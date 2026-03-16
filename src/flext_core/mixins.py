@@ -323,62 +323,60 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         bootstrap_wire_packages: Sequence[str] | None = None
         bootstrap_wire_classes: Sequence[type] | None = None
 
-        if hasattr(self, "_runtime_bootstrap_options"):
-            bootstrap_method = self._runtime_bootstrap_options
-            if callable(bootstrap_method):
-                try:
-                    options_raw = bootstrap_method()
-                    options: m.RuntimeBootstrapOptions | None = None
-                    if isinstance(options_raw, m.RuntimeBootstrapOptions):
-                        options = options_raw
-                    elif isinstance(options_raw, (dict, Mapping)):
-                        options = m.RuntimeBootstrapOptions.model_validate(options_raw)
-                    elif options_raw is not None:
-                        # Handle duck-typed objects (e.g. SimpleNamespace)
-                        try:
-                            options = m.RuntimeBootstrapOptions.model_validate(
-                                options_raw, from_attributes=True
-                            )
-                        except ValidationError:
-                            options = None
+        bootstrap_method = getattr(self, "_runtime_bootstrap_options", None)
+        if isinstance(bootstrap_method, Callable):
+            try:
+                options_raw = bootstrap_method()
+                options: m.RuntimeBootstrapOptions | None = None
+                if isinstance(options_raw, m.RuntimeBootstrapOptions):
+                    options = options_raw
+                elif isinstance(options_raw, (dict, Mapping)):
+                    options = m.RuntimeBootstrapOptions.model_validate(options_raw)
+                elif options_raw is not None:
+                    try:
+                        options = m.RuntimeBootstrapOptions.model_validate(
+                            options_raw, from_attributes=True
+                        )
+                    except ValidationError:
+                        options = None
 
-                    if options:
-                        if options.config_type is not None:
-                            config_type_raw = options.config_type
-                        if options.config_overrides is not None:
-                            overrides = options.config_overrides
-                        if options.context is not None:
-                            initial_ctx = options.context
-                        if options.services is not None:
-                            services_typed: dict[str, t.RegisterableService] = {}
-                            for key, value in options.services.items():
-                                if u.is_registerable_service(value):
-                                    services_typed[str(key)] = value
-                            bootstrap_services = services_typed
-                        bootstrap_factories = options.factories
-                        bootstrap_resources = options.resources
-                        if options.wire_modules is not None:
-                            modules_list: list[ModuleType] = []
-                            packages_list: list[str] = []
-                            for item in options.wire_modules:
-                                if isinstance(item, str):
-                                    packages_list.append(item)
-                                else:
-                                    modules_list.append(item)
-                            bootstrap_wire_modules = modules_list
-                            if packages_list:
-                                bootstrap_wire_packages = packages_list
-                        if options.wire_packages is not None:
-                            current_packages = list(bootstrap_wire_packages or [])
-                            current_packages.extend(options.wire_packages)
-                            bootstrap_wire_packages = current_packages
-                        if options.wire_classes is not None:
-                            bootstrap_wire_classes = options.wire_classes
-                except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
-                    FlextLogger.create_module_logger(__name__).warning(
-                        "Failed to load runtime bootstrap options",
-                        exc_info=exc,
-                    )
+                if options:
+                    if options.config_type is not None:
+                        config_type_raw = options.config_type
+                    if options.config_overrides is not None:
+                        overrides = options.config_overrides
+                    if options.context is not None:
+                        initial_ctx = options.context
+                    if options.services is not None:
+                        services_typed: dict[str, t.RegisterableService] = {}
+                        for key, value in options.services.items():
+                            if u.is_registerable_service(value):
+                                services_typed[str(key)] = value
+                        bootstrap_services = services_typed
+                    bootstrap_factories = options.factories
+                    bootstrap_resources = options.resources
+                    if options.wire_modules is not None:
+                        modules_list: list[ModuleType] = []
+                        packages_list: list[str] = []
+                        for item in options.wire_modules:
+                            if isinstance(item, str):
+                                packages_list.append(item)
+                            else:
+                                modules_list.append(item)
+                        bootstrap_wire_modules = modules_list
+                        if packages_list:
+                            bootstrap_wire_packages = packages_list
+                    if options.wire_packages is not None:
+                        current_packages = list(bootstrap_wire_packages or [])
+                        current_packages.extend(options.wire_packages)
+                        bootstrap_wire_packages = current_packages
+                    if options.wire_classes is not None:
+                        bootstrap_wire_classes = options.wire_classes
+            except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
+                FlextLogger.create_module_logger(__name__).warning(
+                    "Failed to load runtime bootstrap options",
+                    exc_info=exc,
+                )
 
         if FlextMixins._is_flext_settings_type(config_type_raw):
             config_cls_typed = config_type_raw
@@ -578,27 +576,21 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 handler_name_raw: t.Scalar | None = ctx_mapping.get(
                     "handler_name", "unknown"
                 )
-                handler_name: str = (
-                    str(handler_name_raw) if handler_name_raw is not None else "unknown"
-                )
+                handler_name: str = str(handler_name_raw)
                 handler_mode_raw: t.Scalar | None = ctx_mapping.get(
                     "handler_mode", "operation"
                 )
-                handler_mode_str: str = (
-                    str(handler_mode_raw)
-                    if handler_mode_raw is not None
-                    else "operation"
-                )
-                handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
-                    "command"
+                handler_mode_str: str = str(handler_mode_raw)
+                handler_mode_literal: c.Cqrs.HandlerType = (
+                    c.Cqrs.HandlerType.COMMAND
                     if handler_mode_str == "command"
-                    else "query"
+                    else c.Cqrs.HandlerType.QUERY
                     if handler_mode_str == "query"
-                    else "event"
+                    else c.Cqrs.HandlerType.EVENT
                     if handler_mode_str == "event"
-                    else "saga"
+                    else c.Cqrs.HandlerType.SAGA
                     if handler_mode_str == "saga"
-                    else "operation"
+                    else c.Cqrs.HandlerType.OPERATION
                 )
                 execution_ctx = m.ExecutionContext.create_for_handler(
                     handler_name=handler_name, handler_mode=handler_mode_literal

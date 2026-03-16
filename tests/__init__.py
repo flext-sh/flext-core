@@ -11,7 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from tests import benchmark, helpers, infra, integration
+    from tests import benchmark, helpers, integration, unit
     from tests.base import TestsFlextServiceBase
     from tests.benchmark.test_container_memory import (
         TestContainerMemory,
@@ -82,1023 +82,6 @@ if TYPE_CHECKING:
         ReliabilityScenarios,
         ValidationScenario,
         ValidationScenarios,
-    )
-    from tests.infra import unit
-    from tests.infra.constants import FlextInfraTestConstants
-    from tests.infra.fixtures import (
-        real_docs_project,
-        real_makefile_project,
-        real_python_package,
-        real_toml_project,
-        real_workspace,
-    )
-    from tests.infra.fixtures_git import real_git_repo
-    from tests.infra.git_service import RealGitService
-    from tests.infra.helpers import FlextInfraTestHelpers, h
-    from tests.infra.models import FlextInfraTestModels
-    from tests.infra.protocols import FlextInfraTestProtocols
-    from tests.infra.runner_service import RealSubprocessRunner
-    from tests.infra.scenarios import (
-        DependencyScenario,
-        DependencyScenarios,
-        GitScenario,
-        GitScenarios,
-        SubprocessScenario,
-        SubprocessScenarios,
-        WorkspaceScenario,
-        WorkspaceScenarios,
-    )
-    from tests.infra.typings import FlextInfraTestTypes, t
-    from tests.infra.unit import (
-        basemk,
-        check,
-        codegen,
-        container,
-        core,
-        deps,
-        discovery,
-        docs,
-        github,
-        io,
-        refactor,
-        release,
-    )
-    from tests.infra.unit._utilities.test_discovery_consolidated import (
-        TestDiscoveryDiscoverProjects,
-        TestDiscoveryFindAllPyprojectFiles,
-        TestDiscoveryIterPythonFiles,
-        TestDiscoveryProjectRoots,
-    )
-    from tests.infra.unit._utilities.test_formatting import TestFormattingRunRuffFix
-    from tests.infra.unit._utilities.test_iteration import (
-        TestIterWorkspacePythonModules,
-    )
-    from tests.infra.unit._utilities.test_parsing import (
-        TestParsingModuleAst,
-        TestParsingModuleCst,
-    )
-    from tests.infra.unit._utilities.test_safety import (
-        TestSafetyCheckpoint,
-        TestSafetyRollback,
-        TestSafetyWorkspaceValidation,
-    )
-    from tests.infra.unit._utilities.test_scanning import (
-        MockScanner,
-        TestScanFileBatch,
-        TestScanModels,
-    )
-    from tests.infra.unit.basemk.engine import (
-        test_basemk_cli_generate_to_file,
-        test_basemk_cli_generate_to_stdout,
-        test_basemk_engine_execute_calls_render_all,
-        test_basemk_engine_render_all_handles_template_error,
-        test_basemk_engine_render_all_returns_string,
-        test_basemk_engine_render_all_with_valid_config,
-        test_generator_fails_for_invalid_make_syntax,
-        test_generator_renders_with_config_override,
-        test_generator_write_saves_output_file,
-        test_render_all_generates_large_makefile,
-        test_render_all_has_no_scripts_path_references,
-    )
-    from tests.infra.unit.basemk.generator import (
-        test_generator_execute_returns_generated_content,
-        test_generator_generate_propagates_render_failure,
-        test_generator_generate_with_basemk_config_object,
-        test_generator_generate_with_dict_config,
-        test_generator_generate_with_invalid_dict_config,
-        test_generator_generate_with_none_config_uses_default,
-        test_generator_initializes_with_custom_engine,
-        test_generator_initializes_with_default_engine,
-        test_generator_write_creates_parent_directories,
-        test_generator_write_fails_without_output_or_stream,
-        test_generator_write_to_file,
-        test_generator_write_to_stream,
-    )
-    from tests.infra.unit.basemk.generator_edge_cases import (
-        test_generator_normalize_config_with_basemk_config,
-        test_generator_normalize_config_with_dict,
-        test_generator_normalize_config_with_invalid_dict,
-        test_generator_normalize_config_with_none,
-        test_generator_validate_generated_output_handles_oserror,
-        test_generator_write_handles_file_permission_error,
-        test_generator_write_to_stream_handles_oserror,
-    )
-    from tests.infra.unit.basemk.init import TestFlextInfraBaseMk
-    from tests.infra.unit.basemk.main import (
-        test_basemk_build_config_with_none,
-        test_basemk_build_config_with_project_name,
-        test_basemk_main_calls_sys_exit,
-        test_basemk_main_ensures_structlog_configured,
-        test_basemk_main_output_to_stdout,
-        test_basemk_main_with_generate_command,
-        test_basemk_main_with_generation_failure,
-        test_basemk_main_with_invalid_command,
-        test_basemk_main_with_no_command,
-        test_basemk_main_with_none_argv,
-        test_basemk_main_with_output_file,
-        test_basemk_main_with_project_name,
-        test_basemk_main_with_write_failure,
-    )
-    from tests.infra.unit.check.cli import (
-        test_resolve_gates_maps_type_alias,
-        test_run_cli_run_returns_one_for_fail,
-        test_run_cli_run_returns_two_for_error,
-        test_run_cli_run_returns_zero_for_pass,
-        test_run_cli_with_fail_fast_flag,
-        test_run_cli_with_multiple_projects,
-    )
-    from tests.infra.unit.check.extended_cli_entry import (
-        TestCheckMainEntryPoint,
-        TestFixPyrelfyCLI,
-        TestRunCLIExtended,
-        TestWorkspaceCheckCLI,
-    )
-    from tests.infra.unit.check.extended_config_fixer import (
-        TestConfigFixerEnsureProjectExcludes,
-        TestConfigFixerExecute,
-        TestConfigFixerFindPyprojectFiles,
-        TestConfigFixerFixSearchPaths,
-        TestConfigFixerProcessFile,
-        TestConfigFixerRemoveIgnoreSubConfig,
-        TestConfigFixerRun,
-        TestConfigFixerToArray,
-    )
-    from tests.infra.unit.check.extended_config_fixer_errors import (
-        TestConfigFixerPathResolution,
-        TestConfigFixerRunMethods,
-        TestConfigFixerRunWithVerbose,
-        TestProcessFileReadError,
-    )
-    from tests.infra.unit.check.extended_error_reporting import (
-        RunStub,
-        TestErrorReporting,
-        TestGoFmtEmptyLinesInOutput,
-        TestMarkdownReportEmptyGates,
-        TestMypyEmptyLinesInOutput,
-        TestRuffFormatDuplicateFiles,
-    )
-    from tests.infra.unit.check.extended_gate_bandit_markdown import (
-        TestWorkspaceCheckerRunBandit,
-        TestWorkspaceCheckerRunMarkdown,
-    )
-    from tests.infra.unit.check.extended_gate_go_cmd import (
-        TestWorkspaceCheckerCollectMarkdownFiles,
-        TestWorkspaceCheckerRunCommand,
-        TestWorkspaceCheckerRunGo,
-    )
-    from tests.infra.unit.check.extended_gate_mypy_pyright import (
-        TestWorkspaceCheckerRunMypy,
-        TestWorkspaceCheckerRunPyright,
-    )
-    from tests.infra.unit.check.extended_models import (
-        TestCheckIssueFormatted,
-        TestProjectResultProperties,
-        TestWorkspaceCheckerErrorSummary,
-    )
-    from tests.infra.unit.check.extended_project_runners import TestJsonWriteFailure
-    from tests.infra.unit.check.extended_projects import (
-        TestCheckProjectRunners,
-        TestLintAndFormatPublicMethods,
-    )
-    from tests.infra.unit.check.extended_reports import (
-        TestMarkdownReportSkipsEmptyGates,
-        TestMarkdownReportWithErrors,
-        TestWorkspaceCheckerMarkdownReport,
-        TestWorkspaceCheckerMarkdownReportEdgeCases,
-        TestWorkspaceCheckerSARIFReport,
-        TestWorkspaceCheckerSARIFReportEdgeCases,
-    )
-    from tests.infra.unit.check.extended_resolve_gates import (
-        TestWorkspaceCheckerParseGateCSV,
-        TestWorkspaceCheckerResolveGates,
-    )
-    from tests.infra.unit.check.extended_run_projects import (
-        CheckProjectStub,
-        TestRunProjectsBehavior,
-        TestRunProjectsReports,
-        TestRunProjectsValidation,
-        TestRunSingleProject,
-    )
-    from tests.infra.unit.check.extended_runners import TestRunMypy, TestRunPyrefly
-    from tests.infra.unit.check.extended_runners_extra import (
-        TestRunBandit,
-        TestRunMarkdown,
-        TestRunPyright,
-    )
-    from tests.infra.unit.check.extended_runners_go import TestRunGo
-    from tests.infra.unit.check.extended_runners_ruff import (
-        RunCallable,
-        TestCollectMarkdownFiles,
-        TestRunCommand,
-        TestRunRuffFormat,
-        TestRunRuffLint,
-    )
-    from tests.infra.unit.check.extended_workspace_init import (
-        TestWorkspaceCheckerBuildGateResult,
-        TestWorkspaceCheckerBuildGateResult as r,
-        TestWorkspaceCheckerDirsWithPy,
-        TestWorkspaceCheckerExecute,
-        TestWorkspaceCheckerExistingCheckDirs,
-        TestWorkspaceCheckerInitialization,
-        TestWorkspaceCheckerInitOSError,
-        TestWorkspaceCheckerResolveWorkspaceRootFallback,
-    )
-    from tests.infra.unit.check.fix_pyrefly_config import (
-        test_fix_pyrefly_config_main_executes_real_cli_help,
-    )
-    from tests.infra.unit.check.init import TestFlextInfraCheck
-    from tests.infra.unit.check.main import test_check_main_executes_real_cli
-    from tests.infra.unit.check.pyrefly import TestFlextInfraConfigFixer
-    from tests.infra.unit.check.workspace import TestFlextInfraWorkspaceChecker
-    from tests.infra.unit.check.workspace_check import (
-        test_workspace_check_main_returns_error_without_projects,
-    )
-    from tests.infra.unit.codegen.autofix import (
-        fixer,
-        test_in_context_typevar_not_flagged,
-        test_standalone_final_detected_as_fixable,
-        test_standalone_typealias_detected_as_fixable,
-        test_standalone_typevar_detected_as_fixable,
-        test_syntax_error_files_skipped,
-    )
-    from tests.infra.unit.codegen.autofix_workspace import (
-        test_files_modified_tracks_affected_files,
-        test_flexcore_excluded_from_run,
-        test_project_without_src_returns_empty,
-    )
-    from tests.infra.unit.codegen.census import (
-        TestFixabilityClassification,
-        TestParseViolationInvalid,
-        TestParseViolationValid,
-        census,
-    )
-    from tests.infra.unit.codegen.census_models import (
-        TestCensusReportModel,
-        TestCensusViolationModel,
-        TestExcludedProjects,
-        TestViolationPattern,
-    )
-    from tests.infra.unit.codegen.constants_quality_gate import (
-        TestConstantsQualityGateCLIDispatch,
-        TestConstantsQualityGateVerdict,
-    )
-    from tests.infra.unit.codegen.init import (
-        test_codegen_dir_returns_all_exports,
-        test_codegen_getattr_raises_attribute_error,
-        test_codegen_lazy_imports_work,
-    )
-    from tests.infra.unit.codegen.lazy_init_generation import (
-        TestGenerateFile,
-        TestGenerateTypeChecking,
-        TestResolveAliases,
-        TestRunRuffFix,
-        test_codegen_init_getattr_raises_attribute_error,
-    )
-    from tests.infra.unit.codegen.lazy_init_helpers import (
-        TestBuildSiblingExportIndex,
-        TestExtractExports,
-        TestInferPackage,
-        TestReadExistingDocstring,
-    )
-    from tests.infra.unit.codegen.lazy_init_process import TestProcessDirectory
-    from tests.infra.unit.codegen.lazy_init_service import TestFlextInfraCodegenLazyInit
-    from tests.infra.unit.codegen.lazy_init_tests import (
-        TestAllDirectoriesScanned,
-        TestCheckOnlyMode,
-        TestEdgeCases,
-        TestExcludedDirectories,
-    )
-    from tests.infra.unit.codegen.lazy_init_transforms import (
-        TestExtractInlineConstants,
-        TestExtractVersionExports,
-        TestMergeChildExports,
-        TestScanAstPublicDefs,
-        TestShouldBubbleUp,
-    )
-    from tests.infra.unit.codegen.main import (
-        TestHandleLazyInit,
-        TestMainCommandDispatch,
-        TestMainEntryPoint,
-    )
-    from tests.infra.unit.codegen.pipeline import test_codegen_pipeline_end_to_end
-    from tests.infra.unit.codegen.scaffolder import (
-        TestScaffoldProjectCreatesSrcModules,
-        TestScaffoldProjectCreatesTestsModules,
-        TestScaffoldProjectIdempotency,
-        TestScaffoldProjectNoop,
-    )
-    from tests.infra.unit.codegen.scaffolder_naming import (
-        TestGeneratedClassNamingConvention,
-        TestGeneratedFilesAreValidPython,
-    )
-    from tests.infra.unit.container.test_infra_container import (
-        TestInfraContainerFunctions,
-        TestInfraMroPattern,
-        TestInfraServiceRetrieval,
-    )
-    from tests.infra.unit.core.basemk_validator import (
-        TestBaseMkValidatorCore,
-        TestBaseMkValidatorEdgeCases,
-        TestBaseMkValidatorSha256,
-        v,
-    )
-    from tests.infra.unit.core.init import TestCoreModuleInit
-    from tests.infra.unit.core.inventory import (
-        TestInventoryServiceCore,
-        TestInventoryServiceReports,
-        TestInventoryServiceScripts,
-    )
-    from tests.infra.unit.core.main import (
-        TestMainBaseMkValidate,
-        TestMainCliRouting,
-        TestMainInventory,
-        TestMainScan,
-    )
-    from tests.infra.unit.core.pytest_diag import (
-        TestPytestDiagExtractorCore,
-        TestPytestDiagLogParsing,
-        TestPytestDiagParseXml,
-    )
-    from tests.infra.unit.core.scanner import (
-        TestScannerCore,
-        TestScannerHelpers,
-        TestScannerMultiFile,
-    )
-    from tests.infra.unit.core.skill_validator import (
-        TestNormalizeStringList,
-        TestSafeLoadYaml,
-        TestSkillValidatorAstGrepCount,
-        TestSkillValidatorCore,
-        TestSkillValidatorRenderTemplate,
-    )
-    from tests.infra.unit.core.stub_chain import (
-        TestStubChainAnalyze,
-        TestStubChainCore,
-        TestStubChainDiscoverProjects,
-        TestStubChainIsInternal,
-        TestStubChainStubExists,
-        TestStubChainValidate,
-    )
-    from tests.infra.unit.deps.test_detection_classify import (
-        TestBuildProjectReport,
-        TestClassifyIssues,
-    )
-    from tests.infra.unit.deps.test_detection_deptry import TestRunDeptry
-    from tests.infra.unit.deps.test_detection_models import (
-        TestFlextInfraDependencyDetectionModels,
-        TestFlextInfraDependencyDetectionService,
-        TestToInfraValue,
-    )
-    from tests.infra.unit.deps.test_detection_pip_check import TestRunPipCheck
-    from tests.infra.unit.deps.test_detection_typings import (
-        TestLoadDependencyLimits,
-        TestRunMypyStubHints,
-    )
-    from tests.infra.unit.deps.test_detection_typings_flow import (
-        TestModuleAndTypingsFlow,
-    )
-    from tests.infra.unit.deps.test_detection_uncovered import (
-        TestDetectionUncoveredLines,
-    )
-    from tests.infra.unit.deps.test_detection_wrappers import (
-        TestModuleLevelWrappers,
-        test_discover_projects_wrapper,
-        test_get_current_typings_from_pyproject_wrapper,
-        test_get_required_typings_wrapper,
-        test_run_deptry_wrapper,
-        test_run_mypy_stub_hints_wrapper,
-        test_run_pip_check_wrapper,
-    )
-    from tests.infra.unit.deps.test_detector_detect import (
-        TestFlextInfraRuntimeDevDependencyDetectorRunDetect,
-    )
-    from tests.infra.unit.deps.test_detector_detect_failures import (
-        TestDetectorRunFailures,
-    )
-    from tests.infra.unit.deps.test_detector_init import (
-        TestFlextInfraRuntimeDevDependencyDetectorInit,
-    )
-    from tests.infra.unit.deps.test_detector_main import (
-        TestFlextInfraRuntimeDevDependencyDetectorRunTypings,
-        TestMainFunction,
-    )
-    from tests.infra.unit.deps.test_detector_models import (
-        TestFlextInfraDependencyDetectorModels,
-    )
-    from tests.infra.unit.deps.test_detector_report import (
-        TestFlextInfraRuntimeDevDependencyDetectorRunReport,
-    )
-    from tests.infra.unit.deps.test_detector_report_flags import TestDetectorReportFlags
-    from tests.infra.unit.deps.test_extra_paths_manager import (
-        TestConstants,
-        TestFlextInfraExtraPathsManager,
-        TestGetDepPaths,
-        TestSyncOne,
-    )
-    from tests.infra.unit.deps.test_extra_paths_pep621 import (
-        TestPathDepPathsPep621,
-        TestPathDepPathsPoetry,
-        test_helpers_alias_exposed,
-    )
-    from tests.infra.unit.deps.test_extra_paths_sync import (
-        pyright_content,
-        test_main_success_modes,
-        test_main_sync_failure,
-        test_sync_extra_paths_missing_root_pyproject,
-        test_sync_extra_paths_success_modes,
-        test_sync_extra_paths_sync_failure,
-        test_sync_one_edge_cases,
-    )
-    from tests.infra.unit.deps.test_init import TestFlextInfraDeps
-    from tests.infra.unit.deps.test_internal_sync_discovery import (
-        TestCollectInternalDeps,
-        TestParseGitmodules,
-        TestParseRepoMap,
-    )
-    from tests.infra.unit.deps.test_internal_sync_discovery_edge import (
-        TestCollectInternalDepsEdgeCases,
-    )
-    from tests.infra.unit.deps.test_internal_sync_resolve import (
-        TestInferOwnerFromOrigin,
-        TestResolveRef,
-        TestSynthesizedRepoMap,
-    )
-    from tests.infra.unit.deps.test_internal_sync_sync import TestSync
-    from tests.infra.unit.deps.test_internal_sync_sync_edge import (
-        TestSyncMethodEdgeCases,
-    )
-    from tests.infra.unit.deps.test_internal_sync_sync_edge_more import (
-        TestSyncMethodEdgeCasesMore,
-    )
-    from tests.infra.unit.deps.test_internal_sync_update import (
-        TestEnsureCheckout,
-        TestEnsureSymlink,
-        TestEnsureSymlinkEdgeCases,
-    )
-    from tests.infra.unit.deps.test_internal_sync_update_checkout_edge import (
-        TestEnsureCheckoutEdgeCases,
-    )
-    from tests.infra.unit.deps.test_internal_sync_validation import (
-        TestFlextInfraInternalDependencySyncService,
-        TestIsInternalPathDep,
-        TestIsRelativeTo,
-        TestOwnerFromRemoteUrl,
-        TestValidateGitRefEdgeCases,
-    )
-    from tests.infra.unit.deps.test_internal_sync_workspace import (
-        TestIsWorkspaceMode,
-        TestWorkspaceRootFromEnv,
-        TestWorkspaceRootFromParents,
-    )
-    from tests.infra.unit.deps.test_main import (
-        TestMainHelpAndErrors,
-        TestMainReturnValues,
-        TestSubcommandMapping,
-    )
-    from tests.infra.unit.deps.test_main_dispatch import (
-        TestMainDelegation,
-        TestMainExceptionHandling,
-        TestMainModuleImport,
-        TestMainSubcommandDispatch,
-        TestMainSysArgvModification,
-        test_string_zero_return_value,
-    )
-    from tests.infra.unit.deps.test_modernizer_comments import (
-        TestInjectCommentsPhase,
-        test_inject_comments_phase_apply_banner,
-        test_inject_comments_phase_apply_broken_group_section,
-        test_inject_comments_phase_apply_markers,
-        test_inject_comments_phase_apply_with_optional_dependencies_dev,
-    )
-    from tests.infra.unit.deps.test_modernizer_consolidate import (
-        TestConsolidateGroupsPhase,
-        test_consolidate_groups_phase_apply_removes_old_groups,
-        test_consolidate_groups_phase_apply_with_empty_poetry_group,
-    )
-    from tests.infra.unit.deps.test_modernizer_helpers import (
-        array,
-        as_string_list,
-        canonical_dev_dependencies,
-        dedupe_specs,
-        dep_name,
-        doc,
-        ensure_table,
-        project_dev_groups,
-        test_array,
-        test_as_string_list,
-        test_as_string_list_toml_item,
-        test_canonical_dev_dependencies,
-        test_dedupe_specs,
-        test_dep_name,
-        test_ensure_table,
-        test_project_dev_groups,
-        test_project_dev_groups_missing_sections,
-        test_unwrap_item,
-        test_unwrap_item_toml_item,
-        unwrap_item,
-    )
-    from tests.infra.unit.deps.test_modernizer_main import (
-        TestFlextInfraPyprojectModernizer,
-        TestModernizerRunAndMain,
-    )
-    from tests.infra.unit.deps.test_modernizer_main_extra import (
-        TestModernizerEdgeCases,
-        TestModernizerUncoveredLines,
-        test_flext_infra_pyproject_modernizer_find_pyproject_files,
-        test_flext_infra_pyproject_modernizer_process_file_invalid_toml,
-    )
-    from tests.infra.unit.deps.test_modernizer_pyrefly import (
-        TestEnsurePyreflyConfigPhase,
-        test_ensure_pyrefly_config_phase_apply_errors,
-        test_ensure_pyrefly_config_phase_apply_ignore_errors,
-        test_ensure_pyrefly_config_phase_apply_python_version,
-        test_ensure_pyrefly_config_phase_apply_search_path,
-    )
-    from tests.infra.unit.deps.test_modernizer_pyright import (
-        TestEnsurePyrightConfigPhase,
-    )
-    from tests.infra.unit.deps.test_modernizer_pytest import (
-        TestEnsurePytestConfigPhase,
-        test_ensure_pytest_config_phase_apply_markers,
-        test_ensure_pytest_config_phase_apply_minversion,
-        test_ensure_pytest_config_phase_apply_python_classes,
-    )
-    from tests.infra.unit.deps.test_modernizer_workspace import (
-        TestParser,
-        TestReadDoc,
-        test_workspace_root_doc_construction,
-    )
-    from tests.infra.unit.deps.test_path_sync_helpers import (
-        extract_dep_name,
-        test_extract_dep_name,
-        test_extract_requirement_name,
-        test_helpers_alias_is_reachable_helpers,
-        test_target_path,
-    )
-    from tests.infra.unit.deps.test_path_sync_init import (
-        TestDetectMode,
-        TestFlextInfraDependencyPathSync,
-        TestPathSyncEdgeCases,
-        test_detect_mode_with_nonexistent_path,
-        test_detect_mode_with_path_object,
-    )
-    from tests.infra.unit.deps.test_path_sync_main import (
-        TestMain,
-        test_helpers_alias_is_reachable_main,
-    )
-    from tests.infra.unit.deps.test_path_sync_main_edges import TestMainEdgeCases
-    from tests.infra.unit.deps.test_path_sync_main_more import (
-        test_main_discovery_failure,
-        test_main_no_changes_needed,
-        test_main_project_invalid_toml,
-        test_main_project_no_name,
-        test_main_project_non_string_name,
-        test_main_with_changes_and_dry_run,
-        test_main_with_changes_no_dry_run,
-        test_workspace_root_fallback,
-    )
-    from tests.infra.unit.deps.test_path_sync_main_project_obj import (
-        test_helpers_alias_is_reachable_project_obj,
-        test_main_project_obj_not_dict_first_loop,
-        test_main_project_obj_not_dict_second_loop,
-    )
-    from tests.infra.unit.deps.test_path_sync_rewrite_deps import (
-        TestRewriteDepPaths,
-        rewrite_dep_paths,
-        test_rewrite_dep_paths_dry_run,
-        test_rewrite_dep_paths_read_failure,
-        test_rewrite_dep_paths_with_internal_names,
-        test_rewrite_dep_paths_with_no_deps,
-    )
-    from tests.infra.unit.deps.test_path_sync_rewrite_pep621 import (
-        TestRewritePep621,
-        test_rewrite_pep621_invalid_path_dep_regex,
-        test_rewrite_pep621_no_project_table,
-        test_rewrite_pep621_non_string_item,
-    )
-    from tests.infra.unit.deps.test_path_sync_rewrite_poetry import (
-        TestRewritePoetry,
-        test_rewrite_poetry_no_poetry_table,
-        test_rewrite_poetry_no_tool_table,
-        test_rewrite_poetry_with_non_dict_value,
-    )
-    from tests.infra.unit.discovery.test_infra_discovery import (
-        TestFlextInfraDiscoveryService,
-    )
-    from tests.infra.unit.discovery.test_infra_discovery_edge_cases import (
-        TestFlextInfraDiscoveryServiceUncoveredLines,
-    )
-    from tests.infra.unit.docs.auditor import (
-        TestAuditorCore,
-        TestAuditorNormalize,
-        auditor,
-        is_external,
-        normalize_link,
-        should_skip_target,
-    )
-    from tests.infra.unit.docs.auditor_budgets import TestLoadAuditBudgets
-    from tests.infra.unit.docs.auditor_cli import (
-        TestAuditorMainCli,
-        TestAuditorScopeFailure,
-    )
-    from tests.infra.unit.docs.auditor_links import (
-        TestAuditorBrokenLinks,
-        TestAuditorToMarkdown,
-    )
-    from tests.infra.unit.docs.auditor_scope import (
-        TestAuditorForbiddenTerms,
-        TestAuditorScope,
-    )
-    from tests.infra.unit.docs.builder import TestBuilderCore, builder
-    from tests.infra.unit.docs.builder_scope import TestBuilderScope
-    from tests.infra.unit.docs.fixer import TestFixerCore
-    from tests.infra.unit.docs.fixer_internals import (
-        TestFixerMaybeFixLink,
-        TestFixerProcessFile,
-        TestFixerScope,
-        TestFixerToc,
-    )
-    from tests.infra.unit.docs.generator import TestGeneratorCore
-    from tests.infra.unit.docs.generator_internals import (
-        TestGeneratorHelpers,
-        TestGeneratorScope,
-        gen,
-    )
-    from tests.infra.unit.docs.init import TestFlextInfraDocs
-    from tests.infra.unit.docs.main import TestRunAudit, TestRunFix
-    from tests.infra.unit.docs.main_commands import (
-        TestRunBuild,
-        TestRunGenerate,
-        TestRunValidate,
-    )
-    from tests.infra.unit.docs.main_entry import TestMainRouting, TestMainWithFlags
-    from tests.infra.unit.docs.shared import TestBuildScopes, TestFlextInfraDocScope
-    from tests.infra.unit.docs.shared_iter import (
-        TestIterMarkdownFiles,
-        TestSelectedProjectNames,
-    )
-    from tests.infra.unit.docs.shared_write import TestWriteJson, TestWriteMarkdown
-    from tests.infra.unit.docs.validator import TestValidateCore, TestValidateReport
-    from tests.infra.unit.docs.validator_internals import (
-        TestAdrHelpers,
-        TestMaybeWriteTodo,
-        TestValidateScope,
-        validator,
-    )
-    from tests.infra.unit.github.linter import TestFlextInfraWorkflowLinter
-    from tests.infra.unit.github.main import (
-        TestRunLint,
-        TestRunWorkflows,
-        run_lint,
-        run_pr,
-        run_workflows,
-    )
-    from tests.infra.unit.github.main_dispatch import (
-        TestRunPrWorkspace,
-        run_pr_workspace,
-    )
-    from tests.infra.unit.github.pr import (
-        TestCreate,
-        TestFlextInfraPrManager,
-        TestStatus,
-    )
-    from tests.infra.unit.github.pr_cli import TestParseArgs, TestSelectorFunction
-    from tests.infra.unit.github.pr_init import TestGithubInit
-    from tests.infra.unit.github.pr_operations import (
-        TestChecks,
-        TestClose,
-        TestMerge,
-        TestTriggerRelease,
-        TestView,
-    )
-    from tests.infra.unit.github.pr_workspace import (
-        TestCheckpoint,
-        TestFlextInfraPrWorkspaceManager,
-        TestRunPr,
-    )
-    from tests.infra.unit.github.pr_workspace_orchestrate import (
-        TestOrchestrate,
-        TestStaticMethods,
-    )
-    from tests.infra.unit.github.workflows import (
-        TestFlextInfraWorkflowSyncer,
-        TestRenderTemplate,
-        TestSyncOperation,
-        TestSyncProject,
-    )
-    from tests.infra.unit.github.workflows_workspace import (
-        TestSyncWorkspace,
-        TestWriteReport,
-    )
-    from tests.infra.unit.io.test_infra_json_io import TestFlextInfraJsonService
-    from tests.infra.unit.io.test_infra_output_edge_cases import (
-        TestInfraOutputEdgeCases,
-        TestInfraOutputNoColor,
-        TestMroFacadeMethods,
-    )
-    from tests.infra.unit.io.test_infra_output_formatting import (
-        TestInfraOutputHeader,
-        TestInfraOutputMessages,
-        TestInfraOutputProgress,
-        TestInfraOutputStatus,
-        TestInfraOutputSummary,
-    )
-    from tests.infra.unit.io.test_infra_terminal_detection import (
-        TestShouldUseColor,
-        TestShouldUseUnicode,
-    )
-    from tests.infra.unit.refactor.test_infra_refactor_analysis import (
-        test_build_impact_map_extracts_rename_entries,
-        test_build_impact_map_extracts_signature_entries,
-        test_main_analyze_violations_is_read_only,
-        test_main_analyze_violations_writes_json_report,
-        test_violation_analysis_counts_massive_patterns,
-        test_violation_analyzer_skips_non_utf8_files,
-    )
-    from tests.infra.unit.refactor.test_infra_refactor_class_and_propagation import (
-        test_class_reconstructor_reorders_each_contiguous_method_block,
-        test_class_reconstructor_reorders_methods_by_config,
-        test_class_reconstructor_skips_interleaved_non_method_members,
-        test_mro_checker_keeps_external_attribute_base,
-        test_mro_redundancy_checker_removes_nested_attribute_inheritance,
-        test_signature_propagation_removes_and_adds_keywords,
-        test_signature_propagation_renames_call_keyword,
-        test_symbol_propagation_keeps_alias_reference_when_asname_used,
-        test_symbol_propagation_renames_import_and_local_references,
-        test_symbol_propagation_updates_mro_base_references,
-    )
-    from tests.infra.unit.refactor.test_infra_refactor_engine import (
-        test_engine_always_enables_class_nesting_file_rule,
-        test_refactor_files_skips_non_python_inputs,
-        test_refactor_project_scans_tests_and_scripts_dirs,
-        test_rule_dispatch_fails_on_invalid_pattern_rule_config,
-        test_rule_dispatch_fails_on_unknown_rule_mapping,
-        test_rule_dispatch_keeps_legacy_id_fallback_mapping,
-        test_rule_dispatch_prefers_fix_action_metadata,
-    )
-    from tests.infra.unit.refactor.test_infra_refactor_import_modernizer import (
-        test_import_modernizer_adds_c_when_existing_c_is_aliased,
-        test_import_modernizer_does_not_rewrite_function_parameter_shadow,
-        test_import_modernizer_does_not_rewrite_rebound_local_name_usage,
-        test_import_modernizer_partial_import_keeps_unmapped_symbols,
-        test_import_modernizer_partial_import_with_asname_keeps_unmapped_alias,
-        test_import_modernizer_skips_rewrite_when_runtime_alias_shadowed_in_function,
-        test_import_modernizer_skips_when_runtime_alias_name_is_blocked,
-        test_import_modernizer_updates_aliased_symbol_usage,
-        test_lazy_import_rule_hoists_import_to_module_level,
-        test_lazy_import_rule_uses_fix_action_for_hoist,
-    )
-    from tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations import (
-        test_ensure_future_annotations_after_docstring,
-        test_ensure_future_annotations_moves_existing_import_to_top,
-        test_legacy_import_bypass_collapses_to_primary_import,
-        test_legacy_rule_uses_fix_action_remove_for_aliases,
-        test_legacy_wrapper_forwarding_keywords_is_inlined_as_alias,
-        test_legacy_wrapper_forwarding_varargs_is_inlined_as_alias,
-        test_legacy_wrapper_function_is_inlined_as_alias,
-        test_legacy_wrapper_non_passthrough_is_not_inlined,
-    )
-    from tests.infra.unit.refactor.test_infra_refactor_pattern_corrections import (
-        test_pattern_rule_converts_dict_annotations_to_mapping,
-        test_pattern_rule_keeps_dict_param_when_copy_used,
-        test_pattern_rule_keeps_dict_param_when_subscript_mutated,
-        test_pattern_rule_keeps_type_cast_when_not_nested_object_cast,
-        test_pattern_rule_optionally_converts_return_annotations_to_mapping,
-        test_pattern_rule_removes_configured_redundant_casts,
-        test_pattern_rule_removes_nested_type_object_cast_chain,
-        test_pattern_rule_skips_overload_signatures,
-    )
-    from tests.infra.unit.refactor.test_infra_refactor_safety import (
-        EngineSafetyStub,
-        test_refactor_project_integrates_safety_manager,
-    )
-    from tests.infra.unit.release.flow import TestReleaseMainFlow
-    from tests.infra.unit.release.main import TestReleaseMainParsing
-    from tests.infra.unit.release.orchestrator import TestReleaseOrchestratorExecute
-    from tests.infra.unit.release.orchestrator_git import (
-        TestCollectChanges,
-        TestCreateBranches,
-        TestCreateTag,
-        TestPreviousTag,
-        TestPushRelease,
-    )
-    from tests.infra.unit.release.orchestrator_helpers import (
-        TestBuildTargets,
-        TestBumpNextDev,
-        TestDispatchPhase,
-        TestGenerateNotes,
-        TestRunMake,
-        TestUpdateChangelog,
-        TestVersionFiles,
-    )
-    from tests.infra.unit.release.orchestrator_phases import (
-        TestPhaseBuild,
-        TestPhaseValidate,
-        TestPhaseVersion,
-    )
-    from tests.infra.unit.release.orchestrator_publish import (
-        TestPhasePublish,
-        workspace_root,
-    )
-    from tests.infra.unit.release.release_init import TestReleaseInit
-    from tests.infra.unit.release.version_resolution import (
-        TestReleaseMainTagResolution,
-        TestReleaseMainVersionResolution,
-        TestResolveVersionInteractive,
-    )
-    from tests.infra.unit.test_infra_constants_core import (
-        TestFlextInfraConstantsExcludedNamespace,
-        TestFlextInfraConstantsFilesNamespace,
-        TestFlextInfraConstantsGatesNamespace,
-        TestFlextInfraConstantsPathsNamespace,
-        TestFlextInfraConstantsStatusNamespace,
-    )
-    from tests.infra.unit.test_infra_constants_extra import (
-        TestFlextInfraConstantsAlias,
-        TestFlextInfraConstantsCheckNamespace,
-        TestFlextInfraConstantsConsistency,
-        TestFlextInfraConstantsEncodingNamespace,
-        TestFlextInfraConstantsGithubNamespace,
-        TestFlextInfraConstantsImmutability,
-    )
-    from tests.infra.unit.test_infra_git import (
-        TestFlextInfraGitService,
-        TestGitPush,
-        TestGitTagOperations,
-        TestRemovedCompatibilityMethods,
-        git_repo,
-    )
-    from tests.infra.unit.test_infra_init_lazy_core import TestFlextInfraInitLazyLoading
-    from tests.infra.unit.test_infra_init_lazy_submodules import (
-        TestFlextInfraSubmoduleInitLazyLoading,
-    )
-    from tests.infra.unit.test_infra_main import (
-        test_main_all_groups_defined,
-        test_main_group_modules_are_valid,
-        test_main_help_flag_returns_zero,
-        test_main_returns_error_when_no_args,
-        test_main_unknown_group_returns_error,
-    )
-    from tests.infra.unit.test_infra_maintenance_init import TestFlextInfraMaintenance
-    from tests.infra.unit.test_infra_maintenance_main import (
-        TestMaintenanceMainEnforcer,
-        TestMaintenanceMainSuccess,
-    )
-    from tests.infra.unit.test_infra_maintenance_python_version import (
-        TestDiscoverProjects,
-        TestEnforcerExecute,
-        TestEnsurePythonVersionFile,
-        TestReadRequiredMinor,
-        TestWorkspaceRoot,
-    )
-    from tests.infra.unit.test_infra_paths import TestFlextInfraPathResolver
-    from tests.infra.unit.test_infra_patterns_core import (
-        TestFlextInfraPatternsMarkdown,
-        TestFlextInfraPatternsTooling,
-    )
-    from tests.infra.unit.test_infra_patterns_extra import (
-        TestFlextInfraPatternsEdgeCases,
-        TestFlextInfraPatternsPatternTypes,
-    )
-    from tests.infra.unit.test_infra_protocols import TestFlextInfraProtocolsImport
-    from tests.infra.unit.test_infra_reporting_core import (
-        TestFlextInfraReportingServiceCore,
-    )
-    from tests.infra.unit.test_infra_reporting_extra import (
-        TestFlextInfraReportingServiceExtra,
-    )
-    from tests.infra.unit.test_infra_selection import TestFlextInfraUtilitiesSelection
-    from tests.infra.unit.test_infra_subprocess_core import (
-        runner,
-        test_capture_cases,
-        test_run_cases,
-        test_run_raw_cases,
-    )
-    from tests.infra.unit.test_infra_subprocess_extra import (
-        TestFlextInfraCommandRunnerExtra,
-    )
-    from tests.infra.unit.test_infra_templates import (
-        engine,
-        test_engine_constants_shared,
-        test_multiple_instances_independent,
-        test_render_failure,
-        test_render_success,
-        test_template_constants,
-    )
-    from tests.infra.unit.test_infra_toml_io import (
-        TestFlextInfraTomlDocument,
-        TestFlextInfraTomlHelpers,
-        TestFlextInfraTomlRead,
-    )
-    from tests.infra.unit.test_infra_typings import TestFlextInfraTypesImport
-    from tests.infra.unit.test_infra_utilities import TestFlextInfraUtilitiesImport
-    from tests.infra.unit.test_infra_version_core import TestFlextInfraVersionClass
-    from tests.infra.unit.test_infra_version_extra import (
-        TestFlextInfraVersionModuleLevel,
-        TestFlextInfraVersionPackageInfo,
-    )
-    from tests.infra.unit.test_infra_versioning import (
-        service,
-        test_bump_version_invalid,
-        test_bump_version_result_type,
-        test_bump_version_valid,
-        test_current_workspace_version,
-        test_parse_semver_invalid,
-        test_parse_semver_result_type,
-        test_parse_semver_valid,
-        test_release_tag_from_branch_invalid,
-        test_release_tag_from_branch_result_type,
-        test_release_tag_from_branch_valid,
-        test_replace_project_version,
-    )
-    from tests.infra.unit.test_infra_workspace_cli import (
-        test_workspace_cli_migrate_command,
-        test_workspace_cli_migrate_output_contains_summary,
-    )
-    from tests.infra.unit.test_infra_workspace_detector import (
-        TestDetectorBasicDetection,
-        TestDetectorGitRunScenarios,
-        TestDetectorRepoNameExtraction,
-        detector,
-    )
-    from tests.infra.unit.test_infra_workspace_init import TestFlextInfraWorkspace
-    from tests.infra.unit.test_infra_workspace_main import (
-        TestMainCli,
-        TestRunDetect,
-        TestRunMigrate,
-        TestRunOrchestrate,
-        TestRunSync,
-    )
-    from tests.infra.unit.test_infra_workspace_migrator import (
-        test_migrator_apply_updates_project_files,
-        test_migrator_discovery_failure,
-        test_migrator_dry_run_reports_changes_without_writes,
-        test_migrator_execute_returns_failure,
-        test_migrator_handles_missing_pyproject_gracefully,
-        test_migrator_no_changes_needed,
-        test_migrator_preserves_custom_makefile_content,
-        test_migrator_workspace_root_not_exists,
-        test_migrator_workspace_root_project_detection,
-    )
-    from tests.infra.unit.test_infra_workspace_migrator_deps import (
-        test_migrate_makefile_not_found_non_dry_run,
-        test_migrate_pyproject_flext_core_non_dry_run,
-        test_migrator_has_flext_core_dependency_in_poetry,
-        test_migrator_has_flext_core_dependency_poetry_deps_not_table,
-        test_migrator_has_flext_core_dependency_poetry_table_missing,
-        test_workspace_migrator_error_handling_on_invalid_workspace,
-        test_workspace_migrator_makefile_not_found_dry_run,
-        test_workspace_migrator_makefile_read_error,
-        test_workspace_migrator_pyproject_write_error,
-    )
-    from tests.infra.unit.test_infra_workspace_migrator_dryrun import (
-        test_migrator_flext_core_dry_run,
-        test_migrator_flext_core_project_skipped,
-        test_migrator_gitignore_already_normalized_dry_run,
-        test_migrator_makefile_not_found_dry_run,
-        test_migrator_makefile_read_failure,
-        test_migrator_pyproject_not_found_dry_run,
-    )
-    from tests.infra.unit.test_infra_workspace_migrator_errors import (
-        TestMigratorReadFailures,
-        TestMigratorWriteFailures,
-    )
-    from tests.infra.unit.test_infra_workspace_migrator_internal import (
-        TestMigratorEdgeCases,
-        TestMigratorInternalMakefile,
-        TestMigratorInternalPyproject,
-    )
-    from tests.infra.unit.test_infra_workspace_migrator_pyproject import (
-        TestMigratorDryRun,
-        TestMigratorFlextCore,
-        TestMigratorPoetryDeps,
-    )
-    from tests.infra.unit.test_infra_workspace_orchestrator import (
-        TestOrchestratorBasic,
-        TestOrchestratorFailures,
-        orchestrator,
-    )
-    from tests.infra.unit.test_infra_workspace_sync import (
-        SetupFn,
-        svc,
-        test_atomic_write_fail,
-        test_atomic_write_ok,
-        test_cli_result_by_project_root,
-        test_gitignore_entry_scenarios,
-        test_gitignore_sync_failure,
-        test_gitignore_write_failure,
-        test_sync_basemk_scenarios,
-        test_sync_error_scenarios,
-        test_sync_root_validation,
-        test_sync_success_scenarios,
-    )
-    from tests.infra.utilities import FlextInfraTestUtilities
-    from tests.infra.workspace_factory import WorkspaceFactory
-    from tests.infra.workspace_scenarios import (
-        BrokenScenario,
-        EmptyScenario,
-        FullScenario,
-        MinimalScenario,
     )
     from tests.integration import patterns
     from tests.integration.patterns.test_advanced_patterns import TestFunction
@@ -1238,7 +221,7 @@ if TYPE_CHECKING:
         fixture_factory,
         test_data_factory,
     )
-    from tests.typings import T, T_co, T_contra, TestsFlextTypes
+    from tests.typings import T, T_co, T_contra, TestsFlextTypes, t
     from tests.unit import contracts, flext_tests
     from tests.unit.conftest_infra import (
         infra_git,
@@ -1294,6 +277,7 @@ if TYPE_CHECKING:
     from tests.unit.flext_tests.test_utilities import (
         TestFlextTestsUtilitiesFactory,
         TestFlextTestsUtilitiesResult,
+        TestFlextTestsUtilitiesResult as r,
         TestFlextTestsUtilitiesResultCompat,
         TestFlextTestsUtilitiesTestContext,
     )
@@ -1310,7 +294,10 @@ if TYPE_CHECKING:
         TestAutomatedExceptions,
         TestAutomatedExceptions as e,
     )
-    from tests.unit.test_automated_handlers import TestAutomatedFlextHandlers
+    from tests.unit.test_automated_handlers import (
+        TestAutomatedFlextHandlers,
+        TestAutomatedFlextHandlers as h,
+    )
     from tests.unit.test_automated_loggings import TestAutomatedFlextLogger
     from tests.unit.test_automated_mixins import (
         TestAutomatedFlextMixins,
@@ -1398,6 +385,7 @@ if TYPE_CHECKING:
         TestHierarchicalExceptionSystem,
     )
     from tests.unit.test_coverage_loggings import (
+        TestEdgeCases,
         TestExceptionLogging,
         TestFactoryPatterns,
         TestGlobalContextManagement,
@@ -2169,14 +1157,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "BadSingletonForTest",
     ),
     "BadString": ("tests.unit.test_utilities_mapper_full_coverage", "BadString"),
-    "BrokenScenario": ("tests.infra.workspace_scenarios", "BrokenScenario"),
     "CacheScenarios": (
         "tests.unit.test_utilities_cache_coverage_100",
         "CacheScenarios",
-    ),
-    "CheckProjectStub": (
-        "tests.infra.unit.check.extended_run_projects",
-        "CheckProjectStub",
     ),
     "CoerceListValidatorScenario": (
         "tests.unit.test_collection_utilities_coverage_100",
@@ -2217,18 +1200,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_configuration_coverage_100",
         "DataclassConfigForTest",
     ),
-    "DependencyScenario": ("tests.infra.scenarios", "DependencyScenario"),
-    "DependencyScenarios": ("tests.infra.scenarios", "DependencyScenarios"),
     "DictHandler": (
         "tests.unit.test_utilities_type_checker_coverage_100",
         "DictHandler",
     ),
     "EchoHandler": ("tests.unit.test_dispatcher_minimal", "EchoHandler"),
-    "EmptyScenario": ("tests.infra.workspace_scenarios", "EmptyScenario"),
-    "EngineSafetyStub": (
-        "tests.infra.unit.refactor.test_infra_refactor_safety",
-        "EngineSafetyStub",
-    ),
     "EnumScenarios": ("tests.unit.test_enum_utilities_coverage_100", "EnumScenarios"),
     "EventHandler": ("tests.unit.test_dispatcher_full_coverage", "EventHandler"),
     "EventSubscriber": ("tests.unit.test_dispatcher_minimal", "EventSubscriber"),
@@ -2291,12 +1267,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextCommandType",
     ),
     "FlextCoreTestsUtilities": ("tests.utilities", "FlextCoreTestsUtilities"),
-    "FlextInfraTestConstants": ("tests.infra.constants", "FlextInfraTestConstants"),
-    "FlextInfraTestHelpers": ("tests.infra.helpers", "FlextInfraTestHelpers"),
-    "FlextInfraTestModels": ("tests.infra.models", "FlextInfraTestModels"),
-    "FlextInfraTestProtocols": ("tests.infra.protocols", "FlextInfraTestProtocols"),
-    "FlextInfraTestTypes": ("tests.infra.typings", "FlextInfraTestTypes"),
-    "FlextInfraTestUtilities": ("tests.infra.utilities", "FlextInfraTestUtilities"),
     "FlextLdapConstants": (
         "tests.integration.test_refactor_policy_mro",
         "FlextLdapConstants",
@@ -2320,7 +1290,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextTestResult": ("tests.test_utils", "FlextTestResult"),
     "FlextTestResultCo": ("tests.test_utils", "FlextTestResultCo"),
-    "FullScenario": ("tests.infra.workspace_scenarios", "FullScenario"),
     "FunctionalExternalService": ("tests.conftest", "FunctionalExternalService"),
     "GenericHandler": (
         "tests.unit.test_utilities_type_checker_coverage_100",
@@ -2334,8 +1303,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "GetUserServiceAutoFactory",
     ),
     "GetUserServiceFactory": ("tests.helpers.factories", "GetUserServiceFactory"),
-    "GitScenario": ("tests.infra.scenarios", "GitScenario"),
-    "GitScenarios": ("tests.infra.scenarios", "GitScenarios"),
     "GivenWhenThenBuilder": (
         "tests.integration.patterns.test_patterns_testing",
         "GivenWhenThenBuilder",
@@ -2350,9 +1317,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "IsSubsetScenario",
     ),
     "LifecycleService": ("tests.integration.test_service", "LifecycleService"),
-    "MinimalScenario": ("tests.infra.workspace_scenarios", "MinimalScenario"),
     "MissingType": ("tests.unit.test_utilities_checker_full_coverage", "MissingType"),
-    "MockScanner": ("tests.infra.unit._utilities.test_scanning", "MockScanner"),
     "MockScenario": (
         "tests.integration.patterns.test_patterns_testing",
         "MockScenario",
@@ -2416,12 +1381,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Priority": ("tests.unit.test_utilities_enum_full_coverage", "Priority"),
     "QueryHandler": ("tests.unit.test_dispatcher_full_coverage", "QueryHandler"),
     "RailwayTestCase": ("tests.test_documented_patterns", "RailwayTestCase"),
-    "RealGitService": ("tests.infra.git_service", "RealGitService"),
-    "RealSubprocessRunner": ("tests.infra.runner_service", "RealSubprocessRunner"),
     "ReliabilityScenario": ("tests.helpers.scenarios", "ReliabilityScenario"),
     "ReliabilityScenarios": ("tests.helpers.scenarios", "ReliabilityScenarios"),
-    "RunCallable": ("tests.infra.unit.check.extended_runners_ruff", "RunCallable"),
-    "RunStub": ("tests.infra.unit.check.extended_error_reporting", "RunStub"),
     "RuntimeCloneService": (
         "tests.unit.test_service_additional",
         "RuntimeCloneService",
@@ -2436,7 +1397,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ServiceTestCase": ("tests.test_documented_patterns", "ServiceTestCase"),
     "ServiceTestCaseFactory": ("tests.helpers.factories", "ServiceTestCaseFactory"),
     "ServiceTestCases": ("tests.helpers.factories", "ServiceTestCases"),
-    "SetupFn": ("tests.infra.unit.test_infra_workspace_sync", "SetupFn"),
     "SimpleObj": ("tests.unit.test_utilities_mapper_coverage_100", "SimpleObj"),
     "SingletonWithoutGetGlobalForTest": (
         "tests.unit.test_utilities_configuration_coverage_100",
@@ -2459,8 +1419,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_string_parser",
         "StringParserTestFactory",
     ),
-    "SubprocessScenario": ("tests.infra.scenarios", "SubprocessScenario"),
-    "SubprocessScenarios": ("tests.infra.scenarios", "SubprocessScenarios"),
     "SuiteBuilder": (
         "tests.integration.patterns.test_patterns_testing",
         "SuiteBuilder",
@@ -2469,16 +1427,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TMessage": ("tests.unit.test_utilities_type_checker_coverage_100", "TMessage"),
     "T_co": ("tests.typings", "T_co"),
     "T_contra": ("tests.typings", "T_contra"),
-    "TestAdrHelpers": ("tests.infra.unit.docs.validator_internals", "TestAdrHelpers"),
     "TestAdvancedPatterns": (
         "tests.integration.patterns.test_patterns_testing",
         "TestAdvancedPatterns",
     ),
     "TestAggregateRoots": ("tests.unit.test_coverage_models", "TestAggregateRoots"),
-    "TestAllDirectoriesScanned": (
-        "tests.infra.unit.codegen.lazy_init_tests",
-        "TestAllDirectoriesScanned",
-    ),
     "TestAllPatternsIntegration": (
         "tests.test_documented_patterns",
         "TestAllPatternsIntegration",
@@ -2488,26 +1441,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestAltPropagatesException",
     ),
     "TestAssertExists": ("tests.unit.flext_tests.test_files", "TestAssertExists"),
-    "TestAuditorBrokenLinks": (
-        "tests.infra.unit.docs.auditor_links",
-        "TestAuditorBrokenLinks",
-    ),
-    "TestAuditorCore": ("tests.infra.unit.docs.auditor", "TestAuditorCore"),
-    "TestAuditorForbiddenTerms": (
-        "tests.infra.unit.docs.auditor_scope",
-        "TestAuditorForbiddenTerms",
-    ),
-    "TestAuditorMainCli": ("tests.infra.unit.docs.auditor_cli", "TestAuditorMainCli"),
-    "TestAuditorNormalize": ("tests.infra.unit.docs.auditor", "TestAuditorNormalize"),
-    "TestAuditorScope": ("tests.infra.unit.docs.auditor_scope", "TestAuditorScope"),
-    "TestAuditorScopeFailure": (
-        "tests.infra.unit.docs.auditor_cli",
-        "TestAuditorScopeFailure",
-    ),
-    "TestAuditorToMarkdown": (
-        "tests.infra.unit.docs.auditor_links",
-        "TestAuditorToMarkdown",
-    ),
     "TestAutomatedArchitecture": (
         "tests.unit.test_automated_architecture",
         "TestAutomatedArchitecture",
@@ -2577,68 +1510,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_infra_integration",
         "TestBaseMkGenerationFlow",
     ),
-    "TestBaseMkValidatorCore": (
-        "tests.infra.unit.core.basemk_validator",
-        "TestBaseMkValidatorCore",
-    ),
-    "TestBaseMkValidatorEdgeCases": (
-        "tests.infra.unit.core.basemk_validator",
-        "TestBaseMkValidatorEdgeCases",
-    ),
-    "TestBaseMkValidatorSha256": (
-        "tests.infra.unit.core.basemk_validator",
-        "TestBaseMkValidatorSha256",
-    ),
     "TestBatchOperations": ("tests.unit.flext_tests.test_files", "TestBatchOperations"),
-    "TestBuildProjectReport": (
-        "tests.infra.unit.deps.test_detection_classify",
-        "TestBuildProjectReport",
-    ),
-    "TestBuildScopes": ("tests.infra.unit.docs.shared", "TestBuildScopes"),
-    "TestBuildSiblingExportIndex": (
-        "tests.infra.unit.codegen.lazy_init_helpers",
-        "TestBuildSiblingExportIndex",
-    ),
-    "TestBuildTargets": (
-        "tests.infra.unit.release.orchestrator_helpers",
-        "TestBuildTargets",
-    ),
-    "TestBuilderCore": ("tests.infra.unit.docs.builder", "TestBuilderCore"),
-    "TestBuilderScope": ("tests.infra.unit.docs.builder_scope", "TestBuilderScope"),
-    "TestBumpNextDev": (
-        "tests.infra.unit.release.orchestrator_helpers",
-        "TestBumpNextDev",
-    ),
-    "TestCensusReportModel": (
-        "tests.infra.unit.codegen.census_models",
-        "TestCensusReportModel",
-    ),
-    "TestCensusViolationModel": (
-        "tests.infra.unit.codegen.census_models",
-        "TestCensusViolationModel",
-    ),
-    "TestCheckIssueFormatted": (
-        "tests.infra.unit.check.extended_models",
-        "TestCheckIssueFormatted",
-    ),
-    "TestCheckMainEntryPoint": (
-        "tests.infra.unit.check.extended_cli_entry",
-        "TestCheckMainEntryPoint",
-    ),
-    "TestCheckOnlyMode": (
-        "tests.infra.unit.codegen.lazy_init_tests",
-        "TestCheckOnlyMode",
-    ),
-    "TestCheckProjectRunners": (
-        "tests.infra.unit.check.extended_projects",
-        "TestCheckProjectRunners",
-    ),
-    "TestCheckpoint": ("tests.infra.unit.github.pr_workspace", "TestCheckpoint"),
-    "TestChecks": ("tests.infra.unit.github.pr_operations", "TestChecks"),
-    "TestClassifyIssues": (
-        "tests.infra.unit.deps.test_detection_classify",
-        "TestClassifyIssues",
-    ),
     "TestCleanText": ("tests.unit.test_utilities_text_full_coverage", "TestCleanText"),
     "TestCloneContainer": (
         "tests.unit.test_utilities_context_full_coverage",
@@ -2647,23 +1519,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestCloneRuntime": (
         "tests.unit.test_utilities_context_full_coverage",
         "TestCloneRuntime",
-    ),
-    "TestClose": ("tests.infra.unit.github.pr_operations", "TestClose"),
-    "TestCollectChanges": (
-        "tests.infra.unit.release.orchestrator_git",
-        "TestCollectChanges",
-    ),
-    "TestCollectInternalDeps": (
-        "tests.infra.unit.deps.test_internal_sync_discovery",
-        "TestCollectInternalDeps",
-    ),
-    "TestCollectInternalDepsEdgeCases": (
-        "tests.infra.unit.deps.test_internal_sync_discovery_edge",
-        "TestCollectInternalDepsEdgeCases",
-    ),
-    "TestCollectMarkdownFiles": (
-        "tests.infra.unit.check.extended_runners_ruff",
-        "TestCollectMarkdownFiles",
     ),
     "TestCommands": ("tests.unit.test_coverage_models", "TestCommands"),
     "TestCompleteFlextSystemIntegration": (
@@ -2679,50 +1534,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_configuration_coverage_100",
         "TestConfigConstants",
     ),
-    "TestConfigFixerEnsureProjectExcludes": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerEnsureProjectExcludes",
-    ),
-    "TestConfigFixerExecute": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerExecute",
-    ),
-    "TestConfigFixerFindPyprojectFiles": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerFindPyprojectFiles",
-    ),
-    "TestConfigFixerFixSearchPaths": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerFixSearchPaths",
-    ),
-    "TestConfigFixerPathResolution": (
-        "tests.infra.unit.check.extended_config_fixer_errors",
-        "TestConfigFixerPathResolution",
-    ),
-    "TestConfigFixerProcessFile": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerProcessFile",
-    ),
-    "TestConfigFixerRemoveIgnoreSubConfig": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerRemoveIgnoreSubConfig",
-    ),
-    "TestConfigFixerRun": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerRun",
-    ),
-    "TestConfigFixerRunMethods": (
-        "tests.infra.unit.check.extended_config_fixer_errors",
-        "TestConfigFixerRunMethods",
-    ),
-    "TestConfigFixerRunWithVerbose": (
-        "tests.infra.unit.check.extended_config_fixer_errors",
-        "TestConfigFixerRunWithVerbose",
-    ),
-    "TestConfigFixerToArray": (
-        "tests.infra.unit.check.extended_config_fixer",
-        "TestConfigFixerToArray",
-    ),
     "TestConfigMapDictOps": (
         "tests.unit.test_typings_full_coverage",
         "TestConfigMapDictOps",
@@ -2734,22 +1545,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestConfigServiceViaDI": (
         "tests.unit.test_di_services_access",
         "TestConfigServiceViaDI",
-    ),
-    "TestConsolidateGroupsPhase": (
-        "tests.infra.unit.deps.test_modernizer_consolidate",
-        "TestConsolidateGroupsPhase",
-    ),
-    "TestConstants": (
-        "tests.infra.unit.deps.test_extra_paths_manager",
-        "TestConstants",
-    ),
-    "TestConstantsQualityGateCLIDispatch": (
-        "tests.infra.unit.codegen.constants_quality_gate",
-        "TestConstantsQualityGateCLIDispatch",
-    ),
-    "TestConstantsQualityGateVerdict": (
-        "tests.infra.unit.codegen.constants_quality_gate",
-        "TestConstantsQualityGateVerdict",
     ),
     "TestContainerDIRealExecution": (
         "tests.unit.test_di_incremental",
@@ -2784,7 +1579,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_di_services_access",
         "TestContextServiceViaDI",
     ),
-    "TestCoreModuleInit": ("tests.infra.unit.core.init", "TestCoreModuleInit"),
     "TestCorrelationDomain": (
         "tests.unit.test_coverage_context",
         "TestCorrelationDomain",
@@ -2792,11 +1586,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestCoveragePush75Percent": (
         "tests.unit.test_final_75_percent_push",
         "TestCoveragePush75Percent",
-    ),
-    "TestCreate": ("tests.infra.unit.github.pr", "TestCreate"),
-    "TestCreateBranches": (
-        "tests.infra.unit.release.orchestrator_git",
-        "TestCreateBranches",
     ),
     "TestCreateDatetimeProxy": (
         "tests.unit.test_utilities_context_full_coverage",
@@ -2815,7 +1604,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_context_full_coverage",
         "TestCreateStrProxy",
     ),
-    "TestCreateTag": ("tests.infra.unit.release.orchestrator_git", "TestCreateTag"),
     "TestCriticalReturnsResultBool": (
         "tests.unit.test_loggings_strict_returns",
         "TestCriticalReturnsResultBool",
@@ -2838,58 +1626,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_di_incremental",
         "TestDependencyIntegrationRealExecution",
     ),
-    "TestDetectMode": ("tests.infra.unit.deps.test_path_sync_init", "TestDetectMode"),
-    "TestDetectionUncoveredLines": (
-        "tests.infra.unit.deps.test_detection_uncovered",
-        "TestDetectionUncoveredLines",
-    ),
-    "TestDetectorBasicDetection": (
-        "tests.infra.unit.test_infra_workspace_detector",
-        "TestDetectorBasicDetection",
-    ),
-    "TestDetectorGitRunScenarios": (
-        "tests.infra.unit.test_infra_workspace_detector",
-        "TestDetectorGitRunScenarios",
-    ),
-    "TestDetectorRepoNameExtraction": (
-        "tests.infra.unit.test_infra_workspace_detector",
-        "TestDetectorRepoNameExtraction",
-    ),
-    "TestDetectorReportFlags": (
-        "tests.infra.unit.deps.test_detector_report_flags",
-        "TestDetectorReportFlags",
-    ),
-    "TestDetectorRunFailures": (
-        "tests.infra.unit.deps.test_detector_detect_failures",
-        "TestDetectorRunFailures",
-    ),
     "TestDictMixinOperations": (
         "tests.unit.test_typings_full_coverage",
         "TestDictMixinOperations",
-    ),
-    "TestDiscoverProjects": (
-        "tests.infra.unit.test_infra_maintenance_python_version",
-        "TestDiscoverProjects",
-    ),
-    "TestDiscoveryDiscoverProjects": (
-        "tests.infra.unit._utilities.test_discovery_consolidated",
-        "TestDiscoveryDiscoverProjects",
-    ),
-    "TestDiscoveryFindAllPyprojectFiles": (
-        "tests.infra.unit._utilities.test_discovery_consolidated",
-        "TestDiscoveryFindAllPyprojectFiles",
-    ),
-    "TestDiscoveryIterPythonFiles": (
-        "tests.infra.unit._utilities.test_discovery_consolidated",
-        "TestDiscoveryIterPythonFiles",
-    ),
-    "TestDiscoveryProjectRoots": (
-        "tests.infra.unit._utilities.test_discovery_consolidated",
-        "TestDiscoveryProjectRoots",
-    ),
-    "TestDispatchPhase": (
-        "tests.infra.unit.release.orchestrator_helpers",
-        "TestDispatchPhase",
     ),
     "TestDispatcherDI": ("tests.unit.test_dispatcher_di", "TestDispatcherDI"),
     "TestDomainEvents": ("tests.unit.test_coverage_models", "TestDomainEvents"),
@@ -2901,43 +1640,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_domain_full_coverage",
         "TestDomainLogger",
     ),
-    "TestEdgeCases": ("tests.infra.unit.codegen.lazy_init_tests", "TestEdgeCases"),
-    "TestEnforcerExecute": (
-        "tests.infra.unit.test_infra_maintenance_python_version",
-        "TestEnforcerExecute",
-    ),
-    "TestEnsureCheckout": (
-        "tests.infra.unit.deps.test_internal_sync_update",
-        "TestEnsureCheckout",
-    ),
-    "TestEnsureCheckoutEdgeCases": (
-        "tests.infra.unit.deps.test_internal_sync_update_checkout_edge",
-        "TestEnsureCheckoutEdgeCases",
-    ),
-    "TestEnsurePyreflyConfigPhase": (
-        "tests.infra.unit.deps.test_modernizer_pyrefly",
-        "TestEnsurePyreflyConfigPhase",
-    ),
-    "TestEnsurePyrightConfigPhase": (
-        "tests.infra.unit.deps.test_modernizer_pyright",
-        "TestEnsurePyrightConfigPhase",
-    ),
-    "TestEnsurePytestConfigPhase": (
-        "tests.infra.unit.deps.test_modernizer_pytest",
-        "TestEnsurePytestConfigPhase",
-    ),
-    "TestEnsurePythonVersionFile": (
-        "tests.infra.unit.test_infra_maintenance_python_version",
-        "TestEnsurePythonVersionFile",
-    ),
-    "TestEnsureSymlink": (
-        "tests.infra.unit.deps.test_internal_sync_update",
-        "TestEnsureSymlink",
-    ),
-    "TestEnsureSymlinkEdgeCases": (
-        "tests.infra.unit.deps.test_internal_sync_update",
-        "TestEnsureSymlinkEdgeCases",
-    ),
+    "TestEdgeCases": ("tests.unit.test_coverage_loggings", "TestEdgeCases"),
     "TestEnterprisePatterns": (
         "tests.integration.patterns.test_architectural_patterns",
         "TestEnterprisePatterns",
@@ -2950,10 +1653,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestErrorOrPatternUnchanged": (
         "tests.unit.test_result_exception_carrying",
         "TestErrorOrPatternUnchanged",
-    ),
-    "TestErrorReporting": (
-        "tests.infra.unit.check.extended_error_reporting",
-        "TestErrorReporting",
     ),
     "TestErrorReturnsResultBool": (
         "tests.unit.test_loggings_strict_returns",
@@ -3003,26 +1702,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_coverage_exceptions",
         "TestExceptionSerialization",
     ),
-    "TestExcludedDirectories": (
-        "tests.infra.unit.codegen.lazy_init_tests",
-        "TestExcludedDirectories",
-    ),
-    "TestExcludedProjects": (
-        "tests.infra.unit.codegen.census_models",
-        "TestExcludedProjects",
-    ),
-    "TestExtractExports": (
-        "tests.infra.unit.codegen.lazy_init_helpers",
-        "TestExtractExports",
-    ),
-    "TestExtractInlineConstants": (
-        "tests.infra.unit.codegen.lazy_init_transforms",
-        "TestExtractInlineConstants",
-    ),
-    "TestExtractVersionExports": (
-        "tests.infra.unit.codegen.lazy_init_transforms",
-        "TestExtractVersionExports",
-    ),
     "TestFacadeDeprecatedAliases": (
         "tests.unit.test_deprecation_warnings",
         "TestFacadeDeprecatedAliases",
@@ -3054,25 +1733,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.flext_tests.test_files",
         "TestFileInfoFromModels",
     ),
-    "TestFixPyrelfyCLI": (
-        "tests.infra.unit.check.extended_cli_entry",
-        "TestFixPyrelfyCLI",
-    ),
-    "TestFixabilityClassification": (
-        "tests.infra.unit.codegen.census",
-        "TestFixabilityClassification",
-    ),
-    "TestFixerCore": ("tests.infra.unit.docs.fixer", "TestFixerCore"),
-    "TestFixerMaybeFixLink": (
-        "tests.infra.unit.docs.fixer_internals",
-        "TestFixerMaybeFixLink",
-    ),
-    "TestFixerProcessFile": (
-        "tests.infra.unit.docs.fixer_internals",
-        "TestFixerProcessFile",
-    ),
-    "TestFixerScope": ("tests.infra.unit.docs.fixer_internals", "TestFixerScope"),
-    "TestFixerToc": ("tests.infra.unit.docs.fixer_internals", "TestFixerToc"),
     "TestFixtureFactory": ("tests.test_utils", "TestFixtureFactory"),
     "TestFlatMapPropagatesException": (
         "tests.unit.test_result_exception_carrying",
@@ -3102,237 +1762,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestFlextExceptionsHierarchy",
     ),
     "TestFlextHandlers": ("tests.unit.test_handlers", "TestFlextHandlers"),
-    "TestFlextInfraBaseMk": ("tests.infra.unit.basemk.init", "TestFlextInfraBaseMk"),
-    "TestFlextInfraCheck": ("tests.infra.unit.check.init", "TestFlextInfraCheck"),
-    "TestFlextInfraCodegenLazyInit": (
-        "tests.infra.unit.codegen.lazy_init_service",
-        "TestFlextInfraCodegenLazyInit",
-    ),
-    "TestFlextInfraCommandRunnerExtra": (
-        "tests.infra.unit.test_infra_subprocess_extra",
-        "TestFlextInfraCommandRunnerExtra",
-    ),
-    "TestFlextInfraConfigFixer": (
-        "tests.infra.unit.check.pyrefly",
-        "TestFlextInfraConfigFixer",
-    ),
-    "TestFlextInfraConstantsAlias": (
-        "tests.infra.unit.test_infra_constants_extra",
-        "TestFlextInfraConstantsAlias",
-    ),
-    "TestFlextInfraConstantsCheckNamespace": (
-        "tests.infra.unit.test_infra_constants_extra",
-        "TestFlextInfraConstantsCheckNamespace",
-    ),
-    "TestFlextInfraConstantsConsistency": (
-        "tests.infra.unit.test_infra_constants_extra",
-        "TestFlextInfraConstantsConsistency",
-    ),
-    "TestFlextInfraConstantsEncodingNamespace": (
-        "tests.infra.unit.test_infra_constants_extra",
-        "TestFlextInfraConstantsEncodingNamespace",
-    ),
-    "TestFlextInfraConstantsExcludedNamespace": (
-        "tests.infra.unit.test_infra_constants_core",
-        "TestFlextInfraConstantsExcludedNamespace",
-    ),
-    "TestFlextInfraConstantsFilesNamespace": (
-        "tests.infra.unit.test_infra_constants_core",
-        "TestFlextInfraConstantsFilesNamespace",
-    ),
-    "TestFlextInfraConstantsGatesNamespace": (
-        "tests.infra.unit.test_infra_constants_core",
-        "TestFlextInfraConstantsGatesNamespace",
-    ),
-    "TestFlextInfraConstantsGithubNamespace": (
-        "tests.infra.unit.test_infra_constants_extra",
-        "TestFlextInfraConstantsGithubNamespace",
-    ),
-    "TestFlextInfraConstantsImmutability": (
-        "tests.infra.unit.test_infra_constants_extra",
-        "TestFlextInfraConstantsImmutability",
-    ),
-    "TestFlextInfraConstantsPathsNamespace": (
-        "tests.infra.unit.test_infra_constants_core",
-        "TestFlextInfraConstantsPathsNamespace",
-    ),
-    "TestFlextInfraConstantsStatusNamespace": (
-        "tests.infra.unit.test_infra_constants_core",
-        "TestFlextInfraConstantsStatusNamespace",
-    ),
-    "TestFlextInfraDependencyDetectionModels": (
-        "tests.infra.unit.deps.test_detection_models",
-        "TestFlextInfraDependencyDetectionModels",
-    ),
-    "TestFlextInfraDependencyDetectionService": (
-        "tests.infra.unit.deps.test_detection_models",
-        "TestFlextInfraDependencyDetectionService",
-    ),
-    "TestFlextInfraDependencyDetectorModels": (
-        "tests.infra.unit.deps.test_detector_models",
-        "TestFlextInfraDependencyDetectorModels",
-    ),
-    "TestFlextInfraDependencyPathSync": (
-        "tests.infra.unit.deps.test_path_sync_init",
-        "TestFlextInfraDependencyPathSync",
-    ),
-    "TestFlextInfraDeps": ("tests.infra.unit.deps.test_init", "TestFlextInfraDeps"),
-    "TestFlextInfraDiscoveryService": (
-        "tests.infra.unit.discovery.test_infra_discovery",
-        "TestFlextInfraDiscoveryService",
-    ),
-    "TestFlextInfraDiscoveryServiceUncoveredLines": (
-        "tests.infra.unit.discovery.test_infra_discovery_edge_cases",
-        "TestFlextInfraDiscoveryServiceUncoveredLines",
-    ),
-    "TestFlextInfraDocScope": (
-        "tests.infra.unit.docs.shared",
-        "TestFlextInfraDocScope",
-    ),
-    "TestFlextInfraDocs": ("tests.infra.unit.docs.init", "TestFlextInfraDocs"),
-    "TestFlextInfraExtraPathsManager": (
-        "tests.infra.unit.deps.test_extra_paths_manager",
-        "TestFlextInfraExtraPathsManager",
-    ),
-    "TestFlextInfraGitService": (
-        "tests.infra.unit.test_infra_git",
-        "TestFlextInfraGitService",
-    ),
-    "TestFlextInfraInitLazyLoading": (
-        "tests.infra.unit.test_infra_init_lazy_core",
-        "TestFlextInfraInitLazyLoading",
-    ),
-    "TestFlextInfraInternalDependencySyncService": (
-        "tests.infra.unit.deps.test_internal_sync_validation",
-        "TestFlextInfraInternalDependencySyncService",
-    ),
-    "TestFlextInfraJsonService": (
-        "tests.infra.unit.io.test_infra_json_io",
-        "TestFlextInfraJsonService",
-    ),
-    "TestFlextInfraMaintenance": (
-        "tests.infra.unit.test_infra_maintenance_init",
-        "TestFlextInfraMaintenance",
-    ),
     "TestFlextInfraNamespaceValidator": (
         "tests.unit.test_namespace_validator",
         "TestFlextInfraNamespaceValidator",
-    ),
-    "TestFlextInfraPathResolver": (
-        "tests.infra.unit.test_infra_paths",
-        "TestFlextInfraPathResolver",
-    ),
-    "TestFlextInfraPatternsEdgeCases": (
-        "tests.infra.unit.test_infra_patterns_extra",
-        "TestFlextInfraPatternsEdgeCases",
-    ),
-    "TestFlextInfraPatternsMarkdown": (
-        "tests.infra.unit.test_infra_patterns_core",
-        "TestFlextInfraPatternsMarkdown",
-    ),
-    "TestFlextInfraPatternsPatternTypes": (
-        "tests.infra.unit.test_infra_patterns_extra",
-        "TestFlextInfraPatternsPatternTypes",
-    ),
-    "TestFlextInfraPatternsTooling": (
-        "tests.infra.unit.test_infra_patterns_core",
-        "TestFlextInfraPatternsTooling",
-    ),
-    "TestFlextInfraPrManager": (
-        "tests.infra.unit.github.pr",
-        "TestFlextInfraPrManager",
-    ),
-    "TestFlextInfraPrWorkspaceManager": (
-        "tests.infra.unit.github.pr_workspace",
-        "TestFlextInfraPrWorkspaceManager",
-    ),
-    "TestFlextInfraProtocolsImport": (
-        "tests.infra.unit.test_infra_protocols",
-        "TestFlextInfraProtocolsImport",
-    ),
-    "TestFlextInfraPyprojectModernizer": (
-        "tests.infra.unit.deps.test_modernizer_main",
-        "TestFlextInfraPyprojectModernizer",
-    ),
-    "TestFlextInfraReportingServiceCore": (
-        "tests.infra.unit.test_infra_reporting_core",
-        "TestFlextInfraReportingServiceCore",
-    ),
-    "TestFlextInfraReportingServiceExtra": (
-        "tests.infra.unit.test_infra_reporting_extra",
-        "TestFlextInfraReportingServiceExtra",
-    ),
-    "TestFlextInfraRuntimeDevDependencyDetectorInit": (
-        "tests.infra.unit.deps.test_detector_init",
-        "TestFlextInfraRuntimeDevDependencyDetectorInit",
-    ),
-    "TestFlextInfraRuntimeDevDependencyDetectorRunDetect": (
-        "tests.infra.unit.deps.test_detector_detect",
-        "TestFlextInfraRuntimeDevDependencyDetectorRunDetect",
-    ),
-    "TestFlextInfraRuntimeDevDependencyDetectorRunReport": (
-        "tests.infra.unit.deps.test_detector_report",
-        "TestFlextInfraRuntimeDevDependencyDetectorRunReport",
-    ),
-    "TestFlextInfraRuntimeDevDependencyDetectorRunTypings": (
-        "tests.infra.unit.deps.test_detector_main",
-        "TestFlextInfraRuntimeDevDependencyDetectorRunTypings",
-    ),
-    "TestFlextInfraSubmoduleInitLazyLoading": (
-        "tests.infra.unit.test_infra_init_lazy_submodules",
-        "TestFlextInfraSubmoduleInitLazyLoading",
-    ),
-    "TestFlextInfraTomlDocument": (
-        "tests.infra.unit.test_infra_toml_io",
-        "TestFlextInfraTomlDocument",
-    ),
-    "TestFlextInfraTomlHelpers": (
-        "tests.infra.unit.test_infra_toml_io",
-        "TestFlextInfraTomlHelpers",
-    ),
-    "TestFlextInfraTomlRead": (
-        "tests.infra.unit.test_infra_toml_io",
-        "TestFlextInfraTomlRead",
-    ),
-    "TestFlextInfraTypesImport": (
-        "tests.infra.unit.test_infra_typings",
-        "TestFlextInfraTypesImport",
-    ),
-    "TestFlextInfraUtilitiesImport": (
-        "tests.infra.unit.test_infra_utilities",
-        "TestFlextInfraUtilitiesImport",
-    ),
-    "TestFlextInfraUtilitiesSelection": (
-        "tests.infra.unit.test_infra_selection",
-        "TestFlextInfraUtilitiesSelection",
-    ),
-    "TestFlextInfraVersionClass": (
-        "tests.infra.unit.test_infra_version_core",
-        "TestFlextInfraVersionClass",
-    ),
-    "TestFlextInfraVersionModuleLevel": (
-        "tests.infra.unit.test_infra_version_extra",
-        "TestFlextInfraVersionModuleLevel",
-    ),
-    "TestFlextInfraVersionPackageInfo": (
-        "tests.infra.unit.test_infra_version_extra",
-        "TestFlextInfraVersionPackageInfo",
-    ),
-    "TestFlextInfraWorkflowLinter": (
-        "tests.infra.unit.github.linter",
-        "TestFlextInfraWorkflowLinter",
-    ),
-    "TestFlextInfraWorkflowSyncer": (
-        "tests.infra.unit.github.workflows",
-        "TestFlextInfraWorkflowSyncer",
-    ),
-    "TestFlextInfraWorkspace": (
-        "tests.infra.unit.test_infra_workspace_init",
-        "TestFlextInfraWorkspace",
-    ),
-    "TestFlextInfraWorkspaceChecker": (
-        "tests.infra.unit.check.workspace",
-        "TestFlextInfraWorkspaceChecker",
     ),
     "TestFlextLogLevel": (
         "tests.integration.patterns.test_patterns_logging",
@@ -3494,10 +1926,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_text_full_coverage",
         "TestFormatAppId",
     ),
-    "TestFormattingRunRuffFix": (
-        "tests.infra.unit._utilities.test_formatting",
-        "TestFormattingRunRuffFix",
-    ),
     "TestFromValidationCarriesException": (
         "tests.unit.test_result_exception_carrying",
         "TestFromValidationCarriesException",
@@ -3506,55 +1934,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.patterns.test_advanced_patterns",
         "TestFunction",
     ),
-    "TestGenerateFile": (
-        "tests.infra.unit.codegen.lazy_init_generation",
-        "TestGenerateFile",
-    ),
-    "TestGenerateNotes": (
-        "tests.infra.unit.release.orchestrator_helpers",
-        "TestGenerateNotes",
-    ),
-    "TestGenerateTypeChecking": (
-        "tests.infra.unit.codegen.lazy_init_generation",
-        "TestGenerateTypeChecking",
-    ),
-    "TestGeneratedClassNamingConvention": (
-        "tests.infra.unit.codegen.scaffolder_naming",
-        "TestGeneratedClassNamingConvention",
-    ),
-    "TestGeneratedFilesAreValidPython": (
-        "tests.infra.unit.codegen.scaffolder_naming",
-        "TestGeneratedFilesAreValidPython",
-    ),
-    "TestGeneratorCore": ("tests.infra.unit.docs.generator", "TestGeneratorCore"),
-    "TestGeneratorHelpers": (
-        "tests.infra.unit.docs.generator_internals",
-        "TestGeneratorHelpers",
-    ),
-    "TestGeneratorScope": (
-        "tests.infra.unit.docs.generator_internals",
-        "TestGeneratorScope",
-    ),
-    "TestGetDepPaths": (
-        "tests.infra.unit.deps.test_extra_paths_manager",
-        "TestGetDepPaths",
-    ),
-    "TestGitPush": ("tests.infra.unit.test_infra_git", "TestGitPush"),
-    "TestGitTagOperations": ("tests.infra.unit.test_infra_git", "TestGitTagOperations"),
-    "TestGithubInit": ("tests.infra.unit.github.pr_init", "TestGithubInit"),
     "TestGlobalContextManagement": (
         "tests.unit.test_coverage_loggings",
         "TestGlobalContextManagement",
-    ),
-    "TestGoFmtEmptyLinesInOutput": (
-        "tests.infra.unit.check.extended_error_reporting",
-        "TestGoFmtEmptyLinesInOutput",
     ),
     "TestGuardsDeprecatedMethods": (
         "tests.unit.test_deprecation_warnings",
         "TestGuardsDeprecatedMethods",
     ),
-    "TestHandleLazyInit": ("tests.infra.unit.codegen.main", "TestHandleLazyInit"),
     "TestHandlerDecoratorMetadata": (
         "tests.unit.test_handler_decorator_discovery",
         "TestHandlerDecoratorMetadata",
@@ -3591,14 +1978,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_refactor_nesting_idempotency",
         "TestIdempotency",
     ),
-    "TestInferOwnerFromOrigin": (
-        "tests.infra.unit.deps.test_internal_sync_resolve",
-        "TestInferOwnerFromOrigin",
-    ),
-    "TestInferPackage": (
-        "tests.infra.unit.codegen.lazy_init_helpers",
-        "TestInferPackage",
-    ),
     "TestInfoReturnsResultBool": (
         "tests.unit.test_loggings_strict_returns",
         "TestInfoReturnsResultBool",
@@ -3607,50 +1986,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.flext_tests.test_files",
         "TestInfoWithContentMeta",
     ),
-    "TestInfraContainerFunctions": (
-        "tests.infra.unit.container.test_infra_container",
-        "TestInfraContainerFunctions",
-    ),
-    "TestInfraMroPattern": (
-        "tests.infra.unit.container.test_infra_container",
-        "TestInfraMroPattern",
-    ),
-    "TestInfraOutputEdgeCases": (
-        "tests.infra.unit.io.test_infra_output_edge_cases",
-        "TestInfraOutputEdgeCases",
-    ),
-    "TestInfraOutputHeader": (
-        "tests.infra.unit.io.test_infra_output_formatting",
-        "TestInfraOutputHeader",
-    ),
-    "TestInfraOutputMessages": (
-        "tests.infra.unit.io.test_infra_output_formatting",
-        "TestInfraOutputMessages",
-    ),
-    "TestInfraOutputNoColor": (
-        "tests.infra.unit.io.test_infra_output_edge_cases",
-        "TestInfraOutputNoColor",
-    ),
-    "TestInfraOutputProgress": (
-        "tests.infra.unit.io.test_infra_output_formatting",
-        "TestInfraOutputProgress",
-    ),
-    "TestInfraOutputStatus": (
-        "tests.infra.unit.io.test_infra_output_formatting",
-        "TestInfraOutputStatus",
-    ),
-    "TestInfraOutputSummary": (
-        "tests.infra.unit.io.test_infra_output_formatting",
-        "TestInfraOutputSummary",
-    ),
-    "TestInfraServiceRetrieval": (
-        "tests.infra.unit.container.test_infra_container",
-        "TestInfraServiceRetrieval",
-    ),
-    "TestInjectCommentsPhase": (
-        "tests.infra.unit.deps.test_modernizer_comments",
-        "TestInjectCommentsPhase",
-    ),
     "TestInstanceCreation": (
         "tests.unit.test_coverage_loggings",
         "TestInstanceCreation",
@@ -3658,42 +1993,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestIntegrationWithRealCommandServices": (
         "tests.integration.test_infra_integration",
         "TestIntegrationWithRealCommandServices",
-    ),
-    "TestInventoryServiceCore": (
-        "tests.infra.unit.core.inventory",
-        "TestInventoryServiceCore",
-    ),
-    "TestInventoryServiceReports": (
-        "tests.infra.unit.core.inventory",
-        "TestInventoryServiceReports",
-    ),
-    "TestInventoryServiceScripts": (
-        "tests.infra.unit.core.inventory",
-        "TestInventoryServiceScripts",
-    ),
-    "TestIsInternalPathDep": (
-        "tests.infra.unit.deps.test_internal_sync_validation",
-        "TestIsInternalPathDep",
-    ),
-    "TestIsRelativeTo": (
-        "tests.infra.unit.deps.test_internal_sync_validation",
-        "TestIsRelativeTo",
-    ),
-    "TestIsWorkspaceMode": (
-        "tests.infra.unit.deps.test_internal_sync_workspace",
-        "TestIsWorkspaceMode",
-    ),
-    "TestIterMarkdownFiles": (
-        "tests.infra.unit.docs.shared_iter",
-        "TestIterMarkdownFiles",
-    ),
-    "TestIterWorkspacePythonModules": (
-        "tests.infra.unit._utilities.test_iteration",
-        "TestIterWorkspacePythonModules",
-    ),
-    "TestJsonWriteFailure": (
-        "tests.infra.unit.check.extended_project_runners",
-        "TestJsonWriteFailure",
     ),
     "TestLashPropagatesException": (
         "tests.unit.test_result_exception_carrying",
@@ -3706,18 +2005,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestLibraryIntegration": (
         "tests.integration.test_integration",
         "TestLibraryIntegration",
-    ),
-    "TestLintAndFormatPublicMethods": (
-        "tests.infra.unit.check.extended_projects",
-        "TestLintAndFormatPublicMethods",
-    ),
-    "TestLoadAuditBudgets": (
-        "tests.infra.unit.docs.auditor_budgets",
-        "TestLoadAuditBudgets",
-    ),
-    "TestLoadDependencyLimits": (
-        "tests.infra.unit.deps.test_detection_typings",
-        "TestLoadDependencyLimits",
     ),
     "TestLogReturnsResultBool": (
         "tests.unit.test_loggings_strict_returns",
@@ -3735,60 +2022,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestLoggingsErrorPaths": (
         "tests.unit.test_loggings_error_paths_coverage",
         "TestLoggingsErrorPaths",
-    ),
-    "TestMain": ("tests.infra.unit.deps.test_path_sync_main", "TestMain"),
-    "TestMainBaseMkValidate": ("tests.infra.unit.core.main", "TestMainBaseMkValidate"),
-    "TestMainCli": ("tests.infra.unit.test_infra_workspace_main", "TestMainCli"),
-    "TestMainCliRouting": ("tests.infra.unit.core.main", "TestMainCliRouting"),
-    "TestMainCommandDispatch": (
-        "tests.infra.unit.codegen.main",
-        "TestMainCommandDispatch",
-    ),
-    "TestMainDelegation": (
-        "tests.infra.unit.deps.test_main_dispatch",
-        "TestMainDelegation",
-    ),
-    "TestMainEdgeCases": (
-        "tests.infra.unit.deps.test_path_sync_main_edges",
-        "TestMainEdgeCases",
-    ),
-    "TestMainEntryPoint": ("tests.infra.unit.codegen.main", "TestMainEntryPoint"),
-    "TestMainExceptionHandling": (
-        "tests.infra.unit.deps.test_main_dispatch",
-        "TestMainExceptionHandling",
-    ),
-    "TestMainFunction": (
-        "tests.infra.unit.deps.test_detector_main",
-        "TestMainFunction",
-    ),
-    "TestMainHelpAndErrors": (
-        "tests.infra.unit.deps.test_main",
-        "TestMainHelpAndErrors",
-    ),
-    "TestMainInventory": ("tests.infra.unit.core.main", "TestMainInventory"),
-    "TestMainModuleImport": (
-        "tests.infra.unit.deps.test_main_dispatch",
-        "TestMainModuleImport",
-    ),
-    "TestMainReturnValues": ("tests.infra.unit.deps.test_main", "TestMainReturnValues"),
-    "TestMainRouting": ("tests.infra.unit.docs.main_entry", "TestMainRouting"),
-    "TestMainScan": ("tests.infra.unit.core.main", "TestMainScan"),
-    "TestMainSubcommandDispatch": (
-        "tests.infra.unit.deps.test_main_dispatch",
-        "TestMainSubcommandDispatch",
-    ),
-    "TestMainSysArgvModification": (
-        "tests.infra.unit.deps.test_main_dispatch",
-        "TestMainSysArgvModification",
-    ),
-    "TestMainWithFlags": ("tests.infra.unit.docs.main_entry", "TestMainWithFlags"),
-    "TestMaintenanceMainEnforcer": (
-        "tests.infra.unit.test_infra_maintenance_main",
-        "TestMaintenanceMainEnforcer",
-    ),
-    "TestMaintenanceMainSuccess": (
-        "tests.infra.unit.test_infra_maintenance_main",
-        "TestMaintenanceMainSuccess",
     ),
     "TestMapPropagatesException": (
         "tests.unit.test_result_exception_carrying",
@@ -3822,27 +2055,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_data_mapper",
         "TestMapperTransformValues",
     ),
-    "TestMarkdownReportEmptyGates": (
-        "tests.infra.unit.check.extended_error_reporting",
-        "TestMarkdownReportEmptyGates",
-    ),
-    "TestMarkdownReportSkipsEmptyGates": (
-        "tests.infra.unit.check.extended_reports",
-        "TestMarkdownReportSkipsEmptyGates",
-    ),
-    "TestMarkdownReportWithErrors": (
-        "tests.infra.unit.check.extended_reports",
-        "TestMarkdownReportWithErrors",
-    ),
-    "TestMaybeWriteTodo": (
-        "tests.infra.unit.docs.validator_internals",
-        "TestMaybeWriteTodo",
-    ),
-    "TestMerge": ("tests.infra.unit.github.pr_operations", "TestMerge"),
-    "TestMergeChildExports": (
-        "tests.infra.unit.codegen.lazy_init_transforms",
-        "TestMergeChildExports",
-    ),
     "TestMetadata": ("tests.unit.test_coverage_models", "TestMetadata"),
     "TestMigrationComplexity": (
         "tests.integration.test_migration_validation",
@@ -3864,145 +2076,27 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_migration_validation",
         "TestMigrationScenario5",
     ),
-    "TestMigratorDryRun": (
-        "tests.infra.unit.test_infra_workspace_migrator_pyproject",
-        "TestMigratorDryRun",
-    ),
-    "TestMigratorEdgeCases": (
-        "tests.infra.unit.test_infra_workspace_migrator_internal",
-        "TestMigratorEdgeCases",
-    ),
-    "TestMigratorFlextCore": (
-        "tests.infra.unit.test_infra_workspace_migrator_pyproject",
-        "TestMigratorFlextCore",
-    ),
-    "TestMigratorInternalMakefile": (
-        "tests.infra.unit.test_infra_workspace_migrator_internal",
-        "TestMigratorInternalMakefile",
-    ),
-    "TestMigratorInternalPyproject": (
-        "tests.infra.unit.test_infra_workspace_migrator_internal",
-        "TestMigratorInternalPyproject",
-    ),
-    "TestMigratorPoetryDeps": (
-        "tests.infra.unit.test_infra_workspace_migrator_pyproject",
-        "TestMigratorPoetryDeps",
-    ),
-    "TestMigratorReadFailures": (
-        "tests.infra.unit.test_infra_workspace_migrator_errors",
-        "TestMigratorReadFailures",
-    ),
-    "TestMigratorWriteFailures": (
-        "tests.infra.unit.test_infra_workspace_migrator_errors",
-        "TestMigratorWriteFailures",
-    ),
     "TestModelIntegration": ("tests.unit.test_coverage_models", "TestModelIntegration"),
     "TestModelSerialization": (
         "tests.unit.test_coverage_models",
         "TestModelSerialization",
     ),
     "TestModelValidation": ("tests.unit.test_coverage_models", "TestModelValidation"),
-    "TestModernizerEdgeCases": (
-        "tests.infra.unit.deps.test_modernizer_main_extra",
-        "TestModernizerEdgeCases",
-    ),
-    "TestModernizerRunAndMain": (
-        "tests.infra.unit.deps.test_modernizer_main",
-        "TestModernizerRunAndMain",
-    ),
-    "TestModernizerUncoveredLines": (
-        "tests.infra.unit.deps.test_modernizer_main_extra",
-        "TestModernizerUncoveredLines",
-    ),
-    "TestModuleAndTypingsFlow": (
-        "tests.infra.unit.deps.test_detection_typings_flow",
-        "TestModuleAndTypingsFlow",
-    ),
-    "TestModuleLevelWrappers": (
-        "tests.infra.unit.deps.test_detection_wrappers",
-        "TestModuleLevelWrappers",
-    ),
     "TestMonadicOperationsUnchanged": (
         "tests.unit.test_result_exception_carrying",
         "TestMonadicOperationsUnchanged",
-    ),
-    "TestMroFacadeMethods": (
-        "tests.infra.unit.io.test_infra_output_edge_cases",
-        "TestMroFacadeMethods",
-    ),
-    "TestMypyEmptyLinesInOutput": (
-        "tests.infra.unit.check.extended_error_reporting",
-        "TestMypyEmptyLinesInOutput",
-    ),
-    "TestNormalizeStringList": (
-        "tests.infra.unit.core.skill_validator",
-        "TestNormalizeStringList",
     ),
     "TestOkNoneGuardStillRaises": (
         "tests.unit.test_result_exception_carrying",
         "TestOkNoneGuardStillRaises",
     ),
-    "TestOrchestrate": (
-        "tests.infra.unit.github.pr_workspace_orchestrate",
-        "TestOrchestrate",
-    ),
-    "TestOrchestratorBasic": (
-        "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorBasic",
-    ),
-    "TestOrchestratorFailures": (
-        "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorFailures",
-    ),
     "TestOutputSingletonConsistency": (
         "tests.integration.test_infra_integration",
         "TestOutputSingletonConsistency",
     ),
-    "TestOwnerFromRemoteUrl": (
-        "tests.infra.unit.deps.test_internal_sync_validation",
-        "TestOwnerFromRemoteUrl",
-    ),
-    "TestParseArgs": ("tests.infra.unit.github.pr_cli", "TestParseArgs"),
-    "TestParseGitmodules": (
-        "tests.infra.unit.deps.test_internal_sync_discovery",
-        "TestParseGitmodules",
-    ),
-    "TestParseRepoMap": (
-        "tests.infra.unit.deps.test_internal_sync_discovery",
-        "TestParseRepoMap",
-    ),
-    "TestParseViolationInvalid": (
-        "tests.infra.unit.codegen.census",
-        "TestParseViolationInvalid",
-    ),
-    "TestParseViolationValid": (
-        "tests.infra.unit.codegen.census",
-        "TestParseViolationValid",
-    ),
-    "TestParser": ("tests.infra.unit.deps.test_modernizer_workspace", "TestParser"),
-    "TestParsingModuleAst": (
-        "tests.infra.unit._utilities.test_parsing",
-        "TestParsingModuleAst",
-    ),
-    "TestParsingModuleCst": (
-        "tests.infra.unit._utilities.test_parsing",
-        "TestParsingModuleCst",
-    ),
-    "TestPathDepPathsPep621": (
-        "tests.infra.unit.deps.test_extra_paths_pep621",
-        "TestPathDepPathsPep621",
-    ),
-    "TestPathDepPathsPoetry": (
-        "tests.infra.unit.deps.test_extra_paths_pep621",
-        "TestPathDepPathsPoetry",
-    ),
     "TestPathResolverDiscoveryFlow": (
         "tests.integration.test_infra_integration",
         "TestPathResolverDiscoveryFlow",
-    ),
-    "TestPathSyncEdgeCases": (
-        "tests.infra.unit.deps.test_path_sync_init",
-        "TestPathSyncEdgeCases",
     ),
     "TestPattern1V1Explicit": (
         "tests.test_documented_patterns",
@@ -4052,38 +2146,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_phase2_coverage_final",
         "TestPhase2FinalCoveragePush",
     ),
-    "TestPhaseBuild": (
-        "tests.infra.unit.release.orchestrator_phases",
-        "TestPhaseBuild",
-    ),
-    "TestPhasePublish": (
-        "tests.infra.unit.release.orchestrator_publish",
-        "TestPhasePublish",
-    ),
-    "TestPhaseValidate": (
-        "tests.infra.unit.release.orchestrator_phases",
-        "TestPhaseValidate",
-    ),
-    "TestPhaseVersion": (
-        "tests.infra.unit.release.orchestrator_phases",
-        "TestPhaseVersion",
-    ),
-    "TestPreviousTag": ("tests.infra.unit.release.orchestrator_git", "TestPreviousTag"),
-    "TestProcessDirectory": (
-        "tests.infra.unit.codegen.lazy_init_process",
-        "TestProcessDirectory",
-    ),
-    "TestProcessFileReadError": (
-        "tests.infra.unit.check.extended_config_fixer_errors",
-        "TestProcessFileReadError",
-    ),
     "TestProjectLevelRefactor": (
         "tests.integration.test_refactor_nesting_project",
         "TestProjectLevelRefactor",
-    ),
-    "TestProjectResultProperties": (
-        "tests.infra.unit.check.extended_models",
-        "TestProjectResultProperties",
     ),
     "TestPropertyBasedPatterns": (
         "tests.integration.patterns.test_patterns_testing",
@@ -4093,29 +2158,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_loggings_strict_returns",
         "TestProtocolComplianceStructlogLogger",
     ),
-    "TestPushRelease": ("tests.infra.unit.release.orchestrator_git", "TestPushRelease"),
-    "TestPytestDiagExtractorCore": (
-        "tests.infra.unit.core.pytest_diag",
-        "TestPytestDiagExtractorCore",
-    ),
-    "TestPytestDiagLogParsing": (
-        "tests.infra.unit.core.pytest_diag",
-        "TestPytestDiagLogParsing",
-    ),
-    "TestPytestDiagParseXml": (
-        "tests.infra.unit.core.pytest_diag",
-        "TestPytestDiagParseXml",
-    ),
     "TestQueries": ("tests.unit.test_coverage_models", "TestQueries"),
-    "TestReadDoc": ("tests.infra.unit.deps.test_modernizer_workspace", "TestReadDoc"),
-    "TestReadExistingDocstring": (
-        "tests.infra.unit.codegen.lazy_init_helpers",
-        "TestReadExistingDocstring",
-    ),
-    "TestReadRequiredMinor": (
-        "tests.infra.unit.test_infra_maintenance_python_version",
-        "TestReadRequiredMinor",
-    ),
     "TestRealWiringScenarios": (
         "tests.unit.test_di_incremental",
         "TestRealWiringScenarios",
@@ -4124,139 +2167,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.patterns.test_patterns_testing",
         "TestRealWorldScenarios",
     ),
-    "TestReleaseInit": ("tests.infra.unit.release.release_init", "TestReleaseInit"),
-    "TestReleaseMainFlow": ("tests.infra.unit.release.flow", "TestReleaseMainFlow"),
-    "TestReleaseMainParsing": (
-        "tests.infra.unit.release.main",
-        "TestReleaseMainParsing",
-    ),
-    "TestReleaseMainTagResolution": (
-        "tests.infra.unit.release.version_resolution",
-        "TestReleaseMainTagResolution",
-    ),
-    "TestReleaseMainVersionResolution": (
-        "tests.infra.unit.release.version_resolution",
-        "TestReleaseMainVersionResolution",
-    ),
-    "TestReleaseOrchestratorExecute": (
-        "tests.infra.unit.release.orchestrator",
-        "TestReleaseOrchestratorExecute",
-    ),
-    "TestRemovedCompatibilityMethods": (
-        "tests.infra.unit.test_infra_git",
-        "TestRemovedCompatibilityMethods",
-    ),
-    "TestRenderTemplate": ("tests.infra.unit.github.workflows", "TestRenderTemplate"),
-    "TestResolveAliases": (
-        "tests.infra.unit.codegen.lazy_init_generation",
-        "TestResolveAliases",
-    ),
-    "TestResolveRef": (
-        "tests.infra.unit.deps.test_internal_sync_resolve",
-        "TestResolveRef",
-    ),
-    "TestResolveVersionInteractive": (
-        "tests.infra.unit.release.version_resolution",
-        "TestResolveVersionInteractive",
-    ),
     "TestResultBasics": ("tests.unit.test_coverage_76_lines", "TestResultBasics"),
     "TestResultTransformations": (
         "tests.unit.test_coverage_76_lines",
         "TestResultTransformations",
     ),
-    "TestRewriteDepPaths": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
-        "TestRewriteDepPaths",
-    ),
-    "TestRewritePep621": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_pep621",
-        "TestRewritePep621",
-    ),
-    "TestRewritePoetry": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_poetry",
-        "TestRewritePoetry",
-    ),
-    "TestRuffFormatDuplicateFiles": (
-        "tests.infra.unit.check.extended_error_reporting",
-        "TestRuffFormatDuplicateFiles",
-    ),
-    "TestRunAudit": ("tests.infra.unit.docs.main", "TestRunAudit"),
-    "TestRunBandit": ("tests.infra.unit.check.extended_runners_extra", "TestRunBandit"),
-    "TestRunBuild": ("tests.infra.unit.docs.main_commands", "TestRunBuild"),
-    "TestRunCLIExtended": (
-        "tests.infra.unit.check.extended_cli_entry",
-        "TestRunCLIExtended",
-    ),
-    "TestRunCommand": (
-        "tests.infra.unit.check.extended_runners_ruff",
-        "TestRunCommand",
-    ),
-    "TestRunDeptry": ("tests.infra.unit.deps.test_detection_deptry", "TestRunDeptry"),
-    "TestRunDetect": ("tests.infra.unit.test_infra_workspace_main", "TestRunDetect"),
-    "TestRunFix": ("tests.infra.unit.docs.main", "TestRunFix"),
-    "TestRunGenerate": ("tests.infra.unit.docs.main_commands", "TestRunGenerate"),
-    "TestRunGo": ("tests.infra.unit.check.extended_runners_go", "TestRunGo"),
-    "TestRunLint": ("tests.infra.unit.github.main", "TestRunLint"),
-    "TestRunMake": ("tests.infra.unit.release.orchestrator_helpers", "TestRunMake"),
-    "TestRunMarkdown": (
-        "tests.infra.unit.check.extended_runners_extra",
-        "TestRunMarkdown",
-    ),
-    "TestRunMigrate": ("tests.infra.unit.test_infra_workspace_main", "TestRunMigrate"),
-    "TestRunMypy": ("tests.infra.unit.check.extended_runners", "TestRunMypy"),
-    "TestRunMypyStubHints": (
-        "tests.infra.unit.deps.test_detection_typings",
-        "TestRunMypyStubHints",
-    ),
-    "TestRunOrchestrate": (
-        "tests.infra.unit.test_infra_workspace_main",
-        "TestRunOrchestrate",
-    ),
-    "TestRunPipCheck": (
-        "tests.infra.unit.deps.test_detection_pip_check",
-        "TestRunPipCheck",
-    ),
-    "TestRunPr": ("tests.infra.unit.github.pr_workspace", "TestRunPr"),
-    "TestRunPrWorkspace": (
-        "tests.infra.unit.github.main_dispatch",
-        "TestRunPrWorkspace",
-    ),
-    "TestRunProjectsBehavior": (
-        "tests.infra.unit.check.extended_run_projects",
-        "TestRunProjectsBehavior",
-    ),
-    "TestRunProjectsReports": (
-        "tests.infra.unit.check.extended_run_projects",
-        "TestRunProjectsReports",
-    ),
-    "TestRunProjectsValidation": (
-        "tests.infra.unit.check.extended_run_projects",
-        "TestRunProjectsValidation",
-    ),
-    "TestRunPyrefly": ("tests.infra.unit.check.extended_runners", "TestRunPyrefly"),
-    "TestRunPyright": (
-        "tests.infra.unit.check.extended_runners_extra",
-        "TestRunPyright",
-    ),
-    "TestRunRuffFix": (
-        "tests.infra.unit.codegen.lazy_init_generation",
-        "TestRunRuffFix",
-    ),
-    "TestRunRuffFormat": (
-        "tests.infra.unit.check.extended_runners_ruff",
-        "TestRunRuffFormat",
-    ),
-    "TestRunRuffLint": (
-        "tests.infra.unit.check.extended_runners_ruff",
-        "TestRunRuffLint",
-    ),
-    "TestRunSingleProject": (
-        "tests.infra.unit.check.extended_run_projects",
-        "TestRunSingleProject",
-    ),
-    "TestRunSync": ("tests.infra.unit.test_infra_workspace_main", "TestRunSync"),
-    "TestRunValidate": ("tests.infra.unit.docs.main_commands", "TestRunValidate"),
-    "TestRunWorkflows": ("tests.infra.unit.github.main", "TestRunWorkflows"),
     "TestRuntimeDeprecatedNormalizeMethods": (
         "tests.unit.test_deprecation_warnings",
         "TestRuntimeDeprecatedNormalizeMethods",
@@ -4273,60 +2188,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_exception_carrying",
         "TestSafeCarriesException",
     ),
-    "TestSafeLoadYaml": ("tests.infra.unit.core.skill_validator", "TestSafeLoadYaml"),
     "TestSafeString": (
         "tests.unit.test_utilities_text_full_coverage",
         "TestSafeString",
     ),
-    "TestSafetyCheckpoint": (
-        "tests.infra.unit._utilities.test_safety",
-        "TestSafetyCheckpoint",
-    ),
-    "TestSafetyRollback": (
-        "tests.infra.unit._utilities.test_safety",
-        "TestSafetyRollback",
-    ),
-    "TestSafetyWorkspaceValidation": (
-        "tests.infra.unit._utilities.test_safety",
-        "TestSafetyWorkspaceValidation",
-    ),
-    "TestScaffoldProjectCreatesSrcModules": (
-        "tests.infra.unit.codegen.scaffolder",
-        "TestScaffoldProjectCreatesSrcModules",
-    ),
-    "TestScaffoldProjectCreatesTestsModules": (
-        "tests.infra.unit.codegen.scaffolder",
-        "TestScaffoldProjectCreatesTestsModules",
-    ),
-    "TestScaffoldProjectIdempotency": (
-        "tests.infra.unit.codegen.scaffolder",
-        "TestScaffoldProjectIdempotency",
-    ),
-    "TestScaffoldProjectNoop": (
-        "tests.infra.unit.codegen.scaffolder",
-        "TestScaffoldProjectNoop",
-    ),
-    "TestScanAstPublicDefs": (
-        "tests.infra.unit.codegen.lazy_init_transforms",
-        "TestScanAstPublicDefs",
-    ),
-    "TestScanFileBatch": (
-        "tests.infra.unit._utilities.test_scanning",
-        "TestScanFileBatch",
-    ),
-    "TestScanModels": ("tests.infra.unit._utilities.test_scanning", "TestScanModels"),
-    "TestScannerCore": ("tests.infra.unit.core.scanner", "TestScannerCore"),
-    "TestScannerHelpers": ("tests.infra.unit.core.scanner", "TestScannerHelpers"),
-    "TestScannerMultiFile": ("tests.infra.unit.core.scanner", "TestScannerMultiFile"),
     "TestScopedContextManagement": (
         "tests.unit.test_coverage_loggings",
         "TestScopedContextManagement",
     ),
-    "TestSelectedProjectNames": (
-        "tests.infra.unit.docs.shared_iter",
-        "TestSelectedProjectNames",
-    ),
-    "TestSelectorFunction": ("tests.infra.unit.github.pr_cli", "TestSelectorFunction"),
     "TestService": ("tests.unit.test_service_coverage_100", "TestService"),
     "TestService100Coverage": (
         "tests.unit.test_service_coverage_100",
@@ -4358,83 +2227,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestServicesIntegrationViaDI",
     ),
     "TestShortAlias": ("tests.unit.flext_tests.test_files", "TestShortAlias"),
-    "TestShouldBubbleUp": (
-        "tests.infra.unit.codegen.lazy_init_transforms",
-        "TestShouldBubbleUp",
-    ),
-    "TestShouldUseColor": (
-        "tests.infra.unit.io.test_infra_terminal_detection",
-        "TestShouldUseColor",
-    ),
-    "TestShouldUseUnicode": (
-        "tests.infra.unit.io.test_infra_terminal_detection",
-        "TestShouldUseUnicode",
-    ),
-    "TestSkillValidatorAstGrepCount": (
-        "tests.infra.unit.core.skill_validator",
-        "TestSkillValidatorAstGrepCount",
-    ),
-    "TestSkillValidatorCore": (
-        "tests.infra.unit.core.skill_validator",
-        "TestSkillValidatorCore",
-    ),
-    "TestSkillValidatorRenderTemplate": (
-        "tests.infra.unit.core.skill_validator",
-        "TestSkillValidatorRenderTemplate",
-    ),
-    "TestStaticMethods": (
-        "tests.infra.unit.github.pr_workspace_orchestrate",
-        "TestStaticMethods",
-    ),
-    "TestStatus": ("tests.infra.unit.github.pr", "TestStatus"),
     "TestStrictContainerNormalization": (
         "tests.unit.test_deprecation_warnings",
         "TestStrictContainerNormalization",
-    ),
-    "TestStubChainAnalyze": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainAnalyze",
-    ),
-    "TestStubChainCore": ("tests.infra.unit.core.stub_chain", "TestStubChainCore"),
-    "TestStubChainDiscoverProjects": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainDiscoverProjects",
-    ),
-    "TestStubChainIsInternal": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainIsInternal",
-    ),
-    "TestStubChainStubExists": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainStubExists",
-    ),
-    "TestStubChainValidate": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainValidate",
-    ),
-    "TestSubcommandMapping": (
-        "tests.infra.unit.deps.test_main",
-        "TestSubcommandMapping",
-    ),
-    "TestSync": ("tests.infra.unit.deps.test_internal_sync_sync", "TestSync"),
-    "TestSyncMethodEdgeCases": (
-        "tests.infra.unit.deps.test_internal_sync_sync_edge",
-        "TestSyncMethodEdgeCases",
-    ),
-    "TestSyncMethodEdgeCasesMore": (
-        "tests.infra.unit.deps.test_internal_sync_sync_edge_more",
-        "TestSyncMethodEdgeCasesMore",
-    ),
-    "TestSyncOne": ("tests.infra.unit.deps.test_extra_paths_manager", "TestSyncOne"),
-    "TestSyncOperation": ("tests.infra.unit.github.workflows", "TestSyncOperation"),
-    "TestSyncProject": ("tests.infra.unit.github.workflows", "TestSyncProject"),
-    "TestSyncWorkspace": (
-        "tests.infra.unit.github.workflows_workspace",
-        "TestSyncWorkspace",
-    ),
-    "TestSynthesizedRepoMap": (
-        "tests.infra.unit.deps.test_internal_sync_resolve",
-        "TestSynthesizedRepoMap",
     ),
     "TestTextLogger": (
         "tests.unit.test_utilities_text_full_coverage",
@@ -4456,10 +2251,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_dispatcher_timeout_coverage_100",
         "TestTimeoutEnforcerInitialization",
     ),
-    "TestToInfraValue": (
-        "tests.infra.unit.deps.test_detection_models",
-        "TestToInfraValue",
-    ),
     "TestTraceReturnsResultBool": (
         "tests.unit.test_loggings_strict_returns",
         "TestTraceReturnsResultBool",
@@ -4468,30 +2259,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_exception_carrying",
         "TestTraversePropagatesException",
     ),
-    "TestTriggerRelease": (
-        "tests.infra.unit.github.pr_operations",
-        "TestTriggerRelease",
-    ),
-    "TestUpdateChangelog": (
-        "tests.infra.unit.release.orchestrator_helpers",
-        "TestUpdateChangelog",
-    ),
     "TestUser": ("tests.unit.flext_tests.test_factories", "TestUser"),
     "TestUtilitiesCoverage": (
         "tests.unit.test_utilities_coverage",
         "TestUtilitiesCoverage",
     ),
     "TestUtilitiesDomain": ("tests.unit.test_coverage_context", "TestUtilitiesDomain"),
-    "TestValidateCore": ("tests.infra.unit.docs.validator", "TestValidateCore"),
-    "TestValidateGitRefEdgeCases": (
-        "tests.infra.unit.deps.test_internal_sync_validation",
-        "TestValidateGitRefEdgeCases",
-    ),
-    "TestValidateReport": ("tests.infra.unit.docs.validator", "TestValidateReport"),
-    "TestValidateScope": (
-        "tests.infra.unit.docs.validator_internals",
-        "TestValidateScope",
-    ),
     "TestValidateValueImmutable": (
         "tests.unit.test_utilities_domain_full_coverage",
         "TestValidateValueImmutable",
@@ -4505,106 +2278,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestValidatorMapMixin",
     ),
     "TestValues": ("tests.unit.test_coverage_models", "TestValues"),
-    "TestVersionFiles": (
-        "tests.infra.unit.release.orchestrator_helpers",
-        "TestVersionFiles",
-    ),
-    "TestView": ("tests.infra.unit.github.pr_operations", "TestView"),
-    "TestViolationPattern": (
-        "tests.infra.unit.codegen.census_models",
-        "TestViolationPattern",
-    ),
     "TestWarningReturnsResultBool": (
         "tests.unit.test_loggings_strict_returns",
         "TestWarningReturnsResultBool",
-    ),
-    "TestWorkspaceCheckCLI": (
-        "tests.infra.unit.check.extended_cli_entry",
-        "TestWorkspaceCheckCLI",
-    ),
-    "TestWorkspaceCheckerBuildGateResult": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerBuildGateResult",
-    ),
-    "TestWorkspaceCheckerCollectMarkdownFiles": (
-        "tests.infra.unit.check.extended_gate_go_cmd",
-        "TestWorkspaceCheckerCollectMarkdownFiles",
-    ),
-    "TestWorkspaceCheckerDirsWithPy": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerDirsWithPy",
-    ),
-    "TestWorkspaceCheckerErrorSummary": (
-        "tests.infra.unit.check.extended_models",
-        "TestWorkspaceCheckerErrorSummary",
-    ),
-    "TestWorkspaceCheckerExecute": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerExecute",
-    ),
-    "TestWorkspaceCheckerExistingCheckDirs": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerExistingCheckDirs",
-    ),
-    "TestWorkspaceCheckerInitOSError": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerInitOSError",
-    ),
-    "TestWorkspaceCheckerInitialization": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerInitialization",
-    ),
-    "TestWorkspaceCheckerMarkdownReport": (
-        "tests.infra.unit.check.extended_reports",
-        "TestWorkspaceCheckerMarkdownReport",
-    ),
-    "TestWorkspaceCheckerMarkdownReportEdgeCases": (
-        "tests.infra.unit.check.extended_reports",
-        "TestWorkspaceCheckerMarkdownReportEdgeCases",
-    ),
-    "TestWorkspaceCheckerParseGateCSV": (
-        "tests.infra.unit.check.extended_resolve_gates",
-        "TestWorkspaceCheckerParseGateCSV",
-    ),
-    "TestWorkspaceCheckerResolveGates": (
-        "tests.infra.unit.check.extended_resolve_gates",
-        "TestWorkspaceCheckerResolveGates",
-    ),
-    "TestWorkspaceCheckerResolveWorkspaceRootFallback": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerResolveWorkspaceRootFallback",
-    ),
-    "TestWorkspaceCheckerRunBandit": (
-        "tests.infra.unit.check.extended_gate_bandit_markdown",
-        "TestWorkspaceCheckerRunBandit",
-    ),
-    "TestWorkspaceCheckerRunCommand": (
-        "tests.infra.unit.check.extended_gate_go_cmd",
-        "TestWorkspaceCheckerRunCommand",
-    ),
-    "TestWorkspaceCheckerRunGo": (
-        "tests.infra.unit.check.extended_gate_go_cmd",
-        "TestWorkspaceCheckerRunGo",
-    ),
-    "TestWorkspaceCheckerRunMarkdown": (
-        "tests.infra.unit.check.extended_gate_bandit_markdown",
-        "TestWorkspaceCheckerRunMarkdown",
-    ),
-    "TestWorkspaceCheckerRunMypy": (
-        "tests.infra.unit.check.extended_gate_mypy_pyright",
-        "TestWorkspaceCheckerRunMypy",
-    ),
-    "TestWorkspaceCheckerRunPyright": (
-        "tests.infra.unit.check.extended_gate_mypy_pyright",
-        "TestWorkspaceCheckerRunPyright",
-    ),
-    "TestWorkspaceCheckerSARIFReport": (
-        "tests.infra.unit.check.extended_reports",
-        "TestWorkspaceCheckerSARIFReport",
-    ),
-    "TestWorkspaceCheckerSARIFReportEdgeCases": (
-        "tests.infra.unit.check.extended_reports",
-        "TestWorkspaceCheckerSARIFReportEdgeCases",
     ),
     "TestWorkspaceDetectionOrchestrationFlow": (
         "tests.integration.test_infra_integration",
@@ -4613,24 +2289,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestWorkspaceLevelRefactor": (
         "tests.integration.test_refactor_nesting_workspace",
         "TestWorkspaceLevelRefactor",
-    ),
-    "TestWorkspaceRoot": (
-        "tests.infra.unit.test_infra_maintenance_python_version",
-        "TestWorkspaceRoot",
-    ),
-    "TestWorkspaceRootFromEnv": (
-        "tests.infra.unit.deps.test_internal_sync_workspace",
-        "TestWorkspaceRootFromEnv",
-    ),
-    "TestWorkspaceRootFromParents": (
-        "tests.infra.unit.deps.test_internal_sync_workspace",
-        "TestWorkspaceRootFromParents",
-    ),
-    "TestWriteJson": ("tests.infra.unit.docs.shared_write", "TestWriteJson"),
-    "TestWriteMarkdown": ("tests.infra.unit.docs.shared_write", "TestWriteMarkdown"),
-    "TestWriteReport": (
-        "tests.infra.unit.github.workflows_workspace",
-        "TestWriteReport",
     ),
     "Teste": ("tests.unit.test_exceptions", "Teste"),
     "Testr": ("tests.unit.test_result", "Testr"),
@@ -4884,17 +2542,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ValidationScenario": ("tests.helpers.scenarios", "ValidationScenario"),
     "ValidationScenarios": ("tests.helpers.scenarios", "ValidationScenarios"),
     "ValidationService": ("tests.test_documented_patterns", "ValidationService"),
-    "WorkspaceFactory": ("tests.infra.workspace_factory", "WorkspaceFactory"),
-    "WorkspaceScenario": ("tests.infra.scenarios", "WorkspaceScenario"),
-    "WorkspaceScenarios": ("tests.infra.scenarios", "WorkspaceScenarios"),
     "arrange_act_assert": (
         "tests.integration.patterns.test_patterns_testing",
         "arrange_act_assert",
-    ),
-    "array": ("tests.infra.unit.deps.test_modernizer_helpers", "array"),
-    "as_string_list": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "as_string_list",
     ),
     "assert_rejects": ("tests.conftest", "assert_rejects"),
     "assert_result_success": (
@@ -4903,22 +2553,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "assert_validates": ("tests.conftest", "assert_validates"),
     "assertion_helpers": ("tests.test_utils", "assertion_helpers"),
-    "auditor": ("tests.infra.unit.docs.auditor", "auditor"),
-    "basemk": ("tests.infra.unit.basemk", ""),
     "benchmark": ("tests.benchmark", ""),
-    "builder": ("tests.infra.unit.docs.builder", "builder"),
     "c": ("tests.constants", "c"),
-    "canonical_dev_dependencies": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "canonical_dev_dependencies",
-    ),
-    "census": ("tests.infra.unit.codegen.census", "census"),
-    "check": ("tests.infra.unit.check", ""),
     "clean_container": ("tests.conftest", "clean_container"),
-    "codegen": ("tests.infra.unit.codegen", ""),
-    "container": ("tests.infra.unit.container", ""),
     "contracts": ("tests.unit.contracts", ""),
-    "core": ("tests.infra.unit.core", ""),
     "create_compare_entities_cases": (
         "tests.unit.test_utilities_domain",
         "create_compare_entities_cases",
@@ -4944,39 +2582,21 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "create_validate_value_object_immutable_cases",
     ),
     "d": ("tests.unit.test_automated_decorators", "TestAutomatedFlextDecorators"),
-    "dedupe_specs": ("tests.infra.unit.deps.test_modernizer_helpers", "dedupe_specs"),
-    "dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "dep_name"),
-    "deps": ("tests.infra.unit.deps", ""),
-    "detector": ("tests.infra.unit.test_infra_workspace_detector", "detector"),
-    "discovery": ("tests.infra.unit.discovery", ""),
     "dispatcher": ("tests.unit.test_dispatcher_full_coverage", "dispatcher"),
-    "doc": ("tests.infra.unit.deps.test_modernizer_helpers", "doc"),
-    "docs": ("tests.infra.unit.docs", ""),
     "e": ("tests.unit.test_automated_exceptions", "TestAutomatedExceptions"),
     "empty_strings": ("tests.conftest", "empty_strings"),
-    "engine": ("tests.infra.unit.test_infra_templates", "engine"),
-    "ensure_table": ("tests.infra.unit.deps.test_modernizer_helpers", "ensure_table"),
-    "extract_dep_name": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "extract_dep_name",
-    ),
-    "fixer": ("tests.infra.unit.codegen.autofix", "fixer"),
     "fixture_factory": ("tests.test_utils", "fixture_factory"),
     "flext_result_failure": ("tests.conftest", "flext_result_failure"),
     "flext_result_success": ("tests.conftest", "flext_result_success"),
     "flext_tests": ("tests.unit.flext_tests", ""),
-    "gen": ("tests.infra.unit.docs.generator_internals", "gen"),
     "generators_module": (
         "tests.unit.test_utilities_generators_full_coverage",
         "generators_module",
     ),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
-    "git_repo": ("tests.infra.unit.test_infra_git", "git_repo"),
-    "github": ("tests.infra.unit.github", ""),
-    "h": ("tests.infra.helpers", "h"),
+    "h": ("tests.unit.test_automated_handlers", "TestAutomatedFlextHandlers"),
     "handlers_module": ("tests.unit.test_handlers_full_coverage", "handlers_module"),
     "helpers": ("tests.helpers", ""),
-    "infra": ("tests.infra", ""),
     "infra_git": ("tests.unit.conftest_infra", "infra_git"),
     "infra_git_repo": ("tests.unit.conftest_infra", "infra_git_repo"),
     "infra_io": ("tests.unit.conftest_infra", "infra_io"),
@@ -5003,8 +2623,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "invalid_hostnames": ("tests.conftest", "invalid_hostnames"),
     "invalid_port_numbers": ("tests.conftest", "invalid_port_numbers"),
     "invalid_uris": ("tests.conftest", "invalid_uris"),
-    "io": ("tests.infra.unit.io", ""),
-    "is_external": ("tests.infra.unit.docs.auditor", "is_external"),
     "m": ("tests.models", "m"),
     "make_result_logger": (
         "tests.integration.patterns.test_patterns_logging",
@@ -5016,36 +2634,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "mark_test_pattern",
     ),
     "mock_external_service": ("tests.conftest", "mock_external_service"),
-    "normalize_link": ("tests.infra.unit.docs.auditor", "normalize_link"),
-    "orchestrator": (
-        "tests.infra.unit.test_infra_workspace_orchestrator",
-        "orchestrator",
-    ),
     "out_of_range": ("tests.conftest", "out_of_range"),
     "p": ("tests.protocols", "p"),
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
     "patterns": ("tests.integration.patterns", ""),
-    "project_dev_groups": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "project_dev_groups",
-    ),
-    "pyright_content": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "pyright_content",
-    ),
     "pytestmark": ("tests.integration.test_service", "pytestmark"),
-    "r": (
-        "tests.infra.unit.check.extended_workspace_init",
-        "TestWorkspaceCheckerBuildGateResult",
-    ),
-    "real_docs_project": ("tests.infra.fixtures", "real_docs_project"),
-    "real_git_repo": ("tests.infra.fixtures_git", "real_git_repo"),
-    "real_makefile_project": ("tests.infra.fixtures", "real_makefile_project"),
-    "real_python_package": ("tests.infra.fixtures", "real_python_package"),
-    "real_toml_project": ("tests.infra.fixtures", "real_toml_project"),
-    "real_workspace": ("tests.infra.fixtures", "real_workspace"),
-    "refactor": ("tests.infra.unit.refactor", ""),
-    "release": ("tests.infra.unit.release", ""),
+    "r": ("tests.unit.flext_tests.test_utilities", "TestFlextTestsUtilitiesResult"),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
     "reset_all_factories": ("tests.helpers.factories", "reset_all_factories"),
     "reset_global_container": ("tests.conftest", "reset_global_container"),
@@ -5053,15 +2647,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_runtime_full_coverage",
         "reset_runtime_state",
     ),
-    "rewrite_dep_paths": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
-        "rewrite_dep_paths",
-    ),
-    "run_lint": ("tests.infra.unit.github.main", "run_lint"),
-    "run_pr": ("tests.infra.unit.github.main", "run_pr"),
-    "run_pr_workspace": ("tests.infra.unit.github.main_dispatch", "run_pr_workspace"),
-    "run_workflows": ("tests.infra.unit.github.main", "run_workflows"),
-    "runner": ("tests.infra.unit.test_infra_subprocess_core", "runner"),
     "runtime_cov_tests": ("tests.unit.test_runtime_full_coverage", "runtime_cov_tests"),
     "runtime_module": (
         "tests.unit.test_utilities_generators_full_coverage",
@@ -5070,10 +2655,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
     "s": ("tests.helpers.factories", "GetUserService"),
     "sample_data": ("tests.conftest", "sample_data"),
-    "service": ("tests.infra.unit.test_infra_versioning", "service"),
-    "should_skip_target": ("tests.infra.unit.docs.auditor", "should_skip_target"),
-    "svc": ("tests.infra.unit.test_infra_workspace_sync", "svc"),
-    "t": ("tests.infra.typings", "t"),
+    "t": ("tests.typings", "t"),
     "temp_dir": ("tests.conftest", "temp_dir"),
     "temp_directory": ("tests.conftest", "temp_directory"),
     "temp_file": ("tests.conftest", "temp_file"),
@@ -5101,15 +2683,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_args_full_coverage",
         "test_args_get_enum_params_branches",
     ),
-    "test_array": ("tests.infra.unit.deps.test_modernizer_helpers", "test_array"),
-    "test_as_string_list": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_as_string_list",
-    ),
-    "test_as_string_list_toml_item": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_as_string_list_toml_item",
-    ),
     "test_async_log_writer_paths": (
         "tests.unit.test_runtime_full_coverage",
         "test_async_log_writer_paths",
@@ -5121,14 +2694,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_at_take_and_as_branches": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_at_take_and_as_branches",
-    ),
-    "test_atomic_write_fail": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_atomic_write_fail",
-    ),
-    "test_atomic_write_ok": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_atomic_write_ok",
     ),
     "test_authentication_error_normalizes_extra_kwargs_into_context": (
         "tests.unit.test_exceptions_full_coverage",
@@ -5145,82 +2710,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_base_error_normalize_metadata_merges_existing_metadata_model": (
         "tests.unit.test_exceptions_full_coverage",
         "test_base_error_normalize_metadata_merges_existing_metadata_model",
-    ),
-    "test_basemk_build_config_with_none": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_build_config_with_none",
-    ),
-    "test_basemk_build_config_with_project_name": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_build_config_with_project_name",
-    ),
-    "test_basemk_cli_generate_to_file": (
-        "tests.infra.unit.basemk.engine",
-        "test_basemk_cli_generate_to_file",
-    ),
-    "test_basemk_cli_generate_to_stdout": (
-        "tests.infra.unit.basemk.engine",
-        "test_basemk_cli_generate_to_stdout",
-    ),
-    "test_basemk_engine_execute_calls_render_all": (
-        "tests.infra.unit.basemk.engine",
-        "test_basemk_engine_execute_calls_render_all",
-    ),
-    "test_basemk_engine_render_all_handles_template_error": (
-        "tests.infra.unit.basemk.engine",
-        "test_basemk_engine_render_all_handles_template_error",
-    ),
-    "test_basemk_engine_render_all_returns_string": (
-        "tests.infra.unit.basemk.engine",
-        "test_basemk_engine_render_all_returns_string",
-    ),
-    "test_basemk_engine_render_all_with_valid_config": (
-        "tests.infra.unit.basemk.engine",
-        "test_basemk_engine_render_all_with_valid_config",
-    ),
-    "test_basemk_main_calls_sys_exit": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_calls_sys_exit",
-    ),
-    "test_basemk_main_ensures_structlog_configured": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_ensures_structlog_configured",
-    ),
-    "test_basemk_main_output_to_stdout": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_output_to_stdout",
-    ),
-    "test_basemk_main_with_generate_command": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_generate_command",
-    ),
-    "test_basemk_main_with_generation_failure": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_generation_failure",
-    ),
-    "test_basemk_main_with_invalid_command": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_invalid_command",
-    ),
-    "test_basemk_main_with_no_command": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_no_command",
-    ),
-    "test_basemk_main_with_none_argv": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_none_argv",
-    ),
-    "test_basemk_main_with_output_file": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_output_file",
-    ),
-    "test_basemk_main_with_project_name": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_project_name",
-    ),
-    "test_basemk_main_with_write_failure": (
-        "tests.infra.unit.basemk.main",
-        "test_basemk_main_with_write_failure",
     ),
     "test_basic_imports_work": (
         "tests.unit.test_models_validation_full_coverage",
@@ -5242,31 +2731,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_build_apply_transform_and_process_error_paths",
     ),
-    "test_build_impact_map_extracts_rename_entries": (
-        "tests.infra.unit.refactor.test_infra_refactor_analysis",
-        "test_build_impact_map_extracts_rename_entries",
-    ),
-    "test_build_impact_map_extracts_signature_entries": (
-        "tests.infra.unit.refactor.test_infra_refactor_analysis",
-        "test_build_impact_map_extracts_signature_entries",
-    ),
     "test_build_options_invalid_only_kwargs_returns_base": (
         "tests.unit.test_utilities_configuration_full_coverage",
         "test_build_options_invalid_only_kwargs_returns_base",
     ),
     "test_builder": ("tests.unit.test_container_full_coverage", "test_builder"),
-    "test_bump_version_invalid": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_bump_version_invalid",
-    ),
-    "test_bump_version_result_type": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_bump_version_result_type",
-    ),
-    "test_bump_version_valid": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_bump_version_valid",
-    ),
     "test_callable_registration_with_attribute": (
         "tests.unit.test_dispatcher_full_coverage",
         "test_callable_registration_with_attribute",
@@ -5274,14 +2743,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_canonical_aliases_are_available": (
         "tests.unit.test_models_generic_full_coverage",
         "test_canonical_aliases_are_available",
-    ),
-    "test_canonical_dev_dependencies": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_canonical_dev_dependencies",
-    ),
-    "test_capture_cases": (
-        "tests.infra.unit.test_infra_subprocess_core",
-        "test_capture_cases",
     ),
     "test_categories_clear_and_symbols_are_available": (
         "tests.unit.test_models_collections_full_coverage",
@@ -5311,10 +2772,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_protocols_full_coverage",
         "test_check_implements_protocol_false_non_runtime_protocol",
     ),
-    "test_check_main_executes_real_cli": (
-        "tests.infra.unit.check.main",
-        "test_check_main_executes_real_cli",
-    ),
     "test_checker_logger_and_safe_type_hints_fallback": (
         "tests.unit.test_utilities_checker_full_coverage",
         "test_checker_logger_and_safe_type_hints_fallback",
@@ -5343,18 +2800,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_refactor_nesting_file",
         "test_class_nesting_refactor_single_file_end_to_end",
     ),
-    "test_class_reconstructor_reorders_each_contiguous_method_block": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_class_reconstructor_reorders_each_contiguous_method_block",
-    ),
-    "test_class_reconstructor_reorders_methods_by_config": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_class_reconstructor_reorders_methods_by_config",
-    ),
-    "test_class_reconstructor_skips_interleaved_non_method_members": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_class_reconstructor_skips_interleaved_non_method_members",
-    ),
     "test_clear_keys_values_items_and_validate_branches": (
         "tests.unit.test_context_full_coverage",
         "test_clear_keys_values_items_and_validate_branches",
@@ -5362,30 +2807,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_clear_operation_scope_and_handle_log_result_paths": (
         "tests.unit.test_decorators_full_coverage",
         "test_clear_operation_scope_and_handle_log_result_paths",
-    ),
-    "test_cli_result_by_project_root": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_cli_result_by_project_root",
-    ),
-    "test_codegen_dir_returns_all_exports": (
-        "tests.infra.unit.codegen.init",
-        "test_codegen_dir_returns_all_exports",
-    ),
-    "test_codegen_getattr_raises_attribute_error": (
-        "tests.infra.unit.codegen.init",
-        "test_codegen_getattr_raises_attribute_error",
-    ),
-    "test_codegen_init_getattr_raises_attribute_error": (
-        "tests.infra.unit.codegen.lazy_init_generation",
-        "test_codegen_init_getattr_raises_attribute_error",
-    ),
-    "test_codegen_lazy_imports_work": (
-        "tests.infra.unit.codegen.init",
-        "test_codegen_lazy_imports_work",
-    ),
-    "test_codegen_pipeline_end_to_end": (
-        "tests.infra.unit.codegen.pipeline",
-        "test_codegen_pipeline_end_to_end",
     ),
     "test_collection_batch_failure_error_capture_and_parse_sequence_outer_error": (
         "tests.unit.test_utilities_collection_full_coverage",
@@ -5426,14 +2847,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_configure_with_resource_register_and_factory_error_paths": (
         "tests.unit.test_container_full_coverage",
         "test_configure_with_resource_register_and_factory_error_paths",
-    ),
-    "test_consolidate_groups_phase_apply_removes_old_groups": (
-        "tests.infra.unit.deps.test_modernizer_consolidate",
-        "test_consolidate_groups_phase_apply_removes_old_groups",
-    ),
-    "test_consolidate_groups_phase_apply_with_empty_poetry_group": (
-        "tests.infra.unit.deps.test_modernizer_consolidate",
-        "test_consolidate_groups_phase_apply_with_empty_poetry_group",
     ),
     "test_constants_auto_enum_and_bimapping_paths": (
         "tests.unit.test_constants_full_coverage",
@@ -5568,20 +2981,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_container_full_coverage",
         "test_create_scoped_instance_and_scoped_additional_branches",
     ),
-    "test_current_workspace_version": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_current_workspace_version",
-    ),
     "test_data_factory": ("tests.test_utils", "test_data_factory"),
     "test_decorators_family_blocks_dispatcher_target": (
         "tests.unit.test_refactor_policy_family_rules",
         "test_decorators_family_blocks_dispatcher_target",
     ),
-    "test_dedupe_specs": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_dedupe_specs",
-    ),
-    "test_dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "test_dep_name"),
     "test_dependency_integration_and_wiring_paths": (
         "tests.unit.test_runtime_full_coverage",
         "test_dependency_integration_and_wiring_paths",
@@ -5606,21 +3010,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_decorators_full_coverage",
         "test_deprecated_wrapper_emits_warning_and_returns_value",
     ),
-    "test_detect_mode_with_nonexistent_path": (
-        "tests.infra.unit.deps.test_path_sync_init",
-        "test_detect_mode_with_nonexistent_path",
-    ),
-    "test_detect_mode_with_path_object": (
-        "tests.infra.unit.deps.test_path_sync_init",
-        "test_detect_mode_with_path_object",
-    ),
     "test_discover_project_roots_without_nested_git_dirs": (
         "tests.unit.test_refactor_migrate_to_class_mro",
         "test_discover_project_roots_without_nested_git_dirs",
-    ),
-    "test_discover_projects_wrapper": (
-        "tests.infra.unit.deps.test_detection_wrappers",
-        "test_discover_projects_wrapper",
     ),
     "test_discovery_narrowed_function_paths": (
         "tests.unit.test_handlers_full_coverage",
@@ -5678,14 +3070,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_dispatcher_reliability_full_coverage",
         "test_dispatcher_reliability_branch_paths",
     ),
-    "test_engine_always_enables_class_nesting_file_rule": (
-        "tests.infra.unit.refactor.test_infra_refactor_engine",
-        "test_engine_always_enables_class_nesting_file_rule",
-    ),
-    "test_engine_constants_shared": (
-        "tests.infra.unit.test_infra_templates",
-        "test_engine_constants_shared",
-    ),
     "test_enrich_and_ensure_trace_context_branches": (
         "tests.unit.test_utilities_generators_full_coverage",
         "test_enrich_and_ensure_trace_context_branches",
@@ -5697,46 +3081,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_ensure_dict_branches": (
         "tests.unit.test_utilities_generators_full_coverage",
         "test_ensure_dict_branches",
-    ),
-    "test_ensure_future_annotations_after_docstring": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_ensure_future_annotations_after_docstring",
-    ),
-    "test_ensure_future_annotations_moves_existing_import_to_top": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_ensure_future_annotations_moves_existing_import_to_top",
-    ),
-    "test_ensure_pyrefly_config_phase_apply_errors": (
-        "tests.infra.unit.deps.test_modernizer_pyrefly",
-        "test_ensure_pyrefly_config_phase_apply_errors",
-    ),
-    "test_ensure_pyrefly_config_phase_apply_ignore_errors": (
-        "tests.infra.unit.deps.test_modernizer_pyrefly",
-        "test_ensure_pyrefly_config_phase_apply_ignore_errors",
-    ),
-    "test_ensure_pyrefly_config_phase_apply_python_version": (
-        "tests.infra.unit.deps.test_modernizer_pyrefly",
-        "test_ensure_pyrefly_config_phase_apply_python_version",
-    ),
-    "test_ensure_pyrefly_config_phase_apply_search_path": (
-        "tests.infra.unit.deps.test_modernizer_pyrefly",
-        "test_ensure_pyrefly_config_phase_apply_search_path",
-    ),
-    "test_ensure_pytest_config_phase_apply_markers": (
-        "tests.infra.unit.deps.test_modernizer_pytest",
-        "test_ensure_pytest_config_phase_apply_markers",
-    ),
-    "test_ensure_pytest_config_phase_apply_minversion": (
-        "tests.infra.unit.deps.test_modernizer_pytest",
-        "test_ensure_pytest_config_phase_apply_minversion",
-    ),
-    "test_ensure_pytest_config_phase_apply_python_classes": (
-        "tests.infra.unit.deps.test_modernizer_pytest",
-        "test_ensure_pytest_config_phase_apply_python_classes",
-    ),
-    "test_ensure_table": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_ensure_table",
     ),
     "test_ensure_trace_context_dict_conversion_paths": (
         "tests.unit.test_runtime_full_coverage",
@@ -5786,10 +3130,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_context_full_coverage",
         "test_export_paths_with_metadata_and_statistics",
     ),
-    "test_extract_dep_name": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_extract_dep_name",
-    ),
     "test_extract_error_paths_and_prop_accessor": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_extract_error_paths_and_prop_accessor",
@@ -5814,10 +3154,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_checker_full_coverage",
         "test_extract_message_type_from_parameter_branches",
     ),
-    "test_extract_requirement_name": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_extract_requirement_name",
-    ),
     "test_facade_binding_is_correct": (
         "tests.unit.test_models_validation_full_coverage",
         "test_facade_binding_is_correct",
@@ -5826,10 +3162,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_field_and_fields_multi_branches",
     ),
-    "test_files_modified_tracks_affected_files": (
-        "tests.infra.unit.codegen.autofix_workspace",
-        "test_files_modified_tracks_affected_files",
-    ),
     "test_filter_map_normalize_convert_helpers": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_filter_map_normalize_convert_helpers",
@@ -5837,22 +3169,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_find_mapping_no_match_and_merge_error_paths": (
         "tests.unit.test_utilities_collection_full_coverage",
         "test_find_mapping_no_match_and_merge_error_paths",
-    ),
-    "test_fix_pyrefly_config_main_executes_real_cli_help": (
-        "tests.infra.unit.check.fix_pyrefly_config",
-        "test_fix_pyrefly_config_main_executes_real_cli_help",
-    ),
-    "test_flexcore_excluded_from_run": (
-        "tests.infra.unit.codegen.autofix_workspace",
-        "test_flexcore_excluded_from_run",
-    ),
-    "test_flext_infra_pyproject_modernizer_find_pyproject_files": (
-        "tests.infra.unit.deps.test_modernizer_main_extra",
-        "test_flext_infra_pyproject_modernizer_find_pyproject_files",
-    ),
-    "test_flext_infra_pyproject_modernizer_process_file_invalid_toml": (
-        "tests.infra.unit.deps.test_modernizer_main_extra",
-        "test_flext_infra_pyproject_modernizer_process_file_invalid_toml",
     ),
     "test_flext_message_type_alias_adapter": (
         "tests.unit.test_models_cqrs_full_coverage",
@@ -5878,94 +3194,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_generators_full_coverage",
         "test_generate_special_paths_and_dynamic_subclass",
     ),
-    "test_generator_execute_returns_generated_content": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_execute_returns_generated_content",
-    ),
-    "test_generator_fails_for_invalid_make_syntax": (
-        "tests.infra.unit.basemk.engine",
-        "test_generator_fails_for_invalid_make_syntax",
-    ),
-    "test_generator_generate_propagates_render_failure": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_generate_propagates_render_failure",
-    ),
-    "test_generator_generate_with_basemk_config_object": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_generate_with_basemk_config_object",
-    ),
-    "test_generator_generate_with_dict_config": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_generate_with_dict_config",
-    ),
-    "test_generator_generate_with_invalid_dict_config": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_generate_with_invalid_dict_config",
-    ),
-    "test_generator_generate_with_none_config_uses_default": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_generate_with_none_config_uses_default",
-    ),
-    "test_generator_initializes_with_custom_engine": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_initializes_with_custom_engine",
-    ),
-    "test_generator_initializes_with_default_engine": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_initializes_with_default_engine",
-    ),
-    "test_generator_normalize_config_with_basemk_config": (
-        "tests.infra.unit.basemk.generator_edge_cases",
-        "test_generator_normalize_config_with_basemk_config",
-    ),
-    "test_generator_normalize_config_with_dict": (
-        "tests.infra.unit.basemk.generator_edge_cases",
-        "test_generator_normalize_config_with_dict",
-    ),
-    "test_generator_normalize_config_with_invalid_dict": (
-        "tests.infra.unit.basemk.generator_edge_cases",
-        "test_generator_normalize_config_with_invalid_dict",
-    ),
-    "test_generator_normalize_config_with_none": (
-        "tests.infra.unit.basemk.generator_edge_cases",
-        "test_generator_normalize_config_with_none",
-    ),
-    "test_generator_renders_with_config_override": (
-        "tests.infra.unit.basemk.engine",
-        "test_generator_renders_with_config_override",
-    ),
-    "test_generator_validate_generated_output_handles_oserror": (
-        "tests.infra.unit.basemk.generator_edge_cases",
-        "test_generator_validate_generated_output_handles_oserror",
-    ),
-    "test_generator_write_creates_parent_directories": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_write_creates_parent_directories",
-    ),
-    "test_generator_write_fails_without_output_or_stream": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_write_fails_without_output_or_stream",
-    ),
-    "test_generator_write_handles_file_permission_error": (
-        "tests.infra.unit.basemk.generator_edge_cases",
-        "test_generator_write_handles_file_permission_error",
-    ),
-    "test_generator_write_saves_output_file": (
-        "tests.infra.unit.basemk.engine",
-        "test_generator_write_saves_output_file",
-    ),
-    "test_generator_write_to_file": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_write_to_file",
-    ),
-    "test_generator_write_to_stream": (
-        "tests.infra.unit.basemk.generator",
-        "test_generator_write_to_stream",
-    ),
-    "test_generator_write_to_stream_handles_oserror": (
-        "tests.infra.unit.basemk.generator_edge_cases",
-        "test_generator_write_to_stream_handles_oserror",
-    ),
     "test_generators_additional_missed_paths": (
         "tests.unit.test_utilities_generators_full_coverage",
         "test_generators_additional_missed_paths",
@@ -5977,10 +3205,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_get_and_get_typed_resource_factory_paths": (
         "tests.unit.test_container_full_coverage",
         "test_get_and_get_typed_resource_factory_paths",
-    ),
-    "test_get_current_typings_from_pyproject_wrapper": (
-        "tests.infra.unit.deps.test_detection_wrappers",
-        "test_get_current_typings_from_pyproject_wrapper",
     ),
     "test_get_enum_values_returns_immutable_sequence": (
         "tests.unit.test_utilities_enum_full_coverage",
@@ -5994,25 +3218,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_registry_full_coverage",
         "test_get_plugin_and_register_metadata_and_list_items_exception",
     ),
-    "test_get_required_typings_wrapper": (
-        "tests.infra.unit.deps.test_detection_wrappers",
-        "test_get_required_typings_wrapper",
-    ),
     "test_get_service_info": (
         "tests.unit.test_service_additional",
         "test_get_service_info",
-    ),
-    "test_gitignore_entry_scenarios": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_gitignore_entry_scenarios",
-    ),
-    "test_gitignore_sync_failure": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_gitignore_sync_failure",
-    ),
-    "test_gitignore_write_failure": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_gitignore_write_failure",
     ),
     "test_group_sort_unique_slice_chunk_branches": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -6070,22 +3278,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_refactor_policy_family_rules",
         "test_helper_consolidation_is_prechecked",
     ),
-    "test_helpers_alias_exposed": (
-        "tests.infra.unit.deps.test_extra_paths_pep621",
-        "test_helpers_alias_exposed",
-    ),
-    "test_helpers_alias_is_reachable_helpers": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_helpers_alias_is_reachable_helpers",
-    ),
-    "test_helpers_alias_is_reachable_main": (
-        "tests.infra.unit.deps.test_path_sync_main",
-        "test_helpers_alias_is_reachable_main",
-    ),
-    "test_helpers_alias_is_reachable_project_obj": (
-        "tests.infra.unit.deps.test_path_sync_main_project_obj",
-        "test_helpers_alias_is_reachable_project_obj",
-    ),
     "test_identifiable_unique_id_empty_rejected": (
         "tests.unit.test_models_base_full_coverage",
         "test_identifiable_unique_id_empty_rejected",
@@ -6097,42 +3289,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_implements_decorator_validation_error_message": (
         "tests.unit.test_protocols_full_coverage",
         "test_implements_decorator_validation_error_message",
-    ),
-    "test_import_modernizer_adds_c_when_existing_c_is_aliased": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_adds_c_when_existing_c_is_aliased",
-    ),
-    "test_import_modernizer_does_not_rewrite_function_parameter_shadow": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_does_not_rewrite_function_parameter_shadow",
-    ),
-    "test_import_modernizer_does_not_rewrite_rebound_local_name_usage": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_does_not_rewrite_rebound_local_name_usage",
-    ),
-    "test_import_modernizer_partial_import_keeps_unmapped_symbols": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_partial_import_keeps_unmapped_symbols",
-    ),
-    "test_import_modernizer_partial_import_with_asname_keeps_unmapped_alias": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_partial_import_with_asname_keeps_unmapped_alias",
-    ),
-    "test_import_modernizer_skips_rewrite_when_runtime_alias_shadowed_in_function": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_skips_rewrite_when_runtime_alias_shadowed_in_function",
-    ),
-    "test_import_modernizer_skips_when_runtime_alias_name_is_blocked": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_skips_when_runtime_alias_name_is_blocked",
-    ),
-    "test_import_modernizer_updates_aliased_symbol_usage": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_import_modernizer_updates_aliased_symbol_usage",
-    ),
-    "test_in_context_typevar_not_flagged": (
-        "tests.infra.unit.codegen.autofix",
-        "test_in_context_typevar_not_flagged",
     ),
     "test_inactive_and_none_value_paths": (
         "tests.unit.test_context_full_coverage",
@@ -6149,22 +3305,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_initialize_di_components_second_type_error_branch": (
         "tests.unit.test_container_full_coverage",
         "test_initialize_di_components_second_type_error_branch",
-    ),
-    "test_inject_comments_phase_apply_banner": (
-        "tests.infra.unit.deps.test_modernizer_comments",
-        "test_inject_comments_phase_apply_banner",
-    ),
-    "test_inject_comments_phase_apply_broken_group_section": (
-        "tests.infra.unit.deps.test_modernizer_comments",
-        "test_inject_comments_phase_apply_broken_group_section",
-    ),
-    "test_inject_comments_phase_apply_markers": (
-        "tests.infra.unit.deps.test_modernizer_comments",
-        "test_inject_comments_phase_apply_markers",
-    ),
-    "test_inject_comments_phase_apply_with_optional_dependencies_dev": (
-        "tests.infra.unit.deps.test_modernizer_comments",
-        "test_inject_comments_phase_apply_with_optional_dependencies_dev",
     ),
     "test_inject_sets_missing_dependency_from_container": (
         "tests.unit.test_decorators_full_coverage",
@@ -6214,38 +3354,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_full_coverage",
         "test_lash_runtime_result_paths",
     ),
-    "test_lazy_import_rule_hoists_import_to_module_level": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_lazy_import_rule_hoists_import_to_module_level",
-    ),
-    "test_lazy_import_rule_uses_fix_action_for_hoist": (
-        "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
-        "test_lazy_import_rule_uses_fix_action_for_hoist",
-    ),
-    "test_legacy_import_bypass_collapses_to_primary_import": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_legacy_import_bypass_collapses_to_primary_import",
-    ),
-    "test_legacy_rule_uses_fix_action_remove_for_aliases": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_legacy_rule_uses_fix_action_remove_for_aliases",
-    ),
-    "test_legacy_wrapper_forwarding_keywords_is_inlined_as_alias": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_legacy_wrapper_forwarding_keywords_is_inlined_as_alias",
-    ),
-    "test_legacy_wrapper_forwarding_varargs_is_inlined_as_alias": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_legacy_wrapper_forwarding_varargs_is_inlined_as_alias",
-    ),
-    "test_legacy_wrapper_function_is_inlined_as_alias": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_legacy_wrapper_function_is_inlined_as_alias",
-    ),
-    "test_legacy_wrapper_non_passthrough_is_not_inlined": (
-        "tests.infra.unit.refactor.test_infra_refactor_legacy_and_annotations",
-        "test_legacy_wrapper_non_passthrough_is_not_inlined",
-    ),
     "test_log_operation_track_perf_exception_adds_duration": (
         "tests.unit.test_decorators_full_coverage",
         "test_log_operation_track_perf_exception_adds_duration",
@@ -6277,78 +3385,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_loggings_uncovered_level_trace_path_and_exception_guards": (
         "tests.unit.test_loggings_full_coverage",
         "test_loggings_uncovered_level_trace_path_and_exception_guards",
-    ),
-    "test_main_all_groups_defined": (
-        "tests.infra.unit.test_infra_main",
-        "test_main_all_groups_defined",
-    ),
-    "test_main_analyze_violations_is_read_only": (
-        "tests.infra.unit.refactor.test_infra_refactor_analysis",
-        "test_main_analyze_violations_is_read_only",
-    ),
-    "test_main_analyze_violations_writes_json_report": (
-        "tests.infra.unit.refactor.test_infra_refactor_analysis",
-        "test_main_analyze_violations_writes_json_report",
-    ),
-    "test_main_discovery_failure": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_main_discovery_failure",
-    ),
-    "test_main_group_modules_are_valid": (
-        "tests.infra.unit.test_infra_main",
-        "test_main_group_modules_are_valid",
-    ),
-    "test_main_help_flag_returns_zero": (
-        "tests.infra.unit.test_infra_main",
-        "test_main_help_flag_returns_zero",
-    ),
-    "test_main_no_changes_needed": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_main_no_changes_needed",
-    ),
-    "test_main_project_invalid_toml": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_main_project_invalid_toml",
-    ),
-    "test_main_project_no_name": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_main_project_no_name",
-    ),
-    "test_main_project_non_string_name": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_main_project_non_string_name",
-    ),
-    "test_main_project_obj_not_dict_first_loop": (
-        "tests.infra.unit.deps.test_path_sync_main_project_obj",
-        "test_main_project_obj_not_dict_first_loop",
-    ),
-    "test_main_project_obj_not_dict_second_loop": (
-        "tests.infra.unit.deps.test_path_sync_main_project_obj",
-        "test_main_project_obj_not_dict_second_loop",
-    ),
-    "test_main_returns_error_when_no_args": (
-        "tests.infra.unit.test_infra_main",
-        "test_main_returns_error_when_no_args",
-    ),
-    "test_main_success_modes": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "test_main_success_modes",
-    ),
-    "test_main_sync_failure": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "test_main_sync_failure",
-    ),
-    "test_main_unknown_group_returns_error": (
-        "tests.infra.unit.test_infra_main",
-        "test_main_unknown_group_returns_error",
-    ),
-    "test_main_with_changes_and_dry_run": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_main_with_changes_and_dry_run",
-    ),
-    "test_main_with_changes_no_dry_run": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_main_with_changes_no_dry_run",
     ),
     "test_map_error_identity_and_transform": (
         "tests.unit.test_result_additional",
@@ -6394,17 +3430,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_models_base_full_coverage",
         "test_metadata_attributes_rejects_non_mapping",
     ),
-    "test_migrate_makefile_not_found_non_dry_run": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_migrate_makefile_not_found_non_dry_run",
-    ),
     "test_migrate_protocols_rewrites_references_with_p_alias": (
         "tests.unit.test_refactor_migrate_to_class_mro",
         "test_migrate_protocols_rewrites_references_with_p_alias",
-    ),
-    "test_migrate_pyproject_flext_core_non_dry_run": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_migrate_pyproject_flext_core_non_dry_run",
     ),
     "test_migrate_to_mro_inlines_alias_constant_into_constants_class": (
         "tests.unit.test_refactor_migrate_to_class_mro",
@@ -6429,78 +3457,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_migrate_typings_rewrites_references_with_t_alias": (
         "tests.unit.test_refactor_migrate_to_class_mro",
         "test_migrate_typings_rewrites_references_with_t_alias",
-    ),
-    "test_migrator_apply_updates_project_files": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_apply_updates_project_files",
-    ),
-    "test_migrator_discovery_failure": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_discovery_failure",
-    ),
-    "test_migrator_dry_run_reports_changes_without_writes": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_dry_run_reports_changes_without_writes",
-    ),
-    "test_migrator_execute_returns_failure": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_execute_returns_failure",
-    ),
-    "test_migrator_flext_core_dry_run": (
-        "tests.infra.unit.test_infra_workspace_migrator_dryrun",
-        "test_migrator_flext_core_dry_run",
-    ),
-    "test_migrator_flext_core_project_skipped": (
-        "tests.infra.unit.test_infra_workspace_migrator_dryrun",
-        "test_migrator_flext_core_project_skipped",
-    ),
-    "test_migrator_gitignore_already_normalized_dry_run": (
-        "tests.infra.unit.test_infra_workspace_migrator_dryrun",
-        "test_migrator_gitignore_already_normalized_dry_run",
-    ),
-    "test_migrator_handles_missing_pyproject_gracefully": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_handles_missing_pyproject_gracefully",
-    ),
-    "test_migrator_has_flext_core_dependency_in_poetry": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_migrator_has_flext_core_dependency_in_poetry",
-    ),
-    "test_migrator_has_flext_core_dependency_poetry_deps_not_table": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_migrator_has_flext_core_dependency_poetry_deps_not_table",
-    ),
-    "test_migrator_has_flext_core_dependency_poetry_table_missing": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_migrator_has_flext_core_dependency_poetry_table_missing",
-    ),
-    "test_migrator_makefile_not_found_dry_run": (
-        "tests.infra.unit.test_infra_workspace_migrator_dryrun",
-        "test_migrator_makefile_not_found_dry_run",
-    ),
-    "test_migrator_makefile_read_failure": (
-        "tests.infra.unit.test_infra_workspace_migrator_dryrun",
-        "test_migrator_makefile_read_failure",
-    ),
-    "test_migrator_no_changes_needed": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_no_changes_needed",
-    ),
-    "test_migrator_preserves_custom_makefile_content": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_preserves_custom_makefile_content",
-    ),
-    "test_migrator_pyproject_not_found_dry_run": (
-        "tests.infra.unit.test_infra_workspace_migrator_dryrun",
-        "test_migrator_pyproject_not_found_dry_run",
-    ),
-    "test_migrator_workspace_root_not_exists": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_workspace_root_not_exists",
-    ),
-    "test_migrator_workspace_root_project_detection": (
-        "tests.infra.unit.test_infra_workspace_migrator",
-        "test_migrator_workspace_root_project_detection",
     ),
     "test_misc_unregistration_clear_and_reset": (
         "tests.unit.test_container_full_coverage",
@@ -6562,14 +3518,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_models_settings_full_coverage",
         "test_models_settings_context_validator_and_non_standard_status_input",
     ),
-    "test_mro_checker_keeps_external_attribute_base": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_mro_checker_keeps_external_attribute_base",
-    ),
-    "test_mro_redundancy_checker_removes_nested_attribute_inheritance": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_mro_redundancy_checker_removes_nested_attribute_inheritance",
-    ),
     "test_mro_resolver_accepts_expected_order": (
         "tests.integration.test_refactor_policy_mro",
         "test_mro_resolver_accepts_expected_order",
@@ -6581,10 +3529,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_mro_scanner_includes_constants_variants_in_all_scopes": (
         "tests.unit.test_refactor_migrate_to_class_mro",
         "test_mro_scanner_includes_constants_variants_in_all_scopes",
-    ),
-    "test_multiple_instances_independent": (
-        "tests.infra.unit.test_infra_templates",
-        "test_multiple_instances_independent",
     ),
     "test_names_uses_cache_on_second_call": (
         "tests.unit.test_utilities_enum_full_coverage",
@@ -6714,18 +3658,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_collection_full_coverage",
         "test_parse_mapping_outer_exception",
     ),
-    "test_parse_semver_invalid": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_parse_semver_invalid",
-    ),
-    "test_parse_semver_result_type": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_parse_semver_result_type",
-    ),
-    "test_parse_semver_valid": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_parse_semver_valid",
-    ),
     "test_parser_convert_and_norm_branches": (
         "tests.unit.test_utilities_parser_full_coverage",
         "test_parser_convert_and_norm_branches",
@@ -6758,38 +3690,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_parser_full_coverage",
         "test_parser_success_and_edge_paths_cover_major_branches",
     ),
-    "test_pattern_rule_converts_dict_annotations_to_mapping": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_converts_dict_annotations_to_mapping",
-    ),
-    "test_pattern_rule_keeps_dict_param_when_copy_used": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_keeps_dict_param_when_copy_used",
-    ),
-    "test_pattern_rule_keeps_dict_param_when_subscript_mutated": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_keeps_dict_param_when_subscript_mutated",
-    ),
-    "test_pattern_rule_keeps_type_cast_when_not_nested_object_cast": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_keeps_type_cast_when_not_nested_object_cast",
-    ),
-    "test_pattern_rule_optionally_converts_return_annotations_to_mapping": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_optionally_converts_return_annotations_to_mapping",
-    ),
-    "test_pattern_rule_removes_configured_redundant_casts": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_removes_configured_redundant_casts",
-    ),
-    "test_pattern_rule_removes_nested_type_object_cast_chain": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_removes_nested_type_object_cast_chain",
-    ),
-    "test_pattern_rule_skips_overload_signatures": (
-        "tests.infra.unit.refactor.test_infra_refactor_pattern_corrections",
-        "test_pattern_rule_skips_overload_signatures",
-    ),
     "test_private_coerce_with_enum_and_string": (
         "tests.unit.test_utilities_enum_full_coverage",
         "test_private_coerce_with_enum_and_string",
@@ -6817,18 +3717,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_process_outer_exception_and_coercion_branches": (
         "tests.unit.test_utilities_collection_full_coverage",
         "test_process_outer_exception_and_coercion_branches",
-    ),
-    "test_project_dev_groups": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_project_dev_groups",
-    ),
-    "test_project_dev_groups_missing_sections": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_project_dev_groups_missing_sections",
-    ),
-    "test_project_without_src_returns_empty": (
-        "tests.infra.unit.codegen.autofix_workspace",
-        "test_project_without_src_returns_empty",
     ),
     "test_protocol_and_simple_guard_helpers": (
         "tests.unit.test_utilities_guards_full_coverage",
@@ -6882,18 +3770,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_full_coverage",
         "test_recover_tap_and_tap_error_paths",
     ),
-    "test_refactor_files_skips_non_python_inputs": (
-        "tests.infra.unit.refactor.test_infra_refactor_engine",
-        "test_refactor_files_skips_non_python_inputs",
-    ),
-    "test_refactor_project_integrates_safety_manager": (
-        "tests.infra.unit.refactor.test_infra_refactor_safety",
-        "test_refactor_project_integrates_safety_manager",
-    ),
-    "test_refactor_project_scans_tests_and_scripts_dirs": (
-        "tests.infra.unit.refactor.test_infra_refactor_engine",
-        "test_refactor_project_scans_tests_and_scripts_dirs",
-    ),
     "test_refactor_utilities_iter_python_files_includes_examples_and_scripts": (
         "tests.unit.test_refactor_migrate_to_class_mro",
         "test_refactor_utilities_iter_python_files_includes_examples_and_scripts",
@@ -6926,18 +3802,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_configuration_full_coverage",
         "test_register_singleton_register_factory_and_bulk_register_paths",
     ),
-    "test_release_tag_from_branch_invalid": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_release_tag_from_branch_invalid",
-    ),
-    "test_release_tag_from_branch_result_type": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_release_tag_from_branch_result_type",
-    ),
-    "test_release_tag_from_branch_valid": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_release_tag_from_branch_valid",
-    ),
     "test_remaining_build_fields_construct_and_eq_paths": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_remaining_build_fields_construct_and_eq_paths",
@@ -6946,33 +3810,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_remaining_uncovered_branches",
     ),
-    "test_render_all_generates_large_makefile": (
-        "tests.infra.unit.basemk.engine",
-        "test_render_all_generates_large_makefile",
-    ),
-    "test_render_all_has_no_scripts_path_references": (
-        "tests.infra.unit.basemk.engine",
-        "test_render_all_has_no_scripts_path_references",
-    ),
-    "test_render_failure": (
-        "tests.infra.unit.test_infra_templates",
-        "test_render_failure",
-    ),
-    "test_render_success": (
-        "tests.infra.unit.test_infra_templates",
-        "test_render_success",
-    ),
-    "test_replace_project_version": (
-        "tests.infra.unit.test_infra_versioning",
-        "test_replace_project_version",
-    ),
     "test_resolve_env_file_and_log_level": (
         "tests.unit.test_utilities_configuration_full_coverage",
         "test_resolve_env_file_and_log_level",
-    ),
-    "test_resolve_gates_maps_type_alias": (
-        "tests.infra.unit.check.cli",
-        "test_resolve_gates_maps_type_alias",
     ),
     "test_resolve_logger_prefers_logger_attribute": (
         "tests.unit.test_decorators_full_coverage",
@@ -7002,106 +3842,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_runtime_full_coverage",
         "test_reuse_existing_runtime_scenarios",
     ),
-    "test_rewrite_dep_paths_dry_run": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
-        "test_rewrite_dep_paths_dry_run",
-    ),
-    "test_rewrite_dep_paths_read_failure": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
-        "test_rewrite_dep_paths_read_failure",
-    ),
-    "test_rewrite_dep_paths_with_internal_names": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
-        "test_rewrite_dep_paths_with_internal_names",
-    ),
-    "test_rewrite_dep_paths_with_no_deps": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
-        "test_rewrite_dep_paths_with_no_deps",
-    ),
-    "test_rewrite_pep621_invalid_path_dep_regex": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_pep621",
-        "test_rewrite_pep621_invalid_path_dep_regex",
-    ),
-    "test_rewrite_pep621_no_project_table": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_pep621",
-        "test_rewrite_pep621_no_project_table",
-    ),
-    "test_rewrite_pep621_non_string_item": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_pep621",
-        "test_rewrite_pep621_non_string_item",
-    ),
-    "test_rewrite_poetry_no_poetry_table": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_poetry",
-        "test_rewrite_poetry_no_poetry_table",
-    ),
-    "test_rewrite_poetry_no_tool_table": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_poetry",
-        "test_rewrite_poetry_no_tool_table",
-    ),
-    "test_rewrite_poetry_with_non_dict_value": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_poetry",
-        "test_rewrite_poetry_with_non_dict_value",
-    ),
-    "test_rule_dispatch_fails_on_invalid_pattern_rule_config": (
-        "tests.infra.unit.refactor.test_infra_refactor_engine",
-        "test_rule_dispatch_fails_on_invalid_pattern_rule_config",
-    ),
-    "test_rule_dispatch_fails_on_unknown_rule_mapping": (
-        "tests.infra.unit.refactor.test_infra_refactor_engine",
-        "test_rule_dispatch_fails_on_unknown_rule_mapping",
-    ),
-    "test_rule_dispatch_keeps_legacy_id_fallback_mapping": (
-        "tests.infra.unit.refactor.test_infra_refactor_engine",
-        "test_rule_dispatch_keeps_legacy_id_fallback_mapping",
-    ),
-    "test_rule_dispatch_prefers_fix_action_metadata": (
-        "tests.infra.unit.refactor.test_infra_refactor_engine",
-        "test_rule_dispatch_prefers_fix_action_metadata",
-    ),
     "test_rules_merge_combines_model_dump_values": (
         "tests.unit.test_models_collections_full_coverage",
         "test_rules_merge_combines_model_dump_values",
     ),
-    "test_run_cases": ("tests.infra.unit.test_infra_subprocess_core", "test_run_cases"),
-    "test_run_cli_run_returns_one_for_fail": (
-        "tests.infra.unit.check.cli",
-        "test_run_cli_run_returns_one_for_fail",
-    ),
-    "test_run_cli_run_returns_two_for_error": (
-        "tests.infra.unit.check.cli",
-        "test_run_cli_run_returns_two_for_error",
-    ),
-    "test_run_cli_run_returns_zero_for_pass": (
-        "tests.infra.unit.check.cli",
-        "test_run_cli_run_returns_zero_for_pass",
-    ),
-    "test_run_cli_with_fail_fast_flag": (
-        "tests.infra.unit.check.cli",
-        "test_run_cli_with_fail_fast_flag",
-    ),
-    "test_run_cli_with_multiple_projects": (
-        "tests.infra.unit.check.cli",
-        "test_run_cli_with_multiple_projects",
-    ),
-    "test_run_deptry_wrapper": (
-        "tests.infra.unit.deps.test_detection_wrappers",
-        "test_run_deptry_wrapper",
-    ),
-    "test_run_mypy_stub_hints_wrapper": (
-        "tests.infra.unit.deps.test_detection_wrappers",
-        "test_run_mypy_stub_hints_wrapper",
-    ),
-    "test_run_pip_check_wrapper": (
-        "tests.infra.unit.deps.test_detection_wrappers",
-        "test_run_pip_check_wrapper",
-    ),
     "test_run_pipeline_query_and_event_paths": (
         "tests.unit.test_handlers_full_coverage",
         "test_run_pipeline_query_and_event_paths",
-    ),
-    "test_run_raw_cases": (
-        "tests.infra.unit.test_infra_subprocess_core",
-        "test_run_raw_cases",
     ),
     "test_runtime_create_instance_failure_branch": (
         "tests.unit.test_runtime_full_coverage",
@@ -7175,29 +3922,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_enum_full_coverage",
         "test_shortcuts_delegate_to_primary_methods",
     ),
-    "test_signature_propagation_removes_and_adds_keywords": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_signature_propagation_removes_and_adds_keywords",
-    ),
-    "test_signature_propagation_renames_call_keyword": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_signature_propagation_renames_call_keyword",
-    ),
     "test_small_mapper_convenience_methods": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_small_mapper_convenience_methods",
-    ),
-    "test_standalone_final_detected_as_fixable": (
-        "tests.infra.unit.codegen.autofix",
-        "test_standalone_final_detected_as_fixable",
-    ),
-    "test_standalone_typealias_detected_as_fixable": (
-        "tests.infra.unit.codegen.autofix",
-        "test_standalone_typealias_detected_as_fixable",
-    ),
-    "test_standalone_typevar_detected_as_fixable": (
-        "tests.infra.unit.codegen.autofix",
-        "test_standalone_typevar_detected_as_fixable",
     ),
     "test_statistics_and_custom_fields_validators": (
         "tests.unit.test_models_context_full_coverage",
@@ -7210,10 +3937,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_strict_registration_and_dispatch": (
         "tests.unit.test_dispatcher_full_coverage",
         "test_strict_registration_and_dispatch",
-    ),
-    "test_string_zero_return_value": (
-        "tests.infra.unit.deps.test_main_dispatch",
-        "test_string_zero_return_value",
     ),
     "test_strip_whitespace_preserves_clean": (
         "tests.unit.test_models_validation_full_coverage",
@@ -7243,22 +3966,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_registry_full_coverage",
         "test_summary_properties_and_subclass_storage_reset",
     ),
-    "test_symbol_propagation_keeps_alias_reference_when_asname_used": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_symbol_propagation_keeps_alias_reference_when_asname_used",
-    ),
-    "test_symbol_propagation_renames_import_and_local_references": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_symbol_propagation_renames_import_and_local_references",
-    ),
-    "test_symbol_propagation_updates_mro_base_references": (
-        "tests.infra.unit.refactor.test_infra_refactor_class_and_propagation",
-        "test_symbol_propagation_updates_mro_base_references",
-    ),
-    "test_sync_basemk_scenarios": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_sync_basemk_scenarios",
-    ),
     "test_sync_config_namespace_paths": (
         "tests.unit.test_container_full_coverage",
         "test_sync_config_namespace_paths",
@@ -7266,46 +3973,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_sync_config_registers_namespace_factories_and_fallbacks": (
         "tests.unit.test_container_full_coverage",
         "test_sync_config_registers_namespace_factories_and_fallbacks",
-    ),
-    "test_sync_error_scenarios": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_sync_error_scenarios",
-    ),
-    "test_sync_extra_paths_missing_root_pyproject": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "test_sync_extra_paths_missing_root_pyproject",
-    ),
-    "test_sync_extra_paths_success_modes": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "test_sync_extra_paths_success_modes",
-    ),
-    "test_sync_extra_paths_sync_failure": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "test_sync_extra_paths_sync_failure",
-    ),
-    "test_sync_one_edge_cases": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "test_sync_one_edge_cases",
-    ),
-    "test_sync_root_validation": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_sync_root_validation",
-    ),
-    "test_sync_success_scenarios": (
-        "tests.infra.unit.test_infra_workspace_sync",
-        "test_sync_success_scenarios",
-    ),
-    "test_syntax_error_files_skipped": (
-        "tests.infra.unit.codegen.autofix",
-        "test_syntax_error_files_skipped",
-    ),
-    "test_target_path": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_target_path",
-    ),
-    "test_template_constants": (
-        "tests.infra.unit.test_infra_templates",
-        "test_template_constants",
     ),
     "test_timeout_additional_success_and_reraise_timeout_paths": (
         "tests.unit.test_decorators_full_coverage",
@@ -7355,14 +4022,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_refactor_cli_models_workflow",
         "test_ultrawork_models_cli_runs_dry_run_copy",
     ),
-    "test_unwrap_item": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_unwrap_item",
-    ),
-    "test_unwrap_item_toml_item": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_unwrap_item_toml_item",
-    ),
     "test_update_exception_path": (
         "tests.unit.test_utilities_model_full_coverage",
         "test_update_exception_path",
@@ -7411,14 +4070,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_full_coverage",
         "test_validation_like_error_structure",
     ),
-    "test_violation_analysis_counts_massive_patterns": (
-        "tests.infra.unit.refactor.test_infra_refactor_analysis",
-        "test_violation_analysis_counts_massive_patterns",
-    ),
-    "test_violation_analyzer_skips_non_utf8_files": (
-        "tests.infra.unit.refactor.test_infra_refactor_analysis",
-        "test_violation_analyzer_skips_non_utf8_files",
-    ),
     "test_with_correlation_with_context_track_operation_and_factory": (
         "tests.unit.test_decorators_full_coverage",
         "test_with_correlation_with_context_track_operation_and_factory",
@@ -7427,58 +4078,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_additional",
         "test_with_resource_cleanup_runs",
     ),
-    "test_workspace_check_main_returns_error_without_projects": (
-        "tests.infra.unit.check.workspace_check",
-        "test_workspace_check_main_returns_error_without_projects",
-    ),
-    "test_workspace_cli_migrate_command": (
-        "tests.infra.unit.test_infra_workspace_cli",
-        "test_workspace_cli_migrate_command",
-    ),
-    "test_workspace_cli_migrate_output_contains_summary": (
-        "tests.infra.unit.test_infra_workspace_cli",
-        "test_workspace_cli_migrate_output_contains_summary",
-    ),
-    "test_workspace_migrator_error_handling_on_invalid_workspace": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_workspace_migrator_error_handling_on_invalid_workspace",
-    ),
-    "test_workspace_migrator_makefile_not_found_dry_run": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_workspace_migrator_makefile_not_found_dry_run",
-    ),
-    "test_workspace_migrator_makefile_read_error": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_workspace_migrator_makefile_read_error",
-    ),
-    "test_workspace_migrator_pyproject_write_error": (
-        "tests.infra.unit.test_infra_workspace_migrator_deps",
-        "test_workspace_migrator_pyproject_write_error",
-    ),
-    "test_workspace_root_doc_construction": (
-        "tests.infra.unit.deps.test_modernizer_workspace",
-        "test_workspace_root_doc_construction",
-    ),
-    "test_workspace_root_fallback": (
-        "tests.infra.unit.deps.test_path_sync_main_more",
-        "test_workspace_root_fallback",
-    ),
     "u": ("tests.utilities", "u"),
-    "unit": ("tests.infra.unit", ""),
-    "unwrap_item": ("tests.infra.unit.deps.test_modernizer_helpers", "unwrap_item"),
-    "v": ("tests.infra.unit.core.basemk_validator", "v"),
+    "unit": ("tests.unit", ""),
     "valid_hostnames": ("tests.conftest", "valid_hostnames"),
     "valid_port_numbers": ("tests.conftest", "valid_port_numbers"),
     "valid_ranges": ("tests.conftest", "valid_ranges"),
     "valid_strings": ("tests.conftest", "valid_strings"),
     "valid_uris": ("tests.conftest", "valid_uris"),
     "validation_scenarios": ("tests.conftest", "validation_scenarios"),
-    "validator": ("tests.infra.unit.docs.validator_internals", "validator"),
     "whitespace_strings": ("tests.conftest", "whitespace_strings"),
-    "workspace_root": (
-        "tests.infra.unit.release.orchestrator_publish",
-        "workspace_root",
-    ),
     "x": ("tests.unit.test_automated_mixins", "TestAutomatedFlextMixins"),
 }
 
@@ -7497,9 +4105,7 @@ __all__ = [
     "BadMapping",
     "BadSingletonForTest",
     "BadString",
-    "BrokenScenario",
     "CacheScenarios",
-    "CheckProjectStub",
     "CoerceListValidatorScenario",
     "CoerceValidatorScenario",
     "CollectionScenarios",
@@ -7512,12 +4118,8 @@ __all__ = [
     "CreateUserCommand",
     "CreateUserCommandHandler",
     "DataclassConfigForTest",
-    "DependencyScenario",
-    "DependencyScenarios",
     "DictHandler",
     "EchoHandler",
-    "EmptyScenario",
-    "EngineSafetyStub",
     "EnumScenarios",
     "EventHandler",
     "EventSubscriber",
@@ -7541,12 +4143,6 @@ __all__ = [
     "FlextCommandId",
     "FlextCommandType",
     "FlextCoreTestsUtilities",
-    "FlextInfraTestConstants",
-    "FlextInfraTestHelpers",
-    "FlextInfraTestModels",
-    "FlextInfraTestProtocols",
-    "FlextInfraTestTypes",
-    "FlextInfraTestUtilities",
     "FlextLdapConstants",
     "FlextLdapModels",
     "FlextLdapProtocols",
@@ -7555,7 +4151,6 @@ __all__ = [
     "FlextTestBuilder",
     "FlextTestResult",
     "FlextTestResultCo",
-    "FullScenario",
     "FunctionalExternalService",
     "GenericHandler",
     "GenericModelFactory",
@@ -7563,16 +4158,12 @@ __all__ = [
     "GetUserServiceAuto",
     "GetUserServiceAutoFactory",
     "GetUserServiceFactory",
-    "GitScenario",
-    "GitScenarios",
     "GivenWhenThenBuilder",
     "IntHandler",
     "IsMemberScenario",
     "IsSubsetScenario",
     "LifecycleService",
-    "MinimalScenario",
     "MissingType",
-    "MockScanner",
     "MockScenario",
     "MultiOperationService",
     "NestedClassPropagationTransformer",
@@ -7594,12 +4185,8 @@ __all__ = [
     "Priority",
     "QueryHandler",
     "RailwayTestCase",
-    "RealGitService",
-    "RealSubprocessRunner",
     "ReliabilityScenario",
     "ReliabilityScenarios",
-    "RunCallable",
-    "RunStub",
     "RuntimeCloneService",
     "SampleCommand",
     "SampleEvent",
@@ -7611,7 +4198,6 @@ __all__ = [
     "ServiceTestCase",
     "ServiceTestCaseFactory",
     "ServiceTestCases",
-    "SetupFn",
     "SimpleObj",
     "SingletonWithoutGetGlobalForTest",
     "SingletonWithoutModelDumpForTest",
@@ -7619,28 +4205,16 @@ __all__ = [
     "StrictOptionsForTest",
     "StringHandler",
     "StringParserTestFactory",
-    "SubprocessScenario",
-    "SubprocessScenarios",
     "SuiteBuilder",
     "T",
     "TMessage",
     "T_co",
     "T_contra",
-    "TestAdrHelpers",
     "TestAdvancedPatterns",
     "TestAggregateRoots",
-    "TestAllDirectoriesScanned",
     "TestAllPatternsIntegration",
     "TestAltPropagatesException",
     "TestAssertExists",
-    "TestAuditorBrokenLinks",
-    "TestAuditorCore",
-    "TestAuditorForbiddenTerms",
-    "TestAuditorMainCli",
-    "TestAuditorNormalize",
-    "TestAuditorScope",
-    "TestAuditorScopeFailure",
-    "TestAuditorToMarkdown",
     "TestAutomatedArchitecture",
     "TestAutomatedExceptions",
     "TestAutomatedFlextContainer",
@@ -7659,57 +4233,18 @@ __all__ = [
     "TestBackwardCompatDiscardReturnValue",
     "TestBackwardCompatibility",
     "TestBaseMkGenerationFlow",
-    "TestBaseMkValidatorCore",
-    "TestBaseMkValidatorEdgeCases",
-    "TestBaseMkValidatorSha256",
     "TestBatchOperations",
-    "TestBuildProjectReport",
-    "TestBuildScopes",
-    "TestBuildSiblingExportIndex",
-    "TestBuildTargets",
-    "TestBuilderCore",
-    "TestBuilderScope",
-    "TestBumpNextDev",
-    "TestCensusReportModel",
-    "TestCensusViolationModel",
-    "TestCheckIssueFormatted",
-    "TestCheckMainEntryPoint",
-    "TestCheckOnlyMode",
-    "TestCheckProjectRunners",
-    "TestCheckpoint",
-    "TestChecks",
-    "TestClassifyIssues",
     "TestCleanText",
     "TestCloneContainer",
     "TestCloneRuntime",
-    "TestClose",
-    "TestCollectChanges",
-    "TestCollectInternalDeps",
-    "TestCollectInternalDepsEdgeCases",
-    "TestCollectMarkdownFiles",
     "TestCommands",
     "TestCompleteFlextSystemIntegration",
     "TestComprehensiveIntegration",
     "TestConfig",
     "TestConfigConstants",
-    "TestConfigFixerEnsureProjectExcludes",
-    "TestConfigFixerExecute",
-    "TestConfigFixerFindPyprojectFiles",
-    "TestConfigFixerFixSearchPaths",
-    "TestConfigFixerPathResolution",
-    "TestConfigFixerProcessFile",
-    "TestConfigFixerRemoveIgnoreSubConfig",
-    "TestConfigFixerRun",
-    "TestConfigFixerRunMethods",
-    "TestConfigFixerRunWithVerbose",
-    "TestConfigFixerToArray",
     "TestConfigMapDictOps",
     "TestConfigModels",
     "TestConfigServiceViaDI",
-    "TestConsolidateGroupsPhase",
-    "TestConstants",
-    "TestConstantsQualityGateCLIDispatch",
-    "TestConstantsQualityGateVerdict",
     "TestContainerDIRealExecution",
     "TestContainerInfo",
     "TestContainerIntegration",
@@ -7719,17 +4254,13 @@ __all__ = [
     "TestContext100Coverage",
     "TestContextDataModel",
     "TestContextServiceViaDI",
-    "TestCoreModuleInit",
     "TestCorrelationDomain",
     "TestCoveragePush75Percent",
-    "TestCreate",
-    "TestCreateBranches",
     "TestCreateDatetimeProxy",
     "TestCreateDictProxy",
     "TestCreateFromCallableCarriesException",
     "TestCreateInStatic",
     "TestCreateStrProxy",
-    "TestCreateTag",
     "TestCriticalReturnsResultBool",
     "TestCrossModuleIntegration",
     "TestDIBridgeRealExecution",
@@ -7737,39 +4268,16 @@ __all__ = [
     "TestDataGenerators",
     "TestDebugReturnsResultBool",
     "TestDependencyIntegrationRealExecution",
-    "TestDetectMode",
-    "TestDetectionUncoveredLines",
-    "TestDetectorBasicDetection",
-    "TestDetectorGitRunScenarios",
-    "TestDetectorRepoNameExtraction",
-    "TestDetectorReportFlags",
-    "TestDetectorRunFailures",
     "TestDictMixinOperations",
-    "TestDiscoverProjects",
-    "TestDiscoveryDiscoverProjects",
-    "TestDiscoveryFindAllPyprojectFiles",
-    "TestDiscoveryIterPythonFiles",
-    "TestDiscoveryProjectRoots",
-    "TestDispatchPhase",
     "TestDispatcherDI",
     "TestDomainEvents",
     "TestDomainHashValue",
     "TestDomainLogger",
     "TestEdgeCases",
-    "TestEnforcerExecute",
-    "TestEnsureCheckout",
-    "TestEnsureCheckoutEdgeCases",
-    "TestEnsurePyreflyConfigPhase",
-    "TestEnsurePyrightConfigPhase",
-    "TestEnsurePytestConfigPhase",
-    "TestEnsurePythonVersionFile",
-    "TestEnsureSymlink",
-    "TestEnsureSymlinkEdgeCases",
     "TestEnterprisePatterns",
     "TestEntities",
     "TestEntityCoverageEdgeCases",
     "TestErrorOrPatternUnchanged",
-    "TestErrorReporting",
     "TestErrorReturnsResultBool",
     "TestEventDrivenPatterns",
     "TestExceptionContext",
@@ -7782,11 +4290,6 @@ __all__ = [
     "TestExceptionPropertyAccess",
     "TestExceptionReturnsResultBool",
     "TestExceptionSerialization",
-    "TestExcludedDirectories",
-    "TestExcludedProjects",
-    "TestExtractExports",
-    "TestExtractInlineConstants",
-    "TestExtractVersionExports",
     "TestFacadeDeprecatedAliases",
     "TestFactories",
     "TestFactoriesHelpers",
@@ -7797,13 +4300,6 @@ __all__ = [
     "TestFailWithException",
     "TestFileInfo",
     "TestFileInfoFromModels",
-    "TestFixPyrelfyCLI",
-    "TestFixabilityClassification",
-    "TestFixerCore",
-    "TestFixerMaybeFixLink",
-    "TestFixerProcessFile",
-    "TestFixerScope",
-    "TestFixerToc",
     "TestFixtureFactory",
     "TestFlatMapPropagatesException",
     "TestFlextCommand",
@@ -7815,67 +4311,7 @@ __all__ = [
     "TestFlextDecorators",
     "TestFlextExceptionsHierarchy",
     "TestFlextHandlers",
-    "TestFlextInfraBaseMk",
-    "TestFlextInfraCheck",
-    "TestFlextInfraCodegenLazyInit",
-    "TestFlextInfraCommandRunnerExtra",
-    "TestFlextInfraConfigFixer",
-    "TestFlextInfraConstantsAlias",
-    "TestFlextInfraConstantsCheckNamespace",
-    "TestFlextInfraConstantsConsistency",
-    "TestFlextInfraConstantsEncodingNamespace",
-    "TestFlextInfraConstantsExcludedNamespace",
-    "TestFlextInfraConstantsFilesNamespace",
-    "TestFlextInfraConstantsGatesNamespace",
-    "TestFlextInfraConstantsGithubNamespace",
-    "TestFlextInfraConstantsImmutability",
-    "TestFlextInfraConstantsPathsNamespace",
-    "TestFlextInfraConstantsStatusNamespace",
-    "TestFlextInfraDependencyDetectionModels",
-    "TestFlextInfraDependencyDetectionService",
-    "TestFlextInfraDependencyDetectorModels",
-    "TestFlextInfraDependencyPathSync",
-    "TestFlextInfraDeps",
-    "TestFlextInfraDiscoveryService",
-    "TestFlextInfraDiscoveryServiceUncoveredLines",
-    "TestFlextInfraDocScope",
-    "TestFlextInfraDocs",
-    "TestFlextInfraExtraPathsManager",
-    "TestFlextInfraGitService",
-    "TestFlextInfraInitLazyLoading",
-    "TestFlextInfraInternalDependencySyncService",
-    "TestFlextInfraJsonService",
-    "TestFlextInfraMaintenance",
     "TestFlextInfraNamespaceValidator",
-    "TestFlextInfraPathResolver",
-    "TestFlextInfraPatternsEdgeCases",
-    "TestFlextInfraPatternsMarkdown",
-    "TestFlextInfraPatternsPatternTypes",
-    "TestFlextInfraPatternsTooling",
-    "TestFlextInfraPrManager",
-    "TestFlextInfraPrWorkspaceManager",
-    "TestFlextInfraProtocolsImport",
-    "TestFlextInfraPyprojectModernizer",
-    "TestFlextInfraReportingServiceCore",
-    "TestFlextInfraReportingServiceExtra",
-    "TestFlextInfraRuntimeDevDependencyDetectorInit",
-    "TestFlextInfraRuntimeDevDependencyDetectorRunDetect",
-    "TestFlextInfraRuntimeDevDependencyDetectorRunReport",
-    "TestFlextInfraRuntimeDevDependencyDetectorRunTypings",
-    "TestFlextInfraSubmoduleInitLazyLoading",
-    "TestFlextInfraTomlDocument",
-    "TestFlextInfraTomlHelpers",
-    "TestFlextInfraTomlRead",
-    "TestFlextInfraTypesImport",
-    "TestFlextInfraUtilitiesImport",
-    "TestFlextInfraUtilitiesSelection",
-    "TestFlextInfraVersionClass",
-    "TestFlextInfraVersionModuleLevel",
-    "TestFlextInfraVersionPackageInfo",
-    "TestFlextInfraWorkflowLinter",
-    "TestFlextInfraWorkflowSyncer",
-    "TestFlextInfraWorkspace",
-    "TestFlextInfraWorkspaceChecker",
     "TestFlextLogLevel",
     "TestFlextLogger",
     "TestFlextLoggerIntegration",
@@ -7922,25 +4358,10 @@ __all__ = [
     "TestFlextUtilitiesReliability",
     "TestFlextVersion",
     "TestFormatAppId",
-    "TestFormattingRunRuffFix",
     "TestFromValidationCarriesException",
     "TestFunction",
-    "TestGenerateFile",
-    "TestGenerateNotes",
-    "TestGenerateTypeChecking",
-    "TestGeneratedClassNamingConvention",
-    "TestGeneratedFilesAreValidPython",
-    "TestGeneratorCore",
-    "TestGeneratorHelpers",
-    "TestGeneratorScope",
-    "TestGetDepPaths",
-    "TestGitPush",
-    "TestGitTagOperations",
-    "TestGithubInit",
     "TestGlobalContextManagement",
-    "TestGoFmtEmptyLinesInOutput",
     "TestGuardsDeprecatedMethods",
-    "TestHandleLazyInit",
     "TestHandlerDecoratorMetadata",
     "TestHandlerDiscoveryClass",
     "TestHandlerDiscoveryEdgeCases",
@@ -7950,64 +4371,18 @@ __all__ = [
     "TestHelperConsolidationTransformer",
     "TestHierarchicalExceptionSystem",
     "TestIdempotency",
-    "TestInferOwnerFromOrigin",
-    "TestInferPackage",
     "TestInfoReturnsResultBool",
     "TestInfoWithContentMeta",
-    "TestInfraContainerFunctions",
-    "TestInfraMroPattern",
-    "TestInfraOutputEdgeCases",
-    "TestInfraOutputHeader",
-    "TestInfraOutputMessages",
-    "TestInfraOutputNoColor",
-    "TestInfraOutputProgress",
-    "TestInfraOutputStatus",
-    "TestInfraOutputSummary",
-    "TestInfraServiceRetrieval",
-    "TestInjectCommentsPhase",
     "TestInstanceCreation",
     "TestIntegrationWithRealCommandServices",
-    "TestInventoryServiceCore",
-    "TestInventoryServiceReports",
-    "TestInventoryServiceScripts",
-    "TestIsInternalPathDep",
-    "TestIsRelativeTo",
-    "TestIsWorkspaceMode",
-    "TestIterMarkdownFiles",
-    "TestIterWorkspacePythonModules",
-    "TestJsonWriteFailure",
     "TestLashPropagatesException",
     "TestLevelBasedContextManagement",
     "TestLibraryIntegration",
-    "TestLintAndFormatPublicMethods",
-    "TestLoadAuditBudgets",
-    "TestLoadDependencyLimits",
     "TestLogReturnsResultBool",
     "TestLoggerServiceViaDI",
     "TestLoggingIntegration",
     "TestLoggingMethods",
     "TestLoggingsErrorPaths",
-    "TestMain",
-    "TestMainBaseMkValidate",
-    "TestMainCli",
-    "TestMainCliRouting",
-    "TestMainCommandDispatch",
-    "TestMainDelegation",
-    "TestMainEdgeCases",
-    "TestMainEntryPoint",
-    "TestMainExceptionHandling",
-    "TestMainFunction",
-    "TestMainHelpAndErrors",
-    "TestMainInventory",
-    "TestMainModuleImport",
-    "TestMainReturnValues",
-    "TestMainRouting",
-    "TestMainScan",
-    "TestMainSubcommandDispatch",
-    "TestMainSysArgvModification",
-    "TestMainWithFlags",
-    "TestMaintenanceMainEnforcer",
-    "TestMaintenanceMainSuccess",
     "TestMapPropagatesException",
     "TestMapperBuildFlagsDict",
     "TestMapperCollectActiveKeys",
@@ -8016,56 +4391,19 @@ __all__ = [
     "TestMapperInvertDict",
     "TestMapperMapDictKeys",
     "TestMapperTransformValues",
-    "TestMarkdownReportEmptyGates",
-    "TestMarkdownReportSkipsEmptyGates",
-    "TestMarkdownReportWithErrors",
-    "TestMaybeWriteTodo",
-    "TestMerge",
-    "TestMergeChildExports",
     "TestMetadata",
     "TestMigrationComplexity",
     "TestMigrationScenario1",
     "TestMigrationScenario2",
     "TestMigrationScenario4",
     "TestMigrationScenario5",
-    "TestMigratorDryRun",
-    "TestMigratorEdgeCases",
-    "TestMigratorFlextCore",
-    "TestMigratorInternalMakefile",
-    "TestMigratorInternalPyproject",
-    "TestMigratorPoetryDeps",
-    "TestMigratorReadFailures",
-    "TestMigratorWriteFailures",
     "TestModelIntegration",
     "TestModelSerialization",
     "TestModelValidation",
-    "TestModernizerEdgeCases",
-    "TestModernizerRunAndMain",
-    "TestModernizerUncoveredLines",
-    "TestModuleAndTypingsFlow",
-    "TestModuleLevelWrappers",
     "TestMonadicOperationsUnchanged",
-    "TestMroFacadeMethods",
-    "TestMypyEmptyLinesInOutput",
-    "TestNormalizeStringList",
     "TestOkNoneGuardStillRaises",
-    "TestOrchestrate",
-    "TestOrchestratorBasic",
-    "TestOrchestratorFailures",
     "TestOutputSingletonConsistency",
-    "TestOwnerFromRemoteUrl",
-    "TestParseArgs",
-    "TestParseGitmodules",
-    "TestParseRepoMap",
-    "TestParseViolationInvalid",
-    "TestParseViolationValid",
-    "TestParser",
-    "TestParsingModuleAst",
-    "TestParsingModuleCst",
-    "TestPathDepPathsPep621",
-    "TestPathDepPathsPoetry",
     "TestPathResolverDiscoveryFlow",
-    "TestPathSyncEdgeCases",
     "TestPattern1V1Explicit",
     "TestPattern2V2Property",
     "TestPattern3RailwayV1",
@@ -8078,98 +4416,20 @@ __all__ = [
     "TestPerformanceBenchmarks",
     "TestPerformanceDomain",
     "TestPhase2FinalCoveragePush",
-    "TestPhaseBuild",
-    "TestPhasePublish",
-    "TestPhaseValidate",
-    "TestPhaseVersion",
-    "TestPreviousTag",
-    "TestProcessDirectory",
-    "TestProcessFileReadError",
     "TestProjectLevelRefactor",
-    "TestProjectResultProperties",
     "TestPropertyBasedPatterns",
     "TestProtocolComplianceStructlogLogger",
-    "TestPushRelease",
-    "TestPytestDiagExtractorCore",
-    "TestPytestDiagLogParsing",
-    "TestPytestDiagParseXml",
     "TestQueries",
-    "TestReadDoc",
-    "TestReadExistingDocstring",
-    "TestReadRequiredMinor",
     "TestRealWiringScenarios",
     "TestRealWorldScenarios",
-    "TestReleaseInit",
-    "TestReleaseMainFlow",
-    "TestReleaseMainParsing",
-    "TestReleaseMainTagResolution",
-    "TestReleaseMainVersionResolution",
-    "TestReleaseOrchestratorExecute",
-    "TestRemovedCompatibilityMethods",
-    "TestRenderTemplate",
-    "TestResolveAliases",
-    "TestResolveRef",
-    "TestResolveVersionInteractive",
     "TestResultBasics",
     "TestResultTransformations",
-    "TestRewriteDepPaths",
-    "TestRewritePep621",
-    "TestRewritePoetry",
-    "TestRuffFormatDuplicateFiles",
-    "TestRunAudit",
-    "TestRunBandit",
-    "TestRunBuild",
-    "TestRunCLIExtended",
-    "TestRunCommand",
-    "TestRunDeptry",
-    "TestRunDetect",
-    "TestRunFix",
-    "TestRunGenerate",
-    "TestRunGo",
-    "TestRunLint",
-    "TestRunMake",
-    "TestRunMarkdown",
-    "TestRunMigrate",
-    "TestRunMypy",
-    "TestRunMypyStubHints",
-    "TestRunOrchestrate",
-    "TestRunPipCheck",
-    "TestRunPr",
-    "TestRunPrWorkspace",
-    "TestRunProjectsBehavior",
-    "TestRunProjectsReports",
-    "TestRunProjectsValidation",
-    "TestRunPyrefly",
-    "TestRunPyright",
-    "TestRunRuffFix",
-    "TestRunRuffFormat",
-    "TestRunRuffLint",
-    "TestRunSingleProject",
-    "TestRunSync",
-    "TestRunValidate",
-    "TestRunWorkflows",
     "TestRuntimeDeprecatedNormalizeMethods",
     "TestRuntimeDictLike",
     "TestRuntimeTypeChecking",
     "TestSafeCarriesException",
-    "TestSafeLoadYaml",
     "TestSafeString",
-    "TestSafetyCheckpoint",
-    "TestSafetyRollback",
-    "TestSafetyWorkspaceValidation",
-    "TestScaffoldProjectCreatesSrcModules",
-    "TestScaffoldProjectCreatesTestsModules",
-    "TestScaffoldProjectIdempotency",
-    "TestScaffoldProjectNoop",
-    "TestScanAstPublicDefs",
-    "TestScanFileBatch",
-    "TestScanModels",
-    "TestScannerCore",
-    "TestScannerHelpers",
-    "TestScannerMultiFile",
     "TestScopedContextManagement",
-    "TestSelectedProjectNames",
-    "TestSelectorFunction",
     "TestService",
     "TestService100Coverage",
     "TestServiceBootstrap",
@@ -8180,85 +4440,24 @@ __all__ = [
     "TestServicerChaining",
     "TestServicesIntegrationViaDI",
     "TestShortAlias",
-    "TestShouldBubbleUp",
-    "TestShouldUseColor",
-    "TestShouldUseUnicode",
-    "TestSkillValidatorAstGrepCount",
-    "TestSkillValidatorCore",
-    "TestSkillValidatorRenderTemplate",
-    "TestStaticMethods",
-    "TestStatus",
     "TestStrictContainerNormalization",
-    "TestStubChainAnalyze",
-    "TestStubChainCore",
-    "TestStubChainDiscoverProjects",
-    "TestStubChainIsInternal",
-    "TestStubChainStubExists",
-    "TestStubChainValidate",
-    "TestSubcommandMapping",
-    "TestSync",
-    "TestSyncMethodEdgeCases",
-    "TestSyncMethodEdgeCasesMore",
-    "TestSyncOne",
-    "TestSyncOperation",
-    "TestSyncProject",
-    "TestSyncWorkspace",
-    "TestSynthesizedRepoMap",
     "TestTextLogger",
     "TestTimeoutEnforcerCleanup",
     "TestTimeoutEnforcerEdgeCases",
     "TestTimeoutEnforcerExecutorManagement",
     "TestTimeoutEnforcerInitialization",
-    "TestToInfraValue",
     "TestTraceReturnsResultBool",
     "TestTraversePropagatesException",
-    "TestTriggerRelease",
-    "TestUpdateChangelog",
     "TestUser",
     "TestUtilitiesCoverage",
     "TestUtilitiesDomain",
-    "TestValidateCore",
-    "TestValidateGitRefEdgeCases",
-    "TestValidateReport",
-    "TestValidateScope",
     "TestValidateValueImmutable",
     "TestValidatorCallable",
     "TestValidatorMapMixin",
     "TestValues",
-    "TestVersionFiles",
-    "TestView",
-    "TestViolationPattern",
     "TestWarningReturnsResultBool",
-    "TestWorkspaceCheckCLI",
-    "TestWorkspaceCheckerBuildGateResult",
-    "TestWorkspaceCheckerCollectMarkdownFiles",
-    "TestWorkspaceCheckerDirsWithPy",
-    "TestWorkspaceCheckerErrorSummary",
-    "TestWorkspaceCheckerExecute",
-    "TestWorkspaceCheckerExistingCheckDirs",
-    "TestWorkspaceCheckerInitOSError",
-    "TestWorkspaceCheckerInitialization",
-    "TestWorkspaceCheckerMarkdownReport",
-    "TestWorkspaceCheckerMarkdownReportEdgeCases",
-    "TestWorkspaceCheckerParseGateCSV",
-    "TestWorkspaceCheckerResolveGates",
-    "TestWorkspaceCheckerResolveWorkspaceRootFallback",
-    "TestWorkspaceCheckerRunBandit",
-    "TestWorkspaceCheckerRunCommand",
-    "TestWorkspaceCheckerRunGo",
-    "TestWorkspaceCheckerRunMarkdown",
-    "TestWorkspaceCheckerRunMypy",
-    "TestWorkspaceCheckerRunPyright",
-    "TestWorkspaceCheckerSARIFReport",
-    "TestWorkspaceCheckerSARIFReportEdgeCases",
     "TestWorkspaceDetectionOrchestrationFlow",
     "TestWorkspaceLevelRefactor",
-    "TestWorkspaceRoot",
-    "TestWorkspaceRootFromEnv",
-    "TestWorkspaceRootFromParents",
-    "TestWriteJson",
-    "TestWriteMarkdown",
-    "TestWriteReport",
     "Teste",
     "Testr",
     "TestrCoverage",
@@ -8340,29 +4539,15 @@ __all__ = [
     "ValidationScenario",
     "ValidationScenarios",
     "ValidationService",
-    "WorkspaceFactory",
-    "WorkspaceScenario",
-    "WorkspaceScenarios",
     "arrange_act_assert",
-    "array",
-    "as_string_list",
     "assert_rejects",
     "assert_result_success",
     "assert_validates",
     "assertion_helpers",
-    "auditor",
-    "basemk",
     "benchmark",
-    "builder",
     "c",
-    "canonical_dev_dependencies",
-    "census",
-    "check",
     "clean_container",
-    "codegen",
-    "container",
     "contracts",
-    "core",
     "create_compare_entities_cases",
     "create_compare_value_objects_cases",
     "create_hash_entity_cases",
@@ -8370,33 +4555,18 @@ __all__ = [
     "create_validate_entity_has_id_cases",
     "create_validate_value_object_immutable_cases",
     "d",
-    "dedupe_specs",
-    "dep_name",
-    "deps",
-    "detector",
-    "discovery",
     "dispatcher",
-    "doc",
-    "docs",
     "e",
     "empty_strings",
-    "engine",
-    "ensure_table",
-    "extract_dep_name",
-    "fixer",
     "fixture_factory",
     "flext_result_failure",
     "flext_result_success",
     "flext_tests",
-    "gen",
     "generators_module",
     "get_memory_usage",
-    "git_repo",
-    "github",
     "h",
     "handlers_module",
     "helpers",
-    "infra",
     "infra_git",
     "infra_git_repo",
     "infra_io",
@@ -8417,49 +4587,26 @@ __all__ = [
     "invalid_hostnames",
     "invalid_port_numbers",
     "invalid_uris",
-    "io",
-    "is_external",
     "m",
     "make_result_logger",
     "mapper",
     "mark_test_pattern",
     "mock_external_service",
-    "normalize_link",
-    "orchestrator",
     "out_of_range",
     "p",
     "parser_scenarios",
     "patterns",
-    "project_dev_groups",
-    "pyright_content",
     "pytestmark",
     "r",
-    "real_docs_project",
-    "real_git_repo",
-    "real_makefile_project",
-    "real_python_package",
-    "real_toml_project",
-    "real_workspace",
-    "refactor",
-    "release",
     "reliability_scenarios",
     "reset_all_factories",
     "reset_global_container",
     "reset_runtime_state",
-    "rewrite_dep_paths",
-    "run_lint",
-    "run_pr",
-    "run_pr_workspace",
-    "run_workflows",
-    "runner",
     "runtime_cov_tests",
     "runtime_module",
     "runtime_tests",
     "s",
     "sample_data",
-    "service",
-    "should_skip_target",
-    "svc",
     "t",
     "temp_dir",
     "temp_directory",
@@ -8470,53 +4617,22 @@ __all__ = [
     "test_aliases_are_available",
     "test_args_get_enum_params_annotated_unwrap_branch",
     "test_args_get_enum_params_branches",
-    "test_array",
-    "test_as_string_list",
-    "test_as_string_list_toml_item",
     "test_async_log_writer_paths",
     "test_async_log_writer_shutdown_with_full_queue",
     "test_at_take_and_as_branches",
-    "test_atomic_write_fail",
-    "test_atomic_write_ok",
     "test_authentication_error_normalizes_extra_kwargs_into_context",
     "test_auto_value_lowercases_input",
     "test_bad_string_and_bad_bool_raise_value_error",
     "test_base_error_normalize_metadata_merges_existing_metadata_model",
-    "test_basemk_build_config_with_none",
-    "test_basemk_build_config_with_project_name",
-    "test_basemk_cli_generate_to_file",
-    "test_basemk_cli_generate_to_stdout",
-    "test_basemk_engine_execute_calls_render_all",
-    "test_basemk_engine_render_all_handles_template_error",
-    "test_basemk_engine_render_all_returns_string",
-    "test_basemk_engine_render_all_with_valid_config",
-    "test_basemk_main_calls_sys_exit",
-    "test_basemk_main_ensures_structlog_configured",
-    "test_basemk_main_output_to_stdout",
-    "test_basemk_main_with_generate_command",
-    "test_basemk_main_with_generation_failure",
-    "test_basemk_main_with_invalid_command",
-    "test_basemk_main_with_no_command",
-    "test_basemk_main_with_none_argv",
-    "test_basemk_main_with_output_file",
-    "test_basemk_main_with_project_name",
-    "test_basemk_main_with_write_failure",
     "test_basic_imports_work",
     "test_batch_fail_collect_flatten_and_progress",
     "test_bi_map_returns_forward_copy_and_inverse",
     "test_bind_operation_context_without_ensure_correlation_and_bind_failure",
     "test_build_apply_transform_and_process_error_paths",
-    "test_build_impact_map_extracts_rename_entries",
-    "test_build_impact_map_extracts_signature_entries",
     "test_build_options_invalid_only_kwargs_returns_base",
     "test_builder",
-    "test_bump_version_invalid",
-    "test_bump_version_result_type",
-    "test_bump_version_valid",
     "test_callable_registration_with_attribute",
     "test_canonical_aliases_are_available",
-    "test_canonical_dev_dependencies",
-    "test_capture_cases",
     "test_categories_clear_and_symbols_are_available",
     "test_centralize_pydantic_cli_outputs_extended_metrics",
     "test_centralizer_converts_typed_dict_factory_to_model",
@@ -8524,7 +4640,6 @@ __all__ = [
     "test_centralizer_moves_dict_alias_in_typings_without_keyword_name",
     "test_centralizer_moves_manual_type_aliases_to_models_file",
     "test_check_implements_protocol_false_non_runtime_protocol",
-    "test_check_main_executes_real_cli",
     "test_checker_logger_and_safe_type_hints_fallback",
     "test_chk_exercises_missed_branches",
     "test_circuit_breaker_transitions_and_metrics",
@@ -8532,17 +4647,8 @@ __all__ = [
     "test_class_nesting_keeps_unmapped_top_level_classes",
     "test_class_nesting_moves_top_level_class_into_new_namespace",
     "test_class_nesting_refactor_single_file_end_to_end",
-    "test_class_reconstructor_reorders_each_contiguous_method_block",
-    "test_class_reconstructor_reorders_methods_by_config",
-    "test_class_reconstructor_skips_interleaved_non_method_members",
     "test_clear_keys_values_items_and_validate_branches",
     "test_clear_operation_scope_and_handle_log_result_paths",
-    "test_cli_result_by_project_root",
-    "test_codegen_dir_returns_all_exports",
-    "test_codegen_getattr_raises_attribute_error",
-    "test_codegen_init_getattr_raises_attribute_error",
-    "test_codegen_lazy_imports_work",
-    "test_codegen_pipeline_end_to_end",
     "test_collection_batch_failure_error_capture_and_parse_sequence_outer_error",
     "test_combined_with_and_without_railway_uses_injection",
     "test_command_pagination_limit",
@@ -8553,8 +4659,6 @@ __all__ = [
     "test_configure_structlog_edge_paths",
     "test_configure_structlog_print_logger_factory_fallback",
     "test_configure_with_resource_register_and_factory_error_paths",
-    "test_consolidate_groups_phase_apply_removes_old_groups",
-    "test_consolidate_groups_phase_apply_with_empty_poetry_group",
     "test_constants_auto_enum_and_bimapping_paths",
     "test_construct_transform_and_deep_eq_branches",
     "test_container_and_service_domain_paths",
@@ -8589,21 +4693,15 @@ __all__ = [
     "test_create_merges_metadata_dict_branch",
     "test_create_overloads_and_auto_correlation",
     "test_create_scoped_instance_and_scoped_additional_branches",
-    "test_current_workspace_version",
     "test_data_factory",
     "test_decorators_family_blocks_dispatcher_target",
-    "test_dedupe_specs",
-    "test_dep_name",
     "test_dependency_integration_and_wiring_paths",
     "test_dependency_registration_duplicate_guards",
     "test_deprecated_class_noop_init_branch",
     "test_deprecated_normalize_to_general_value_warns",
     "test_deprecated_normalize_to_metadata_value_warns",
     "test_deprecated_wrapper_emits_warning_and_returns_value",
-    "test_detect_mode_with_nonexistent_path",
-    "test_detect_mode_with_path_object",
     "test_discover_project_roots_without_nested_git_dirs",
-    "test_discover_projects_wrapper",
     "test_discovery_narrowed_function_paths",
     "test_dispatch_after_handler_removal_fails",
     "test_dispatch_auto_discovery_handler",
@@ -8618,21 +4716,9 @@ __all__ = [
     "test_dispatch_unknown_mode_raises",
     "test_dispatcher_family_blocks_models_target",
     "test_dispatcher_reliability_branch_paths",
-    "test_engine_always_enables_class_nesting_file_rule",
-    "test_engine_constants_shared",
     "test_enrich_and_ensure_trace_context_branches",
     "test_ensure_and_extract_array_index_helpers",
     "test_ensure_dict_branches",
-    "test_ensure_future_annotations_after_docstring",
-    "test_ensure_future_annotations_moves_existing_import_to_top",
-    "test_ensure_pyrefly_config_phase_apply_errors",
-    "test_ensure_pyrefly_config_phase_apply_ignore_errors",
-    "test_ensure_pyrefly_config_phase_apply_python_version",
-    "test_ensure_pyrefly_config_phase_apply_search_path",
-    "test_ensure_pytest_config_phase_apply_markers",
-    "test_ensure_pytest_config_phase_apply_minversion",
-    "test_ensure_pytest_config_phase_apply_python_classes",
-    "test_ensure_table",
     "test_ensure_trace_context_dict_conversion_paths",
     "test_ensure_utc_datetime_adds_tzinfo_when_naive",
     "test_ensure_utc_datetime_preserves_aware",
@@ -8645,63 +4731,29 @@ __all__ = [
     "test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception",
     "test_execute_retry_loop_covers_default_linear_and_never_ran",
     "test_export_paths_with_metadata_and_statistics",
-    "test_extract_dep_name",
     "test_extract_error_paths_and_prop_accessor",
     "test_extract_field_value_and_ensure_variants",
     "test_extract_mapping_or_none_branches",
     "test_extract_message_type_annotation_and_dict_subclass_paths",
     "test_extract_message_type_from_handle_with_only_self",
     "test_extract_message_type_from_parameter_branches",
-    "test_extract_requirement_name",
     "test_facade_binding_is_correct",
     "test_field_and_fields_multi_branches",
-    "test_files_modified_tracks_affected_files",
     "test_filter_map_normalize_convert_helpers",
     "test_find_mapping_no_match_and_merge_error_paths",
-    "test_fix_pyrefly_config_main_executes_real_cli_help",
-    "test_flexcore_excluded_from_run",
-    "test_flext_infra_pyproject_modernizer_find_pyproject_files",
-    "test_flext_infra_pyproject_modernizer_process_file_invalid_toml",
     "test_flext_message_type_alias_adapter",
     "test_flow_through_short_circuits_on_failure",
     "test_from_validation_and_to_model_paths",
     "test_frozen_value_model_equality_and_hash",
     "test_general_value_helpers_and_logger",
     "test_generate_special_paths_and_dynamic_subclass",
-    "test_generator_execute_returns_generated_content",
-    "test_generator_fails_for_invalid_make_syntax",
-    "test_generator_generate_propagates_render_failure",
-    "test_generator_generate_with_basemk_config_object",
-    "test_generator_generate_with_dict_config",
-    "test_generator_generate_with_invalid_dict_config",
-    "test_generator_generate_with_none_config_uses_default",
-    "test_generator_initializes_with_custom_engine",
-    "test_generator_initializes_with_default_engine",
-    "test_generator_normalize_config_with_basemk_config",
-    "test_generator_normalize_config_with_dict",
-    "test_generator_normalize_config_with_invalid_dict",
-    "test_generator_normalize_config_with_none",
-    "test_generator_renders_with_config_override",
-    "test_generator_validate_generated_output_handles_oserror",
-    "test_generator_write_creates_parent_directories",
-    "test_generator_write_fails_without_output_or_stream",
-    "test_generator_write_handles_file_permission_error",
-    "test_generator_write_saves_output_file",
-    "test_generator_write_to_file",
-    "test_generator_write_to_stream",
-    "test_generator_write_to_stream_handles_oserror",
     "test_generators_additional_missed_paths",
     "test_generators_mapping_non_dict_normalization_path",
     "test_get_and_get_typed_resource_factory_paths",
-    "test_get_current_typings_from_pyproject_wrapper",
     "test_get_enum_values_returns_immutable_sequence",
     "test_get_logger_none_name_paths",
     "test_get_plugin_and_register_metadata_and_list_items_exception",
-    "test_get_required_typings_wrapper",
     "test_get_service_info",
-    "test_gitignore_entry_scenarios",
-    "test_gitignore_sync_failure",
-    "test_gitignore_write_failure",
     "test_group_sort_unique_slice_chunk_branches",
     "test_guard_in_has_empty_none_helpers",
     "test_guard_instance_attribute_access_warnings",
@@ -8716,30 +4768,13 @@ __all__ = [
     "test_handler_builder_fluent_methods",
     "test_handler_type_literal_and_invalid",
     "test_helper_consolidation_is_prechecked",
-    "test_helpers_alias_exposed",
-    "test_helpers_alias_is_reachable_helpers",
-    "test_helpers_alias_is_reachable_main",
-    "test_helpers_alias_is_reachable_project_obj",
     "test_identifiable_unique_id_empty_rejected",
     "test_implements_decorator_helper_methods_and_static_wrappers",
     "test_implements_decorator_validation_error_message",
-    "test_import_modernizer_adds_c_when_existing_c_is_aliased",
-    "test_import_modernizer_does_not_rewrite_function_parameter_shadow",
-    "test_import_modernizer_does_not_rewrite_rebound_local_name_usage",
-    "test_import_modernizer_partial_import_keeps_unmapped_symbols",
-    "test_import_modernizer_partial_import_with_asname_keeps_unmapped_alias",
-    "test_import_modernizer_skips_rewrite_when_runtime_alias_shadowed_in_function",
-    "test_import_modernizer_skips_when_runtime_alias_name_is_blocked",
-    "test_import_modernizer_updates_aliased_symbol_usage",
-    "test_in_context_typevar_not_flagged",
     "test_inactive_and_none_value_paths",
     "test_init_fallback_and_lazy_returns_result_property",
     "test_initialize_di_components_error_paths",
     "test_initialize_di_components_second_type_error_branch",
-    "test_inject_comments_phase_apply_banner",
-    "test_inject_comments_phase_apply_broken_group_section",
-    "test_inject_comments_phase_apply_markers",
-    "test_inject_comments_phase_apply_with_optional_dependencies_dev",
     "test_inject_sets_missing_dependency_from_container",
     "test_invalid_handler_mode_init_raises",
     "test_invalid_registration_attempts",
@@ -8752,14 +4787,6 @@ __all__ = [
     "test_is_type_protocol_fallback_branches",
     "test_is_valid_handles_validation_exception",
     "test_lash_runtime_result_paths",
-    "test_lazy_import_rule_hoists_import_to_module_level",
-    "test_lazy_import_rule_uses_fix_action_for_hoist",
-    "test_legacy_import_bypass_collapses_to_primary_import",
-    "test_legacy_rule_uses_fix_action_remove_for_aliases",
-    "test_legacy_wrapper_forwarding_keywords_is_inlined_as_alias",
-    "test_legacy_wrapper_forwarding_varargs_is_inlined_as_alias",
-    "test_legacy_wrapper_function_is_inlined_as_alias",
-    "test_legacy_wrapper_non_passthrough_is_not_inlined",
     "test_log_operation_track_perf_exception_adds_duration",
     "test_loggings_bind_clear_level_error_paths",
     "test_loggings_context_and_factory_paths",
@@ -8768,24 +4795,6 @@ __all__ = [
     "test_loggings_remaining_branch_paths",
     "test_loggings_source_and_log_error_paths",
     "test_loggings_uncovered_level_trace_path_and_exception_guards",
-    "test_main_all_groups_defined",
-    "test_main_analyze_violations_is_read_only",
-    "test_main_analyze_violations_writes_json_report",
-    "test_main_discovery_failure",
-    "test_main_group_modules_are_valid",
-    "test_main_help_flag_returns_zero",
-    "test_main_no_changes_needed",
-    "test_main_project_invalid_toml",
-    "test_main_project_no_name",
-    "test_main_project_non_string_name",
-    "test_main_project_obj_not_dict_first_loop",
-    "test_main_project_obj_not_dict_second_loop",
-    "test_main_returns_error_when_no_args",
-    "test_main_success_modes",
-    "test_main_sync_failure",
-    "test_main_unknown_group_returns_error",
-    "test_main_with_changes_and_dry_run",
-    "test_main_with_changes_no_dry_run",
     "test_map_error_identity_and_transform",
     "test_map_flags_collect_and_invert_branches",
     "test_map_flat_map_and_then_paths",
@@ -8797,33 +4806,13 @@ __all__ = [
     "test_metadata_attributes_accepts_t_dict_and_mapping",
     "test_metadata_attributes_rejects_basemodel_non_mapping_dump",
     "test_metadata_attributes_rejects_non_mapping",
-    "test_migrate_makefile_not_found_non_dry_run",
     "test_migrate_protocols_rewrites_references_with_p_alias",
-    "test_migrate_pyproject_flext_core_non_dry_run",
     "test_migrate_to_mro_inlines_alias_constant_into_constants_class",
     "test_migrate_to_mro_moves_constant_and_rewrites_reference",
     "test_migrate_to_mro_moves_manual_uppercase_assignment",
     "test_migrate_to_mro_normalizes_facade_alias_to_c",
     "test_migrate_to_mro_rejects_unknown_target",
     "test_migrate_typings_rewrites_references_with_t_alias",
-    "test_migrator_apply_updates_project_files",
-    "test_migrator_discovery_failure",
-    "test_migrator_dry_run_reports_changes_without_writes",
-    "test_migrator_execute_returns_failure",
-    "test_migrator_flext_core_dry_run",
-    "test_migrator_flext_core_project_skipped",
-    "test_migrator_gitignore_already_normalized_dry_run",
-    "test_migrator_handles_missing_pyproject_gracefully",
-    "test_migrator_has_flext_core_dependency_in_poetry",
-    "test_migrator_has_flext_core_dependency_poetry_deps_not_table",
-    "test_migrator_has_flext_core_dependency_poetry_table_missing",
-    "test_migrator_makefile_not_found_dry_run",
-    "test_migrator_makefile_read_failure",
-    "test_migrator_no_changes_needed",
-    "test_migrator_preserves_custom_makefile_content",
-    "test_migrator_pyproject_not_found_dry_run",
-    "test_migrator_workspace_root_not_exists",
-    "test_migrator_workspace_root_project_detection",
     "test_misc_unregistration_clear_and_reset",
     "test_mixins_container_registration_and_logger_paths",
     "test_mixins_context_logging_and_cqrs_paths",
@@ -8839,12 +4828,9 @@ __all__ = [
     "test_models_handler_uncovered_mode_and_reset_paths",
     "test_models_settings_branch_paths",
     "test_models_settings_context_validator_and_non_standard_status_input",
-    "test_mro_checker_keeps_external_attribute_base",
-    "test_mro_redundancy_checker_removes_nested_attribute_inheritance",
     "test_mro_resolver_accepts_expected_order",
     "test_mro_resolver_rejects_wrong_order",
     "test_mro_scanner_includes_constants_variants_in_all_scopes",
-    "test_multiple_instances_independent",
     "test_names_uses_cache_on_second_call",
     "test_namespace_enforce_cli_fails_on_manual_protocol_violation",
     "test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring",
@@ -8877,9 +4863,6 @@ __all__ = [
     "test_options_merge_conflict_paths_and_empty_merge_options",
     "test_pagination_response_string_fallbacks",
     "test_parse_mapping_outer_exception",
-    "test_parse_semver_invalid",
-    "test_parse_semver_result_type",
-    "test_parse_semver_valid",
     "test_parser_convert_and_norm_branches",
     "test_parser_internal_helpers_additional_coverage",
     "test_parser_parse_helpers_and_primitive_coercion_branches",
@@ -8888,14 +4871,6 @@ __all__ = [
     "test_parser_safe_length_and_parse_delimited_error_paths",
     "test_parser_split_and_normalize_exception_paths",
     "test_parser_success_and_edge_paths_cover_major_branches",
-    "test_pattern_rule_converts_dict_annotations_to_mapping",
-    "test_pattern_rule_keeps_dict_param_when_copy_used",
-    "test_pattern_rule_keeps_dict_param_when_subscript_mutated",
-    "test_pattern_rule_keeps_type_cast_when_not_nested_object_cast",
-    "test_pattern_rule_optionally_converts_return_annotations_to_mapping",
-    "test_pattern_rule_removes_configured_redundant_casts",
-    "test_pattern_rule_removes_nested_type_object_cast_chain",
-    "test_pattern_rule_skips_overload_signatures",
     "test_private_coerce_with_enum_and_string",
     "test_private_getters_exception_paths",
     "test_private_is_member_by_name",
@@ -8903,9 +4878,6 @@ __all__ = [
     "test_private_parse_success_and_failure",
     "test_process_context_data_and_related_convenience",
     "test_process_outer_exception_and_coercion_branches",
-    "test_project_dev_groups",
-    "test_project_dev_groups_missing_sections",
-    "test_project_without_src_returns_empty",
     "test_protocol_and_simple_guard_helpers",
     "test_protocol_model_and_settings_methods",
     "test_protocol_runtime_check",
@@ -8919,9 +4891,6 @@ __all__ = [
     "test_rate_limiter_jitter_application",
     "test_reconfigure_and_reset_state_paths",
     "test_recover_tap_and_tap_error_paths",
-    "test_refactor_files_skips_non_python_inputs",
-    "test_refactor_project_integrates_safety_manager",
-    "test_refactor_project_scans_tests_and_scripts_dirs",
     "test_refactor_utilities_iter_python_files_includes_examples_and_scripts",
     "test_register_existing_providers_full_paths_and_misc_methods",
     "test_register_existing_providers_skips_and_register_core_fallback",
@@ -8930,18 +4899,9 @@ __all__ = [
     "test_register_handler_with_message_type",
     "test_register_handler_without_route_fails",
     "test_register_singleton_register_factory_and_bulk_register_paths",
-    "test_release_tag_from_branch_invalid",
-    "test_release_tag_from_branch_result_type",
-    "test_release_tag_from_branch_valid",
     "test_remaining_build_fields_construct_and_eq_paths",
     "test_remaining_uncovered_branches",
-    "test_render_all_generates_large_makefile",
-    "test_render_all_has_no_scripts_path_references",
-    "test_render_failure",
-    "test_render_success",
-    "test_replace_project_version",
     "test_resolve_env_file_and_log_level",
-    "test_resolve_gates_maps_type_alias",
     "test_resolve_logger_prefers_logger_attribute",
     "test_result_property_raises_on_failure",
     "test_results_internal_conflict_paths_and_combine",
@@ -8949,32 +4909,8 @@ __all__ = [
     "test_retry_unreachable_timeouterror_path",
     "test_reuse_existing_runtime_coverage_branches",
     "test_reuse_existing_runtime_scenarios",
-    "test_rewrite_dep_paths_dry_run",
-    "test_rewrite_dep_paths_read_failure",
-    "test_rewrite_dep_paths_with_internal_names",
-    "test_rewrite_dep_paths_with_no_deps",
-    "test_rewrite_pep621_invalid_path_dep_regex",
-    "test_rewrite_pep621_no_project_table",
-    "test_rewrite_pep621_non_string_item",
-    "test_rewrite_poetry_no_poetry_table",
-    "test_rewrite_poetry_no_tool_table",
-    "test_rewrite_poetry_with_non_dict_value",
-    "test_rule_dispatch_fails_on_invalid_pattern_rule_config",
-    "test_rule_dispatch_fails_on_unknown_rule_mapping",
-    "test_rule_dispatch_keeps_legacy_id_fallback_mapping",
-    "test_rule_dispatch_prefers_fix_action_metadata",
     "test_rules_merge_combines_model_dump_values",
-    "test_run_cases",
-    "test_run_cli_run_returns_one_for_fail",
-    "test_run_cli_run_returns_two_for_error",
-    "test_run_cli_run_returns_zero_for_pass",
-    "test_run_cli_with_fail_fast_flag",
-    "test_run_cli_with_multiple_projects",
-    "test_run_deptry_wrapper",
-    "test_run_mypy_stub_hints_wrapper",
-    "test_run_pip_check_wrapper",
     "test_run_pipeline_query_and_event_paths",
-    "test_run_raw_cases",
     "test_runtime_create_instance_failure_branch",
     "test_runtime_family_blocks_non_runtime_target",
     "test_runtime_integration_tracking_paths",
@@ -8993,16 +4929,10 @@ __all__ = [
     "test_set_set_all_get_validation_and_error_paths",
     "test_settings_materialize_and_context_overrides",
     "test_shortcuts_delegate_to_primary_methods",
-    "test_signature_propagation_removes_and_adds_keywords",
-    "test_signature_propagation_renames_call_keyword",
     "test_small_mapper_convenience_methods",
-    "test_standalone_final_detected_as_fixable",
-    "test_standalone_typealias_detected_as_fixable",
-    "test_standalone_typevar_detected_as_fixable",
     "test_statistics_and_custom_fields_validators",
     "test_statistics_from_dict_and_none_conflict_resolution",
     "test_strict_registration_and_dispatch",
-    "test_string_zero_return_value",
     "test_strip_whitespace_preserves_clean",
     "test_strip_whitespace_returns_empty_on_spaces",
     "test_strip_whitespace_trims_leading_trailing",
@@ -9010,22 +4940,8 @@ __all__ = [
     "test_structlog_proxy_context_var_get_set_reset_paths",
     "test_summary_error_paths_and_bindings_failures",
     "test_summary_properties_and_subclass_storage_reset",
-    "test_symbol_propagation_keeps_alias_reference_when_asname_used",
-    "test_symbol_propagation_renames_import_and_local_references",
-    "test_symbol_propagation_updates_mro_base_references",
-    "test_sync_basemk_scenarios",
     "test_sync_config_namespace_paths",
     "test_sync_config_registers_namespace_factories_and_fallbacks",
-    "test_sync_error_scenarios",
-    "test_sync_extra_paths_missing_root_pyproject",
-    "test_sync_extra_paths_success_modes",
-    "test_sync_extra_paths_sync_failure",
-    "test_sync_one_edge_cases",
-    "test_sync_root_validation",
-    "test_sync_success_scenarios",
-    "test_syntax_error_files_skipped",
-    "test_target_path",
-    "test_template_constants",
     "test_timeout_additional_success_and_reraise_timeout_paths",
     "test_timeout_covers_exception_timeout_branch",
     "test_timeout_raises_when_successful_call_exceeds_limit",
@@ -9038,8 +4954,6 @@ __all__ = [
     "test_type_guards_and_narrowing_failures",
     "test_type_guards_result",
     "test_ultrawork_models_cli_runs_dry_run_copy",
-    "test_unwrap_item",
-    "test_unwrap_item_toml_item",
     "test_update_exception_path",
     "test_update_statistics_remove_hook_and_clone_false_result",
     "test_update_success_path_returns_ok_result",
@@ -9052,32 +4966,17 @@ __all__ = [
     "test_validate_tags_list_normalizes",
     "test_validate_value_object_immutable_exception_and_no_setattr_branch",
     "test_validation_like_error_structure",
-    "test_violation_analysis_counts_massive_patterns",
-    "test_violation_analyzer_skips_non_utf8_files",
     "test_with_correlation_with_context_track_operation_and_factory",
     "test_with_resource_cleanup_runs",
-    "test_workspace_check_main_returns_error_without_projects",
-    "test_workspace_cli_migrate_command",
-    "test_workspace_cli_migrate_output_contains_summary",
-    "test_workspace_migrator_error_handling_on_invalid_workspace",
-    "test_workspace_migrator_makefile_not_found_dry_run",
-    "test_workspace_migrator_makefile_read_error",
-    "test_workspace_migrator_pyproject_write_error",
-    "test_workspace_root_doc_construction",
-    "test_workspace_root_fallback",
     "u",
     "unit",
-    "unwrap_item",
-    "v",
     "valid_hostnames",
     "valid_port_numbers",
     "valid_ranges",
     "valid_strings",
     "valid_uris",
     "validation_scenarios",
-    "validator",
     "whitespace_strings",
-    "workspace_root",
     "x",
 ]
 

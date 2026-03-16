@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final, Literal
+from typing import Final
 
 
 class FlextConstants:
@@ -21,46 +21,6 @@ class FlextConstants:
     Provides immutable, namespace-organized constants for system configuration,
     validation limits, error handling, and operational defaults.
     """
-
-    class _Base:
-        """Shared base StrEnums for common values across all domains."""
-
-        class CommonStatus(StrEnum):
-            """Common status values for system operations."""
-
-            ACTIVE = "active"
-            INACTIVE = "inactive"
-            PENDING = "pending"
-            RUNNING = "running"
-            COMPLETED = "completed"
-            FAILED = "failed"
-            CANCELLED = "cancelled"
-            COMPENSATING = "compensating"
-            ARCHIVED = "archived"
-
-        class CommonAction(StrEnum):
-            """Common action types for data operations."""
-
-            GET = "get"
-            CREATE = "create"
-            UPDATE = "update"
-            DELETE = "delete"
-            LIST = "list"
-
-        class CommonFormat(StrEnum):
-            """Common data serialization formats."""
-
-            JSON = "json"
-            YAML = "yaml"
-            TOML = "toml"
-            XML = "xml"
-
-        class CommonLevel(StrEnum):
-            """Common severity levels for operations."""
-
-            NONE = "none"
-            WARN = "warn"
-            ERROR = "error"
 
     NAME: Final[str] = "FLEXT"
     INITIAL_TIME: Final[float] = 0.0
@@ -485,221 +445,6 @@ class FlextConstants:
             CLEAR = "clear"
             GET = "get"
 
-    class Literals:
-        """Literal type aliases for type-safe annotations."""
-
-        type LogLevelLiteral = Literal[
-            FlextConstants.Settings.LogLevel.DEBUG,
-            FlextConstants.Settings.LogLevel.INFO,
-            FlextConstants.Settings.LogLevel.WARNING,
-            FlextConstants.Settings.LogLevel.ERROR,
-            FlextConstants.Settings.LogLevel.CRITICAL,
-        ]
-        type EnvironmentLiteral = Literal[
-            FlextConstants.Settings.Environment.DEVELOPMENT,
-            FlextConstants.Settings.Environment.STAGING,
-            FlextConstants.Settings.Environment.PRODUCTION,
-            FlextConstants.Settings.Environment.TESTING,
-            FlextConstants.Settings.Environment.LOCAL,
-        ]
-        type RegistrationStatusLiteral = Literal["active", "inactive"]
-        type StateLiteral = Literal[
-            FlextConstants.Domain.Status.ACTIVE,
-            FlextConstants.Domain.Status.INACTIVE,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPENSATING,
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.SpecialStatus.SENT,
-            FlextConstants.Cqrs.SpecialStatus.IDLE,
-            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
-            FlextConstants.Cqrs.HealthStatus.HEALTHY,
-            FlextConstants.Cqrs.HealthStatus.DEGRADED,
-            FlextConstants.Cqrs.HealthStatus.UNHEALTHY,
-        ]
-        type ActionLiteral = Literal[
-            FlextConstants.Cqrs.Action.GET,
-            FlextConstants.Cqrs.Action.CREATE,
-            FlextConstants.Cqrs.Action.UPDATE,
-            FlextConstants.Cqrs.Action.DELETE,
-            FlextConstants.Cqrs.Action.LIST,
-        ]
-        type FailureLevelLiteral = Literal[
-            FlextConstants.Exceptions.FailureLevel.STRICT,
-            FlextConstants.Exceptions.FailureLevel.WARN,
-            FlextConstants.Exceptions.FailureLevel.PERMISSIVE,
-        ]
-        type ProcessingModeLiteral = Literal[
-            FlextConstants.Cqrs.ProcessingMode.BATCH,
-            FlextConstants.Cqrs.ProcessingMode.STREAM,
-            FlextConstants.Cqrs.ProcessingMode.PARALLEL,
-            FlextConstants.Cqrs.ProcessingMode.SEQUENTIAL,
-        ]
-        type ProcessingStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-            FlextConstants.Cqrs.CommonStatus.CANCELLED,
-        ]
-        type ProcessingPhaseLiteral = Literal[
-            FlextConstants.Cqrs.ProcessingPhase.PREPARE,
-            FlextConstants.Cqrs.ProcessingPhase.EXECUTE,
-            FlextConstants.Cqrs.ProcessingPhase.VALIDATE,
-            FlextConstants.Cqrs.ProcessingPhase.COMPLETE,
-        ]
-        type BindTypeLiteral = Literal[
-            FlextConstants.Cqrs.BindType.TEMPORARY,
-            FlextConstants.Cqrs.BindType.PERMANENT,
-        ]
-        type MergeStrategyLiteral = Literal[
-            FlextConstants.Cqrs.MergeStrategy.REPLACE,
-            FlextConstants.Cqrs.MergeStrategy.UPDATE,
-            FlextConstants.Cqrs.MergeStrategy.MERGE_DEEP,
-        ]
-        type StatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-            FlextConstants.Cqrs.CommonStatus.COMPENSATING,
-        ]
-        type HealthStatusLiteral = Literal[
-            FlextConstants.Cqrs.HealthStatus.HEALTHY,
-            FlextConstants.Cqrs.HealthStatus.DEGRADED,
-            FlextConstants.Cqrs.HealthStatus.UNHEALTHY,
-        ]
-        type TokenTypeLiteral = Literal[
-            FlextConstants.Cqrs.TokenType.BEARER,
-            FlextConstants.Cqrs.TokenType.API_KEY,
-            FlextConstants.Cqrs.TokenType.JWT,
-        ]
-        type NotificationStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.SpecialStatus.SENT,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type TokenStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type CircuitBreakerStateLiteral = Literal[
-            FlextConstants.Reliability.CircuitBreakerState.CLOSED,
-            FlextConstants.Reliability.CircuitBreakerState.OPEN,
-            FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN,
-        ]
-        type CircuitBreakerStatusLiteral = Literal[
-            FlextConstants.Cqrs.SpecialStatus.IDLE,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type BatchStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type ExportStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type OperationStatusLiteral = Literal[
-            FlextConstants.Cqrs.OperationStatus.SUCCESS,
-            FlextConstants.Cqrs.OperationStatus.FAILURE,
-            FlextConstants.Cqrs.OperationStatus.PARTIAL,
-        ]
-        type SerializationFormatLiteral = Literal[
-            FlextConstants.Cqrs.SerializationFormat.JSON,
-            FlextConstants.Cqrs.SerializationFormat.YAML,
-            FlextConstants.Cqrs.SerializationFormat.TOML,
-            FlextConstants.Cqrs.SerializationFormat.MSGPACK,
-        ]
-        type CompressionLiteral = Literal[
-            FlextConstants.Cqrs.Compression.NONE,
-            FlextConstants.Cqrs.Compression.GZIP,
-            FlextConstants.Cqrs.Compression.BZIP2,
-            FlextConstants.Cqrs.Compression.LZ4,
-        ]
-        type AggregationLiteral = Literal[
-            FlextConstants.Cqrs.Aggregation.SUM,
-            FlextConstants.Cqrs.Aggregation.AVG,
-            FlextConstants.Cqrs.Aggregation.MIN,
-            FlextConstants.Cqrs.Aggregation.MAX,
-            FlextConstants.Cqrs.Aggregation.COUNT,
-        ]
-        type PersistenceLevelLiteral = Literal[
-            FlextConstants.Cqrs.PersistenceLevel.MEMORY,
-            FlextConstants.Cqrs.PersistenceLevel.DISK,
-            FlextConstants.Cqrs.PersistenceLevel.DISTRIBUTED,
-        ]
-        type TargetFormatLiteral = Literal[
-            FlextConstants.Cqrs.TargetFormat.FULL,
-            FlextConstants.Cqrs.TargetFormat.COMPACT,
-            FlextConstants.Cqrs.TargetFormat.MINIMAL,
-        ]
-        type WarningLevelLiteral = Literal[
-            FlextConstants.Cqrs.WarningLevel.NONE,
-            FlextConstants.Cqrs.WarningLevel.WARN,
-            FlextConstants.Cqrs.WarningLevel.ERROR,
-        ]
-        type OutputFormatLiteral = Literal[
-            FlextConstants.Cqrs.OutputFormat.DICT, FlextConstants.Cqrs.OutputFormat.JSON
-        ]
-        type ModeLiteral = Literal[
-            FlextConstants.Cqrs.Mode.VALIDATION, FlextConstants.Cqrs.Mode.SERIALIZATION
-        ]
-        type ErrorTypeLiteral = Literal[
-            FlextConstants.Exceptions.ErrorType.VALIDATION,
-            FlextConstants.Exceptions.ErrorType.CONFIGURATION,
-            FlextConstants.Exceptions.ErrorType.OPERATION,
-            FlextConstants.Exceptions.ErrorType.CONNECTION,
-            FlextConstants.Exceptions.ErrorType.TIMEOUT,
-            FlextConstants.Exceptions.ErrorType.AUTHORIZATION,
-            FlextConstants.Exceptions.ErrorType.AUTHENTICATION,
-            FlextConstants.Exceptions.ErrorType.NOT_FOUND,
-            FlextConstants.Exceptions.ErrorType.ATTRIBUTE_ACCESS,
-            FlextConstants.Exceptions.ErrorType.CONFLICT,
-            FlextConstants.Exceptions.ErrorType.RATE_LIMIT,
-            FlextConstants.Exceptions.ErrorType.CIRCUIT_BREAKER,
-            FlextConstants.Exceptions.ErrorType.TYPE_ERROR,
-            FlextConstants.Exceptions.ErrorType.VALUE_ERROR,
-            FlextConstants.Exceptions.ErrorType.RUNTIME_ERROR,
-            FlextConstants.Exceptions.ErrorType.SYSTEM_ERROR,
-        ]
-        "Error type literals for error categorization and type-safe error handling."
-        type ContextOperationGetLiteral = Literal["get"]
-        type ContextOperationModifyLiteral = Literal["bind", "unbind", "clear"]
-        type ReturnResultTrueLiteral = Literal[True]
-        type ReturnResultFalseLiteral = Literal[False]
-        type OrderStatusLiteral = Literal[
-            FlextConstants.Domain.OrderStatus.PENDING,
-            FlextConstants.Domain.OrderStatus.CONFIRMED,
-            FlextConstants.Domain.OrderStatus.SHIPPED,
-            FlextConstants.Domain.OrderStatus.DELIVERED,
-            FlextConstants.Domain.OrderStatus.CANCELLED,
-        ]
-        type ActiveOrderStatusLiteral = Literal[
-            FlextConstants.Domain.OrderStatus.PENDING,
-            FlextConstants.Domain.OrderStatus.CONFIRMED,
-            FlextConstants.Domain.OrderStatus.SHIPPED,
-        ]
-        type TerminalOrderStatusLiteral = Literal[
-            FlextConstants.Domain.OrderStatus.DELIVERED,
-            FlextConstants.Domain.OrderStatus.CANCELLED,
-        ]
-        type CurrencyLiteral = Literal[
-            FlextConstants.Domain.Currency.USD,
-            FlextConstants.Domain.Currency.EUR,
-            FlextConstants.Domain.Currency.GBP,
-            FlextConstants.Domain.Currency.BRL,
-        ]
-
     class Domain:
         """Domain-specific constants using StrEnum + Pydantic 2."""
 
@@ -727,11 +472,6 @@ class FlextConstants:
             DELIVERED = "delivered"
             CANCELLED = "cancelled"
 
-        type ActiveStates = Literal[
-            FlextConstants.Domain.Status.ACTIVE, FlextConstants.Domain.Status.INACTIVE
-        ]
-        type TerminalStates = Literal[FlextConstants.Domain.Status.ARCHIVED,]
-
     class Inherited:
         """Explicit references to inherited constants from FlextConstants.
 
@@ -756,13 +496,6 @@ class FlextConstants:
             OPERATION = "operation"
             SAGA = "saga"
 
-        type CommandMessageTypeLiteral = Literal["command"]
-        type QueryMessageTypeLiteral = Literal["query"]
-        type EventMessageTypeLiteral = Literal["event"]
-        type HandlerTypeLiteral = Literal[
-            "command", "query", "event", "operation", "saga"
-        ]
-
         class CommonStatus(StrEnum):
             """CQRS common status enumeration."""
 
@@ -783,13 +516,6 @@ class FlextConstants:
             GAUGE = "gauge"
             HISTOGRAM = "histogram"
             SUMMARY = "summary"
-
-        type ServiceMetricTypeLiteral = Literal[
-            FlextConstants.Cqrs.MetricType.COUNTER,
-            FlextConstants.Cqrs.MetricType.GAUGE,
-            FlextConstants.Cqrs.MetricType.HISTOGRAM,
-            FlextConstants.Cqrs.MetricType.SUMMARY,
-        ]
 
         class ServiceMetricCategory(StrEnum):
             """Service metric categories enumeration.
@@ -818,21 +544,6 @@ class FlextConstants:
             STREAM = "stream"
             PARALLEL = "parallel"
             SEQUENTIAL = "sequential"
-
-        type ProcessingStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-            FlextConstants.Cqrs.CommonStatus.CANCELLED,
-        ]
-        type SagaStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-            FlextConstants.Cqrs.CommonStatus.COMPENSATING,
-        ]
 
         class ProcessingPhase(StrEnum):
             """CQRS processing phases enumeration."""
@@ -875,36 +586,6 @@ class FlextConstants:
             BEARER = "bearer"
             API_KEY = "api_key"
             JWT = "jwt"
-
-        type NotificationStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.SpecialStatus.SENT,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type TokenStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type CircuitBreakerStatusLiteral = Literal[
-            FlextConstants.Cqrs.SpecialStatus.IDLE,
-            FlextConstants.Cqrs.CommonStatus.RUNNING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type BatchStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
-        type ExportStatusLiteral = Literal[
-            FlextConstants.Cqrs.CommonStatus.PENDING,
-            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
-            FlextConstants.Cqrs.CommonStatus.COMPLETED,
-            FlextConstants.Cqrs.CommonStatus.FAILED,
-        ]
 
         class OperationStatus(StrEnum):
             """CQRS operation status enumeration."""

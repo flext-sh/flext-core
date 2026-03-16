@@ -109,7 +109,7 @@ if TYPE_CHECKING:
     from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
-    from flext_core.typings import FlextTypes, RegistryBindingKey, t
+    from flext_core.typings import FlextTypes, t
     from flext_core.utilities import FlextUtilities, u, validate_pydantic_model
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -206,7 +206,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Handle": ("flext_core.dispatcher", "Handle"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
-    "RegistryBindingKey": ("flext_core.typings", "RegistryBindingKey"),
     "ResultHelpers": ("flext_core._utilities.result_helpers", "ResultHelpers"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
     "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
@@ -300,7 +299,6 @@ __all__ = [
     "P",
     "R",
     "RateLimiterManager",
-    "RegistryBindingKey",
     "ResultHelpers",
     "ResultT",
     "RetryPolicy",

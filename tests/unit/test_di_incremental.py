@@ -22,18 +22,17 @@ from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import override
 
-from flext_tests import tm
+from flext_tests import tm, u
 
 from flext_core import (
     FlextContainer,
     FlextContext,
     FlextRuntime,
     FlextSettings,
+    m,
     r,
     s,
 )
-from flext_core._models.service import FlextModelsService
-from tests import m, u
 
 from ..test_utils import assertion_helpers
 
@@ -297,8 +296,8 @@ class TestServiceBootstrapWithDI:
             @override
             def _runtime_bootstrap_options(
                 cls,
-            ) -> FlextModelsService.RuntimeBootstrapOptions:
-                return FlextModelsService.RuntimeBootstrapOptions(
+            ) -> m.RuntimeBootstrapOptions:
+                return m.RuntimeBootstrapOptions(
                     services={"custom_service": "custom_value"},
                     factories={"custom_factory": lambda: {"custom": "data"}},
                 )

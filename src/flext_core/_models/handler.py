@@ -96,7 +96,7 @@ class FlextModelsHandler:
             Field(description="Registration mode (auto_discovery, explicit)"),
         ]
         handler_mode: Annotated[
-            c.Cqrs.HandlerTypeLiteral | c.Cqrs.HandlerType | None,
+            c.Cqrs.HandlerType | None,
             Field(default=None, description="Handler mode (command/query/event)"),
         ] = None
         message_type: Annotated[
@@ -152,7 +152,7 @@ class FlextModelsHandler:
             ),
         ] = None
         handler_mode: Annotated[
-            c.Cqrs.HandlerTypeLiteral | None,
+            c.Cqrs.HandlerType | None,
             Field(
                 default=None,
                 description="Handler operation mode (command, query, event)",
@@ -275,7 +275,7 @@ class FlextModelsHandler:
             ),
         ]
         handler_mode: Annotated[
-            c.Cqrs.HandlerTypeLiteral,
+            c.Cqrs.HandlerType,
             Field(
                 min_length=c.Reliability.RETRY_COUNT_MIN,
                 description="Mode of handler execution",
@@ -327,7 +327,7 @@ class FlextModelsHandler:
 
         @classmethod
         def create_for_handler(
-            cls, handler_name: str, handler_mode: c.Cqrs.HandlerTypeLiteral
+            cls, handler_name: str, handler_mode: c.Cqrs.HandlerType
         ) -> Self:
             """Create execution context for a handler.
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
@@ -187,7 +187,7 @@ class FlextModelsService:
 
         service_name: str
         metric_types: Annotated[
-            list[c.Cqrs.ServiceMetricTypeLiteral],
+            list[Literal["performance", "errors", "throughput"]],
             Field(
                 default_factory=lambda: list(c.Cqrs.DEFAULT_METRIC_CATEGORIES),
                 description="Types of metrics to collect",

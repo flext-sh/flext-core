@@ -52,4 +52,6 @@ class TestsFlextTypes(FlextTestsTypes, FlextInfraTypes):
         "Handler configuration mapping specific to flext-core handlers."
 
 
-__all__ = ["T", "T_co", "T_contra", "TestsFlextTypes"]
+t = TestsFlextTypes
+
+__all__ = ["T", "T_co", "T_contra", "TestsFlextTypes", "t"]

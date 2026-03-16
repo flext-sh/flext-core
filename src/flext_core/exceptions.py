@@ -23,7 +23,6 @@ from pydantic import (
 )
 
 from flext_core import FlextRuntime, c, m, t
-from flext_core._models.base import FlextModelFoundation
 
 
 class FlextExceptions:
@@ -33,7 +32,7 @@ class FlextExceptions:
     for consistent error handling and logging.
     """
 
-    _V = FlextModelFoundation.Validators
+    _V = m.Validators
 
     class _ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""

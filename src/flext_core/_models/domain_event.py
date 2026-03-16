@@ -147,7 +147,7 @@ class FlextModelsDomainEvent:
         """Base class for domain events."""
 
         message_type: Annotated[
-            c.Cqrs.EventMessageTypeLiteral,
+            str,
             Field(
                 default="event",
                 frozen=True,

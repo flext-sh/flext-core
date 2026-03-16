@@ -41,7 +41,6 @@ T_Settings = TypeVar("T_Settings", bound=BaseSettings)
 TRuntime = TypeVar("TRuntime")
 TV = TypeVar("TV")
 TV_co = TypeVar("TV_co", covariant=True)
-type RegistryBindingKey = str | type
 U = TypeVar("U")
 
 
@@ -58,6 +57,7 @@ class FlextTypes:
     type Primitives = str | int | float | bool
     type Scalar = str | int | float | bool | datetime
     type Container = Scalar | Path
+    type RegistryBindingKey = str | type
 
     # --- RUNTIME isinstance() TUPLES ---
     # PEP 695 `type` aliases are TypeAliasType and CANNOT be used with isinstance().
@@ -207,7 +207,6 @@ __all__ = [
     "MessageT_contra",
     "P",
     "R",
-    "RegistryBindingKey",
     "ResultT",
     "T",
     "TRuntime",

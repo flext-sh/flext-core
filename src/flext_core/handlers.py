@@ -22,7 +22,6 @@ from typing import ClassVar, Unpack, override
 from pydantic import BaseModel, ConfigDict
 
 from flext_core import c, e, m, p, r, t, u, x
-from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -79,13 +78,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
     _HANDLER_TYPE_LITERALS: ClassVar[
-        Mapping[c.Cqrs.HandlerType, c.Cqrs.HandlerTypeLiteral]
+        Mapping[c.Cqrs.HandlerType, c.Cqrs.HandlerType]
     ] = {
-        c.Cqrs.HandlerType.COMMAND: "command",
-        c.Cqrs.HandlerType.QUERY: "query",
-        c.Cqrs.HandlerType.EVENT: "event",
-        c.Cqrs.HandlerType.OPERATION: "operation",
-        c.Cqrs.HandlerType.SAGA: "saga",
+        c.Cqrs.HandlerType.COMMAND: c.Cqrs.HandlerType.COMMAND,
+        c.Cqrs.HandlerType.QUERY: c.Cqrs.HandlerType.QUERY,
+        c.Cqrs.HandlerType.EVENT: c.Cqrs.HandlerType.EVENT,
+        c.Cqrs.HandlerType.OPERATION: c.Cqrs.HandlerType.OPERATION,
+        c.Cqrs.HandlerType.SAGA: c.Cqrs.HandlerType.SAGA,
     }
 
     def __init__(self, *, config: m.Handler | None = None) -> None:
@@ -125,7 +124,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
         self._metrics: dict[str, t.MetadataAttributeValue] = {}
-        self._stack: list[m.ExecutionContext | FlextModelsContainers.ConfigMap] = []
+        self._stack: list[m.ExecutionContext | m.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless dispatcher integration."""
@@ -274,8 +273,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     @staticmethod
     def _handler_type_to_literal(
         handler_type: c.Cqrs.HandlerType,
-    ) -> c.Cqrs.HandlerTypeLiteral:
-        """Convert HandlerType StrEnum to HandlerTypeLiteral."""
+    ) -> c.Cqrs.HandlerType:
+        """Convert handler type to canonical HandlerType."""
         if handler_type in FlextHandlers._HANDLER_TYPE_LITERALS:
             return FlextHandlers._HANDLER_TYPE_LITERALS[handler_type]
         msg = f"Unsupported handler type: {handler_type}"
@@ -435,22 +434,20 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
         raise NotImplementedError
 
-    def pop_context(self) -> r[FlextModelsContainers.ConfigMap]:
+    def pop_context(self) -> r[m.ConfigMap]:
         """Pop execution context from the local handler stack."""
         if not self._stack:
-            return r[FlextModelsContainers.ConfigMap].ok(
-                FlextModelsContainers.ConfigMap(root={})
-            )
+            return r[m.ConfigMap].ok(m.ConfigMap(root={}))
         popped = self._stack.pop()
         if isinstance(popped, m.ExecutionContext):
-            context_dict = FlextModelsContainers.ConfigMap(
+            context_dict = m.ConfigMap(
                 root={
                     "handler_name": popped.handler_name,
                     "handler_mode": popped.handler_mode,
                 }
             )
-            return r[FlextModelsContainers.ConfigMap].ok(context_dict)
-        return r[FlextModelsContainers.ConfigMap].ok(popped)
+            return r[m.ConfigMap].ok(context_dict)
+        return r[m.ConfigMap].ok(popped)
 
     def push_context(
         self, ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue]
@@ -467,16 +464,16 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         handler_mode_str = (
             str(handler_mode_raw) if handler_mode_raw is not None else "operation"
         )
-        handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
-            "command"
+        handler_mode_literal: c.Cqrs.HandlerType = (
+            c.Cqrs.HandlerType.COMMAND
             if handler_mode_str == "command"
-            else "query"
+            else c.Cqrs.HandlerType.QUERY
             if handler_mode_str == "query"
-            else "event"
+            else c.Cqrs.HandlerType.EVENT
             if handler_mode_str == "event"
-            else "saga"
+            else c.Cqrs.HandlerType.SAGA
             if handler_mode_str == "saga"
-            else "operation"
+            else c.Cqrs.HandlerType.OPERATION
         )
         execution_ctx = m.ExecutionContext.create_for_handler(
             handler_name=handler_name, handler_mode=handler_mode_literal

@@ -8,11 +8,11 @@ from datetime import UTC, datetime
 from typing import cast
 
 import pytest
-from flext_tests import tm
+from flext_tests import t, tm
 from pydantic import BaseModel
 
 from flext_core import r
-from tests import c, m, t, u
+from tests import c, m, u
 
 from ._models import _Model
 

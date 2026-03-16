@@ -28,19 +28,7 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    FlextSettings,
-    e,
-    h,
-    m,
-    p,
-    r,
-    t,
-    u,
-    x,
-)
+from flext_core import FlextContext, FlextSettings, e, h, m, p, r, t, u, x
 
 
 class FlextService[
@@ -296,6 +284,8 @@ class FlextService[
         This method is called by :meth:`_create_initial_runtime` which uses
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
+        from flext_core.container import FlextContainer
+
         config_cls = config_type or FlextSettings
         runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (
