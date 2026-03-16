@@ -266,7 +266,7 @@ class TestuTypeGuardsNormalizeToMetadata:
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         test_dict = {123: "value", "key": "test"}
-        result = u.normalize_to_metadata(cast("RuntimeData", test_dict))
+        result = u.normalize_to_metadata(cast("FlextRuntime.RuntimeData", test_dict))
         tm.that(result, is_=dict)
         tm.that(result, has="123")
 
@@ -321,7 +321,7 @@ class TestuTypeGuardsNormalizeToMetadata:
                 return "custom_object"
 
         obj = CustomObject()
-        result = u.normalize_to_metadata(cast("RuntimeData", obj))
+        result = u.normalize_to_metadata(cast("FlextRuntime.RuntimeData", obj))
         tm.that(result, is_=str)
         tm.that(result, eq="custom_object")
 

@@ -288,20 +288,20 @@ def test_normalization_edge_branches() -> None:
             return iter(["x"])
 
     normalized_dict_like = FlextRuntime.normalize_to_container(
-        cast("RuntimeData", DictLike()),
+        cast("FlextRuntime.RuntimeData", DictLike()),
     )
     tm.that(isinstance(normalized_dict_like, m.Dict), eq=True)
     tm.that(getattr(normalized_dict_like, "root", None), eq={"x": 1})
     metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
     tm.that(isinstance(metadata_cfg, str), eq=True)
     metadata_dict_like = FlextRuntime.normalize_to_metadata(
-        cast("RuntimeData", DictLike()),
+        cast("FlextRuntime.RuntimeData", DictLike()),
     )
     tm.that(
         isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1}, eq=True
     )
     metadata_list = FlextRuntime.normalize_to_metadata(
-        cast("RuntimeData", ["a", object()]),
+        cast("FlextRuntime.RuntimeData", ["a", object()]),
     )
     tm.that(isinstance(metadata_list, list), eq=True)
 
@@ -600,14 +600,14 @@ def test_model_support_and_hash_compare_paths() -> None:
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id("a", cast("RuntimeData", object()))
+            FlextRuntime.compare_entities_by_id("a", cast("FlextRuntime.RuntimeData", object()))
             is False
         ),
         eq=True,
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(cast("RuntimeData", object()), 3)
+            FlextRuntime.compare_entities_by_id(cast("FlextRuntime.RuntimeData", object()), 3)
             is False
         ),
         eq=True,
@@ -622,14 +622,14 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_entities_by_id(
-                cast("RuntimeData", A()),
-                cast("RuntimeData", B()),
+                cast("FlextRuntime.RuntimeData", A()),
+                cast("FlextRuntime.RuntimeData", B()),
             )
             is False
         ),
         eq=True,
     )
-    obj = cast("RuntimeData", object())
+    obj = cast("FlextRuntime.RuntimeData", object())
     tm.that(
         FlextRuntime.hash_entity_by_id(obj),
         eq=hash(
@@ -640,7 +640,7 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_value_objects_by_value(
-                cast("RuntimeData", object()),
+                cast("FlextRuntime.RuntimeData", object()),
                 1,
             )
             is False
@@ -662,8 +662,8 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_value_objects_by_value(
-                cast("RuntimeData", C()),
-                cast("RuntimeData", D()),
+                cast("FlextRuntime.RuntimeData", C()),
+                cast("FlextRuntime.RuntimeData", D()),
             )
             is False
         ),
@@ -672,8 +672,8 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_value_objects_by_value(
-                cast("RuntimeData", C()),
-                cast("RuntimeData", C()),
+                cast("FlextRuntime.RuntimeData", C()),
+                cast("FlextRuntime.RuntimeData", C()),
             )
             is True
         ),
@@ -1015,15 +1015,15 @@ def test_model_helpers_remaining_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_entities_by_id(
-                cast("RuntimeData", left),
-                cast("RuntimeData", right),
+                cast("FlextRuntime.RuntimeData", left),
+                cast("FlextRuntime.RuntimeData", right),
             )
             is True
         ),
         eq=True,
     )
     tm.that(
-        isinstance(FlextRuntime.hash_entity_by_id(cast("RuntimeData", left)), int),
+        isinstance(FlextRuntime.hash_entity_by_id(cast("FlextRuntime.RuntimeData", left)), int),
         eq=True,
     )
     vm_a = ValueModel(a=1)

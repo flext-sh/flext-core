@@ -587,7 +587,7 @@ class TestFlextRuntime:
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = FlextRuntime.is_dict_like(cast("RuntimeData", test_case.test_input))
+        result = FlextRuntime.is_dict_like(cast("FlextRuntime.RuntimeData", test_case.test_input))
         tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
@@ -603,7 +603,7 @@ class TestFlextRuntime:
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = FlextRuntime.is_list_like(cast("RuntimeData", test_case.test_input))
+        result = FlextRuntime.is_list_like(cast("FlextRuntime.RuntimeData", test_case.test_input))
         tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
@@ -618,7 +618,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = FlextRuntime.is_valid_json(cast("RuntimeData", test_case.test_input))
+        result = FlextRuntime.is_valid_json(cast("FlextRuntime.RuntimeData", test_case.test_input))
         tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
@@ -634,7 +634,7 @@ class TestFlextRuntime:
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_valid_identifier(
-            cast("RuntimeData", test_case.test_input)
+            cast("FlextRuntime.RuntimeData", test_case.test_input)
         )
         tm.that(result == test_case.expected_result, eq=True)
 
