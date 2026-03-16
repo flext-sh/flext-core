@@ -1217,9 +1217,9 @@ class FlextUtilitiesGuards:
         hostname_pattern = (
             "^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
         )
-        if re.search(hostname_pattern, hostname) is None:
-            return r[str].fail(f"{field_name} has invalid hostname format")
-        return r[str].ok(hostname)
+        return FlextUtilitiesGuards.validate_pattern(
+            hostname, hostname_pattern, field_name
+        )
 
     @staticmethod
     def validate_length[T: Sized](
@@ -1272,9 +1272,7 @@ class FlextUtilitiesGuards:
     def validate_uri(uri: str, field_name: str = "uri") -> r[str]:
         """Return success when ``uri`` is a valid URI/URL format."""
         uri_pattern = "^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\s]+$"
-        if re.search(uri_pattern, uri) is None:
-            return r[str].fail(f"{field_name} has invalid URI format")
-        return r[str].ok(uri)
+        return FlextUtilitiesGuards.validate_pattern(uri, uri_pattern, field_name)
 
     @staticmethod
     def validate_pydantic_model[T: BaseModel](
