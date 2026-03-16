@@ -65,6 +65,7 @@ from types import ModuleType, TracebackType
 from typing import (
     Annotated,
     ClassVar,
+    TypeGuard,
     Self,
     TypeIs,
     cast,
@@ -487,7 +488,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.RuntimeData,
-    ) -> TypeIs[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
+    ) -> TypeGuard[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
         """Type guard to check if value is dict-like.
 
         Note:
@@ -620,7 +621,7 @@ class FlextRuntime:
     @staticmethod
     def _is_structlog_processor(
         value: t.RuntimeData,
-    ) -> TypeIs[structlog.types.Processor]:
+    ) -> TypeGuard[structlog.types.Processor]:
         return callable(value)
 
     @staticmethod
