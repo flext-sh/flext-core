@@ -83,8 +83,7 @@ from pydantic import (
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
-from flext_core import T, c, p, t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core import T, c, m, p, t
 
 
 class FlextRuntime:
@@ -185,7 +184,7 @@ class FlextRuntime:
         def get(cls) -> type:
             """Lazily import and return the Metadata model."""
             if cls._model is None:
-                cls._model = FlextModelFoundation.Metadata
+                cls._model = m.Metadata
             return cls._model
 
     Metadata: ClassVar[type] = _LazyMetadata.get()
@@ -487,7 +486,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.RuntimeData,
-    ) -> TypeGuard[FlextModelsContainers.ConfigMap | Mapping[str, t.NormalizedValue]]:
+    ) -> TypeGuard[m.ConfigMap | Mapping[str, t.NormalizedValue]]:
         """Type guard to check if value is dict-like.
 
         Note:
@@ -502,7 +501,7 @@ class FlextRuntime:
 
         """
         match value:
-            case FlextModelsContainers.ConfigMap():
+            case m.ConfigMap():
                 return True
             case Mapping():
                 return True
@@ -646,7 +645,7 @@ class FlextRuntime:
         def _to_plain_container(value: t.Container | BaseModel) -> t.NormalizedValue:
             if isinstance(
                 value,
-                (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict),
+                (m.ConfigMap, m.Dict),
             ):
                 return {
                     str(inner_key): _to_plain_container(
@@ -654,7 +653,7 @@ class FlextRuntime:
                     )
                     for inner_key, inner_value in value.root.items()
                 }
-            if isinstance(value, FlextModelsContainers.ObjectList):
+            if isinstance(value, m.ObjectList):
                 return list(value.root)
             if isinstance(value, (str, int, float, bool, datetime, Path)):
                 return value
@@ -662,7 +661,7 @@ class FlextRuntime:
 
         if FlextRuntime.is_dict_like(val):
             normalized_dict: dict[str, t.NormalizedValue | BaseModel] = {}
-            if isinstance(val, FlextModelsContainers.ConfigMap):
+            if isinstance(val, m.ConfigMap):
                 for key, item in val.root.items():
                     normalized_item = FlextRuntime.normalize_to_container(item)
                     normalized_dict[key] = _to_plain_container(normalized_item)
@@ -671,14 +670,14 @@ class FlextRuntime:
                 for key, item in typed_mapping.items():
                     normalized_item = FlextRuntime.normalize_to_container(item)
                     normalized_dict[str(key)] = _to_plain_container(normalized_item)
-            return FlextModelsContainers.Dict(root=normalized_dict)
+            return m.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
             normalized_list: list[str | int | float | bool | datetime | Path] = []
             for v in val:
                 normalized_item = FlextRuntime.normalize_to_container(v)
                 if isinstance(normalized_item, (str, int, float, bool, datetime, Path)):
                     normalized_list.append(normalized_item)
-            return FlextModelsContainers.ObjectList(root=normalized_list)
+            return m.ObjectList(root=normalized_list)
         return str(val)
 
     @staticmethod
@@ -742,7 +741,7 @@ class FlextRuntime:
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
                     normalized[str_k] = (
-                        FlextModelFoundation.Validators
+                        m.Validators
                         .metadata_json_dict_adapter()
                         .dump_json(inner)
                         .decode()
@@ -828,7 +827,7 @@ class FlextRuntime:
         def create_container(
             cls,
             *,
-            config: FlextModelsContainers.ConfigMap | None = None,
+            config: m.ConfigMap | None = None,
             services: Mapping[str, t.RegisterableService] | None = None,
             factories: Mapping[
                 str,
@@ -890,7 +889,7 @@ class FlextRuntime:
 
         @classmethod
         def create_layered_bridge(
-            cls, config: FlextModelsContainers.ConfigMap | None = None
+            cls, config: m.ConfigMap | None = None
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -918,7 +917,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
-            config: FlextModelsContainers.ConfigMap | None,
+            config: m.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration mapping to the DI container.
 
@@ -942,7 +941,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration_provider(
             configuration_provider: providers.Configuration,
-            config: FlextModelsContainers.ConfigMap | None,
+            config: m.ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if config:
@@ -1303,9 +1302,7 @@ class FlextRuntime:
         _payload: T | None = PrivateAttr(default=None)
         error: Annotated[str | None, Field(default=None)]
         error_code: Annotated[str | None, Field(default=None)]
-        error_data: Annotated[
-            FlextModelsContainers.ConfigMap | None, Field(default=None)
-        ]
+        error_data: Annotated[m.ConfigMap | None, Field(default=None)]
 
         _exception: BaseException | None = PrivateAttr(default=None)
         _result_logger: p.Log.StructlogLogger | None = PrivateAttr(default=None)
@@ -1377,10 +1374,7 @@ class FlextRuntime:
             cls: type[FlextRuntime.RuntimeResult[U]],
             error: str | None,
             error_code: str | None = None,
-            error_data: t.ResultErrorData
-            | BaseModel
-            | FlextModelsContainers.ConfigMap
-            | None = None,
+            error_data: t.ResultErrorData | BaseModel | m.ConfigMap | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 
@@ -1398,16 +1392,16 @@ class FlextRuntime:
 
             """
             error_msg = error if error is not None else ""
-            validated_error_data: FlextModelsContainers.ConfigMap
+            validated_error_data: m.ConfigMap
             if error_data is None:
-                validated_error_data = FlextModelsContainers.ConfigMap(root={})
-            elif isinstance(error_data, FlextModelsContainers.ConfigMap):
+                validated_error_data = m.ConfigMap(root={})
+            elif isinstance(error_data, m.ConfigMap):
                 validated_error_data = error_data
             elif isinstance(error_data, BaseModel):
                 dump = error_data.model_dump()
-                validated_error_data = FlextModelsContainers.ConfigMap(dump)
+                validated_error_data = m.ConfigMap(dump)
             else:
-                validated_error_data = FlextModelsContainers.ConfigMap(dict(error_data))
+                validated_error_data = m.ConfigMap(dict(error_data))
 
             return cls(
                 is_success=False,
@@ -1435,7 +1429,7 @@ class FlextRuntime:
                 is_success=True,
                 error=None,
                 error_code=None,
-                error_data=FlextModelsContainers.ConfigMap(root={}),
+                error_data=m.ConfigMap(root={}),
             )
             setattr(instance, "_payload", value)
             return instance
@@ -1646,7 +1640,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: FlextModelsContainers.ConfigMap | None = None,
+            event_data: m.ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation.
 
@@ -1722,7 +1716,7 @@ class FlextRuntime:
             Mapping[str, str]: Enriched context with trace fields
 
         """
-        context_dict = FlextModelsContainers.ConfigMap(root={})
+        context_dict = m.ConfigMap(root={})
         if isinstance(context, Mapping):
             try:
                 parsed_context: dict[str, t.NormalizedValue | BaseModel] = {
@@ -1733,9 +1727,9 @@ class FlextRuntime:
                     "Failed to convert mapping context to string dict", exc_info=exc
                 )
                 parsed_context = {}
-            context_dict = FlextModelsContainers.ConfigMap(parsed_context)
+            context_dict = m.ConfigMap(parsed_context)
         elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):
-            context_dict = FlextModelsContainers.ConfigMap(root={})
+            context_dict = m.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
         elif not isinstance(context, Mapping) and FlextRuntime.is_dict_like(context):
@@ -1747,9 +1741,9 @@ class FlextRuntime:
                 logging.getLogger(__name__).debug(
                     "Failed to normalize mapping context fields", exc_info=exc
                 )
-                context_dict = FlextModelsContainers.ConfigMap(root={})
+                context_dict = m.ConfigMap(root={})
         else:
-            context_dict = FlextModelsContainers.ConfigMap(root={})
+            context_dict = m.ConfigMap(root={})
         result: dict[str, str] = {}
         for key, value in context_dict.items():
             result[key] = str(value)

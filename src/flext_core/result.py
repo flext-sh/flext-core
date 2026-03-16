@@ -17,10 +17,7 @@ from pydantic import BaseModel, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import FlextRuntime, T_Model, U, t
-from flext_core._models import (
-    FlextModelsContainers,
-)  # do not move to use m to not generate Ciclical import error
+from flext_core import FlextRuntime, T_Model, U, m, t
 
 
 class FlextResult[T](FlextRuntime.RuntimeResult[T]):
@@ -34,29 +31,23 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @staticmethod
     def _validate_error_data(
-        error_data: t.ResultErrorData
-        | BaseModel
-        | FlextModelsContainers.ConfigMap
-        | None,
-    ) -> FlextModelsContainers.ConfigMap | None:
+        error_data: t.ResultErrorData | BaseModel | m.ConfigMap | None,
+    ) -> m.ConfigMap | None:
         """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
         if error_data is None:
             return None
-        if isinstance(error_data, FlextModelsContainers.ConfigMap):
+        if isinstance(error_data, m.ConfigMap):
             return error_data
         if isinstance(error_data, BaseModel):
             dump = error_data.model_dump()
-            return FlextModelsContainers.ConfigMap(dump)
-        return FlextModelsContainers.ConfigMap(dict(error_data))
+            return m.ConfigMap(dump)
+        return m.ConfigMap(dict(error_data))
 
     def __init__(
         self,
         source: Result[T, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData
-        | BaseModel
-        | FlextModelsContainers.ConfigMap
-        | None = None,
+        error_data: t.ResultErrorData | BaseModel | m.ConfigMap | None = None,
         *,
         value: T | None = None,
         error: str | None = None,
@@ -202,10 +193,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         cls: type[FlextResult[U]],
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData
-        | BaseModel
-        | FlextModelsContainers.ConfigMap
-        | None = None,
+        error_data: t.ResultErrorData | BaseModel | m.ConfigMap | None = None,
         *,
         exception: BaseException | None = None,
     ) -> FlextResult[U]:
