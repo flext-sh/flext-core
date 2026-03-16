@@ -929,16 +929,12 @@ class TestFlextRuntime:
             tm.that(runtime_first is runtime_second, eq=True)
             tm.that(component.config.app_name == "runtime-aware", eq=True)
             tm.that(component.context is runtime_first.context, eq=True)
-            service_result = component.container.get(
-                "preseed"
-            )
+            service_result = component.container.get("preseed")
             tm.that(service_result.is_success, eq=True)
             tm.that(
                 service_result.value == t.ConfigMap(root={"enabled": True}), eq=True
             )
-            factory_result = component.container.get(
-                "counter"
-            )
+            factory_result = component.container.get("counter")
             tm.that(factory_result.is_success, eq=True)
             tm.that(factory_result.value == {"count": 1}, eq=True)
 
