@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import TypeGuard, get_args, get_origin, get_type_hints
+from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -30,7 +30,7 @@ class FlextUtilitiesChecker:
     @staticmethod
     def _is_module_export_callable(
         value: object,
-    ) -> TypeGuard[Callable[..., t.ModuleExport]]:
+    ) -> TypeIs[Callable[..., t.ModuleExport]]:
         return callable(value)
 
     @property

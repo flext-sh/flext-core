@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
@@ -31,6 +31,7 @@ from flext_core import r
 from tests import p, t, u
 
 
+@unique
 class ProtocolCategoryType(StrEnum):
     """Protocol category types for organization."""
 

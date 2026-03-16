@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import TypeGuard
+from typing import TypeIs
 
 from pydantic import BaseModel
 
@@ -14,19 +14,19 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_context(
         value: object,
-    ) -> TypeGuard[p.Context]:
+    ) -> TypeIs[p.Context]:
         return isinstance(value, p.Context)
 
     @staticmethod
     def is_handler_callable(
         value: t.NormalizedValue,
-    ) -> TypeGuard[t.HandlerCallable]:
+    ) -> TypeIs[t.HandlerCallable]:
         return callable(value)
 
     @staticmethod
     def is_handler_type(
         value: t.NormalizedValue | t.HandlerCallable,
-    ) -> TypeGuard[t.HandlerLike]:
+    ) -> TypeIs[t.HandlerLike]:
         return (
             callable(value)
             or isinstance(value, Mapping)
@@ -42,31 +42,31 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_registerable(
         value: t.NormalizedValue,
-    ) -> TypeGuard[t.RegisterableService]:
+    ) -> TypeIs[t.RegisterableService]:
         return FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
 
     @staticmethod
     def is_factory(
         value: object,
-    ) -> TypeGuard[t.FactoryCallable]:
+    ) -> TypeIs[t.FactoryCallable]:
         return callable(value)
 
     @staticmethod
     def is_resource(
         value: object,
-    ) -> TypeGuard[t.ResourceCallable]:
+    ) -> TypeIs[t.ResourceCallable]:
         return callable(value)
 
     @staticmethod
     def is_result_like(
         value: object,
-    ) -> TypeGuard[p.ResultLike[t.Container | BaseModel]]:
+    ) -> TypeIs[p.ResultLike[t.Container | BaseModel]]:
         return isinstance(value, p.ResultLike)
 
     @staticmethod
     def is_registerable_service(
         value: object,
-    ) -> TypeGuard[t.RegisterableService]:
+    ) -> TypeIs[t.RegisterableService]:
         return (
             value is None
             or isinstance(value, (str, int, float, bool, BaseModel, Path, Mapping))
@@ -142,13 +142,13 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def _is_type_tuple(
         value: t.GuardInput,
-    ) -> TypeGuard[tuple[type, ...]]:
+    ) -> TypeIs[tuple[type, ...]]:
         return isinstance(value, tuple)
 
     @staticmethod
     def is_type_tuple(
         value: t.GuardInput,
-    ) -> TypeGuard[tuple[type, ...]]:
+    ) -> TypeIs[tuple[type, ...]]:
         return FlextUtilitiesGuardsTypeProtocol._is_type_tuple(value)
 
     @staticmethod

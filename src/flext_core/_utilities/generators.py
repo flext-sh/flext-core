@@ -16,7 +16,7 @@ import time
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import TypeGuard
+from typing import TypeIs
 
 from pydantic import BaseModel
 
@@ -138,7 +138,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _is_config_mapping(
         value: t.NormalizedValue,
-    ) -> TypeGuard[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod

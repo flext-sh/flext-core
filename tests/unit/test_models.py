@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import threading
 from collections.abc import Callable
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -35,6 +35,7 @@ from flext_core._models.domain_event import _ComparableConfigMap
 from tests import c, m, t
 
 
+@unique
 class ModelType(StrEnum):
     """Model types for parametrized testing."""
 

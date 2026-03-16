@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
@@ -35,6 +35,7 @@ from ..test_utils import assertion_helpers
 from .contracts.text_contract import TextUtilityContract
 
 
+@unique
 class UtilityOperationType(StrEnum):
     """Utility operation types for parametrization."""
 

@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -25,6 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from tests import t
 
 
+@unique
 class Status(StrEnum):
     """Test StrEnum for collection testing."""
 
@@ -33,6 +34,7 @@ class Status(StrEnum):
     INACTIVE = "inactive"
 
 
+@unique
 class Priority(StrEnum):
     """Test StrEnum for collection testing."""
 

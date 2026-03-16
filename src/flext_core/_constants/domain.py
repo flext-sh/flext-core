@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from types import MappingProxyType
 from typing import Final
 
@@ -58,6 +58,7 @@ class FlextConstantsDomain:
         })
         "Numeric log levels for comparison (lower = more verbose)."
 
+        @unique
         class ContextOperation(StrEnum):
             """Context operation types enumeration."""
 
@@ -69,6 +70,7 @@ class FlextConstantsDomain:
     class Domain:
         """Domain-specific constants using StrEnum + Pydantic 2."""
 
+        @unique
         class Status(StrEnum):
             """Status values for domain entities."""
 
@@ -76,6 +78,7 @@ class FlextConstantsDomain:
             INACTIVE = "inactive"
             ARCHIVED = "archived"
 
+        @unique
         class Currency(StrEnum):
             """Currency enumeration for monetary operations."""
 
@@ -84,6 +87,7 @@ class FlextConstantsDomain:
             GBP = "GBP"
             BRL = "BRL"
 
+        @unique
         class OrderStatus(StrEnum):
             """Order status enumeration for order lifecycle."""
 

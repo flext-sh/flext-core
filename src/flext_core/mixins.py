@@ -17,7 +17,7 @@ from types import ModuleType
 from typing import (
     Annotated,
     ClassVar,
-    TypeGuard,
+    TypeIs,
     Unpack,
     override,
 )
@@ -426,7 +426,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     @staticmethod
     def _is_flext_settings_type(
         candidate: type | t.NormalizedValue | BaseModel,
-    ) -> TypeGuard[type[FlextSettings]]:
+    ) -> TypeIs[type[FlextSettings]]:
         return isinstance(candidate, type) and callable(
             getattr(candidate, "get_global", None)
         )

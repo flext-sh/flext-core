@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 
@@ -84,6 +84,7 @@ class FlextConstantsValidation:
     class Exceptions:
         """Exception handling configuration."""
 
+        @unique
         class FailureLevel(StrEnum):
             """Exception failure levels."""
 
@@ -93,6 +94,7 @@ class FlextConstantsValidation:
 
         FAILURE_LEVEL_DEFAULT: Final[FailureLevel] = FailureLevel.PERMISSIVE
 
+        @unique
         class ErrorType(StrEnum):
             """Error type enumeration for error categorization."""
 

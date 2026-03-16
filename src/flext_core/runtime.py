@@ -66,7 +66,7 @@ from typing import (
     Annotated,
     ClassVar,
     Self,
-    TypeGuard,
+    TypeIs,
     cast,
     override,
 )
@@ -367,7 +367,7 @@ class FlextRuntime:
             return FlextRuntime.create_instance(class_type)
 
     @staticmethod
-    def _is_scalar(value: t.RuntimeData) -> TypeGuard[t.Scalar]:
+    def _is_scalar(value: t.RuntimeData) -> TypeIs[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         return isinstance(value, t.SCALAR_TYPES)
 
@@ -459,7 +459,7 @@ class FlextRuntime:
         return logger
 
     @staticmethod
-    def is_base_model(obj: t.RuntimeData) -> TypeGuard[BaseModel]:
+    def is_base_model(obj: t.RuntimeData) -> TypeIs[BaseModel]:
         """Type guard to narrow object to BaseModel.
 
         This allows isinstance checks to narrow types for FlextRuntime methods
@@ -487,7 +487,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.RuntimeData,
-    ) -> TypeGuard[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
         """Type guard to check if value is dict-like.
 
         Note:
@@ -514,7 +514,7 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: t.RuntimeData,
-    ) -> TypeGuard[Sequence[t.NormalizedValue]]:
+    ) -> TypeIs[Sequence[t.NormalizedValue]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes))
 
@@ -584,12 +584,12 @@ class FlextRuntime:
         return all(hasattr(candidate, member) for member in required_members)
 
     @staticmethod
-    def is_valid_identifier(value: t.RuntimeData) -> TypeGuard[str]:
+    def is_valid_identifier(value: t.RuntimeData) -> TypeIs[str]:
         """Type guard to check if value is a valid Python identifier."""
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
-    def is_valid_json(value: t.RuntimeData) -> TypeGuard[str]:
+    def is_valid_json(value: t.RuntimeData) -> TypeIs[str]:
         """Type guard to check if value is valid JSON string.
 
         Business Rule: Validates JSON strings using Pydantic v2 TypeAdapter for parsing.
@@ -620,7 +620,7 @@ class FlextRuntime:
     @staticmethod
     def _is_structlog_processor(
         value: t.RuntimeData,
-    ) -> TypeGuard[structlog.types.Processor]:
+    ) -> TypeIs[structlog.types.Processor]:
         return callable(value)
 
     @staticmethod

@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
@@ -39,6 +39,7 @@ from flext_core import (
 )
 
 
+@unique
 class DecoratorOperationType(StrEnum):
     """Decorator operation types for parametrized testing."""
 

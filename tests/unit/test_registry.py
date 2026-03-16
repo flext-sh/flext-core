@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
@@ -33,6 +33,7 @@ from flext_core import FlextRegistry, h, r
 from tests import c, m
 
 
+@unique
 class RegistryOperationType(StrEnum):
     """Registry operation types for test parametrization."""
 

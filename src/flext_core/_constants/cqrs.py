@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 
@@ -16,11 +16,13 @@ class FlextConstantsCqrs:
     class Cqrs:
         """CQRS pattern constants."""
 
+        @unique
         class Status(StrEnum):
             """CQRS status enumeration."""
 
             STOPPED = "stopped"
 
+        @unique
         class HandlerType(StrEnum):
             """CQRS handler types enumeration."""
 
@@ -30,6 +32,7 @@ class FlextConstantsCqrs:
             OPERATION = "operation"
             SAGA = "saga"
 
+        @unique
         class CommonStatus(StrEnum):
             """CQRS common status enumeration."""
 
@@ -43,6 +46,7 @@ class FlextConstantsCqrs:
             COMPENSATING = "compensating"
             ARCHIVED = "archived"
 
+        @unique
         class MetricType(StrEnum):
             """Service metric types enumeration."""
 
@@ -51,6 +55,7 @@ class FlextConstantsCqrs:
             HISTOGRAM = "histogram"
             SUMMARY = "summary"
 
+        @unique
         class ServiceMetricCategory(StrEnum):
             """Service metric categories enumeration.
 
@@ -71,6 +76,7 @@ class FlextConstantsCqrs:
         "Default metric categories for service metrics requests."
         DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
 
+        @unique
         class ProcessingMode(StrEnum):
             """CQRS processing modes enumeration."""
 
@@ -79,6 +85,7 @@ class FlextConstantsCqrs:
             PARALLEL = "parallel"
             SEQUENTIAL = "sequential"
 
+        @unique
         class ProcessingPhase(StrEnum):
             """CQRS processing phases enumeration."""
 
@@ -87,12 +94,14 @@ class FlextConstantsCqrs:
             VALIDATE = "validate"
             COMPLETE = "complete"
 
+        @unique
         class BindType(StrEnum):
             """CQRS binding types enumeration."""
 
             TEMPORARY = "temporary"
             PERMANENT = "permanent"
 
+        @unique
         class MergeStrategy(StrEnum):
             """CQRS merge strategies enumeration."""
 
@@ -100,6 +109,7 @@ class FlextConstantsCqrs:
             UPDATE = "update"
             MERGE_DEEP = "merge_deep"
 
+        @unique
         class HealthStatus(StrEnum):
             """CQRS health status enumeration."""
 
@@ -107,6 +117,7 @@ class FlextConstantsCqrs:
             DEGRADED = "degraded"
             UNHEALTHY = "unhealthy"
 
+        @unique
         class SpecialStatus(StrEnum):
             """Special status values not in CommonStatus."""
 
@@ -114,6 +125,7 @@ class FlextConstantsCqrs:
             IDLE = "idle"
             PROCESSING = "processing"
 
+        @unique
         class TokenType(StrEnum):
             """CQRS token types enumeration."""
 
@@ -121,6 +133,7 @@ class FlextConstantsCqrs:
             API_KEY = "api_key"
             JWT = "jwt"
 
+        @unique
         class OperationStatus(StrEnum):
             """CQRS operation status enumeration."""
 
@@ -128,6 +141,7 @@ class FlextConstantsCqrs:
             FAILURE = "failure"
             PARTIAL = "partial"
 
+        @unique
         class SerializationFormat(StrEnum):
             """CQRS serialization formats enumeration."""
 
@@ -136,6 +150,7 @@ class FlextConstantsCqrs:
             TOML = "toml"
             MSGPACK = "msgpack"
 
+        @unique
         class Compression(StrEnum):
             """CQRS compression formats enumeration."""
 
@@ -144,6 +159,7 @@ class FlextConstantsCqrs:
             BZIP2 = "bzip2"
             LZ4 = "lz4"
 
+        @unique
         class Aggregation(StrEnum):
             """CQRS aggregation functions enumeration."""
 
@@ -153,6 +169,7 @@ class FlextConstantsCqrs:
             MAX = "max"
             COUNT = "count"
 
+        @unique
         class Action(StrEnum):
             """CQRS action types enumeration.
 
@@ -167,6 +184,7 @@ class FlextConstantsCqrs:
             DELETE = "delete"
             LIST = "list"
 
+        @unique
         class PersistenceLevel(StrEnum):
             """CQRS persistence levels enumeration."""
 
@@ -174,6 +192,7 @@ class FlextConstantsCqrs:
             DISK = "disk"
             DISTRIBUTED = "distributed"
 
+        @unique
         class TargetFormat(StrEnum):
             """CQRS target formats enumeration."""
 
@@ -181,6 +200,7 @@ class FlextConstantsCqrs:
             COMPACT = "compact"
             MINIMAL = "minimal"
 
+        @unique
         class WarningLevel(StrEnum):
             """CQRS warning levels enumeration.
 
@@ -193,6 +213,7 @@ class FlextConstantsCqrs:
             WARN = "warn"
             ERROR = "error"
 
+        @unique
         class OutputFormat(StrEnum):
             """CQRS output formats enumeration.
 
@@ -204,6 +225,7 @@ class FlextConstantsCqrs:
             DICT = "dict"
             JSON = "json"
 
+        @unique
         class Mode(StrEnum):
             """CQRS operation modes enumeration.
 
@@ -215,6 +237,7 @@ class FlextConstantsCqrs:
             VALIDATION = "validation"
             SERIALIZATION = "serialization"
 
+        @unique
         class RegistrationStatus(StrEnum):
             """CQRS registration status enumeration.
 

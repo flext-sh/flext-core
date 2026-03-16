@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 
@@ -136,6 +136,7 @@ class FlextConstantsPlatform:
         DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: Final[int] = 60
         DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD: Final[int] = 3
 
+        @unique
         class CircuitBreakerState(StrEnum):
             """Circuit breaker states.
 

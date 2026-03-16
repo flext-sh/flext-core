@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 
@@ -69,6 +69,7 @@ class FlextConstantsMixins:
         DEFAULT_SORT_KEYS: Final[bool] = False
         DEFAULT_ENSURE_ASCII: Final[bool] = False
 
+        @unique
         class BoolTrueValue(StrEnum):
             """String representations of boolean true values."""
 
@@ -78,6 +79,7 @@ class FlextConstantsMixins:
             ON = "on"
             ENABLED = "enabled"
 
+        @unique
         class BoolFalseValue(StrEnum):
             """String representations of boolean false values."""
 

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Mapping
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 import pytest
@@ -36,6 +36,7 @@ class TestFlextUtilitiesReliability:
     100% coverage. All test constants organized in nested classes.
     """
 
+    @unique
     class TimeoutScenario(StrEnum):
         """Timeout test scenarios."""
 
@@ -44,6 +45,7 @@ class TestFlextUtilitiesReliability:
         EXCEPTION = "exception"
         FAILURE = "failure"
 
+    @unique
     class RetryScenario(StrEnum):
         """Retry test scenarios."""
 
@@ -52,6 +54,7 @@ class TestFlextUtilitiesReliability:
         CONTROLLED_RETRY = "controlled_retry"
         BLOCKED_RETRY = "blocked_retry"
 
+    @unique
     class DelayConfig(StrEnum):
         """Delay configuration types."""
 

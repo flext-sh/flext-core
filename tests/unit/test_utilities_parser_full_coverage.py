@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserString
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import cast, override
 
 import pytest
@@ -36,6 +36,7 @@ class _StrRaises:
         raise TypeError(msg)
 
 
+@unique
 class _Status(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -396,6 +397,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     parser = u()
     tm.fail(parser._coerce_to_float([]))
 
+    @unique
     class _ValueEnum(StrEnum):
         FIRST = "v-1"
 

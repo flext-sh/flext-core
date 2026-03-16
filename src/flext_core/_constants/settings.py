@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 
@@ -40,6 +40,7 @@ class FlextConstantsSettings:
             "_cached_value",
         )
 
+        @unique
         class ConversionMode(StrEnum):
             """Conversion mode enumeration for type-safe conversion operations.
 
@@ -66,6 +67,7 @@ class FlextConstantsSettings:
         DEFAULT_DEBUG_MODE: Final[bool] = False
         DEFAULT_TRACE_MODE: Final[bool] = False
 
+        @unique
         class LogLevel(StrEnum):
             """Standard log levels."""
 
@@ -75,6 +77,7 @@ class FlextConstantsSettings:
             ERROR = "ERROR"
             CRITICAL = "CRITICAL"
 
+        @unique
         class Environment(StrEnum):
             """Environment types."""
 

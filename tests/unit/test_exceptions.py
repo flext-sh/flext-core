@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterator, Mapping
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
@@ -33,6 +33,7 @@ from flext_core import FlextConstants, FlextRuntime, e
 from tests import c, m
 
 
+@unique
 class ExceptionScenarioType(StrEnum):
     """Exception test scenario types for organization."""
 
@@ -50,6 +51,7 @@ class ExceptionScenarioType(StrEnum):
     EXCEPTION_CHAINING = "exception_chaining"
 
 
+@unique
 class ExceptionTypeScenarioType(StrEnum):
     """Exception type testing scenarios."""
 

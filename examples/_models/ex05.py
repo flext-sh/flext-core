@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import override
 
 from pydantic import ConfigDict, Field, field_validator
@@ -10,6 +10,7 @@ from pydantic import ConfigDict, Field, field_validator
 from flext_core import m
 
 
+@unique
 class Ex05StatusEnum(StrEnum):
     ACTIVE = "active"
     PENDING = "pending"

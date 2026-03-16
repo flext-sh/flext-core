@@ -20,7 +20,7 @@ from collections.abc import Callable, Iterator, Mapping, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import TypeGuard
+from typing import TypeIs
 
 import pytest
 from flext_tests import t as tt
@@ -77,19 +77,17 @@ def _as_object_list(value: tt.Tests.object) -> list[tt.Tests.object] | None:
 
 def _is_object_mapping(
     value: tt.Tests.object,
-) -> TypeGuard[Mapping[str, tt.Tests.object]]:
+) -> TypeIs[Mapping[str, tt.Tests.object]]:
     return isinstance(value, Mapping)
 
 
-def _is_object_list(value: tt.Tests.object) -> TypeGuard[list[tt.Tests.object]]:
+def _is_object_list(value: tt.Tests.object) -> TypeIs[list[tt.Tests.object]]:
     return isinstance(value, list)
 
 
 def _is_object_container_sequence(
     value: tt.Tests.object,
-) -> TypeGuard[
-    list[tt.Tests.object] | tuple[tt.Tests.object, ...] | set[tt.Tests.object]
-]:
+) -> TypeIs[list[tt.Tests.object] | tuple[tt.Tests.object, ...] | set[tt.Tests.object]]:
     return isinstance(value, (list, tuple, set))
 
 

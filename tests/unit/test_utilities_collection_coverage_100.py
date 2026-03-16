@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -29,6 +29,7 @@ from flext_core import FlextRuntime, r
 from ..test_utils import assertion_helpers
 
 
+@unique
 class FixtureStatus(StrEnum):
     """Test status enum for collection utilities tests."""
 
@@ -38,6 +39,7 @@ class FixtureStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+@unique
 class FixturePriority(StrEnum):
     """Test priority enum for collection utilities tests."""
 

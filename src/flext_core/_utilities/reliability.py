@@ -15,7 +15,7 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping
-from typing import TypeGuard
+from typing import TypeIs
 
 from pydantic import BaseModel, ValidationError
 
@@ -44,13 +44,13 @@ class FlextUtilitiesReliability:
     @staticmethod
     def _is_match_mapper(
         value: t.NormalizedValue | Callable[[t.NormalizedValue], t.NormalizedValue],
-    ) -> TypeGuard[Callable[[t.NormalizedValue], t.NormalizedValue]]:
+    ) -> TypeIs[Callable[[t.NormalizedValue], t.NormalizedValue]]:
         return callable(value)
 
     @staticmethod
     def _is_match_predicate(
         value: type | t.NormalizedValue | Callable[[t.NormalizedValue], bool],
-    ) -> TypeGuard[Callable[[t.NormalizedValue], bool]]:
+    ) -> TypeIs[Callable[[t.NormalizedValue], bool]]:
         return callable(value) and (not isinstance(value, type))
 
     @staticmethod

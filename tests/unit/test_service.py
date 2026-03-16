@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, override
 
 import pytest
@@ -32,6 +32,7 @@ from flext_core import r, s
 from tests import t
 
 
+@unique
 class ServiceScenarioType(StrEnum):
     """Service scenario types for parametrized testing."""
 

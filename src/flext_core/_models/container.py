@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, TypeGuard
+from typing import Annotated, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
@@ -29,7 +29,7 @@ class FlextModelsContainer:
     @staticmethod
     def _is_metadata_instance(
         v: t.MetadataInput,
-    ) -> TypeGuard[FlextModelFoundation.Metadata]:
+    ) -> TypeIs[FlextModelFoundation.Metadata]:
         return isinstance(v, FlextModelFoundation.Metadata)
 
     @staticmethod

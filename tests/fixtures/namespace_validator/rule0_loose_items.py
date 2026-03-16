@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 
 
 class FlextTestConstants:
@@ -18,6 +18,7 @@ def helper() -> None:
     """Loose function — NOT in allowlist."""
 
 
+@unique
 class Status(StrEnum):
     """Loose class — 2nd outer class — VIOLATION."""
 

@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar, ParamSpec, TypeVar, cast
 
 import pytest
@@ -32,6 +32,7 @@ from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e
 from tests import t
 
 
+@unique
 class TypeVarCategory(StrEnum):
     """TypeVar categories for parametrized testing."""
 

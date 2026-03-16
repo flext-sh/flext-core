@@ -18,7 +18,7 @@ from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Literal, Protocol, TypeGuard, overload
+from typing import Literal, Protocol, TypeIs, overload
 
 from pydantic import BaseModel
 
@@ -984,7 +984,7 @@ class FlextDecorators:
     @staticmethod
     def _has_flext_logger(
         value: t.NormalizedValue | BaseModel,
-    ) -> TypeGuard[_HasLogger]:
+    ) -> TypeIs[_HasLogger]:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger", None)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import cast, override
 
 import pytest
@@ -12,6 +12,7 @@ from flext_tests import tm
 from tests import u
 
 
+@unique
 class Status(StrEnum):
     """Test Status Enum."""
 
@@ -20,6 +21,7 @@ class Status(StrEnum):
     INACTIVE = "inactive"
 
 
+@unique
 class Priority(StrEnum):
     """Test Priority Enum."""
 

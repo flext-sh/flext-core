@@ -6,18 +6,18 @@ import warnings
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TypeGuard, TypeIs
+from typing import TypeIs
 
 from flext_core import t
 
 
 class FlextUtilitiesGuardsTypeCore:
     @staticmethod
-    def _is_object_sequence(value: object) -> TypeGuard[Sequence[object]]:
+    def _is_object_sequence(value: object) -> TypeIs[Sequence[object]]:
         return isinstance(value, (list, tuple))
 
     @staticmethod
-    def _is_object_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+    def _is_object_mapping(value: object) -> TypeIs[Mapping[str, object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -61,7 +61,7 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def is_container(
         value: object,
-    ) -> TypeGuard[str | int | float | bool | datetime | Path]:
+    ) -> TypeIs[str | int | float | bool | datetime | Path]:
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
         if FlextUtilitiesGuardsTypeCore._is_object_sequence(value):
@@ -80,7 +80,7 @@ class FlextUtilitiesGuardsTypeCore:
         return callable(value) or FlextUtilitiesGuardsTypeCore.is_container(value)
 
     @staticmethod
-    def is_list(value: t.NormalizedValue) -> TypeGuard[list[t.NormalizedValue]]:
+    def is_list(value: t.NormalizedValue) -> TypeIs[list[t.NormalizedValue]]:
         return isinstance(value, list)
 
     @staticmethod
@@ -94,27 +94,27 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def is_mapping(
         value: object,
-    ) -> TypeGuard[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def is_primitive(
         value: object,
-    ) -> TypeGuard[t.Primitives]:
+    ) -> TypeIs[t.Primitives]:
         return isinstance(value, (str, int, float, bool))
 
     @staticmethod
     def is_scalar(
         value: object,
-    ) -> TypeGuard[t.Scalar]:
+    ) -> TypeIs[t.Scalar]:
         return isinstance(value, (str, int, float, bool, datetime))
 
     @staticmethod
-    def is_string_non_empty(value: t.NormalizedValue) -> TypeGuard[str]:
+    def is_string_non_empty(value: t.NormalizedValue) -> TypeIs[str]:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
+    def is_instance_of[T](value: object, type_cls: type[T]) -> TypeIs[T]:
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
     @staticmethod

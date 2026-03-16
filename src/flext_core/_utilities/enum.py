@@ -370,7 +370,7 @@ class FlextUtilitiesEnum:
         return tuple(member.value for member in enum_class.__members__.values())
 
     @staticmethod
-    def is_member[E: StrEnum](enum_cls: type[E], value: t.Scalar | E) -> TypeGuard[E]:
+    def is_member[E: StrEnum](enum_cls: type[E], value: t.Scalar | E) -> bool:
         """Generic TypeGuard for any StrEnum.
 
         Example:
@@ -389,7 +389,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def is_subset[E: StrEnum](
         enum_cls: type[E], valid_members: frozenset[E], value: t.Scalar | E
-    ) -> TypeGuard[E]:
+    ) -> bool:
         """TypeGuard for subset of a StrEnum.
 
         Example:

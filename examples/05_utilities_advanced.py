@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import override
 
 from pydantic import Field
@@ -29,6 +29,7 @@ from pydantic import Field
 from flext_core import c, m, r, s, t, u
 
 
+@unique
 class StatusEnum(StrEnum):
     """Status enumeration using StrEnum."""
 

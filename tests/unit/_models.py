@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, ClassVar, Never, TypeAlias, override
+from typing import Annotated, ClassVar, Never, override
 
 from flext_tests import t
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,9 +16,9 @@ class _ValidationLikeError(Exception):
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
-TestCaseMap: TypeAlias = Mapping[str, t.Tests.object]
+type TestCaseMap = Mapping[str, t.Tests.object]
 
-InputPayloadMap: TypeAlias = dict[str, t.Tests.object]
+type InputPayloadMap = dict[str, t.Tests.object]
 
 __all__ = [
     "BadConfigForTest",

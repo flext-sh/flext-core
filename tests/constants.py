@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, Final, Literal
 
 from flext_infra import FlextInfraConstants
@@ -38,6 +38,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
     class Tests(FlextTestsConstants.Tests):
         """flext-core-specific test namespaces."""
 
+        @unique
         class ServiceTestType(StrEnum):
             """Service test type enum for test scenarios."""
 
@@ -147,6 +148,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
         class Railway:
             """Flext-core-specific railway pattern operation constants."""
 
+            @unique
             class Operation(StrEnum):
                 """Railway operation types for testing."""
 
@@ -175,6 +177,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
         class HTTP:
             """Flext-core-specific HTTP-related constants for testing."""
 
+            @unique
             class Method(StrEnum):
                 """HTTP methods for testing."""
 
@@ -305,6 +308,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
             Mode = FlextTestsConstants.Cqrs.Mode
             RegistrationStatus = FlextTestsConstants.Cqrs.RegistrationStatus
 
+        @unique
         class StatusEnum(StrEnum):
             """Reusable test status enum for test fixtures.
 
@@ -315,6 +319,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
             PENDING = "pending"
             INACTIVE = "inactive"
 
+        @unique
         class PriorityEnum(StrEnum):
             """Reusable test priority enum for test fixtures.
 

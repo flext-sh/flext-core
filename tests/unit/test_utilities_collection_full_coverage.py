@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Iterator, Mapping
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
 import pytest
@@ -14,6 +14,7 @@ from flext_core import r
 from tests import c, m, t, u
 
 
+@unique
 class _Color(StrEnum):
     RED = "red"
     BLUE = "blue"

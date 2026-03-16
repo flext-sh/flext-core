@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, override
 
 from flext_infra import FlextInfraModels
@@ -42,6 +42,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
     - Generic models accessed via FlextTestsModels.Tests namespace
     """
 
+    @unique
     class ServiceTestType(StrEnum):
         """Service test type enum for test scenarios."""
 

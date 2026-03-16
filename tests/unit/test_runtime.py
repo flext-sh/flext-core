@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from enum import StrEnum
+from enum import StrEnum, unique
 from types import ModuleType
 from typing import Annotated, ClassVar, cast
 
@@ -44,6 +44,7 @@ from flext_core import (
 )
 
 
+@unique
 class RuntimeOperationType(StrEnum):
     """Runtime operation types for parametrized testing."""
 

@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
@@ -32,6 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import FlextContext, p, t, x
 
 
+@unique
 class ServiceMixinScenarioType(StrEnum):
     """Service mixin test scenario types."""
 
@@ -45,6 +46,7 @@ class ServiceMixinScenarioType(StrEnum):
     SERVICE_ENRICH = "service_enrich"
 
 
+@unique
 class ModelConversionScenarioType(StrEnum):
     """ModelConversion test scenario types."""
 
@@ -53,6 +55,7 @@ class ModelConversionScenarioType(StrEnum):
     WITH_NONE = "with_none"
 
 
+@unique
 class ResultHandlingScenarioType(StrEnum):
     """ResultHandling test scenario types."""
 

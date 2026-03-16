@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
@@ -33,6 +33,7 @@ from tests import c
 from ..test_utils import assertion_helpers
 
 
+@unique
 class ResultOperationType(StrEnum):
     """Result operation test scenario types."""
 

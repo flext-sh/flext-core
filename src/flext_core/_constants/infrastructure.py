@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Final
 
 
@@ -32,6 +32,7 @@ class FlextConstantsInfrastructure:
         EXPORT_FORMAT_JSON: Final[str] = "json"
         EXPORT_FORMAT_DICT: Final[str] = "dict"
 
+        @unique
         class MetadataField(StrEnum):
             """Metadata field names used in context operations."""
 

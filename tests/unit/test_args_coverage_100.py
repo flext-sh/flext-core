@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, Final
 
 import pytest
@@ -35,6 +35,7 @@ class TestFlextUtilitiesArgs:
     100% coverage. All test constants organized in nested classes.
     """
 
+    @unique
     class StatusEnum(StrEnum):
         """Test status enum."""
 
@@ -42,6 +43,7 @@ class TestFlextUtilitiesArgs:
         PENDING = "pending"
         INACTIVE = "inactive"
 
+    @unique
     class PriorityEnum(StrEnum):
         """Test priority enum."""
 

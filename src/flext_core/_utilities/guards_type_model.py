@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TypeGuard
+from typing import TypeIs
 
 from pydantic import BaseModel
 
@@ -12,27 +12,27 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 class FlextUtilitiesGuardsTypeModel:
     @staticmethod
-    def _is_object_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+    def _is_object_mapping(value: object) -> TypeIs[Mapping[str, object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
-    def _is_object_sequence(value: object) -> TypeGuard[Sequence[object]]:
+    def _is_object_sequence(value: object) -> TypeIs[Sequence[object]]:
         return isinstance(value, (list, tuple))
 
     @staticmethod
     def is_object_list(
         value: object,
-    ) -> TypeGuard[list[t.NormalizedValue]]:
+    ) -> TypeIs[list[t.NormalizedValue]]:
         return isinstance(value, list)
 
     @staticmethod
     def is_object_tuple(
         value: object,
-    ) -> TypeGuard[tuple[t.NormalizedValue, ...]]:
+    ) -> TypeIs[tuple[t.NormalizedValue, ...]]:
         return isinstance(value, tuple)
 
     @staticmethod
-    def is_config_value(value: t.NormalizedValue) -> TypeGuard[t.NormalizedValue]:
+    def is_config_value(value: t.NormalizedValue) -> TypeIs[t.NormalizedValue]:
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
         if isinstance(value, (list, tuple)):
@@ -54,7 +54,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def is_configuration_dict(
         value: object,
-    ) -> TypeGuard[t.Dict]:
+    ) -> TypeIs[t.Dict]:
         if isinstance(value, t.Dict):
             for item_value in value.root.values():
                 if not FlextUtilitiesGuardsTypeCore.is_container(item_value):
@@ -67,7 +67,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def is_configuration_mapping(
         value: Mapping[str, t.NormalizedValue] | t.ConfigMap | t.Dict,
-    ) -> TypeGuard[t.ConfigMap]:
+    ) -> TypeIs[t.ConfigMap]:
         candidate: Mapping[str, t.NormalizedValue | BaseModel] = (
             value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
         )
@@ -77,7 +77,7 @@ class FlextUtilitiesGuardsTypeModel:
         return True
 
     @staticmethod
-    def is_pydantic_model(value: t.NormalizedValue) -> TypeGuard[p.HasModelDump]:
+    def is_pydantic_model(value: t.NormalizedValue) -> TypeIs[p.HasModelDump]:
         return (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")
