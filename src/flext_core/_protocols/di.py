@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
@@ -44,14 +44,10 @@ class FlextProtocolsDI:
             ...
 
         @overload
-        def get[T: t.RegisterableService](
-            self, name: str, *, type_cls: type[T]
-        ) -> r[T]: ...
+        def get[T: object](self, name: str, *, type_cls: type[T]) -> r[T]: ...
 
         @overload
-        def get(
-            self, name: str, *, type_cls: None = None
-        ) -> r[t.RegisterableService]: ...
+        def get(self, name: str, *, type_cls: None = None) -> r[object]: ...
 
         def get_config(self) -> t.ConfigMap:
             """Return the merged configuration exposed by this container."""
@@ -68,7 +64,7 @@ class FlextProtocolsDI:
         def register(
             self,
             name: str,
-            impl: t.RegisterableService,
+            impl: object,
             *,
             kind: str = "service",
         ) -> Self:
@@ -81,9 +77,9 @@ class FlextProtocolsDI:
             config: FlextProtocolsConfig.Config | None = None,
             context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
-            services: Mapping[str, t.RegisterableService] | None = None,
-            factories: Mapping[str, t.FactoryCallable] | None = None,
-            resources: Mapping[str, t.ResourceCallable] | None = None,
+            services: Mapping[str, object] | None = None,
+            factories: Mapping[str, Callable[..., object]] | None = None,
+            resources: Mapping[str, Callable[..., object]] | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...

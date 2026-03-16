@@ -7,7 +7,7 @@ from typing import ClassVar, override
 
 from pydantic import PrivateAttr
 
-from flext_core import (, t
+from flext_core import (
     FlextContext,
     FlextExceptions,
     FlextService,
@@ -16,6 +16,7 @@ from flext_core import (, t
     p,
     r,
     s,
+    t,
 )
 
 from ._models import (

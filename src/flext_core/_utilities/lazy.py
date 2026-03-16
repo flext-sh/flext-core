@@ -12,6 +12,10 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices
 
 # INFRASTRUCTURE EXCEPTION: lazy_getattr and cleanup_submodule_namespace MUST remain
 # module-level functions. They are imported directly by all auto-generated __init__.py
@@ -24,7 +28,7 @@ def lazy_getattr(
     lazy_imports: Mapping[str, tuple[str, str]],
     module_globals: dict[str, object],
     module_name: str,
-) -> object:
+) -> FlextTypesServices.ModuleExport:
     """Lazy-load a module attribute on first access (PEP 562).
 
     Args:

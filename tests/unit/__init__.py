@@ -236,6 +236,19 @@ if TYPE_CHECKING:
         TestRuntimeDeprecatedNormalizeMethods,
         TestStrictContainerNormalization,
     )
+    from tests.unit.test_di_incremental import (
+        TestContainerDIRealExecution,
+        TestDependencyIntegrationRealExecution,
+        TestDIBridgeRealExecution,
+        TestRealWiringScenarios,
+        TestServiceBootstrapWithDI,
+    )
+    from tests.unit.test_di_services_access import (
+        TestConfigServiceViaDI,
+        TestContextServiceViaDI,
+        TestLoggerServiceViaDI,
+        TestServicesIntegrationViaDI,
+    )
     from tests.unit.test_dispatcher_di import TestDispatcherDI
     from tests.unit.test_dispatcher_full_coverage import (
         EventHandler,
@@ -1152,6 +1165,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_configuration_coverage_100",
         "TestConfigModels",
     ),
+    "TestConfigServiceViaDI": (
+        "tests.unit.test_di_services_access",
+        "TestConfigServiceViaDI",
+    ),
+    "TestContainerDIRealExecution": (
+        "tests.unit.test_di_incremental",
+        "TestContainerDIRealExecution",
+    ),
     "TestContainerInfo": ("tests.unit.flext_tests.test_docker", "TestContainerInfo"),
     "TestContainerStatus": (
         "tests.unit.flext_tests.test_docker",
@@ -1164,6 +1185,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestContextDataModel": (
         "tests.unit.test_coverage_context",
         "TestContextDataModel",
+    ),
+    "TestContextServiceViaDI": (
+        "tests.unit.test_di_services_access",
+        "TestContextServiceViaDI",
     ),
     "TestCorrelationDomain": (
         "tests.unit.test_coverage_context",
@@ -1194,9 +1219,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_loggings_strict_returns",
         "TestCriticalReturnsResultBool",
     ),
+    "TestDIBridgeRealExecution": (
+        "tests.unit.test_di_incremental",
+        "TestDIBridgeRealExecution",
+    ),
     "TestDebugReturnsResultBool": (
         "tests.unit.test_loggings_strict_returns",
         "TestDebugReturnsResultBool",
+    ),
+    "TestDependencyIntegrationRealExecution": (
+        "tests.unit.test_di_incremental",
+        "TestDependencyIntegrationRealExecution",
     ),
     "TestDictMixinOperations": (
         "tests.unit.test_typings_full_coverage",
@@ -1517,6 +1550,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_loggings_strict_returns",
         "TestLogReturnsResultBool",
     ),
+    "TestLoggerServiceViaDI": (
+        "tests.unit.test_di_services_access",
+        "TestLoggerServiceViaDI",
+    ),
     "TestLoggingIntegration": (
         "tests.unit.test_coverage_loggings",
         "TestLoggingIntegration",
@@ -1586,6 +1623,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestProtocolComplianceStructlogLogger",
     ),
     "TestQueries": ("tests.unit.test_coverage_models", "TestQueries"),
+    "TestRealWiringScenarios": (
+        "tests.unit.test_di_incremental",
+        "TestRealWiringScenarios",
+    ),
     "TestResultBasics": ("tests.unit.test_coverage_76_lines", "TestResultBasics"),
     "TestResultTransformations": (
         "tests.unit.test_coverage_76_lines",
@@ -1624,10 +1665,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_service_bootstrap",
         "TestServiceBootstrap",
     ),
+    "TestServiceBootstrapWithDI": (
+        "tests.unit.test_di_incremental",
+        "TestServiceBootstrapWithDI",
+    ),
     "TestServiceDomain": ("tests.unit.test_coverage_context", "TestServiceDomain"),
     "TestServiceWithValidation": (
         "tests.unit.test_service_coverage_100",
         "TestServiceWithValidation",
+    ),
+    "TestServicesIntegrationViaDI": (
+        "tests.unit.test_di_services_access",
+        "TestServicesIntegrationViaDI",
     ),
     "TestShortAlias": ("tests.unit.flext_tests.test_files", "TestShortAlias"),
     "TestStrictContainerNormalization": (
@@ -3477,10 +3526,13 @@ __all__ = [
     "TestConfigConstants",
     "TestConfigMapDictOps",
     "TestConfigModels",
+    "TestConfigServiceViaDI",
+    "TestContainerDIRealExecution",
     "TestContainerInfo",
     "TestContainerStatus",
     "TestContext100Coverage",
     "TestContextDataModel",
+    "TestContextServiceViaDI",
     "TestCorrelationDomain",
     "TestCoveragePush75Percent",
     "TestCreateDatetimeProxy",
@@ -3489,7 +3541,9 @@ __all__ = [
     "TestCreateInStatic",
     "TestCreateStrProxy",
     "TestCriticalReturnsResultBool",
+    "TestDIBridgeRealExecution",
     "TestDebugReturnsResultBool",
+    "TestDependencyIntegrationRealExecution",
     "TestDictMixinOperations",
     "TestDispatcherDI",
     "TestDomainEvents",
@@ -3584,6 +3638,7 @@ __all__ = [
     "TestLashPropagatesException",
     "TestLevelBasedContextManagement",
     "TestLogReturnsResultBool",
+    "TestLoggerServiceViaDI",
     "TestLoggingIntegration",
     "TestLoggingMethods",
     "TestLoggingsErrorPaths",
@@ -3605,6 +3660,7 @@ __all__ = [
     "TestPhase2FinalCoveragePush",
     "TestProtocolComplianceStructlogLogger",
     "TestQueries",
+    "TestRealWiringScenarios",
     "TestResultBasics",
     "TestResultTransformations",
     "TestRuntimeDeprecatedNormalizeMethods",
@@ -3616,8 +3672,10 @@ __all__ = [
     "TestService",
     "TestService100Coverage",
     "TestServiceBootstrap",
+    "TestServiceBootstrapWithDI",
     "TestServiceDomain",
     "TestServiceWithValidation",
+    "TestServicesIntegrationViaDI",
     "TestShortAlias",
     "TestStrictContainerNormalization",
     "TestTextLogger",
