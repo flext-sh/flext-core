@@ -1,0 +1,38 @@
+src/flext_core/typings.py
+  faf65408a2bf6b6e 46
+tests/unit/test_models_79_coverage.py
+  db54e713f8a75ffa 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "d0e14e95317993884c35549513443c1a67673740",
+  "prompts": {
+    "db54e713f8a75ffa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308a4140fffeEW5VmjnZNiWZBa-74d86667-6e1f-4907-87d6-32d22f7a7070",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "faf65408a2bf6b6e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308a4140fffeEW5VmjnZNiWZBa-d67ee6bd-bd55-48d9-a889-f19f952a540e",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
