@@ -21,7 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import T, h, r
 
-from tests import , m, t
+from tests import c, m, t
 
 
 class TestsFlextServiceBase(FlextTestsServiceBase[T]):
