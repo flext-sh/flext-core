@@ -137,7 +137,7 @@ class FlextRuntime:
     2. **track_domain_event()** - Domain event emission with correlation
 
     **Core Features** (10 runtime capabilities):
-    1. **Type Safety** - TypeGuard utilities for pattern validation
+    1. **Type Safety** - TypeIs utilities for pattern validation
     2. **Serialization** - Multi-strategy safe object conversion
     3. **Type Introspection** - Generic type analysis
     4. **External Libraries** - structlog and dependency-injector adapters
@@ -487,7 +487,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.RuntimeData,
-    ) -> TypeGuard[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
         """Type guard to check if value is dict-like.
 
         Note:
@@ -593,7 +593,7 @@ class FlextRuntime:
         """Type guard to check if value is valid JSON string.
 
         Business Rule: Validates JSON strings using Pydantic v2 TypeAdapter for parsing.
-        Returns TypeGuard[str] for type narrowing in conditional blocks.
+        Returns TypeIs[str] for type narrowing in conditional blocks.
         Catches ValidationError for safe validation. Used for
         validating JSON payloads before deserialization.
 
@@ -620,7 +620,7 @@ class FlextRuntime:
     @staticmethod
     def _is_structlog_processor(
         value: t.RuntimeData,
-    ) -> TypeGuard[structlog.types.Processor]:
+    ) -> TypeIs[structlog.types.Processor]:
         return callable(value)
 
     @staticmethod
