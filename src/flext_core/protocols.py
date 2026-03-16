@@ -28,7 +28,6 @@ from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
 from flext_core import T, t
-from flext_core._models import FlextModelsContainers
 
 if TYPE_CHECKING:
     from flext_core import r

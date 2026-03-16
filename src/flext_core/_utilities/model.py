@@ -14,7 +14,6 @@ import orjson
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, m, r, t
-from flext_core._models import FlextModelFoundation
 
 
 class FlextUtilitiesModel:
@@ -34,7 +33,7 @@ class FlextUtilitiesModel:
 
     """
 
-    _V = FlextModelFoundation.Validators
+    _V = m.Validators
 
     @staticmethod
     def _normalize_str_object_mapping(
