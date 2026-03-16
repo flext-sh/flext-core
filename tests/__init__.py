@@ -1116,7 +1116,7 @@ if TYPE_CHECKING:
         TypeGuardsScenarios,
     )
     from tests.unit.test_version import TestFlextVersion
-    from tests.utilities import FlextCoreTestsUtilities, u
+    from tests.utilities import TestsFlextUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AlgarOudMigConstants": (
@@ -1266,7 +1266,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.patterns.test_patterns_commands",
         "FlextCommandType",
     ),
-    "FlextCoreTestsUtilities": ("tests.utilities", "FlextCoreTestsUtilities"),
     "FlextLdapConstants": (
         "tests.integration.test_refactor_policy_mro",
         "FlextLdapConstants",
@@ -2319,6 +2318,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestsFlextTestsFactoriesRes",
     ),
     "TestsFlextTypes": ("tests.typings", "TestsFlextTypes"),
+    "TestsFlextUtilities": ("tests.utilities", "TestsFlextUtilities"),
     "Testu": ("tests.unit.test_utilities", "Testu"),
     "TestuCacheClearObjectCache": (
         "tests.unit.test_utilities_cache_coverage_100",
@@ -4142,7 +4142,6 @@ __all__ = [
     "FlextCliUtilities",
     "FlextCommandId",
     "FlextCommandType",
-    "FlextCoreTestsUtilities",
     "FlextLdapConstants",
     "FlextLdapModels",
     "FlextLdapProtocols",
@@ -4472,6 +4471,7 @@ __all__ = [
     "TestsFlextTestsFactoriesModel",
     "TestsFlextTestsFactoriesRes",
     "TestsFlextTypes",
+    "TestsFlextUtilities",
     "Testu",
     "TestuCacheClearObjectCache",
     "TestuCacheGenerateCacheKey",

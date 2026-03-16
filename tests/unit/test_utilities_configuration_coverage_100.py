@@ -58,7 +58,7 @@ class _Assertions:
 
 class _ResultAssertions:
     @staticmethod
-    def assert_success_with_value[T](
+    def assert_success_with_value[T: t.NormalizedValue](
         result: FlextRuntime.RuntimeResult[T], expected: T
     ) -> None:
         tm.that(getattr(result, "is_success"), eq=True)
@@ -639,9 +639,8 @@ class TestFlextUtilitiesConfiguration:
             )
             _ResultAssertions.assert_failure(result)
             tm.that(result.error, none=False)
-            assert (
-                TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL
-                in result.error
+            assert TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL in (
+                result.error or ""
             )
 
         def test_set_singleton_not_callable(self) -> None:
@@ -666,7 +665,7 @@ class TestFlextUtilitiesConfiguration:
             tm.that(result.error, none=False)
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_IMPLEMENT_HAS_MODEL_DUMP
-                in result.error
+                in (result.error or "")
             )
 
         def test_set_singleton_parameter_set_failure(self) -> None:
@@ -679,12 +678,9 @@ class TestFlextUtilitiesConfiguration:
             )
             _ResultAssertions.assert_failure(result)
             tm.that(result.error, none=False)
-            assert (
-                TestConfigConstants.ErrorMessages.FAILED_TO_SET_PARAMETER.format(
-                    TestConfigConstants.ParameterNames.MISSING.value,
-                )
-                in result.error
-            )
+            assert TestConfigConstants.ErrorMessages.FAILED_TO_SET_PARAMETER.format(
+                TestConfigConstants.ParameterNames.MISSING.value,
+            ) in (result.error or "")
 
     class TestValidateConfigClass:
         """Tests for validate_config_class method."""
@@ -929,12 +925,9 @@ class TestFlextUtilitiesConfiguration:
             )
             _ResultAssertions.assert_failure(result)
             tm.that(result.error, none=False)
-            assert (
-                TestConfigConstants.ErrorMessages.FAILED_TO_BUILD.format(
-                    "StrictOptions",
-                )
-                in result.error
-            )
+            assert TestConfigConstants.ErrorMessages.FAILED_TO_BUILD.format(
+                "StrictOptions",
+            ) in (result.error or "")
 
         def test_unexpected_error(self) -> None:
             """Test build_options_from_kwargs handles unexpected errors."""
@@ -946,9 +939,6 @@ class TestFlextUtilitiesConfiguration:
             )
             _ResultAssertions.assert_failure(result)
             tm.that(result.error, none=False)
-            assert (
-                TestConfigConstants.ErrorMessages.UNEXPECTED_ERROR_BUILDING.format(
-                    "FailingOptions",
-                )
-                in result.error
-            )
+            assert TestConfigConstants.ErrorMessages.UNEXPECTED_ERROR_BUILDING.format(
+                "FailingOptions",
+            ) in (result.error or "")

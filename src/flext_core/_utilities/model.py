@@ -162,7 +162,10 @@ class FlextUtilitiesModel:
         if instance_result.is_failure:
             return r[M].fail(f"Model validation failed: {instance_result.error}")
         instance = instance_result.value
-        assert isinstance(instance, model_cls)
+        if not isinstance(instance, model_cls):
+            return r[M].fail(
+                f"Expected {model_cls.__name__}, got {type(instance).__name__}"
+            )
         return r[M].ok(instance)
 
     @staticmethod
@@ -193,7 +196,10 @@ class FlextUtilitiesModel:
         if instance_result.is_failure:
             return r[T_Model].fail(f"Model validation failed: {instance_result.error}")
         instance = instance_result.value
-        assert isinstance(instance, model_cls)
+        if not isinstance(instance, model_cls):
+            return r[T_Model].fail(
+                f"Expected {model_cls.__name__}, got {type(instance).__name__}"
+            )
         return r[T_Model].ok(instance)
 
     @staticmethod
@@ -223,7 +229,10 @@ class FlextUtilitiesModel:
         if instance_result.is_failure:
             return r[M].fail(f"Model validation failed: {instance_result.error}")
         instance = instance_result.value
-        assert isinstance(instance, model_cls)
+        if not isinstance(instance, model_cls):
+            return r[M].fail(
+                f"Expected {model_cls.__name__}, got {type(instance).__name__}"
+            )
         return r[M].ok(instance)
 
     @staticmethod
@@ -339,7 +348,10 @@ class FlextUtilitiesModel:
         if updated_result.is_failure:
             return r[M].fail(f"Model update failed: {updated_result.error}")
         updated = updated_result.value
-        assert isinstance(updated, instance.__class__)
+        if not isinstance(updated, instance.__class__):
+            return r[M].fail(
+                f"Expected {instance.__class__.__name__}, got {type(updated).__name__}"
+            )
         return r[M].ok(updated)
 
     @staticmethod

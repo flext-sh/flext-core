@@ -28,7 +28,19 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextContext, FlextSettings, e, h, m, p, r, t, u, x
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextSettings,
+    e,
+    h,
+    m,
+    p,
+    r,
+    t,
+    u,
+    x,
+)
 
 
 class FlextService[
@@ -132,8 +144,10 @@ class FlextService[
             self._execution_result = self.execute()
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            assert execution_result.value is not None
-            return execution_result.value
+            if execution_result.value is not None:
+                return execution_result.value
+            error_msg = "Service execution returned None value"
+            raise e.BaseError(error_msg)
         raise e.BaseError(execution_result.error or "Service execution failed")
 
     _context: p.Context | None = PrivateAttr(default=None)
@@ -285,8 +299,6 @@ class FlextService[
         This method is called by :meth:`_create_initial_runtime` which uses
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
-        from flext_core.container import FlextContainer
-
         config_cls = config_type or FlextSettings
         runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (
@@ -402,8 +414,7 @@ class FlextService[
             )
             return False
         v = validation_result.value
-        assert isinstance(v, bool)
-        return v
+        return v if isinstance(v, bool) else False
 
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules with extensible validation pipeline.

@@ -25,7 +25,7 @@ from flext_core import r
 from .test_utils import assertion_helpers
 
 
-class FlextCoreTestsUtilities(FlextTestsUtilities, FlextInfraUtilities):
+class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
     """Utilities for flext-core tests - extends FlextTestsUtilities.
 
     Architecture: Extends FlextTestsUtilities with flext-core-specific utility
@@ -102,10 +102,10 @@ class FlextCoreTestsUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def create_for_split() -> (
-                FlextCoreTestsUtilities.Tests.CoreBadObjects.BadSplitString
+                TestsFlextUtilities.Tests.CoreBadObjects.BadSplitString
             ):
                 """Create object that fails on split()."""
-                return FlextCoreTestsUtilities.Tests.CoreBadObjects.BadSplitString()
+                return TestsFlextUtilities.Tests.CoreBadObjects.BadSplitString()
 
             class BadIndexString:
                 """String-like object that raises on indexing."""
@@ -122,10 +122,10 @@ class FlextCoreTestsUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def create_for_index() -> (
-                FlextCoreTestsUtilities.Tests.CoreBadObjects.BadIndexString
+                TestsFlextUtilities.Tests.CoreBadObjects.BadIndexString
             ):
                 """Create object that fails on indexing."""
-                return FlextCoreTestsUtilities.Tests.CoreBadObjects.BadIndexString()
+                return TestsFlextUtilities.Tests.CoreBadObjects.BadIndexString()
 
             class BadStrObject:
                 """Object that raises on str() conversion."""
@@ -138,10 +138,10 @@ class FlextCoreTestsUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def create_for_str() -> (
-                FlextCoreTestsUtilities.Tests.CoreBadObjects.BadStrObject
+                TestsFlextUtilities.Tests.CoreBadObjects.BadStrObject
             ):
                 """Create object that fails on str()."""
-                return FlextCoreTestsUtilities.Tests.CoreBadObjects.BadStrObject()
+                return TestsFlextUtilities.Tests.CoreBadObjects.BadStrObject()
 
             class BadDict(UserDict[str, t.Tests.object]):
                 """Dict that raises on get()."""
@@ -239,6 +239,6 @@ class FlextCoreTestsUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 )
 
 
-u = FlextCoreTestsUtilities
+u = TestsFlextUtilities
 
-__all__ = ["FlextCoreTestsUtilities", "u"]
+__all__ = ["TestsFlextUtilities", "u"]

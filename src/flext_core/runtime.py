@@ -85,7 +85,6 @@ from structlog.stdlib import add_log_level
 
 from flext_core import T, c, p, t
 from flext_core._models import FlextModelFoundation, FlextModelsContainers
-from flext_core._utilities import FlextUtilitiesDeprecation
 
 
 class FlextRuntime:
@@ -638,9 +637,6 @@ class FlextRuntime:
 
         """
         if val is None:
-            FlextUtilitiesDeprecation.warn_polymorphic_input(
-                val, "normalize_to_container", "t.Container | BaseModel"
-            )
             return ""
         if FlextRuntime._is_scalar(val) or isinstance(val, Path):
             return val
