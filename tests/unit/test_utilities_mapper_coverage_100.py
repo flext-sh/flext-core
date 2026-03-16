@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, cast
 
-from flext_tests import t, tm
+from flext_tests import tm
 from pydantic import BaseModel, Field
 
 from tests import m, t, u

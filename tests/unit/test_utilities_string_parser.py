@@ -27,12 +27,11 @@ from collections.abc import Callable
 from typing import cast
 
 import pytest
-from flext_tests import m, t as tests_t, u
 
 from flext_core import r
 from tests import c, m, t, u
 
-_object = tests_t.Tests.object
+_object = t.Tests.object
 
 
 class StringParserTestFactory:
@@ -430,7 +429,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test parsing exception handling with bad object."""
-            bad_obj = FlextCoreTestsUtilities.Tests.CoreBadObjects.create_for_split()
+            bad_obj = u.Tests.CoreBadObjects.create_for_split()
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.parse_delimited(
                 bad_str,
@@ -451,7 +450,7 @@ class TestuStringParser:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.object]]",
+                    "Callable[[], r[t.Tests.object]]",
                     lambda: parser.split_on_char_with_escape(
                         case.text,
                         case.split_char,
@@ -465,7 +464,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test split exception handling with bad object."""
-            bad_obj = FlextCoreTestsUtilities.Tests.CoreBadObjects.create_for_index()
+            bad_obj = u.Tests.CoreBadObjects.create_for_index()
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.split_on_char_with_escape(
                 bad_str,
@@ -489,7 +488,7 @@ class TestuStringParser:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.object]]",
+                    "Callable[[], r[t.Tests.object]]",
                     lambda: parser.normalize_whitespace(
                         case.text,
                         pattern=case.pattern,
@@ -503,7 +502,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test normalization exception handling with bad object."""
-            bad_obj = FlextCoreTestsUtilities.Tests.CoreBadObjects.create_for_str()
+            bad_obj = u.Tests.CoreBadObjects.create_for_str()
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.normalize_whitespace(bad_str)
             assert result.is_failure
@@ -521,7 +520,7 @@ class TestuStringParser:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.object]]",
+                    "Callable[[], r[t.Tests.object]]",
                     lambda: parser.apply_regex_pipeline(case.text, case.patterns),
                 ),
                 expected_value=case.expected,
@@ -551,7 +550,7 @@ class TestuStringParser:
             text = cast("str", cast("object", None))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.object]]",
+                    "Callable[[], r[t.Tests.object]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [
@@ -571,7 +570,7 @@ class TestuStringParser:
             text = cast("str", cast("object", 123))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.object]]",
+                    "Callable[[], r[t.Tests.object]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [

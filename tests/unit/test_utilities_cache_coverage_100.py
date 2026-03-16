@@ -21,7 +21,7 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from tests import t, u
