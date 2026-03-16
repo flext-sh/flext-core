@@ -66,7 +66,6 @@ from typing import (
     Annotated,
     ClassVar,
     Self,
-    TypeGuard,
     TypeIs,
     cast,
     override,
