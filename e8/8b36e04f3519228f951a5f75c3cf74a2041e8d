@@ -1,0 +1,38 @@
+src/flext_core/constants.py
+  db706e64c0370220 688
+tests/unit/test_utilities_text_full_coverage.py
+  e78bcaba9ed14069 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "e88b36e04f3519228f951a5f75c3cf74a2041e8d",
+  "prompts": {
+    "db706e64c0370220": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3091847d5ffeTCLuKwyQLDE3l2",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "e78bcaba9ed14069": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30ed83fa2ffeXIlYwDPQXZFSnb",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
