@@ -14,13 +14,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Annotated, override
+from typing import Annotated, override
 
 from flext_tests import FlextTestsServiceBase
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import T, h, r
-
 from tests import c, m, t
 
 
