@@ -16,7 +16,7 @@ from enum import StrEnum
 from itertools import batched, chain
 from typing import overload
 
-from flext_core import R, T, U, m, r, t
+from flext_core import T, U, m, r, t
 
 
 class FlextUtilitiesCollection:
@@ -179,7 +179,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def batch(
         items: Sequence[T],
-        operation: Callable[[T], R | r[R]],
+        operation: Callable[[T], t.Serializable | r[t.Serializable]],
         *,
         size: int | None = None,
         on_error: str | None = None,

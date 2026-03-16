@@ -318,7 +318,9 @@ def test_guard_instance_attribute_access_warnings() -> None:
     guards = u()
     method = guards.is_type
     tm.that(callable(method), eq=True)
-    private_method = cast("Callable[..., t.Tests.object]", getattr(guards, "_is_str"))
+    private_method = cast(
+        "Callable[..., t.Tests.object]", getattr(guards, "_is_mapping")
+    )
     tm.that(callable(private_method), eq=True)
 
 

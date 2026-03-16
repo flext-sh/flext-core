@@ -1,12 +1,4 @@
-"""Deprecation warnings pattern for backward compatibility.
-
-FlextUtilitiesDeprecation provides utilities for marking deprecated functions,
-parameters, and classes with migration guidance while maintaining backward
-compatibility.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Deprecation utilities for flext-core."""
 
 from __future__ import annotations
 
@@ -28,18 +20,7 @@ class FlextUtilitiesDeprecation:
 
     @classmethod
     def warn_once(cls, identifier: str, message: str) -> None:
-        """Emit a deprecation warning only once per unique identifier.
-
-        Args:
-            identifier: Unique identifier for this warning (used to prevent duplicates).
-            message: Warning message to display.
-
-        Example:
-            >>> FlextUtilitiesDeprecation.warn_once(
-            ...     "old_api_v1", "This API is deprecated. Use v2 instead."
-            ... )
-
-        """
+        """Emit one deprecation warning per identifier."""
         if identifier not in cls._warned_once:
             cls._warned_once.add(identifier)
             warnings.warn(message, DeprecationWarning, stacklevel=2)
@@ -53,19 +34,7 @@ class FlextUtilitiesDeprecation:
         *,
         removal_version: str = "0.14.0",
     ) -> None:
-        """Emit deprecation warning for overly polymorphic inputs.
-
-        Use at system boundaries where broad union types (NormalizedValue,
-        t.RuntimeData, RegisterableService) accept inputs that should migrate
-        to narrower types (Container, Scalar, ConfigMap).
-
-        Args:
-            value: The actual value received.
-            context: Name of the function/parameter accepting the value.
-            preferred: Preferred narrower type name.
-            removal_version: Version when broad acceptance will be removed.
-
-        """
+        """Warn on broad input unions that should be narrowed."""
         type_name = type(value).__name__
         identifier = f"polymorphic_{context}_{type_name}"
         cls.warn_once(
@@ -153,25 +122,7 @@ class FlextUtilitiesDeprecation:
     def deprecated_parameter(
         param_name: str, replacement: str | None = None, version: str | None = None
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Mark function parameter as deprecated.
-
-        Args:
-            param_name: Name of deprecated parameter.
-            replacement: Name of replacement parameter.
-            version: Version when deprecation was introduced.
-
-        Returns:
-            Decorator that warns when deprecated parameter is used.
-
-        Example:
-            >>> @FlextUtilitiesDeprecation.deprecated_parameter(
-            ...     "old_param",
-            ...     replacement="new_param",
-            ...     version="2.0.0"
-            ... )
-            >>> def my_function(new_param: str, old_param: str | None = None): ...
-
-        """
+        """Warn when a deprecated parameter is passed by keyword."""
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
