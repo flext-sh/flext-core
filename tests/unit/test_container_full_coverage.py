@@ -48,7 +48,7 @@ class _ContextNoClone:
 
     def set(
         self,
-        key_or_data: str | m.ConfigMap,
+        key_or_data: str | t.ConfigMap,
         value: t.Container | BaseModel | None = None,
         *,
         scope: str = "",
@@ -208,7 +208,7 @@ def test_initialize_di_components_error_paths(
 def test_sync_config_namespace_paths(monkeypatch: _MonkeyPatch) -> None:
     c = FlextContainer.create()
     c._config = FlextSettings()
-    c._user_overrides = m.ConfigMap(root={})
+    c._user_overrides = t.ConfigMap(root={})
     c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
@@ -259,7 +259,7 @@ def test_configure_with_resource_register_and_factory_error_paths(
     monkeypatch: _MonkeyPatch,
 ) -> None:
     c = FlextContainer.create()
-    c._user_overrides = m.ConfigMap(root={})
+    c._user_overrides = t.ConfigMap(root={})
     c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
@@ -342,7 +342,7 @@ def test_scoped_config_context_branches(monkeypatch: _MonkeyPatch) -> None:
     c._services = {}
     c._factories = {}
     c._resources = {}
-    c._user_overrides = m.ConfigMap(root={})
+    c._user_overrides = t.ConfigMap(root={})
     c._global_config = m.ContainerConfig(
         enable_singleton=True,
         enable_factory_caching=False,
@@ -415,7 +415,7 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
     tm.that(wrapper(), eq=7)
     tm.that(
         wrapper(_factory_config=types.SimpleNamespace(fn=123, name="factory.captured")),
-        eq=m.ConfigMap(root={}),
+        eq=t.ConfigMap(root={}),
     )
     monkeypatch.setattr(FlextContainer, "register", original_register)
 
@@ -465,7 +465,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
             max_services=10,
             max_factories=10,
         )
-        c._user_overrides = m.ConfigMap(root={})
+        c._user_overrides = t.ConfigMap(root={})
         registered: dict[str, Callable[..., object]] = {}
         monkeypatch.setattr(c, "has_service", _has_service_false)
 
@@ -521,7 +521,7 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
         services={},
         factories={},
         resources={},
-        user_overrides=m.ConfigMap(root={}),
+        user_overrides=t.ConfigMap(root={}),
         container_config=m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
@@ -594,7 +594,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
         max_services=10,
         max_factories=10,
     )
-    c._user_overrides = m.ConfigMap(root={})
+    c._user_overrides = t.ConfigMap(root={})
 
     # --- _CfgNoMethod: namespace_registry without get_namespace_config ---
     # n1 is NOT registered in FlextSettings, so get_namespace_config returns None

@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
 from flext_core import FlextRuntime, r
-from tests import c, m, u
+from tests import c, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module("tests.unit.test_runtime_coverage_100")
@@ -264,9 +264,9 @@ def test_runtime_create_instance_failure_branch(
 
 
 def test_normalization_edge_branches() -> None:
-    cfg = m.ConfigMap(root={"a": 1})
+    cfg = t.ConfigMap(root={"a": 1})
     normalized_cfg = FlextRuntime.normalize_to_container(cfg)
-    tm.that(isinstance(normalized_cfg, (m.ConfigMap, m.Dict)), eq=True)
+    tm.that(isinstance(normalized_cfg, (t.ConfigMap, t.Dict)), eq=True)
     tm.that(getattr(normalized_cfg, "root", None), eq={"a": 1})
 
     class DictLike(Mapping[str, object]):
@@ -287,7 +287,7 @@ def test_normalization_edge_branches() -> None:
     normalized_dict_like = FlextRuntime.normalize_to_container(
         cast("t.RuntimeData", DictLike()),
     )
-    tm.that(isinstance(normalized_dict_like, m.Dict), eq=True)
+    tm.that(isinstance(normalized_dict_like, t.Dict), eq=True)
     tm.that(getattr(normalized_dict_like, "root", None), eq={"x": 1})
     metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
     tm.that(isinstance(metadata_cfg, str), eq=True)
@@ -528,7 +528,7 @@ def test_runtime_result_all_missed_branches() -> None:
     failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
         "e",
         error_code="E1",
-        error_data=m.ConfigMap(root={"x": 1}),
+        error_data=t.ConfigMap(root={"x": 1}),
     )
     tm.that(success.is_success, eq=True)
     tm.that(success.unwrap_or(9), eq=1)
@@ -765,10 +765,10 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     normalized_mapping = FlextRuntime.normalize_to_container(
         MappingProxyType({"k": "v"}),
     )
-    tm.that(isinstance(normalized_mapping, m.Dict), eq=True)
+    tm.that(isinstance(normalized_mapping, t.Dict), eq=True)
     tm.that(getattr(normalized_mapping, "root", None), eq={"k": "v"})
     norm_list = FlextRuntime.normalize_to_container([1, "x"])
-    tm.that(isinstance(norm_list, m.ObjectList), eq=True)
+    tm.that(isinstance(norm_list, t.ObjectList), eq=True)
     tm.that(list(getattr(norm_list, "root", [])), eq=[1, "x"])
     # Path is Container, returned as-is
     tm.that(FlextRuntime.normalize_to_container(Path("/tmp")), eq=Path("/tmp"))
@@ -884,14 +884,14 @@ def test_configure_structlog_print_logger_factory_fallback(
 def test_dependency_integration_and_wiring_paths() -> None:
     bridge, services, resources = (
         FlextRuntime.DependencyIntegration.create_layered_bridge(
-            config=m.ConfigMap(root={"db": m.Dict(root={"dsn": "sqlite://"})}),
+            config=t.ConfigMap(root={"db": t.Dict(root={"dsn": "sqlite://"})}),
         )
     )
     tm.that(
         bridge is not None and services is not None and (resources is not None), eq=True
     )
     di = FlextRuntime.DependencyIntegration.create_container(
-        config=m.ConfigMap(root={"feature": m.Dict(root={"enabled": True})}),
+        config=t.ConfigMap(root={"feature": t.Dict(root={"enabled": True})}),
         services={"svc": 1},
         factories={"factory": lambda: 2},
         resources={"resource": lambda: {"ok": True}},
@@ -906,7 +906,7 @@ def test_dependency_integration_and_wiring_paths() -> None:
     provider = runtime_module.providers.Configuration()
     FlextRuntime.DependencyIntegration.bind_configuration_provider(
         provider,
-        m.ConfigMap(root={"api": m.Dict(root={"url": "x"})}),
+        t.ConfigMap(root={"api": t.Dict(root={"url": "x"})}),
     )
     tm.that(provider.api.url(), eq="x")
 
@@ -926,7 +926,7 @@ def test_runtime_result_remaining_paths() -> None:
     failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
         "err",
         error_code="E2",
-        error_data=m.ConfigMap(root={"k": "v"}),
+        error_data=t.ConfigMap(root={"k": "v"}),
     )
     tm.that(failure.error_code, eq="E2")
     tm.that(failure.error_data, none=False)
@@ -988,7 +988,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
     FlextRuntime.Integration.track_domain_event(
         "evt",
         aggregate_id="agg",
-        event_data=m.ConfigMap(root={"k": "v"}),
+        event_data=t.ConfigMap(root={"k": "v"}),
     )
     FlextRuntime.Integration.setup_service_infrastructure(
         service_name="svc",

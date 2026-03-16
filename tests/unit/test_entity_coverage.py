@@ -45,7 +45,7 @@ class TestEntityCoverageEdgeCases:
         assert len(events) == 0
         event_result = entity.add_domain_event(
             "test_event",
-            m.ConfigMap(root={"key": "value"}),
+            t.ConfigMap(root={"key": "value"}),
         )
         assert event_result.is_success
         events = entity.uncommitted_events
@@ -61,9 +61,9 @@ class TestEntityCoverageEdgeCases:
         entry = TestEntry(unique_id="test-id", name="test")
         max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
         for i in range(max_events):
-            result = entry.add_domain_event(f"event_{i}", m.ConfigMap(root={}))
+            result = entry.add_domain_event(f"event_{i}", t.ConfigMap(root={}))
             assert result.is_success
-        fail_result = entry.add_domain_event("overflow_event", m.ConfigMap(root={}))
+        fail_result = entry.add_domain_event("overflow_event", t.ConfigMap(root={}))
         assert fail_result.is_failure
         error_msg = fail_result.error or ""
         assert "would exceed max events limit" in error_msg

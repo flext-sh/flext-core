@@ -191,7 +191,7 @@ class FlextDecorators:
         ...     )
         ...     def call_external_api(
         ...         self, endpoint: str
-         ...     ) -> m.ConfigMap:
+         ...     ) -> t.ConfigMap:
         ...         # Automatically retries on failure with backoff
         ...         return requests.get(endpoint).json()
 
@@ -263,7 +263,7 @@ class FlextDecorators:
 
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-         ... def business_operation() -> m.ConfigMap:
+         ... def business_operation() -> t.ConfigMap:
         ...     # All exceptions become r.fail()
         ...     return process_business_logic()
         >>>
@@ -687,7 +687,7 @@ class FlextDecorators:
                     delay_seconds=2.0,
                     backoff_strategy=c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
                 )
-                def unreliable_operation(self) -> m.ConfigMap:
+                def unreliable_operation(self) -> t.ConfigMap:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -837,7 +837,7 @@ class FlextDecorators:
                 result=clear_result,
                 logger=logger,
                 fallback_message="operation_context_clear_failed",
-                kwargs=m.ConfigMap(
+                kwargs=t.ConfigMap(
                     root={"extra": {"function": function_name, "operation": operation}}
                 ),
             )
@@ -919,19 +919,19 @@ class FlextDecorators:
         result: r[bool] | p.Result[bool] | FlextRuntime.RuntimeResult[bool],
         logger: FlextLogger,
         fallback_message: str,
-        kwargs: m.ConfigMap,
+        kwargs: t.ConfigMap,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
             fallback_logger = logger.logger if hasattr(logger, "logger") else None
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
-            fallback_kwargs = m.ConfigMap(root=kwargs.root)
+            fallback_kwargs = t.ConfigMap(root=kwargs.root)
             warning_context: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
                 if key == "extra" and FlextRuntime.is_dict_like(value):
                     extra_items: Mapping[str, t.NormalizedValue | BaseModel]
-                    if isinstance(value, m.ConfigMap):
+                    if isinstance(value, t.ConfigMap):
                         extra_items = value.root
                     else:
                         extra_items = {
@@ -1173,7 +1173,7 @@ class FlextDecorators:
 
             class MyService:
                 @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> m.ConfigMap:
+                def long_running_operation(self) -> t.ConfigMap:
                     # Automatically raises TimeoutError if exceeds 30 seconds
                     return self._process_data()
             ```

@@ -16,7 +16,6 @@ from typing import cast
 from flext_tests import u
 
 from flext_core import r
-from tests import m
 
 
 def test_ok_accepts_none() -> None:
@@ -33,13 +32,13 @@ def test_map_error_identity_and_transform() -> None:
     failure: r[int] = r[int].fail(
         "bad",
         error_code="E1",
-        error_data=m.ConfigMap(root={"k": "v"}),
+        error_data=t.ConfigMap(root={"k": "v"}),
     )
     transformed = failure.map_error(lambda msg: f"{msg}_mapped")
     assert transformed.is_failure
     assert transformed.error is not None and "bad_mapped" in transformed.error
     assert transformed.error_code == "E1"
-    assert transformed.error_data == m.ConfigMap(root={"k": "v"})
+    assert transformed.error_data == t.ConfigMap(root={"k": "v"})
 
 
 def test_flow_through_short_circuits_on_failure() -> None:

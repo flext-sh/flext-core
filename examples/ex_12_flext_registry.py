@@ -206,7 +206,7 @@ class Ex12FlextRegistry(Examples):
         callable_value = self.rand_str(10)
         bad_value = self.rand_str(4)
         track_name = self.rand_str(8)
-        meta_dict = m.ConfigMap(root={"team": team_value, "version": version_value})
+        meta_dict = t.ConfigMap(root={"team": team_value, "version": version_value})
         meta_model = m.Metadata(attributes={"owner": owner_value, "enabled": True})
         reg_plain = registry.register(svc_plain_name, svc_plain_value)
         reg_meta_dict = registry.register(
@@ -328,10 +328,10 @@ class Ex12FlextRegistry(Examples):
             "ensure_result.existing",
             r[int].ok(ensured_existing).unwrap_or(0) == ensured_existing,
         )
-        self.check("to_dict.none", m.ConfigMap(root={}).root)
+        self.check("to_dict.none", t.ConfigMap(root={}).root)
         self.check(
             "to_dict.mapping",
-            m.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
+            t.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
         )
         self.check(
             "to_dict.basemodel",

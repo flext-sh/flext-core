@@ -153,7 +153,7 @@ class TestFlextTestsFiles:
         """Test creating multiple files from dictionary."""
         files: dict[
             str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1", "file2": "content2", "file3.txt": "content3"}
         with tf.files(files, directory=tmp_path, ext=".txt") as created:
             assert len(created) == 3
@@ -168,7 +168,7 @@ class TestFlextTestsFiles:
         """Test creating file set with custom extension."""
         files: dict[
             str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         extension = ".md"
         with tf.files(files, directory=tmp_path, ext=extension) as created:
@@ -287,7 +287,7 @@ class TestFlextTestsFiles:
         """Test files classmethod context manager."""
         files: dict[
             str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1", "file2": "content2"}
         with tf.files(files) as created:
             assert len(created) == 2
@@ -302,7 +302,7 @@ class TestFlextTestsFiles:
         """Test files with custom extension."""
         files: dict[
             str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         with tf.files(files, ext=".md") as created:
             assert created["file1"].name == "file1.md"
@@ -312,7 +312,7 @@ class TestFlextTestsFiles:
         nested_dir = tmp_path / "nested" / "subdir"
         files: dict[
             str,
-            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         with tf.files(files, directory=nested_dir) as created:
             assert created["file1"].parent == nested_dir
@@ -356,7 +356,7 @@ class TestFlextTestsFilesNewApi:
     def test_create_json_auto_detect_from_dict(self, tmp_path: Path) -> None:
         """Test create() auto-detects JSON from dict content."""
         manager = tf(base_dir=tmp_path)
-        content: m.ConfigMap = m.ConfigMap(root={"key": "value", "number": 42})
+        content: t.ConfigMap = t.ConfigMap(root={"key": "value", "number": 42})
         path = manager.create(content, "config.json")
         assert path.exists()
         data = json.loads(path.read_text())
@@ -365,7 +365,7 @@ class TestFlextTestsFilesNewApi:
     def test_create_yaml_auto_detect_from_extension(self, tmp_path: Path) -> None:
         """Test create() auto-detects YAML from .yaml extension."""
         manager = tf(base_dir=tmp_path)
-        content: m.ConfigMap = m.ConfigMap(root={"name": "test", "enabled": True})
+        content: t.ConfigMap = t.ConfigMap(root={"name": "test", "enabled": True})
         path = manager.create(content, "config.yaml")
         assert path.exists()
         data = yaml.safe_load(path.read_text())
@@ -407,7 +407,7 @@ class TestFlextTestsFilesNewApi:
     def test_create_json_custom_indent(self, tmp_path: Path) -> None:
         """Test create() JSON with custom indentation."""
         manager = tf(base_dir=tmp_path)
-        content = m.ConfigMap(root={"key": "value"})
+        content = t.ConfigMap(root={"key": "value"})
         path = manager.create(content, "config.json", indent=4)
         assert path.exists()
         text = path.read_text()
@@ -440,7 +440,7 @@ class TestFlextTestsFilesNewApi:
     def test_read_json_file(self, tmp_path: Path) -> None:
         """Test read() returns dict content for .json files."""
         manager = tf(base_dir=tmp_path)
-        content: m.ConfigMap = m.ConfigMap(root={"key": "value", "number": 42})
+        content: t.ConfigMap = t.ConfigMap(root={"key": "value", "number": 42})
         path = manager.create(content, "config.json")
         result = manager.read(path)
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -449,7 +449,7 @@ class TestFlextTestsFilesNewApi:
     def test_read_yaml_file(self, tmp_path: Path) -> None:
         """Test read() returns dict content for .yaml files."""
         manager = tf(base_dir=tmp_path)
-        content: m.ConfigMap = m.ConfigMap(root={"name": "test", "enabled": True})
+        content: t.ConfigMap = t.ConfigMap(root={"name": "test", "enabled": True})
         path = manager.create(content, "config.yaml")
         result = manager.read(path)
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -638,7 +638,7 @@ class TestFlextTestsFilesNewApi:
     def test_info_format_detection(self, tmp_path: Path) -> None:
         """Test info() detects file format."""
         manager = tf(base_dir=tmp_path)
-        path = manager.create(m.ConfigMap(root={"key": "value"}), "config.json")
+        path = manager.create(t.ConfigMap(root={"key": "value"}), "config.json")
         result = manager.info(path)
         _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
@@ -678,7 +678,7 @@ class TestFlextTestsFilesNewApi:
 
     def test_files_context_manager_json_auto_detect(self) -> None:
         """Test files() auto-detects JSON from dict content."""
-        content = m.ConfigMap(root={"key": "value"})
+        content = t.ConfigMap(root={"key": "value"})
         with tf.files({"config": content}) as paths:
             assert paths["config"].suffix == ".json"
             data = json.loads(paths["config"].read_text())
@@ -688,7 +688,7 @@ class TestFlextTestsFilesNewApi:
         """Test files() handles mixed content types."""
         with tf.files({
             "text": "plain text",
-            "json": m.ConfigMap(root={"key": "value"}),
+            "json": t.ConfigMap(root={"key": "value"}),
             "csv": [["a", "b"], ["1", "2"]],
         }) as paths:
             assert paths["text"].read_text() == "plain text"
@@ -773,7 +773,7 @@ class TestInfoWithContentMeta:
         """Test info() with parse_content=True for JSON dict."""
         manager = tf(base_dir=tmp_path)
         path = manager.create(
-            m.ConfigMap(root={"key1": "value1", "key2": "value2"}),
+            t.ConfigMap(root={"key1": "value1", "key2": "value2"}),
             "config.json",
         )
         result = manager.info(path, parse_content=True)
@@ -799,7 +799,7 @@ class TestInfoWithContentMeta:
     def test_info_parse_content_yaml_dict(self, tmp_path: Path) -> None:
         """Test info() with parse_content=True for YAML dict."""
         manager = tf(base_dir=tmp_path)
-        path = manager.create(m.ConfigMap(root={"a": 1, "b": 2, "c": 3}), "config.yaml")
+        path = manager.create(t.ConfigMap(root={"a": 1, "b": 2, "c": 3}), "config.yaml")
         result = manager.info(path, parse_content=True)
         _ = assertion_helpers.assert_flext_result_success(result)
         info = result.value
@@ -828,7 +828,7 @@ class TestInfoWithContentMeta:
 
         manager = tf(base_dir=tmp_path)
         path = manager.create(
-            m.ConfigMap(root={"name": "Alice", "age": 30}),
+            t.ConfigMap(root={"name": "Alice", "age": 30}),
             "user.json",
         )
         result = manager.info(path, validate_model=SimpleModel)
@@ -846,7 +846,7 @@ class TestInfoWithContentMeta:
 
         manager = tf(base_dir=tmp_path)
         path = manager.create(
-            m.ConfigMap(root={"other_field": "value"}),
+            t.ConfigMap(root={"other_field": "value"}),
             "invalid.json",
         )
         result = manager.info(path, validate_model=StrictModel)
@@ -1042,7 +1042,7 @@ class TestCreateInStatic:
 
     def test_create_in_dict_content(self, tmp_path: Path) -> None:
         """Test create_in() for dict content (JSON)."""
-        path = tf.create_in(m.ConfigMap(root={"key": "value"}), "config.json", tmp_path)
+        path = tf.create_in(t.ConfigMap(root={"key": "value"}), "config.json", tmp_path)
         assert path.exists()
         content = json.loads(path.read_text())
         assert content == {"key": "value"}
@@ -1050,7 +1050,7 @@ class TestCreateInStatic:
     def test_create_in_yaml_content(self, tmp_path: Path) -> None:
         """Test create_in() for YAML file."""
         path = tf.create_in(
-            m.ConfigMap(root={"setting": True}),
+            t.ConfigMap(root={"setting": True}),
             "config.yaml",
             tmp_path,
         )
@@ -1074,14 +1074,14 @@ class TestCreateInStatic:
     def test_create_in_format_detection(self, tmp_path: Path) -> None:
         """Test create_in() format auto-detection from extension."""
         path1 = tf.create_in(
-            m.ConfigMap(root={"key": "value"}),
+            t.ConfigMap(root={"key": "value"}),
             "config.json",
             tmp_path,
         )
         assert path1.exists()
         assert json.loads(path1.read_text()) == {"key": "value"}
         path2 = tf.create_in(
-            m.ConfigMap(root={"key": "value"}),
+            t.ConfigMap(root={"key": "value"}),
             "config.yaml",
             tmp_path,
         )
@@ -1094,7 +1094,7 @@ class TestCreateInStatic:
 
     def test_create_in_with_flextresult(self, tmp_path: Path) -> None:
         """Test create_in() with r content extraction."""
-        result = r[m.ConfigMap].ok(m.ConfigMap(root={"status": "success"}))
+        result = r[t.ConfigMap].ok(t.ConfigMap(root={"status": "success"}))
         path = tf.create_in(result, "result.json", tmp_path)
         assert path.exists()
         content = json.loads(path.read_text())
@@ -1114,8 +1114,8 @@ class TestCreateInStatic:
 
     def test_create_in_json_indent(self, tmp_path: Path) -> None:
         """Test create_in() with custom JSON indentation."""
-        content: m.ConfigMap = m.ConfigMap(
-            root={"key": "value", "nested": m.ConfigMap(root={"a": 1})},
+        content: t.ConfigMap = t.ConfigMap(
+            root={"key": "value", "nested": t.ConfigMap(root={"a": 1})},
         )
         path = tf.create_in(content, "config.json", tmp_path, indent=4)
         assert path.exists()

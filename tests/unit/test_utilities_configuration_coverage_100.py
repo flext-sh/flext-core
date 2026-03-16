@@ -480,7 +480,7 @@ class TestFlextUtilitiesConfiguration:
             result = u.set_parameter(
                 config,
                 param_name,
-                cast("t.Scalar | m.ConfigMap", value),
+                cast("t.Scalar | t.ConfigMap", value),
             )
             if result:
                 tm.that(getattr(config, param_name), eq=value)
@@ -510,7 +510,7 @@ class TestFlextUtilitiesConfiguration:
             result = u.set_parameter(
                 config,
                 param_name,
-                cast("t.Scalar | m.ConfigMap", value),
+                cast("t.Scalar | t.ConfigMap", value),
             )
             tm.that(result, eq=False)
 
@@ -556,7 +556,7 @@ class TestFlextUtilitiesConfiguration:
             result = u.set_parameter(
                 config,
                 param_name,
-                cast("t.Scalar | m.ConfigMap", value),
+                cast("t.Scalar | t.ConfigMap", value),
             )
             tm.that(result, eq=True)
             tm.that(getattr(config, param_name), eq=value)

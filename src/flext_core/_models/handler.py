@@ -23,7 +23,7 @@ from pydantic import (
 )
 
 from flext_core import c, p, t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core._models import FlextModelFoundation
 
 
 class FlextModelsHandler:
@@ -282,7 +282,7 @@ class FlextModelsHandler:
             ),
         ]
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: FlextModelsContainers.Dict | None = PrivateAttr(default=None)
+        _metrics_state: t.Dict | None = PrivateAttr(default=None)
 
         @computed_field
         def execution_time_ms(self) -> float:
@@ -304,7 +304,7 @@ class FlextModelsHandler:
             return self._start_time is not None
 
         @computed_field
-        def metrics_state(self) -> FlextModelsContainers.Dict:
+        def metrics_state(self) -> t.Dict:
             """Get current metrics state.
 
             Returns:
@@ -320,8 +320,8 @@ class FlextModelsHandler:
 
             """
             if self._metrics_state is None:
-                self._metrics_state = FlextModelsContainers.Dict(root={})
-            metrics_state_val: FlextModelsContainers.Dict = self._metrics_state
+                self._metrics_state = t.Dict(root={})
+            metrics_state_val: t.Dict = self._metrics_state
             return metrics_state_val
 
         @classmethod
@@ -371,7 +371,7 @@ class FlextModelsHandler:
             self._start_time = None
             self._metrics_state = None
 
-        def set_metrics_state(self, state: FlextModelsContainers.Dict) -> None:
+        def set_metrics_state(self, state: t.Dict) -> None:
             """Set metrics state."""
             self._metrics_state = state
 

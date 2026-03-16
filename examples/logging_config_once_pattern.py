@@ -17,16 +17,16 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import c, m, r, s, t
+from flext_core import c, r, s, t
 
 
-class DatabaseService(s[m.ConfigMap]):
+class DatabaseService(s[t.ConfigMap]):
     """Example service showing config log-once pattern."""
 
-    db_config: m.ConfigMap
+    db_config: t.ConfigMap
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute database operations.
 
         Returns:
@@ -37,8 +37,8 @@ class DatabaseService(s[m.ConfigMap]):
             "database_query", operation_type="select", table="users"
         )
         self.logger.info("Executing database query")
-        results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
-        return r[m.ConfigMap].ok(results)
+        results = t.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
+        return r[t.ConfigMap].ok(results)
 
     @override
     def model_post_init(self, /, __context: t.Container | None) -> None:
@@ -52,7 +52,7 @@ class DatabaseService(s[m.ConfigMap]):
         self._log_config_once(self.db_config, message="Database configuration loaded")
 
 
-class MigrationService(s[m.ConfigMap]):
+class MigrationService(s[t.ConfigMap]):
     """Example migration service with config log-once pattern."""
 
     input_dir: str
@@ -68,7 +68,7 @@ class MigrationService(s[m.ConfigMap]):
 
         """
         super().model_post_init(__context)
-        config = m.ConfigMap(
+        config = t.ConfigMap(
             root={
                 "input_dir": self.input_dir,
                 "output_dir": self.output_dir,
@@ -80,7 +80,7 @@ class MigrationService(s[m.ConfigMap]):
         self._log_config_once(config, message="Migration configuration loaded")
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute migration.
 
         Returns:
@@ -93,13 +93,13 @@ class MigrationService(s[m.ConfigMap]):
         self.logger.info("Starting migration process")
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
 def main() -> None:
     """Demonstrate config log-once pattern."""
     print("=== Example 1: Database Service ===")
-    db_config = m.ConfigMap(
+    db_config = t.ConfigMap(
         root={
             "host": c.Network.LOCALHOST,
             "port": 5432,

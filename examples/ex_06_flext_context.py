@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c
 
 from .shared import Examples
 
@@ -31,7 +31,7 @@ class Ex06FlextContext(Examples):
         _ = seed.set("k3", True)
         payload = seed.iter_scope_vars()[c.Context.SCOPE_GLOBAL].get()
         self.check(
-            "set_all.success", ctx.set(payload or m.ConfigMap(root={})).is_success
+            "set_all.success", ctx.set(payload or t.ConfigMap(root={})).is_success
         )
         self.check("get.k1", ctx.get("k1").unwrap_or("missing"))
         self.check("has.k2", ctx.has("k2"))
@@ -40,7 +40,7 @@ class Ex06FlextContext(Examples):
         self.check("keys.count", len(ctx.keys()))
         self.check("values.count", len(ctx.values()))
         self.check("items.count", len(ctx.items()))
-        merged = ctx.clone().merge(m.ConfigMap(root={"k4": "merged"}).root)
+        merged = ctx.clone().merge(t.ConfigMap(root={"k4": "merged"}).root)
         self.check("merge.get", merged.get("k4").unwrap_or("missing"))
         self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
         self.check("validate.success", ctx.validate_context().is_success)

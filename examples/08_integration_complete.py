@@ -54,7 +54,7 @@ class Order(m.AggregateRoot):
     status: c.Cqrs.CommonStatus = Field(default=c.Cqrs.CommonStatus.PENDING)
 
 
-class IntegrationService(s[m.ConfigMap]):
+class IntegrationService(s[t.ConfigMap]):
     """Service demonstrating complete flext-core integration."""
 
     @staticmethod
@@ -70,7 +70,7 @@ class IntegrationService(s[m.ConfigMap]):
         """Show FlextContainer integration."""
         print("\n=== FlextContainer Integration ===")
         container = FlextContainer()
-        logger_service = m.ConfigMap(root={"module": __name__})
+        logger_service = t.ConfigMap(root={"module": __name__})
         _ = container.register("logger", logger_service)
         logger_result = container.get("logger")
         if logger_result.is_success:
@@ -159,7 +159,7 @@ class IntegrationService(s[m.ConfigMap]):
         print(f"✅ Text processing: '{cleaned}'")
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute complete integration demonstration."""
         print("Starting complete integration demonstration")
         try:
@@ -172,8 +172,8 @@ class IntegrationService(s[m.ConfigMap]):
             self._demonstrate_decorators_integration()
             self._demonstrate_registry_dispatcher_integration()
             self._demonstrate_utilities_integration()
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
+            return r[t.ConfigMap].ok(
+                t.ConfigMap(
                     root={
                         "components_integrated": [
                             "r",
@@ -204,7 +204,7 @@ class IntegrationService(s[m.ConfigMap]):
             )
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
+            return r[t.ConfigMap].fail(error_msg)
 
 
 def main() -> None:

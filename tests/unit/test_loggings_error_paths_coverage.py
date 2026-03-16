@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextLogger
-from tests import m
 
 
 class TestLoggingsErrorPaths:
@@ -23,7 +22,7 @@ class TestLoggingsErrorPaths:
         """Test _get_global_context returns empty ConfigMap when no context set."""
         FlextLogger.clear_global_context()
         result = FlextLogger._get_global_context()
-        assert isinstance(result, m.ConfigMap)
+        assert isinstance(result, t.ConfigMap)
         assert isinstance(result.root, dict)
 
     def test_get_global_context_with_values(self) -> None:
@@ -31,7 +30,7 @@ class TestLoggingsErrorPaths:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(test_key="test_value")
         result = FlextLogger._get_global_context()
-        assert isinstance(result, m.ConfigMap)
+        assert isinstance(result, t.ConfigMap)
         assert "test_key" in result.root
         FlextLogger.clear_global_context()
 

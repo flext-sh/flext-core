@@ -171,8 +171,8 @@ def test_publish_event_to_subscriber() -> None:
         event_type="OrderCreated",
         aggregate_id="order-1",
         event_id="evt-order",
-        data=m.Dict({}),
-        metadata=m.Dict({}),
+        data=t.Dict({}),
+        metadata=t.Dict({}),
     )
     res = dispatcher.publish(event)
     assert res.is_success
@@ -186,8 +186,8 @@ def test_publish_no_subscribers_succeeds() -> None:
         event_type="NobodyListening",
         aggregate_id="agg-1",
         event_id="evt-none",
-        data=m.Dict({}),
-        metadata=m.Dict({}),
+        data=t.Dict({}),
+        metadata=t.Dict({}),
     )
     res = dispatcher.publish(event)
     assert res.is_success

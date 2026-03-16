@@ -29,8 +29,7 @@ import pytest
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, x
-from tests import m
+from flext_core import FlextContext, t, x
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -89,7 +88,7 @@ class ModelConversionScenario(BaseModel):
     ]
     input_value: Annotated[object, Field(description="Input value for conversion")]
     expected_output: Annotated[
-        m.ConfigMap, Field(description="Expected conversion output")
+        t.ConfigMap, Field(description="Expected conversion output")
     ]
 
 
@@ -148,19 +147,19 @@ class MixinScenarios:
             name="to_dict_with_basemodel",
             scenario_type=ModelConversionScenarioType.WITH_BASEMODEL,
             input_value=None,
-            expected_output=m.ConfigMap(root={"name": "test", "value": 42}),
+            expected_output=t.ConfigMap(root={"name": "test", "value": 42}),
         ),
         ModelConversionScenario(
             name="to_dict_with_dict",
             scenario_type=ModelConversionScenarioType.WITH_DICT,
             input_value={"key": "value", "number": 123},
-            expected_output=m.ConfigMap(root={"key": "value", "number": 123}),
+            expected_output=t.ConfigMap(root={"key": "value", "number": 123}),
         ),
         ModelConversionScenario(
             name="to_dict_with_none",
             scenario_type=ModelConversionScenarioType.WITH_NONE,
             input_value=None,
-            expected_output=m.ConfigMap(root={}),
+            expected_output=t.ConfigMap(root={}),
         ),
     ]
     RESULT_HANDLING_SCENARIOS: ClassVar[list[ResultHandlingScenario]] = [

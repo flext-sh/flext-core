@@ -58,14 +58,14 @@ class GetUserQuery(m.Query):
     user_id: str
 
 
-class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
+class GetUserHandler(h[GetUserQuery, t.ConfigMap]):
     """Handler for getting users."""
 
     @override
-    def handle(self, message: GetUserQuery) -> r[m.ConfigMap]:
+    def handle(self, message: GetUserQuery) -> r[t.ConfigMap]:
         """Handle get user query."""
-        return r[m.ConfigMap].ok(
-            m.ConfigMap(
+        return r[t.ConfigMap].ok(
+            t.ConfigMap(
                 root={
                     "user_id": message.user_id,
                     "name": "Demo User",
@@ -81,7 +81,7 @@ class _DemoPlugin(m.Value):
     name: str
 
 
-class RegistryDispatcherService(s[m.ConfigMap]):
+class RegistryDispatcherService(s[t.ConfigMap]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
     @staticmethod
@@ -150,15 +150,15 @@ class RegistryDispatcherService(s[m.ConfigMap]):
             print(f"✅ Plugin catalog: {plugins_result.value}")
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute registry and dispatcher demonstrations."""
         print("Starting registry and dispatcher demonstration")
         try:
             self._demonstrate_registry()
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
+            return r[t.ConfigMap].ok(
+                t.ConfigMap(
                     root={
                         "patterns_demonstrated": [
                             "handler_registration",
@@ -182,7 +182,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
             )
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
+            return r[t.ConfigMap].fail(error_msg)
 
 
 def main() -> None:

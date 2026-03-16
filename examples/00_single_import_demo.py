@@ -28,7 +28,7 @@ from itertools import starmap
 from pydantic import BaseModel, ConfigDict, Field
 from twisted.python.log import msg
 
-from flext_core import FlextContext, FlextLogger, c, e, m, r, u
+from flext_core import FlextContext, FlextLogger, c, e, r, u
 
 
 class UserProfile(BaseModel):
@@ -48,7 +48,7 @@ class UserProfile(BaseModel):
         return r[bool].ok(True)
 
 
-def validate_transform_user(data: m.ConfigMap) -> r[UserProfile]:
+def validate_transform_user(data: t.ConfigMap) -> r[UserProfile]:
     """Railway pattern using centralized utilities - no None types, strict validation."""
     name_value = data.get("name")
     email_value = data.get("email")
@@ -76,7 +76,7 @@ def validate_transform_user(data: m.ConfigMap) -> r[UserProfile]:
     )
 
 
-def process_user_data(*, user_data: m.ConfigMap, operation: c.Cqrs.Action) -> r[str]:
+def process_user_data(*, user_data: t.ConfigMap, operation: c.Cqrs.Action) -> r[str]:
     """Decorated railway with centralized StrEnum constraints - direct functional composition."""
     return validate_transform_user(user_data).map(
         lambda profile: (
@@ -106,7 +106,7 @@ class UserService:
         return user.activate().map(return_user)
 
     @staticmethod
-    def _validate_data(data: m.ConfigMap) -> r[bool]:
+    def _validate_data(data: t.ConfigMap) -> r[bool]:
         """Validate input data using u (DRY) - no None types."""
         required_fields: AbstractSet[str] = frozenset({"name", "email"})
         present_fields: AbstractSet[str] = frozenset(data.keys())
@@ -115,7 +115,7 @@ class UserService:
             return r[bool].fail(f"Missing required fields: {missing}")
         return r[bool].ok(value=True)
 
-    def create_user(self, user_data: m.ConfigMap) -> r[UserProfile]:
+    def create_user(self, user_data: t.ConfigMap) -> r[UserProfile]:
         """Create user with advanced context tracing and railway pattern - direct functional composition."""
         with FlextContext.Correlation.new_correlation():
             correlation_raw = FlextContext.Variables.Correlation.CORRELATION_ID.get()
@@ -156,7 +156,7 @@ class UserService:
         return user
 
     def _validate_and_transform(
-        self, user_data: m.ConfigMap, _: bool
+        self, user_data: t.ConfigMap, _: bool
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)
@@ -165,7 +165,7 @@ class UserService:
 def demonstrate_utilities() -> None:
     """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
     correlation_id = u.generate("correlation")
-    test_obj: m.ConfigMap = m.ConfigMap(
+    test_obj: t.ConfigMap = t.ConfigMap(
         root={"unique_id": correlation_id, "test": True}
     )
     cache_result = u.clear_object_cache(test_obj)
@@ -247,7 +247,7 @@ def identity(x: r[str]) -> r[str]:
     return x
 
 
-def execute_validation_chain(user_data: m.ConfigMap) -> None:
+def execute_validation_chain(user_data: t.ConfigMap) -> None:
     """Execute validation chain with railway pattern - SRP focused on chaining operations."""
     _ = (
         validate_transform_user(user_data)
@@ -267,7 +267,7 @@ def execute_validation_chain(user_data: m.ConfigMap) -> None:
     )
 
 
-def execute_service_operations(service: UserService, user_data: m.ConfigMap) -> None:
+def execute_service_operations(service: UserService, user_data: t.ConfigMap) -> None:
     """Execute service operations - SRP focused on service interaction."""
     result = service.create_user(user_data)
     if result.is_success:
@@ -277,7 +277,7 @@ def execute_service_operations(service: UserService, user_data: m.ConfigMap) -> 
         print(f"Service: FAILED - {result.error}")
 
 
-def execute_demonstrations(service: UserService, user_data: m.ConfigMap) -> None:
+def execute_demonstrations(service: UserService, user_data: t.ConfigMap) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
     _ = service.create_user(user_data).flat_map(ignore_and_return_none)
     demonstrate_utilities()
@@ -290,7 +290,7 @@ def main() -> None:
     with FlextContext.Correlation.new_correlation():
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
         logger.info("Starting demonstration", correlation_id=str(correlation_id or ""))
-        user_data: m.ConfigMap = m.ConfigMap(
+        user_data: t.ConfigMap = t.ConfigMap(
             root={"name": "Demo", "email": "demo@example.com"}
         )
         service = UserService()

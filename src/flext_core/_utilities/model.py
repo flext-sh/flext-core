@@ -169,7 +169,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def load[T_Model: BaseModel](
-        model_cls: type[T_Model], data: m.ConfigMap, *, strict: bool = False
+        model_cls: type[T_Model], data: t.ConfigMap, *, strict: bool = False
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with r.
 
@@ -236,7 +236,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def ensure_metadata(
-        value: t.Scalar | m.ConfigMap | m.Metadata | None,
+        value: t.Scalar | t.ConfigMap | m.Metadata | None,
     ) -> m.Metadata:
         """Normalize any value to m.Metadata.
 
@@ -301,7 +301,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_pydantic_dict(
-        data: m.ConfigMap | None,
+        data: t.ConfigMap | None,
     ) -> Mapping[str, t.Scalar | list[t.Primitives]]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
@@ -356,11 +356,11 @@ class FlextUtilitiesModel:
     @staticmethod
     def to_config_map(
         obj: BaseModel | Mapping[str, t.NormalizedValue] | t.NormalizedValue | None,
-    ) -> m.ConfigMap:
+    ) -> t.ConfigMap:
         """Convert BaseModel/dict to ConfigMap (None → empty ConfigMap)."""
         if obj is None:
-            return m.ConfigMap(root={})
-        if isinstance(obj, m.ConfigMap):
+            return t.ConfigMap(root={})
+        if isinstance(obj, t.ConfigMap):
             return obj
         if isinstance(obj, BaseModel):
             model_dump_result = obj.model_dump()
@@ -374,11 +374,11 @@ class FlextUtilitiesModel:
                 else:
                     normalized_value = str(value)
                 normalized_model_dump[str(key)] = normalized_value
-            config_map_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(normalized_model_dump)
+            config_map_result = r[t.ConfigMap].create_from_callable(
+                lambda: t.ConfigMap(normalized_model_dump)
             )
             if config_map_result.is_failure:
-                return m.ConfigMap(root={"value": str(model_dump_result)})
+                return t.ConfigMap(root={"value": str(model_dump_result)})
             return config_map_result.value
         if isinstance(obj, Mapping):
             obj_mapping_result = r[dict[str, t.NormalizedValue]].create_from_callable(
@@ -389,7 +389,7 @@ class FlextUtilitiesModel:
                 )
             )
             if obj_mapping_result.is_failure:
-                return m.ConfigMap(root={})
+                return t.ConfigMap(root={})
             normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
             for key, value in obj_mapping_result.value.items():
                 normalized_mapping_value: t.NormalizedValue | BaseModel = (
@@ -398,11 +398,11 @@ class FlextUtilitiesModel:
                     else str(value)
                 )
                 normalized_mapping[str(key)] = normalized_mapping_value
-            config_map_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(normalized_mapping)
+            config_map_result = r[t.ConfigMap].create_from_callable(
+                lambda: t.ConfigMap(normalized_mapping)
             )
             if config_map_result.is_failure:
-                return m.ConfigMap(root={})
+                return t.ConfigMap(root={})
             return config_map_result.value
 
         # Fallback to general value normalization
@@ -412,8 +412,8 @@ class FlextUtilitiesModel:
             normalized_map = FlextUtilitiesModel._normalize_str_object_mapping(
                 normalized_obj
             )
-            return m.ConfigMap(root=normalized_map)
-        return m.ConfigMap(root={})
+            return t.ConfigMap(root=normalized_map)
+        return t.ConfigMap(root={})
 
 
 __all__ = ["FlextUtilitiesModel"]

@@ -50,7 +50,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, T_Model, c, e, m, p, r, t
+from flext_core import FlextRuntime, T_Model, c, e, p, r, t
 
 
 class FlextUtilitiesConfiguration:
@@ -397,7 +397,7 @@ class FlextUtilitiesConfiguration:
                 return r[T_Model].ok(base_options)
             base_class: type[BaseModel] = model_class
             valid_field_names: set[str] = set(base_class.model_fields.keys())
-            valid_kwargs = m.ConfigMap(root={})
+            valid_kwargs = t.ConfigMap(root={})
             invalid_kwargs: list[str] = []
             for key, value in kwargs.items():
                 if key in valid_field_names:
@@ -430,7 +430,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def bulk_register(
-        container: p.DI, registrations: Mapping[str, t.Scalar | m.ConfigMap | m.Dict]
+        container: p.DI, registrations: Mapping[str, t.Scalar | t.ConfigMap | t.Dict]
     ) -> r[int]:
         """Register multiple services at once.
 
@@ -705,7 +705,7 @@ class FlextUtilitiesConfiguration:
     def register_factory(
         container: p.DI,
         name: str,
-        factory: Callable[[], t.Scalar | m.ConfigMap | m.Dict],
+        factory: Callable[[], t.Scalar | t.ConfigMap | t.Dict],
         *,
         _cache: bool = False,
     ) -> r[bool]:
@@ -736,7 +736,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def register_singleton(
-        container: p.DI, name: str, instance: t.Scalar | m.ConfigMap | m.Dict
+        container: p.DI, name: str, instance: t.Scalar | t.ConfigMap | t.Dict
     ) -> r[bool]:
         """Register singleton with standard error handling.
 
@@ -763,7 +763,7 @@ class FlextUtilitiesConfiguration:
     def set_parameter(
         obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
-        value: t.Scalar | m.ConfigMap,
+        value: t.Scalar | t.ConfigMap,
     ) -> bool:
         """Set parameter value on a configuration object with validation.
 
@@ -818,7 +818,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_singleton(
-        singleton_class: type, parameter: str, value: t.Scalar | m.ConfigMap
+        singleton_class: type, parameter: str, value: t.Scalar | t.ConfigMap
     ) -> FlextRuntime.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 

@@ -27,7 +27,7 @@ import pytest
 from flext_tests import t, u
 
 from flext_core import FlextSettings, r
-from tests import c, m
+from tests import c
 
 from .contracts.text_contract import TextUtilityContract
 
@@ -277,7 +277,7 @@ class Testu(TextUtilityContract):
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
-        data: m.ConfigMap = m.ConfigMap(root={"z": 1, "a": 2, "m": 3})
+        data: t.ConfigMap = t.ConfigMap(root={"z": 1, "a": 2, "m": 3})
         result = u.sort_dict_keys(data)
         assert result == {"a": 2, "m": 3, "z": 1}
 
@@ -294,7 +294,7 @@ class Testu(TextUtilityContract):
 
     def test_cache_clear_object_cache(self) -> None:
         """Test clearing object cache."""
-        cache_data: m.ConfigMap = m.ConfigMap(root={"test": "data"})
+        cache_data: t.ConfigMap = t.ConfigMap(root={"test": "data"})
         result = u.clear_object_cache(cache_data)
         _ = u.Tests.Result.assert_success(result)
 
@@ -304,7 +304,7 @@ class Testu(TextUtilityContract):
         if has_cache:
 
             class TestWithCache:
-                _cache: ClassVar[m.ConfigMap] = m.ConfigMap(root={})
+                _cache: ClassVar[t.ConfigMap] = t.ConfigMap(root={})
 
             cache_obj = TestWithCache()
             result = u.has_cache_attributes(

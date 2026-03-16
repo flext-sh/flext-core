@@ -28,7 +28,7 @@ from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from tests import c, m
+from tests import c
 
 from ..test_utils import assertion_helpers
 
@@ -628,7 +628,7 @@ class Testr:
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data = m.ConfigMap(root={"key": "value"})
+        error_data = t.ConfigMap(root={"key": "value"})
         result: r[str] = r[str].fail("error", error_data=error_data)
         tm.that(result.error_data, eq=error_data)
         success = r[str].ok("test")

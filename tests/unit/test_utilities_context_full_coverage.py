@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 from flext_tests import t
 
 from flext_core import FlextContext
-from tests import m, u
+from tests import u
 
 from ._models import _FakeConfig
 
@@ -62,7 +62,7 @@ class TestCreateDictProxy:
 
     def test_create_dict_proxy_with_default(self) -> None:
         """Creates proxy with dict default."""
-        default_val = m.ConfigMap(root={"key": "value"})
+        default_val = t.ConfigMap(root={"key": "value"})
         proxy = u.create_dict_proxy("metadata", default_val)
         assert proxy._default == default_val
 
@@ -120,7 +120,7 @@ class TestCloneRuntime:
         """When config_overrides provided, model_copy is called with them."""
         runtime = _FakeRuntime()
         cloned = u.clone_runtime(
-            runtime, config_overrides=m.ConfigMap(root={"timeout": 30})
+            runtime, config_overrides=t.ConfigMap(root={"timeout": 30})
         )
         assert isinstance(cloned._config, _FakeConfig)
         assert cloned._config.data["timeout"] == 30

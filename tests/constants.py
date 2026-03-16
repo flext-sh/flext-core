@@ -20,7 +20,7 @@ from flext_infra import FlextInfraConstants
 from flext_tests import FlextTestsConstants
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels
+from flext_core import t
 
 
 class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
@@ -246,13 +246,11 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
             MISSING_VALUE: Final[str] = "Missing value"
             INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
             CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
-            TEST_DATA: Final[FlextModels.ConfigMap] = FlextModels.ConfigMap({
+            TEST_DATA: Final[t.ConfigMap] = t.ConfigMap({
                 "key": "value",
                 "value": 5,
             })
-            TEST_DICT: Final[FlextModels.ConfigMap] = FlextModels.ConfigMap({
-                "key": "value"
-            })
+            TEST_DICT: Final[t.ConfigMap] = t.ConfigMap({"key": "value"})
             TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
             MAX_EXECUTION_TIME: Final[float] = 1.0
             ITERATION_COUNT: Final[int] = 1000

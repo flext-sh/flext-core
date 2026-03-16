@@ -19,7 +19,6 @@ from typing import override
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from flext_core import c, t
-from flext_core._models.containers import FlextModelsContainers
 from flext_core.result import r
 
 
@@ -94,7 +93,7 @@ class CircuitBreakerManager(BaseModel):
             return r[bool].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data=FlextModelsContainers.ConfigMap(
+                error_data=t.ConfigMap(
                     root={
                         "message_type": message_type,
                         "state": self.get_state(message_type),
@@ -309,7 +308,7 @@ class RateLimiterManager(BaseModel):
             return r[bool].fail(
                 f"Rate limit exceeded for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data=FlextModelsContainers.ConfigMap(
+                error_data=t.ConfigMap(
                     root={
                         "message_type": message_type,
                         "limit": self.max_requests,

@@ -23,7 +23,7 @@ from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import m, p, r, t
+from flext_core import p, r, t
 
 
 class FlextUtilitiesGuards:
@@ -58,7 +58,7 @@ class FlextUtilitiesGuards:
         return callable(func)
 
     @staticmethod
-    def _is_dict(value: t.NormalizedValue) -> TypeGuard[m.Dict]:
+    def _is_dict(value: t.NormalizedValue) -> TypeGuard[t.Dict]:
         """Check if value is a dict-like mapping."""
         return isinstance(value, dict)
 
@@ -187,26 +187,26 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_configuration_dict(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[m.Dict]:
-        """Check if value is a valid m.Dict mapping.
+    ) -> TypeGuard[t.Dict]:
+        """Check if value is a valid t.Dict mapping.
 
-        This TypeGuard enables explicit narrowing for m.Dict values.
+        This TypeGuard enables explicit narrowing for t.Dict values.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[m.Dict]: True if value matches ConfigurationDict structure
+            TypeGuard[t.Dict]: True if value matches ConfigurationDict structure
 
         Example:
             >>> from flext_core import u
             >>> if u.is_configuration_dict(config):
-            ...     # config is now typed as m.Dict
+            ...     # config is now typed as t.Dict
             ...     config["key"] = "value"
 
         """
-        if isinstance(value, m.Dict):
+        if isinstance(value, t.Dict):
             candidate: Mapping[str, t.NormalizedValue | BaseModel] = value.root
             for item_key, item_value in candidate.items():
                 if not isinstance(item_key, str):
@@ -225,29 +225,29 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_configuration_mapping(
-        value: Mapping[str, t.NormalizedValue] | m.ConfigMap | m.Dict,
-    ) -> TypeGuard[m.ConfigMap]:
-        """Check if value is a valid m.ConfigMap.
+        value: Mapping[str, t.NormalizedValue] | t.ConfigMap | t.Dict,
+    ) -> TypeGuard[t.ConfigMap]:
+        """Check if value is a valid t.ConfigMap.
 
-        m.ConfigMap = Mapping[str, t.NormalizedValue | BaseModel]
+        t.ConfigMap = Mapping[str, t.NormalizedValue | BaseModel]
 
-        This TypeGuard enables explicit narrowing for m.ConfigMap.
+        This TypeGuard enables explicit narrowing for t.ConfigMap.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[m.ConfigMap]: True if value matches ConfigurationMapping structure
+            TypeGuard[t.ConfigMap]: True if value matches ConfigurationMapping structure
 
         Example:
             >>> from flext_core import u
             >>> if u.is_configuration_mapping(config):
-            ...     # config is now typed as m.ConfigMap
+            ...     # config is now typed as t.ConfigMap
             ...     items = config.items()
 
         """
-        if isinstance(value, (m.ConfigMap, m.Dict)):
+        if isinstance(value, (t.ConfigMap, t.Dict)):
             candidate: Mapping[str, t.NormalizedValue | BaseModel] = value.root
         elif isinstance(value, Mapping):
             candidate = value
@@ -1052,7 +1052,7 @@ class FlextUtilitiesGuards:
         return FlextUtilitiesGuards._ensure_to_list(value, list_default)
 
     @staticmethod
-    def extract_mapping_or_none(value: t.NormalizedValue) -> r[m.ConfigMap]:
+    def extract_mapping_or_none(value: t.NormalizedValue) -> r[t.ConfigMap]:
         """Extract a mapping from a value or return None.
 
         Used for type narrowing when a generic parameter could be a Mapping
@@ -1063,14 +1063,14 @@ class FlextUtilitiesGuards:
             value: Value that may or may not be a Mapping
 
         Returns:
-            r[m.ConfigMap] containing mapping on success, failure otherwise
+            r[t.ConfigMap] containing mapping on success, failure otherwise
 
         """
         if FlextUtilitiesGuards._is_mapping(
             value
         ) and FlextUtilitiesGuards.is_configuration_mapping(value):
-            return r[m.ConfigMap].ok(value)
-        return r[m.ConfigMap].fail("Value is not a configuration mapping")
+            return r[t.ConfigMap].ok(value)
+        return r[t.ConfigMap].fail("Value is not a configuration mapping")
 
     @staticmethod
     def guard(

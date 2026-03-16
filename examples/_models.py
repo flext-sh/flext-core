@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from flext_core import m, r
+from flext_core import r
 
 
 class _ProtocolHandler(BaseModel):
@@ -24,11 +24,11 @@ class _ServiceStub(BaseModel):
     def is_valid(self) -> bool:
         return True
 
-    def execute(self) -> r[m.ConfigMap]:
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"ok": True}))
+    def execute(self) -> r[t.ConfigMap]:
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"ok": True}))
 
-    def get_service_info(self) -> m.ConfigMap:
-        return m.ConfigMap(root={"service": "stub"})
+    def get_service_info(self) -> t.ConfigMap:
+        return t.ConfigMap(root={"service": "stub"})
 
     def validate_business_rules(self) -> r[bool]:
         return r[bool].ok(True)

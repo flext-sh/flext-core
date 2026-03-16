@@ -504,7 +504,7 @@ class GenericModelFactory:
             name=name,
             version=version,
             status=status,
-            metadata=m.Dict({}),
+            metadata=t.Dict({}),
         )
 
     @staticmethod
@@ -519,7 +519,7 @@ class GenericModelFactory:
             dict(config) if config else {},
         )
         return m.Configuration.model_validate({
-            "config": m.Dict(config_root),
+            "config": t.Dict(config_root),
             "source": source,
             "environment": environment,
         })
@@ -533,7 +533,7 @@ class GenericModelFactory:
         """Create HealthStatus."""
         return m.Health.model_validate({
             "healthy": healthy,
-            "checks": m.Dict({
+            "checks": t.Dict({
                 str(key): value for key, value in (checks or {}).items()
             }),
         })
@@ -549,7 +549,7 @@ class GenericModelFactory:
             success_count=success,
             failure_count=failure,
             skipped_count=skipped,
-            metadata=m.Dict({}),
+            metadata=t.Dict({}),
         )
 
     @staticmethod
@@ -560,7 +560,7 @@ class GenericModelFactory:
             errors=[],
             warnings=[],
             skipped=[],
-            metadata=m.Dict({}),
+            metadata=t.Dict({}),
         )
 
 

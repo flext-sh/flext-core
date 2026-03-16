@@ -111,7 +111,7 @@ class FlextRegistry(s[bool]):
                 raise TypeError(msg)
 
     def __init_subclass__(
-        cls, **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar]
+        cls, **kwargs: t.Scalar | t.ConfigMap | Sequence[t.Scalar]
     ) -> None:
         """Auto-create per-subclass class-level storage.
 
@@ -272,7 +272,7 @@ class FlextRegistry(s[bool]):
         self,
         name: str,
         service: t.RegistrablePlugin,
-        metadata: m.ConfigMap | m.Metadata | None = None,
+        metadata: t.ConfigMap | m.Metadata | None = None,
     ) -> r[bool]:
         """Register a service component with optional metadata.
 
@@ -288,7 +288,7 @@ class FlextRegistry(s[bool]):
             r[bool]: Success (True) if registered or failure with error details.
 
         """
-        validated_metadata: m.ConfigMap | None = None
+        validated_metadata: t.ConfigMap | None = None
         if metadata is not None:
             raw_metadata: Mapping[str, t.NormalizedValue | t.MetadataValue | BaseModel]
             if isinstance(metadata, m.Metadata):
@@ -303,7 +303,7 @@ class FlextRegistry(s[bool]):
                     normalized_root[k] = str(v)
                 else:
                     normalized_root[k] = str(v) if v is not None else ""
-            validated_metadata = m.ConfigMap(root=normalized_root)
+            validated_metadata = t.ConfigMap(root=normalized_root)
         if validated_metadata is not None:
             metadata_dict = validated_metadata
             metadata_keys_str: str = ",".join(metadata_dict.keys())
@@ -359,7 +359,7 @@ class FlextRegistry(s[bool]):
     def register_handler(
         self,
         handler: t.HandlerLike,
-        _metadata: m.ConfigMap | m.Metadata | None = None,
+        _metadata: t.ConfigMap | m.Metadata | None = None,
     ) -> r[m.RegistrationDetails]:
         """Register a handler instance or callable.
 

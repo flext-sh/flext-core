@@ -46,8 +46,8 @@ class TestAutomatedFlextDispatcher:
         )
         tm.ok(dispatcher.register_handler(event_handler), eq=True)
         tm.ok(tb.Tests.Result.ok("payload"), eq="payload")
-        event_data = m.Dict.model_validate({"item": "created"})
-        event_metadata = m.Dict.model_validate({})
+        event_data = t.Dict.model_validate({"item": "created"})
+        event_metadata = t.Dict.model_validate({})
         event = m.Event(
             event_type="item_created",
             aggregate_id="agg-1",

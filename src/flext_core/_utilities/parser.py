@@ -739,7 +739,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: p.HasModelDump | list[str] | m.ConfigMap | Mapping[str, t.Container],
+        items: p.HasModelDump | list[str] | t.ConfigMap | Mapping[str, t.Container],
         *,
         case: str | None = None,
     ) -> bool:
@@ -747,7 +747,7 @@ class FlextUtilitiesParser:
 
         Mnemonic: norm = normalize, in_ = membership check
 
-        Canonical path: pass m.ConfigMap or any Pydantic BaseModel (p.HasModelDump).
+        Canonical path: pass t.ConfigMap or any Pydantic BaseModel (p.HasModelDump).
         Legacy path: raw Mapping or list[str] — emits DeprecationWarning.
 
         Args:
@@ -760,14 +760,14 @@ class FlextUtilitiesParser:
 
         """
         items_to_check: list[str]
-        if isinstance(items, m.ConfigMap):
+        if isinstance(items, t.ConfigMap):
             items_to_check = [str(k) for k in items.root]
         elif isinstance(items, p.HasModelDump):
             items_to_check = list(items.model_dump().keys())
         elif isinstance(items, Mapping):
             warnings.warn(
                 "Passing raw Mapping to norm_in() is deprecated. "
-                "Use m.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
+                "Use t.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
                 "Will be removed in v0.13.",
                 DeprecationWarning,
                 stacklevel=2,
@@ -805,14 +805,14 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: m.ConfigMap | BaseModel | list[str] | Mapping[str, t.NormalizedValue],
+        items: t.ConfigMap | BaseModel | list[str] | Mapping[str, t.NormalizedValue],
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
     ) -> list[str] | set[str] | dict[str, str]:
         """Normalize list/dict (builder: norm().list())."""
-        if isinstance(items, m.ConfigMap):
+        if isinstance(items, t.ConfigMap):
             dict_items: Mapping[str, t.NormalizedValue | BaseModel] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
@@ -840,7 +840,7 @@ class FlextUtilitiesParser:
         if isinstance(items, Mapping):
             warnings.warn(
                 "Passing raw Mapping to norm_list() is deprecated. "
-                "Use m.ConfigMap or a Pydantic BaseModel instead. "
+                "Use t.ConfigMap or a Pydantic BaseModel instead. "
                 "Will be removed in v0.13.",
                 DeprecationWarning,
                 stacklevel=2,

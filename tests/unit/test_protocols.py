@@ -28,7 +28,7 @@ from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from tests import m, p
+from tests import p
 
 
 class ProtocolCategoryType(StrEnum):
@@ -236,13 +236,13 @@ class TestFlextProtocols:
         class UserRepository:
             """Repository for user entities."""
 
-            def find_by_id(self, entity_id: str) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok(
-                    m.ConfigMap(root={"id": entity_id, "name": "Test"}),
+            def find_by_id(self, entity_id: str) -> r[t.ConfigMap]:
+                return r[t.ConfigMap].ok(
+                    t.ConfigMap(root={"id": entity_id, "name": "Test"}),
                 )
 
-            def save(self, entity: m.ConfigMap) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok(entity)
+            def save(self, entity: t.ConfigMap) -> r[t.ConfigMap]:
+                return r[t.ConfigMap].ok(entity)
 
             def delete(self, entity_id: str) -> r[bool]:
                 return r[bool].ok(True)
@@ -271,8 +271,8 @@ class TestFlextProtocols:
         class UserService:
             """Service for user operations."""
 
-            def execute(self) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "success"}))
+            def execute(self) -> r[t.ConfigMap]:
+                return r[t.ConfigMap].ok(t.ConfigMap(root={"status": "success"}))
 
         service = UserService()
         tm.that(
@@ -300,8 +300,8 @@ class TestFlextProtocols:
         class CreateUserHandler:
             """Handler for user creation."""
 
-            def handle(self, command: m.ConfigMap) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok(m.ConfigMap(root={"user_id": "123"}))
+            def handle(self, command: t.ConfigMap) -> r[t.ConfigMap]:
+                return r[t.ConfigMap].ok(t.ConfigMap(root={"user_id": "123"}))
 
         handler = CreateUserHandler()
         tm.that(
@@ -314,7 +314,7 @@ class TestFlextProtocols:
             eq=True,
             msg="Handler handle must be callable",
         )
-        command = m.ConfigMap(root={"name": "Test"})
+        command = t.ConfigMap(root={"name": "Test"})
         result = handler.handle(command)
         _ = u.Tests.Result.assert_success(result)
         tm.that(result.value, has="user_id", msg="Handler result must contain user_id")
@@ -332,11 +332,11 @@ class TestFlextProtocols:
         class AdvancedService:
             """Service implementing multiple protocols."""
 
-            def execute(self) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok(m.ConfigMap(root={}))
+            def execute(self) -> r[t.ConfigMap]:
+                return r[t.ConfigMap].ok(t.ConfigMap(root={}))
 
-            def handle(self, command: m.ConfigMap) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok(m.ConfigMap(root={}))
+            def handle(self, command: t.ConfigMap) -> r[t.ConfigMap]:
+                return r[t.ConfigMap].ok(t.ConfigMap(root={}))
 
         service = AdvancedService()
         required_methods = ["execute", "handle"]
@@ -353,7 +353,7 @@ class TestFlextProtocols:
             )
         execute_result = service.execute()
         _ = u.Tests.Result.assert_success(execute_result)
-        handle_result = service.handle(m.ConfigMap(root={"command": "test"}))
+        handle_result = service.handle(t.ConfigMap(root={"command": "test"}))
         _ = u.Tests.Result.assert_success(handle_result)
 
     def test_protocol_runtime_checkable(self) -> None:

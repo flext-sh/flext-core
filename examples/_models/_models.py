@@ -6,7 +6,7 @@ from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import m, r
+from flext_core import r
 
 
 class Ex01ValidPersonPayload(BaseModel):
@@ -114,7 +114,7 @@ class Ex05HandlerLike(BaseModel):
     """Protocol-compatible handler model."""
 
     model_config = ConfigDict(frozen=False)
-    data: m.ConfigMap = Field(default_factory=lambda: m.ConfigMap(root={}))
+    data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
 
 
 class Ex05GoodProcessor(BaseModel):
@@ -170,13 +170,13 @@ class Ex10ServiceStub(BaseModel):
         """Return service validity state."""
         return True
 
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute service action."""
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"ok": True}))
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"ok": True}))
 
-    def get_service_info(self) -> m.ConfigMap:
+    def get_service_info(self) -> t.ConfigMap:
         """Return service metadata."""
-        return m.ConfigMap(root={"service": "stub"})
+        return t.ConfigMap(root={"service": "stub"})
 
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules."""
@@ -212,7 +212,7 @@ class Ex11HandlerLike(BaseModel):
     """Handler-like protocol stub."""
 
     model_config = ConfigDict(frozen=False)
-    data: m.ConfigMap = Field(default_factory=lambda: m.ConfigMap(root={}))
+    data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
 
     def handle(self) -> str:
         """Handle payload."""

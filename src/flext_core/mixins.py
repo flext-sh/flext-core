@@ -61,8 +61,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     Example:
         class MyService(x):
             def process(
-                self, data: m.ConfigMap
-            ) -> r[m.ConfigMap]:
+                self, data: t.ConfigMap
+            ) -> r[t.ConfigMap]:
                 with self.track("process"):
                     self.logger.info("Processing", size=len(data))
                     return u.ok({"status": "processed"})
@@ -71,7 +71,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _operation_stats: Annotated[
-        dict[str, m.ConfigMap],
+        dict[str, t.ConfigMap],
         PrivateAttr(default_factory=dict),
     ]
 
@@ -160,26 +160,26 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         if operation_data:
             debug_keys = {"schema", "params"}
             error_keys = {"stack_trace", "exception", "traceback", "error_details"}
-            debug_data: m.ConfigMap = m.ConfigMap(
+            debug_data: t.ConfigMap = t.ConfigMap(
                 root={k: v for k, v in operation_data.items() if k in debug_keys}
             )
-            error_data: m.ConfigMap = m.ConfigMap(
+            error_data: t.ConfigMap = t.ConfigMap(
                 root={k: v for k, v in operation_data.items() if k in error_keys}
             )
-            normal_data: m.ConfigMap = m.ConfigMap(
+            normal_data: t.ConfigMap = t.ConfigMap(
                 root={
                     k: v
                     for k, v in operation_data.items()
                     if k not in debug_keys and k not in error_keys
                 }
             )
-            all_context_data: m.ConfigMap = normal_data.model_copy()
+            all_context_data: t.ConfigMap = normal_data.model_copy()
             if debug_data:
-                merged_debug: m.ConfigMap = all_context_data.model_copy()
+                merged_debug: t.ConfigMap = all_context_data.model_copy()
                 merged_debug.update(debug_data.root)
                 all_context_data = merged_debug
             if error_data:
-                merged_error: m.ConfigMap = all_context_data.model_copy()
+                merged_error: t.ConfigMap = all_context_data.model_copy()
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
@@ -211,9 +211,9 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         self, operation_name: str
     ) -> Iterator[Mapping[str, t.NormalizedValue | BaseModel]]:
         """Track operation performance with timing and automatic context cleanup."""
-        stats: m.ConfigMap = self._operation_stats.get(
+        stats: t.ConfigMap = self._operation_stats.get(
             operation_name,
-            m.ConfigMap(
+            t.ConfigMap(
                 root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
             ),
         )
@@ -293,7 +293,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     def _enrich_context(self, **context_data: t.Scalar) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
-        service_context: m.ConfigMap = m.ConfigMap(
+        service_context: t.ConfigMap = t.ConfigMap(
             root={
                 "service_name": self.__class__.__name__,
                 "service_module": self.__class__.__module__,
@@ -451,10 +451,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 )
 
     def _log_config_once(
-        self, config: m.ConfigMap, message: str = "Configuration loaded"
+        self, config: t.ConfigMap, message: str = "Configuration loaded"
     ) -> None:
         """Log configuration ONCE without binding to context."""
-        config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
+        config_typed: t.ConfigMap = t.ConfigMap(root=dict(config.items()))
         self.logger.info(
             message,
             **FlextMixins._normalize_log_payload(config_typed.root),
@@ -464,7 +464,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         """Log message with automatic context data inclusion."""
         correlation_id = FlextContext.Correlation.get_correlation_id()
         operation_name = FlextContext.Request.get_operation_name()
-        context_data: m.ConfigMap = m.ConfigMap(
+        context_data: t.ConfigMap = t.ConfigMap(
             root={
                 "correlation_id": FlextRuntime.normalize_to_container(
                     correlation_id or ""
@@ -509,11 +509,11 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 super().__init__(*args, **kwargs)
                 self._metrics = {}
 
-            def get_metrics(self) -> r[m.ConfigMap]:
+            def get_metrics(self) -> r[t.ConfigMap]:
                 """Return all recorded metrics as a ConfigMap result."""
                 if not hasattr(self, "_metrics"):
                     self._metrics = {}
-                return r[m.ConfigMap].ok(m.ConfigMap(root=dict(self._metrics.items())))
+                return r[t.ConfigMap].ok(t.ConfigMap(root=dict(self._metrics.items())))
 
             def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
                 """Record a named metric value in the tracker."""
@@ -525,7 +525,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         class ContextStack:
             """Manages execution context stack."""
 
-            _stack: list[m.ExecutionContext | m.ConfigMap | dict[str, t.Scalar]]
+            _stack: list[m.ExecutionContext | t.ConfigMap | dict[str, t.Scalar]]
 
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize context stack with empty stack list."""
@@ -556,7 +556,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             "handler_name": popped.handler_name,
                             "handler_mode": popped.handler_mode,
                         })
-                    if isinstance(popped, m.ConfigMap):
+                    if isinstance(popped, t.ConfigMap):
                         return r[dict[str, t.Scalar]].ok({
                             str(ck): cv
                             for ck, cv in popped.root.items()

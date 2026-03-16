@@ -15,8 +15,8 @@ from tests import m
 class _RegistryHandlerCallable:
     message_type = "tests.registry.handler"
 
-    def __call__(self, _message: m.Command) -> m.ConfigMap:
-        return m.ConfigMap(root={"handled": "yes"})
+    def __call__(self, _message: m.Command) -> t.ConfigMap:
+        return t.ConfigMap(root={"handled": "yes"})
 
 
 _registry_handler = _RegistryHandlerCallable()
@@ -31,7 +31,7 @@ class TestAutomatedFlextRegistry:
     def test_register_service_with_metadata(self) -> None:
         registry = FlextRegistry.create()
         service = "service_impl"
-        metadata = m.ConfigMap(root={"owner": "tests"})
+        metadata = t.ConfigMap(root={"owner": "tests"})
         result = registry.register("sample_service", service, metadata=metadata)
         tm.ok(result, eq=True)
 

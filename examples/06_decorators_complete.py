@@ -21,10 +21,10 @@ from __future__ import annotations
 import time
 from typing import override
 
-from flext_core import FlextContainer, FlextDecorators, c, m, r, s
+from flext_core import FlextContainer, FlextDecorators, c, r, s
 
 
-class DecoratorsService(s[m.ConfigMap]):
+class DecoratorsService(s[t.ConfigMap]):
     """Service demonstrating FlextDecorators comprehensive features."""
 
     @staticmethod
@@ -32,7 +32,7 @@ class DecoratorsService(s[m.ConfigMap]):
         """Show combined decorator."""
         print("\n=== Combined Decorator ===")
         container = FlextContainer()
-        logger_service = m.ConfigMap(root={"module": __name__})
+        logger_service = t.ConfigMap(root={"module": __name__})
         _ = container.register("logger", logger_service)
 
         @FlextDecorators.combined(
@@ -56,7 +56,7 @@ class DecoratorsService(s[m.ConfigMap]):
         """Show dependency injection decorator."""
         print("\n=== Dependency Injection Decorator ===")
         container = FlextContainer()
-        logger_service = m.ConfigMap(root={"module": __name__})
+        logger_service = t.ConfigMap(root={"module": __name__})
         _ = container.register("logger", logger_service)
 
         @FlextDecorators.inject(logger="logger")
@@ -166,7 +166,7 @@ class DecoratorsService(s[m.ConfigMap]):
         print(f"✅ Context operation: {result}")
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute decorators demonstrations."""
         print("Starting decorators demonstration")
         try:
@@ -176,8 +176,8 @@ class DecoratorsService(s[m.ConfigMap]):
             self._demonstrate_with_context()
             self._demonstrate_retry_timeout()
             self._demonstrate_combined()
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
+            return r[t.ConfigMap].ok(
+                t.ConfigMap(
                     root={
                         "decorators_demonstrated": [
                             "inject",
@@ -203,7 +203,7 @@ class DecoratorsService(s[m.ConfigMap]):
             )
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
+            return r[t.ConfigMap].fail(error_msg)
 
 
 def main() -> None:

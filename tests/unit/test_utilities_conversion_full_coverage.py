@@ -14,7 +14,7 @@ def test_conversion_string_and_join_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"a": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"a": 1}), t.ConfigMap)
     assert u.to_str_list(None) == []
     assert u.normalize("Ab") == "Ab"
     assert u.join([]) == ""

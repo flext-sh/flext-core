@@ -11,7 +11,7 @@ import pytest
 from flext_tests import t, tm
 
 import flext_core.loggings as loggings_module
-from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r
+from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, p, r
 
 
 class _FakeBindable:
@@ -89,7 +89,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     get_result = FlextLogger._get_global_context()
     clear_result = FlextLogger.clear_global_context()
     tm.ok(bind_result)
-    tm.that(isinstance(get_result, m.ConfigMap), eq=True)
+    tm.that(isinstance(get_result, t.ConfigMap), eq=True)
     tm.ok(clear_result)
 
     def _raise_bind_contextvars(**_kwargs: t.Scalar) -> None:

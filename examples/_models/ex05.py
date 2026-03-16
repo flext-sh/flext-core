@@ -38,7 +38,7 @@ class Ex05HandlerBad(m.Value):
 
 class Ex05HandlerLike(m.Value):
     model_config = ConfigDict(frozen=False)
-    data: m.ConfigMap = Field(default_factory=lambda: m.ConfigMap(root={}))
+    data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
 
 
 class Ex05GoodProcessor(m.Value):
@@ -49,7 +49,7 @@ class Ex05GoodProcessor(m.Value):
 
     @classmethod
     @override
-    def validate(cls, value: m.ConfigMap) -> Ex05GoodProcessor:
+    def validate(cls, value: t.ConfigMap) -> Ex05GoodProcessor:
         return cls.model_validate(value)
 
 

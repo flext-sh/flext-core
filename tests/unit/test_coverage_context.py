@@ -116,7 +116,7 @@ class TestContextDataModel:
 
     def test_context_with_context_data_model(self) -> None:
         context_data = m.ContextData(
-            data=m.Dict(root={"key1": "value1", "key2": "value2"}),
+            data=t.Dict(root={"key1": "value1", "key2": "value2"}),
         )
         context = FlextContext(initial_data=context_data)
         result1 = context.get("key1")

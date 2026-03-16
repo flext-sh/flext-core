@@ -31,7 +31,6 @@ from pydantic import (
 )
 
 from flext_core import c, t
-from flext_core._models import FlextModelsContainers
 
 
 class FlextModelFoundation:
@@ -548,9 +547,9 @@ class FlextModelFoundation:
         command_type: str
         issuer_id: str | None = None
         data: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Command payload containing input data required for execution.",
             ),
         ]
@@ -561,13 +560,13 @@ class FlextModelFoundation:
         message_type: Literal["query"] = "query"
         query_type: str
         filters: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Filter criteria used to constrain query results.",
             ),
         ]
-        pagination: FlextModelsContainers.Dict | None = None
+        pagination: t.Dict | None = None
 
     class EventMessage(BaseModel):
         """Event message with discriminated union support."""
@@ -576,9 +575,9 @@ class FlextModelFoundation:
         event_type: str
         aggregate_id: str
         data: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Event payload with domain data describing what happened.",
             ),
         ]

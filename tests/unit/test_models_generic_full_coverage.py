@@ -10,7 +10,7 @@ from tests import c, m
 
 
 def test_operation_progress_start_operation_sets_runtime_fields() -> None:
-    op = m.Operation(metadata=m.Dict(root={}))
+    op = m.Operation(metadata=t.Dict(root={}))
     op.start_operation(name="sync", estimated_total=5)
     assert op.operation_name == "sync"
     assert op.estimated_total == 5
@@ -20,7 +20,7 @@ def test_operation_progress_start_operation_sets_runtime_fields() -> None:
 
 def test_conversion_add_converted_and_error_metadata_append_paths() -> None:
     conv = m.Conversion(
-        converted=[], errors=[], warnings=[], skipped=[], metadata=m.Dict(root={})
+        converted=[], errors=[], warnings=[], skipped=[], metadata=t.Dict(root={})
     )
     conv.add_converted("ok-1")
     conv.add_error("bad-1", item="item-a")
@@ -33,7 +33,7 @@ def test_conversion_add_converted_and_error_metadata_append_paths() -> None:
 
 def test_conversion_add_warning_metadata_append_paths() -> None:
     conv = m.Conversion(
-        converted=[], errors=[], warnings=[], skipped=[], metadata=m.Dict(root={})
+        converted=[], errors=[], warnings=[], skipped=[], metadata=t.Dict(root={})
     )
     conv.add_warning("warn-1", item="item-a")
     conv.add_warning("warn-2", item="item-b")
@@ -44,7 +44,7 @@ def test_conversion_add_warning_metadata_append_paths() -> None:
 
 def test_conversion_add_skipped_skip_reason_upsert_paths() -> None:
     conv = m.Conversion(
-        converted=[], errors=[], warnings=[], skipped=[], metadata=m.Dict(root={})
+        converted=[], errors=[], warnings=[], skipped=[], metadata=t.Dict(root={})
     )
     conv.add_skipped("item-a", reason="empty")
     conv.add_skipped("item-b", reason="invalid")
@@ -58,7 +58,7 @@ def test_conversion_add_skipped_skip_reason_upsert_paths() -> None:
 
 def test_conversion_start_and_complete_methods() -> None:
     conv = m.Conversion(
-        converted=[], errors=[], warnings=[], skipped=[], metadata=m.Dict(root={})
+        converted=[], errors=[], warnings=[], skipped=[], metadata=t.Dict(root={})
     )
     conv.start_conversion(
         source_format="xml",
@@ -76,7 +76,7 @@ def test_conversion_start_and_complete_methods() -> None:
 
 def test_canonical_aliases_are_available() -> None:
     result = r[str].ok("ok")
-    value = m.Dict(root={"k": "v"})
+    value = t.Dict(root={"k": "v"})
     assert result.value == "ok"
     assert value.root == {"k": "v"}
     assert c.Performance.RECENT_THRESHOLD_SECONDS > 0

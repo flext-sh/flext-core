@@ -125,13 +125,13 @@ def test_discovery_narrowed_function_paths() -> None:
     @decorator
     def exposed(value: BaseModel) -> BaseModel:
         _ = value
-        return m.ConfigMap(root={"value": 123})
+        return t.ConfigMap(root={"value": 123})
 
     module = ModuleType("handlers_discovery")
     setattr(module, "exposed", exposed)
     discovered = h.Discovery.scan_module(module)
     assert len(discovered) == 1
     wrapped = discovered[0][1]
-    wrapped_result = wrapped(m.ConfigMap(root={"value": "x"}))
+    wrapped_result = wrapped(t.ConfigMap(root={"value": "x"}))
     assert isinstance(wrapped_result, str)
     assert wrapped_result == "root={'value': 123}"

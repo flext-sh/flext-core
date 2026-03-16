@@ -57,7 +57,7 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"a": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"a": 1}), t.ConfigMap)
     checker = u()
     logger = checker.logger
     assert hasattr(logger, "info")

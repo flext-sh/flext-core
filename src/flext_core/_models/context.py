@@ -26,7 +26,6 @@ from pydantic import (
 from flext_core import FlextRuntime, c, t
 from flext_core._models import (
     FlextModelFoundation,
-    FlextModelsContainers,
     FlextModelsEntity,
 )
 
@@ -293,14 +292,14 @@ class FlextModelsContext:
         """
 
         data: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Initial context data as key-value pairs",
             ),
-        ] = Field(default_factory=FlextModelsContainers.Dict)
+        ] = Field(default_factory=t.Dict)
         metadata: Annotated[
-            FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
+            FlextModelFoundation.Metadata | t.Dict | None,
             BeforeValidator(lambda v: FlextModelsContext._normalize_metadata_before(v)),
             Field(
                 default=None,
@@ -337,7 +336,7 @@ class FlextModelsContext:
                 return normalized
             if isinstance(
                 normalized,
-                (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict),
+                (t.ConfigMap, t.Dict),
             ):
                 return {
                     str(key): cls.normalize_to_serializable_value(item_value)
@@ -369,7 +368,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: FlextModelsContainers.Dict | Mapping[str, t.Scalar] | BaseModel | None,
+            v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
         ) -> Mapping[str, t.NormalizedValue]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
@@ -468,7 +467,7 @@ class FlextModelsContext:
             ),
         ]
         metadata: Annotated[
-            FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
+            FlextModelFoundation.Metadata | t.Dict | None,
             BeforeValidator(lambda v: FlextModelsContext._normalize_metadata_before(v)),
             Field(
                 default=None,
@@ -500,7 +499,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: FlextModelsContainers.Dict | Mapping[str, t.Scalar] | BaseModel | None,
+            v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
         ) -> Mapping[str, t.NormalizedValue]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 

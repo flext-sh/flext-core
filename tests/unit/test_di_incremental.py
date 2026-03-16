@@ -75,7 +75,7 @@ class TestDIBridgeRealExecution:
         """Test create_layered_bridge with real configuration."""
         bridge, service_module, resource_module = (
             FlextRuntime.DependencyIntegration.create_layered_bridge(
-                config=m.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
+                config=t.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
         tm.that(repr(bridge) != "", eq=True)

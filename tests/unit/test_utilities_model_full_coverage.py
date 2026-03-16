@@ -40,7 +40,7 @@ def test_update_success_path_returns_ok_result() -> None:
 
 def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u.normalize_to_pydantic_dict(None) == {}
-    data = m.ConfigMap(
+    data = t.ConfigMap(
         root=cast(
             "dict[str, t.NormalizedValue | BaseModel]",
             {"a": 1, "b": _Cfg(x=1), "c": [1, _Cfg(x=2)]},

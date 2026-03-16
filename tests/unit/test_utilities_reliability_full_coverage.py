@@ -15,7 +15,7 @@ def test_utilities_reliability_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
 
     def _always_fail() -> r[t.Container]:
         return r[t.Container].fail("e")

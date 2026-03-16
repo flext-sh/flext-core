@@ -410,13 +410,13 @@ class FlextExceptions:
 
     @staticmethod
     def _build_context_map(
-        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+        context: Mapping[str, t.MetadataValue] | t.ConfigMap | None,
+        extra_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
         excluded_keys: set[str] | frozenset[str] | None = None,
-    ) -> m.ConfigMap:
+    ) -> t.ConfigMap:
         """Build normalized context map from context and kwargs."""
         excluded = excluded_keys or frozenset()
-        context_map: m.ConfigMap = m.ConfigMap(root={})
+        context_map: t.ConfigMap = t.ConfigMap(root={})
         if context:
             context_map.update({
                 k: FlextRuntime.normalize_to_container(
@@ -437,12 +437,12 @@ class FlextExceptions:
 
     @staticmethod
     def _build_param_map(
-        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+        context: Mapping[str, t.MetadataValue] | t.ConfigMap | None,
+        extra_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
         keys: set[str] | frozenset[str],
-    ) -> m.ConfigMap:
+    ) -> t.ConfigMap:
         """Build unnormalized parameter map for strict params validation."""
-        param_map: m.ConfigMap = m.ConfigMap(root={})
+        param_map: t.ConfigMap = t.ConfigMap(root={})
         if context:
             param_map.update({
                 k: FlextRuntime.normalize_to_container(
@@ -471,7 +471,7 @@ class FlextExceptions:
         param_keys: set[str] | frozenset[str],
         *,
         excluded_context_keys: set[str] | frozenset[str] | None = None,
-    ) -> tuple[TParams, m.ConfigMap | None, t.MetadataValue | None, str | None]:
+    ) -> tuple[TParams, t.ConfigMap | None, t.MetadataValue | None, str | None]:
         """Extract, resolve and build error parameters from kwargs.
 
         Shared init boilerplate for all typed error subclasses.
@@ -559,7 +559,7 @@ class FlextExceptions:
     def _safe_config_map(
         value: Metadata
         | m.Metadata
-        | m.ConfigMap
+        | t.ConfigMap
         | Mapping[str, t.NormalizedValue | t.MetadataValue | None]
         | t.MetadataValue
         | t.NormalizedValue
@@ -586,7 +586,7 @@ class FlextExceptions:
     def _safe_metadata(
         value: Metadata
         | m.Metadata
-        | m.ConfigMap
+        | t.ConfigMap
         | Mapping[str, t.NormalizedValue | t.MetadataValue | None]
         | t.MetadataValue
         | t.NormalizedValue
@@ -657,16 +657,16 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
-            context: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
+            context: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
             metadata: m.Metadata
             | Metadata
-            | m.ConfigMap
+            | t.ConfigMap
             | t.MetadataValue
             | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
+            merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize base error with message and optional metadata.
@@ -685,7 +685,7 @@ class FlextExceptions:
             super().__init__(message)
             self.message = message
             self.error_code = error_code
-            final_kwargs: m.ConfigMap = m.ConfigMap(root={})
+            final_kwargs: t.ConfigMap = t.ConfigMap(root={})
             if merged_kwargs:
                 final_kwargs.update({
                     k: FlextRuntime.normalize_to_container(
@@ -725,8 +725,8 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: m.Metadata | Metadata | m.ConfigMap | t.MetadataValue | None,
-            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+            metadata: m.Metadata | Metadata | t.ConfigMap | t.MetadataValue | None,
+            merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
         ) -> Metadata:
             """Normalize metadata from various input types to m.Metadata model.
 
@@ -767,8 +767,8 @@ class FlextExceptions:
         @staticmethod
         def _normalize_metadata_from_dict(
             metadata_dict: Mapping[str, t.NormalizedValue | t.MetadataValue | None]
-            | m.ConfigMap,
-            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+            | t.ConfigMap,
+            merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
         ) -> Metadata:
             """Normalize metadata from dict-like object."""
             merged_attrs: dict[str, t.MetadataValue | None] = {}
@@ -1020,7 +1020,7 @@ class FlextExceptions:
             context: Mapping[str, t.MetadataValue] | None = None,
             metadata: m.Metadata
             | Metadata
-            | m.ConfigMap
+            | t.ConfigMap
             | t.MetadataValue
             | None = None,
             correlation_id: str | None = None,
@@ -1218,7 +1218,7 @@ class FlextExceptions:
             actual_type: type | str | None,
             context: Mapping[str, t.MetadataValue] | None,
             extra_kwargs: Mapping[str, t.MetadataValue],
-        ) -> m.ConfigMap:
+        ) -> t.ConfigMap:
             """Build type context dictionary."""
             type_context = e._build_context_map(context, extra_kwargs)
             resolved_expected_type = e.TypeError._resolve_type_name(expected_type)
@@ -1352,10 +1352,10 @@ class FlextExceptions:
         metadata_obj: Metadata
         | Mapping[str, t.NormalizedValue | t.MetadataValue | None]
         | None,
-        kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
-    ) -> m.ConfigMap:
+        kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
+    ) -> t.ConfigMap:
         """Build error context dictionary."""
-        error_context: m.ConfigMap = m.ConfigMap(root={})
+        error_context: t.ConfigMap = t.ConfigMap(root={})
         if correlation_id is not None:
             error_context["correlation_id"] = correlation_id
         e._merge_metadata_into_context(error_context, metadata_obj)
@@ -1371,10 +1371,10 @@ class FlextExceptions:
         error_type: str | None,
         message: str,
         error_code: str | None,
-        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
+        context: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
     ) -> e.BaseError:
         """Create error by type using context dict."""
-        error_context: m.ConfigMap = m.ConfigMap(root={})
+        error_context: t.ConfigMap = t.ConfigMap(root={})
         if context is not None:
             error_context.update({
                 k: FlextRuntime.normalize_to_container(
@@ -1486,7 +1486,7 @@ class FlextExceptions:
 
     @staticmethod
     def _merge_metadata_into_context(
-        context: m.ConfigMap,
+        context: t.ConfigMap,
         metadata_obj: Metadata
         | Mapping[str, t.NormalizedValue | t.MetadataValue | None]
         | None,
@@ -1647,7 +1647,7 @@ class FlextExceptions:
         **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create exception by calling the class instance."""
-        normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})
+        normalized_kwargs: t.ConfigMap = t.ConfigMap(root={})
         for k, v in kwargs.items():
             normalized_kwargs[k] = FlextRuntime.normalize_to_container(
                 FlextRuntime.normalize_to_metadata(v)
@@ -1683,7 +1683,7 @@ class FlextExceptions:
                 else str(exc_type)
             )
             exception_counts_dict[exc_name] = count
-        exception_counts_payload = m.ConfigMap.model_validate(exception_counts_dict)
+        exception_counts_payload = t.ConfigMap.model_validate(exception_counts_dict)
         result_dict: m.ErrorMap = m.ErrorMap(
             root={
                 "total_exceptions": total,

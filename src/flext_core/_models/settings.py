@@ -27,7 +27,6 @@ from flext_core import c, p, r, t
 from flext_core._models import (
     FlextModelFoundation,
     FlextModelsCollections,
-    FlextModelsContainers,
 )
 from flext_core.runtime import FlextRuntime
 
@@ -66,18 +65,18 @@ class FlextModelsConfig:
             ),
         ]
         data: Annotated[
-            FlextModelsContainers.ConfigMap,
+            t.ConfigMap,
             Field(
-                default_factory=FlextModelsContainers.ConfigMap,
+                default_factory=t.ConfigMap,
                 description="Primary request payload passed to the processing operation.",
                 title="Processing Data",
                 examples=[{"record_id": "123", "status": "pending"}],
             ),
         ]
         context: Annotated[
-            FlextModelsContainers.ConfigMap,
+            t.ConfigMap,
             Field(
-                default_factory=FlextModelsContainers.ConfigMap,
+                default_factory=t.ConfigMap,
                 description="Execution context metadata used for traceability and request scoping.",
                 title="Processing Context",
                 examples=[{"correlation_id": "corr-123"}],
@@ -327,18 +326,18 @@ class FlextModelsConfig:
             ),
         ]
         input_data: Annotated[
-            FlextModelsContainers.ConfigMap,
+            t.ConfigMap,
             Field(
-                default_factory=FlextModelsContainers.ConfigMap,
+                default_factory=t.ConfigMap,
                 description="Input payload supplied to the handler during execution.",
                 title="Input Data",
                 examples=[{"order_id": "ord-1001"}],
             ),
         ]
         execution_context: Annotated[
-            FlextModelsContainers.ConfigMap,
+            t.ConfigMap,
             Field(
-                default_factory=FlextModelsContainers.ConfigMap,
+                default_factory=t.ConfigMap,
                 description="Context values provided to the handler for tracing and runtime behavior.",
                 title="Execution Context",
                 examples=[{"correlation_id": "corr-abc"}],
@@ -391,9 +390,9 @@ class FlextModelsConfig:
             Field(default=None, description="Optional middleware name"),
         ] = None
         config: Annotated[
-            FlextModelsContainers.ConfigMap,
+            t.ConfigMap,
             Field(
-                default_factory=FlextModelsContainers.ConfigMap,
+                default_factory=t.ConfigMap,
                 description="Middleware-specific configuration",
             ),
         ]
@@ -482,7 +481,7 @@ class FlextModelsConfig:
             ),
         ] = True
         env: Annotated[
-            FlextModelsContainers.ConfigMap | None,
+            t.ConfigMap | None,
             Field(
                 default=None,
                 description="Environment variables for the command",
@@ -788,9 +787,9 @@ class FlextModelsConfig:
             ),
         ] = False
         extra_kwargs: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Additional keyword arguments for metadata",
             ),
         ]
@@ -1135,9 +1134,9 @@ class FlextModelsConfig:
             ),
         ]
         call_kwargs: Annotated[
-            FlextModelsContainers.ConfigMap,
+            t.ConfigMap,
             Field(
-                default_factory=FlextModelsContainers.ConfigMap,
+                default_factory=t.ConfigMap,
                 description="Keyword arguments for function",
             ),
         ]

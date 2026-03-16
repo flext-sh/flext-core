@@ -56,7 +56,7 @@ TEST_DATA: Mapping[str, str | int | dict[str, str]] = {
 }
 
 
-class AdvancedUtilitiesService(s[m.ConfigMap]):
+class AdvancedUtilitiesService(s[t.ConfigMap]):
     """Service demonstrating advanced u features."""
 
     @staticmethod
@@ -91,7 +91,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             print(f"✅ Get parameter: name={name_param}")
         except Exception as e:
             print(f"⚠️  Get parameter: {e}")
-        config_dict: m.ConfigMap = m.ConfigMap(root={"timeout": 30, "retries": 3})
+        config_dict: t.ConfigMap = t.ConfigMap(root={"timeout": 30, "retries": 3})
         try:
             timeout = u.get_parameter(config_dict.root, "timeout")
             print(f"✅ Get from dict: timeout={timeout}")
@@ -153,7 +153,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             "status": "active",
             "age": 25,
         }
-        model_result = u.load(UserModel, m.ConfigMap(root=user_data))
+        model_result = u.load(UserModel, t.ConfigMap(root=user_data))
         user_from_dict = UserModel.model_validate(user_data)
         print(
             f"✅ Model from dict: {user_from_dict.name} ({user_from_dict.status.value})"
@@ -225,7 +225,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Type Guards ===")
         if u.is_type("hello", "string_non_empty"):
             print("✅ String non-empty guard: 'hello' is valid")
-        test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value"})
+        test_dict: t.ConfigMap = t.ConfigMap(root={"key": "value"})
         if u.is_type(test_dict, "dict_non_empty"):
             print("✅ Dict non-empty guard: dict is valid")
         test_list: list[int] = [1, 2, 3]
@@ -233,7 +233,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             print("✅ List non-empty guard: list is valid")
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute advanced utilities demonstrations."""
         print("Starting advanced utilities demonstration")
         try:
@@ -246,8 +246,8 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             self._demonstrate_domain_utilities()
             self._demonstrate_pagination()
             self._demonstrate_configuration()
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
+            return r[t.ConfigMap].ok(
+                t.ConfigMap(
                     root={
                         "utilities_demonstrated": [
                             "args_validation",
@@ -277,7 +277,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             )
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
+            return r[t.ConfigMap].fail(error_msg)
 
 
 def main() -> None:
@@ -289,7 +289,7 @@ def main() -> None:
     service = AdvancedUtilitiesService()
     result = service.execute()
     if result.is_success:
-        result_data: m.ConfigMap = m.ConfigMap(
+        result_data: t.ConfigMap = t.ConfigMap(
             root={
                 "utilities_demonstrated": [
                     "args_validation",

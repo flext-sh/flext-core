@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import c, m, t, tm
+from flext_tests import c, t, tm
 
 from flext_core import r
 
@@ -374,7 +374,7 @@ class TestFlextTestsMatchers:
         """Test tm.fail() with data parameter."""
         result: r[str] = r[str].fail(
             "error",
-            error_data=m.ConfigMap(root={"field": "email"}),
+            error_data=t.ConfigMap(root={"field": "email"}),
         )
         error = tm.fail(result, data={"field": "email"})
         assert error == "error"

@@ -738,7 +738,7 @@ class TestFlextRuntime:
             di_container = FlextRuntime.DependencyIntegration.create_container()
             config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
                 di_container,
-                m.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
+                t.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
             )
             tm.that(repr(config_provider) != "", eq=True)
             config = di_container.config
@@ -835,7 +835,7 @@ class TestFlextRuntime:
 
             setattr(module, "consume", consume_automation)
             di_container = FlextRuntime.DependencyIntegration.create_container(
-                config=m.ConfigMap(root={"flags": {"enabled": True}}),
+                config=t.ConfigMap(root={"flags": {"enabled": True}}),
                 services={"static_value": 7},
                 factories={"token_factory": token_factory},
                 resources={"api_client": lambda: {"connected": True}},
@@ -935,7 +935,7 @@ class TestFlextRuntime:
             )
             tm.that(service_result.is_success, eq=True)
             tm.that(
-                service_result.value == m.ConfigMap(root={"enabled": True}), eq=True
+                service_result.value == t.ConfigMap(root={"enabled": True}), eq=True
             )
             factory_result: r[t.RegisterableService] = component.container.get(
                 "counter"
@@ -1031,7 +1031,7 @@ class TestFlextRuntime:
             FlextRuntime.Integration.track_domain_event(
                 "UserCreated",
                 aggregate_id="user-123",
-                event_data=m.ConfigMap(root={"email": "test@example.com"}),
+                event_data=t.ConfigMap(root={"email": "test@example.com"}),
             )
             tm.that(
                 FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
@@ -1044,7 +1044,7 @@ class TestFlextRuntime:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_domain_event(
                 "SystemInitialized",
-                event_data=m.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
+                event_data=t.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
             )
             tm.that(
                 FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True

@@ -15,20 +15,20 @@ class Ex02TestConfig(FlextSettings):
 
 
 class Ex02DatabaseService(m.Value):
-    config: m.ConfigMap
+    config: t.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
 
     def connect(self) -> r[bool]:
         return r[bool].ok(True)
 
-    def query(self, sql: str) -> r[m.ConfigMap]:
+    def query(self, sql: str) -> r[t.ConfigMap]:
         if "INVALID" in sql:
-            return r[m.ConfigMap].fail("invalid query")
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"rows": 1}))
+            return r[t.ConfigMap].fail("invalid query")
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"rows": 1}))
 
 
 class Ex02CacheService(m.Value):
-    config: m.ConfigMap
+    config: t.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
 
     def set(self, key: str, value: str) -> r[bool]:
@@ -40,7 +40,7 @@ class Ex02CacheService(m.Value):
 
 
 class Ex02EmailService(m.Value):
-    config: m.ConfigMap
+    config: t.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
 
     def send(self, to: str, subject: str, body: str) -> r[bool]:

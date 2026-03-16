@@ -78,7 +78,7 @@ class SampleAggregate(m.AggregateRoot):
         self.status = new_status
         result = self.add_domain_event(
             "status_changed",
-            m.ConfigMap(root={"old_status": "active", "new_status": new_status}),
+            t.ConfigMap(root={"old_status": "active", "new_status": new_status}),
         )
         if result.is_failure:
             error_msg = f"Failed to add domain event: {result.error}"
@@ -92,7 +92,7 @@ class EventAggregate(m.AggregateRoot):
 
     def trigger_event(self) -> None:
         """Trigger a test event."""
-        _ = self.add_domain_event("test_event", m.ConfigMap(root={"data": "test"}))
+        _ = self.add_domain_event("test_event", t.ConfigMap(root={"data": "test"}))
 
 
 class TestFlextModels:
@@ -443,7 +443,7 @@ class TestFlextModels:
         )
         result = entity.add_domain_event(
             "test_event",
-            m.ConfigMap(root={"data": "value"}),
+            t.ConfigMap(root={"data": "value"}),
         )
         _ = u.Tests.Result.assert_success(result)
         tm.that(
@@ -482,7 +482,7 @@ class TestFlextModels:
             name: str
 
         entity = TestEntity(name="test", domain_events=[])
-        result = entity.add_domain_event("", m.ConfigMap(root={"data": "value"}))
+        result = entity.add_domain_event("", t.ConfigMap(root={"data": "value"}))
         _ = u.Tests.Result.assert_failure(result)
         tm.that(result.error, none=False, msg="Failure result must have error message")
         if result.error is not None:
@@ -493,7 +493,7 @@ class TestFlextModels:
             )
         result = entity.add_domain_event(
             "valid",
-            m.ConfigMap(root={"string": "value", "number": 42}),
+            t.ConfigMap(root={"string": "value", "number": 42}),
         )
         _ = u.Tests.Result.assert_success(result)
         tm.that(
@@ -561,7 +561,7 @@ class TestFlextModels:
         )
         assert hasattr(aggregate, "_invariants")
         assert isinstance(aggregate._invariants, list)
-        result = aggregate.add_domain_event("test", m.ConfigMap(root={"data": "value"}))
+        result = aggregate.add_domain_event("test", t.ConfigMap(root={"data": "value"}))
         _ = u.Tests.Result.assert_success(result)
 
     def test_aggregate_root_invariants(self) -> None:
@@ -636,7 +636,7 @@ class TestFlextModels:
         """Test Query creation."""
         query = m.Query(
             query_type="find_users",
-            filters=m.Dict(root={"active": "true"}),
+            filters=t.Dict(root={"active": "true"}),
             pagination=m.Pagination(),
             query_id="q-test-1",
         )
@@ -653,8 +653,8 @@ class TestFlextModels:
             name: str
 
         aggregate = TestAggregate(name="test", domain_events=[])
-        _ = aggregate.add_domain_event("event1", m.ConfigMap(root={"data": "value1"}))
-        _ = aggregate.add_domain_event("event2", m.ConfigMap(root={"data": "value2"}))
+        _ = aggregate.add_domain_event("event1", t.ConfigMap(root={"data": "value1"}))
+        _ = aggregate.add_domain_event("event2", t.ConfigMap(root={"data": "value2"}))
         assert len(aggregate.domain_events) == 2
         result = aggregate.mark_events_as_committed()
         _ = u.Tests.Result.assert_success(result)
@@ -682,9 +682,9 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test", domain_events=[])
         events = [
-            ("event1", m.ConfigMap(root={"data": "value1"})),
-            ("event2", m.ConfigMap(root={"data": "value2"})),
-            ("event3", m.ConfigMap(root={"data": "value3"})),
+            ("event1", t.ConfigMap(root={"data": "value1"})),
+            ("event2", t.ConfigMap(root={"data": "value2"})),
+            ("event3", t.ConfigMap(root={"data": "value3"})),
         ]
         result = aggregate.add_domain_events_bulk(events)
         _ = u.Tests.Result.assert_success(result)
@@ -702,7 +702,7 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test", domain_events=[])
         result = aggregate.add_domain_events_bulk([])
         _ = u.Tests.Result.assert_success(result)
-        invalid_empty_name = [("", m.ConfigMap(root={"data": "value"}))]
+        invalid_empty_name = [("", t.ConfigMap(root={"data": "value"}))]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
         _ = u.Tests.Result.assert_failure(result)
         assert (
@@ -718,7 +718,7 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test", domain_events=[])
         max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
         events = [
-            (f"event{i}", m.ConfigMap(root={"data": f"value{i}"}))
+            (f"event{i}", t.ConfigMap(root={"data": f"value{i}"}))
             for i in range(max_events + 1)
         ]
         result = aggregate.add_domain_events_bulk(events)
@@ -742,7 +742,7 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test", domain_events=[], handler_data={})
         result = aggregate.add_domain_event(
             "user_action",
-            m.ConfigMap(root={"event_type": "test_event", "key": "value"}),
+            t.ConfigMap(root={"event_type": "test_event", "key": "value"}),
         )
         _ = u.Tests.Result.assert_success(result)
         assert aggregate.handler_called is True
@@ -763,7 +763,7 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test", domain_events=[])
         result = aggregate.add_domain_event(
             "failing_event",
-            m.ConfigMap(root={"data": "value"}),
+            t.ConfigMap(root={"data": "value"}),
         )
         _ = u.Tests.Result.assert_success(result)
 
@@ -809,10 +809,10 @@ class TestFlextModels:
     def test_processing_request_model_creation(self) -> None:
         """Test ProcessingRequest model with correct fields."""
         request = m.ProcessingRequest(
-            data=m.ConfigMap(root={"input": "data"}),
+            data=t.ConfigMap(root={"input": "data"}),
             enable_validation=True,
             operation_id="op-test-1",
-            context=m.ConfigMap(root={}),
+            context=t.ConfigMap(root={}),
         )
         assert getattr(request.data, "root", request.data) == {"input": "data"}
         assert request.enable_validation is True
@@ -847,9 +847,9 @@ class TestFlextModels:
         """Test HandlerExecutionConfig model with correct fields."""
         config = m.HandlerExecutionConfig(
             handler_name="my_handler",
-            input_data=m.ConfigMap(root={"key": "value"}),
+            input_data=t.ConfigMap(root={"key": "value"}),
             retry_on_failure=True,
-            execution_context=m.ConfigMap(root={}),
+            execution_context=t.ConfigMap(root={}),
         )
         assert config.handler_name == "my_handler"
         assert getattr(config.input_data, "root", config.input_data) == {"key": "value"}
@@ -997,8 +997,8 @@ class TestFlextModels:
         """Test Cqrs.Handler model creation."""
         handler_config = m.HandlerExecutionConfig(
             handler_name="CreateUserHandler",
-            input_data=m.ConfigMap(root={}),
-            execution_context=m.ConfigMap(root={}),
+            input_data=t.ConfigMap(root={}),
+            execution_context=t.ConfigMap(root={}),
         )
         assert handler_config.handler_name == "CreateUserHandler"
 
@@ -1013,7 +1013,7 @@ class TestFlextModels:
         """Test Query model with validators."""
         pagination = m.Pagination(page=1, size=20)
         query = m.Query(
-            filters=m.Dict(root={"user_id": "user-456"}),
+            filters=t.Dict(root={"user_id": "user-456"}),
             pagination=pagination,
             query_type="GetOrdersByUser",
             query_id="q-test-2",
@@ -1028,7 +1028,7 @@ class TestFlextModels:
     def test_context_data_model_creation(self) -> None:
         """Test ContextData model with validators."""
         ctx = m.ContextData(
-            data=m.Dict(root={"request_id": "req-456", "user_id": "user-123"}),
+            data=t.Dict(root={"request_id": "req-456", "user_id": "user-123"}),
             metadata=m.Metadata(attributes={"source": "api"}),
         )
         assert ctx.data["request_id"] == "req-456"
@@ -1040,7 +1040,7 @@ class TestFlextModels:
         """Test ContextExport model creation."""
         stats: dict[str, t.NormalizedValue] = {"sets": 10, "gets": 20}
         export = m.ContextExport(
-            data=m.Dict(root={"key": "value"}).root,
+            data=t.Dict(root={"key": "value"}).root,
             metadata=m.Metadata(attributes={"version": "1.0"}),
             statistics=stats,
         )

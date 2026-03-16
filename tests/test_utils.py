@@ -27,7 +27,6 @@ from flext_core import (
     FlextService,
     FlextSettings,
     FlextUtilities,
-    m,
     r,
     t,
 )
@@ -237,17 +236,17 @@ class TestFixtureFactory:
         return FlextRuntime
 
     @staticmethod
-    def create_test_service_instance() -> FlextService[m.ConfigMap]:
+    def create_test_service_instance() -> FlextService[t.ConfigMap]:
         """Create test service fixture."""
 
-        class TestFlextService(FlextService[m.ConfigMap]):
+        class TestFlextService(FlextService[t.ConfigMap]):
             """Concrete test service implementation."""
 
             @override
-            def execute(self) -> r[m.ConfigMap]:
+            def execute(self) -> r[t.ConfigMap]:
                 """Execute test service operation."""
-                return r[m.ConfigMap].ok(
-                    m.ConfigMap(root={"result": "test_service_executed"}),
+                return r[t.ConfigMap].ok(
+                    t.ConfigMap(root={"result": "test_service_executed"}),
                 )
 
         return TestFlextService()

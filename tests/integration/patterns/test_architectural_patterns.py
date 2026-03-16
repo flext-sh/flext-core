@@ -150,7 +150,7 @@ class TestEnterprisePatterns:
         for i in range(1000):
             result = repo.save(
                 f"entity_{i}",
-                m.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
+                t.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
             )
             assertion_helpers.assert_flext_result_success(
                 result,
@@ -167,7 +167,7 @@ class TestEnterprisePatterns:
             query_result: r[t.Container | BaseModel] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
-            assert isinstance(entity_data, m.ConfigMap), (
+            assert isinstance(entity_data, t.ConfigMap), (
                 f"Expected ConfigMap, got {type(entity_data)}"
             )
             assert entity_data.root.get("id") == i, f"Entity {i} should have id={i}"

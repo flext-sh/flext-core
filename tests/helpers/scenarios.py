@@ -14,7 +14,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from tests import m
+from tests import t
 
 
 class ValidationScenario(BaseModel):
@@ -89,7 +89,7 @@ class ReliabilityScenario(BaseModel):
     name: Annotated[str, Field(description="Unique reliability scenario name")]
     strategy: Annotated[str, Field(description="Reliability strategy under test")]
     config: Annotated[
-        m.ConfigMap, Field(description="Reliability configuration payload")
+        t.ConfigMap, Field(description="Reliability configuration payload")
     ]
     simulate_failures: Annotated[
         int, Field(description="Number of failures to simulate")
@@ -717,7 +717,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_immediate_success",
             strategy="retry",
-            config=m.ConfigMap(
+            config=t.ConfigMap(
                 root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
             ),
             simulate_failures=0,
@@ -728,7 +728,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_after_one_failure",
             strategy="retry",
-            config=m.ConfigMap(
+            config=t.ConfigMap(
                 root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
             ),
             simulate_failures=1,
@@ -739,7 +739,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_exhausted",
             strategy="retry",
-            config=m.ConfigMap(
+            config=t.ConfigMap(
                 root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
             ),
             simulate_failures=5,
@@ -752,7 +752,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",
-            config=m.ConfigMap(root={"failure_threshold": 5, "timeout_ms": 1000}),
+            config=t.ConfigMap(root={"failure_threshold": 5, "timeout_ms": 1000}),
             simulate_failures=0,
             expected_state="closed",
             should_succeed=True,
@@ -761,7 +761,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="circuit_open_on_threshold",
             strategy="circuit_breaker",
-            config=m.ConfigMap(root={"failure_threshold": 2, "timeout_ms": 1000}),
+            config=t.ConfigMap(root={"failure_threshold": 2, "timeout_ms": 1000}),
             simulate_failures=3,
             expected_state="open",
             should_succeed=False,

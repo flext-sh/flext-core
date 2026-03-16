@@ -19,61 +19,61 @@ class TestDictMixinOperations:
 
     def test_setitem(self) -> None:
         """__setitem__ works on Dict (line 320)."""
-        d = m.Dict(root={"a": "1"})
+        d = t.Dict(root={"a": "1"})
         d["b"] = "2"
         assert d["b"] == "2"
 
     def test_delitem(self) -> None:
         """__delitem__ works on Dict (line 324)."""
-        d = m.Dict(root={"a": "1", "b": "2"})
+        d = t.Dict(root={"a": "1", "b": "2"})
         del d["a"]
         assert "a" not in d
 
     def test_iter(self) -> None:
         """__iter__ returns iterator over keys (line 331)."""
-        d = m.Dict(root={"x": "1", "y": "2"})
+        d = t.Dict(root={"x": "1", "y": "2"})
         keys = list(d.keys())
         assert "x" in keys
         assert "y" in keys
 
     def test_values(self) -> None:
         """values() returns values view (line 351)."""
-        d = m.Dict(root={"a": "1", "b": "2"})
+        d = t.Dict(root={"a": "1", "b": "2"})
         vals = list(d.values())
         assert "1" in vals
         assert "2" in vals
 
     def test_update(self) -> None:
         """update() merges another mapping (line 355)."""
-        d = m.Dict(root={"a": "1"})
+        d = t.Dict(root={"a": "1"})
         d.update({"b": "2"})
         assert d["b"] == "2"
 
     def test_clear(self) -> None:
         """clear() empties the dict (line 359)."""
-        d = m.Dict(root={"a": "1"})
+        d = t.Dict(root={"a": "1"})
         d.clear()
         assert len(d) == 0
 
     def test_pop(self) -> None:
         """pop() removes and returns item (line 363)."""
-        d = m.Dict(root={"a": "1", "b": "2"})
+        d = t.Dict(root={"a": "1", "b": "2"})
         result = d.pop("a")
         assert result == "1"
         assert "a" not in d
 
     def test_pop_with_default(self) -> None:
         """pop() returns default when key missing."""
-        d = m.Dict(root={"a": "1"})
+        d = t.Dict(root={"a": "1"})
         result = d.pop("missing", "default_val")
         assert result == "default_val"
 
     def test_popitem_and_setdefault(self) -> None:
-        d = m.Dict(root={"a": "1"})
+        d = t.Dict(root={"a": "1"})
         key, value = d.popitem()
         assert key == "a"
         assert value == "1"
-        d2 = m.Dict(root={})
+        d2 = t.Dict(root={})
         assert d2.setdefault("x", "y") == "y"
         assert d2["x"] == "y"
 
@@ -83,13 +83,13 @@ class TestConfigMapDictOps:
 
     def test_configmap_setitem(self) -> None:
         """ConfigMap supports __setitem__."""
-        cm = m.ConfigMap(root={"key": "val"})
+        cm = t.ConfigMap(root={"key": "val"})
         cm["new"] = "item"
         assert cm["new"] == "item"
 
     def test_configmap_iter(self) -> None:
         """ConfigMap supports __iter__."""
-        cm = m.ConfigMap(root={"a": "1", "b": "2"})
+        cm = t.ConfigMap(root={"a": "1", "b": "2"})
         assert set(cm.keys()) == {"a", "b"}
 
 

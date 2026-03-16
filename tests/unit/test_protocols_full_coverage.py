@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Protocol, cast, override, runtime_checkable
 
-from flext_core import c, m, p, r, u
+from flext_core import c, p, r, u
 
 
 @runtime_checkable
@@ -36,7 +36,7 @@ class _ProtocolModel(p.ProtocolModel, _RequirePing):
 def test_implements_decorator_validation_error_message() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap(root={}), m.ConfigMap)
+    assert isinstance(t.ConfigMap(root={}), t.ConfigMap)
     assert isinstance(u.to_str_list(1), list)
 
     @p.implements(_RequirePing)

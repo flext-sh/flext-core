@@ -96,7 +96,7 @@ class TestFlextContext:
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
         initial_data = m.ContextData(
-            data=m.Dict(root={"user_id": "123", "session_id": "abc"}),
+            data=t.Dict(root={"user_id": "123", "session_id": "abc"}),
         )
         context = FlextContext(initial_data=initial_data)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
@@ -124,7 +124,7 @@ class TestFlextContext:
         """Test context set/get value operations."""
         context = test_context
         if isinstance(value, (dict, list)):
-            set_result = context.set(m.ConfigMap.model_validate({key: value}))
+            set_result = context.set(t.ConfigMap.model_validate({key: value}))
         else:
             set_result = context.set(key, value)
         _ = u.Tests.Result.assert_success(set_result)
@@ -191,7 +191,7 @@ class TestFlextContext:
                 "profile": {"name": "John Doe", "email": "john@example.com"},
             },
         }
-        context.set(m.ConfigMap.model_validate({"nested": nested_data})).value
+        context.set(t.ConfigMap.model_validate({"nested": nested_data})).value
         result = context.get("nested")
         _ = u.Tests.Result.assert_success(result)
         retrieved = result.value
@@ -379,10 +379,10 @@ class TestFlextContext:
     ) -> None:
         """Test context with special values."""
         context = test_context
-        converted_value: str | m.ConfigMap
+        converted_value: str | t.ConfigMap
         expected_value: str
         if isinstance(special_value, dict):
-            converted_value = m.ConfigMap.model_validate({
+            converted_value = t.ConfigMap.model_validate({
                 f"{value_name}_key": special_value
             })
             expected_value = (
@@ -391,7 +391,7 @@ class TestFlextContext:
         else:
             converted_value = str(special_value)
             expected_value = special_value
-        if isinstance(converted_value, m.ConfigMap):
+        if isinstance(converted_value, t.ConfigMap):
             context.set(converted_value).value
         else:
             context.set(f"{value_name}_key", converted_value).value
@@ -399,7 +399,7 @@ class TestFlextContext:
         _ = u.Tests.Result.assert_success(result)
         actual = result.value
         tm.that(
-            actual.model_dump() if isinstance(actual, m.Dict) else actual,
+            actual.model_dump() if isinstance(actual, t.Dict) else actual,
             eq=expected_value,
         )
 
@@ -631,7 +631,7 @@ class TestFlextContext:
     def test_context_edge_case_none_value(self, test_context: FlextContext) -> None:
         """Test context with None value."""
         context = test_context
-        config_map = m.ConfigMap(root={"key_none": None})
+        config_map = t.ConfigMap(root={"key_none": None})
         result = context.set(config_map)
         _ = u.Tests.Result.assert_success(result)
 

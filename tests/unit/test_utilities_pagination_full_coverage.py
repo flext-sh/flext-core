@@ -16,7 +16,7 @@ def test_pagination_response_string_fallbacks() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     pagination_data: Mapping[
         str,
         str | Mapping[str, t.Container] | list[t.Container],

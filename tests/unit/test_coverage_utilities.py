@@ -29,7 +29,7 @@ from flext_tests import t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, r
-from tests import m, p, u
+from tests import p, u
 
 from ..test_utils import assertion_helpers
 from .contracts.text_contract import TextUtilityContract
@@ -70,7 +70,7 @@ class _TestCachedObject:
     """Mock object with cache attributes."""
 
     def __init__(self) -> None:
-        self._cache: m.ConfigMap = m.ConfigMap(root={"key": "value"})
+        self._cache: t.ConfigMap = t.ConfigMap(root={"key": "value"})
         self._simple_cache: str = "cached_value"
 
 
@@ -177,7 +177,7 @@ class UtilityScenarios:
         result: dict[str, t.NormalizedValue | BaseModel] = {}
         for key, value in kwargs.items():
             result[str(key)] = value
-        config_map: p.HasModelDump = m.ConfigMap(root=result)
+        config_map: p.HasModelDump = t.ConfigMap(root=result)
         return config_map
 
     @staticmethod
@@ -379,7 +379,7 @@ class Testu(TextUtilityContract):
                         )
                         else str(v)
                     )
-            result = u.clear_object_cache(m.ConfigMap(root=obj_dict))
+            result = u.clear_object_cache(t.ConfigMap(root=obj_dict))
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_cache_has_attributes_true(self) -> None:

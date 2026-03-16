@@ -27,7 +27,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ValidationError
 
 from flext_core import r
-from tests import m, t
+from tests import t
 
 
 class TestFailNoExceptionBackwardCompat:
@@ -86,7 +86,7 @@ class TestFailWithException:
         tm.that(result.error == error_msg, eq=True)
         tm.that(
             result.error_data
-            == m.ConfigMap(
+            == t.ConfigMap(
                 root=cast("dict[str, t.NormalizedValue | BaseModel]", error_data)
             ),
             eq=True,

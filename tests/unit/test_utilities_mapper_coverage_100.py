@@ -21,7 +21,7 @@ from typing import Annotated, cast
 from flext_tests import tm
 from pydantic import BaseModel, Field
 
-from tests import m, t, u
+from tests import t, u
 
 from ..test_utils import assertion_helpers
 from ._models import ComplexModel
@@ -426,7 +426,7 @@ class TestuMapperBuild:
                 "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
             },
         )
-        res = u.construct(spec, m.ConfigMap(root=source))
+        res = u.construct(spec, t.ConfigMap(root=source))
         tm.that(
             res, eq={"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}
         )

@@ -27,7 +27,7 @@ class DatabaseService(m.ArbitraryTypesModel):
     """Database service using centralized types and railway pattern."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
-    config: m.ConfigMap
+    config: t.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
 
     def connect(self) -> r[bool]:
@@ -45,10 +45,10 @@ class DatabaseService(m.ArbitraryTypesModel):
         self.status = c.Cqrs.CommonStatus.ACTIVE
         return r[bool].ok(value=True)
 
-    def query(self, sql: str) -> r[m.ConfigMap]:
+    def query(self, sql: str) -> r[t.ConfigMap]:
         """Execute query with comprehensive validation using u."""
         if self.status != c.Cqrs.CommonStatus.ACTIVE:
-            return r[m.ConfigMap].fail(c.Errors.CONNECTION_ERROR)
+            return r[t.ConfigMap].fail(c.Errors.CONNECTION_ERROR)
         sql_keywords: tuple[str, ...] = (
             c.Cqrs.Action.GET,
             c.Cqrs.Action.CREATE,
@@ -57,22 +57,22 @@ class DatabaseService(m.ArbitraryTypesModel):
         )
         sql_pattern = f"\\b({'|'.join(sql_keywords)})\\b"
         if not u.validate_pattern(sql, sql_pattern).is_success:
-            return r[m.ConfigMap].fail(c.Errors.VALIDATION_ERROR)
-        result: m.ConfigMap = m.ConfigMap(
+            return r[t.ConfigMap].fail(c.Errors.VALIDATION_ERROR)
+        result: t.ConfigMap = t.ConfigMap(
             root={
                 "id": u.generate("ulid"),
                 "name": "Alice",
                 "email": "alice@example.com",
             }
         )
-        return r[m.ConfigMap].ok(result)
+        return r[t.ConfigMap].ok(result)
 
 
 class CacheService(m.ArbitraryTypesModel):
     """Cache service using centralized types."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
-    config: m.ConfigMap
+    config: t.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
 
     def get(self, key: str) -> r[str | int]:
@@ -107,7 +107,7 @@ class EmailService(m.ArbitraryTypesModel):
     """Email service using centralized types."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
-    config: m.ConfigMap
+    config: t.ConfigMap
     status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
 
     def send(self, to: str, subject: str, body: str) -> r[bool]:
@@ -126,7 +126,7 @@ class EmailService(m.ArbitraryTypesModel):
         return r.traverse(validations, lambda r: r).map(lambda _: True)
 
 
-class DependencyInjectionService(s[m.ConfigMap]):
+class DependencyInjectionService(s[t.ConfigMap]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
     @staticmethod
@@ -176,7 +176,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
     ]:
         """Setup container with services."""
         container = FlextContainer()
-        db_config: m.ConfigMap = m.ConfigMap(
+        db_config: t.ConfigMap = t.ConfigMap(
             root={
                 "driver": "sqlite",
                 "url": "sqlite:///:memory:",
@@ -185,12 +185,12 @@ class DependencyInjectionService(s[m.ConfigMap]):
         )
         db_service = DatabaseService(config=db_config)
         db_service.status = c.Cqrs.CommonStatus.ACTIVE
-        cache_config: m.ConfigMap = m.ConfigMap(
+        cache_config: t.ConfigMap = t.ConfigMap(
             root={"backend": "memory", "ttl": c.Defaults.DEFAULT_CACHE_TTL}
         )
         cache_service = CacheService(config=cache_config)
         cache_service.status = c.Cqrs.CommonStatus.ACTIVE
-        email_config: m.ConfigMap = m.ConfigMap(
+        email_config: t.ConfigMap = t.ConfigMap(
             root={"host": "smtp.example.com", "port": 587}
         )
         email_service = EmailService(config=email_config)
@@ -201,14 +201,14 @@ class DependencyInjectionService(s[m.ConfigMap]):
         return container, db_service, cache_service, email_service
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute DI demonstrations."""
         self.logger.info("Starting dependency injection demonstration")
         container, db_service, cache_service, email_service = self._setup_container()
         self._demonstrate_registration(container)
         self._demonstrate_resolution(db_service, cache_service, email_service)
         self._demonstrate_advanced_patterns(container, db_service)
-        result_data: m.ConfigMap = m.ConfigMap(
+        result_data: t.ConfigMap = t.ConfigMap(
             root={
                 "patterns_demonstrated": 5,
                 "services_registered": ["database", "cache", "email"],
@@ -223,7 +223,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
             }
         )
         self.logger.info("Dependency injection demonstration completed")
-        return r[m.ConfigMap].ok(result_data)
+        return r[t.ConfigMap].ok(result_data)
 
     def _demonstrate_registration(self, container: FlextContainer) -> None:
         """Show service registration patterns."""

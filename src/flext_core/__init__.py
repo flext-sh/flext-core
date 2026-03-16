@@ -22,28 +22,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
-from flext_core.typings import (
-    TV,
-    EnumT,
-    MessageT_contra,
-    P,
-    R,
-    ResultT,
-    T,
-    T_co,
-    T_contra,
-    T_Model,
-    T_Namespace,
-    T_Settings,
-    TRuntime,
-    TV_co,
-    U,
-    ValidatedParams,
-    ValidatedReturn,
-)
 
 if TYPE_CHECKING:
-    from flext_core import _decorators, _dispatcher, _models, _utilities
+    from flext_core import (
+        _constants,
+        _decorators,
+        _dispatcher,
+        _models,
+        _protocols,
+        _typings,
+        _utilities,
+    )
     from flext_core.__version__ import (
         __all__,
         __author__,
@@ -55,6 +44,14 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
+    from flext_core._constants.base import FlextConstantsBase
+    from flext_core._constants.cqrs import FlextConstantsCqrs
+    from flext_core._constants.domain import FlextConstantsDomain
+    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+    from flext_core._constants.mixins import FlextConstantsMixins
+    from flext_core._constants.platform import FlextConstantsPlatform
+    from flext_core._constants.settings import FlextConstantsSettings
+    from flext_core._constants.validation import FlextConstantsValidation
     from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
     from flext_core._dispatcher.config import FlextModelsConfig
     from flext_core._dispatcher.reliability import (
@@ -75,6 +72,26 @@ if TYPE_CHECKING:
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.service import FlextModelsService
+    from flext_core._protocols.base import FlextProtocolsBase
+    from flext_core._protocols.config import FlextProtocolsConfig
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.di import FlextProtocolsDI
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core._protocols.metaclass import (
+        FlextProtocolsMetaclassUtilities,
+        ProtocolModel,
+        ProtocolModelMeta,
+        ProtocolSettings,
+    )
+    from flext_core._protocols.metrics import FlextProtocolsMetrics
+    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols.service import FlextProtocolsService
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.containers import FlextTypingContainers
+    from flext_core._typings.core import FlextTypesCore
+    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings.validation import FlextTypesValidation
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.cache import FlextUtilitiesCache
     from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -111,7 +128,27 @@ if TYPE_CHECKING:
     from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
-    from flext_core.typings import FlextTypes, t
+    from flext_core.typings import (
+        TV,
+        EnumT,
+        FlextTypes,
+        MessageT_contra,
+        P,
+        R,
+        ResultT,
+        T,
+        T_co,
+        T_contra,
+        T_Model,
+        T_Namespace,
+        T_Settings,
+        TRuntime,
+        TV_co,
+        U,
+        ValidatedParams,
+        ValidatedReturn,
+        t,
+    )
     from flext_core.utilities import FlextUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -120,12 +157,33 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "CircuitBreakerManager",
     ),
     "DispatchMessage": ("flext_core.dispatcher", "DispatchMessage"),
+    "EnumT": ("flext_core.typings", "EnumT"),
     "Execute": ("flext_core.dispatcher", "Execute"),
     "FactoryDecoratorsDiscovery": (
         "flext_core._decorators.discovery",
         "FactoryDecoratorsDiscovery",
     ),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
+    "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
+    "FlextConstantsCqrs": ("flext_core._constants.cqrs", "FlextConstantsCqrs"),
+    "FlextConstantsDomain": ("flext_core._constants.domain", "FlextConstantsDomain"),
+    "FlextConstantsInfrastructure": (
+        "flext_core._constants.infrastructure",
+        "FlextConstantsInfrastructure",
+    ),
+    "FlextConstantsMixins": ("flext_core._constants.mixins", "FlextConstantsMixins"),
+    "FlextConstantsPlatform": (
+        "flext_core._constants.platform",
+        "FlextConstantsPlatform",
+    ),
+    "FlextConstantsSettings": (
+        "flext_core._constants.settings",
+        "FlextConstantsSettings",
+    ),
+    "FlextConstantsValidation": (
+        "flext_core._constants.validation",
+        "FlextConstantsValidation",
+    ),
     "FlextContainer": ("flext_core.container", "FlextContainer"),
     "FlextContext": ("flext_core.context", "FlextContext"),
     "FlextDecorators": ("flext_core.decorators", "FlextDecorators"),
@@ -155,12 +213,33 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
     "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
     "FlextProtocols": ("flext_core.protocols", "FlextProtocols"),
+    "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),
+    "FlextProtocolsConfig": ("flext_core._protocols.config", "FlextProtocolsConfig"),
+    "FlextProtocolsContext": ("flext_core._protocols.context", "FlextProtocolsContext"),
+    "FlextProtocolsDI": ("flext_core._protocols.di", "FlextProtocolsDI"),
+    "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
+    "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
+    "FlextProtocolsMetaclassUtilities": (
+        "flext_core._protocols.metaclass",
+        "FlextProtocolsMetaclassUtilities",
+    ),
+    "FlextProtocolsMetrics": ("flext_core._protocols.metrics", "FlextProtocolsMetrics"),
+    "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
+    "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
     "FlextRegistry": ("flext_core.registry", "FlextRegistry"),
     "FlextResult": ("flext_core.result", "FlextResult"),
     "FlextRuntime": ("flext_core.runtime", "FlextRuntime"),
     "FlextService": ("flext_core.service", "FlextService"),
     "FlextSettings": ("flext_core.settings", "FlextSettings"),
     "FlextTypes": ("flext_core.typings", "FlextTypes"),
+    "FlextTypesCore": ("flext_core._typings.core", "FlextTypesCore"),
+    "FlextTypesServices": ("flext_core._typings.services", "FlextTypesServices"),
+    "FlextTypesValidation": ("flext_core._typings.validation", "FlextTypesValidation"),
+    "FlextTypingBase": ("flext_core._typings.base", "FlextTypingBase"),
+    "FlextTypingContainers": (
+        "flext_core._typings.containers",
+        "FlextTypingContainers",
+    ),
     "FlextUtilities": ("flext_core.utilities", "FlextUtilities"),
     "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),
     "FlextUtilitiesCache": ("flext_core._utilities.cache", "FlextUtilitiesCache"),
@@ -210,10 +289,29 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
     "Handle": ("flext_core.dispatcher", "Handle"),
+    "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
+    "P": ("flext_core.typings", "P"),
+    "ProtocolModel": ("flext_core._protocols.metaclass", "ProtocolModel"),
+    "ProtocolModelMeta": ("flext_core._protocols.metaclass", "ProtocolModelMeta"),
+    "ProtocolSettings": ("flext_core._protocols.metaclass", "ProtocolSettings"),
+    "R": ("flext_core.typings", "R"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
+    "ResultT": ("flext_core.typings", "ResultT"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
+    "T": ("flext_core.typings", "T"),
+    "TRuntime": ("flext_core.typings", "TRuntime"),
+    "TV": ("flext_core.typings", "TV"),
+    "TV_co": ("flext_core.typings", "TV_co"),
+    "T_Model": ("flext_core.typings", "T_Model"),
+    "T_Namespace": ("flext_core.typings", "T_Namespace"),
+    "T_Settings": ("flext_core.typings", "T_Settings"),
+    "T_co": ("flext_core.typings", "T_co"),
+    "T_contra": ("flext_core.typings", "T_contra"),
     "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
+    "U": ("flext_core.typings", "U"),
+    "ValidatedParams": ("flext_core.typings", "ValidatedParams"),
+    "ValidatedReturn": ("flext_core.typings", "ValidatedReturn"),
     "__all__": ("flext_core.__version__", "__all__"),
     "__author__": ("flext_core.__version__", "__author__"),
     "__author_email__": ("flext_core.__version__", "__author_email__"),
@@ -223,9 +321,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__url__": ("flext_core.__version__", "__url__"),
     "__version__": ("flext_core.__version__", "__version__"),
     "__version_info__": ("flext_core.__version__", "__version_info__"),
+    "_constants": ("flext_core._constants", ""),
     "_decorators": ("flext_core._decorators", ""),
     "_dispatcher": ("flext_core._dispatcher", ""),
     "_models": ("flext_core._models", ""),
+    "_protocols": ("flext_core._protocols", ""),
+    "_typings": ("flext_core._typings", ""),
     "_utilities": ("flext_core._utilities", ""),
     "c": ("flext_core.constants", "c"),
     "d": ("flext_core.decorators", "d"),
@@ -248,6 +349,14 @@ __all__ = [
     "Execute",
     "FactoryDecoratorsDiscovery",
     "FlextConstants",
+    "FlextConstantsBase",
+    "FlextConstantsCqrs",
+    "FlextConstantsDomain",
+    "FlextConstantsInfrastructure",
+    "FlextConstantsMixins",
+    "FlextConstantsPlatform",
+    "FlextConstantsSettings",
+    "FlextConstantsValidation",
     "FlextContainer",
     "FlextContext",
     "FlextDecorators",
@@ -271,12 +380,27 @@ __all__ = [
     "FlextModelsHandler",
     "FlextModelsService",
     "FlextProtocols",
+    "FlextProtocolsBase",
+    "FlextProtocolsConfig",
+    "FlextProtocolsContext",
+    "FlextProtocolsDI",
+    "FlextProtocolsHandler",
+    "FlextProtocolsLogging",
+    "FlextProtocolsMetaclassUtilities",
+    "FlextProtocolsMetrics",
+    "FlextProtocolsResult",
+    "FlextProtocolsService",
     "FlextRegistry",
     "FlextResult",
     "FlextRuntime",
     "FlextService",
     "FlextSettings",
     "FlextTypes",
+    "FlextTypesCore",
+    "FlextTypesServices",
+    "FlextTypesValidation",
+    "FlextTypingBase",
+    "FlextTypingContainers",
     "FlextUtilities",
     "FlextUtilitiesArgs",
     "FlextUtilitiesCache",
@@ -302,6 +426,9 @@ __all__ = [
     "MessageT_contra",
     "Metadata",
     "P",
+    "ProtocolModel",
+    "ProtocolModelMeta",
+    "ProtocolSettings",
     "R",
     "RateLimiterManager",
     "ResultT",
@@ -327,9 +454,12 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
+    "_constants",
     "_decorators",
     "_dispatcher",
     "_models",
+    "_protocols",
+    "_typings",
     "_utilities",
     "c",
     "d",

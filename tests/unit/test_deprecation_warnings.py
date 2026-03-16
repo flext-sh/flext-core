@@ -22,7 +22,7 @@ from flext_tests import t as test_t, tm
 from flext_core import FlextRuntime, FlextUtilities
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from tests import m, t
+from tests import t
 
 pytestmark = [pytest.mark.unit]
 
@@ -162,14 +162,14 @@ class TestStrictContainerNormalization:
         tm.that(FlextRuntime.normalize_to_container(None), eq="")
 
     def test_normalize_to_container_dict_wraps_in_model(self) -> None:
-        """Nested dicts are wrapped in m.Dict RootModel."""
+        """Nested dicts are wrapped in t.Dict RootModel."""
         result = FlextRuntime.normalize_to_container({"key": "value"})
-        tm.that(isinstance(result, m.Dict), eq=True)
+        tm.that(isinstance(result, t.Dict), eq=True)
 
     def test_normalize_to_container_list_wraps_in_model(self) -> None:
-        """Nested lists are wrapped in m.ObjectList RootModel."""
+        """Nested lists are wrapped in t.ObjectList RootModel."""
         result = FlextRuntime.normalize_to_container([1, 2, 3])
-        tm.that(isinstance(result, m.ObjectList), eq=True)
+        tm.that(isinstance(result, t.ObjectList), eq=True)
 
     def test_normalize_to_container_unknown_becomes_str(self) -> None:
         """Unknown objects are converted to string representation."""

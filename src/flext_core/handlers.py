@@ -124,7 +124,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
         self._metrics: dict[str, t.MetadataAttributeValue] = {}
-        self._stack: list[m.ExecutionContext | m.ConfigMap] = []
+        self._stack: list[m.ExecutionContext | t.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless dispatcher integration."""
@@ -434,20 +434,20 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
         raise NotImplementedError
 
-    def pop_context(self) -> r[m.ConfigMap]:
+    def pop_context(self) -> r[t.ConfigMap]:
         """Pop execution context from the local handler stack."""
         if not self._stack:
-            return r[m.ConfigMap].ok(m.ConfigMap(root={}))
+            return r[t.ConfigMap].ok(t.ConfigMap(root={}))
         popped = self._stack.pop()
         if isinstance(popped, m.ExecutionContext):
-            context_dict = m.ConfigMap(
+            context_dict = t.ConfigMap(
                 root={
                     "handler_name": popped.handler_name,
                     "handler_mode": popped.handler_mode,
                 }
             )
-            return r[m.ConfigMap].ok(context_dict)
-        return r[m.ConfigMap].ok(popped)
+            return r[t.ConfigMap].ok(context_dict)
+        return r[t.ConfigMap].ok(popped)
 
     def push_context(
         self, ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue]

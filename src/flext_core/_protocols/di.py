@@ -1,0 +1,106 @@
+"""FlextProtocolsDI - dependency injection protocols.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from types import ModuleType
+from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
+
+from flext_core import t
+from flext_core._protocols.config import FlextProtocolsConfig
+from flext_core._protocols.context import FlextProtocolsContext
+
+if TYPE_CHECKING:
+    from flext_core import r
+
+Configurable = FlextProtocolsConfig.Configurable
+Config = FlextProtocolsConfig.Config
+Context = FlextProtocolsContext.Context
+
+
+class FlextProtocolsDI:
+    """Protocols for DI container behavior."""
+
+    @runtime_checkable
+    class DI(Configurable, Protocol):
+        """Dependency injection container protocol.
+
+        Extends Configurable to allow container configuration.
+        Implements configure() method from Configurable protocol.
+        """
+
+        @property
+        def config(self) -> Config:
+            """Configuration bound to the container."""
+            ...
+
+        @property
+        def context(self) -> Context:
+            """Execution context bound to the container."""
+            ...
+
+        def clear_all(self) -> None:
+            """Clear all services and factories."""
+            ...
+
+        @overload
+        def get[T: t.RegisterableService](
+            self, name: str, *, type_cls: type[T]
+        ) -> r[T]: ...
+
+        @overload
+        def get(
+            self, name: str, *, type_cls: None = None
+        ) -> r[t.RegisterableService]: ...
+
+        def get_config(self) -> t.ConfigMap:
+            """Return the merged configuration exposed by this container."""
+            ...
+
+        def has_service(self, name: str) -> bool:
+            """Check if a service is registered."""
+            ...
+
+        def list_services(self) -> Sequence[str]:
+            """List all registered services."""
+            ...
+
+        def register(
+            self,
+            name: str,
+            impl: t.RegisterableService,
+            *,
+            kind: str = "service",
+        ) -> Self:
+            """Register an implementation by kind."""
+            ...
+
+        def scoped(
+            self,
+            *,
+            config: Config | None = None,
+            context: Context | None = None,
+            subproject: str | None = None,
+            services: Mapping[str, t.RegisterableService] | None = None,
+            factories: Mapping[str, t.FactoryCallable] | None = None,
+            resources: Mapping[str, t.ResourceCallable] | None = None,
+        ) -> Self:
+            """Create an isolated container scope with optional overrides."""
+            ...
+
+        def wire_modules(
+            self,
+            *,
+            modules: Sequence[ModuleType] | None = None,
+            packages: Sequence[str] | None = None,
+            classes: Sequence[type] | None = None,
+        ) -> None:
+            """Wire modules/packages to the DI bridge for @inject/Provide usage."""
+            ...
+
+
+__all__ = ["FlextProtocolsDI"]

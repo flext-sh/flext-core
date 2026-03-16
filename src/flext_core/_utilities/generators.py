@@ -20,7 +20,7 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core import c, m, r, t
+from flext_core import c, r, t
 
 
 class FlextUtilitiesGenerators:
@@ -190,7 +190,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def create_dynamic_type_subclass(
-        name: str, base_class: type, attributes: m.ConfigMap
+        name: str, base_class: type, attributes: t.ConfigMap
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

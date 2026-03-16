@@ -276,13 +276,13 @@ def test_clear_operation_scope_and_handle_log_result_paths(
         result=r[bool].fail("x", error_code="E1"),
         logger=cast("FlextLogger", fake_logger),
         fallback_message="fallback",
-        kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
+        kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
     )
     d._handle_log_result(
         result=r[bool].fail("y", error_code="E2"),
         logger=cast("FlextLogger", fake_logger),
         fallback_message="fallback2",
-        kwargs=m.ConfigMap(root={"extra": "not-a-dict"}),
+        kwargs=t.ConfigMap(root={"extra": "not-a-dict"}),
     )
     tm.that(len(fake_logger.warning_calls) > 0, eq=True)
 
@@ -298,7 +298,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
         result=r[bool].fail("x"),
         logger=cast("FlextLogger", _NoFallback()),
         fallback_message="m",
-        kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
+        kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
     )
     fake_logger = _FakeLogger()
 
@@ -313,7 +313,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
         result=r[bool].fail("x", error_code="E"),
         logger=cast("FlextLogger", fake_logger),
         fallback_message="fallback",
-        kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
+        kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
     )
     tm.that(len(fake_logger.warning_calls) > 0, eq=True)
 
@@ -441,7 +441,7 @@ def test_with_correlation_with_context_track_operation_and_factory(
 
     @d.factory(name="svc.factory", singleton=True, lazy=False)
     def build(_value: BaseModel) -> BaseModel:
-        return m.ConfigMap(root={"v": 7})
+        return t.ConfigMap(root={"v": 7})
 
     tm.that(hasattr(build, c.Discovery.FACTORY_ATTR), eq=True)
 

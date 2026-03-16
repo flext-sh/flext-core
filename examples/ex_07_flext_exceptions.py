@@ -33,7 +33,7 @@ class Ex07FlextExceptions(Examples):
         base = e.BaseError(
             "base boom",
             error_code="E_BASE",
-            context=m.ConfigMap(root={"scope": "demo"}),
+            context=t.ConfigMap(root={"scope": "demo"}),
             metadata=m.Metadata(attributes={"channel": "example"}),
             correlation_id="corr-base-1",
             auto_correlation=False,

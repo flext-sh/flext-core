@@ -21,7 +21,7 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
     cfg = ComparableConfigMap(root={"a": 1})
     assert (cfg == 1) is False
@@ -38,6 +38,6 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
         )
     entry = FlextModelsEntity.Entity(unique_id="e1")
     bad = entry.add_domain_events_bulk(
-        cast("Sequence[tuple[str, m.ConfigMap | None]]", "invalid"),
+        cast("Sequence[tuple[str, t.ConfigMap | None]]", "invalid"),
     )
     assert bad.is_failure

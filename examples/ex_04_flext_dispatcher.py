@@ -89,7 +89,7 @@ class Ex04FlextDispatcher(Examples):
         def dispatch_message(self, message: p.Routable) -> t.Container | BaseModel:
             """Return deterministic user payload for GetUser."""
             typed_message = Ex04FlextDispatcher.GetUser.model_validate(message)
-            return m.ConfigMap(
+            return t.ConfigMap(
                 root={"state": "active", "username": typed_message.username}
             )
 

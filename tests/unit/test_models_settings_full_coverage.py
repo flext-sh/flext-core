@@ -35,7 +35,7 @@ def test_models_settings_branch_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
     assert isinstance(FlextModelsConfig._get_log_level_from_config(), int)
     with pytest.raises(ValueError, match="HTTP status code validation failed"):
@@ -62,8 +62,8 @@ def test_models_settings_branch_paths() -> None:
 def test_models_settings_context_validator_and_non_standard_status_input() -> None:
     req = FlextModelsConfig.ProcessingRequest(
         operation_id="op-1",
-        data=m.ConfigMap(root={}),
-        context=m.ConfigMap(root={}),
+        data=t.ConfigMap(root={}),
+        context=t.ConfigMap(root={}),
     )
     assert "trace_id" in req.context
 

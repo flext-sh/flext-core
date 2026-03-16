@@ -35,7 +35,7 @@ def demonstrate_enhanced_generic_models() -> None:
         user_id="user123",
         tenant_id="tenant456",
         environment="development",
-        metadata=m.Dict(root={"session_id": "sess789", "request_id": "req101"}),
+        metadata=t.Dict(root={"session_id": "sess789", "request_id": "req101"}),
     )
     print(f"📊 Context: source={context.source}, env={context.environment}")
     print(
@@ -60,7 +60,7 @@ def demonstrate_enhanced_generic_models() -> None:
     )
     health = gm.Health(
         healthy=True,
-        checks=m.Dict(
+        checks=t.Dict(
             root={
                 "database": True,
                 "cache": True,
@@ -307,11 +307,11 @@ class Order(m.AggregateRoot):
         return r.ok(self)
 
 
-class DomainModelService(s[m.ConfigMap]):
+class DomainModelService(s[t.ConfigMap]):
     """Advanced DDD demonstration service with railway-oriented programming."""
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute comprehensive DDD demonstrations using railway patterns."""
         email_result = r[Email].ok(Email(address="Test@Example.Com"))
 
@@ -362,9 +362,9 @@ class DomainModelService(s[m.ConfigMap]):
 
         def build_result(
             vo_tuple: tuple[Email, Money], user: User, order: Order
-        ) -> m.ConfigMap:
+        ) -> t.ConfigMap:
             order_total = sum(item.price.amount * item.quantity for item in order.items)
-            return m.ConfigMap(
+            return t.ConfigMap(
                 root={
                     "email": vo_tuple[0].address,
                     "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
@@ -374,11 +374,11 @@ class DomainModelService(s[m.ConfigMap]):
                 }
             )
 
-        def combine_with_user(vo_tuple: tuple[Email, Money]) -> r[m.ConfigMap]:
+        def combine_with_user(vo_tuple: tuple[Email, Money]) -> r[t.ConfigMap]:
 
-            def combine_with_order(user: User) -> r[m.ConfigMap]:
+            def combine_with_order(user: User) -> r[t.ConfigMap]:
 
-                def finalize(order: Order) -> m.ConfigMap:
+                def finalize(order: Order) -> t.ConfigMap:
                     return build_result(vo_tuple, user, order)
 
                 return order_result.map(finalize)

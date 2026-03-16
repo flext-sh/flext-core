@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import c, h, m, r, s, u
+from flext_core import c, h, m, r, s, t, u
 
 
 class CreateUserCommand(m.Command):
@@ -87,7 +87,7 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
         return r[UserDTO].ok(user)
 
 
-class HandlersService(s[m.ConfigMap]):
+class HandlersService(s[t.ConfigMap]):
     """Service demonstrating CQRS handlers with flext-core."""
 
     @staticmethod
@@ -149,15 +149,15 @@ class HandlersService(s[m.ConfigMap]):
             print(f"❌ Query failed: {not_found_result.error}")
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute comprehensive handler demonstrations."""
         print("Starting CQRS handlers demonstration")
         self._demonstrate_command_handlers()
         self._demonstrate_query_handlers()
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
-        return r[m.ConfigMap].ok(
-            m.ConfigMap(
+        return r[t.ConfigMap].ok(
+            t.ConfigMap(
                 root={
                     "handlers_demonstrated": [
                         c.Cqrs.HandlerType.COMMAND,

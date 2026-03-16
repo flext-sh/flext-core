@@ -13,7 +13,7 @@ from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import r
-from tests import m, p, t, u
+from tests import p, t, u
 
 
 class _PortModel(BaseModel):
@@ -326,7 +326,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u]) -> None:
     with pytest.raises(TypeError, match="Cannot narrow"):
         mapper._narrow_to_string_keyed_dict(123)
     mapped = mapper._narrow_to_configuration_mapping({"x": 1})
-    tm.that(mapped, is_=m.ConfigMap)
+    tm.that(mapped, is_=t.ConfigMap)
     tm.that(mapped.root["x"], eq=1)
     with pytest.raises(TypeError, match="Cannot narrow"):
         _ = mapper._narrow_to_configuration_mapping(
@@ -437,7 +437,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
         field: NotGeneral = NotGeneral()
 
     res_non_general = mapper.extract(
-        cast("m.ConfigMap | BaseModel", cast("t.NormalizedValue", Container())),
+        cast("t.ConfigMap | BaseModel", cast("t.NormalizedValue", Container())),
         "field",
     )
     tm.ok(res_non_general)
@@ -449,7 +449,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
 
     res_exception = mapper.extract(
         cast(
-            "m.ConfigMap | BaseModel", cast("t.NormalizedValue", ExplodingModelDump())
+            "t.ConfigMap | BaseModel", cast("t.NormalizedValue", ExplodingModelDump())
         ),
         "a",
     )
@@ -459,7 +459,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
     tm.that(
         accessor(
             cast(
-                "m.ConfigMap | BaseModel",
+                "t.ConfigMap | BaseModel",
                 cast("p.AccessibleData", AttrObject(name="x", value=1)),
             ),
         ),
@@ -467,7 +467,7 @@ def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
     )
     tm.that(
         mapper.prop("missing")(
-            cast("m.ConfigMap | BaseModel", cast("t.NormalizedValue", {"a": 1})),
+            cast("t.ConfigMap | BaseModel", cast("t.NormalizedValue", {"a": 1})),
         ),
         eq="",
     )
@@ -725,7 +725,7 @@ def test_field_and_fields_multi_branches(mapper: type[u]) -> None:
     tm.that(mapper.field({}, "missing", ops={"ensure": "str"}), eq="")
     source_obj = AttrObject(name="n", value=1)
     fields = mapper.fields_multi(
-        cast("m.ConfigMap | BaseModel", cast("t.NormalizedValue", source_obj)),
+        cast("t.ConfigMap | BaseModel", cast("t.NormalizedValue", source_obj)),
         {"name": "", "missing": None},
     )
     tm.that(fields, eq={"name": "n", "missing": ""})
@@ -743,7 +743,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
             "literal": 5,
         },
     )
-    constructed = mapper.construct(spec, m.ConfigMap(root=source))
+    constructed = mapper.construct(spec, t.ConfigMap(root=source))
     tm.that(constructed["name"], eq="alice")
     tm.that(constructed["n"], eq=4)
     tm.that(constructed["literal"], eq=5)
@@ -770,7 +770,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
                 "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                 {"x": ExplodeOnGet()},
             ),
-            m.ConfigMap(root={"x": 1}),
+            t.ConfigMap(root={"x": 1}),
             on_error="stop",
         ),
         eq={"x": ""},
@@ -781,7 +781,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
                 "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                 {"x": ExplodeOnGet()},
             ),
-            m.ConfigMap(root={"x": 1}),
+            t.ConfigMap(root={"x": 1}),
             on_error="skip",
         ),
         eq={"x": ""},
@@ -819,8 +819,8 @@ def test_process_context_data_and_related_convenience(
     )
     tm.that(result, has="c")
     normalized = mapper.normalize_context_values(
-        context=m.ConfigMap(root={"a": "1"}),
-        extra_kwargs=m.ConfigMap(root={"b": 2}),
+        context=t.ConfigMap(root={"a": "1"}),
+        extra_kwargs=t.ConfigMap(root={"b": 2}),
         field="x",
     )
     tm.that(normalized["field"], eq="x")
@@ -1075,15 +1075,15 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u]) -> None:
     tm.that(
         mapper.fields_multi({"a": 1, "b": 2}, {"a": 0, "b": 0}), eq={"a": 1, "b": 2}
     )
-    tm.that(mapper.fields_multi(m.ConfigMap(root={"a": 1}), {"a": 0}), eq={"a": 1})
+    tm.that(mapper.fields_multi(t.ConfigMap(root={"a": 1}), {"a": 0}), eq={"a": 1})
     tm.that(
-        mapper.construct({"x": {"value": 1}}, m.ConfigMap(root={"x": 0})), eq={"x": 1}
+        mapper.construct({"x": {"value": 1}}, t.ConfigMap(root={"x": 0})), eq={"x": 1}
     )
-    tm.that(mapper.construct({"x": "a"}, m.ConfigMap(root={"a": 2})), eq={"x": 2})
+    tm.that(mapper.construct({"x": "a"}, t.ConfigMap(root={"a": 2})), eq={"x": 2})
     tm.that(
         mapper.construct(
             {"x": {"field": "a", "ops": "noop"}},
-            m.ConfigMap(root={"a": 2}),
+            t.ConfigMap(root={"a": 2}),
         ),
         eq={"x": 2},
     )

@@ -128,8 +128,8 @@ def test_non_empty_and_normalize_branches() -> None:
 
 
 def test_configuration_mapping_and_dict_negative_branches() -> None:
-    bad_value_mapping = cast("m.ConfigMap", {"k": {1}})
-    bad_value_dict = cast("m.Dict", {"k": {1}})
+    bad_value_mapping = cast("t.ConfigMap", {"k": {1}})
+    bad_value_dict = cast("t.Dict", {"k": {1}})
     tm.that(not u.is_configuration_mapping(bad_value_mapping), eq=True)
     tm.that(not u.is_configuration_dict(bad_value_dict), eq=True)
     tm.that(u.is_configuration_dict({"k": 1}), eq=True)

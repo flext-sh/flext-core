@@ -279,7 +279,7 @@ class TestFlextModelsCollectionsSettings:
 
     def test_config_from_dict(self) -> None:
         """Test from_mapping class method."""
-        config_data = m.ConfigMap(root={"timeout": 60})
+        config_data = t.ConfigMap(root={"timeout": 60})
         config: _TestConfig = _TestConfig.from_mapping(config_data)
         tm.that(config.timeout, eq=60)
 

@@ -45,7 +45,7 @@ def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
 
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
-    model_from_t_dict = m.Metadata.model_validate({"attributes": m.Dict(root={"a": 1})})
+    model_from_t_dict = m.Metadata.model_validate({"attributes": t.Dict(root={"a": 1})})
     model_from_mapping = m.Metadata(attributes={"b": 2})
     assert model_from_t_dict.attributes == {"a": 1}
     assert model_from_mapping.attributes == {"b": 2}

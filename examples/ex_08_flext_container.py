@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from types import ModuleType
 from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, r, u
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, u
 
 from .shared import Examples
 
@@ -342,7 +342,7 @@ class Ex08FlextContainer(Examples):
             services={scoped_service_name: scoped_service_value},
             factories={scoped_factory_name: lambda: scoped_factory_value},
             resources={
-                scoped_resource_name: lambda: m.ConfigMap(
+                scoped_resource_name: lambda: t.ConfigMap(
                     root={"res": scoped_resource_value}
                 )
             },

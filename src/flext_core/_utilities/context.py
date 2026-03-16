@@ -46,7 +46,7 @@ class FlextUtilitiesContext:
         runtime: T,
         *,
         context: p.Context | None = None,
-        config_overrides: m.ConfigMap | None = None,
+        config_overrides: t.ConfigMap | None = None,
     ) -> T:
         """Clone runtime with optional overrides.
 
@@ -112,8 +112,8 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def create_dict_proxy(
-        key: str, default: m.ConfigMap | None = None
-    ) -> m.StructlogProxyContextVar[m.ConfigMap]:
+        key: str, default: t.ConfigMap | None = None
+    ) -> m.StructlogProxyContextVar[t.ConfigMap]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -124,7 +124,7 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[m.ConfigMap] instance
+            StructlogProxyContextVar[t.ConfigMap] instance
 
         Example:
             >>> var = u.Context.create_dict_proxy("metadata")
@@ -132,8 +132,8 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns dict
 
         """
-        proxy: m.StructlogProxyContextVar[m.ConfigMap] = m.StructlogProxyContextVar[
-            m.ConfigMap
+        proxy: m.StructlogProxyContextVar[t.ConfigMap] = m.StructlogProxyContextVar[
+            t.ConfigMap
         ](key, default=default)
         return proxy
 

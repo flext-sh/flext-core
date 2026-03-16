@@ -83,9 +83,9 @@ class Examples:
         """Return a deterministic pseudo-random boolean."""
         return self._next_unit_float() >= 0.5
 
-    def rand_dict(self, n: int = 3) -> m.ConfigMap:
+    def rand_dict(self, n: int = 3) -> t.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys → int values."""
-        return m.ConfigMap(
+        return t.ConfigMap(
             root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
         )
 
@@ -198,11 +198,11 @@ class Examples:
     @staticmethod
     def bind_status(
         value: r[t.Container] | t.Container,
-    ) -> m.ConfigMap | t.Container:
+    ) -> t.ConfigMap | t.Container:
         """Return a summary ConfigMap when *value* is a ``r``."""
         match value:
             case r() as result:
-                return m.ConfigMap(
+                return t.ConfigMap(
                     root={
                         "is_success": result.is_success,
                         "error": result.error,

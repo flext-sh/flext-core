@@ -23,7 +23,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from tests import m, t, u
+from tests import t, u
 
 
 class TypeGuardScenario(BaseModel):
@@ -94,8 +94,8 @@ class TypeGuardsScenarios:
     # Scenarios for normalize_to_metadata:
     # - Scalars: preserved as their original type
     # - None → "" (empty string)
-    # - dict → m.Dict (BaseModel RootModel)
-    # - list → m.ObjectList (BaseModel RootModel)
+    # - dict → t.Dict (BaseModel RootModel)
+    # - list → t.ObjectList (BaseModel RootModel)
     # - unknown → str(val)
     NORMALIZE_TO_METADATA: ClassVar[list[NormalizeScenario]] = [
         NormalizeScenario(name="string_value", value="test", expected_type=str),
@@ -208,8 +208,8 @@ class TestuTypeGuardsNormalizeToMetadata:
     normalize_to_container behavior:
     - Scalars: preserved as original type (int→int, float→float, bool→bool)
     - None → "" (empty string)
-    - dict → m.Dict (BaseModel RootModel)
-    - list → m.ObjectList (BaseModel RootModel)
+    - dict → t.Dict (BaseModel RootModel)
+    - list → t.ObjectList (BaseModel RootModel)
     - BaseModel → passed through
     - unknown → str(val)
     """
@@ -235,7 +235,7 @@ class TestuTypeGuardsNormalizeToMetadata:
         tm.that(result, eq="")
 
     def test_normalize_dict_to_pydantic_model(self) -> None:
-        test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value", "num": 42})
+        test_dict: t.ConfigMap = t.ConfigMap(root={"key": "value", "num": 42})
         result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=str)
 
@@ -245,13 +245,13 @@ class TestuTypeGuardsNormalizeToMetadata:
         tm.that(result, is_=list)
 
     def test_normalize_dict_with_primitives(self) -> None:
-        test_dict: m.ConfigMap = m.ConfigMap(root={"a": 1, "b": "test", "c": True})
+        test_dict: t.ConfigMap = t.ConfigMap(root={"a": 1, "b": "test", "c": True})
         result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=str)
 
     def test_normalize_dict_with_nested_dict(self) -> None:
-        inner = m.ConfigMap(root={"nested": "value"})
-        outer = m.ConfigMap(root={"key": inner})
+        inner = t.ConfigMap(root={"nested": "value"})
+        outer = t.ConfigMap(root={"key": inner})
         result = u.normalize_to_metadata(outer)
         tm.that(result, is_=str)
 

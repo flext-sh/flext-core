@@ -25,7 +25,7 @@ from typing import ClassVar, Self, override
 from pydantic import BaseModel
 from structlog.typing import Context
 
-from flext_core import FlextRuntime, FlextSettings, c, m, p, r, t, u
+from flext_core import FlextRuntime, FlextSettings, c, p, r, t, u
 
 
 class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
@@ -99,7 +99,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return instance
 
     @classmethod
-    def _get_global_context(cls) -> m.ConfigMap:
+    def _get_global_context(cls) -> t.ConfigMap:
         """Get current global context (internal use only)."""
         try:
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
@@ -114,9 +114,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context_obj: dict[str, t.NormalizedValue | BaseModel] = dict(
                 context_map.items()
             )
-            return m.ConfigMap(root=context_obj)
+            return t.ConfigMap(root=context_obj)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            return m.ConfigMap(root={})
+            return t.ConfigMap(root={})
 
     @classmethod
     def bind_context(cls, scope: str, **context: t.Container | BaseModel) -> r[bool]:
@@ -773,12 +773,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         exception: Exception | None,
         exc_info: bool,
         context: Mapping[str, t.Container | Exception],
-    ) -> m.ConfigMap:
+    ) -> t.ConfigMap:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
-        context_dict: m.ConfigMap = m.ConfigMap(root={})
+        context_dict: t.ConfigMap = t.ConfigMap(root={})
         if exception is not None:
-            exception_data: m.ConfigMap = m.ConfigMap(
+            exception_data: t.ConfigMap = t.ConfigMap(
                 root={
                     "exception_type": exception.__class__.__name__,
                     "exception_message": str(exception),
@@ -788,7 +788,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context_dict.root
             )
             merged_root.update(dict(exception_data.root))
-            context_dict = m.ConfigMap(root=merged_root)
+            context_dict = t.ConfigMap(root=merged_root)
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
                     traceback.format_exception(
@@ -1112,7 +1112,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             elapsed = time.time() - self._start_time
             is_success = exc_type is None
             status = "success" if is_success else "failed"
-            context: m.ConfigMap = m.ConfigMap(
+            context: t.ConfigMap = t.ConfigMap(
                 root={
                     "duration_seconds": elapsed,
                     "operation": self._operation_name,

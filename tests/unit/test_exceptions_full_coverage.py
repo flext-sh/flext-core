@@ -52,15 +52,15 @@ def test_not_found_error_correlation_id_selection_and_extra_kwargs() -> None:
 
 
 def test_merge_metadata_context_paths() -> None:
-    context = m.ConfigMap(root={})
+    context = t.ConfigMap(root={})
     err = e.BaseError("meta", metadata={"x": 1})
     meta = err.metadata
-    config_attrs = m.ConfigMap({"k": 1, "z": "q"})
+    config_attrs = t.ConfigMap({"k": 1, "z": "q"})
     object.__setattr__(meta, "attributes", config_attrs)
     e._merge_metadata_into_context(context, meta)
     assert context["k"] == 1
     assert context["z"] == "q"
-    context2 = m.ConfigMap(root={})
+    context2 = t.ConfigMap(root={})
     mapping_obj = MappingProxyType({"p": 7})
     e._merge_metadata_into_context(context2, mapping_obj)
     assert context2["p"] == 7
@@ -72,7 +72,7 @@ def test_exceptions_uncovered_metadata_paths() -> None:
     assert same is metadata
     raw = m.Metadata(attributes={"x": "1"})
     object.__setattr__(raw, "attributes", {"x": 1, "y": "z"})
-    merged = m.ConfigMap(root={})
+    merged = t.ConfigMap(root={})
     e._merge_metadata_into_context(merged, raw)
     assert merged["x"] == 1
     assert merged["y"] == "z"

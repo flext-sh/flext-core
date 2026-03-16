@@ -14,7 +14,7 @@ from typing import NoReturn, cast, override
 import pytest
 from pydantic import BaseModel
 
-from tests import m, t, u
+from tests import t, u
 
 from ._models import _GoodModel
 
@@ -163,7 +163,7 @@ def test_generate_special_paths_and_dynamic_subclass(
     dynamic = u.create_dynamic_type_subclass(
         "DynCls",
         object,
-        m.ConfigMap(root={"value": 10}),
+        t.ConfigMap(root={"value": 10}),
     )
     instance = dynamic()
     assert getattr(instance, "value") == 10

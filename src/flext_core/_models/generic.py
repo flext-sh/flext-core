@@ -81,9 +81,9 @@ class FlextGenericModels:
             str, Field(default="1.0.0", description="Schema version")
         ] = "1.0.0"
         metadata: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Additional metadata",
             ),
         ]
@@ -134,9 +134,9 @@ class FlextGenericModels:
             float | None, Field(default=None, description="CPU %")
         ] = None
         metadata: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Service metadata",
             ),
         ]
@@ -148,9 +148,9 @@ class FlextGenericModels:
         """
 
         config: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Config key-value pairs",
             ),
         ]
@@ -178,9 +178,9 @@ class FlextGenericModels:
             Field(default_factory=list, description="Validation errors"),
         ]
         metadata: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Config metadata",
             ),
         ]
@@ -195,16 +195,16 @@ class FlextGenericModels:
             True
         )
         checks: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Check results",
             ),
         ]
         details: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Check details",
             ),
         ]
@@ -228,9 +228,9 @@ class FlextGenericModels:
             str | None, Field(default=None, description="Environment")
         ] = None
         metadata: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Health metadata",
             ),
         ]
@@ -278,9 +278,9 @@ class FlextGenericModels:
             str | None, Field(default=None, description="Operation name")
         ] = None
         metadata: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Operation metadata",
             ),
         ]
@@ -361,9 +361,9 @@ class FlextGenericModels:
             int | None, Field(default=None, description="Total input count")
         ] = None
         metadata: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Conversion metadata",
             ),
         ]

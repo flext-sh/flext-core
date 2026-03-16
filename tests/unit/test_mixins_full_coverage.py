@@ -11,7 +11,7 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 
 from flext_core import FlextLogger, FlextMixins, r, x
-from tests import c, m, p, u
+from tests import c, p, u
 
 from ._models import _SvcModel
 
@@ -83,8 +83,8 @@ class _RuntimeContainer:
     def clear_all(self) -> None:
         pass
 
-    def get_config(self) -> m.ConfigMap:
-        return m.ConfigMap(root={})
+    def get_config(self) -> t.ConfigMap:
+        return t.ConfigMap(root={})
 
     def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.Tests.object]:
         return r[t.Tests.object].fail("not implemented")
@@ -153,7 +153,7 @@ def test_mixins_result_and_model_conversion_paths(
     tm.that(isinstance(c.Context.SCOPE_OPERATION, str), eq=True)
     tm.that(hasattr(u, "merge"), eq=True)
     tm.fail(x.fail("error"))
-    conf = m.ConfigMap(root={"a": "b"})
+    conf = t.ConfigMap(root={"a": "b"})
     tm.that(x.normalize_to_container(conf) is conf, eq=True)
     model = _SvcModel(value="ok")
     tm.that(x.normalize_to_container(model) is model, eq=True)
@@ -305,7 +305,7 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
         config_overrides=None,
         initial_context=None,
     )
-    config = m.ConfigMap(root={"k": "v"})
+    config = t.ConfigMap(root={"k": "v"})
     service._log_config_once(config, message="cfg")
     service._with_operation_context(
         "run",
@@ -366,7 +366,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     tm.that(x.ProtocolValidation.is_command_bus(cmd_bus), eq=True)
     unknown = x.ProtocolValidation.validate_protocol_compliance(
-        m.ConfigMap(root={}),
+        t.ConfigMap(root={}),
         "Nope",
     )
     service_like = SimpleNamespace(

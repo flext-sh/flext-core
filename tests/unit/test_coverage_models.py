@@ -342,7 +342,7 @@ class TestQueries:
     def test_query_creation(self) -> None:
         """Test creating a query."""
         query = GetUserQuery(
-            filters=m.Dict(root={"user_id": "USER-001"}),
+            filters=t.Dict(root={"user_id": "USER-001"}),
             query_type="get_user",
             pagination=m.Pagination(),
             query_id="q-test-1",
@@ -356,7 +356,7 @@ class TestQueries:
         query = ListAccountsQuery(
             page=1,
             limit=10,
-            filters=m.Dict(root={}),
+            filters=t.Dict(root={}),
             pagination=m.Pagination(),
             query_id="q-test-2",
         )
@@ -371,7 +371,7 @@ class TestQueries:
             keyword="laptop",
             category="electronics",
             min_price=500.0,
-            filters=m.Dict(root={}),
+            filters=t.Dict(root={}),
             pagination=m.Pagination(),
             query_id="q-test-3",
         )

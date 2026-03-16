@@ -20,13 +20,10 @@ from typing import Annotated, TypeGuard
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
 from flext_core import FlextRuntime, c, t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core._models import FlextModelFoundation
 
 _MetadataInput = (
-    FlextModelFoundation.Metadata
-    | FlextModelsContainers.ConfigMap
-    | Mapping[str, t.Scalar]
-    | None
+    FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.Scalar] | None
 )
 
 
@@ -56,7 +53,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: m.ConfigMap for service tracking.
+        Replaces: t.ConfigMap for service tracking.
         """
 
         model_config = ConfigDict(
@@ -83,7 +80,7 @@ class FlextModelsContainer:
             ),
         ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
         metadata: Annotated[
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
+            FlextModelFoundation.Metadata | t.ConfigMap | None,
             Field(
                 default=None,
                 description="Additional service metadata (JSON-serializable)",
@@ -115,11 +112,7 @@ class FlextModelsContainer:
         def validate_service_type(
             cls,
             v: t.RegisterableService,
-        ) -> (
-            t.RegisterableService
-            | FlextModelsContainers.ConfigMap
-            | FlextModelsContainers.ObjectList
-        ):
+        ) -> t.RegisterableService | t.ConfigMap | t.ObjectList:
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v
             if isinstance(v, (BaseModel, Path)):
@@ -132,14 +125,14 @@ class FlextModelsContainer:
                     normalized_mapping[str(key)] = FlextRuntime.normalize_to_container(
                         item
                     )
-                return FlextModelsContainers.ConfigMap(root=normalized_mapping)
+                return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
                 normalized_sequence: list[t.Container] = []
                 for item in v:
                     normalized_item = FlextRuntime.normalize_to_container(item)
                     container_item: t.Container = str(normalized_item)
                     normalized_sequence.append(container_item)
-                return FlextModelsContainers.ObjectList(root=normalized_sequence)
+                return t.ObjectList(root=normalized_sequence)
             if hasattr(v, "__dict__"):
                 return v
             if hasattr(v, "bind") and hasattr(v, "info"):
@@ -151,7 +144,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: m.ConfigMap for factory tracking.
+        Replaces: t.ConfigMap for factory tracking.
         """
 
         model_config = ConfigDict(
@@ -193,7 +186,7 @@ class FlextModelsContainer:
             ),
         ] = None
         metadata: Annotated[
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
+            FlextModelFoundation.Metadata | t.ConfigMap | None,
             Field(
                 default=None,
                 description="Additional factory metadata (JSON-serializable)",
@@ -245,7 +238,7 @@ class FlextModelsContainer:
             ),
         ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
         metadata: Annotated[
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
+            FlextModelFoundation.Metadata | t.ConfigMap | None,
             Field(
                 default=None,
                 description="Additional resource metadata (JSON-serializable)",
@@ -261,7 +254,7 @@ class FlextModelsContainer:
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: m.ConfigMap for container configuration storage.
+        Replaces: t.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 

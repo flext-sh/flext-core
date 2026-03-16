@@ -14,7 +14,7 @@ class Ex11HandlerLikeService(FlextSettings):
 
     @classmethod
     @override
-    def validate(cls, value: m.ConfigMap) -> Ex11HandlerLikeService:
+    def validate(cls, value: t.ConfigMap) -> Ex11HandlerLikeService:
         """Validate service payload."""
         return cls.model_validate(value)
 
@@ -34,7 +34,7 @@ class Ex11Payload(m.Value):
 
 class Ex11HandlerLike(m.Value):
     model_config = ConfigDict(frozen=False)
-    data: m.ConfigMap = Field(default_factory=lambda: m.ConfigMap(root={}))
+    data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
 
     def handle(self) -> str:
         return "ok"

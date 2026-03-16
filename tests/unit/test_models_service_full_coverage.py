@@ -17,7 +17,7 @@ def test_service_request_timeout_validator_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
     with pytest.raises(ValueError, match="greater than 0"):
         FlextModelsService.DomainServiceExecutionRequest(

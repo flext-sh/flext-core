@@ -17,7 +17,6 @@ from pydantic import BaseModel
 
 from flext_core import (
     FlextRuntime,
-    m,
     p,
     r,
 )
@@ -837,7 +836,7 @@ class FlextUtilitiesMapper:
                 if raw_value is None:
                     return default if default is not None else ""
                 return FlextUtilitiesMapper.narrow_to_container(raw_value)
-            case m.ConfigMap() | m.Dict():
+            case t.ConfigMap() | t.Dict():
                 raw_value = data.root.get(key)
                 if raw_value is None:
                     return default if default is not None else ""
@@ -878,23 +877,23 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_to_configuration_mapping(
         value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
-    ) -> m.ConfigMap:
+    ) -> t.ConfigMap:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
-        if isinstance(value, m.ConfigMap):
+        if isinstance(value, t.ConfigMap):
             return value
         if isinstance(value, Mapping):
             narrowed_dict: dict[str, t.NormalizedValue | BaseModel] = dict(
                 FlextUtilitiesMapper._narrow_to_configuration_dict(value)
             )
-            coerced_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(root=narrowed_dict)
+            coerced_result = r[t.ConfigMap].create_from_callable(
+                lambda: t.ConfigMap(root=narrowed_dict)
             )
             if coerced_result.is_success:
-                val: m.ConfigMap = coerced_result.value
+                val: t.ConfigMap = coerced_result.value
                 return val
-            error_msg = f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {coerced_result.error}"
+            error_msg = f"Cannot coerce {value.__class__.__name__} to t.ConfigMap: {coerced_result.error}"
             raise TypeError(error_msg)
-        error_msg = f"Cannot narrow {value.__class__.__name__} to m.ConfigMap"
+        error_msg = f"Cannot narrow {value.__class__.__name__} to t.ConfigMap"
         raise TypeError(error_msg)
 
     @staticmethod
@@ -1322,7 +1321,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def construct(
         spec: Mapping[str, t.NormalizedValue | t.MapperCallable],
-        source: m.ConfigMap | BaseModel | None = None,
+        source: t.ConfigMap | BaseModel | None = None,
         *,
         on_error: str = "stop",
     ) -> t.ContainerMapping:
@@ -2170,8 +2169,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def normalize_context_values(
-        context: m.ConfigMap | None,
-        extra_kwargs: m.ConfigMap,
+        context: t.ConfigMap | None,
+        extra_kwargs: t.ConfigMap,
         **specific_fields: t.MetadataValue,
     ) -> Mapping[str, t.MetadataValue]:
         """Normalize and merge context values for exception handling.
@@ -2321,11 +2320,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def process_context_data(
-        primary_data: m.ConfigMap
+        primary_data: t.ConfigMap
         | BaseModel
         | Mapping[str, t.NormalizedValue]
         | None = None,
-        secondary_data: m.ConfigMap
+        secondary_data: t.ConfigMap
         | BaseModel
         | Mapping[str, t.NormalizedValue]
         | None = None,
@@ -2391,7 +2390,7 @@ class FlextUtilitiesMapper:
         result: dict[str, t.NormalizedValue] = {}
         if primary_data is not None:
             primary_source: Mapping[str, t.NormalizedValue] | None = None
-            if isinstance(primary_data, m.ConfigMap):
+            if isinstance(primary_data, t.ConfigMap):
                 primary_source = {
                     k: FlextUtilitiesMapper.narrow_to_container(v)
                     for k, v in primary_data.root.items()
@@ -2416,7 +2415,7 @@ class FlextUtilitiesMapper:
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
             secondary_source: Mapping[str, t.NormalizedValue] | None = None
-            if isinstance(secondary_data, m.ConfigMap):
+            if isinstance(secondary_data, t.ConfigMap):
                 secondary_source = {
                     k: FlextUtilitiesMapper.narrow_to_container(v)
                     for k, v in secondary_data.root.items()
@@ -2463,7 +2462,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def prop(
         key: str,
-    ) -> Callable[[m.ConfigMap | BaseModel], t.NormalizedValue]:
+    ) -> Callable[[t.ConfigMap | BaseModel], t.NormalizedValue]:
         """Create a property accessor function (functional pattern).
 
         Returns a function that extracts a property/attribute from an object.
@@ -2484,7 +2483,7 @@ class FlextUtilitiesMapper:
 
         """
 
-        def accessor(obj: m.ConfigMap | BaseModel) -> t.NormalizedValue:
+        def accessor(obj: t.ConfigMap | BaseModel) -> t.NormalizedValue:
             """Access property from object."""
             result = FlextUtilitiesMapper.get(obj, key)
             return result if result is not None else ""
@@ -2601,7 +2600,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform(
-        source: t.ContainerMapping | m.ConfigMap,
+        source: t.ContainerMapping | t.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -2639,7 +2638,7 @@ class FlextUtilitiesMapper:
                     str(k): FlextUtilitiesMapper.narrow_to_container(v)
                     for k, v in source.root.items()
                 }
-                if isinstance(source, m.ConfigMap)
+                if isinstance(source, t.ConfigMap)
                 else dict(source),
                 normalize=normalize,
                 map_keys=map_keys,

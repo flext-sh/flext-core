@@ -20,7 +20,7 @@ def test_settings_materialize_and_context_overrides() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
+    assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
     sub = _SubSettings.get_global()
     assert isinstance(sub, _SubSettings)

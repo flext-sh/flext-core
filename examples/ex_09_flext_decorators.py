@@ -170,12 +170,12 @@ class Ex09FlextDecorators(Examples):
         self.check("factory.custom.lazy", getattr(custom_cfg, "lazy", None))
         self.check(
             "factory.default.call_matches",
-            factory_default(m.ConfigMap(root={})).model_dump().get("value")
+            factory_default(t.ConfigMap(root={})).model_dump().get("value")
             == default_value,
         )
         self.check(
             "factory.custom.call_matches",
-            factory_custom(m.ConfigMap(root={})).model_dump().get("value")
+            factory_custom(t.ConfigMap(root={})).model_dump().get("value")
             == custom_value,
         )
 

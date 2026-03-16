@@ -25,7 +25,7 @@ from typing import override
 
 from flext_core import FlextConstants, FlextService, c, m, r, u
 
-TEST_DATA: m.ConfigMap = m.ConfigMap(
+TEST_DATA: t.ConfigMap = t.ConfigMap(
     root={
         "email": "test@example.com",
         "invalid_email": "invalid-email",
@@ -39,7 +39,7 @@ TEST_DATA: m.ConfigMap = m.ConfigMap(
 )
 
 
-class UtilitiesService(FlextService[m.ConfigMap]):
+class UtilitiesService(FlextService[t.ConfigMap]):
     """Service demonstrating u comprehensive toolkit."""
 
     @staticmethod
@@ -182,7 +182,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         print(f"✅ Hostname validation: {hostname} -> {hostname_result.is_success}")
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute comprehensive utilities demonstrations."""
         print("Starting utilities demonstration")
         try:
@@ -194,8 +194,8 @@ class UtilitiesService(FlextService[m.ConfigMap]):
             self._demonstrate_string_parsing()
             self._demonstrate_collection_operations()
             self._demonstrate_type_checking()
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
+            return r[t.ConfigMap].ok(
+                t.ConfigMap(
                     root={
                         "utilities_demonstrated": [
                             "validation",
@@ -219,7 +219,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
             )
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"
-            return r[m.ConfigMap].fail(error_msg)
+            return r[t.ConfigMap].fail(error_msg)
 
 
 def demonstrate_utility_composition() -> None:
@@ -243,7 +243,7 @@ def main() -> None:
     service = UtilitiesService()
     result = service.execute()
 
-    def handle_success(data: m.ConfigMap) -> None:
+    def handle_success(data: t.ConfigMap) -> None:
         """Handle successful result."""
         print("\n✅ Demonstrated 8 utility categories")
         print("✅ Covered listed utility types")

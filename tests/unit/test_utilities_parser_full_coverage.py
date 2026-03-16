@@ -314,7 +314,7 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     tm.that(parser.conv_str_list(5), eq=["5"])
     tm.that(parser.norm_str("abc"), eq="abc")
     normalized_map = parser.norm_list(
-        m.ConfigMap(root={"a": "", "b": "B"}),
+        t.ConfigMap(root={"a": "", "b": "B"}),
         case="lower",
         filter_truthy=True,
     )
@@ -324,8 +324,8 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     tm.that(len(normalized_set), eq=2)
     tm.that(normalized_set == {"a", "b"}, eq=True)
     tm.that(parser.norm_join(["A", "B"], sep="-"), eq="A-B")
-    mapping_result = parser.norm_in("a", m.ConfigMap(root={"A": "1"}), case="lower")
-    config_map_result = parser.norm_in("a", m.ConfigMap(root={"A": "x"}), case="lower")
+    mapping_result = parser.norm_in("a", t.ConfigMap(root={"A": "1"}), case="lower")
+    config_map_result = parser.norm_in("a", t.ConfigMap(root={"A": "x"}), case="lower")
     with pytest.raises(TypeError):
         parser.norm_in("a", cast("list[str]", object()), case="lower")
     tm.that(mapping_result, eq=True)
@@ -436,4 +436,4 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
         lt=1e-09,
     )
-    tm.that(parser.norm_in("a", m.ConfigMap(root={"A": "1"}), case="lower"), eq=True)
+    tm.that(parser.norm_in("a", t.ConfigMap(root={"A": "1"}), case="lower"), eq=True)

@@ -28,7 +28,7 @@ from typing import override
 
 from pydantic import Field, TypeAdapter, ValidationError
 
-from flext_core import FlextConstants, FlextService, FlextSettings, c, m, r, t
+from flext_core import FlextConstants, FlextService, FlextSettings, c, r, t
 
 _CONTAINER_LIST_ADAPTER = TypeAdapter(list)
 
@@ -78,7 +78,7 @@ class AppConfig(FlextSettings):
     )
 
 
-class ConfigManagementService(FlextService[m.ConfigMap]):
+class ConfigManagementService(FlextService[t.ConfigMap]):
     """Service demonstrating advanced FlextSettings patterns using railway-oriented programming.
 
     Uses functional composition, error handling chains, and type-safe configuration
@@ -86,10 +86,10 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
     """
 
     @staticmethod
-    def _create_success_metadata(patterns: tuple[str, ...]) -> r[m.ConfigMap]:
+    def _create_success_metadata(patterns: tuple[str, ...]) -> r[t.ConfigMap]:
         """Create success metadata from demonstrated patterns."""
-        return r[m.ConfigMap].ok(
-            m.ConfigMap(
+        return r[t.ConfigMap].ok(
+            t.ConfigMap(
                 root={
                     "patterns_demonstrated": list(patterns),
                     "config_features": [
@@ -245,16 +245,16 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
         )
 
     @staticmethod
-    def _handle_execution_error(error: str) -> r[m.ConfigMap]:
+    def _handle_execution_error(error: str) -> r[t.ConfigMap]:
         """Handle execution errors with proper logging."""
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
-        return r[m.ConfigMap].fail(
+        return r[t.ConfigMap].fail(
             error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
         )
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (
             self
@@ -334,12 +334,12 @@ def main() -> r[bool]:
         result = demonstrate_file_config()
         return r[bool].ok(result.is_success)
 
-    def run_service_demo() -> r[m.ConfigMap]:
+    def run_service_demo() -> r[t.ConfigMap]:
         """Run service-based configuration demonstration."""
         service = ConfigManagementService()
         return service.execute()
 
-    def display_results(metadata: m.ConfigMap) -> r[bool]:
+    def display_results(metadata: t.ConfigMap) -> r[bool]:
         """Display demonstration results."""
         patterns = metadata.get("patterns_demonstrated", [])
         features = metadata.get("config_features", [])

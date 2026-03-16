@@ -54,7 +54,7 @@ class FlextContainer(p.DI):
     _global_lock: threading.RLock = threading.RLock()
     _context: p.Context | None = None
     _config: p.Config | None = None
-    _user_overrides: m.ConfigMap
+    _user_overrides: t.ConfigMap
     containers: ModuleType
     providers: ModuleType
     _di_bridge: di_containers.DeclarativeContainer
@@ -77,8 +77,8 @@ class FlextContainer(p.DI):
         _services: Mapping[str, m.ServiceRegistration] | None = None,
         _factories: Mapping[str, m.FactoryRegistration] | None = None,
         _resources: Mapping[str, m.ResourceRegistration] | None = None,
-        _user_overrides: Mapping[str, t.Scalar | m.ConfigMap | Sequence[t.Scalar]]
-        | m.ConfigMap
+        _user_overrides: Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
+        | t.ConfigMap
         | None = None,
         _container_config: m.ContainerConfig | None = None,
     ) -> Self:
@@ -103,8 +103,8 @@ class FlextContainer(p.DI):
         _services: Mapping[str, m.ServiceRegistration] | None = None,
         _factories: Mapping[str, m.FactoryRegistration] | None = None,
         _resources: Mapping[str, m.ResourceRegistration] | None = None,
-        _user_overrides: Mapping[str, t.Scalar | m.ConfigMap | Sequence[t.Scalar]]
-        | m.ConfigMap
+        _user_overrides: Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
+        | t.ConfigMap
         | None = None,
         _container_config: m.ContainerConfig | None = None,
     ) -> None:
@@ -219,7 +219,7 @@ class FlextContainer(p.DI):
         services: Mapping[str, m.ServiceRegistration],
         factories: Mapping[str, m.FactoryRegistration],
         resources: Mapping[str, m.ResourceRegistration],
-        user_overrides: m.ConfigMap,
+        user_overrides: t.ConfigMap,
         container_config: m.ContainerConfig,
     ) -> FlextContainer:
         """Create a scoped container instance bypassing singleton pattern.
@@ -335,7 +335,7 @@ class FlextContainer(p.DI):
                                     else:
                                         raw_result = str(config_raw)
                                 elif config_callable is not None:
-                                    return m.ConfigMap(root={})
+                                    return t.ConfigMap(root={})
                                 else:
                                     raw_result = _factory_func_ref()
                                 try:
@@ -425,10 +425,10 @@ class FlextContainer(p.DI):
         if config is None:
             return self
         config_map: Mapping[str, t.Container] = config
-        processed_dict = m.ConfigMap(root={})
+        processed_dict = t.ConfigMap(root={})
         for key, value in config_map.items():
             processed_dict[str(key)] = FlextRuntime.normalize_to_container(value)
-        merged = m.ConfigMap(root=dict(self._user_overrides.items()))
+        merged = t.ConfigMap(root=dict(self._user_overrides.items()))
         merged.update(dict(processed_dict.items()))
         self._user_overrides = merged
         container_values = self._global_config.model_dump()
@@ -544,10 +544,10 @@ class FlextContainer(p.DI):
         return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
     @override
-    def get_config(self) -> m.ConfigMap:
+    def get_config(self) -> t.ConfigMap:
         """Return the merged configuration exposed by this container."""
         config_dict_raw = self._global_config.model_dump()
-        return m.ConfigMap(
+        return t.ConfigMap(
             root={
                 str(key): FlextRuntime.normalize_to_container(value)
                 for key, value in config_dict_raw.items()
@@ -611,8 +611,8 @@ class FlextContainer(p.DI):
         factories: Mapping[str, m.FactoryRegistration] | None = None,
         resources: Mapping[str, m.ResourceRegistration] | None = None,
         global_config: m.ContainerConfig | None = None,
-        user_overrides: Mapping[str, t.Scalar | m.ConfigMap | Sequence[t.Scalar]]
-        | m.ConfigMap
+        user_overrides: Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
+        | t.ConfigMap
         | None = None,
         config: p.Config | None = None,
         context: p.Context | None = None,
@@ -629,7 +629,7 @@ class FlextContainer(p.DI):
         self._global_config = global_config or self._create_container_config()
         overrides_root: dict[str, t.NormalizedValue | BaseModel] = {}
         if user_overrides is not None:
-            if isinstance(user_overrides, m.ConfigMap):
+            if isinstance(user_overrides, t.ConfigMap):
                 overrides_root = dict(user_overrides.root)
             else:
                 for ok, ov in user_overrides.items():
@@ -646,7 +646,7 @@ class FlextContainer(p.DI):
                         ]
                     else:
                         overrides_root[ok] = str(ov)
-        user_overrides_map = m.ConfigMap(root=overrides_root)
+        user_overrides_map = t.ConfigMap(root=overrides_root)
         self._user_overrides = user_overrides_map
         config_instance: p.Config = (
             config if config is not None else FlextSettings.get_global()
@@ -932,7 +932,7 @@ class FlextContainer(p.DI):
                 cloned_resources[name] = m.ResourceRegistration(
                     name=name, factory=resource_factory
                 )
-        user_overrides_copy = m.ConfigMap(root=dict(self._user_overrides.items()))
+        user_overrides_copy = t.ConfigMap(root=dict(self._user_overrides.items()))
         return FlextContainer._create_scoped_instance(
             config=base_config,
             context=scoped_context,
@@ -957,7 +957,7 @@ class FlextContainer(p.DI):
         - etc.
         """
         config_dict_raw = self._global_config.model_dump()
-        config_map = m.ConfigMap(
+        config_map = t.ConfigMap(
             root={
                 str(key): FlextRuntime.normalize_to_container(value)
                 for key, value in config_dict_raw.items()

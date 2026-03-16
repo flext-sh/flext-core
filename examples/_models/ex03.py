@@ -57,7 +57,7 @@ class Ex03OrderItem(m.Value):
     quantity: int = Field(ge=1)
 
 
-def _new_order_items() -> list[m.ConfigMap]:
+def _new_order_items() -> list[t.ConfigMap]:
     """Create empty order-item list with explicit type."""
     return []
 
@@ -66,12 +66,12 @@ class Ex03Order(m.AggregateRoot):
     """Domain order aggregate."""
 
     customer_id: str
-    items: list[m.ConfigMap] = Field(default_factory=_new_order_items)
+    items: list[t.ConfigMap] = Field(default_factory=_new_order_items)
     status: c.Domain.Status = c.Domain.Status.ACTIVE
 
     def add_item(self, item: Ex03OrderItem) -> r[Ex03Order]:
         """Append item to order."""
-        item_payload = m.ConfigMap(root=item.model_dump())
+        item_payload = t.ConfigMap(root=item.model_dump())
         return r[Ex03Order].ok(
             self.model_copy(update={"items": [*self.items, item_payload]})
         )

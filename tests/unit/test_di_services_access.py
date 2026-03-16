@@ -29,7 +29,6 @@ from flext_core import (
     FlextLogger,
     FlextRuntime,
     FlextSettings,
-    m,
     r,
     s,
 )
@@ -65,7 +64,7 @@ class TestConfigServiceViaDI:
     def test_config_injection_via_wiring(self) -> None:
         """Test injecting FlextSettings via @inject decorator."""
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config=m.ConfigMap(root={"app_name": "injected_config"}),
+            config=t.ConfigMap(root={"app_name": "injected_config"}),
         )
         module = ModuleType("config_injection_module")
 
@@ -218,7 +217,7 @@ class TestServicesIntegrationViaDI:
         """Test injecting multiple services via @inject."""
         services = {"logger_name": "test"}
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config=m.ConfigMap(root={"app_name": "injected"}),
+            config=t.ConfigMap(root={"app_name": "injected"}),
             services=services,
         )
         module = ModuleType("services_injection_module")

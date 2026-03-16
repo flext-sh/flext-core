@@ -149,7 +149,7 @@ class TestFlextModelsContainer:
             tags=["test", "integration"],
         )
         tm.that(registration.name, eq="full_service")
-        tm.that(registration.service, eq=m.ConfigMap(root={"data": "value"}))
+        tm.that(registration.service, eq=t.ConfigMap(root={"data": "value"}))
         tm.that(registration.metadata, eq=metadata)
         tm.that(registration.service_type, eq="TestService")
         tm.that(registration.tags, eq=["test", "integration"])
@@ -345,14 +345,14 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
 
     def test_normalize_to_metadata_empty_dict(self) -> None:
         """Test normalize_to_metadata with empty dict."""
-        result = u.ensure_metadata(m.ConfigMap(root={}))
+        result = u.ensure_metadata(t.ConfigMap(root={}))
         tm.that(hasattr(result, "attributes"), eq=True)
         tm.that(result.attributes, eq={})
 
     def test_normalize_to_metadata_with_values(self) -> None:
         """Test normalize_to_metadata with dict containing values."""
         result = u.ensure_metadata(
-            m.ConfigMap(root={"key1": "value1", "key2": 42, "key3": True}),
+            t.ConfigMap(root={"key1": "value1", "key2": 42, "key3": True}),
         )
         tm.that(hasattr(result, "attributes"), eq=True)
         tm.that(result.attributes["key1"], eq="value1")
@@ -369,7 +369,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_nested_dict(self) -> None:
         """Test normalize_to_metadata with nested dict values."""
         result = u.ensure_metadata(
-            m.ConfigMap(root={"nested": {"level1": {"level2": "value"}}}),
+            t.ConfigMap(root={"nested": {"level1": {"level2": "value"}}}),
         )
         tm.that(hasattr(result, "attributes"), eq=True)
         tm.that(result.attributes, has="nested")

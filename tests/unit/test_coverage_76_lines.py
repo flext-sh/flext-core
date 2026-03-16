@@ -10,7 +10,6 @@ from __future__ import annotations
 from flext_tests import tm
 
 from flext_core import FlextExceptions, r
-from tests import m
 
 
 class TestResultBasics:
@@ -151,9 +150,9 @@ class TestResultTransformations:
         tm.that(r_no_data.error_data, none=True)
         r_with_data: r[int] = r[int].fail(
             "error",
-            error_data=m.ConfigMap(root={"detail": "info"}),
+            error_data=t.ConfigMap(root={"detail": "info"}),
         )
-        tm.that(isinstance(r_with_data.error_data, m.ConfigMap), eq=True)
+        tm.that(isinstance(r_with_data.error_data, t.ConfigMap), eq=True)
         tm.that(str(r_with_data.error_data), has="info")
 
     def test_result_value_on_success(self) -> None:

@@ -15,7 +15,7 @@ from typing import Annotated, Self, override
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_core import t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core._models import FlextModelFoundation
 
 
 class FlextModelsCollections:
@@ -284,7 +284,7 @@ class FlextModelsCollections:
             raise TypeError(msg)
 
         @classmethod
-        def from_mapping(cls, mapping: FlextModelsContainers.ConfigMap) -> Self:
+        def from_mapping(cls, mapping: t.ConfigMap) -> Self:
             return cls.model_validate(dict(mapping))
 
         def diff(
@@ -303,8 +303,8 @@ class FlextModelsCollections:
         def merge(self, other: Self) -> Self:
             return self.model_copy(update=other.model_dump())
 
-        def to_mapping(self) -> FlextModelsContainers.ConfigMap:
-            return FlextModelsContainers.ConfigMap(root=self.model_dump())
+        def to_mapping(self) -> t.ConfigMap:
+            return t.ConfigMap(root=self.model_dump())
 
         def with_updates(self, **updates: t.MetadataValue) -> Self:
             return self.model_copy(update=updates)

@@ -17,7 +17,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_core import FlextUtilities, r
-from tests import m
 
 
 class TestUtilitiesCoverage:
@@ -34,7 +33,7 @@ __all__ = ["TestUtilitiesCoverage"]
 def test_utilities_get_method_coverage() -> None:
     """Test FlextUtilities.get() method for line 401 coverage."""
     u = FlextUtilities
-    test_data = m.ConfigMap(root={"key": "value", "other": 456})
+    test_data = t.ConfigMap(root={"key": "value", "other": 456})
     result = u.get(test_data.root, "key")
     assert result == "value"
     result = u.get(test_data.root, "missing", default="fallback")

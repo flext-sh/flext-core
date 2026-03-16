@@ -25,7 +25,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import override
 
-from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
+from flext_core import FlextContext, FlextLogger, FlextService, c, r, u
 
 
 @contextmanager
@@ -34,7 +34,7 @@ def _request_scope(
     operation_name: str,
     user_id: str | None = None,
     request_id: str | None = None,
-    metadata: m.ConfigMap | None = None,
+    metadata: t.ConfigMap | None = None,
 ) -> Generator[None]:
     resolved_request_id = request_id or u.generate("correlation")
     with FlextContext.Correlation.new_correlation(resolved_request_id):
@@ -59,7 +59,7 @@ def _request_scope(
                 FlextContext.Variables.OperationMetadata.reset(metadata_token)
 
 
-class ContextManagementService(FlextService[m.ConfigMap]):
+class ContextManagementService(FlextService[t.ConfigMap]):
     """Service demonstrating comprehensive FlextContext patterns with advanced features.
 
     Uses c centralized StrEnum/Literals, t composition,
@@ -67,7 +67,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
     """
 
     @staticmethod
-    def _build_success_metadata(_: m.ConfigMap) -> m.ConfigMap:
+    def _build_success_metadata(_: t.ConfigMap) -> t.ConfigMap:
         """Build success metadata using centralized c (DRY)."""
         all_patterns = tuple(
             member.value for member in c.Cqrs.HandlerType.__members__.values()
@@ -78,7 +78,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
             if pattern
             in {"factory_methods", "railway_operations", "validation_patterns"}
         )
-        return m.ConfigMap(
+        return t.ConfigMap(
             root={
                 "patterns_demonstrated": filtered_patterns,
                 "context_features": (
@@ -97,7 +97,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
         )
 
     @staticmethod
-    def _demonstrate_context_concepts() -> r[m.ConfigMap]:
+    def _demonstrate_context_concepts() -> r[t.ConfigMap]:
         """Demonstrate context management concepts using FlextContext."""
         print("\n=== Context Concepts ===")
         with _request_scope(
@@ -110,7 +110,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
                 or c.Context.CORRELATION_ID_PREFIX
                 + u.generate("correlation")[: c.Context.CORRELATION_ID_LENGTH]
             )
-            context_data: m.ConfigMap = m.ConfigMap(
+            context_data: t.ConfigMap = t.ConfigMap(
                 root={
                     c.Mixins.FIELD_NAME: "context_demo",
                     "correlation_id": correlation_id,
@@ -121,10 +121,10 @@ class ContextManagementService(FlextService[m.ConfigMap]):
             print("✅ Thread-local storage for isolation")
             print("✅ Correlation IDs for request tracking")
             print(f"✅ Scope: {c.Context.SCOPE_REQUEST}")
-            return r[m.ConfigMap].ok(context_data)
+            return r[t.ConfigMap].ok(context_data)
 
     @staticmethod
-    def _demonstrate_correlation_tracking() -> r[m.ConfigMap]:
+    def _demonstrate_correlation_tracking() -> r[t.ConfigMap]:
         """Demonstrate correlation ID tracking across service boundaries."""
         print("\n=== Correlation Tracking ===")
         correlation_id = u.generate("correlation")
@@ -135,7 +135,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
                 FlextContext.Variables.Correlation.CORRELATION_ID.get()
                 or correlation_id
             )
-            correlation_data: m.ConfigMap = m.ConfigMap(
+            correlation_data: t.ConfigMap = t.ConfigMap(
                 root={
                     "correlation_id": context_correlation,
                     "prefix": c.Context.CORRELATION_ID_PREFIX,
@@ -146,10 +146,10 @@ class ContextManagementService(FlextService[m.ConfigMap]):
             print("✅ Cross-service tracing support")
             print("✅ Request-scoped variables")
             print("✅ Distributed tracing ready")
-            return r[m.ConfigMap].ok(correlation_data)
+            return r[t.ConfigMap].ok(correlation_data)
 
     @staticmethod
-    def _demonstrate_performance_tracking() -> r[m.ConfigMap]:
+    def _demonstrate_performance_tracking() -> r[t.ConfigMap]:
         """Demonstrate performance tracking with FlextContext.Performance."""
         print("\n=== Performance Tracking ===")
         operation_name = "performance_demo"
@@ -158,12 +158,12 @@ class ContextManagementService(FlextService[m.ConfigMap]):
         ) as timing_metadata:
             start_time = FlextContext.Variables.OperationStartTime.get()
             operation_metadata_raw = FlextContext.Variables.OperationMetadata.get()
-            operation_metadata: m.ConfigMap = (
+            operation_metadata: t.ConfigMap = (
                 operation_metadata_raw
-                if isinstance(operation_metadata_raw, m.ConfigMap)
-                else m.ConfigMap(root={})
+                if isinstance(operation_metadata_raw, t.ConfigMap)
+                else t.ConfigMap(root={})
             )
-            performance_data: m.ConfigMap = m.ConfigMap(
+            performance_data: t.ConfigMap = t.ConfigMap(
                 root={
                     "operation": operation_name,
                     "start_time": start_time.isoformat()
@@ -177,10 +177,10 @@ class ContextManagementService(FlextService[m.ConfigMap]):
             print(f"✅ Start time: {performance_data['start_time']}")
             print("✅ Performance monitoring enabled")
             print("✅ Timing metadata captured")
-            return r[m.ConfigMap].ok(performance_data)
+            return r[t.ConfigMap].ok(performance_data)
 
     @staticmethod
-    def _demonstrate_request_handling() -> r[m.ConfigMap]:
+    def _demonstrate_request_handling() -> r[t.ConfigMap]:
         """Demonstrate request context management with performance tracking."""
         print("\n=== Request Context ===")
         request_id = u.generate("correlation")
@@ -189,7 +189,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
             _request_scope(
                 operation_name=operation_name,
                 request_id=request_id,
-                metadata=m.ConfigMap(root={"endpoint": "/api/demo", "method": "GET"}),
+                metadata=t.ConfigMap(root={"endpoint": "/api/demo", "method": "GET"}),
             ),
             FlextContext.Performance.timed_operation(
                 operation_name=operation_name
@@ -197,7 +197,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
         ):
             user_id = FlextContext.Variables.UserId.get() or "anonymous"
             operation = FlextContext.Request.get_operation_name() or "unknown"
-            request_data: m.ConfigMap = m.ConfigMap(
+            request_data: t.ConfigMap = t.ConfigMap(
                 root={
                     "user_id": user_id,
                     "request_id": request_id,
@@ -209,10 +209,10 @@ class ContextManagementService(FlextService[m.ConfigMap]):
             print("✅ Request lifecycle management")
             print("✅ Performance tracking and metrics")
             print("✅ Context inheritance in service calls")
-            return r[m.ConfigMap].ok(request_data)
+            return r[t.ConfigMap].ok(request_data)
 
     @staticmethod
-    def _demonstrate_threading_concepts() -> r[m.ConfigMap]:
+    def _demonstrate_threading_concepts() -> r[t.ConfigMap]:
         """Demonstrate threading and isolation concepts with context safety."""
         print("\n=== Threading Concepts ===")
         thread_count = threading.active_count()
@@ -220,7 +220,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
             str(thread.name) for thread in threading.enumerate()
         )
 
-        def thread_operation(thread_id: int) -> r[m.ConfigMap]:
+        def thread_operation(thread_id: int) -> r[t.ConfigMap]:
             """Thread operation with isolated context."""
             with _request_scope(
                 operation_name=f"thread_{thread_id}", request_id=f"req-{thread_id}"
@@ -228,8 +228,8 @@ class ContextManagementService(FlextService[m.ConfigMap]):
                 correlation_id = (
                     FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
                 )
-                return r[m.ConfigMap].ok(
-                    m.ConfigMap(
+                return r[t.ConfigMap].ok(
+                    t.ConfigMap(
                         root={
                             "thread_id": thread_id,
                             "correlation_id": correlation_id,
@@ -240,7 +240,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
 
         results = [thread_operation(i) for i in range(min(3, thread_count))]
         thread_results = r.traverse(results, lambda r: r)
-        threading_data: m.ConfigMap = m.ConfigMap(
+        threading_data: t.ConfigMap = t.ConfigMap(
             root={
                 "active_threads": thread_count,
                 "thread_names": list(active_threads),
@@ -252,11 +252,11 @@ class ContextManagementService(FlextService[m.ConfigMap]):
         print("✅ No shared state between threads")
         print(f"✅ Thread names: {', '.join(active_threads[:5])}")
         if thread_results.is_failure:
-            return r[m.ConfigMap].fail(thread_results.error or "threading failed")
-        return r[m.ConfigMap].ok(threading_data)
+            return r[t.ConfigMap].fail(thread_results.error or "threading failed")
+        return r[t.ConfigMap].ok(threading_data)
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute comprehensive context demonstrations using railway pattern."""
         self.logger.info("Starting context management demonstration")
         return (
@@ -297,7 +297,7 @@ def main() -> None:
     service = ContextManagementService()
     result = service.execute()
 
-    def handle_success(metadata: m.ConfigMap) -> None:
+    def handle_success(metadata: t.ConfigMap) -> None:
         """Handle successful result with type narrowing."""
         patterns = metadata.get("patterns_demonstrated", ())
         features = metadata.get("context_features", ())

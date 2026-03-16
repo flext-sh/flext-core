@@ -55,7 +55,7 @@ def test_categories_clear_and_symbols_are_available() -> None:
 
 
 def test_statistics_from_dict_and_none_conflict_resolution() -> None:
-    config_map = m.ConfigMap({"value": 5})
+    config_map = t.ConfigMap({"value": 5})
     loaded = _Stats.from_mapping(cast("dict[str, t.MetadataValue]", config_map.root))
     assert loaded.value == 5
     assert _Stats._resolve_conflict(None, None) is None
@@ -94,7 +94,7 @@ def test_options_merge_conflict_paths_and_empty_merge_options() -> None:
 
 
 def test_config_hash_from_mapping_and_non_hashable() -> None:
-    loaded = _Config.from_mapping(m.ConfigMap(root={"value": 7}))
+    loaded = _Config.from_mapping(t.ConfigMap(root={"value": 7}))
     assert loaded.value == 7
     with pytest.raises(TypeError, match="_Config objects are not hashable") as exc_info:
         hash(loaded)

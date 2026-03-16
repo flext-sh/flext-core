@@ -23,38 +23,38 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextContext, FlextRuntime, c, m, r, s, u
+from flext_core import FlextContext, FlextRuntime, c, r, s, u
 
 
-class UserService(s[m.ConfigMap]):
+class UserService(s[t.ConfigMap]):
     """Service demonstrating automatic context enrichment."""
 
-    def create_user(self, username: str, email: str) -> r[m.ConfigMap]:
+    def create_user(self, username: str, email: str) -> r[t.ConfigMap]:
         """Create user with automatic context enrichment."""
         if self.logger:
             self.logger.info("Creating user", username=username, email=email)
-        user_data: m.ConfigMap = m.ConfigMap(
+        user_data: t.ConfigMap = t.ConfigMap(
             root={"id": "usr_123", "username": username, "email": email}
         )
-        return r[m.ConfigMap].ok(user_data)
+        return r[t.ConfigMap].ok(user_data)
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Required abstract method implementation."""
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"status": "initialized"}))
 
 
-class PaymentService(s[m.ConfigMap]):
+class PaymentService(s[t.ConfigMap]):
     """Service demonstrating correlation ID tracking."""
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Required abstract method implementation."""
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "initialized"}))
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"status": "initialized"}))
 
     def process_payment(
         self, payment_id: str, amount: float, user_id: str
-    ) -> r[m.ConfigMap]:
+    ) -> r[t.ConfigMap]:
         """Process payment with correlation tracking.
 
         Demonstrates:
@@ -78,7 +78,7 @@ class PaymentService(s[m.ConfigMap]):
                 amount=amount,
                 correlation_id=correlation_id,
             )
-        payment_data: m.ConfigMap = m.ConfigMap(
+        payment_data: t.ConfigMap = t.ConfigMap(
             root={
                 "payment_id": payment_id,
                 "amount": amount,
@@ -87,29 +87,29 @@ class PaymentService(s[m.ConfigMap]):
             }
         )
         self._clear_operation_context()
-        return r[m.ConfigMap].ok(payment_data)
+        return r[t.ConfigMap].ok(payment_data)
 
 
-class OrderService(s[m.ConfigMap]):
+class OrderService(s[t.ConfigMap]):
     """Service demonstrating context enrichment helper method."""
 
-    _order_data: m.ConfigMap = PrivateAttr(default_factory=lambda: m.ConfigMap(root={}))
+    _order_data: t.ConfigMap = PrivateAttr(default_factory=lambda: t.ConfigMap(root={}))
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Process order with business logic."""
         order_id_raw = self._order_data.get("order_id", "ord_123")
         order_id = str(order_id_raw) if order_id_raw else "ord_123"
-        result_data = m.ConfigMap(
+        result_data = t.ConfigMap(
             root={"order_id": order_id, "status": c.Cqrs.CommonStatus.PENDING.value}
         )
-        return r[m.ConfigMap].ok(result_data)
+        return r[t.ConfigMap].ok(result_data)
 
     def process_order(
         self, order_id: str, customer_id: str, correlation_id: str | None = None
-    ) -> r[m.ConfigMap]:
+    ) -> r[t.ConfigMap]:
         """Process order with automatic context enrichment."""
-        self._order_data = m.ConfigMap(
+        self._order_data = t.ConfigMap(
             root={"order_id": order_id, "customer_id": customer_id}
         )
         correlation = correlation_id or f"order_{order_id}_{customer_id}"
@@ -121,7 +121,7 @@ class OrderService(s[m.ConfigMap]):
             return self.execute()
 
 
-class AutomationService(s[m.ConfigMap]):
+class AutomationService(s[t.ConfigMap]):
     """Service demonstrating the 5 new r methods in automation context.
 
     Shows how the new v0.9.9+ methods work with automated workflows:
@@ -148,12 +148,12 @@ class AutomationService(s[m.ConfigMap]):
         """Demo 4: alt - Alternative Automation Paths."""
         print("\n=== 4. alt: Alternative Automation Paths ===")
 
-        def get_cached() -> r[m.ConfigMap]:
-            return r[m.ConfigMap].fail("Cache unavailable")
+        def get_cached() -> r[t.ConfigMap]:
+            return r[t.ConfigMap].fail("Cache unavailable")
 
-        def get_default() -> r[m.ConfigMap]:
-            return r[m.ConfigMap].ok(
-                m.ConfigMap(
+        def get_default() -> r[t.ConfigMap]:
+            return r[t.ConfigMap].ok(
+                t.ConfigMap(
                     root={
                         "automation_mode": c.Cqrs.ProcessingMode.SEQUENTIAL.value,
                         "batch_size": c.Performance.BatchProcessing.DEFAULT_SIZE,
@@ -177,17 +177,17 @@ class AutomationService(s[m.ConfigMap]):
         """ETL Pipeline with Error Recovery."""
         print("\n--- Data Pipeline with Error Recovery ---")
 
-        def extract() -> r[list[m.ConfigMap]]:
-            return r[list[m.ConfigMap]].ok([
-                m.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
-                m.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
+        def extract() -> r[list[t.ConfigMap]]:
+            return r[list[t.ConfigMap]].ok([
+                t.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
+                t.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
             ])
 
         def transform(
-            data: list[m.ConfigMap],
-        ) -> FlextRuntime.RuntimeResult[list[m.ConfigMap]]:
-            transformed: list[m.ConfigMap] = [
-                m.ConfigMap(
+            data: list[t.ConfigMap],
+        ) -> FlextRuntime.RuntimeResult[list[t.ConfigMap]]:
+            transformed: list[t.ConfigMap] = [
+                t.ConfigMap(
                     root={
                         **item.root,
                         "processed": True,
@@ -196,13 +196,13 @@ class AutomationService(s[m.ConfigMap]):
                 )
                 for item in data
             ]
-            return r[list[m.ConfigMap]].ok(transformed)
+            return r[list[t.ConfigMap]].ok(transformed)
 
         def load(
-            data: list[m.ConfigMap],
-        ) -> FlextRuntime.RuntimeResult[list[m.ConfigMap]]:
+            data: list[t.ConfigMap],
+        ) -> FlextRuntime.RuntimeResult[list[t.ConfigMap]]:
             print(f"   💾 Loaded {len(data)} records successfully")
-            return r[list[m.ConfigMap]].ok(data)
+            return r[list[t.ConfigMap]].ok(data)
 
         extract_result = extract()
         if extract_result.is_failure:
@@ -224,17 +224,17 @@ class AutomationService(s[m.ConfigMap]):
         print("\n=== 2. flow_through: Automation Pipeline Composition ===")
 
         def validate(
-            data: m.ConfigMap,
-        ) -> FlextRuntime.RuntimeResult[m.ConfigMap]:
+            data: t.ConfigMap,
+        ) -> FlextRuntime.RuntimeResult[t.ConfigMap]:
             task_type = str(data.get("task_type", ""))
             if not task_type:
-                return r[m.ConfigMap].fail("Task type required")
-            return r[m.ConfigMap].ok(data)
+                return r[t.ConfigMap].fail("Task type required")
+            return r[t.ConfigMap].ok(data)
 
         def enrich(
-            data: m.ConfigMap,
-        ) -> FlextRuntime.RuntimeResult[m.ConfigMap]:
-            enriched: m.ConfigMap = m.ConfigMap(
+            data: t.ConfigMap,
+        ) -> FlextRuntime.RuntimeResult[t.ConfigMap]:
+            enriched: t.ConfigMap = t.ConfigMap(
                 root={
                     **data.root,
                     "automation_timestamp": "2025-01-01T12:00:00Z",
@@ -242,9 +242,9 @@ class AutomationService(s[m.ConfigMap]):
                     "result_id": "RESULT-001",
                 }
             )
-            return r[m.ConfigMap].ok(enriched)
+            return r[t.ConfigMap].ok(enriched)
 
-        automation_input: m.ConfigMap = m.ConfigMap(
+        automation_input: t.ConfigMap = t.ConfigMap(
             root={"task_type": c.Cqrs.ProcessingMode.BATCH.value, "source": "database"}
         )
         validate_result = validate(automation_input)
@@ -266,8 +266,8 @@ class AutomationService(s[m.ConfigMap]):
         """Demo 1: from_callable - Safe Automation Task Execution."""
         print("\n=== 1. from_callable: Safe Automation Task Execution ===")
 
-        def risky_automation_task() -> m.ConfigMap:
-            task_data: m.ConfigMap = m.ConfigMap(
+        def risky_automation_task() -> t.ConfigMap:
+            task_data: t.ConfigMap = t.ConfigMap(
                 root={
                     "task_id": "AUTO-001",
                     "task_type": "data_sync",
@@ -282,7 +282,7 @@ class AutomationService(s[m.ConfigMap]):
                 raise ValueError(msg)
             return task_data
 
-        result = r[m.ConfigMap].create_from_callable(risky_automation_task)
+        result = r[t.ConfigMap].create_from_callable(risky_automation_task)
         if result.is_success:
             data = result.value
             print(f"✅ Automation successful: {data.get('task_type', 'N/A')}")
@@ -312,17 +312,17 @@ class AutomationService(s[m.ConfigMap]):
     def _demo_lazy_config() -> None:
         """Configuration with Lazy Loading."""
         print("\n--- Configuration with Lazy Loading ---")
-        cache = m.ConfigMap(root={})
+        cache = t.ConfigMap(root={})
 
-        def load_config() -> m.ConfigMap:
+        def load_config() -> t.ConfigMap:
             if not cache.root:
                 print("   📄 Loading configuration from file...")
                 cache.root["database_url"] = "postgresql://localhost:5432/testdb"
                 cache.root["cache_ttl"] = c.Defaults.DEFAULT_CACHE_TTL
             return cache
 
-        fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail("No cached config")
-        config: m.ConfigMap = (
+        fail_attempt: r[t.ConfigMap] = r[t.ConfigMap].fail("No cached config")
+        config: t.ConfigMap = (
             load_config() if fail_attempt.is_failure else fail_attempt.value
         )
         config_count = len(config.root)
@@ -359,9 +359,9 @@ class AutomationService(s[m.ConfigMap]):
         """Demo 5: value_or_call - Lazy Resource Initialization."""
         print("\n=== 5. value_or_call: Lazy Resource Initialization ===")
 
-        def create_engine() -> m.ConfigMap:
+        def create_engine() -> t.ConfigMap:
             print("   ⚙️  Initializing automation engine...")
-            return m.ConfigMap(
+            return t.ConfigMap(
                 root={
                     "engine_id": "AUTO-ENGINE-001",
                     "engine_type": c.Cqrs.ProcessingMode.PARALLEL.value,
@@ -369,8 +369,8 @@ class AutomationService(s[m.ConfigMap]):
                 }
             )
 
-        fail_result: r[m.ConfigMap] = r[m.ConfigMap].fail("No existing engine")
-        engine: m.ConfigMap = (
+        fail_result: r[t.ConfigMap] = r[t.ConfigMap].fail("No existing engine")
+        engine: t.ConfigMap = (
             create_engine() if fail_result.is_failure else fail_result.value
         )
         engine_id = str(engine.get("engine_id", "unknown"))
@@ -378,13 +378,13 @@ class AutomationService(s[m.ConfigMap]):
         worker_count = int(worker_count_text) if worker_count_text.isdigit() else 0
         print(f"✅ Engine acquired: {engine_id}")
         print(f"   Workers: {worker_count}")
-        existing: m.ConfigMap = m.ConfigMap(
+        existing: t.ConfigMap = t.ConfigMap(
             root={
                 "engine_id": "CACHED-ENGINE-001",
                 "worker_count": c.Container.DEFAULT_WORKERS,
             }
         )
-        success_result = r[m.ConfigMap].ok(existing)
+        success_result = r[t.ConfigMap].ok(existing)
         cached = success_result.map_or(create_engine())
         cached_id = str(cached.get("engine_id", "unknown"))
         print(f"✅ Existing engine used: {cached_id}")
@@ -408,9 +408,9 @@ class AutomationService(s[m.ConfigMap]):
         print("=" * 60)
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Required abstract method implementation."""
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "automation_ready"}))
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"status": "automation_ready"}))
 
 
 def main() -> None:

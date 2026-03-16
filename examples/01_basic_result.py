@@ -219,8 +219,8 @@ class RailwayService(s[DemonstrationResult]):
     def _demonstrate_value_extraction() -> None:
         """Demonstrate r value extraction with advanced patterns."""
         print("\n=== Value Extraction ===")
-        success = r[m.ConfigMap].ok(
-            m.ConfigMap(root={"name": "John", "email": "john@example.com"})
+        success = r[t.ConfigMap].ok(
+            t.ConfigMap(root={"name": "John", "email": "john@example.com"})
         )
         failure: r[str] = r[str].fail("Not found")
         user_data = success.value

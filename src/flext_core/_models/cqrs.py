@@ -25,7 +25,7 @@ from pydantic import (
 )
 
 from flext_core import FlextRuntime, c, p, r, t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core._models import FlextModelFoundation
 
 
 class FlextModelsCqrs:
@@ -128,24 +128,21 @@ class FlextModelsCqrs:
         )
         tag: ClassVar[Literal["query"]] = "query"
         _pagination_input_adapter: ClassVar[
-            TypeAdapter[
-                BaseModel | FlextModelsContainers.Dict | Mapping[str, t.Scalar] | None
-            ]
-            | None
+            TypeAdapter[BaseModel | t.Dict | Mapping[str, t.Scalar] | None] | None
         ] = None
         message_type: Literal["query"] = Field(
             default="query",
             frozen=True,
             description="Message type discriminator",
         )
-        filters: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
+        filters: t.Dict = Field(
+            default_factory=t.Dict,
             description="Filter values that restrict which records are returned by the query.",
             title="Query Filters",
             examples=[{"status": "active", "tenant": "acme"}],
         )
-        pagination: BaseModel | FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
+        pagination: BaseModel | t.Dict = Field(
+            default_factory=t.Dict,
             description="Pagination settings controlling page number and page size for query results.",
             title="Pagination",
             examples=[{"page": 1, "size": 50}],
@@ -207,15 +204,10 @@ class FlextModelsCqrs:
         @classmethod
         def _pagination_adapter(
             cls,
-        ) -> TypeAdapter[
-            BaseModel | FlextModelsContainers.Dict | Mapping[str, t.Scalar] | None
-        ]:
+        ) -> TypeAdapter[BaseModel | t.Dict | Mapping[str, t.Scalar] | None]:
             if cls._pagination_input_adapter is None:
                 cls._pagination_input_adapter = TypeAdapter(
-                    FlextModelsCqrs.Pagination
-                    | FlextModelsContainers.Dict
-                    | Mapping[str, t.Scalar]
-                    | None
+                    FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.Scalar] | None
                 )
             return cls._pagination_input_adapter
 
@@ -223,7 +215,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | FlextModelsContainers.Dict | Mapping[str, t.Scalar] | None,
+            v: BaseModel | t.Dict | Mapping[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
@@ -233,7 +225,7 @@ class FlextModelsCqrs:
             validate_result = r[BaseModel].create_from_callable(
                 lambda: (
                     pagination_cls.model_validate(parsed_input.root)
-                    if isinstance(parsed_input, FlextModelsContainers.Dict)
+                    if isinstance(parsed_input, t.Dict)
                     else pagination_cls.model_validate(parsed_input.model_dump())
                     if isinstance(parsed_input, FlextModelsCqrs.Pagination)
                     else pagination_cls.model_validate(dict(parsed_input))
@@ -346,7 +338,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: FlextModelsContainers.ConfigMap | None = None
+            handler_config: t.ConfigMap | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -365,7 +357,7 @@ class FlextModelsCqrs:
                 """Initialize builder with required handler_type."""
                 super().__init__()
                 handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
-                self._data: FlextModelsContainers.Dict = FlextModelsContainers.Dict(
+                self._data: t.Dict = t.Dict(
                     root={
                         "handler_type": handler_type,
                         "handler_mode": c.Dispatcher.HANDLER_MODE_COMMAND
@@ -383,7 +375,7 @@ class FlextModelsCqrs:
                 """Build and validate Handler instance."""
                 return FlextModelsCqrs.Handler.model_validate(self._data.root)
 
-            def merge_config(self, config: FlextModelsContainers.ConfigMap) -> Self:
+            def merge_config(self, config: t.ConfigMap) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.root.update(config.root)
                 return self
@@ -457,16 +449,16 @@ class FlextModelsCqrs:
             ),
         ]
         data: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Event payload data",
             ),
         ]
         metadata: Annotated[
-            FlextModelsContainers.Dict,
+            t.Dict,
             Field(
-                default_factory=FlextModelsContainers.Dict,
+                default_factory=t.Dict,
                 description="Event metadata (timestamps, correlation IDs, etc.)",
             ),
         ]

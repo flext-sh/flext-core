@@ -1,0 +1,238 @@
+"""FlextProtocolsLogging - logging and related infrastructure protocols.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+
+from pydantic import BaseModel
+from structlog.typing import BindableLogger
+
+from flext_core import t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.config import FlextProtocolsConfig
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.di import FlextProtocolsDI
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.service import FlextProtocolsService
+
+if TYPE_CHECKING:
+    from flext_core import r
+
+Base = FlextProtocolsBase.Base
+Config = FlextProtocolsConfig.Config
+Context = FlextProtocolsContext.Context
+DI = FlextProtocolsDI.DI
+Service = FlextProtocolsService.Service
+CommandBus = FlextProtocolsHandler.CommandBus
+
+
+class FlextProtocolsLogging:
+    """Protocols for logging, connection, validation, and entries."""
+
+    class Log:
+        """Logging namespace with StructlogLogger and Metadata protocols.
+
+        Access patterns:
+        - p.Log.StructlogLogger - structlog logger protocol
+        - p.Log.Metadata - metadata protocol
+        """
+
+        @runtime_checkable
+        class StructlogLogger(BindableLogger, Protocol):
+            """Protocol for structlog logger with all logging methods.
+
+            Extends BindableLogger to add explicit method signatures for
+            logging methods (debug, info, warning, error, etc.) that are
+            available via __getattr__ at runtime.
+            """
+
+            def critical(
+                self,
+                msg: str,
+                *args: t.Container,
+                **kw: t.Container | Exception,
+            ) -> r[bool] | None:
+                """Log critical message."""
+                ...
+
+            def debug(
+                self,
+                msg: str,
+                *args: t.Container,
+                **kw: t.Container | Exception,
+            ) -> r[bool] | None:
+                """Log debug message."""
+                ...
+
+            def error(
+                self,
+                msg: str,
+                *args: t.Container,
+                **kw: t.Container | Exception,
+            ) -> r[bool] | None:
+                """Log error message."""
+                ...
+
+            def exception(
+                self,
+                msg: str,
+                *args: t.Container,
+                **kw: t.Container | Exception,
+            ) -> r[bool] | None:
+                """Log exception with traceback."""
+                ...
+
+            def info(
+                self,
+                msg: str,
+                *args: t.Container,
+                **kw: t.Container | Exception,
+            ) -> r[bool] | None:
+                """Log info message."""
+                ...
+
+            def warning(
+                self,
+                msg: str,
+                *args: t.Container,
+                **kw: t.Container | Exception,
+            ) -> r[bool] | None:
+                """Log warning message."""
+                ...
+
+        @runtime_checkable
+        class Metadata(Protocol):
+            """Metadata protocol."""
+
+            @property
+            def attributes(self) -> t.ConfigMap:
+                """Metadata attributes."""
+                ...
+
+            @property
+            def created_at(self) -> datetime:
+                """Creation timestamp."""
+                ...
+
+            @property
+            def updated_at(self) -> datetime:
+                """Update timestamp."""
+                ...
+
+            @property
+            def version(self) -> str:
+                """Version string."""
+                ...
+
+    @runtime_checkable
+    class Connection(Base, Protocol):
+        """External system connection protocol."""
+
+        def close_connection(self) -> None:
+            """Close connection."""
+            ...
+
+        def get_connection_string(self) -> str:
+            """Get connection string."""
+            ...
+
+        def test_connection(self) -> FlextProtocolsLogging.Result[bool]:
+            """Test connection."""
+            ...
+
+    @runtime_checkable
+    class ValidatorSpec(Base, Protocol):
+        """Protocol for validator specifications with operator composition.
+
+        Validators implement __call__ to validate values and support composition
+        via __and__ (both must pass), __or__ (either passes), and __invert__ (negation).
+
+        Example:
+            validator = V.string.non_empty & V.string.max_length(100)
+            is_valid = validator("hello")  # True
+
+        """
+
+        def __call__(self, value: t.Container) -> bool:
+            """Validate value, return True if valid."""
+            ...
+
+        def __and__(
+            self, other: FlextProtocolsLogging.ValidatorSpec
+        ) -> FlextProtocolsLogging.ValidatorSpec:
+            """Compose with AND - both validators must pass."""
+            ...
+
+        def __invert__(self) -> FlextProtocolsLogging.ValidatorSpec:
+            """Negate validator - passes when original fails."""
+            ...
+
+        def __or__(
+            self, other: FlextProtocolsLogging.ValidatorSpec
+        ) -> FlextProtocolsLogging.ValidatorSpec:
+            """Compose with OR - at least one validator must pass."""
+            ...
+
+    @runtime_checkable
+    class Entry(Base, Protocol):
+        """Entry protocol (read-only)."""
+
+        @property
+        def attributes(self) -> Mapping[str, Sequence[str]]:
+            """Entry attributes as immutable mapping."""
+            ...
+
+        @property
+        def dn(self) -> str:
+            """Distinguished name."""
+            ...
+
+        def add_attribute(self, name: str, values: Sequence[str]) -> Self:
+            """Add attribute values, returning self for chaining."""
+            ...
+
+        def remove_attribute(self, name: str) -> Self:
+            """Remove attribute, returning self for chaining."""
+            ...
+
+        def set_attribute(self, name: str, values: Sequence[str]) -> Self:
+            """Set attribute values, returning self for chaining."""
+            ...
+
+        def to_dict(self) -> Mapping[str, t.Scalar]:
+            """Convert to dictionary representation."""
+            ...
+
+        def to_ldif(self) -> str:
+            """Convert to LDIF format."""
+            ...
+
+    type AccessibleData = (
+        t.ConfigMap
+        | Mapping[str, t.NormalizedValue | BaseModel]
+        | t.NormalizedValue
+        | BaseModel
+        | "FlextProtocols.HasModelDump"
+        | "FlextProtocols.ValidatorSpec"
+    )
+    type RegisterableService = (
+        t.Container
+        | BindableLogger
+        | Callable[..., t.Container]
+        | Config
+        | Context
+        | DI
+        | Service[t.Container]
+        | CommandBus
+    )
+    type ServiceFactory = t.FactoryCallable
+    'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns RegisterableService).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
+
+
+__all__ = ["FlextProtocolsLogging"]

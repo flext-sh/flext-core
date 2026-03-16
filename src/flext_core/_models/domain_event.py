@@ -17,10 +17,10 @@ from typing import Annotated, override
 from pydantic import BaseModel, BeforeValidator, Field
 
 from flext_core import c, t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core._models import FlextModelFoundation
 
 
-class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
+class _ComparableConfigMap(t.ConfigMap):
     """ConfigMap with equality support for domain event data."""
 
     @override
@@ -31,7 +31,7 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
             typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 other
             )
-            other_mapping = FlextModelsContainers.ConfigMap(
+            other_mapping = t.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(value)
                     for key, value in typed_other.items()
@@ -40,7 +40,7 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
             return self.root == other_mapping
         return super().__eq__(other)
 
-    __hash__ = FlextModelsContainers.ConfigMap.__hash__
+    __hash__ = t.ConfigMap.__hash__
 
 
 class FlextModelsDomainEvent:
@@ -97,13 +97,13 @@ class FlextModelsDomainEvent:
         """BeforeValidator: normalize event data to _ComparableConfigMap."""
         if isinstance(value, _ComparableConfigMap):
             return value
-        if isinstance(value, FlextModelsContainers.ConfigMap):
+        if isinstance(value, t.ConfigMap):
             return _ComparableConfigMap(root=dict(value.items()))
         if isinstance(value, dict):
             typed_value = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 value
             )
-            intermediate = FlextModelsContainers.ConfigMap(
+            intermediate = t.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(item)
                     for key, item in typed_value.items()
@@ -114,7 +114,7 @@ class FlextModelsDomainEvent:
             typed_mapping = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 value
             )
-            intermediate = FlextModelsContainers.ConfigMap(
+            intermediate = t.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(item)
                     for key, item in typed_mapping.items()
@@ -128,7 +128,7 @@ class FlextModelsDomainEvent:
 
     @staticmethod
     def to_config_map(
-        data: FlextModelsContainers.ConfigMap | None,
+        data: t.ConfigMap | None,
     ) -> _ComparableConfigMap:
         """Convert optional ConfigMap to a comparable variant."""
         if not data:

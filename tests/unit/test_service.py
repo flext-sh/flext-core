@@ -29,7 +29,7 @@ from flext_tests import FlextTestsUtilities, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r, s
-from tests import m, t
+from tests import t
 
 
 class ServiceScenarioType(StrEnum):
@@ -58,13 +58,13 @@ class ServiceScenario(BaseModel):
     ] = None
 
 
-class UserService(s[m.ConfigMap]):
+class UserService(s[t.ConfigMap]):
     """Basic user service for standard testing."""
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute service and return data."""
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"user_id": 1, "name": "test_user"}))
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"user_id": 1, "name": "test_user"}))
 
 
 class ComplexService(s[str]):
@@ -162,7 +162,7 @@ class ServiceScenarios:
     ]
 
     @staticmethod
-    def create_service(scenario: ServiceScenario) -> s[m.ConfigMap] | s[str] | s[bool]:
+    def create_service(scenario: ServiceScenario) -> s[t.ConfigMap] | s[str] | s[bool]:
         """Create service instance for scenario."""
         kwargs_raw: Mapping[str, t.Scalar] = scenario.service_kwargs or {}
         if scenario.scenario_type == ServiceScenarioType.BASIC_USER:
@@ -230,7 +230,7 @@ class TestsCore:
         result = service.execute()
         _ = u.Tests.Result.assert_success(result)
         data = result.value
-        assert isinstance(data, m.ConfigMap)
+        assert isinstance(data, t.ConfigMap)
         assert "user_id" in data
 
     @pytest.mark.parametrize(

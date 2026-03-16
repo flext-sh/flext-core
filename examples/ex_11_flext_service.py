@@ -248,7 +248,7 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "CQRS.MetricsTracker.get",
-            metrics.get_metrics().unwrap_or(m.ConfigMap(root={})).get(metric_key)
+            metrics.get_metrics().unwrap_or(t.ConfigMap(root={})).get(metric_key)
             == metric_value,
         )
 
@@ -265,7 +265,7 @@ class Ex11FlextService(Examples):
             "CQRS.ContextStack.current.type",
             type(current).__name__ if current is not None else "None",
         )
-        popped = stack.pop_context().unwrap_or(m.ConfigMap(root={}))
+        popped = stack.pop_context().unwrap_or(t.ConfigMap(root={}))
         self.check("CQRS.ContextStack.pop.handler_name", popped.get("handler_name"))
         self.check("CQRS.ContextStack.pop.empty", stack.pop_context().unwrap_or({}))
 
@@ -364,17 +364,17 @@ class Ex11FlextService(Examples):
         s.Integration.track_domain_event(
             event_name=event_name,
             aggregate_id=aggregate_id,
-            event_data=m.ConfigMap(root={event_key: event_value}),
+            event_data=t.ConfigMap(root={event_key: event_value}),
         )
         self.check("Integration.calls", "ok")
 
         # DependencyIntegration namespace
         di = s.DependencyIntegration.create_container(
-            config=m.ConfigMap(root={"env": env_value}),
+            config=t.ConfigMap(root={"env": env_value}),
             services={"object_item": service_object},
             factories={"factory_item": lambda: factory_object},
             resources={
-                "resource_item": lambda: m.ConfigMap(root={"value": resource_number})
+                "resource_item": lambda: t.ConfigMap(root={"value": resource_number})
             },
             wire_modules=[sys.modules[__name__]],
             wire_packages=["flext_core"],
@@ -389,7 +389,7 @@ class Ex11FlextService(Examples):
 
         bridge, service_mod, resource_mod = (
             s.DependencyIntegration.create_layered_bridge(
-                config=m.ConfigMap(root={"region": region_value}),
+                config=t.ConfigMap(root={"region": region_value}),
             )
         )
         self.check("DependencyIntegration.bridge.type", type(bridge).__name__)
@@ -557,10 +557,10 @@ class Ex11FlextService(Examples):
         self.check("create_runtime.full.config", type(runtime_full.config).__name__)
 
         payload = _Payload(text=payload_text, count=payload_count)
-        self.check("to_dict.none", m.ConfigMap(root={}).root)
+        self.check("to_dict.none", t.ConfigMap(root={}).root)
         self.check(
             "to_dict.mapping",
-            m.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
+            t.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
         )
         self.check("to_dict.model", payload.model_dump())
 

@@ -84,11 +84,11 @@ class QueryHandler:
 
     message_type = SampleQuery
 
-    def handle(self, message: SampleQuery) -> r[m.ConfigMap]:
+    def handle(self, message: SampleQuery) -> r[t.ConfigMap]:
         """Handle the query."""
         query_id = getattr(message, "query_id", None)
-        return r[m.ConfigMap].ok(
-            m.ConfigMap(root={"result": "data", "id": str(query_id)}),
+        return r[t.ConfigMap].ok(
+            t.ConfigMap(root={"result": "data", "id": str(query_id)}),
         )
 
     def can_handle(self, message_type: type) -> bool:
@@ -150,8 +150,8 @@ def test_event_publishing_strict(dispatcher: FlextDispatcher) -> None:
         aggregate_id="agg-1",
         event_type="sample_event",
         event_id="evt-1",
-        data=m.Dict(root={}),
-        metadata=m.Dict(root={}),
+        data=t.Dict(root={}),
+        metadata=t.Dict(root={}),
     )
     res = dispatcher.publish(evt)
     assert res.is_success

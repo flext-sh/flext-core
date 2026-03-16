@@ -291,14 +291,14 @@ class Ex10FlextHandlers(Examples):
             "pop_context.1",
             handler
             .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
+            .unwrap_or(t.ConfigMap(root={}))
             .get("handler_name", "-"),
         )
         self.check(
             "pop_context.2",
             handler
             .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
+            .unwrap_or(t.ConfigMap(root={}))
             .get("handler_name", "-"),
         )
 
@@ -332,7 +332,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.get_metrics",
-            tracker.get_metrics().unwrap_or(m.ConfigMap(root={})).get(hit_key, -1),
+            tracker.get_metrics().unwrap_or(t.ConfigMap(root={})).get(hit_key, -1),
         )
         stack = h.CQRS.ContextStack()
         self.check(
@@ -349,11 +349,11 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "cqrs.pop_context",
             cast(
-                "m.ConfigMap", stack.pop_context().unwrap_or(m.ConfigMap(root={}))
+                "t.ConfigMap", stack.pop_context().unwrap_or(t.ConfigMap(root={}))
             ).get("handler_name", "-"),
         )
         di = h.DependencyIntegration
-        di_container = di.create_container(config=m.ConfigMap(root={"env": env_value}))
+        di_container = di.create_container(config=t.ConfigMap(root={"env": env_value}))
         self.check("di.bind_configuration_exists", hasattr(di_container, "config"))
         self.check(
             "di.register_object",
@@ -369,7 +369,7 @@ class Ex10FlextHandlers(Examples):
         resource_provider = di.register_resource(
             di_container,
             resource_key,
-            lambda: m.ConfigMap(root={resource_key: resource_value}),
+            lambda: t.ConfigMap(root={resource_key: resource_value}),
         )
         self.check(
             "di.register_resource",
@@ -382,7 +382,7 @@ class Ex10FlextHandlers(Examples):
             duplicate_error = f"{type(exc).__name__}:{exc}"
         self.check("di.duplicate_error", duplicate_error)
         bridge, services_mod, resources_mod = di.create_layered_bridge(
-            m.ConfigMap(root={self.rand_str(2): self.rand_str(2)})
+            t.ConfigMap(root={self.rand_str(2): self.rand_str(2)})
         )
         self.check("di.layered.bridge", bridge.__class__.__name__)
         self.check("di.layered.services", services_mod.__class__.__name__)
@@ -396,7 +396,7 @@ class Ex10FlextHandlers(Examples):
         h.Integration.track_domain_event(
             event_name,
             aggregate_id=aggregate_id,
-            event_data=m.ConfigMap(root={self.rand_str(3): self.rand_int(1, 9)}),
+            event_data=t.ConfigMap(root={self.rand_str(3): self.rand_int(1, 9)}),
         )
         h.Integration.setup_service_infrastructure(
             service_name=service_name,
@@ -414,7 +414,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "protocol.is_handler.false",
-            h.ProtocolValidation.is_handler(m.ConfigMap(root={})),
+            h.ProtocolValidation.is_handler(t.ConfigMap(root={})),
         )
         self.check(
             "protocol.is_service", h.ProtocolValidation.is_service(Ex10ServiceStub())
@@ -544,7 +544,7 @@ class Ex10FlextHandlers(Examples):
             "mixin.ensure_result.result",
             r[int].ok(ensured_result).unwrap_or(-1) == ensured_result,
         )
-        self.check("mixin.to_dict", m.ConfigMap(root={dict_key: dict_value}).root)
+        self.check("mixin.to_dict", t.ConfigMap(root={dict_key: dict_value}).root)
         generated_a = h.generate_id()
         generated_b = h.generate_id()
         self.check(

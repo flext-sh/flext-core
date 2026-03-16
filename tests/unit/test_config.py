@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_tests import c, m, tm, u
+from flext_tests import c, tm, u
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
@@ -78,7 +78,7 @@ class TestFlextSettings:
         config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
             config,
-            m.ConfigMap(dict(config_data)),
+            t.ConfigMap(dict(config_data)),
         )
         tm.that(config, is_=FlextSettings, msg="Config must be FlextSettings instance")
 
@@ -92,7 +92,7 @@ class TestFlextSettings:
         config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
             config,
-            m.ConfigMap(dict(config_data)),
+            t.ConfigMap(dict(config_data)),
         )
 
     def test_config_to_dict(self) -> None:

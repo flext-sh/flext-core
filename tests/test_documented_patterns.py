@@ -32,7 +32,6 @@ from flext_core import (
     FlextLogger,
     FlextService,
     FlextSettings,
-    m,
     r,
     t,
 )
@@ -203,14 +202,14 @@ class TestFactories:
         ]
 
     @staticmethod
-    def multi_operation_cases() -> list[tuple[str, int, m.ConfigMap]]:
+    def multi_operation_cases() -> list[tuple[str, int, t.ConfigMap]]:
         """Generate multiple operation test cases."""
         return [
-            ("double", 5, m.ConfigMap(root={"operation": "double", "result": 10})),
-            ("square", 4, m.ConfigMap(root={"operation": "square", "result": 16})),
-            ("negate", 7, m.ConfigMap(root={"operation": "negate", "result": -7})),
-            ("double", 0, m.ConfigMap(root={"operation": "double", "result": 0})),
-            ("square", 1, m.ConfigMap(root={"operation": "square", "result": 1})),
+            ("double", 5, t.ConfigMap(root={"operation": "double", "result": 10})),
+            ("square", 4, t.ConfigMap(root={"operation": "square", "result": 16})),
+            ("negate", 7, t.ConfigMap(root={"operation": "negate", "result": -7})),
+            ("double", 0, t.ConfigMap(root={"operation": "double", "result": 0})),
+            ("square", 1, t.ConfigMap(root={"operation": "square", "result": 1})),
         ]
 
 
@@ -249,48 +248,48 @@ class SendEmailService(FlextService[EmailResponse]):
         )
 
 
-class ValidationService(FlextService[m.ConfigMap]):
+class ValidationService(FlextService[t.ConfigMap]):
     """Service that validates input."""
 
     value: int = 0
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Validate value."""
         if self.value < 0:
-            return r[m.ConfigMap].fail("Value must be positive")
+            return r[t.ConfigMap].fail("Value must be positive")
         if self.value > 100:
-            return r[m.ConfigMap].fail("Value must be <= 100")
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"valid": True, "value": self.value}))
+            return r[t.ConfigMap].fail("Value must be <= 100")
+        return r[t.ConfigMap].ok(t.ConfigMap(root={"valid": True, "value": self.value}))
 
 
-class MultiOperationService(FlextService[m.ConfigMap]):
+class MultiOperationService(FlextService[t.ConfigMap]):
     """Service with multiple operations."""
 
     operation: str = ""
     value: int = 0
 
     @override
-    def execute(self) -> r[m.ConfigMap]:
+    def execute(self) -> r[t.ConfigMap]:
         """Execute based on operation."""
         match self.operation:
             case "double":
-                return r[m.ConfigMap].ok(
-                    m.ConfigMap(root={"operation": "double", "result": self.value * 2}),
+                return r[t.ConfigMap].ok(
+                    t.ConfigMap(root={"operation": "double", "result": self.value * 2}),
                 )
             case "square":
-                return r[m.ConfigMap].ok(
-                    m.ConfigMap(root={"operation": "square", "result": self.value**2}),
+                return r[t.ConfigMap].ok(
+                    t.ConfigMap(root={"operation": "square", "result": self.value**2}),
                 )
             case "negate":
-                return r[m.ConfigMap].ok(
-                    m.ConfigMap(root={"operation": "negate", "result": -self.value}),
+                return r[t.ConfigMap].ok(
+                    t.ConfigMap(root={"operation": "negate", "result": -self.value}),
                 )
             case _:
-                return r[m.ConfigMap].fail(f"Unknown operation: {self.operation}")
+                return r[t.ConfigMap].fail(f"Unknown operation: {self.operation}")
 
 
-def _value_lt_100(data: m.ConfigMap) -> bool:
+def _value_lt_100(data: t.ConfigMap) -> bool:
     value = data.get("value")
     return isinstance(value, int) and value < 100
 
@@ -552,10 +551,10 @@ class TestPattern8MultipleOperations:
         self,
         operation: str,
         value: int,
-        expected: m.ConfigMap,
+        expected: t.ConfigMap,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
-        result: m.ConfigMap = _make(
+        result: t.ConfigMap = _make(
             MultiOperationService, operation=operation, value=value
         ).result
         assert result["operation"] == expected["operation"]
@@ -639,7 +638,7 @@ class TestAllPatternsIntegration:
         assert email_result.is_success
         message_id: str = str(email_result.value)
         assert message_id.startswith("msg-")
-        calc_result: m.ConfigMap = _make(
+        calc_result: t.ConfigMap = _make(
             MultiOperationService, operation="double", value=10
         ).result
         assert calc_result["result"] == 20
