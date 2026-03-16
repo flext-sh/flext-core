@@ -342,7 +342,7 @@ def test_timeout_reraises_original_exception_when_within_limit() -> None:
 
 
 def test_combined_with_and_without_railway_uses_injection(
-    clean_container: FlextContainer,
+    clean_container: p.Container,
 ) -> None:
     _ = clean_container
     di = FlextContainer.create()

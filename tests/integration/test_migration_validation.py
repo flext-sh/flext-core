@@ -112,7 +112,7 @@ class TestMigrationScenario4:
         class UserService(FlextService[None]):
             """User service extending FlextService."""
 
-            _logger: FlextLogger = PrivateAttr(
+            _logger: p.Logger = PrivateAttr(
                 default_factory=lambda: FlextLogger(__name__)
             )
 

@@ -283,7 +283,7 @@ class TestFlextContext:
         for thread in threads:
             thread.join()
         tm.that(len(results), eq=10)
-        tm.that(all(r.startswith("value_"), eq=True) for r in results)
+        tm.that(all(r.startswith("value_") for r in results), eq=True)
 
     def test_context_performance(self, test_context: FlextContext) -> None:
         """Test context performance."""
@@ -343,9 +343,9 @@ class TestFlextContext:
         context = test_context
         context.set("key1", "value1").value
         context.set("key2", "value2").value
-        tm.that(all(context.has(k), eq=True) for k in ["key1", "key2"])
+        tm.that(all(context.has(k) for k in ["key1", "key2"]), eq=True)
         context.clear()
-        tm.that(not any(context.has(k), eq=True) for k in ["key1", "key2"])
+        tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
 
     @pytest.mark.parametrize(
         ("key_name", "special_key"),

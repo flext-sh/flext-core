@@ -44,7 +44,7 @@ class PerformanceBenchmark:
         return (result, elapsed)
 
     @staticmethod
-    def benchmark_register(container: FlextContainer, count: int) -> float:
+    def benchmark_register(container: p.Container, count: int) -> float:
         """Benchmark service registration.
 
         Args:
@@ -60,7 +60,7 @@ class PerformanceBenchmark:
         return elapsed
 
     @staticmethod
-    def benchmark_get(container: FlextContainer, count: int) -> float:
+    def benchmark_get(container: p.Container, count: int) -> float:
         """Benchmark service resolution.
 
         Args:
@@ -76,7 +76,7 @@ class PerformanceBenchmark:
         return elapsed
 
     @staticmethod
-    def benchmark_register_factory(container: FlextContainer, count: int) -> float:
+    def benchmark_register_factory(container: p.Container, count: int) -> float:
         """Benchmark factory registration.
 
         Args:
@@ -98,7 +98,7 @@ class PerformanceBenchmark:
         return elapsed
 
     @staticmethod
-    def benchmark_register_resource(container: FlextContainer, count: int) -> float:
+    def benchmark_register_resource(container: p.Container, count: int) -> float:
         """Benchmark resource registration.
 
         Args:
@@ -120,7 +120,7 @@ class PerformanceBenchmark:
         return elapsed
 
     @staticmethod
-    def benchmark_has_service(container: FlextContainer, count: int) -> float:
+    def benchmark_has_service(container: p.Container, count: int) -> float:
         """Benchmark has_service() lookups.
 
         Args:
@@ -138,7 +138,7 @@ class PerformanceBenchmark:
 
     @staticmethod
     def benchmark_list_services(
-        container: FlextContainer,
+        container: p.Container,
         iterations: int = 100,
     ) -> float:
         """Benchmark list_services() calls.

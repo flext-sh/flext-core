@@ -402,7 +402,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         runtime_context: p.Context = (
             initial_ctx if isinstance(initial_ctx, p.Context) else FlextContext.create()
         )
-        runtime_config_typed: FlextSettings = runtime_config
+        runtime_config_typed: p.Settings = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=runtime_context,

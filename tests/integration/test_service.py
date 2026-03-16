@@ -287,7 +287,7 @@ class TestFlextServiceIntegration:
     """Integration tests for FlextService implementations."""
 
     @pytest.mark.integration
-    def test_user_service_execution(self, clean_container: FlextContainer) -> None:
+    def test_user_service_execution(self, clean_container: p.Container) -> None:
         """Test user service execution with FlextService.
 
         Args:
@@ -300,7 +300,7 @@ class TestFlextServiceIntegration:
         assert result.value is True
 
     @pytest.mark.integration
-    def test_user_service_get_user(self, clean_container: FlextContainer) -> None:
+    def test_user_service_get_user(self, clean_container: p.Container) -> None:
         """Test user service get_user method.
 
         Args:
@@ -320,7 +320,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_user_service_with_custom_data(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
     ) -> None:
         """Test user service with custom user data.
 
@@ -345,7 +345,7 @@ class TestFlextServiceIntegration:
         assert result.value.email == "custom@example.com"
 
     @pytest.mark.integration
-    def test_user_service_failure_mode(self, clean_container: FlextContainer) -> None:
+    def test_user_service_failure_mode(self, clean_container: p.Container) -> None:
         """Test user service failure mode.
 
         Args:
@@ -361,7 +361,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_notification_service_execution(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
     ) -> None:
         """Test notification service execution.
 
@@ -375,7 +375,7 @@ class TestFlextServiceIntegration:
         assert result.value == "sent"
 
     @pytest.mark.integration
-    def test_notification_service_send(self, clean_container: FlextContainer) -> None:
+    def test_notification_service_send(self, clean_container: p.Container) -> None:
         """Test notification service send method.
 
         Args:
@@ -393,7 +393,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_notification_service_failure_mode(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
     ) -> None:
         """Test notification service failure mode.
 
@@ -408,7 +408,7 @@ class TestFlextServiceIntegration:
         assert result.error == "Notification service unavailable"
 
     @pytest.mark.integration
-    def test_lifecycle_service_execution(self, clean_container: FlextContainer) -> None:
+    def test_lifecycle_service_execution(self, clean_container: p.Container) -> None:
         """Test lifecycle service execution.
 
         Args:
@@ -424,7 +424,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_lifecycle_service_initialization(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
         temp_directory: str,
     ) -> None:
         """Test lifecycle service initialization with config.
@@ -450,7 +450,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_lifecycle_service_health_check(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
         temp_directory: str,
     ) -> None:
         """Test lifecycle service health check.
@@ -475,7 +475,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_lifecycle_service_shutdown(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
         temp_directory: str,
     ) -> None:
         """Test lifecycle service shutdown.
@@ -501,7 +501,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_lifecycle_service_failure_modes(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
         temp_directory: str,
     ) -> None:
         """Test lifecycle service failure modes.
@@ -530,7 +530,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_service_dependency_injection(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
     ) -> None:
         """Test dependency injection patterns with real services.
 
@@ -578,7 +578,7 @@ class TestFlextServiceIntegration:
     @pytest.mark.integration
     def test_service_with_external_service(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
         mock_external_service: FunctionalExternalService,
     ) -> None:
         """Test service integration with external service.

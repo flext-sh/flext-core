@@ -51,7 +51,7 @@ class TestLibraryIntegration:
     @pytest.mark.core
     def test_all_exports_work(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
         sample_data: dict[str, t.Tests.object],
     ) -> None:
         """Test comprehensive integration of core library exports.
@@ -83,7 +83,7 @@ class TestLibraryIntegration:
     @pytest.mark.core
     def test_flext_result_with_container(
         self,
-        clean_container: FlextContainer,
+        clean_container: p.Container,
         mock_external_service: FunctionalExternalService,
     ) -> None:
         """Test r integration with DI container factory pattern.
