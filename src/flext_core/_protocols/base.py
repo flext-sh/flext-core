@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel
@@ -84,6 +85,49 @@ class FlextProtocolsBase:
         def query_type(self) -> str | None:
             """Query type identifier."""
             ...
+
+    _protocol_specs: ClassVar[
+        Mapping[str, Callable[[t.NormalizedValue], bool]] | None
+    ] = None
+    _protocol_type_map: ClassVar[Mapping[type, str] | None] = None
+
+    @classmethod
+    def get_protocol_specs(
+        cls,
+    ) -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
+        if cls._protocol_specs is None:
+            from flext_core import p
+
+            cls._protocol_specs = MappingProxyType({
+                "config": lambda v: isinstance(v, p.Settings),
+                "context": lambda v: isinstance(v, p.Context),
+                "container": lambda v: isinstance(v, p.Container),
+                "command_bus": lambda v: isinstance(v, p.Dispatcher),
+                "handler": lambda v: isinstance(v, p.Handler),
+                "logger": lambda v: isinstance(v, p.Logger),
+                "result": lambda v: isinstance(v, p.Result),
+                "service": lambda v: isinstance(v, p.Service),
+                "middleware": lambda v: isinstance(v, p.Middleware),
+            })
+        return cls._protocol_specs
+
+    @classmethod
+    def get_protocol_type_map(cls) -> Mapping[type, str]:
+        if cls._protocol_type_map is None:
+            from flext_core import p
+
+            cls._protocol_type_map = MappingProxyType({
+                p.Settings: "config",
+                p.Context: "context",
+                p.Container: "container",
+                p.Dispatcher: "command_bus",
+                p.Handler: "handler",
+                p.Logger: "logger",
+                p.Result: "result",
+                p.Service: "service",
+                p.Middleware: "middleware",
+            })
+        return cls._protocol_type_map
 
     @classmethod
     def check_protocol_compliance(

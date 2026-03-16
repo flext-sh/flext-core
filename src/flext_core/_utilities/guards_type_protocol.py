@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from types import MappingProxyType
 from typing import TypeGuard
 
 from pydantic import BaseModel
@@ -12,31 +11,6 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesGuardsTypeProtocol:
-    _PROTOCOL_SPECS: Mapping[str, Callable[[t.NormalizedValue], bool]] = (
-        MappingProxyType({
-            "config": lambda v: isinstance(v, p.Settings),
-            "context": lambda v: isinstance(v, p.Context),
-            "container": lambda v: isinstance(v, p.Container),
-            "command_bus": lambda v: isinstance(v, p.Dispatcher),
-            "handler": lambda v: isinstance(v, p.Handler),
-            "logger": lambda v: isinstance(v, p.Logger),
-            "result": lambda v: isinstance(v, p.Result),
-            "service": lambda v: isinstance(v, p.Service),
-            "middleware": lambda v: isinstance(v, p.Middleware),
-        })
-    )
-    _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
-        p.Settings: "config",
-        p.Context: "context",
-        p.Container: "container",
-        p.Dispatcher: "command_bus",
-        p.Handler: "handler",
-        p.Logger: "logger",
-        p.Result: "result",
-        p.Service: "service",
-        p.Middleware: "middleware",
-    })
-
     @staticmethod
     def is_context(
         value: object,
@@ -161,7 +135,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         if name == "context":
             return FlextUtilitiesGuardsTypeProtocol.is_context(value)
         try:
-            return FlextUtilitiesGuardsTypeProtocol._PROTOCOL_SPECS[name](value)
+            return p.get_protocol_specs()[name](value)
         except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
 
@@ -184,7 +158,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     ) -> bool:
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
-            if type_name in FlextUtilitiesGuardsTypeProtocol._PROTOCOL_SPECS:
+            if type_name in p.get_protocol_specs():
                 return FlextUtilitiesGuardsTypeProtocol._check_protocol(
                     value, type_name
                 )
@@ -207,9 +181,9 @@ class FlextUtilitiesGuardsTypeProtocol:
             return False
         if isinstance(type_spec, tuple):
             return isinstance(value, type_spec)
-        if type_spec in FlextUtilitiesGuardsTypeProtocol._PROTOCOL_TYPE_MAP:
+        if type_spec in p.get_protocol_type_map():
             return FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                value, FlextUtilitiesGuardsTypeProtocol._PROTOCOL_TYPE_MAP[type_spec]
+                value, p.get_protocol_type_map()[type_spec]
             )
         try:
             return isinstance(
