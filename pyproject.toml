@@ -1,5 +1,5 @@
 # [MANAGED] FLEXT pyproject standardization
-# Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
+# Sections with [MANAGED] are enforced by the modernizer tool.
 # Sections with [CUSTOM] are project-specific extension points.
 # Sections with [AUTO] are derived from workspace layout and dependencies.
 # [MANAGED] build system
@@ -120,9 +120,10 @@ optional-dependencies.dev = [
   "types-toml>=0.10.8.20240310",
   "uv>=0.9.6",
   "vulture>=2.13",
+  "flext-infra @ file:../flext-infra",
+  "flext-tests @ file:../flext-tests",
 ]
 urls = {Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core"}
-
 
 # [CUSTOM] poetry - flext-core ships only the core package
 [tool.poetry]
