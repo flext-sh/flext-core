@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from types import TracebackType
-from typing import Protocol, override, runtime_checkable
+from typing import Protocol, Self, override, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
-from flext_core.protocols import FlextProtocols
 
 Base = FlextProtocolsBase.Base
 
@@ -29,7 +28,7 @@ class FlextProtocolsResult:
         Fully compatible with r and FlextRuntime usage patterns.
 
         Defined at root level to allow self-referencing in method signatures
-        (e.g., `def map[U](...) -> FlextProtocols.Result[U]`).
+        (e.g., `def map[U](...) -> FlextProtocolsResult.Result[U]`).
         """
 
         @classmethod
@@ -41,7 +40,7 @@ class FlextProtocolsResult:
             which misses Pydantic v2 model fields (stored in __pydantic_fields__,
             not __dict__). This hook uses class-level attrs that ARE in __dict__.
             """
-            if cls is FlextProtocols.Result:
+            if cls is FlextProtocolsResult.Result:
                 required = frozenset({"is_failure", "value", "flat_map", "lash"})
                 if all(any(a in B.__dict__ for B in cls_.__mro__) for a in required):
                     return True
@@ -115,15 +114,15 @@ class FlextProtocolsResult:
 
         @classmethod
         def accumulate_errors[TItem](
-            cls, *results: FlextProtocols.Result[TItem]
-        ) -> FlextProtocols.Result[Sequence[TItem]]:
+            cls, *results: FlextProtocolsResult.Result[TItem]
+        ) -> FlextProtocolsResult.Result[Sequence[TItem]]:
             """Collect all successes, fail if any failure."""
             ...
 
         @classmethod
         def create_from_callable(
             cls, func: Callable[[], T], error_code: str | None = None
-        ) -> FlextProtocols.Result[T]:
+        ) -> FlextProtocolsResult.Result[T]:
             """Create result from callable, catching exceptions."""
             ...
 
@@ -131,10 +130,10 @@ class FlextProtocolsResult:
         def traverse[TItem, UResult](
             cls,
             items: Sequence[TItem],
-            func: Callable[[TItem], FlextProtocols.Result[UResult]],
+            func: Callable[[TItem], FlextProtocolsResult.Result[UResult]],
             *,
             fail_fast: bool = True,
-        ) -> FlextProtocols.Result[Sequence[UResult]]:
+        ) -> FlextProtocolsResult.Result[Sequence[UResult]]:
             """Map over sequence with configurable failure handling."""
             ...
 
@@ -147,22 +146,22 @@ class FlextProtocolsResult:
             ...
 
         def flat_map[U](
-            self, func: Callable[[T], FlextProtocols.Result[U]]
-        ) -> FlextProtocols.Result[U]:
+            self, func: Callable[[T], FlextProtocolsResult.Result[U]]
+        ) -> FlextProtocolsResult.Result[U]:
             """Chain operations returning Result."""
             ...
 
         def flow_through[U](
-            self, *funcs: Callable[[T | U], FlextProtocols.Result[U]]
-        ) -> FlextProtocols.Result[U]:
+            self, *funcs: Callable[[T | U], FlextProtocolsResult.Result[U]]
+        ) -> FlextProtocolsResult.Result[U]:
             """Chain multiple operations in a pipeline."""
             ...
 
-        def lash(self, func: Callable[[str], FlextProtocols.Result[T]]) -> Self:
+        def lash(self, func: Callable[[str], FlextProtocolsResult.Result[T]]) -> Self:
             """Apply recovery function on failure."""
             ...
 
-        def map[U](self, func: Callable[[T], U]) -> FlextProtocols.Result[U]:
+        def map[U](self, func: Callable[[T], U]) -> FlextProtocolsResult.Result[U]:
             """Transform success value using function."""
             ...
 

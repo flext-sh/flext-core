@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
 
 class FlextTypes(
+    FlextTypesCore,
     FlextTypesServices,
     FlextTypesValidation,
 ):

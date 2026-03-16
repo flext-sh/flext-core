@@ -13,10 +13,9 @@ from typing import Protocol, runtime_checkable
 from pydantic import BaseModel
 
 from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.core import FlextTypesCore
 
 
-class FlextTypesServices(FlextTypesCore):
+class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
     @runtime_checkable
@@ -37,9 +36,9 @@ class FlextTypesServices(FlextTypesCore):
         | BaseModel
         | Mapping[
             str,
-            FlextTypingBase.Container | FlextTypesCore.ContainerValue,
+            FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
         ]
-        | Sequence[FlextTypingBase.Container | FlextTypesCore.ContainerValue]
+        | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
         | Callable[..., FlextTypingBase.Container | BaseModel]
         | FlextTypesServices.DispatchableService
     )
@@ -84,7 +83,7 @@ class FlextTypesServices(FlextTypesCore):
 
     # --- MAPPER / CACHE / CONVERSION CONSOLIDATED TYPES ---
     type MapperCallable = Callable[
-        [FlextTypesCore.NormalizedValue], FlextTypesCore.NormalizedValue
+        [FlextTypingBase.NormalizedValue], FlextTypingBase.NormalizedValue
     ]
     type StrictValue = (
         FlextTypingBase.Scalar
