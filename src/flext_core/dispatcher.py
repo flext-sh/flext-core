@@ -11,31 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable
 
 from pydantic import BaseModel
 
 from flext_core import FlextLogger, c, p, r, t, u
-
-type _DispatchableHandler = (
-    Callable[
-        ...,
-        p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None,
-    ]
-    | p.DispatchMessage
-    | p.Handle
-    | p.Execute
-)
-
-type _ResolvedHandlerCallable = Callable[
-    [p.Routable], p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None
-]
-type _RegisteredHandler = tuple[_DispatchableHandler, _ResolvedHandlerCallable]
-type _AutoHandlerRegistration = tuple[
-    _DispatchableHandler,
-    _ResolvedHandlerCallable,
-    tuple[t.MessageTypeSpecifier, ...],
-]
 
 
 class FlextDispatcher:
@@ -49,9 +28,9 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: dict[str, _RegisteredHandler] = {}
-        self._auto_handlers: list[_AutoHandlerRegistration] = []
-        self._event_subscribers: dict[str, list[_RegisteredHandler]] = {}
+        self._handlers: dict[str, t.RegisteredHandler] = {}
+        self._auto_handlers: list[t.AutoHandlerRegistration] = []
+        self._event_subscribers: dict[str, list[t.RegisteredHandler]] = {}
 
     def dispatch(self, message: p.Routable) -> r[t.Container | BaseModel]:
         """Dispatch a CQRS message to its registered handler.
@@ -138,7 +117,7 @@ class FlextDispatcher:
         return r[bool].ok(value=True)
 
     def register_handler(
-        self, handler: _DispatchableHandler, *, is_event: bool = False
+        self, handler: t.DispatchableHandler, *, is_event: bool = False
     ) -> r[bool]:
         """Register a handler for a specific message type.
 
@@ -197,7 +176,7 @@ class FlextDispatcher:
 
     def _execute_handler(
         self,
-        resolved_handler: _ResolvedHandlerCallable,
+        resolved_handler: t.ResolvedHandlerCallable,
         message: p.Routable,
         route_name: str,
     ) -> r[t.Container | BaseModel]:

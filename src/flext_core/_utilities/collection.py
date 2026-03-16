@@ -351,7 +351,7 @@ class FlextUtilitiesCollection:
 
         """
         return (
-            [list(batch) for batch in batched(items, size)]
+            [list(batch) for batch in batched(items, size, strict=False)]
             if size > 0
             else [list(items)]
         )

@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -63,6 +63,33 @@ class FlextTypes(
         | Sequence[FlextTypesCore.NormalizedValue]
         | p.HasModelDump
     )
+
+    # --- Dispatcher type aliases ---
+    type DispatchableHandler = (
+        Callable[
+            ...,
+            p.ResultLike[FlextTypesCore.Container | BaseModel]
+            | FlextTypesCore.Container
+            | BaseModel
+            | None,
+        ]
+        | p.DispatchMessage
+        | p.Handle
+        | p.Execute
+    )
+    type ResolvedHandlerCallable = Callable[
+        [p.Routable],
+        p.ResultLike[FlextTypesCore.Container | BaseModel]
+        | FlextTypesCore.Container
+        | BaseModel
+        | None,
+    ]
+    type RegisteredHandler = tuple[DispatchableHandler, ResolvedHandlerCallable]
+    type AutoHandlerRegistration = tuple[
+        DispatchableHandler,
+        ResolvedHandlerCallable,
+        tuple[FlextTypesServices.MessageTypeSpecifier, ...],
+    ]
 
 
 t = FlextTypes

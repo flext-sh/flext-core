@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import cast, override
+from typing import override
 
 from pydantic import (
     BaseModel,
@@ -140,7 +140,7 @@ class FlextService[
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
             if execution_result.value is not None:
-                return cast("TDomainResult", execution_result.value)
+                return execution_result.value
             error_msg = "Service execution returned None value"
             raise e.BaseError(error_msg)
         raise e.BaseError(execution_result.error or "Service execution failed")

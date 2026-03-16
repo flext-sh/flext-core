@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
+from typing import ClassVar, Literal, TypeIs, overload
 
 from pydantic import ValidationError
 
@@ -47,7 +47,7 @@ class FlextUtilitiesEnum:
         return enum_cls(value)
 
     @staticmethod
-    def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeGuard[E]:
+    def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
         """Check membership by name (internal helper)."""
         return name in enum_cls.__members__
 
@@ -256,7 +256,8 @@ class FlextUtilitiesEnum:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        return StrEnum(name, values)
+        result: type[StrEnum] = StrEnum(name, values)  # type: ignore[assignment]  # StrEnum() functional API returns type[Enum] per typeshed but is type[StrEnum] at runtime
+        return result
 
     @overload
     @staticmethod

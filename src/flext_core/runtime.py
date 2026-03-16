@@ -488,8 +488,8 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.RuntimeData,
-    ) -> TypeGuard[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
-        """Type guard to check if value is dict-like.
+    ) -> TypeIs[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
+        """TypeIs to check if value is dict-like.
 
         Note:
             ``value`` remains broad because this guard is a boundary utility used

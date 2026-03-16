@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from types import MappingProxyType
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel
@@ -85,63 +84,6 @@ class FlextProtocolsBase:
         def query_type(self) -> str | None:
             """Query type identifier."""
             ...
-
-    _protocol_specs: ClassVar[
-        Mapping[str, Callable[[t.NormalizedValue], bool]] | None
-    ] = None
-    _protocol_type_map: ClassVar[Mapping[type, str] | None] = None
-
-    @classmethod
-    def get_protocol_specs(
-        cls,
-    ) -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
-        if cls._protocol_specs is None:
-            from flext_core._protocols.config import FlextProtocolsConfig  # noqa: PLC0415  # Circular: _protocols/base ↔ siblings — lazy-cached, runs once
-            from flext_core._protocols.context import FlextProtocolsContext  # noqa: PLC0415
-            from flext_core._protocols.di import FlextProtocolsDI  # noqa: PLC0415
-            from flext_core._protocols.handler import FlextProtocolsHandler  # noqa: PLC0415
-            from flext_core._protocols.logging import FlextProtocolsLogging  # noqa: PLC0415
-            from flext_core._protocols.result import FlextProtocolsResult  # noqa: PLC0415
-            from flext_core._protocols.service import FlextProtocolsService  # noqa: PLC0415
-
-            cls._protocol_specs = MappingProxyType({
-                "config": lambda v: isinstance(v, FlextProtocolsConfig.Settings),
-                "context": lambda v: isinstance(v, FlextProtocolsContext.Context),
-                "container": lambda v: isinstance(v, FlextProtocolsDI.Container),
-                "command_bus": lambda v: isinstance(
-                    v, FlextProtocolsHandler.CommandBus
-                ),
-                "handler": lambda v: isinstance(v, FlextProtocolsHandler.Handler),
-                "logger": lambda v: isinstance(v, FlextProtocolsLogging.Logger),
-                "result": lambda v: isinstance(v, FlextProtocolsResult.Result),
-                "service": lambda v: isinstance(v, FlextProtocolsService.Service),
-                "middleware": lambda v: isinstance(v, FlextProtocolsHandler.Middleware),
-            })
-        return cls._protocol_specs
-
-    @classmethod
-    def get_protocol_type_map(cls) -> Mapping[type, str]:
-        if cls._protocol_type_map is None:
-            from flext_core._protocols.config import FlextProtocolsConfig
-            from flext_core._protocols.context import FlextProtocolsContext
-            from flext_core._protocols.di import FlextProtocolsDI
-            from flext_core._protocols.handler import FlextProtocolsHandler
-            from flext_core._protocols.logging import FlextProtocolsLogging
-            from flext_core._protocols.result import FlextProtocolsResult
-            from flext_core._protocols.service import FlextProtocolsService
-
-            cls._protocol_type_map = MappingProxyType({
-                FlextProtocolsConfig.Settings: "config",
-                FlextProtocolsContext.Context: "context",
-                FlextProtocolsDI.Container: "container",
-                FlextProtocolsHandler.CommandBus: "command_bus",
-                FlextProtocolsHandler.Handler: "handler",
-                FlextProtocolsLogging.Logger: "logger",
-                FlextProtocolsResult.Result: "result",
-                FlextProtocolsService.Service: "service",
-                FlextProtocolsHandler.Middleware: "middleware",
-            })
-        return cls._protocol_type_map
 
     @classmethod
     def check_protocol_compliance(

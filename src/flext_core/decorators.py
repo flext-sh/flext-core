@@ -18,7 +18,7 @@ from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Literal, Protocol, TypeIs, overload
+from typing import Literal, NoReturn, Protocol, TypeIs, overload
 
 from pydantic import BaseModel
 
@@ -760,19 +760,6 @@ class FlextDecorators:
                         FlextDecorators._handle_retry_exhaustion(
                             retry_result, retry_func, attempts, error_code, logger
                         )
-                        retry_error_code = (
-                            error_code
-                            if error_code is not None
-                            else "OPERATION_TIMEOUT"
-                        )
-                        timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
-                        raise e.TimeoutError(
-                            timeout_message,
-                            error_code=retry_error_code,
-                            operation=func.__name__,
-                            attempts=attempts,
-                            original_error=str(retry_result),
-                        )
                     return retry_result
                 except (
                     AttributeError,
@@ -784,7 +771,6 @@ class FlextDecorators:
                     FlextDecorators._handle_retry_exhaustion(
                         exc, retry_func, attempts, error_code, logger
                     )
-                    raise
 
             return wrapper
 
@@ -970,7 +956,7 @@ class FlextDecorators:
         attempts: int,
         _error_code: str | None,
         logger: p.Logger,
-    ) -> None:
+    ) -> NoReturn:
         """Handle retry exhaustion and raise appropriate exception."""
         logger.error(
             "operation_failed_all_retries_exhausted",
@@ -979,7 +965,19 @@ class FlextDecorators:
             error=str(last_exception),
             error_type=last_exception.__class__.__name__,
         )
-        raise last_exception
+        effective_error_code: str = (
+            _error_code if _error_code is not None else "OPERATION_TIMEOUT"
+        )
+        timeout_message = (
+            f"Operation {func.__name__} failed after {attempts} attempts"
+        )
+        raise e.TimeoutError(
+            timeout_message,
+            error_code=effective_error_code,
+            operation=func.__name__,
+            attempts=attempts,
+            original_error=str(last_exception),
+        ) from last_exception
 
     @staticmethod
     def _has_flext_logger(
