@@ -101,6 +101,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.guards import FlextUtilitiesGuards
     from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
     from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+    from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
     from flext_core._utilities.guards_validation import FlextUtilitiesGuardsValidation
     from flext_core._utilities.mapper import FlextUtilitiesMapper
     from flext_core._utilities.model import FlextUtilitiesModel
@@ -274,6 +275,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._utilities.guards_type",
         "FlextUtilitiesGuardsType",
     ),
+    "FlextUtilitiesGuardsTypeCore": (
+        "flext_core._utilities.guards_type_core",
+        "FlextUtilitiesGuardsTypeCore",
+    ),
     "FlextUtilitiesGuardsValidation": (
         "flext_core._utilities.guards_validation",
         "FlextUtilitiesGuardsValidation",
@@ -416,6 +421,7 @@ __all__ = [
     "FlextUtilitiesGuards",
     "FlextUtilitiesGuardsEnsure",
     "FlextUtilitiesGuardsType",
+    "FlextUtilitiesGuardsTypeCore",
     "FlextUtilitiesGuardsValidation",
     "FlextUtilitiesMapper",
     "FlextUtilitiesModel",
