@@ -30,7 +30,7 @@ from structlog.typing import BindableLogger
 from flext_core import T, t
 
 if TYPE_CHECKING:
-    from flext_core import r
+    from flext_core import m, r
 
 
 class _ProtocolIntrospection:
@@ -365,7 +365,7 @@ class FlextProtocols:
         @overload
         def set(
             self,
-            key_or_data: FlextModelsContainers.ConfigMap,
+            key_or_data: m.ConfigMap,
             value: None = ...,
             *,
             scope: str = ...,
@@ -373,7 +373,7 @@ class FlextProtocols:
 
         def set(
             self,
-            key_or_data: str | FlextModelsContainers.ConfigMap,
+            key_or_data: str | m.ConfigMap,
             value: t.Container | BaseModel | None = ...,
             *,
             scope: str = ...,
@@ -462,7 +462,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
+        def error_data(self) -> m.ConfigMap | None:
             """Error metadata (optional)."""
             ...
 
@@ -577,7 +577,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
+        def error_data(self) -> m.ConfigMap | None:
             """Error data."""
             ...
 
@@ -710,7 +710,7 @@ class FlextProtocols:
             self, name: str, *, type_cls: None = None
         ) -> r[t.RegisterableService]: ...
 
-        def get_config(self) -> FlextModelsContainers.ConfigMap:
+        def get_config(self) -> m.ConfigMap:
             """Return the merged configuration exposed by this container."""
             ...
 
@@ -954,7 +954,7 @@ class FlextProtocols:
         tracks handler execution metrics (latency, success/failure counts, etc.).
         """
 
-        def get_metrics(self) -> FlextProtocols.Result[FlextModelsContainers.ConfigMap]:
+        def get_metrics(self) -> FlextProtocols.Result[m.ConfigMap]:
             """Get current metrics dictionary.
 
             Returns:
@@ -1094,7 +1094,7 @@ class FlextProtocols:
             """Metadata protocol."""
 
             @property
-            def attributes(self) -> FlextModelsContainers.ConfigMap:
+            def attributes(self) -> m.ConfigMap:
                 """Metadata attributes."""
                 ...
 
@@ -1197,7 +1197,7 @@ class FlextProtocols:
             ...
 
     type AccessibleData = (
-        FlextModelsContainers.ConfigMap
+        m.ConfigMap
         | Mapping[str, t.NormalizedValue | BaseModel]
         | t.NormalizedValue
         | BaseModel

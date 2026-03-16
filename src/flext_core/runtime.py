@@ -67,6 +67,7 @@ from typing import (
     ClassVar,
     Self,
     TypeGuard,
+    TYPE_CHECKING,
     cast,
     override,
 )
@@ -83,7 +84,10 @@ from pydantic import (
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
-from flext_core import T, c, m, p, t
+from flext_core import T, c, p, t
+
+if TYPE_CHECKING:
+    from flext_core import m
 
 
 class FlextRuntime:
