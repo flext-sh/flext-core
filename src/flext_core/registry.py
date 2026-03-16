@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, ClassVar, Literal, Self, cast, override
+from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
@@ -184,14 +184,14 @@ class FlextRegistry(s[bool]):
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
         if result.is_success:
-            return cast("c.Cqrs.HandlerType", result.value)
+            return result.value
         return c.Cqrs.HandlerType.COMMAND
 
     def _get_status(self, value: t.Container | BaseModel) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
         if result.is_success:
-            return cast("c.Cqrs.CommonStatus", result.value)
+            return result.value
         return c.Cqrs.CommonStatus.ACTIVE
 
     @override
@@ -207,11 +207,7 @@ class FlextRegistry(s[bool]):
         return r[bool].ok(value=True)
 
     def get_plugin(
-        self,
-        category: str,
-        name: str,
-        *,
-        scope: Literal["instance", "class"] = "instance",
+        self, category: str, name: str, *, scope: str = "instance"
     ) -> r[t.Container | BaseModel | None]:
         """Get a registered plugin by category and name.
 
@@ -252,9 +248,7 @@ class FlextRegistry(s[bool]):
             self._narrow_value(cls._class_plugin_storage[key])
         )
 
-    def list_plugins(
-        self, category: str, *, scope: Literal["instance", "class"] = "instance"
-    ) -> r[list[str]]:
+    def list_plugins(self, category: str, *, scope: str = "instance") -> r[list[str]]:
         """List all plugins in a category.
 
         Args:
@@ -344,7 +338,7 @@ class FlextRegistry(s[bool]):
 
             reg_result = self.register_handler(handler)
             if reg_result.is_success:
-                details = cast("m.RegistrationDetails", reg_result.value)
+                details = reg_result.value
                 self._add_successful_registration(key, details, summary)
             else:
                 summary.errors.append(
@@ -415,7 +409,7 @@ class FlextRegistry(s[bool]):
             result = self.register_handler(handler)
             key = getattr(handler, "__name__", handler.__class__.__name__)
             if result.is_success:
-                registration_details = cast("m.RegistrationDetails", result.value)
+                registration_details = result.value
                 self._add_successful_registration(key, registration_details, summary)
             else:
                 summary.errors.append(

@@ -9,7 +9,10 @@ from typing import cast, override
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, FlextHandlers, c, h, m, r, t
+from flext_core import FlextExceptions, FlextHandlers, h, r
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 
 handlers_module = importlib.import_module("flext_core.handlers")
 

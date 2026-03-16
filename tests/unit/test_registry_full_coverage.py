@@ -9,7 +9,11 @@ from typing import cast, override
 import pytest
 from flext_tests import t as test_t
 
-from flext_core import FlextHandlers, FlextRegistry, c, h, m, p, r, t
+from flext_core import FlextHandlers, FlextRegistry, h, r
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 class _Handler(FlextHandlers[test_t.Tests.object, t.Container]):

@@ -29,11 +29,12 @@ from typing import cast
 import pytest
 from flext_tests import t as tests_t, tm, u
 
-from flext_core import m, r, t
+from flext_core import r
 from tests.constants import (
     TestsFlextConstants,
 )
-from tests.models import m as tm
+from tests.models import m, m as tm
+from tests.typings import t
 from tests.utilities import (
     FlextCoreTestsUtilities,
 )

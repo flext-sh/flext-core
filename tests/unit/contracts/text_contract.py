@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import u
-
 
 class TextUtilityContract:
     """Reusable contract mixin for text utility tests.
@@ -58,3 +56,6 @@ class TextUtilityContract:
     def assert_format_app_id(raw: str, expected: str) -> None:
         """Assert app id formatting behavior."""
         assert u.format_app_id(raw) == expected
+
+
+from tests.utilities import u

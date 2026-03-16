@@ -9,8 +9,12 @@ from typing import cast, override
 import pytest
 from flext_tests import t as test_t, tm
 
-from flext_core import c, m, r, t, u
+from flext_core import r
 from flext_core._utilities.parser import FlextUtilitiesParser
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 from ._models import _Model
 

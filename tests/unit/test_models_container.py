@@ -22,7 +22,8 @@ import pytest
 from flext_tests import t, tm
 from pydantic import BaseModel, ValidationError
 
-from flext_core import m, u
+from tests.models import m
+from tests.utilities import u
 
 _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, TypeError)
 

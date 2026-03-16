@@ -1,3 +1,5 @@
+from tests.models import m
+
 """Entity coverage tests targeting lines 82, 87, 110, 139, 235.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -5,8 +7,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
-from flext_core import c, m
 
 
 class TestEntityCoverageEdgeCases:
@@ -82,3 +82,6 @@ class TestEntityCoverageEdgeCases:
         assert value == value2
         value3 = TestValue(data="different")
         assert value != value3
+
+
+from tests.constants import c

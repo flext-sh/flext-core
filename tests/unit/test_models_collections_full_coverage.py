@@ -12,7 +12,10 @@ import pytest
 from flext_tests import t
 from pydantic import Field
 
-from flext_core import c, m, r, u
+from flext_core import r
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 
 class _Stats(m.Statistics):

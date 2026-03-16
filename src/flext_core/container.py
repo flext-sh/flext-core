@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from types import ModuleType
-from typing import Literal, Self, overload, override
+from typing import Self, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -687,7 +687,7 @@ class FlextContainer(p.DI):
             | Callable[[], p.Log.StructlogLogger]
         ),
         *,
-        kind: Literal["service", "factory", "resource"] = "service",
+        kind: str = "service",
     ) -> Self:
         """Register a service instance for dependency resolution.
 

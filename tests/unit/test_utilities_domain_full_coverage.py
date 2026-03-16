@@ -15,8 +15,8 @@ from typing import Annotated, cast, override
 
 from pydantic import BaseModel, Field
 
-from flext_core import u
 from flext_core.runtime import RuntimeData
+from tests.utilities import u
 
 from ._models import _FrozenEntity, _SampleEntity
 

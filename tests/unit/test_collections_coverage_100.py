@@ -21,8 +21,9 @@ import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRuntime, m
+from flext_core import FlextRuntime
 from flext_core.runtime import RuntimeData
+from tests.models import m
 
 
 class _TestConfig(m.Config):

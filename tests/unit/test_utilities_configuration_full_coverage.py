@@ -9,7 +9,10 @@ from typing import cast
 
 import pytest
 
-from flext_core import p, r, t, u
+from flext_core import r
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 from ._models import _DumpErrorModel, _Opts
 

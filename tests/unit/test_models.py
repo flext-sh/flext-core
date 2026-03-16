@@ -31,8 +31,10 @@ import pytest
 from flext_tests import t as test_t, tm, u
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core import c, m, t
 from flext_core._models.domain_event import _ComparableConfigMap
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 
 
 class ModelType(StrEnum):

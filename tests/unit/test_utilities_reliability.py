@@ -23,7 +23,8 @@ from typing import Final
 import pytest
 from flext_tests import u
 
-from flext_core import FlextRuntime, r, t
+from flext_core import FlextRuntime, r
+from tests.typings import t
 
 
 class TestFlextUtilitiesReliability:

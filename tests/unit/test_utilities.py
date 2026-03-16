@@ -26,7 +26,9 @@ from typing import ClassVar, cast
 import pytest
 from flext_tests import t, u
 
-from flext_core import FlextSettings, c, m, r
+from flext_core import FlextSettings, r
+from tests.constants import c
+from tests.models import m
 
 from .contracts.text_contract import TextUtilityContract
 

@@ -8,7 +8,8 @@ import pytest
 from flext_tests import tb, tm
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextRegistry, m, r
+from flext_core import FlextRegistry, r
+from tests.models import m
 
 
 class _RegistryHandlerCallable:

@@ -1,3 +1,5 @@
+from tests.typings import t
+
 """Tests for FlextTypes - dict mixin operations and validator map.
 
 Module: flext_core.typings
@@ -10,8 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pydantic import BaseModel
-
-from flext_core import m, t
 
 
 class TestDictMixinOperations:
@@ -130,3 +130,6 @@ class TestValidatorMapMixin:
         vals = list(fvm.values())
         assert len(vals) == 1
         assert vals[0] is noop
+
+
+from tests.models import m

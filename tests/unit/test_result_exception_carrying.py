@@ -26,7 +26,9 @@ from typing import cast
 from flext_tests import tm
 from pydantic import BaseModel, ValidationError
 
-from flext_core import m, r, t
+from flext_core import r
+from tests.models import m
+from tests.typings import t
 
 
 class TestFailNoExceptionBackwardCompat:

@@ -285,12 +285,6 @@ if TYPE_CHECKING:
         test_register_handler_with_message_type,
         test_register_handler_without_route_fails,
     )
-    from tests.unit.test_dispatcher_reliability import (
-        test_circuit_breaker_transitions_and_metrics,
-        test_rate_limiter_blocks_then_recovers,
-        test_rate_limiter_jitter_application,
-        test_retry_policy_behavior,
-    )
     from tests.unit.test_dispatcher_reliability_full_coverage import (
         test_dispatcher_reliability_branch_paths,
     )
@@ -2150,10 +2144,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_guards_full_coverage",
         "test_chk_exercises_missed_branches",
     ),
-    "test_circuit_breaker_transitions_and_metrics": (
-        "tests.unit.test_dispatcher_reliability",
-        "test_circuit_breaker_transitions_and_metrics",
-    ),
     "test_class_nesting_appends_to_existing_namespace_and_removes_pass": (
         "tests.unit.test_transformer_class_nesting",
         "test_class_nesting_appends_to_existing_namespace_and_removes_pass",
@@ -3110,14 +3100,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_decorators_full_coverage",
         "test_railway_and_retry_additional_paths",
     ),
-    "test_rate_limiter_blocks_then_recovers": (
-        "tests.unit.test_dispatcher_reliability",
-        "test_rate_limiter_blocks_then_recovers",
-    ),
-    "test_rate_limiter_jitter_application": (
-        "tests.unit.test_dispatcher_reliability",
-        "test_rate_limiter_jitter_application",
-    ),
     "test_reconfigure_and_reset_state_paths": (
         "tests.unit.test_runtime_full_coverage",
         "test_reconfigure_and_reset_state_paths",
@@ -3181,10 +3163,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_results_internal_conflict_paths_and_combine": (
         "tests.unit.test_models_collections_full_coverage",
         "test_results_internal_conflict_paths_and_combine",
-    ),
-    "test_retry_policy_behavior": (
-        "tests.unit.test_dispatcher_reliability",
-        "test_retry_policy_behavior",
     ),
     "test_retry_unreachable_timeouterror_path": (
         "tests.unit.test_decorators_full_coverage",
@@ -3827,7 +3805,6 @@ __all__ = [
     "test_check_implements_protocol_false_non_runtime_protocol",
     "test_checker_logger_and_safe_type_hints_fallback",
     "test_chk_exercises_missed_branches",
-    "test_circuit_breaker_transitions_and_metrics",
     "test_class_nesting_appends_to_existing_namespace_and_removes_pass",
     "test_class_nesting_keeps_unmapped_top_level_classes",
     "test_class_nesting_moves_top_level_class_into_new_namespace",
@@ -4067,8 +4044,6 @@ __all__ = [
     "test_query_resolve_pagination_wrapper_and_fallback",
     "test_query_validate_pagination_dict_and_default",
     "test_railway_and_retry_additional_paths",
-    "test_rate_limiter_blocks_then_recovers",
-    "test_rate_limiter_jitter_application",
     "test_reconfigure_and_reset_state_paths",
     "test_recover_tap_and_tap_error_paths",
     "test_refactor_utilities_iter_python_files_includes_examples_and_scripts",
@@ -4085,7 +4060,6 @@ __all__ = [
     "test_resolve_logger_prefers_logger_attribute",
     "test_result_property_raises_on_failure",
     "test_results_internal_conflict_paths_and_combine",
-    "test_retry_policy_behavior",
     "test_retry_unreachable_timeouterror_path",
     "test_reuse_existing_runtime_coverage_branches",
     "test_reuse_existing_runtime_scenarios",

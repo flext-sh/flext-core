@@ -6,8 +6,11 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextDispatcher, m, p, r, t
+from flext_core import FlextDispatcher, r
 from flext_core.dispatcher import _DispatchableHandler
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
 
 
 def _force_handler(

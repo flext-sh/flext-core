@@ -11,9 +11,12 @@ from typing import cast
 
 import pytest
 
-from flext_core import c, m, r, u
+from flext_core import r
 from flext_core._models.domain_event import _ComparableConfigMap as ComparableConfigMap
 from flext_core._models.entity import FlextModelsEntity
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 
 def test_entity_comparable_map_and_bulk_validation_paths() -> None:

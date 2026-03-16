@@ -21,7 +21,9 @@ from typing import Annotated, cast
 from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
-from flext_core import m, t as core_t, u
+from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 from ..test_utils import assertion_helpers
 from ._models import ComplexModel
@@ -126,14 +128,14 @@ class TestuMapperExtract:
 
     def test_extract_array_index(self) -> None:
         """Test array indexing."""
-        data: dict[str, core_t.NormalizedValue] = {"items": [1, 2, 3]}
+        data: dict[str, t.NormalizedValue] = {"items": [1, 2, 3]}
         result = u.extract(data, "items[1]")
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value, eq=2)
 
     def test_extract_array_index_nested(self) -> None:
         """Test nested array indexing."""
-        data: dict[str, core_t.NormalizedValue] = {
+        data: dict[str, t.NormalizedValue] = {
             "users": [{"name": "alice"}, {"name": "bob"}]
         }
         result = u.extract(data, "users[1].name")
@@ -156,7 +158,7 @@ class TestuMapperExtract:
 
     def test_extract_array_index_error(self) -> None:
         """Test invalid array index."""
-        data: dict[str, core_t.NormalizedValue] = {"items": [1]}
+        data: dict[str, t.NormalizedValue] = {"items": [1]}
         result = u.extract(data, "items[5]", required=True)
         _ = assertion_helpers.assert_flext_result_failure(result)
         msg = str(result.error)
@@ -351,7 +353,7 @@ class TestuMapperBuild:
     def test_build_pipeline(self) -> None:
         """Test build pipeline."""
         ops = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
                 "ensure": "list",
                 "map": _DOUBLE_OP,
@@ -363,9 +365,9 @@ class TestuMapperBuild:
 
     def test_build_all_ops(self) -> None:
         """Test all build operations."""
-        input_data: list[core_t.NormalizedValue] = [1, 2, 1, 3, 4]
+        input_data: list[t.NormalizedValue] = [1, 2, 1, 3, 4]
         ops = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
                 "ensure": "list",
                 "filter": _GT_TWO_OP,
@@ -388,7 +390,7 @@ class TestuMapperBuild:
     def test_build_group(self) -> None:
         """Test build group - keys are converted to strings for ConfigurationDict."""
         ops = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {"group": _GROUP_LEN_OP},
         )
         res = u.build(["cat", "dog", "ant"], ops=ops)
@@ -407,19 +409,19 @@ class TestuMapperBuild:
 
     def test_fields_multi(self) -> None:
         """Test fields multi extraction."""
-        data: dict[str, core_t.NormalizedValue] = {"a": 1, "b": 2}
-        spec: dict[str, core_t.NormalizedValue] = {"a": None, "b": None}
+        data: dict[str, t.NormalizedValue] = {"a": 1, "b": 2}
+        spec: dict[str, t.NormalizedValue] = {"a": None, "b": None}
         res = u.fields_multi(data, spec)
         tm.that(res, eq={"a": 1, "b": 2})
 
     def test_construct(self) -> None:
         """Test construct."""
-        source: dict[str, core_t.NormalizedValue | BaseModel] = {
+        source: dict[str, t.NormalizedValue | BaseModel] = {
             "user_name": "john",
             "user_age": 30,
         }
-        spec: Mapping[str, core_t.NormalizedValue | core_t.MapperCallable] = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+        spec: Mapping[str, t.NormalizedValue | t.MapperCallable] = cast(
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
                 "name": "user_name",
                 "age": "user_age",
@@ -448,7 +450,7 @@ class TestuMapperAdvanced:
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
         ops = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
                 "convert": _INT_CONVERT_OP,
                 "convert_default": 0,
@@ -457,7 +459,7 @@ class TestuMapperAdvanced:
         res = u.build("invalid", ops=ops)
         tm.that(res, eq=0)
         ops_default = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
                 "convert": _INT_CONVERT_OP,
                 "convert_default": 10,
@@ -468,9 +470,9 @@ class TestuMapperAdvanced:
 
     def test_transform_options(self) -> None:
         """Test build transform options."""
-        data: dict[str, core_t.NormalizedValue] = {"a": "UPPER", "b": None, "c": ""}
+        data: dict[str, t.NormalizedValue] = {"a": "UPPER", "b": None, "c": ""}
         ops = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
                 "transform": {
                     "normalize": True,
@@ -484,16 +486,16 @@ class TestuMapperAdvanced:
 
     def test_build_sort_complex(self) -> None:
         """Test build sort with callable and string."""
-        data: list[core_t.NormalizedValue] = [{"a": 2}, {"a": 1}]
+        data: list[t.NormalizedValue] = [{"a": 2}, {"a": 1}]
         ops_sort = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {"sort": "a"},
         )
         res = u.build(data, ops=ops_sort)
         assert isinstance(res, list) and len(res) > 0
         assert isinstance(res[0], dict) and res[0].get("a") == 1
         ops_getter = cast(
-            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
                 "sort": _GET_KEY_A_OP,
             },
@@ -504,7 +506,7 @@ class TestuMapperAdvanced:
 
     def test_build_unique(self) -> None:
         """Test build unique."""
-        data: list[core_t.NormalizedValue] = [1, 2, 1, 3]
+        data: list[t.NormalizedValue] = [1, 2, 1, 3]
         res = u.build(data, ops={"unique": True})
         tm.that(res, eq=[1, 2, 3])
 

@@ -28,7 +28,9 @@ import pytest
 from flext_tests import FlextTestsUtilities, u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import m, r, s, t
+from flext_core import r, s
+from tests.models import m
+from tests.typings import t
 
 
 class ServiceScenarioType(StrEnum):

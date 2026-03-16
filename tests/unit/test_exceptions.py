@@ -29,7 +29,9 @@ import pytest
 from flext_tests import t, tm, u
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextConstants, FlextRuntime, c, e, m
+from flext_core import FlextConstants, FlextRuntime, e
+from tests.constants import c
+from tests.models import m
 
 
 class ExceptionScenarioType(StrEnum):

@@ -8,7 +8,10 @@ import pytest
 from flext_tests import t
 
 import flext_core._utilities.args as args_module
-from flext_core import c, m, r, u
+from flext_core import r
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 
 def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:

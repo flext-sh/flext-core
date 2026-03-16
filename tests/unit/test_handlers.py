@@ -21,7 +21,9 @@ import pytest
 from flext_tests import FlextTestsUtilities, t, u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, c, h, m, r, x
+from flext_core import FlextExceptions, h, r, x
+from tests.constants import c
+from tests.models import m
 
 from ..test_utils import assertion_helpers
 

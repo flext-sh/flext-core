@@ -10,7 +10,11 @@ from typing import ClassVar, cast, override
 import pytest
 from flext_tests import t, tm
 
-from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r, u
+from flext_core import FlextLogger, FlextRuntime, FlextSettings, r
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.utilities import u
 
 
 class _FakeBindable:

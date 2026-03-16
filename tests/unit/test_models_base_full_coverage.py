@@ -7,7 +7,10 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from flext_core import c, m, r, u
+from flext_core import r
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 from ._models import _BrokenDumpModel
 

@@ -12,7 +12,11 @@ import pytest
 from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
-from flext_core import m, p, r, t, u
+from flext_core import r
+from tests.models import m
+from tests.protocols import p
+from tests.typings import t
+from tests.utilities import u
 
 
 class _PortModel(BaseModel):

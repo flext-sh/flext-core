@@ -12,7 +12,10 @@ import pytest
 from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
-from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
+from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, r
+from tests.constants import c
+from tests.models import m
+from tests.typings import t
 
 
 class _FakeLogger:

@@ -19,8 +19,11 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import FlextRuntime, c, m, r, u
+from flext_core import FlextRuntime, r
 from flext_core.runtime import RuntimeData
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module("tests.unit.test_runtime_coverage_100")

@@ -9,7 +9,7 @@ from typing import cast, override
 import pytest
 from flext_tests import tm
 
-from flext_core import u
+from tests.utilities import u
 
 
 class Status(StrEnum):

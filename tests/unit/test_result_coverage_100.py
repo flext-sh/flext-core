@@ -27,7 +27,9 @@ import math
 import pytest
 from flext_tests import tm
 
-from flext_core import m, r, t
+from flext_core import r
+from tests.models import m
+from tests.typings import t
 
 
 class _ResultAssertions:

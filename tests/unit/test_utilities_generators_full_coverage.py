@@ -1,3 +1,6 @@
+from tests.typings import t
+from tests.utilities import u
+
 """Tests for FlextUtilitiesGenerators to achieve full coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -13,8 +16,6 @@ from typing import NoReturn, cast, override
 
 import pytest
 from pydantic import BaseModel
-
-from flext_core import m, t, u
 
 from ._models import _GoodModel
 
@@ -198,3 +199,6 @@ def test_generators_mapping_non_dict_normalization_path() -> None:
 
     normalized = u._normalize_context_to_dict(_SimpleMapping())
     assert normalized == {"a": 1}
+
+
+from tests.models import m

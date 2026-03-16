@@ -17,7 +17,6 @@ from re import Pattern
 from types import ModuleType
 from typing import (
     Annotated,
-    Literal,
     ParamSpec,
     Protocol,
     TypeVar,
@@ -148,7 +147,6 @@ class FlextTypes:
 
     # Other Types
     type SortableObjectType = str | int | float
-    type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]
     type TypeHintSpecifier = type | str | Callable[[Scalar], Scalar]
     type TypeOriginSpecifier = TypeHintSpecifier
     type GenericTypeArgument = str | type[Scalar]

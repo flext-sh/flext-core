@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from flext_core import c, m, r, u
+from flext_core import r
 from flext_core._dispatcher import reliability as disp_rel
+from tests.constants import c
+from tests.models import m
+from tests.utilities import u
 
 
 def test_dispatcher_reliability_branch_paths() -> None:

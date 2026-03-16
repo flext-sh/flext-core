@@ -62,7 +62,7 @@ External concerns including logging, configuration, dependency injection, and co
 
 | Component         | Description                                                |
 | ----------------- | ---------------------------------------------------------- |
-| `r[T]`  | Railway-oriented error handling with monadic operations    |
+| `r[T]`            | Railway-oriented error handling with monadic operations    |
 | `FlextContainer`  | Dependency injection container with type-safe registration |
 | `FlextDispatcher` | Command/query dispatcher with reliability controls         |
 | `FlextContext`    | Hierarchical context management for tracing                |

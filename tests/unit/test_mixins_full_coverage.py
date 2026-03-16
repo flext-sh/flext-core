@@ -10,7 +10,11 @@ import pytest
 from flext_tests import t, tm
 from pydantic import BaseModel
 
-from flext_core import FlextLogger, FlextMixins, c, m, p, r, u, x
+from flext_core import FlextLogger, FlextMixins, r, x
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
+from tests.utilities import u
 
 from ._models import _SvcModel
 

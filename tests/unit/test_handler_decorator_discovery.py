@@ -24,7 +24,10 @@ from typing import ClassVar, cast, override
 
 from flext_tests import tm
 
-from flext_core import FlextService, c, h, m, p, r
+from flext_core import FlextService, h, r
+from tests.constants import c
+from tests.models import m
+from tests.protocols import p
 
 type _TestCallable = Callable[..., r[str]]
 type _TestDecorator = Callable[[_TestCallable], _TestCallable]

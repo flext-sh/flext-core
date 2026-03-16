@@ -13,7 +13,6 @@ from types import ModuleType, TracebackType
 from typing import (
     TYPE_CHECKING,
     ClassVar,
-    Literal,
     Protocol,
     Self,
     overload,
@@ -26,7 +25,7 @@ from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
 from flext_core import T, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core._models import FlextModelsContainers
 
 if TYPE_CHECKING:
     from pydantic._internal._model_construction import (
@@ -734,7 +733,7 @@ class FlextProtocols:
             name: str,
             impl: t.RegisterableService,
             *,
-            kind: Literal["service", "factory", "resource"] = "service",
+            kind: str = "service",
         ) -> Self:
             """Register an implementation by kind."""
             ...

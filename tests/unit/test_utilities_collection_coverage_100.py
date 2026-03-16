@@ -24,7 +24,8 @@ import pytest
 from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
-from flext_core import FlextRuntime, p, r
+from flext_core import FlextRuntime, r
+from tests.protocols import p
 
 from ..test_utils import assertion_helpers
 

@@ -8,7 +8,9 @@ Tests the strict FlextDispatcher API:
 
 from __future__ import annotations
 
-from flext_core import FlextDispatcher, c, m, r
+from flext_core import FlextDispatcher, r
+from tests.constants import c
+from tests.models import m
 
 
 class EchoHandler:

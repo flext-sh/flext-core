@@ -16,7 +16,8 @@ from typing import Never, cast, overload, override
 import structlog
 from flext_tests import t, tm
 
-from flext_core import FlextRuntime, p
+from flext_core import FlextRuntime
+from tests.protocols import p
 
 
 class TestRuntimeDictLike:

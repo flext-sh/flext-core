@@ -70,7 +70,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     """
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _operation_stats: dict[str, m.ConfigMap] = PrivateAttr(default_factory=dict)
+    _operation_stats: Annotated[
+        dict[str, m.ConfigMap],
+        PrivateAttr(default_factory=dict),
+    ]
 
     _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
@@ -320,6 +323,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         bootstrap_wire_packages: Sequence[str] | None = None
         bootstrap_wire_classes: Sequence[type] | None = None
 
+        options: m.RuntimeBootstrapOptions | None = None
         try:
             options_raw: object = getattr(
                 self,
@@ -327,7 +331,6 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 lambda: None,
             )()
             if options_raw is not None:
-                options: m.RuntimeBootstrapOptions | None = None
                 if isinstance(options_raw, m.RuntimeBootstrapOptions):
                     options = options_raw
                 elif isinstance(options_raw, (dict, Mapping)):

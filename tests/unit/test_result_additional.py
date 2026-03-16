@@ -15,7 +15,8 @@ from typing import cast
 
 from flext_tests import u
 
-from flext_core import m, r
+from flext_core import r
+from tests.models import m
 
 
 def test_ok_accepts_none() -> None:

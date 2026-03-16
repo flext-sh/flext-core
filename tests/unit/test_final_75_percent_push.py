@@ -20,7 +20,8 @@ import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextExceptions, r, u
+from flext_core import FlextContainer, FlextExceptions, r
+from tests.utilities import u
 
 
 class ResultOperationScenario(BaseModel):
