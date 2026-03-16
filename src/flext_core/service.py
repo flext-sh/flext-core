@@ -132,8 +132,8 @@ class FlextService[
             self._execution_result = self.execute()
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            domain_result: TDomainResult = execution_result.unwrap()
-            return domain_result
+            assert execution_result.value is not None
+            return execution_result.value
         raise e.BaseError(execution_result.error or "Service execution failed")
 
     _context: p.Context | None = PrivateAttr(default=None)
@@ -401,7 +401,9 @@ class FlextService[
                 "Service business rule validation failed", exc_info=bool(exc)
             )
             return False
-        return validation_result.value
+        v = validation_result.value
+        assert isinstance(v, bool)
+        return v
 
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules with extensible validation pipeline.

@@ -200,6 +200,7 @@ class FlextUtilitiesParser:
         if str_result.is_failure:
             return r[str].fail(str_result.error or "String conversion failed")
         str_repr = str_result.value
+        assert isinstance(str_repr, str)
         obj_class_name: str = type(obj).__name__
         if str_repr and str_repr != f"<{obj_class_name} object>":
             return r[str].ok(str_repr)
@@ -498,7 +499,9 @@ class FlextUtilitiesParser:
         if isinstance(text, str | bytes):
             text_length_result = r[int].create_from_callable(lambda: len(text))
             if text_length_result.is_success:
-                return text_length_result.value
+                len_ = text_length_result.value
+                assert isinstance(len_, int)
+                return len_
             return "unknown"
         text_adapter: TypeAdapter[str | bytes] = TypeAdapter(str | bytes)
         try:
@@ -507,7 +510,9 @@ class FlextUtilitiesParser:
             return "unknown"
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
         if text_length_result.is_success:
-            return text_length_result.value
+            len_ = text_length_result.value
+            assert isinstance(len_, int)
+            return len_
         return "unknown"
 
     @staticmethod
@@ -1091,11 +1096,15 @@ class FlextUtilitiesParser:
             mapping_key = self._extract_key_from_mapping(str_keyed)
             key = mapping_key.unwrap_or(obj_type_name)
         elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
-            key = attr_key.value
+            ak = attr_key.value
+            assert isinstance(ak, str)
+            key = ak
         elif hasattr(obj, "__class__"):
             key = type(obj).__name__
         elif (str_key := self._extract_key_from_str_conversion(obj)).is_success:
-            key = str_key.value
+            sk = str_key.value
+            assert isinstance(sk, str)
+            key = sk
         else:
             key = type(obj).__name__
         return key

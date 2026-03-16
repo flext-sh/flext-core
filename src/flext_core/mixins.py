@@ -609,10 +609,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             validators: Sequence[Callable[[TValidation], r[bool]]],
         ) -> r[TValidation]:
             """Chain validators sequentially, returning first failure or data on success."""
-            result: r[TValidation] = r[TValidation].ok(data)
+            current_data: TValidation = data
+            result: r[TValidation] = r[TValidation].ok(current_data)
             for validator in validators:
                 if result.is_success:
-                    current_data = result.unwrap()
                     validation_result = validator(current_data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"

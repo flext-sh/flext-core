@@ -184,14 +184,18 @@ class FlextRegistry(s[bool]):
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
         if result.is_success:
-            return result.value
+            v = result.value
+            assert isinstance(v, c.Cqrs.HandlerType)
+            return v
         return c.Cqrs.HandlerType.COMMAND
 
     def _get_status(self, value: t.Container | BaseModel) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
         if result.is_success:
-            return result.value
+            v = result.value
+            assert isinstance(v, c.Cqrs.CommonStatus)
+            return v
         return c.Cqrs.CommonStatus.ACTIVE
 
     @override
@@ -339,6 +343,7 @@ class FlextRegistry(s[bool]):
             reg_result = self.register_handler(handler)
             if reg_result.is_success:
                 details = reg_result.value
+                assert isinstance(details, m.RegistrationDetails)
                 self._add_successful_registration(key, details, summary)
             else:
                 summary.errors.append(
@@ -410,6 +415,7 @@ class FlextRegistry(s[bool]):
             key = getattr(handler, "__name__", handler.__class__.__name__)
             if result.is_success:
                 registration_details = result.value
+                assert isinstance(registration_details, m.RegistrationDetails)
                 self._add_successful_registration(key, registration_details, summary)
             else:
                 summary.errors.append(

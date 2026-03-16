@@ -22,6 +22,7 @@ import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import FlextRuntime
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from tests import m, t, u
 

@@ -12,7 +12,6 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
     from tests import benchmark, helpers, integration, unit
-    from tests.base import TestsFlextServiceBase
     from tests.benchmark.test_container_memory import (
         TestContainerMemory,
         get_memory_usage,
@@ -2297,7 +2296,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextConstants": ("tests.constants", "TestsFlextConstants"),
     "TestsFlextModels": ("tests.models", "TestsFlextModels"),
     "TestsFlextProtocols": ("tests.protocols", "TestsFlextProtocols"),
-    "TestsFlextServiceBase": ("tests.base", "TestsFlextServiceBase"),
     "TestsFlextTestsFactoriesDict": (
         "tests.unit.flext_tests.test_factories",
         "TestsFlextTestsFactoriesDict",
@@ -4465,7 +4463,6 @@ __all__ = [
     "TestsFlextConstants",
     "TestsFlextModels",
     "TestsFlextProtocols",
-    "TestsFlextServiceBase",
     "TestsFlextTestsFactoriesDict",
     "TestsFlextTestsFactoriesGeneric",
     "TestsFlextTestsFactoriesList",
