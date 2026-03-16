@@ -65,8 +65,8 @@ from types import ModuleType, TracebackType
 from typing import (
     Annotated,
     ClassVar,
-    TypeGuard,
     Self,
+    TypeGuard,
     TypeIs,
     cast,
     override,
@@ -1734,7 +1734,7 @@ class FlextRuntime:
             context_dict = t.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
-        elif not isinstance(context, Mapping) and FlextRuntime.is_dict_like(context):
+        elif FlextRuntime.is_dict_like(context):
             try:
                 for k_obj, v_obj in context.items():
                     key_str = str(k_obj)
