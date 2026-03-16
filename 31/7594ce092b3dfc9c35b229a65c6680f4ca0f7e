@@ -1,0 +1,38 @@
+src/flext_core/service.py
+  a87c37bd85fd5adb 86
+tests/unit/test_loggings_full_coverage.py
+  a4cb7ca3a610a614 541-543
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "317594ce092b3dfc9c35b229a65c6680f4ca0f7e",
+  "prompts": {
+    "a4cb7ca3a610a614": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308030929ffe5BCyerdS6SjVPF-f4316d29-95be-4924-9702-0c6e5c7fe5d1",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 1,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "a87c37bd85fd5adb": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_308934a72ffeJ6x2A8RvY36ubD",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
