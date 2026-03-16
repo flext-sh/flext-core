@@ -100,23 +100,23 @@ class FlextUtilitiesDeprecation:
         has_version = version is not None
 
         if has_replacement and has_version:
-            return _stdlib_deprecated(
-                "This class is deprecated and has a replacement.",
-                category=DeprecationWarning,
-            )
-        if has_replacement:
-            return _stdlib_deprecated(
-                "This class is deprecated. Use the replacement class.",
-                category=DeprecationWarning,
-            )
-        if has_version:
-            return _stdlib_deprecated(
-                "This class is deprecated.",
-                category=DeprecationWarning,
-            )
-        return _stdlib_deprecated(
-            "This class is deprecated.", category=DeprecationWarning
-        )
+            msg = "This class is deprecated and has a replacement."
+        elif has_replacement:
+            msg = "This class is deprecated. Use the replacement class."
+        elif has_version:
+            msg = "This class is deprecated."
+        else:
+            msg = "This class is deprecated."
+
+        stdlib_decorator = _stdlib_deprecated(msg, category=DeprecationWarning)
+
+        def _wrapper(cls: TClass) -> TClass:
+            init_attr = cls.__dict__.get("__init__")
+            if init_attr is None and "__init__" in cls.__dict__:
+                cls.__init__ = lambda self, *_a, **_kw: None  # type: ignore[assignment]
+            return stdlib_decorator(cls)
+
+        return _wrapper
 
     @staticmethod
     def deprecated_parameter(

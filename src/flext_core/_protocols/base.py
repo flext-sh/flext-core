@@ -96,36 +96,50 @@ class FlextProtocolsBase:
         cls,
     ) -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
         if cls._protocol_specs is None:
-            from flext_core import p
+            from flext_core._protocols.config import FlextProtocolsConfig  # noqa: PLC0415  # Circular: _protocols/base ↔ siblings — lazy-cached, runs once
+            from flext_core._protocols.context import FlextProtocolsContext  # noqa: PLC0415
+            from flext_core._protocols.di import FlextProtocolsDI  # noqa: PLC0415
+            from flext_core._protocols.handler import FlextProtocolsHandler  # noqa: PLC0415
+            from flext_core._protocols.logging import FlextProtocolsLogging  # noqa: PLC0415
+            from flext_core._protocols.result import FlextProtocolsResult  # noqa: PLC0415
+            from flext_core._protocols.service import FlextProtocolsService  # noqa: PLC0415
 
             cls._protocol_specs = MappingProxyType({
-                "config": lambda v: isinstance(v, p.Settings),
-                "context": lambda v: isinstance(v, p.Context),
-                "container": lambda v: isinstance(v, p.Container),
-                "command_bus": lambda v: isinstance(v, p.Dispatcher),
-                "handler": lambda v: isinstance(v, p.Handler),
-                "logger": lambda v: isinstance(v, p.Logger),
-                "result": lambda v: isinstance(v, p.Result),
-                "service": lambda v: isinstance(v, p.Service),
-                "middleware": lambda v: isinstance(v, p.Middleware),
+                "config": lambda v: isinstance(v, FlextProtocolsConfig.Settings),
+                "context": lambda v: isinstance(v, FlextProtocolsContext.Context),
+                "container": lambda v: isinstance(v, FlextProtocolsDI.Container),
+                "command_bus": lambda v: isinstance(
+                    v, FlextProtocolsHandler.CommandBus
+                ),
+                "handler": lambda v: isinstance(v, FlextProtocolsHandler.Handler),
+                "logger": lambda v: isinstance(v, FlextProtocolsLogging.Logger),
+                "result": lambda v: isinstance(v, FlextProtocolsResult.Result),
+                "service": lambda v: isinstance(v, FlextProtocolsService.Service),
+                "middleware": lambda v: isinstance(v, FlextProtocolsHandler.Middleware),
             })
         return cls._protocol_specs
 
     @classmethod
     def get_protocol_type_map(cls) -> Mapping[type, str]:
         if cls._protocol_type_map is None:
-            from flext_core import p
+            from flext_core._protocols.config import FlextProtocolsConfig
+            from flext_core._protocols.context import FlextProtocolsContext
+            from flext_core._protocols.di import FlextProtocolsDI
+            from flext_core._protocols.handler import FlextProtocolsHandler
+            from flext_core._protocols.logging import FlextProtocolsLogging
+            from flext_core._protocols.result import FlextProtocolsResult
+            from flext_core._protocols.service import FlextProtocolsService
 
             cls._protocol_type_map = MappingProxyType({
-                p.Settings: "config",
-                p.Context: "context",
-                p.Container: "container",
-                p.Dispatcher: "command_bus",
-                p.Handler: "handler",
-                p.Logger: "logger",
-                p.Result: "result",
-                p.Service: "service",
-                p.Middleware: "middleware",
+                FlextProtocolsConfig.Settings: "config",
+                FlextProtocolsContext.Context: "context",
+                FlextProtocolsDI.Container: "container",
+                FlextProtocolsHandler.CommandBus: "command_bus",
+                FlextProtocolsHandler.Handler: "handler",
+                FlextProtocolsLogging.Logger: "logger",
+                FlextProtocolsResult.Result: "result",
+                FlextProtocolsService.Service: "service",
+                FlextProtocolsHandler.Middleware: "middleware",
             })
         return cls._protocol_type_map
 

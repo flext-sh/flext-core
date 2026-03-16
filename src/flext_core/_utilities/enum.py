@@ -256,7 +256,7 @@ class FlextUtilitiesEnum:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        return type(name, (StrEnum,), dict(values))
+        return StrEnum(name, values)
 
     @overload
     @staticmethod
