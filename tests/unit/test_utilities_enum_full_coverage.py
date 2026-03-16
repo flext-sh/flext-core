@@ -114,9 +114,10 @@ def test_bi_map_returns_forward_copy_and_inverse() -> None:
 
 
 def test_create_enum_executes_factory_path() -> None:
-    expected_errors = cast("tuple[type[Exception], ...]", (TypeError, AttributeError))
-    with pytest.raises(expected_errors):
-        _ = u.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"})
+    dynamic_status = u.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"})
+    tm.that(dynamic_status.OK.value, eq="ok")
+    tm.that(dynamic_status.ERR.value, eq="err")
+    tm.that(dynamic_status.OK in dynamic_status.__members__.values(), eq=True)
 
 
 def test_shortcuts_delegate_to_primary_methods() -> None:

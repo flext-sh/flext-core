@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
+from typing import ClassVar, Literal, TypeGuard, TypeIs, cast, overload
 
 from pydantic import ValidationError
 
@@ -252,11 +252,7 @@ class FlextUtilitiesEnum:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        return type(
-            name,
-            (StrEnum,),
-            {"__members__": {k: StrEnum(k, v) for k, v in values.items()}},
-        )
+        return cast(type[StrEnum], StrEnum(name, values))
 
     @overload
     @staticmethod
