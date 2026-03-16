@@ -243,7 +243,7 @@ def main() -> None:
     service = UtilitiesService()
     result = service.execute()
 
-    def handle_success(data: t.ConfigMap) -> None:
+    def handle_success(_data: t.ConfigMap) -> None:
         """Handle successful result."""
         print("\n✅ Demonstrated 8 utility categories")
         print("✅ Covered listed utility types")

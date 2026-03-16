@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from pydantic import BaseModel
+
 from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.result import FlextProtocolsResult
@@ -24,75 +26,74 @@ class FlextProtocolsHandler:
     class Handler[MessageT: FlextProtocolsBase.Model, ResultT](
         FlextProtocolsBase.Base, Protocol
     ):
-        """Command/Query handler interface (generic).
+        def can_handle(self, message_type: type) -> bool: ...
 
-        Reflects real implementations like FlextHandlers which provide
-        comprehensive validation and execution pipelines for CQRS handlers.
+        def handle(self, message: MessageT) -> r[ResultT]: ...
 
-        Type Parameters:
-        - MessageT: Type of message handled (command, query, or event)
-        - ResultT: Type of result returned by handler
-        """
+    @runtime_checkable
+    class DispatchMessage(Protocol):
+        def dispatch_message(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> (
+            FlextProtocolsResult.ResultLike[t.Container | BaseModel]
+            | t.Container
+            | BaseModel
+            | None
+        ): ...
 
-        def can_handle(self, message_type: type) -> bool:
-            """Check if handler can handle the specified message type.
+    @runtime_checkable
+    class Handle(Protocol):
+        def handle(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> (
+            FlextProtocolsResult.ResultLike[t.Container | BaseModel]
+            | t.Container
+            | BaseModel
+            | None
+        ): ...
 
-            Reflects real implementations like FlextHandlers.can_handle() which
-            checks message type compatibility using duck typing and class hierarchy.
-            """
-            ...
-
-        def handle(self, message: MessageT) -> r[ResultT]:
-            """Handle message - core business logic method.
-
-            Reflects real implementations like FlextHandlers.handle() which
-            executes handler business logic for commands, queries, or events.
-            """
-            ...
+    @runtime_checkable
+    class Execute(Protocol):
+        def execute(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> (
+            FlextProtocolsResult.ResultLike[t.Container | BaseModel]
+            | t.Container
+            | BaseModel
+            | None
+        ): ...
 
     @runtime_checkable
     class CommandBus(FlextProtocolsBase.Base, Protocol):
-        """Command routing and execution protocol.
-
-        Matches FlextDispatcher: strict handler registration and message dispatch.
-        """
-
         def dispatch(
-            self, message: FlextProtocolsBase.Routable
-        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
-            """Dispatch a CQRS message to its registered handler."""
-            ...
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]: ...
 
         def publish(
             self,
             event: FlextProtocolsBase.Routable | Sequence[FlextProtocolsBase.Routable],
-        ) -> FlextProtocolsResult.Result[bool]:
-            """Publish events to registered subscribers."""
-            ...
+        ) -> FlextProtocolsResult.Result[bool]: ...
 
         def register_handler(
-            self, handler: t.HandlerLike, *, is_event: bool = False
-        ) -> FlextProtocolsResult.Result[bool]:
-            """Register a handler with route auto-discovery.
-
-            Handler must expose message_type, event_type, or can_handle
-            for route resolution.
-            """
-            ...
+            self,
+            handler: t.HandlerLike,
+            *,
+            is_event: bool = False,
+        ) -> FlextProtocolsResult.Result[bool]: ...
 
     @runtime_checkable
     class Middleware(FlextProtocolsBase.Base, Protocol):
-        """Processing pipeline middleware."""
-
         def process[TResult](
             self,
             command: FlextProtocolsBase.Model,
             next_handler: Callable[
                 [FlextProtocolsBase.Model], FlextProtocolsResult.Result[TResult]
             ],
-        ) -> FlextProtocolsResult.Result[TResult]:
-            """Process command."""
-            ...
+        ) -> FlextProtocolsResult.Result[TResult]: ...
 
 
 __all__ = ["FlextProtocolsHandler"]

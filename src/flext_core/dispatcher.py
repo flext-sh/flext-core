@@ -12,60 +12,19 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
 from flext_core import FlextLogger, c, p, r, t, u
-
-
-@runtime_checkable
-class DispatchMessage(Protocol):
-    """Protocol for objects that can dispatch messages."""
-
-    __slots__: tuple[()] = ()
-
-    def dispatch_message(
-        self, message: p.Routable
-    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
-        """Dispatch a message."""
-        ...
-
-
-@runtime_checkable
-class Handle(Protocol):
-    """Protocol for objects that can handle messages."""
-
-    __slots__: tuple[()] = ()
-
-    def handle(
-        self, message: p.Routable
-    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
-        """Handle a message."""
-        ...
-
-
-@runtime_checkable
-class Execute(Protocol):
-    """Protocol for objects that can execute messages."""
-
-    __slots__: tuple[()] = ()
-
-    def execute(
-        self, message: p.Routable
-    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
-        """Execute a message."""
-        ...
-
 
 type _DispatchableHandler = (
     Callable[
         ...,
         p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None,
     ]
-    | DispatchMessage
-    | Handle
-    | Execute
+    | p.DispatchMessage
+    | p.Handle
+    | p.Execute
 )
 
 type _ResolvedHandlerCallable = Callable[
@@ -195,11 +154,11 @@ class FlextDispatcher:
         """
         route_name: str | None = None
         accepted_message_types = u.compute_accepted_message_types(handler.__class__)
-        if isinstance(handler, DispatchMessage):
+        if isinstance(handler, p.DispatchMessage):
             resolved_handler = handler.dispatch_message
-        elif isinstance(handler, Handle):
+        elif isinstance(handler, p.Handle):
             resolved_handler = handler.handle
-        elif isinstance(handler, Execute):
+        elif isinstance(handler, p.Execute):
             resolved_handler = handler.execute
         else:
             resolved_handler = handler

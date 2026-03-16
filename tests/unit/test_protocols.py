@@ -72,19 +72,9 @@ class ProtocolScenarios:
             category=ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            name="has_model_fields_protocol",
-            protocol_name="HasModelFields",
-            category=ProtocolCategoryType.FOUNDATION,
-        ),
-        ProtocolDefinitionScenario(
             name="has_model_dump_protocol",
             protocol_name="HasModelDump",
             category=ProtocolCategoryType.FOUNDATION,
-        ),
-        ProtocolDefinitionScenario(
-            name="repository_protocol",
-            protocol_name="Repository",
-            category=ProtocolCategoryType.DOMAIN,
         ),
         ProtocolDefinitionScenario(
             name="service_protocol",
@@ -119,7 +109,6 @@ class ProtocolScenarios:
             protocol_names=[
                 "Result",
                 "ResultLike",
-                "HasModelFields",
                 "HasModelDump",
                 "Model",
             ],
@@ -127,7 +116,7 @@ class ProtocolScenarios:
         ProtocolAvailabilityScenario(
             name="all_domain_protocols_available",
             category=ProtocolCategoryType.DOMAIN,
-            protocol_names=["Repository", "Service"],
+            protocol_names=["Service"],
         ),
         ProtocolAvailabilityScenario(
             name="all_infrastructure_protocols_available",

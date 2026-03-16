@@ -35,7 +35,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
 
     Architecture: Layer 0.5 (Configuration Foundation)
     Provides enterprise-grade configuration management for the FLEXT ecosystem
-    through p.ProtocolSettings base class with natural protocol multi-inheritance.
+    through Pydantic BaseSettings with natural protocol compliance.
 
     Core Features:
     - Pydantic v2 BaseSettings with type-safe configuration
@@ -43,7 +43,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     - Thread-safe singleton pattern
     - Dependency injection integration
     - Runtime configuration updates
-    - Protocol compliance via inheritance (p.Config, p.ProtocolSettings)
+    - Protocol compliance via inheritance (p.Config)
     """
 
     _instances: ClassVar[dict[type[Self], Self]] = {}

@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core._dispatcher.config import FlextModelsConfig
     from flext_core._dispatcher.reliability import (
         CircuitBreakerManager,
         RateLimiterManager,
@@ -32,7 +31,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._dispatcher.reliability",
         "CircuitBreakerManager",
     ),
-    "FlextModelsConfig": ("flext_core._dispatcher.config", "FlextModelsConfig"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
     "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
@@ -40,7 +38,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     "CircuitBreakerManager",
-    "FlextModelsConfig",
     "RateLimiterManager",
     "RetryPolicy",
     "TimeoutEnforcer",

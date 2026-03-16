@@ -28,7 +28,7 @@ from structlog.typing import Context
 from flext_core import FlextRuntime, FlextSettings, c, p, r, t, u
 
 
-class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
+class FlextLogger(FlextRuntime, p.StructlogLogger):
     """Context-aware logger tuned for dispatcher-centric CQRS flows.
 
     FlextLogger layers structured logging on ``structlog`` with scoped contexts,
@@ -39,7 +39,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     _scoped_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
     _level_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
-    _structlog_instance: p.Log.StructlogLogger | None = None
+    _structlog_instance: p.StructlogLogger | None = None
     type _LogArg = t.Scalar | BaseModel | Exception
 
     def __init__(
@@ -47,7 +47,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         name: str,
         *,
         config: p.Config | None = None,
-        _bound_logger: p.Log.StructlogLogger | None = None,
+        _bound_logger: p.StructlogLogger | None = None,
         _level: c.Settings.LogLevel | str | None = None,
         _service_name: str | None = None,
         _service_version: str | None = None,
@@ -90,7 +90,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     @property
     @override
-    def logger(self) -> p.Log.StructlogLogger:
+    def logger(self) -> p.StructlogLogger:
         """Wrapped structlog logger instance."""
         instance = self._structlog_instance
         if instance is None:
@@ -352,9 +352,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
 
     @classmethod
-    def create_bound_logger(
-        cls, name: str, bound_logger: p.Log.StructlogLogger
-    ) -> Self:
+    def create_bound_logger(cls, name: str, bound_logger: p.StructlogLogger) -> Self:
         """Internal factory for creating logger with pre-bound structlog instance."""
         return cls(name, _bound_logger=bound_logger)
 
@@ -757,7 +755,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     @override
     @staticmethod
-    def get_logger(name: str | None = None) -> p.Log.StructlogLogger:
+    def get_logger(name: str | None = None) -> p.StructlogLogger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger)."""
         return FlextRuntime.get_logger(name)
 

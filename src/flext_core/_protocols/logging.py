@@ -14,123 +14,102 @@ from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
 from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.config import FlextProtocolsConfig
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.di import FlextProtocolsDI
-from flext_core._protocols.handler import FlextProtocolsHandler
 from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._protocols.service import FlextProtocolsService
 from flext_core.typings import FlextTypes as t
 
 if TYPE_CHECKING:
     from flext_core import r
 
-Config = FlextProtocolsConfig.Config
-Context = FlextProtocolsContext.Context
-DI = FlextProtocolsDI.DI
-Service = FlextProtocolsService.Service
-CommandBus = FlextProtocolsHandler.CommandBus
-Result = FlextProtocolsResult.Result
-HasModelDump = FlextProtocolsResult.HasModelDump
-
 
 class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
-    class Log:
-        """Logging namespace with StructlogLogger and Metadata protocols.
+    @runtime_checkable
+    class StructlogLogger(BindableLogger, Protocol):
+        """Protocol for structlog logger with all logging methods.
 
-        Access patterns:
-        - p.Log.StructlogLogger - structlog logger protocol
-        - p.Log.Metadata - metadata protocol
+        Extends BindableLogger to add explicit method signatures for
+        logging methods (debug, info, warning, error, etc.) that are
+        available via __getattr__ at runtime.
         """
 
-        @runtime_checkable
-        class StructlogLogger(BindableLogger, Protocol):
-            """Protocol for structlog logger with all logging methods.
+        def critical(
+            self,
+            msg: str,
+            *args: t.Container,
+            **kw: t.Container | Exception,
+        ) -> r[bool] | None:
+            """Log critical message."""
+            ...
 
-            Extends BindableLogger to add explicit method signatures for
-            logging methods (debug, info, warning, error, etc.) that are
-            available via __getattr__ at runtime.
-            """
+        def debug(
+            self,
+            msg: str,
+            *args: t.Container,
+            **kw: t.Container | Exception,
+        ) -> r[bool] | None:
+            """Log debug message."""
+            ...
 
-            def critical(
-                self,
-                msg: str,
-                *args: t.Container,
-                **kw: t.Container | Exception,
-            ) -> r[bool] | None:
-                """Log critical message."""
-                ...
+        def error(
+            self,
+            msg: str,
+            *args: t.Container,
+            **kw: t.Container | Exception,
+        ) -> r[bool] | None:
+            """Log error message."""
+            ...
 
-            def debug(
-                self,
-                msg: str,
-                *args: t.Container,
-                **kw: t.Container | Exception,
-            ) -> r[bool] | None:
-                """Log debug message."""
-                ...
+        def exception(
+            self,
+            msg: str,
+            *args: t.Container,
+            **kw: t.Container | Exception,
+        ) -> r[bool] | None:
+            """Log exception with traceback."""
+            ...
 
-            def error(
-                self,
-                msg: str,
-                *args: t.Container,
-                **kw: t.Container | Exception,
-            ) -> r[bool] | None:
-                """Log error message."""
-                ...
+        def info(
+            self,
+            msg: str,
+            *args: t.Container,
+            **kw: t.Container | Exception,
+        ) -> r[bool] | None:
+            """Log info message."""
+            ...
 
-            def exception(
-                self,
-                msg: str,
-                *args: t.Container,
-                **kw: t.Container | Exception,
-            ) -> r[bool] | None:
-                """Log exception with traceback."""
-                ...
+        def warning(
+            self,
+            msg: str,
+            *args: t.Container,
+            **kw: t.Container | Exception,
+        ) -> r[bool] | None:
+            """Log warning message."""
+            ...
 
-            def info(
-                self,
-                msg: str,
-                *args: t.Container,
-                **kw: t.Container | Exception,
-            ) -> r[bool] | None:
-                """Log info message."""
-                ...
+    @runtime_checkable
+    class Metadata(Protocol):
+        """Metadata protocol."""
 
-            def warning(
-                self,
-                msg: str,
-                *args: t.Container,
-                **kw: t.Container | Exception,
-            ) -> r[bool] | None:
-                """Log warning message."""
-                ...
+        @property
+        def attributes(self) -> t.ConfigMap:
+            """Metadata attributes."""
+            ...
 
-        @runtime_checkable
-        class Metadata(Protocol):
-            """Metadata protocol."""
+        @property
+        def created_at(self) -> datetime:
+            """Creation timestamp."""
+            ...
 
-            @property
-            def attributes(self) -> t.ConfigMap:
-                """Metadata attributes."""
-                ...
+        @property
+        def updated_at(self) -> datetime:
+            """Update timestamp."""
+            ...
 
-            @property
-            def created_at(self) -> datetime:
-                """Creation timestamp."""
-                ...
-
-            @property
-            def updated_at(self) -> datetime:
-                """Update timestamp."""
-                ...
-
-            @property
-            def version(self) -> str:
-                """Version string."""
-                ...
+        @property
+        def version(self) -> str:
+            """Version string."""
+            ...
 
     @runtime_checkable
     class Connection(FlextProtocolsBase.Base, Protocol):
@@ -144,7 +123,7 @@ class FlextProtocolsLogging:
             """Get connection string."""
             ...
 
-        def test_connection(self) -> Result[bool]:
+        def test_connection(self) -> FlextProtocolsResult.Result[bool]:
             """Test connection."""
             ...
 
@@ -220,7 +199,7 @@ class FlextProtocolsLogging:
         | Mapping[str, t.NormalizedValue | BaseModel]
         | t.NormalizedValue
         | BaseModel
-        | HasModelDump
+        | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec
     )
 

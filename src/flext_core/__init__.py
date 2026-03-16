@@ -53,7 +53,6 @@ if TYPE_CHECKING:
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
     from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
-    from flext_core._dispatcher.config import FlextModelsConfig
     from flext_core._dispatcher.reliability import (
         CircuitBreakerManager,
         RateLimiterManager,
@@ -72,6 +71,7 @@ if TYPE_CHECKING:
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.service import FlextModelsService
+    from flext_core._models.settings import FlextModelsConfig
     from flext_core._protocols.base import FlextProtocolsBase
     from flext_core._protocols.config import FlextProtocolsConfig
     from flext_core._protocols.context import FlextProtocolsContext
@@ -109,7 +109,7 @@ if TYPE_CHECKING:
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
-    from flext_core.dispatcher import DispatchMessage, Execute, FlextDispatcher, Handle
+    from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, Metadata, e
     from flext_core.handlers import FlextHandlers, h
     from flext_core.loggings import FlextLogger
@@ -149,9 +149,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._dispatcher.reliability",
         "CircuitBreakerManager",
     ),
-    "DispatchMessage": ("flext_core.dispatcher", "DispatchMessage"),
     "EnumT": ("flext_core.typings", "EnumT"),
-    "Execute": ("flext_core.dispatcher", "Execute"),
     "FactoryDecoratorsDiscovery": (
         "flext_core._decorators.discovery",
         "FactoryDecoratorsDiscovery",
@@ -192,7 +190,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._models.collections",
         "FlextModelsCollections",
     ),
-    "FlextModelsConfig": ("flext_core._dispatcher.config", "FlextModelsConfig"),
+    "FlextModelsConfig": ("flext_core._models.settings", "FlextModelsConfig"),
     "FlextModelsContainer": ("flext_core._models.container", "FlextModelsContainer"),
     "FlextModelsContainers": ("flext_core._models.containers", "FlextModelsContainers"),
     "FlextModelsContext": ("flext_core._models.context", "FlextModelsContext"),
@@ -276,7 +274,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextUtilitiesResultHelpers",
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
-    "Handle": ("flext_core.dispatcher", "Handle"),
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core.typings", "P"),
@@ -329,9 +326,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 __all__ = [
     "TV",
     "CircuitBreakerManager",
-    "DispatchMessage",
     "EnumT",
-    "Execute",
     "FactoryDecoratorsDiscovery",
     "FlextConstants",
     "FlextConstantsBase",
@@ -405,7 +400,6 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
-    "Handle",
     "MessageT_contra",
     "Metadata",
     "P",
