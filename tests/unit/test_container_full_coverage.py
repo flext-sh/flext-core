@@ -505,10 +505,7 @@ def test_register_existing_providers_full_paths_and_misc_methods(
     monkeypatch.setattr(c, "_context", FlextContext())
     monkeypatch.setattr(c, "has_service", _has_service_false)
     c.register_core_services()
-    tm.that(
-        c.has_service("context").is_success or c.has_service("context").is_failure,
-        eq=True,
-    )
+    tm.that(c.has_service("context"), is_=bool)
     c.wire_modules(modules=[])
     tm.ok(c.get("r1"))
     tm.ok(c.get("f1", type_cls=str))
