@@ -72,10 +72,19 @@ class FlextUtilitiesGuardsTypeCore:
     ) -> TypeGuard[str | int | float | bool | datetime | Path]:
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
-        if isinstance(value, (list, tuple)):
-            return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
+        if isinstance(value, list):
+            sequence_value: list[object] = [item for item in value]
+            return FlextUtilitiesGuardsTypeCore._all_container_sequence(sequence_value)
+        if isinstance(value, tuple):
+            tuple_as_list: list[object] = [item for item in value]
+            return FlextUtilitiesGuardsTypeCore._all_container_sequence(tuple_as_list)
         if isinstance(value, Mapping):
-            return FlextUtilitiesGuardsTypeCore._all_container_mapping_values(value)
+            mapping_value: dict[str, object] = {
+                str(map_key): map_value for map_key, map_value in value.items()
+            }
+            return FlextUtilitiesGuardsTypeCore._all_container_mapping_values(
+                mapping_value
+            )
         return isinstance(value, Path)
 
     @staticmethod

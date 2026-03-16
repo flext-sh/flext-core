@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from datetime import datetime
+from typing import TypeGuard
+
+from pydantic import BaseModel
+
+from flext_core import p, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+
+
+class FlextUtilitiesGuardsTypeModel:
+    @staticmethod
+    def _is_object_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+        return isinstance(value, Mapping)
+
+    @staticmethod
+    def _is_object_sequence(value: object) -> TypeGuard[Sequence[object]]:
+        return isinstance(value, (list, tuple))
+
+    @staticmethod
+    def is_object_list(
+        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+    ) -> TypeGuard[list[t.NormalizedValue]]:
+        return isinstance(value, list)
+
+    @staticmethod
+    def is_object_tuple(
+        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+    ) -> TypeGuard[tuple[t.NormalizedValue, ...]]:
+        return isinstance(value, tuple)
+
+    @staticmethod
+    def is_config_value(value: t.NormalizedValue) -> TypeGuard[t.NormalizedValue]:
+        if value is None or isinstance(value, (str, int, float, bool, datetime)):
+            return True
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                if not (
+                    item is None or isinstance(item, (str, int, float, bool, datetime))
+                ):
+                    return False
+            return True
+        if isinstance(value, Mapping):
+            for item in value.values():
+                if not (
+                    item is None or isinstance(item, (str, int, float, bool, datetime))
+                ):
+                    return False
+            return True
+        return False
+
+    @staticmethod
+    def is_configuration_dict(
+        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+    ) -> TypeGuard[t.Dict]:
+        if isinstance(value, t.Dict):
+            for item_value in value.root.values():
+                if not FlextUtilitiesGuardsTypeCore.is_container(item_value):
+                    return False
+            return True
+        return FlextUtilitiesGuardsTypeModel._is_object_mapping(
+            value
+        ) and FlextUtilitiesGuardsTypeCore._all_container_mapping_values(value)
+
+    @staticmethod
+    def is_configuration_mapping(
+        value: Mapping[str, t.NormalizedValue] | t.ConfigMap | t.Dict,
+    ) -> TypeGuard[t.ConfigMap]:
+        candidate: Mapping[str, t.NormalizedValue | BaseModel] = (
+            value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
+        )
+        for item_value in candidate.values():
+            if not FlextUtilitiesGuardsTypeCore.is_container(item_value):
+                return False
+        return True
+
+    @staticmethod
+    def is_pydantic_model(value: t.NormalizedValue) -> TypeGuard[p.HasModelDump]:
+        return (
+            isinstance(value, BaseModel)
+            and hasattr(value, "model_dump")
+            and callable(value.model_dump)
+        )
+
+
+__all__ = ["FlextUtilitiesGuardsTypeModel"]
