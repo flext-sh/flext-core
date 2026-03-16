@@ -1,0 +1,23 @@
+src/flext_core/_utilities/lazy.py
+  c5cb07103c2f28bb 15,17-18,29,31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "1d0a3d489acfb56063f9a5ad0f039a64a2e1e593",
+  "prompts": {
+    "c5cb07103c2f28bb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308a4140fffeEW5VmjnZNiWZBa-ddc5e76d-3f90-4951-af2c-bf3f27e26785",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 2,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
