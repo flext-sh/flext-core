@@ -397,7 +397,7 @@ class FlextUtilitiesConfiguration:
                 return r[T_Model].ok(base_options)
             base_class: type[BaseModel] = model_class
             valid_field_names: set[str] = set(base_class.model_fields.keys())
-            valid_kwargs = FlextModelsContainers.ConfigMap(root={})
+            valid_kwargs = m.ConfigMap(root={})
             invalid_kwargs: list[str] = []
             for key, value in kwargs.items():
                 if key in valid_field_names:

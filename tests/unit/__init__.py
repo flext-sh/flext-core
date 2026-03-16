@@ -285,6 +285,12 @@ if TYPE_CHECKING:
         test_register_handler_with_message_type,
         test_register_handler_without_route_fails,
     )
+    from tests.unit.test_dispatcher_reliability import (
+        test_circuit_breaker_transitions_and_metrics,
+        test_rate_limiter_blocks_then_recovers,
+        test_rate_limiter_jitter_application,
+        test_retry_policy_behavior,
+    )
     from tests.unit.test_dispatcher_reliability_full_coverage import (
         test_dispatcher_reliability_branch_paths,
     )
@@ -702,6 +708,19 @@ if TYPE_CHECKING:
         test_parse_mapping_outer_exception,
         test_process_outer_exception_and_coercion_branches,
     )
+    from tests.unit.test_utilities_configuration_coverage_100 import (
+        BadSingletonForTest,
+        ConfigWithoutModelConfigForTest,
+        DataclassConfigForTest,
+        FailingOptionsForTest,
+        OptionsModelForTest,
+        SingletonWithoutGetGlobalForTest,
+        SingletonWithoutModelDumpForTest,
+        StrictOptionsForTest,
+        TestConfigConstants,
+        TestConfigModels,
+        TestFlextUtilitiesConfiguration,
+    )
     from tests.unit.test_utilities_configuration_full_coverage import (
         test_build_options_invalid_only_kwargs_returns_base,
         test_private_getters_exception_paths,
@@ -719,6 +738,14 @@ if TYPE_CHECKING:
         test_conversion_string_and_join_paths,
     )
     from tests.unit.test_utilities_coverage import TestUtilitiesCoverage
+    from tests.unit.test_utilities_data_mapper import (
+        TestMapperBuildFlagsDict,
+        TestMapperCollectActiveKeys,
+        TestMapperFilterDict,
+        TestMapperInvertDict,
+        TestMapperMapDictKeys,
+        TestMapperTransformValues,
+    )
     from tests.unit.test_utilities_deprecation_full_coverage import (
         test_deprecated_class_noop_init_branch,
     )
@@ -897,6 +924,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "BadBool": ("tests.unit.test_utilities_mapper_full_coverage", "BadBool"),
     "BadMapping": ("tests.unit.test_utilities_mapper_full_coverage", "BadMapping"),
+    "BadSingletonForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "BadSingletonForTest",
+    ),
     "BadString": ("tests.unit.test_utilities_mapper_full_coverage", "BadString"),
     "CacheScenarios": (
         "tests.unit.test_utilities_cache_coverage_100",
@@ -916,9 +947,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "ConcreteTestHandler": ("tests.unit.test_registry", "ConcreteTestHandler"),
     "ConcreteTestService": ("tests.unit.test_service_bootstrap", "ConcreteTestService"),
+    "ConfigWithoutModelConfigForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "ConfigWithoutModelConfigForTest",
+    ),
     "ContainerModelsScenarios": (
         "tests.unit.test_models_container",
         "ContainerModelsScenarios",
+    ),
+    "DataclassConfigForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "DataclassConfigForTest",
     ),
     "DictHandler": (
         "tests.unit.test_utilities_type_checker_coverage_100",
@@ -941,6 +980,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ExtractPageParamsScenario": (
         "tests.unit.test_pagination_coverage_100",
         "ExtractPageParamsScenario",
+    ),
+    "FailingOptionsForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "FailingOptionsForTest",
     ),
     "GenericHandler": (
         "tests.unit.test_utilities_type_checker_coverage_100",
@@ -971,6 +1014,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ObjectHandler": (
         "tests.unit.test_utilities_type_checker_coverage_100",
         "ObjectHandler",
+    ),
+    "OptionsModelForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "OptionsModelForTest",
     ),
     "PaginationScenarios": (
         "tests.unit.test_pagination_coverage_100",
@@ -1004,7 +1051,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "SampleHandler": ("tests.unit.test_dispatcher_full_coverage", "SampleHandler"),
     "SampleQuery": ("tests.unit.test_dispatcher_full_coverage", "SampleQuery"),
     "SimpleObj": ("tests.unit.test_utilities_mapper_coverage_100", "SimpleObj"),
+    "SingletonWithoutGetGlobalForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "SingletonWithoutGetGlobalForTest",
+    ),
+    "SingletonWithoutModelDumpForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "SingletonWithoutModelDumpForTest",
+    ),
     "Status": ("tests.unit.test_utilities_enum_full_coverage", "Status"),
+    "StrictOptionsForTest": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "StrictOptionsForTest",
+    ),
     "StringHandler": (
         "tests.unit.test_utilities_type_checker_coverage_100",
         "StringHandler",
@@ -1094,9 +1153,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "TestCommands": ("tests.unit.test_coverage_models", "TestCommands"),
     "TestConfig": ("tests.unit.flext_tests.test_factories", "TestConfig"),
+    "TestConfigConstants": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "TestConfigConstants",
+    ),
     "TestConfigMapDictOps": (
         "tests.unit.test_typings_full_coverage",
         "TestConfigMapDictOps",
+    ),
+    "TestConfigModels": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "TestConfigModels",
     ),
     "TestConfigServiceViaDI": (
         "tests.unit.test_di_services_access",
@@ -1398,6 +1465,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_args_coverage_100",
         "TestFlextUtilitiesArgs",
     ),
+    "TestFlextUtilitiesConfiguration": (
+        "tests.unit.test_utilities_configuration_coverage_100",
+        "TestFlextUtilitiesConfiguration",
+    ),
     "TestFlextUtilitiesModelNormalizeToMetadata": (
         "tests.unit.test_models_container",
         "TestFlextUtilitiesModelNormalizeToMetadata",
@@ -1496,9 +1567,33 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_exception_carrying",
         "TestMapPropagatesException",
     ),
+    "TestMapperBuildFlagsDict": (
+        "tests.unit.test_utilities_data_mapper",
+        "TestMapperBuildFlagsDict",
+    ),
+    "TestMapperCollectActiveKeys": (
+        "tests.unit.test_utilities_data_mapper",
+        "TestMapperCollectActiveKeys",
+    ),
     "TestMapperDeprecatedMethods": (
         "tests.unit.test_deprecation_warnings",
         "TestMapperDeprecatedMethods",
+    ),
+    "TestMapperFilterDict": (
+        "tests.unit.test_utilities_data_mapper",
+        "TestMapperFilterDict",
+    ),
+    "TestMapperInvertDict": (
+        "tests.unit.test_utilities_data_mapper",
+        "TestMapperInvertDict",
+    ),
+    "TestMapperMapDictKeys": (
+        "tests.unit.test_utilities_data_mapper",
+        "TestMapperMapDictKeys",
+    ),
+    "TestMapperTransformValues": (
+        "tests.unit.test_utilities_data_mapper",
+        "TestMapperTransformValues",
     ),
     "TestMetadata": ("tests.unit.test_coverage_models", "TestMetadata"),
     "TestModelIntegration": ("tests.unit.test_coverage_models", "TestModelIntegration"),
@@ -2054,6 +2149,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_chk_exercises_missed_branches": (
         "tests.unit.test_utilities_guards_full_coverage",
         "test_chk_exercises_missed_branches",
+    ),
+    "test_circuit_breaker_transitions_and_metrics": (
+        "tests.unit.test_dispatcher_reliability",
+        "test_circuit_breaker_transitions_and_metrics",
     ),
     "test_class_nesting_appends_to_existing_namespace_and_removes_pass": (
         "tests.unit.test_transformer_class_nesting",
@@ -3011,6 +3110,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_decorators_full_coverage",
         "test_railway_and_retry_additional_paths",
     ),
+    "test_rate_limiter_blocks_then_recovers": (
+        "tests.unit.test_dispatcher_reliability",
+        "test_rate_limiter_blocks_then_recovers",
+    ),
+    "test_rate_limiter_jitter_application": (
+        "tests.unit.test_dispatcher_reliability",
+        "test_rate_limiter_jitter_application",
+    ),
     "test_reconfigure_and_reset_state_paths": (
         "tests.unit.test_runtime_full_coverage",
         "test_reconfigure_and_reset_state_paths",
@@ -3074,6 +3181,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_results_internal_conflict_paths_and_combine": (
         "tests.unit.test_models_collections_full_coverage",
         "test_results_internal_conflict_paths_and_combine",
+    ),
+    "test_retry_policy_behavior": (
+        "tests.unit.test_dispatcher_reliability",
+        "test_retry_policy_behavior",
     ),
     "test_retry_unreachable_timeouterror_path": (
         "tests.unit.test_decorators_full_coverage",
@@ -3334,6 +3445,7 @@ __all__ = [
     "AutoDiscoveryHandler",
     "BadBool",
     "BadMapping",
+    "BadSingletonForTest",
     "BadString",
     "CacheScenarios",
     "CoerceListValidatorScenario",
@@ -3341,7 +3453,9 @@ __all__ = [
     "CollectionScenarios",
     "ConcreteTestHandler",
     "ConcreteTestService",
+    "ConfigWithoutModelConfigForTest",
     "ContainerModelsScenarios",
+    "DataclassConfigForTest",
     "DictHandler",
     "EchoHandler",
     "EnumScenarios",
@@ -3351,6 +3465,7 @@ __all__ = [
     "ExplodingHandler",
     "ExplodingLenList",
     "ExtractPageParamsScenario",
+    "FailingOptionsForTest",
     "GenericHandler",
     "IntHandler",
     "IsMemberScenario",
@@ -3360,6 +3475,7 @@ __all__ = [
     "NoHandleMethod",
     "NonCallableHandle",
     "ObjectHandler",
+    "OptionsModelForTest",
     "PaginationScenarios",
     "ParseMappingScenario",
     "ParseOrDefaultScenario",
@@ -3374,7 +3490,10 @@ __all__ = [
     "SampleHandler",
     "SampleQuery",
     "SimpleObj",
+    "SingletonWithoutGetGlobalForTest",
+    "SingletonWithoutModelDumpForTest",
     "Status",
+    "StrictOptionsForTest",
     "StringHandler",
     "StringParserTestFactory",
     "T",
@@ -3404,7 +3523,9 @@ __all__ = [
     "TestCloneRuntime",
     "TestCommands",
     "TestConfig",
+    "TestConfigConstants",
     "TestConfigMapDictOps",
+    "TestConfigModels",
     "TestConfigServiceViaDI",
     "TestContainerDIRealExecution",
     "TestContainerInfo",
@@ -3495,6 +3616,7 @@ __all__ = [
     "TestFlextTestsUtilitiesTestContext",
     "TestFlextTypings",
     "TestFlextUtilitiesArgs",
+    "TestFlextUtilitiesConfiguration",
     "TestFlextUtilitiesModelNormalizeToMetadata",
     "TestFlextUtilitiesReliability",
     "TestFlextVersion",
@@ -3521,7 +3643,13 @@ __all__ = [
     "TestLoggingMethods",
     "TestLoggingsErrorPaths",
     "TestMapPropagatesException",
+    "TestMapperBuildFlagsDict",
+    "TestMapperCollectActiveKeys",
     "TestMapperDeprecatedMethods",
+    "TestMapperFilterDict",
+    "TestMapperInvertDict",
+    "TestMapperMapDictKeys",
+    "TestMapperTransformValues",
     "TestMetadata",
     "TestModelIntegration",
     "TestModelSerialization",
@@ -3699,6 +3827,7 @@ __all__ = [
     "test_check_implements_protocol_false_non_runtime_protocol",
     "test_checker_logger_and_safe_type_hints_fallback",
     "test_chk_exercises_missed_branches",
+    "test_circuit_breaker_transitions_and_metrics",
     "test_class_nesting_appends_to_existing_namespace_and_removes_pass",
     "test_class_nesting_keeps_unmapped_top_level_classes",
     "test_class_nesting_moves_top_level_class_into_new_namespace",
@@ -3938,6 +4067,8 @@ __all__ = [
     "test_query_resolve_pagination_wrapper_and_fallback",
     "test_query_validate_pagination_dict_and_default",
     "test_railway_and_retry_additional_paths",
+    "test_rate_limiter_blocks_then_recovers",
+    "test_rate_limiter_jitter_application",
     "test_reconfigure_and_reset_state_paths",
     "test_recover_tap_and_tap_error_paths",
     "test_refactor_utilities_iter_python_files_includes_examples_and_scripts",
@@ -3954,6 +4085,7 @@ __all__ = [
     "test_resolve_logger_prefers_logger_attribute",
     "test_result_property_raises_on_failure",
     "test_results_internal_conflict_paths_and_combine",
+    "test_retry_policy_behavior",
     "test_retry_unreachable_timeouterror_path",
     "test_reuse_existing_runtime_coverage_branches",
     "test_reuse_existing_runtime_scenarios",

@@ -38,6 +38,8 @@ from flext_core.typings import (
     TRuntime,
     TV_co,
     U,
+    ValidatedParams,
+    ValidatedReturn,
 )
 
 if TYPE_CHECKING:
@@ -314,6 +316,8 @@ __all__ = [
     "T_contra",
     "TimeoutEnforcer",
     "U",
+    "ValidatedParams",
+    "ValidatedReturn",
     "__all__",
     "__author__",
     "__author_email__",

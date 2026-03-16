@@ -21,7 +21,8 @@ from typing import (
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError, validate_call
 
-from flext_core import ValidatedParams, ValidatedReturn, m, r, t
+from flext_core import m, r, t
+from flext_core.typings import ValidatedParams, ValidatedReturn
 
 
 class FlextUtilitiesArgs:
