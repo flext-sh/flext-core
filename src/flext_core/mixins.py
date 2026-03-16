@@ -320,63 +320,62 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         bootstrap_wire_packages: Sequence[str] | None = None
         bootstrap_wire_classes: Sequence[type] | None = None
 
-        bootstrap_method_raw = getattr(self, "_runtime_bootstrap_options", None)
-        bootstrap_method: Callable[[], object] | None = (
-            bootstrap_method_raw if isinstance(bootstrap_method_raw, Callable) else None
-        )
-        if bootstrap_method is not None:
-            try:
-                options_raw = bootstrap_method()
+        try:
+            options_raw: object = getattr(
+                self,
+                "_runtime_bootstrap_options",
+                lambda: None,
+            )()
+            if options_raw is not None:
                 options: m.RuntimeBootstrapOptions | None = None
                 if isinstance(options_raw, m.RuntimeBootstrapOptions):
                     options = options_raw
                 elif isinstance(options_raw, (dict, Mapping)):
                     options = m.RuntimeBootstrapOptions.model_validate(options_raw)
-                elif options_raw is not None:
+                else:
                     try:
                         options = m.RuntimeBootstrapOptions.model_validate(
                             options_raw, from_attributes=True
                         )
                     except ValidationError:
                         options = None
-
-                if options:
-                    if options.config_type is not None:
-                        config_type_raw = options.config_type
-                    if options.config_overrides is not None:
-                        overrides = options.config_overrides
-                    if options.context is not None:
-                        initial_ctx = options.context
-                    if options.services is not None:
-                        services_typed: dict[str, t.RegisterableService] = {}
-                        for key, value in options.services.items():
-                            if u.is_registerable_service(value):
-                                services_typed[str(key)] = value
-                        bootstrap_services = services_typed
-                    bootstrap_factories = options.factories
-                    bootstrap_resources = options.resources
-                    if options.wire_modules is not None:
-                        modules_list: list[ModuleType] = []
-                        packages_list: list[str] = []
-                        for item in options.wire_modules:
-                            if isinstance(item, str):
-                                packages_list.append(item)
-                            else:
-                                modules_list.append(item)
-                        bootstrap_wire_modules = modules_list
-                        if packages_list:
-                            bootstrap_wire_packages = packages_list
-                    if options.wire_packages is not None:
-                        current_packages = list(bootstrap_wire_packages or [])
-                        current_packages.extend(options.wire_packages)
-                        bootstrap_wire_packages = current_packages
-                    if options.wire_classes is not None:
-                        bootstrap_wire_classes = options.wire_classes
-            except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
-                FlextLogger.create_module_logger(__name__).warning(
-                    "Failed to load runtime bootstrap options",
-                    exc_info=exc,
-                )
+            if options:
+                if options.config_type is not None:
+                    config_type_raw = options.config_type
+                if options.config_overrides is not None:
+                    overrides = options.config_overrides
+                if options.context is not None:
+                    initial_ctx = options.context
+                if options.services is not None:
+                    services_typed: dict[str, t.RegisterableService] = {}
+                    for key, value in options.services.items():
+                        if u.is_registerable_service(value):
+                            services_typed[str(key)] = value
+                    bootstrap_services = services_typed
+                bootstrap_factories = options.factories
+                bootstrap_resources = options.resources
+                if options.wire_modules is not None:
+                    modules_list: list[ModuleType] = []
+                    packages_list: list[str] = []
+                    for item in options.wire_modules:
+                        if isinstance(item, str):
+                            packages_list.append(item)
+                        else:
+                            modules_list.append(item)
+                    bootstrap_wire_modules = modules_list
+                    if packages_list:
+                        bootstrap_wire_packages = packages_list
+                if options.wire_packages is not None:
+                    current_packages = list(bootstrap_wire_packages or [])
+                    current_packages.extend(options.wire_packages)
+                    bootstrap_wire_packages = current_packages
+                if options.wire_classes is not None:
+                    bootstrap_wire_classes = options.wire_classes
+        except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
+            FlextLogger.create_module_logger(__name__).warning(
+                "Failed to load runtime bootstrap options",
+                exc_info=exc,
+            )
 
         if FlextMixins._is_flext_settings_type(config_type_raw):
             config_cls_typed = config_type_raw
