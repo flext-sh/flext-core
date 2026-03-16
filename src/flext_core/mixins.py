@@ -326,7 +326,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         bootstrap_method = getattr(self, "_runtime_bootstrap_options", None)
         if isinstance(bootstrap_method, Callable):
             try:
-                options_raw = bootstrap_method()
+                options_raw: object = bootstrap_method()
                 options: m.RuntimeBootstrapOptions | None = None
                 if isinstance(options_raw, m.RuntimeBootstrapOptions):
                     options = options_raw

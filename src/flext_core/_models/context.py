@@ -24,9 +24,9 @@ from pydantic import (
 )
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.entity import FlextModelsEntity
+from flext_core._models import FlextModelFoundation
+from flext_core._models import FlextModelsContainers
+from flext_core._models import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
 
 

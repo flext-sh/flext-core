@@ -18,7 +18,9 @@ from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import FlextRuntime, T_Model, t
-from flext_core._models.containers import FlextModelsContainers ## do not move to use m to not generate Ciclical import error
+from flext_core._models.containers import (
+    FlextModelsContainers,
+)  ## do not move to use m to not generate Ciclical import error
 from flext_core import U
 
 

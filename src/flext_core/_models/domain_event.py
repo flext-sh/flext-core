@@ -17,8 +17,8 @@ from typing import Annotated, override
 from pydantic import BaseModel, BeforeValidator, Field
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.containers import FlextModelsContainers
+from flext_core._models import FlextModelFoundation
+from flext_core._models import FlextModelsContainers
 
 _V = FlextModelFoundation.Validators
 
