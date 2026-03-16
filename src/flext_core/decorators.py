@@ -968,9 +968,7 @@ class FlextDecorators:
         effective_error_code: str = (
             _error_code if _error_code is not None else "OPERATION_TIMEOUT"
         )
-        timeout_message = (
-            f"Operation {func.__name__} failed after {attempts} attempts"
-        )
+        timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
         raise e.TimeoutError(
             timeout_message,
             error_code=effective_error_code,
