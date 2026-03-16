@@ -22,7 +22,7 @@ from flext_tests import t as test_t, tm
 from flext_core import FlextRuntime, FlextUtilities
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from tests import m
+from tests import m, t
 
 pytestmark = [pytest.mark.unit]
 

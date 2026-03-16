@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import contextvars
 import enum
+import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import BaseModel, Field, PrivateAttr
@@ -1266,15 +1267,13 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         ) -> Generator[m.ConfigMap]:
             """Create timed operation context with performance tracking."""
             start_time = u.generate_datetime_utc()
+            start_perf = time.perf_counter()
             operation_metadata: m.ConfigMap = m.ConfigMap(
                 root={
                     c.Context.METADATA_KEY_START_TIME: start_time.isoformat(),
                     c.Context.KEY_OPERATION_NAME: operation_name,
                 }
             )
-            _ = FlextContext.Variables.OperationStartTime.get()
-            _ = FlextContext.Variables.OperationMetadata.get()
-            _ = FlextContext.Variables.OperationName.get()
             start_token = FlextContext.Variables.OperationStartTime.set(start_time)
             metadata_token = FlextContext.Variables.OperationMetadata.set(
                 operation_metadata
@@ -1287,8 +1286,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             try:
                 yield operation_metadata
             finally:
-                end_time = u.generate_datetime_utc()
-                duration = (end_time - start_time).total_seconds()
+                duration = time.perf_counter() - start_perf
+                end_time = start_time + timedelta(seconds=duration)
                 operation_metadata.update({
                     c.Context.METADATA_KEY_END_TIME: end_time.isoformat(),
                     c.Context.METADATA_KEY_DURATION_SECONDS: duration,

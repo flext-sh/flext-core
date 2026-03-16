@@ -36,8 +36,6 @@ P = ParamSpec("P")
 R = TypeVar("R")
 ResultT = TypeVar("ResultT")
 T = TypeVar("T")
-ValidatedParams = ParamSpec("ValidatedParams")
-ValidatedReturn = TypeVar("ValidatedReturn")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
 T_Model = TypeVar("T_Model", bound=BaseModel)
@@ -47,6 +45,8 @@ TRuntime = TypeVar("TRuntime")
 TV = TypeVar("TV")
 TV_co = TypeVar("TV_co", covariant=True)
 U = TypeVar("U")
+ValidatedParams = ParamSpec("ValidatedParams")
+ValidatedReturn = TypeVar("ValidatedReturn")
 
 
 class FlextTypes:

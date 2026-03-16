@@ -492,12 +492,6 @@ class FlextContainer(p.DI):
         if name in self._services:
             service_registration = self._services[name]
             service = service_registration.service
-            try:
-                m.ServiceRegistration(name=name, service=service)
-            except ValidationError:
-                return r[t.RegisterableService].fail(
-                    f"Service '{name}' has unsupported runtime type"
-                )
             if type_cls is not None:
                 service_for_check: t.RegisterableService = service
                 if not u.is_instance_of(service_for_check, type_cls):
@@ -514,12 +508,6 @@ class FlextContainer(p.DI):
                     factory_registration.factory
                 )
                 resolved = factory_callable()
-                try:
-                    m.ServiceRegistration(name=name, service=resolved)
-                except ValidationError:
-                    return r[t.RegisterableService].fail(
-                        f"Factory '{name}' returned unsupported runtime type"
-                    )
                 if type_cls is not None:
                     resolved_for_check: t.RegisterableService = resolved
                     if not u.is_instance_of(resolved_for_check, type_cls):
@@ -714,8 +702,6 @@ class FlextContainer(p.DI):
             return self
         try:
             if kind == "service":
-                if not u.is_registerable_service(impl):
-                    return self
                 if hasattr(self._di_services, name):
                     return self
                 registration = m.ServiceRegistration(

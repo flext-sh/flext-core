@@ -15,7 +15,7 @@ from typing import Annotated, cast, override
 
 from pydantic import BaseModel, Field
 
-from tests import u
+from tests import t, u
 
 from ._models import _FrozenEntity, _SampleEntity
 

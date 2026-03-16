@@ -16,8 +16,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import c, p, r, t, u
-from flext_core.loggings import FlextLogger
+from flext_core import FlextLogger, c, p, r, t, u
 
 
 @runtime_checkable

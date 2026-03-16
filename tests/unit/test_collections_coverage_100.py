@@ -22,7 +22,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime
-from tests import m
+from tests import m, t
 
 
 class _TestConfig(m.Config):

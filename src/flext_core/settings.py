@@ -27,8 +27,7 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core import FlextRuntime, T_Namespace, T_Settings, c, t, u
-from flext_core.__version__ import __version__
+from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, t, u
 
 
 class FlextSettings(BaseSettings, FlextRuntime):

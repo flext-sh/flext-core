@@ -21,6 +21,9 @@ from typing import (
 )
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic._internal._model_construction import (
+    ModelMetaclass as _TypeCheckModelMeta,
+)
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
@@ -28,10 +31,6 @@ from flext_core import T, t
 from flext_core._models import FlextModelsContainers
 
 if TYPE_CHECKING:
-    from pydantic._internal._model_construction import (
-        ModelMetaclass as _TypeCheckModelMeta,
-    )
-
     from flext_core import r
 
 
