@@ -284,7 +284,7 @@ class TestRuntimeTypeChecking:
         FlextRuntime._structlog_configured = False
 
         def custom_processor(
-            logger: p.Log.StructlogLogger | None,
+            logger: p.StructlogLogger | None,
             method_name: str,
             event_dict: dict[str, t.Tests.object],
         ) -> dict[str, t.Tests.object]:

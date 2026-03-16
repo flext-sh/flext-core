@@ -671,8 +671,8 @@ class FlextContainer(p.DI):
             t.RegisterableService
             | t.FactoryCallable
             | t.ResourceCallable
-            | p.Log.StructlogLogger
-            | Callable[[], p.Log.StructlogLogger]
+            | p.StructlogLogger
+            | Callable[[], p.StructlogLogger]
         ),
         *,
         kind: str = "service",

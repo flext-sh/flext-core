@@ -973,7 +973,7 @@ class TestFlextRuntime:
         ):
 
             def custom_processor(
-                _logger: p.Log.StructlogLogger,
+                _logger: p.StructlogLogger,
                 _method_name: str,
                 event_dict: dict[str, t.Tests.object],
             ) -> dict[str, t.Tests.object]:

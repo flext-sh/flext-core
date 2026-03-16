@@ -17,7 +17,7 @@ class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @property
-    def logger(self) -> p.Log.StructlogLogger:
+    def logger(self) -> p.StructlogLogger:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 

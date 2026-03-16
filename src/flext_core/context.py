@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-import enum
 import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
@@ -22,15 +21,6 @@ from typing import Annotated, ClassVar, Final, Self, overload
 from pydantic import BaseModel, Field, PrivateAttr
 
 from flext_core import FlextLogger, FlextRuntime, c, m, p, r, t, u
-
-
-class _Sentinel(enum.Enum):
-    """Sentinel enum for distinguishing 'not provided' from None."""
-
-    MISSING = "__sentinel_missing__"
-
-
-_SENTINEL: Final[str] = _Sentinel.MISSING.value
 
 
 class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
@@ -711,7 +701,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     def set(
         self,
         key_or_data: str | t.ConfigMap,
-        value: t.Container | BaseModel | None = _SENTINEL,
+        value: t.Container | BaseModel | None = c.Context.SENTINEL_MISSING,
         *,
         scope: str = c.Context.SCOPE_GLOBAL,
     ) -> r[bool]:
@@ -960,7 +950,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         self, key: str, value: t.NormalizedValue | BaseModel | None, scope: str
     ) -> r[bool]:
         """Set a single key-value pair in the context."""
-        if value is _SENTINEL or value is None:
+        if value is c.Context.SENTINEL_MISSING or value is None:
             return r[bool].fail("Value is required for single-key set")
         validation_result = FlextContext._validate_set_inputs(key, value)
         if validation_result.is_failure:

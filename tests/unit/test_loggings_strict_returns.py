@@ -8,7 +8,7 @@ Tests verify that:
   exception, trace, log) return r[bool] instead of None
 - Return values have is_success=True on normal logging
 - Backward compatibility: code that discards return value still works
-- Protocol compliance: FlextLogger satisfies p.Log.StructlogLogger
+- Protocol compliance: FlextLogger satisfies p.StructlogLogger
 
 Uses Python 3.13 patterns and pytest parametrization.
 
@@ -253,10 +253,10 @@ class TestBackwardCompatDiscardReturnValue:
 
 
 class TestProtocolComplianceStructlogLogger:
-    """Test protocol compliance: FlextLogger satisfies p.Log.StructlogLogger."""
+    """Test protocol compliance: FlextLogger satisfies p.StructlogLogger."""
 
     def test_flext_logger_implements_structlog_logger_protocol(self) -> None:
-        """Verify FlextLogger implements p.Log.StructlogLogger protocol."""
+        """Verify FlextLogger implements p.StructlogLogger protocol."""
         logger = FlextLogger.create_module_logger(__name__)
         tm.that(hasattr(logger, "debug"), eq=True)
         tm.that(hasattr(logger, "info"), eq=True)

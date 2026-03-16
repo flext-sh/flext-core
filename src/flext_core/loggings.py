@@ -1088,7 +1088,7 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""
 
-        def __init__(self, logger: FlextLogger, operation_name: str) -> None:
+        def __init__(self, logger: p.StructlogLogger, operation_name: str) -> None:
             """Initialize with logger and operation name."""
             super().__init__()
             self.logger = logger

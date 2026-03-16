@@ -79,11 +79,11 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
+    config_type: type[p.Config] | None = Field(default=None, exclude=True)
     config_overrides: dict[str, t.NormalizedValue] | None = Field(
         default=None, exclude=True
     )
-    initial_context: FlextContext | None = Field(default=None, exclude=True)
+    initial_context: p.Context | None = Field(default=None, exclude=True)
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, t.RegisterableService] | None = Field(
         default=None, exclude=True
@@ -151,7 +151,7 @@ class FlextService[
         raise e.BaseError(execution_result.error or "Service execution failed")
 
     _context: p.Context | None = PrivateAttr(default=None)
-    _config: FlextSettings | None = PrivateAttr(default=None)
+    _config: p.Config | None = PrivateAttr(default=None)
     _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: list[tuple[str, m.DecoratorConfig]] = PrivateAttr(
@@ -182,7 +182,7 @@ class FlextService[
         return u.require_initialized(self._runtime, "Runtime")
 
     @property
-    def settings(self) -> FlextSettings:
+    def settings(self) -> p.Config:
         """Return service config narrowed to FlextSettings."""
         config = self.config
         if isinstance(config, FlextSettings):
@@ -201,7 +201,7 @@ class FlextService[
         config_type_raw = self.config_type or (
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
-        config_type_val: type[FlextSettings] | None
+        config_type_val: type[p.Config] | None
         if (
             config_type_raw is not None
             and isinstance(config_type_raw, type)
@@ -264,7 +264,7 @@ class FlextService[
     def _create_runtime(
         cls,
         *,
-        config_type: type[FlextSettings] | None = None,
+        config_type: type[p.Config] | None = None,
         config_overrides: Mapping[str, t.NormalizedValue] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
@@ -326,14 +326,14 @@ class FlextService[
         )
 
     @classmethod
-    def _get_service_config_type(cls) -> type[FlextSettings]:
+    def _get_service_config_type(cls) -> type[p.Config]:
         """Get the config type for this service class.
 
         Services can override this method to specify their specific config type.
         Defaults to FlextSettings for generic services.
 
         Returns:
-            type[FlextSettings]: The config class to use for this service
+            type[p.Config]: The config class to use for this service
 
         """
         return FlextSettings

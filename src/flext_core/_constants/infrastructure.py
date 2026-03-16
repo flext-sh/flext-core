@@ -63,6 +63,8 @@ class FlextConstantsInfrastructure:
         METADATA_KEY_START_TIME: Final[str] = "start_time"
         METADATA_KEY_END_TIME: Final[str] = "end_time"
         METADATA_KEY_DURATION_SECONDS: Final[str] = "duration_seconds"
+        SENTINEL_MISSING: Final[str] = "__sentinel_missing__"
+        """Sentinel value to distinguish 'not provided' from None in context operations."""
 
     class Container:
         """Dependency injection container constants."""

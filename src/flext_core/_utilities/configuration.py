@@ -110,7 +110,7 @@ class FlextUtilitiesConfiguration:
         return (True, str(val))
 
     @staticmethod
-    def _get_logger() -> p.Log.StructlogLogger:
+    def _get_logger() -> p.StructlogLogger:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 

@@ -81,7 +81,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     tm.that(value, eq="ok")
     logger_obj = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
+        cast("p.StructlogLogger", cast("object", _FakeBindable())),
     )
     tm.that(logger_obj._context, eq={})
     tm.that(logger_obj() is logger_obj, eq=True)
@@ -113,7 +113,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     def _create_module_logger(_cls: type, _name: str) -> FlextLogger:
         return FlextLogger.create_bound_logger(
             "mod",
-            cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
+            cast("p.StructlogLogger", cast("object", _FakeBindable())),
         )
 
     monkeypatch.setattr(
@@ -238,7 +238,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", fake)),
+        cast("p.StructlogLogger", cast("object", fake)),
     )
 
     def _no_frame() -> types.FrameType | None:
@@ -281,10 +281,10 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
     )
     logger_boom = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
+        cast("p.StructlogLogger", cast("object", _FakeBindable())),
     )
     logger_boom._structlog_instance = cast(
-        "p.Log.StructlogLogger",
+        "p.StructlogLogger",
         cast("object", _FakeBindable()),
     )
 
@@ -304,7 +304,7 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
     fake = _FakeBindable()
     logger = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", fake)),
+        cast("p.StructlogLogger", cast("object", fake)),
     )
 
     def _raise_cfg(_cls: type) -> p.Config:
@@ -329,7 +329,7 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
     tm.that("stack_trace" in with_exc_info, eq=True)
     broken = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
+        cast("p.StructlogLogger", cast("object", _FakeBindable())),
     )
 
     def _raise_error(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
@@ -362,7 +362,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",
-            cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
+            cast("p.StructlogLogger", cast("object", _FakeBindable())),
         )
 
     monkeypatch.setattr(
@@ -392,7 +392,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
 
     trace_logger = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", _TraceLogger())),
+        cast("p.StructlogLogger", cast("object", _TraceLogger())),
     )
     trace_logger.trace("%s", "a")
 
@@ -490,7 +490,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
 
     err_logger = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", _ErrorLogger())),
+        cast("p.StructlogLogger", cast("object", _ErrorLogger())),
     )
     err_logger.error("boom", exception=ValueError("x"))
 
@@ -512,7 +512,7 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
         captured["level"] = level
         return FlextLogger.create_bound_logger(
             "ctx",
-            cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
+            cast("p.StructlogLogger", cast("object", _FakeBindable())),
         )
 
     monkeypatch.setattr(
@@ -538,10 +538,12 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
             msg = "exception"
             raise RuntimeError(msg)
 
-    monkeypatch.setattr(p.Log, "StructlogLogger", _StructlogLogger)
+    from flext_core._protocols.logging import FlextProtocolsLogging
+
+    monkeypatch.setattr(FlextProtocolsLogging, "StructlogLogger", _StructlogLogger)
     trace_logger = FlextLogger.create_bound_logger(
         "x",
-        cast("p.Log.StructlogLogger", cast("object", _StructlogLogger())),
+        cast("p.StructlogLogger", cast("object", _StructlogLogger())),
     )
     trace_logger.trace("%s", "value")
     trace_logger.error("boom", exception=ValueError("x"))
