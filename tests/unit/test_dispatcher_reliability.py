@@ -49,6 +49,7 @@ def test_rate_limiter_blocks_then_recovers() -> None:
     tm.fail(blocked)
     tm.that(blocked.error_code, eq=c.Errors.OPERATION_ERROR)
     tm.that(blocked.error_data is not None, eq=True)
+    assert blocked.error_data is not None
     retry_after_val = blocked.error_data.get("retry_after")
     tm.that(isinstance(retry_after_val, (int, float)) and retry_after_val >= 0, eq=True)
     time.sleep(0.22)
