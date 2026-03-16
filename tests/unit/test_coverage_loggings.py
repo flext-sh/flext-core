@@ -26,7 +26,7 @@ from flext_core import FlextLogger, FlextSettings, p, r, t
 def make_result_logger(
     name: str,
     *,
-    config: FlextSettings | None = None,
+    config: p.Settings | None = None,
     _level: str | None = None,
     _service_name: str | None = None,
     _service_version: str | None = None,
