@@ -14,7 +14,7 @@ import re
 import pytest
 from hypothesis import given, strategies as st
 
-from tests.utilities import u
+from tests import u
 
 from .contracts.text_contract import TextUtilityContract
 
