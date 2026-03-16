@@ -21,11 +21,11 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def clone_container(
-        container: p.DI,
+        container: p.Container,
         *,
         scope_id: str | None = None,
         overrides: Mapping[str, t.RegisterableService] | None = None,
-    ) -> p.DI:
+    ) -> p.Container:
         """Clone container with scoping.
 
         Creates a scoped container instance with optional service overrides.
@@ -36,7 +36,7 @@ class FlextUtilitiesContext:
             overrides: Optional service overrides.
 
         Returns:
-            p.DI: Scoped container instance.
+            p.Container: Scoped container instance.
 
         """
         return container.scoped(subproject=scope_id, services=overrides)

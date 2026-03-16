@@ -31,7 +31,7 @@ from flext_tests import c, tm, u
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextSettings, t
+from flext_core import FlextSettings, p, t
 
 
 class ConfigScenarios:
@@ -567,7 +567,7 @@ class TestFlextSettingsPydantic:
         """Test AutoConfig.create_config method."""
         auto_config = FlextSettings.AutoConfig(config_class=FlextSettings)
         instance = auto_config.create_config()
-        assert isinstance(instance, FlextSettings)
+        assert isinstance(instance, p.Settings)
 
     def test_auto_register_decorator(self) -> None:
         """Test register_namespace registers a namespace class."""
@@ -595,7 +595,7 @@ class TestFlextSettingsPydantic:
         with pytest.raises(TypeError, match="is not instance"):
             config.get_namespace("test_type", threading.Thread)
         instance = config.get_namespace("test_type", BaseSettings)
-        assert isinstance(instance, FlextSettings)
+        assert isinstance(instance, p.Settings)
         del FlextSettings._namespace_registry["test_type"]
 
     def test_get_namespace_found(self) -> None:
@@ -603,7 +603,7 @@ class TestFlextSettingsPydantic:
         FlextSettings.register_namespace("test_attr", FlextSettings)
         config = u.Tests.ConfigHelpers.create_test_config()
         instance = config.get_namespace("test_attr", FlextSettings)
-        assert isinstance(instance, FlextSettings)
+        assert isinstance(instance, p.Settings)
         del FlextSettings._namespace_registry["test_attr"]
 
 

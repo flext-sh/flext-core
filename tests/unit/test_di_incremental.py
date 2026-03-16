@@ -30,6 +30,7 @@ from flext_core import (
     FlextRuntime,
     FlextSettings,
     m,
+    p,
     r,
     s,
     t,
@@ -286,7 +287,7 @@ class TestServiceBootstrapWithDI:
             wire_modules=[sys.modules[__name__]],
         )
         container_instance = runtime.container
-        tm.that(isinstance(container_instance, FlextContainer), eq=True)
+        tm.that(isinstance(container_instance, p.Container), eq=True)
         tm.that(hasattr(container_instance, "_di_container"), eq=True)
 
     def test_service_with_runtime_bootstrap_options(self) -> None:

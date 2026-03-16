@@ -79,7 +79,7 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type[p.Config] | None = Field(default=None, exclude=True)
+    config_type: type[p.Settings] | None = Field(default=None, exclude=True)
     config_overrides: dict[str, t.NormalizedValue] | None = Field(
         default=None, exclude=True
     )
@@ -120,10 +120,10 @@ class FlextService[
             self.__class__.__name__, runtime.config.version
         ):
             pass
-        if not isinstance(runtime.context, FlextContext):
+        if not isinstance(runtime.context, p.Context):
             msg = "Expected FlextContext"
             raise TypeError(msg)
-        if not isinstance(runtime.config, FlextSettings):
+        if not isinstance(runtime.config, p.Settings):
             msg = "Expected FlextSettings"
             raise TypeError(msg)
         self._context = runtime.context
@@ -151,8 +151,8 @@ class FlextService[
         raise e.BaseError(execution_result.error or "Service execution failed")
 
     _context: p.Context | None = PrivateAttr(default=None)
-    _config: p.Config | None = PrivateAttr(default=None)
-    _container: p.DI | None = PrivateAttr(default=None)
+    _config: p.Settings | None = PrivateAttr(default=None)
+    _container: p.Container | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: list[tuple[str, m.DecoratorConfig]] = PrivateAttr(
         default_factory=lambda: list[tuple[str, m.DecoratorConfig]]()
@@ -160,13 +160,13 @@ class FlextService[
 
     @property
     @override
-    def config(self) -> p.Config:
+    def config(self) -> p.Settings:
         """Service-scoped configuration clone."""
         return u.require_initialized(self._config, "Config")
 
     @property
     @override
-    def container(self) -> p.DI:
+    def container(self) -> p.Container:
         """Container bound to the service context/config."""
         return u.require_initialized(self._container, "Container")
 
@@ -182,10 +182,10 @@ class FlextService[
         return u.require_initialized(self._runtime, "Runtime")
 
     @property
-    def settings(self) -> p.Config:
+    def settings(self) -> p.Settings:
         """Return service config narrowed to FlextSettings."""
         config = self.config
-        if isinstance(config, FlextSettings):
+        if isinstance(config, p.Settings):
             return config
         msg = "Service config is not FlextSettings"
         raise TypeError(msg)
@@ -201,7 +201,7 @@ class FlextService[
         config_type_raw = self.config_type or (
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
-        config_type_val: type[p.Config] | None
+        config_type_val: type[p.Settings] | None
         if (
             config_type_raw is not None
             and isinstance(config_type_raw, type)
@@ -264,7 +264,7 @@ class FlextService[
     def _create_runtime(
         cls,
         *,
-        config_type: type[p.Config] | None = None,
+        config_type: type[p.Settings] | None = None,
         config_overrides: Mapping[str, t.NormalizedValue] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
@@ -308,7 +308,7 @@ class FlextService[
         runtime_context_input = (
             context if context is not None else FlextContext.create()
         )
-        runtime_config_typed: p.Config = runtime_config
+        runtime_config_typed: p.Settings = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=runtime_context_input,
@@ -330,14 +330,14 @@ class FlextService[
         )
 
     @classmethod
-    def _get_service_config_type(cls) -> type[p.Config]:
+    def _get_service_config_type(cls) -> type[p.Settings]:
         """Get the config type for this service class.
 
         Services can override this method to specify their specific config type.
         Defaults to FlextSettings for generic services.
 
         Returns:
-            type[p.Config]: The config class to use for this service
+            type[p.Settings]: The config class to use for this service
 
         """
         return FlextSettings

@@ -26,7 +26,7 @@ import yaml
 from flext_tests import t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings
+from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings, p
 
 
 class ConfigTestCase(BaseModel):
@@ -156,9 +156,9 @@ class TestFlextSettingsSingletonIntegration:
         assert config1 is config2
         assert config2 is config3
         assert config1 is config3
-        assert isinstance(config1, FlextSettings)
-        assert isinstance(config2, FlextSettings)
-        assert isinstance(config3, FlextSettings)
+        assert isinstance(config1, p.Settings)
+        assert isinstance(config2, p.Settings)
+        assert isinstance(config3, p.Settings)
 
     def test_singleton_pattern(self) -> None:
         """Test that FlextSettings.get_global() returns the same instance."""

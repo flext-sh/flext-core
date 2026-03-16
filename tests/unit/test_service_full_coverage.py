@@ -36,7 +36,7 @@ def test_service_init_type_guards_and_properties(
     bad_ctx_runtime = m.ServiceRuntime.model_construct(
         config=FlextSettings(),
         context=cast("p.Context", "invalid-context"),
-        container=cast("p.DI", "invalid-container"),
+        container=cast("p.Container", "invalid-container"),
     )
 
     def _bad_ctx_runtime_factory(_cls: type[_Svc]) -> m.ServiceRuntime:
@@ -51,9 +51,9 @@ def test_service_init_type_guards_and_properties(
         _Svc()
     good_ctx = FlextContext.create()
     bad_cfg_runtime = m.ServiceRuntime.model_construct(
-        config=cast("p.Config", _FakeConfig()),
+        config=cast("p.Settings", _FakeConfig()),
         context=good_ctx,
-        container=cast("p.DI", "invalid-container"),
+        container=cast("p.Container", "invalid-container"),
     )
 
     def _bad_cfg_runtime_factory(_cls: type[_Svc]) -> m.ServiceRuntime:

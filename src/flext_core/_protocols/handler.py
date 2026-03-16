@@ -67,7 +67,7 @@ class FlextProtocolsHandler:
         ): ...
 
     @runtime_checkable
-    class CommandBus(FlextProtocolsBase.Base, Protocol):
+    class Dispatcher(FlextProtocolsBase.Base, Protocol):
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,

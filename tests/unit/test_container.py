@@ -29,7 +29,7 @@ import pytest
 from flext_tests import c, t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, r
+from flext_core import FlextContainer, p, r
 
 
 class ServiceScenario(BaseModel):
@@ -122,7 +122,7 @@ class TestFlextContainer:
             none=False,
             msg="Container must not be None",
         )
-        assert isinstance(clean_container, FlextContainer), (
+        assert isinstance(clean_container, p.Container), (
             "Container must be FlextContainer instance"
         )
 

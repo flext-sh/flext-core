@@ -28,7 +28,7 @@ class FlextUtilitiesChecker:
     """
 
     @property
-    def logger(self) -> p.StructlogLogger:
+    def logger(self) -> p.Logger:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 

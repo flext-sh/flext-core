@@ -164,10 +164,10 @@ class FlextRuntime:
     """
 
     _structlog_configured: ClassVar[bool] = False
-    _runtime_logger: ClassVar[p.StructlogLogger | None] = None
+    _runtime_logger: ClassVar[p.Logger | None] = None
 
     @property
-    def logger(self) -> p.StructlogLogger:
+    def logger(self) -> p.Logger:
         """Infrastructure logger for FlextRuntime internals (avoids circular imports)."""
         cls = type(self)
         logger = cls._runtime_logger
@@ -216,10 +216,10 @@ class FlextRuntime:
             )
             self.thread.start()
             _ = atexit.register(self.shutdown)
-            self._writer_logger: p.StructlogLogger | None = None
+            self._writer_logger: p.Logger | None = None
 
         @property
-        def _writer_log(self) -> p.StructlogLogger:
+        def _writer_log(self) -> p.Logger:
             """Logger for async log writer."""
             if getattr(self, "_writer_logger", None) is None:
                 self._writer_logger = structlog.get_logger(__name__)
@@ -432,7 +432,7 @@ class FlextRuntime:
             return ()
 
     @staticmethod
-    def get_logger(name: str | None = None) -> p.StructlogLogger:
+    def get_logger(name: str | None = None) -> p.Logger:
         """Get structlog logger instance - same structure/config used by FlextLogger.
 
         Returns the exact same structlog logger instance that FlextLogger uses internally.
@@ -455,7 +455,7 @@ class FlextRuntime:
                 name = frame.f_back.f_globals.get("__name__", __name__)
             else:
                 name = __name__
-        logger: p.StructlogLogger = structlog.get_logger(name)
+        logger: p.Logger = structlog.get_logger(name)
         return logger
 
     @staticmethod
@@ -1046,8 +1046,8 @@ class FlextRuntime:
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: Sequence[t.Container] | None = None,
-        wrapper_class_factory: Callable[[], type[p.StructlogLogger]] | None = None,
-        logger_factory: Callable[[], p.StructlogLogger] | None = None,
+        wrapper_class_factory: Callable[[], type[p.Logger]] | None = None,
+        logger_factory: Callable[[], p.Logger] | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -1224,7 +1224,7 @@ class FlextRuntime:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: p.StructlogLogger | None,
+        _logger: p.Logger | None,
         method_name: str,
         event_dict: t.GeneralValueTypeMapping,
     ) -> t.GeneralValueTypeMapping:
@@ -1306,7 +1306,7 @@ class FlextRuntime:
         error_data: Annotated[t.ConfigMap | None, Field(default=None)]
 
         _exception: BaseException | None = PrivateAttr(default=None)
-        _result_logger: p.StructlogLogger | None = PrivateAttr(default=None)
+        _result_logger: p.Logger | None = PrivateAttr(default=None)
 
         @override
         def __repr__(self) -> str:
@@ -1346,7 +1346,7 @@ class FlextRuntime:
             return not self.is_success
 
         @property
-        def result_logger(self) -> p.StructlogLogger:
+        def result_logger(self) -> p.Logger:
             """Logger for RuntimeResult."""
             logger = self._result_logger
             if logger is None:

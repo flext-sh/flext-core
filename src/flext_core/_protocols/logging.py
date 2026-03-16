@@ -25,7 +25,7 @@ class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
     @runtime_checkable
-    class StructlogLogger(BindableLogger, Protocol):
+    class Logger(BindableLogger, Protocol):
         """Protocol for structlog logger with all logging methods.
 
         Extends BindableLogger to add explicit method signatures for

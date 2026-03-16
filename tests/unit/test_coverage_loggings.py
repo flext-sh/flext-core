@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from flext_tests import tm
 
-from flext_core import FlextLogger, FlextSettings, r, t
+from flext_core import FlextLogger, FlextSettings, p, r, t
 
 
 def make_result_logger(
@@ -252,7 +252,7 @@ class TestFactoryPatterns:
     def test_create_service_logger(self) -> None:
         """Test creating service logger using FlextLogger constructor."""
         logger = FlextLogger("user-service")
-        tm.that(isinstance(logger, FlextLogger), eq=True)
+        tm.that(isinstance(logger, p.Logger), eq=True)
         tm.that(logger.name, eq="user-service")
 
     def test_create_service_logger_with_version(self) -> None:
@@ -263,24 +263,24 @@ class TestFactoryPatterns:
     def test_create_service_logger_with_correlation_id(self) -> None:
         """Test creating service logger with correlation ID via bind."""
         logger = FlextLogger("payment-service").bind(correlation_id="flext-abc123")
-        tm.that(isinstance(logger, FlextLogger), eq=True)
+        tm.that(isinstance(logger, p.Logger), eq=True)
 
     def test_create_module_logger(self) -> None:
         """Test creating module logger."""
         logger = FlextLogger.create_module_logger("myapp.services")
-        tm.that(isinstance(logger, FlextLogger), eq=True)
+        tm.that(isinstance(logger, p.Logger), eq=True)
         tm.that(logger.name, eq="myapp.services")
 
     def test_create_module_logger_dunder_name(self) -> None:
         """Test creating module logger with __name__."""
         module_name = __name__
         logger = FlextLogger.create_module_logger(module_name)
-        tm.that(isinstance(logger, FlextLogger), eq=True)
+        tm.that(isinstance(logger, p.Logger), eq=True)
 
     def test_get_logger(self) -> None:
         """Test creating logger via constructor (get_logger pattern)."""
         logger = FlextLogger("default_logger")
-        tm.that(isinstance(logger, FlextLogger), eq=True)
+        tm.that(isinstance(logger, p.Logger), eq=True)
         tm.that(logger.name, eq="default_logger")
 
 
@@ -310,12 +310,12 @@ class TestInstanceCreation:
         """Test bind creates new logger instance."""
         logger1 = FlextLogger("test")
         logger2 = logger1.bind(request_id="123")
-        tm.that(isinstance(logger2, FlextLogger), eq=True)
+        tm.that(isinstance(logger2, p.Logger), eq=True)
 
     def test_bind_chaining(self) -> None:
         """Test chaining multiple bind calls."""
         logger = FlextLogger("test").bind(a="1").bind(b="2").bind(c="3")
-        tm.that(isinstance(logger, FlextLogger), eq=True)
+        tm.that(isinstance(logger, p.Logger), eq=True)
 
 
 class TestLoggingMethods:

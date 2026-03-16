@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextSettings, r
+from flext_core import FlextSettings, p, r
 from tests import c, m, t, u
 
 
@@ -28,7 +28,7 @@ def test_settings_materialize_and_context_overrides() -> None:
     cfg = FlextSettings.for_context("ctx-a")
     assert cfg.app_name == "A"
     unchanged = FlextSettings.for_context("ctx-b")
-    assert isinstance(unchanged, FlextSettings)
+    assert isinstance(unchanged, p.Settings)
 
     class _N(BaseSettings):
         x: int = 1

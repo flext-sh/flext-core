@@ -541,24 +541,24 @@ class FlextUtilitiesGuards:
 
     _PROTOCOL_SPECS: Mapping[str, Callable[[t.NormalizedValue], bool]] = (
         MappingProxyType({
-            "config": lambda v: isinstance(v, p.Config),
+            "config": lambda v: isinstance(v, p.Settings),
             "context": lambda v: isinstance(v, p.Context),
-            "container": lambda v: isinstance(v, p.DI),
-            "command_bus": lambda v: isinstance(v, p.CommandBus),
+            "container": lambda v: isinstance(v, p.Container),
+            "command_bus": lambda v: isinstance(v, p.Dispatcher),
             "handler": lambda v: isinstance(v, p.Handler),
-            "logger": lambda v: isinstance(v, p.StructlogLogger),
+            "logger": lambda v: isinstance(v, p.Logger),
             "result": lambda v: isinstance(v, p.Result),
             "service": lambda v: isinstance(v, p.Service),
             "middleware": lambda v: isinstance(v, p.Middleware),
         })
     )
     _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
-        p.Config: "config",
+        p.Settings: "config",
         p.Context: "context",
-        p.DI: "container",
-        p.CommandBus: "command_bus",
+        p.Container: "container",
+        p.Dispatcher: "command_bus",
         p.Handler: "handler",
-        p.StructlogLogger: "logger",
+        p.Logger: "logger",
         p.Result: "result",
         p.Service: "service",
         p.Middleware: "middleware",
@@ -1224,7 +1224,7 @@ class FlextUtilitiesGuards:
                   "mapping", "callable", "sized", "list_or_tuple", "sequence_not_str",
                   "string_non_empty", "dict_non_empty", "list_non_empty"
                 - Type/class: str, dict, list, tuple, Sequence, Mapping, etc.
-                - Protocol: p.Config, p.Context, etc.
+                - Protocol: p.Settings, p.Context, etc.
 
         Returns:
             bool: True if value matches the type specification
@@ -1247,7 +1247,7 @@ class FlextUtilitiesGuards:
             >>> u.is_type(obj, (str, bytes))
 
             >>> # Protocol checks
-            >>> u.is_type(obj, p.Config)
+            >>> u.is_type(obj, p.Settings)
             >>> u.is_type(obj, p.Context)
 
         """

@@ -27,11 +27,9 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
-    FlextContainer,
     FlextExceptions,
-    FlextLogger,
     FlextService,
-    FlextSettings,
+    p,
     r,
     t,
 )
@@ -518,19 +516,19 @@ class TestPattern7AutomaticInfrastructure:
         """Infrastructure: Config available automatically."""
         service = _make(GetUserService, user_id="123")
         assert service.config is not None
-        assert isinstance(service.config, FlextSettings)
+        assert isinstance(service.config, p.Settings)
 
     def test_infrastructure_logger_automatic(self) -> None:
         """Infrastructure: Logger available automatically."""
         service = _make(GetUserService, user_id="123")
         assert service.logger is not None
-        assert isinstance(service.logger, FlextLogger)
+        assert isinstance(service.logger, p.Logger)
 
     def test_infrastructure_container_automatic(self) -> None:
         """Infrastructure: Container available automatically."""
         service = _make(GetUserService, user_id="123")
         assert service.container is not None
-        assert isinstance(service.container, FlextContainer)
+        assert isinstance(service.container, p.Container)
 
     def test_infrastructure_lazy_initialization(self) -> None:
         """Infrastructure: Properties are lazy."""

@@ -29,7 +29,7 @@ import pytest
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, t, x
+from flext_core import FlextContext, p, t, x
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -225,7 +225,7 @@ class TestFlextMixinsNestedClasses:
             result = service._register_in_container("test_service")
             _ = u.Tests.Result.assert_success(result)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPERTY:
-            assert isinstance(service.context, FlextContext)
+            assert isinstance(service.context, p.Context)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPAGATE:
             service._propagate_context("test_operation")
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_CORRELATION:

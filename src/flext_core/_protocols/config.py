@@ -26,7 +26,9 @@ class FlextProtocolsConfig:
             ...
 
     @runtime_checkable
-    class Config(FlextProtocolsResult.HasModelDump, FlextProtocolsBase.Base, Protocol):
+    class Settings(
+        FlextProtocolsResult.HasModelDump, FlextProtocolsBase.Base, Protocol
+    ):
         """Configuration protocol based on Pydantic BaseSettings pattern.
 
         Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.

@@ -110,7 +110,7 @@ class FlextUtilitiesConfiguration:
         return (True, str(val))
 
     @staticmethod
-    def _get_logger() -> p.StructlogLogger:
+    def _get_logger() -> p.Logger:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 
@@ -430,7 +430,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def bulk_register(
-        container: p.DI, registrations: Mapping[str, t.Scalar | t.ConfigMap | t.Dict]
+        container: p.Container,
+        registrations: Mapping[str, t.Scalar | t.ConfigMap | t.Dict],
     ) -> r[int]:
         """Register multiple services at once.
 
@@ -703,7 +704,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def register_factory(
-        container: p.DI,
+        container: p.Container,
         name: str,
         factory: Callable[[], t.Scalar | t.ConfigMap | t.Dict],
         *,
@@ -736,7 +737,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def register_singleton(
-        container: p.DI, name: str, instance: t.Scalar | t.ConfigMap | t.Dict
+        container: p.Container, name: str, instance: t.Scalar | t.ConfigMap | t.Dict
     ) -> r[bool]:
         """Register singleton with standard error handling.
 

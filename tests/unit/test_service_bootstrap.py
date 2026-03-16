@@ -21,7 +21,7 @@ from typing import override
 
 from flext_tests import u
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, s
+from flext_core import FlextContext, m, p, r, s
 
 
 class ConcreteTestService(s[bool]):
@@ -60,9 +60,9 @@ class TestServiceBootstrap:
         assert runtime.config is not None
         assert runtime.context is not None
         assert runtime.container is not None
-        assert isinstance(runtime.config, FlextSettings)
-        assert isinstance(runtime.context, FlextContext)
-        assert isinstance(runtime.container, FlextContainer)
+        assert isinstance(runtime.config, p.Settings)
+        assert isinstance(runtime.context, p.Context)
+        assert isinstance(runtime.container, p.Container)
         assert runtime.config.app_name == "runtime_app"
 
     def test_create_initial_runtime_uses_bootstrap_options(self) -> None:

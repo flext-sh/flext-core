@@ -39,7 +39,7 @@ class FlextRegistry(s[bool]):
     idempotent registration, and exposes batch operations that return ``r``
     summaries.
 
-    It delegates to ``FlextDispatcher`` (which implements ``p.CommandBus``)
+    It delegates to ``FlextDispatcher`` (which implements ``p.Dispatcher``)
     for actual handler registration and execution.
     """
 
@@ -85,12 +85,12 @@ class FlextRegistry(s[bool]):
             """
             return not self.errors
 
-    _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
+    _dispatcher: p.Dispatcher | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
     _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    dispatcher: Annotated[p.CommandBus | None, Field(default=None, exclude=True)] = None
+    dispatcher: Annotated[p.Dispatcher | None, Field(default=None, exclude=True)] = None
 
     @override
     def model_post_init(self, __context: t.Container | None, /) -> None:
@@ -127,7 +127,7 @@ class FlextRegistry(s[bool]):
     @classmethod
     def create(
         cls,
-        dispatcher: p.CommandBus | None = None,
+        dispatcher: p.Dispatcher | None = None,
         *,
         auto_discover_handlers: bool = False,
     ) -> Self:

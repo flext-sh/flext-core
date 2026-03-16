@@ -36,9 +36,9 @@ class FlextModelsService:
         registry) should be used directly - not through FlextService.
         """
 
-        config: p.Config
+        config: p.Settings
         context: p.Context
-        container: p.DI
+        container: p.Container
 
     class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""

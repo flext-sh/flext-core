@@ -13,7 +13,7 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, r
+from flext_core import FlextContainer, FlextContext, FlextSettings, p, r
 from tests import m
 
 _MonkeyPatch = pytest.MonkeyPatch
@@ -120,7 +120,7 @@ def _namespace_config_none(_namespace: str) -> None:
 
 
 def test_builder() -> None:
-    tm.that(isinstance(FlextContainer.Builder.create(), FlextContainer), eq=True)
+    tm.that(isinstance(FlextContainer.Builder.create(), p.Container), eq=True)
 
 
 def test_create_auto_register_factories_path(monkeypatch: _MonkeyPatch) -> None:
@@ -159,7 +159,7 @@ def test_create_auto_register_factories_path(monkeypatch: _MonkeyPatch) -> None:
         raising=False,
     )
     created = FlextContainer.create(auto_register_factories=True)
-    tm.that(isinstance(created, FlextContainer), eq=True)
+    tm.that(isinstance(created, p.Container), eq=True)
     tm.that(called, has="x")
 
 
@@ -189,7 +189,7 @@ def test_config_context_properties_and_defaults(
         "flext_core.container.FlextSettings.get_global",
         lambda: FlextSettings(),
     )
-    tm.that(isinstance(c._get_default_config(), FlextSettings), eq=True)
+    tm.that(isinstance(c._get_default_config(), p.Settings), eq=True)
 
 
 def test_initialize_di_components_error_paths(
@@ -362,12 +362,12 @@ def test_scoped_config_context_branches(monkeypatch: _MonkeyPatch) -> None:
         _fake_create_scoped_instance,
     )
     _ = c.scoped(subproject="sub")
-    tm.that(isinstance(captured["config"], FlextSettings), eq=True)
+    tm.that(isinstance(captured["config"], p.Settings), eq=True)
     _ = c.scoped(
         config=_FalseConfig(),
         context=_ContextNoClone(),
     )
-    tm.that(isinstance(captured["context"], FlextContext), eq=True)
+    tm.that(isinstance(captured["context"], p.Context), eq=True)
 
 
 def test_create_auto_register_factory_wrapper_callable_and_non_callable(
@@ -529,7 +529,7 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
             max_factories=10,
         ),
     )
-    tm.that(isinstance(scoped, FlextContainer), eq=True)
+    tm.that(isinstance(scoped, p.Container), eq=True)
     base._config = _FalseConfig()
     base._context = FlextContext()
     _ = base.scoped(
@@ -552,7 +552,7 @@ def test_additional_container_branches_cover_fluent_and_lookup_paths() -> None:
         max_factories=10,
     )
     global_instance = FlextContainer.get_global()
-    tm.that(isinstance(global_instance, FlextContainer), eq=True)
+    tm.that(isinstance(global_instance, p.Container), eq=True)
     tm.that(c.configure({"enable_factory_caching": True}), eq=c)
     c.register("svc-x", "value")
     c.register("fac-x", lambda: "v", kind="factory")

@@ -529,7 +529,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     tm.ok(valid)
     FlextMixins._logger_cache.clear()
     logger_obj = _LoggerService._get_or_create_logger()
-    tm.that(isinstance(logger_obj, FlextLogger), eq=True)
+    tm.that(isinstance(logger_obj, p.Logger), eq=True)
 
     class _BrokenContainer:
         def get_typed(

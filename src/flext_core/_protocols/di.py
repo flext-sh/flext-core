@@ -22,7 +22,7 @@ class FlextProtocolsDI:
     """Protocols for DI container behavior."""
 
     @runtime_checkable
-    class DI(FlextProtocolsConfig.Configurable, Protocol):
+    class Container(FlextProtocolsConfig.Configurable, Protocol):
         """Dependency injection container protocol.
 
         Extends FlextProtocolsConfig.Configurable to allow container configuration.
@@ -30,7 +30,7 @@ class FlextProtocolsDI:
         """
 
         @property
-        def config(self) -> FlextProtocolsConfig.Config:
+        def config(self) -> FlextProtocolsConfig.Settings:
             """Configuration bound to the container."""
             ...
 
@@ -74,7 +74,7 @@ class FlextProtocolsDI:
         def scoped(
             self,
             *,
-            config: FlextProtocolsConfig.Config | None = None,
+            config: FlextProtocolsConfig.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
             services: Mapping[str, object] | None = None,

@@ -791,7 +791,7 @@ class FlextDecorators:
         return decorator
 
     class _HasLogger(Protocol):
-        logger: p.StructlogLogger
+        logger: p.Logger
 
     type _LoggerCarrier = _HasLogger | FlextLogger | t.Container | BaseModel
 
@@ -799,7 +799,7 @@ class FlextDecorators:
     def _bind_operation_context(
         *,
         operation: str,
-        logger: p.StructlogLogger,
+        logger: p.Logger,
         function_name: str,
         ensure_correlation: bool,
     ) -> str | None:
@@ -828,7 +828,7 @@ class FlextDecorators:
 
     @staticmethod
     def _clear_operation_scope(
-        *, logger: p.StructlogLogger, function_name: str, operation: str
+        *, logger: p.Logger, function_name: str, operation: str
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
         clear_result = FlextLogger.clear_scope("operation")
@@ -847,7 +847,7 @@ class FlextDecorators:
         func: Callable[..., R],
         args: tuple[t.NormalizedValue | BaseModel, ...],
         kwargs: Mapping[str, t.NormalizedValue | BaseModel],
-        logger: p.StructlogLogger,
+        logger: p.Logger,
         *,
         retry_config: m.RetryConfiguration | None = None,
     ) -> R | Exception:
@@ -917,7 +917,7 @@ class FlextDecorators:
     def _handle_log_result(
         *,
         result: r[bool] | p.Result[bool] | FlextRuntime.RuntimeResult[bool],
-        logger: p.StructlogLogger,
+        logger: p.Logger,
         fallback_message: str,
         kwargs: t.ConfigMap,
     ) -> None:
@@ -963,7 +963,7 @@ class FlextDecorators:
         func: Callable[..., R],
         attempts: int,
         error_code: str | None,
-        logger: p.StructlogLogger,
+        logger: p.Logger,
     ) -> None:
         """Handle retry exhaustion and raise appropriate exception."""
         logger.error(
@@ -992,20 +992,20 @@ class FlextDecorators:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger", None)
-        return isinstance(logger_value, FlextLogger)
+        return isinstance(logger_value, p.Logger)
 
     @staticmethod
     def _resolve_logger(
         args: tuple[t.NormalizedValue | BaseModel, ...], func: Callable[P, R]
-    ) -> p.StructlogLogger:
+    ) -> p.Logger:
         """Resolve logger from first argument or create module logger.
 
         Returns:
-            p.StructlogLogger instance (protocol-typed for flexibility)
+            p.Logger instance (protocol-typed for flexibility)
 
         """
         first_arg = args[0] if args else None
-        if isinstance(first_arg, FlextLogger):
+        if isinstance(first_arg, p.Logger):
             return first_arg
         if (
             first_arg is not None

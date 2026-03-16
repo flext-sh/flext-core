@@ -39,7 +39,7 @@ from flext_core import (
 from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
 
 
-class FlextContainer(p.DI):
+class FlextContainer(p.Container):
     """Singleton container that exposes DI registration and resolution helpers.
 
     Services and factories remain local to the container, keeping dispatcher and
@@ -47,13 +47,13 @@ class FlextContainer(p.DI):
     ``r`` (r) so failures are explicit. Thread-safe initialization
     guarantees one global instance for runtime usage while allowing scoped
     containers in tests. The class satisfies ``p.Configurable`` and
-    ``p.DI`` through structural typing only.
+    ``p.Container`` through structural typing only.
     """
 
     _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
     _context: p.Context | None = None
-    _config: p.Config | None = None
+    _config: p.Settings | None = None
     _user_overrides: t.ConfigMap
     containers: ModuleType
     providers: ModuleType
@@ -72,7 +72,7 @@ class FlextContainer(p.DI):
     def __new__(
         cls,
         *,
-        _config: p.Config | None = None,
+        _config: p.Settings | None = None,
         _context: p.Context | None = None,
         _services: Mapping[str, m.ServiceRegistration] | None = None,
         _factories: Mapping[str, m.FactoryRegistration] | None = None,
@@ -98,7 +98,7 @@ class FlextContainer(p.DI):
     def __init__(
         self,
         *,
-        _config: p.Config | None = None,
+        _config: p.Settings | None = None,
         _context: p.Context | None = None,
         _services: Mapping[str, m.ServiceRegistration] | None = None,
         _factories: Mapping[str, m.FactoryRegistration] | None = None,
@@ -135,7 +135,7 @@ class FlextContainer(p.DI):
 
     @property
     @override
-    def config(self) -> p.Config:
+    def config(self) -> p.Settings:
         """Return configuration bound to this container."""
         if self._config is None:
             error_msg = "Configuration must be initialized via initialize_registrations"
@@ -214,7 +214,7 @@ class FlextContainer(p.DI):
     def _create_scoped_instance(
         cls,
         *,
-        config: p.Config,
+        config: p.Settings,
         context: p.Context,
         services: Mapping[str, m.ServiceRegistration],
         factories: Mapping[str, m.FactoryRegistration],
@@ -357,7 +357,7 @@ class FlextContainer(p.DI):
 
     @classmethod
     def get_global(
-        cls, *, config: p.Config | None = None, context: p.Context | None = None
+        cls, *, config: p.Settings | None = None, context: p.Context | None = None
     ) -> Self:
         """Return the thread-safe global container instance.
 
@@ -442,7 +442,7 @@ class FlextContainer(p.DI):
         self.sync_config_to_di()
         return self
 
-    def create_module_logger(self, module_name: str | None = None) -> p.StructlogLogger:
+    def create_module_logger(self, module_name: str | None = None) -> p.Logger:
         """Create a FlextLogger instance for the specified module.
 
         This method provides direct access to FlextLogger without going through
@@ -614,7 +614,7 @@ class FlextContainer(p.DI):
         user_overrides: Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
         | t.ConfigMap
         | None = None,
-        config: p.Config | None = None,
+        config: p.Settings | None = None,
         context: p.Context | None = None,
     ) -> None:
         """Initialize service registrations and configuration.
@@ -648,7 +648,7 @@ class FlextContainer(p.DI):
                         overrides_root[ok] = str(ov)
         user_overrides_map = t.ConfigMap(root=overrides_root)
         self._user_overrides = user_overrides_map
-        config_instance: p.Config = (
+        config_instance: p.Settings = (
             config if config is not None else FlextSettings.get_global()
         )
         self._config = config_instance
@@ -671,8 +671,8 @@ class FlextContainer(p.DI):
             t.RegisterableService
             | t.FactoryCallable
             | t.ResourceCallable
-            | p.StructlogLogger
-            | Callable[[], p.StructlogLogger]
+            | p.Logger
+            | Callable[[], p.Logger]
         ),
         *,
         kind: str = "service",
@@ -853,7 +853,7 @@ class FlextContainer(p.DI):
     def scoped(
         self,
         *,
-        config: p.Config | None = None,
+        config: p.Settings | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
         services: Mapping[str, t.RegisterableService] | None = None,
@@ -876,13 +876,13 @@ class FlextContainer(p.DI):
                 instance.
 
         Returns:
-            A container implementing ``p.DI`` with
+            A container implementing ``p.Container`` with
             isolated state that inherits the global configuration by default.
 
         """
         config_input = config
         if config is not None:
-            base_config: p.Config = config.model_copy(deep=True)
+            base_config: p.Settings = config.model_copy(deep=True)
         else:
             base_config = self.config.model_copy(deep=True)
         if subproject and config_input is None:
@@ -903,7 +903,7 @@ class FlextContainer(p.DI):
                     scoped_context = FlextContext()
             else:
                 scoped_context = FlextContext()
-        elif u.is_context(context) and isinstance(context, FlextContext):
+        elif u.is_context(context) and isinstance(context, p.Context):
             scoped_context = context
         else:
             scoped_context = self.context.clone()
@@ -1031,7 +1031,7 @@ class FlextContainer(p.DI):
             self._di_container, modules=modules, packages=packages, classes=classes
         )
 
-    def _get_default_config(self) -> p.Config:
+    def _get_default_config(self) -> p.Settings:
         """Get default configuration instance."""
         return FlextSettings.get_global()
 

@@ -29,6 +29,7 @@ from flext_core import (
     FlextLogger,
     FlextRuntime,
     FlextSettings,
+    p,
     r,
     s,
     t,
@@ -45,13 +46,13 @@ class TestConfigServiceViaDI:
         config1 = FlextSettings.get_global()
         config2 = FlextSettings.get_global()
         assert config1 is config2
-        assert isinstance(config1, FlextSettings)
+        assert isinstance(config1, p.Settings)
 
     def test_config_via_service_runtime(self) -> None:
         """Test FlextSettings accessible via FlextService._create_runtime."""
         runtime = s._create_runtime(config_overrides={"app_name": "test_app"})
         assert runtime.config is not None
-        assert isinstance(runtime.config, FlextSettings)
+        assert isinstance(runtime.config, p.Settings)
         assert runtime.config.app_name == "test_app"
 
     def test_config_via_container_scoped(self) -> None:
@@ -59,7 +60,7 @@ class TestConfigServiceViaDI:
         container = FlextContainer(_context=FlextContext())
         scoped = container.scoped(config=FlextSettings(app_name="scoped_config"))
         assert scoped.config is not None
-        assert isinstance(scoped.config, FlextSettings)
+        assert isinstance(scoped.config, p.Settings)
         assert scoped.config.app_name == "scoped_config"
 
     def test_config_injection_via_wiring(self) -> None:
@@ -101,7 +102,7 @@ class TestLoggerServiceViaDI:
         """Test FlextLogger.create_module_logger."""
         logger = FlextLogger.create_module_logger("test_service")
         assert logger is not None
-        assert isinstance(logger, FlextLogger)
+        assert isinstance(logger, p.Logger)
         assert hasattr(logger, "info")
         assert hasattr(logger, "error")
 
@@ -110,7 +111,7 @@ class TestLoggerServiceViaDI:
         container = FlextContainer()
         logger_result = container.get("logger")
         assert logger_result.is_success
-        assert isinstance(logger_result.value, FlextLogger)
+        assert isinstance(logger_result.value, p.Logger)
 
         def create_custom_logger() -> FlextLogger:
             return FlextLogger.create_module_logger("service_logger")
@@ -124,7 +125,7 @@ class TestLoggerServiceViaDI:
         assert container.has_service("custom_logger")
         custom_logger_result = container.get("custom_logger")
         assert custom_logger_result.is_success
-        assert isinstance(custom_logger_result.value, FlextLogger)
+        assert isinstance(custom_logger_result.value, p.Logger)
 
 
 class TestContextServiceViaDI:
@@ -134,14 +135,14 @@ class TestContextServiceViaDI:
         """Test creating context via FlextContext.create()."""
         context = FlextContext.create()
         assert context is not None
-        assert isinstance(context, FlextContext)
+        assert isinstance(context, p.Context)
 
     def test_context_via_service_runtime(self) -> None:
         """Test FlextContext accessible via FlextService._create_runtime."""
         custom_context = FlextContext.create()
         runtime = s._create_runtime(context=custom_context)
         assert runtime.context is not None
-        assert isinstance(runtime.context, FlextContext)
+        assert isinstance(runtime.context, p.Context)
         assert runtime.context is custom_context
 
     def test_context_registration_in_container(self) -> None:
@@ -149,7 +150,7 @@ class TestContextServiceViaDI:
         container = FlextContainer(_context=FlextContext())
         context_result = container.get("context")
         assert context_result.is_success
-        assert isinstance(context_result.value, FlextContext)
+        assert isinstance(context_result.value, p.Context)
         custom_context = FlextContext()
         returned_container = container.register(
             "custom_context",
@@ -159,7 +160,7 @@ class TestContextServiceViaDI:
         assert container.has_service("custom_context")
         custom_context_result = container.get("custom_context")
         assert custom_context_result.is_success
-        assert isinstance(custom_context_result.value, FlextContext)
+        assert isinstance(custom_context_result.value, p.Context)
         assert custom_context_result.value is custom_context
 
 
@@ -174,12 +175,12 @@ class TestServicesIntegrationViaDI:
             context=custom_context,
         )
         assert runtime.config is not None
-        assert isinstance(runtime.config, FlextSettings)
+        assert isinstance(runtime.config, p.Settings)
         assert runtime.config.app_name == "integrated_app"
         assert runtime.context is not None
-        assert isinstance(runtime.context, FlextContext)
+        assert isinstance(runtime.context, p.Context)
         assert runtime.container is not None
-        assert isinstance(runtime.container, FlextContainer)
+        assert isinstance(runtime.container, p.Container)
 
     def test_services_in_service_class(self) -> None:
         """Test services accessible in FlextService subclass."""

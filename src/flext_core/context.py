@@ -38,7 +38,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     - Serialization helpers for propagating context via headers or payloads
     """
 
-    _logger: ClassVar[p.StructlogLogger] = FlextLogger(__name__)
+    _logger: ClassVar[p.Logger] = FlextLogger(__name__)
 
     @staticmethod
     def _to_normalized(value: t.NormalizedValue | BaseModel) -> t.NormalizedValue:
@@ -994,10 +994,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 update={"operations": operations}
             )
 
-    _container: p.DI | None = None
+    _container: p.Container | None = None
 
     @classmethod
-    def get_container(cls) -> p.DI:
+    def get_container(cls) -> p.Container:
         """Get global container instance.
 
         The container must be set explicitly using `set_container()` before
@@ -1023,7 +1023,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         return cls._container
 
     @classmethod
-    def set_container(cls, container: p.DI) -> None:
+    def set_container(cls, container: p.Container) -> None:
         """Set the global container instance."""
         cls._container = container
 
@@ -1167,7 +1167,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 ...     result.value.info("Service retrieved")
 
             """
-            container: p.DI = FlextContext.get_container()
+            container: p.Container = FlextContext.get_container()
             service_result = container.get(service_name)
             if service_result.is_success:
                 service_value = service_result.value

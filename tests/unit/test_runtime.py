@@ -39,7 +39,6 @@ from flext_core import (
     c,
     m,
     p,
-    r,
     s,
     x,
 )
@@ -930,14 +929,14 @@ class TestFlextRuntime:
             tm.that(runtime_first is runtime_second, eq=True)
             tm.that(component.config.app_name == "runtime-aware", eq=True)
             tm.that(component.context is runtime_first.context, eq=True)
-            service_result: r[t.RegisterableService] = component.container.get(
+            service_result = component.container.get(
                 "preseed"
             )
             tm.that(service_result.is_success, eq=True)
             tm.that(
                 service_result.value == t.ConfigMap(root={"enabled": True}), eq=True
             )
-            factory_result: r[t.RegisterableService] = component.container.get(
+            factory_result = component.container.get(
                 "counter"
             )
             tm.that(factory_result.is_success, eq=True)
@@ -973,7 +972,7 @@ class TestFlextRuntime:
         ):
 
             def custom_processor(
-                _logger: p.StructlogLogger,
+                _logger: p.Logger,
                 _method_name: str,
                 event_dict: dict[str, t.Tests.object],
             ) -> dict[str, t.Tests.object]:

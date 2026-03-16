@@ -556,7 +556,7 @@ class FlextModelsConfig:
             ),
         ] = None
         logger_factory: Annotated[
-            Callable[..., p.StructlogLogger] | None,
+            Callable[..., p.Logger] | None,
             Field(
                 default=None,
                 description="Custom logger factory for structlog",

@@ -130,11 +130,11 @@ class _ServiceLike:
         self._inner = _EchoService()
 
     @property
-    def config(self) -> p.Config:
+    def config(self) -> p.Settings:
         return self._inner.config
 
     @property
-    def container(self) -> p.DI:
+    def container(self) -> p.Container:
         return self._inner.container
 
     @property

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
@@ -73,9 +73,9 @@ class FlextProtocolsContext:
         config_overrides: Mapping[str, t.Scalar] | None
         context: FlextProtocolsContext.Context | None
         subproject: str | None
-        services: Mapping[str, object] | None
-        factories: Mapping[str, Callable[..., object]] | None
-        resources: Mapping[str, Callable[..., object]] | None
+        services: Mapping[str, t.RegisterableService] | None
+        factories: Mapping[str, t.FactoryCallable] | None
+        resources: Mapping[str, t.ResourceCallable] | None
         container_overrides: Mapping[str, t.Scalar] | None
         wire_modules: Sequence[ModuleType | str] | None
         wire_packages: Sequence[str] | None

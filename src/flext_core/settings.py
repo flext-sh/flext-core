@@ -43,7 +43,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     - Thread-safe singleton pattern
     - Dependency injection integration
     - Runtime configuration updates
-    - Protocol compliance via inheritance (p.Config)
+    - Protocol compliance via inheritance (p.Settings)
     """
 
     _instances: ClassVar[dict[type[Self], Self]] = {}

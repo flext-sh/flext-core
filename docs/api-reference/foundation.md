@@ -182,7 +182,7 @@ error_code = c.Errors.VALIDATION_ERROR
 user = m.Entity(id="123", name="Alice")
 
 # Protocols
-if isinstance(service, p.Config):
+if isinstance(service, p.Settings):
     service.configure(config)
 
 # Utilities
@@ -194,7 +194,7 @@ if u.chk().eq(value, expected):
 
 | Alias | Full Name         | Module       | Purpose                                      |
 | ----- | ----------------- | ------------ | -------------------------------------------- |
-| `r`   | `r`     | `result`     | Railway-oriented result type                 |
+| `r`   | `r`               | `result`     | Railway-oriented result type                 |
 | `t`   | `FlextTypes`      | `typings`    | Type aliases and TypeVars                    |
 | `c`   | `FlextConstants`  | `constants`  | Immutable constants and defaults             |
 | `m`   | `FlextModels`     | `models`     | Domain models (Entity, Value, AggregateRoot) |

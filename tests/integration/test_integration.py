@@ -32,7 +32,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import t
 
-from flext_core import FlextContainer, __version__, r, u
+from flext_core import FlextContainer, __version__, p, r, u
 from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService
@@ -77,7 +77,7 @@ class TestLibraryIntegration:
         assert service_result.is_success is True
         assert service_result.value == test_value
         global_container = FlextContainer()
-        assert isinstance(global_container, FlextContainer)
+        assert isinstance(global_container, p.Container)
 
     @pytest.mark.integration
     @pytest.mark.core

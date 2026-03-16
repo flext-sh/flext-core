@@ -7,7 +7,7 @@ from typing import override
 from flext_tests import tb, tm, tt
 from hypothesis import given, strategies as st
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, r, s
+from flext_core import p, r, s
 
 
 class _SuccessService(s[str]):
@@ -63,9 +63,9 @@ class TestAutomatedFlextService:
 
     def test_runtime_properties(self) -> None:
         service = _SuccessService()
-        tm.that(isinstance(service.config, FlextSettings), eq=True)
-        tm.that(isinstance(service.container, FlextContainer), eq=True)
-        tm.that(isinstance(service.context, FlextContext), eq=True)
+        tm.that(isinstance(service.config, p.Settings), eq=True)
+        tm.that(isinstance(service.container, p.Container), eq=True)
+        tm.that(isinstance(service.context, p.Context), eq=True)
 
     @given(st.text(min_size=1))
     def test_execute_hypothesis(self, value: str) -> None:

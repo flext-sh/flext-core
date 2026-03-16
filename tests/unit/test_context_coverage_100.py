@@ -16,7 +16,7 @@ import pytest
 from flext_tests import m, t, tm, u
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextConstants, FlextContext
+from flext_core import FlextConstants, FlextContext, p
 
 
 class TestContext100Coverage:
@@ -221,7 +221,7 @@ class TestContext100Coverage:
         context1 = FlextContext()
         context2 = FlextContext()
         merged = context1.merge(context2)
-        tm.that(isinstance(merged, FlextContext), eq=True)
+        tm.that(isinstance(merged, p.Context), eq=True)
 
     def test_remove_from_specific_scope_direct(self) -> None:
         """Test remove from specific scope using remove method."""

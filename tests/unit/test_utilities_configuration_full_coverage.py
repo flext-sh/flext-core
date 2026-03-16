@@ -110,9 +110,9 @@ def test_build_options_invalid_only_kwargs_returns_base() -> None:
 
 
 def test_register_singleton_register_factory_and_bulk_register_paths() -> None:
-    ok = cast("p.DI", cast("object", _ContainerOK()))
-    fail = cast("p.DI", cast("object", _ContainerFail()))
-    err = cast("p.DI", cast("object", _ContainerRaise()))
+    ok = cast("p.Container", cast("object", _ContainerOK()))
+    fail = cast("p.Container", cast("object", _ContainerFail()))
+    err = cast("p.Container", cast("object", _ContainerRaise()))
     singleton_ok = u.register_singleton(ok, "s", 1)
     singleton_fail = u.register_singleton(fail, "s", 1)
     singleton_err = u.register_singleton(err, "s", 1)

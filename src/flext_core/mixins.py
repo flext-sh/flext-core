@@ -83,17 +83,17 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         super().__init_subclass__(**kwargs)
 
     @property
-    def config(self) -> p.Config:
+    def config(self) -> p.Settings:
         """Return the runtime configuration associated with this component.
 
-        Returns p.Config protocol type for type safety. In practice, this is
+        Returns p.Settings protocol type for type safety. In practice, this is
         FlextSettings - callers needing concrete attributes can use type
         identity or MRO checks for type narrowing.
         """
         return self._get_runtime().config
 
     @property
-    def container(self) -> p.DI:
+    def container(self) -> p.Container:
         """Get global FlextContainer instance with lazy initialization."""
         return self._get_runtime().container
 
@@ -648,7 +648,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
         @staticmethod
         def is_command_bus(obj: p.Base | BaseModel) -> bool:
-            """Check if *obj* satisfies ``p.CommandBus`` structurally."""
+            """Check if *obj* satisfies ``p.Dispatcher`` structurally."""
             return (
                 hasattr(obj, "dispatch")
                 and callable(getattr(obj, "dispatch", None))

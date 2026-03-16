@@ -28,7 +28,7 @@ from structlog.typing import Context
 from flext_core import FlextRuntime, FlextSettings, c, p, r, t, u
 
 
-class FlextLogger(FlextRuntime, p.StructlogLogger):
+class FlextLogger(FlextRuntime, p.Logger):
     """Context-aware logger tuned for dispatcher-centric CQRS flows.
 
     FlextLogger layers structured logging on ``structlog`` with scoped contexts,
@@ -39,15 +39,15 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
 
     _scoped_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
     _level_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
-    _structlog_instance: p.StructlogLogger | None = None
+    _structlog_instance: p.Logger | None = None
     type _LogArg = t.Scalar | BaseModel | Exception
 
     def __init__(
         self,
         name: str,
         *,
-        config: p.Config | None = None,
-        _bound_logger: p.StructlogLogger | None = None,
+        config: p.Settings | None = None,
+        _bound_logger: p.Logger | None = None,
         _level: c.Settings.LogLevel | str | None = None,
         _service_name: str | None = None,
         _service_version: str | None = None,
@@ -90,7 +90,7 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
 
     @property
     @override
-    def logger(self) -> p.StructlogLogger:
+    def logger(self) -> p.Logger:
         """Wrapped structlog logger instance."""
         instance = self._structlog_instance
         if instance is None:
@@ -352,7 +352,7 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
             return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
 
     @classmethod
-    def create_bound_logger(cls, name: str, bound_logger: p.StructlogLogger) -> Self:
+    def create_bound_logger(cls, name: str, bound_logger: p.Logger) -> Self:
         """Internal factory for creating logger with pre-bound structlog instance."""
         return cls(name, _bound_logger=bound_logger)
 
@@ -391,7 +391,7 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
     @classmethod
     def for_container(
         cls,
-        container: p.DI,
+        container: p.Container,
         level: str | None = None,
         **context: t.Container,
     ) -> FlextLogger:
@@ -548,7 +548,7 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
     @contextmanager
     def with_container_context(
         cls,
-        container: p.DI,
+        container: p.Container,
         level: c.Settings.LogLevel | str | None = None,
         **context: t.Container,
     ) -> Iterator[FlextLogger]:
@@ -755,7 +755,7 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
 
     @override
     @staticmethod
-    def get_logger(name: str | None = None) -> p.StructlogLogger:
+    def get_logger(name: str | None = None) -> p.Logger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger)."""
         return FlextRuntime.get_logger(name)
 
@@ -1088,7 +1088,7 @@ class FlextLogger(FlextRuntime, p.StructlogLogger):
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""
 
-        def __init__(self, logger: p.StructlogLogger, operation_name: str) -> None:
+        def __init__(self, logger: p.Logger, operation_name: str) -> None:
             """Initialize with logger and operation name."""
             super().__init__()
             self.logger = logger

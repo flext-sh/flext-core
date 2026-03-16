@@ -30,7 +30,7 @@ import pytest
 from flext_tests import FlextTestsUtilities, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextContext, t
+from flext_core import FlextContainer, FlextContext, p, t
 from tests import m
 
 type SetGetInputValue = str | int | float | bool | list[int] | dict[str, str]
@@ -91,7 +91,7 @@ class TestFlextContext:
     def test_context_initialization(self, test_context: FlextContext) -> None:
         """Test context initialization."""
         tm.that(test_context, none=False)
-        tm.that(isinstance(test_context, FlextContext), eq=True)
+        tm.that(isinstance(test_context, p.Context), eq=True)
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
