@@ -16,16 +16,17 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from tests.unit.flext_tests.test_builders import TestFlextTestsBuilders
-    from tests.unit.flext_tests.test_docker import (
+
+    from .test_builders import TestFlextTestsBuilders
+    from .test_docker import (
         TestContainerInfo,
         TestContainerStatus,
         TestFlextTestsDocker,
         TestFlextTestsDockerWorkerId,
         TestFlextTestsDockerWorkspaceRoot,
     )
-    from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
-    from tests.unit.flext_tests.test_factories import (
+    from .test_domains import TestFlextTestsDomains
+    from .test_factories import (
         TestConfig,
         TestFactoriesHelpers,
         TestFlextTestsFactoriesModernAPI,
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
         TestsFlextTestsFactoriesRes,
         TestUser,
     )
-    from tests.unit.flext_tests.test_files import (
+    from .test_files import (
         TestAssertExists,
         TestBatchOperations,
         TestCreateInStatic,
@@ -50,8 +51,8 @@ if TYPE_CHECKING:
         TestInfoWithContentMeta,
         TestShortAlias,
     )
-    from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
-    from tests.unit.flext_tests.test_utilities import (
+    from .test_matchers import TestFlextTestsMatchers
+    from .test_utilities import (
         TestFlextTestsUtilitiesFactory,
         TestFlextTestsUtilitiesResult,
         TestFlextTestsUtilitiesResult as r,

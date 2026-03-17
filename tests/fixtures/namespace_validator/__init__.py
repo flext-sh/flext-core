@@ -10,29 +10,17 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from tests.fixtures.namespace_validator.rule0_no_class import MAX_VALUE, helper
-    from tests.fixtures.namespace_validator.rule0_wrong_prefix import RandomConstants
-    from tests.fixtures.namespace_validator.rule1_loose_constant import (
-        DEFAULT_TIMEOUT,
-        MAX_RETRIES,
-    )
-    from tests.fixtures.namespace_validator.rule1_loose_enum import Status
-    from tests.fixtures.namespace_validator.rule1_magic_number import (
-        FlextTestUtilities,
-        u,
-    )
-    from tests.fixtures.namespace_validator.rule1_valid_constants import (
-        FlextTestConstants,
-        c,
-    )
-    from tests.fixtures.namespace_validator.rule2_typevar_wrong_module import (
-        FlextTestModels,
-        m,
-    )
-    from tests.fixtures.namespace_validator.rule2_valid_types import FlextTestTypes, t
-    from tests.fixtures.namespace_validator.typings import LooseTypeAlias
-
     from flext_core.typings import FlextTypes
+
+    from .rule0_no_class import MAX_VALUE, helper
+    from .rule0_wrong_prefix import RandomConstants
+    from .rule1_loose_constant import DEFAULT_TIMEOUT, MAX_RETRIES
+    from .rule1_loose_enum import Status
+    from .rule1_magic_number import FlextTestUtilities, u
+    from .rule1_valid_constants import FlextTestConstants, c
+    from .rule2_typevar_wrong_module import FlextTestModels, m
+    from .rule2_valid_types import FlextTestTypes, t
+    from .typings import LooseTypeAlias
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DEFAULT_TIMEOUT": (

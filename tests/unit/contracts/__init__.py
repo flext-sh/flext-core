@@ -11,7 +11,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from tests.unit.contracts.text_contract import TextUtilityContract
+
+    from .text_contract import TextUtilityContract
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TextUtilityContract": (

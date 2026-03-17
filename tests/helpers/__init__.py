@@ -18,7 +18,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from tests.helpers.factories import (
+
+    from .factories import (
         FailingService,
         FailingServiceAuto,
         FailingServiceAutoFactory,
@@ -42,7 +43,7 @@ if TYPE_CHECKING:
         ValidatingServiceFactory,
         reset_all_factories,
     )
-    from tests.helpers.scenarios import (
+    from .scenarios import (
         ParserScenario,
         ParserScenarios,
         ReliabilityScenario,

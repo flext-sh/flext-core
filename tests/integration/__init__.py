@@ -11,13 +11,14 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from tests.integration import patterns
-    from tests.integration.patterns.test_advanced_patterns import TestFunction
-    from tests.integration.patterns.test_architectural_patterns import (
+
+    from . import patterns as patterns
+    from .patterns.test_advanced_patterns import TestFunction
+    from .patterns.test_architectural_patterns import (
         TestEnterprisePatterns,
         TestEventDrivenPatterns,
     )
-    from tests.integration.patterns.test_patterns_commands import (
+    from .patterns.test_patterns_commands import (
         CreateUserCommand,
         CreateUserCommandHandler,
         FailingCommand,
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
         UpdateUserCommand,
         UpdateUserCommandHandler,
     )
-    from tests.integration.patterns.test_patterns_logging import (
+    from .patterns.test_patterns_logging import (
         TestFlextContext,
         TestFlextLogger,
         TestFlextLoggerIntegration,
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
         assert_result_success,
         make_result_logger,
     )
-    from tests.integration.patterns.test_patterns_testing import (
+    from .patterns.test_patterns_testing import (
         AssertionBuilder,
         FixtureBuilder,
         FlextTestBuilder,
@@ -55,13 +56,13 @@ if TYPE_CHECKING:
         arrange_act_assert,
         mark_test_pattern,
     )
-    from tests.integration.test_config_integration import (
+    from .test_config_integration import (
         ConfigTestCase,
         ConfigTestFactories,
         TestFlextSettingsSingletonIntegration,
         ThreadSafetyTest,
     )
-    from tests.integration.test_infra_integration import (
+    from .test_infra_integration import (
         TestBaseMkGenerationFlow,
         TestContainerIntegration,
         TestCrossModuleIntegration,
@@ -71,8 +72,8 @@ if TYPE_CHECKING:
         TestServicerChaining,
         TestWorkspaceDetectionOrchestrationFlow,
     )
-    from tests.integration.test_integration import TestLibraryIntegration
-    from tests.integration.test_migration_validation import (
+    from .test_integration import TestLibraryIntegration
+    from .test_migration_validation import (
         TestBackwardCompatibility,
         TestMigrationComplexity,
         TestMigrationScenario1,
@@ -80,15 +81,13 @@ if TYPE_CHECKING:
         TestMigrationScenario4,
         TestMigrationScenario5,
     )
-    from tests.integration.test_refactor_nesting_file import (
+    from .test_refactor_nesting_file import (
         test_class_nesting_refactor_single_file_end_to_end,
     )
-    from tests.integration.test_refactor_nesting_idempotency import TestIdempotency
-    from tests.integration.test_refactor_nesting_project import TestProjectLevelRefactor
-    from tests.integration.test_refactor_nesting_workspace import (
-        TestWorkspaceLevelRefactor,
-    )
-    from tests.integration.test_refactor_policy_mro import (
+    from .test_refactor_nesting_idempotency import TestIdempotency
+    from .test_refactor_nesting_project import TestProjectLevelRefactor
+    from .test_refactor_nesting_workspace import TestWorkspaceLevelRefactor
+    from .test_refactor_policy_mro import (
         AlgarOudMigConstants,
         AlgarOudMigModels,
         AlgarOudMigProtocols,
@@ -112,7 +111,7 @@ if TYPE_CHECKING:
         test_mro_resolver_accepts_expected_order,
         test_mro_resolver_rejects_wrong_order,
     )
-    from tests.integration.test_service import (
+    from .test_service import (
         LifecycleService,
         NotificationService,
         ServiceConfig,
@@ -122,7 +121,7 @@ if TYPE_CHECKING:
         UserServiceEntity,
         pytestmark,
     )
-    from tests.integration.test_system import TestCompleteFlextSystemIntegration
+    from .test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AlgarOudMigConstants": (

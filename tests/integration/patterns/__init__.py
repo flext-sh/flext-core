@@ -23,12 +23,13 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
-    from tests.integration.patterns.test_advanced_patterns import TestFunction
-    from tests.integration.patterns.test_architectural_patterns import (
+
+    from .test_advanced_patterns import TestFunction
+    from .test_architectural_patterns import (
         TestEnterprisePatterns,
         TestEventDrivenPatterns,
     )
-    from tests.integration.patterns.test_patterns_commands import (
+    from .test_patterns_commands import (
         CreateUserCommand,
         CreateUserCommandHandler,
         FailingCommand,
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
         UpdateUserCommand,
         UpdateUserCommandHandler,
     )
-    from tests.integration.patterns.test_patterns_logging import (
+    from .test_patterns_logging import (
         EXPECTED_BULK_SIZE,
         TestFlextContext,
         TestFlextLogger,
@@ -51,7 +52,7 @@ if TYPE_CHECKING:
         assert_result_success,
         make_result_logger,
     )
-    from tests.integration.patterns.test_patterns_testing import (
+    from .test_patterns_testing import (
         AssertionBuilder,
         FixtureBuilder,
         FlextTestBuilder,
