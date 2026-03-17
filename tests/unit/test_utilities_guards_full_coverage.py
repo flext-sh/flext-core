@@ -320,7 +320,10 @@ def test_guard_instance_attribute_access_warnings() -> None:
     guards = u()
     method = guards.is_type
     tm.that(callable(method), eq=True)
-    tm.that(callable(guards.is_mapping), eq=True)
+    private_method = cast(
+        "Callable[..., t.Tests.object]", getattr(guards, "_is_mapping")
+    )
+    tm.that(callable(private_method), eq=True)
 
 
 def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:

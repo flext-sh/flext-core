@@ -796,9 +796,10 @@ class FlextLogger(FlextRuntime, p.Logger):
     @override
     def critical(
         self,
-        msg: str,
-        *args: t.Container,
-        **kw: t.RuntimeAtomic | Exception,
+        event: str,
+        *,
+        error: Exception | None = None,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log critical message - Logger.Log implementation.
 
@@ -813,17 +814,18 @@ class FlextLogger(FlextRuntime, p.Logger):
         """
         return self._log_standard_level(
             c.Settings.LogLevel.CRITICAL,
-            msg,
-            *args,
+            event,
+            error=error,
             **kw,
         )
 
     @override
     def debug(
         self,
-        msg: str,
-        *args: t.Container,
-        **kw: t.RuntimeAtomic | Exception,
+        event: str,
+        *,
+        error: Exception | None = None,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log debug message - Logger.Log implementation.
 
@@ -838,17 +840,18 @@ class FlextLogger(FlextRuntime, p.Logger):
         """
         return self._log_standard_level(
             c.Settings.LogLevel.DEBUG,
-            msg,
-            *args,
+            event,
+            error=error,
             **kw,
         )
 
     @override
     def error(
         self,
-        msg: str,
-        *args: t.Container,
-        **kw: t.RuntimeAtomic | Exception,
+        event: str,
+        *,
+        error: Exception | None = None,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log error message - Logger.Log implementation.
 
@@ -863,8 +866,8 @@ class FlextLogger(FlextRuntime, p.Logger):
         """
         return self._log_standard_level(
             c.Settings.LogLevel.ERROR,
-            msg,
-            *args,
+            event,
+            error=error,
             **kw,
         )
 
@@ -873,7 +876,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | Exception,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
@@ -997,30 +1000,32 @@ class FlextLogger(FlextRuntime, p.Logger):
     @override
     def info(
         self,
-        msg: str,
-        *args: t.Container,
-        **kw: t.RuntimeAtomic | Exception,
+        event: str,
+        *,
+        error: Exception | None = None,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log info message - Logger.Log implementation."""
         return self._log_standard_level(
             c.Settings.LogLevel.INFO,
-            msg,
-            *args,
+            event,
+            error=error,
             **kw,
         )
 
     @override
     def warning(
         self,
-        msg: str,
-        *args: t.Container,
-        **kw: t.RuntimeAtomic | Exception,
+        event: str,
+        *,
+        error: Exception | None = None,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log warning message - Logger.Log implementation."""
         return self._log_standard_level(
             c.Settings.LogLevel.WARNING,
-            msg,
-            *args,
+            event,
+            error=error,
             **kw,
         )
 
