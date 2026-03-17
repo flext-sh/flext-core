@@ -34,6 +34,8 @@ class FlextTypesServices:
             """Dispatch a message and return the result."""
             ...
 
+    type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
+
     type RegisterableService = (
         FlextTypingBase.Container
         | BaseModel
