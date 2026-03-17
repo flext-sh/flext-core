@@ -113,7 +113,7 @@ class FlextModelsHandler:
             "message_type",
         })
 
-        def __getitem__(self, key: str) -> t.NormalizedValue | BaseModel:
+        def __getitem__(self, key: str) -> t.ValueOrModel:
             match key:
                 case "handler_name":
                     return self.handler_name
@@ -136,9 +136,7 @@ class FlextModelsHandler:
         """
 
         handler: Annotated[
-            t.HandlerCallable
-            | p.Handler[p.Model, t.NormalizedValue | BaseModel]
-            | BaseModel,
+            t.HandlerCallable | p.Handler[p.Model, t.ValueOrModel] | BaseModel,
             Field(
                 description="Handler instance (callable, object, or FlextHandlers)",
             ),

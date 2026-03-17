@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 from flext_core import c, p, t
@@ -304,8 +304,8 @@ class FlextModelsService:
         ]
         operation_callable: Annotated[
             Callable[
-                [t.NormalizedValue | BaseModel],
-                p.ResultLike[t.NormalizedValue | BaseModel],
+                [t.ValueOrModel],
+                p.ResultLike[t.ValueOrModel],
             ],
             Field(description="Callable operation returning result"),
         ]

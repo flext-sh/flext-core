@@ -117,7 +117,7 @@ class FlextModelsContainer:
             if callable(v):
                 return v
             if isinstance(v, Mapping):
-                normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
+                normalized_mapping: dict[str, t.ValueOrModel] = {}
                 for key, item in v.items():
                     normalized_mapping[str(key)] = FlextRuntime.normalize_to_container(
                         item

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
-from pydantic import BaseModel
-
 from flext_core import T, p, r, t
 from flext_core._utilities import FlextUtilitiesGuards
 
@@ -106,14 +104,14 @@ class FlextUtilitiesResultHelpers:
 
     @staticmethod
     def ensure_result(
-        value: t.NormalizedValue | BaseModel,
-    ) -> r[t.NormalizedValue | BaseModel]:
+        value: t.ValueOrModel,
+    ) -> r[t.ValueOrModel]:
         """Wrap value in r if not already a Result.
 
         Generic replacement for:
         if not isinstance(val, r): val = r.ok(val)
         """
-        return r[t.NormalizedValue | BaseModel].ok(value)
+        return r[t.ValueOrModel].ok(value)
 
 
 __all__ = ["FlextUtilitiesResultHelpers"]

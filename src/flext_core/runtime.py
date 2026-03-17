@@ -662,7 +662,7 @@ class FlextRuntime:
             return str(value)
 
         if FlextRuntime.is_dict_like(val):
-            normalized_dict: dict[str, t.NormalizedValue | BaseModel] = {}
+            normalized_dict: dict[str, t.ValueOrModel] = {}
             if isinstance(val, t.ConfigMap):
                 for key, item in val.root.items():
                     normalized_item = FlextRuntime.normalize_to_container(item)
@@ -748,8 +748,8 @@ class FlextRuntime:
     def safe_get_attribute(
         obj: t.RuntimeData | type | ModuleType,
         attr: str,
-        default: t.NormalizedValue | BaseModel | None = None,
-    ) -> t.NormalizedValue | BaseModel | None:
+        default: t.ValueOrModel | None = None,
+    ) -> t.ValueOrModel | None:
         """Safe attribute access without raising AttributeError.
 
         Business Rule: Accesses object attributes safely using getattr() with
@@ -1699,7 +1699,7 @@ class FlextRuntime:
         context_dict = t.ConfigMap(root={})
         if isinstance(context, Mapping):
             try:
-                parsed_context: dict[str, t.NormalizedValue | BaseModel] = {
+                parsed_context: dict[str, t.ValueOrModel] = {
                     str(k): str(v) for k, v in context.items()
                 }
             except (TypeError, ValueError, AttributeError, RuntimeError) as exc:

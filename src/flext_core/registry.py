@@ -289,7 +289,7 @@ class FlextRegistry(s[bool]):
                 raw_metadata = metadata.attributes
             else:
                 raw_metadata = metadata.root
-            normalized_root: dict[str, t.NormalizedValue | BaseModel] = {}
+            normalized_root: dict[str, t.ValueOrModel] = {}
             for k, v in raw_metadata.items():
                 if isinstance(v, (*t.CONTAINER_TYPES, BaseModel)):
                     normalized_root[k] = v

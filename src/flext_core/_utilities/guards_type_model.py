@@ -55,7 +55,7 @@ class FlextUtilitiesGuardsTypeModel:
     def is_configuration_mapping(
         value: Mapping[str, t.NormalizedValue] | t.ConfigMap | t.Dict,
     ) -> TypeIs[t.ConfigMap]:
-        candidate: Mapping[str, t.NormalizedValue | BaseModel] = (
+        candidate: Mapping[str, t.ValueOrModel] = (
             value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
         )
         for item_value in candidate.values():

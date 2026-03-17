@@ -728,7 +728,7 @@ class FlextDecorators:
                     retry_on_status_codes=[],
                 )
                 try:
-                    retry_args: tuple[t.NormalizedValue | BaseModel, ...] = tuple(
+                    retry_args: tuple[t.ValueOrModel, ...] = tuple(
                         FlextRuntime.normalize_to_container(a)
                         if isinstance(
                             a, (str, int, float, bool, datetime, Path, BaseModel)
@@ -738,7 +738,7 @@ class FlextDecorators:
                         else ""
                         for a in args
                     )
-                    retry_kwargs: dict[str, t.NormalizedValue | BaseModel] = {}
+                    retry_kwargs: dict[str, t.ValueOrModel] = {}
                     for key, value in kwargs.items():
                         if isinstance(
                             value,
@@ -831,8 +831,8 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple[t.NormalizedValue | BaseModel, ...],
-        kwargs: Mapping[str, t.NormalizedValue | BaseModel],
+        args: tuple[t.ValueOrModel, ...],
+        kwargs: Mapping[str, t.ValueOrModel],
         logger: p.Logger,
         *,
         retry_config: m.RetryConfiguration | None = None,
@@ -922,7 +922,7 @@ class FlextDecorators:
             warning_context: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
                 if key == "extra" and FlextRuntime.is_dict_like(value):
-                    extra_items: Mapping[str, t.NormalizedValue | BaseModel]
+                    extra_items: Mapping[str, t.ValueOrModel]
                     if isinstance(value, t.ConfigMap):
                         extra_items = value.root
                     else:
@@ -979,7 +979,7 @@ class FlextDecorators:
 
     @staticmethod
     def _has_flext_logger(
-        value: t.NormalizedValue | BaseModel,
+        value: _LoggerCarrier,
     ) -> TypeIs[_HasLogger]:
         if not hasattr(value, "logger"):
             return False

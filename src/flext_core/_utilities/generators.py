@@ -212,7 +212,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue] | None,
+        value: t.ValueOrModel | Mapping[str, t.NormalizedValue] | None,
         default: Mapping[str, t.NormalizedValue] | None = None,
     ) -> Mapping[str, t.NormalizedValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
@@ -421,9 +421,7 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
     @staticmethod
-    def generate_operation_id(
-        message_type: str, message: BaseModel | t.NormalizedValue
-    ) -> str:
+    def generate_operation_id(message_type: str, message: t.ValueOrModel) -> str:
         """Generate unique operation ID for dispatch operations.
 
         Args:

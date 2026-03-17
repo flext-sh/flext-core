@@ -308,7 +308,7 @@ class FlextModelFoundation:
             return FlextModelFoundation._ensure_utc_datetime(v)
 
         @staticmethod
-        def normalize_to_list(v: t.NormalizedValue | BaseModel) -> list[t.Container]:
+        def normalize_to_list(v: t.ValueOrModel) -> list[t.Container]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -324,7 +324,7 @@ class FlextModelFoundation:
 
         @staticmethod
         def validate_config_dict(
-            v: t.NormalizedValue | BaseModel,
+            v: t.ValueOrModel,
         ) -> Mapping[str, t.Container]:
             """Validate configuration dictionary structure."""
             try:
@@ -343,7 +343,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: t.NormalizedValue | BaseModel) -> list[str]:
+        def validate_tags_list(v: t.ValueOrModel) -> list[str]:
             """Validate and normalize tags list."""
             try:
                 raw_tags: Sequence[t.Container] = (

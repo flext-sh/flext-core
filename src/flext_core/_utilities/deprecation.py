@@ -8,8 +8,6 @@ from collections.abc import Callable
 from typing import ClassVar
 from warnings import deprecated as _stdlib_deprecated
 
-from pydantic import BaseModel
-
 from flext_core import P, R, t
 
 
@@ -28,7 +26,7 @@ class FlextUtilitiesDeprecation:
     @classmethod
     def warn_polymorphic_input(
         cls,
-        value: t.NormalizedValue | BaseModel | None,
+        value: t.ValueOrModel | None,
         context: str,
         preferred: str,
         *,

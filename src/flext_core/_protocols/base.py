@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, Protocol, Self, runtime_checkable
 
-from pydantic import BaseModel
-
 from flext_core import t
 
 if TYPE_CHECKING:
@@ -47,16 +45,14 @@ class FlextProtocolsBase:
         model_config: ClassVar[Mapping[str, t.Container]]
         model_fields: ClassVar[Mapping[str, type | str]]
 
-        def model_dump(
-            self, **kwargs: t.Container
-        ) -> Mapping[str, t.NormalizedValue | BaseModel]:
+        def model_dump(self, **kwargs: t.Container) -> Mapping[str, t.ValueOrModel]:
             """Dump model to dictionary."""
             ...
 
         @classmethod
         def model_validate(
             cls,
-            obj: t.NormalizedValue | BaseModel,
+            obj: t.ValueOrModel,
             **kwargs: t.Container,
         ) -> Self:
             """Validate object against model."""

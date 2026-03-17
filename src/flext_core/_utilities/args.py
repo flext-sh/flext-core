@@ -19,7 +19,7 @@ from typing import (
     get_type_hints,
 )
 
-from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError, validate_call
+from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
 from flext_core import m, r, t
 from flext_core.typings import ValidatedParams, ValidatedReturn
@@ -46,7 +46,7 @@ class FlextUtilitiesArgs:
     _V = m.Validators
 
     @staticmethod
-    def _validate_enum_type(candidate: type[Enum] | str) -> r[type[StrEnum]]:
+    def _validate_enum_type(candidate: object) -> r[type[StrEnum]]:
         """Validate that candidate is a StrEnum subclass."""
         try:
             return r[type[StrEnum]].ok(
@@ -66,12 +66,19 @@ class FlextUtilitiesArgs:
              # params = {"status": Status}
 
         """
+        hints: dict[str, object]
         try:
-            hints = get_type_hints(func, include_extras=True)
+            resolved_hints = get_type_hints(func, include_extras=True)
+            hints = {str(name): hint for name, hint in resolved_hints.items()}
         except (NameError, TypeError, AttributeError):
             fallback_annotations = getattr(func, "__annotations__", None)
             if isinstance(fallback_annotations, Mapping):
-                hints = dict(fallback_annotations.items())
+                try:
+                    hints = TypeAdapter(dict[str, object]).validate_python(
+                        fallback_annotations
+                    )
+                except ValidationError:
+                    return {}
             else:
                 return {}
         enum_params: dict[str, type[StrEnum]] = {}
@@ -83,7 +90,14 @@ class FlextUtilitiesArgs:
             while origin is Annotated:
                 current_hint = get_args(current_hint)[0]
                 origin = get_origin(current_hint)
-            validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
+            if isinstance(current_hint, str) or (
+                isinstance(current_hint, type) and issubclass(current_hint, Enum)
+            ):
+                validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
+            else:
+                validated_hint = r[type[StrEnum]].fail(
+                    "Candidate is not a valid StrEnum type"
+                )
             if validated_hint.is_success:
                 enum_params[name] = validated_hint.value
             elif origin is UnionType:
@@ -93,7 +107,16 @@ class FlextUtilitiesArgs:
                     while arg_origin is Annotated:
                         current_arg = get_args(current_arg)[0]
                         arg_origin = get_origin(current_arg)
-                    validated_arg = FlextUtilitiesArgs._validate_enum_type(current_arg)
+                    if isinstance(current_arg, str) or (
+                        isinstance(current_arg, type) and issubclass(current_arg, Enum)
+                    ):
+                        validated_arg = FlextUtilitiesArgs._validate_enum_type(
+                            current_arg
+                        )
+                    else:
+                        validated_arg = r[type[StrEnum]].fail(
+                            "Candidate is not a valid StrEnum type"
+                        )
                     if validated_arg.is_success:
                         enum_params[name] = validated_arg.value
                         break
@@ -101,9 +124,9 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, t.NormalizedValue | BaseModel],
+        kwargs: Mapping[str, t.ValueOrModel],
         enum_fields: Mapping[str, type[E]],
-    ) -> r[Mapping[str, t.NormalizedValue | BaseModel]]:
+    ) -> r[Mapping[str, t.ValueOrModel]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
@@ -129,10 +152,10 @@ class FlextUtilitiesArgs:
                     valid = ", ".join(m.value for m in enum_members)
                     errors.append(f"{field}: '{value}' not in [{valid}]")
         if errors:
-            return r[Mapping[str, t.NormalizedValue | BaseModel]].fail(
+            return r[Mapping[str, t.ValueOrModel]].fail(
                 f"Invalid values: {'; '.join(errors)}"
             )
-        return r[Mapping[str, t.NormalizedValue | BaseModel]].ok(parsed)
+        return r[Mapping[str, t.ValueOrModel]].ok(parsed)
 
     @staticmethod
     def validated(

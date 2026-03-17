@@ -623,7 +623,7 @@ class FlextContainer(p.Container):
         self._factories = dict(factories.items()) if factories is not None else {}
         self._resources = dict(resources.items()) if resources is not None else {}
         self._global_config = global_config or self._create_container_config()
-        overrides_root: dict[str, t.NormalizedValue | BaseModel] = {}
+        overrides_root: dict[str, t.ValueOrModel] = {}
         if user_overrides is not None:
             if isinstance(user_overrides, t.ConfigMap):
                 overrides_root = dict(user_overrides.root)

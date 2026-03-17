@@ -328,7 +328,7 @@ class FlextUtilitiesConversion:
         return [item for item in result if item]
 
     @staticmethod
-    def narrow[T](value: t.NormalizedValue | BaseModel, type_cls: type[T]) -> T:
+    def narrow[T](value: t.ValueOrModel, type_cls: type[T]) -> T:
         """Narrow *value* to *type_cls*, attempting coercion via Pydantic validation.
 
         Args:

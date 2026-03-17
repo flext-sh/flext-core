@@ -198,7 +198,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     @staticmethod
     def _normalize_log_payload(
-        payload: Mapping[str, t.NormalizedValue | BaseModel],
+        payload: Mapping[str, t.ValueOrModel],
     ) -> dict[str, t.RuntimeAtomic]:
         normalized_payload: dict[str, t.RuntimeAtomic] = {}
         for key, value in payload.items():
@@ -206,9 +206,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         return normalized_payload
 
     @contextmanager
-    def track(
-        self, operation_name: str
-    ) -> Iterator[Mapping[str, t.NormalizedValue | BaseModel]]:
+    def track(self, operation_name: str) -> Iterator[Mapping[str, t.ValueOrModel]]:
         """Track operation performance with timing and automatic context cleanup."""
         stats: t.ConfigMap = self._operation_stats.get(
             operation_name,
@@ -222,7 +220,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         ) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: dict[str, t.NormalizedValue | BaseModel] = (
+                metrics_map: dict[str, t.ValueOrModel] = (
                     {
                         str(k): FlextRuntime.normalize_to_container(v)
                         for k, v in metrics.items()
@@ -425,7 +423,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     @staticmethod
     def _is_flext_settings_type(
-        candidate: type | t.NormalizedValue | BaseModel,
+        candidate: type | t.ValueOrModel,
     ) -> TypeIs[type[FlextSettings]]:
         return isinstance(candidate, type) and callable(
             getattr(candidate, "get_global", None)

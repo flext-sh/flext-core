@@ -14,7 +14,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Annotated, override
 
-from pydantic import BaseModel, BeforeValidator, Field
+from pydantic import BeforeValidator, Field
 
 from flext_core import c, t
 from flext_core._models import FlextModelFoundation
@@ -93,7 +93,7 @@ class FlextModelsDomainEvent:
 
     @staticmethod
     def _normalize_event_data(
-        value: t.NormalizedValue | BaseModel,
+        value: t.ValueOrModel,
     ) -> _ComparableConfigMap:
         """BeforeValidator: normalize event data to _ComparableConfigMap."""
         if isinstance(value, _ComparableConfigMap):

@@ -86,7 +86,7 @@ class FlextUtilitiesConfiguration:
     def _duck_dump_get_parameter(
         obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
-    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+    ) -> tuple[bool, t.ValueOrModel]:
         """Get parameter from duck-typed model_dump() result.
 
         Instead of iterating the dump dict (which has Unknown types from getattr),
@@ -189,7 +189,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def _try_get_attr(
         obj: p.HasModelDump | BaseModel | p.Base, parameter: str
-    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+    ) -> tuple[bool, t.ValueOrModel]:
         """Try to get attribute value from object via direct attribute access.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
@@ -222,8 +222,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, t.NormalizedValue | BaseModel], parameter: str
-    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+        obj: Mapping[str, t.ValueOrModel], parameter: str
+    ) -> tuple[bool, t.ValueOrModel]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -258,7 +258,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_from_duck_model_dump(
         obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
-    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+    ) -> tuple[bool, t.ValueOrModel]:
         try:
             return FlextUtilitiesConfiguration._duck_dump_get_parameter(obj, parameter)
         except (AttributeError, TypeError, ValueError, RuntimeError):
@@ -268,7 +268,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def _try_get_from_model_dump(
         obj: p.HasModelDump, parameter: str
-    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+    ) -> tuple[bool, t.ValueOrModel]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -512,12 +512,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_parameter(
-        obj: p.HasModelDump
-        | BaseModel
-        | p.Base
-        | Mapping[str, t.NormalizedValue | BaseModel],
+        obj: p.HasModelDump | BaseModel | p.Base | Mapping[str, t.ValueOrModel],
         parameter: str,
-    ) -> t.NormalizedValue | BaseModel:
+    ) -> t.ValueOrModel:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -566,16 +563,16 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _resolve_from_mapping(
-        obj: Mapping[str, t.NormalizedValue | BaseModel],
+        obj: Mapping[str, t.ValueOrModel],
         parameter: str,
-    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+    ) -> tuple[bool, t.ValueOrModel]:
         return FlextUtilitiesConfiguration._try_get_from_dict_like(obj, parameter)
 
     @staticmethod
     def _resolve_from_obj(
         obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
-    ) -> t.NormalizedValue | BaseModel:
+    ) -> t.ValueOrModel:
         if isinstance(obj, p.HasModelDump):
             found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
                 obj, parameter
@@ -596,12 +593,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _resolve_parameter(
-        obj: p.HasModelDump
-        | BaseModel
-        | p.Base
-        | Mapping[str, t.NormalizedValue | BaseModel],
+        obj: p.HasModelDump | BaseModel | p.Base | Mapping[str, t.ValueOrModel],
         parameter: str,
-    ) -> t.NormalizedValue | BaseModel:
+    ) -> t.ValueOrModel:
         if isinstance(obj, BaseModel):
             return FlextUtilitiesConfiguration._resolve_from_obj(obj, parameter)
         if isinstance(obj, p.HasModelDump):
@@ -610,15 +604,15 @@ class FlextUtilitiesConfiguration:
         # Use _resolve_from_mapping for Mapping, fallback to _resolve_from_obj
         # Attempt to resolve from mapping-like objects using attribute access
 
-        def _default_get(_k: str) -> t.NormalizedValue | BaseModel | None:
+        def _default_get(_k: str) -> t.ValueOrModel | None:
             return None
 
         contains_method = getattr(obj, "__contains__", None)
         if callable(contains_method) and contains_method(parameter):
-            get_method: Callable[[str], t.NormalizedValue | BaseModel | None] = getattr(
+            get_method: Callable[[str], t.ValueOrModel | None] = getattr(
                 obj, "get", _default_get
             )
-            raw_val: t.NormalizedValue | BaseModel | None = get_method(parameter)
+            raw_val: t.ValueOrModel | None = get_method(parameter)
             if raw_val is None:
                 return raw_val
             if isinstance(raw_val, (str, int, float, bool, datetime, Path)):
@@ -641,9 +635,7 @@ class FlextUtilitiesConfiguration:
         raise e.NotFoundError(msg)
 
     @staticmethod
-    def get_singleton(
-        singleton_class: type, parameter: str
-    ) -> t.NormalizedValue | BaseModel:
+    def get_singleton(singleton_class: type, parameter: str) -> t.ValueOrModel:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)

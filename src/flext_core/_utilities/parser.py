@@ -253,7 +253,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_get_attr(
-        obj: BaseModel | t.NormalizedValue,
+        obj: t.ValueOrModel,
         attr: str,
         default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
@@ -793,7 +793,7 @@ class FlextUtilitiesParser:
     ) -> list[str] | set[str] | dict[str, str]:
         """Normalize list/dict (builder: norm().list())."""
         if isinstance(items, t.ConfigMap):
-            dict_items: Mapping[str, t.NormalizedValue | BaseModel] = items.root
+            dict_items: Mapping[str, t.ValueOrModel] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {

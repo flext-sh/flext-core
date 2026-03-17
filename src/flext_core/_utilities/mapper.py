@@ -666,10 +666,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_field_value(
-        item: t.NormalizedValue
-        | BaseModel
+        item: t.ValueOrModel
         | Mapping[str, t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue | BaseModel],
+        | Mapping[str, t.ValueOrModel],
         field_name: str,
     ) -> t.NormalizedValue:
         """Extract field value from item (dict or object).
@@ -693,8 +692,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_get_value(
-        current: t.NormalizedValue
-        | BaseModel
+        current: t.ValueOrModel
         | p.HasModelDump
         | p.ValidatorSpec
         | Mapping[str, t.NormalizedValue],
@@ -887,7 +885,7 @@ class FlextUtilitiesMapper:
         if isinstance(value, t.ConfigMap):
             return value
         if isinstance(value, Mapping):
-            narrowed_dict: dict[str, t.NormalizedValue | BaseModel] = dict(
+            narrowed_dict: dict[str, t.ValueOrModel] = dict(
                 FlextUtilitiesMapper._narrow_to_configuration_dict(value)
             )
             coerced_result = r[t.ConfigMap].create_from_callable(
@@ -1256,7 +1254,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def cast_generic[T](
         value: t.NormalizedValue,
-        target_type: Callable[[t.NormalizedValue | BaseModel], T] | None = None,
+        target_type: Callable[[t.ValueOrModel], T] | None = None,
         *,
         default: T | None = None,
     ) -> T | t.NormalizedValue:
@@ -1813,7 +1811,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields_multi(
-        source: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue],
+        source: t.ValueOrModel | Mapping[str, t.NormalizedValue],
         spec: Mapping[str, t.NormalizedValue],
     ) -> t.ContainerMapping:
         """Extract multiple fields using specification dict.
@@ -2118,7 +2116,7 @@ class FlextUtilitiesMapper:
         | t.ContainerValue
         | BaseModel
         | Mapping[str, t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue | BaseModel]
+        | Mapping[str, t.ValueOrModel]
         | Mapping[str, t.Scalar | Sequence[t.Scalar]]
         | p.HasModelDump
         | p.ValidatorSpec
@@ -2154,10 +2152,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def narrow_to_general_value_type(
-        value: t.NormalizedValue
-        | BaseModel
+        value: t.ValueOrModel
         | Mapping[str, t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue | BaseModel]
+        | Mapping[str, t.ValueOrModel]
         | p.HasModelDump
         | None,
     ) -> t.NormalizedValue:

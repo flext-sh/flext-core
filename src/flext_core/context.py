@@ -41,7 +41,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     _logger: ClassVar[p.Logger] = FlextLogger(__name__)
 
     @staticmethod
-    def _to_normalized(value: t.NormalizedValue | BaseModel) -> t.NormalizedValue:
+    def _to_normalized(value: t.ValueOrModel) -> t.NormalizedValue:
         """Narrow ``Container | BaseModel`` to ``NormalizedValue``.
 
         BaseModel instances are converted via ``model_dump()`` so the result
@@ -60,9 +60,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         return value
 
     @staticmethod
-    def _empty_hooks() -> dict[
-        str, list[Callable[[t.Scalar], t.NormalizedValue | BaseModel | None]]
-    ]:
+    def _empty_hooks() -> dict[str, list[Callable[[t.Scalar], t.ValueOrModel | None]]]:
         return {}
 
     initial_data: Annotated[
@@ -120,15 +118,15 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             return {}
 
     _metadata: m.Metadata = PrivateAttr()
-    _hooks: dict[
-        str, list[Callable[[t.Scalar], t.NormalizedValue | BaseModel | None]]
-    ] = PrivateAttr(default_factory=_empty_hooks)
+    _hooks: dict[str, list[Callable[[t.Scalar], t.ValueOrModel | None]]] = PrivateAttr(
+        default_factory=_empty_hooks
+    )
     _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
     _scope_vars: dict[str, contextvars.ContextVar[t.ConfigMap | None]] = PrivateAttr()
 
-    def __init__(self, **data: t.NormalizedValue | BaseModel) -> None:
+    def __init__(self, **data: t.ValueOrModel) -> None:
         """Initialize FlextContext with optional initial data.
 
         ARCHITECTURAL NOTE: FlextContext now uses Python's contextvars for storage,
@@ -264,9 +262,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         return cls(initial_data=m.ContextData(data=t.Dict(root=data_map.root)))
 
     @staticmethod
-    def _propagate_to_logger(
-        key: str, value: t.NormalizedValue | BaseModel, scope: str
-    ) -> None:
+    def _propagate_to_logger(key: str, value: t.ValueOrModel, scope: str) -> None:
         """Propagate context changes to FlextLogger (DRY helper).
 
         Args:
@@ -280,7 +276,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             _ = FlextLogger.bind_global_context(**{key: normalized})
 
     @staticmethod
-    def _validate_set_inputs(key: str, value: t.NormalizedValue | BaseModel) -> r[bool]:
+    def _validate_set_inputs(key: str, value: t.ValueOrModel) -> r[bool]:
         """Validate inputs for set operation.
 
         Args:
@@ -388,9 +384,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             metadata_dict_export = self._get_all_metadata()
         metadata_for_model: t.ConfigMap | None = None
         if metadata_dict_export:
-            normalized_metadata_map: dict[str, t.NormalizedValue | BaseModel] = {}
+            normalized_metadata_map: dict[str, t.ValueOrModel] = {}
             for k, v in metadata_dict_export.items():
-                metadata_value: t.NormalizedValue | BaseModel = v
+                metadata_value: t.ValueOrModel = v
                 if isinstance(v, Mapping):
                     metadata_value = t.ConfigMap(
                         root=dict(v.items()),
@@ -621,7 +617,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             exported_result = other.export(as_dict=True)
             if not isinstance(exported_result, BaseModel):
                 try:
-                    exported_items: dict[str, t.NormalizedValue | BaseModel] = dict(
+                    exported_items: dict[str, t.ValueOrModel] = dict(
                         exported_result.items()
                     )
                     exported_map = t.ConfigMap(root=exported_items)
@@ -634,9 +630,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             exported_map = other
         else:
             try:
-                mapping_root: dict[str, t.NormalizedValue | BaseModel] = dict(
-                    other.items()
-                )
+                mapping_root: dict[str, t.ValueOrModel] = dict(other.items())
                 exported_map = t.ConfigMap(root=mapping_root)
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
@@ -942,7 +936,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             _ = FlextLogger.bind_global_context(**normalized_context)
 
     def _set_single(
-        self, key: str, value: t.NormalizedValue | BaseModel | None, scope: str
+        self, key: str, value: t.ValueOrModel | None, scope: str
     ) -> r[bool]:
         """Set a single key-value pair in the context."""
         if value is c.Context.SENTINEL_MISSING or value is None:
@@ -1297,7 +1291,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                         FlextRuntime.normalize_to_metadata(operation_metadata_raw)
                     )
                 )
-            raw_ctx: dict[str, t.NormalizedValue | BaseModel | None] = {
+            raw_ctx: dict[str, t.ValueOrModel | None] = {
                 c.Context.KEY_CORRELATION_ID: context_vars.Correlation.CORRELATION_ID.get(),
                 c.Context.KEY_PARENT_CORRELATION_ID: context_vars.Correlation.PARENT_CORRELATION_ID.get(),
                 c.Context.KEY_SERVICE_NAME: context_vars.Service.SERVICE_NAME.get(),

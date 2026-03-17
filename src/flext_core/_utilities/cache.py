@@ -206,7 +206,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def normalize_component(
-        component: t.NormalizedValue | BaseModel | set[t.NormalizedValue],
+        component: t.ValueOrModel | set[t.NormalizedValue],
     ) -> t.NormalizedValue:
         """Normalize a component recursively for consistent representation.
 

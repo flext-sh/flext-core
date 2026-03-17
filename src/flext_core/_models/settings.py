@@ -268,7 +268,7 @@ class FlextModelsConfig:
         ] = c.Defaults.TIMEOUT
         continue_on_error: bool = True
         data_items: Annotated[
-            list[t.NormalizedValue | BaseModel],
+            list[t.ValueOrModel],
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
@@ -290,7 +290,7 @@ class FlextModelsConfig:
 
         @classmethod
         def validate_batch(
-            cls, models: list[t.NormalizedValue | BaseModel]
+            cls, models: list[t.ValueOrModel]
         ) -> list[FlextModelsConfig.BatchProcessingConfig]:
             batch_result = r[
                 list[FlextModelsConfig.BatchProcessingConfig]
@@ -657,7 +657,7 @@ class FlextModelsConfig:
             ),
         ]
         metadata: Annotated[
-            t.NormalizedValue | BaseModel | None,
+            t.ValueOrModel | None,
             Field(
                 default=None,
                 description="Optional execution context metadata",
@@ -690,7 +690,7 @@ class FlextModelsConfig:
         """
 
         config_overrides: Annotated[
-            Mapping[str, t.NormalizedValue | BaseModel] | None,
+            Mapping[str, t.ValueOrModel] | None,
             Field(default=None, description="Optional configuration overrides"),
         ] = None
         context: Annotated[
@@ -732,7 +732,7 @@ class FlextModelsConfig:
         """
 
         config_overrides: Annotated[
-            Mapping[str, t.NormalizedValue | BaseModel] | None,
+            Mapping[str, t.ValueOrModel] | None,
             Field(default=None, description="Optional configuration overrides"),
         ] = None
         service_name: Annotated[
@@ -821,7 +821,7 @@ class FlextModelsConfig:
             Field(default=None, description="Field name that failed validation"),
         ] = None
         value: Annotated[
-            t.NormalizedValue | BaseModel | None,
+            t.ValueOrModel | None,
             Field(default=None, description="Value that failed validation"),
         ] = None
 
@@ -978,13 +978,11 @@ class FlextModelsConfig:
             Field(default=None, description="Actual type class"),
         ] = None
         context: Annotated[
-            Mapping[str, t.NormalizedValue | BaseModel] | None,
+            Mapping[str, t.ValueOrModel] | None,
             Field(default=None, description="Additional context for error"),
         ] = None
         metadata: Annotated[
-            FlextModelFoundation.Metadata
-            | Mapping[str, t.NormalizedValue | BaseModel]
-            | None,
+            FlextModelFoundation.Metadata | Mapping[str, t.ValueOrModel] | None,
             Field(default=None, description="Metadata for error"),
         ] = None
 
@@ -996,7 +994,7 @@ class FlextModelsConfig:
             Field(default=None, description="Expected value description"),
         ] = None
         actual_value: Annotated[
-            t.NormalizedValue | BaseModel | None,
+            t.ValueOrModel | None,
             Field(default=None, description="Actual value that caused error"),
         ] = None
 
@@ -1123,11 +1121,11 @@ class FlextModelsConfig:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
         func: Annotated[
-            Callable[..., t.NormalizedValue | BaseModel],
+            Callable[..., t.ValueOrModel],
             Field(description="Function to execute"),
         ]
         args: Annotated[
-            tuple[t.NormalizedValue | BaseModel, ...],
+            tuple[t.ValueOrModel, ...],
             Field(
                 default_factory=tuple,
                 description="Positional arguments for function",

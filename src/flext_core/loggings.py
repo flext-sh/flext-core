@@ -111,9 +111,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                 if context_vars
                 else {}
             )
-            context_obj: dict[str, t.NormalizedValue | BaseModel] = dict(
-                context_map.items()
-            )
+            context_obj: dict[str, t.ValueOrModel] = dict(context_map.items())
             return t.ConfigMap(root=context_obj)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return t.ConfigMap(root={})
@@ -643,7 +641,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
     @staticmethod
     def _to_container_value(
-        value: _LogArg | t.Container | t.NormalizedValue | BaseModel,
+        value: _LogArg | t.Container | t.ValueOrModel,
     ) -> t.Container:
         """Normalize value to Container (internal helper)."""
         if isinstance(value, Exception):
@@ -663,7 +661,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
     @staticmethod
     def _to_scalar_value(
-        value: _LogArg | t.Container | t.NormalizedValue | BaseModel | None,
+        value: _LogArg | t.Container | t.ValueOrModel | None,
     ) -> t.Scalar:
         if value is None:
             return ""
@@ -677,7 +675,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
     @staticmethod
     def _to_container_context(
-        context: Mapping[str, _LogArg | t.Container | t.NormalizedValue | BaseModel],
+        context: Mapping[str, _LogArg | t.Container | t.ValueOrModel],
     ) -> dict[str, t.Container]:
         """Convert mapping to container context using normalization."""
         return {
@@ -688,9 +686,7 @@ class FlextLogger(FlextRuntime, p.Logger):
     @classmethod
     def _to_scalar_context(
         cls,
-        context: Mapping[
-            str, _LogArg | t.Container | t.NormalizedValue | BaseModel | None
-        ],
+        context: Mapping[str, _LogArg | t.Container | t.ValueOrModel | None],
     ) -> dict[str, t.Scalar]:
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
@@ -779,9 +775,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                     "exception_message": str(exception),
                 }
             )
-            merged_root: dict[str, t.NormalizedValue | BaseModel] = dict(
-                context_dict.root
-            )
+            merged_root: dict[str, t.ValueOrModel] = dict(context_dict.root)
             merged_root.update(dict(exception_data.root))
             context_dict = t.ConfigMap(root=merged_root)
             if include_stack_trace:

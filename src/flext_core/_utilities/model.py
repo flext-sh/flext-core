@@ -38,10 +38,8 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _normalize_str_object_mapping(
-        value: t.NormalizedValue
-        | BaseModel
-        | Mapping[str, t.NormalizedValue | BaseModel],
-    ) -> dict[str, t.NormalizedValue | BaseModel]:
+        value: t.ValueOrModel | Mapping[str, t.ValueOrModel],
+    ) -> dict[str, t.ValueOrModel]:
         normalized_result = r[dict[str, t.NormalizedValue]].create_from_callable(
             lambda: FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
                 value
@@ -57,7 +55,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _normalize_to_pydantic_value(
-        value: t.NormalizedValue | BaseModel,
+        value: t.ValueOrModel,
     ) -> t.Scalar | list[t.Primitives]:
         """Normalize object to Pydantic-safe PydanticConfigValue.
 
@@ -75,7 +73,7 @@ class FlextUtilitiesModel:
         if isinstance(value, (bool, int, float, str)):
             return value
         if isinstance(value, (list, tuple)):
-            sequence_items: list[t.NormalizedValue | BaseModel] = [
+            sequence_items: list[t.ValueOrModel] = [
                 FlextRuntime.normalize_to_container(item_value) for item_value in value
             ]
             normalized_items: list[t.Primitives] = []
@@ -361,9 +359,9 @@ class FlextUtilitiesModel:
             return obj
         if isinstance(obj, BaseModel):
             model_dump_result = obj.model_dump()
-            normalized_model_dump: dict[str, t.NormalizedValue | BaseModel] = {}
+            normalized_model_dump: dict[str, t.ValueOrModel] = {}
             for key, value in model_dump_result.items():
-                normalized_value: t.NormalizedValue | BaseModel
+                normalized_value: t.ValueOrModel
                 if value is None:
                     normalized_value = ""
                 elif isinstance(value, (str, int, float, bool, type(None), BaseModel)):
@@ -387,9 +385,9 @@ class FlextUtilitiesModel:
             )
             if obj_mapping_result.is_failure:
                 return t.ConfigMap(root={})
-            normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
+            normalized_mapping: dict[str, t.ValueOrModel] = {}
             for key, value in obj_mapping_result.value.items():
-                normalized_mapping_value: t.NormalizedValue | BaseModel = (
+                normalized_mapping_value: t.ValueOrModel = (
                     FlextRuntime.normalize_to_container(value)
                     if isinstance(value, (str, int, float, bool, type(None), BaseModel))
                     else str(value)
@@ -405,7 +403,7 @@ class FlextUtilitiesModel:
         # Fallback to general value normalization
         normalized = FlextRuntime.normalize_to_container(obj)
         if isinstance(normalized, Mapping):
-            normalized_obj: t.NormalizedValue | BaseModel = normalized
+            normalized_obj: t.ValueOrModel = normalized
             normalized_map = FlextUtilitiesModel._normalize_str_object_mapping(
                 normalized_obj
             )

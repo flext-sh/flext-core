@@ -196,7 +196,7 @@ class FlextProtocolsLogging:
 
     type AccessibleData = (
         t.ConfigMap
-        | Mapping[str, t.NormalizedValue | BaseModel]
+        | Mapping[str, t.ValueOrModel]
         | t.NormalizedValue
         | BaseModel
         | FlextProtocolsResult.HasModelDump
