@@ -409,7 +409,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             ...     print(f"Failed: {result.error}")
 
         """
-        validation = self.validate_input(message)
+        validation = self.validate_message(message)
         if validation.is_failure:
             return r[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
@@ -517,14 +517,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[bool].fail("Message cannot be None")
         return r[bool].ok(value=True)
 
-    def validate_input(self, value: MessageT_contra) -> r[bool]:
-        """Validate input — override in subclasses for domain-specific logic.
-
-        Renamed from ``validate`` to avoid shadowing ``BaseModel.validate``
-        classmethod and eliminating the ``type: ignore[override]`` comment.
-        """
-        return self.validate_message(value)
-
     def _record_execution_metrics(
         self, *, success: bool, error: str | None = None
     ) -> None:
@@ -577,7 +569,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
             return r[ResultT].fail(error_msg)
-        validation = self.validate_input(message)
+        validation = self.validate_message(message)
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"

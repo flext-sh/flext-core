@@ -140,11 +140,11 @@ class CreateUserCommandHandler(
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
     @override
-    def validate_input(self, value: CreateUserCommand) -> r[bool]:
+    def validate_message(self, data: CreateUserCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if type(value).__name__ != "CreateUserCommand":
+        if type(data).__name__ != "CreateUserCommand":
             return r[bool].fail("Cannot handle this command type")
-        return value.validate_command()
+        return data.validate_command()
 
     @override
     def handle(
@@ -194,11 +194,11 @@ class UpdateUserCommandHandler(
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
     @override
-    def validate_input(self, value: UpdateUserCommand) -> r[bool]:
+    def validate_message(self, data: UpdateUserCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if type(value).__name__ != "UpdateUserCommand":
+        if type(data).__name__ != "UpdateUserCommand":
             return r[bool].fail("Cannot handle this command type")
-        return value.validate_command()
+        return data.validate_command()
 
     @override
     def handle(
@@ -238,11 +238,11 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
         return message_type == FailingCommand or str(message_type) == "failing"
 
     @override
-    def validate_input(self, value: FailingCommand) -> r[bool]:
+    def validate_message(self, data: FailingCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if type(value).__name__ != "FailingCommand":
+        if type(data).__name__ != "FailingCommand":
             return r[bool].fail("Cannot handle this command type")
-        return value.validate_command()
+        return data.validate_command()
 
     @override
     def handle(self, message: FailingCommand) -> r[bool]:
@@ -444,7 +444,7 @@ class TestFlextCommandHandler:
             target_user_id="123",
             updates={"name": "test"},
         )
-        result = CreateUserCommandHandler().validate_input(
+        result = CreateUserCommandHandler().validate_message(
             cast("CreateUserCommand", wrong_command)
         )
         if not result.is_failure:

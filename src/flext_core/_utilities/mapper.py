@@ -190,9 +190,6 @@ class FlextUtilitiesMapper:
             convert_default_raw if not callable(convert_default_raw) else None
         )
 
-        def convert_callable(value: t.NormalizedValue) -> t.NormalizedValue:
-            return FlextUtilitiesMapper.narrow_to_container(convert_callable_raw(value))
-
         converter_name = (
             convert_callable_raw.__name__
             if hasattr(convert_callable_raw, "__name__")
@@ -216,7 +213,7 @@ class FlextUtilitiesMapper:
                 t.NormalizedValue
             ].create_from_callable(
                 lambda: FlextUtilitiesMapper.narrow_to_container(
-                    convert_callable(value)
+                    convert_callable_raw(value)
                 )
             )
             if converted_result.is_success:
@@ -392,22 +389,24 @@ class FlextUtilitiesMapper:
             return current
         map_callable: t.MapperCallable = map_func_result.value
 
-        def map_func(value: t.NormalizedValue) -> t.NormalizedValue:
-            return FlextUtilitiesMapper.narrow_to_container(map_callable(value))
-
         if isinstance(current, (list, tuple)):
             seq_current: Sequence[t.NormalizedValue] = current
             return [
-                map_func(FlextUtilitiesMapper.narrow_to_container(x))
+                FlextUtilitiesMapper.narrow_to_container(
+                    map_callable(FlextUtilitiesMapper.narrow_to_container(x))
+                )
                 for x in seq_current
             ]
         if isinstance(current, Mapping):
             current_dict: t.ContainerMapping = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
-            return {k: map_func(v) for k, v in current_dict.items()}
+            return {
+                k: FlextUtilitiesMapper.narrow_to_container(map_callable(v))
+                for k, v in current_dict.items()
+            }
         current_general = FlextUtilitiesMapper.narrow_to_container(current)
-        return map_func(current_general)
+        return FlextUtilitiesMapper.narrow_to_container(map_callable(current_general))
 
     @staticmethod
     def _build_apply_normalize(
@@ -453,23 +452,27 @@ class FlextUtilitiesMapper:
             return current
         process_callable: t.MapperCallable = process_func_result.value
 
-        def process_func(value: t.NormalizedValue) -> t.NormalizedValue:
-            return FlextUtilitiesMapper.narrow_to_container(process_callable(value))
-
         def _process_current() -> t.NormalizedValue:
             if isinstance(current, (list, tuple)):
                 seq_current: Sequence[t.NormalizedValue] = current
                 return [
-                    process_func(FlextUtilitiesMapper.narrow_to_container(x))
+                    FlextUtilitiesMapper.narrow_to_container(
+                        process_callable(FlextUtilitiesMapper.narrow_to_container(x))
+                    )
                     for x in seq_current
                 ]
             if isinstance(current, Mapping):
                 current_dict: t.ContainerMapping = (
                     FlextUtilitiesMapper._narrow_to_configuration_dict(current)
                 )
-                return {k: process_func(v) for k, v in current_dict.items()}
+                return {
+                    k: FlextUtilitiesMapper.narrow_to_container(process_callable(v))
+                    for k, v in current_dict.items()
+                }
             current_general = FlextUtilitiesMapper.narrow_to_container(current)
-            return process_func(current_general)
+            return FlextUtilitiesMapper.narrow_to_container(
+                process_callable(current_general)
+            )
 
         process_result: r[t.NormalizedValue] = r[
             t.NormalizedValue
@@ -2070,9 +2073,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_dict(
-        raw: Mapping[
-            str, t.MetadataOrValue | t.ContainerValue | BaseModel
-        ],
+        raw: Mapping[str, t.MetadataOrValue | t.ContainerValue | BaseModel],
     ) -> dict[str, t.NormalizedValue]:
         """Convert a dict with heterogeneous values to NormalizedValue dict.
 
@@ -2092,9 +2093,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_list(
-        raw: Sequence[
-            t.MetadataOrValue | t.ContainerValue | BaseModel
-        ],
+        raw: Sequence[t.MetadataOrValue | t.ContainerValue | BaseModel],
     ) -> list[t.NormalizedValue]:
         """Convert a list with heterogeneous values to NormalizedValue list.
 
@@ -2111,7 +2110,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def narrow_to_container(
-        value: t.MetadataOrValue | t.ContainerValue | BaseModel
+        value: t.MetadataOrValue
+        | t.ContainerValue
+        | BaseModel
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.ValueOrModel]
         | Mapping[str, t.Scalar | Sequence[t.Scalar]]
@@ -2191,15 +2192,12 @@ class FlextUtilitiesMapper:
             for k, v in specific_fields.items()
         }
 
-        def _metadata_transformer(value: t.NormalizedValue) -> t.NormalizedValue:
-            return FlextUtilitiesMapper.narrow_to_container(
-                FlextRuntime.normalize_to_metadata(value)
-            )
-
         raw_result: t.ContainerMapping = FlextUtilitiesMapper.process_context_data(
             primary_data=context,
             secondary_data=extra_kwargs,
-            transformer=_metadata_transformer,
+            transformer=lambda value: FlextUtilitiesMapper.narrow_to_container(
+                FlextRuntime.normalize_to_metadata(value)
+            ),
             field_overrides=field_overrides_config,
             merge_strategy="merge",
         )

@@ -136,10 +136,10 @@ def test_clear_keys_values_items_and_validate_branches(
             raise TypeError(msg)
 
     monkeypatch.setattr(ctx2, "_scope_vars", {"bad": _BadVar()})
-    tm.fail(ctx2.validate_input())
+    tm.fail(ctx2.validate_context())
     ctx3 = FlextContext()
     ctx3._set_in_contextvar("global", t.ConfigMap(root={"": "x"}))
-    tm.fail(ctx3.validate_input())
+    tm.fail(ctx3.validate_context())
 
 
 def test_update_statistics_remove_hook_and_clone_false_result(

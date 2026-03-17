@@ -364,8 +364,8 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def validate_input(self, value: str) -> r[bool]:
-                _ = value
+            def validate_message(self, data: str) -> r[bool]:
+                _ = data
                 return r[bool].fail("Validation failed for test")
 
             @override
@@ -529,7 +529,7 @@ class TestFlextHandlers:
             handler_mode=handler_mode,
         )
         handler = ConcreteTestHandler(config=config)
-        result = handler.validate_input("test_message")
+        result = handler.validate_message("test_message")
         _ = u.Tests.Result.assert_success(result)
 
     @pytest.mark.parametrize(
@@ -548,7 +548,7 @@ class TestFlextHandlers:
             f"Test {type_name.title()} Message",
         )
         handler = ValidationTestHandler(config=config)
-        result = handler.validate_input(message)
+        result = handler.validate_message(message)
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_handlers_record_metric(self) -> None:
@@ -603,7 +603,7 @@ class TestFlextHandlers:
             "Test None Message",
         )
         handler = ValidationTestHandler(config=config)
-        result = handler.validate_input(None)
+        result = handler.validate_message(None)
         _ = u.Tests.Result.assert_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:
@@ -618,7 +618,7 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         msg = TestMessage(value="test")
-        result = handler.validate_input(msg)
+        result = handler.validate_message(msg)
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_dataclass_message_validation(self) -> None:
@@ -634,7 +634,7 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         msg = DataClassMessage(value="test", number=42)
-        result = handler.validate_input(msg)
+        result = handler.validate_message(msg)
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_slots_message_validation(self) -> None:
@@ -651,7 +651,7 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         msg = SlotsMessage(value="test", number=42)
-        result = handler.validate_input(msg)
+        result = handler.validate_message(msg)
         _ = u.Tests.Result.assert_success(result)
 
 

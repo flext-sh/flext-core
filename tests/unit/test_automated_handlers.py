@@ -25,12 +25,12 @@ class TestAutomatedFlextHandlers:
         )
         tm.ok(handler.execute("abc"), eq="abc")
 
-    def test_validate_input(self) -> None:
+    def test_validate_message(self) -> None:
         handler = FlextHandlers.create_from_callable(
             handler_callable=lambda value: str(value),
             handler_name="validator",
         )
-        tm.ok(handler.validate_input("ok"), eq=True)
+        tm.ok(handler.validate_message("ok"), eq=True)
 
     def test_execute_failure_path(self) -> None:
         def _failing_handler(value: t.Scalar) -> t.Scalar:

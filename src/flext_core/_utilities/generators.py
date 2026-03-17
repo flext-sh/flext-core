@@ -20,7 +20,7 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import c, r, t
+from flext_core import FlextRuntime, c, r, t
 
 
 class FlextUtilitiesGenerators:
@@ -409,7 +409,7 @@ class FlextUtilitiesGenerators:
             >>> duration = (end - start).total_seconds()  # Precise duration
 
         """
-        return datetime.now(UTC)
+        return FlextRuntime.generate_datetime_utc()
 
     @staticmethod
     def generate_iso_timestamp() -> str:

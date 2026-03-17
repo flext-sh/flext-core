@@ -23,7 +23,6 @@ from flext_core._models import (
     FlextModelFoundation,
     FlextModelsDomainEvent,
 )
-from flext_core._utilities.generators import FlextUtilitiesGenerators
 
 
 class FlextModelsEntity:
@@ -188,7 +187,7 @@ class FlextModelsEntity:
         @override
         def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
-            self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
+            self.updated_at = FlextRuntime.generate_datetime_utc()
 
     class Value(FlextModelFoundation.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""

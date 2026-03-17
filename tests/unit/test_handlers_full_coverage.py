@@ -31,8 +31,8 @@ class _QueryHandler(_Handler):
         super().__init__(config=config)
 
     @override
-    def validate_input(self, value: t.Scalar) -> r[bool]:
-        _ = value
+    def validate_message(self, data: t.Scalar) -> r[bool]:
+        _ = data
         return r[bool].ok(True)
 
 
@@ -41,8 +41,8 @@ class _EventHandler(_Handler):
         super().__init__(config=config)
 
     @override
-    def validate_input(self, value: t.Scalar) -> r[bool]:
-        _ = value
+    def validate_message(self, data: t.Scalar) -> r[bool]:
+        _ = data
         return r[bool].ok(True)
 
 
