@@ -27,6 +27,8 @@ class FlextConstantsMixins:
         FIELD_DESCRIPTION: Final[str] = "description"
         FIELD_CONTEXT: Final[str] = "context"
         FIELD_HANDLER_MODE: Final[str] = "handler_mode"
+        FIELD_AUTO_LOG: Final[str] = "auto_log"
+        FIELD_AUTO_CORRELATION: Final[str] = "auto_correlation"
         FIELD_STATE: Final[str] = "state"
         FIELD_CREATED_AT: Final[str] = "created_at"
         FIELD_UPDATED_AT: Final[str] = "updated_at"

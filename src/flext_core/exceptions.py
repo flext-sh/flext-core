@@ -489,7 +489,7 @@ class FlextExceptions:
             Tuple of (resolved_params, error_context, metadata, correlation_id)
 
         """
-        preserved_metadata_raw = extra_kwargs.pop("metadata", None)
+        preserved_metadata_raw = extra_kwargs.pop(c.Mixins.FIELD_METADATA, None)
         preserved_metadata = (
             FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
             if preserved_metadata_raw is not None
@@ -609,20 +609,20 @@ class FlextExceptions:
             except PydanticValidationError:
                 dumped_map = None
         if dumped_map is not None:
-            attrs_raw = dumped_map.get("attributes")
+            attrs_raw = dumped_map.get(c.Mixins.FIELD_ATTRIBUTES)
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
                 attrs = {
                     k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in attrs_map.items()
                 }
-                return m.Metadata.model_validate({"attributes": attrs})
+                return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: attrs})
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
             attrs = {
                 k: FlextRuntime.normalize_to_metadata(v) for k, v in attrs_map.items()
             }
-            return m.Metadata.model_validate({"attributes": attrs})
+            return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: attrs})
         return None
 
     @staticmethod
@@ -742,8 +742,10 @@ class FlextExceptions:
                         k: FlextRuntime.normalize_to_metadata(v)
                         for k, v in merged_kwargs.items()
                     }
-                    return m.Metadata.model_validate({"attributes": normalized_attrs})
-                return m.Metadata.model_validate({"attributes": {}})
+                    return m.Metadata.model_validate({
+                        c.Mixins.FIELD_ATTRIBUTES: normalized_attrs
+                    })
+                return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: {}})
             metadata_model = e._safe_metadata(metadata)
             if metadata_model is not None:
                 if not merged_kwargs:
@@ -754,13 +756,17 @@ class FlextExceptions:
                 }
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
-                return m.Metadata.model_validate({"attributes": merged_attrs})
+                return m.Metadata.model_validate({
+                    c.Mixins.FIELD_ATTRIBUTES: merged_attrs
+                })
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:
                 return e.BaseError._normalize_metadata_from_dict(
                     metadata_dict, merged_kwargs
                 )
-            return m.Metadata.model_validate({"attributes": {"value": str(metadata)}})
+            return m.Metadata.model_validate({
+                c.Mixins.FIELD_ATTRIBUTES: {"value": str(metadata)}
+            })
 
         @staticmethod
         def _normalize_metadata_from_dict(
@@ -775,7 +781,7 @@ class FlextExceptions:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             return m.Metadata.model_validate({
-                "attributes": {
+                c.Mixins.FIELD_ATTRIBUTES: {
                     k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in merged_attrs.items()
                 }
@@ -1032,7 +1038,10 @@ class FlextExceptions:
                 e.NotFoundErrorParams,
                 params,
                 {"resource_type", "resource_id"},
-                excluded_context_keys={c.Context.KEY_CORRELATION_ID, "metadata"},
+                excluded_context_keys={
+                    c.Context.KEY_CORRELATION_ID,
+                    c.Mixins.FIELD_METADATA,
+                },
             )
             metadata_input = metadata if metadata is not None else meta
             super().__init__(
@@ -1160,7 +1169,7 @@ class FlextExceptions:
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize type error with type information."""
-            preserved_metadata = extra_kwargs.pop("metadata", None)
+            preserved_metadata = extra_kwargs.pop(c.Mixins.FIELD_METADATA, None)
             normalized_metadata = (
                 FlextRuntime.normalize_to_metadata(preserved_metadata)
                 if preserved_metadata is not None
@@ -1355,7 +1364,7 @@ class FlextExceptions:
             error_context[c.Context.KEY_CORRELATION_ID] = correlation_id
         e._merge_metadata_into_context(error_context, metadata_obj)
         for k, v in kwargs.items():
-            if k not in {c.Context.KEY_CORRELATION_ID, "metadata"}:
+            if k not in {c.Context.KEY_CORRELATION_ID, c.Mixins.FIELD_METADATA}:
                 error_context[k] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(v)
                 )
@@ -1459,7 +1468,7 @@ class FlextExceptions:
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
-        metadata_raw = kwargs.get("metadata")
+        metadata_raw = kwargs.get(c.Mixins.FIELD_METADATA)
         metadata: Metadata | Mapping[str, t.MetadataOrValue | None] | None = None
         model_dump = getattr(metadata_raw, "model_dump", None)
         if callable(model_dump):
@@ -1467,11 +1476,11 @@ class FlextExceptions:
         if metadata is None:
             metadata = e._safe_config_map(metadata_raw)
         if metadata is None:
-            attrs_raw = getattr(metadata_raw, "attributes", None)
+            attrs_raw = getattr(metadata_raw, c.Mixins.FIELD_ATTRIBUTES, None)
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
                 metadata = m.Metadata.model_validate({
-                    "attributes": dict(attrs_map.items())
+                    c.Mixins.FIELD_ATTRIBUTES: dict(attrs_map.items())
                 })
         return (correlation_id, metadata)
 
@@ -1522,9 +1531,9 @@ class FlextExceptions:
             if k
             not in {
                 c.Context.KEY_CORRELATION_ID,
-                "metadata",
-                "auto_log",
-                "auto_correlation",
+                c.Mixins.FIELD_METADATA,
+                c.Mixins.FIELD_AUTO_LOG,
+                c.Mixins.FIELD_AUTO_CORRELATION,
                 c.Mixins.FIELD_CONFIG,
             }
         }
@@ -1534,11 +1543,11 @@ class FlextExceptions:
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
-        auto_log_raw = merged_kwargs.get("auto_log")
-        auto_correlation_raw = merged_kwargs.get("auto_correlation")
+        auto_log_raw = merged_kwargs.get(c.Mixins.FIELD_AUTO_LOG)
+        auto_correlation_raw = merged_kwargs.get(c.Mixins.FIELD_AUTO_CORRELATION)
         return (
             correlation_id,
-            merged_kwargs.get("metadata"),
+            merged_kwargs.get(c.Mixins.FIELD_METADATA),
             e._safe_bool(
                 auto_log_raw
                 if FlextUtilitiesGuardsTypeCore.is_scalar(auto_log_raw)
