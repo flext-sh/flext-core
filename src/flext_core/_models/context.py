@@ -28,6 +28,7 @@ from flext_core._models import (
     FlextModelFoundation,
     FlextModelsEntity,
 )
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextModelsContext:
@@ -354,7 +355,7 @@ class FlextModelsContext:
             cls, obj: t.NormalizedValue | BaseModel, path: str = ""
         ) -> None:
             """Recursively check if object is JSON-serializable."""
-            if obj is None or isinstance(obj, (str, int, float, bool)):
+            if obj is None or FlextUtilitiesGuardsTypeCore.is_primitive(obj):
                 return
             if FlextRuntime.is_dict_like(obj):
                 for key, val in obj.items():
@@ -373,7 +374,9 @@ class FlextModelsContext:
             cls, val: t.NormalizedValue | BaseModel
         ) -> t.NormalizedValue:
             normalized = cls.normalize_to_container(val)
-            if normalized is None or isinstance(normalized, (str, int, float, bool)):
+            if normalized is None or FlextUtilitiesGuardsTypeCore.is_primitive(
+                normalized
+            ):
                 return normalized
             if isinstance(
                 normalized,

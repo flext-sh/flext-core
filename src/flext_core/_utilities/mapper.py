@@ -22,6 +22,7 @@ from flext_core import (
 )
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core.typings import t
 
 
@@ -574,7 +575,7 @@ class FlextUtilitiesMapper:
             comparable_items: t.ContainerList = [
                 FlextUtilitiesMapper.narrow_to_container(
                     item
-                    if isinstance(item, (str, int, float, bool)) or item is None
+                    if FlextUtilitiesGuardsTypeCore.is_primitive(item) or item is None
                     else str(item)
                 )
                 for item in current_list
@@ -653,7 +654,7 @@ class FlextUtilitiesMapper:
         for item in current_list_unique:
             item_hashable: t.NormalizedValue | str = (
                 item
-                if isinstance(item, (str, int, float, bool)) or item is None
+                if FlextUtilitiesGuardsTypeCore.is_primitive(item) or item is None
                 else str(item)
             )
             if item_hashable not in seen:

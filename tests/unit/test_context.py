@@ -33,8 +33,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import FlextContainer, FlextContext, p, t
 from tests import m
 
-type SetGetInputValue = str | int | float | bool | list[int] | dict[str, str]
-type SetGetExpectedValue = str | int | float | bool
+type SetGetInputValue = t.Primitives | list[int] | dict[str, str]
+type SetGetExpectedValue = t.Primitives
 type NestedDictValue = dict[str, dict[str, dict[str, dict[str, str]]]]
 
 

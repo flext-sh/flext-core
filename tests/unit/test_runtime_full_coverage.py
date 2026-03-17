@@ -1020,7 +1020,7 @@ def test_model_helpers_remaining_paths() -> None:
 def test_ensure_trace_context_dict_conversion_paths() -> None:
     payload: dict[
         str,
-        t.Scalar | Path | list[int] | dict[str, int] | Callable[[], int] | type | None,
+        t.Container | list[int] | dict[str, int] | Callable[[], int] | type | None,
     ] = {
         "none": None,
         "str": "x",

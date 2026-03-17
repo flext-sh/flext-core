@@ -12,7 +12,6 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping
-from datetime import datetime
 from typing import Annotated, ClassVar, override
 
 from pydantic import (
@@ -23,6 +22,7 @@ from pydantic import (
 )
 
 from flext_core import FlextRuntime, c, m, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextExceptions:
@@ -498,7 +498,7 @@ class FlextExceptions:
         correlation_id_raw = extra_kwargs.pop("correlation_id", None)
         correlation_id_str = (
             e._safe_optional_str(correlation_id_raw)
-            if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
         normalized_extra_kwargs: dict[str, t.MetadataValue] = {
@@ -513,7 +513,7 @@ class FlextExceptions:
                 normalized_val = FlextRuntime.normalize_to_metadata(val)
 
                 def to_normalized(value: t.MetadataValue) -> t.NormalizedValue:
-                    if isinstance(value, (str, int, float, bool, datetime)):
+                    if FlextUtilitiesGuardsTypeCore.is_scalar(value):
                         return value
                     if isinstance(value, Mapping):
                         return {
@@ -1463,7 +1463,7 @@ class FlextExceptions:
         correlation_id_raw = kwargs.get("correlation_id")
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
         metadata_raw = kwargs.get("metadata")
@@ -1542,7 +1542,7 @@ class FlextExceptions:
         correlation_id_raw = merged_kwargs.get("correlation_id")
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
         auto_log_raw = merged_kwargs.get("auto_log")
@@ -1552,13 +1552,13 @@ class FlextExceptions:
             merged_kwargs.get("metadata"),
             e._safe_bool(
                 auto_log_raw
-                if isinstance(auto_log_raw, (str, int, float, bool, datetime))
+                if FlextUtilitiesGuardsTypeCore.is_scalar(auto_log_raw)
                 else None,
                 default=False,
             ),
             e._safe_bool(
                 auto_correlation_raw
-                if isinstance(auto_correlation_raw, (str, int, float, bool, datetime))
+                if FlextUtilitiesGuardsTypeCore.is_scalar(auto_correlation_raw)
                 else None,
                 default=False,
             ),

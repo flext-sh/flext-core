@@ -740,7 +740,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     result = fn_candidate(message)
                     if result is None:
                         return None
-                    if isinstance(result, str | int | float | bool):
+                    if u.is_primitive(result):
                         return result
                     return str(result)
 

@@ -31,6 +31,7 @@ from pydantic import (
 )
 
 from flext_core import c, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextModelFoundation:
@@ -89,10 +90,10 @@ class FlextModelFoundation:
         _enum_type_adapter: ClassVar[TypeAdapter[type[StrEnum]] | None] = None
         _serializable_adapter: ClassVar[TypeAdapter[t.Serializable] | None] = None
         _metadata_json_dict_adapter: ClassVar[
-            TypeAdapter[dict[str, str | int | float | bool]] | None
+            TypeAdapter[dict[str, t.Primitives]] | None
         ] = None
         _flat_metadata_dict_adapter: ClassVar[
-            TypeAdapter[dict[str, str | int | float | bool]] | None
+            TypeAdapter[dict[str, t.Primitives]] | None
         ] = None
         _structlog_processor_adapter: ClassVar[
             TypeAdapter[Callable[..., t.Container]] | None
@@ -278,21 +279,17 @@ class FlextModelFoundation:
         @classmethod
         def metadata_json_dict_adapter(
             cls,
-        ) -> TypeAdapter[dict[str, str | int | float | bool]]:
+        ) -> TypeAdapter[dict[str, t.Primitives]]:
             if cls._metadata_json_dict_adapter is None:
-                cls._metadata_json_dict_adapter = TypeAdapter(
-                    dict[str, str | int | float | bool]
-                )
+                cls._metadata_json_dict_adapter = TypeAdapter(dict[str, t.Primitives])
             return cls._metadata_json_dict_adapter
 
         @classmethod
         def flat_metadata_dict_adapter(
             cls,
-        ) -> TypeAdapter[dict[str, str | int | float | bool]]:
+        ) -> TypeAdapter[dict[str, t.Primitives]]:
             if cls._flat_metadata_dict_adapter is None:
-                cls._flat_metadata_dict_adapter = TypeAdapter(
-                    dict[str, str | int | float | bool]
-                )
+                cls._flat_metadata_dict_adapter = TypeAdapter(dict[str, t.Primitives])
             return cls._flat_metadata_dict_adapter
 
         @classmethod
@@ -316,7 +313,7 @@ class FlextModelFoundation:
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
             except (TypeError, ValueError):
-                if isinstance(v, (str, int, float, bool, datetime)):
+                if FlextUtilitiesGuardsTypeCore.is_scalar(v):
                     return [v]
                 return [str(v)]
 
@@ -522,9 +519,6 @@ class FlextModelFoundation:
                 return {}
             if isinstance(value, BaseModel):
                 result = value.model_dump()
-                if not isinstance(result, Mapping):
-                    msg = "attributes BaseModel must dump to mapping"
-                    raise TypeError(msg)
             elif isinstance(value, Mapping):
                 result = dict(value.items())
             else:

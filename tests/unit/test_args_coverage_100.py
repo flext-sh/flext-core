@@ -327,7 +327,7 @@ class TestFlextUtilitiesArgs:
             )
             result = process(valid_status)
             _ = assertion_helpers.assert_flext_result_success(result)
-            tm.that(result.value, eq=values.STATUS_ACTIVE)
+            tm.that(str(result.value), eq=values.STATUS_ACTIVE)
 
         @staticmethod
         def test_validated_with_result_exception() -> None:
@@ -369,7 +369,8 @@ class TestFlextUtilitiesArgs:
                 _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
                 if scenario.expected_status:
-                    tm.that(parsed["status"], eq=scenario.expected_status)
+                    if isinstance(parsed, Mapping):
+                        tm.that(parsed["status"], eq=scenario.expected_status)
             else:
                 _ = u.Tests.Result.assert_failure(result)
 

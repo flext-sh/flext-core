@@ -45,6 +45,7 @@ from collections.abc import Mapping
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, c, m, p, r, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesCache:
@@ -242,7 +243,7 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component.items()
             }
-        if isinstance(component, (str, int, float, bool)) or component is None:
+        if FlextUtilitiesGuardsTypeCore.is_primitive(component) or component is None:
             return component
         if isinstance(component, set):
             normalized_set_items: list[t.NormalizedValue] = [

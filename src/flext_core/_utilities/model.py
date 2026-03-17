@@ -14,6 +14,7 @@ import orjson
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, m, r, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesModel:
@@ -274,7 +275,7 @@ class FlextUtilitiesModel:
                 str_k = str(k)
                 if v is None:
                     safe_attrs[str_k] = ""
-                elif isinstance(v, (str, int, float, bool)):
+                elif FlextUtilitiesGuardsTypeCore.is_primitive(v):
                     safe_attrs[str_k] = v
                 elif FlextRuntime.is_dict_like(v):
                     nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(

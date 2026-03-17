@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from pathlib import Path
 from typing import TypeIs
 
@@ -61,8 +60,8 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def is_container(
         value: object,
-    ) -> TypeIs[str | int | float | bool | datetime | Path]:
-        if value is None or isinstance(value, (str, int, float, bool, datetime)):
+    ) -> TypeIs[t.Container]:
+        if value is None or isinstance(value, t.SCALAR_TYPES):
             return True
         if FlextUtilitiesGuardsTypeCore._is_object_sequence(value):
             return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
@@ -107,7 +106,7 @@ class FlextUtilitiesGuardsTypeCore:
     def is_scalar(
         value: object,
     ) -> TypeIs[t.Scalar]:
-        return isinstance(value, (str, int, float, bool, datetime))
+        return isinstance(value, t.SCALAR_TYPES)
 
     @staticmethod
     def is_string_non_empty(value: t.NormalizedValue) -> TypeIs[str]:

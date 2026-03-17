@@ -85,6 +85,7 @@ from structlog.stdlib import add_log_level
 
 from flext_core import T, c, p, t
 from flext_core._models import FlextModelFoundation
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 
 
 class FlextRuntime:
@@ -673,7 +674,7 @@ class FlextRuntime:
                     normalized_dict[str(key)] = _to_plain_container(normalized_item)
             return t.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            normalized_list: list[str | int | float | bool | datetime | Path] = []
+            normalized_list: list[t.Container] = []
             for v in val:
                 normalized_item = FlextRuntime.normalize_to_container(v)
                 if isinstance(normalized_item, (str, int, float, bool, datetime, Path)):
@@ -682,10 +683,10 @@ class FlextRuntime:
         return str(val)
 
     @staticmethod
-    def _normalize_to_metadata_scalar(val: t.RuntimeData) -> str | int | float | bool:
+    def _normalize_to_metadata_scalar(val: t.RuntimeData) -> t.Primitives:
         if val is None:
             return ""
-        if isinstance(val, (str, int, float, bool)):
+        if FlextUtilitiesGuardsTypeCore.is_primitive(val):
             return val
         if isinstance(val, datetime):
             return val.isoformat()
@@ -702,7 +703,7 @@ class FlextRuntime:
         """Normalize input into metadata-compatible scalar, list, or mapping values."""
         if val is None:
             return ""
-        if isinstance(val, (str, int, float, bool)):
+        if FlextUtilitiesGuardsTypeCore.is_primitive(val):
             return val
         if isinstance(val, datetime):
             return val
@@ -716,7 +717,7 @@ class FlextRuntime:
                 str_k = str(k)
                 if v is None:
                     normalized[str_k] = ""
-                elif isinstance(v, (str, int, float, bool, datetime)):
+                elif FlextUtilitiesGuardsTypeCore.is_scalar(v):
                     normalized[str_k] = v
                 elif isinstance(v, Path):
                     normalized[str_k] = str(v)
@@ -727,7 +728,7 @@ class FlextRuntime:
                         FlextRuntime._normalize_to_metadata_scalar(item) for item in v
                     ]
                 elif FlextRuntime.is_dict_like(v):
-                    inner: dict[str, str | int | float | bool] = {}
+                    inner: dict[str, t.Primitives] = {}
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
                     normalized[str_k] = (
@@ -1711,16 +1712,6 @@ class FlextRuntime:
             context_dict = t.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
-        elif FlextRuntime.is_dict_like(context):
-            try:
-                for k_obj, v_obj in context.items():
-                    key_str = str(k_obj)
-                    context_dict[key_str] = str(v_obj)
-            except (TypeError, ValueError, AttributeError) as exc:
-                logging.getLogger(__name__).debug(
-                    "Failed to normalize mapping context fields", exc_info=exc
-                )
-                context_dict = t.ConfigMap(root={})
         else:
             context_dict = t.ConfigMap(root={})
         result: dict[str, str] = {}

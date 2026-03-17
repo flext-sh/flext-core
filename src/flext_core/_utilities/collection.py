@@ -17,6 +17,7 @@ from itertools import batched, chain
 from typing import overload
 
 from flext_core import T, U, m, r, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesCollection:
@@ -30,12 +31,12 @@ class FlextUtilitiesCollection:
         if validated_result.is_failure:
             return str(value)
         validated = validated_result.value
-        if isinstance(validated, (str, int, float, bool, datetime)):
+        if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
             normalized_list: list[t.NormalizedValue] = []
             for item in validated:
-                if isinstance(item, (str, int, float, bool, datetime)):
+                if FlextUtilitiesGuardsTypeCore.is_scalar(item):
                     normalized_list.append(item)
                 else:
                     normalized_list.append(str(item))
@@ -43,7 +44,7 @@ class FlextUtilitiesCollection:
         if isinstance(validated, dict):
             normalized_dict: dict[str, t.NormalizedValue] = {}
             for dict_key, dict_val in validated.items():
-                if isinstance(dict_val, (str, int, float, bool, datetime)):
+                if FlextUtilitiesGuardsTypeCore.is_scalar(dict_val):
                     normalized_dict[dict_key] = dict_val
                 else:
                     normalized_dict[dict_key] = str(dict_val)
@@ -100,7 +101,7 @@ class FlextUtilitiesCollection:
         if validated_result.is_failure:
             return str(value)
         validated = validated_result.value
-        if isinstance(validated, (str, int, float, bool, datetime)):
+        if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
             normalized_items: list[t.NormalizedValue] = [
@@ -168,7 +169,7 @@ class FlextUtilitiesCollection:
     def _to_batch_scalar(value: t.NormalizedValue) -> t.Scalar:
         if value is None:
             return ""
-        if isinstance(value, (str, int, float, bool, datetime)):
+        if FlextUtilitiesGuardsTypeCore.is_scalar(value):
             return value
         return str(value)
 
@@ -250,9 +251,7 @@ class FlextUtilitiesCollection:
                             value = FlextUtilitiesCollection._coerce_guard_value(
                                 list_value
                             )
-                        elif isinstance(
-                            result_value, (str, int, float, bool, datetime)
-                        ):
+                        elif isinstance(result_value, t.SCALAR_TYPES):
                             value = FlextUtilitiesCollection._coerce_guard_value(
                                 result_value
                             )
@@ -302,9 +301,7 @@ class FlextUtilitiesCollection:
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
                             raw_list
                         )
-                    elif isinstance(
-                        normalized_result_raw, (str, int, float, bool, datetime)
-                    ):
+                    elif isinstance(normalized_result_raw, t.SCALAR_TYPES):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
                             normalized_result_raw
                         )

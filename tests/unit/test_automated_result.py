@@ -11,7 +11,7 @@ from hypothesis import given, settings, strategies as st
 
 from flext_core import r
 
-type SampleValue = str | int | float | bool | None
+type SampleValue = t.Primitives | None
 
 
 class TestAutomatedResult:

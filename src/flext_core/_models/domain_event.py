@@ -18,6 +18,7 @@ from pydantic import BaseModel, BeforeValidator, Field
 
 from flext_core import c, t
 from flext_core._models import FlextModelFoundation
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class _ComparableConfigMap(t.ConfigMap):
@@ -74,7 +75,7 @@ class FlextModelsDomainEvent:
                 normalized_map[str(key)] = (
                     FlextModelsDomainEvent.metadata_to_normalized(
                         value
-                        if isinstance(value, (str, int, float, bool, datetime))
+                        if FlextUtilitiesGuardsTypeCore.is_scalar(value)
                         else str(value)
                     )
                 )
@@ -83,7 +84,7 @@ class FlextModelsDomainEvent:
             return [
                 FlextModelsDomainEvent.metadata_to_normalized(
                     value
-                    if isinstance(value, (str, int, float, bool, datetime))
+                    if FlextUtilitiesGuardsTypeCore.is_scalar(value)
                     else str(value)
                 )
                 for value in item
@@ -136,7 +137,9 @@ class FlextModelsDomainEvent:
         return _ComparableConfigMap(
             root={
                 str(key): (
-                    value if isinstance(value, (str, int, float, bool)) else str(value)
+                    value
+                    if FlextUtilitiesGuardsTypeCore.is_primitive(value)
+                    else str(value)
                 )
                 for key, value in data.items()
             }

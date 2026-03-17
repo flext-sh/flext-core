@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
 from typing import TypeIs
 
 from pydantic import BaseModel
@@ -25,20 +24,16 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_config_value(value: t.NormalizedValue) -> TypeIs[t.NormalizedValue]:
-        if value is None or isinstance(value, (str, int, float, bool, datetime)):
+        if value is None or FlextUtilitiesGuardsTypeCore.is_scalar(value):
             return True
         if isinstance(value, (list, tuple)):
             for item in value:
-                if not (
-                    item is None or isinstance(item, (str, int, float, bool, datetime))
-                ):
+                if not (item is None or FlextUtilitiesGuardsTypeCore.is_scalar(item)):
                     return False
             return True
         if isinstance(value, Mapping):
             for item in value.values():
-                if not (
-                    item is None or isinstance(item, (str, int, float, bool, datetime))
-                ):
+                if not (item is None or FlextUtilitiesGuardsTypeCore.is_scalar(item)):
                     return False
             return True
         return False

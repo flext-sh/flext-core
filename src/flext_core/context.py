@@ -811,7 +811,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 hook_data: t.Scalar
                 if event_data is None:
                     hook_data = ""
-                elif isinstance(event_data, (str, int, float, bool, datetime)):
+                elif u.is_scalar(event_data):
                     hook_data = event_data
                 else:
                     hook_data = str(event_data)
@@ -1170,7 +1170,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 service_value = service_result.value
                 if service_value is None:
                     return r[t.Scalar].ok("")
-                if isinstance(service_value, (str, int, float, bool, datetime)):
+                if u.is_scalar(service_value):
                     return r[t.Scalar].ok(service_value)
                 return r[t.Scalar].ok(str(service_value))
             return r[t.Scalar].fail(service_result.error or "Service not found")

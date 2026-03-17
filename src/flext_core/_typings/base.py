@@ -7,7 +7,7 @@ from pathlib import Path
 
 class FlextTypingBase:
     type Primitives = str | int | float | bool
-    type Scalar = str | int | float | bool | datetime
+    type Scalar = Primitives | datetime
     type Container = Scalar | Path
 
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
