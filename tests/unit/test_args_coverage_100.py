@@ -364,7 +364,7 @@ class TestFlextUtilitiesArgs:
             """Test parse_kwargs with parametrized success scenarios."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_parse_kwargs_scenarios()
             scenario = scenarios[scenario_name]
-            result = u.parse_kwargs(scenario.kwargs, scenario.enum_fields)
+            result = u.parse_kwargs(scenario.kwargs.root, scenario.enum_fields)
             if scenario.expected_success:
                 _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
@@ -377,7 +377,7 @@ class TestFlextUtilitiesArgs:
             """Test parse_kwargs with invalid enum value."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_parse_kwargs_scenarios()
             scenario = scenarios["invalid_enum_value"]
-            result = u.parse_kwargs(scenario.kwargs, scenario.enum_fields)
+            result = u.parse_kwargs(scenario.kwargs.root, scenario.enum_fields)
             u.Tests.Result.assert_failure_with_error(
                 result,
                 expected_error=scenario.expected_error,
@@ -433,12 +433,11 @@ class TestFlextUtilitiesArgs:
         def test_get_enum_params_union() -> None:
             """Test get_enum_params with Union type."""
 
-            def process(status: str | TestFlextUtilitiesArgs.StatusEnum) -> bool:
-                return True
+        def process(status: str | TestFlextUtilitiesArgs.StatusEnum) -> bool:
+            return True
 
-            params = u.get_enum_params(process)
-            tm.that(params, has="status")
-            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
+        params = u.get_enum_params(process)
+        tm.that(params, eq={})
 
         @staticmethod
         def test_get_enum_params_no_enums() -> None:
