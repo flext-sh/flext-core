@@ -1354,7 +1354,7 @@ class FlextRuntime:
             cls,
             error: str | None,
             error_code: str | None = None,
-            error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None = None,
+            error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
         ) -> Self:
             """Create failed result with error message.
 

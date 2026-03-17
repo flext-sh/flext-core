@@ -55,7 +55,7 @@ class FlextModelsDomainEvent:
 
     @staticmethod
     def metadata_to_normalized(
-        item: t.NormalizedValue | t.MetadataValue | None,
+        item: t.MetadataOrValue | None,
     ) -> t.NormalizedValue:
         if item is None:
             return None

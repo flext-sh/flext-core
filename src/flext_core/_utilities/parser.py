@@ -785,7 +785,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: t.ConfigMap | BaseModel | list[str] | Mapping[str, t.NormalizedValue],
+        items: t.ConfigModelInput | list[str] | Mapping[str, t.NormalizedValue],
         *,
         case: str | None = None,
         filter_truthy: bool = False,

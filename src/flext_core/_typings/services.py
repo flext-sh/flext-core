@@ -57,7 +57,9 @@ class FlextTypesServices:
         ]
         | Sequence[FlextTypingBase.Scalar]
     )
+    type MetadataOrValue = MetadataValue | FlextTypingBase.NormalizedValue
     type MetadataAttributeValue = MetadataValue
+    type ConfigModelInput = BaseModel | FlextTypingContainers.ConfigMap
     type MetadataInput = (
         BaseModel
         | FlextTypingContainers.ConfigMap
@@ -92,6 +94,7 @@ class FlextTypesServices:
     type MapperCallable = Callable[
         [FlextTypingBase.NormalizedValue], FlextTypingBase.NormalizedValue
     ]
+    type MapperInput = MapperCallable | FlextTypingBase.NormalizedValue
     type StrictValue = (
         FlextTypingBase.Scalar
         | ConfigurationMapping

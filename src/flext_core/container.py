@@ -491,15 +491,14 @@ class FlextContainer(p.Container):
         """
         if name in self._services:
             service_registration = self._services[name]
-                service = service_registration.service
-                if type_cls is not None:
-                    service_for_check: t.RegisterableService = service
-                    if not isinstance(service_for_check, type_cls):
-                        return r[T].fail(
-                            f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}"
-                        )
-                    typed_service: T = service_for_check
-                    return r[T].ok(typed_service)
+            service = service_registration.service
+            if type_cls is not None:
+                service_for_check: t.RegisterableService = service
+                if not u.is_instance_of(service_for_check, type_cls):
+                    return r[T].fail(
+                        f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}"
+                    )
+                return r[T].ok(service_for_check)
             return r[t.RegisterableService].ok(service)
         if name in self._factories:
             try:
@@ -510,10 +509,9 @@ class FlextContainer(p.Container):
                 resolved = factory_callable()
                 if type_cls is not None:
                     resolved_for_check: t.RegisterableService = resolved
-                    if not isinstance(resolved_for_check, type_cls):
+                    if not u.is_instance_of(resolved_for_check, type_cls):
                         return r[T].fail(f"Factory '{name}' returned wrong type")
-                    typed_resolved: T = resolved_for_check
-                    return r[T].ok(typed_resolved)
+                    return r[T].ok(resolved_for_check)
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -530,10 +528,9 @@ class FlextContainer(p.Container):
                     )
                 if type_cls is not None:
                     resource_for_check: t.RegisterableService = resolved
-                    if not isinstance(resource_for_check, type_cls):
+                    if not u.is_instance_of(resource_for_check, type_cls):
                         return r[T].fail(f"Resource '{name}' returned wrong type")
-                    typed_resource: T = resource_for_check
-                    return r[T].ok(typed_resource)
+                    return r[T].ok(resource_for_check)
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -918,11 +915,13 @@ class FlextContainer(p.Container):
             cloned_services[name] = m.ServiceRegistration(
                 name=name, service=service, service_type=service.__class__.__name__
             )
-        for name, factory in (factories or {}).items():
+        input_factories: Mapping[str, t.FactoryCallable] = factories or {}
+        for name, factory in input_factories.items():
             if not u.is_factory(factory):
                 continue
             cloned_factories[name] = m.FactoryRegistration(name=name, factory=factory)
-        for name, resource_factory in (resources or {}).items():
+        input_resources: Mapping[str, t.ResourceCallable] = resources or {}
+        for name, resource_factory in input_resources.items():
             if u.is_resource(resource_factory):
                 cloned_resources[name] = m.ResourceRegistration(
                     name=name, factory=resource_factory

@@ -284,7 +284,7 @@ class FlextRegistry(s[bool]):
         """
         validated_metadata: t.ConfigMap | None = None
         if metadata is not None:
-            raw_metadata: Mapping[str, t.NormalizedValue | t.MetadataValue | BaseModel]
+            raw_metadata: Mapping[str, t.MetadataOrValue | BaseModel]
             if isinstance(metadata, m.Metadata):
                 raw_metadata = metadata.attributes
             else:

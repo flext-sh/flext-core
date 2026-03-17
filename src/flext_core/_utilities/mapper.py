@@ -151,7 +151,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_chunk(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
@@ -174,7 +174,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_convert(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
@@ -236,7 +236,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_ensure(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply ensure operation."""
         if "ensure" not in ops:
@@ -296,7 +296,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_filter(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
         default: t.NormalizedValue,
     ) -> t.NormalizedValue:
         """Helper: Apply filter operation."""
@@ -329,14 +329,14 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_group(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply group operation."""
         if "group" not in ops:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        group_spec_raw: t.NormalizedValue | t.MapperCallable = ops["group"]
+        group_spec_raw: t.MapperInput = ops["group"]
         current_items: Sequence[t.NormalizedValue] = current
         current_list: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
@@ -382,7 +382,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_map(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply map operation."""
         if "map" not in ops:
@@ -412,7 +412,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_normalize(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply normalize operation."""
         if "normalize" not in ops:
@@ -439,7 +439,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_process(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
         default: t.NormalizedValue,
         on_error: str,
     ) -> t.NormalizedValue:
@@ -482,7 +482,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_slice(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
@@ -519,14 +519,14 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_sort(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        sort_spec_raw: t.NormalizedValue | t.MapperCallable = ops["sort"]
+        sort_spec_raw: t.MapperInput = ops["sort"]
         current_items: Sequence[t.NormalizedValue] = current
         current_list: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
@@ -589,7 +589,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_transform(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
         default: t.NormalizedValue,
         on_error: str,
     ) -> t.NormalizedValue:
@@ -638,7 +638,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_unique(
         current: t.NormalizedValue,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
     ) -> t.NormalizedValue:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
@@ -821,9 +821,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_callable_from_dict(
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable], key: str
+        ops: Mapping[str, t.MapperInput], key: str
     ) -> r[t.MapperCallable]:
-        value: t.NormalizedValue | t.MapperCallable = ops.get(key)
+        value: t.MapperInput = ops.get(key)
         if callable(value):
             return r[t.MapperCallable].ok(value)
         return r[t.MapperCallable].fail(f"Operation '{key}' is not callable")
@@ -852,7 +852,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_str_from_dict(
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        ops: Mapping[str, t.MapperInput],
         key: str,
         default: str = "",
     ) -> str:
@@ -1134,7 +1134,7 @@ class FlextUtilitiesMapper:
     def build(
         value: p.AccessibleData,
         *,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable] | None = None,
+        ops: Mapping[str, t.MapperInput] | None = None,
         default: t.NormalizedValue = None,
         on_error: str = "stop",
     ) -> t.NormalizedValue:
@@ -1321,8 +1321,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def construct(
-        spec: Mapping[str, t.NormalizedValue | t.MapperCallable],
-        source: t.ConfigMap | BaseModel | None = None,
+        spec: Mapping[str, t.MapperInput],
+        source: t.ConfigModelInput | None = None,
         *,
         on_error: str = "stop",
     ) -> t.ContainerMapping:
@@ -1695,7 +1695,7 @@ class FlextUtilitiesMapper:
         *,
         default: t.NormalizedValue = None,
         required: bool = False,
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable] | None = None,
+        ops: Mapping[str, t.MapperInput] | None = None,
     ) -> t.NormalizedValue:
         """Extract single field from source with optional DSL processing.
 
@@ -2071,7 +2071,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_untyped_dict(
         raw: Mapping[
-            str, t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel
+            str, t.MetadataOrValue | t.ContainerValue | BaseModel
         ],
     ) -> dict[str, t.NormalizedValue]:
         """Convert a dict with heterogeneous values to NormalizedValue dict.
@@ -2093,7 +2093,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_untyped_list(
         raw: Sequence[
-            t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel
+            t.MetadataOrValue | t.ContainerValue | BaseModel
         ],
     ) -> list[t.NormalizedValue]:
         """Convert a list with heterogeneous values to NormalizedValue list.
@@ -2111,10 +2111,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def narrow_to_container(
-        value: t.NormalizedValue
-        | t.MetadataValue
-        | t.ContainerValue
-        | BaseModel
+        value: t.MetadataOrValue | t.ContainerValue | BaseModel
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.ValueOrModel]
         | Mapping[str, t.Scalar | Sequence[t.Scalar]]
@@ -2320,12 +2317,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def process_context_data(
-        primary_data: t.ConfigMap
-        | BaseModel
+        primary_data: t.ConfigModelInput
         | Mapping[str, t.NormalizedValue]
         | None = None,
-        secondary_data: t.ConfigMap
-        | BaseModel
+        secondary_data: t.ConfigModelInput
         | Mapping[str, t.NormalizedValue]
         | None = None,
         *,
@@ -2462,7 +2457,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def prop(
         key: str,
-    ) -> Callable[[t.ConfigMap | BaseModel], t.NormalizedValue]:
+    ) -> Callable[[t.ConfigModelInput], t.NormalizedValue]:
         """Create a property accessor function (functional pattern).
 
         Returns a function that extracts a property/attribute from an object.
@@ -2483,7 +2478,7 @@ class FlextUtilitiesMapper:
 
         """
 
-        def accessor(obj: t.ConfigMap | BaseModel) -> t.NormalizedValue:
+        def accessor(obj: t.ConfigModelInput) -> t.NormalizedValue:
             """Access property from object."""
             result = FlextUtilitiesMapper.get(obj, key)
             return result if result is not None else ""

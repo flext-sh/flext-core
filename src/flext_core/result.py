@@ -31,7 +31,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @staticmethod
     def _validate_error_data(
-        error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None,
+        error_data: t.ResultErrorData | t.ConfigModelInput | None,
     ) -> t.ConfigMap | None:
         """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
         if error_data is None:
@@ -47,7 +47,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         self,
         source: Result[T, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None = None,
+        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
         *,
         value: T | None = None,
         error: str | None = None,
@@ -193,7 +193,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None = None,
+        error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
         *,
         exception: BaseException | None = None,
     ) -> Self:
@@ -222,7 +222,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
         """
         error_msg = error if error is not None else ""
-        result = FlextResult[T](
+        result: Self = cls(
             error_code=error_code,
             error_data=error_data,
             error=error_msg,
