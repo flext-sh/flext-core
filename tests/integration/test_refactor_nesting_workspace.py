@@ -67,18 +67,18 @@ class TestWorkspaceLevelRefactor:
                 '\nclass UtilityHelper:\n    @staticmethod\n    def help() -> str:\n        return "help"\n',
             )
         scanner = FlextInfraRefactorLooseClassScanner()
-        all_violations: list[m.Infra.Refactor.LooseClassViolation] = []
+        all_violations: list[m.Infra.LooseClassViolation] = []
         for proj in projects:
             result = scanner.scan(tmp_path / proj)
             assert result.is_success
             violations_raw = result.value.get("violations", [])
             if isinstance(violations_raw, list):
                 for v_item in violations_raw:
-                    if isinstance(v_item, m.Infra.Refactor.LooseClassViolation):
+                    if isinstance(v_item, m.Infra.LooseClassViolation):
                         all_violations.append(v_item)
                     elif isinstance(v_item, Mapping):
                         all_violations.append(
-                            m.Infra.Refactor.LooseClassViolation.model_validate(v_item)
+                            m.Infra.LooseClassViolation.model_validate(v_item)
                         )
         assert len(all_violations) >= 3
         for v in all_violations:
