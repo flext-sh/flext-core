@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.cqrs import FlextModelsCqrs
     from flext_core._models.decorators import FlextModelsDecorators
+    from flext_core._models.dispatcher import FlextModelsDispatcher
     from flext_core._models.domain_event import FlextModelsDomainEvent
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.generic import FlextGenericModels
@@ -49,6 +50,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextModelsContext": ("flext_core._models.context", "FlextModelsContext"),
     "FlextModelsCqrs": ("flext_core._models.cqrs", "FlextModelsCqrs"),
     "FlextModelsDecorators": ("flext_core._models.decorators", "FlextModelsDecorators"),
+    "FlextModelsDispatcher": ("flext_core._models.dispatcher", "FlextModelsDispatcher"),
     "FlextModelsDomainEvent": (
         "flext_core._models.domain_event",
         "FlextModelsDomainEvent",
@@ -68,6 +70,7 @@ __all__ = [
     "FlextModelsContext",
     "FlextModelsCqrs",
     "FlextModelsDecorators",
+    "FlextModelsDispatcher",
     "FlextModelsDomainEvent",
     "FlextModelsEntity",
     "FlextModelsHandler",

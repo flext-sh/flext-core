@@ -129,7 +129,7 @@ class FlextService[
             else []
         )
 
-    @computed_field
+    @computed_field(repr=False)
     @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
