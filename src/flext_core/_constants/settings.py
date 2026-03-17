@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
+from flext_core._constants.base import FlextConstantsBase
+
 
 class FlextConstantsSettings:
     """Constants for utilities and settings."""
@@ -28,7 +30,7 @@ class FlextConstantsSettings:
         "UTF-8 format for bytes serialization."
         SERIALIZATION_HEX: Final = "hex"
         "Hex format for bytes serialization."
-        MAX_TIMEOUT_SECONDS: Final[int] = 3600
+        MAX_TIMEOUT_SECONDS: Final[float] = FlextConstantsBase.MAX_TIMEOUT_SECONDS
         LONG_UUID_LENGTH: Final[int] = 12
         SHORT_UUID_LENGTH: Final[int] = 8
         VERSION_MODULO: Final[int] = 100
@@ -63,7 +65,7 @@ class FlextConstantsSettings:
         MAX_WORKERS_THRESHOLD: Final[int] = 50
         DEFAULT_ENABLE_CACHING: Final[bool] = True
         DEFAULT_ENABLE_TRACING: Final[bool] = False
-        DEFAULT_TIMEOUT: Final[int] = 30
+        DEFAULT_TIMEOUT: Final[float] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
         DEFAULT_DEBUG_MODE: Final[bool] = False
         DEFAULT_TRACE_MODE: Final[bool] = False
 

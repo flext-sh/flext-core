@@ -495,7 +495,7 @@ class FlextExceptions:
             if preserved_metadata_raw is not None
             else None
         )
-        correlation_id_raw = extra_kwargs.pop("correlation_id", None)
+        correlation_id_raw = extra_kwargs.pop(c.Context.KEY_CORRELATION_ID, None)
         correlation_id_str = (
             e._safe_optional_str(correlation_id_raw)
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
@@ -792,7 +792,7 @@ class FlextExceptions:
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
-                "correlation_id": self.correlation_id,
+                c.Context.KEY_CORRELATION_ID: self.correlation_id,
                 "timestamp": self.timestamp,
             }
             if self.metadata and self.metadata.attributes:
@@ -956,10 +956,10 @@ class FlextExceptions:
             resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                {"auth_method": auth_method, "user_id": user_id},
+                {"auth_method": auth_method, c.Context.KEY_USER_ID: user_id},
                 e.AuthenticationErrorParams,
                 params,
-                {"auth_method", "user_id"},
+                {"auth_method", c.Context.KEY_USER_ID},
             )
             super().__init__(
                 message,
@@ -991,7 +991,7 @@ class FlextExceptions:
                 {},
                 e.AuthorizationErrorParams,
                 params,
-                {"user_id", "resource", "permission"},
+                {c.Context.KEY_USER_ID, "resource", "permission"},
             )
             super().__init__(
                 message,
@@ -1032,7 +1032,7 @@ class FlextExceptions:
                 e.NotFoundErrorParams,
                 params,
                 {"resource_type", "resource_id"},
-                excluded_context_keys={"correlation_id", "metadata"},
+                excluded_context_keys={c.Context.KEY_CORRELATION_ID, "metadata"},
             )
             metadata_input = metadata if metadata is not None else meta
             super().__init__(
@@ -1131,7 +1131,7 @@ class FlextExceptions:
                 {},
                 e.CircuitBreakerErrorParams,
                 params,
-                {"service_name", "failure_count", "reset_timeout"},
+                {c.Context.KEY_SERVICE_NAME, "failure_count", "reset_timeout"},
             )
             super().__init__(
                 message,
@@ -1166,7 +1166,7 @@ class FlextExceptions:
                 if preserved_metadata is not None
                 else None
             )
-            preserved_corr_id = extra_kwargs.pop("correlation_id", None)
+            preserved_corr_id = extra_kwargs.pop(c.Context.KEY_CORRELATION_ID, None)
             type_map = self._get_type_map()
             normalized_expected_type = self._normalize_type(
                 expected_type, type_map, extra_kwargs, "expected_type"
@@ -1352,10 +1352,10 @@ class FlextExceptions:
         """Build error context dictionary."""
         error_context: t.ConfigMap = t.ConfigMap(root={})
         if correlation_id is not None:
-            error_context["correlation_id"] = correlation_id
+            error_context[c.Context.KEY_CORRELATION_ID] = correlation_id
         e._merge_metadata_into_context(error_context, metadata_obj)
         for k, v in kwargs.items():
-            if k not in {"correlation_id", "metadata"}:
+            if k not in {c.Context.KEY_CORRELATION_ID, "metadata"}:
                 error_context[k] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(v)
                 )
@@ -1396,8 +1396,8 @@ class FlextExceptions:
         }
         error_class = error_classes.get(error_type) if error_type else None
         correlation_id = None
-        if error_context and "correlation_id" in error_context:
-            correlation_id = str(error_context["correlation_id"])
+        if error_context and c.Context.KEY_CORRELATION_ID in error_context:
+            correlation_id = str(error_context[c.Context.KEY_CORRELATION_ID])
         context_payload: Mapping[str, t.MetadataValue] | None = None
         if error_context:
             context_payload = {
@@ -1432,14 +1432,14 @@ class FlextExceptions:
             (["operation"], "operation"),
             (["host", "port"], "connection"),
             (["timeout_seconds"], "timeout"),
-            (["user_id", "permission"], "authorization"),
+            ([c.Context.KEY_USER_ID, "permission"], "authorization"),
             (["auth_method"], "authentication"),
             (["resource_id"], "not_found"),
             (["attribute_name"], "attribute_access"),
         ]
         for keys, error_type in error_patterns:
             if error_type == "authorization":
-                if "user_id" in kwargs and "permission" in kwargs:
+                if c.Context.KEY_USER_ID in kwargs and "permission" in kwargs:
                     return error_type
             elif any(key in kwargs for key in keys):
                 return error_type
@@ -1453,7 +1453,7 @@ class FlextExceptions:
 
         Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
         """
-        correlation_id_raw = kwargs.get("correlation_id")
+        correlation_id_raw = kwargs.get(c.Context.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
@@ -1521,14 +1521,14 @@ class FlextExceptions:
             for k, v in merged_kwargs.items()
             if k
             not in {
-                "correlation_id",
+                c.Context.KEY_CORRELATION_ID,
                 "metadata",
                 "auto_log",
                 "auto_correlation",
-                "config",
+                c.Mixins.FIELD_CONFIG,
             }
         }
-        correlation_id_raw = merged_kwargs.get("correlation_id")
+        correlation_id_raw = merged_kwargs.get(c.Context.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
@@ -1551,7 +1551,7 @@ class FlextExceptions:
                 else None,
                 default=False,
             ),
-            merged_kwargs.get("config"),
+            merged_kwargs.get(c.Mixins.FIELD_CONFIG),
             extra_kwargs,
         )
 
@@ -1654,7 +1654,7 @@ class FlextExceptions:
         cls._exception_counts.clear()
 
     @classmethod
-    def get_metrics(cls) -> m.ErrorMap:
+    def get_metrics(cls) -> t.ConfigMap:
         """Get exception metrics and statistics."""
         total = sum(cls._exception_counts.values(), 0)
         exception_counts_list = [
@@ -1671,7 +1671,7 @@ class FlextExceptions:
             )
             exception_counts_dict[exc_name] = count
         exception_counts_payload = t.ConfigMap.model_validate(exception_counts_dict)
-        result_dict: m.ErrorMap = m.ErrorMap(
+        result_dict: t.ConfigMap = t.ConfigMap(
             root={
                 "total_exceptions": total,
                 "exception_counts": exception_counts_payload,

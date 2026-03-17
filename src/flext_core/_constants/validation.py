@@ -27,7 +27,7 @@ class FlextConstantsValidation:
         MAX_AGE: Final[int] = 150
         MIN_AGE: Final[int] = 0
         PREVIEW_LENGTH: Final[int] = 50
-        VALIDATION_TIMEOUT_MS: Final[int] = 100
+        VALIDATION_TIMEOUT_MS: Final[float] = 100.0
         MAX_UNCOMMITTED_EVENTS: Final[int] = 100
         DISCOUNT_THRESHOLD: Final[int] = 100
         DISCOUNT_RATE: Final[float] = 0.05

@@ -432,6 +432,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             be handled separately in the validate() method and executed via execute().
 
         """
+        _ = message
         raise NotImplementedError
 
     def pop_context(self) -> r[t.ConfigMap]:
@@ -456,9 +457,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
             return r[bool].ok(value=True)
-        handler_name_raw = ctx.get("handler_name", "unknown")
+        handler_name_raw = ctx.get("handler_name", c.Mixins.IDENTIFIER_UNKNOWN)
         handler_name = (
-            str(handler_name_raw) if handler_name_raw is not None else "unknown"
+            str(handler_name_raw)
+            if handler_name_raw is not None
+            else c.Mixins.IDENTIFIER_UNKNOWN
         )
         handler_mode_raw = ctx.get("handler_mode", "operation")
         handler_mode_str = (
@@ -466,11 +469,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         )
         handler_mode_literal: c.Cqrs.HandlerType = (
             c.Cqrs.HandlerType.COMMAND
-            if handler_mode_str == "command"
+            if handler_mode_str == c.Cqrs.HandlerType.COMMAND
             else c.Cqrs.HandlerType.QUERY
-            if handler_mode_str == "query"
+            if handler_mode_str == c.Cqrs.HandlerType.QUERY
             else c.Cqrs.HandlerType.EVENT
-            if handler_mode_str == "event"
+            if handler_mode_str == c.Cqrs.HandlerType.EVENT
             else c.Cqrs.HandlerType.SAGA
             if handler_mode_str == "saga"
             else c.Cqrs.HandlerType.OPERATION

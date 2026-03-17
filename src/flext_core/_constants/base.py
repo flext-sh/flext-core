@@ -14,10 +14,6 @@ class FlextConstantsBase:
 
     NAME: Final[str] = "FLEXT"
     INITIAL_TIME: Final[float] = 0.0
-    EVENT_TUPLE_SIZE: Final[int] = 2
-    "Domain event tuple size (event_type, event_data)."
-    MIN_QUALNAME_PARTS_FOR_WRAPPER: Final[int] = 2
-    "Minimum qualname parts for wrapper detection."
     PERCENTAGE_MULTIPLIER: Final[int] = 100
     "Multiplier for percentage calculations (100 = 100%)."
     MILLISECONDS_MULTIPLIER: Final[int] = 1000
@@ -32,7 +28,7 @@ class FlextConstantsBase:
         LOCALHOST: Final[str] = "localhost"
         MIN_PORT: Final[int] = 1
         MAX_PORT: Final[int] = 65535
-        DEFAULT_TIMEOUT: Final[int] = 30
+        DEFAULT_TIMEOUT: Final[float] = 30.0
         DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
         MAX_CONNECTION_POOL_SIZE: Final[int] = 100
         MAX_HOSTNAME_LENGTH: Final[int] = 253
@@ -43,27 +39,25 @@ class FlextConstantsBase:
         """User-facing message templates."""
 
         TYPE_MISMATCH: Final[str] = "Type mismatch"
-        VALIDATION_FAILED: Final[str] = "Validation failed"
-        REDACTED_SECRET: Final[str] = "***REDACTED***"  # noqa: S105 — display placeholder, not a real secret
 
     class Defaults:
         """Default values."""
 
-        TIMEOUT: Final[int] = 30
+        TIMEOUT: Final[float] = 30.0
         PAGE_SIZE: Final[int] = 100
-        TIMEOUT_SECONDS: Final[int] = 30
+        TIMEOUT_SECONDS: Final[float] = 30.0
         CACHE_TTL: Final[int] = 300
         DEFAULT_CACHE_TTL: Final[int] = CACHE_TTL
         DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
         MAX_MESSAGE_LENGTH: Final[int] = 100
         DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0
-        OPERATION_TIMEOUT_SECONDS: Final[int] = 30
+        OPERATION_TIMEOUT_SECONDS: Final[float] = 30.0
         DATABASE_URL: Final[str] = "sqlite:///:memory:"
         DEFAULT_DATABASE_URL: Final[str] = DATABASE_URL
 
-    DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
-    MAX_TIMEOUT_SECONDS: Final[int] = 3600
-    MIN_TIMEOUT_SECONDS: Final[int] = 1
+    DEFAULT_TIMEOUT_SECONDS: Final[float] = 30.0
+    MAX_TIMEOUT_SECONDS: Final[float] = 3600.0
+    MIN_TIMEOUT_SECONDS: Final[float] = 1.0
     DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
     DEFAULT_BATCH_SIZE: Final[int] = 1000
     DEFAULT_PAGE_SIZE: Final[int] = 10
@@ -86,10 +80,10 @@ class FlextConstantsBase:
     EXPECTED_TUPLE_LENGTH: Final[int] = 2
     DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
     PREVIEW_LENGTH: Final[int] = 50
-    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = 60
+    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[float] = 60.0
     IDENTIFIER_LENGTH: Final[int] = 12
     MAX_BATCH_SIZE_LIMIT: Final[int] = 10000
     DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
     DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
-    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = 600
+    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[float] = 600.0
     DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600

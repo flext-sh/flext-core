@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
+from flext_core._constants.base import FlextConstantsBase
+
 
 class FlextConstantsInfrastructure:
     """Constants for context, container, dispatcher, and pagination."""
@@ -25,7 +27,9 @@ class FlextConstantsInfrastructure:
         SCOPE_OPERATION: Final[str] = "operation"
         CORRELATION_ID_PREFIX: Final[str] = "flext-"
         CORRELATION_ID_LENGTH: Final[int] = 12
-        DEFAULT_CONTEXT_TIMEOUT: Final[int] = 30
+        DEFAULT_CONTEXT_TIMEOUT: Final[float] = (
+            FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+        )
         MAX_CONTEXT_DEPTH: Final[int] = 10
         MAX_CONTEXT_SIZE: Final[int] = 1000
         MILLISECONDS_PER_SECOND: Final[int] = 1000
@@ -71,9 +75,9 @@ class FlextConstantsInfrastructure:
         """Dependency injection container constants."""
 
         DEFAULT_WORKERS: Final[int] = 4
-        TIMEOUT_SECONDS: Final[int] = 30
-        MIN_TIMEOUT_SECONDS: Final[int] = 1
-        MAX_TIMEOUT_SECONDS: Final[int] = 300
+        TIMEOUT_SECONDS: Final[float] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+        MIN_TIMEOUT_SECONDS: Final[float] = FlextConstantsBase.MIN_TIMEOUT_SECONDS
+        MAX_TIMEOUT_SECONDS: Final[float] = 300.0
         MAX_CACHE_SIZE: Final[int] = 100
         DEFAULT_MAX_SERVICES: Final[int] = 1000
         "Default maximum number of services allowed in container."
@@ -97,9 +101,13 @@ class FlextConstantsInfrastructure:
         DEFAULT_AUTO_CONTEXT: Final[bool] = True
         DEFAULT_ENABLE_LOGGING: Final[bool] = True
         DEFAULT_ENABLE_METRICS: Final[bool] = True
-        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
-        MIN_TIMEOUT_SECONDS: Final[int] = 1
-        MAX_TIMEOUT_SECONDS: Final[int] = 600
+        DEFAULT_TIMEOUT_SECONDS: Final[float] = (
+            FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+        )
+        MIN_TIMEOUT_SECONDS: Final[float] = FlextConstantsBase.MIN_TIMEOUT_SECONDS
+        MAX_TIMEOUT_SECONDS: Final[float] = (
+            FlextConstantsBase.MAX_TIMEOUT_SECONDS_PERFORMANCE
+        )
         MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
         DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core.dispatcher:FlextDispatcher"
         "Default dispatcher implementation path."
@@ -136,9 +144,9 @@ class FlextConstantsInfrastructure:
         """Pagination configuration."""
 
         DEFAULT_PAGE_NUMBER: Final[int] = 1
-        DEFAULT_PAGE_SIZE: Final[int] = 10
-        MAX_PAGE_SIZE: Final[int] = 1000
-        MIN_PAGE_SIZE: Final[int] = 1
+        DEFAULT_PAGE_SIZE: Final[int] = FlextConstantsBase.DEFAULT_PAGE_SIZE
+        MAX_PAGE_SIZE: Final[int] = FlextConstantsBase.MAX_PAGE_SIZE
+        MIN_PAGE_SIZE: Final[int] = FlextConstantsBase.MIN_PAGE_SIZE
         MIN_PAGE_NUMBER: Final[int] = 1
         MAX_PAGE_NUMBER: Final[int] = 10000
         DEFAULT_PAGE_SIZE_EXAMPLE: Final[int] = 20

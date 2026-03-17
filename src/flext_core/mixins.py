@@ -292,7 +292,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         """Log service information ONCE at initialization (not bound to context)."""
         service_context: t.ConfigMap = t.ConfigMap(
             root={
-                "service_name": self.__class__.__name__,
+                c.Context.KEY_SERVICE_NAME: self.__class__.__name__,
                 "service_module": self.__class__.__module__,
                 **context_data,
             }
@@ -463,7 +463,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         operation_name = FlextContext.Request.get_operation_name()
         context_data: t.ConfigMap = t.ConfigMap(
             root={
-                "correlation_id": FlextRuntime.normalize_to_container(
+                c.Context.KEY_CORRELATION_ID: FlextRuntime.normalize_to_container(
                     correlation_id or ""
                 ),
                 "operation": FlextRuntime.normalize_to_container(operation_name or ""),
@@ -573,7 +573,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     return r[bool].ok(value=True)
                 ctx_mapping: dict[str, t.Scalar] = {str(k): v for k, v in ctx.items()}
                 handler_name_raw: t.Scalar | None = ctx_mapping.get(
-                    "handler_name", "unknown"
+                    "handler_name", c.Mixins.IDENTIFIER_UNKNOWN
                 )
                 handler_name: str = str(handler_name_raw)
                 handler_mode_raw: t.Scalar | None = ctx_mapping.get(
@@ -582,11 +582,11 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 handler_mode_str: str = str(handler_mode_raw)
                 handler_mode_literal: c.Cqrs.HandlerType = (
                     c.Cqrs.HandlerType.COMMAND
-                    if handler_mode_str == "command"
+                    if handler_mode_str == c.Cqrs.HandlerType.COMMAND
                     else c.Cqrs.HandlerType.QUERY
-                    if handler_mode_str == "query"
+                    if handler_mode_str == c.Cqrs.HandlerType.QUERY
                     else c.Cqrs.HandlerType.EVENT
-                    if handler_mode_str == "event"
+                    if handler_mode_str == c.Cqrs.HandlerType.EVENT
                     else c.Cqrs.HandlerType.SAGA
                     if handler_mode_str == "saga"
                     else c.Cqrs.HandlerType.OPERATION

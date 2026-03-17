@@ -183,14 +183,14 @@ class FlextRegistry(s[bool]):
     def _get_handler_mode(self, value: t.RuntimeAtomic) -> c.Cqrs.HandlerType:
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
-        if result.is_success and isinstance(result.value, c.Cqrs.HandlerType):
+        if result.is_success:
             return result.value
         return c.Cqrs.HandlerType.COMMAND
 
     def _get_status(self, value: t.RuntimeAtomic) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
-        if result.is_success and isinstance(result.value, c.Cqrs.CommonStatus):
+        if result.is_success:
             return result.value
         return c.Cqrs.CommonStatus.ACTIVE
 
@@ -335,9 +335,7 @@ class FlextRegistry(s[bool]):
             key = f"binding::{message_type_name}::{handler_name}"
 
             reg_result = self.register_handler(handler)
-            if reg_result.is_success and isinstance(
-                reg_result.value, m.RegistrationDetails
-            ):
+            if reg_result.is_success:
                 self._add_successful_registration(key, reg_result.value, summary)
             else:
                 summary.errors.append(
@@ -362,10 +360,12 @@ class FlextRegistry(s[bool]):
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
-        status_raw = getattr(handler, "status", "active")
+        status_raw = getattr(handler, c.Mixins.FIELD_STATUS, c.Cqrs.CommonStatus.ACTIVE)
         status = self._get_status(status_raw)
         handler_mode_raw = getattr(
-            handler, "handler_mode", getattr(handler, "mode", "command")
+            handler,
+            "handler_mode",
+            getattr(handler, "mode", c.Cqrs.HandlerType.COMMAND),
         )
         handler_mode = self._get_handler_mode(handler_mode_raw)
 
@@ -407,7 +407,7 @@ class FlextRegistry(s[bool]):
         for handler in handlers:
             result = self.register_handler(handler)
             key = getattr(handler, "__name__", handler.__class__.__name__)
-            if result.is_success and isinstance(result.value, m.RegistrationDetails):
+            if result.is_success:
                 self._add_successful_registration(key, result.value, summary)
             else:
                 summary.errors.append(
@@ -515,9 +515,9 @@ class FlextRegistry(s[bool]):
         """
         handler_mode_val = reg_result.mode
         handler_mode = c.Cqrs.HandlerType.COMMAND
-        if "query" in handler_mode_val.lower():
+        if c.Cqrs.HandlerType.QUERY in handler_mode_val.lower():
             handler_mode = c.Cqrs.HandlerType.QUERY
-        elif "event" in handler_mode_val.lower():
+        elif c.Cqrs.HandlerType.EVENT in handler_mode_val.lower():
             handler_mode = c.Cqrs.HandlerType.EVENT
         timestamp = getattr(reg_result, "timestamp", "")
         status = reg_result.status
