@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from flext_core._models.dispatcher import FlextModelsDispatcher
 
-# Re-export from canonical _models/ location
 TimeoutEnforcer = FlextModelsDispatcher.TimeoutEnforcer
 
 

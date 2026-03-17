@@ -22,6 +22,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_settings import BaseSettings
 
 from flext_core import c, p, r, t
 from flext_core._models import (
@@ -47,6 +48,31 @@ class FlextModelsConfig:
 
         """
         return FlextRuntime.get_log_level_from_config()
+
+    class AutoConfig(FlextModelFoundation.ArbitraryTypesModel):
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        config_class: Annotated[
+            type[BaseSettings],
+            Field(description="Settings class to instantiate"),
+        ]
+        env_prefix: Annotated[
+            str,
+            Field(
+                default=c.Platform.ENV_PREFIX,
+                description="Environment variable prefix for settings resolution",
+            ),
+        ] = c.Platform.ENV_PREFIX
+        env_file: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Path to .env file for environment variable loading",
+            ),
+        ] = None
+
+        def create_config(self) -> BaseSettings:
+            return self.config_class()
 
     class ProcessingRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""

@@ -18,8 +18,6 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import (
-    BaseModel,
-    ConfigDict,
     Field,
     PrivateAttr,
     computed_field,
@@ -28,6 +26,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, t, u
+from flext_core._models.settings import FlextModelsConfig
 
 
 class FlextSettings(BaseSettings, FlextRuntime):
@@ -317,33 +316,9 @@ class FlextSettings(BaseSettings, FlextRuntime):
         )
         return self
 
-    class AutoConfig(BaseModel):
-        """Auto-configuration model for dynamic config creation."""
-
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-
-        config_class: Annotated[
-            type[BaseSettings],
-            Field(description="Settings class to instantiate"),
-        ]
-        env_prefix: Annotated[
-            str,
-            Field(
-                default=c.Platform.ENV_PREFIX,
-                description="Environment variable prefix for settings resolution",
-            ),
-        ] = c.Platform.ENV_PREFIX
-        env_file: Annotated[
-            str | None,
-            Field(
-                default=None,
-                description="Path to .env file for environment variable loading",
-            ),
-        ] = None
-
-        def create_config(self) -> BaseSettings:
-            """Create configuration instance."""
-            return self.config_class()
+    AutoConfig: ClassVar[type[FlextModelsConfig.AutoConfig]] = (
+        FlextModelsConfig.AutoConfig
+    )
 
     _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
     _context_overrides: ClassVar[dict[str, dict[str, t.Scalar]]] = {}
