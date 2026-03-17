@@ -915,7 +915,7 @@ class FlextRuntime:
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
                 configured_container.config = configuration_provider
             else:
-                setattr(di_container, "config", configuration_provider)
+                setattr(di_container, c.Mixins.FIELD_CONFIG, configuration_provider)
             return configuration_provider
 
         @staticmethod
@@ -1243,7 +1243,7 @@ class FlextRuntime:
             "debug": 10,
             "info": 20,
             "warning": 30,
-            "error": 40,
+            c.Cqrs.WarningLevel.ERROR: 40,
             "critical": 50,
         }
         current_level = level_hierarchy.get(method_name.lower(), 20)
@@ -1633,7 +1633,7 @@ class FlextRuntime:
 
             """
             context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get("correlation_id")
+            correlation_id = context_vars.get(c.Context.KEY_CORRELATION_ID)
             logger = structlog.get_logger(__name__)
             logger.info(
                 "Domain event emitted",
@@ -1661,7 +1661,7 @@ class FlextRuntime:
 
             """
             context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get("correlation_id")
+            correlation_id = context_vars.get(c.Context.KEY_CORRELATION_ID)
             logger = structlog.get_logger(__name__)
             if resolved:
                 logger.info(
@@ -1721,8 +1721,8 @@ class FlextRuntime:
             result["trace_id"] = FlextRuntime.generate_id()
         if "span_id" not in result:
             result["span_id"] = FlextRuntime.generate_id()
-        if include_correlation_id and "correlation_id" not in result:
-            result["correlation_id"] = FlextRuntime.generate_id()
+        if include_correlation_id and c.Context.KEY_CORRELATION_ID not in result:
+            result[c.Context.KEY_CORRELATION_ID] = FlextRuntime.generate_id()
         if include_timestamp and "timestamp" not in result:
             result["timestamp"] = FlextRuntime.generate_datetime_utc().isoformat()
         return result

@@ -364,7 +364,7 @@ class FlextRegistry(s[bool]):
         status = self._get_status(status_raw)
         handler_mode_raw = getattr(
             handler,
-            "handler_mode",
+            c.Mixins.FIELD_HANDLER_MODE,
             getattr(handler, "mode", c.Cqrs.HandlerType.COMMAND),
         )
         handler_mode = self._get_handler_mode(handler_mode_raw)

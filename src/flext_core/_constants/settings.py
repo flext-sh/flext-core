@@ -65,7 +65,7 @@ class FlextConstantsSettings:
         MAX_WORKERS_THRESHOLD: Final[int] = 50
         DEFAULT_ENABLE_CACHING: Final[bool] = True
         DEFAULT_ENABLE_TRACING: Final[bool] = False
-        DEFAULT_TIMEOUT: Final[float] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+        DEFAULT_TIMEOUT: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
         DEFAULT_DEBUG_MODE: Final[bool] = False
         DEFAULT_TRACE_MODE: Final[bool] = False
 

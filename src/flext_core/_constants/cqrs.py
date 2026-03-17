@@ -253,10 +253,10 @@ class FlextConstantsCqrs:
 
         DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
         DEFAULT_TIMESTAMP: Final[str] = ""
-        DEFAULT_TIMEOUT: Final[float] = 30000.0
-        MIN_TIMEOUT: Final[float] = 1000.0
-        MAX_TIMEOUT: Final[float] = 300000.0
-        DEFAULT_COMMAND_TIMEOUT: Final[float] = 0.0
+        DEFAULT_TIMEOUT: Final[int] = 30000
+        MIN_TIMEOUT: Final[int] = 1000
+        MAX_TIMEOUT: Final[int] = 300000
+        DEFAULT_COMMAND_TIMEOUT: Final[int] = 0
         DEFAULT_RETRIES: Final[int] = 0
         MIN_RETRIES: Final[int] = 0
         MAX_RETRIES: Final[int] = 5

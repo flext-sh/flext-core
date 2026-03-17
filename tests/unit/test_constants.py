@@ -60,7 +60,7 @@ class ConstantsScenarios:
         ConstantPathScenario(path="Validation.MAX_EMAIL_LENGTH", expected=254),
         ConstantPathScenario(path="Validation.MIN_PHONE_DIGITS", expected=10),
         ConstantPathScenario(path="Defaults.TIMEOUT", expected=30),
-        ConstantPathScenario(path="Reliability.DEFAULT_TIMEOUT_SECONDS", expected=30.0),
+        ConstantPathScenario(path="Reliability.DEFAULT_TIMEOUT_SECONDS", expected=30),
         ConstantPathScenario(path="Utilities.MAX_TIMEOUT_SECONDS", expected=3600),
         ConstantPathScenario(path="Logging.DEFAULT_LEVEL", expected="INFO"),
         ConstantPathScenario(path="Platform.FLEXT_API_PORT", expected=8000),

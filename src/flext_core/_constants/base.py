@@ -28,7 +28,7 @@ class FlextConstantsBase:
         LOCALHOST: Final[str] = "localhost"
         MIN_PORT: Final[int] = 1
         MAX_PORT: Final[int] = 65535
-        DEFAULT_TIMEOUT: Final[float] = 30.0
+        DEFAULT_TIMEOUT: Final[int] = 30
         DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
         MAX_CONNECTION_POOL_SIZE: Final[int] = 100
         MAX_HOSTNAME_LENGTH: Final[int] = 253
@@ -43,21 +43,21 @@ class FlextConstantsBase:
     class Defaults:
         """Default values."""
 
-        TIMEOUT: Final[float] = 30.0
+        TIMEOUT: Final[int] = 30
         PAGE_SIZE: Final[int] = 100
-        TIMEOUT_SECONDS: Final[float] = 30.0
+        TIMEOUT_SECONDS: Final[int] = 30
         CACHE_TTL: Final[int] = 300
         DEFAULT_CACHE_TTL: Final[int] = CACHE_TTL
         DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
         MAX_MESSAGE_LENGTH: Final[int] = 100
         DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0
-        OPERATION_TIMEOUT_SECONDS: Final[float] = 30.0
+        OPERATION_TIMEOUT_SECONDS: Final[int] = 30
         DATABASE_URL: Final[str] = "sqlite:///:memory:"
         DEFAULT_DATABASE_URL: Final[str] = DATABASE_URL
 
-    DEFAULT_TIMEOUT_SECONDS: Final[float] = 30.0
-    MAX_TIMEOUT_SECONDS: Final[float] = 3600.0
-    MIN_TIMEOUT_SECONDS: Final[float] = 1.0
+    DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+    MAX_TIMEOUT_SECONDS: Final[int] = 3600
+    MIN_TIMEOUT_SECONDS: Final[int] = 1
     DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
     DEFAULT_BATCH_SIZE: Final[int] = 1000
     DEFAULT_PAGE_SIZE: Final[int] = 10
@@ -72,7 +72,7 @@ class FlextConstantsBase:
     MAX_OPERATION_NAME_LENGTH: Final[int] = 100
     MAX_PORT_NUMBER: Final[int] = 65535
     MIN_PORT_NUMBER: Final[int] = 1
-    MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = 300.0
+    MAX_TIMEOUT_VALIDATION_SECONDS: Final[int] = 300
     MAX_RETRY_COUNT_VALIDATION: Final[int] = 10
     MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = 253
     MAX_WORKERS_VALIDATION: Final[int] = 100
@@ -80,10 +80,10 @@ class FlextConstantsBase:
     EXPECTED_TUPLE_LENGTH: Final[int] = 2
     DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
     PREVIEW_LENGTH: Final[int] = 50
-    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[float] = 60.0
+    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = 60
     IDENTIFIER_LENGTH: Final[int] = 12
     MAX_BATCH_SIZE_LIMIT: Final[int] = 10000
     DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
     DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
-    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[float] = 600.0
+    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = 600
     DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600

@@ -570,7 +570,7 @@ class FlextContainer(p.Container):
         self._di_services = service_module
         self._di_resources = resource_module
         self._di_container = di_container
-        config_attr = "config"
+        config_attr = c.Mixins.FIELD_CONFIG
         if not hasattr(bridge, config_attr):
             error_msg = "Bridge must have config provider"
             raise TypeError(error_msg)
@@ -771,11 +771,11 @@ class FlextContainer(p.Container):
         Note: Uses has_service() which checks both dicts and DI container to avoid conflicts.
         """
         if (
-            not self.has_service("config")
+            not self.has_service(c.Mixins.FIELD_CONFIG)
             and self._config is not None
             and u.is_registerable_service(self._config)
         ):
-            _ = self.register("config", self._config)
+            _ = self.register(c.Mixins.FIELD_CONFIG, self._config)
         if not self.has_service("logger"):
             _ = self.register(
                 "logger",
@@ -783,11 +783,11 @@ class FlextContainer(p.Container):
                 kind="factory",
             )
         if (
-            not self.has_service("context")
+            not self.has_service(c.Mixins.FIELD_CONTEXT)
             and self._context is not None
             and u.is_registerable_service(self._context)
         ):
-            _ = self.register("context", self._context)
+            _ = self.register(c.Mixins.FIELD_CONTEXT, self._context)
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
             service_candidate: object = dispatcher

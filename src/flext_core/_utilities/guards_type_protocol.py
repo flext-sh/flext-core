@@ -18,8 +18,8 @@ def _get_protocol_specs() -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
     global _protocol_specs_cache  # noqa: PLW0603
     if _protocol_specs_cache is None:
         _protocol_specs_cache = MappingProxyType({
-            "config": lambda v: isinstance(v, p.Settings),
-            "context": lambda v: isinstance(v, p.Context),
+            c.Mixins.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
+            c.Mixins.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
             "container": lambda v: isinstance(v, p.Container),
             "command_bus": lambda v: isinstance(v, p.Dispatcher),
             "handler": lambda v: isinstance(v, p.Handler),
@@ -35,8 +35,8 @@ def _get_protocol_type_map() -> Mapping[type, str]:
     global _protocol_type_map_cache  # noqa: PLW0603
     if _protocol_type_map_cache is None:
         _protocol_type_map_cache = MappingProxyType({
-            p.Settings: "config",
-            p.Context: "context",
+            p.Settings: c.Mixins.FIELD_CONFIG,
+            p.Context: c.Mixins.FIELD_CONTEXT,
             p.Container: "container",
             p.Dispatcher: "command_bus",
             p.Handler: "handler",
@@ -170,7 +170,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _check_protocol(value: t.NormalizedValue, name: str) -> bool:
-        if name == "context":
+        if name == c.Mixins.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.is_context(value)
         try:
             return _get_protocol_specs()[name](value)

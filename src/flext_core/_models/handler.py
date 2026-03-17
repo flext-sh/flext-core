@@ -107,9 +107,9 @@ class FlextModelsHandler:
         ] = None
         _GETITEM_FIELDS: ClassVar[frozenset[str]] = frozenset({
             "handler_name",
-            "status",
+            c.Mixins.FIELD_STATUS,
             "mode",
-            "handler_mode",
+            c.Mixins.FIELD_HANDLER_MODE,
             "message_type",
         })
 
@@ -117,11 +117,11 @@ class FlextModelsHandler:
             match key:
                 case "handler_name":
                     return self.handler_name
-                case "status":
+                case c.Mixins.FIELD_STATUS:
                     return self.status
                 case "mode":
                     return self.mode
-                case "handler_mode":
+                case c.Mixins.FIELD_HANDLER_MODE:
                     return self.handler_mode
                 case "message_type":
                     return self.message_type

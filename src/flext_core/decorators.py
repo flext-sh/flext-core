@@ -466,7 +466,7 @@ class FlextDecorators:
                         "func_module": func.__module__,
                     }
                     if correlation_id is not None:
-                        start_extra["correlation_id"] = correlation_id
+                        start_extra[c.Context.KEY_CORRELATION_ID] = correlation_id
                     if correlation_id is not None:
                         logger.debug(
                             "%s_started",
@@ -488,7 +488,7 @@ class FlextDecorators:
                         "success": True,
                     }
                     if correlation_id is not None:
-                        completion_extra["correlation_id"] = correlation_id
+                        completion_extra[c.Context.KEY_CORRELATION_ID] = correlation_id
                     if track_perf:
                         duration = time.perf_counter() - start_time
                         completion_extra["duration_ms"] = (
@@ -507,12 +507,12 @@ class FlextDecorators:
                     failure_extra: dict[str, t.NormalizedValue] = {
                         "function": func.__name__,
                         "success": False,
-                        "error": str(exc),
+                        c.Cqrs.WarningLevel.ERROR: str(exc),
                         "error_type": exc.__class__.__name__,
-                        "operation": op_name,
+                        c.Cqrs.HandlerType.OPERATION: op_name,
                     }
                     if correlation_id is not None:
-                        failure_extra["correlation_id"] = correlation_id
+                        failure_extra[c.Context.KEY_CORRELATION_ID] = correlation_id
                     tracked_duration = (
                         time.perf_counter() - start_time if track_perf else 0.0
                     )
@@ -817,14 +817,19 @@ class FlextDecorators:
         *, logger: p.Logger, function_name: str, operation: str
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
-        clear_result = FlextLogger.clear_scope("operation")
+        clear_result = FlextLogger.clear_scope(c.Context.SCOPE_OPERATION)
         if clear_result.is_failure:
             FlextDecorators._handle_log_result(
                 result=clear_result,
                 logger=logger,
                 fallback_message="operation_context_clear_failed",
                 kwargs=t.ConfigMap(
-                    root={"extra": {"function": function_name, "operation": operation}}
+                    root={
+                        "extra": {
+                            "function": function_name,
+                            c.Cqrs.HandlerType.OPERATION: operation,
+                        }
+                    }
                 ),
             )
 
@@ -966,7 +971,7 @@ class FlextDecorators:
             error_type=last_exception.__class__.__name__,
         )
         effective_error_code: str = (
-            _error_code if _error_code is not None else "OPERATION_TIMEOUT"
+            _error_code if _error_code is not None else c.Errors.TIMEOUT_ERROR
         )
         timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
         raise e.TimeoutError(
@@ -1216,7 +1221,7 @@ class FlextDecorators:
                         msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {exc.__class__.__name__}"
                         raise e.TimeoutError(
                             msg,
-                            error_code=error_code or "OPERATION_TIMEOUT",
+                            error_code=error_code or c.Errors.TIMEOUT_ERROR,
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             duration_seconds=duration,

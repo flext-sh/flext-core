@@ -498,16 +498,16 @@ class FlextUtilitiesParser:
             text_length_result = r[int].create_from_callable(lambda: len(text))
             if text_length_result.is_success:
                 return text_length_result.value
-            return "unknown"
+            return c.Mixins.IDENTIFIER_UNKNOWN
         text_adapter: TypeAdapter[str | bytes] = TypeAdapter(str | bytes)
         try:
             text_value: str | bytes = text_adapter.validate_python(text)
         except ValidationError:
-            return "unknown"
+            return c.Mixins.IDENTIFIER_UNKNOWN
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
         if text_length_result.is_success:
             return text_length_result.value
-        return "unknown"
+        return c.Mixins.IDENTIFIER_UNKNOWN
 
     @staticmethod
     def _validate_split_inputs(split_char: str, escape_char: str) -> r[bool]:

@@ -360,14 +360,14 @@ class FlextModelsCqrs:
                 self._data: t.Dict = t.Dict(
                     root={
                         "handler_type": handler_type,
-                        "handler_mode": c.Dispatcher.HANDLER_MODE_COMMAND
+                        c.Mixins.FIELD_HANDLER_MODE: c.Dispatcher.HANDLER_MODE_COMMAND
                         if handler_type == c.Cqrs.HandlerType.COMMAND
                         else c.Dispatcher.HANDLER_MODE_QUERY,
                         "handler_id": f"{handler_type}_handler_{handler_short_id}",
                         "handler_name": f"{handler_type.title()} Handler",
                         "command_timeout": c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
                         "max_command_retries": c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
-                        "metadata": None,
+                        c.Mixins.FIELD_METADATA: None,
                     }
                 )
 
@@ -387,7 +387,7 @@ class FlextModelsCqrs:
 
             def with_metadata(self, metadata: FlextModelFoundation.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
-                self._data.root["metadata"] = metadata
+                self._data.root[c.Mixins.FIELD_METADATA] = metadata
                 return self
 
             def with_name(self, handler_name: str) -> Self:

@@ -62,17 +62,21 @@ class FlextLogger(FlextRuntime, p.Logger):
             return
         if config is not None:
             _level = getattr(config, "level", _level)
-            _service_name = getattr(config, "service_name", _service_name)
-            _service_version = getattr(config, "service_version", _service_version)
-            _correlation_id = getattr(config, "correlation_id", _correlation_id)
+            _service_name = getattr(config, c.Context.KEY_SERVICE_NAME, _service_name)
+            _service_version = getattr(
+                config, c.Context.KEY_SERVICE_VERSION, _service_version
+            )
+            _correlation_id = getattr(
+                config, c.Context.KEY_CORRELATION_ID, _correlation_id
+            )
             _force_new = getattr(config, "force_new", _force_new)
         context = {}
         if _service_name:
-            context["service_name"] = _service_name
+            context[c.Context.KEY_SERVICE_NAME] = _service_name
         if _service_version:
-            context["service_version"] = _service_version
+            context[c.Context.KEY_SERVICE_VERSION] = _service_version
         if _correlation_id:
-            context["correlation_id"] = _correlation_id
+            context[c.Context.KEY_CORRELATION_ID] = _correlation_id
         base_logger = FlextRuntime.get_logger(name)
         self._structlog_instance = (
             base_logger.bind(**context) if context else base_logger
@@ -235,7 +239,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                 "debug": "debug",
                 "info": "info",
                 "warning": "warning",
-                "error": "error",
+                c.Cqrs.WarningLevel.ERROR: c.Cqrs.WarningLevel.ERROR,
                 "critical": "critical",
             }.get(level_lower, level_lower)
             if level_normalized not in cls._level_contexts:
@@ -414,7 +418,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         if level is None:
             config = (
                 container.config
-                if hasattr(container, "config")
+                if hasattr(container, c.Mixins.FIELD_CONFIG)
                 else FlextSettings.get_global()
             )
             level = getattr(config, "log_level", "INFO")
@@ -495,7 +499,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                 "debug": "debug",
                 "info": "info",
                 "warning": "warning",
-                "error": "error",
+                c.Cqrs.WarningLevel.ERROR: c.Cqrs.WarningLevel.ERROR,
                 "critical": "critical",
             }.get(level_lower, level_lower)
             prefixed_keys: list[str] = []
@@ -655,9 +659,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         normalized = FlextRuntime.normalize_to_container(value)
         if u.is_scalar(normalized) or isinstance(normalized, Path):
             return normalized
-        if isinstance(normalized, BaseModel):
-            return normalized.model_dump_json()
-        return str(normalized)
+        return normalized.model_dump_json()
 
     @staticmethod
     def _to_scalar_value(
@@ -1104,8 +1106,8 @@ class FlextLogger(FlextRuntime, p.Logger):
             context: t.ConfigMap = t.ConfigMap(
                 root={
                     "duration_seconds": elapsed,
-                    "operation": self._operation_name,
-                    "status": status,
+                    c.Cqrs.HandlerType.OPERATION: self._operation_name,
+                    c.Mixins.FIELD_STATUS: status,
                 }
             )
             if not is_success:

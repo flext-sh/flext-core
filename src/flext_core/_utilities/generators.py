@@ -62,9 +62,9 @@ class FlextUtilitiesGenerators:
             "batch": c.Cqrs.ProcessingMode.BATCH,
             "transaction": "txn",
             "saga": "saga",
-            "event": "evt",
-            "command": "cmd",
-            "query": "qry",
+            c.Cqrs.HandlerType.EVENT: "evt",
+            c.Cqrs.HandlerType.COMMAND: "cmd",
+            c.Cqrs.HandlerType.QUERY: "qry",
         }
         resolved_prefix = kind_prefix_map.get(kind)
         if resolved_prefix is None:
@@ -90,8 +90,10 @@ class FlextUtilitiesGenerators:
             context_dict["trace_id"] = FlextUtilitiesGenerators._generate_id()
         if "span_id" not in context_dict:
             context_dict["span_id"] = FlextUtilitiesGenerators._generate_id()
-        if include_correlation_id and "correlation_id" not in context_dict:
-            context_dict["correlation_id"] = FlextUtilitiesGenerators._generate_id()
+        if include_correlation_id and c.Context.KEY_CORRELATION_ID not in context_dict:
+            context_dict[c.Context.KEY_CORRELATION_ID] = (
+                FlextUtilitiesGenerators._generate_id()
+            )
         if include_timestamp and "timestamp" not in context_dict:
             context_dict["timestamp"] = (
                 FlextUtilitiesGenerators.generate_iso_timestamp()

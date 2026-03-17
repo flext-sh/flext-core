@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from flext_core import (
     FlextRuntime,
+    c,
     p,
     r,
 )
@@ -1381,7 +1382,7 @@ class FlextUtilitiesMapper:
                         if source_field_raw is not None
                         else target_key
                     )
-                    field_default = target_spec_mapping.get("default")
+                    field_default = target_spec_mapping.get(c.Mixins.IDENTIFIER_DEFAULT)
                     field_ops = target_spec_mapping.get("ops")
                 else:
                     fallback_val: t.NormalizedValue = (
@@ -1786,7 +1787,9 @@ class FlextUtilitiesMapper:
                                 obj[name]
                             )
                         elif isinstance(field_config, Mapping):
-                            default_value = field_config.get("default")
+                            default_value = field_config.get(
+                                c.Mixins.IDENTIFIER_DEFAULT
+                            )
                             if default_value is not None:
                                 result[name] = default_value
                         else:
@@ -1796,7 +1799,7 @@ class FlextUtilitiesMapper:
                             getattr(obj, name)
                         )
                     elif isinstance(field_config, Mapping):
-                        default_value = field_config.get("default")
+                        default_value = field_config.get(c.Mixins.IDENTIFIER_DEFAULT)
                         if default_value is not None:
                             result[name] = default_value
             elif isinstance(spec_item, str):
@@ -2552,7 +2555,10 @@ class FlextUtilitiesMapper:
                 config, "port", as_type=int, default=c.Platform.DEFAULT_HTTP_PORT
             )
             name = FlextUtilitiesMapper.take(
-                obj, "name", as_type=str, default="unknown"
+                obj,
+                "name",
+                as_type=str,
+                default=c.Mixins.IDENTIFIER_UNKNOWN,
             )
 
             # Take N items (generalized from take_n)

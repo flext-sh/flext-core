@@ -177,13 +177,9 @@ class FlextUtilitiesChecker:
             r[t.MessageTypeSpecifier]: Success with message type or failure.
 
         """
-        if not hasattr(handler_class, "handle"):
+        if not hasattr(handler_class, c.Mixins.METHOD_HANDLE):
             return r[t.MessageTypeSpecifier].fail("Handler has no handle method")
-        if c.Mixins.METHOD_HANDLE != "handle":
-            return r[t.MessageTypeSpecifier].fail(
-                f"Unsupported handler method: {c.Mixins.METHOD_HANDLE}"
-            )
-        handle_method_raw: object = getattr(handler_class, "handle", None)
+        handle_method_raw: object = getattr(handler_class, c.Mixins.METHOD_HANDLE, None)
         if not cls._is_module_export_callable(handle_method_raw):
             return r[t.MessageTypeSpecifier].fail(
                 "Handler handle attribute is not callable"

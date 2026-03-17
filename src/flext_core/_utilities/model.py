@@ -13,7 +13,7 @@ from collections.abc import Mapping
 import orjson
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, m, r, t
+from flext_core import FlextRuntime, c, m, r, t
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
@@ -264,7 +264,7 @@ class FlextUtilitiesModel:
 
         """
         if value is None:
-            return m.Metadata.model_validate({"attributes": {}})
+            return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: {}})
         if isinstance(value, m.Metadata):
             return value
         if FlextRuntime.is_dict_like(value):
@@ -290,7 +290,7 @@ class FlextUtilitiesModel:
                     safe_attrs[str_k] = orjson.dumps(plain_mapping).decode()
                 else:
                     safe_attrs[str_k] = str(v)
-            return m.Metadata.model_validate({"attributes": safe_attrs})
+            return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: safe_attrs})
         msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 

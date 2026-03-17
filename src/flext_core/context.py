@@ -137,8 +137,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         super().__init__(**data)
         context_data = m.ContextData()
         if self.initial_data is not None:
-            if hasattr(self.initial_data, "data") and hasattr(
-                self.initial_data, "metadata"
+            if hasattr(self.initial_data, c.Mixins.FIELD_DATA) and hasattr(
+                self.initial_data, c.Mixins.FIELD_METADATA
             ):
                 context_data = m.ContextData.model_validate(
                     self.initial_data, from_attributes=True
@@ -414,7 +414,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                     mk: FlextContext._to_normalized(mv)
                     for mk, mv in metadata_container.items()
                 }
-                result_dict["metadata"] = meta_items
+                result_dict[c.Mixins.FIELD_METADATA] = meta_items
             return result_dict
         metadata_root: t.ConfigMap | None = (
             t.ConfigMap(
@@ -734,7 +734,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         updated_attributes = dict(self._metadata.attributes.items())
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
-            update={"attributes": updated_attributes}
+            update={c.Mixins.FIELD_ATTRIBUTES: updated_attributes}
         )
 
     def set_statistics_for_clone(self, statistics: m.ContextStatistics) -> None:
@@ -901,7 +901,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             self._update_statistics(c.Context.OPERATION_SET)
             self._execute_hooks(
                 c.Context.OPERATION_SET,
-                t.ConfigMap(root={"data": t.ConfigMap(root=data.root)}),
+                t.ConfigMap(root={c.Mixins.FIELD_DATA: t.ConfigMap(root=data.root)}),
             )
             return r[bool].ok(value=True)
         except (TypeError, Exception) as e:
@@ -1032,7 +1032,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 c.Context.KEY_SERVICE_NAME, default=None
             )
             SERVICE_VERSION: Final[m.StructlogProxyContextVar[str]] = (
-                u.create_str_proxy("service_version", default=None)
+                u.create_str_proxy(c.Context.KEY_SERVICE_VERSION, default=None)
             )
 
         class Request:
@@ -1042,10 +1042,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 c.Context.KEY_USER_ID, default=None
             )
             REQUEST_ID: Final[m.StructlogProxyContextVar[str]] = u.create_str_proxy(
-                "request_id", default=None
+                c.Context.KEY_REQUEST_ID, default=None
             )
             REQUEST_TIMESTAMP: Final[m.StructlogProxyContextVar[datetime]] = (
-                u.create_datetime_proxy("request_timestamp", default=None)
+                u.create_datetime_proxy(c.Context.KEY_REQUEST_TIMESTAMP, default=None)
             )
 
         class Performance:
@@ -1055,10 +1055,12 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 c.Context.KEY_OPERATION_NAME, default=None
             )
             OPERATION_START_TIME: Final[m.StructlogProxyContextVar[datetime]] = (
-                u.create_datetime_proxy("operation_start_time", default=None)
+                u.create_datetime_proxy(
+                    c.Context.KEY_OPERATION_START_TIME, default=None
+                )
             )
             OPERATION_METADATA: Final[m.StructlogProxyContextVar[t.ConfigMap]] = (
-                u.create_dict_proxy("operation_metadata", default=None)
+                u.create_dict_proxy(c.Context.KEY_OPERATION_METADATA, default=None)
             )
 
         CorrelationId: Final[m.StructlogProxyContextVar[str]] = (

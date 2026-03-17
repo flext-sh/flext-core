@@ -66,7 +66,7 @@ class FlextModelsContext:
             return v
         if isinstance(v, Mapping):
             return FlextModelFoundation.Metadata.model_validate({
-                "attributes": FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                c.Mixins.FIELD_ATTRIBUTES: FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     v
                 )
             })

@@ -45,7 +45,7 @@ class FlextUtilitiesPagination:
             r with response dictionary or error
 
         """
-        data = pagination_data.get("data")
+        data = pagination_data.get(c.Mixins.FIELD_DATA)
         pagination = pagination_data.get("pagination")
         if data is None or pagination is None:
             return r[Mapping[str, str]].fail("Invalid pagination data structure")
@@ -53,7 +53,10 @@ class FlextUtilitiesPagination:
         pagination_val: str = (
             pagination if isinstance(pagination, str) else str(pagination)
         )
-        response: dict[str, str] = {"data": data_val, "pagination": pagination_val}
+        response: dict[str, str] = {
+            c.Mixins.FIELD_DATA: data_val,
+            "pagination": pagination_val,
+        }
         if message is not None:
             response["message"] = message
         return r[Mapping[str, str]].ok(response)
@@ -179,7 +182,7 @@ class FlextUtilitiesPagination:
             "has_prev": has_prev,
         }
         return r[dict[str, list[t.RuntimeAtomic] | t.PaginationMeta]].ok({
-            "data": data_list,
+            c.Mixins.FIELD_DATA: data_list,
             "pagination": pagination_meta,
         })
 

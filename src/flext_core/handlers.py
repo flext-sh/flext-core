@@ -152,7 +152,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             if klass is FlextHandlers:
                 msg = f"{cls.__qualname__} must implement a handle() method"
                 raise TypeError(msg)
-            if "handle" in klass.__dict__:
+            if c.Mixins.METHOD_HANDLE in klass.__dict__:
                 break
 
     @property
@@ -444,7 +444,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             context_dict = t.ConfigMap(
                 root={
                     "handler_name": popped.handler_name,
-                    "handler_mode": popped.handler_mode,
+                    c.Mixins.FIELD_HANDLER_MODE: popped.handler_mode,
                 }
             )
             return r[t.ConfigMap].ok(context_dict)
@@ -463,9 +463,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             if handler_name_raw is not None
             else c.Mixins.IDENTIFIER_UNKNOWN
         )
-        handler_mode_raw = ctx.get("handler_mode", "operation")
+        handler_mode_raw = ctx.get(
+            c.Mixins.FIELD_HANDLER_MODE, c.Cqrs.HandlerType.OPERATION
+        )
         handler_mode_str = (
-            str(handler_mode_raw) if handler_mode_raw is not None else "operation"
+            str(handler_mode_raw)
+            if handler_mode_raw is not None
+            else c.Cqrs.HandlerType.OPERATION
         )
         handler_mode_literal: c.Cqrs.HandlerType = (
             c.Cqrs.HandlerType.COMMAND
@@ -535,7 +539,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         _ = self.record_metric("execution_time_ms", exec_time)
         _ = self.record_metric("success", success)
         if error is not None:
-            _ = self.record_metric("error", error)
+            _ = self.record_metric(c.Cqrs.WarningLevel.ERROR, error)
 
     def _run_pipeline(
         self,

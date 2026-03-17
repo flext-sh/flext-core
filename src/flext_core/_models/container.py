@@ -35,14 +35,16 @@ class FlextModelsContainer:
     @staticmethod
     def _normalize_metadata(value: t.MetadataInput) -> FlextModelFoundation.Metadata:
         if value is None:
-            return FlextModelFoundation.Metadata.model_validate({"attributes": {}})
+            return FlextModelFoundation.Metadata.model_validate({
+                c.Mixins.FIELD_ATTRIBUTES: {}
+            })
         if FlextModelsContainer._is_metadata_instance(value):
             return value
         if not isinstance(value, Mapping):
             msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
             raise TypeError(msg)
         return FlextModelFoundation.Metadata.model_validate({
-            "attributes": dict(value.items())
+            c.Mixins.FIELD_ATTRIBUTES: dict(value.items())
         })
 
     class _MetadataValidatorMixin:

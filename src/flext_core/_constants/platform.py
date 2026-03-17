@@ -39,7 +39,7 @@ class FlextConstantsPlatform:
             """Reliability constants for system behavior."""
 
             MAX_RETRY_ATTEMPTS: Final[int] = 3
-            DEFAULT_TIMEOUT: Final[float] = FlextConstantsBase.Network.DEFAULT_TIMEOUT
+            DEFAULT_TIMEOUT: Final[int] = FlextConstantsBase.Network.DEFAULT_TIMEOUT
             CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
             HEADER_REQUEST_ID: Final[str] = "X-Request-ID"
 
@@ -81,7 +81,7 @@ class FlextConstantsPlatform:
         MIN_DB_POOL_SIZE: Final[int] = 1
         MAX_DB_POOL_SIZE: Final[int] = 100
         MAX_RETRY_ATTEMPTS_LIMIT: Final[int] = 10
-        DEFAULT_TIMEOUT_LIMIT: Final[float] = 300.0
+        DEFAULT_TIMEOUT_LIMIT: Final[int] = 300
         MIN_CURRENT_STEP: Final[int] = 0
         DEFAULT_INITIAL_DELAY_SECONDS: Final[float] = 1.0
         MAX_BATCH_SIZE: Final[int] = 10000
@@ -91,7 +91,7 @@ class FlextConstantsPlatform:
         MIN_VERSION: Final[int] = 1
         DEFAULT_PAGE_SIZE: Final[int] = FlextConstantsBase.DEFAULT_PAGE_SIZE
         HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 1073741824
-        MAX_TIMEOUT_SECONDS: Final[float] = (
+        MAX_TIMEOUT_SECONDS: Final[int] = (
             FlextConstantsBase.MAX_TIMEOUT_SECONDS_PERFORMANCE
         )
         MAX_BATCH_OPERATIONS: Final[int] = 1000
@@ -132,16 +132,14 @@ class FlextConstantsPlatform:
         BACKOFF_STRATEGY_LINEAR: Final[str] = "linear"
         "Linear backoff strategy."
         DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
-        DEFAULT_RECOVERY_TIMEOUT: Final[float] = (
+        DEFAULT_RECOVERY_TIMEOUT: Final[int] = (
             FlextConstantsBase.DEFAULT_RECOVERY_TIMEOUT_SECONDS
         )
-        DEFAULT_TIMEOUT_SECONDS: Final[float] = (
-            FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
-        )
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
         DEFAULT_RATE_LIMIT_WINDOW_SECONDS: Final[int] = 60
         DEFAULT_RATE_LIMIT_MAX_REQUESTS: Final[int] = 100
         DEFAULT_CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
-        DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: Final[float] = (
+        DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: Final[int] = (
             FlextConstantsBase.DEFAULT_RECOVERY_TIMEOUT_SECONDS
         )
         DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD: Final[int] = 3

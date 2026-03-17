@@ -141,7 +141,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     @staticmethod
     def _clear_operation_context() -> None:
         """Clear operation scope context (preserves request/application scopes)."""
-        _ = FlextLogger.clear_scope("operation")
+        _ = FlextLogger.clear_scope(c.Context.SCOPE_OPERATION)
         FlextContext.Request.set_operation_name("")
 
     @staticmethod
@@ -466,7 +466,9 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 c.Context.KEY_CORRELATION_ID: FlextRuntime.normalize_to_container(
                     correlation_id or ""
                 ),
-                "operation": FlextRuntime.normalize_to_container(operation_name or ""),
+                c.Cqrs.HandlerType.OPERATION: FlextRuntime.normalize_to_container(
+                    operation_name or ""
+                ),
                 **{k: FlextRuntime.normalize_to_container(v) for k, v in extra.items()},
             }
         )
@@ -551,7 +553,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     if isinstance(popped, m.ExecutionContext):
                         return r[dict[str, t.Scalar]].ok({
                             "handler_name": popped.handler_name,
-                            "handler_mode": popped.handler_mode,
+                            c.Mixins.FIELD_HANDLER_MODE: popped.handler_mode,
                         })
                     if isinstance(popped, t.ConfigMap):
                         return r[dict[str, t.Scalar]].ok({
@@ -577,7 +579,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 )
                 handler_name: str = str(handler_name_raw)
                 handler_mode_raw: t.Scalar | None = ctx_mapping.get(
-                    "handler_mode", "operation"
+                    c.Mixins.FIELD_HANDLER_MODE, c.Cqrs.HandlerType.OPERATION
                 )
                 handler_mode_str: str = str(handler_mode_raw)
                 handler_mode_literal: c.Cqrs.HandlerType = (
@@ -659,8 +661,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         def is_handler(obj: p.Base | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.Handler`` structurally."""
             return (
-                hasattr(obj, "handle")
-                and callable(getattr(obj, "handle", None))
+                hasattr(obj, c.Mixins.METHOD_HANDLE)
+                and callable(getattr(obj, c.Mixins.METHOD_HANDLE, None))
                 and hasattr(obj, "validate")
                 and callable(getattr(obj, "validate", None))
             )
@@ -700,7 +702,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         ) -> r[bool]:
             """Validate *obj* compliance with named protocol via duck-typing."""
             protocol_required_attrs: Mapping[str, Sequence[str]] = {
-                "Handler": ["handle", "can_handle"],
+                "Handler": [c.Mixins.METHOD_HANDLE, "can_handle"],
                 "Service": ["execute", "get_service_info", "is_valid"],
                 "CommandBus": ["dispatch", "publish", "register_handler"],
                 "Repository": ["get_by_id", "save", "delete", "find_all"],
