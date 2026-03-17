@@ -673,7 +673,7 @@ class FlextModelsContext:
             """Validate context instance has get() and set() methods."""
             context_field = None
             for field_name in self.__class__.model_fields:
-                if "context" in field_name.lower():
+                if c.Mixins.FIELD_CONTEXT in field_name.lower():
                     context_field = getattr(self, field_name, None)
                     break
             if context_field is None:

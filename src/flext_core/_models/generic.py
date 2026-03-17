@@ -24,7 +24,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from flext_core import t
+from flext_core import c, t
 from flext_core._models import FlextModelFoundation, FlextModelsContainers
 
 
@@ -110,8 +110,8 @@ class FlextGenericModels:
             str | None, Field(default=None, description="Service version")
         ] = None
         status: Annotated[
-            str, Field(default="active", description="Service status")
-        ] = "active"
+            str, Field(default=c.Cqrs.CommonStatus.ACTIVE, description="Service status")
+        ] = c.Cqrs.CommonStatus.ACTIVE
         uptime_seconds: Annotated[
             float | None, Field(default=None, description="Uptime in seconds")
         ] = None

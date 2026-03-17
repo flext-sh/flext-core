@@ -1438,7 +1438,7 @@ class FlextExceptions:
         error_patterns: list[tuple[list[str], str]] = [
             (["field", "value"], "validation"),
             (["config_key", "config_source"], "configuration"),
-            (["operation"], "operation"),
+            ([c.Cqrs.HandlerType.OPERATION], "operation"),
             (["host", "port"], "connection"),
             (["timeout_seconds"], "timeout"),
             ([c.Context.KEY_USER_ID, "permission"], "authorization"),
