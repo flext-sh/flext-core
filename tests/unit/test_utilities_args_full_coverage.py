@@ -42,17 +42,35 @@ def test_args_get_enum_params_branches() -> None:
 def test_args_get_enum_params_annotated_unwrap_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    seen_candidates: list[type[object] | str] = []
+
     def _mock_get_type_hints(
         _func: t.TypeHintSpecifier,
+        include_extras: bool = False,
     ) -> dict[str, t.TypeHintSpecifier]:
+        _ = include_extras
         return {
             "mode": cast("t.TypeHintSpecifier", Annotated[c.Cqrs.HandlerType, "meta"])
         }
+
+    def _mock_validate_enum_type(
+        candidate: type[object] | str,
+    ) -> r[type[c.Cqrs.HandlerType]]:
+        seen_candidates.append(candidate)
+        if candidate is c.Cqrs.HandlerType:
+            return r[type[c.Cqrs.HandlerType]].ok(c.Cqrs.HandlerType)
+        return r[type[c.Cqrs.HandlerType]].fail("invalid")
 
     monkeypatch.setattr(
         args_module,
         "get_type_hints",
         _mock_get_type_hints,
     )
+    monkeypatch.setattr(
+        args_module.FlextUtilitiesArgs,
+        "_validate_enum_type",
+        _mock_validate_enum_type,
+    )
     params = u.get_enum_params(_no_op_func)
-    assert params["mode"] is c.Cqrs.HandlerType
+    assert seen_candidates == [c.Cqrs.HandlerType]
+    assert params.get("mode") is c.Cqrs.HandlerType
