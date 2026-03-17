@@ -66,10 +66,12 @@ if TYPE_CHECKING:
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.cqrs import FlextModelsCqrs
     from flext_core._models.decorators import FlextModelsDecorators
+    from flext_core._models.dispatcher import FlextModelsDispatcher
     from flext_core._models.domain_event import FlextModelsDomainEvent
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
+    from flext_core._models.result import FlextModelsResult
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
     from flext_core._protocols.base import FlextProtocolsBase
@@ -205,12 +207,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextModelsContext": ("flext_core._models.context", "FlextModelsContext"),
     "FlextModelsCqrs": ("flext_core._models.cqrs", "FlextModelsCqrs"),
     "FlextModelsDecorators": ("flext_core._models.decorators", "FlextModelsDecorators"),
+    "FlextModelsDispatcher": ("flext_core._models.dispatcher", "FlextModelsDispatcher"),
     "FlextModelsDomainEvent": (
         "flext_core._models.domain_event",
         "FlextModelsDomainEvent",
     ),
     "FlextModelsEntity": ("flext_core._models.entity", "FlextModelsEntity"),
     "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
+    "FlextModelsResult": ("flext_core._models.result", "FlextModelsResult"),
     "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
     "FlextProtocols": ("flext_core.protocols", "FlextProtocols"),
     "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),
@@ -392,9 +396,11 @@ __all__ = [
     "FlextModelsContext",
     "FlextModelsCqrs",
     "FlextModelsDecorators",
+    "FlextModelsDispatcher",
     "FlextModelsDomainEvent",
     "FlextModelsEntity",
     "FlextModelsHandler",
+    "FlextModelsResult",
     "FlextModelsService",
     "FlextProtocols",
     "FlextProtocolsBase",

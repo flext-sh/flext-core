@@ -12,6 +12,7 @@ from flext_tests import t, tm
 
 import flext_core.loggings as loggings_module
 from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, p, r
+from flext_core._protocols.logging import FlextProtocolsLogging
 
 
 class _FakeBindable:
@@ -537,8 +538,6 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
         def error(self, message: str, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             msg = "exception"
             raise RuntimeError(msg)
-
-    from flext_core._protocols.logging import FlextProtocolsLogging
 
     monkeypatch.setattr(FlextProtocolsLogging, "Logger", _StructlogLogger)
     trace_logger = FlextLogger.create_bound_logger(

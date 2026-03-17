@@ -30,6 +30,7 @@ if TYPE_CHECKING:
         m,
     )
     from tests.fixtures.namespace_validator.rule2_valid_types import FlextTestTypes, t
+    from tests.fixtures.namespace_validator.typings import LooseTypeAlias
 
     from flext_core.typings import FlextTypes
 
@@ -54,6 +55,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.fixtures.namespace_validator.rule1_magic_number",
         "FlextTestUtilities",
     ),
+    "LooseTypeAlias": ("tests.fixtures.namespace_validator.typings", "LooseTypeAlias"),
     "MAX_RETRIES": (
         "tests.fixtures.namespace_validator.rule1_loose_constant",
         "MAX_RETRIES",
@@ -79,6 +81,7 @@ __all__ = [
     "FlextTestModels",
     "FlextTestTypes",
     "FlextTestUtilities",
+    "LooseTypeAlias",
     "RandomConstants",
     "Status",
     "c",

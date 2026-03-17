@@ -281,6 +281,7 @@ if TYPE_CHECKING:
         TestFlextTestsUtilitiesResultCompat,
         TestFlextTestsUtilitiesTestContext,
     )
+    from tests.unit.protocols import FlextProtocols
     from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
     from tests.unit.test_automated_architecture import TestAutomatedArchitecture
     from tests.unit.test_automated_container import TestAutomatedFlextContainer
@@ -1276,6 +1277,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_refactor_policy_mro",
         "FlextLdapUtilities",
     ),
+    "FlextProtocols": ("tests.unit.protocols", "FlextProtocols"),
     "FlextTestBuilder": (
         "tests.integration.patterns.test_patterns_testing",
         "FlextTestBuilder",
@@ -4120,6 +4122,7 @@ __all__ = [
     "FlextLdapProtocols",
     "FlextLdapTypes",
     "FlextLdapUtilities",
+    "FlextProtocols",
     "FlextTestBuilder",
     "FlextTestResult",
     "FlextTestResultCo",

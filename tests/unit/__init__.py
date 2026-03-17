@@ -72,6 +72,7 @@ if TYPE_CHECKING:
         TestFlextTestsUtilitiesResultCompat,
         TestFlextTestsUtilitiesTestContext,
     )
+    from tests.unit.protocols import FlextProtocols, p
     from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
     from tests.unit.test_automated_architecture import TestAutomatedArchitecture
     from tests.unit.test_automated_container import TestAutomatedFlextContainer
@@ -489,7 +490,7 @@ if TYPE_CHECKING:
         ValidatePaginationParamsScenario,
     )
     from tests.unit.test_phase2_coverage_final import TestPhase2FinalCoveragePush
-    from tests.unit.test_protocols import TestFlextProtocols, TestFlextProtocols as p
+    from tests.unit.test_protocols import TestFlextProtocols
     from tests.unit.test_refactor_cli_models_workflow import (
         test_centralize_pydantic_cli_outputs_extended_metrics,
         test_namespace_enforce_cli_fails_on_manual_protocol_violation,
@@ -978,6 +979,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_configuration_coverage_100",
         "FailingOptionsForTest",
     ),
+    "FlextProtocols": ("tests.unit.protocols", "FlextProtocols"),
     "GenericHandler": (
         "tests.unit.test_utilities_type_checker_coverage_100",
         "GenericHandler",
@@ -2008,7 +2010,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "infra_workflow_syncer": ("tests.unit.conftest_infra", "infra_workflow_syncer"),
     "m": ("tests.unit.flext_tests.test_files", "TestFileInfoFromModels"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
-    "p": ("tests.unit.test_protocols", "TestFlextProtocols"),
+    "p": ("tests.unit.protocols", "p"),
     "pytestmark": ("tests.unit.test_utilities_type_checker_coverage_100", "pytestmark"),
     "r": ("tests.unit.flext_tests.test_utilities", "TestFlextTestsUtilitiesResult"),
     "reset_runtime_state": (
@@ -3439,6 +3441,7 @@ __all__ = [
     "ExplodingLenList",
     "ExtractPageParamsScenario",
     "FailingOptionsForTest",
+    "FlextProtocols",
     "GenericHandler",
     "IntHandler",
     "IsMemberScenario",

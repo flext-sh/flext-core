@@ -17,7 +17,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextConstants, FlextContext
-from tests import m, t, u
+from tests import m, p, t, u
 
 
 class TestContext100Coverage:

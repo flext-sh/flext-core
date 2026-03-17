@@ -1032,26 +1032,17 @@ class FlextLogger(FlextRuntime, p.Logger):
     def _log(
         self,
         _level: c.Settings.LogLevel | str,
-        message: str,
-        *args: _LogArg,
-        **context: t.RuntimeAtomic | Exception | bool | None,
+        event: str,
+        **context: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Internal logging method - consolidates all log level methods.
 
         Business Rule: Internal method that consolidates all log level methods (debug,
-        info, warning, error, critical) into a single implementation. Formats message
-        with % arguments, auto-adds source path if not provided, and delegates to
+        info, warning, error, critical) into a single implementation. Delegates to
         structlog logger. Uses FlextRuntime for centralized logging management.
         Returns r[bool] indicating success or failure.
-
-        Audit Implication: Internal logging ensures audit trail completeness by
-        formatting messages and adding source context. All log messages go through
-        this method, ensuring consistent log formatting and context inclusion across
-        FLEXT. Source path is critical for tracing log messages to their source in
-        audit trails.
         """
         try:
-            formatted_message = FlextLogger._format_log_message(message, *args)
             if "source" not in context and (
                 source_path := FlextLogger._get_caller_source_path()
             ):
@@ -1063,7 +1054,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                     level_raw = str(_level)
             level_str = level_raw.lower()
             scalar_context = FlextLogger._to_scalar_context(context)
-            getattr(self.logger, level_str)(formatted_message, **scalar_context)
+            getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Logging failed: {e}")
@@ -1071,17 +1062,14 @@ class FlextLogger(FlextRuntime, p.Logger):
     def _log_standard_level(
         self,
         level: c.Settings.LogLevel,
-        msg: str,
-        *args: t.Container,
-        **kw: t.RuntimeAtomic | Exception,
+        event: str,
+        *,
+        error: Exception | None = None,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
-        message = msg
-        filtered_args: tuple[t.Scalar, ...] = tuple(
-            FlextLogger._to_scalar_value(arg)
-            for arg in args
-            if not isinstance(arg, BaseException)
-        )
-        return self._log(level, message, *filtered_args, **kw)
+        if error is not None:
+            kw["error"] = error
+        return self._log(level, event, **kw)
 
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""

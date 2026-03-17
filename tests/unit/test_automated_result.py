@@ -9,7 +9,7 @@ import pytest
 from flext_tests import tm, tt
 from hypothesis import given, settings, strategies as st
 
-from flext_core import r
+from flext_core import r, t
 
 type SampleValue = t.Primitives | None
 
