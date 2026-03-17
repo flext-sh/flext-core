@@ -491,15 +491,15 @@ class FlextContainer(p.Container):
         """
         if name in self._services:
             service_registration = self._services[name]
-            service = service_registration.service
-            if type_cls is not None:
-                service_for_check: t.RegisterableService = service
-                if not u.is_instance_of(service_for_check, type_cls):
-                    return r[T].fail(
-                        f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}"
-                    )
-                typed_service: T = service_for_check
-                return r[T].ok(typed_service)
+                service = service_registration.service
+                if type_cls is not None:
+                    service_for_check: t.RegisterableService = service
+                    if not isinstance(service_for_check, type_cls):
+                        return r[T].fail(
+                            f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}"
+                        )
+                    typed_service: T = service_for_check
+                    return r[T].ok(typed_service)
             return r[t.RegisterableService].ok(service)
         if name in self._factories:
             try:
@@ -510,7 +510,7 @@ class FlextContainer(p.Container):
                 resolved = factory_callable()
                 if type_cls is not None:
                     resolved_for_check: t.RegisterableService = resolved
-                    if not u.is_instance_of(resolved_for_check, type_cls):
+                    if not isinstance(resolved_for_check, type_cls):
                         return r[T].fail(f"Factory '{name}' returned wrong type")
                     typed_resolved: T = resolved_for_check
                     return r[T].ok(typed_resolved)
@@ -530,7 +530,7 @@ class FlextContainer(p.Container):
                     )
                 if type_cls is not None:
                     resource_for_check: t.RegisterableService = resolved
-                    if not u.is_instance_of(resource_for_check, type_cls):
+                    if not isinstance(resource_for_check, type_cls):
                         return r[T].fail(f"Resource '{name}' returned wrong type")
                     typed_resource: T = resource_for_check
                     return r[T].ok(typed_resource)
@@ -848,8 +848,8 @@ class FlextContainer(p.Container):
         context: p.Context | None = None,
         subproject: str | None = None,
         services: Mapping[str, object] | None = None,
-        factories: Mapping[str, Callable[..., object]] | None = None,
-        resources: Mapping[str, Callable[..., object]] | None = None,
+        factories: Mapping[str, t.FactoryCallable] | None = None,
+        resources: Mapping[str, t.ResourceCallable] | None = None,
     ) -> FlextContainer:
         """Create an isolated container scope with optional overrides.
 
