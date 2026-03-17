@@ -1525,16 +1525,20 @@ class FlextExceptions:
                 if v is None:
                     continue
                 merged_kwargs[k] = v
+        field_metadata = c.Mixins.FIELD_METADATA
+        field_auto_log = getattr(c.Mixins, "FIELD_AUTO_LOG", "auto_log")
+        field_auto_correlation = c.Mixins.FIELD_AUTO_CORRELATION
+        field_config = c.Mixins.FIELD_CONFIG
         extra_kwargs = {
             k: v
             for k, v in merged_kwargs.items()
             if k
             not in {
                 c.Context.KEY_CORRELATION_ID,
-                c.Mixins.FIELD_METADATA,
-                c.Mixins.FIELD_AUTO_LOG,
-                c.Mixins.FIELD_AUTO_CORRELATION,
-                c.Mixins.FIELD_CONFIG,
+                field_metadata,
+                field_auto_log,
+                field_auto_correlation,
+                field_config,
             }
         }
         correlation_id_raw = merged_kwargs.get(c.Context.KEY_CORRELATION_ID)
@@ -1543,11 +1547,11 @@ class FlextExceptions:
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
-        auto_log_raw = merged_kwargs.get(c.Mixins.FIELD_AUTO_LOG)
-        auto_correlation_raw = merged_kwargs.get(c.Mixins.FIELD_AUTO_CORRELATION)
+        auto_log_raw = merged_kwargs.get(field_auto_log)
+        auto_correlation_raw = merged_kwargs.get(field_auto_correlation)
         return (
             correlation_id,
-            merged_kwargs.get(c.Mixins.FIELD_METADATA),
+            merged_kwargs.get(field_metadata),
             e._safe_bool(
                 auto_log_raw
                 if FlextUtilitiesGuardsTypeCore.is_scalar(auto_log_raw)
@@ -1560,7 +1564,7 @@ class FlextExceptions:
                 else None,
                 default=False,
             ),
-            merged_kwargs.get(c.Mixins.FIELD_CONFIG),
+            merged_kwargs.get(field_config),
             extra_kwargs,
         )
 

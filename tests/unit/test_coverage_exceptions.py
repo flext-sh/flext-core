@@ -39,11 +39,12 @@ class ExceptionCreationScenario(BaseModel):
     ]
     message: Annotated[str, Field(description="Exception message")]
     kwargs: Annotated[
-        dict[str, object | type],
+        dict[str, t.MetadataAttributeValue | type],
         Field(description="Keyword arguments for exception creation"),
     ]
     expected_attrs: Annotated[
-        dict[str, object | type], Field(description="Expected attributes to validate")
+        dict[str, t.MetadataAttributeValue | type],
+        Field(description="Expected attributes to validate"),
     ]
 
 
@@ -239,7 +240,7 @@ class TestFlextExceptionsHierarchy:
         tm.that(isinstance(error, Exception), eq=True)
         for attr_name, expected_value in scenario.expected_attrs.items():
             tm.that(hasattr(error, attr_name), eq=True)
-            tm.that(getattr(error, attr_name), eq=expected_value)  # type: ignore[arg-type]
+            tm.that(getattr(error, attr_name), eq=expected_value)
 
 
 class TestExceptionIntegration:
@@ -384,10 +385,10 @@ class TestExceptionContext:
             raise ValueError(error_msg)
         except ValueError as e:
             original = e
-        tm.that(original, none=False)
+        tm.that(original is not None, eq=True)
         error = FlextExceptions.OperationError("Operation failed")
         error.__cause__ = original
-        tm.that(error.__cause__, eq=original)
+        tm.that(error.__cause__ is original, eq=True)
 
     def test_exception_preservation(self) -> None:
         """Test that exception information is preserved."""

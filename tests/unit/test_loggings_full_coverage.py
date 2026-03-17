@@ -382,7 +382,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
         return sentinel
 
     monkeypatch.setattr(FlextRuntime, "get_logger", staticmethod(_get_logger))
-    tm.that(FlextLogger.get_logger("x") is sentinel, eq=True)  # type: ignore[arg-type]
+    tm.that(FlextLogger.get_logger("x") is sentinel, eq=True)
 
     class _TraceLogger(_FakeBindable):
         @override
