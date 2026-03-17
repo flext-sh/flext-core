@@ -20,12 +20,12 @@ from enum import StrEnum, unique
 from typing import Annotated, Final
 
 import pytest
-from flext_tests import t, tm, u
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-
-from ..test_utils import assertion_helpers
+from tests import t, u
+from tests.test_utils import assertion_helpers
 
 
 class TestFlextUtilitiesArgs:
@@ -262,6 +262,7 @@ class TestFlextUtilitiesArgs:
             )
             result = process(status_value)
             tm.that(result, eq=scenario.expected_result)
+            tm.that(result, eq=scenario.expected_result)
 
         def test_validated_decorator_invalid_enum(self) -> None:
             """Test validated decorator with invalid enum."""
@@ -293,6 +294,7 @@ class TestFlextUtilitiesArgs:
             expected = (
                 f"{values.NAME_JOHN}: {values.STATUS_ACTIVE} ({values.PRIORITY_HIGH})"
             )
+            tm.that(result, eq=expected)
             tm.that(result, eq=expected)
 
     class TestValidatedWithResult:
@@ -449,6 +451,7 @@ class TestFlextUtilitiesArgs:
 
             params = u.get_enum_params(process)
             tm.that(params, eq={})
+            tm.that(params, eq={})
 
         @staticmethod
         def test_get_enum_params_exception() -> None:
@@ -458,6 +461,7 @@ class TestFlextUtilitiesArgs:
                 __annotations__ = {"invalid": "NonExistentType"}
 
             params = u.get_enum_params(BadFunction)
+            tm.that(params, eq={})
             tm.that(params, eq={})
 
         @staticmethod

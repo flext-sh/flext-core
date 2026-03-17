@@ -22,7 +22,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime
-from tests import m, t
+from tests import m
 
 
 class _TestConfig(m.Config):
@@ -220,7 +220,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10)
         stats2 = TestStats(count=20)
         result = TestStats.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(cast("t.RuntimeData", result)), eq=True)
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
         tm.that(result["count"], eq=30)
 
     def test_statistics_aggregate_lists(self) -> None:
@@ -232,7 +232,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(items=["a", "b"])
         stats2 = TestStats(items=["c"])
         result = TestStats.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(cast("t.RuntimeData", result)), eq=True)
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
         tm.that(result["items"], eq=["a", "b", "c"])
 
     def test_statistics_aggregate_mixed(self) -> None:
@@ -246,7 +246,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10, items=["a"], name="first")
         stats2 = TestStats(count=20, items=["b"], name="second")
         result = TestStats.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(cast("t.RuntimeData", result)), eq=True)
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
         tm.that(result["count"], eq=30)
         tm.that(result["items"], eq=["a", "b"])
         tm.that(result["name"], eq="second")
@@ -261,7 +261,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10, name="first")
         stats2 = TestStats(count=None, name=None)
         result = TestStats.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(cast("t.RuntimeData", result)), eq=True)
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
         tm.that(result["count"], eq=10)
         tm.that(result["name"], eq="first")
 

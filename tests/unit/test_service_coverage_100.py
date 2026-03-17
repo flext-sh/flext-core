@@ -93,4 +93,4 @@ class TestService100Coverage:
         """Test validate_business_rules can be overridden."""
         service = TestServiceWithValidation()
         result = service.validate_business_rules()
-        assert isinstance(result, r)
+        tm.that(result, is_=r)
