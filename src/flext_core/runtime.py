@@ -1373,11 +1373,11 @@ class FlextRuntime:
 
         @classmethod
         def fail(
-            cls: type[FlextRuntime.RuntimeResult[T]],
+            cls,
             error: str | None,
             error_code: str | None = None,
             error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None = None,
-        ) -> FlextRuntime.RuntimeResult[T]:
+        ) -> Self:
             """Create failed result with error message.
 
             Business Rule: Creates failed RuntimeResult with error message, optional error

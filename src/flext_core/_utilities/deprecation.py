@@ -111,9 +111,6 @@ class FlextUtilitiesDeprecation:
         stdlib_decorator = _stdlib_deprecated(msg, category=DeprecationWarning)
 
         def _wrapper(cls: TClass) -> TClass:
-            init_attr = cls.__dict__.get("__init__")
-            if init_attr is None and "__init__" in cls.__dict__:
-                cls.__init__ = lambda _self, *_a, **_kw: None  # type: ignore[assignment]
             return stdlib_decorator(cls)
 
         return _wrapper
