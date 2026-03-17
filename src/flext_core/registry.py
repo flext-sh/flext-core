@@ -184,17 +184,15 @@ class FlextRegistry(s[bool]):
     def _get_handler_mode(self, value: t.Container | BaseModel) -> c.Cqrs.HandlerType:
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
-        if result.is_success:
-            v: c.Cqrs.HandlerType = result.value
-            return v
+        if result.is_success and isinstance(result.value, c.Cqrs.HandlerType):
+            return result.value
         return c.Cqrs.HandlerType.COMMAND
 
     def _get_status(self, value: t.Container | BaseModel) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
-        if result.is_success:
-            v: c.Cqrs.CommonStatus = result.value
-            return v
+        if result.is_success and isinstance(result.value, c.Cqrs.CommonStatus):
+            return result.value
         return c.Cqrs.CommonStatus.ACTIVE
 
     @override
@@ -340,9 +338,10 @@ class FlextRegistry(s[bool]):
             key = f"binding::{message_type_name}::{handler_name}"
 
             reg_result = self.register_handler(handler)
-            if reg_result.is_success:
-                details: m.RegistrationDetails = reg_result.value
-                self._add_successful_registration(key, details, summary)
+            if reg_result.is_success and isinstance(
+                reg_result.value, m.RegistrationDetails
+            ):
+                self._add_successful_registration(key, reg_result.value, summary)
             else:
                 summary.errors.append(
                     reg_result.error
@@ -411,9 +410,8 @@ class FlextRegistry(s[bool]):
         for handler in handlers:
             result = self.register_handler(handler)
             key = getattr(handler, "__name__", handler.__class__.__name__)
-            if result.is_success:
-                registration_details: m.RegistrationDetails = result.value
-                self._add_successful_registration(key, registration_details, summary)
+            if result.is_success and isinstance(result.value, m.RegistrationDetails):
+                self._add_successful_registration(key, result.value, summary)
             else:
                 summary.errors.append(
                     result.error or f"Failed to register handler '{key}'"

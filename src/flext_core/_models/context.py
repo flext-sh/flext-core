@@ -80,6 +80,47 @@ class FlextModelsContext:
             return out
         return FlextModelsContext._normalize_to_mapping(v)
 
+    class _SerializableDataValidatorMixin:
+        @field_validator("data", mode="before")
+        @classmethod
+        def validate_dict_serializable(
+            cls,
+            v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
+        ) -> Mapping[str, t.NormalizedValue]:
+            """Validate that ConfigurationMapping values are JSON-serializable.
+
+            STRICT mode: Also accepts FlextModelFoundation.Metadata and converts to dict.
+            Uses mode='before' to validate raw input before Pydantic processing.
+            Only allows JSON-serializable types: str, int, float, bool, list, dict,
+            None.
+            """
+            working_value: dict[str, t.NormalizedValue]
+            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
+            if v is None:
+                return {}
+            if isinstance(v, FlextModelFoundation.Metadata):
+                normalized_metadata: dict[str, t.NormalizedValue | BaseModel] = {
+                    key: FlextRuntime.normalize_to_container(value)
+                    for key, value in v.attributes.items()
+                }
+                normalized_mapping = normalized_metadata
+            elif isinstance(v, BaseModel):
+                dump_result = v.model_dump()
+                normalized_mapping = {
+                    str(k): FlextRuntime.normalize_to_container(dv)
+                    for k, dv in dump_result.items()
+                }
+            else:
+                normalized_mapping = dict(v)
+            working_value = {
+                str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
+                    val
+                )
+                for k, val in normalized_mapping.items()
+            }
+            FlextModelsContext.ContextData.check_json_serializable(working_value)
+            return dict(working_value)
+
     class StructlogProxyToken(FlextModelsEntity.Value):
         """Token for resetting structlog context variables.
 
@@ -260,7 +301,7 @@ class FlextModelsContext:
             Field(default=None, description="Previous value before set operation"),
         ]
 
-    class ContextData(FlextModelsEntity.Value):
+    class ContextData(_SerializableDataValidatorMixin, FlextModelsEntity.Value):
         """Lightweight container for initializing context state.
 
         Used by FlextContext initialization to provide initial data and metadata.
@@ -362,46 +403,6 @@ class FlextModelsContext:
                 ]
             return str(normalized)
 
-        @field_validator("data", mode="before")
-        @classmethod
-        def validate_dict_serializable(
-            cls,
-            v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
-        ) -> Mapping[str, t.NormalizedValue]:
-            """Validate that ConfigurationMapping values are JSON-serializable.
-
-            STRICT mode: Also accepts FlextModelFoundation.Metadata and converts to dict.
-            Uses mode='before' to validate raw input before Pydantic processing.
-            Only allows JSON-serializable types: str, int, float, bool, list, dict,
-            None.
-            """
-            working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
-            if v is None:
-                return {}
-            if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata: dict[str, t.NormalizedValue | BaseModel] = {
-                    key: FlextRuntime.normalize_to_container(value)
-                    for key, value in v.attributes.items()
-                }
-                normalized_mapping = normalized_metadata
-            elif isinstance(v, BaseModel):
-                dump_result = v.model_dump()
-                normalized_mapping = {
-                    str(k): FlextRuntime.normalize_to_container(dv)
-                    for k, dv in dump_result.items()
-                }
-            else:
-                normalized_mapping = dict(v)
-            working_value = {
-                str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
-                    val
-                )
-                for k, val in normalized_mapping.items()
-            }
-            FlextModelsContext.ContextData.check_json_serializable(working_value)
-            return dict(working_value)
-
         @staticmethod
         def normalize_to_container(
             val: t.NormalizedValue | BaseModel,
@@ -420,13 +421,7 @@ class FlextModelsContext:
             msg = f"Non-normalizable type {type(val).__name__}"
             raise TypeError(msg)
 
-        @staticmethod
-        def normalize_to_general_value(
-            val: t.NormalizedValue | BaseModel,
-        ) -> t.NormalizedValue | BaseModel:
-            return FlextModelsContext.ContextData.normalize_to_container(val)
-
-    class ContextExport(FlextModelsEntity.Value):
+    class ContextExport(_SerializableDataValidatorMixin, FlextModelsEntity.Value):
         """Typed snapshot returned by export_snapshot.
 
         Provides a complete serializable snapshot of context state including
@@ -492,46 +487,6 @@ class FlextModelsContext:
         def total_data_items(self) -> int:
             """Compute total number of data items across all scopes."""
             return len(self.data)
-
-        @field_validator("data", mode="before")
-        @classmethod
-        def validate_dict_serializable(
-            cls,
-            v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
-        ) -> Mapping[str, t.NormalizedValue]:
-            """Validate that ConfigurationMapping values are JSON-serializable.
-
-            Uses mode='before' to validate raw input before Pydantic processing.
-            Accepts Pydantic models (converts via model_dump) or dict.
-            Only allows JSON-serializable types: str, int, float, bool, list, dict,
-            None.
-            """
-            working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
-            if v is None:
-                return {}
-            if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata_2: dict[str, t.NormalizedValue | BaseModel] = {
-                    key: FlextRuntime.normalize_to_container(value)
-                    for key, value in v.attributes.items()
-                }
-                normalized_mapping = normalized_metadata_2
-            elif isinstance(v, BaseModel):
-                dump_result = v.model_dump()
-                normalized_mapping = {
-                    str(k): FlextRuntime.normalize_to_container(dv)
-                    for k, dv in dump_result.items()
-                }
-            else:
-                normalized_mapping = dict(v)
-            working_value = {
-                str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
-                    val
-                )
-                for k, val in normalized_mapping.items()
-            }
-            FlextModelsContext.ContextData.check_json_serializable(working_value)
-            return dict(working_value)
 
     class ContextScopeData(FlextModelFoundation.ArbitraryTypesModel):
         """Scope-specific data container for context management.

@@ -259,6 +259,7 @@ class TestuTypeGuardsNormalizeToMetadata:
         test_dict = {"key": [1, 2, 3]}
         result = u.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
+        assert isinstance(result, dict)
         tm.that(result["key"], is_=list)
 
     def test_normalize_dict_with_non_string_key(self) -> None:

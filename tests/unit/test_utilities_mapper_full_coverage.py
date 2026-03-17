@@ -830,7 +830,7 @@ def test_small_mapper_convenience_methods(mapper: type[u]) -> None:
     tm.that(mapper.omit({"a": 1, "b": 2}, "a"), eq={"b": 2})
     tm.that(mapper.pluck([{"a": 1}, {}], "a", default=0), eq=[1, 0])
     keyed = mapper.key_by(["aa", "b"], len)
-    tm.that(keyed, eq={2: "aa", 1: "b"})
+    assert keyed == {2: "aa", 1: "b"}
     fields_from_mapping = mapper.fields(
         {"name": "alice", "age": 1},
         "name",

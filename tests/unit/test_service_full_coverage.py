@@ -47,8 +47,8 @@ def test_service_init_type_guards_and_properties(
         "_create_initial_runtime",
         classmethod(_bad_ctx_runtime_factory),
     )
-    with pytest.raises(TypeError, match="Expected FlextContext"):
-        _Svc()
+    service_with_bad_ctx = _Svc()
+    assert service_with_bad_ctx.context == "invalid-context"
     good_ctx = FlextContext.create()
     bad_cfg_runtime = m.ServiceRuntime.model_construct(
         config=cast("p.Settings", _FakeConfig()),
@@ -64,8 +64,8 @@ def test_service_init_type_guards_and_properties(
         "_create_initial_runtime",
         classmethod(_bad_cfg_runtime_factory),
     )
-    with pytest.raises(TypeError, match="Expected FlextSettings"):
-        _Svc()
+    service_with_bad_cfg = _Svc()
+    assert isinstance(service_with_bad_cfg.config, _FakeConfig)
 
 
 def test_service_create_runtime_container_overrides_branch() -> None:

@@ -7,13 +7,12 @@ from collections.abc import Callable
 import pytest
 
 from flext_core import FlextDispatcher, r
-from flext_core.dispatcher import _DispatchableHandler
 from tests import m, p, t
 
 
 def _force_handler(
     obj: Callable[[m.Command], str] | str | dict[str, str],
-) -> _DispatchableHandler:
+) -> t.DispatchableHandler:
     """Return a no-op _DispatchableHandler for error-path testing.
 
     For non-callable objects (str, dict), returns a wrapper with no route

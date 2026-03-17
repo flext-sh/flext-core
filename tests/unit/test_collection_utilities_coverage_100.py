@@ -272,7 +272,7 @@ class TestuCollectionCoerceListValidator:
                 validator(cast("t.NormalizedValue", scenario.value))
             expected_error = scenario.expected_error
             assert expected_error is not None
-            tm.that(exc_info.value, is_=(TypeError, ValueError))
+            tm.that(isinstance(exc_info.value, (TypeError, ValueError)), eq=True)
             tm.that(str(exc_info.value), has=expected_error)
 
 

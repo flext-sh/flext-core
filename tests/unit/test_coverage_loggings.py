@@ -258,7 +258,7 @@ class TestFactoryPatterns:
     def test_create_service_logger_with_version(self) -> None:
         """Test creating service logger with version via bind."""
         logger = FlextLogger("auth-service").bind(version="2.0.0")
-        tm.that(logger, is_=FlextLogger)
+        tm.that(isinstance(logger, p.Logger), eq=True)
 
     def test_create_service_logger_with_correlation_id(self) -> None:
         """Test creating service logger with correlation ID via bind."""

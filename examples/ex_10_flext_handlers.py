@@ -287,20 +287,20 @@ class Ex10FlextHandlers(Examples):
             "push_context.execution",
             handler.push_context(context_payload_event).is_success,
         )
-        self.check(
-            "pop_context.1",
-            handler
-            .pop_context()
-            .unwrap_or(t.ConfigMap(root={}))
-            .get("handler_name", "-"),
+        pop_ctx_1 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
+        pop_ctx_1_val = (
+            pop_ctx_1.get("handler_name", "-")
+            if isinstance(pop_ctx_1, t.ConfigMap)
+            else "-"
         )
-        self.check(
-            "pop_context.2",
-            handler
-            .pop_context()
-            .unwrap_or(t.ConfigMap(root={}))
-            .get("handler_name", "-"),
+        self.check("pop_context.1", pop_ctx_1_val)
+        pop_ctx_2 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
+        pop_ctx_2_val = (
+            pop_ctx_2.get("handler_name", "-")
+            if isinstance(pop_ctx_2, t.ConfigMap)
+            else "-"
         )
+        self.check("pop_context.2", pop_ctx_2_val)
 
     def demo_namespaces_and_mixins(self) -> None:
         """Exercise namespaces, protocol validation, and mixins."""
@@ -330,10 +330,11 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "cqrs.record_metric", tracker.record_metric(hit_key, hit_value).is_success
         )
-        self.check(
-            "cqrs.get_metrics",
-            tracker.get_metrics().unwrap_or(t.ConfigMap(root={})).get(hit_key, -1),
+        metrics_map = tracker.get_metrics().unwrap_or(t.ConfigMap(root={}))
+        metrics_val = (
+            metrics_map.get(hit_key, -1) if isinstance(metrics_map, t.ConfigMap) else -1
         )
+        self.check("cqrs.get_metrics", metrics_val)
         stack = h.CQRS.ContextStack()
         self.check(
             "cqrs.push_context.mapping",
@@ -642,11 +643,9 @@ class Ex10FlextHandlers(Examples):
         self.check("runtime.is_sequence_type.false", h.is_sequence_type(dict[str, int]))
         self.check(
             "runtime.normalize_general",
-            h.normalize_to_general_value({dict_key: dict_value}),
+            h.normalize_to_container({dict_key: dict_value}),
         )
-        self.check(
-            "runtime.normalize_metadata", h.normalize_to_metadata_value({"k": [1, 2]})
-        )
+        self.check("runtime.normalize_metadata", h.normalize_to_metadata({"k": [1, 2]}))
 
     @override
     def exercise(self) -> None:

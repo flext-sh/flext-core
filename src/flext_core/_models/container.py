@@ -45,7 +45,14 @@ class FlextModelsContainer:
             "attributes": dict(value.items())
         })
 
-    class ServiceRegistration(BaseModel):
+    class _MetadataValidatorMixin:
+        @field_validator("metadata", mode="before")
+        @classmethod
+        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
+            """Validate and normalize metadata to Metadata (STRICT mode)."""
+            return FlextModelsContainer._normalize_metadata(v)
+
+    class ServiceRegistration(_MetadataValidatorMixin, BaseModel):
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
@@ -97,12 +104,6 @@ class FlextModelsContainer:
             ),
         ] = Field(default_factory=list)
 
-        @field_validator("metadata", mode="before")
-        @classmethod
-        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
-            """Validate and normalize metadata to Metadata (STRICT mode)."""
-            return FlextModelsContainer._normalize_metadata(v)
-
         @field_validator("service", mode="before")
         @classmethod
         def validate_service_type(
@@ -136,7 +137,7 @@ class FlextModelsContainer:
             msg = f"Service must be a RegisterableService type, got {type(v).__name__}"
             raise ValueError(msg)
 
-    class FactoryRegistration(BaseModel):
+    class FactoryRegistration(_MetadataValidatorMixin, BaseModel):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
@@ -197,13 +198,7 @@ class FlextModelsContainer:
             ),
         ] = c.ZERO
 
-        @field_validator("metadata", mode="before")
-        @classmethod
-        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
-            """Validate and normalize metadata to Metadata (STRICT mode)."""
-            return FlextModelsContainer._normalize_metadata(v)
-
-    class ResourceRegistration(BaseModel):
+    class ResourceRegistration(_MetadataValidatorMixin, BaseModel):
         """Model for lifecycle-managed resource registrations.
 
         Captures resource factories that dependency-injector should wrap via
@@ -240,12 +235,6 @@ class FlextModelsContainer:
                 description="Additional resource metadata (JSON-serializable)",
             ),
         ] = None
-
-        @field_validator("metadata", mode="before")
-        @classmethod
-        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
-            """Normalize resource metadata to Metadata model."""
-            return FlextModelsContainer._normalize_metadata(v)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.

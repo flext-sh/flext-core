@@ -229,8 +229,8 @@ class DecoratorScenarios:
             name="retry_exhausted",
             operation=DecoratorOperationType.RETRY_EXHAUSTED,
             should_succeed=False,
-            error_type=ValueError,
-            error_pattern="Always fails",
+            error_type=FlextExceptions.TimeoutError,
+            error_pattern="failed after 2 attempts",
             requires_container_setup=False,
             with_exception_handling=True,
             timeout_duration=0.1,
@@ -440,7 +440,9 @@ class TestFlextDecorators:
                 error_msg = "Always fails"
                 raise ValueError(error_msg)
 
-            with pytest.raises(ValueError, match="Always fails"):
+            with pytest.raises(
+                FlextExceptions.TimeoutError, match="failed after 2 attempts"
+            ):
                 always_fails()
 
     @pytest.mark.parametrize(

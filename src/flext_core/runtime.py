@@ -53,7 +53,6 @@ import sys
 import threading
 import typing
 import uuid
-import warnings
 from collections.abc import (
     Callable,
     Mapping,
@@ -683,17 +682,6 @@ class FlextRuntime:
         return str(val)
 
     @staticmethod
-    def normalize_to_general_value(val: t.RuntimeData) -> t.Container | BaseModel:
-        """Deprecated alias; use normalize_to_container."""
-        warnings.warn(
-            "normalize_to_general_value is deprecated; use normalize_to_container. "
-            "Planned removal: v0.12.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextRuntime.normalize_to_container(val)
-
-    @staticmethod
     def _normalize_to_metadata_scalar(val: t.RuntimeData) -> str | int | float | bool:
         if val is None:
             return ""
@@ -754,17 +742,6 @@ class FlextRuntime:
         if FlextRuntime.is_list_like(val):
             return [FlextRuntime._normalize_to_metadata_scalar(item) for item in val]
         return str(val)
-
-    @staticmethod
-    def normalize_to_metadata_value(val: t.RuntimeData) -> t.MetadataValue:
-        """Deprecated alias; use normalize_to_metadata."""
-        warnings.warn(
-            "normalize_to_metadata_value is deprecated; use normalize_to_metadata. "
-            "Planned removal: v0.12.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextRuntime.normalize_to_metadata(val)
 
     @staticmethod
     def safe_get_attribute(

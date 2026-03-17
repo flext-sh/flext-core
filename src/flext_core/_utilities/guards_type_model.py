@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from datetime import datetime
 from typing import TypeIs
 
@@ -11,14 +11,6 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesGuardsTypeModel:
-    @staticmethod
-    def _is_object_mapping(value: object) -> TypeIs[Mapping[str, object]]:
-        return isinstance(value, Mapping)
-
-    @staticmethod
-    def _is_object_sequence(value: object) -> TypeIs[Sequence[object]]:
-        return isinstance(value, (list, tuple))
-
     @staticmethod
     def is_object_list(
         value: object,
@@ -60,7 +52,7 @@ class FlextUtilitiesGuardsTypeModel:
                 if not FlextUtilitiesGuardsTypeCore.is_container(item_value):
                     return False
             return True
-        return FlextUtilitiesGuardsTypeModel._is_object_mapping(
+        return FlextUtilitiesGuardsTypeCore.is_mapping(
             value
         ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
 
@@ -77,7 +69,7 @@ class FlextUtilitiesGuardsTypeModel:
         return True
 
     @staticmethod
-    def is_pydantic_model(value: t.NormalizedValue) -> TypeIs[p.HasModelDump]:
+    def is_pydantic_model(value: object) -> TypeIs[p.HasModelDump]:
         return (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")

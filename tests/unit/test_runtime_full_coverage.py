@@ -303,25 +303,13 @@ def test_normalization_edge_branches() -> None:
     tm.that(isinstance(metadata_list, list), eq=True)
 
 
-def test_deprecated_normalize_to_general_value_warns() -> None:
-    """Verify deprecated normalize_to_general_value emits DeprecationWarning."""
-    # COMPATIBILITY: normalize_to_general_value deprecated → use normalize_to_container
-    # Planned removal: v0.12
-    with pytest.warns(
-        DeprecationWarning, match="normalize_to_general_value is deprecated"
-    ):
-        result = FlextRuntime.normalize_to_general_value("hello")
+def test_normalize_to_container_alias_removal_path() -> None:
+    result = FlextRuntime.normalize_to_container("hello")
     tm.that(result, eq="hello")
 
 
-def test_deprecated_normalize_to_metadata_value_warns() -> None:
-    """Verify deprecated normalize_to_metadata_value emits DeprecationWarning."""
-    # COMPATIBILITY: normalize_to_metadata_value deprecated → use normalize_to_metadata
-    # Planned removal: v0.12
-    with pytest.warns(
-        DeprecationWarning, match="normalize_to_metadata_value is deprecated"
-    ):
-        result = FlextRuntime.normalize_to_metadata_value(42)
+def test_normalize_to_metadata_alias_removal_path() -> None:
+    result = FlextRuntime.normalize_to_metadata(42)
     tm.that(result is not None, eq=True)
 
 

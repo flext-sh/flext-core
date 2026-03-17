@@ -522,6 +522,9 @@ class FlextModelFoundation:
                 return {}
             if isinstance(value, BaseModel):
                 result = value.model_dump()
+                if not isinstance(result, Mapping):
+                    msg = "attributes BaseModel must dump to mapping"
+                    raise TypeError(msg)
             elif isinstance(value, Mapping):
                 result = dict(value.items())
             else:

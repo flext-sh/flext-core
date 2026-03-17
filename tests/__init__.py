@@ -434,10 +434,10 @@ if TYPE_CHECKING:
         test_with_correlation_with_context_track_operation_and_factory,
     )
     from tests.unit.test_deprecation_warnings import (
-        TestFacadeDeprecatedAliases,
+        TestFacadeNormalizeAliases,
         TestGuardsDeprecatedMethods,
         TestMapperDeprecatedMethods,
-        TestRuntimeDeprecatedNormalizeMethods,
+        TestRuntimeNormalizeMethods,
         TestStrictContainerNormalization,
     )
     from tests.unit.test_di_incremental import (
@@ -796,13 +796,13 @@ if TYPE_CHECKING:
         test_configure_structlog_print_logger_factory_fallback,
         test_dependency_integration_and_wiring_paths,
         test_dependency_registration_duplicate_guards,
-        test_deprecated_normalize_to_general_value_warns,
-        test_deprecated_normalize_to_metadata_value_warns,
         test_ensure_trace_context_dict_conversion_paths,
         test_get_logger_none_name_paths,
         test_model_helpers_remaining_paths,
         test_model_support_and_hash_compare_paths,
         test_normalization_edge_branches,
+        test_normalize_to_container_alias_removal_path,
+        test_normalize_to_metadata_alias_removal_path,
         test_reconfigure_and_reset_state_paths,
         test_reuse_existing_runtime_coverage_branches,
         test_reuse_existing_runtime_scenarios,
@@ -1694,9 +1694,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_coverage_exceptions",
         "TestExceptionSerialization",
     ),
-    "TestFacadeDeprecatedAliases": (
+    "TestFacadeNormalizeAliases": (
         "tests.unit.test_deprecation_warnings",
-        "TestFacadeDeprecatedAliases",
+        "TestFacadeNormalizeAliases",
     ),
     "TestFactories": ("tests.test_documented_patterns", "TestFactories"),
     "TestFactoriesHelpers": (
@@ -2164,13 +2164,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_coverage_76_lines",
         "TestResultTransformations",
     ),
-    "TestRuntimeDeprecatedNormalizeMethods": (
-        "tests.unit.test_deprecation_warnings",
-        "TestRuntimeDeprecatedNormalizeMethods",
-    ),
     "TestRuntimeDictLike": (
         "tests.unit.test_runtime_coverage_100",
         "TestRuntimeDictLike",
+    ),
+    "TestRuntimeNormalizeMethods": (
+        "tests.unit.test_deprecation_warnings",
+        "TestRuntimeNormalizeMethods",
     ),
     "TestRuntimeTypeChecking": (
         "tests.unit.test_runtime_coverage_100",
@@ -2987,14 +2987,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_deprecation_full_coverage",
         "test_deprecated_class_noop_init_branch",
     ),
-    "test_deprecated_normalize_to_general_value_warns": (
-        "tests.unit.test_runtime_full_coverage",
-        "test_deprecated_normalize_to_general_value_warns",
-    ),
-    "test_deprecated_normalize_to_metadata_value_warns": (
-        "tests.unit.test_runtime_full_coverage",
-        "test_deprecated_normalize_to_metadata_value_warns",
-    ),
     "test_deprecated_wrapper_emits_warning_and_returns_value": (
         "tests.unit.test_decorators_full_coverage",
         "test_deprecated_wrapper_emits_warning_and_returns_value",
@@ -3595,6 +3587,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_generators_full_coverage",
         "test_normalize_context_to_dict_error_paths",
     ),
+    "test_normalize_to_container_alias_removal_path": (
+        "tests.unit.test_runtime_full_coverage",
+        "test_normalize_to_container_alias_removal_path",
+    ),
     "test_normalize_to_list_passes_list_through": (
         "tests.unit.test_models_validation_full_coverage",
         "test_normalize_to_list_passes_list_through",
@@ -3606,6 +3602,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_normalize_to_list_wraps_scalar": (
         "tests.unit.test_models_validation_full_coverage",
         "test_normalize_to_list_wraps_scalar",
+    ),
+    "test_normalize_to_metadata_alias_removal_path": (
+        "tests.unit.test_runtime_full_coverage",
+        "test_normalize_to_metadata_alias_removal_path",
     ),
     "test_normalize_to_pydantic_dict_and_value_branches": (
         "tests.unit.test_utilities_model_full_coverage",
@@ -4262,7 +4262,7 @@ __all__ = [
     "TestExceptionPropertyAccess",
     "TestExceptionReturnsResultBool",
     "TestExceptionSerialization",
-    "TestFacadeDeprecatedAliases",
+    "TestFacadeNormalizeAliases",
     "TestFactories",
     "TestFactoriesHelpers",
     "TestFactoryDecoratorsDiscoveryHasFactories",
@@ -4396,8 +4396,8 @@ __all__ = [
     "TestRealWorldScenarios",
     "TestResultBasics",
     "TestResultTransformations",
-    "TestRuntimeDeprecatedNormalizeMethods",
     "TestRuntimeDictLike",
+    "TestRuntimeNormalizeMethods",
     "TestRuntimeTypeChecking",
     "TestSafeCarriesException",
     "TestSafeString",
@@ -4670,8 +4670,6 @@ __all__ = [
     "test_dependency_integration_and_wiring_paths",
     "test_dependency_registration_duplicate_guards",
     "test_deprecated_class_noop_init_branch",
-    "test_deprecated_normalize_to_general_value_warns",
-    "test_deprecated_normalize_to_metadata_value_warns",
     "test_deprecated_wrapper_emits_warning_and_returns_value",
     "test_discover_project_roots_without_nested_git_dirs",
     "test_discovery_narrowed_function_paths",
@@ -4822,9 +4820,11 @@ __all__ = [
     "test_non_empty_and_normalize_branches",
     "test_normalization_edge_branches",
     "test_normalize_context_to_dict_error_paths",
+    "test_normalize_to_container_alias_removal_path",
     "test_normalize_to_list_passes_list_through",
     "test_normalize_to_list_wraps_int",
     "test_normalize_to_list_wraps_scalar",
+    "test_normalize_to_metadata_alias_removal_path",
     "test_normalize_to_pydantic_dict_and_value_branches",
     "test_not_found_error_correlation_id_selection_and_extra_kwargs",
     "test_object_dict_and_type_error_fallback_paths",

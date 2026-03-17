@@ -307,9 +307,7 @@ class Ex08FlextContainer(Examples):
         self.check(
             "result.ok.roundtrip", r[int].ok(random_ok_val).value == random_ok_val
         )
-        self.check(
-            "runtime.normalize.bool", FlextRuntime.normalize_to_general_value(True)
-        )
+        self.check("runtime.normalize.bool", FlextRuntime.normalize_to_container(True))
         self.check("constants.default_max_services", c.Container.DEFAULT_MAX_SERVICES)
         return root
 

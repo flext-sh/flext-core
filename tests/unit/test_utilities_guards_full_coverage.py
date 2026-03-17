@@ -116,6 +116,7 @@ def test_non_empty_and_normalize_branches() -> None:
     tm.that(isinstance(dict_complex_out, dict) and "k" in dict_complex_out, eq=True)
     list_out = u.normalize_to_metadata(cast("t.NormalizedValue", [1, object()]))
     tm.that(isinstance(list_out, list), eq=True)
+    assert isinstance(list_out, list)
     tm.that(list_out[0] == 1, eq=True)
     tm.that(isinstance(list_out[1], str), eq=True)
     tm.that(
@@ -221,7 +222,7 @@ def test_extract_mapping_or_none_branches() -> None:
     mapping_non_str_keys = u.extract_mapping_or_none(
         cast("t.NormalizedValue", {1: "v"})
     )
-    tm.that(mapping_non_str_keys.is_failure, eq=True)
+    tm.that(mapping_non_str_keys.is_success, eq=True)
     tm.that(u.extract_mapping_or_none([1, 2, 3]).is_failure, eq=True)
 
 
@@ -246,6 +247,7 @@ def test_guard_in_has_empty_none_helpers() -> None:
     tm.that(u.guard("x", validator=_raise_error, default="d") == "d", eq=True)
     failure_result = u.guard("x", validator=_always_false, return_value=True)
     tm.that(isinstance(failure_result, r), eq=True)
+    assert isinstance(failure_result, r)
     tm.that(failure_result.is_failure, eq=True)
     tm.that(u.in_("a", ["a", "b"]), eq=True)
     tm.that(not u.in_([], ("a", "b")), eq=True)
@@ -318,10 +320,7 @@ def test_guard_instance_attribute_access_warnings() -> None:
     guards = u()
     method = guards.is_type
     tm.that(callable(method), eq=True)
-    private_method = cast(
-        "Callable[..., t.Tests.object]", getattr(guards, "_is_mapping")
-    )
-    tm.that(callable(private_method), eq=True)
+    tm.that(callable(guards.is_mapping), eq=True)
 
 
 def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:

@@ -184,12 +184,6 @@ class FlextUtilitiesGuardsTypeProtocol:
         return isinstance(value, tuple)
 
     @staticmethod
-    def is_type_tuple(
-        value: t.GuardInput,
-    ) -> TypeIs[tuple[type, ...]]:
-        return FlextUtilitiesGuardsTypeProtocol._is_type_tuple(value)
-
-    @staticmethod
     def is_type(
         value: t.NormalizedValue,
         type_spec: str | type | tuple[type, ...],

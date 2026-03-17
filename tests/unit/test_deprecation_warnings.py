@@ -27,35 +27,8 @@ from tests import t
 pytestmark = [pytest.mark.unit]
 
 
-class TestRuntimeDeprecatedNormalizeMethods:
-    """Deprecated runtime normalization methods must emit DeprecationWarning."""
-
-    def test_normalize_to_general_value_emits_deprecation(self) -> None:
-        """FlextRuntime.normalize_to_general_value -> normalize_to_container."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = FlextRuntime.normalize_to_general_value("hello")
-            tm.that(result, eq="hello")
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            tm.that(len(deprecation_warnings), gt=0)
-            tm.that(str(deprecation_warnings[0].message), has="normalize_to_container")
-
-    def test_normalize_to_metadata_value_emits_deprecation(self) -> None:
-        """FlextRuntime.normalize_to_metadata_value -> normalize_to_metadata."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = FlextRuntime.normalize_to_metadata_value(42)
-            tm.that(result, eq=42)
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            tm.that(len(deprecation_warnings), gt=0)
-            tm.that(str(deprecation_warnings[0].message), has="normalize_to_metadata")
-
-    def test_normalize_to_general_value_functional_equivalence(self) -> None:
-        """Deprecated path must return same result as non-deprecated path."""
+class TestRuntimeNormalizeMethods:
+    def test_normalize_to_container_functional_equivalence(self) -> None:
         test_cases: list[test_t.Tests.object] = [
             "str",
             42,
@@ -66,15 +39,13 @@ class TestRuntimeDeprecatedNormalizeMethods:
             [1, 2],
         ]
         for val in test_cases:
-            with warnings.catch_warnings(record=True):
-                warnings.simplefilter("always")
-                deprecated_result = FlextRuntime.normalize_to_general_value(
-                    cast("t.RuntimeData", val),
-                )
-            strict_result = FlextRuntime.normalize_to_container(
+            normalized_result = FlextRuntime.normalize_to_container(
                 cast("t.RuntimeData", val),
             )
-            tm.that(type(deprecated_result), eq=type(strict_result))
+            strict_result = FlextRuntime.normalize_to_container(
+                cast("t.RuntimeData", val)
+            )
+            tm.that(type(normalized_result), eq=type(strict_result))
 
 
 class TestGuardsDeprecatedMethods:
@@ -121,30 +92,14 @@ class TestMapperDeprecatedMethods:
             tm.that(str(deprecation_warnings[0].message), has="narrow_to_container")
 
 
-class TestFacadeDeprecatedAliases:
-    """Deprecated facade aliases (u.*) must emit DeprecationWarning via runtime."""
+class TestFacadeNormalizeAliases:
+    def test_facade_normalize_to_container(self) -> None:
+        result = FlextUtilities.normalize_to_container("facade_test")
+        tm.that(result, eq="facade_test")
 
-    def test_facade_normalize_to_general_value_emits_deprecation(self) -> None:
-        """FlextUtilities.normalize_to_general_value -> normalize_to_container."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = FlextUtilities.normalize_to_general_value("facade_test")
-            tm.that(result, eq="facade_test")
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            tm.that(len(deprecation_warnings), gt=0)
-
-    def test_facade_normalize_to_metadata_value_emits_deprecation(self) -> None:
-        """FlextUtilities.normalize_to_metadata_value -> normalize_to_metadata."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = FlextUtilities.normalize_to_metadata_value("facade_meta")
-            tm.that(result, eq="facade_meta")
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            tm.that(len(deprecation_warnings), gt=0)
+    def test_facade_normalize_to_metadata(self) -> None:
+        result = FlextUtilities.normalize_to_metadata("facade_meta")
+        tm.that(result, eq="facade_meta")
 
 
 class TestStrictContainerNormalization:
