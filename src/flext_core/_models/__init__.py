@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
+    from flext_core._models.result import FlextModelsResult
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
     from flext_core.typings import FlextTypes
@@ -57,6 +58,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextModelsEntity": ("flext_core._models.entity", "FlextModelsEntity"),
     "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
+    "FlextModelsResult": ("flext_core._models.result", "FlextModelsResult"),
     "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
 }
 
@@ -74,6 +76,7 @@ __all__ = [
     "FlextModelsDomainEvent",
     "FlextModelsEntity",
     "FlextModelsHandler",
+    "FlextModelsResult",
     "FlextModelsService",
 ]
 

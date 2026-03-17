@@ -25,6 +25,7 @@ from flext_core._models import (
     FlextModelsDispatcher,
     FlextModelsEntity,
     FlextModelsHandler,
+    FlextModelsResult,
     FlextModelsService,
 )
 
@@ -41,6 +42,7 @@ class FlextModels(
     FlextModelsEntity,
     FlextGenericModels,
     FlextModelsHandler,
+    FlextModelsResult,
     FlextModelsService,
     FlextModelsConfig,
 ):
