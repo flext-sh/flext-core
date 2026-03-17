@@ -27,15 +27,11 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def _all_container_mapping_values(value: Mapping[str, object]) -> bool:
+    def all_container_mapping_values(value: Mapping[str, object]) -> bool:
         for mapped_value in value.values():
             if not FlextUtilitiesGuardsTypeCore.is_container(mapped_value):
                 return False
         return True
-
-    @staticmethod
-    def all_container_mapping_values(value: Mapping[str, object]) -> bool:
-        return FlextUtilitiesGuardsTypeCore._all_container_mapping_values(value)
 
     @staticmethod
     def is_dict_non_empty(value: t.NormalizedValue) -> bool:
@@ -66,7 +62,7 @@ class FlextUtilitiesGuardsTypeCore:
         if FlextUtilitiesGuardsTypeCore._is_object_sequence(value):
             return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
         if FlextUtilitiesGuardsTypeCore._is_object_mapping(value):
-            return FlextUtilitiesGuardsTypeCore._all_container_mapping_values(value)
+            return FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
         return isinstance(value, Path)
 
     @staticmethod

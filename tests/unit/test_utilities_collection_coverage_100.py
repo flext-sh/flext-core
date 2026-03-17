@@ -789,7 +789,8 @@ class TestuCollectionParseSequence:
         _ = assertion_helpers.assert_flext_result_failure(result)
         tm.that(result.error, none=False)
         tm.that(result.error, has="Invalid")
-        assert "invalid1" in result.error or "invalid2" in result.error
+        error_message = result.error or ""
+        assert "invalid1" in error_message or "invalid2" in error_message
 
 
 class TestuCollectionCoerceListValidator:
@@ -870,7 +871,8 @@ class TestuCollectionParseMapping:
         tm.that(result.value, none=False)
         tm.that(len(result.value), eq=3)
         tm.that(
-            all(isinstance(v, FixturePriority) for v in result.value.values()), eq=True
+            all(v in FixturePriority for v in result.value.values()),
+            eq=True,
         )
 
     def test_parse_mapping_error_message_format(self) -> None:
@@ -882,7 +884,8 @@ class TestuCollectionParseMapping:
         _ = assertion_helpers.assert_flext_result_failure(result)
         tm.that(result.error, none=False)
         tm.that(result.error, has="Invalid")
-        assert "invalid1" in result.error or "invalid2" in result.error
+        error_message = result.error or ""
+        assert "invalid1" in error_message or "invalid2" in error_message
 
 
 class TestuCollectionCoerceDictValidator:
@@ -962,7 +965,7 @@ class TestuCollectionFind:
         """Test find with various scenarios."""
         result = u.find(
             scenario.items,
-            cast("Callable[[t.Tests.object], bool]", scenario.predicate),
+            scenario.predicate,
         )
         if scenario.expected_result is None:
             assert result.is_failure
@@ -1031,7 +1034,7 @@ class TestuCollectionProcess:
 
 
 class TestuCollectionGroup:
-    """Real tests for u.group."""
+    """Real tests for u.group_by."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -1039,8 +1042,8 @@ class TestuCollectionGroup:
         ids=lambda s: s.name,
     )
     def test_group(self, scenario: GroupScenario) -> None:
-        """Test group with various scenarios."""
-        result = u.group(scenario.items, scenario.key)
+        """Test group_by with various scenarios."""
+        result = u.group_by(scenario.items, scenario.key)
         assert result == scenario.expected_result
 
 
@@ -1094,8 +1097,8 @@ class TestuCollectionBatch:
         """Test batch with flattening."""
         items = [[1, 2], [3, 4], 5]
 
-        def flatten_op(value: list[int] | int) -> int | r[int]:
-            return cast("int | r[int]", value)
+        def flatten_op(value: list[int] | int) -> t.Serializable:
+            return cast("t.Serializable", value)
 
         result = u.batch(
             items,

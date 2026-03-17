@@ -794,14 +794,6 @@ class FlextUtilitiesCollection:
         return list(chain.from_iterable(items))
 
     @staticmethod
-    def group(items: Sequence[T], key_func: Callable[[T], U]) -> dict[U, list[T]]:
-        """Group items by key function.
-
-        This is an alias for group_by for convenience.
-        """
-        return FlextUtilitiesCollection.group_by(items, key_func)
-
-    @staticmethod
     def group_by(items: Sequence[T], key_func: Callable[[T], U]) -> dict[U, list[T]]:
         """Group items by key function.
 
