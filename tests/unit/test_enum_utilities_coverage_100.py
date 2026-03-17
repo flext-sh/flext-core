@@ -359,25 +359,25 @@ class TestuEnumMetadata:
         """Test values method."""
         values = u.values(Status)
         tm.that(isinstance(values, frozenset), eq=True)
-        tm.that(values, contains="active")
-        tm.that(values, contains="pending")
-        tm.that(values, contains="inactive")
+        assert "active" in values
+        assert "pending" in values
+        assert "inactive" in values
 
     def test_names(self) -> None:
         """Test names method."""
         names = u.names(Status)
         tm.that(isinstance(names, frozenset), eq=True)
-        tm.that(names, contains="ACTIVE")
-        tm.that(names, contains="PENDING")
-        tm.that(names, contains="INACTIVE")
+        assert "ACTIVE" in names
+        assert "PENDING" in names
+        assert "INACTIVE" in names
 
     def test_members(self) -> None:
         """Test members method."""
         members = u.members(Status)
         tm.that(isinstance(members, frozenset), eq=True)
-        tm.that(members, contains=Status.ACTIVE)
-        tm.that(members, contains=Status.PENDING)
-        tm.that(members, contains=Status.INACTIVE)
+        assert Status.ACTIVE in members
+        assert Status.PENDING in members
+        assert Status.INACTIVE in members
 
     def test_metadata_caching(self) -> None:
         """Test that metadata methods are cached."""

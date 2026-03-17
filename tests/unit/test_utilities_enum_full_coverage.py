@@ -78,16 +78,16 @@ def test_names_uses_cache_on_second_call() -> None:
     u._names_cache.clear()
     first = u.names(Status)
     second = u.names(Status)
-    tm.that(first, eq=frozenset({"ACTIVE", "PENDING", "INACTIVE"}))
-    tm.that(second, eq=first)
+    assert first == frozenset({"ACTIVE", "PENDING", "INACTIVE"})
+    assert second == first
 
 
 def test_members_uses_cache_on_second_call() -> None:
     u._members_cache.clear()
     first = u.members(Status)
     second = u.members(Status)
-    tm.that(first, eq=frozenset({Status.ACTIVE, Status.PENDING, Status.INACTIVE}))
-    tm.that(second, eq=first)
+    assert first == frozenset({Status.ACTIVE, Status.PENDING, Status.INACTIVE})
+    assert second == first
 
 
 def test_get_enum_values_returns_immutable_sequence() -> None:

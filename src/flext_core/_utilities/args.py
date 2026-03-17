@@ -67,24 +67,33 @@ class FlextUtilitiesArgs:
 
         """
         try:
-            hints = get_type_hints(func)
+            hints = get_type_hints(func, include_extras=True)
         except (NameError, TypeError, AttributeError):
-            return {}
+            fallback_annotations = getattr(func, "__annotations__", None)
+            if isinstance(fallback_annotations, Mapping):
+                hints = dict(fallback_annotations.items())
+            else:
+                return {}
         enum_params: dict[str, type[StrEnum]] = {}
         for name, hint in hints.items():
             if name == "return":
                 continue
             current_hint = hint
-            origin = get_origin(hint)
-            if origin is Annotated:
-                current_hint = get_args(hint)[0]
+            origin = get_origin(current_hint)
+            while origin is Annotated:
+                current_hint = get_args(current_hint)[0]
                 origin = get_origin(current_hint)
             validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
             if validated_hint.is_success:
                 enum_params[name] = validated_hint.value
             elif origin is UnionType:
                 for arg in get_args(current_hint):
-                    validated_arg = FlextUtilitiesArgs._validate_enum_type(arg)
+                    current_arg = arg
+                    arg_origin = get_origin(current_arg)
+                    while arg_origin is Annotated:
+                        current_arg = get_args(current_arg)[0]
+                        arg_origin = get_origin(current_arg)
+                    validated_arg = FlextUtilitiesArgs._validate_enum_type(current_arg)
                     if validated_arg.is_success:
                         enum_params[name] = validated_arg.value
                         break

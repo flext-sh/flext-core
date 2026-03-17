@@ -851,7 +851,7 @@ class TestuCollectionParseMapping:
             _ = assertion_helpers.assert_flext_result_success(result)
             tm.that(result.value, none=False)
             if scenario.expected_keys is not None:
-                tm.that(set(result.value.keys()), eq=set(scenario.expected_keys))
+                assert set(result.value.keys()) == set(scenario.expected_keys)
             for val in result.value.values():
                 tm.that(val, is_=scenario.enum_cls)
         else:
@@ -900,7 +900,7 @@ class TestuCollectionCoerceDictValidator:
             result = validator(scenario.value)
             u.Tests.Assertions.assert_result_matches_expected(result, dict)
             if scenario.expected_keys is not None:
-                tm.that(set(result.keys()), eq=set(scenario.expected_keys))
+                assert set(result.keys()) == set(scenario.expected_keys)
             for val in result.values():
                 tm.that(val, is_=scenario.enum_cls)
         else:
