@@ -955,10 +955,10 @@ class FlextUtilitiesMapper:
     @staticmethod
     def agg[T](
         items: list[T] | tuple[T, ...],
-        field: str | Callable[[T], int | float],
+        field: str | Callable[[T], t.Numeric],
         *,
-        fn: Callable[[list[int | float]], int | float] | None = None,
-    ) -> int | float:
+        fn: Callable[[list[t.Numeric]], t.Numeric] | None = None,
+    ) -> t.Numeric:
         """Aggregate field values from objects (mnemonic: agg = aggregate).
 
         Generic replacement for: sum(getattr(...)), max(getattr(...))
@@ -984,7 +984,7 @@ class FlextUtilitiesMapper:
 
         """
         items_list: list[T] = list(items)
-        numeric_values: list[int | float] = []
+        numeric_values: list[t.Numeric] = []
         if callable(field):
             for item in items_list:
                 val = field(item)
@@ -1010,11 +1010,9 @@ class FlextUtilitiesMapper:
                     val_raw = raw_val
                 else:
                     continue
-                if isinstance(val_raw, int | float):
+                if isinstance(val_raw, (int, float)):
                     numeric_values.append(val_raw)
-        agg_fn: Callable[[list[int | float]], int | float] = (
-            fn if fn is not None else sum
-        )
+        agg_fn: Callable[[list[t.Numeric]], t.Numeric] = fn if fn is not None else sum
         if numeric_values:
             return agg_fn(numeric_values)
         return 0

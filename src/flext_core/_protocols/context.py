@@ -10,7 +10,6 @@ from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
-from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
 from flext_core import t
@@ -37,13 +36,13 @@ class FlextProtocolsContext:
             """Clone context for isolated execution."""
             ...
 
-        def get(self, key: str, scope: str = ...) -> r[t.Container | BaseModel]:
+        def get(self, key: str, scope: str = ...) -> r[t.RuntimeAtomic]:
             """Get a context value. Returns Result-like object."""
             ...
 
         @overload
         def set(
-            self, key_or_data: str, value: t.Container | BaseModel, *, scope: str = ...
+            self, key_or_data: str, value: t.RuntimeAtomic, *, scope: str = ...
         ) -> r[bool]: ...
 
         @overload
@@ -58,7 +57,7 @@ class FlextProtocolsContext:
         def set(
             self,
             key_or_data: str | t.ConfigMap,
-            value: t.Container | BaseModel | None = ...,
+            value: t.RuntimeAtomic | None = ...,
             *,
             scope: str = ...,
         ) -> r[bool]:

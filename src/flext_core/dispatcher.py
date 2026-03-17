@@ -32,7 +32,7 @@ class FlextDispatcher:
         self._auto_handlers: list[t.AutoHandlerRegistration] = []
         self._event_subscribers: dict[str, list[t.RegisteredHandler]] = {}
 
-    def dispatch(self, message: p.Routable) -> r[t.Container | BaseModel]:
+    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -45,7 +45,7 @@ class FlextDispatcher:
         try:
             route_name = u.get_message_route(message)
         except (TypeError, ValueError) as e:
-            return r[t.Container | BaseModel].fail(
+            return r[t.RuntimeAtomic].fail(
                 f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
             )
         handler_entry = self._handlers.get(route_name)
@@ -59,7 +59,7 @@ class FlextDispatcher:
                     handler_entry = (auto_h, resolved_handler)
                     break
         if not handler_entry:
-            return r[t.Container | BaseModel].fail(
+            return r[t.RuntimeAtomic].fail(
                 f"No handler found for {route_name}",
                 error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
@@ -75,7 +75,7 @@ class FlextDispatcher:
         expects a concrete payload type and should avoid ad-hoc narrowing logic.
         """
 
-        def _coerce(value: t.Container | BaseModel) -> r[DispatchValueT]:
+        def _coerce(value: t.RuntimeAtomic) -> r[DispatchValueT]:
             if isinstance(value, expected_type):
                 return r[DispatchValueT].ok(value)
             if isinstance(value, BaseModel):
@@ -179,9 +179,9 @@ class FlextDispatcher:
         resolved_handler: t.ResolvedHandlerCallable,
         message: p.Routable,
         route_name: str,
-    ) -> r[t.Container | BaseModel]:
+    ) -> r[t.RuntimeAtomic]:
         """Execute a handler against a message."""
-        dispatch_result = r[t.Container | BaseModel]
+        dispatch_result = r[t.RuntimeAtomic]
         try:
             raw_output = resolved_handler(message)
             if u.is_result_like(raw_output):
@@ -194,7 +194,7 @@ class FlextDispatcher:
                         if isinstance(error_data_value, BaseModel)
                         else None,
                     )
-                value: t.Container | BaseModel | None = raw_output.value
+                value: t.RuntimeAtomic | None = raw_output.value
                 if not u.is_container(value):
                     return dispatch_result.fail(
                         "Handler returned non-container value in success result"

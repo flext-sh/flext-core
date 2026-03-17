@@ -172,7 +172,7 @@ class FlextRegistry(s[bool]):
         | t.RegistrablePlugin
         | BaseModel
         | None,
-    ) -> t.Container | BaseModel | None:
+    ) -> t.RuntimeAtomic | None:
         """Safe conversion using centralized utilities."""
         if value is None:
             return None
@@ -180,14 +180,14 @@ class FlextRegistry(s[bool]):
             return value
         return str(value)
 
-    def _get_handler_mode(self, value: t.Container | BaseModel) -> c.Cqrs.HandlerType:
+    def _get_handler_mode(self, value: t.RuntimeAtomic) -> c.Cqrs.HandlerType:
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
         if result.is_success and isinstance(result.value, c.Cqrs.HandlerType):
             return result.value
         return c.Cqrs.HandlerType.COMMAND
 
-    def _get_status(self, value: t.Container | BaseModel) -> c.Cqrs.CommonStatus:
+    def _get_status(self, value: t.RuntimeAtomic) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
         if result.is_success and isinstance(result.value, c.Cqrs.CommonStatus):
@@ -208,7 +208,7 @@ class FlextRegistry(s[bool]):
 
     def get_plugin(
         self, category: str, name: str, *, scope: str = "instance"
-    ) -> r[t.Container | BaseModel | None]:
+    ) -> r[t.RuntimeAtomic | None]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -223,17 +223,15 @@ class FlextRegistry(s[bool]):
                     for k in self._registered_keys
                     if k.startswith(f"{category}::")
                 ]
-                return r[t.Container | BaseModel | None].fail(
+                return r[t.RuntimeAtomic | None].fail(
                     f"{category} '{name}' not found. Available: {available}"
                 )
             raw_result = self.container.get(key)
             if raw_result.is_failure:
-                return r[t.Container | BaseModel | None].fail(
+                return r[t.RuntimeAtomic | None].fail(
                     f"Failed to retrieve {category} '{name}': {raw_result.error}"
                 )
-            return r[t.Container | BaseModel | None].ok(
-                self._narrow_value(raw_result.value)
-            )
+            return r[t.RuntimeAtomic | None].ok(self._narrow_value(raw_result.value))
         cls = type(self)
         if key not in cls._class_registered_keys:
             available = [
@@ -241,10 +239,10 @@ class FlextRegistry(s[bool]):
                 for k in cls._class_registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[t.Container | BaseModel | None].fail(
+            return r[t.RuntimeAtomic | None].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
-        return r[t.Container | BaseModel | None].ok(
+        return r[t.RuntimeAtomic | None].ok(
             self._narrow_value(cls._class_plugin_storage[key])
         )
 

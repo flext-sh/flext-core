@@ -32,8 +32,8 @@ class FlextModelsCollections:
         def _sum_numeric_values(
             cls,
             non_none: Sequence[t.MetadataValue],
-        ) -> int | float | None:
-            numeric: list[int | float] = [
+        ) -> t.Numeric | None:
+            numeric: list[t.Numeric] = [
                 v
                 for v in non_none
                 if isinstance(v, (int, float)) and not isinstance(v, bool)

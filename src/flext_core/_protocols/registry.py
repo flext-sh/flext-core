@@ -94,7 +94,7 @@ class FlextProtocolsRegistry:
             name: str,
             *,
             scope: str = "instance",
-        ) -> r[t.Container | BaseModel | None]:
+        ) -> r[t.RuntimeAtomic | None]:
             """Get a registered plugin by category and name."""
             ...
 

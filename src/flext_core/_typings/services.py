@@ -13,12 +13,13 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core._typings import FlextTypingBase, FlextTypingContainers
 
 
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
+
+    type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
 
     @runtime_checkable
     class DispatchableService(Protocol):
@@ -63,11 +64,7 @@ class FlextTypesServices:
     )
     type HandlerCallable = Callable[[BaseModel], BaseModel]
     type HandlerLike = Callable[..., BaseModel]
-    type RegistrablePlugin = (
-        FlextTypingBase.Scalar
-        | BaseModel
-        | Callable[..., FlextTypingBase.Scalar | BaseModel]
-    )
+    type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
 
     # Other Types
     type SortableObjectType = str | int | float

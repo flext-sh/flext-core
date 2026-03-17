@@ -31,7 +31,7 @@ class FlextUtilitiesPagination:
     def build_pagination_response(
         pagination_data: Mapping[
             str,
-            Sequence[t.Container | BaseModel] | Mapping[str, t.Container] | str,
+            Sequence[t.RuntimeAtomic] | Mapping[str, t.Container] | str,
         ],
         message: str | None = None,
     ) -> r[Mapping[str, str]]:
@@ -143,7 +143,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> r[dict[str, list[t.Container | BaseModel] | t.PaginationMeta]]:
+    ) -> r[dict[str, list[t.RuntimeAtomic] | t.PaginationMeta]]:
         """Prepare pagination data structure.
 
         Args:
@@ -161,12 +161,12 @@ class FlextUtilitiesPagination:
         total_count = total if total is not None else len(data)
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
-            return r[dict[str, list[t.Container | BaseModel] | t.PaginationMeta]].fail(
+            return r[dict[str, list[t.RuntimeAtomic] | t.PaginationMeta]].fail(
                 f"Page {page} exceeds total pages {total_pages}"
             )
         has_next: bool = page < total_pages
         has_prev: bool = page > 1
-        data_list: list[t.Container | BaseModel] = []
+        data_list: list[t.RuntimeAtomic] = []
         for item in data:
             normalized = FlextRuntime.normalize_to_container(item)
             data_list.append(normalized)
@@ -178,7 +178,7 @@ class FlextUtilitiesPagination:
             "has_next": has_next,
             "has_prev": has_prev,
         }
-        return r[dict[str, list[t.Container | BaseModel] | t.PaginationMeta]].ok({
+        return r[dict[str, list[t.RuntimeAtomic] | t.PaginationMeta]].ok({
             "data": data_list,
             "pagination": pagination_meta,
         })

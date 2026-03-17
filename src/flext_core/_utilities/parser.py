@@ -101,7 +101,7 @@ class FlextUtilitiesParser:
         if isinstance(value, str):
             normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
             return normalized in {"true", "1", "yes", "on"}
-        if isinstance(value, int | float):
+        if isinstance(value, (int, float)):
             return bool(value)
         return default
 
@@ -415,7 +415,7 @@ class FlextUtilitiesParser:
         value: t.NormalizedValue,
         target: type,
         default: float | str | bool | None,
-        default_factory: Callable[[], int | float | str | bool] | None,
+        default_factory: Callable[[], t.Numeric | str | bool] | None,
         field_prefix: str,
     ) -> r[t.Primitives]:
         """Helper: Try primitive coercion."""
@@ -660,9 +660,9 @@ class FlextUtilitiesParser:
     @staticmethod
     def convert(
         value: t.NormalizedValue,
-        target_type: type[int | float | str | bool],
-        default: float | str | bool,
-    ) -> int | float | str | bool:
+        target_type: type[t.Numeric | str | bool],
+        default: t.Numeric | str | bool,
+    ) -> t.Numeric | str | bool:
         """Unified type conversion with safe fallback.
 
         Automatically handles common type conversions (int, str, float, bool) with
@@ -804,7 +804,7 @@ class FlextUtilitiesParser:
                 for k, v in dict_items.items()
             }
         if isinstance(items, BaseModel):
-            dumped: dict[str, t.Container | BaseModel] = {
+            dumped: dict[str, t.RuntimeAtomic] = {
                 str(k): FlextRuntime.normalize_to_container(v)
                 for k, v in items.model_dump().items()
             }
@@ -825,7 +825,7 @@ class FlextUtilitiesParser:
                 DeprecationWarning,
                 stacklevel=2,
             )
-            dict_items_raw: dict[str, t.Container | BaseModel] = {
+            dict_items_raw: dict[str, t.RuntimeAtomic] = {
                 str(k): FlextRuntime.normalize_to_container(v) for k, v in items.items()
             }
             if filter_truthy:

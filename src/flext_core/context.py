@@ -450,9 +450,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             },
         )
 
-    def get(
-        self, key: str, scope: str = c.Context.SCOPE_GLOBAL
-    ) -> r[t.Container | BaseModel]:
+    def get(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> r[t.RuntimeAtomic]:
         """Get a value from the context.
 
         Fast fail: Returns r[t.Container] - fails if key not found.
@@ -484,23 +482,23 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         """
         if not self._active:
-            return r[t.Container | BaseModel].fail("Context is not active")
+            return r[t.RuntimeAtomic].fail("Context is not active")
         scope_data = self._get_from_contextvar(scope)
         if key not in scope_data:
-            return r[t.Container | BaseModel].fail(
+            return r[t.RuntimeAtomic].fail(
                 f"Context key '{key}' not found in scope '{scope}'"
             )
         value = scope_data[key]
         self._update_statistics(c.Context.OPERATION_GET)
         if value is None:
-            return r[t.Container | BaseModel].fail(
+            return r[t.RuntimeAtomic].fail(
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
         normalized = FlextRuntime.normalize_to_container(value)
-        return r[t.Container | BaseModel].ok(normalized)
+        return r[t.RuntimeAtomic].ok(normalized)
 
-    def get_metadata(self, key: str) -> r[t.Container | BaseModel]:
+    def get_metadata(self, key: str) -> r[t.RuntimeAtomic]:
         """Get metadata from the context.
 
         Fast fail: Returns r[t.Container | BaseModel] - fails if key not found.
@@ -528,12 +526,12 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         """
         if key not in self._metadata.attributes:
-            return r[t.Container | BaseModel].fail(f"Metadata key '{key}' not found")
+            return r[t.RuntimeAtomic].fail(f"Metadata key '{key}' not found")
         raw_value: t.MetadataValue = self._metadata.attributes[key]
-        normalized_value: t.Container | BaseModel = FlextRuntime.normalize_to_container(
+        normalized_value: t.RuntimeAtomic = FlextRuntime.normalize_to_container(
             raw_value
         )
-        return r[t.Container | BaseModel].ok(normalized_value)
+        return r[t.RuntimeAtomic].ok(normalized_value)
 
     def has(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> bool:
         """Check if a key exists in the context.
@@ -687,7 +685,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
     @overload
     def set(
-        self, key_or_data: str, value: t.Container | BaseModel, *, scope: str = ...
+        self, key_or_data: str, value: t.RuntimeAtomic, *, scope: str = ...
     ) -> r[bool]: ...
 
     @overload
@@ -698,7 +696,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     def set(
         self,
         key_or_data: str | t.ConfigMap,
-        value: t.Container | BaseModel | None = c.Context.SENTINEL_MISSING,
+        value: t.RuntimeAtomic | None = c.Context.SENTINEL_MISSING,
         *,
         scope: str = c.Context.SCOPE_GLOBAL,
     ) -> r[bool]:
@@ -936,7 +934,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         updated.update(data.root)
         _ = ctx_var.set(updated)
         if scope == c.Context.SCOPE_GLOBAL:
-            normalized_context: dict[str, t.Container | BaseModel] = {
+            normalized_context: dict[str, t.RuntimeAtomic] = {
                 key: FlextRuntime.normalize_to_container(value)
                 for key, value in data.items()
                 if value is not None

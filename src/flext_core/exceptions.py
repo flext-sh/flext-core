@@ -22,7 +22,7 @@ from pydantic import (
 )
 
 from flext_core import FlextRuntime, c, m, t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 
 
 class FlextExceptions:
@@ -58,7 +58,7 @@ class FlextExceptions:
     class _StrictNumberValue(_ParamsModel):
         """Strict numeric extractor for kwargs/context parsing."""
 
-        value: Annotated[int | float, Field()]
+        value: Annotated[t.Numeric, Field()]
 
     class ValidationErrorParams(_ParamsModel):
         """Validated params for ValidationError."""
@@ -123,7 +123,7 @@ class FlextExceptions:
             ),
         ]
         timeout: Annotated[
-            int | float | None,
+            t.Numeric | None,
             Field(
                 default=None,
                 description="Connection timeout threshold in seconds.",
@@ -136,7 +136,7 @@ class FlextExceptions:
         """Validated params for TimeoutError."""
 
         timeout_seconds: Annotated[
-            int | float | None,
+            t.Numeric | None,
             Field(
                 default=None,
                 description="Timeout duration in seconds that triggered this exception.",
@@ -295,7 +295,7 @@ class FlextExceptions:
             ),
         ]
         retry_after: Annotated[
-            int | float | None,
+            t.Numeric | None,
             Field(
                 default=None,
                 description="Time in seconds clients should wait before retrying.",
@@ -328,7 +328,7 @@ class FlextExceptions:
             ),
         ]
         reset_timeout: Annotated[
-            int | float | None,
+            t.Numeric | None,
             Field(
                 default=None,
                 description="Seconds before allowing a circuit breaker reset attempt.",
@@ -628,7 +628,7 @@ class FlextExceptions:
         return None
 
     @staticmethod
-    def _safe_number(value: t.Scalar | None) -> int | float | None:
+    def _safe_number(value: t.Scalar | None) -> t.Numeric | None:
         """Extract optional strict numeric value from dynamic values."""
         if value is None:
             return None

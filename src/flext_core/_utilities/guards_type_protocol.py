@@ -57,7 +57,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_handler_callable(
-        value: t.NormalizedValue,
+        value: object,
     ) -> TypeIs[t.HandlerCallable]:
         return callable(value)
 
@@ -79,7 +79,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_registerable(
-        value: t.NormalizedValue,
+        value: object,
     ) -> TypeIs[t.RegisterableService]:
         return FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
 
@@ -98,7 +98,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_result_like(
         value: object,
-    ) -> TypeIs[p.ResultLike[t.Container | BaseModel]]:
+    ) -> TypeIs[p.ResultLike[t.RuntimeAtomic]]:
         return isinstance(value, p.ResultLike)
 
     @staticmethod

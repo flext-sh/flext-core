@@ -182,13 +182,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                metadata_context: dict[str, t.Container | BaseModel] = {
+                metadata_context: dict[str, t.RuntimeAtomic] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
-                normal_metadata_context: dict[str, t.Container | BaseModel] = {
+                normal_metadata_context: dict[str, t.RuntimeAtomic] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in normal_data.root.items()
                 }
@@ -199,8 +199,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     @staticmethod
     def _normalize_log_payload(
         payload: Mapping[str, t.NormalizedValue | BaseModel],
-    ) -> dict[str, t.Container | BaseModel]:
-        normalized_payload: dict[str, t.Container | BaseModel] = {}
+    ) -> dict[str, t.RuntimeAtomic]:
+        normalized_payload: dict[str, t.RuntimeAtomic] = {}
         for key, value in payload.items():
             normalized_payload[str(key)] = FlextRuntime.normalize_to_container(value)
         return normalized_payload

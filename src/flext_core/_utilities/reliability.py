@@ -97,13 +97,13 @@ class FlextUtilitiesReliability:
         backoff_multiplier_raw = config.get("backoff_multiplier")
         initial_delay = (
             float(initial_delay_raw)
-            if isinstance(initial_delay_raw, int | float)
+            if isinstance(initial_delay_raw, (int, float))
             and (not isinstance(initial_delay_raw, bool))
             else 0.1
         )
         max_delay = (
             float(max_delay_raw)
-            if isinstance(max_delay_raw, int | float)
+            if isinstance(max_delay_raw, (int, float))
             and (not isinstance(max_delay_raw, bool))
             else 60.0
         )
@@ -115,7 +115,7 @@ class FlextUtilitiesReliability:
         backoff_multiplier: float | None = None
         if (
             backoff_multiplier_raw is not None
-            and isinstance(backoff_multiplier_raw, int | float)
+            and isinstance(backoff_multiplier_raw, (int, float))
             and (not isinstance(backoff_multiplier_raw, bool))
         ):
             backoff_multiplier = float(backoff_multiplier_raw)

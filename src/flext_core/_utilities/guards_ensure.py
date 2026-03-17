@@ -171,7 +171,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return ""
             return error_msg or f"{context_name} must be int"
         if shortcut_lower == "float":
-            if isinstance(value, int | float) and (not isinstance(value, bool)):
+            if isinstance(value, (int, float)) and (not isinstance(value, bool)):
                 return ""
             return error_msg or f"{context_name} must be float"
         if shortcut_lower == "bool":
@@ -268,7 +268,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return False
         if not_in is not None and value in not_in:
             return False
-        check_val: int | float = 0
+        check_val: t.Numeric = 0
         if isinstance(value, (int, float)):
             check_val = value
         elif isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):

@@ -627,7 +627,7 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_container(
         val: t.RuntimeData,
-    ) -> t.Container | BaseModel:
+    ) -> t.RuntimeAtomic:
         """Normalize any value to t.Container | BaseModel.
 
         Args:
@@ -644,7 +644,7 @@ class FlextRuntime:
         if isinstance(val, BaseModel):
             return val
 
-        def _to_plain_container(value: t.Container | BaseModel) -> t.NormalizedValue:
+        def _to_plain_container(value: t.RuntimeAtomic) -> t.NormalizedValue:
             if isinstance(
                 value,
                 (t.ConfigMap, t.Dict),
@@ -1680,7 +1680,7 @@ class FlextRuntime:
     @classmethod
     def ensure_trace_context(
         cls,
-        context: Mapping[str, t.Scalar] | BaseModel | t.Scalar,
+        context: Mapping[str, t.Scalar] | t.ScalarOrModel,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,

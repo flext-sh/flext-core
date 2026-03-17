@@ -955,7 +955,7 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def mul(*values: float) -> int | float:
+    def mul(*values: float) -> t.Numeric:
         """Multiply values.
 
         Args:

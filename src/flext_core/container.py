@@ -36,7 +36,7 @@ from flext_core import (
     t,
     u,
 )
-from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
+from flext_core._decorators import FactoryDecoratorsDiscovery
 
 
 class FlextContainer(p.Container):

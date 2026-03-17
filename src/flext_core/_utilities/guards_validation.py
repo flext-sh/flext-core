@@ -56,10 +56,10 @@ class FlextUtilitiesGuardsValidation:
         return r[int].ok(port)
 
     @staticmethod
-    def validate_positive(value: float, field_name: str = "value") -> r[int | float]:
+    def validate_positive(value: float, field_name: str = "value") -> r[t.Numeric]:
         if isinstance(value, bool) or value <= 0:
-            return r[int | float].fail(f"{field_name} must be positive")
-        return r[int | float].ok(value)
+            return r[t.Numeric].fail(f"{field_name} must be positive")
+        return r[t.Numeric].ok(value)
 
     @staticmethod
     def validate_uri(uri: str, field_name: str = "uri") -> r[str]:

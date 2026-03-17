@@ -113,25 +113,23 @@ class FlextModelsContainers(FlextTypingContainers):
     class ValidatorCallable(
         RootModel[
             Callable[
-                [t.Scalar | BaseModel | None],
-                t.Scalar | BaseModel | None,
+                [t.ScalarOrModel | None],
+                t.ScalarOrModel | None,
             ]
         ]
     ):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
         root: Callable[
-            [t.Scalar | BaseModel | None],
-            t.Scalar | BaseModel | None,
+            [t.ScalarOrModel | None],
+            t.ScalarOrModel | None,
         ] = Field(
             title="Validator Callable",
             description="Callable that validates or transforms one scalar/model input value.",
             examples=["identity_validator"],
         )
 
-        def __call__(
-            self, value: t.Scalar | BaseModel | None
-        ) -> t.Scalar | BaseModel | None:
+        def __call__(self, value: t.ScalarOrModel | None) -> t.ScalarOrModel | None:
             """Execute validator."""
             return self.root(value)
 
@@ -140,8 +138,8 @@ class FlextModelsContainers(FlextTypingContainers):
             dict[
                 str,
                 Callable[
-                    [t.Scalar | BaseModel | None],
-                    t.Scalar | BaseModel | None,
+                    [t.ScalarOrModel | None],
+                    t.ScalarOrModel | None,
                 ],
             ]
         ]
@@ -153,16 +151,16 @@ class FlextModelsContainers(FlextTypingContainers):
         ) -> ItemsView[
             str,
             Callable[
-                [t.Scalar | BaseModel | None],
-                t.Scalar | BaseModel | None,
+                [t.ScalarOrModel | None],
+                t.ScalarOrModel | None,
             ],
         ]:
             """Get validator items."""
             validated: dict[
                 str,
                 Callable[
-                    [t.Scalar | BaseModel | None],
-                    t.Scalar | BaseModel | None,
+                    [t.ScalarOrModel | None],
+                    t.ScalarOrModel | None,
                 ],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.items()
@@ -171,16 +169,16 @@ class FlextModelsContainers(FlextTypingContainers):
             self,
         ) -> ValuesView[
             Callable[
-                [t.Scalar | BaseModel | None],
-                t.Scalar | BaseModel | None,
+                [t.ScalarOrModel | None],
+                t.ScalarOrModel | None,
             ],
         ]:
             """Get validator values."""
             validated: dict[
                 str,
                 Callable[
-                    [t.Scalar | BaseModel | None],
-                    t.Scalar | BaseModel | None,
+                    [t.ScalarOrModel | None],
+                    t.ScalarOrModel | None,
                 ],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.values()
@@ -192,8 +190,8 @@ class FlextModelsContainers(FlextTypingContainers):
             dict[
                 str,
                 Callable[
-                    [t.Scalar | BaseModel | None],
-                    t.Scalar | BaseModel | None,
+                    [t.ScalarOrModel | None],
+                    t.ScalarOrModel | None,
                 ],
             ],
             Field(
@@ -211,8 +209,8 @@ class FlextModelsContainers(FlextTypingContainers):
             dict[
                 str,
                 Callable[
-                    [t.Scalar | BaseModel | None],
-                    t.Scalar | BaseModel | None,
+                    [t.ScalarOrModel | None],
+                    t.ScalarOrModel | None,
                 ],
             ],
             Field(
@@ -230,8 +228,8 @@ class FlextModelsContainers(FlextTypingContainers):
             dict[
                 str,
                 Callable[
-                    [t.Scalar | BaseModel | None],
-                    t.Scalar | BaseModel | None,
+                    [t.ScalarOrModel | None],
+                    t.ScalarOrModel | None,
                 ],
             ],
             Field(

@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import ClassVar, Unpack, override
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
 
 from flext_core import c, e, m, p, r, t, u, x
 
@@ -531,7 +531,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time_value = self._execution_context.execution_time_ms
         try:
-            if isinstance(exec_time_value, int | float | str):
+            if isinstance(exec_time_value, (int, float, str)):
                 exec_time = float(exec_time_value)
             else:
                 exec_time = 0.0
@@ -725,12 +725,12 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 if not callable(func):
                     continue
                 config: m.DecoratorConfig = getattr(func, c.Discovery.HANDLER_ATTR)
-                callable_func: Callable[..., t.Container | BaseModel | None] = func
+                callable_func: Callable[..., t.RuntimeAtomic | None] = func
 
                 def narrowed_func(
-                    message: BaseModel | t.Container,
+                    message: t.RuntimeAtomic,
                     captured_callable: Callable[
-                        ..., t.Container | BaseModel | None
+                        ..., t.RuntimeAtomic | None
                     ] = callable_func,
                     **kwargs: t.Scalar,
                 ) -> t.Scalar | None:

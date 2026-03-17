@@ -40,7 +40,7 @@ class FlextLogger(FlextRuntime, p.Logger):
     _scoped_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
     _level_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
     _structlog_instance: p.Logger | None = None
-    type _LogArg = t.Scalar | BaseModel | Exception
+    type _LogArg = t.ScalarOrModel | Exception
 
     def __init__(
         self,
@@ -119,7 +119,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             return t.ConfigMap(root={})
 
     @classmethod
-    def bind_context(cls, scope: str, **context: t.Container | BaseModel) -> r[bool]:
+    def bind_context(cls, scope: str, **context: t.RuntimeAtomic) -> r[bool]:
         """Bind context variables to a specific scope.
 
         Business Rule: Binds context variables to a specific scope (APPLICATION, REQUEST,
@@ -202,9 +202,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
 
     @classmethod
-    def bind_context_for_level(
-        cls, level: str, **context: t.Container | BaseModel
-    ) -> r[bool]:
+    def bind_context_for_level(cls, level: str, **context: t.RuntimeAtomic) -> r[bool]:
         """Bind context variables that only appear in logs at specified level or higher.
 
         Business Rule: Binds context variables with level prefix (`_level_{level}_`) for
@@ -256,7 +254,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
     @classmethod
-    def bind_global_context(cls, **context: t.Container | BaseModel) -> r[bool]:
+    def bind_global_context(cls, **context: t.RuntimeAtomic) -> r[bool]:
         """Bind context globally using FlextRuntime.structlog() contextvars.
 
         Business Rule: Binds context variables globally using structlog contextvars,
@@ -804,7 +802,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | BaseModel | Exception,
+        **kw: t.RuntimeAtomic | Exception,
     ) -> r[bool]:
         """Log critical message - Logger.Log implementation.
 
@@ -829,7 +827,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | BaseModel | Exception,
+        **kw: t.RuntimeAtomic | Exception,
     ) -> r[bool]:
         """Log debug message - Logger.Log implementation.
 
@@ -854,7 +852,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | BaseModel | Exception,
+        **kw: t.RuntimeAtomic | Exception,
     ) -> r[bool]:
         """Log error message - Logger.Log implementation.
 
@@ -1005,7 +1003,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | BaseModel | Exception,
+        **kw: t.RuntimeAtomic | Exception,
     ) -> r[bool]:
         """Log info message - Logger.Log implementation."""
         return self._log_standard_level(
@@ -1020,7 +1018,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | BaseModel | Exception,
+        **kw: t.RuntimeAtomic | Exception,
     ) -> r[bool]:
         """Log warning message - Logger.Log implementation."""
         return self._log_standard_level(
@@ -1035,7 +1033,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         _level: c.Settings.LogLevel | str,
         message: str,
         *args: _LogArg,
-        **context: t.Container | BaseModel | Exception | bool | None,
+        **context: t.RuntimeAtomic | Exception | bool | None,
     ) -> r[bool]:
         """Internal logging method - consolidates all log level methods.
 
@@ -1074,7 +1072,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         level: c.Settings.LogLevel,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | BaseModel | Exception,
+        **kw: t.RuntimeAtomic | Exception,
     ) -> r[bool]:
         message = msg
         filtered_args: tuple[t.Scalar, ...] = tuple(
