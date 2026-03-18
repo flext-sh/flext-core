@@ -23,30 +23,42 @@ class TestModels79Coverage:
     """Single-namespace coverage tests for models.py."""
 
     class CreateUserCommand(BaseModel):
+        """Command to create a user."""
+
         user_id: Annotated[str, Field(description="User identifier for create command")]
         name: Annotated[str, Field(description="User display name for create command")]
         email: Annotated[str, Field(description="User email for create command")]
 
     class FindUserQuery(BaseModel):
+        """Query to find a user."""
+
         user_id: Annotated[str, Field(description="User identifier for lookup query")]
 
     class OptionalFieldCommand(BaseModel):
+        """Command with optional field."""
+
         required_field: Annotated[str, Field(description="Required command field")]
         optional_field: Annotated[
             str | None, Field(default=None, description="Optional command field")
         ] = None
 
     class PagedQuery(BaseModel):
+        """Query with pagination."""
+
         page: Annotated[int, Field(description="Requested page number")]
         page_size: Annotated[int, Field(description="Requested page size")]
 
     class CreateUserCmd(BaseModel):
+        """Integration command to create user."""
+
         user_id: Annotated[
             str, Field(description="User identifier for integration command")
         ]
         name: Annotated[str, Field(description="User name for integration command")]
 
     class GetUserQuery(BaseModel):
+        """Integration query to get user."""
+
         user_id: Annotated[
             str, Field(description="User identifier for integration query")
         ]

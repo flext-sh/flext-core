@@ -15,6 +15,8 @@ from ..test_utils import assertion_helpers
 
 class TestFlextHandlers:
     class ConcreteTestHandler(h[str, str]):
+        """Test handler for string messages."""
+
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
@@ -23,6 +25,8 @@ class TestFlextHandlers:
             return r[str].ok(f"processed_{message}")
 
     class ValidationTestHandler(h[t.Tests.object, str]):
+        """Test handler for validation."""
+
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
@@ -31,6 +35,8 @@ class TestFlextHandlers:
             return r[str].ok(f"processed_{message}")
 
     class FailingTestHandler(h[str, str]):
+        """Test handler that fails."""
+
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
@@ -39,6 +45,8 @@ class TestFlextHandlers:
             return r[str].fail(f"Handler failed for: {message}")
 
     class HandlerTypeScenario(m.Value):
+        """Scenario for handler types."""
+
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Handler type scenario name")]
         handler_type: Annotated[c.Cqrs.HandlerType, Field(description="Type")]

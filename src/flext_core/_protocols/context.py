@@ -22,23 +22,32 @@ class FlextProtocolsContext:
     """Protocols for context and runtime bootstrap options."""
 
     @runtime_checkable
-    class Context(Protocol):
-        """Context protocol for type safety without circular imports.
-
-        Defined in protocols.py to keep all protocol definitions together.
-        Full context protocol p.Context extends this minimal interface.
-
-        Methods use generic return types (Any) for structural compatibility
-        with p.Context which uses ResultLike[T] (also covariant with Any).
-        """
-
-        def clone(self) -> Self:
-            """Clone context for isolated execution."""
-            ...
+    class ContextRead(Protocol):
+        """Read-only context operations."""
 
         def get(self, key: str, scope: str = ...) -> r[t.RuntimeAtomic]:
-            """Get a context value. Returns Result-like object."""
+            """Get a context value by key and scope."""
             ...
+
+        def has(self, key: str, scope: str = ...) -> bool:
+            """Check if a key exists in the given scope."""
+            ...
+
+        def keys(self) -> list[str]:
+            """Return all keys across all scopes."""
+            ...
+
+        def values(self) -> list[t.NormalizedValue]:
+            """Return all values across all scopes."""
+            ...
+
+        def items(self) -> list[tuple[str, t.NormalizedValue]]:
+            """Return all key-value pairs across all scopes."""
+            ...
+
+    @runtime_checkable
+    class ContextWrite(Protocol):
+        """Write context operations."""
 
         @overload
         def set(
@@ -65,8 +74,81 @@ class FlextProtocolsContext:
             *,
             scope: str = ...,
         ) -> r[bool]:
-            """Set a context value. Returns Result-like object."""
+            """Set a context value or bulk-set from ConfigMap."""
             ...
+
+        def remove(self, key: str, scope: str = ...) -> None:
+            """Remove a key from the given scope."""
+            ...
+
+        def clear(self) -> None:
+            """Clear all context data across all scopes."""
+            ...
+
+    @runtime_checkable
+    class ContextLifecycle(Protocol):
+        """Context lifecycle operations."""
+
+        def clone(self) -> Self:
+            """Clone context for isolated execution."""
+            ...
+
+        def merge(
+            self,
+            other: FlextProtocolsContext.Context,
+            *,
+            strategy: str = ...,
+        ) -> r[bool]:
+            """Merge another context into this one."""
+            ...
+
+        def validate_context(self) -> r[bool]:
+            """Validate context state consistency."""
+            ...
+
+    @runtime_checkable
+    class ContextExport(Protocol):
+        """Context export/serialization operations."""
+
+        def export(
+            self,
+            *,
+            include_metadata: bool = ...,
+            include_statistics: bool = ...,
+        ) -> r[t.ConfigMap]:
+            """Export context state as serializable ConfigMap."""
+            ...
+
+    @runtime_checkable
+    class ContextMetadataAccess(Protocol):
+        """Context metadata read/write operations."""
+
+        def get_metadata(self, key: str) -> r[t.RuntimeAtomic]:
+            """Get a metadata value by key."""
+            ...
+
+        def set_metadata(self, key: str, value: t.MetadataValue) -> None:
+            """Set a metadata value by key."""
+            ...
+
+    @runtime_checkable
+    class Context(
+        ContextRead,
+        ContextWrite,
+        ContextLifecycle,
+        ContextExport,
+        ContextMetadataAccess,
+        Protocol,
+    ):
+        """Full context protocol — composed from capability sub-protocols.
+
+        Consumers should depend on the NARROWEST sub-protocol they need:
+        - ContextRead: read-only access (get/has/keys/values/items)
+        - ContextWrite: mutation (set/remove/clear)
+        - ContextLifecycle: clone/merge/validate
+        - ContextExport: serialization
+        - ContextMetadataAccess: metadata operations
+        """
 
     @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):

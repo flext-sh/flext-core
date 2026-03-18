@@ -28,17 +28,23 @@ from flext_core import t
 class TestCollectionUtilitiesCoverage:
     @unique
     class Status(StrEnum):
+        """Status enumeration."""
+
         ACTIVE = "active"
         PENDING = "pending"
         INACTIVE = "inactive"
 
     @unique
     class Priority(StrEnum):
+        """Priority enumeration."""
+
         LOW = "low"
         MEDIUM = "medium"
         HIGH = "high"
 
     class ParseSequenceScenario(BaseModel):
+        """Scenario for sequence parsing."""
+
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse sequence scenario name")]
         values: Annotated[
@@ -57,6 +63,8 @@ class TestCollectionUtilitiesCoverage:
         ] = None
 
     class CoerceListValidatorScenario(BaseModel):
+        """Scenario for list coercion."""
+
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce list scenario name")]
         value: Annotated[object, Field(description="Input value for list coercion")]
@@ -69,6 +77,8 @@ class TestCollectionUtilitiesCoverage:
         ] = None
 
     class ParseMappingScenario(BaseModel):
+        """Scenario for mapping parsing."""
+
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse mapping scenario name")]
         mapping: Annotated[

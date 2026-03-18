@@ -34,6 +34,8 @@ from tests import p, t, u
 class TestFlextProtocols:
     @unique
     class ProtocolCategoryType(StrEnum):
+        """Protocol category types."""
+
         FOUNDATION = "foundation"
         DOMAIN = "domain"
         INFRASTRUCTURE = "infrastructure"
@@ -42,6 +44,8 @@ class TestFlextProtocols:
         EXTENSIONS = "extensions"
 
     class ProtocolDefinitionScenario(BaseModel):
+        """Scenario for protocol definitions."""
+
         model_config = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Protocol definition scenario name")]
@@ -49,6 +53,8 @@ class TestFlextProtocols:
         category: Annotated[StrEnum, Field(description="Protocol category")]
 
     class ProtocolAvailabilityScenario(BaseModel):
+        """Scenario for protocol availability."""
+
         model_config = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Protocol availability scenario name")]

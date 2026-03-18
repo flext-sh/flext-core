@@ -12,10 +12,14 @@ from tests import m, t
 
 class TestFlextModelsCollectionsCoverage100:
     class TestConfig(m.Config):
+        """Test configuration with timeout and retries."""
+
         timeout: int = 30
         retries: int = 3
 
     class CategoryOperationScenario(m.Value):
+        """Scenario for category operations."""
+
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Category operation scenario name")]
         category: Annotated[str, Field(description="Category key")]
@@ -25,39 +29,59 @@ class TestFlextModelsCollectionsCoverage100:
         operation: Annotated[str, Field(description="Category operation name")]
 
     class StatisticsCount(m.Statistics):
+        """Statistics with count field."""
+
         count: int = 0
 
     class StatisticsItems(m.Statistics):
+        """Statistics with items list."""
+
         items: Annotated[list[str], Field(default_factory=list)]
 
     class StatisticsMixed(m.Statistics):
+        """Statistics with count, items, and name."""
+
         count: int = 0
         items: Annotated[list[str], Field(default_factory=list)]
         name: str = ""
 
     class StatisticsOptional(m.Statistics):
+        """Statistics with optional count and name."""
+
         count: int | None = None
         name: str | None = None
 
     class ResultsProcessed(m.Results):
+        """Results with processed count."""
+
         processed: int = 0
 
     class ResultsErrors(m.Results):
+        """Results with errors list."""
+
         errors: Annotated[list[str], Field(default_factory=list)]
 
     class ResultsMetadata(m.Results):
+        """Results with metadata dictionary."""
+
         metadata: Annotated[dict[str, str], Field(default_factory=dict)]
 
     class ResultsMixed(m.Results):
+        """Results with processed, errors, and status."""
+
         processed: int = 0
         errors: Annotated[list[str], Field(default_factory=list)]
         status: str = ""
 
     class ResultsOptional(m.Results):
+        """Results with optional processed and status."""
+
         processed: int | None = None
         status: str | None = None
 
     class TestOptions(m.Options):
+        """Options with verbose and color flags."""
+
         verbose: bool = False
         color: bool = True
 

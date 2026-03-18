@@ -70,6 +70,47 @@ class FlextContainer(p.Container):
     _global_config: m.ContainerConfig
 
     @staticmethod
+    def _merge_registration_specs(
+        base: m.ServiceRegistrationSpec,
+        override: m.ServiceRegistrationSpec,
+    ) -> m.ServiceRegistrationSpec:
+        """Merge two ServiceRegistrationSpec using Pydantic v2 model_copy.
+
+        Produces a copy of *base* with every non-None field from *override*
+        applied on top.  ``model_copy(update=...)`` is the canonical Pydantic v2
+        API for this pattern — it bypasses the synthesized ``__init__`` entirely,
+        copies validated field values directly, and preserves the exact field
+        types declared on the model (no ``LaxStr`` / ``Any`` widening).
+        """
+        override_updates: dict[
+            str,
+            t.RuntimeData
+            | p.Settings
+            | p.Context
+            | m.ContainerConfig
+            | Mapping[str, m.ServiceRegistration]
+            | Mapping[str, m.FactoryRegistration]
+            | Mapping[str, m.ResourceRegistration]
+            | Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
+            | t.ConfigMap,
+        ] = {}
+        if override.config is not None:
+            override_updates["config"] = override.config
+        if override.context is not None:
+            override_updates["context"] = override.context
+        if override.services is not None:
+            override_updates["services"] = override.services
+        if override.factories is not None:
+            override_updates["factories"] = override.factories
+        if override.resources is not None:
+            override_updates["resources"] = override.resources
+        if override.user_overrides is not None:
+            override_updates["user_overrides"] = override.user_overrides
+        if override.container_config is not None:
+            override_updates["container_config"] = override.container_config
+        return base.model_copy(update=override_updates)
+
+    @staticmethod
     def _resolve_bootstrap_registration(
         registration: m.ServiceRegistrationSpec | None,
         **registration_kwargs: t.RuntimeData
@@ -94,43 +135,10 @@ class FlextContainer(p.Container):
             "user_overrides": registration_kwargs.get("_user_overrides"),
             "container_config": registration_kwargs.get("_container_config"),
         })
-        return m.ServiceRegistrationSpec.model_validate({
-            "config": (
-                override_registration.config
-                if override_registration.config is not None
-                else base_registration.config
-            ),
-            "context": (
-                override_registration.context
-                if override_registration.context is not None
-                else base_registration.context
-            ),
-            "services": (
-                override_registration.services
-                if override_registration.services is not None
-                else base_registration.services
-            ),
-            "factories": (
-                override_registration.factories
-                if override_registration.factories is not None
-                else base_registration.factories
-            ),
-            "resources": (
-                override_registration.resources
-                if override_registration.resources is not None
-                else base_registration.resources
-            ),
-            "user_overrides": (
-                override_registration.user_overrides
-                if override_registration.user_overrides is not None
-                else base_registration.user_overrides
-            ),
-            "container_config": (
-                override_registration.container_config
-                if override_registration.container_config is not None
-                else base_registration.container_config
-            ),
-        })
+        return FlextContainer._merge_registration_specs(
+            base_registration,
+            override_registration,
+        )
 
     @staticmethod
     def _resolve_scoped_registration(
@@ -148,43 +156,10 @@ class FlextContainer(p.Container):
         override_registration = m.ServiceRegistrationSpec.model_validate(
             registration_kwargs
         )
-        return m.ServiceRegistrationSpec.model_validate({
-            "config": (
-                override_registration.config
-                if override_registration.config is not None
-                else registration.config
-            ),
-            "context": (
-                override_registration.context
-                if override_registration.context is not None
-                else registration.context
-            ),
-            "services": (
-                override_registration.services
-                if override_registration.services is not None
-                else registration.services
-            ),
-            "factories": (
-                override_registration.factories
-                if override_registration.factories is not None
-                else registration.factories
-            ),
-            "resources": (
-                override_registration.resources
-                if override_registration.resources is not None
-                else registration.resources
-            ),
-            "user_overrides": (
-                override_registration.user_overrides
-                if override_registration.user_overrides is not None
-                else registration.user_overrides
-            ),
-            "container_config": (
-                override_registration.container_config
-                if override_registration.container_config is not None
-                else registration.container_config
-            ),
-        })
+        return FlextContainer._merge_registration_specs(
+            registration,
+            override_registration,
+        )
 
     def __new__(
         cls,

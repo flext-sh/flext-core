@@ -49,16 +49,22 @@ class TestuTypeChecker:
         return cast("t.MessageTypeSpecifier", value)
 
     class StringHandler(h[str, str]):
+        """Handler for string messages."""
+
         @override
         def handle(self, message: str) -> r[str]:
             return r[str].ok(f"Processed: {message}")
 
     class IntHandler(h[int, int]):
+        """Handler for integer messages."""
+
         @override
         def handle(self, message: int) -> r[int]:
             return r[int].ok(message * 2)
 
     class DictHandler(h[dict[str, t.Tests.object], dict[str, t.Tests.object]]):
+        """Handler for dictionary messages."""
+
         @override
         def handle(
             self,
@@ -70,6 +76,8 @@ class TestuTypeChecker:
             })
 
     class ObjectHandler(h[object, t.Container]):
+        """Handler for object messages."""
+
         @override
         def handle(self, message: object) -> r[t.Container]:
             if isinstance(message, (str, int, float, bool)):
@@ -77,23 +85,33 @@ class TestuTypeChecker:
             return r[t.Container].fail("unsupported message")
 
     class ExplicitTypeHandler:
+        """Handler with explicit type annotation."""
+
         def handle(self, message: str) -> str:
             return message.upper()
 
     class NoHandleMethod:
+        """Class without handle method."""
+
         def process(self, data: str) -> str:
             return data
 
     class NonCallableHandle:
+        """Class with non-callable handle attribute."""
+
         handle: str = "not a method"
 
     class _BadSignatureCallable:
+        """Callable with bad signature attribute."""
+
         __signature__ = "bad-signature"
 
         def __call__(self, x: int) -> str:
             return str(x)
 
     class GenericHandler[TMessage]:
+        """Generic handler with type parameter."""
+
         def handle(self, message: TMessage) -> TMessage:
             return message
 

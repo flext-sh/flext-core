@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import types
+from typing import override
 
 from flext_tests import tm
 
@@ -177,9 +178,9 @@ class TestHandlerDecoratorDiscovery:
         def handle_user_delete_globally(cmd: DeleteCommand) -> r[str]:
             return r[str].ok(f"global_delete_{cmd.user_id}")
 
-        module.handle_user_create_globally = handle_user_create_globally
-        module.handle_user_delete_globally = handle_user_delete_globally
-        module.non_callable = 123
+        setattr(module, "handle_user_create_globally", handle_user_create_globally)
+        setattr(module, "handle_user_delete_globally", handle_user_delete_globally)
+        setattr(module, "non_callable", 123)
 
         handlers = h.Discovery.scan_module(module)
         tm.that(len(handlers) == 2, eq=True)
@@ -202,8 +203,8 @@ class TestHandlerDecoratorDiscovery:
             _ = cmd
             return r[str].ok("public")
 
-        module._private_handler = _private_handler
-        module.public_handler = public_handler
+        setattr(module, "_private_handler", _private_handler)
+        setattr(module, "public_handler", public_handler)
         handlers = h.Discovery.scan_module(module)
         names = [name for name, _, _ in handlers]
         tm.that("_private_handler" not in names, eq=True)
@@ -217,7 +218,7 @@ class TestHandlerDecoratorDiscovery:
         def handler(cmd: str) -> r[str]:
             return r[str].ok(cmd)
 
-        module_with_handlers.handler = handler
+        setattr(module_with_handlers, "handler", handler)
         tm.that(h.Discovery.has_handlers_module(module_with_handlers) is True, eq=True)
         tm.that(
             h.Discovery.has_handlers_module(module_without_handlers) is False, eq=True
@@ -288,6 +289,7 @@ class TestHandlerDecoratorDiscovery:
             def handle_user_create(self, cmd: CreateCommand) -> r[str]:
                 return r[str].ok(f"created_{cmd.name}")
 
+            @override
             def execute(self) -> r[str]:
                 return r[str].ok("executed")
 

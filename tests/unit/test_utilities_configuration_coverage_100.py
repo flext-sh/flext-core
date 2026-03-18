@@ -18,6 +18,8 @@ pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 class TestFlextUtilitiesConfiguration:
     class Assertions:
+        """Helper for value assertions."""
+
         @staticmethod
         def that(
             value: t.Tests.object,
@@ -37,6 +39,8 @@ class TestFlextUtilitiesConfiguration:
                 tm.that(value, has=contains)
 
     class ResultAssertions:
+        """Helper for result assertions."""
+
         @staticmethod
         def assert_success_with_value[T: t.NormalizedValue](
             result: FlextRuntime.RuntimeResult[T],
@@ -54,25 +58,37 @@ class TestFlextUtilitiesConfiguration:
             tm.that(getattr(result, "is_failure"), eq=True)
 
     class OptionsModelForTest(m.Value):
+        """Test options model with format, indent, and sort_keys."""
+
         format: str = "json"
         indent: int = 2
         sort_keys: bool = False
 
     class StrictOptionsForTest(m.Value):
+        """Test options with strict value range."""
+
         value: Annotated[int, Field(ge=0, le=100)]
 
     class DataclassConfigForTest(BaseModel):
+        """Test config with name and value."""
+
         name: Annotated[str, Field(description="Config object name")]
         value: Annotated[int, Field(default=42, description="Config object value")] = 42
 
     class SingletonWithoutGetGlobalForTest:
+        """Singleton without get_global method."""
+
         def __init__(self) -> None:
             self.value = "test"
 
     class BadSingletonForTest:
+        """Singleton with non-callable get_global."""
+
         get_global = "not callable"
 
     class SingletonWithoutModelDumpForTest:
+        """Singleton without model_dump method."""
+
         _instance: ClassVar[
             TestFlextUtilitiesConfiguration.SingletonWithoutModelDumpForTest | None
         ] = None
@@ -86,10 +102,14 @@ class TestFlextUtilitiesConfiguration:
             return cls._instance
 
     class ConfigWithoutModelConfigForTest:
+        """Config without model_config attribute."""
+
         def __init__(self) -> None:
             pass
 
     class FailingOptionsForTest(m.Value):
+        """Test options that fail validation."""
+
         value: str = "test"
 
     @unique

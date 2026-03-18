@@ -16,13 +16,19 @@ from tests import m, t
 
 class TestCoverageModels:
     class GetUserQuery(m.Query):
+        """Query to get user."""
+
         pass
 
     class ListAccountsQuery(m.Query):
+        """Query to list accounts."""
+
         page: int
         limit: int
 
     class SearchProductsQuery(m.Query):
+        """Query to search products."""
+
         keyword: str
         category: str | None = None
         min_price: float | None = None

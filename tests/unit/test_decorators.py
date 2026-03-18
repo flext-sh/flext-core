@@ -16,6 +16,8 @@ from flext_core import FlextDecorators, FlextExceptions, FlextLogger, r
 class TestFlextDecorators:
     @unique
     class DecoratorOperationType(StrEnum):
+        """Decorator operation types."""
+
         INJECT_BASIC = "inject_basic"
         INJECT_MISSING = "inject_missing"
         INJECT_PROVIDED = "inject_provided"
@@ -34,15 +36,21 @@ class TestFlextDecorators:
         COMBINED_WITH_RAILWAY = "combined_with_railway"
 
     class DecoratorTestCase(BaseModel):
+        """Test case for decorator."""
+
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Decorator test case name")]
         operation: Annotated[str, Field(description="Decorator operation under test")]
 
     class TestService:
+        """Service for testing."""
+
         def get_value(self) -> str:
             return "test_value"
 
     class ServiceWithLogger:
+        """Service with logger for testing."""
+
         def __init__(self) -> None:
             self.logger = FlextLogger(__name__)
             self.attempts = 0

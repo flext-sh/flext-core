@@ -22,6 +22,8 @@ class TestDocumentedPatterns:
     """Unified documented-pattern tests with one top-level class."""
 
     class User(BaseModel):
+        """User model for testing."""
+
         unique_id: Annotated[str, Field(description="Unique user identifier")]
         name: Annotated[str, Field(description="User display name")]
         email: Annotated[str, Field(description="User email address")]
@@ -30,6 +32,8 @@ class TestDocumentedPatterns:
         ] = True
 
     class ServiceTestCase(BaseModel):
+        """Test case for service."""
+
         model_config = ConfigDict(frozen=True)
 
         user_id: Annotated[str, Field(description="User identifier for test case")]
@@ -56,6 +60,8 @@ class TestDocumentedPatterns:
             )
 
     class RailwayTestCase(BaseModel):
+        """Test case for railway pattern."""
+
         model_config = ConfigDict(frozen=True)
 
         user_ids: Annotated[

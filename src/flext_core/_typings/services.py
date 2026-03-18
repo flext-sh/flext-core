@@ -67,7 +67,7 @@ class FlextTypesServices:
         | Mapping[str, FlextTypingBase.Scalar]
         | None
     )
-    type HandlerCallable = Callable[[BaseModel], BaseModel]
+    type HandlerCallable = Callable[..., BaseModel | None]
     type HandlerLike = Callable[..., BaseModel]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
 
@@ -114,10 +114,9 @@ class FlextTypesServices:
         | Path
         | list[FlextTypingBase.NormalizedValue]
         | Mapping[str, FlextTypingBase.NormalizedValue | BaseModel]
-        | tuple[object, ...]
+        | tuple[FlextTypingBase.NormalizedValue, ...]
         | BaseModel
         | FlextTypingContainers.ConfigMap
         | RegisterableService
-        | object
         | None
     )

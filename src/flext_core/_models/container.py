@@ -307,6 +307,8 @@ class FlextModelsContainer:
         ] = True
 
     class ServiceRegistrationSpec(FlextModelFoundation.ArbitraryTypesModel):
+        model_config = ConfigDict(strict=True)
+
         config: Annotated[
             p.Settings | None,
             Field(

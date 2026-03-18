@@ -122,48 +122,48 @@ class TestFlextRuntime:
         def dict_like_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dict_like_empty",
-                    operation=RuntimeOperationType.DICT_LIKE_VALID,
+                    operation=runtime_op_type.DICT_LIKE_VALID,
                     test_input={},
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dict_like_single_key",
-                    operation=RuntimeOperationType.DICT_LIKE_VALID,
+                    operation=runtime_op_type.DICT_LIKE_VALID,
                     test_input={"key": "value"},
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dict_like_nested",
-                    operation=RuntimeOperationType.DICT_LIKE_VALID,
+                    operation=runtime_op_type.DICT_LIKE_VALID,
                     test_input={"nested": {"dict": True}},
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dict_like_invalid_list",
-                    operation=RuntimeOperationType.DICT_LIKE_INVALID,
+                    operation=runtime_op_type.DICT_LIKE_INVALID,
                     test_input=[],
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dict_like_invalid_string",
-                    operation=RuntimeOperationType.DICT_LIKE_INVALID,
+                    operation=runtime_op_type.DICT_LIKE_INVALID,
                     test_input="string",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dict_like_invalid_int",
-                    operation=RuntimeOperationType.DICT_LIKE_INVALID,
+                    operation=runtime_op_type.DICT_LIKE_INVALID,
                     test_input=123,
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dict_like_invalid_none",
-                    operation=RuntimeOperationType.DICT_LIKE_INVALID,
+                    operation=runtime_op_type.DICT_LIKE_INVALID,
                     test_input=None,
                     expected_result=False,
                 ),
@@ -173,48 +173,48 @@ class TestFlextRuntime:
         def list_like_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="list_like_empty",
-                    operation=RuntimeOperationType.LIST_LIKE_VALID,
+                    operation=runtime_op_type.LIST_LIKE_VALID,
                     test_input=[],
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="list_like_integers",
-                    operation=RuntimeOperationType.LIST_LIKE_VALID,
+                    operation=runtime_op_type.LIST_LIKE_VALID,
                     test_input=[1, 2, 3],
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="list_like_strings",
-                    operation=RuntimeOperationType.LIST_LIKE_VALID,
+                    operation=runtime_op_type.LIST_LIKE_VALID,
                     test_input=["a", "b", "c"],
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="list_like_invalid_dict",
-                    operation=RuntimeOperationType.LIST_LIKE_INVALID,
+                    operation=runtime_op_type.LIST_LIKE_INVALID,
                     test_input={},
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="list_like_invalid_string",
-                    operation=RuntimeOperationType.LIST_LIKE_INVALID,
+                    operation=runtime_op_type.LIST_LIKE_INVALID,
                     test_input="string",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="list_like_invalid_int",
-                    operation=RuntimeOperationType.LIST_LIKE_INVALID,
+                    operation=runtime_op_type.LIST_LIKE_INVALID,
                     test_input=123,
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="list_like_invalid_none",
-                    operation=RuntimeOperationType.LIST_LIKE_INVALID,
+                    operation=runtime_op_type.LIST_LIKE_INVALID,
                     test_input=None,
                     expected_result=False,
                 ),
@@ -224,72 +224,72 @@ class TestFlextRuntime:
         def json_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_valid_object",
-                    operation=RuntimeOperationType.JSON_VALID,
+                    operation=runtime_op_type.JSON_VALID,
                     test_input='{"key": "value"}',
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_valid_empty_array",
-                    operation=RuntimeOperationType.JSON_VALID,
+                    operation=runtime_op_type.JSON_VALID,
                     test_input="[]",
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_valid_array",
-                    operation=RuntimeOperationType.JSON_VALID,
+                    operation=runtime_op_type.JSON_VALID,
                     test_input="[1, 2, 3]",
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_valid_string",
-                    operation=RuntimeOperationType.JSON_VALID,
+                    operation=runtime_op_type.JSON_VALID,
                     test_input='"string"',
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_valid_null",
-                    operation=RuntimeOperationType.JSON_VALID,
+                    operation=runtime_op_type.JSON_VALID,
                     test_input="null",
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_invalid_plain_text",
-                    operation=RuntimeOperationType.JSON_INVALID,
+                    operation=runtime_op_type.JSON_INVALID,
                     test_input="not json",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_invalid_malformed",
-                    operation=RuntimeOperationType.JSON_INVALID,
+                    operation=runtime_op_type.JSON_INVALID,
                     test_input="{invalid}",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_invalid_empty",
-                    operation=RuntimeOperationType.JSON_INVALID,
+                    operation=runtime_op_type.JSON_INVALID,
                     test_input="",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_non_string_dict",
-                    operation=RuntimeOperationType.JSON_NON_STRING,
+                    operation=runtime_op_type.JSON_NON_STRING,
                     test_input={"key": "value"},
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_non_string_list",
-                    operation=RuntimeOperationType.JSON_NON_STRING,
+                    operation=runtime_op_type.JSON_NON_STRING,
                     test_input=[1, 2, 3],
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="json_non_string_none",
-                    operation=RuntimeOperationType.JSON_NON_STRING,
+                    operation=runtime_op_type.JSON_NON_STRING,
                     test_input=None,
                     expected_result=False,
                 ),
@@ -299,66 +299,66 @@ class TestFlextRuntime:
         def identifier_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_valid_lowercase",
-                    operation=RuntimeOperationType.IDENTIFIER_VALID,
+                    operation=runtime_op_type.IDENTIFIER_VALID,
                     test_input="variable",
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_valid_private",
-                    operation=RuntimeOperationType.IDENTIFIER_VALID,
+                    operation=runtime_op_type.IDENTIFIER_VALID,
                     test_input="_private",
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_valid_class_name",
-                    operation=RuntimeOperationType.IDENTIFIER_VALID,
+                    operation=runtime_op_type.IDENTIFIER_VALID,
                     test_input="ClassName",
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_valid_snake_case",
-                    operation=RuntimeOperationType.IDENTIFIER_VALID,
+                    operation=runtime_op_type.IDENTIFIER_VALID,
                     test_input="function_name",
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_invalid_starts_with_digit",
-                    operation=RuntimeOperationType.IDENTIFIER_INVALID,
+                    operation=runtime_op_type.IDENTIFIER_INVALID,
                     test_input="123invalid",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_invalid_hyphen",
-                    operation=RuntimeOperationType.IDENTIFIER_INVALID,
+                    operation=runtime_op_type.IDENTIFIER_INVALID,
                     test_input="invalid-name",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_invalid_space",
-                    operation=RuntimeOperationType.IDENTIFIER_INVALID,
+                    operation=runtime_op_type.IDENTIFIER_INVALID,
                     test_input="invalid name",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_invalid_empty",
-                    operation=RuntimeOperationType.IDENTIFIER_INVALID,
+                    operation=runtime_op_type.IDENTIFIER_INVALID,
                     test_input="",
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_non_string_int",
-                    operation=RuntimeOperationType.IDENTIFIER_NON_STRING,
+                    operation=runtime_op_type.IDENTIFIER_NON_STRING,
                     test_input=123,
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="identifier_non_string_none",
-                    operation=RuntimeOperationType.IDENTIFIER_NON_STRING,
+                    operation=runtime_op_type.IDENTIFIER_NON_STRING,
                     test_input=None,
                     expected_result=False,
                 ),
@@ -368,42 +368,42 @@ class TestFlextRuntime:
         def generic_args_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="extract_generic_list",
-                    operation=RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
+                    operation=runtime_op_type.EXTRACT_GENERIC_GENERIC_TYPE,
                     test_input=list[str],
                     expected_result=(str,),
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="extract_generic_dict",
-                    operation=RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
+                    operation=runtime_op_type.EXTRACT_GENERIC_GENERIC_TYPE,
                     test_input=dict[str, int],
                     expected_result=(str, int),
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="extract_generic_non_generic_str",
-                    operation=RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
+                    operation=runtime_op_type.EXTRACT_GENERIC_NON_GENERIC,
                     test_input=str,
                     expected_result=(),
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="extract_generic_non_generic_int",
-                    operation=RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
+                    operation=runtime_op_type.EXTRACT_GENERIC_NON_GENERIC,
                     test_input=int,
                     expected_result=(),
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="extract_generic_exception_none",
-                    operation=RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
+                    operation=runtime_op_type.EXTRACT_GENERIC_EXCEPTION,
                     test_input=None,
                     expected_result=(),
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="extract_generic_exception_string",
-                    operation=RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
+                    operation=runtime_op_type.EXTRACT_GENERIC_EXCEPTION,
                     test_input="not a type",
                     expected_result=(),
                 ),
@@ -413,48 +413,48 @@ class TestFlextRuntime:
         def sequence_type_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="sequence_type_list_of_str",
-                    operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
+                    operation=runtime_op_type.SEQUENCE_TYPE_VALID,
                     test_input=list[str],
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="sequence_type_tuple",
-                    operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
+                    operation=runtime_op_type.SEQUENCE_TYPE_VALID,
                     test_input=tuple[int, ...],
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="sequence_type_str_is_sequence",
-                    operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
+                    operation=runtime_op_type.SEQUENCE_TYPE_VALID,
                     test_input=str,
                     expected_result=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="sequence_type_invalid_dict",
-                    operation=RuntimeOperationType.SEQUENCE_TYPE_INVALID,
+                    operation=runtime_op_type.SEQUENCE_TYPE_INVALID,
                     test_input=dict[str, int],
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="sequence_type_invalid_int",
-                    operation=RuntimeOperationType.SEQUENCE_TYPE_INVALID,
+                    operation=runtime_op_type.SEQUENCE_TYPE_INVALID,
                     test_input=int,
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="sequence_type_exception_none",
-                    operation=RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
+                    operation=runtime_op_type.SEQUENCE_TYPE_EXCEPTION,
                     test_input=None,
                     expected_result=False,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="sequence_type_exception_string",
-                    operation=RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
+                    operation=runtime_op_type.SEQUENCE_TYPE_EXCEPTION,
                     test_input="not a type",
                     expected_result=False,
                 ),
@@ -464,24 +464,24 @@ class TestFlextRuntime:
         def serialization_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="safe_get_attribute_exists",
-                    operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS,
+                    operation=runtime_op_type.SAFE_GET_ATTRIBUTE_EXISTS,
                     test_input=None,
                     expected_result="value",
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="safe_get_attribute_missing_with_default",
-                    operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT,
+                    operation=runtime_op_type.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT,
                     test_input=None,
                     expected_result="default",
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="safe_get_attribute_missing_no_default",
-                    operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT,
+                    operation=runtime_op_type.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT,
                     test_input=None,
                     expected_result=None,
                 ),
@@ -491,46 +491,46 @@ class TestFlextRuntime:
         def library_access_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="structlog_module",
-                    operation=RuntimeOperationType.STRUCTLOG_MODULE,
+                    operation=runtime_op_type.STRUCTLOG_MODULE,
                     test_input=None,
                     expected_result=structlog,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dependency_providers",
-                    operation=RuntimeOperationType.DEPENDENCY_PROVIDERS_MODULE,
+                    operation=runtime_op_type.DEPENDENCY_PROVIDERS_MODULE,
                     test_input=None,
                     expected_result=providers,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dependency_containers",
-                    operation=RuntimeOperationType.DEPENDENCY_CONTAINERS_MODULE,
+                    operation=runtime_op_type.DEPENDENCY_CONTAINERS_MODULE,
                     test_input=None,
                     expected_result=containers,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dependency_wiring_configuration",
-                    operation=RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION,
+                    operation=runtime_op_type.DEPENDENCY_WIRING_CONFIGURATION,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dependency_wiring_factories",
-                    operation=RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES,
+                    operation=runtime_op_type.DEPENDENCY_WIRING_FACTORIES,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="dependency_wiring_automation",
-                    operation=RuntimeOperationType.DEPENDENCY_WIRING_AUTOMATION,
+                    operation=runtime_op_type.DEPENDENCY_WIRING_AUTOMATION,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="service_runtime_automation",
-                    operation=RuntimeOperationType.SERVICE_RUNTIME_AUTOMATION,
+                    operation=runtime_op_type.SERVICE_RUNTIME_AUTOMATION,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="mixins_runtime_automation",
-                    operation=RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION,
+                    operation=runtime_op_type.MIXINS_RUNTIME_AUTOMATION,
                 ),
             ]
 
@@ -538,40 +538,40 @@ class TestFlextRuntime:
         def structlog_config_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="configure_defaults",
-                    operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS,
+                    operation=runtime_op_type.CONFIGURE_STRUCTLOG_DEFAULTS,
                     test_input=None,
                     expected_result=None,
                     should_reset_config=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="configure_custom_level",
-                    operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL,
+                    operation=runtime_op_type.CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL,
                     test_input=None,
                     expected_result=None,
                     should_reset_config=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="configure_json_renderer",
-                    operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_JSON_RENDERER,
+                    operation=runtime_op_type.CONFIGURE_STRUCTLOG_JSON_RENDERER,
                     test_input=None,
                     expected_result=None,
                     should_reset_config=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="configure_additional_processors",
-                    operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS,
+                    operation=runtime_op_type.CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS,
                     test_input=None,
                     expected_result=None,
                     should_reset_config=True,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="configure_idempotent",
-                    operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT,
+                    operation=runtime_op_type.CONFIGURE_STRUCTLOG_IDEMPOTENT,
                     test_input=None,
                     expected_result=None,
                     should_reset_config=True,
@@ -582,44 +582,44 @@ class TestFlextRuntime:
         def integration_scenarios(
             cls,
         ) -> list[TestFlextRuntime.RuntimeTestCase]:
-            RuntimeTestCase = cls._runtime_test_case()
-            RuntimeOperationType = cls._runtime_operation_type()
+            runtime_test_case = cls._runtime_test_case()
+            runtime_op_type = cls._runtime_operation_type()
             return [
-                RuntimeTestCase(
+                runtime_test_case(
                     name="constants_patterns",
-                    operation=RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS,
+                    operation=runtime_op_type.INTEGRATION_CONSTANTS_PATTERNS,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="layer_hierarchy",
-                    operation=RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY,
+                    operation=runtime_op_type.INTEGRATION_LAYER_HIERARCHY,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="track_service_resolution_success",
-                    operation=RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS,
+                    operation=runtime_op_type.TRACK_SERVICE_RESOLUTION_SUCCESS,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="track_service_resolution_failure",
-                    operation=RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE,
+                    operation=runtime_op_type.TRACK_SERVICE_RESOLUTION_FAILURE,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="track_domain_event_with_aggregate",
-                    operation=RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE,
+                    operation=runtime_op_type.TRACK_DOMAIN_EVENT_WITH_AGGREGATE,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="track_domain_event_without_aggregate",
-                    operation=RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE,
+                    operation=runtime_op_type.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="setup_service_infrastructure_full",
-                    operation=RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL,
+                    operation=runtime_op_type.SETUP_SERVICE_INFRASTRUCTURE_FULL,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="setup_service_infrastructure_minimal",
-                    operation=RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL,
+                    operation=runtime_op_type.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL,
                 ),
-                RuntimeTestCase(
+                runtime_test_case(
                     name="setup_service_without_correlation",
-                    operation=RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION,
+                    operation=runtime_op_type.SETUP_SERVICE_WITHOUT_CORRELATION,
                 ),
             ]
 

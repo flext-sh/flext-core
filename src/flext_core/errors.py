@@ -158,7 +158,6 @@ class FlextError(BaseModel):
         )
 
     @override
-    @override
     def __str__(self) -> str:
         """String representation (full message with code)."""
         return f"{self.code}: {self.message}"

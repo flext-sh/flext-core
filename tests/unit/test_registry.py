@@ -15,6 +15,8 @@ from tests import c, m
 class TestFlextRegistry:
     @unique
     class RegistryOperationType(StrEnum):
+        """Registry operation types."""
+
         REGISTER_HANDLER = "register_handler"
         REGISTER_HANDLERS = "register_handlers"
         REGISTER_BINDINGS = "register_bindings"
@@ -25,6 +27,8 @@ class TestFlextRegistry:
         ERROR_HANDLING = "error_handling"
 
     class RegistryTestCase(BaseModel):
+        """Test case for registry operations."""
+
         model_config = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Registry test case name")]
@@ -57,6 +61,8 @@ class TestFlextRegistry:
         ] = False
 
     class ConcreteTestHandler(h[t.Tests.object, t.Tests.object]):
+        """Test handler for registry."""
+
         @override
         def handle(self, message: t.Tests.object) -> r[t.Tests.object]:
             return r[t.Tests.object].ok(f"processed_{message}")

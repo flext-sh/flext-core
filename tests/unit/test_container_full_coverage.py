@@ -325,7 +325,7 @@ class TestContainerFullCoverage:
     def test_misc_unregistration_clear_and_reset(self) -> None:
         c = FlextContainer.create()
         _ = c.register("resx", lambda: "ok", kind="resource")
-        tm.that(c.create_module_logger().logger, ne=None)
+        tm.that(c.create_module_logger(), ne=None)
         tm.ok(c.unregister("resx"))
         _ = c.register("r1", lambda: "ok", kind="resource")
         c.clear_all()
@@ -514,17 +514,19 @@ class TestContainerFullCoverage:
     def test_create_scoped_instance_and_scoped_additional_branches(self) -> None:
         base = FlextContainer.create()
         scoped = FlextContainer._create_scoped_instance(
-            config=FlextSettings(),
-            context=FlextContext(),
-            services={},
-            factories={},
-            resources={},
-            user_overrides=t.ConfigMap(root={}),
-            container_config=m.ContainerConfig(
-                enable_singleton=True,
-                enable_factory_caching=False,
-                max_services=10,
-                max_factories=10,
+            registration=m.ServiceRegistrationSpec(
+                config=FlextSettings(),
+                context=FlextContext(),
+                services={},
+                factories={},
+                resources={},
+                user_overrides=t.ConfigMap(root={}),
+                container_config=m.ContainerConfig(
+                    enable_singleton=True,
+                    enable_factory_caching=False,
+                    max_services=10,
+                    max_factories=10,
+                ),
             ),
         )
         tm.that(isinstance(scoped, p.Container), eq=True)
