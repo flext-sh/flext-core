@@ -36,6 +36,10 @@ class FlextTypesServices:
 
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
 
+    type BootstrapInput = (
+        BaseModel | Mapping[str, FlextTypingBase.NormalizedValue] | None
+    )
+
     type RegisterableService = (
         FlextTypingBase.Container
         | BaseModel
@@ -45,6 +49,7 @@ class FlextTypesServices:
         ]
         | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
         | Callable[..., FlextTypingBase.Container | BaseModel]
+        | Callable[..., FlextTypesServices.RegisterableService]
         | FlextTypesServices.DispatchableService
     )
     type FactoryCallable = Callable[[], RegisterableService]
