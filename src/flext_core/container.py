@@ -190,6 +190,13 @@ class FlextContainer(p.Container):
         cls,
         *,
         registration: m.ServiceRegistrationSpec | None = None,
+        **registration_kwargs: t.RuntimeData
+        | p.Settings
+        | p.Context
+        | m.ContainerConfig
+        | Mapping[str, m.ServiceRegistration]
+        | Mapping[str, m.FactoryRegistration]
+        | Mapping[str, m.ResourceRegistration],
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -197,7 +204,7 @@ class FlextContainer(p.Container):
         while preserving singleton semantics for runtime callers. Double-checked
         locking protects against duplicate initialization under concurrency.
         """
-        _ = registration
+        _ = cls._resolve_bootstrap_registration(registration, **registration_kwargs)
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:
@@ -209,6 +216,13 @@ class FlextContainer(p.Container):
         self,
         *,
         registration: m.ServiceRegistrationSpec | None = None,
+        **registration_kwargs: t.RuntimeData
+        | p.Settings
+        | p.Context
+        | m.ContainerConfig
+        | Mapping[str, m.ServiceRegistration]
+        | Mapping[str, m.FactoryRegistration]
+        | Mapping[str, m.ResourceRegistration],
     ) -> None:
         """Wire the Dependency Injector container and supporting registries.
 
@@ -219,8 +233,9 @@ class FlextContainer(p.Container):
         super().__init__()
         if hasattr(self, "_di_container"):
             return
-        init_registration = (
-            registration if registration is not None else m.ServiceRegistrationSpec()
+        init_registration = self._resolve_bootstrap_registration(
+            registration,
+            **registration_kwargs,
         )
         self.containers = FlextRuntime.dependency_containers()
         self.providers = FlextRuntime.dependency_providers()
@@ -320,24 +335,35 @@ class FlextContainer(p.Container):
         cls,
         *,
         registration: m.ServiceRegistrationSpec,
+        **registration_kwargs: t.RuntimeData
+        | p.Settings
+        | p.Context
+        | m.ContainerConfig
+        | Mapping[str, m.ServiceRegistration]
+        | Mapping[str, m.FactoryRegistration]
+        | Mapping[str, m.ResourceRegistration],
     ) -> FlextContainer:
         """Create a scoped container instance bypassing singleton pattern.
 
         This is an internal factory method to safely create non-singleton containers.
         Uses direct attribute assignment (no frozen=True, compatible with FlextRuntime pattern).
         """
+        scoped_registration = cls._resolve_scoped_registration(
+            registration,
+            **registration_kwargs,
+        )
         instance = FlextRuntime.create_instance(cls)
         instance.containers = FlextRuntime.dependency_containers()
         instance.providers = FlextRuntime.dependency_providers()
         instance.initialize_di_components()
         instance.initialize_registrations(
-            services=registration.services,
-            factories=registration.factories,
-            resources=registration.resources,
-            global_config=registration.container_config,
-            user_overrides=registration.user_overrides,
-            config=registration.config,
-            context=registration.context,
+            services=scoped_registration.services,
+            factories=scoped_registration.factories,
+            resources=scoped_registration.resources,
+            global_config=scoped_registration.container_config,
+            user_overrides=scoped_registration.user_overrides,
+            config=scoped_registration.config,
+            context=scoped_registration.context,
         )
         instance.sync_config_to_di()
         instance.register_existing_providers()
