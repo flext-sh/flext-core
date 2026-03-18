@@ -12,17 +12,16 @@ from hypothesis import given, settings, strategies as st
 from flext_core import FlextMixins, r, s
 
 
-class _MixinTestService(s[str]):
-    __test__ = False
-
-    @override
-    def execute(self) -> r[str]:
-        return r[str].ok("mixin_test")
-
-
 class TestAutomatedFlextMixins:
+    class _MixinTestService(s[str]):
+        __test__ = False
+
+        @override
+        def execute(self) -> r[str]:
+            return r[str].ok("mixin_test")
+
     def test_service_exposes_mixins_properties(self) -> None:
-        svc = _MixinTestService()
+        svc = self._MixinTestService()
         tm.ok(svc.execute(), eq="mixin_test")
         tm.that(svc.config.version, none=False)
         tm.that(callable(svc.container.register), eq=True)
@@ -35,7 +34,7 @@ class TestAutomatedFlextMixins:
         ids=lambda case: case[0],
     )
     def test_track_context_manager(self, operation_name: str) -> None:
-        svc = _MixinTestService()
+        svc = self._MixinTestService()
         with svc.track(operation_name) as metrics:
             tm.that(metrics, is_=dict)
             tm.that(metrics, has="operation_count")
@@ -90,7 +89,7 @@ class TestAutomatedFlextMixins:
         ids=lambda case: case[0],
     )
     def test_track_benchmark(self, mode: str, benchmark: Callable[..., object]) -> None:
-        svc = _MixinTestService()
+        svc = self._MixinTestService()
         simple = tt.op("simple")
 
         if mode == "raw":

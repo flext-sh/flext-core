@@ -12,8 +12,8 @@ from flext_tests import tm
 from flext_core import FlextExceptions, r, t
 
 
-class TestResultBasics:
-    """Tests for r basic operations."""
+class TestCoverage76Lines:
+    """Tests for r and FlextExceptions coverage — basic ops and transformations."""
 
     def test_result_bool_true(self) -> None:
         """Test __bool__ returns True for success."""
@@ -89,10 +89,6 @@ class TestResultBasics:
         """Test CircuitBreakerError exception."""
         exc = FlextExceptions.CircuitBreakerError("circuit open")
         tm.that(str(exc), has="circuit open")
-
-
-class TestResultTransformations:
-    """Tests for r transformation methods."""
 
     def test_result_lash_recovery(self) -> None:
         """Test lash recovers from failure."""
@@ -193,4 +189,4 @@ class TestResultTransformations:
         tm.fail(r2)
 
 
-__all__ = ["TestResultBasics", "TestResultTransformations"]
+__all__ = ["TestCoverage76Lines"]

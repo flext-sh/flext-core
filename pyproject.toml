@@ -64,6 +64,8 @@ optional-dependencies.dev = [
   "django-stubs>=5.2.2",
   "factory-boy>=3.3.1",
   "faker>=37.4",
+  "flext-infra @ file:../flext-infra",
+  "flext-tests @ file:../flext-tests",
   "hypothesis>=6.125",
   "interrogate>=1.7",
   "isort>=6.0.1",
@@ -120,8 +122,6 @@ optional-dependencies.dev = [
   "types-toml>=0.10.8.20240310",
   "uv>=0.9.6",
   "vulture>=2.13",
-  "flext-infra @ file:../flext-infra",
-  "flext-tests @ file:../flext-tests",
 ]
 urls = {Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core"}
 

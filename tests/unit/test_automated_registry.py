@@ -12,17 +12,15 @@ from flext_core import FlextRegistry, r
 from tests import m, t
 
 
-class _RegistryHandlerCallable:
-    message_type = "tests.registry.handler"
-
-    def __call__(self, _message: m.Command) -> t.ConfigMap:
-        return t.ConfigMap(root={"handled": "yes"})
-
-
-_registry_handler = _RegistryHandlerCallable()
-
-
 class TestAutomatedFlextRegistry:
+    class _RegistryHandlerCallable:
+        message_type = "tests.registry.handler"
+
+        def __call__(self, _message: m.Command) -> t.ConfigMap:
+            return t.ConfigMap(root={"handled": "yes"})
+
+    _registry_handler = _RegistryHandlerCallable()
+
     def test_create_registry_and_execute(self) -> None:
         registry = FlextRegistry.create()
         tm.that(registry, is_=FlextRegistry)
@@ -37,7 +35,7 @@ class TestAutomatedFlextRegistry:
 
     def test_register_handler(self) -> None:
         registry = FlextRegistry.create()
-        details = tm.ok(registry.register_handler(_registry_handler))
+        details = tm.ok(registry.register_handler(self._registry_handler))
         tm.that(details.registration_id, none=False)
 
     @pytest.mark.parametrize(
