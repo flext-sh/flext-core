@@ -93,7 +93,7 @@ class FlextRegistry(s[bool]):
     dispatcher: Annotated[p.Dispatcher | None, Field(default=None, exclude=True)] = None
 
     @override
-    def model_post_init(self, __context: object, /) -> None:
+    def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
         """Post-initialization hook for registry.
 
         Calls parent model_post_init for runtime setup, then resolves
