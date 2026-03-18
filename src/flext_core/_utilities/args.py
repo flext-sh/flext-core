@@ -20,6 +20,7 @@ from typing import (
 )
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
+from pydantic.errors import PydanticSchemaGenerationError
 
 from flext_core import m, r, t
 from flext_core.typings import P, R
@@ -77,7 +78,7 @@ class FlextUtilitiesArgs:
                     hints = TypeAdapter(dict[str, t.TypeHintSpecifier]).validate_python(
                         fallback_annotations,
                     )
-                except ValidationError:
+                except (ValidationError, PydanticSchemaGenerationError):
                     return {}
             else:
                 return {}

@@ -433,13 +433,14 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def test_get_enum_params_union() -> None:
-            """Test get_enum_params with Union type."""
+            """Test get_enum_params with Union type - extracts StrEnum from union."""
 
-        def process(status: str | TestFlextUtilitiesArgs.StatusEnum) -> bool:
-            return True
+            def process(status: str | TestFlextUtilitiesArgs.StatusEnum) -> bool:
+                return True
 
-        params = u.get_enum_params(process)
-        tm.that(params, eq={})
+            params = u.get_enum_params(process)
+            tm.that(params, has="status")
+            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
         def test_get_enum_params_no_enums() -> None:

@@ -769,7 +769,7 @@ class FlextContainer(p.Container):
     def register(
         self,
         name: str,
-        impl: object,
+        impl: t.RegisterableService,
         *,
         kind: str = "service",
     ) -> Self:
@@ -794,12 +794,8 @@ class FlextContainer(p.Container):
         """
         if not name:
             return self
-        if kind == "service" and (not u.is_registerable_service(impl)):
-            return self
         try:
             if kind == "service":
-                if not u.is_registerable_service(impl):
-                    return self
                 if hasattr(self._di_services, name):
                     return self
                 service_impl: t.RegisterableService = impl
@@ -911,9 +907,10 @@ class FlextContainer(p.Container):
             _ = self.register(c.Mixins.FIELD_CONTEXT, self._context)
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
-            service_candidate: object = dispatcher
-            if not u.is_registerable_service(service_candidate):
+            dispatcher_candidate = dispatcher
+            if not u.is_registerable_service(dispatcher_candidate):
                 return
+            service_candidate: t.RegisterableService = dispatcher_candidate
             dispatcher_name = "command_bus"
             registration = m.ServiceRegistration(
                 name=dispatcher_name,
@@ -971,7 +968,7 @@ class FlextContainer(p.Container):
         config: p.Settings | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
-        services: Mapping[str, object] | None = None,
+        services: Mapping[str, t.RegisterableService] | None = None,
         factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
     ) -> FlextContainer:
