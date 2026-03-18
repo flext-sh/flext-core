@@ -22,143 +22,150 @@ import pytest
 from flext_core import FlextContainer, p
 
 
-class PerformanceBenchmark:
-    """Container for benchmark results and utilities."""
-
-    @staticmethod
-    def measure_time(
-        func: Callable[[], object],
-    ) -> tuple[object, float]:
-        """Measure execution time of a function.
-
-        Args:
-            func: Function to measure.
-
-        Returns:
-            Tuple of (result, elapsed_time_in_seconds).
-
-        """
-        start = time.perf_counter()
-        result = func()
-        elapsed = time.perf_counter() - start
-        return (result, elapsed)
-
-    @staticmethod
-    def benchmark_register(container: p.Container, count: int) -> float:
-        """Benchmark service registration.
-
-        Args:
-            container: Container instance.
-            count: Number of services to register.
-
-        Returns:
-            Elapsed time in seconds.
-
-        """
-        _, elapsed = PerformanceBenchmark.measure_time(lambda: None)
-        [container.register(f"service_{i}", f"value_{i}") for i in range(count)]
-        return elapsed
-
-    @staticmethod
-    def benchmark_get(container: p.Container, count: int) -> float:
-        """Benchmark service resolution.
-
-        Args:
-            container: Container instance with services registered.
-            count: Number of services to resolve.
-
-        Returns:
-            Elapsed time in seconds.
-
-        """
-        _, elapsed = PerformanceBenchmark.measure_time(lambda: None)
-        [container.get(f"service_{i}") for i in range(count)]
-        return elapsed
-
-    @staticmethod
-    def benchmark_register_factory(container: p.Container, count: int) -> float:
-        """Benchmark factory registration.
-
-        Args:
-            container: Container instance.
-            count: Number of factories to register.
-
-        Returns:
-            Elapsed time in seconds.
-
-        """
-
-        def make_factory(captured_i: int) -> Callable[[], str]:
-            """Create factory function that captures i in closure."""
-            return lambda: f"value_{captured_i}"
-
-        _, elapsed = PerformanceBenchmark.measure_time(lambda: None)
-        for i in range(count):
-            container.register(f"factory_{i}", make_factory(i), kind="factory")
-        return elapsed
-
-    @staticmethod
-    def benchmark_register_resource(container: p.Container, count: int) -> float:
-        """Benchmark resource registration.
-
-        Args:
-            container: Container instance.
-            count: Number of resources to register.
-
-        Returns:
-            Elapsed time in seconds.
-
-        """
-
-        def make_resource(captured_i: int) -> Callable[[], str]:
-            """Create resource function that captures i in closure."""
-            return lambda: f"value_{captured_i}"
-
-        _, elapsed = PerformanceBenchmark.measure_time(lambda: None)
-        for i in range(count):
-            container.register(f"resource_{i}", make_resource(i), kind="resource")
-        return elapsed
-
-    @staticmethod
-    def benchmark_has_service(container: p.Container, count: int) -> float:
-        """Benchmark has_service() lookups.
-
-        Args:
-            container: Container instance with services registered.
-            count: Number of lookups to perform.
-
-        Returns:
-            Elapsed time in seconds.
-
-        """
-        _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [container.has_service(f"service_{i}") for i in range(count)],
-        )
-        return elapsed
-
-    @staticmethod
-    def benchmark_list_services(
-        container: p.Container,
-        iterations: int = 100,
-    ) -> float:
-        """Benchmark list_services() calls.
-
-        Args:
-            container: Container instance with services registered.
-            iterations: Number of list_services() calls.
-
-        Returns:
-            Elapsed time in seconds.
-
-        """
-        _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [container.list_services() for _ in range(iterations)],
-        )
-        return elapsed
-
-
 class TestContainerPerformance:
     """Performance benchmarks for container operations."""
+
+    class PerformanceBenchmark:
+        """Container for benchmark results and utilities."""
+
+        @staticmethod
+        def measure_time(
+            func: Callable[[], object],
+        ) -> tuple[object, float]:
+            """Measure execution time of a function.
+
+            Args:
+                func: Function to measure.
+
+            Returns:
+                Tuple of (result, elapsed_time_in_seconds).
+
+            """
+            start = time.perf_counter()
+            result = func()
+            elapsed = time.perf_counter() - start
+            return (result, elapsed)
+
+        @staticmethod
+        def benchmark_register(container: p.Container, count: int) -> float:
+            """Benchmark service registration.
+
+            Args:
+                container: Container instance.
+                count: Number of services to register.
+
+            Returns:
+                Elapsed time in seconds.
+
+            """
+            _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
+                lambda: None,
+            )
+            [container.register(f"service_{i}", f"value_{i}") for i in range(count)]
+            return elapsed
+
+        @staticmethod
+        def benchmark_get(container: p.Container, count: int) -> float:
+            """Benchmark service resolution.
+
+            Args:
+                container: Container instance with services registered.
+                count: Number of services to resolve.
+
+            Returns:
+                Elapsed time in seconds.
+
+            """
+            _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
+                lambda: None,
+            )
+            [container.get(f"service_{i}") for i in range(count)]
+            return elapsed
+
+        @staticmethod
+        def benchmark_register_factory(container: p.Container, count: int) -> float:
+            """Benchmark factory registration.
+
+            Args:
+                container: Container instance.
+                count: Number of factories to register.
+
+            Returns:
+                Elapsed time in seconds.
+
+            """
+
+            def make_factory(captured_i: int) -> Callable[[], str]:
+                """Create factory function that captures i in closure."""
+                return lambda: f"value_{captured_i}"
+
+            _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
+                lambda: None,
+            )
+            for i in range(count):
+                container.register(f"factory_{i}", make_factory(i), kind="factory")
+            return elapsed
+
+        @staticmethod
+        def benchmark_register_resource(container: p.Container, count: int) -> float:
+            """Benchmark resource registration.
+
+            Args:
+                container: Container instance.
+                count: Number of resources to register.
+
+            Returns:
+                Elapsed time in seconds.
+
+            """
+
+            def make_resource(captured_i: int) -> Callable[[], str]:
+                """Create resource function that captures i in closure."""
+                return lambda: f"value_{captured_i}"
+
+            _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
+                lambda: None,
+            )
+            for i in range(count):
+                container.register(f"resource_{i}", make_resource(i), kind="resource")
+            return elapsed
+
+        @staticmethod
+        def benchmark_has_service(container: p.Container, count: int) -> float:
+            """Benchmark has_service() lookups.
+
+            Args:
+                container: Container instance with services registered.
+                count: Number of lookups to perform.
+
+            Returns:
+                Elapsed time in seconds.
+
+            """
+            _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
+                lambda: [container.has_service(f"service_{i}") for i in range(count)],
+            )
+            return elapsed
+
+        @staticmethod
+        def benchmark_list_services(
+            container: p.Container,
+            iterations: int = 100,
+        ) -> float:
+            """Benchmark list_services() calls.
+
+            Args:
+                container: Container instance with services registered.
+                iterations: Number of list_services() calls.
+
+            Returns:
+                Elapsed time in seconds.
+
+            """
+            _, elapsed = TestContainerPerformance.PerformanceBenchmark.measure_time(
+                lambda: [container.list_services() for _ in range(iterations)],
+            )
+            return elapsed
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
@@ -169,7 +176,7 @@ class TestContainerPerformance:
     def test_register_performance(self, count: int) -> None:
         """Benchmark register() with different volumes."""
         container = FlextContainer.create()
-        PerformanceBenchmark.benchmark_register(container, count)
+        self.PerformanceBenchmark.benchmark_register(container, count)
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
@@ -182,21 +189,21 @@ class TestContainerPerformance:
         container = FlextContainer.create()
         for i in range(count):
             _ = container.register(f"service_{i}", f"value_{i}")
-        PerformanceBenchmark.benchmark_get(container, count)
+        self.PerformanceBenchmark.benchmark_get(container, count)
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize("count", [10, 100, 1000], ids=["10", "100", "1000"])
     def test_register_factory_performance(self, count: int) -> None:
         """Benchmark register_factory() with different volumes."""
         container = FlextContainer.create()
-        _ = PerformanceBenchmark.benchmark_register_factory(container, count)
+        _ = self.PerformanceBenchmark.benchmark_register_factory(container, count)
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize("count", [10, 100, 1000], ids=["10", "100", "1000"])
     def test_register_resource_performance(self, count: int) -> None:
         """Benchmark register_resource() with different volumes."""
         container = FlextContainer.create()
-        _ = PerformanceBenchmark.benchmark_register_resource(container, count)
+        _ = self.PerformanceBenchmark.benchmark_register_resource(container, count)
 
     @pytest.mark.benchmark
     @pytest.mark.parametrize(
@@ -209,7 +216,7 @@ class TestContainerPerformance:
         container = FlextContainer.create()
         for i in range(count):
             _ = container.register(f"service_{i}", f"value_{i}")
-        _ = PerformanceBenchmark.benchmark_has_service(container, count)
+        _ = self.PerformanceBenchmark.benchmark_has_service(container, count)
 
     @pytest.mark.benchmark
     def test_list_services_performance(self) -> None:
@@ -218,4 +225,4 @@ class TestContainerPerformance:
             container = FlextContainer.create()
             for i in range(count):
                 _ = container.register(f"service_{i}", f"value_{i}")
-            PerformanceBenchmark.benchmark_list_services(container, iterations=100)
+            self.PerformanceBenchmark.benchmark_list_services(container, iterations=100)

@@ -27,29 +27,27 @@ from flext_tests import c, t as test_t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ConstantPathScenario(BaseModel):
-    """Test scenario for constant path access."""
+class TestConstants:
+    """Comprehensive test suite for FlextConstants using u."""
 
-    model_config = ConfigDict(frozen=True)
-    path: Annotated[str, Field(description="Constant access path")]
-    expected: Annotated[object, Field(description="Expected constant value")]
+    class ConstantPathScenario(BaseModel):
+        """Test scenario for constant path access."""
 
+        model_config = ConfigDict(frozen=True)
+        path: Annotated[str, Field(description="Constant access path")]
+        expected: Annotated[object, Field(description="Expected constant value")]
 
-class PatternValidationScenario(BaseModel):
-    """Test scenario for pattern validation."""
+    class PatternValidationScenario(BaseModel):
+        """Test scenario for pattern validation."""
 
-    model_config = ConfigDict(frozen=True)
-    pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
-    valid_cases: Annotated[
-        list[str], Field(description="Inputs expected to match the pattern")
-    ]
-    invalid_cases: Annotated[
-        list[str], Field(description="Inputs expected to fail the pattern")
-    ]
-
-
-class ConstantsScenarios:
-    """Centralized constants test scenarios using c (FlextConstants)."""
+        model_config = ConfigDict(frozen=True)
+        pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
+        valid_cases: Annotated[
+            list[str], Field(description="Inputs expected to match the pattern")
+        ]
+        invalid_cases: Annotated[
+            list[str], Field(description="Inputs expected to fail the pattern")
+        ]
 
     CORE_CONSTANT_PATHS: ClassVar[list[ConstantPathScenario]] = [
         ConstantPathScenario(path="NAME", expected="FLEXT"),
@@ -181,13 +179,9 @@ class ConstantsScenarios:
     ]
     LOG_LEVELS: ClassVar[list[str]] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-
-class TestFlextConstants:
-    """Comprehensive test suite for FlextConstants using u."""
-
     @pytest.mark.parametrize(
         "scenario",
-        ConstantsScenarios.CORE_CONSTANT_PATHS,
+        CORE_CONSTANT_PATHS,
         ids=lambda s: s.path,
     )
     def test_core_constant_values(self, scenario: ConstantPathScenario) -> None:
@@ -195,7 +189,7 @@ class TestFlextConstants:
         actual = u.Tests.ConstantsHelpers.get_constant_by_path(scenario.path)
         tm.that(str(actual), eq=str(scenario.expected))
 
-    @pytest.mark.parametrize("level", ConstantsScenarios.LOG_LEVELS)
+    @pytest.mark.parametrize("level", LOG_LEVELS)
     def test_core_logging_enum_levels(self, level: str) -> None:
         """Test logging level enum values."""
         actual = getattr(c.Settings.LogLevel, level)
@@ -203,7 +197,7 @@ class TestFlextConstants:
 
     @pytest.mark.parametrize(
         "scenario",
-        ConstantsScenarios.PATTERN_VALIDATION_SCENARIOS,
+        PATTERN_VALIDATION_SCENARIOS,
         ids=lambda s: s.pattern_attr,
     )
     def test_validation_regex_patterns(
@@ -232,8 +226,8 @@ class TestFlextConstants:
 
     @pytest.mark.parametrize(
         ("value", "expected_type"),
-        ConstantsScenarios.TYPE_CHECKS,
-        ids=ConstantsScenarios.TYPE_CHECK_IDS,
+        TYPE_CHECKS,
+        ids=TYPE_CHECK_IDS,
     )
     def test_type_safety_constant_types(
         self,
@@ -254,7 +248,7 @@ class TestFlextConstants:
         tm.that(c.Reliability.DEFAULT_TIMEOUT_SECONDS, eq=30)
         tm.that(c.Settings.LogLevel.ERROR, eq="ERROR")
 
-    @pytest.mark.parametrize("category", ConstantsScenarios.REQUIRED_CATEGORIES)
+    @pytest.mark.parametrize("category", REQUIRED_CATEGORIES)
     def test_completeness_required_categories_exist(self, category: str) -> None:
         """Test that all required constant categories exist."""
         tm.that(hasattr(c, category), eq=True, msg=f"Missing category: {category}")
@@ -305,7 +299,7 @@ class TestFlextConstants:
 
     def test_edge_cases_enum_completeness(self) -> None:
         """Test that enums contain all expected values."""
-        for level in ConstantsScenarios.LOG_LEVELS:
+        for level in self.LOG_LEVELS:
             tm.that(hasattr(c.Settings.LogLevel, level), eq=True)
             tm.that(getattr(c.Settings.LogLevel, level), eq=level)
 
@@ -327,4 +321,4 @@ class TestFlextConstants:
         )
 
 
-__all__ = ["TestFlextConstants"]
+__all__ = ["TestConstants"]

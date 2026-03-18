@@ -32,59 +32,46 @@ from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e
 from tests import t
 
 
-@unique
-class TypeVarCategory(StrEnum):
-    """TypeVar categories for parametrized testing."""
+class TestTypings:
+    """Unified test suite for t and type system using FlextTestsUtilities."""
 
-    CORE = "core"
-    COVARIANT = "covariant"
-    CONTRAVARIANT = "contravariant"
-    PARAMSPEC = "paramspec"
-    CQRS = "cqrs"
+    @unique
+    class TypeVarCategory(StrEnum):
+        """TypeVar categories for parametrized testing."""
 
+        CORE = "core"
+        COVARIANT = "covariant"
+        CONTRAVARIANT = "contravariant"
+        PARAMSPEC = "paramspec"
+        CQRS = "cqrs"
 
-class TypeVarTestCase(BaseModel):
-    """TypeVar test case definition."""
+    class TypeVarTestCase(BaseModel):
+        """TypeVar test case definition."""
 
-    model_config = ConfigDict(frozen=True)
+        model_config = ConfigDict(frozen=True)
 
-    name: Annotated[str, Field(description="Type variable test case name")]
-    category: Annotated[TypeVarCategory, Field(description="Type variable category")]
-    type_var: Annotated[object, Field(description="Type variable object under test")]
-    expected_not_none: Annotated[
-        bool,
-        Field(default=True, description="Whether object is expected to be non-none"),
-    ] = True
-
-
-class TypeScenarios:
-    """Factory for type system test scenarios with centralized test data."""
+        name: Annotated[str, Field(description="Type variable test case name")]
+        category: Annotated[
+            TypeVarCategory,
+            Field(description="Type variable category"),
+        ]
+        type_var: Annotated[
+            object, Field(description="Type variable object under test")
+        ]
+        expected_not_none: Annotated[
+            bool,
+            Field(
+                default=True, description="Whether object is expected to be non-none"
+            ),
+        ] = True
 
     CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
+        TypeVarTestCase(name="T", category=TypeVarCategory.CORE, type_var=T),
+        TypeVarTestCase(name="U", category=TypeVarCategory.CORE, type_var=U),
+        TypeVarTestCase(name="E", category=TypeVarCategory.CORE, type_var=e),
+        TypeVarTestCase(name="R", category=TypeVarCategory.CORE, type_var=R),
         TypeVarTestCase(
-            name="T",
-            category=TypeVarCategory.CORE,
-            type_var=T,
-        ),
-        TypeVarTestCase(
-            name="U",
-            category=TypeVarCategory.CORE,
-            type_var=U,
-        ),
-        TypeVarTestCase(
-            name="E",
-            category=TypeVarCategory.CORE,
-            type_var=e,
-        ),
-        TypeVarTestCase(
-            name="R",
-            category=TypeVarCategory.CORE,
-            type_var=R,
-        ),
-        TypeVarTestCase(
-            name="ResultT",
-            category=TypeVarCategory.CORE,
-            type_var=ResultT,
+            name="ResultT", category=TypeVarCategory.CORE, type_var=ResultT
         ),
     ]
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
@@ -102,33 +89,13 @@ class TypeScenarios:
         ),
     ]
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(
-            name="Command",
-            category=TypeVarCategory.CQRS,
-            type_var=object,
-        ),
-        TypeVarTestCase(
-            name="Query",
-            category=TypeVarCategory.CQRS,
-            type_var=object,
-        ),
-        TypeVarTestCase(
-            name="Event",
-            category=TypeVarCategory.CQRS,
-            type_var=object,
-        ),
-        TypeVarTestCase(
-            name="Message",
-            category=TypeVarCategory.CQRS,
-            type_var=object,
-        ),
+        TypeVarTestCase(name="Command", category=TypeVarCategory.CQRS, type_var=object),
+        TypeVarTestCase(name="Query", category=TypeVarCategory.CQRS, type_var=object),
+        TypeVarTestCase(name="Event", category=TypeVarCategory.CQRS, type_var=object),
+        TypeVarTestCase(name="Message", category=TypeVarCategory.CQRS, type_var=object),
     ]
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(
-            name="P",
-            category=TypeVarCategory.PARAMSPEC,
-            type_var=P,
-        ),
+        TypeVarTestCase(name="P", category=TypeVarCategory.PARAMSPEC, type_var=P),
     ]
 
     @staticmethod
@@ -136,13 +103,9 @@ class TypeScenarios:
         """Check if object is a TypeVar-like instance."""
         return isinstance(obj, (TypeVar, ParamSpec)) or obj is not None
 
-
-class TestFlextTypings:
-    """Unified test suite for t and type system using FlextTestsUtilities."""
-
     @pytest.mark.parametrize(
         "test_case",
-        TypeScenarios.CORE_TYPEVARS,
+        CORE_TYPEVARS,
         ids=lambda c: c.name,
     )
     def test_core_typevars(self, test_case: TypeVarTestCase) -> None:
@@ -154,14 +117,14 @@ class TestFlextTypings:
                 msg=f"{test_case.name} must not be None",
             )
             tm.that(
-                TypeScenarios.is_typevar(test_case.type_var),
+                self.is_typevar(test_case.type_var),
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
 
     @pytest.mark.parametrize(
         "test_case",
-        TypeScenarios.COVARIANT_TYPEVARS,
+        COVARIANT_TYPEVARS,
         ids=lambda c: c.name,
     )
     def test_covariant_typevars(self, test_case: TypeVarTestCase) -> None:
@@ -173,7 +136,7 @@ class TestFlextTypings:
                 msg=f"{test_case.name} must not be None",
             )
             tm.that(
-                TypeScenarios.is_typevar(test_case.type_var),
+                self.is_typevar(test_case.type_var),
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
@@ -185,7 +148,7 @@ class TestFlextTypings:
 
     @pytest.mark.parametrize(
         "test_case",
-        TypeScenarios.CONTRAVARIANT_TYPEVARS,
+        CONTRAVARIANT_TYPEVARS,
         ids=lambda c: c.name,
     )
     def test_contravariant_typevars(self, test_case: TypeVarTestCase) -> None:
@@ -197,7 +160,7 @@ class TestFlextTypings:
                 msg=f"{test_case.name} must not be None",
             )
             tm.that(
-                TypeScenarios.is_typevar(test_case.type_var),
+                self.is_typevar(test_case.type_var),
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
@@ -209,7 +172,7 @@ class TestFlextTypings:
 
     @pytest.mark.parametrize(
         "test_case",
-        TypeScenarios.CQRS_ALIASES,
+        CQRS_ALIASES,
         ids=lambda c: c.name,
     )
     def test_cqrs_aliases(self, test_case: TypeVarTestCase) -> None:
@@ -228,7 +191,7 @@ class TestFlextTypings:
 
     @pytest.mark.parametrize(
         "test_case",
-        TypeScenarios.PARAMSPEC_ITEMS,
+        PARAMSPEC_ITEMS,
         ids=lambda c: c.name,
     )
     def test_paramspec(self, test_case: TypeVarTestCase) -> None:
@@ -328,4 +291,4 @@ class TestFlextTypings:
             hostname_adapter.validate_python(invalid_hostname)
 
 
-__all__ = ["TestFlextTypings"]
+__all__ = ["TestTypings"]
