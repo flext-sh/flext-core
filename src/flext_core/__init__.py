@@ -1,21 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Public API for flext-core.
-
-Runtime aliases: simple assignments only (c = FlextConstants, m = FlextModels, etc.).
-Never use FlextRuntime.Aliases or any alias registry for c, m, r, t, u, p, d, e, h, s, x.
-
-Access via project runtime alias only; no subdivision. Subprojects: nested classes
-for organization, then class-level aliases at facade root so call sites use m.Foo,
-m.Bar only (never m.ProjectName.Foo). MRO protocol only; direct methods.
-
-Use at call sites: from flext_core import c, m, r, t, u, p, d, e, h, s, x
-Classes (FlextContainer, FlextModels, etc.) are for inheritance and type annotations.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Flext core package."""
 
 from __future__ import annotations
 
@@ -26,7 +12,6 @@ from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core import (
         _constants,
-        _decorators,
         _dispatcher,
         _models,
         _protocols,
@@ -52,7 +37,6 @@ if TYPE_CHECKING:
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
-    from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
     from flext_core._dispatcher.reliability import (
         CircuitBreakerManager,
         RateLimiterManager,
@@ -76,8 +60,8 @@ if TYPE_CHECKING:
     from flext_core._models.settings import FlextModelsConfig
     from flext_core._protocols.base import FlextProtocolsBase
     from flext_core._protocols.config import FlextProtocolsConfig
+    from flext_core._protocols.container import FlextProtocolsContainer
     from flext_core._protocols.context import FlextProtocolsContext
-    from flext_core._protocols.di import FlextProtocolsDI
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.logging import FlextProtocolsLogging
     from flext_core._protocols.registry import FlextProtocolsRegistry
@@ -96,6 +80,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
+    from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enum import FlextUtilitiesEnum
     from flext_core._utilities.file_ops import FlextUtilitiesFileOps
@@ -157,8 +142,6 @@ if TYPE_CHECKING:
         TRuntime,
         TV_co,
         U,
-        ValidatedParams,
-        ValidatedReturn,
         t,
     )
     from flext_core.utilities import FlextUtilities, u
@@ -171,10 +154,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "EnumT": ("flext_core.typings", "EnumT"),
     "ErrorDomain": ("flext_core.errors", "ErrorDomain"),
-    "FactoryDecoratorsDiscovery": (
-        "flext_core._decorators.discovery",
-        "FactoryDecoratorsDiscovery",
-    ),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
     "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
     "FlextConstantsCqrs": ("flext_core._constants.cqrs", "FlextConstantsCqrs"),
@@ -230,8 +209,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocols": ("flext_core.protocols", "FlextProtocols"),
     "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),
     "FlextProtocolsConfig": ("flext_core._protocols.config", "FlextProtocolsConfig"),
+    "FlextProtocolsContainer": (
+        "flext_core._protocols.container",
+        "FlextProtocolsContainer",
+    ),
     "FlextProtocolsContext": ("flext_core._protocols.context", "FlextProtocolsContext"),
-    "FlextProtocolsDI": ("flext_core._protocols.di", "FlextProtocolsDI"),
     "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
     "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
     "FlextProtocolsRegistry": (
@@ -274,6 +256,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextUtilitiesDeprecation": (
         "flext_core._utilities.deprecation",
         "FlextUtilitiesDeprecation",
+    ),
+    "FlextUtilitiesDiscovery": (
+        "flext_core._utilities.discovery",
+        "FlextUtilitiesDiscovery",
     ),
     "FlextUtilitiesDomain": ("flext_core._utilities.domain", "FlextUtilitiesDomain"),
     "FlextUtilitiesEnum": ("flext_core._utilities.enum", "FlextUtilitiesEnum"),
@@ -347,8 +333,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "T_contra": ("flext_core.typings", "T_contra"),
     "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
     "U": ("flext_core.typings", "U"),
-    "ValidatedParams": ("flext_core.typings", "ValidatedParams"),
-    "ValidatedReturn": ("flext_core.typings", "ValidatedReturn"),
     "__all__": ("flext_core.__version__", "__all__"),
     "__author__": ("flext_core.__version__", "__author__"),
     "__author_email__": ("flext_core.__version__", "__author_email__"),
@@ -359,7 +343,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__version__": ("flext_core.__version__", "__version__"),
     "__version_info__": ("flext_core.__version__", "__version_info__"),
     "_constants": ("flext_core._constants", ""),
-    "_decorators": ("flext_core._decorators", ""),
     "_dispatcher": ("flext_core._dispatcher", ""),
     "_models": ("flext_core._models", ""),
     "_protocols": ("flext_core._protocols", ""),
@@ -387,7 +370,6 @@ __all__ = [
     "CircuitBreakerManager",
     "EnumT",
     "ErrorDomain",
-    "FactoryDecoratorsDiscovery",
     "FlextConstants",
     "FlextConstantsBase",
     "FlextConstantsCqrs",
@@ -425,8 +407,8 @@ __all__ = [
     "FlextProtocols",
     "FlextProtocolsBase",
     "FlextProtocolsConfig",
+    "FlextProtocolsContainer",
     "FlextProtocolsContext",
-    "FlextProtocolsDI",
     "FlextProtocolsHandler",
     "FlextProtocolsLogging",
     "FlextProtocolsRegistry",
@@ -452,6 +434,7 @@ __all__ = [
     "FlextUtilitiesContext",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDeprecation",
+    "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnum",
     "FlextUtilitiesFileOps",
@@ -487,8 +470,6 @@ __all__ = [
     "T_contra",
     "TimeoutEnforcer",
     "U",
-    "ValidatedParams",
-    "ValidatedReturn",
     "__all__",
     "__author__",
     "__author_email__",
@@ -499,7 +480,6 @@ __all__ = [
     "__version__",
     "__version_info__",
     "_constants",
-    "_decorators",
     "_dispatcher",
     "_models",
     "_protocols",

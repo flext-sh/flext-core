@@ -22,6 +22,7 @@ from typing import (
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
 from flext_core import m, r, t
+from flext_core.typings import P, R
 
 
 class FlextUtilitiesArgs:
@@ -157,9 +158,7 @@ class FlextUtilitiesArgs:
         return r[Mapping[str, t.ValueOrModel]].ok(parsed)
 
     @staticmethod
-    def validated(
-        func: Callable[t.ValidatedParams, t.ValidatedReturn],
-    ) -> Callable[t.ValidatedParams, t.ValidatedReturn]:
+    def validated(func: Callable[P, R]) -> Callable[P, R]:
         """Decorator that uses @validate_call from Pydantic internally.
 
         ADVANTAGE:

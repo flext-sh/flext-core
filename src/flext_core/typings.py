@@ -96,10 +96,6 @@ class FlextTypes(
 
 t = FlextTypes
 
-# Re-export class attributes at module level for backward compatibility
-ValidatedParams = FlextTypes.ValidatedParams
-ValidatedReturn = FlextTypes.ValidatedReturn
-
 __all__ = [
     "TV",
     "BaseModel",
@@ -118,7 +114,5 @@ __all__ = [
     "T_co",
     "T_contra",
     "U",
-    "ValidatedParams",
-    "ValidatedReturn",
     "t",
 ]
