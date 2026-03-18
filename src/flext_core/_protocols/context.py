@@ -95,11 +95,9 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: FlextProtocolsContext.Context,
-            *,
-            strategy: str = ...,
-        ) -> r[bool]:
-            """Merge another context into this one."""
+            other: Self | t.ConfigMap | Mapping[str, t.NormalizedValue],
+        ) -> Self:
+            """Merge another context or mapping into this one."""
             ...
 
         def validate_context(self) -> r[bool]:
