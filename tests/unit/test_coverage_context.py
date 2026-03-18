@@ -66,9 +66,11 @@ class TestCoverageContext:
         tm.that("duration_seconds" in metadata, eq=True)
         duration_value = metadata["duration_seconds"]
         tm.that(isinstance(duration_value, float), eq=True)
-        if isinstance(duration_value, float):
-            tm.that(duration_value >= 0.01, eq=True)
-            tm.that(duration_value < 0.1, eq=True)
+        duration_float: float = (
+            float(duration_value) if isinstance(duration_value, (int, float)) else 0.0
+        )
+        tm.that(duration_float >= 0.01, eq=True)
+        tm.that(duration_float < 0.1, eq=True)
 
     def test_timed_operation_duration_calculation(self) -> None:
         u.Tests.ContextHelpers.clear_context()

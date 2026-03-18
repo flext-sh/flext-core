@@ -341,8 +341,9 @@ class TestFlextModelsContainer:
             metadata=None,
         )
         tm.that(registration.metadata, none=False)
-        metadata_dump = registration.metadata.model_dump()
-        tm.that(metadata_dump.get("attributes", {}), eq={})
+        if registration.metadata is not None:
+            metadata_dump = registration.metadata.model_dump()
+            tm.that(metadata_dump.get("attributes", {}), eq={})
 
     def test_normalize_to_metadata_none(self) -> None:
         """Test normalize_to_metadata with None returns empty Metadata."""
