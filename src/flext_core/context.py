@@ -76,24 +76,23 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if ctx_value is None:
             return {}
 
+        payload: (
+            dict[str, t.NormalizedValue | BaseModel] | Mapping[str, t.NormalizedValue]
+        )
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
-            ctx_value = ctx_value.root
+            payload = ctx_value.root
         elif isinstance(ctx_value, BaseModel):
-            ctx_value = ctx_value.model_dump()
+            payload = ctx_value.model_dump()
         elif u.is_mapping(ctx_value):
-            pass
+            payload = ctx_value
         else:
             return {}
 
         try:
             normalized: dict[str, t.NormalizedValue] = {}
-            mapping_value: Mapping[str, t.NormalizedValue]
-            if isinstance(ctx_value, BaseModel):
-                mapping_value = dict(ctx_value.model_dump().items())
-            elif isinstance(ctx_value, Mapping):
-                mapping_value = dict(ctx_value.items())
-            else:
-                return {}
+            mapping_value: Mapping[str, t.NormalizedValue | BaseModel] = dict(
+                payload.items(),
+            )
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
@@ -141,10 +140,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if self.initial_data is not None:
             if isinstance(self.initial_data, m.ContextData):
                 context_data = self.initial_data
-            elif isinstance(self.initial_data, t.ConfigMap):
+            else:
                 context_data = m.ContextData(
                     data=t.Dict(
-                        root=t.ConfigMap(root=dict(self.initial_data.items())).root,
+                        root=dict(self.initial_data.items()),
                     ),
                 )
         self._metadata = m.Metadata()
