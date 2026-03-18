@@ -163,7 +163,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_dict_with_primitives(self) -> None:
         test_dict = {"a": 1, "b": "test", "c": True}
-        result = FlextRuntime.normalize_to_metadata(test_dict)
+        result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_dict))
         tm.that(result, is_=dict)
 
     def test_normalize_dict_with_nested_dict(self) -> None:
@@ -173,13 +173,13 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_dict_with_list_value(self) -> None:
         test_dict = {"key": [1, 2, 3]}
-        result = FlextRuntime.normalize_to_metadata(test_dict)
+        result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_dict))
         tm.that(result, is_=dict)
         assert isinstance(result, dict)
         tm.that(result["key"], is_=list)
 
     def test_normalize_dict_with_non_string_key(self) -> None:
-        test_dict = {123: "value", "key": "test"}
+        test_dict = {"123": "value", "key": "test"}
         result = FlextRuntime.normalize_to_metadata(test_dict)
         tm.that(result, is_=dict)
         assert isinstance(result, dict)
@@ -187,7 +187,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_list_with_primitives(self) -> None:
         test_list = ["a", 1, True]
-        result = FlextRuntime.normalize_to_metadata(test_list)
+        result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_list))
         tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
@@ -197,7 +197,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     def test_normalize_list_with_dict(self) -> None:
         test_list = [{"key": "value"}]
-        result = FlextRuntime.normalize_to_metadata(test_list)
+        result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_list))
         tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:

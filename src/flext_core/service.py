@@ -44,9 +44,9 @@ from flext_core import (
 
 
 class FlextService[
-    TDomainResult: t.ValueOrModel | list[t.ValueOrModel] = t.NormalizedValue
+    TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel] = t.NormalizedValue
     | BaseModel
-    | list[t.ValueOrModel]
+    | Sequence[t.ValueOrModel]
 ](x, ABC):
     """Base class for domain services in FLEXT applications.
 

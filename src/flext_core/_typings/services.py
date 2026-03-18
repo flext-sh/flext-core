@@ -92,6 +92,8 @@ class FlextTypesServices:
     )
 
     # --- MAPPER / CACHE / CONVERSION CONSOLIDATED TYPES ---
+    type ValidatorCallable = Callable[[ScalarOrModel | None], ScalarOrModel | None]
+
     type MapperCallable = Callable[
         [FlextTypingBase.NormalizedValue], FlextTypingBase.NormalizedValue
     ]

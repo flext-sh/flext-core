@@ -354,23 +354,51 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def coerce_dict_to_bool() -> Callable[[t.NormalizedValue], Mapping[str, bool]]:
-        """Create validator that coerces dict values to bool."""
+    def _coerce_dict_values[V](
+        coerce_fn: Callable[[t.NormalizedValue], V],
+    ) -> Callable[[t.NormalizedValue], Mapping[str, V]]:
+        """Create validator that validates a dict and coerces each value via *coerce_fn*."""
 
-        def validator(data: t.NormalizedValue) -> Mapping[str, bool]:
+        def validator(data: t.NormalizedValue) -> Mapping[str, V]:
             normalized_map_result = (
                 FlextUtilitiesCollection._validate_dict_str_metadata(data)
             )
             if normalized_map_result.is_failure:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
                 raise TypeError(msg)
-            normalized_map = normalized_map_result.value
-            normalized: dict[str, bool] = {}
-            for key, val in normalized_map.items():
-                normalized[key] = FlextUtilitiesCollection._coerce_value_to_bool(val)
-            return normalized
+            return {
+                key: coerce_fn(val) for key, val in normalized_map_result.value.items()
+            }
 
         return validator
+
+    @staticmethod
+    def coerce_dict_to_bool() -> Callable[[t.NormalizedValue], Mapping[str, bool]]:
+        """Create validator that coerces dict values to bool."""
+        return FlextUtilitiesCollection._coerce_dict_values(
+            FlextUtilitiesCollection._coerce_value_to_bool
+        )
+
+    @staticmethod
+    def coerce_dict_to_float() -> Callable[[t.NormalizedValue], Mapping[str, float]]:
+        """Create validator that coerces dict values to float."""
+        return FlextUtilitiesCollection._coerce_dict_values(
+            FlextUtilitiesCollection._coerce_value_to_float
+        )
+
+    @staticmethod
+    def coerce_dict_to_int() -> Callable[[t.NormalizedValue], Mapping[str, int]]:
+        """Create validator that coerces dict values to int."""
+        return FlextUtilitiesCollection._coerce_dict_values(
+            FlextUtilitiesCollection._coerce_value_to_int
+        )
+
+    @staticmethod
+    def coerce_dict_to_str() -> Callable[[t.NormalizedValue], Mapping[str, str]]:
+        """Create validator that coerces dict values to str."""
+        return FlextUtilitiesCollection._coerce_dict_values(
+            FlextUtilitiesCollection._coerce_value_to_str
+        )
 
     @staticmethod
     def coerce_dict_to_enum[E: StrEnum](
@@ -391,63 +419,6 @@ class FlextUtilitiesCollection:
                     )
                     raise TypeError(msg)
             return result
-
-        return validator
-
-    @staticmethod
-    def coerce_dict_to_float() -> Callable[[t.NormalizedValue], Mapping[str, float]]:
-        """Create validator that coerces dict values to float."""
-
-        def validator(data: t.NormalizedValue) -> Mapping[str, float]:
-            normalized_map_result = (
-                FlextUtilitiesCollection._validate_dict_str_metadata(data)
-            )
-            if normalized_map_result.is_failure:
-                msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg)
-            normalized_map = normalized_map_result.value
-            normalized: dict[str, float] = {}
-            for key, val in normalized_map.items():
-                normalized[key] = FlextUtilitiesCollection._coerce_value_to_float(val)
-            return normalized
-
-        return validator
-
-    @staticmethod
-    def coerce_dict_to_int() -> Callable[[t.NormalizedValue], Mapping[str, int]]:
-        """Create validator that coerces dict values to int."""
-
-        def validator(data: t.NormalizedValue) -> Mapping[str, int]:
-            normalized_map_result = (
-                FlextUtilitiesCollection._validate_dict_str_metadata(data)
-            )
-            if normalized_map_result.is_failure:
-                msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg)
-            normalized_map = normalized_map_result.value
-            normalized: dict[str, int] = {}
-            for key, val in normalized_map.items():
-                normalized[key] = FlextUtilitiesCollection._coerce_value_to_int(val)
-            return normalized
-
-        return validator
-
-    @staticmethod
-    def coerce_dict_to_str() -> Callable[[t.NormalizedValue], Mapping[str, str]]:
-        """Create validator that coerces dict values to str."""
-
-        def validator(data: t.NormalizedValue) -> Mapping[str, str]:
-            normalized_map_result = (
-                FlextUtilitiesCollection._validate_dict_str_metadata(data)
-            )
-            if normalized_map_result.is_failure:
-                msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg)
-            normalized_map = normalized_map_result.value
-            normalized: dict[str, str] = {}
-            for key, val in normalized_map.items():
-                normalized[key] = FlextUtilitiesCollection._coerce_value_to_str(val)
-            return normalized
 
         return validator
 
@@ -490,13 +461,22 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_list_to_bool() -> Callable[[Sequence[t.NormalizedValue]], list[bool]]:
-        """Create validator that coerces sequence values to bool."""
+    def _coerce_list_values[V](
+        coerce_fn: Callable[[t.NormalizedValue], V],
+    ) -> Callable[[Sequence[t.NormalizedValue]], list[V]]:
+        """Create validator that coerces each sequence element via *coerce_fn*."""
 
-        def validator(data: Sequence[t.NormalizedValue]) -> list[bool]:
-            return [FlextUtilitiesCollection._coerce_value_to_bool(v) for v in data]
+        def validator(data: Sequence[t.NormalizedValue]) -> list[V]:
+            return [coerce_fn(v) for v in data]
 
         return validator
+
+    @staticmethod
+    def coerce_list_to_bool() -> Callable[[Sequence[t.NormalizedValue]], list[bool]]:
+        """Create validator that coerces sequence values to bool."""
+        return FlextUtilitiesCollection._coerce_list_values(
+            FlextUtilitiesCollection._coerce_value_to_bool
+        )
 
     @staticmethod
     def coerce_list_to_enum[E: StrEnum](
@@ -523,29 +503,23 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_to_float() -> Callable[[Sequence[t.NormalizedValue]], list[float]]:
         """Create validator that coerces sequence values to float."""
-
-        def validator(data: Sequence[t.NormalizedValue]) -> list[float]:
-            return [FlextUtilitiesCollection._coerce_value_to_float(v) for v in data]
-
-        return validator
+        return FlextUtilitiesCollection._coerce_list_values(
+            FlextUtilitiesCollection._coerce_value_to_float
+        )
 
     @staticmethod
     def coerce_list_to_int() -> Callable[[Sequence[t.NormalizedValue]], list[int]]:
         """Create validator that coerces sequence values to int."""
-
-        def validator(data: Sequence[t.NormalizedValue]) -> list[int]:
-            return [FlextUtilitiesCollection._coerce_value_to_int(v) for v in data]
-
-        return validator
+        return FlextUtilitiesCollection._coerce_list_values(
+            FlextUtilitiesCollection._coerce_value_to_int
+        )
 
     @staticmethod
     def coerce_list_to_str() -> Callable[[Sequence[t.NormalizedValue]], list[str]]:
         """Create validator that coerces sequence values to str."""
-
-        def validator(data: Sequence[t.NormalizedValue]) -> list[str]:
-            return [FlextUtilitiesCollection._coerce_value_to_str(v) for v in data]
-
-        return validator
+        return FlextUtilitiesCollection._coerce_list_values(
+            FlextUtilitiesCollection._coerce_value_to_str
+        )
 
     @staticmethod
     def coerce_list_validator[E: StrEnum](

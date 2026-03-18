@@ -14,6 +14,7 @@ DOCSTRING_MIN ?= 80
 COMPLEXITY_MAX ?= 10
 CORE_STACK ?= python
 PYTEST_ARGS ?=
+PYTEST_BASE_TARGET := $(if $(findstring tests/,$(PYTEST_ARGS)),,$(TESTS_DIR))
 DIAG ?= 0
 CHECK_GATES ?=
 VALIDATE_GATES ?=
@@ -220,7 +221,7 @@ build: ## Build distributable artifacts
 	$(POETRY) build; \
 	echo "Build complete: $(PROJECT_NAME) ($$(($$(date +%s) - $$build_start))s)"
 
-check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,go,type to select)
+check: ## Run lint gates (CHECK_GATES=lint,ruff,format,pyrefly,mypy,pyright,security,markdown,go,type to select)
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
 		gates="$(CHECK_GATES)"; \
 		if [ -n "$$gates" ]; then \
@@ -273,14 +274,14 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	if [ -n "$$gates" ]; then \
 		for g in $$(echo "$$gates" | tr ',' ' '); do \
 			case "$$g" in \
-				lint|format|pyrefly|mypy|pyright|security|markdown|go|type) ;; \
-				*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,pyrefly,mypy,pyright,security,markdown,go,type)"; exit 2;; \
+				ruff|lint|format|pyrefly|mypy|pyright|security|markdown|go|type) ;; \
+				*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,ruff,format,pyrefly,mypy,pyright,security,markdown,go,type)"; exit 2;; \
 			esac; \
 		done; \
 	else \
 		gates="lint,format,pyrefly,mypy,pyright,security,markdown,go"; \
 	fi; \
-	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g' | tr ' ' ','); \
+	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g' | sed 's/\bruff\b/lint/g' | tr ' ' ','); \
 	project_key="$(PROJECT_NAME)"; \
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
@@ -369,6 +370,10 @@ test: ## Run pytest only
 	log_file="$$report_dir/pytest.log"; \
 	junit_file="$$report_dir/junit.xml"; \
 	coverage_file="$$report_dir/coverage.xml"; \
+	coverage_args="--cov --cov-report=xml:$$coverage_file"; \
+	if echo "$(PYTEST_ARGS)" | grep -Eq '(^|[[:space:]])(\./)?tests/'; then \
+		coverage_args=""; \
+	fi; \
 	summary_file="$$report_dir/summary.txt"; \
 	failed_file="$$report_dir/failed-tests.txt"; \
 	errors_file="$$report_dir/errors.txt"; \
@@ -377,14 +382,14 @@ test: ## Run pytest only
 	skips_file="$$report_dir/skipped-tests.txt"; \
 	command_file="$$report_dir/command.txt"; \
 	interrupted=0; \
-	echo "$(POETRY) run pytest $(TESTS_DIR) $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file --cov --cov-report=xml:$$coverage_file $(if $(filter 1,$(DIAG)),-vv,-q) $(PYTEST_ARGS)" > "$$command_file"; \
+	echo "$(POETRY) run pytest $(PYTEST_BASE_TARGET) $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file $$coverage_args $(if $(filter 1,$(DIAG)),-vv,-q) $(PYTEST_ARGS)" > "$$command_file"; \
 	trap 'interrupted=1; trap "" INT TERM' INT TERM; \
-	$(POETRY) run pytest $(TESTS_DIR) \
+	$(POETRY) run pytest $(PYTEST_BASE_TARGET) \
 		$(PYTEST_REPORT_ARGS) \
 		$(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) \
 		-p no:metadata \
 		--junitxml="$$junit_file" \
-		--cov --cov-report=xml:$$coverage_file \
+		$$coverage_args \
 		$(if $(filter 1,$(DIAG)),-vv,-q) $(PYTEST_ARGS) 2>&1 | tee "$$log_file"; \
 	rc=$${PIPESTATUS[0]}; \
 	if [ "$$interrupted" = "1" ]; then rc=130; fi; \
@@ -410,7 +415,7 @@ test: ## Run pytest only
 		echo "duration_seconds=0" >> "$$summary_file"; \
 	fi; \
 	counts_file="$$report_dir/counts.env"; \
-	$(VENV_PYTHON) -m flext_infra core pytest-diag \
+	$(VENV_PYTHON) -m flext_infra validate pytest-diag \
 		--junit "$$junit_file" --log "$$log_file" \
 		--failed "$$failed_file" --errors "$$errors_file" \
 		--warnings "$$warnings_file" --slowest "$$slowest_file" \

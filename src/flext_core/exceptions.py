@@ -1281,6 +1281,39 @@ class FlextExceptions:
             )
             return e._safe_optional_str(qualname_value)
 
+    @staticmethod
+    def _init_from_params[TParams: BaseModel](
+        error_instance: e.BaseError,
+        message: str,
+        *,
+        error_code: str,
+        context: Mapping[str, t.MetadataValue] | None,
+        correlation_id: str | None,
+        params_cls: type[TParams],
+        params: TParams | None,
+        named_params: Mapping[str, t.MetadataValue | None],
+        param_keys: set[str] | frozenset[str],
+        extra_kwargs: dict[str, t.Container],
+    ) -> None:
+        resolved, ctx, meta, corr = e._init_error_params(
+            context,
+            extra_kwargs,
+            named_params,
+            params_cls,
+            params,
+            param_keys,
+        )
+        e.BaseError.__init__(
+            error_instance,
+            message,
+            error_code=error_code,
+            context=ctx,
+            metadata=meta,
+            correlation_id=correlation_id if correlation_id is not None else corr,
+        )
+        for key in param_keys:
+            setattr(error_instance, key, getattr(resolved, key, None))
+
     class OperationError(BaseError):
         """Exception raised for general operation failures."""
 
@@ -1297,23 +1330,18 @@ class FlextExceptions:
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize operation error with operation context."""
-            resolved, ctx, meta, corr = e._init_error_params(
-                context,
-                extra_kwargs,
-                {"operation": operation, "reason": reason},
-                e.OperationErrorParams,
-                params,
-                {"operation", "reason"},
-            )
-            super().__init__(
+            e._init_from_params(
+                self,
                 message,
                 error_code=error_code,
-                context=ctx,
-                metadata=meta,
-                correlation_id=correlation_id if correlation_id is not None else corr,
+                context=context,
+                correlation_id=correlation_id,
+                params_cls=e.OperationErrorParams,
+                params=params,
+                named_params={"operation": operation, "reason": reason},
+                param_keys={"operation", "reason"},
+                extra_kwargs=extra_kwargs,
             )
-            self.operation = resolved.operation
-            self.reason = resolved.reason
 
     class AttributeAccessError(BaseError):
         """Exception raised for attribute access errors."""
@@ -1331,26 +1359,21 @@ class FlextExceptions:
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize attribute access error with attribute context."""
-            resolved, ctx, meta, corr = e._init_error_params(
-                context,
-                extra_kwargs,
-                {
+            e._init_from_params(
+                self,
+                message,
+                error_code=error_code,
+                context=context,
+                correlation_id=correlation_id,
+                params_cls=e.AttributeAccessErrorParams,
+                params=params,
+                named_params={
                     "attribute_name": attribute_name,
                     "attribute_context": attribute_context,
                 },
-                e.AttributeAccessErrorParams,
-                params,
-                {"attribute_name", "attribute_context"},
+                param_keys={"attribute_name", "attribute_context"},
+                extra_kwargs=extra_kwargs,
             )
-            super().__init__(
-                message,
-                error_code=error_code,
-                context=ctx,
-                metadata=meta,
-                correlation_id=correlation_id if correlation_id is not None else corr,
-            )
-            self.attribute_name = resolved.attribute_name
-            self.attribute_context = resolved.attribute_context
 
     @staticmethod
     def _build_error_context(

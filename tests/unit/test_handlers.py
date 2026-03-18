@@ -418,9 +418,10 @@ class TestFlextHandlers:
         handler_type: c.Cqrs.HandlerType,
         handler_mode: c.Cqrs.HandlerType,
     ) -> None:
+        handler_type_name = str(handler_type)
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
-            f"test_validate_generic_{handler_type.value}",
-            f"Test Validate Generic {handler_type.value.title()}",
+            f"test_validate_generic_{handler_type_name}",
+            f"Test Validate Generic {handler_type_name.title()}",
             handler_type=handler_type,
             handler_mode=handler_mode,
         )

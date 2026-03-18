@@ -110,20 +110,10 @@ class FlextModelsContainers(FlextTypingContainers):
             ),
         ]
 
-    class ValidatorCallable(
-        RootModel[
-            Callable[
-                [t.ScalarOrModel | None],
-                t.ScalarOrModel | None,
-            ]
-        ]
-    ):
+    class ValidatorCallable(RootModel[t.ValidatorCallable]):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
-        root: Callable[
-            [t.ScalarOrModel | None],
-            t.ScalarOrModel | None,
-        ] = Field(
+        root: t.ValidatorCallable = Field(
             title="Validator Callable",
             description="Callable that validates or transforms one scalar/model input value.",
             examples=["identity_validator"],
@@ -133,67 +123,28 @@ class FlextModelsContainers(FlextTypingContainers):
             """Execute validator."""
             return self.root(value)
 
-    class _RootValidatorMapModel(
-        RootModel[
-            dict[
-                str,
-                Callable[
-                    [t.ScalarOrModel | None],
-                    t.ScalarOrModel | None,
-                ],
-            ]
-        ]
-    ):
+    class _RootValidatorMapModel(RootModel[dict[str, t.ValidatorCallable]]):
         """Shared API for validator map containers."""
 
-        def items(
-            self,
-        ) -> ItemsView[
-            str,
-            Callable[
-                [t.ScalarOrModel | None],
-                t.ScalarOrModel | None,
-            ],
-        ]:
+        def items(self) -> ItemsView[str, t.ValidatorCallable]:
             """Get validator items."""
-            validated: dict[
-                str,
-                Callable[
-                    [t.ScalarOrModel | None],
-                    t.ScalarOrModel | None,
-                ],
-            ] = {key: value for key, value in self.root.items() if callable(value)}
+            validated: dict[str, t.ValidatorCallable] = {
+                key: value for key, value in self.root.items() if callable(value)
+            }
             return validated.items()
 
-        def values(
-            self,
-        ) -> ValuesView[
-            Callable[
-                [t.ScalarOrModel | None],
-                t.ScalarOrModel | None,
-            ],
-        ]:
+        def values(self) -> ValuesView[t.ValidatorCallable]:
             """Get validator values."""
-            validated: dict[
-                str,
-                Callable[
-                    [t.ScalarOrModel | None],
-                    t.ScalarOrModel | None,
-                ],
-            ] = {key: value for key, value in self.root.items() if callable(value)}
+            validated: dict[str, t.ValidatorCallable] = {
+                key: value for key, value in self.root.items() if callable(value)
+            }
             return validated.values()
 
     class FieldValidatorMap(_RootValidatorMapModel):
         """Map of field validators."""
 
         root: Annotated[
-            dict[
-                str,
-                Callable[
-                    [t.ScalarOrModel | None],
-                    t.ScalarOrModel | None,
-                ],
-            ],
+            dict[str, t.ValidatorCallable],
             Field(
                 default_factory=dict,
                 title="Field Validator Map",
@@ -206,13 +157,7 @@ class FlextModelsContainers(FlextTypingContainers):
         """Map of consistency rules."""
 
         root: Annotated[
-            dict[
-                str,
-                Callable[
-                    [t.ScalarOrModel | None],
-                    t.ScalarOrModel | None,
-                ],
-            ],
+            dict[str, t.ValidatorCallable],
             Field(
                 default_factory=dict,
                 title="Consistency Rule Map",
@@ -225,13 +170,7 @@ class FlextModelsContainers(FlextTypingContainers):
         """Map of event validators."""
 
         root: Annotated[
-            dict[
-                str,
-                Callable[
-                    [t.ScalarOrModel | None],
-                    t.ScalarOrModel | None,
-                ],
-            ],
+            dict[str, t.ValidatorCallable],
             Field(
                 default_factory=dict,
                 title="Event Validator Map",

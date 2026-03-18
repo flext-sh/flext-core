@@ -34,7 +34,9 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.Discovery.HANDLER_ATTR)
+        config: m.DecoratorConfig = getattr(
+            Service.handle_user, c.Discovery.HANDLER_ATTR
+        )
         tm.that(config.command is CreateCommand, eq=True)
 
     def test_decorator_priority_timeout_and_middleware(self) -> None:
@@ -54,7 +56,9 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.Discovery.HANDLER_ATTR)
+        config: m.DecoratorConfig = getattr(
+            Service.handle_user, c.Discovery.HANDLER_ATTR
+        )
         tm.that(config.priority == 42, eq=True)
         tm.that(config.timeout == 5.0, eq=True)
         tm.that(config.middleware == middleware_types, eq=True)
@@ -69,7 +73,9 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.Discovery.HANDLER_ATTR)
+        config: m.DecoratorConfig = getattr(
+            Service.handle_user, c.Discovery.HANDLER_ATTR
+        )
         tm.that(config.priority == c.Discovery.DEFAULT_PRIORITY, eq=True)
         tm.that(config.timeout == c.Discovery.DEFAULT_TIMEOUT, eq=True)
         tm.that(config.middleware == [], eq=True)
@@ -213,7 +219,9 @@ class TestHandlerDecoratorDiscovery:
 
         module_with_handlers.handler = handler
         tm.that(h.Discovery.has_handlers_module(module_with_handlers) is True, eq=True)
-        tm.that(h.Discovery.has_handlers_module(module_without_handlers) is False, eq=True)
+        tm.that(
+            h.Discovery.has_handlers_module(module_without_handlers) is False, eq=True
+        )
 
     def test_scan_class_with_inherited_handlers(self) -> None:
         class CreateCommand:

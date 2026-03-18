@@ -132,6 +132,7 @@ if TYPE_CHECKING:
         test_not_found_error_correlation_id_selection_and_extra_kwargs,
     )
     from .test_final_75_percent_push import TestFinal75PercentPush
+    from .test_handler_decorator_discovery import TestHandlerDecoratorDiscovery
     from .test_handlers import TestFlextHandlers
     from .test_handlers_full_coverage import TestHandlersFullCoverage, handlers_module
     from .test_loggings_error_paths_coverage import TestLoggingsErrorPaths
@@ -732,6 +733,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestFlextUtilitiesReliability",
     ),
     "TestFlextVersion": ("tests.unit.test_version", "TestFlextVersion"),
+    "TestHandlerDecoratorDiscovery": (
+        "tests.unit.test_handler_decorator_discovery",
+        "TestHandlerDecoratorDiscovery",
+    ),
     "TestHandlersFullCoverage": (
         "tests.unit.test_handlers_full_coverage",
         "TestHandlersFullCoverage",
@@ -1925,6 +1930,7 @@ __all__ = [
     "TestFlextUtilitiesConfiguration",
     "TestFlextUtilitiesReliability",
     "TestFlextVersion",
+    "TestHandlerDecoratorDiscovery",
     "TestHandlersFullCoverage",
     "TestHelperConsolidationTransformer",
     "TestLoggingsErrorPaths",
