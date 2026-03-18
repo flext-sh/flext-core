@@ -1,0 +1,23 @@
+tests/unit/test_coverage_76_lines.py
+  2a33b4329ef01197 15-16,192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "7692fd41013866b5620ac944201ba784c0c589dd",
+  "prompts": {
+    "2a33b4329ef01197": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_301e4b775ffetrhhG21YpGmC9G",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 7,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
