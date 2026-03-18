@@ -10,8 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from types import TracebackType
 from typing import Protocol, override, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core.typings import FlextTypes as t
+from flext_core import FlextProtocolsBase, FlextTypes as t
 
 
 class FlextProtocolsResult:

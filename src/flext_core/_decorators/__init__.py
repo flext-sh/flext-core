@@ -17,18 +17,19 @@ from typing import TYPE_CHECKING
 from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
+    from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FactoryDecoratorsDiscovery": (
-        "flext_core._decorators.discovery",
-        "FactoryDecoratorsDiscovery",
+        "flext_core._utilities.discovery",
+        "FlextUtilitiesDiscovery",
     ),
 }
 
 __all__ = [
     "FactoryDecoratorsDiscovery",
+    "FlextUtilitiesDiscovery",
 ]
 
 
@@ -41,5 +42,8 @@ def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete."""
     return sorted(__all__)
 
+
+# Backward compatibility alias
+FactoryDecoratorsDiscovery = __getattr__("FactoryDecoratorsDiscovery")
 
 cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

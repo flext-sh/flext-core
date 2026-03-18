@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
-from flext_core._constants.base import FlextConstantsBase
+from flext_core import FlextConstantsBase
 
 
 class FlextConstantsValidation:

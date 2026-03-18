@@ -15,8 +15,7 @@ from typing import ClassVar, Literal, TypeIs, cast, overload
 
 from pydantic import ValidationError
 
-from flext_core import m, r, t
-from flext_core.typings import EnumT
+from flext_core import EnumT, m, r, t
 
 
 class FlextUtilitiesEnum:

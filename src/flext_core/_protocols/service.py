@@ -9,19 +9,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Protocol, runtime_checkable
 
-from flext_core import t
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
-
-Base = FlextProtocolsBase.Base
+from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 
 class FlextProtocolsService:
     """Protocols for service execution and repository access."""
 
     @runtime_checkable
-    class Service[T](Base, Protocol):
-        """Base domain service interface.
+    class Service[T](FlextProtocolsBase.Base, Protocol):
+        """FlextProtocolsBase.Base domain service interface.
 
         Reflects real implementations like FlextService which executes
         domain logic without requiring command parameters (services are

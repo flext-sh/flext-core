@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
+    from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enum import FlextUtilitiesEnum
     from flext_core._utilities.file_ops import FlextUtilitiesFileOps
@@ -68,6 +69,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextUtilitiesDeprecation": (
         "flext_core._utilities.deprecation",
         "FlextUtilitiesDeprecation",
+    ),
+    "FlextUtilitiesDiscovery": (
+        "flext_core._utilities.discovery",
+        "FlextUtilitiesDiscovery",
     ),
     "FlextUtilitiesDomain": ("flext_core._utilities.domain", "FlextUtilitiesDomain"),
     "FlextUtilitiesEnum": ("flext_core._utilities.enum", "FlextUtilitiesEnum"),
@@ -131,6 +136,7 @@ __all__ = [
     "FlextUtilitiesContext",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDeprecation",
+    "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnum",
     "FlextUtilitiesFileOps",

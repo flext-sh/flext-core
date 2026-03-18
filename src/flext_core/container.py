@@ -36,7 +36,7 @@ from flext_core import (
     t,
     u,
 )
-from flext_core._decorators import FactoryDecoratorsDiscovery
+from flext_core._utilities.discovery import FlextUtilitiesDiscovery
 
 
 class FlextContainer(p.Container):
@@ -397,7 +397,7 @@ class FlextContainer(p.Container):
                 module_name = str(module_name_raw) if module_name_raw else "__main__"
                 caller_module = sys.modules.get(module_name)
                 if caller_module:
-                    factories = FactoryDecoratorsDiscovery.scan_module(caller_module)
+                    factories = FlextUtilitiesDiscovery.scan_module(caller_module)
                     for factory_name, factory_config in factories:
                         factory_func_raw = (
                             getattr(caller_module, factory_name)

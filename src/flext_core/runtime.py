@@ -29,7 +29,7 @@ and provides type guards and serialization utilities.
 - Pure Layer 0.5 implementation - safe from circular imports
 
 **Usage** (simple runtime aliases only; no alias registry):
-- Package __init__: c = FlextConstants, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases.
+- Package __init__: c = c, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases.
 - Facades (e.g. FlextUtilities) expose staticmethod aliases from external subclasses so call sites get one flat namespace (u.foo, u.bar), no subdivision (no u.foo).
 - At call sites use project namespace only: c, m, r, t, u, p, d, e, h, s, x from project __init__. Subprojects: access only via that project's namespace; no cross-project alias subdivision. MRO protocol only; direct methods.
 - Runtime helpers via x (e.g. x.create_instance, x.is_dict_like).
@@ -77,18 +77,16 @@ from pydantic import (
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
-from flext_core._models import FlextModelFoundation
-from flext_core._models.result import FlextModelsResult
-from flext_core._models.service import FlextModelsService
-from flext_core._typings.generics import T
-from flext_core._utilities import FlextUtilitiesGuardsTypeCore
-from flext_core.constants import FlextConstants
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
-
-c = FlextConstants
-p = FlextProtocols
-t = FlextTypes
+from flext_core import (
+    FlextModelFoundation,
+    FlextModelsResult,
+    FlextModelsService,
+    FlextUtilitiesGuardsTypeCore,
+    T,
+    c,
+    p,
+    t,
+)
 
 
 class FlextRuntime:
@@ -154,7 +152,7 @@ class FlextRuntime:
 
 
     **Usage** (simple runtime aliases only; no alias registry):
-    - Package __init__: c = FlextConstants, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases or any registry.
+    - Package __init__: c = c, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases or any registry.
     - Facades use staticmethod aliases from external subclasses so one flat namespace (no u.foo); subprojects use project namespace only (from flext_cli import m, x; m.Foo, m.Bar).
     - At call sites use runtime aliases from project __init__: c, m, r, t, u, p, d, e, h, s, x. Access via project runtime alias only; no subdivision. MRO only; direct methods. Examples: x.create_instance(MyClass), r[T].ok(value).
 

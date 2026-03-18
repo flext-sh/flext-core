@@ -3,8 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 
-from flext_core import m, p, r, t
-from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+from flext_core import FlextUtilitiesGuardsType, m, p, r, t
 
 
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):

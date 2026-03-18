@@ -183,7 +183,7 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
-            "flext_core.container.FactoryDecoratorsDiscovery.scan_module",
+            "flext_core.container.FlextUtilitiesDiscovery.scan_module",
             _scan_factory_module,
         )
 
@@ -436,7 +436,7 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
-            "flext_core.container.FactoryDecoratorsDiscovery.scan_module",
+            "flext_core.container.FlextUtilitiesDiscovery.scan_module",
             _scan_factory_module_captured,
         )
         original_register = FlextContainer.register

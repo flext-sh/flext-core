@@ -7,48 +7,49 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import c, p, t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-
-_protocol_specs_cache: Mapping[str, Callable[[t.NormalizedValue], bool]] | None = None
-_protocol_type_map_cache: Mapping[type, str] | None = None
-
-
-def _get_protocol_specs() -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
-    global _protocol_specs_cache  # noqa: PLW0603
-    if _protocol_specs_cache is None:
-        _protocol_specs_cache = MappingProxyType({
-            c.Mixins.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
-            c.Mixins.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
-            "container": lambda v: isinstance(v, p.Container),
-            "command_bus": lambda v: isinstance(v, p.Dispatcher),
-            "handler": lambda v: isinstance(v, p.Handler),
-            "logger": lambda v: isinstance(v, p.Logger),
-            "result": lambda v: isinstance(v, p.Result),
-            "service": lambda v: isinstance(v, p.Service),
-            "middleware": lambda v: isinstance(v, p.Middleware),
-        })
-    return _protocol_specs_cache
-
-
-def _get_protocol_type_map() -> Mapping[type, str]:
-    global _protocol_type_map_cache  # noqa: PLW0603
-    if _protocol_type_map_cache is None:
-        _protocol_type_map_cache = MappingProxyType({
-            p.Settings: c.Mixins.FIELD_CONFIG,
-            p.Context: c.Mixins.FIELD_CONTEXT,
-            p.Container: "container",
-            p.Dispatcher: "command_bus",
-            p.Handler: "handler",
-            p.Logger: "logger",
-            p.Result: "result",
-            p.Service: "service",
-            p.Middleware: "middleware",
-        })
-    return _protocol_type_map_cache
+from flext_core import FlextUtilitiesGuardsTypeCore, c, p, t
 
 
 class FlextUtilitiesGuardsTypeProtocol:
+    _protocol_specs_cache: Mapping[str, Callable[[t.NormalizedValue], bool]] | None = (
+        None
+    )
+    _protocol_type_map_cache: Mapping[type, str] | None = None
+
+    @staticmethod
+    def _get_protocol_specs() -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
+        if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
+            FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
+                c.Mixins.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
+                c.Mixins.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
+                "container": lambda v: isinstance(v, p.Container),
+                "command_bus": lambda v: isinstance(v, p.Dispatcher),
+                "handler": lambda v: isinstance(v, p.Handler),
+                "logger": lambda v: isinstance(v, p.Logger),
+                "result": lambda v: isinstance(v, p.Result),
+                "service": lambda v: isinstance(v, p.Service),
+                "middleware": lambda v: isinstance(v, p.Middleware),
+            })
+        return FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache
+
+    @staticmethod
+    def _get_protocol_type_map() -> Mapping[type, str]:
+        if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
+            FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
+                MappingProxyType({
+                    p.Settings: c.Mixins.FIELD_CONFIG,
+                    p.Context: c.Mixins.FIELD_CONTEXT,
+                    p.Container: "container",
+                    p.Dispatcher: "command_bus",
+                    p.Handler: "handler",
+                    p.Logger: "logger",
+                    p.Result: "result",
+                    p.Service: "service",
+                    p.Middleware: "middleware",
+                })
+            )
+        return FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache
+
     @staticmethod
     def is_context(
         value: object,
@@ -173,7 +174,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         if name == c.Mixins.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.is_context(value)
         try:
-            return _get_protocol_specs()[name](value)
+            return FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()[name](value)
         except (TypeError, ValueError, AttributeError, RuntimeError):
             return False
 
@@ -190,7 +191,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     ) -> bool:
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
-            if type_name in _get_protocol_specs():
+            if type_name in FlextUtilitiesGuardsTypeProtocol._get_protocol_specs():
                 return FlextUtilitiesGuardsTypeProtocol._check_protocol(
                     value,
                     type_name,
@@ -216,10 +217,10 @@ class FlextUtilitiesGuardsTypeProtocol:
             return False
         if isinstance(type_spec, tuple):
             return isinstance(value, type_spec)
-        if type_spec in _get_protocol_type_map():
+        if type_spec in FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map():
             return FlextUtilitiesGuardsTypeProtocol._check_protocol(
                 value,
-                _get_protocol_type_map()[type_spec],
+                FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map()[type_spec],
             )
         try:
             return isinstance(

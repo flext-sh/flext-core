@@ -16,7 +16,7 @@ from flext_core.constants import c
 from flext_core.models import m
 
 
-class FactoryDecoratorsDiscovery:
+class FlextUtilitiesDiscovery:
     """Auto-discovery mechanism for factory decorators (namespace-only, no MRO base).
 
     Governance: Pure namespace class with only @staticmethod members. No state,
@@ -56,8 +56,8 @@ class FactoryDecoratorsDiscovery:
             List of tuples (function_name, FactoryDecoratorConfig) sorted by name
 
         Example:
-            >>> from flext_core import FactoryDecoratorsDiscovery
-            >>> factories = FactoryDecoratorsDiscovery.scan_module(my_module)
+            >>> from flext_core import FlextUtilitiesDiscovery
+            >>> factories = FlextUtilitiesDiscovery.scan_module(my_module)
             >>> for func_name, config in factories:
             ...     print(f"{func_name}: singleton={config.singleton}")
 
@@ -76,3 +76,6 @@ class FactoryDecoratorsDiscovery:
                 config: m.FactoryDecoratorConfig = config_raw
                 factories.append((name, config))
         return sorted(factories, key=operator.itemgetter(0))
+
+
+__all__ = ["FlextUtilitiesDiscovery"]

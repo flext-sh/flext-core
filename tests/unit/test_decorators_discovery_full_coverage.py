@@ -1,6 +1,6 @@
-"""Tests for FactoryDecoratorsDiscovery - scan_module and has_factories.
+"""Tests for FlextUtilitiesDiscovery - scan_module and has_factories.
 
-Module: flext_core._decorators.discovery
+Module: flext_core._utilities.discovery
 Coverage target: lines 50-63, 85 (scan_module body, has_factories body)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import types
 
-from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
+from flext_core._utilities.discovery import (
+    FlextUtilitiesDiscovery as FactoryDecoratorsDiscovery,
+)
 from tests import c, m
 
 

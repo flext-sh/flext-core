@@ -16,8 +16,8 @@ from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core._protocols.base import FlextProtocolsBase
     from flext_core._protocols.config import FlextProtocolsConfig
+    from flext_core._protocols.container import FlextProtocolsContainer
     from flext_core._protocols.context import FlextProtocolsContext
-    from flext_core._protocols.di import FlextProtocolsDI
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.logging import FlextProtocolsLogging
     from flext_core._protocols.registry import FlextProtocolsRegistry
@@ -28,8 +28,11 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),
     "FlextProtocolsConfig": ("flext_core._protocols.config", "FlextProtocolsConfig"),
+    "FlextProtocolsContainer": (
+        "flext_core._protocols.container",
+        "FlextProtocolsContainer",
+    ),
     "FlextProtocolsContext": ("flext_core._protocols.context", "FlextProtocolsContext"),
-    "FlextProtocolsDI": ("flext_core._protocols.di", "FlextProtocolsDI"),
     "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
     "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
     "FlextProtocolsRegistry": (
@@ -43,8 +46,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 __all__ = [
     "FlextProtocolsBase",
     "FlextProtocolsConfig",
+    "FlextProtocolsContainer",
     "FlextProtocolsContext",
-    "FlextProtocolsDI",
     "FlextProtocolsHandler",
     "FlextProtocolsLogging",
     "FlextProtocolsRegistry",

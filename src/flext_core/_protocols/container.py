@@ -1,4 +1,4 @@
-"""FlextProtocolsDI - dependency injection protocols.
+"""FlextProtocolsContainer - dependency injection protocols.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,15 +10,13 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
-from flext_core import t
-from flext_core._protocols.config import FlextProtocolsConfig
-from flext_core._protocols.context import FlextProtocolsContext
+from flext_core import FlextProtocolsConfig, FlextProtocolsContext, t
 
 if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextProtocolsDI:
+class FlextProtocolsContainer:
     """Protocols for DI container behavior."""
 
     @runtime_checkable
@@ -105,4 +103,4 @@ class FlextProtocolsDI:
             ...
 
 
-__all__ = ["FlextProtocolsDI"]
+__all__ = ["FlextProtocolsContainer"]

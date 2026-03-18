@@ -9,8 +9,8 @@ from __future__ import annotations
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsConfig,
+    FlextProtocolsContainer,
     FlextProtocolsContext,
-    FlextProtocolsDI,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
     FlextProtocolsRegistry,
@@ -24,7 +24,7 @@ class FlextProtocols(
     FlextProtocolsContext,
     FlextProtocolsResult,
     FlextProtocolsConfig,
-    FlextProtocolsDI,
+    FlextProtocolsContainer,
     FlextProtocolsService,
     FlextProtocolsHandler,
     FlextProtocolsLogging,

@@ -16,8 +16,7 @@ from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, c, p, r, t
-from flext_core._utilities import FlextUtilitiesGuards
+from flext_core import FlextRuntime, FlextUtilitiesGuards, c, p, r, t
 
 
 class FlextUtilitiesChecker:
