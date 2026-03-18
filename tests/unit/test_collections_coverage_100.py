@@ -11,7 +11,7 @@ from tests import m, t
 
 
 class TestFlextModelsCollectionsCoverage100:
-    class TestConfig(m.Config):
+    class ConfigFixture(m.Config):
         """Test configuration with timeout and retries."""
 
         timeout: int = 30
@@ -79,7 +79,7 @@ class TestFlextModelsCollectionsCoverage100:
         processed: int | None = None
         status: str | None = None
 
-    class TestOptions(m.Options):
+    class OptionsFixture(m.Options):
         """Options with verbose and color flags."""
 
         verbose: bool = False
@@ -244,48 +244,48 @@ class TestFlextModelsCollectionsCoverage100:
         tm.that(result["name"], eq="first")
 
     def test_config_merge(self) -> None:
-        config1 = self.TestConfig.model_validate({"timeout": 30, "retries": 3})
-        config2 = self.TestConfig.model_validate({"timeout": 60})
+        config1 = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
+        config2 = self.ConfigFixture.model_validate({"timeout": 60})
         merged = config1.merge(config2)
         tm.that(merged.timeout, eq=60)
         tm.that(merged.retries, eq=3)
 
     def test_config_from_dict(self) -> None:
         config_data = t.ConfigMap(root={"timeout": 60})
-        config = self.TestConfig.from_mapping(config_data)
+        config = self.ConfigFixture.from_mapping(config_data)
         tm.that(config.timeout, eq=60)
 
     def test_config_to_dict(self) -> None:
-        config = self.TestConfig.model_validate({"timeout": 60})
+        config = self.ConfigFixture.model_validate({"timeout": 60})
         tm.that(config.to_mapping()["timeout"], eq=60)
 
     def test_config_with_updates(self) -> None:
-        config = self.TestConfig.model_validate({"timeout": 30, "retries": 3})
+        config = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
         updated = config.with_updates(timeout=60)
         tm.that(updated.timeout, eq=60)
         tm.that(updated.retries, eq=3)
         tm.that(config.timeout, eq=30)
 
     def test_config_diff(self) -> None:
-        config1 = self.TestConfig.model_validate({"timeout": 30, "retries": 3})
-        config2 = self.TestConfig.model_validate({"timeout": 60, "retries": 3})
+        config1 = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
+        config2 = self.ConfigFixture.model_validate({"timeout": 60, "retries": 3})
         diff = config1.diff(config2)
         tm.that("timeout" in diff, eq=True)
         tm.that(diff["timeout"], eq=(30, 60))
         tm.that("retries" in diff, eq=False)
 
     def test_config_diff_all_different(self) -> None:
-        config1 = self.TestConfig.model_validate({"timeout": 30, "retries": 3})
-        config2 = self.TestConfig.model_validate({"timeout": 60, "retries": 5})
+        config1 = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
+        config2 = self.ConfigFixture.model_validate({"timeout": 60, "retries": 5})
         diff = config1.diff(config2)
         tm.that(len(diff), eq=2)
         tm.that(diff["timeout"], eq=(30, 60))
         tm.that(diff["retries"], eq=(3, 5))
 
     def test_config_eq(self) -> None:
-        config1 = self.TestConfig.model_validate({"timeout": 30})
-        config2 = self.TestConfig.model_validate({"timeout": 30})
-        config3 = self.TestConfig.model_validate({"timeout": 60})
+        config1 = self.ConfigFixture.model_validate({"timeout": 30})
+        config2 = self.ConfigFixture.model_validate({"timeout": 30})
+        config3 = self.ConfigFixture.model_validate({"timeout": 60})
         tm.that(config1 == config2, eq=True)
         tm.that(config1 != config3, eq=True)
         tm.that(config1 != "not a config", eq=True)
@@ -332,15 +332,15 @@ class TestFlextModelsCollectionsCoverage100:
         tm.that(aggregated["status"], eq="ok")
 
     def test_options_merge(self) -> None:
-        options1 = self.TestOptions(verbose=False, color=True)
-        options2 = self.TestOptions(verbose=True)
+        options1 = self.OptionsFixture(verbose=False, color=True)
+        options2 = self.OptionsFixture(verbose=True)
         merged = options1.merge(options2)
         tm.that(merged.verbose is True, eq=True)
         tm.that(merged.color is True, eq=True)
 
     def test_options_merge_all_fields(self) -> None:
-        options1 = self.TestOptions(verbose=False, color=True)
-        options2 = self.TestOptions(verbose=True, color=False)
+        options1 = self.OptionsFixture(verbose=False, color=True)
+        options2 = self.OptionsFixture(verbose=True, color=False)
         merged = options1.merge(options2)
         tm.that(merged.verbose is True, eq=True)
         tm.that(merged.color is False, eq=True)

@@ -33,12 +33,12 @@ from flext_core import r
 from ..constants import TestsFlextConstants
 from ..models import TestsFlextModels
 from ..typings import TestsFlextTypes
-from ..utilities import TestsFlextUtilities
+from ..utilities import FlextCoreTestUtilities
 
 c = TestsFlextConstants
 m = TestsFlextModels
 t = TestsFlextTypes
-u = TestsFlextUtilities
+u = FlextCoreTestUtilities
 
 _object = t.NormalizedValue
 

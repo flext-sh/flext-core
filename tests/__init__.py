@@ -615,7 +615,7 @@ if TYPE_CHECKING:
         TestUtilitiesTypeGuardsCoverage100,
     )
     from .unit.test_version import TestFlextVersion
-    from .utilities import TestsFlextUtilities, u
+    from .utilities import FlextCoreTestUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AttrObject": ("tests.unit.test_utilities_mapper_full_coverage", "AttrObject"),
@@ -1077,7 +1077,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextProtocols": ("tests.protocols", "TestsFlextProtocols"),
     "TestsFlextServiceBase": ("tests.base", "TestsFlextServiceBase"),
     "TestsFlextTypes": ("tests.typings", "TestsFlextTypes"),
-    "TestsFlextUtilities": ("tests.utilities", "TestsFlextUtilities"),
+    "FlextCoreTestUtilities": ("tests.utilities", "FlextCoreTestUtilities"),
     "Testu": ("tests.unit.test_utilities", "Testu"),
     "TestuCacheClearObjectCache": (
         "tests.unit.test_utilities_cache_coverage_100",
@@ -2276,7 +2276,7 @@ __all__ = [
     "TestsFlextProtocols",
     "TestsFlextServiceBase",
     "TestsFlextTypes",
-    "TestsFlextUtilities",
+    "FlextCoreTestUtilities",
     "Testu",
     "TestuCacheClearObjectCache",
     "TestuCacheGenerateCacheKey",
