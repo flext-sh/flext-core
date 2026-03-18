@@ -268,7 +268,6 @@ def test_guard_in_has_empty_none_helpers() -> None:
 
 
 def test_chk_exercises_missed_branches() -> None:
-
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(none=True).model_dump()), eq=True)
     tm.that(not u.chk(None, **core_m.GuardCheckSpec(none=False).model_dump()), eq=True)
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(is_=int).model_dump()), eq=True)

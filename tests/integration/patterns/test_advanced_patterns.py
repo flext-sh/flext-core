@@ -34,7 +34,7 @@ class TestAdvancedPatterns:
     class MockScenario:
         """Mock scenario object for testing purposes."""
 
-        def __init__(self, name: str, data: m.MockScenarioData) -> None:
+        def __init__(self, name: str, data: m.Tests.MockScenarioData) -> None:
             """Initialize mockscenario:."""
             super().__init__()
             self.name = name
