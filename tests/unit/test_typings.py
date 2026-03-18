@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, ParamSpec, TypeVar, cast
+from typing import Annotated, ClassVar, ParamSpec, TypeVar
 
 import pytest
 from flext_tests import t as test_t, tm
@@ -51,11 +51,12 @@ class TestTypings:
 
         name: Annotated[str, Field(description="Type variable test case name")]
         category: Annotated[
-            TestTypings.TypeVarCategory,
+            TypeVarCategory,
             Field(description="Type variable category"),
         ]
         type_var: Annotated[
-            object, Field(description="Type variable object under test")
+            test_t.Tests.Testobject,
+            Field(description="Type variable object under test"),
         ]
         expected_not_none: Annotated[
             bool,
@@ -88,17 +89,21 @@ class TestTypings:
         ),
     ]
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(name="Command", category=TypeVarCategory.CQRS, type_var=object),
-        TypeVarTestCase(name="Query", category=TypeVarCategory.CQRS, type_var=object),
-        TypeVarTestCase(name="Event", category=TypeVarCategory.CQRS, type_var=object),
-        TypeVarTestCase(name="Message", category=TypeVarCategory.CQRS, type_var=object),
+        TypeVarTestCase(
+            name="Command", category=TypeVarCategory.CQRS, type_var=t.Command
+        ),
+        TypeVarTestCase(name="Query", category=TypeVarCategory.CQRS, type_var=t.Query),
+        TypeVarTestCase(name="Event", category=TypeVarCategory.CQRS, type_var=t.Event),
+        TypeVarTestCase(
+            name="Message", category=TypeVarCategory.CQRS, type_var=t.Message
+        ),
     ]
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
         TypeVarTestCase(name="P", category=TypeVarCategory.PARAMSPEC, type_var=P),
     ]
 
     @staticmethod
-    def is_typevar(obj: object) -> bool:
+    def is_typevar(obj: test_t.Tests.Testobject | None) -> bool:
         """Check if object is a TypeVar-like instance."""
         return isinstance(obj, (TypeVar, ParamSpec)) or obj is not None
 
@@ -111,7 +116,7 @@ class TestTypings:
         """Test core TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
@@ -130,7 +135,7 @@ class TestTypings:
         """Test covariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
@@ -140,7 +145,7 @@ class TestTypings:
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg="Covariant TypeVar must exist",
             )
@@ -154,7 +159,7 @@ class TestTypings:
         """Test contravariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
@@ -164,7 +169,7 @@ class TestTypings:
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg="Contravariant TypeVar must exist",
             )
@@ -178,14 +183,9 @@ class TestTypings:
         """Test CQRS type aliases are properly defined."""
         if test_case.expected_not_none:
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
-            )
-            tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
-                eq=object,
-                msg=f"{test_case.name} must equal object",
             )
 
     @pytest.mark.parametrize(
@@ -197,12 +197,12 @@ class TestTypings:
         """Test ParamSpec is properly defined and exported."""
         if test_case.expected_not_none:
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
             tm.that(
-                cast("test_t.Tests.object", test_case.type_var),
+                test_case.type_var,
                 none=False,
                 msg="ParamSpec must exist",
             )
@@ -222,25 +222,20 @@ class TestTypings:
         """Test that all public exports can be imported and are valid."""
         core_typevars = [T, U, e, R, ResultT, T_co, T_contra, P]
         for tv in core_typevars:
-            assert tv is not None, "TypeVar must be importable and not None"
+            tm.that(tv, none=False, msg="TypeVar must be importable and not None")
 
     def test_module_structure(self) -> None:
         """Test that t has expected structure with real validation."""
         for tv in [T, U, P, R]:
-            assert tv is not None, "TypeVar must not be None"
+            tm.that(tv, none=False, msg="TypeVar must not be None")
         cqrs_aliases = [
-            object,
-            object,
-            object,
-            object,
+            t.Command,
+            t.Query,
+            t.Event,
+            t.Message,
         ]
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
-            tm.that(
-                alias,
-                eq=object,
-                msg="CQRS alias must equal object",
-            )
 
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""

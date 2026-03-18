@@ -18,7 +18,7 @@ from collections.abc import Mapping, Sequence
 from flext_infra import FlextInfraTypes
 from flext_tests import FlextTestsTypes
 
-from flext_core import T, T_co, T_contra
+from flext_core import T, T_co, T_contra, t as ft
 
 
 class TestsFlextTypes(FlextTestsTypes, FlextInfraTypes):
@@ -40,15 +40,9 @@ class TestsFlextTypes(FlextTestsTypes, FlextInfraTypes):
         Only defines types that are truly flext-core-specific.
         """
 
-        type ServiceConfigMapping = Mapping[
-            str,
-            object | Sequence[str] | Mapping[str, str | int] | None,
-        ]
+        type ServiceConfigMapping = Mapping[str, ft.NormalizedValue | Sequence[str]]
         "Service configuration mapping specific to flext-core services."
-        type HandlerConfigMapping = Mapping[
-            str,
-            object | Sequence[str] | Mapping[str, str] | None,
-        ]
+        type HandlerConfigMapping = Mapping[str, ft.NormalizedValue | Sequence[str]]
         "Handler configuration mapping specific to flext-core handlers."
 
 

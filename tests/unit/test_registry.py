@@ -28,10 +28,7 @@ class TestFlextRegistry:
         model_config = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Registry test case name")]
-        operation: Annotated[
-            TestFlextRegistry.RegistryOperationType,
-            Field(description="Registry operation type"),
-        ]
+        operation: Annotated[StrEnum, Field(description="Registry operation type")]
         handler_count: Annotated[
             int, Field(default=1, description="Number of handlers to generate")
         ] = 1

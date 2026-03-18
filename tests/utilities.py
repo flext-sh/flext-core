@@ -18,11 +18,9 @@ from collections.abc import Callable, Iterator
 from typing import Never, override
 
 from flext_infra import FlextInfraUtilities
-from flext_tests import FlextTestsUtilities, t
+from flext_tests import FlextTestsUtilities, t, tm
 
 from flext_core import r
-
-from .test_utils import assertion_helpers
 
 
 class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
@@ -62,22 +60,21 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """
                 result = operation()
                 if expected_error is not None:
-                    _ = assertion_helpers.assert_flext_result_failure(
+                    tm.fail(
                         result,
-                        f"Expected failure for: {description}, got success",
-                        error_contains=expected_error,
-                    )
-                    assert expected_error in str(result.error), (
-                        f"Expected error '{expected_error}' in '{result.error}' for: {description}"
+                        has=expected_error,
+                        msg=f"Expected failure for: {description}, got success",
                     )
                 else:
-                    _ = assertion_helpers.assert_flext_result_success(
+                    actual_value = tm.ok(
                         result,
-                        f"Expected success for: {description}, got: {result.error}",
+                        msg=f"Expected success for: {description}, got: {result.error}",
                     )
                     if expected_value is not None:
-                        assert result.value == expected_value, (
-                            f"Expected {expected_value}, got {result.value} for: {description}"
+                        tm.that(
+                            actual_value,
+                            eq=expected_value,
+                            msg=f"Expected {expected_value}, got {actual_value} for: {description}",
                         )
 
         class CoreBadObjects:
@@ -143,7 +140,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """Create object that fails on str()."""
                 return TestsFlextUtilities.Tests.CoreBadObjects.BadStrObject()
 
-            class BadDict(UserDict[str, t.Tests.object]):
+            class BadDict(UserDict[str, t.Tests.Testobject]):
                 """Dict that raises on get()."""
 
                 @override
@@ -152,11 +149,11 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                     msg = "Bad dict get"
                     raise RuntimeError(msg)
 
-            class BadList(UserList[t.Tests.object]):
+            class BadList(UserList[t.Tests.Testobject]):
                 """List that raises on iteration."""
 
                 @override
-                def __iter__(self) -> Iterator[t.Tests.object]:
+                def __iter__(self) -> Iterator[t.Tests.Testobject]:
                     """Raise error on iteration."""
                     msg = "Bad list iteration"
                     raise RuntimeError(msg)
@@ -164,7 +161,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                model_dump: Callable[[], dict[str, t.Tests.object]] = staticmethod(
+                model_dump: Callable[[], dict[str, t.Tests.Testobject]] = staticmethod(
                     lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
                 )
 
@@ -193,10 +190,10 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                     description: Test case description for error messages
 
                 """
-                _ = assertion_helpers.assert_flext_result_failure(
+                tm.fail(
                     result,
-                    description,
-                    error_contains=expected_error,
+                    has=expected_error,
+                    msg=description,
                 )
 
             @staticmethod
@@ -211,9 +208,9 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                     description: Test case description for error messages
 
                 """
-                _ = assertion_helpers.assert_flext_result_success(
+                tm.ok(
                     result,
-                    f"Expected success for: {description}, got: {result.error}",
+                    msg=f"Expected success for: {description}, got: {result.error}",
                 )
 
             @staticmethod
@@ -230,12 +227,14 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                     description: Test case description for error messages
 
                 """
-                _ = assertion_helpers.assert_flext_result_success(
+                actual_value = tm.ok(
                     result,
-                    f"Expected success for: {description}, got: {result.error}",
+                    msg=f"Expected success for: {description}, got: {result.error}",
                 )
-                assert result.value == expected_value, (
-                    f"Expected {expected_value}, got {result.value} for: {description}"
+                tm.that(
+                    actual_value,
+                    eq=expected_value,
+                    msg=f"Expected {expected_value}, got {actual_value} for: {description}",
                 )
 
 

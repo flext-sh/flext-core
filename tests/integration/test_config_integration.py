@@ -21,7 +21,6 @@ import threading
 from pathlib import Path
 from typing import Annotated
 
-import pytest
 import yaml
 from flext_tests import t
 from pydantic import BaseModel, ConfigDict, Field
@@ -167,8 +166,7 @@ class TestFlextSettingsSingletonIntegration:
         container = FlextContainer()
         container.clear_all()
 
-    @pytest.mark.parametrize("case", _ConfigTestFactories.basic_config_cases())
-    def test_singleton_pattern_with_factories(self, case: _ConfigTestCase) -> None:
+    def test_singleton_pattern_with_factories(self) -> None:
         """Test that FlextSettings.get_global() returns the same instance."""
         config1 = FlextSettings.get_global()
         config2 = FlextSettings.get_global()

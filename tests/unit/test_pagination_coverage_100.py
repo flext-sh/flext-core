@@ -15,11 +15,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from collections.abc import Callable
+from typing import Annotated, cast
 
 import pytest
 from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
+
+
+def _case_factories(
+    getter_name: str,
+    count: int,
+) -> list[Callable[[], BaseModel]]:
+    return [
+        lambda index=index: cast(
+            "Callable[[], BaseModel]",
+            getattr(TestPaginationCoverage100, getter_name),
+        )()[index]
+        for index in range(count)
+    ]
 
 
 class TestPaginationCoverage100:
@@ -90,11 +104,12 @@ class TestPaginationCoverage100:
             str | None, Field(description="Expected preparation error")
         ]
 
-    class PaginationScenarios:
-        """Centralized pagination test scenarios."""
-
-        EXTRACT_PAGE_PARAMS: ClassVar[list[ExtractPageParamsScenario]] = [
-            ExtractPageParamsScenario(
+    @staticmethod
+    def _extract_page_params_scenarios() -> list[
+        TestPaginationCoverage100.ExtractPageParamsScenario
+    ]:
+        return [
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="default_values",
                 query_params={},
                 default_page=1,
@@ -105,7 +120,7 @@ class TestPaginationCoverage100:
                 expected_page_size=20,
                 expected_error=None,
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="valid_page_and_size",
                 query_params={"page": "2", "page_size": "50"},
                 default_page=1,
@@ -116,7 +131,7 @@ class TestPaginationCoverage100:
                 expected_page_size=50,
                 expected_error=None,
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="page_zero",
                 query_params={"page": "0"},
                 default_page=1,
@@ -127,7 +142,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Page must be >= 1",
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="page_size_zero",
                 query_params={"page_size": "0"},
                 default_page=1,
@@ -138,7 +153,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Page size must be >= 1",
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="page_size_exceeds_max",
                 query_params={"page_size": "2000"},
                 default_page=1,
@@ -149,7 +164,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Page size must be <= 1000",
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="invalid_page_string",
                 query_params={"page": "abc"},
                 default_page=1,
@@ -160,7 +175,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Invalid page parameters",
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="invalid_page_size_string",
                 query_params={"page_size": "xyz"},
                 default_page=1,
@@ -171,7 +186,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Invalid page parameters",
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="negative_page",
                 query_params={"page": "-1"},
                 default_page=1,
@@ -182,7 +197,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Page must be >= 1",
             ),
-            ExtractPageParamsScenario(
+            TestPaginationCoverage100.ExtractPageParamsScenario(
                 name="custom_defaults",
                 query_params={},
                 default_page=5,
@@ -194,8 +209,13 @@ class TestPaginationCoverage100:
                 expected_error=None,
             ),
         ]
-        VALIDATE_PAGINATION_PARAMS: ClassVar[list[ValidatePaginationParamsScenario]] = [
-            ValidatePaginationParamsScenario(
+
+    @staticmethod
+    def _validate_pagination_params_scenarios() -> list[
+        TestPaginationCoverage100.ValidatePaginationParamsScenario
+    ]:
+        return [
+            TestPaginationCoverage100.ValidatePaginationParamsScenario(
                 name="valid_with_page_size",
                 page=2,
                 page_size=50,
@@ -204,7 +224,7 @@ class TestPaginationCoverage100:
                 expected_page_size=50,
                 expected_error=None,
             ),
-            ValidatePaginationParamsScenario(
+            TestPaginationCoverage100.ValidatePaginationParamsScenario(
                 name="valid_without_page_size",
                 page=1,
                 page_size=None,
@@ -213,7 +233,7 @@ class TestPaginationCoverage100:
                 expected_page_size=20,
                 expected_error=None,
             ),
-            ValidatePaginationParamsScenario(
+            TestPaginationCoverage100.ValidatePaginationParamsScenario(
                 name="page_zero",
                 page=0,
                 page_size=20,
@@ -222,7 +242,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Page must be >= 1",
             ),
-            ValidatePaginationParamsScenario(
+            TestPaginationCoverage100.ValidatePaginationParamsScenario(
                 name="page_size_zero",
                 page=1,
                 page_size=0,
@@ -231,7 +251,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Page size must be >= 1",
             ),
-            ValidatePaginationParamsScenario(
+            TestPaginationCoverage100.ValidatePaginationParamsScenario(
                 name="page_size_exceeds_max",
                 page=1,
                 page_size=2000,
@@ -240,7 +260,7 @@ class TestPaginationCoverage100:
                 expected_page_size=None,
                 expected_error="Page size must be <= 1000",
             ),
-            ValidatePaginationParamsScenario(
+            TestPaginationCoverage100.ValidatePaginationParamsScenario(
                 name="negative_page",
                 page=-1,
                 page_size=20,
@@ -250,8 +270,13 @@ class TestPaginationCoverage100:
                 expected_error="Page must be >= 1",
             ),
         ]
-        PREPARE_PAGINATION_DATA: ClassVar[list[PreparePaginationDataScenario]] = [
-            PreparePaginationDataScenario(
+
+    @staticmethod
+    def _prepare_pagination_data_scenarios() -> list[
+        TestPaginationCoverage100.PreparePaginationDataScenario
+    ]:
+        return [
+            TestPaginationCoverage100.PreparePaginationDataScenario(
                 name="with_data_and_total",
                 data=["item1", "item2", "item3"],
                 total=100,
@@ -262,7 +287,7 @@ class TestPaginationCoverage100:
                 expected_total_pages=5,
                 expected_error=None,
             ),
-            PreparePaginationDataScenario(
+            TestPaginationCoverage100.PreparePaginationDataScenario(
                 name="with_data_no_total",
                 data=["item1", "item2"],
                 total=None,
@@ -273,7 +298,7 @@ class TestPaginationCoverage100:
                 expected_total_pages=1,
                 expected_error=None,
             ),
-            PreparePaginationDataScenario(
+            TestPaginationCoverage100.PreparePaginationDataScenario(
                 name="no_data_no_total",
                 data=None,
                 total=None,
@@ -284,7 +309,7 @@ class TestPaginationCoverage100:
                 expected_total_pages=0,
                 expected_error=None,
             ),
-            PreparePaginationDataScenario(
+            TestPaginationCoverage100.PreparePaginationDataScenario(
                 name="page_exceeds_total_pages",
                 data=["item1"],
                 total=10,
@@ -295,7 +320,7 @@ class TestPaginationCoverage100:
                 expected_total_pages=None,
                 expected_error="Page 10 exceeds total pages 1",
             ),
-            PreparePaginationDataScenario(
+            TestPaginationCoverage100.PreparePaginationDataScenario(
                 name="last_page_exact",
                 data=["item1", "item2"],
                 total=22,
@@ -306,7 +331,7 @@ class TestPaginationCoverage100:
                 expected_total_pages=2,
                 expected_error=None,
             ),
-            PreparePaginationDataScenario(
+            TestPaginationCoverage100.PreparePaginationDataScenario(
                 name="empty_data_with_total",
                 data=[],
                 total=0,
@@ -319,9 +344,27 @@ class TestPaginationCoverage100:
             ),
         ]
 
-    @pytest.mark.parametrize("scenario", PaginationScenarios.EXTRACT_PAGE_PARAMS)
-    def test_extract_page_params(self, scenario: ExtractPageParamsScenario) -> None:
+    @pytest.mark.parametrize(
+        "scenario_factory",
+        _case_factories("_extract_page_params_scenarios", 9),
+        ids=[
+            "default_values",
+            "valid_page_and_size",
+            "page_zero",
+            "page_size_zero",
+            "page_size_exceeds_max",
+            "invalid_page_string",
+            "invalid_page_size_string",
+            "negative_page",
+            "custom_defaults",
+        ],
+    )
+    def test_extract_page_params(
+        self,
+        scenario_factory: Callable[[], BaseModel],
+    ) -> None:
         """Test extract_page_params with various scenarios."""
+        scenario = cast("ExtractPageParamsScenario", scenario_factory())
         result = u.extract_page_params(
             scenario.query_params,
             default_page=scenario.default_page,
@@ -340,14 +383,23 @@ class TestPaginationCoverage100:
             )
 
     @pytest.mark.parametrize(
-        "scenario",
-        PaginationScenarios.VALIDATE_PAGINATION_PARAMS,
+        "scenario_factory",
+        _case_factories("_validate_pagination_params_scenarios", 6),
+        ids=[
+            "valid_with_page_size",
+            "valid_without_page_size",
+            "page_zero",
+            "page_size_zero",
+            "page_size_exceeds_max",
+            "negative_page",
+        ],
     )
     def test_validate_pagination_params(
         self,
-        scenario: ValidatePaginationParamsScenario,
+        scenario_factory: Callable[[], BaseModel],
     ) -> None:
         """Test validate_pagination_params with various scenarios."""
+        scenario = cast("ValidatePaginationParamsScenario", scenario_factory())
         result = u.validate_pagination_params(
             page=scenario.page,
             page_size=scenario.page_size,
@@ -365,14 +417,23 @@ class TestPaginationCoverage100:
             )
 
     @pytest.mark.parametrize(
-        "scenario",
-        PaginationScenarios.PREPARE_PAGINATION_DATA,
+        "scenario_factory",
+        _case_factories("_prepare_pagination_data_scenarios", 6),
+        ids=[
+            "with_data_and_total",
+            "with_data_no_total",
+            "no_data_no_total",
+            "page_exceeds_total_pages",
+            "last_page_exact",
+            "empty_data_with_total",
+        ],
     )
     def test_prepare_pagination_data(
         self,
-        scenario: PreparePaginationDataScenario,
+        scenario_factory: Callable[[], BaseModel],
     ) -> None:
         """Test prepare_pagination_data with various scenarios."""
+        scenario = cast("PreparePaginationDataScenario", scenario_factory())
         result = u.prepare_pagination_data(
             scenario.data,
             scenario.total,
@@ -528,9 +589,3 @@ class TestPaginationCoverage100:
         result = u.extract_pagination_config(Config())
         assert result["default_page_size"] == 40
         assert result["max_page_size"] == 600
-
-
-ExtractPageParamsScenario = TestPaginationCoverage100.ExtractPageParamsScenario
-ValidatePaginationParamsScenario = ValidatePaginationParamsScenario
-PreparePaginationDataScenario = TestPaginationCoverage100.PreparePaginationDataScenario
-PaginationScenarios = TestPaginationCoverage100.PaginationScenarios

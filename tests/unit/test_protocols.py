@@ -46,19 +46,13 @@ class TestFlextProtocols:
 
         name: Annotated[str, Field(description="Protocol definition scenario name")]
         protocol_name: Annotated[str, Field(description="Protocol attribute name")]
-        category: Annotated[
-            TestFlextProtocols.ProtocolCategoryType,
-            Field(description="Protocol category"),
-        ]
+        category: Annotated[StrEnum, Field(description="Protocol category")]
 
     class ProtocolAvailabilityScenario(BaseModel):
         model_config = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Protocol availability scenario name")]
-        category: Annotated[
-            TestFlextProtocols.ProtocolCategoryType,
-            Field(description="Protocol category"),
-        ]
+        category: Annotated[StrEnum, Field(description="Protocol category")]
         protocol_names: Annotated[
             list[str], Field(description="Expected protocol names")
         ]

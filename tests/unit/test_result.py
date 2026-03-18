@@ -55,9 +55,7 @@ class Testr:
 
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Result scenario name")]
-        operation_type: Annotated[
-            Testr.ResultOperationType, Field(description="Result operation type")
-        ]
+        operation_type: Annotated[StrEnum, Field(description="Result operation type")]
         value: Annotated[object, Field(description="Input value for result operation")]
         is_success_expected: Annotated[
             bool, Field(default=True, description="Expected success state")
@@ -70,7 +68,7 @@ class Testr:
         def __init__(
             self,
             name: str,
-            operation_type: Testr.ResultOperationType,
+            operation_type: StrEnum,
             value: t.Tests.object,
             *,
             is_success_expected: bool = True,
