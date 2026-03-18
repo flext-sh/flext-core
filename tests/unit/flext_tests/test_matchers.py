@@ -40,7 +40,7 @@ def _greater_than_two(value: t.Tests.Testobject) -> bool:
 
 
 class TestFlextTestsMatchers:
-    """Test suite for FlextTestsMatchers class."""
+    """Test suite for tm class."""
 
     def test_assert_result_success_passes(self) -> None:
         """Test tm.ok() with successful result."""

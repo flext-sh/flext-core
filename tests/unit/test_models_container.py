@@ -9,7 +9,7 @@ Tests cover:
 - ContainerConfig all fields and defaults
 - Edge cases and error paths
 
-Uses real implementations, FlextTestsUtilities, and advanced pytest patterns.
+Uses real implementations, u, and advanced pytest patterns.
 """
 
 from __future__ import annotations

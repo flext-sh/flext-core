@@ -1,10 +1,10 @@
 """Models for flext-core tests.
 
-Provides TestsFlextModels using composition with FlextTestsModels and FlextModels.
+Provides TestsFlextModels using composition with m and FlextModels.
 All generic test models come from flext_tests.
 
 Architecture:
-- FlextTestsModels (flext_tests) = Generic models for all FLEXT projects
+- m (flext_tests) = Generic models for all FLEXT projects
 - FlextModels (flext_core) = Core domain models
 - TestsFlextModels (tests/) = flext-core-specific models using composition
 
@@ -25,21 +25,21 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import FlextModels, t
 
 
-class TestsFlextModels(FlextTestsModels, FlextInfraModels):
-    """Models for flext-core tests - uses composition with FlextTestsModels.
+class TestsFlextModels(m, FlextInfraModels):
+    """Models for flext-core tests - uses composition with m.
 
-    Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextModels
+    Architecture: Uses composition (not inheritance) with m and FlextModels
     for flext-core-specific model definitions.
 
     Access patterns:
-    - TestsFlextModels.FlextTestsModels.Tests.* = flext_tests test models (via composition)
+    - TestsFlextModels.m.Tests.* = flext_tests test models (via composition)
     - TestsFlextModels.* = flext-core-specific test models
     - TestsFlextModels.FlextModels.Entity, .FlextModels.Value, etc. = FlextModels domain models (via composition)
 
     Rules:
-    - Use composition, not inheritance (FlextTestsModels deprecates subclassing)
+    - Use composition, not inheritance (m deprecates subclassing)
     - flext-core-specific models go in Core namespace
-    - Generic models accessed via FlextTestsModels.Tests namespace
+    - Generic models accessed via m.Tests namespace
     """
 
     @unique

@@ -58,7 +58,7 @@ class TestAutomatedFlextSettings:
         tm.that(first is second, eq=False)
 
     def test_create_and_read_config_file(self, tmp_path: Path) -> None:
-        files_cls: type[FlextTestsFiles] = tf
+        files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         config = t.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
         config_path = files.create(config, "config.yaml", fmt="yaml")
@@ -70,7 +70,7 @@ class TestAutomatedFlextSettings:
             tm.that(str(read_result.value.root.get("app_name")), eq="flext")
 
     def test_create_and_read_json_config(self, tmp_path: Path) -> None:
-        files_cls: type[FlextTestsFiles] = tf
+        files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         payload = t.ConfigMap(
             root={"name": "flext-core", "workers": 4, "enabled": True}
@@ -87,7 +87,7 @@ class TestAutomatedFlextSettings:
                 tm.that(workers, eq=4)
 
     def test_compare_identical_files(self, tmp_path: Path) -> None:
-        files_cls: type[FlextTestsFiles] = tf
+        files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         first = files.create(t.ConfigMap(root={"x": 1}), "a.json", fmt="json")
         second = files.create(t.ConfigMap(root={"x": 1}), "b.json", fmt="json")

@@ -116,7 +116,13 @@ if TYPE_CHECKING:
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
-    from flext_core.constants import FlextConstants, c
+    from flext_core.constants import (
+        PROJECT_KIND_APPLICATION,
+        PROJECT_KIND_LIBRARY,
+        PROJECT_KIND_SERVICE,
+        FlextConstants,
+        c,
+    )
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
@@ -318,6 +324,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core.typings", "P"),
+    "PROJECT_KIND_APPLICATION": ("flext_core.constants", "PROJECT_KIND_APPLICATION"),
+    "PROJECT_KIND_LIBRARY": ("flext_core.constants", "PROJECT_KIND_LIBRARY"),
+    "PROJECT_KIND_SERVICE": ("flext_core.constants", "PROJECT_KIND_SERVICE"),
     "R": ("flext_core.typings", "R"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
     "ResultT": ("flext_core.typings", "ResultT"),
@@ -365,6 +374,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "PROJECT_KIND_APPLICATION",
+    "PROJECT_KIND_LIBRARY",
+    "PROJECT_KIND_SERVICE",
     "TV",
     "CircuitBreakerManager",
     "EnumT",

@@ -13,7 +13,7 @@ Tests FlextContext functionality including:
 - Thread safety
 - Edge cases and error handling
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -102,12 +102,8 @@ class TestFlextContext:
         """Test context initialization with initial data."""
         initial_data = t.Dict(root={"user_id": "123", "session_id": "abc"})
         context = FlextContext(initial_data=initial_data)
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            context, "user_id", "123"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            context, "session_id", "abc"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(context, "user_id", "123")
+        u.Tests.ContextHelpers.assert_context_get_success(context, "session_id", "abc")
 
     @pytest.mark.parametrize(
         ("key", "value", "expected"), ContextScenarios.SET_GET_CASES
@@ -127,9 +123,7 @@ class TestFlextContext:
             set_result = context.set(key, value)
         _ = u.Tests.Result.assert_success(set_result)
         expected_value = expected
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            context, key, expected_value
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(context, key, expected_value)
 
     def test_context_get_with_default(self, test_context: FlextContext) -> None:
         """Test context get with default value using monadic operations."""
@@ -202,19 +196,13 @@ class TestFlextContext:
         context1 = test_context
         context1.set("key1", "value1").value
         context1.set("key2", "value1").value
-        context2 = FlextTestsUtilities.Tests.ContextHelpers.create_test_context()
+        context2 = u.Tests.ContextHelpers.create_test_context()
         context2.set("key2", "value2").value
         context2.set("key3", "value3").value
         merged = context1.merge(context2)
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key1", "value1"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key2", "value2"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key3", "value3"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key1", "value1")
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key2", "value2")
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key3", "value3")
 
     def test_context_clone(self, test_context: FlextContext) -> None:
         """Test context cloning."""
@@ -223,16 +211,10 @@ class TestFlextContext:
         context.set("key2", "value2").value
         cloned_raw = context.clone()
         cloned = cloned_raw
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            cloned, "key1", "value1"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            cloned, "key2", "value2"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(cloned, "key1", "value1")
+        u.Tests.ContextHelpers.assert_context_get_success(cloned, "key2", "value2")
         cloned.set("key1", "modified_value").value
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            context, "key1", "value1"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(context, "key1", "value1")
 
     def test_context_validation(self, test_context: FlextContext) -> None:
         """Test context validation."""
@@ -300,7 +282,7 @@ class TestFlextContext:
         context = test_context
         context.set("global_key", "global_value").value
         context.set(f"{scope}_key", value, scope=scope).value
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
+        u.Tests.ContextHelpers.assert_context_get_success(
             context, "global_key", "global_value"
         )
         scoped_result = context.get(f"{scope}_key", scope=scope)
@@ -337,7 +319,7 @@ class TestFlextContext:
         context = test_context
         _ = key_name
         context.set(special_key, "special_value").value
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
+        u.Tests.ContextHelpers.assert_context_get_success(
             context, special_key, "special_value"
         )
 
@@ -438,7 +420,7 @@ class TestFlextContext:
         for i in range(100):
             context.set(f"key_{i}", f"value_{i}").value
         for i in range(100):
-            FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
+            u.Tests.ContextHelpers.assert_context_get_success(
                 context, f"key_{i}", f"value_{i}"
             )
         for i in range(50):
@@ -446,7 +428,7 @@ class TestFlextContext:
         for i in range(50):
             tm.that(context.has(f"key_{i}"), eq=False)
         for i in range(50, 100):
-            FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
+            u.Tests.ContextHelpers.assert_context_get_success(
                 context, f"key_{i}", f"value_{i}"
             )
 
@@ -507,9 +489,7 @@ class TestFlextContext:
         context = test_context
         context.set("key1", "value1").value
         merged = context.merge({})
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key1", "value1"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key1", "value1")
 
     def test_context_clone_then_clear_original(
         self, test_context: FlextContext
@@ -536,29 +516,19 @@ class TestFlextContext:
         context = test_context
         context.set("key1", "value1").value
         merged = context.merge({"key2": "value2", "key3": "value3"})
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key1", "value1"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key2", "value2"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key3", "value3"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key1", "value1")
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key2", "value2")
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key3", "value3")
 
     def test_context_merge_with_context(self, test_context: FlextContext) -> None:
         """Test merging context with another context."""
         context1 = test_context
         context1.set("key1", "value1").value
-        context2 = FlextTestsUtilities.Tests.ContextHelpers.create_test_context()
+        context2 = u.Tests.ContextHelpers.create_test_context()
         context2.set("key2", "value2").value
         merged = context1.merge(context2)
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key1", "value1"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            merged, "key2", "value2"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key1", "value1")
+        u.Tests.ContextHelpers.assert_context_get_success(merged, "key2", "value2")
 
     def test_context_clone_independence(self, test_context: FlextContext) -> None:
         """Test cloned context is independent."""
@@ -568,12 +538,8 @@ class TestFlextContext:
         context2 = context2_raw
         context2.set("key1", "value2").value
         context2.set("key3", "value3").value
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            context1, "key1", "value1"
-        )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
-            context2, "key1", "value2"
-        )
+        u.Tests.ContextHelpers.assert_context_get_success(context1, "key1", "value1")
+        u.Tests.ContextHelpers.assert_context_get_success(context2, "key1", "value2")
         tm.that(context1.has("key3"), eq=False)
         tm.that(context2.has("key3"), eq=True)
 
@@ -610,10 +576,10 @@ class TestFlextContext:
         context = test_context
         context.set("key1", "global_value").value
         context.set("key2", "request_value").value
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
+        u.Tests.ContextHelpers.assert_context_get_success(
             context, "key1", "global_value"
         )
-        FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
+        u.Tests.ContextHelpers.assert_context_get_success(
             context, "key2", "request_value"
         )
 

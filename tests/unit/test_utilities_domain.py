@@ -11,7 +11,7 @@ Tests u functionality including:
 - Entity ID validation (validate_entity_has_id)
 - Value object immutability validation (validate_value_object_immutable)
 
-Uses Python 3.13 patterns, FlextTestsUtilities, constants (c), types (t),
+Uses Python 3.13 patterns, u, constants (c), types (t),
 utilities (u), protocols (p), models (m) extensively for maximum code reuse.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -452,7 +452,7 @@ def create_validate_value_object_immutable_cases() -> list[TestUnitModels.TestCa
 
 
 class TestuDomain:
-    """Comprehensive tests for u using FlextTestsUtilities and constants extensively."""
+    """Comprehensive tests for u using u and constants extensively."""
 
     @pytest.mark.parametrize(
         "test_case",
@@ -462,7 +462,7 @@ class TestuDomain:
     def test_compare_entities_by_id(
         self, test_case: TestUnitModels.TestCaseMap
     ) -> None:
-        """Test compare_entities_by_id using FlextTestsUtilities."""
+        """Test compare_entities_by_id using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -479,7 +479,7 @@ class TestuDomain:
         ids=lambda case: f"hash_entity_{case['description']}",
     )
     def test_hash_entity_by_id(self, test_case: TestUnitModels.TestCaseMap) -> None:
-        """Test hash_entity_by_id using FlextTestsUtilities."""
+        """Test hash_entity_by_id using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -502,7 +502,7 @@ class TestuDomain:
     def test_compare_value_objects_by_value(
         self, test_case: TestUnitModels.TestCaseMap
     ) -> None:
-        """Test compare_value_objects_by_value using FlextTestsUtilities."""
+        """Test compare_value_objects_by_value using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -526,7 +526,7 @@ class TestuDomain:
     def test_hash_value_object_by_value(
         self, test_case: TestUnitModels.TestCaseMap
     ) -> None:
-        """Test hash_value_object_by_value using FlextTestsUtilities."""
+        """Test hash_value_object_by_value using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -543,7 +543,7 @@ class TestuDomain:
     def test_validate_entity_has_id(
         self, test_case: TestUnitModels.TestCaseMap
     ) -> None:
-        """Test validate_entity_has_id using FlextTestsUtilities."""
+        """Test validate_entity_has_id using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
@@ -562,7 +562,7 @@ class TestuDomain:
     def test_validate_value_object_immutable(
         self, test_case: TestUnitModels.TestCaseMap
     ) -> None:
-        """Test validate_value_object_immutable using FlextTestsUtilities."""
+        """Test validate_value_object_immutable using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),

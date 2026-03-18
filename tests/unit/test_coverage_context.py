@@ -16,13 +16,13 @@ class TestCoverageContext:
     """Coverage tests for currently supported FlextContext APIs."""
 
     def test_new_correlation_context(self) -> None:
-        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
+        u.Tests.ContextHelpers.clear_context()
         with FlextContext.Correlation.new_correlation() as correlation_id:
             tm.that(isinstance(correlation_id, str), eq=True)
             tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
 
     def test_new_correlation_with_explicit_id(self) -> None:
-        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
+        u.Tests.ContextHelpers.clear_context()
         explicit_id = "explicit-corr-789"
         with FlextContext.Correlation.new_correlation(
             correlation_id=explicit_id,
@@ -53,7 +53,7 @@ class TestCoverageContext:
         _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_timed_operation_context(self) -> None:
-        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
+        u.Tests.ContextHelpers.clear_context()
         with FlextContext.Performance.timed_operation("database_query") as metadata:
             tm.that("start_time" in metadata, eq=True)
             tm.that("operation_name" in metadata, eq=True)
@@ -71,7 +71,7 @@ class TestCoverageContext:
         tm.that(duration < 0.1, eq=True)
 
     def test_timed_operation_duration_calculation(self) -> None:
-        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
+        u.Tests.ContextHelpers.clear_context()
         expected_sleep = 0.05
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
             start_time = metadata.get("start_time")
@@ -87,12 +87,12 @@ class TestCoverageContext:
         tm.that(metadata["operation_name"], eq="slow_operation")
 
     def test_ensure_correlation_id_creates_if_missing(self) -> None:
-        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
+        u.Tests.ContextHelpers.clear_context()
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
         tm.that(isinstance(correlation_id, str), eq=True)
 
     def test_ensure_correlation_id_uses_existing(self) -> None:
-        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
+        u.Tests.ContextHelpers.clear_context()
         existing_id = "existing_corr_789"
         FlextContext.Correlation.set_correlation_id(existing_id)
         correlation_id = FlextContext.Utilities.ensure_correlation_id()

@@ -19,6 +19,10 @@ from flext_core._constants import (
     FlextConstantsValidation,
 )
 
+PROJECT_KIND_LIBRARY: Final[str] = "library"
+PROJECT_KIND_APPLICATION: Final[str] = "application"
+PROJECT_KIND_SERVICE: Final[str] = "service"
+
 
 class FlextConstants(
     FlextConstantsBase,
@@ -38,7 +42,16 @@ class FlextConstants(
     ENCODING: Final[str] = FlextConstantsSettings.Utilities.DEFAULT_ENCODING
     PAGE_SIZE: Final[int] = FlextConstantsInfrastructure.Pagination.DEFAULT_PAGE_SIZE
     MAX_RETRIES: Final[int] = FlextConstantsPlatform.Reliability.MAX_RETRY_ATTEMPTS
+    PROJECT_KIND_LIBRARY: Final[str] = PROJECT_KIND_LIBRARY
+    PROJECT_KIND_APPLICATION: Final[str] = PROJECT_KIND_APPLICATION
+    PROJECT_KIND_SERVICE: Final[str] = PROJECT_KIND_SERVICE
 
 
 c = FlextConstants
-__all__ = ["FlextConstants", "c"]
+__all__ = [
+    "PROJECT_KIND_APPLICATION",
+    "PROJECT_KIND_LIBRARY",
+    "PROJECT_KIND_SERVICE",
+    "FlextConstants",
+    "c",
+]

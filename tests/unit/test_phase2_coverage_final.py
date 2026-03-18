@@ -6,7 +6,7 @@ Scope: Strategic tests targeting remaining coverage gaps
 This test file contains strategic tests targeting the remaining ~86 uncovered lines
 needed to reach Phase 2 completion at 75% coverage.
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -25,7 +25,7 @@ from ..test_utils import assertion_helpers
 
 
 class TestPhase2CoverageFinal:
-    """Strategic tests targeting remaining coverage gaps using FlextTestsUtilities."""
+    """Strategic tests targeting remaining coverage gaps using u."""
 
     class ResultChainingScenario(BaseModel):
         """r chaining test scenario."""

@@ -12,7 +12,7 @@ Tests core m functionality including:
 - Custom validators and field processing
 - JSON serialization and deserialization
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -36,7 +36,7 @@ from tests import c, m, t
 
 
 class TestModels:
-    """Test suite for m using FlextTestsUtilities and c."""
+    """Test suite for m using u and c."""
 
     @unique
     class ModelType(StrEnum):

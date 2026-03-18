@@ -1,11 +1,11 @@
 """Service base for flext-core tests.
 
-Provides TestsFlextServiceBase, extending FlextTestsServiceBase with flext-core-specific
+Provides TestsFlextServiceBase, extending s with flext-core-specific
 service functionality. All generic test service functionality comes from flext_tests.
 
 Architecture:
-- FlextTestsServiceBase (flext_tests) = Generic service base for all FLEXT projects
-- TestsFlextServiceBase (tests/) = flext-core-specific service base extending FlextTestsServiceBase
+- s (flext_tests) = Generic service base for all FLEXT projects
+- TestsFlextServiceBase (tests/) = flext-core-specific service base extending s
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,25 +14,28 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import datetime
+from pathlib import Path
 from typing import Annotated, override
 
+from flext_tests import s, td
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import T, h, r
 from tests import c, m, t
 
 
-class TestsFlextServiceBase(FlextTestsServiceBase[T]):
-    """Service base for flext-core tests - extends FlextTestsServiceBase.
+class TestsFlextServiceBase(s[T]):
+    """Service base for flext-core tests - extends s.
 
-    Architecture: Extends FlextTestsServiceBase with flext-core-specific service
-    functionality. All generic service functionality from FlextTestsServiceBase
+    Architecture: Extends s with flext-core-specific service
+    functionality. All generic service functionality from s
     is available through inheritance.
 
     Rules:
-    - NEVER redeclare functionality from FlextTestsServiceBase
+    - NEVER redeclare functionality from s
     - Only flext-core-specific service functionality allowed
-    - All generic service functionality comes from FlextTestsServiceBase
+    - All generic service functionality comes from s
     """
 
     class HandlerTestCase(BaseModel):
@@ -92,48 +95,54 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         """Centralized factories for test handlers."""
 
         @staticmethod
+        def _to_container(value: t.Tests.Testobject) -> t.Container | None:
+            if value is None:
+                return None
+            if isinstance(value, (str, int, float, bool, datetime, Path)):
+                container_value: t.Container = value
+                return container_value
+            return None
+
+        @staticmethod
+        def _build_cases(
+            *, should_fail: bool
+        ) -> list[TestsFlextServiceBase.HandlerTestCase]:
+            cases: list[TestsFlextServiceBase.HandlerTestCase] = []
+            for spec in td.default_handler_case_specs():
+                spec_should_fail = bool(spec.get("should_fail", False))
+                if spec_should_fail is not should_fail:
+                    continue
+                handler_type_name = str(spec["handler_type"])
+                expected_result = TestsFlextServiceBase.HandlerFactories._to_container(
+                    spec.get("expected_result")
+                )
+                cases.append(
+                    TestsFlextServiceBase.HandlerTestCase(
+                        handler_id=str(spec["handler_id"]),
+                        handler_type=getattr(c.Cqrs.HandlerType, handler_type_name),
+                        expected_result=expected_result,
+                        should_fail=spec_should_fail,
+                        error_message=(
+                            str(spec["error_message"])
+                            if isinstance(spec.get("error_message"), str)
+                            else None
+                        ),
+                        description=str(spec["description"]),
+                    )
+                )
+            return cases
+
+        @staticmethod
         def success_cases() -> list[TestsFlextServiceBase.HandlerTestCase]:
             """Generate success handler test cases."""
-            return [
-                TestsFlextServiceBase.HandlerTestCase(
-                    handler_id="success_command",
-                    handler_type=c.Cqrs.HandlerType.COMMAND,
-                    expected_result="Handled: test",
-                    description="Command handler success",
-                ),
-                TestsFlextServiceBase.HandlerTestCase(
-                    handler_id="success_query",
-                    handler_type=c.Cqrs.HandlerType.QUERY,
-                    expected_result="Handled: query",
-                    description="Query handler success",
-                ),
-                TestsFlextServiceBase.HandlerTestCase(
-                    handler_id="success_event",
-                    handler_type=c.Cqrs.HandlerType.EVENT,
-                    expected_result="Handled: event",
-                    description="Event handler success",
-                ),
-            ]
+            return TestsFlextServiceBase.HandlerFactories._build_cases(
+                should_fail=False
+            )
 
         @staticmethod
         def failure_cases() -> list[TestsFlextServiceBase.HandlerTestCase]:
             """Generate failure handler test cases."""
-            return [
-                TestsFlextServiceBase.HandlerTestCase(
-                    handler_id="fail_command",
-                    handler_type=c.Cqrs.HandlerType.COMMAND,
-                    should_fail=True,
-                    error_message="Command failed",
-                    description="Command handler failure",
-                ),
-                TestsFlextServiceBase.HandlerTestCase(
-                    handler_id="fail_query",
-                    handler_type=c.Cqrs.HandlerType.QUERY,
-                    should_fail=True,
-                    error_message="Query failed",
-                    description="Query handler failure",
-                ),
-            ]
+            return TestsFlextServiceBase.HandlerFactories._build_cases(should_fail=True)
 
     class Handlers:
         """Handler creation utilities for tests."""
@@ -202,7 +211,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         @staticmethod
         def create_simple_handler(
             handler_id: str,
-            result_value: t.Container = c.Strings.BASIC_WORD,
+            result_value: t.Container = "test",
         ) -> h[t.Container, t.Container]:
             """Create a simple handler that always returns the same value.
 
@@ -232,7 +241,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         @staticmethod
         def create_failing_handler(
             handler_id: str,
-            error_message: str = c.TestErrors.PROCESSING_ERROR,
+            error_message: str = "Processing error",
         ) -> h[t.Container, t.Container]:
             """Create a handler that always fails.
 
@@ -248,7 +257,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                 msg = "Handler ID cannot be empty"
                 raise ValueError(msg)
             if not error_message:
-                error_message = c.TestErrors.PROCESSING_ERROR
+                error_message = "Processing error"
 
             def always_fail(
                 _msg: t.Container,

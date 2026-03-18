@@ -11,7 +11,7 @@ Tests p functionality including:
 - Commands/Extensions protocols (Dispatcher, Middleware)
 - Protocol implementations and runtime checking
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

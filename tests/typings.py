@@ -1,11 +1,11 @@
 """Type system foundation for flext-core tests.
 
-Provides TestsFlextTypes, extending FlextTestsTypes with flext-core-specific types.
+Provides TestsFlextTypes, extending t with flext-core-specific types.
 All generic test types come from flext_tests, only flext-core-specific additions here.
 
 Architecture:
-- FlextTestsTypes (flext_tests) = Generic types for all FLEXT projects
-- TestsFlextTypes (tests/) = flext-core-specific types extending FlextTestsTypes
+- t (flext_tests) = Generic types for all FLEXT projects
+- TestsFlextTypes (tests/) = flext-core-specific types extending t
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,19 +21,19 @@ from flext_tests import t
 from flext_core import T, T_co, T_contra, t as ft
 
 
-class TestsFlextTypes(FlextTestsTypes, FlextInfraTypes):
-    """Type system foundation for flext-core tests - extends FlextTestsTypes.
+class TestsFlextTypes(t, FlextInfraTypes):
+    """Type system foundation for flext-core tests - extends t.
 
-    Architecture: Extends FlextTestsTypes with flext-core-specific type definitions.
-    All generic types from FlextTestsTypes are available through inheritance.
+    Architecture: Extends t with flext-core-specific type definitions.
+    All generic types from t are available through inheritance.
 
     Rules:
-    - NEVER redeclare types from FlextTestsTypes
+    - NEVER redeclare types from t
     - Only flext-core-specific types allowed (not generic for other projects)
-    - All generic types come from FlextTestsTypes
+    - All generic types come from t
     """
 
-    class Tests(FlextTestsTypes.Tests):
+    class Tests(t.Tests):
         """Flext-core-specific type definitions for testing.
 
         Uses composition of t for type safety and consistency.

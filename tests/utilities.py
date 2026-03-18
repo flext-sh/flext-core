@@ -1,11 +1,11 @@
 """Utilities for flext-core tests.
 
-Provides FlextTestsUtilities, extending FlextTestsUtilities with flext-core-specific
+Provides u, extending u with flext-core-specific
 utilities. All generic test utilities come from flext_tests.
 
 Architecture:
-- FlextTestsUtilities (flext_tests) = Generic utilities for all FLEXT projects
-- FlextTestsUtilities (tests/) = flext-core-specific utilities extending FlextTestsUtilities
+- u (flext_tests) = Generic utilities for all FLEXT projects
+- u (tests/) = flext-core-specific utilities extending u
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,20 +23,20 @@ from flext_tests import t, tm, u
 from flext_core import r
 
 
-class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
-    """Utilities for flext-core tests - extends FlextTestsUtilities.
+class TestsFlextUtilities(u, FlextInfraUtilities):
+    """Utilities for flext-core tests - extends u.
 
-    Architecture: Extends FlextTestsUtilities with flext-core-specific utility
-    definitions. All generic utilities from FlextTestsUtilities are available
+    Architecture: Extends u with flext-core-specific utility
+    definitions. All generic utilities from u are available
     through inheritance.
 
     Rules:
-    - NEVER redeclare utilities from FlextTestsUtilities
+    - NEVER redeclare utilities from u
     - Only flext-core-specific utilities allowed
-    - All generic utilities come from FlextTestsUtilities
+    - All generic utilities come from u
     """
 
-    class Tests(FlextTestsUtilities.Tests):
+    class Tests(u.Tests):
         """flext-core-specific test utilities namespace."""
 
         class CoreParserHelpers:

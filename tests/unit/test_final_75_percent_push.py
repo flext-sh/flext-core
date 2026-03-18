@@ -5,7 +5,7 @@ Scope: r, FlextContainer, FlextExceptions, u
 
 Simple tests targeting uncovered lines.
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -24,7 +24,7 @@ from flext_core import FlextContainer, FlextExceptions, r
 
 
 class TestFinal75PercentPush:
-    """Simple tests targeting uncovered lines using FlextTestsUtilities."""
+    """Simple tests targeting uncovered lines using u."""
 
     class ResultOperationScenario(BaseModel):
         """r operation test scenario."""

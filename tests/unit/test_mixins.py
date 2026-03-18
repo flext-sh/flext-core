@@ -12,7 +12,7 @@ Tests x functionality including:
 - ModelConversion nested class (to_dict conversions)
 - ResultHandling nested class (ensure_result wrapping)
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -32,7 +32,7 @@ from flext_core import FlextContext, p, t, x
 
 
 class TestFlextMixinsNestedClasses:
-    """Comprehensive test suite for nested mixin classes using FlextTestsUtilities."""
+    """Comprehensive test suite for nested mixin classes using u."""
 
     @unique
     class ServiceMixinScenarioType(StrEnum):

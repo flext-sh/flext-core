@@ -1,4 +1,4 @@
-"""Architecture validation tests for flext-core using tv (FlextTestsValidator)."""
+"""Architecture validation tests for flext-core using tv (tv)."""
 
 from __future__ import annotations
 

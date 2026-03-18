@@ -11,7 +11,7 @@ Tests core s functionality including:
 - Business rules validation (success, failure, exception handling)
 - Service metadata retrieval
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -31,7 +31,7 @@ from flext_core import r, s
 
 
 class TestsCore:
-    """Unified test suite for s using FlextTestsUtilities."""
+    """Unified test suite for s using u."""
 
     @unique
     class ServiceScenarioType(StrEnum):
@@ -265,12 +265,10 @@ class TestsCore:
         service.name = "test"
         service.amount = 10
         service.enabled = True
-        validation_result = (
-            FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
-                service,
-                required_attrs=["name", "amount", "enabled"],
-                optional_attrs=["validate_business_rules"],
-            )
+        validation_result = u.Tests.GenericHelpers.validate_model_attributes(
+            service,
+            required_attrs=["name", "amount", "enabled"],
+            optional_attrs=["validate_business_rules"],
         )
         assert validation_result.is_success
 
@@ -280,11 +278,9 @@ class TestsCore:
         service.name = ""
         service.amount = -1
         service.enabled = False
-        validation_result = (
-            FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
-                service,
-                required_attrs=["name"],
-            )
+        validation_result = u.Tests.GenericHelpers.validate_model_attributes(
+            service,
+            required_attrs=["name"],
         )
         _ = u.Tests.Result.assert_success(validation_result)
         business_result = service.validate_business_rules()

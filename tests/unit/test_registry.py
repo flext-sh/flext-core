@@ -247,7 +247,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast("t.HandlerLike", cast("object", None)),
@@ -271,7 +271,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         handlers = self._create_handlers(test_case.handler_count)
         if test_case.duplicate_registration and handlers:
             registry.register_handlers(handlers)
@@ -290,7 +290,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         handlers = self._create_handlers(test_case.handler_count)
         if test_case.duplicate_registration and handlers:
             registry.register_handlers(handlers)
@@ -309,7 +309,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         handlers = self._create_handlers(test_case.handler_count)
         if test_case.duplicate_registration and handlers:
             registry.register_handlers(handlers)
@@ -350,7 +350,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast("t.HandlerLike", cast("object", None)),
@@ -367,12 +367,12 @@ class TestFlextRegistry:
             assert isinstance(result.value, m.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         assert registry is not None
         assert isinstance(registry, FlextRegistry)
 
     def test_registry_with_dispatcher(self) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         handler = self.ConcreteTestHandler()
         result = registry.register_handler(handler)
         _ = u.Tests.Result.assert_success(result)
@@ -393,7 +393,7 @@ class TestFlextRegistry:
         mode: str | None,
         expected: str,
     ) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         assert registry._get_handler_mode(mode or "") == expected
 
     @pytest.mark.parametrize(
@@ -411,5 +411,5 @@ class TestFlextRegistry:
         status: str,
         expected: c.Cqrs.CommonStatus,
     ) -> None:
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
+        registry = u.Tests.RegistryHelpers.create_test_registry()
         assert registry._get_status(status) == expected

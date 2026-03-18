@@ -76,7 +76,7 @@ class TestFlextHandlers:
     ]
 
     def test_handlers_initialization(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_1",
             "Test Handler 1",
         )
@@ -85,7 +85,7 @@ class TestFlextHandlers:
         assert isinstance(handlers, h)
 
     def test_handlers_with_custom_config(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_2",
             "Test Handler 2",
             handler_type=c.Cqrs.HandlerType.QUERY,
@@ -96,7 +96,7 @@ class TestFlextHandlers:
         assert handlers._config_model.handler_type == c.Cqrs.HandlerType.QUERY
 
     def test_handlers_handle_success(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_3",
             "Test Handler 3",
         )
@@ -105,7 +105,7 @@ class TestFlextHandlers:
         u.Tests.Result.assert_success_with_value(result, "processed_test_message")
 
     def test_handlers_handle_failure(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_4",
             "Test Handler 4",
         )
@@ -117,7 +117,7 @@ class TestFlextHandlers:
         )
 
     def test_handlers_config_access(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_5",
             "Test Handler 5",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -129,7 +129,7 @@ class TestFlextHandlers:
         assert handler._config_model.handler_type == c.Cqrs.HandlerType.COMMAND
 
     def test_handlers_execution_context(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_6",
             "Test Handler 6",
         )
@@ -146,7 +146,7 @@ class TestFlextHandlers:
             def handle(self, message: int) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_10",
             "Test Handler 10",
         )
@@ -160,7 +160,7 @@ class TestFlextHandlers:
         ids=lambda s: s.name,
     )
     def test_handlers_types(self, scenario: HandlerTypeScenario) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             f"test_{scenario.name}_handler",
             f"Test {scenario.name.title()} Handler",
             handler_type=scenario.handler_type,
@@ -171,7 +171,7 @@ class TestFlextHandlers:
         assert handler._config_model.handler_mode == scenario.handler_mode
 
     def test_handlers_with_metadata(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_with_metadata",
             "Test Handler With Metadata",
             metadata=m.Metadata(attributes={"test_key": "test_value", "priority": 1}),
@@ -181,7 +181,7 @@ class TestFlextHandlers:
         assert handler._config_model.metadata.attributes["test_key"] == "test_value"
 
     def test_handlers_with_timeout(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_with_timeout",
             "Test Handler With Timeout",
             command_timeout=60,
@@ -190,7 +190,7 @@ class TestFlextHandlers:
         assert handler._config_model.command_timeout == 60
 
     def test_handlers_with_retry_config(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_with_retry",
             "Test Handler With Retry",
             max_command_retries=3,
@@ -199,7 +199,7 @@ class TestFlextHandlers:
         assert handler._config_model.max_command_retries == 3
 
     def test_handlers_inheritance_chain(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_inheritance_handler",
             "Test Inheritance Handler",
         )
@@ -216,7 +216,7 @@ class TestFlextHandlers:
             def handle(self, message: dict[str, t.Tests.object]) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_dict_command_id",
             "Test Pipeline Dict Command ID",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -231,7 +231,7 @@ class TestFlextHandlers:
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_run_pipeline_mode_validation_error(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_mode_error",
             "Test Pipeline Mode Error",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -259,7 +259,7 @@ class TestFlextHandlers:
             def handle(self, message: str) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_cannot_handle",
             "Test Pipeline Cannot Handle",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -287,7 +287,7 @@ class TestFlextHandlers:
             def handle(self, message: str) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_validation_failure",
             "Test Pipeline Validation Failure",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -312,7 +312,7 @@ class TestFlextHandlers:
                 msg = "Test exception in handler"
                 raise ValueError(msg)
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_exception",
             "Test Pipeline Exception",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -382,7 +382,7 @@ class TestFlextHandlers:
         assert "Invalid handler mode: invalid_mode" in str(exc_info.value)
 
     def test_handlers_execute_method(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_execute",
             "Test Execute",
         )
@@ -391,7 +391,7 @@ class TestFlextHandlers:
         u.Tests.Result.assert_success_with_value(result, "processed_test_message")
 
     def test_handlers_can_handle_method(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_can_handle",
             "Test Can Handle",
         )
@@ -399,7 +399,7 @@ class TestFlextHandlers:
         assert isinstance(handler.can_handle(str), bool)
 
     def test_handlers_mode_property(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_mode_property",
             "Test Mode Property",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -419,7 +419,7 @@ class TestFlextHandlers:
         handler_mode: c.Cqrs.HandlerType,
     ) -> None:
         handler_type_name = str(handler_type)
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             f"test_validate_generic_{handler_type_name}",
             f"Test Validate Generic {handler_type_name.title()}",
             handler_type=handler_type,
@@ -439,7 +439,7 @@ class TestFlextHandlers:
         type_name: str,
         message: t.Tests.object,
     ) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             f"test_{type_name}_message",
             f"Test {type_name.title()} Message",
         )
@@ -448,7 +448,7 @@ class TestFlextHandlers:
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_handlers_record_metric(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_record_metric",
             "Test Record Metric",
         )
@@ -457,7 +457,7 @@ class TestFlextHandlers:
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_push_context(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_push_context",
             "Test Push Context",
         )
@@ -470,7 +470,7 @@ class TestFlextHandlers:
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_pop_context(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pop_context",
             "Test Pop Context",
         )
@@ -480,7 +480,7 @@ class TestFlextHandlers:
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_pop_context_empty_stack(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pop_context_empty",
             "Test Pop Context Empty",
         )
@@ -489,7 +489,7 @@ class TestFlextHandlers:
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_message_with_none_raises_validation_error(self) -> None:
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_none_message",
             "Test None Message",
         )
@@ -501,7 +501,7 @@ class TestFlextHandlers:
         class TestMessage(m.Value):
             value: str
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pydantic_validation",
             "Test Pydantic Validation",
         )
@@ -515,7 +515,7 @@ class TestFlextHandlers:
             value: Annotated[str, Field(description="Message value")]
             number: Annotated[int, Field(description="Message number")]
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_dataclass_message",
             "Test Dataclass Message",
         )
@@ -530,7 +530,7 @@ class TestFlextHandlers:
             value: str
             number: int
 
-        config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
+        config = u.Tests.HandlerHelpers.create_handler_config(
             "test_slots_message",
             "Test Slots Message",
         )

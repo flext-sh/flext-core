@@ -11,7 +11,7 @@ Tests e functionality including:
 - Exception serialization and string representation
 - Exception chaining and context propagation
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, u, FlextConstants,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -34,7 +34,7 @@ from tests import c, m
 
 
 class Teste:
-    """Comprehensive test suite for e using FlextTestsUtilities."""
+    """Comprehensive test suite for e using u."""
 
     @unique
     class ExceptionScenarioType(StrEnum):
