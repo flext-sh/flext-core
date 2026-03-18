@@ -116,7 +116,6 @@ class Teste:
             ),
         ]
 
-
     @pytest.mark.parametrize(
         "scenario",
         BASE_SCENARIOS,
@@ -1321,5 +1320,7 @@ class Teste:
         attrs = getattr(metadata, "attributes", {})
         tm.that(attrs.get("source"), eq="protocol")
 
+
+Teste.ExceptionScenario.model_rebuild()
 
 __all__ = ["Teste"]
