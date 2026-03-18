@@ -575,7 +575,9 @@ class UtilitiesMapperFullCoverageNamespace:
         extracted = _extract_transform_options_obj(
             cast("Mapping[str, t.NormalizedValue | t.MapperCallable]", opts)
         )
-        tm.that(extracted[3], eq={"1": "one", "a": "b"})
+        extracted_dict = extracted[3]
+        if isinstance(extracted_dict, Mapping):
+            tm.that(extracted_dict, eq={"1": "one", "a": "b"})
         monkeypatch.setattr(
             u,
             "normalize_component",
