@@ -14,8 +14,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
 from tests import m
 
-_normalize_statistics_before = FlextModelsContext._normalize_statistics_before
-_normalize_to_mapping = FlextModelsContext._normalize_to_mapping
+_normalize_to_mapping = FlextModelsContext.normalize_to_mapping
 
 
 class _ModelWithNoCallableDump:
@@ -196,18 +195,18 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
 
 
 def test_context_export_statistics_validator_and_computed_fields() -> None:
-    stats_none = _normalize_statistics_before(None)
+    stats_none = _normalize_to_mapping(None)
     tm.that(stats_none, eq={})
-    stats_dict = _normalize_statistics_before({"a": 1})
+    stats_dict = _normalize_to_mapping({"a": 1})
     tm.that(stats_dict, eq={"a": 1})
 
     class StatsModel(BaseModel):
         a: int = 1
 
-    stats_model = _normalize_statistics_before(StatsModel())
+    stats_model = _normalize_to_mapping(StatsModel())
     tm.that(stats_model, eq={"a": 1})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_statistics_before(cast("t.NormalizedValue | BaseModel", "x"))
+        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
     tm.that(exported.total_data_items, eq=1)
     tm.that(exported.has_statistics is True, eq=True)
