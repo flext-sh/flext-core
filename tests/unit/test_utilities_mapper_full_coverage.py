@@ -21,7 +21,9 @@ class UtilitiesMapperFullCoverageNamespace:
         """Model with port/nested for mapper take/extract tests."""
 
         port: int = 0
-        nested: Annotated[dict[str, test_t.NormalizedValue], Field(default_factory=dict)]
+        nested: Annotated[
+            dict[str, test_t.NormalizedValue], Field(default_factory=dict)
+        ]
 
     class _MaybeModel(BaseModel):
         """Model with optional field for take tests."""

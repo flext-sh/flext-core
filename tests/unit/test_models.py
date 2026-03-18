@@ -732,7 +732,9 @@ class TestModels:
                 dict[str, test_t.NormalizedValue], Field(default_factory=dict)
             ]
 
-            def _apply_test_event(self, data: dict[str, test_t.NormalizedValue]) -> None:
+            def _apply_test_event(
+                self, data: dict[str, test_t.NormalizedValue]
+            ) -> None:
                 self.handler_called = True
                 self.handler_data = data
 

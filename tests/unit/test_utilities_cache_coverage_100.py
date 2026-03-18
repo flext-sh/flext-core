@@ -523,7 +523,9 @@ class UtilitiesCacheCoverage100Namespace:
                     self._cache = object()
 
                 @override
-                def __setattr__(self, name: str, value: t.NormalizedValue | None) -> None:
+                def __setattr__(
+                    self, name: str, value: t.NormalizedValue | None
+                ) -> None:
                     if name == "_cache" and value is None:
                         raise TypeError(error_msg)
                     super().__setattr__(name, value)

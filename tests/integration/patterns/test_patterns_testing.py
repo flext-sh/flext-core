@@ -67,7 +67,9 @@ class TestPatternsTesting:
             return output
 
         @staticmethod
-        def as_object_list(value: tt.NormalizedValue) -> list[tt.NormalizedValue] | None:
+        def as_object_list(
+            value: tt.NormalizedValue,
+        ) -> list[tt.NormalizedValue] | None:
             if not TestPatternsTesting.Helpers.is_object_list(value):
                 return None
             return list(value)
@@ -79,7 +81,9 @@ class TestPatternsTesting:
             return isinstance(value, Mapping)
 
         @staticmethod
-        def is_object_list(value: tt.NormalizedValue) -> TypeIs[list[tt.NormalizedValue]]:
+        def is_object_list(
+            value: tt.NormalizedValue,
+        ) -> TypeIs[list[tt.NormalizedValue]]:
             return isinstance(value, list)
 
         @staticmethod
@@ -115,7 +119,9 @@ class TestPatternsTesting:
             _arrange_func: Callable[[], tt.NormalizedValue],
             _act_func: Callable[[tt.NormalizedValue], tt.NormalizedValue],
             _assert_func: Callable[[tt.NormalizedValue, tt.NormalizedValue], None],
-        ) -> Callable[[Callable[[], tt.NormalizedValue]], Callable[[], tt.NormalizedValue]]:
+        ) -> Callable[
+            [Callable[[], tt.NormalizedValue]], Callable[[], tt.NormalizedValue]
+        ]:
             def decorator(
                 _test_func: Callable[[], tt.NormalizedValue],
             ) -> Callable[[], tt.NormalizedValue]:

@@ -250,7 +250,9 @@ class TestMixinsFullCoverage:
             def has_service(self, _name: str) -> bool:
                 return True
 
-            def register(self, _name: str, _value: t.NormalizedValue) -> _AlreadyContainer:
+            def register(
+                self, _name: str, _value: t.NormalizedValue
+            ) -> _AlreadyContainer:
                 return self
 
         monkeypatch.setattr(
