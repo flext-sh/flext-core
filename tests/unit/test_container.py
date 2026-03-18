@@ -23,13 +23,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, Any, ClassVar, cast
 
 import pytest
 from flext_tests import c, t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, p, r
+
+ServiceScenario: Any = cast("Any", None)
+TypedRetrievalScenario: Any = cast("Any", None)
 
 
 class TestFlextContainer:
@@ -57,10 +60,13 @@ class TestFlextContainer:
             str, Field(default="", description="Scenario description")
         ] = ""
 
+    globals()["ServiceScenario"] = ServiceScenario
+    globals()["TypedRetrievalScenario"] = TypedRetrievalScenario
+
     class ContainerScenarios:
         """Centralized container test scenarios using c."""
 
-        SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
+        SERVICE_SCENARIOS: ClassVar[list[TestFlextContainer.ServiceScenario]] = [
             ServiceScenario(
                 name="test_service",
                 service="test_service_value",
@@ -77,7 +83,9 @@ class TestFlextContainer:
                 description="String service",
             ),
         ]
-        TYPED_RETRIEVAL_SCENARIOS: ClassVar[list[TypedRetrievalScenario]] = [
+        TYPED_RETRIEVAL_SCENARIOS: ClassVar[
+            list[TestFlextContainer.TypedRetrievalScenario]
+        ] = [
             TypedRetrievalScenario(
                 name="dict_service",
                 service="test_dict_service",
@@ -141,7 +149,9 @@ class TestFlextContainer:
         "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_register_service(
-        self, scenario: ServiceScenario, clean_container: p.Container
+        self,
+        scenario: TestFlextContainer.ServiceScenario,
+        clean_container: p.Container,
     ) -> None:
         """Test service registration with various types using fixtures."""
         result = clean_container.register(scenario.name, scenario.service)
@@ -151,7 +161,9 @@ class TestFlextContainer:
         "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_with_service_fluent(
-        self, scenario: ServiceScenario, clean_container: p.Container
+        self,
+        scenario: TestFlextContainer.ServiceScenario,
+        clean_container: p.Container,
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
         container = clean_container
@@ -258,7 +270,9 @@ class TestFlextContainer:
         "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_get_service(
-        self, scenario: ServiceScenario, clean_container: p.Container
+        self,
+        scenario: TestFlextContainer.ServiceScenario,
+        clean_container: p.Container,
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
@@ -300,7 +314,7 @@ class TestFlextContainer:
     )
     def test_get_typed_correct(
         self,
-        scenario: TypedRetrievalScenario,
+        scenario: TestFlextContainer.TypedRetrievalScenario,
         clean_container: p.Container,
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""

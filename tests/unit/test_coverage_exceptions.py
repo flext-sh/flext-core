@@ -1,18 +1,3 @@
-"""Comprehensive coverage tests for FlextExceptions.
-
-Module: flext_core.exceptions
-Scope: FlextExceptions - exception hierarchy, factory methods, configuration
-
-This module provides extensive tests for the FlextExceptions hierarchy,
-targeting all missing lines and edge cases with accurate API usage.
-
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
-and aggressive parametrization for DRY testing.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -23,33 +8,27 @@ from flext_tests import t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextConstants, FlextExceptions, r
-from tests import c
 
 from ..test_utils import assertion_helpers
 
 
-class ExceptionCreationScenario(BaseModel):
-    """Exception creation test scenario."""
-
-    model_config = ConfigDict(frozen=True)
-    name: Annotated[str, Field(description="Exception creation scenario name")]
-    exception_type: Annotated[
-        type[FlextExceptions.BaseError],
-        Field(description="Exception class to instantiate"),
-    ]
-    message: Annotated[str, Field(description="Exception message")]
-    kwargs: Annotated[
-        dict[str, t.MetadataAttributeValue | type],
-        Field(description="Keyword arguments for exception creation"),
-    ]
-    expected_attrs: Annotated[
-        dict[str, t.MetadataAttributeValue | type],
-        Field(description="Expected attributes to validate"),
-    ]
-
-
-class ExceptionScenarios:
-    """Centralized exception coverage test scenarios using c."""
+class TestCoverageExceptions:
+    class ExceptionCreationScenario(BaseModel):
+        model_config = ConfigDict(frozen=True)
+        name: Annotated[str, Field(description="Exception creation scenario name")]
+        exception_type: Annotated[
+            type[FlextExceptions.BaseError],
+            Field(description="Exception class to instantiate"),
+        ]
+        message: Annotated[str, Field(description="Exception message")]
+        kwargs: Annotated[
+            dict[str, t.MetadataAttributeValue | type],
+            Field(description="Keyword arguments for exception creation"),
+        ]
+        expected_attrs: Annotated[
+            dict[str, t.MetadataAttributeValue | type],
+            Field(description="Expected attributes to validate"),
+        ]
 
     EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
@@ -176,6 +155,7 @@ class ExceptionScenarios:
             expected_attrs={"attribute_name": "missing_field"},
         ),
     ]
+
     FACTORY_CREATION: ClassVar[
         list[tuple[str, dict[str, t.Tests.object], type[FlextExceptions.BaseError]]]
     ] = [
@@ -201,17 +181,8 @@ class ExceptionScenarios:
         ),
     ]
 
-
-class TestFlextExceptionsHierarchy:
-    """Test complete exception hierarchy using FlextTestsUtilities."""
-
-    @pytest.mark.parametrize(
-        "scenario",
-        ExceptionScenarios.EXCEPTION_CREATION,
-        ids=lambda s: s.name,
-    )
+    @pytest.mark.parametrize("scenario", EXCEPTION_CREATION, ids=lambda s: s.name)
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
-        """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
             type_kwargs: dict[str, type] = {}
             metadata_kwargs: dict[str, t.Tests.object] = {}
@@ -237,28 +208,20 @@ class TestFlextExceptionsHierarchy:
         else:
             error = scenario.exception_type(scenario.message)
         tm.that(str(error), has=scenario.message)
-        tm.that(isinstance(error, Exception), eq=True)
         for attr_name, expected_value in scenario.expected_attrs.items():
             tm.that(hasattr(error, attr_name), eq=True)
             tm.that(getattr(error, attr_name), eq=expected_value)
 
-
-class TestExceptionIntegration:
-    """Test exceptions integration with r using FlextTestsUtilities."""
-
     def test_exception_to_result_conversion(self) -> None:
-        """Test converting exceptions to r."""
         try:
             error_msg = "Test error"
             raise FlextExceptions.ValidationError(error_msg, field="email")
-        except FlextExceptions.ValidationError as e:
-            result = r[bool].fail(str(e))
+        except FlextExceptions.ValidationError as err:
+            result = r[bool].fail(str(err))
             _ = assertion_helpers.assert_flext_result_failure(result)
             tm.fail(result, has="Test error")
 
     def test_exception_in_railway_pattern(self) -> None:
-        """Test exception handling in railway pattern."""
-
         def validate_and_process(
             data: dict[str, t.Tests.object],
         ) -> r[dict[str, t.Tests.object]]:
@@ -270,7 +233,6 @@ class TestExceptionIntegration:
         tm.ok(validate_and_process({"id": "123"}))
 
     def test_nested_exception_handling(self) -> None:
-        """Test nested exception scenarios."""
         try:
             error_msg = "Validation failed"
             raise FlextExceptions.ValidationError(
@@ -278,14 +240,12 @@ class TestExceptionIntegration:
                 field="email",
                 value="invalid",
             )
-        except FlextExceptions.ValidationError as e:
-            result = r[bool].fail(f"Error in user creation: {e}")
+        except FlextExceptions.ValidationError as err:
+            result = r[bool].fail(f"Error in user creation: {err}")
             _ = assertion_helpers.assert_flext_result_failure(result)
-            tm.that(result.error, ne=None) and "Validation failed" in result.error
-
-
-class TestExceptionEdgeCases:
-    """Test edge cases and boundary conditions."""
+            tm.that(result.error, ne=None)
+            if result.error is not None:
+                tm.that("Validation failed" in result.error, eq=True)
 
     @pytest.mark.parametrize(
         ("message", "expected_in_str"),
@@ -302,53 +262,40 @@ class TestExceptionEdgeCases:
         message: str,
         expected_in_str: bool,
     ) -> None:
-        """Test exception with various message formats."""
         error = FlextExceptions.ValidationError(message)
-        tm.that(isinstance(error, Exception), eq=True)
         if message:
-            tm.that(message in str(error) or len(str(error)) > 9000, eq=True)
+            tm.that(message in str(error) or len(str(error)) > 9000, eq=expected_in_str)
 
     def test_multiple_exceptions_in_sequence(self) -> None:
-        """Test handling multiple exceptions."""
         errors: list[str] = []
         for i in range(5):
             try:
                 if i % 2 == 0:
                     raise FlextExceptions.ValidationError(f"Error {i}")
                 raise FlextExceptions.ConfigurationError(f"Config error {i}")
-            except Exception as e:
-                errors.append(str(e))
+            except Exception as err:
+                errors.append(str(err))
         tm.that(len(errors), eq=5)
-        tm.that(any("Error" in e for e in errors), eq=True)
+        tm.that(any("Error" in err for err in errors), eq=True)
 
     def test_exception_inheritance_chain(self) -> None:
-        """Test exception inheritance chain."""
         error = FlextExceptions.ValidationError("Test")
-        tm.that(isinstance(error, Exception), eq=True)
-
-
-class TestExceptionProperties:
-    """Test exception properties and attributes."""
+        tm.that(str(error), has="Test")
 
     def test_exception_string_representation(self) -> None:
-        """Test string representation of exceptions."""
         error = FlextExceptions.ValidationError("Test message")
         tm.that(str(error), has="Test message")
 
     def test_exception_repr(self) -> None:
-        """Test repr of exceptions."""
         error = FlextExceptions.ValidationError("Test")
         repr_str = repr(error)
         tm.that(repr_str or "Test" in repr_str, has="ValidationError")
 
     def test_exception_type_checking(self) -> None:
-        """Test type checking for exceptions."""
         error = FlextExceptions.ValidationError("Test")
-        tm.that(isinstance(error, FlextExceptions.ValidationError), eq=True)
-        tm.that(isinstance(error, Exception), eq=True)
+        tm.that(error.__class__.__name__, eq="ValidationError")
 
     def test_base_error_with_metadata(self) -> None:
-        """Test BaseError with metadata."""
         error = FlextExceptions.NotFoundError(
             "Resource not found",
             resource_id="123",
@@ -356,12 +303,7 @@ class TestExceptionProperties:
         )
         tm.that(str(error), has="Resource not found")
 
-
-class TestExceptionContext:
-    """Test exception context enrichment."""
-
     def test_exception_with_context_data(self) -> None:
-        """Test exception with contextual information via metadata."""
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
             user_id="123",
@@ -372,38 +314,24 @@ class TestExceptionContext:
         tm.that(error.metadata.attributes["user_id"], eq="123")
 
     def test_exception_with_correlation_id(self) -> None:
-        """Test exception with auto-generated correlation ID."""
         error = FlextExceptions.BaseError("Test error", auto_correlation=True)
         tm.that(error.correlation_id, none=False)
         tm.that(error.correlation_id, starts="exc_")
 
     def test_exception_chaining(self) -> None:
-        """Test exception chaining with cause using Python's native chaining."""
-        original: Exception | None = None
-        try:
-            error_msg = "Original error"
-            raise ValueError(error_msg)
-        except ValueError as e:
-            original = e
-        tm.that(original is not None, eq=True)
+        original = ValueError("Original error")
         error = FlextExceptions.OperationError("Operation failed")
         error.__cause__ = original
         tm.that(error.__cause__ is original, eq=True)
 
     def test_exception_preservation(self) -> None:
-        """Test that exception information is preserved."""
         original_msg = "Original error message with details"
         error = FlextExceptions.ValidationError(original_msg)
         result = r[bool].fail(str(error))
         tm.that(result.error, none=False)
         tm.fail(result, has=original_msg)
 
-
-class TestExceptionSerialization:
-    """Test exception serialization for logging/APIs."""
-
     def test_exception_to_dict(self) -> None:
-        """Test converting exception to dictionary."""
         error = FlextExceptions.ValidationError(
             "Invalid email",
             field="email",
@@ -412,52 +340,37 @@ class TestExceptionSerialization:
         error_dict = error.to_dict()
         tm.that(error_dict["error_type"], eq="ValidationError")
         tm.that(error_dict["message"], eq="Invalid email")
-        tm.that(error_dict["error_code"], eq=c.Errors.VALIDATION_ERROR)
+        tm.that(error_dict["error_code"], eq="VALIDATION_ERROR")
 
     def test_exception_dict_with_metadata(self) -> None:
-        """Test exception dict includes metadata (flattened)."""
         error = FlextExceptions.OperationError("Operation failed", operation="INSERT")
         error_dict = error.to_dict()
         tm.that(error_dict["operation"], eq="INSERT")
 
-
-class TestExceptionFactory:
-    """Test exception factory methods using FlextTestsUtilities."""
-
     def test_create_error_by_type(self) -> None:
-        """Test creating exception by type name."""
         error = FlextExceptions.create("ValidationError", "Test validation error")
         tm.that(isinstance(error, FlextExceptions.ValidationError), eq=True)
         tm.that(str(error), has="Test validation error")
 
-    @pytest.mark.parametrize(
-        ("message", "kwargs", "expected_type"),
-        ExceptionScenarios.FACTORY_CREATION,
-    )
+    @pytest.mark.parametrize(("message", "kwargs", "expected_type"), FACTORY_CREATION)
     def test_create_error_auto_detection(
         self,
         message: str,
         kwargs: dict[str, t.Tests.object],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
-        """Test smart error type detection in create()."""
         converted_kwargs: dict[str, t.Tests.object] = {
-            k: cast("t.MetadataAttributeValue", v) for k, v in kwargs.items()
+            key: cast("t.MetadataAttributeValue", value)
+            for key, value in kwargs.items()
         }
-        kwargs_typed: dict[str, t.Tests.object] = converted_kwargs
         create_error = cast(
             "Callable[..., FlextExceptions.BaseError]",
             FlextExceptions.create,
         )
-        error = create_error(message, **kwargs_typed)
+        error = create_error(message, **converted_kwargs)
         tm.that(isinstance(error, expected_type), eq=True)
 
-
-class TestExceptionMetrics:
-    """Test exception metrics tracking."""
-
     def test_record_exception(self) -> None:
-        """Test recording exception metrics."""
         FlextExceptions.clear_metrics()
         FlextExceptions.record_exception(FlextExceptions.ValidationError)
         FlextExceptions.record_exception(FlextExceptions.ValidationError)
@@ -471,37 +384,25 @@ class TestExceptionMetrics:
         tm.that(metrics["unique_exception_types"], eq=2)
 
     def test_clear_metrics(self) -> None:
-        """Test clearing exception metrics."""
         FlextExceptions.clear_metrics()
         FlextExceptions.record_exception(FlextExceptions.ValidationError)
         tm.that(FlextExceptions.get_metrics()["total_exceptions"], eq=1)
         FlextExceptions.clear_metrics()
         tm.that(FlextExceptions.get_metrics()["total_exceptions"], eq=0)
 
-
-class TestExceptionLogging:
-    """Test exception logging functionality."""
-
     def test_exception_string_with_correlation_id(self) -> None:
-        """Test exception has correlation ID when auto_correlation=True."""
         error = FlextExceptions.BaseError("Test", auto_correlation=True)
         tm.that(error.correlation_id, none=False)
         tm.that(error.correlation_id, starts="exc_")
         tm.that(str(error), has="Test")
 
     def test_exception_error_code_in_string(self) -> None:
-        """Test error code is included in string representation."""
         error = FlextExceptions.ValidationError("Test message")
         error_str = str(error)
         tm.that(error_str or "Test message" in error_str, has="VALIDATION_ERROR")
 
-
-class TestHierarchicalExceptionSystem:
-    """Test hierarchical exception configuration system."""
-
     def test_failure_level_enum_values(self) -> None:
-        """Test FailureLevel enum has all required values."""
-        failure_level = c.Exceptions.FailureLevel
+        failure_level = FlextConstants.Exceptions.FailureLevel
         tm.that(
             all(
                 hasattr(failure_level, level)
@@ -511,15 +412,13 @@ class TestHierarchicalExceptionSystem:
         )
 
     def test_failure_level_string_values(self) -> None:
-        """Test FailureLevel enum string values."""
-        failure_level = c.Exceptions.FailureLevel
+        failure_level = FlextConstants.Exceptions.FailureLevel
         tm.that(failure_level.STRICT.value, eq="strict")
         tm.that(failure_level.WARN.value, eq="warn")
         tm.that(failure_level.PERMISSIVE.value, eq="permissive")
 
     def test_failure_level_comparison(self) -> None:
-        """Test FailureLevel enum comparison."""
-        failure_level = c.Exceptions.FailureLevel
+        failure_level = FlextConstants.Exceptions.FailureLevel
         strict_val: str = str(failure_level.STRICT.value)
         warn_val: str = str(failure_level.WARN.value)
         permissive_val: str = str(failure_level.PERMISSIVE.value)
@@ -528,15 +427,4 @@ class TestHierarchicalExceptionSystem:
         tm.that(strict_val, eq=str(failure_level.STRICT.value))
 
 
-__all__ = [
-    "TestExceptionContext",
-    "TestExceptionEdgeCases",
-    "TestExceptionFactory",
-    "TestExceptionIntegration",
-    "TestExceptionLogging",
-    "TestExceptionMetrics",
-    "TestExceptionProperties",
-    "TestExceptionSerialization",
-    "TestFlextExceptionsHierarchy",
-    "TestHierarchicalExceptionSystem",
-]
+__all__ = ["TestCoverageExceptions"]

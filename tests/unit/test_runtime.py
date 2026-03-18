@@ -24,7 +24,7 @@ import logging
 from collections.abc import Callable
 from enum import StrEnum, unique
 from types import ModuleType
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, Any, ClassVar, cast
 
 import pytest
 import structlog
@@ -33,6 +33,9 @@ from flext_tests import t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, p, s, x
+
+RuntimeOperationType: Any = cast("Any", None)
+RuntimeTestCase: Any = cast("Any", None)
 
 
 class TestFlextRuntime:
@@ -90,7 +93,7 @@ class TestFlextRuntime:
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         name: Annotated[str, Field(description="Runtime test case name")]
         operation: Annotated[
-            RuntimeOperationType,
+            TestFlextRuntime.RuntimeOperationType,
             Field(description="Runtime operation type"),
         ]
         test_input: Annotated[
@@ -107,10 +110,13 @@ class TestFlextRuntime:
             ),
         ] = False
 
+    globals()["RuntimeOperationType"] = RuntimeOperationType
+    globals()["RuntimeTestCase"] = RuntimeTestCase
+
     class RuntimeScenarios:
         """Centralized runtime test scenarios using c."""
 
-        DICT_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        DICT_LIKE_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="dict_like_empty",
                 operation=RuntimeOperationType.DICT_LIKE_VALID,
@@ -154,7 +160,7 @@ class TestFlextRuntime:
                 expected_result=False,
             ),
         ]
-        LIST_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        LIST_LIKE_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="list_like_empty",
                 operation=RuntimeOperationType.LIST_LIKE_VALID,
@@ -198,7 +204,7 @@ class TestFlextRuntime:
                 expected_result=False,
             ),
         ]
-        JSON_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        JSON_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="json_valid_object",
                 operation=RuntimeOperationType.JSON_VALID,
@@ -266,7 +272,7 @@ class TestFlextRuntime:
                 expected_result=False,
             ),
         ]
-        IDENTIFIER_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        IDENTIFIER_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="identifier_valid_lowercase",
                 operation=RuntimeOperationType.IDENTIFIER_VALID,
@@ -328,7 +334,7 @@ class TestFlextRuntime:
                 expected_result=False,
             ),
         ]
-        GENERIC_ARGS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        GENERIC_ARGS_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="extract_generic_list",
                 operation=RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
@@ -366,7 +372,7 @@ class TestFlextRuntime:
                 expected_result=(),
             ),
         ]
-        SEQUENCE_TYPE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        SEQUENCE_TYPE_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="sequence_type_list_of_str",
                 operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
@@ -410,7 +416,7 @@ class TestFlextRuntime:
                 expected_result=False,
             ),
         ]
-        SERIALIZATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        SERIALIZATION_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="safe_get_attribute_exists",
                 operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS,
@@ -430,7 +436,7 @@ class TestFlextRuntime:
                 expected_result=None,
             ),
         ]
-        LIBRARY_ACCESS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        LIBRARY_ACCESS_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="structlog_module",
                 operation=RuntimeOperationType.STRUCTLOG_MODULE,
@@ -470,7 +476,7 @@ class TestFlextRuntime:
                 operation=RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION,
             ),
         ]
-        STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="configure_defaults",
                 operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS,
@@ -507,7 +513,7 @@ class TestFlextRuntime:
                 should_reset_config=True,
             ),
         ]
-        INTEGRATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        INTEGRATION_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
             RuntimeTestCase(
                 name="constants_patterns",
                 operation=RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS,
@@ -554,7 +560,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.DICT_LIKE_SCENARIOS, ids=lambda c: c.name
     )
-    def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
+    def test_dict_like_validation(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test dict-like object validation.
 
         Business Rule: is_dict_like accepts object compatible objects.
@@ -568,7 +576,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.LIST_LIKE_SCENARIOS, ids=lambda c: c.name
     )
-    def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
+    def test_list_like_validation(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test list-like object validation.
 
         Business Rule: is_list_like accepts object compatible objects.
@@ -582,7 +592,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.JSON_SCENARIOS, ids=lambda c: c.name
     )
-    def test_json_validation(self, test_case: RuntimeTestCase) -> None:
+    def test_json_validation(self, test_case: TestFlextRuntime.RuntimeTestCase) -> None:
         """Test JSON string validation.
 
         Business Rule: None is a valid test input - validates that is_valid_json
@@ -595,7 +605,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.IDENTIFIER_SCENARIOS, ids=lambda c: c.name
     )
-    def test_identifier_validation(self, test_case: RuntimeTestCase) -> None:
+    def test_identifier_validation(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test Python identifier validation.
 
         Business Rule: None is a valid test input - validates that is_valid_identifier
@@ -610,7 +622,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.SERIALIZATION_SCENARIOS, ids=lambda c: c.name
     )
-    def test_safe_get_attribute(self, test_case: RuntimeTestCase) -> None:
+    def test_safe_get_attribute(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test safe attribute retrieval."""
         if test_case.operation == self.RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS:
 
@@ -645,7 +659,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.GENERIC_ARGS_SCENARIOS, ids=lambda c: c.name
     )
-    def test_extract_generic_args(self, test_case: RuntimeTestCase) -> None:
+    def test_extract_generic_args(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test extraction of generic type arguments.
 
         Business Rule: extract_generic_args accepts TypeHintSpecifier compatible objects.
@@ -659,7 +675,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS, ids=lambda c: c.name
     )
-    def test_sequence_type_detection(self, test_case: RuntimeTestCase) -> None:
+    def test_sequence_type_detection(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test sequence type detection.
 
         Business Rule: is_sequence_type accepts TypeHintSpecifier compatible objects.
@@ -673,7 +691,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS, ids=lambda c: c.name
     )
-    def test_external_library_access(self, test_case: RuntimeTestCase) -> None:
+    def test_external_library_access(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test external library access."""
         if test_case.operation == self.RuntimeOperationType.STRUCTLOG_MODULE:
             module = FlextRuntime.structlog()
@@ -908,7 +928,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS, ids=lambda c: c.name
     )
-    def test_structlog_configuration(self, test_case: RuntimeTestCase) -> None:
+    def test_structlog_configuration(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test structlog configuration."""
         if test_case.should_reset_config:
             self.RuntimeScenarios.reset_structlog_config()
@@ -957,7 +979,9 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.INTEGRATION_SCENARIOS, ids=lambda c: c.name
     )
-    def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
+    def test_runtime_integration(
+        self, test_case: TestFlextRuntime.RuntimeTestCase
+    ) -> None:
         """Test FlextRuntime integration scenarios."""
         if (
             test_case.operation

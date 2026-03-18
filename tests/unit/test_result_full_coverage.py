@@ -12,7 +12,7 @@ from flext_tests import t, tm
 
 from flext_core import FlextRuntime, r
 
-from ._models import _ErrorsModel, _PlainErrorModel, _TargetModel
+from ._models import TestUnitModels
 
 
 class _ValidationLikeError(ValueError):
@@ -82,23 +82,50 @@ def test_recover_tap_and_tap_error_paths() -> None:
 
 
 def test_from_validation_and_to_model_paths() -> None:
-    success_result = r[_TargetModel].from_validation({"value": 10}, _TargetModel)
+    success_result = r[TestUnitModels._TargetModel].from_validation(
+        {"value": 10},
+        TestUnitModels._TargetModel,
+    )
     tm.ok(success_result)
     tm.that(success_result.value.value, eq=10)
-    err_result = r[_ErrorsModel].from_validation({"value": "x"}, _ErrorsModel)
+    err_result = r[TestUnitModels._ErrorsModel].from_validation(
+        {"value": "x"},
+        TestUnitModels._ErrorsModel,
+    )
     tm.fail(err_result)
     tm.that("Validation failed" in (err_result.error or ""), eq=True)
     tm.that("bad value" in (err_result.error or ""), eq=True)
-    plain_result = r[_PlainErrorModel].from_validation({"value": "x"}, _PlainErrorModel)
+    plain_result = r[TestUnitModels._PlainErrorModel].from_validation(
+        {"value": "x"},
+        TestUnitModels._PlainErrorModel,
+    )
     tm.fail(plain_result)
     tm.that("plain boom" in (plain_result.error or ""), eq=True)
-    failure_to_model = r[dict[str, int]].fail("already failed").to_model(_TargetModel)
+    failure_to_model = (
+        r[dict[str, int]]
+        .fail("already failed")
+        .to_model(
+            TestUnitModels._TargetModel,
+        )
+    )
     tm.fail(failure_to_model)
     tm.that(failure_to_model.error, eq="already failed")
-    success_to_model = r[dict[str, int]].ok({"value": 9}).to_model(_TargetModel)
+    success_to_model = (
+        r[dict[str, int]]
+        .ok({"value": 9})
+        .to_model(
+            TestUnitModels._TargetModel,
+        )
+    )
     tm.ok(success_to_model)
     tm.that(success_to_model.value.value, eq=9)
-    invalid_to_model = r[dict[str, str]].ok({"value": "bad"}).to_model(_TargetModel)
+    invalid_to_model = (
+        r[dict[str, str]]
+        .ok({"value": "bad"})
+        .to_model(
+            TestUnitModels._TargetModel,
+        )
+    )
     tm.fail(invalid_to_model)
     tm.that("Model conversion failed" in (invalid_to_model.error or ""), eq=True)
 

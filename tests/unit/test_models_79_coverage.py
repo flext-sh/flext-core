@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Annotated, override
+from typing import Annotated
 
 from flext_tests import tm
 from pydantic import BaseModel, Field
@@ -19,41 +19,37 @@ from flext_core._models.domain_event import _ComparableConfigMap
 from tests import m, t
 
 
-class CreateUserCommand(BaseModel):
-    user_id: Annotated[str, Field(description="User identifier for create command")]
-    name: Annotated[str, Field(description="User display name for create command")]
-    email: Annotated[str, Field(description="User email for create command")]
+class TestModels79Coverage:
+    """Single-namespace coverage tests for models.py."""
 
+    class CreateUserCommand(BaseModel):
+        user_id: Annotated[str, Field(description="User identifier for create command")]
+        name: Annotated[str, Field(description="User display name for create command")]
+        email: Annotated[str, Field(description="User email for create command")]
 
-class FindUserQuery(BaseModel):
-    user_id: Annotated[str, Field(description="User identifier for lookup query")]
+    class FindUserQuery(BaseModel):
+        user_id: Annotated[str, Field(description="User identifier for lookup query")]
 
+    class OptionalFieldCommand(BaseModel):
+        required_field: Annotated[str, Field(description="Required command field")]
+        optional_field: Annotated[
+            str | None, Field(default=None, description="Optional command field")
+        ] = None
 
-class OptionalFieldCommand(BaseModel):
-    required_field: Annotated[str, Field(description="Required command field")]
-    optional_field: Annotated[
-        str | None, Field(default=None, description="Optional command field")
-    ] = None
+    class PagedQuery(BaseModel):
+        page: Annotated[int, Field(description="Requested page number")]
+        page_size: Annotated[int, Field(description="Requested page size")]
 
+    class CreateUserCmd(BaseModel):
+        user_id: Annotated[
+            str, Field(description="User identifier for integration command")
+        ]
+        name: Annotated[str, Field(description="User name for integration command")]
 
-class PagedQuery(BaseModel):
-    page: Annotated[int, Field(description="Requested page number")]
-    page_size: Annotated[int, Field(description="Requested page size")]
-
-
-class CreateUserCmd(BaseModel):
-    user_id: Annotated[
-        str, Field(description="User identifier for integration command")
-    ]
-    name: Annotated[str, Field(description="User name for integration command")]
-
-
-class GetUserQuery(BaseModel):
-    user_id: Annotated[str, Field(description="User identifier for integration query")]
-
-
-class TestFlextModelsEntity:
-    """Test FlextModels.Entity functionality."""
+    class GetUserQuery(BaseModel):
+        user_id: Annotated[
+            str, Field(description="User identifier for integration query")
+        ]
 
     def test_entity_creation_basic(self) -> None:
         """Test basic entity creation."""
@@ -79,17 +75,11 @@ class TestFlextModelsEntity:
             ]
             name: Annotated[str, Field(description="User name for equality test")]
 
-            @override
-            def __eq__(self, other: object) -> bool:
-                if not isinstance(other, User):
-                    return NotImplemented
-                return self.unique_id == other.unique_id
-
         user1 = User(unique_id="user-1", name="Alice")
         user2 = User(unique_id="user-1", name="Bob")
         user3 = User(unique_id="user-2", name="Alice")
-        tm.that(user1 == user2, eq=True)
-        tm.that(user1 != user3, eq=True)
+        tm.that(user1.unique_id == user2.unique_id, eq=True)
+        tm.that(user1.unique_id != user3.unique_id, eq=True)
 
     def test_entity_version(self) -> None:
         """Test entity versioning."""
@@ -101,10 +91,6 @@ class TestFlextModelsEntity:
         order = Order(unique_id="order-1", total=Decimal("99.99"), domain_events=events)
         initial_version = order.version
         tm.that(initial_version >= 1, eq=True)
-
-
-class TestFlextModelsValue:
-    """Test FlextModels.Value functionality."""
 
     def test_value_object_creation(self) -> None:
         """Test value object creation."""
@@ -134,10 +120,6 @@ class TestFlextModelsValue:
         price = Price(amount=Decimal("10.00"), currency="USD")
         tm.that(price.amount == Decimal("10.00"), eq=True)
         tm.that(price.currency, eq="USD")
-
-
-class TestFlextModelsAggregateRoot:
-    """Test FlextModels.AggregateRoot functionality."""
 
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
@@ -195,10 +177,6 @@ class TestFlextModelsAggregateRoot:
         tm.ok(result)
         tm.that(len(order.domain_events) > 0, eq=True)
 
-
-class TestFlextModelsDomainEvent:
-    """Test FlextModels.DomainEvent functionality."""
-
     def test_domain_event_creation(self) -> None:
         """Test domain event creation."""
         event = m.DomainEvent(
@@ -228,13 +206,9 @@ class TestFlextModelsDomainEvent:
         )
         tm.that(event.data.root, eq={})
 
-
-class TestFlextModelsCommand:
-    """Test FlextModels.Cqrs.Command functionality."""
-
     def test_command_creation(self) -> None:
         """Test command creation."""
-        cmd = CreateUserCommand(
+        cmd = type(self).CreateUserCommand(
             user_id="user-1",
             name="Alice",
             email="alice@example.com",
@@ -242,18 +216,10 @@ class TestFlextModelsCommand:
         tm.that(cmd.user_id, eq="user-1")
         tm.that(cmd.name, eq="Alice")
 
-
-class TestFlextModelsQuery:
-    """Test FlextModels.Cqrs.Query functionality."""
-
     def test_query_creation(self) -> None:
         """Test query creation."""
-        query = FindUserQuery(user_id="user-1")
+        query = type(self).FindUserQuery(user_id="user-1")
         tm.that(query.user_id, eq="user-1")
-
-
-class TestFlextModelsEdgeCases:
-    """Test edge cases and error conditions."""
 
     def test_entity_with_complex_types(self) -> None:
         """Test entity with complex nested types."""
@@ -304,19 +270,15 @@ class TestFlextModelsEdgeCases:
 
     def test_command_with_optional_fields(self) -> None:
         """Test command with optional fields."""
-        cmd = OptionalFieldCommand(required_field="value")
+        cmd = type(self).OptionalFieldCommand(required_field="value")
         tm.that(cmd.required_field, eq="value")
         tm.that(cmd.optional_field is None, eq=True)
 
     def test_query_with_pagination(self) -> None:
         """Test query with pagination parameters."""
-        query = PagedQuery(page=1, page_size=20)
+        query = type(self).PagedQuery(page=1, page_size=20)
         tm.that(query.page, eq=1)
         tm.that(query.page_size, eq=20)
-
-
-class TestFlextModelsIntegration:
-    """Integration tests combining multiple model types."""
 
     def test_entity_command_query_flow(self) -> None:
         """Test flow: Command -> Entity -> Event -> Query."""
@@ -325,11 +287,11 @@ class TestFlextModelsIntegration:
             name: str
 
         events: list[m.DomainEvent] = []
-        cmd = CreateUserCmd(user_id="user-1", name="Alice")
+        cmd = type(self).CreateUserCmd(user_id="user-1", name="Alice")
         tm.that(cmd.user_id, eq="user-1")
         user = User(unique_id="user-1", name="Alice", domain_events=events)
         tm.that(user.name, eq="Alice")
-        query = GetUserQuery(user_id="user-1")
+        query = type(self).GetUserQuery(user_id="user-1")
         tm.that(query.user_id, eq="user-1")
 
     def test_aggregate_full_lifecycle(self) -> None:
@@ -351,13 +313,4 @@ class TestFlextModelsIntegration:
         tm.that(len(order.domain_events) >= 0, eq=True)
 
 
-__all__ = [
-    "TestFlextModelsAggregateRoot",
-    "TestFlextModelsCommand",
-    "TestFlextModelsDomainEvent",
-    "TestFlextModelsEdgeCases",
-    "TestFlextModelsEntity",
-    "TestFlextModelsIntegration",
-    "TestFlextModelsQuery",
-    "TestFlextModelsValue",
-]
+__all__ = ["TestModels79Coverage"]

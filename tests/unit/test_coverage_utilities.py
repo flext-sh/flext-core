@@ -21,245 +21,202 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast, override
+from typing import ClassVar, cast, override
 
 import pytest
 from flext_tests import t, tm
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
-from flext_core import FlextExceptions, r
-from tests import p, u
+from flext_core import FlextExceptions, r, u
 
 from ..test_utils import assertion_helpers
 from .contracts.text_contract import TextUtilityContract
 
 
-@unique
-class UtilityOperationType(StrEnum):
-    """Utility operation types for parametrization."""
-
-    TYPE_GUARD_STRING = "type_guard_string"
-    TYPE_GUARD_DICT = "type_guard_dict"
-    TYPE_GUARD_LIST = "type_guard_list"
-    ID_GENERATION = "id_generation"
-    TIMESTAMP_GENERATION = "timestamp_generation"
-    CACHE_NORMALIZATION = "cache_normalization"
-    CACHE_KEY = "cache_key"
-    TEXT_CLEANING = "text_cleaning"
-    TEXT_TRUNCATION = "text_truncation"
-
-
-class UtilityTestCase(BaseModel):
-    """Test case for utility operations."""
-
-    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-    operation: Annotated[
-        UtilityOperationType, Field(description="Utility operation under test")
-    ]
-    input_data: t.NormalizedValue = Field(
-        default=None, description="Input data for operation"
-    )
-    expected_type: type | None = Field(default=None, description="Expected output type")
-    should_succeed: bool = Field(
-        default=True, description="Whether operation should succeed"
-    )
-    description: str = Field(default="", description="Scenario description")
-
-
-class _TestCachedObject:
-    """Mock object with cache attributes."""
-
-    def __init__(self) -> None:
-        self._cache: t.ConfigMap = t.ConfigMap(root={"key": "value"})
-        self._simple_cache: str = "cached_value"
-
-
-class _TestUncachedObject:
-    """Mock object without cache attributes."""
-
-    def __init__(self) -> None:
-        pass
-
-
-class _CustomObject:
-    """Custom serializable object."""
-
-    @override
-    def __str__(self) -> str:
-        return "custom_object"
-
-
-class UtilityScenarios:
-    """Centralized utility test scenarios."""
-
-    TYPE_GUARD_CASES: ClassVar[list[UtilityTestCase]] = [
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_STRING,
-            input_data="hello",
-            expected_type=bool,
-            should_succeed=True,
-            description="Non-empty string passes guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_STRING,
-            input_data="",
-            expected_type=bool,
-            should_succeed=False,
-            description="Empty string fails guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_STRING,
-            input_data=123,
-            expected_type=bool,
-            should_succeed=False,
-            description="Non-string fails guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_DICT,
-            input_data={"key": "value"},
-            expected_type=bool,
-            should_succeed=True,
-            description="Non-empty dict passes guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_DICT,
-            input_data={},
-            expected_type=bool,
-            should_succeed=False,
-            description="Empty dict fails guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_DICT,
-            input_data=None,
-            expected_type=bool,
-            should_succeed=False,
-            description="None fails dict guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_LIST,
-            input_data=[1, 2, 3],
-            expected_type=bool,
-            should_succeed=True,
-            description="Non-empty list passes guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_LIST,
-            input_data=[],
-            expected_type=bool,
-            should_succeed=False,
-            description="Empty list fails guard",
-        ),
-        UtilityTestCase(
-            operation=UtilityOperationType.TYPE_GUARD_LIST,
-            input_data=None,
-            expected_type=bool,
-            should_succeed=False,
-            description="None fails list guard",
-        ),
-    ]
-    ID_GENERATOR_CASES: ClassVar[list[tuple[str, str | None]]] = [
-        ("generate_id", None),
-        ("generate_iso_timestamp", None),
-        ("generate_correlation_id", "corr_"),
-        ("generate_entity_id", None),
-        ("generate_saga_id", None),
-        ("generate_event_id", None),
-    ]
-    CACHE_NORMALIZATION_CASES: ClassVar[list[tuple[t.NormalizedValue, type]]] = [
-        ({"a": 1, "b": 2}, dict),
-        ([1, 2, 3], list),
-        (None, type(None)),
-    ]
-
-    @staticmethod
-    def create_mock_config(**kwargs: t.Scalar) -> p.HasModelDump:
-        """Create mock config object."""
-        result: dict[str, t.NormalizedValue | BaseModel] = {}
-        for key, value in kwargs.items():
-            result[str(key)] = value
-        config_map: p.HasModelDump = t.ConfigMap(root=result)
-        return config_map
-
-    @staticmethod
-    def create_mock_cached_object() -> _TestCachedObject:
-        """Create mock object with cache attributes."""
-        return _TestCachedObject()
-
-    @staticmethod
-    def create_mock_uncached_object() -> _TestUncachedObject:
-        """Create mock object without cache attributes."""
-        return _TestUncachedObject()
-
-    @staticmethod
-    def create_custom_object() -> _CustomObject:
-        """Create custom serializable object."""
-        return _CustomObject()
-
-    @staticmethod
-    def create_flaky_operation() -> tuple[list[int], Callable[[], r[str]]]:
-        """Create flaky operation that eventually succeeds."""
-        attempt_count = [0]
-
-        def flaky_op() -> r[str]:
-            attempt_count[0] += 1
-            if attempt_count[0] < 2:
-                return r[str].fail("Temporary failure")
-            return r[str].ok("success")
-
-        return (attempt_count, flaky_op)
-
-
 class Testu(TextUtilityContract):
     """Unified test suite for u - ALL REAL FUNCTIONALITY."""
 
+    @unique
+    class UtilityOperationType(StrEnum):
+        """Utility operation types for parametrization."""
+
+        TYPE_GUARD_STRING = "type_guard_string"
+        TYPE_GUARD_DICT = "type_guard_dict"
+        TYPE_GUARD_LIST = "type_guard_list"
+        ID_GENERATION = "id_generation"
+        TIMESTAMP_GENERATION = "timestamp_generation"
+        CACHE_NORMALIZATION = "cache_normalization"
+        CACHE_KEY = "cache_key"
+        TEXT_CLEANING = "text_cleaning"
+        TEXT_TRUNCATION = "text_truncation"
+
+    @dataclass(frozen=True, slots=True)
+    class UtilityTestCase:
+        """Test case for utility operations."""
+
+        operation: str
+        input_data: t.NormalizedValue = None
+        expected_type: type | None = None
+        should_succeed: bool = True
+        description: str = ""
+
+    class _TestCachedObject:
+        """Mock object with cache attributes."""
+
+        def __init__(self) -> None:
+            self._cache: t.ConfigMap = t.ConfigMap(root={"key": "value"})
+            self._simple_cache: str = "cached_value"
+
+    class _TestUncachedObject:
+        """Mock object without cache attributes."""
+
+        def __init__(self) -> None:
+            pass
+
+    class _CustomObject:
+        """Custom serializable object."""
+
+        @override
+        def __str__(self) -> str:
+            return "custom_object"
+
+    class UtilityScenarios:
+        """Centralized utility test scenarios."""
+
+        TYPE_GUARD_STRING_CASES: ClassVar[list[tuple[t.NormalizedValue, bool, str]]] = [
+            ("hello", True, "Non-empty string passes guard"),
+            ("", False, "Empty string fails guard"),
+            (123, False, "Non-string fails guard"),
+        ]
+        TYPE_GUARD_DICT_CASES: ClassVar[list[tuple[t.NormalizedValue, bool, str]]] = [
+            ({"key": "value"}, True, "Non-empty dict passes guard"),
+            ({}, False, "Empty dict fails guard"),
+            (None, False, "None fails dict guard"),
+        ]
+        TYPE_GUARD_LIST_CASES: ClassVar[list[tuple[t.NormalizedValue, bool, str]]] = [
+            ([1, 2, 3], True, "Non-empty list passes guard"),
+            ([], False, "Empty list fails guard"),
+            (None, False, "None fails list guard"),
+        ]
+        ID_GENERATOR_CASES: ClassVar[list[tuple[str, str | None]]] = [
+            ("generate_id", None),
+            ("generate_iso_timestamp", None),
+            ("generate_correlation_id", "corr_"),
+            ("generate_entity_id", None),
+            ("generate_saga_id", None),
+            ("generate_event_id", None),
+        ]
+        CACHE_NORMALIZATION_CASES: ClassVar[list[tuple[t.NormalizedValue, type]]] = [
+            ({"a": 1, "b": 2}, dict),
+            ([1, 2, 3], list),
+            (None, type(None)),
+        ]
+
+        @staticmethod
+        def create_mock_config(**kwargs: t.Scalar) -> t.ConfigMap:
+            """Create mock config object."""
+            result: dict[str, t.NormalizedValue | BaseModel] = {}
+            for key, value in kwargs.items():
+                result[str(key)] = value
+            return t.ConfigMap(root=result)
+
+        @staticmethod
+        def create_mock_cached_object() -> Testu._TestCachedObject:
+            """Create mock object with cache attributes."""
+            return Testu._TestCachedObject()
+
+        @staticmethod
+        def create_mock_uncached_object() -> Testu._TestUncachedObject:
+            """Create mock object without cache attributes."""
+            return Testu._TestUncachedObject()
+
+        @staticmethod
+        def create_custom_object() -> Testu._CustomObject:
+            """Create custom serializable object."""
+            return Testu._CustomObject()
+
+        @staticmethod
+        def create_flaky_operation() -> tuple[list[int], Callable[[], r[str]]]:
+            """Create flaky operation that eventually succeeds."""
+            attempt_count = [0]
+
+            def flaky_op() -> r[str]:
+                attempt_count[0] += 1
+                if attempt_count[0] < 2:
+                    return r[str].fail("Temporary failure")
+                return r[str].ok("success")
+
+            return (attempt_count, flaky_op)
+
     @pytest.mark.parametrize(
-        "case",
-        [
-            c
-            for c in UtilityScenarios.TYPE_GUARD_CASES
-            if c.operation == UtilityOperationType.TYPE_GUARD_STRING
-        ],
+        ("input_data", "should_succeed", "description"),
+        UtilityScenarios.TYPE_GUARD_STRING_CASES,
     )
-    def test_type_guard_string(self, case: UtilityTestCase) -> None:
+    def test_type_guard_string(
+        self,
+        input_data: t.NormalizedValue,
+        should_succeed: bool,
+        description: str,
+    ) -> None:
         """Test string type guards."""
+        case = self.UtilityTestCase(
+            operation=self.UtilityOperationType.TYPE_GUARD_STRING.value,
+            input_data=input_data,
+            expected_type=bool,
+            should_succeed=should_succeed,
+            description=description,
+        )
         result = u.is_type(case.input_data, "string_non_empty")
-        tm.that(isinstance(result, bool), eq=True)
         tm.that(result, eq=case.should_succeed)
 
     @pytest.mark.parametrize(
-        "case",
-        [
-            c
-            for c in UtilityScenarios.TYPE_GUARD_CASES
-            if c.operation == UtilityOperationType.TYPE_GUARD_DICT
-        ],
+        ("input_data", "should_succeed", "description"),
+        UtilityScenarios.TYPE_GUARD_DICT_CASES,
     )
-    def test_type_guard_dict(self, case: UtilityTestCase) -> None:
+    def test_type_guard_dict(
+        self,
+        input_data: t.NormalizedValue,
+        should_succeed: bool,
+        description: str,
+    ) -> None:
         """Test dict type guards."""
+        case = self.UtilityTestCase(
+            operation=self.UtilityOperationType.TYPE_GUARD_DICT.value,
+            input_data=input_data,
+            expected_type=bool,
+            should_succeed=should_succeed,
+            description=description,
+        )
         result = u.is_type(case.input_data, "dict_non_empty")
-        tm.that(isinstance(result, bool), eq=True)
         tm.that(result, eq=case.should_succeed)
 
     @pytest.mark.parametrize(
-        "case",
-        [
-            c
-            for c in UtilityScenarios.TYPE_GUARD_CASES
-            if c.operation == UtilityOperationType.TYPE_GUARD_LIST
-        ],
+        ("input_data", "should_succeed", "description"),
+        UtilityScenarios.TYPE_GUARD_LIST_CASES,
     )
-    def test_type_guard_list(self, case: UtilityTestCase) -> None:
+    def test_type_guard_list(
+        self,
+        input_data: t.NormalizedValue,
+        should_succeed: bool,
+        description: str,
+    ) -> None:
         """Test list type guards."""
+        case = self.UtilityTestCase(
+            operation=self.UtilityOperationType.TYPE_GUARD_LIST.value,
+            input_data=input_data,
+            expected_type=bool,
+            should_succeed=should_succeed,
+            description=description,
+        )
         result = u.is_type(case.input_data, "list_non_empty")
-        tm.that(isinstance(result, bool), eq=True)
         tm.that(result, eq=case.should_succeed)
 
     def test_generate_id_uniqueness(self) -> None:
         """Test ID generation produces unique values."""
         id1 = u.generate()
         id2 = u.generate()
-        tm.that(isinstance(id1, str), eq=True)
         tm.that(len(id1), gt=0)
         tm.that(id1, ne=id2)
 
@@ -294,7 +251,6 @@ class Testu(TextUtilityContract):
     def test_generate_short_id_length(self) -> None:
         """Test short ID generation with specific length."""
         short_id = u.generate("ulid", length=8)
-        tm.that(isinstance(short_id, str), eq=True)
         tm.that(len(short_id), eq=8)
 
     @pytest.mark.parametrize(("raw", "expected"), TextUtilityContract.CLEAN_TEXT_CASES)
@@ -348,13 +304,14 @@ class Testu(TextUtilityContract):
         data = {"z": 1, "a": 2, "m": 3}
         result = u.sort_dict_keys(data)
         tm.that(isinstance(result, dict), eq=True)
+        if not isinstance(result, dict):
+            pytest.fail("Expected sorted dictionary")
         keys = list(result.keys())
         tm.that(keys, eq=sorted(keys))
 
     def test_cache_generate_key(self) -> None:
         """Test cache key generation."""
         key1 = u.generate_cache_key(None, None)
-        tm.that(isinstance(key1, str), eq=True)
         tm.that(len(key1), gt=0)
 
     def test_cache_generate_key_uniqueness(self) -> None:
@@ -365,7 +322,7 @@ class Testu(TextUtilityContract):
 
     def test_cache_clear_object(self) -> None:
         """Test clearing object cache."""
-        obj = UtilityScenarios.create_mock_cached_object()
+        obj = self.UtilityScenarios.create_mock_cached_object()
         if isinstance(obj, BaseModel):
             result = u.clear_object_cache(obj)
         else:
@@ -385,12 +342,12 @@ class Testu(TextUtilityContract):
 
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
-        obj = UtilityScenarios.create_mock_cached_object()
+        obj = self.UtilityScenarios.create_mock_cached_object()
         assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
-        obj = UtilityScenarios.create_mock_uncached_object()
+        obj = self.UtilityScenarios.create_mock_uncached_object()
         assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is False
 
     def test_reliability_timeout_success(self) -> None:
@@ -424,7 +381,7 @@ class Testu(TextUtilityContract):
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
-        attempt_count, flaky_op = UtilityScenarios.create_flaky_operation()
+        attempt_count, flaky_op = self.UtilityScenarios.create_flaky_operation()
         result: r[str] = u.retry(
             flaky_op,
             max_attempts=3,
@@ -455,13 +412,13 @@ class Testu(TextUtilityContract):
 
     def test_configuration_get_parameter(self) -> None:
         """Test parameter retrieval from config."""
-        config = UtilityScenarios.create_mock_config(timeout=30)
+        config = self.UtilityScenarios.create_mock_config(timeout=30)
         value = u.get_parameter(config, "timeout")
         tm.that(value, eq=30)
 
     def test_configuration_get_parameter_missing(self) -> None:
         """Test parameter retrieval for missing parameter."""
-        config = UtilityScenarios.create_mock_config(timeout=30)
+        config = self.UtilityScenarios.create_mock_config(timeout=30)
         with pytest.raises(FlextExceptions.NotFoundError):
             u.get_parameter(config, "missing")
 

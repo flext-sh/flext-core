@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from flext_core import FlextLogger, FlextMixins, r, x
 from tests import c, p, u
 
-from ._models import _SvcModel
+from ._models import TestUnitModels
 
 
 class TestMixinsFullCoverage:
@@ -163,7 +163,7 @@ class TestMixinsFullCoverage:
         tm.fail(x.fail("error"))
         conf = t.ConfigMap(root={"a": "b"})
         tm.that(x.normalize_to_container(conf) is conf, eq=True)
-        model = _SvcModel(value="ok")
+        model = TestUnitModels._SvcModel(value="ok")
         tm.that(x.normalize_to_container(model) is model, eq=True)
 
         class _BadMap(Mapping[str, t.NormalizedValue]):

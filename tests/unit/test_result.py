@@ -28,7 +28,6 @@ from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from tests import c
 
 from ..test_utils import assertion_helpers
 
@@ -323,7 +322,7 @@ class Testr:
             result = (
                 u.Tests.Result.create_success_result("value")
                 if scenario.value
-                else u.Tests.Result.create_failure_result(c.Errors.GENERIC_ERROR)
+                else u.Tests.Result.create_failure_result("generic_error")
             )
             tm.that(bool(result), eq=bool(scenario.value))
 

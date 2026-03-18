@@ -316,7 +316,7 @@ class TestFlextSettings:
 
         @pytest.mark.parametrize(
             ("env_key", "env_value", "should_load", "log_level"),
-            ConfigScenarios.ENV_PREFIX_CASES,
+            [("DEBUG", "true", False, "INFO"), ("FLEXT_DEBUG", "true", True, "INFO")],
         )
         def test_pydantic_env_prefix(
             self, env_key: str, env_value: str, should_load: bool, log_level: str

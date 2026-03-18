@@ -27,12 +27,8 @@ from pydantic import BaseModel, Field
 
 from flext_core import FlextExceptions, FlextRuntime
 from tests import c, m, p, u
-from tests.unit._models import (
-    BadConfigForTest,
-    ConfigModelForTest,
-    InvalidModelForTest,
-    SingletonClassForTest,
-)
+
+from ._models import TestUnitModels
 
 
 class _Assertions:
@@ -324,7 +320,7 @@ class TestFlextUtilitiesConfiguration:
             expected_value: t.Tests.object,
         ) -> None:
             """Test get_parameter from Pydantic model."""
-            config = ConfigModelForTest(
+            config = TestUnitModels.ConfigModelForTest(
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 timeout=TestConfigConstants.TestValues.TEST_TIMEOUT,
                 enabled=TestConfigConstants.TestValues.TEST_ENABLED_FALSE,
@@ -341,7 +337,9 @@ class TestFlextUtilitiesConfiguration:
 
         def test_from_pydantic_model_not_found(self) -> None:
             """Test get_parameter raises NotFoundError for missing parameter in model."""
-            config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
+            config = TestUnitModels.ConfigModelForTest(
+                name=TestConfigConstants.TestValues.TEST_NAME
+            )
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 u.get_parameter(
                     cast("p.HasModelDump", cast("object", config)),
@@ -356,7 +354,10 @@ class TestFlextUtilitiesConfiguration:
 
         def test_from_pydantic_model_invalid_dump(self) -> None:
             """Test get_parameter handles invalid model_dump return."""
-            config = cast("p.HasModelDump", cast("object", InvalidModelForTest()))
+            config = cast(
+                "p.HasModelDump",
+                cast("object", TestUnitModels.InvalidModelForTest()),
+            )
             result = u.get_parameter(
                 config,
                 TestConfigConstants.ParameterNames.VALUE.value,
@@ -474,7 +475,7 @@ class TestFlextUtilitiesConfiguration:
             expected_success: bool,
         ) -> None:
             """Test set_parameter on Pydantic model with validation."""
-            config = ConfigModelForTest(
+            config = TestUnitModels.ConfigModelForTest(
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 timeout=TestConfigConstants.TestValues.TEST_TIMEOUT // 2,
             )
@@ -507,7 +508,9 @@ class TestFlextUtilitiesConfiguration:
             value: t.Tests.object,
         ) -> None:
             """Test set_parameter handles Pydantic validation errors."""
-            config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
+            config = TestUnitModels.ConfigModelForTest(
+                name=TestConfigConstants.TestValues.TEST_NAME
+            )
             result = u.set_parameter(
                 config,
                 param_name,
@@ -553,7 +556,9 @@ class TestFlextUtilitiesConfiguration:
             value: t.Tests.object,
         ) -> None:
             """Test set_parameter with boundary values."""
-            config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
+            config = TestUnitModels.ConfigModelForTest(
+                name=TestConfigConstants.TestValues.TEST_NAME
+            )
             result = u.set_parameter(
                 config,
                 param_name,
@@ -567,7 +572,7 @@ class TestFlextUtilitiesConfiguration:
 
         def setup_method(self) -> None:
             """Reset singleton instances before each test."""
-            SingletonClassForTest.reset_instance()
+            TestUnitModels.SingletonClassForTest.reset_instance()
 
         @pytest.mark.parametrize(
             ("param_name", "expected_value"),
@@ -585,14 +590,14 @@ class TestFlextUtilitiesConfiguration:
             expected_value: t.Tests.object,
         ) -> None:
             """Test get_singleton from singleton class."""
-            result = u.get_singleton(SingletonClassForTest, param_name)
+            result = u.get_singleton(TestUnitModels.SingletonClassForTest, param_name)
             tm.that(result, eq=expected_value)
 
         def test_get_singleton_not_found(self) -> None:
             """Test get_singleton raises NotFoundError for missing parameter."""
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 u.get_singleton(
-                    SingletonClassForTest,
+                    TestUnitModels.SingletonClassForTest,
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
             tm.that(
@@ -618,10 +623,10 @@ class TestFlextUtilitiesConfiguration:
 
         def test_set_singleton_success(self) -> None:
             """Test set_singleton on singleton class."""
-            instance = SingletonClassForTest.get_global()
+            instance = TestUnitModels.SingletonClassForTest.get_global()
             original_timeout = instance.timeout
             result = u.set_singleton(
-                SingletonClassForTest,
+                TestUnitModels.SingletonClassForTest,
                 TestConfigConstants.ParameterNames.TIMEOUT.value,
                 TestConfigConstants.TestValues.TEST_TIMEOUT_LARGE,
             )
@@ -671,9 +676,9 @@ class TestFlextUtilitiesConfiguration:
 
         def test_set_singleton_parameter_set_failure(self) -> None:
             """Test set_singleton fails when set_parameter fails."""
-            SingletonClassForTest.get_global()
+            TestUnitModels.SingletonClassForTest.get_global()
             result = u.set_singleton(
-                SingletonClassForTest,
+                TestUnitModels.SingletonClassForTest,
                 TestConfigConstants.ParameterNames.MISSING.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
@@ -688,7 +693,9 @@ class TestFlextUtilitiesConfiguration:
 
         def test_success(self) -> None:
             """Test validate_config_class with valid configuration class."""
-            validation_result = u.validate_config_class(ConfigModelForTest)
+            validation_result = u.validate_config_class(
+                TestUnitModels.ConfigModelForTest
+            )
             _ResultAssertions.assert_result_success(validation_result)
             _Assertions.that(
                 validation_result.value,
@@ -708,7 +715,7 @@ class TestFlextUtilitiesConfiguration:
 
         def test_instantiation_error(self) -> None:
             """Test validate_config_class handles instantiation errors."""
-            validation_result = u.validate_config_class(BadConfigForTest)
+            validation_result = u.validate_config_class(TestUnitModels.BadConfigForTest)
             _ResultAssertions.assert_result_failure(validation_result)
             _Assertions.that(
                 validation_result.error or "",

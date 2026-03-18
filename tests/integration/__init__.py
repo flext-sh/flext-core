@@ -13,299 +13,38 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from . import patterns as patterns
-    from .patterns.test_advanced_patterns import TestFunction
-    from .patterns.test_architectural_patterns import (
-        TestEnterprisePatterns,
-        TestEventDrivenPatterns,
-    )
-    from .patterns.test_patterns_commands import (
-        CreateUserCommand,
-        CreateUserCommandHandler,
-        FailingCommand,
-        FailingCommandHandler,
-        FlextCommandId,
-        FlextCommandType,
-        TestFlextCommand,
-        TestFlextCommandHandler,
-        TestFlextCommandResults,
-        UpdateUserCommand,
-        UpdateUserCommandHandler,
-    )
-    from .patterns.test_patterns_logging import (
-        TestFlextContext,
-        TestFlextLogger,
-        TestFlextLoggerIntegration,
-        TestFlextLoggerUsage,
-        TestFlextLogLevel,
-        assert_result_success,
-        make_result_logger,
-    )
-    from .patterns.test_patterns_testing import (
-        AssertionBuilder,
-        FixtureBuilder,
-        FlextTestBuilder,
-        GivenWhenThenBuilder,
-        MockScenario,
-        ParameterizedTestBuilder,
-        SuiteBuilder,
-        TestAdvancedPatterns,
-        TestComprehensiveIntegration,
-        TestPerformanceAnalysis,
-        TestPropertyBasedPatterns,
-        TestRealWorldScenarios,
-        arrange_act_assert,
-        mark_test_pattern,
-    )
-    from .test_config_integration import (
-        ConfigTestCase,
-        ConfigTestFactories,
-        TestFlextSettingsSingletonIntegration,
-        ThreadSafetyTest,
-    )
-    from .test_infra_integration import (
-        TestBaseMkGenerationFlow,
-        TestContainerIntegration,
-        TestCrossModuleIntegration,
-        TestIntegrationWithRealCommandServices,
-        TestOutputSingletonConsistency,
-        TestPathResolverDiscoveryFlow,
-        TestServicerChaining,
-        TestWorkspaceDetectionOrchestrationFlow,
-    )
+    from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
+    from .patterns.test_architectural_patterns import TestArchitecturalPatterns
+    from .patterns.test_patterns_commands import TestPatternsCommands
+    from .patterns.test_patterns_logging import TestPatternsLogging
+    from .patterns.test_patterns_testing import TestPatternsTesting
+    from .test_config_integration import TestFlextSettingsSingletonIntegration
+    from .test_infra_integration import TestInfraIntegration
     from .test_integration import TestLibraryIntegration
-    from .test_migration_validation import (
-        TestBackwardCompatibility,
-        TestMigrationComplexity,
-        TestMigrationScenario1,
-        TestMigrationScenario2,
-        TestMigrationScenario4,
-        TestMigrationScenario5,
-    )
+    from .test_migration_validation import TestMigrationValidation
     from .test_refactor_nesting_file import (
+        pytestmark,
         test_class_nesting_refactor_single_file_end_to_end,
     )
     from .test_refactor_nesting_idempotency import TestIdempotency
     from .test_refactor_nesting_project import TestProjectLevelRefactor
     from .test_refactor_nesting_workspace import TestWorkspaceLevelRefactor
-    from .test_refactor_policy_mro import (
-        AlgarOudMigConstants,
-        AlgarOudMigModels,
-        AlgarOudMigProtocols,
-        AlgarOudMigTypes,
-        AlgarOudMigUtilities,
-        FlextCliConstants,
-        FlextCliModels,
-        FlextCliProtocols,
-        FlextCliTypes,
-        FlextCliUtilities,
-        FlextLdapConstants,
-        FlextLdapConstants as c,
-        FlextLdapModels,
-        FlextLdapModels as m,
-        FlextLdapProtocols,
-        FlextLdapProtocols as p,
-        FlextLdapTypes,
-        FlextLdapTypes as t,
-        FlextLdapUtilities,
-        FlextLdapUtilities as u,
-        test_mro_resolver_accepts_expected_order,
-        test_mro_resolver_rejects_wrong_order,
-    )
-    from .test_service import (
-        LifecycleService,
-        NotificationService,
-        ServiceConfig,
-        TestFlextServiceIntegration,
-        UserQueryService,
-        UserQueryService as s,
-        UserServiceEntity,
-        pytestmark,
-    )
+    from .test_refactor_policy_mro import TestRefactorPolicyMRO
+    from .test_service import TestService, TestService as s
     from .test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "AlgarOudMigConstants": (
-        "tests.integration.test_refactor_policy_mro",
-        "AlgarOudMigConstants",
-    ),
-    "AlgarOudMigModels": (
-        "tests.integration.test_refactor_policy_mro",
-        "AlgarOudMigModels",
-    ),
-    "AlgarOudMigProtocols": (
-        "tests.integration.test_refactor_policy_mro",
-        "AlgarOudMigProtocols",
-    ),
-    "AlgarOudMigTypes": (
-        "tests.integration.test_refactor_policy_mro",
-        "AlgarOudMigTypes",
-    ),
-    "AlgarOudMigUtilities": (
-        "tests.integration.test_refactor_policy_mro",
-        "AlgarOudMigUtilities",
-    ),
-    "AssertionBuilder": (
-        "tests.integration.patterns.test_patterns_testing",
-        "AssertionBuilder",
-    ),
-    "ConfigTestCase": ("tests.integration.test_config_integration", "ConfigTestCase"),
-    "ConfigTestFactories": (
-        "tests.integration.test_config_integration",
-        "ConfigTestFactories",
-    ),
-    "CreateUserCommand": (
-        "tests.integration.patterns.test_patterns_commands",
-        "CreateUserCommand",
-    ),
-    "CreateUserCommandHandler": (
-        "tests.integration.patterns.test_patterns_commands",
-        "CreateUserCommandHandler",
-    ),
-    "FailingCommand": (
-        "tests.integration.patterns.test_patterns_commands",
-        "FailingCommand",
-    ),
-    "FailingCommandHandler": (
-        "tests.integration.patterns.test_patterns_commands",
-        "FailingCommandHandler",
-    ),
-    "FixtureBuilder": (
-        "tests.integration.patterns.test_patterns_testing",
-        "FixtureBuilder",
-    ),
-    "FlextCliConstants": (
-        "tests.integration.test_refactor_policy_mro",
-        "FlextCliConstants",
-    ),
-    "FlextCliModels": ("tests.integration.test_refactor_policy_mro", "FlextCliModels"),
-    "FlextCliProtocols": (
-        "tests.integration.test_refactor_policy_mro",
-        "FlextCliProtocols",
-    ),
-    "FlextCliTypes": ("tests.integration.test_refactor_policy_mro", "FlextCliTypes"),
-    "FlextCliUtilities": (
-        "tests.integration.test_refactor_policy_mro",
-        "FlextCliUtilities",
-    ),
-    "FlextCommandId": (
-        "tests.integration.patterns.test_patterns_commands",
-        "FlextCommandId",
-    ),
-    "FlextCommandType": (
-        "tests.integration.patterns.test_patterns_commands",
-        "FlextCommandType",
-    ),
-    "FlextLdapConstants": (
-        "tests.integration.test_refactor_policy_mro",
-        "FlextLdapConstants",
-    ),
-    "FlextLdapModels": (
-        "tests.integration.test_refactor_policy_mro",
-        "FlextLdapModels",
-    ),
-    "FlextLdapProtocols": (
-        "tests.integration.test_refactor_policy_mro",
-        "FlextLdapProtocols",
-    ),
-    "FlextLdapTypes": ("tests.integration.test_refactor_policy_mro", "FlextLdapTypes"),
-    "FlextLdapUtilities": (
-        "tests.integration.test_refactor_policy_mro",
-        "FlextLdapUtilities",
-    ),
-    "FlextTestBuilder": (
-        "tests.integration.patterns.test_patterns_testing",
-        "FlextTestBuilder",
-    ),
-    "GivenWhenThenBuilder": (
-        "tests.integration.patterns.test_patterns_testing",
-        "GivenWhenThenBuilder",
-    ),
-    "LifecycleService": ("tests.integration.test_service", "LifecycleService"),
-    "MockScenario": (
-        "tests.integration.patterns.test_patterns_testing",
-        "MockScenario",
-    ),
-    "NotificationService": ("tests.integration.test_service", "NotificationService"),
-    "ParameterizedTestBuilder": (
-        "tests.integration.patterns.test_patterns_testing",
-        "ParameterizedTestBuilder",
-    ),
-    "ServiceConfig": ("tests.integration.test_service", "ServiceConfig"),
-    "SuiteBuilder": (
-        "tests.integration.patterns.test_patterns_testing",
-        "SuiteBuilder",
-    ),
     "TestAdvancedPatterns": (
-        "tests.integration.patterns.test_patterns_testing",
+        "tests.integration.patterns.test_advanced_patterns",
         "TestAdvancedPatterns",
     ),
-    "TestBackwardCompatibility": (
-        "tests.integration.test_migration_validation",
-        "TestBackwardCompatibility",
-    ),
-    "TestBaseMkGenerationFlow": (
-        "tests.integration.test_infra_integration",
-        "TestBaseMkGenerationFlow",
+    "TestArchitecturalPatterns": (
+        "tests.integration.patterns.test_architectural_patterns",
+        "TestArchitecturalPatterns",
     ),
     "TestCompleteFlextSystemIntegration": (
         "tests.integration.test_system",
         "TestCompleteFlextSystemIntegration",
-    ),
-    "TestComprehensiveIntegration": (
-        "tests.integration.patterns.test_patterns_testing",
-        "TestComprehensiveIntegration",
-    ),
-    "TestContainerIntegration": (
-        "tests.integration.test_infra_integration",
-        "TestContainerIntegration",
-    ),
-    "TestCrossModuleIntegration": (
-        "tests.integration.test_infra_integration",
-        "TestCrossModuleIntegration",
-    ),
-    "TestEnterprisePatterns": (
-        "tests.integration.patterns.test_architectural_patterns",
-        "TestEnterprisePatterns",
-    ),
-    "TestEventDrivenPatterns": (
-        "tests.integration.patterns.test_architectural_patterns",
-        "TestEventDrivenPatterns",
-    ),
-    "TestFlextCommand": (
-        "tests.integration.patterns.test_patterns_commands",
-        "TestFlextCommand",
-    ),
-    "TestFlextCommandHandler": (
-        "tests.integration.patterns.test_patterns_commands",
-        "TestFlextCommandHandler",
-    ),
-    "TestFlextCommandResults": (
-        "tests.integration.patterns.test_patterns_commands",
-        "TestFlextCommandResults",
-    ),
-    "TestFlextContext": (
-        "tests.integration.patterns.test_patterns_logging",
-        "TestFlextContext",
-    ),
-    "TestFlextLogLevel": (
-        "tests.integration.patterns.test_patterns_logging",
-        "TestFlextLogLevel",
-    ),
-    "TestFlextLogger": (
-        "tests.integration.patterns.test_patterns_logging",
-        "TestFlextLogger",
-    ),
-    "TestFlextLoggerIntegration": (
-        "tests.integration.patterns.test_patterns_logging",
-        "TestFlextLoggerIntegration",
-    ),
-    "TestFlextLoggerUsage": (
-        "tests.integration.patterns.test_patterns_logging",
-        "TestFlextLoggerUsage",
-    ),
-    "TestFlextServiceIntegration": (
-        "tests.integration.test_service",
-        "TestFlextServiceIntegration",
     ),
     "TestFlextSettingsSingletonIntegration": (
         "tests.integration.test_config_integration",
@@ -319,213 +58,73 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_refactor_nesting_idempotency",
         "TestIdempotency",
     ),
-    "TestIntegrationWithRealCommandServices": (
+    "TestInfraIntegration": (
         "tests.integration.test_infra_integration",
-        "TestIntegrationWithRealCommandServices",
+        "TestInfraIntegration",
     ),
     "TestLibraryIntegration": (
         "tests.integration.test_integration",
         "TestLibraryIntegration",
     ),
-    "TestMigrationComplexity": (
+    "TestMigrationValidation": (
         "tests.integration.test_migration_validation",
-        "TestMigrationComplexity",
+        "TestMigrationValidation",
     ),
-    "TestMigrationScenario1": (
-        "tests.integration.test_migration_validation",
-        "TestMigrationScenario1",
+    "TestPatternsCommands": (
+        "tests.integration.patterns.test_patterns_commands",
+        "TestPatternsCommands",
     ),
-    "TestMigrationScenario2": (
-        "tests.integration.test_migration_validation",
-        "TestMigrationScenario2",
+    "TestPatternsLogging": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestPatternsLogging",
     ),
-    "TestMigrationScenario4": (
-        "tests.integration.test_migration_validation",
-        "TestMigrationScenario4",
-    ),
-    "TestMigrationScenario5": (
-        "tests.integration.test_migration_validation",
-        "TestMigrationScenario5",
-    ),
-    "TestOutputSingletonConsistency": (
-        "tests.integration.test_infra_integration",
-        "TestOutputSingletonConsistency",
-    ),
-    "TestPathResolverDiscoveryFlow": (
-        "tests.integration.test_infra_integration",
-        "TestPathResolverDiscoveryFlow",
-    ),
-    "TestPerformanceAnalysis": (
+    "TestPatternsTesting": (
         "tests.integration.patterns.test_patterns_testing",
-        "TestPerformanceAnalysis",
+        "TestPatternsTesting",
     ),
     "TestProjectLevelRefactor": (
         "tests.integration.test_refactor_nesting_project",
         "TestProjectLevelRefactor",
     ),
-    "TestPropertyBasedPatterns": (
-        "tests.integration.patterns.test_patterns_testing",
-        "TestPropertyBasedPatterns",
+    "TestRefactorPolicyMRO": (
+        "tests.integration.test_refactor_policy_mro",
+        "TestRefactorPolicyMRO",
     ),
-    "TestRealWorldScenarios": (
-        "tests.integration.patterns.test_patterns_testing",
-        "TestRealWorldScenarios",
-    ),
-    "TestServicerChaining": (
-        "tests.integration.test_infra_integration",
-        "TestServicerChaining",
-    ),
-    "TestWorkspaceDetectionOrchestrationFlow": (
-        "tests.integration.test_infra_integration",
-        "TestWorkspaceDetectionOrchestrationFlow",
-    ),
+    "TestService": ("tests.integration.test_service", "TestService"),
     "TestWorkspaceLevelRefactor": (
         "tests.integration.test_refactor_nesting_workspace",
         "TestWorkspaceLevelRefactor",
     ),
-    "ThreadSafetyTest": (
-        "tests.integration.test_config_integration",
-        "ThreadSafetyTest",
-    ),
-    "UpdateUserCommand": (
-        "tests.integration.patterns.test_patterns_commands",
-        "UpdateUserCommand",
-    ),
-    "UpdateUserCommandHandler": (
-        "tests.integration.patterns.test_patterns_commands",
-        "UpdateUserCommandHandler",
-    ),
-    "UserQueryService": ("tests.integration.test_service", "UserQueryService"),
-    "UserServiceEntity": ("tests.integration.test_service", "UserServiceEntity"),
-    "arrange_act_assert": (
-        "tests.integration.patterns.test_patterns_testing",
-        "arrange_act_assert",
-    ),
-    "assert_result_success": (
-        "tests.integration.patterns.test_patterns_logging",
-        "assert_result_success",
-    ),
-    "c": ("tests.integration.test_refactor_policy_mro", "FlextLdapConstants"),
-    "m": ("tests.integration.test_refactor_policy_mro", "FlextLdapModels"),
-    "make_result_logger": (
-        "tests.integration.patterns.test_patterns_logging",
-        "make_result_logger",
-    ),
-    "mark_test_pattern": (
-        "tests.integration.patterns.test_patterns_testing",
-        "mark_test_pattern",
-    ),
-    "p": ("tests.integration.test_refactor_policy_mro", "FlextLdapProtocols"),
     "patterns": ("tests.integration.patterns", ""),
-    "pytestmark": ("tests.integration.test_service", "pytestmark"),
-    "s": ("tests.integration.test_service", "UserQueryService"),
-    "t": ("tests.integration.test_refactor_policy_mro", "FlextLdapTypes"),
+    "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
+    "s": ("tests.integration.test_service", "TestService"),
     "test_class_nesting_refactor_single_file_end_to_end": (
         "tests.integration.test_refactor_nesting_file",
         "test_class_nesting_refactor_single_file_end_to_end",
     ),
-    "test_mro_resolver_accepts_expected_order": (
-        "tests.integration.test_refactor_policy_mro",
-        "test_mro_resolver_accepts_expected_order",
-    ),
-    "test_mro_resolver_rejects_wrong_order": (
-        "tests.integration.test_refactor_policy_mro",
-        "test_mro_resolver_rejects_wrong_order",
-    ),
-    "u": ("tests.integration.test_refactor_policy_mro", "FlextLdapUtilities"),
 }
 
 __all__ = [
-    "AlgarOudMigConstants",
-    "AlgarOudMigModels",
-    "AlgarOudMigProtocols",
-    "AlgarOudMigTypes",
-    "AlgarOudMigUtilities",
-    "AssertionBuilder",
-    "ConfigTestCase",
-    "ConfigTestFactories",
-    "CreateUserCommand",
-    "CreateUserCommandHandler",
-    "FailingCommand",
-    "FailingCommandHandler",
-    "FixtureBuilder",
-    "FlextCliConstants",
-    "FlextCliModels",
-    "FlextCliProtocols",
-    "FlextCliTypes",
-    "FlextCliUtilities",
-    "FlextCommandId",
-    "FlextCommandType",
-    "FlextLdapConstants",
-    "FlextLdapModels",
-    "FlextLdapProtocols",
-    "FlextLdapTypes",
-    "FlextLdapUtilities",
-    "FlextTestBuilder",
-    "GivenWhenThenBuilder",
-    "LifecycleService",
-    "MockScenario",
-    "NotificationService",
-    "ParameterizedTestBuilder",
-    "ServiceConfig",
-    "SuiteBuilder",
     "TestAdvancedPatterns",
-    "TestBackwardCompatibility",
-    "TestBaseMkGenerationFlow",
+    "TestArchitecturalPatterns",
     "TestCompleteFlextSystemIntegration",
-    "TestComprehensiveIntegration",
-    "TestContainerIntegration",
-    "TestCrossModuleIntegration",
-    "TestEnterprisePatterns",
-    "TestEventDrivenPatterns",
-    "TestFlextCommand",
-    "TestFlextCommandHandler",
-    "TestFlextCommandResults",
-    "TestFlextContext",
-    "TestFlextLogLevel",
-    "TestFlextLogger",
-    "TestFlextLoggerIntegration",
-    "TestFlextLoggerUsage",
-    "TestFlextServiceIntegration",
     "TestFlextSettingsSingletonIntegration",
     "TestFunction",
     "TestIdempotency",
-    "TestIntegrationWithRealCommandServices",
+    "TestInfraIntegration",
     "TestLibraryIntegration",
-    "TestMigrationComplexity",
-    "TestMigrationScenario1",
-    "TestMigrationScenario2",
-    "TestMigrationScenario4",
-    "TestMigrationScenario5",
-    "TestOutputSingletonConsistency",
-    "TestPathResolverDiscoveryFlow",
-    "TestPerformanceAnalysis",
+    "TestMigrationValidation",
+    "TestPatternsCommands",
+    "TestPatternsLogging",
+    "TestPatternsTesting",
     "TestProjectLevelRefactor",
-    "TestPropertyBasedPatterns",
-    "TestRealWorldScenarios",
-    "TestServicerChaining",
-    "TestWorkspaceDetectionOrchestrationFlow",
+    "TestRefactorPolicyMRO",
+    "TestService",
     "TestWorkspaceLevelRefactor",
-    "ThreadSafetyTest",
-    "UpdateUserCommand",
-    "UpdateUserCommandHandler",
-    "UserQueryService",
-    "UserServiceEntity",
-    "arrange_act_assert",
-    "assert_result_success",
-    "c",
-    "m",
-    "make_result_logger",
-    "mark_test_pattern",
-    "p",
     "patterns",
     "pytestmark",
     "s",
-    "t",
     "test_class_nesting_refactor_single_file_end_to_end",
-    "test_mro_resolver_accepts_expected_order",
-    "test_mro_resolver_rejects_wrong_order",
-    "u",
 ]
 
 

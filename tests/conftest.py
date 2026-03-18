@@ -17,12 +17,10 @@ from flext_tests import t
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, r, t as core_t
 
-builtins.t = core_t
+setattr(builtins, "t", core_t)
 
 from .helpers.scenarios import (  # noqa: E402 — must run after builtins.t assignment above
-    ParserScenarios,
-    ReliabilityScenarios,
-    ValidationScenarios,
+    TestHelperScenarios,
 )
 
 
@@ -144,21 +142,21 @@ def flext_result_failure() -> r[str]:
 
 
 @pytest.fixture
-def validation_scenarios() -> type[ValidationScenarios]:
+def validation_scenarios() -> type:
     """Access to all centralized validation scenarios."""
-    return ValidationScenarios
+    return TestHelperScenarios.ValidationScenarios
 
 
 @pytest.fixture
-def parser_scenarios() -> type[ParserScenarios]:
+def parser_scenarios() -> type:
     """Access to all centralized parser scenarios."""
-    return ParserScenarios
+    return TestHelperScenarios.ParserScenarios
 
 
 @pytest.fixture
-def reliability_scenarios() -> type[ReliabilityScenarios]:
+def reliability_scenarios() -> type:
     """Access to all centralized reliability scenarios."""
-    return ReliabilityScenarios
+    return TestHelperScenarios.ReliabilityScenarios
 
 
 @pytest.fixture

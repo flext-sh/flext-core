@@ -21,8 +21,8 @@ from flext_core import r
 from tests.test_utils import assertion_helpers
 
 
-class TestFileInfo:
-    """Test suite for tf.FileInfo model."""
+class TestFlextTestsFiles:
+    """Test suite for tf class."""
 
     def test_file_info_exists_false(self) -> None:
         """Test tf.FileInfo with exists=False."""
@@ -50,10 +50,6 @@ class TestFileInfo:
         assert info.encoding == "utf-8"
         assert info.is_empty is False
         assert info.first_line == "first line"
-
-
-class TestFlextTestsFiles:
-    """Test suite for tf class."""
 
     def test_init_without_base_dir(self) -> None:
         """Test initialization without base directory."""

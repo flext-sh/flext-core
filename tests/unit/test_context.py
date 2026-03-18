@@ -31,7 +31,6 @@ from flext_tests import FlextTestsUtilities, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, p, t
-from tests import m
 
 
 class TestFlextContext:
@@ -54,7 +53,13 @@ class TestFlextContext:
         """Centralized context test scenarios using FlextConstants."""
 
         SET_GET_CASES: ClassVar[
-            list[tuple[str, SetGetInputValue, SetGetExpectedValue]]
+            list[
+                tuple[
+                    str,
+                    TestFlextContext.SetGetInputValue,
+                    TestFlextContext.SetGetExpectedValue,
+                ]
+            ]
         ] = [
             ("string_key", "string_value", "string_value"),
             ("int_key", 42, 42),
@@ -71,7 +76,9 @@ class TestFlextContext:
             ("special_chars", "key!@#$%^&*()"),
             ("long_key", "k" * 1000),
         ]
-        EDGE_CASE_VALUES: ClassVar[list[tuple[str, str | NestedDictValue]]] = [
+        EDGE_CASE_VALUES: ClassVar[
+            list[tuple[str, str | TestFlextContext.NestedDictValue]]
+        ] = [
             ("long_value", "v" * 10000),
             (
                 "complex_nested",
@@ -93,9 +100,7 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        initial_data = m.ContextData(
-            data=t.Dict(root={"user_id": "123", "session_id": "abc"})
-        )
+        initial_data = t.Dict(root={"user_id": "123", "session_id": "abc"})
         context = FlextContext(initial_data=initial_data)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context, "user_id", "123"
@@ -241,9 +246,11 @@ class TestFlextContext:
         context = test_context
         result = context.set("", "empty_key")
         _ = u.Tests.Result.assert_failure(result)
-        tm.that(
-            result.error, none=False
-        ) and "must be a non-empty string" in result.error
+        error_message = result.error
+        tm.that(error_message, none=False)
+        if error_message is None:
+            pytest.fail("Expected error message for invalid context key")
+        tm.that("must be a non-empty string" in error_message, eq=True)
 
     def test_context_thread_safety(self, test_context: FlextContext) -> None:
         """Test context thread safety."""
@@ -279,9 +286,11 @@ class TestFlextContext:
         context = test_context
         result = context.set("", "value")
         _ = u.Tests.Result.assert_failure(result)
-        tm.that(
-            result.error, none=False
-        ) and "must be a non-empty string" in result.error
+        error_message = result.error
+        tm.that(error_message, none=False)
+        if error_message is None:
+            pytest.fail("Expected error message for invalid context key")
+        tm.that("must be a non-empty string" in error_message, eq=True)
 
     @pytest.mark.parametrize(("scope", "value"), ContextScenarios.SCOPE_CASES)
     def test_context_scoped_access(
@@ -648,19 +657,22 @@ class TestFlextContext:
         """Test context.values() on empty context."""
         context = test_context
         values = context.values()
-        tm.that(isinstance(values, list), eq=True) and len(values) == 0
+        tm.that(isinstance(values, list), eq=True)
+        tm.that(len(values), eq=0)
 
     def test_context_keys_method_empty(self, test_context: FlextContext) -> None:
         """Test context.keys() on empty context."""
         context = test_context
         keys = context.keys()
-        tm.that(isinstance(keys, list), eq=True) and len(keys) == 0
+        tm.that(isinstance(keys, list), eq=True)
+        tm.that(len(keys), eq=0)
 
     def test_context_items_method_empty(self, test_context: FlextContext) -> None:
         """Test context.items() on empty context."""
         context = test_context
         items = context.items()
-        tm.that(isinstance(items, list), eq=True) and len(items) == 0
+        tm.that(isinstance(items, list), eq=True)
+        tm.that(len(items), eq=0)
 
     def test_context_cleanup_twice(self, test_context: FlextContext) -> None:
         """Test cleanup called multiple times."""

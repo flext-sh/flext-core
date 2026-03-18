@@ -18,183 +18,45 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from .test_builders import TestFlextTestsBuilders
-    from .test_docker import (
-        TestContainerInfo,
-        TestContainerStatus,
-        TestFlextTestsDocker,
-        TestFlextTestsDockerWorkerId,
-        TestFlextTestsDockerWorkspaceRoot,
-    )
+    from .test_docker import TestDocker
     from .test_domains import TestFlextTestsDomains
-    from .test_factories import (
-        TestConfig,
-        TestFactoriesHelpers,
-        TestFlextTestsFactoriesModernAPI,
-        TestService,
-        TestService as s,
-        TestsFlextTestsFactoriesDict,
-        TestsFlextTestsFactoriesGeneric,
-        TestsFlextTestsFactoriesList,
-        TestsFlextTestsFactoriesModel,
-        TestsFlextTestsFactoriesRes,
-        TestUser,
-    )
-    from .test_files import (
-        TestAssertExists,
-        TestBatchOperations,
-        TestCreateInStatic,
-        TestFileInfo,
-        TestFileInfoFromModels,
-        TestFileInfoFromModels as m,
-        TestFlextTestsFiles,
-        TestFlextTestsFilesNewApi,
-        TestInfoWithContentMeta,
-        TestShortAlias,
-    )
+    from .test_factories import TestFactoriesHelpers
+    from .test_files import TestFlextTestsFiles
     from .test_matchers import TestFlextTestsMatchers
-    from .test_utilities import (
-        TestFlextTestsUtilitiesFactory,
-        TestFlextTestsUtilitiesResult,
-        TestFlextTestsUtilitiesResult as r,
-        TestFlextTestsUtilitiesResultCompat,
-        TestFlextTestsUtilitiesTestContext,
-    )
+    from .test_utilities import TestUtilities, TestUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestAssertExists": ("tests.unit.flext_tests.test_files", "TestAssertExists"),
-    "TestBatchOperations": ("tests.unit.flext_tests.test_files", "TestBatchOperations"),
-    "TestConfig": ("tests.unit.flext_tests.test_factories", "TestConfig"),
-    "TestContainerInfo": ("tests.unit.flext_tests.test_docker", "TestContainerInfo"),
-    "TestContainerStatus": (
-        "tests.unit.flext_tests.test_docker",
-        "TestContainerStatus",
-    ),
-    "TestCreateInStatic": ("tests.unit.flext_tests.test_files", "TestCreateInStatic"),
+    "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
     "TestFactoriesHelpers": (
         "tests.unit.flext_tests.test_factories",
         "TestFactoriesHelpers",
-    ),
-    "TestFileInfo": ("tests.unit.flext_tests.test_files", "TestFileInfo"),
-    "TestFileInfoFromModels": (
-        "tests.unit.flext_tests.test_files",
-        "TestFileInfoFromModels",
     ),
     "TestFlextTestsBuilders": (
         "tests.unit.flext_tests.test_builders",
         "TestFlextTestsBuilders",
     ),
-    "TestFlextTestsDocker": (
-        "tests.unit.flext_tests.test_docker",
-        "TestFlextTestsDocker",
-    ),
-    "TestFlextTestsDockerWorkerId": (
-        "tests.unit.flext_tests.test_docker",
-        "TestFlextTestsDockerWorkerId",
-    ),
-    "TestFlextTestsDockerWorkspaceRoot": (
-        "tests.unit.flext_tests.test_docker",
-        "TestFlextTestsDockerWorkspaceRoot",
-    ),
     "TestFlextTestsDomains": (
         "tests.unit.flext_tests.test_domains",
         "TestFlextTestsDomains",
     ),
-    "TestFlextTestsFactoriesModernAPI": (
-        "tests.unit.flext_tests.test_factories",
-        "TestFlextTestsFactoriesModernAPI",
-    ),
     "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
-    "TestFlextTestsFilesNewApi": (
-        "tests.unit.flext_tests.test_files",
-        "TestFlextTestsFilesNewApi",
-    ),
     "TestFlextTestsMatchers": (
         "tests.unit.flext_tests.test_matchers",
         "TestFlextTestsMatchers",
     ),
-    "TestFlextTestsUtilitiesFactory": (
-        "tests.unit.flext_tests.test_utilities",
-        "TestFlextTestsUtilitiesFactory",
-    ),
-    "TestFlextTestsUtilitiesResult": (
-        "tests.unit.flext_tests.test_utilities",
-        "TestFlextTestsUtilitiesResult",
-    ),
-    "TestFlextTestsUtilitiesResultCompat": (
-        "tests.unit.flext_tests.test_utilities",
-        "TestFlextTestsUtilitiesResultCompat",
-    ),
-    "TestFlextTestsUtilitiesTestContext": (
-        "tests.unit.flext_tests.test_utilities",
-        "TestFlextTestsUtilitiesTestContext",
-    ),
-    "TestInfoWithContentMeta": (
-        "tests.unit.flext_tests.test_files",
-        "TestInfoWithContentMeta",
-    ),
-    "TestService": ("tests.unit.flext_tests.test_factories", "TestService"),
-    "TestShortAlias": ("tests.unit.flext_tests.test_files", "TestShortAlias"),
-    "TestUser": ("tests.unit.flext_tests.test_factories", "TestUser"),
-    "TestsFlextTestsFactoriesDict": (
-        "tests.unit.flext_tests.test_factories",
-        "TestsFlextTestsFactoriesDict",
-    ),
-    "TestsFlextTestsFactoriesGeneric": (
-        "tests.unit.flext_tests.test_factories",
-        "TestsFlextTestsFactoriesGeneric",
-    ),
-    "TestsFlextTestsFactoriesList": (
-        "tests.unit.flext_tests.test_factories",
-        "TestsFlextTestsFactoriesList",
-    ),
-    "TestsFlextTestsFactoriesModel": (
-        "tests.unit.flext_tests.test_factories",
-        "TestsFlextTestsFactoriesModel",
-    ),
-    "TestsFlextTestsFactoriesRes": (
-        "tests.unit.flext_tests.test_factories",
-        "TestsFlextTestsFactoriesRes",
-    ),
-    "m": ("tests.unit.flext_tests.test_files", "TestFileInfoFromModels"),
-    "r": ("tests.unit.flext_tests.test_utilities", "TestFlextTestsUtilitiesResult"),
-    "s": ("tests.unit.flext_tests.test_factories", "TestService"),
+    "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
+    "u": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
 }
 
 __all__ = [
-    "TestAssertExists",
-    "TestBatchOperations",
-    "TestConfig",
-    "TestContainerInfo",
-    "TestContainerStatus",
-    "TestCreateInStatic",
+    "TestDocker",
     "TestFactoriesHelpers",
-    "TestFileInfo",
-    "TestFileInfoFromModels",
     "TestFlextTestsBuilders",
-    "TestFlextTestsDocker",
-    "TestFlextTestsDockerWorkerId",
-    "TestFlextTestsDockerWorkspaceRoot",
     "TestFlextTestsDomains",
-    "TestFlextTestsFactoriesModernAPI",
     "TestFlextTestsFiles",
-    "TestFlextTestsFilesNewApi",
     "TestFlextTestsMatchers",
-    "TestFlextTestsUtilitiesFactory",
-    "TestFlextTestsUtilitiesResult",
-    "TestFlextTestsUtilitiesResultCompat",
-    "TestFlextTestsUtilitiesTestContext",
-    "TestInfoWithContentMeta",
-    "TestService",
-    "TestShortAlias",
-    "TestUser",
-    "TestsFlextTestsFactoriesDict",
-    "TestsFlextTestsFactoriesGeneric",
-    "TestsFlextTestsFactoriesList",
-    "TestsFlextTestsFactoriesModel",
-    "TestsFlextTestsFactoriesRes",
-    "m",
-    "r",
-    "s",
+    "TestUtilities",
+    "u",
 ]
 
 

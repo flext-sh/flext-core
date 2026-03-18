@@ -23,38 +23,36 @@ from flext_tests import tm
 from flext_core import FlextLogger, p, r, t
 
 
-def make_result_logger(
-    name: str,
-    *,
-    config: p.Settings | None = None,
-    _level: str | None = None,
-    _service_name: str | None = None,
-    _service_version: str | None = None,
-    _correlation_id: str | None = None,
-    _force_new: bool = False,
-) -> FlextLogger:
-    """Helper to build FlextLogger for logging tests."""
-    return FlextLogger(
-        name,
-        config=config,
-        _level=_level,
-        _service_name=_service_name,
-        _service_version=_service_version,
-        _correlation_id=_correlation_id,
-        _force_new=_force_new,
-    )
+class TestCoverageLoggings:
+    @staticmethod
+    def make_result_logger(
+        name: str,
+        *,
+        config: p.Settings | None = None,
+        _level: str | None = None,
+        _service_name: str | None = None,
+        _service_version: str | None = None,
+        _correlation_id: str | None = None,
+        _force_new: bool = False,
+    ) -> FlextLogger:
+        """Helper to build FlextLogger for logging tests."""
+        return FlextLogger(
+            name,
+            config=config,
+            _level=_level,
+            _service_name=_service_name,
+            _service_version=_service_version,
+            _correlation_id=_correlation_id,
+            _force_new=_force_new,
+        )
 
-
-def assert_log_result_success(result: r[bool] | None) -> r[bool]:
-    if result is None:
-        msg = "Expected result to not be None"
-        raise AssertionError(msg)
-    tm.ok(result)
-    return result
-
-
-class TestGlobalContextManagement:
-    """Test global context management via contextvars."""
+    @staticmethod
+    def assert_log_result_success(result: r[bool] | None) -> r[bool]:
+        if result is None:
+            msg = "Expected result to not be None"
+            raise AssertionError(msg)
+        tm.ok(result)
+        return result
 
     def test_bind_global_context(self) -> None:
         """Test binding global context."""
@@ -126,10 +124,6 @@ class TestGlobalContextManagement:
         tm.that(result, is_=t.ConfigMap)
         tm.that(result.root, has="test_key")
         tm.that(result.root["test_key"], eq="test_value")
-
-
-class TestScopedContextManagement:
-    """Test three-tier scoped context system."""
 
     def test_bind_application_context(self) -> None:
         """Test binding application-level context via bind_context."""
@@ -209,10 +203,6 @@ class TestScopedContextManagement:
         result = FlextLogger.clear_scope("operation")
         _ = assert_log_result_success(result)
 
-
-class TestLevelBasedContextManagement:
-    """Test level-based context filtering."""
-
     def test_bind_context_for_level_debug(self) -> None:
         """Test binding DEBUG-level context."""
         FlextLogger.clear_global_context()
@@ -244,10 +234,6 @@ class TestLevelBasedContextManagement:
         FlextLogger.bind_context_for_level("ERROR", stack="trace", error="code")
         result = FlextLogger.unbind_context_for_level("ERROR", "stack", "error")
         _ = assert_log_result_success(result)
-
-
-class TestFactoryPatterns:
-    """Test logger factory methods."""
 
     def test_create_service_logger(self) -> None:
         """Test creating service logger using FlextLogger constructor."""
@@ -283,10 +269,6 @@ class TestFactoryPatterns:
         tm.that(isinstance(logger, p.Logger), eq=True)
         tm.that(logger.name, eq="default_logger")
 
-
-class TestInstanceCreation:
-    """Test FlextLogger instance creation and properties."""
-
     def test_logger_init_with_name(self) -> None:
         """Test initializing logger with name."""
         logger = make_result_logger("test_module")
@@ -316,10 +298,6 @@ class TestInstanceCreation:
         """Test chaining multiple bind calls."""
         logger = FlextLogger("test").bind(a="1").bind(b="2").bind(c="3")
         tm.that(isinstance(logger, p.Logger), eq=True)
-
-
-class TestLoggingMethods:
-    """Test all logging level methods."""
 
     def test_trace_logging(self) -> None:
         """Test trace level logging.
@@ -504,10 +482,6 @@ class TestLoggingMethods:
         tm.that(logger, none=False)
         assert_log_result_success(logger.info("Message with %s and %d", "arg1", 42))
 
-
-class TestExceptionLogging:
-    """Test exception logging functionality."""
-
     def test_exception_logging_with_exception_object(self) -> None:
         """Test logging with exception object.
 
@@ -593,10 +567,6 @@ class TestExceptionLogging:
         tm.that(isinstance(exception_obj, OSError), eq=True)
         tm.that(str(exception_obj), eq=msg)
 
-
-class TestLoggingIntegration:
-    """Test logging integration patterns."""
-
     def test_logger_with_global_context(self) -> None:
         """Test logger respects global context."""
         FlextLogger.clear_global_context()
@@ -645,10 +615,6 @@ class TestLoggingIntegration:
         logger.info("Completed")
         FlextLogger.clear_global_context()
 
-
-class TestEdgeCases:
-    """Test edge cases and error conditions."""
-
     def test_logging_with_empty_message(self) -> None:
         """Test logging with empty message."""
         logger = make_result_logger("test")
@@ -677,14 +643,7 @@ class TestEdgeCases:
         FlextLogger.clear_global_context()
 
 
-__all__ = [
-    "TestEdgeCases",
-    "TestExceptionLogging",
-    "TestFactoryPatterns",
-    "TestGlobalContextManagement",
-    "TestInstanceCreation",
-    "TestLevelBasedContextManagement",
-    "TestLoggingIntegration",
-    "TestLoggingMethods",
-    "TestScopedContextManagement",
-]
+make_result_logger = TestCoverageLoggings.make_result_logger
+assert_log_result_success = TestCoverageLoggings.assert_log_result_success
+
+__all__ = ["TestCoverageLoggings"]

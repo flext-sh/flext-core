@@ -11,7 +11,7 @@ import pytest
 
 from flext_core import p, r, t, u
 
-from ._models import _DumpErrorModel, _Opts
+from ._models import TestUnitModels
 
 
 class TestUtilitiesConfigurationFullCoverage:
@@ -96,7 +96,7 @@ class TestUtilitiesConfigurationFullCoverage:
 
     def test_private_getters_exception_paths(self) -> None:
         assert u._try_get_from_model_dump(
-            cast("p.HasModelDump", cast("object", _DumpErrorModel())),
+            cast("p.HasModelDump", cast("object", TestUnitModels._DumpErrorModel())),
             "missing",
         ) == (False, None)
         assert u._try_get_from_duck_model_dump(self._DuckDumpError(), "value") == (
@@ -105,11 +105,11 @@ class TestUtilitiesConfigurationFullCoverage:
         )
 
     def test_build_options_invalid_only_kwargs_returns_base(self) -> None:
-        base = _Opts(value=9)
+        base = TestUnitModels._Opts(value=9)
         result = u.build_options_from_kwargs(
-            model_class=_Opts,
+            model_class=TestUnitModels._Opts,
             explicit_options=base,
-            default_factory=_Opts,
+            default_factory=TestUnitModels._Opts,
             invalid_field=10,
         )
         assert result.is_success

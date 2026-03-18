@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from tests import t, u
 
-from ._models import _GoodModel
+from ._models import TestUnitModels
 
 generators_module = importlib.import_module("flext_core._utilities.generators")
 runtime_module = importlib.import_module("flext_core.runtime")
@@ -81,7 +81,7 @@ class TestUtilitiesGeneratorsFullCoverage:
             staticmethod(lambda: datetime(2026, 1, 1, tzinfo=UTC)),
         )
         enriched = u.ensure_trace_context(
-            _GoodModel(value=9),
+            TestUnitModels._GoodModel(value=9),
             include_correlation_id=True,
             include_timestamp=True,
         )
@@ -122,7 +122,7 @@ class TestUtilitiesGeneratorsFullCoverage:
 
         raw = {"a": 1}
         assert u.ensure_dict(raw) is raw
-        assert u.ensure_dict(_GoodModel(value=5)) == {"value": 5}
+        assert u.ensure_dict(TestUnitModels._GoodModel(value=5)) == {"value": 5}
         with pytest.raises(TypeError, match=r"Failed to convert Mapping"):
             u.ensure_dict(_IterFailMapping())
         assert u.ensure_dict(None, default={"x": "y"}) == {"x": "y"}
@@ -170,7 +170,7 @@ class TestUtilitiesGeneratorsFullCoverage:
         mapping_ctx: Mapping[str, t.NormalizedValue] = {"a": 1}
         normalized = u._normalize_context_to_dict(mapping_ctx)
         assert normalized == {"a": 1}
-        ensured = u.ensure_dict(_GoodModel(value=3))
+        ensured = u.ensure_dict(TestUnitModels._GoodModel(value=3))
         assert ensured == {"value": 3}
         generated = u.generate(kind="event", separator="-")
         assert generated.startswith("evt-")

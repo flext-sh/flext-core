@@ -13,27 +13,30 @@ from pydantic import BaseModel
 from flext_core import r
 from tests import c, m, t, u
 
-from ._models import _BadCopyModel, _Cfg
+from ._models import TestUnitModels
 
 
 def test_merge_defaults_and_dump_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
-    merged = u.merge_defaults(_Cfg, {"x": 1, "y": "a"}, {"x": 2})
+    merged = u.merge_defaults(TestUnitModels._Cfg, {"x": 1, "y": "a"}, {"x": 2})
     assert merged.is_success
     assert merged.value.x == 2
-    dumped = u.dump(_Cfg(x=3, y="z"), exclude_none=True)
+    dumped = u.dump(TestUnitModels._Cfg(x=3, y="z"), exclude_none=True)
     assert dumped["x"] == 3
 
 
 def test_update_exception_path() -> None:
-    result = u.update(cast("_BadCopyModel", cast("BaseModel", object())), x=5)
+    result = u.update(
+        cast("TestUnitModels._BadCopyModel", cast("BaseModel", object())),
+        x=5,
+    )
     assert result.is_failure
 
 
 def test_update_success_path_returns_ok_result() -> None:
-    result = u.update(_Cfg(x=1, y="a"), x=9)
+    result = u.update(TestUnitModels._Cfg(x=1, y="a"), x=9)
     assert result.is_success
     assert result.value.x == 9
 
@@ -43,7 +46,7 @@ def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     data = t.ConfigMap(
         root=cast(
             "dict[str, t.NormalizedValue | BaseModel]",
-            {"a": 1, "b": _Cfg(x=1), "c": [1, _Cfg(x=2)]},
+            {"a": 1, "b": TestUnitModels._Cfg(x=1), "c": [1, TestUnitModels._Cfg(x=2)]},
         )
     )
     normalized = u.normalize_to_pydantic_dict(data)
@@ -56,11 +59,11 @@ def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     list_value = u._normalize_to_pydantic_value(
         cast(
             "t.NormalizedValue",
-            [1, _Cfg(x=3), None],
+            [1, TestUnitModels._Cfg(x=3), None],
         )
     )
     assert isinstance(list_value, list)
     assert list_value[0] == 1
     assert isinstance(list_value[1], str)
     assert list_value[2] == ""
-    assert isinstance(u._normalize_to_pydantic_value(_Cfg(x=1)), str)
+    assert isinstance(u._normalize_to_pydantic_value(TestUnitModels._Cfg(x=1)), str)

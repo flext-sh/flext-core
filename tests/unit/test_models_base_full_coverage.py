@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from flext_core import c, m, r, t, u
 
-from ._models import _BrokenDumpModel
+from ._models import TestUnitModels
 
 
 class TestModelsBaseFullCoverage:
@@ -34,7 +34,7 @@ class TestModelsBaseFullCoverage:
 
     def test_metadata_attributes_rejects_basemodel_non_mapping_dump(self) -> None:
         with pytest.raises(TypeError, match="must dump to mapping") as exc_info:
-            m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
+            m.Metadata.model_validate({"attributes": TestUnitModels._BrokenDumpModel()})
         assert exc_info.value is not None
         assert "must dump to mapping" in str(exc_info.value)
 

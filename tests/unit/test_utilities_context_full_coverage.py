@@ -17,7 +17,7 @@ from flext_tests import t
 from flext_core import FlextContext
 from tests import u
 
-from ._models import _FakeConfig
+from ._models import TestUnitModels
 
 
 class TestUtilitiesContextFullCoverage:
@@ -28,7 +28,7 @@ class TestUtilitiesContextFullCoverage:
             self._dispatcher = object()
             self._registry = object()
             self._context = object()
-            self._config = _FakeConfig(timeout=10)
+            self._config = TestUnitModels._FakeConfig(timeout=10)
 
     class _FakeContext:
         def clone(self) -> TestUtilitiesContextFullCoverage._FakeContext:
@@ -109,7 +109,7 @@ class TestUtilitiesContextFullCoverage:
         cloned = u.clone_runtime(
             runtime, config_overrides=t.ConfigMap(root={"timeout": 30})
         )
-        assert isinstance(cloned._config, _FakeConfig)
+        assert isinstance(cloned._config, TestUnitModels._FakeConfig)
         assert cloned._config.data["timeout"] == 30
 
     def test_clone_runtime_copies_config_when_no_overrides(self) -> None:

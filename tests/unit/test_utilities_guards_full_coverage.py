@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from flext_core import r
 from tests import c, m, t, u
 
-from ._models import _Model
+from ._models import TestUnitModels
 
 
 def _is_type_obj(
@@ -83,7 +83,9 @@ def test_is_handler_type_branches() -> None:
     tm.that(u.is_handler_type({"a": 1}), eq=True)
     tm.that(
         u.is_handler_type(
-            cast("t.NormalizedValue", _Model.model_validate({"value": 1}))
+            cast(
+                "t.NormalizedValue", TestUnitModels._Model.model_validate({"value": 1})
+            )
         ),
         eq=True,
     )
@@ -183,7 +185,9 @@ def test_protocol_and_simple_guard_helpers() -> None:
     tm.that(u.is_type([1], "sequence_not_str_bytes"), eq=True)
     tm.that(
         u.is_pydantic_model(
-            cast("t.NormalizedValue", _Model.model_validate({"value": 1}))
+            cast(
+                "t.NormalizedValue", TestUnitModels._Model.model_validate({"value": 1})
+            )
         ),
         eq=True,
     )

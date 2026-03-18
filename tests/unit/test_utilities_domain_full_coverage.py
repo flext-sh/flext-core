@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from flext_core import t, u
 
-from ._models import _FrozenEntity, _SampleEntity
+from ._models import TestUnitModels
 
 
 class TestUtilitiesDomainFullCoverage:
@@ -52,12 +52,12 @@ class TestUtilitiesDomainFullCoverage:
 
     def test_frozen_model_is_immutable(self) -> None:
         """Pydantic model with frozen=True detected as immutable (lines 197-200)."""
-        entity = _FrozenEntity()
+        entity = TestUnitModels._FrozenEntity()
         assert u.validate_value_object_immutable(entity) is True
 
     def test_non_frozen_model_checks_setattr(self) -> None:
         """Non-frozen Pydantic model checks __setattr__ override."""
-        entity = _SampleEntity()
+        entity = TestUnitModels._SampleEntity()
         result = u.validate_value_object_immutable(entity)
         assert isinstance(result, bool)
 

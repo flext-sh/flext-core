@@ -22,294 +22,302 @@ from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ExtractPageParamsScenario(BaseModel):
-    """Extract page params test scenario."""
+class TestPaginationCoverage100:
+    class ExtractPageParamsScenario(BaseModel):
+        """Extract page params test scenario."""
 
-    model_config = ConfigDict(frozen=True)
+        model_config = ConfigDict(frozen=True)
 
-    name: Annotated[str, Field(description="Extract page params scenario name")]
-    query_params: Annotated[dict[str, str], Field(description="Input query parameters")]
-    default_page: Annotated[int, Field(description="Default page value")]
-    default_page_size: Annotated[int, Field(description="Default page size value")]
-    max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
-    expected_success: Annotated[bool, Field(description="Expected operation success")]
-    expected_page: Annotated[int | None, Field(description="Expected resolved page")]
-    expected_page_size: Annotated[
-        int | None, Field(description="Expected resolved page size")
-    ]
-    expected_error: Annotated[str | None, Field(description="Expected error message")]
+        name: Annotated[str, Field(description="Extract page params scenario name")]
+        query_params: Annotated[
+            dict[str, str], Field(description="Input query parameters")
+        ]
+        default_page: Annotated[int, Field(description="Default page value")]
+        default_page_size: Annotated[int, Field(description="Default page size value")]
+        max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
+        expected_success: Annotated[
+            bool, Field(description="Expected operation success")
+        ]
+        expected_page: Annotated[
+            int | None, Field(description="Expected resolved page")
+        ]
+        expected_page_size: Annotated[
+            int | None, Field(description="Expected resolved page size")
+        ]
+        expected_error: Annotated[
+            str | None, Field(description="Expected error message")
+        ]
 
+    class ValidatePaginationParamsScenario(BaseModel):
+        """Validate pagination params test scenario."""
 
-class ValidatePaginationParamsScenario(BaseModel):
-    """Validate pagination params test scenario."""
+        model_config = ConfigDict(frozen=True)
 
-    model_config = ConfigDict(frozen=True)
+        name: Annotated[str, Field(description="Validate pagination scenario name")]
+        page: Annotated[int, Field(description="Input page number")]
+        page_size: Annotated[int | None, Field(description="Input page size")]
+        max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
+        expected_success: Annotated[
+            bool, Field(description="Expected validation success")
+        ]
+        expected_page_size: Annotated[
+            int | None, Field(description="Expected validated page size")
+        ]
+        expected_error: Annotated[
+            str | None, Field(description="Expected validation error")
+        ]
 
-    name: Annotated[str, Field(description="Validate pagination scenario name")]
-    page: Annotated[int, Field(description="Input page number")]
-    page_size: Annotated[int | None, Field(description="Input page size")]
-    max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
-    expected_success: Annotated[bool, Field(description="Expected validation success")]
-    expected_page_size: Annotated[
-        int | None, Field(description="Expected validated page size")
-    ]
-    expected_error: Annotated[
-        str | None, Field(description="Expected validation error")
-    ]
+    class PreparePaginationDataScenario(BaseModel):
+        """Prepare pagination data test scenario."""
 
+        model_config = ConfigDict(frozen=True)
 
-class PreparePaginationDataScenario(BaseModel):
-    """Prepare pagination data test scenario."""
+        name: Annotated[str, Field(description="Prepare pagination data scenario name")]
+        data: Annotated[list[str] | None, Field(description="Input page data")]
+        total: Annotated[int | None, Field(description="Input total count")]
+        page: Annotated[int, Field(description="Requested page")]
+        page_size: Annotated[int, Field(description="Requested page size")]
+        expected_success: Annotated[
+            bool, Field(description="Expected preparation success")
+        ]
+        expected_total: Annotated[
+            int | None, Field(description="Expected total in output")
+        ]
+        expected_total_pages: Annotated[
+            int | None, Field(description="Expected total pages in output")
+        ]
+        expected_error: Annotated[
+            str | None, Field(description="Expected preparation error")
+        ]
 
-    model_config = ConfigDict(frozen=True)
+    class PaginationScenarios:
+        """Centralized pagination test scenarios."""
 
-    name: Annotated[str, Field(description="Prepare pagination data scenario name")]
-    data: Annotated[list[str] | None, Field(description="Input page data")]
-    total: Annotated[int | None, Field(description="Input total count")]
-    page: Annotated[int, Field(description="Requested page")]
-    page_size: Annotated[int, Field(description="Requested page size")]
-    expected_success: Annotated[bool, Field(description="Expected preparation success")]
-    expected_total: Annotated[int | None, Field(description="Expected total in output")]
-    expected_total_pages: Annotated[
-        int | None, Field(description="Expected total pages in output")
-    ]
-    expected_error: Annotated[
-        str | None, Field(description="Expected preparation error")
-    ]
-
-
-class PaginationScenarios:
-    """Centralized pagination test scenarios."""
-
-    EXTRACT_PAGE_PARAMS: ClassVar[list[ExtractPageParamsScenario]] = [
-        ExtractPageParamsScenario(
-            name="default_values",
-            query_params={},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=True,
-            expected_page=1,
-            expected_page_size=20,
-            expected_error=None,
-        ),
-        ExtractPageParamsScenario(
-            name="valid_page_and_size",
-            query_params={"page": "2", "page_size": "50"},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=True,
-            expected_page=2,
-            expected_page_size=50,
-            expected_error=None,
-        ),
-        ExtractPageParamsScenario(
-            name="page_zero",
-            query_params={"page": "0"},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page=None,
-            expected_page_size=None,
-            expected_error="Page must be >= 1",
-        ),
-        ExtractPageParamsScenario(
-            name="page_size_zero",
-            query_params={"page_size": "0"},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page=None,
-            expected_page_size=None,
-            expected_error="Page size must be >= 1",
-        ),
-        ExtractPageParamsScenario(
-            name="page_size_exceeds_max",
-            query_params={"page_size": "2000"},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page=None,
-            expected_page_size=None,
-            expected_error="Page size must be <= 1000",
-        ),
-        ExtractPageParamsScenario(
-            name="invalid_page_string",
-            query_params={"page": "abc"},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page=None,
-            expected_page_size=None,
-            expected_error="Invalid page parameters",
-        ),
-        ExtractPageParamsScenario(
-            name="invalid_page_size_string",
-            query_params={"page_size": "xyz"},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page=None,
-            expected_page_size=None,
-            expected_error="Invalid page parameters",
-        ),
-        ExtractPageParamsScenario(
-            name="negative_page",
-            query_params={"page": "-1"},
-            default_page=1,
-            default_page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page=None,
-            expected_page_size=None,
-            expected_error="Page must be >= 1",
-        ),
-        ExtractPageParamsScenario(
-            name="custom_defaults",
-            query_params={},
-            default_page=5,
-            default_page_size=100,
-            max_page_size=500,
-            expected_success=True,
-            expected_page=5,
-            expected_page_size=100,
-            expected_error=None,
-        ),
-    ]
-    VALIDATE_PAGINATION_PARAMS: ClassVar[list[ValidatePaginationParamsScenario]] = [
-        ValidatePaginationParamsScenario(
-            name="valid_with_page_size",
-            page=2,
-            page_size=50,
-            max_page_size=1000,
-            expected_success=True,
-            expected_page_size=50,
-            expected_error=None,
-        ),
-        ValidatePaginationParamsScenario(
-            name="valid_without_page_size",
-            page=1,
-            page_size=None,
-            max_page_size=1000,
-            expected_success=True,
-            expected_page_size=20,
-            expected_error=None,
-        ),
-        ValidatePaginationParamsScenario(
-            name="page_zero",
-            page=0,
-            page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page_size=None,
-            expected_error="Page must be >= 1",
-        ),
-        ValidatePaginationParamsScenario(
-            name="page_size_zero",
-            page=1,
-            page_size=0,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page_size=None,
-            expected_error="Page size must be >= 1",
-        ),
-        ValidatePaginationParamsScenario(
-            name="page_size_exceeds_max",
-            page=1,
-            page_size=2000,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page_size=None,
-            expected_error="Page size must be <= 1000",
-        ),
-        ValidatePaginationParamsScenario(
-            name="negative_page",
-            page=-1,
-            page_size=20,
-            max_page_size=1000,
-            expected_success=False,
-            expected_page_size=None,
-            expected_error="Page must be >= 1",
-        ),
-    ]
-    PREPARE_PAGINATION_DATA: ClassVar[list[PreparePaginationDataScenario]] = [
-        PreparePaginationDataScenario(
-            name="with_data_and_total",
-            data=["item1", "item2", "item3"],
-            total=100,
-            page=1,
-            page_size=20,
-            expected_success=True,
-            expected_total=100,
-            expected_total_pages=5,
-            expected_error=None,
-        ),
-        PreparePaginationDataScenario(
-            name="with_data_no_total",
-            data=["item1", "item2"],
-            total=None,
-            page=1,
-            page_size=20,
-            expected_success=True,
-            expected_total=2,
-            expected_total_pages=1,
-            expected_error=None,
-        ),
-        PreparePaginationDataScenario(
-            name="no_data_no_total",
-            data=None,
-            total=None,
-            page=1,
-            page_size=20,
-            expected_success=True,
-            expected_total=0,
-            expected_total_pages=0,
-            expected_error=None,
-        ),
-        PreparePaginationDataScenario(
-            name="page_exceeds_total_pages",
-            data=["item1"],
-            total=10,
-            page=10,
-            page_size=20,
-            expected_success=False,
-            expected_total=None,
-            expected_total_pages=None,
-            expected_error="Page 10 exceeds total pages 1",
-        ),
-        PreparePaginationDataScenario(
-            name="last_page_exact",
-            data=["item1", "item2"],
-            total=22,
-            page=2,
-            page_size=20,
-            expected_success=True,
-            expected_total=22,
-            expected_total_pages=2,
-            expected_error=None,
-        ),
-        PreparePaginationDataScenario(
-            name="empty_data_with_total",
-            data=[],
-            total=0,
-            page=1,
-            page_size=20,
-            expected_success=True,
-            expected_total=0,
-            expected_total_pages=0,
-            expected_error=None,
-        ),
-    ]
-
-
-class TestuPaginationExtractPageParams:
-    """Test FlextUtilitiesPagination.extract_page_params."""
+        EXTRACT_PAGE_PARAMS: ClassVar[list[ExtractPageParamsScenario]] = [
+            ExtractPageParamsScenario(
+                name="default_values",
+                query_params={},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=True,
+                expected_page=1,
+                expected_page_size=20,
+                expected_error=None,
+            ),
+            ExtractPageParamsScenario(
+                name="valid_page_and_size",
+                query_params={"page": "2", "page_size": "50"},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=True,
+                expected_page=2,
+                expected_page_size=50,
+                expected_error=None,
+            ),
+            ExtractPageParamsScenario(
+                name="page_zero",
+                query_params={"page": "0"},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page=None,
+                expected_page_size=None,
+                expected_error="Page must be >= 1",
+            ),
+            ExtractPageParamsScenario(
+                name="page_size_zero",
+                query_params={"page_size": "0"},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page=None,
+                expected_page_size=None,
+                expected_error="Page size must be >= 1",
+            ),
+            ExtractPageParamsScenario(
+                name="page_size_exceeds_max",
+                query_params={"page_size": "2000"},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page=None,
+                expected_page_size=None,
+                expected_error="Page size must be <= 1000",
+            ),
+            ExtractPageParamsScenario(
+                name="invalid_page_string",
+                query_params={"page": "abc"},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page=None,
+                expected_page_size=None,
+                expected_error="Invalid page parameters",
+            ),
+            ExtractPageParamsScenario(
+                name="invalid_page_size_string",
+                query_params={"page_size": "xyz"},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page=None,
+                expected_page_size=None,
+                expected_error="Invalid page parameters",
+            ),
+            ExtractPageParamsScenario(
+                name="negative_page",
+                query_params={"page": "-1"},
+                default_page=1,
+                default_page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page=None,
+                expected_page_size=None,
+                expected_error="Page must be >= 1",
+            ),
+            ExtractPageParamsScenario(
+                name="custom_defaults",
+                query_params={},
+                default_page=5,
+                default_page_size=100,
+                max_page_size=500,
+                expected_success=True,
+                expected_page=5,
+                expected_page_size=100,
+                expected_error=None,
+            ),
+        ]
+        VALIDATE_PAGINATION_PARAMS: ClassVar[list[ValidatePaginationParamsScenario]] = [
+            ValidatePaginationParamsScenario(
+                name="valid_with_page_size",
+                page=2,
+                page_size=50,
+                max_page_size=1000,
+                expected_success=True,
+                expected_page_size=50,
+                expected_error=None,
+            ),
+            ValidatePaginationParamsScenario(
+                name="valid_without_page_size",
+                page=1,
+                page_size=None,
+                max_page_size=1000,
+                expected_success=True,
+                expected_page_size=20,
+                expected_error=None,
+            ),
+            ValidatePaginationParamsScenario(
+                name="page_zero",
+                page=0,
+                page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page_size=None,
+                expected_error="Page must be >= 1",
+            ),
+            ValidatePaginationParamsScenario(
+                name="page_size_zero",
+                page=1,
+                page_size=0,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page_size=None,
+                expected_error="Page size must be >= 1",
+            ),
+            ValidatePaginationParamsScenario(
+                name="page_size_exceeds_max",
+                page=1,
+                page_size=2000,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page_size=None,
+                expected_error="Page size must be <= 1000",
+            ),
+            ValidatePaginationParamsScenario(
+                name="negative_page",
+                page=-1,
+                page_size=20,
+                max_page_size=1000,
+                expected_success=False,
+                expected_page_size=None,
+                expected_error="Page must be >= 1",
+            ),
+        ]
+        PREPARE_PAGINATION_DATA: ClassVar[list[PreparePaginationDataScenario]] = [
+            PreparePaginationDataScenario(
+                name="with_data_and_total",
+                data=["item1", "item2", "item3"],
+                total=100,
+                page=1,
+                page_size=20,
+                expected_success=True,
+                expected_total=100,
+                expected_total_pages=5,
+                expected_error=None,
+            ),
+            PreparePaginationDataScenario(
+                name="with_data_no_total",
+                data=["item1", "item2"],
+                total=None,
+                page=1,
+                page_size=20,
+                expected_success=True,
+                expected_total=2,
+                expected_total_pages=1,
+                expected_error=None,
+            ),
+            PreparePaginationDataScenario(
+                name="no_data_no_total",
+                data=None,
+                total=None,
+                page=1,
+                page_size=20,
+                expected_success=True,
+                expected_total=0,
+                expected_total_pages=0,
+                expected_error=None,
+            ),
+            PreparePaginationDataScenario(
+                name="page_exceeds_total_pages",
+                data=["item1"],
+                total=10,
+                page=10,
+                page_size=20,
+                expected_success=False,
+                expected_total=None,
+                expected_total_pages=None,
+                expected_error="Page 10 exceeds total pages 1",
+            ),
+            PreparePaginationDataScenario(
+                name="last_page_exact",
+                data=["item1", "item2"],
+                total=22,
+                page=2,
+                page_size=20,
+                expected_success=True,
+                expected_total=22,
+                expected_total_pages=2,
+                expected_error=None,
+            ),
+            PreparePaginationDataScenario(
+                name="empty_data_with_total",
+                data=[],
+                total=0,
+                page=1,
+                page_size=20,
+                expected_success=True,
+                expected_total=0,
+                expected_total_pages=0,
+                expected_error=None,
+            ),
+        ]
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.EXTRACT_PAGE_PARAMS)
     def test_extract_page_params(self, scenario: ExtractPageParamsScenario) -> None:
@@ -331,11 +339,10 @@ class TestuPaginationExtractPageParams:
                 expected_error=scenario.expected_error,
             )
 
-
-class TestuPaginationValidatePaginationParams:
-    """Test FlextUtilitiesPagination.validate_pagination_params."""
-
-    @pytest.mark.parametrize("scenario", PaginationScenarios.VALIDATE_PAGINATION_PARAMS)
+    @pytest.mark.parametrize(
+        "scenario",
+        PaginationScenarios.VALIDATE_PAGINATION_PARAMS,
+    )
     def test_validate_pagination_params(
         self,
         scenario: ValidatePaginationParamsScenario,
@@ -357,11 +364,10 @@ class TestuPaginationValidatePaginationParams:
                 expected_error=scenario.expected_error,
             )
 
-
-class TestuPaginationPreparePaginationData:
-    """Test FlextUtilitiesPagination.prepare_pagination_data."""
-
-    @pytest.mark.parametrize("scenario", PaginationScenarios.PREPARE_PAGINATION_DATA)
+    @pytest.mark.parametrize(
+        "scenario",
+        PaginationScenarios.PREPARE_PAGINATION_DATA,
+    )
     def test_prepare_pagination_data(
         self,
         scenario: PreparePaginationDataScenario,
@@ -394,10 +400,6 @@ class TestuPaginationPreparePaginationData:
                 result,
                 expected_error=scenario.expected_error,
             )
-
-
-class TestuPaginationBuildPaginationResponse:
-    """Test FlextUtilitiesPagination.build_pagination_response."""
 
     def test_build_pagination_response_success(self) -> None:
         """Test build_pagination_response with valid data."""
@@ -478,10 +480,6 @@ class TestuPaginationBuildPaginationResponse:
         response = result.value
         tm.that(response, contains="data")
 
-
-class TestuPaginationExtractPaginationConfig:
-    """Test FlextUtilitiesPagination.extract_pagination_config."""
-
     def test_extract_pagination_config_none(self) -> None:
         """Test extract_pagination_config with None."""
         result = u.extract_pagination_config(None)
@@ -530,3 +528,9 @@ class TestuPaginationExtractPaginationConfig:
         result = u.extract_pagination_config(Config())
         assert result["default_page_size"] == 40
         assert result["max_page_size"] == 600
+
+
+ExtractPageParamsScenario = TestPaginationCoverage100.ExtractPageParamsScenario
+ValidatePaginationParamsScenario = ValidatePaginationParamsScenario
+PreparePaginationDataScenario = TestPaginationCoverage100.PreparePaginationDataScenario
+PaginationScenarios = TestPaginationCoverage100.PaginationScenarios
