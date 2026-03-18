@@ -144,12 +144,12 @@ class Ex09FlextDecorators(Examples):
             value: str
 
         @d.factory(name=factory_default_name)
-        def factory_default(_: BaseModel) -> BaseModel:
+        def factory_default(_: BaseModel) -> _FactoryPayload:
             """Factory function with default singleton and lazy values."""
             return _FactoryPayload(value=default_value)
 
         @d.factory(name=factory_custom_name, singleton=True, lazy=False)
-        def factory_custom(_: BaseModel) -> BaseModel:
+        def factory_custom(_: BaseModel) -> _FactoryPayload:
             """Factory function with explicit singleton and lazy values."""
             return _FactoryPayload(value=custom_value)
 

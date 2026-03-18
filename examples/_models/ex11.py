@@ -6,7 +6,7 @@ from typing import override
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextSettings, m, r
+from flext_core import FlextSettings, m, r, t
 
 
 class Ex11HandlerLikeService(FlextSettings):

@@ -22,7 +22,7 @@ from typing import Annotated, override
 
 from pydantic import EmailStr, Field, computed_field, model_validator
 
-from flext_core import c, m, r, s
+from flext_core import c, m, r, s, t
 from flext_core._models.base import FlextModelFoundation as F
 from flext_core._models.generic import FlextGenericModels as gm
 

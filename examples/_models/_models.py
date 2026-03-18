@@ -6,7 +6,7 @@ from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import r
+from flext_core import r, t
 
 
 class Ex01ValidPersonPayload(BaseModel):

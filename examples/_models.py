@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from flext_core import r
+from flext_core import r, t
 
 
 class _ProtocolHandler(BaseModel):

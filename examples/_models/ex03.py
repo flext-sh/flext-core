@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from pydantic import EmailStr, Field, computed_field, field_validator
 
-from flext_core import c, m, r
+from flext_core import c, m, r, t
 
 
 class Ex03Email(m.Value):

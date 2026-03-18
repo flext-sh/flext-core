@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import ConfigDict
 
-from flext_core import m, r
+from flext_core import m, r, t
 
 
 class Ex10Message(m.Command):
