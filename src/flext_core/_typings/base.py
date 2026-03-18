@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 
@@ -10,6 +9,15 @@ class FlextTypingBase:
     type Numeric = int | float
     type Scalar = Primitives | datetime
     type Container = Scalar | Path
+    type NormalizedValue = (
+        Container
+        | list["FlextTypingBase.NormalizedValue"]
+        | dict[str, "FlextTypingBase.NormalizedValue"]
+        | tuple["FlextTypingBase.NormalizedValue", ...]
+        | None
+    )
+    type ContainerMapping = dict[str, NormalizedValue]
+    type ContainerList = list[NormalizedValue]
 
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,
@@ -33,13 +41,3 @@ class FlextTypingBase:
         type[datetime],
         type[Path],
     ] = (str, int, float, bool, datetime, Path)
-
-    type NormalizedValue = (
-        Container
-        | list[FlextTypingBase.NormalizedValue]
-        | Mapping[str, FlextTypingBase.NormalizedValue]
-        | tuple[FlextTypingBase.NormalizedValue, ...]
-        | None
-    )
-    type ContainerMapping = Mapping[str, FlextTypingBase.NormalizedValue]
-    type ContainerList = list[FlextTypingBase.NormalizedValue]
