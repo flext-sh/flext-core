@@ -15,9 +15,7 @@ from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
 from tests import c, m
 
 
-class TestFactoryDecoratorsDiscoveryScanModule:
-    """Tests for FactoryDecoratorsDiscovery.scan_module()."""
-
+class TestDecoratorsDiscoveryFullCoverage:
     def test_scan_empty_module_returns_empty_list(self) -> None:
         """Scanning a module with no factory-decorated functions returns []."""
         mod = types.ModuleType("empty_mod")
@@ -86,10 +84,6 @@ class TestFactoryDecoratorsDiscoveryScanModule:
         mod.__dict__["some_string"] = "not callable"
         result = FactoryDecoratorsDiscovery.scan_module(mod)
         assert result == []
-
-
-class TestFactoryDecoratorsDiscoveryHasFactories:
-    """Tests for FactoryDecoratorsDiscovery.has_factories()."""
 
     def test_has_factories_returns_false_for_empty_module(self) -> None:
         """Empty module has no factories."""

@@ -20,7 +20,7 @@ from flext_core import FlextRuntime
 from tests import p
 
 
-class TestRuntimeDictLike:
+class TestRuntimeCoverage100:
     """Tests for is_dict_like runtime coverage."""
 
     def test_is_dict_like_with_exception_on_items(self) -> None:
@@ -116,10 +116,6 @@ class TestRuntimeDictLike:
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
         tm.that(result, eq=False)
-
-
-class TestRuntimeTypeChecking:
-    """Tests for runtime type checking coverage."""
 
     def test_extract_generic_args_with_type_mapping(self) -> None:
         """Test extract_generic_args with known type aliases."""

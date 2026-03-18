@@ -14,9 +14,7 @@ from pydantic import BaseModel, ConfigDict
 from flext_core import r
 
 
-class TestFlextTestsUtilitiesResult:
-    """Test suite for u.Tests.Result class."""
-
+class TestUtilities:
     def test_assert_success_passes(self) -> None:
         """Test assert_success with successful result."""
         result = r[str].ok("success")
@@ -75,10 +73,6 @@ class TestFlextTestsUtilitiesResult:
         with pytest.raises(AssertionError):
             u.Tests.Result.assert_failure_with_error(result, "expected")
 
-
-class TestFlextTestsUtilitiesTestContext:
-    """Test suite for u.Tests.TestContext class."""
-
     def test_temporary_attribute_change(self) -> None:
         """Test temporary_attribute changes attribute temporarily."""
 
@@ -116,10 +110,6 @@ class TestFlextTestsUtilitiesTestContext:
                 raise RuntimeError(msg)
         assert obj.attribute == "original"
 
-
-class TestFlextTestsUtilitiesFactory:
-    """Test suite for u.Tests.Factory class."""
-
     def test_create_result_success(self) -> None:
         """Test create_result with value."""
         result = u.Tests.Factory.create_result("test_value")
@@ -144,10 +134,6 @@ class TestFlextTestsUtilitiesFactory:
         assert data["key1"] == "value1"
         assert data["key2"] == 42
         assert data["key3"] is True
-
-
-class TestFlextTestsUtilitiesResultCompat:
-    """Test suite for Result compatibility methods."""
 
     def test_assert_result_success_passes(self) -> None:
         """Test assert_result_success with successful result."""

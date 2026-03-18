@@ -24,24 +24,23 @@ from flext_core import FlextSettings, r
 from ..test_utils import assertion_helpers
 
 
-class ResultChainingScenario(BaseModel):
-    """r chaining test scenario."""
+class TestPhase2CoverageFinal:
+    """Strategic tests targeting remaining coverage gaps using FlextTestsUtilities."""
 
-    model_config = ConfigDict(frozen=True)
+    class ResultChainingScenario(BaseModel):
+        """r chaining test scenario."""
 
-    name: Annotated[str, Field(description="Result chaining scenario name")]
-    initial_value: Annotated[str, Field(description="Initial string value")]
-    operations: Annotated[
-        list[str], Field(description="Operation names applied in sequence")
-    ]
-    expected_success: Annotated[bool, Field(description="Expected success state")]
-    expected_value: Annotated[
-        str | None, Field(default=None, description="Expected resulting value")
-    ] = None
+        model_config = ConfigDict(frozen=True)
 
-
-class CoverageScenarios:
-    """Centralized coverage test scenarios using FlextConstants."""
+        name: Annotated[str, Field(description="Result chaining scenario name")]
+        initial_value: Annotated[str, Field(description="Initial string value")]
+        operations: Annotated[
+            list[str], Field(description="Operation names applied in sequence")
+        ]
+        expected_success: Annotated[bool, Field(description="Expected success state")]
+        expected_value: Annotated[
+            str | None, Field(default=None, description="Expected resulting value")
+        ] = None
 
     CHAINING_SCENARIOS: ClassVar[list[ResultChainingScenario]] = [
         ResultChainingScenario(
@@ -67,10 +66,6 @@ class CoverageScenarios:
         ),
     ]
 
-
-class TestPhase2FinalCoveragePush:
-    """Strategic tests targeting remaining coverage gaps using FlextTestsUtilities."""
-
     def test_flext_result_chaining_operations(self) -> None:
         """Test r chaining with multiple operations."""
         result = r[str].ok("hello").map(str.upper).map(lambda x: f"{x}!")
@@ -93,7 +88,7 @@ class TestPhase2FinalCoveragePush:
     def test_flext_result_error_propagation(self) -> None:
         """Test r error propagation in chain."""
 
-        def failing_op(s: str) -> r[str]:
+        def failing_op(_s: str) -> r[str]:
             """Operation that fails."""
             return r[str].fail("operation failed")
 
@@ -159,7 +154,7 @@ class TestPhase2FinalCoveragePush:
         """Test r lash recovery operations."""
         failure: r[str] = r[str].fail("original_error")
 
-        def recover_func(error: str) -> r[str]:
+        def recover_func(_error: str) -> r[str]:
             """Recovery function."""
             return r[str].ok("recovered_value")
 
@@ -180,4 +175,4 @@ class TestPhase2FinalCoveragePush:
         assert transformed.error == "Transformed: original_error"
 
 
-__all__ = ["TestPhase2FinalCoveragePush"]
+__all__ = ["TestPhase2CoverageFinal"]

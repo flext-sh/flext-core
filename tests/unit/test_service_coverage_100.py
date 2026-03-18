@@ -13,50 +13,47 @@ from typing import override
 
 from flext_tests import tm
 
-from flext_core import r, s
-from tests import t
-
-
-class TestService(s[str]):
-    """Test service for coverage tests."""
-
-    __test__ = False
-
-    @override
-    def execute(self, **_kwargs: t.Scalar) -> r[str]:
-        """Execute service."""
-        return r[str].ok("success")
-
-
-class TestServiceWithValidation(s[str]):
-    """Test service with validation."""
-
-    __test__ = False
-
-    @override
-    def execute(self, **_kwargs: t.Scalar) -> r[str]:
-        """Execute service."""
-        return r[str].ok("validated")
+from flext_core import r, s, t
 
 
 class TestService100Coverage:
     """Real tests to achieve 100% service coverage."""
 
+    class _ServiceStub(s[str]):
+        """Test service for coverage tests."""
+
+        __test__ = False
+
+        @override
+        def execute(self, **_kwargs: t.Scalar) -> r[str]:
+            """Execute service."""
+            return r[str].ok("success")
+
+    class _ServiceWithValidationStub(s[str]):
+        """Test service with validation."""
+
+        __test__ = False
+
+        @override
+        def execute(self, **_kwargs: t.Scalar) -> r[str]:
+            """Execute service."""
+            return r[str].ok("validated")
+
     def test_validate_business_rules_success(self) -> None:
         """Test validate_business_rules."""
-        service = TestService()
+        service = self._ServiceStub()
         result = service.validate_business_rules()
         tm.ok(result)
 
     def test_is_valid(self) -> None:
         """Test is_valid property."""
-        service = TestService()
+        service = self._ServiceStub()
         is_valid = service.is_valid()
         tm.that(is_valid, is_=bool)
 
     def test_get_service_info(self) -> None:
         """Test get_service_info."""
-        service = TestService()
+        service = self._ServiceStub()
         info = service.get_service_info()
         tm.that(info, is_=dict)
         tm.that(len(info), gt=0)
@@ -64,7 +61,7 @@ class TestService100Coverage:
 
     def test_execute_success(self) -> None:
         """Test execute method."""
-        service = TestService()
+        service = self._ServiceStub()
         result = service.execute()
         tm.ok(result)
         tm.that(result.value, is_=str)
@@ -77,13 +74,13 @@ class TestService100Coverage:
 
     def test_result_property(self) -> None:
         """Test result property."""
-        service = TestService()
+        service = self._ServiceStub()
         result = service.result
         tm.that(result, is_=str)
 
     def test_auto_execute_false(self) -> None:
         """Test auto_execute when False."""
-        service = TestService()
+        service = self._ServiceStub()
         assert (
             not hasattr(service, "auto_execute")
             or getattr(service, "auto_execute", False) is False
@@ -91,6 +88,6 @@ class TestService100Coverage:
 
     def test_validate_business_rules_override(self) -> None:
         """Test validate_business_rules can be overridden."""
-        service = TestServiceWithValidation()
+        service = self._ServiceWithValidationStub()
         result = service.validate_business_rules()
         tm.that(result, is_=r)

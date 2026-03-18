@@ -20,7 +20,7 @@ from flext_core import FlextConstants, m, r
 from tests.test_utils import assertion_helpers
 
 
-class TestEnterprisePatterns:
+class TestArchitecturalPatterns:
     """Test enterprise design patterns."""
 
     @pytest.mark.architecture
@@ -186,10 +186,6 @@ class TestEnterprisePatterns:
         assert repo.get_query_count() == 100, (
             f"Expected 100 queries, got {repo.get_query_count()}"
         )
-
-
-class TestEventDrivenPatterns:
-    """Test event-driven architectural patterns."""
 
     @pytest.mark.architecture
     @pytest.mark.ddd

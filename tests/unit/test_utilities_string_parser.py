@@ -34,351 +34,350 @@ from tests import c, m, t, u
 _object = t.Tests.object
 
 
-class StringParserTestFactory:
-    """Factory for generating test cases with edge cases."""
-
-    @staticmethod
-    def parse_delimited_cases() -> list[m.ParseDelimitedCase]:
-        """Generate comprehensive parse_delimited test cases."""
-        return [
-            m.ParseDelimitedCase(
-                text=c.Strings.BASIC_LIST,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                description="basic",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.WITH_SPACES,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                description="with spaces",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.EMPTY,
-                delimiter=c.Delimiters.COMMA,
-                expected=[],
-                description="empty string",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.WITH_SPACES,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                options=m.ParseOptions(strip=True, remove_empty=True),
-                description="with options",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.WITH_SPACES,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", " b", " c"],
-                options=m.ParseOptions(strip=False, remove_empty=True),
-                description="options no strip",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.WITH_EMPTY,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "", "c"],
-                options=m.ParseOptions(strip=True, remove_empty=False),
-                description="options no remove empty",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.BASIC_LIST,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                options=m.ParseOptions(
-                    strip=True,
-                    remove_empty=True,
-                    validator=lambda s: len(s) > 0,
-                ),
-                description="validator success",
-            ),
-            m.ParseDelimitedCase(
-                text="a,b",
-                delimiter=c.Delimiters.COMMA,
-                expected=[],
-                options=m.ParseOptions(
-                    strip=True,
-                    remove_empty=True,
-                    validator=lambda s: len(s) > 1,
-                ),
-                description="validator filters components",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.WITH_SPACES,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                strip=True,
-                remove_empty=True,
-                use_legacy=True,
-                description="legacy params",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.BASIC_LIST,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                validator=lambda s: "x" not in s,
-                use_legacy=True,
-                description="legacy validator",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.BASIC_LIST,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                description="no spaces",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.EXCESSIVE_SPACES,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                description="excessive spaces",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.LEADING_TRAILING,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                description="leading/trailing delimiters",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.SINGLE_CHAR,
-                delimiter=c.Delimiters.COMMA,
-                expected=["a"],
-                description="single component",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.BASIC_LIST,
-                delimiter="",
-                expected=None,
-                expected_error=c.TestErrors.DELIMITER_EMPTY,
-                description="empty delimiter",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.BASIC_LIST,
-                delimiter=",,",
-                expected=None,
-                expected_error=c.TestErrors.DELIMITER_MULTI,
-                description="multi-char delimiter",
-            ),
-            m.ParseDelimitedCase(
-                text=c.Strings.BASIC_LIST,
-                delimiter=" ",
-                expected=None,
-                expected_error=c.TestErrors.DELIMITER_WHITESPACE,
-                description="whitespace delimiter",
-            ),
-        ]
-
-    @staticmethod
-    def split_escape_cases() -> list[m.SplitEscapeCase]:
-        """Generate comprehensive split_on_char_with_escape test cases."""
-        return [
-            m.SplitEscapeCase(
-                text=c.Strings.BASIC_LIST,
-                split_char=c.Delimiters.COMMA,
-                expected=["a", "b", "c"],
-                description="basic",
-            ),
-            m.SplitEscapeCase(
-                text="a\\,b,c",
-                split_char=c.Delimiters.COMMA,
-                expected=["a,b", "c"],
-                description="escaped delimiter",
-            ),
-            m.SplitEscapeCase(
-                text=c.Strings.EMPTY,
-                split_char=c.Delimiters.COMMA,
-                expected=[""],
-                description="empty string",
-            ),
-            m.SplitEscapeCase(
-                text="a#b,c",
-                split_char=c.Delimiters.COMMA,
-                escape_char=c.EscapeChars.HASH,
-                expected=["ab", "c"],
-                description="custom escape char",
-            ),
-            m.SplitEscapeCase(
-                text="a,b\\",
-                split_char=c.Delimiters.COMMA,
-                expected=["a", "b\\"],
-                description="escape at end",
-            ),
-            m.SplitEscapeCase(
-                text="a\\\\,b",
-                split_char=c.Delimiters.COMMA,
-                expected=["a\\", "b"],
-                description="escaped escape char",
-            ),
-            m.SplitEscapeCase(
-                text="a,b,c,d",
-                split_char=c.Delimiters.COMMA,
-                expected=["a", "b", "c", "d"],
-                description="multiple components",
-            ),
-            m.SplitEscapeCase(
-                text="\\,a,b",
-                split_char=c.Delimiters.COMMA,
-                expected=[",a", "b"],
-                description="escaped at start",
-            ),
-            m.SplitEscapeCase(
-                text="a,b",
-                split_char="",
-                expected_error=c.TestErrors.SPLIT_EMPTY,
-                description="empty split char",
-            ),
-            m.SplitEscapeCase(
-                text="a,b",
-                split_char=c.Delimiters.COMMA,
-                escape_char="",
-                expected_error=c.TestErrors.ESCAPE_EMPTY,
-                description="empty escape char",
-            ),
-            m.SplitEscapeCase(
-                text="a,b",
-                split_char=c.Delimiters.COMMA,
-                escape_char=c.Delimiters.COMMA,
-                expected_error=c.TestErrors.SPLIT_ESCAPE_SAME,
-                description="same split and escape",
-            ),
-        ]
-
-    @staticmethod
-    def normalize_whitespace_cases() -> list[m.NormalizeWhitespaceCase]:
-        """Generate comprehensive normalize_whitespace test cases."""
-        return [
-            m.NormalizeWhitespaceCase(
-                text="  hello   world  ",
-                expected="hello world",
-                description="basic",
-            ),
-            m.NormalizeWhitespaceCase(
-                text=c.Strings.EMPTY,
-                expected=c.Strings.EMPTY,
-                description="empty string",
-            ),
-            m.NormalizeWhitespaceCase(
-                text="hello---world",
-                pattern=c.Patterns.DASH,
-                replacement=c.Replacements.DASH,
-                expected="hello-world",
-                description="custom pattern",
-            ),
-            m.NormalizeWhitespaceCase(
-                text="hello   world",
-                replacement=c.Replacements.UNDERSCORE,
-                expected="hello_world",
-                description="custom replacement",
-            ),
-            m.NormalizeWhitespaceCase(
-                text="hello\t\n\rworld",
-                expected="hello world",
-                description="various whitespace",
-            ),
-            m.NormalizeWhitespaceCase(
-                text="   ",
-                expected="",
-                description="only whitespace",
-            ),
-            m.NormalizeWhitespaceCase(
-                text=c.Strings.SINGLE_CHAR,
-                expected=c.Strings.SINGLE_CHAR,
-                description="single char",
-            ),
-            m.NormalizeWhitespaceCase(
-                text="hello\n\n\nworld",
-                expected="hello world",
-                description="multiple newlines",
-            ),
-        ]
-
-    @staticmethod
-    def regex_pipeline_cases() -> list[m.RegexPipelineCase]:
-        """Generate comprehensive apply_regex_pipeline test cases."""
-        return [
-            m.RegexPipelineCase(
-                text="hello   world",
-                patterns=[
-                    (
-                        c.Patterns.WHITESPACE,
-                        c.Replacements.SPACE,
-                    ),
-                    ("=", "="),
-                ],
-                expected="hello world",
-                description="basic",
-            ),
-            m.RegexPipelineCase(
-                text=c.Strings.EMPTY,
-                patterns=[
-                    (
-                        c.Patterns.WHITESPACE,
-                        c.Replacements.SPACE,
-                    ),
-                ],
-                expected=c.Strings.EMPTY,
-                description="empty string",
-            ),
-            m.RegexPipelineCase(
-                text="cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
-                patterns=[
-                    (
-                        c.Patterns.EQUALS_SPACE,
-                        c.Replacements.EQUALS,
-                    ),
-                    (
-                        c.Patterns.COMMA_SPACE,
-                        c.Replacements.COMMA,
-                    ),
-                    (
-                        c.Patterns.WHITESPACE,
-                        c.Replacements.SPACE,
-                    ),
-                ],
-                expected="cn= REDACTED_LDAP_BIND_PASSWORD ,ou= users",
-                description="multiple patterns",
-            ),
-            m.RegexPipelineCase(
-                text="test",
-                patterns=[],
-                expected="test",
-                description="empty patterns",
-            ),
-            m.RegexPipelineCase(
-                text="a=b=c",
-                patterns=[("=", ":"), (":", "=")],
-                expected="a=b=c",
-                description="pattern chaining",
-            ),
-        ]
-
-    @staticmethod
-    def object_key_cases() -> list[m.ObjectKeyCase]:
-        """Generate comprehensive get_object_key test cases (object only)."""
-        return [
-            m.ObjectKeyCase(
-                obj={},
-                expected_exact="dict",
-                description="instance",
-            ),
-            m.ObjectKeyCase(
-                obj="test",
-                expected_exact="test",
-                description="string",
-            ),
-            m.ObjectKeyCase(
-                obj={"name": "DictName"},
-                expected_exact="DictName",
-                description="dict with name",
-            ),
-            m.ObjectKeyCase(
-                obj={"id": "DictId"},
-                expected_exact="DictId",
-                description="dict with id",
-            ),
-        ]
-
-
 class TestuStringParser:
     """Comprehensive tests for u using nested organization."""
+
+    class StringParserTestFactory:
+        """Factory for generating test cases with edge cases."""
+
+        @staticmethod
+        def parse_delimited_cases() -> list[m.ParseDelimitedCase]:
+            """Generate comprehensive parse_delimited test cases."""
+            return [
+                m.ParseDelimitedCase(
+                    text=c.Strings.BASIC_LIST,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    description="basic",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.WITH_SPACES,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    description="with spaces",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.EMPTY,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=[],
+                    description="empty string",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.WITH_SPACES,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    options=m.ParseOptions(strip=True, remove_empty=True),
+                    description="with options",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.WITH_SPACES,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", " b", " c"],
+                    options=m.ParseOptions(strip=False, remove_empty=True),
+                    description="options no strip",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.WITH_EMPTY,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "", "c"],
+                    options=m.ParseOptions(strip=True, remove_empty=False),
+                    description="options no remove empty",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.BASIC_LIST,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    options=m.ParseOptions(
+                        strip=True,
+                        remove_empty=True,
+                        validator=lambda s: len(s) > 0,
+                    ),
+                    description="validator success",
+                ),
+                m.ParseDelimitedCase(
+                    text="a,b",
+                    delimiter=c.Delimiters.COMMA,
+                    expected=[],
+                    options=m.ParseOptions(
+                        strip=True,
+                        remove_empty=True,
+                        validator=lambda s: len(s) > 1,
+                    ),
+                    description="validator filters components",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.WITH_SPACES,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    strip=True,
+                    remove_empty=True,
+                    use_legacy=True,
+                    description="legacy params",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.BASIC_LIST,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    validator=lambda s: "x" not in s,
+                    use_legacy=True,
+                    description="legacy validator",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.BASIC_LIST,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    description="no spaces",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.EXCESSIVE_SPACES,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    description="excessive spaces",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.LEADING_TRAILING,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    description="leading/trailing delimiters",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.SINGLE_CHAR,
+                    delimiter=c.Delimiters.COMMA,
+                    expected=["a"],
+                    description="single component",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.BASIC_LIST,
+                    delimiter="",
+                    expected=None,
+                    expected_error=c.TestErrors.DELIMITER_EMPTY,
+                    description="empty delimiter",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.BASIC_LIST,
+                    delimiter=",,",
+                    expected=None,
+                    expected_error=c.TestErrors.DELIMITER_MULTI,
+                    description="multi-char delimiter",
+                ),
+                m.ParseDelimitedCase(
+                    text=c.Strings.BASIC_LIST,
+                    delimiter=" ",
+                    expected=None,
+                    expected_error=c.TestErrors.DELIMITER_WHITESPACE,
+                    description="whitespace delimiter",
+                ),
+            ]
+
+        @staticmethod
+        def split_escape_cases() -> list[m.SplitEscapeCase]:
+            """Generate comprehensive split_on_char_with_escape test cases."""
+            return [
+                m.SplitEscapeCase(
+                    text=c.Strings.BASIC_LIST,
+                    split_char=c.Delimiters.COMMA,
+                    expected=["a", "b", "c"],
+                    description="basic",
+                ),
+                m.SplitEscapeCase(
+                    text="a\\,b,c",
+                    split_char=c.Delimiters.COMMA,
+                    expected=["a,b", "c"],
+                    description="escaped delimiter",
+                ),
+                m.SplitEscapeCase(
+                    text=c.Strings.EMPTY,
+                    split_char=c.Delimiters.COMMA,
+                    expected=[""],
+                    description="empty string",
+                ),
+                m.SplitEscapeCase(
+                    text="a#b,c",
+                    split_char=c.Delimiters.COMMA,
+                    escape_char=c.EscapeChars.HASH,
+                    expected=["ab", "c"],
+                    description="custom escape char",
+                ),
+                m.SplitEscapeCase(
+                    text="a,b\\",
+                    split_char=c.Delimiters.COMMA,
+                    expected=["a", "b\\"],
+                    description="escape at end",
+                ),
+                m.SplitEscapeCase(
+                    text="a\\\\,b",
+                    split_char=c.Delimiters.COMMA,
+                    expected=["a\\", "b"],
+                    description="escaped escape char",
+                ),
+                m.SplitEscapeCase(
+                    text="a,b,c,d",
+                    split_char=c.Delimiters.COMMA,
+                    expected=["a", "b", "c", "d"],
+                    description="multiple components",
+                ),
+                m.SplitEscapeCase(
+                    text="\\,a,b",
+                    split_char=c.Delimiters.COMMA,
+                    expected=[",a", "b"],
+                    description="escaped at start",
+                ),
+                m.SplitEscapeCase(
+                    text="a,b",
+                    split_char="",
+                    expected_error=c.TestErrors.SPLIT_EMPTY,
+                    description="empty split char",
+                ),
+                m.SplitEscapeCase(
+                    text="a,b",
+                    split_char=c.Delimiters.COMMA,
+                    escape_char="",
+                    expected_error=c.TestErrors.ESCAPE_EMPTY,
+                    description="empty escape char",
+                ),
+                m.SplitEscapeCase(
+                    text="a,b",
+                    split_char=c.Delimiters.COMMA,
+                    escape_char=c.Delimiters.COMMA,
+                    expected_error=c.TestErrors.SPLIT_ESCAPE_SAME,
+                    description="same split and escape",
+                ),
+            ]
+
+        @staticmethod
+        def normalize_whitespace_cases() -> list[m.NormalizeWhitespaceCase]:
+            """Generate comprehensive normalize_whitespace test cases."""
+            return [
+                m.NormalizeWhitespaceCase(
+                    text="  hello   world  ",
+                    expected="hello world",
+                    description="basic",
+                ),
+                m.NormalizeWhitespaceCase(
+                    text=c.Strings.EMPTY,
+                    expected=c.Strings.EMPTY,
+                    description="empty string",
+                ),
+                m.NormalizeWhitespaceCase(
+                    text="hello---world",
+                    pattern=c.Patterns.DASH,
+                    replacement=c.Replacements.DASH,
+                    expected="hello-world",
+                    description="custom pattern",
+                ),
+                m.NormalizeWhitespaceCase(
+                    text="hello   world",
+                    replacement=c.Replacements.UNDERSCORE,
+                    expected="hello_world",
+                    description="custom replacement",
+                ),
+                m.NormalizeWhitespaceCase(
+                    text="hello\t\n\rworld",
+                    expected="hello world",
+                    description="various whitespace",
+                ),
+                m.NormalizeWhitespaceCase(
+                    text="   ",
+                    expected="",
+                    description="only whitespace",
+                ),
+                m.NormalizeWhitespaceCase(
+                    text=c.Strings.SINGLE_CHAR,
+                    expected=c.Strings.SINGLE_CHAR,
+                    description="single char",
+                ),
+                m.NormalizeWhitespaceCase(
+                    text="hello\n\n\nworld",
+                    expected="hello world",
+                    description="multiple newlines",
+                ),
+            ]
+
+        @staticmethod
+        def regex_pipeline_cases() -> list[m.RegexPipelineCase]:
+            """Generate comprehensive apply_regex_pipeline test cases."""
+            return [
+                m.RegexPipelineCase(
+                    text="hello   world",
+                    patterns=[
+                        (
+                            c.Patterns.WHITESPACE,
+                            c.Replacements.SPACE,
+                        ),
+                        ("=", "="),
+                    ],
+                    expected="hello world",
+                    description="basic",
+                ),
+                m.RegexPipelineCase(
+                    text=c.Strings.EMPTY,
+                    patterns=[
+                        (
+                            c.Patterns.WHITESPACE,
+                            c.Replacements.SPACE,
+                        ),
+                    ],
+                    expected=c.Strings.EMPTY,
+                    description="empty string",
+                ),
+                m.RegexPipelineCase(
+                    text="cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
+                    patterns=[
+                        (
+                            c.Patterns.EQUALS_SPACE,
+                            c.Replacements.EQUALS,
+                        ),
+                        (
+                            c.Patterns.COMMA_SPACE,
+                            c.Replacements.COMMA,
+                        ),
+                        (
+                            c.Patterns.WHITESPACE,
+                            c.Replacements.SPACE,
+                        ),
+                    ],
+                    expected="cn= REDACTED_LDAP_BIND_PASSWORD ,ou= users",
+                    description="multiple patterns",
+                ),
+                m.RegexPipelineCase(
+                    text="test",
+                    patterns=[],
+                    expected="test",
+                    description="empty patterns",
+                ),
+                m.RegexPipelineCase(
+                    text="a=b=c",
+                    patterns=[("=", ":"), (":", "=")],
+                    expected="a=b=c",
+                    description="pattern chaining",
+                ),
+            ]
+
+        @staticmethod
+        def object_key_cases() -> list[m.ObjectKeyCase]:
+            """Generate comprehensive get_object_key test cases (object only)."""
+            return [
+                m.ObjectKeyCase(
+                    obj={},
+                    expected_exact="dict",
+                    description="instance",
+                ),
+                m.ObjectKeyCase(
+                    obj="test",
+                    expected_exact="test",
+                    description="string",
+                ),
+                m.ObjectKeyCase(
+                    obj={"name": "DictName"},
+                    expected_exact="DictName",
+                    description="dict with name",
+                ),
+                m.ObjectKeyCase(
+                    obj={"id": "DictId"},
+                    expected_exact="DictId",
+                    description="dict with id",
+                ),
+            ]
 
     @pytest.fixture
     def parser(self) -> u:
@@ -390,7 +389,7 @@ class TestuStringParser:
 
         @pytest.mark.parametrize(
             "case",
-            StringParserTestFactory.parse_delimited_cases(),
+            TestuStringParser.StringParserTestFactory.parse_delimited_cases(),
         )
         def test_parse_delimited(
             self,
@@ -441,7 +440,9 @@ class TestuStringParser:
     class TestSplitWithEscape:
         """Test split_on_char_with_escape method."""
 
-        @pytest.mark.parametrize("case", StringParserTestFactory.split_escape_cases())
+        @pytest.mark.parametrize(
+            "case", TestuStringParser.StringParserTestFactory.split_escape_cases()
+        )
         def test_split_with_escape(
             self,
             parser: u,
@@ -478,7 +479,7 @@ class TestuStringParser:
 
         @pytest.mark.parametrize(
             "case",
-            StringParserTestFactory.normalize_whitespace_cases(),
+            TestuStringParser.StringParserTestFactory.normalize_whitespace_cases(),
         )
         def test_normalize_whitespace(
             self,
@@ -511,7 +512,9 @@ class TestuStringParser:
     class TestRegexPipeline:
         """Test apply_regex_pipeline method."""
 
-        @pytest.mark.parametrize("case", StringParserTestFactory.regex_pipeline_cases())
+        @pytest.mark.parametrize(
+            "case", TestuStringParser.StringParserTestFactory.regex_pipeline_cases()
+        )
         def test_apply_regex_pipeline(
             self,
             parser: u,
@@ -594,7 +597,9 @@ class TestuStringParser:
     class TestGetObjectKey:
         """Test get_object_key method."""
 
-        @pytest.mark.parametrize("case", StringParserTestFactory.object_key_cases())
+        @pytest.mark.parametrize(
+            "case", TestuStringParser.StringParserTestFactory.object_key_cases()
+        )
         def test_get_object_key(
             self,
             parser: u,

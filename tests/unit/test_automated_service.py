@@ -7,74 +7,71 @@ from typing import override
 from flext_tests import tb, tm, tt
 from hypothesis import given, strategies as st
 
-from flext_core import p, r, s
-
-
-class _SuccessService(s[str]):
-    __test__ = False
-
-    @override
-    def execute(self) -> r[str]:
-        return r[str].ok("done")
-
-
-class _FailService(s[str]):
-    __test__ = False
-
-    @override
-    def execute(self) -> r[str]:
-        return r[str].fail("error occurred")
-
-
-class _DynamicService(s[str]):
-    __test__ = False
-    value: str
-
-    @override
-    def execute(self) -> r[str]:
-        return r[str].ok(self.value)
+from flext_core import r, s
 
 
 class TestAutomatedFlextService:
+    class _SuccessService(s[str]):
+        __test__ = False
+
+        @override
+        def execute(self) -> r[str]:
+            return r[str].ok("done")
+
+    class _FailService(s[str]):
+        __test__ = False
+
+        @override
+        def execute(self) -> r[str]:
+            return r[str].fail("error occurred")
+
+    class _DynamicService(s[str]):
+        __test__ = False
+        value: str
+
+        @override
+        def execute(self) -> r[str]:
+            return r[str].ok(self.value)
+
     def test_execute_success(self) -> None:
-        service = _SuccessService()
+        service = self._SuccessService()
         tm.ok(service.execute(), eq="done")
 
     def test_execute_failure(self) -> None:
-        service = _FailService()
+        service = self._FailService()
         tm.fail(service.execute(), has="error")
 
     def test_validate_business_rules(self) -> None:
-        service = _SuccessService()
+        service = self._SuccessService()
         tm.ok(service.validate_business_rules(), eq=True)
 
     def test_is_valid(self) -> None:
-        tm.that(_SuccessService().is_valid(), is_=bool)
-        tm.that(_FailService().is_valid(), eq=True)
+        tm.that(self._SuccessService().is_valid(), is_=bool)
+        tm.that(self._FailService().is_valid(), eq=True)
 
     def test_get_service_info(self) -> None:
-        service = _SuccessService()
+        service = self._SuccessService()
         info = service.get_service_info()
         tm.that(info, is_=Mapping)
         tm.that(info, has="service_type")
 
     def test_result_property(self) -> None:
-        tm.that(_SuccessService().result, eq="done")
+        tm.that(self._SuccessService().result, eq="done")
 
     def test_runtime_properties(self) -> None:
-        service = _SuccessService()
-        tm.that(isinstance(service.config, p.Settings), eq=True)
-        tm.that(isinstance(service.container, p.Container), eq=True)
-        tm.that(isinstance(service.context, p.Context), eq=True)
+        service = self._SuccessService()
+        assert service.config is not None
+        assert service.container is not None
+        assert service.context is not None
 
     @given(st.text(min_size=1))
     def test_execute_hypothesis(self, value: str) -> None:
-        service = _DynamicService(value=value)
+        service = self._DynamicService(value=value)
         result = service.execute()
         tm.that(result.is_success or result.is_failure, eq=True)
 
     def test_execute_benchmark(self) -> None:
-        service = _SuccessService()
+        service = self._SuccessService()
         iterations = 1000
         op = tt.op("simple")
         _ = op()

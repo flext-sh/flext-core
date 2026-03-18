@@ -16,212 +16,220 @@ from tests import c, p, u
 from ._models import _SvcModel
 
 
-def _noop(*_a: t.Scalar, **_k: t.Scalar) -> None:
-    """Typed no-op for protocol stubs."""
-    return
+class TestMixinsFullCoverage:
+    @staticmethod
+    def _noop(*_a: t.Scalar, **_k: t.Scalar) -> None:
+        """Typed no-op for protocol stubs."""
+        return
 
+    @staticmethod
+    def _return_true(*_a: t.Scalar, **_k: t.Scalar) -> bool:
+        """Typed return-True for protocol stubs."""
+        return True
 
-def _return_true(*_a: t.Scalar, **_k: t.Scalar) -> bool:
-    """Typed return-True for protocol stubs."""
-    return True
+    @staticmethod
+    def _return_true_no_args() -> bool:
+        """Typed callable for process/validate stubs."""
+        return True
 
+    @staticmethod
+    def _mock_register_fail(_name: str) -> r[bool]:
+        """Mock _register_in_container that returns failure."""
+        return cast(
+            "r[bool]",
+            cast("object", SimpleNamespace(is_failure=True, error=None)),
+        )
 
-def _return_true_no_args() -> bool:
-    """Typed callable for process/validate stubs."""
-    return True
+    @staticmethod
+    def _validation_ok_true(v: t.NormalizedValue) -> r[bool]:
+        """Validator that always returns ok(True)."""
+        _ = v
+        return r[bool].ok(True)
 
+    @staticmethod
+    def _validation_ok_false(v: t.NormalizedValue) -> r[bool]:
+        """Validator that always returns ok(False)."""
+        _ = v
+        return r[bool].ok(False)
 
-def _mock_register_fail(_name: str) -> r[bool]:
-    """Mock _register_in_container that returns failure."""
-    return cast(
-        "r[bool]",
-        cast("object", SimpleNamespace(is_failure=True, error=None)),
-    )
+    @staticmethod
+    def _validation_fail_no(v: t.NormalizedValue) -> r[bool]:
+        """Validator that always returns fail('no')."""
+        _ = v
+        return r[bool].fail("no")
 
+    class _RuntimeContainer:
+        def __init__(self) -> None:
+            super().__init__()
+            self.configured: dict[str, t.Tests.object] | None = None
+            self.wired: dict[str, t.Tests.object] | None = None
 
-def _validation_ok_true(v: t.NormalizedValue) -> r[bool]:
-    """Validator that always returns ok(True)."""
-    return r[bool].ok(True)
+        def scoped(
+            self, **_kwargs: t.Scalar
+        ) -> TestMixinsFullCoverage._RuntimeContainer:
+            return self
 
+        def configure(self, overrides: dict[str, t.Tests.object]) -> None:
+            self.configured = overrides
 
-def _validation_ok_false(v: t.NormalizedValue) -> r[bool]:
-    """Validator that always returns ok(False)."""
-    return r[bool].ok(False)
+        def wire_modules(self, **kwargs: t.Scalar) -> None:
+            self.wired = dict(kwargs)
 
+        def list_services(self) -> Sequence[str]:
+            return []
 
-def _validation_fail_no(v: t.NormalizedValue) -> r[bool]:
-    """Validator that always returns fail('no')."""
-    return r[bool].fail("no")
+        def has_service(self, _name: str) -> bool:
+            return False
 
+        def register(
+            self, _name: str, _value: t.Tests.object, *, kind: str = "service"
+        ) -> TestMixinsFullCoverage._RuntimeContainer:
+            _ = kind
+            return self
 
-class _RuntimeContainer:
-    def __init__(self) -> None:
-        super().__init__()
-        self.configured: dict[str, t.Tests.object] | None = None
-        self.wired: dict[str, t.Tests.object] | None = None
+        def clear_all(self) -> None:
+            return None
 
-    def scoped(self, **_kwargs: t.Scalar) -> _RuntimeContainer:
-        return self
+        def get_config(self) -> t.ConfigMap:
+            return t.ConfigMap(root={})
 
-    def configure(self, overrides: dict[str, t.Tests.object]) -> None:
-        self.configured = overrides
+        def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.Tests.object]:
+            return r[t.Tests.object].fail("not implemented")
 
-    def wire_modules(self, **kwargs: t.Scalar) -> None:
-        self.wired = dict(kwargs)
+        @property
+        def context(self) -> None:
+            return None
 
-    def list_services(self) -> Sequence[str]:
-        return []
+        @property
+        def config(self) -> None:
+            return None
 
-    def has_service(self, _name: str) -> bool:
-        return False
+    class _ContainerForLogger:
+        def __init__(
+            self,
+            success: bool,
+            logger: t.Container | BaseModel | None = None,
+        ) -> None:
+            super().__init__()
+            self.success: bool = success
+            self.logger: t.Container | BaseModel | None = logger
+            self.factories: dict[str, t.Tests.object] = {}
+            self.register_calls: list[tuple[str, str]] = []
 
-    def register(
-        self, _name: str, _value: t.Tests.object, *, kind: str = "service"
-    ) -> _RuntimeContainer:
-        return self
+        def get_typed(
+            self, _key: str, _tp: type[t.Container | BaseModel]
+        ) -> r[t.Container | BaseModel]:
+            if self.success:
+                return r[t.Container | BaseModel].ok(self.logger or "logger")
+            return r[t.Container | BaseModel].fail("missing")
 
-    def clear_all(self) -> None:
-        pass
+        def get(
+            self,
+            _key: str,
+            *,
+            type_cls: type[t.Container | BaseModel] | None = None,
+        ) -> r[t.Container | BaseModel]:
+            _ = type_cls
+            if self.success:
+                return r[t.Container | BaseModel].ok(self.logger or "logger")
+            return r[t.Container | BaseModel].fail("missing")
 
-    def get_config(self) -> t.ConfigMap:
-        return t.ConfigMap(root={})
+        def register_factory(self, key: str, factory: t.FactoryCallable) -> r[bool]:
+            _ = key
+            _ = factory
+            msg = "register_factory path should not be used"
+            raise AssertionError(msg)
 
-    def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.Tests.object]:
-        return r[t.Tests.object].fail("not implemented")
+        def register(
+            self,
+            name: str,
+            value: t.Tests.object,
+            *,
+            kind: str = "service",
+        ) -> TestMixinsFullCoverage._ContainerForLogger:
+            self.register_calls.append((name, kind))
+            if kind == "factory":
+                self.factories[name] = value
+            _ = value
+            return self
 
-    @property
-    def context(self) -> None:
-        return None
-
-    @property
-    def config(self) -> None:
-        return None
-
-
-class _ContainerForLogger:
-    def __init__(
+    def test_mixins_result_and_model_conversion_paths(
         self,
-        success: bool,
-        logger: t.Container | BaseModel | None = None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        super().__init__()
-        self.success: bool = success
-        self.logger: t.Container | BaseModel | None = logger
-        self.factories: dict[str, t.Tests.object] = {}
-        self.register_calls: list[tuple[str, str]] = []
+        _ = monkeypatch
+        tm.that(isinstance(c.Context.SCOPE_OPERATION, str), eq=True)
+        tm.that(hasattr(u, "merge"), eq=True)
+        tm.fail(x.fail("error"))
+        conf = t.ConfigMap(root={"a": "b"})
+        tm.that(x.normalize_to_container(conf) is conf, eq=True)
+        model = _SvcModel(value="ok")
+        tm.that(x.normalize_to_container(model) is model, eq=True)
 
-    def get_typed(
-        self, _key: str, _tp: type[t.Container | BaseModel]
-    ) -> r[t.Container | BaseModel]:
-        if self.success:
-            return r[t.Container | BaseModel].ok(self.logger or "logger")
-        return r[t.Container | BaseModel].fail("missing")
+        class _BadMap(Mapping[str, t.NormalizedValue]):
+            @override
+            def __iter__(self) -> Iterator[str]:
+                return iter(["k"])
 
-    def get(
+            @override
+            def __len__(self) -> int:
+                return 1
+
+            @override
+            def __getitem__(self, _key: str) -> t.NormalizedValue:
+                msg = "boom"
+                raise RuntimeError(msg)
+
+        with pytest.raises(RuntimeError, match="boom"):
+            _ = x.normalize_to_container(_BadMap())
+
+    def test_mixins_runtime_bootstrap_and_track_paths(
         self,
-        _key: str,
-        *,
-        type_cls: type[t.Container | BaseModel] | None = None,
-    ) -> r[t.Container | BaseModel]:
-        _ = type_cls
-        if self.success:
-            return r[t.Container | BaseModel].ok(self.logger or "logger")
-        return r[t.Container | BaseModel].fail("missing")
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        runtime_container = self._RuntimeContainer()
+        monkeypatch.setattr(
+            "flext_core.mixins.FlextContainer.create",
+            staticmethod(lambda: runtime_container),
+        )
 
-    def register_factory(self, key: str, factory: t.FactoryCallable) -> r[bool]:
-        _ = key
-        _ = factory
-        msg = "register_factory path should not be used"
-        raise AssertionError(msg)
-
-    def register(
-        self,
-        name: str,
-        value: t.Tests.object,
-        *,
-        kind: str = "service",
-    ) -> _ContainerForLogger:
-        self.register_calls.append((name, kind))
-        if kind == "factory":
-            self.factories[name] = value
-        return self
-
-
-def test_mixins_result_and_model_conversion_paths(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    tm.that(isinstance(c.Context.SCOPE_OPERATION, str), eq=True)
-    tm.that(hasattr(u, "merge"), eq=True)
-    tm.fail(x.fail("error"))
-    conf = t.ConfigMap(root={"a": "b"})
-    tm.that(x.normalize_to_container(conf) is conf, eq=True)
-    model = _SvcModel(value="ok")
-    tm.that(x.normalize_to_container(model) is model, eq=True)
-
-    class _BadMap(Mapping[str, t.NormalizedValue]):
-        @override
-        def __iter__(self) -> Iterator[str]:
-            return iter(["k"])
-
-        @override
-        def __len__(self) -> int:
-            return 1
-
-        @override
-        def __getitem__(self, _key: str) -> t.NormalizedValue:
-            msg = "boom"
-            raise RuntimeError(msg)
-
-    with pytest.raises(RuntimeError, match="boom"):
-        _ = x.normalize_to_container(_BadMap())
-
-
-def test_mixins_runtime_bootstrap_and_track_paths(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    runtime_container = _RuntimeContainer()
-    monkeypatch.setattr(
-        "flext_core.mixins.FlextContainer.create",
-        staticmethod(lambda: runtime_container),
-    )
-
-    class _Service(x):
-        @classmethod
-        def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-            return cast(
-                "p.RuntimeBootstrapOptions",
-                cast(
-                    "t.Tests.object",
-                    SimpleNamespace(
-                        config_type=None,
-                        config_overrides=None,
-                        context=None,
-                        services=None,
-                        wire_modules=["pkg"],
-                        resources={"res": lambda: "x"},
-                        factories={"fac": lambda: "y"},
+        class _Service(x):
+            @classmethod
+            def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+                return cast(
+                    "p.RuntimeBootstrapOptions",
+                    cast(
+                        "t.Tests.object",
+                        SimpleNamespace(
+                            config_type=None,
+                            config_overrides=None,
+                            context=None,
+                            services=None,
+                            wire_modules=["pkg"],
+                            resources={"res": lambda: "x"},
+                            factories={"fac": lambda: "y"},
+                        ),
                     ),
-                ),
-            )
+                )
 
-    service = _Service(
-        config_type=None,
-        config_overrides=None,
-        initial_context=None,
-    )
-    runtime = service._get_runtime()
-    tm.that(runtime, none=False)
-    tm.that(runtime_container.wired, none=False)
-    with service.track("op") as metrics:
-        cast("dict[str, t.Tests.object]", metrics)["duration_ms"] = 2.0
-    tm.that(hasattr(service, "_operation_stats"), eq=True)
-    tm.that(service._operation_stats, has="op")
-    try:
-        with service.track("op_fail"):
-            msg = "boom"
-            raise RuntimeError(msg)
-    except RuntimeError:
-        pass
+        service = _Service(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+        )
+        runtime = service._get_runtime()
+        tm.that(runtime, none=False)
+        tm.that(runtime_container.wired, none=False)
+        with service.track("op") as metrics:
+            cast("dict[str, t.Tests.object]", metrics)["duration_ms"] = 2.0
+        tm.that(hasattr(service, "_operation_stats"), eq=True)
+        tm.that(service._operation_stats, has="op")
+        try:
+            with service.track("op_fail"):
+                msg = "boom"
+                raise RuntimeError(msg)
+        except RuntimeError:
+            pass
 
 
 def test_mixins_container_registration_and_logger_paths(

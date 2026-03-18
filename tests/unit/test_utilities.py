@@ -32,92 +32,93 @@ from tests import c
 from .contracts.text_contract import TextUtilityContract
 
 
-class UtilityScenarios(TextUtilityContract):
-    """Centralized utility test scenarios using c (FlextConstants)."""
-
-    TYPE_GUARD_CASES: ClassVar[dict[str, list[tuple[str, object, bool]]]] = {
-        "string": [
-            ("string_empty", "", False),
-            ("string_valid", "test", True),
-            ("string_none", None, False),
-            ("string_number", 123, False),
-            ("string_whitespace", " ", False),
-            ("string_content", " content ", True),
-        ],
-        "dict": [
-            ("dict_empty", {}, False),
-            ("dict_valid", {"a": 1}, True),
-            ("dict_none", None, False),
-            ("dict_string", "not_dict", False),
-        ],
-        "list": [
-            ("list_empty", [], False),
-            ("list_valid", [1, 2, 3], True),
-            ("list_none", None, False),
-            ("list_string", "not_list", False),
-        ],
-    }
-    GENERATOR_METHODS: ClassVar[list[tuple[str, str | None]]] = [
-        ("generate_id", None),
-        ("generate_iso_timestamp", "iso_timestamp"),
-        ("generate_correlation_id", "correlation"),
-        ("generate_entity_id", "entity"),
-        ("generate_transaction_id", "transaction"),
-        ("generate_saga_id", "saga"),
-        ("generate_event_id", "event"),
-    ]
-    SHORT_ID_LENGTHS: ClassVar[list[tuple[int | None, int]]] = [
-        (5, 5),
-        (10, 10),
-        (20, 20),
-        (None, c.Utilities.SHORT_UUID_LENGTH),
-    ]
-    TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = (
-        TextUtilityContract.CLEAN_TEXT_CASES
-        + [
-            ("a    b    c", "a b c"),
-            ("  Test  Text  ", "Test Text"),
-        ]
-    )
-    TEXT_TRUNCATE_CASES: ClassVar[list[tuple[str, int, bool]]] = [
-        ("VeryLongText", 5, True),
-        ("Hi", 10, False),
-    ]
-    CACHE_NORMALIZE_CASES: ClassVar[list[tuple[object, type | tuple[type, ...]]]] = [
-        ({"a": 1, "b": 2}, dict),
-        ([1, 2, 3], list),
-        ("string", str),
-        (42, (int, float, str, dict, list, tuple)),
-        ({"a": {"b": {"c": 1}}, "d": [1, 2, 3]}, dict),
-    ]
-    VALIDATION_PIPELINE_CASES: ClassVar[
-        list[tuple[str, Sequence[Callable[[str], r[bool]]], bool, str | None]]
-    ] = [
-        (
-            "abc123",
-            [
-                lambda d: r[bool].ok(True) if len(d) > 0 else r[bool].fail("Empty"),
-                lambda d: (
-                    r[bool].ok(True) if d.isalnum() else r[bool].fail("Non-alnum")
-                ),
-            ],
-            True,
-            None,
-        ),
-        ("test", [lambda d: r[bool].fail("First failed")], False, "First failed"),
-        ("test", [], True, None),
-    ]
-    TYPE_CHECKER_CASES: ClassVar[list[tuple[tuple[type, ...], type, bool]]] = [
-        ((str,), str, True),
-        ((str, int), str, True),
-        ((str, int), int, True),
-        ((str,), int, False),
-        ((int,), str, False),
-    ]
-
-
 class Testu(TextUtilityContract):
     """Unified test suite for u using flext_tests and c."""
+
+    class UtilityScenarios(TextUtilityContract):
+        """Centralized utility test scenarios using c (FlextConstants)."""
+
+        TYPE_GUARD_CASES: ClassVar[dict[str, list[tuple[str, object, bool]]]] = {
+            "string": [
+                ("string_empty", "", False),
+                ("string_valid", "test", True),
+                ("string_none", None, False),
+                ("string_number", 123, False),
+                ("string_whitespace", " ", False),
+                ("string_content", " content ", True),
+            ],
+            "dict": [
+                ("dict_empty", {}, False),
+                ("dict_valid", {"a": 1}, True),
+                ("dict_none", None, False),
+                ("dict_string", "not_dict", False),
+            ],
+            "list": [
+                ("list_empty", [], False),
+                ("list_valid", [1, 2, 3], True),
+                ("list_none", None, False),
+                ("list_string", "not_list", False),
+            ],
+        }
+        GENERATOR_METHODS: ClassVar[list[tuple[str, str | None]]] = [
+            ("generate_id", None),
+            ("generate_iso_timestamp", "iso_timestamp"),
+            ("generate_correlation_id", "correlation"),
+            ("generate_entity_id", "entity"),
+            ("generate_transaction_id", "transaction"),
+            ("generate_saga_id", "saga"),
+            ("generate_event_id", "event"),
+        ]
+        SHORT_ID_LENGTHS: ClassVar[list[tuple[int | None, int]]] = [
+            (5, 5),
+            (10, 10),
+            (20, 20),
+            (None, c.Utilities.SHORT_UUID_LENGTH),
+        ]
+        TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = (
+            TextUtilityContract.CLEAN_TEXT_CASES
+            + [
+                ("a    b    c", "a b c"),
+                ("  Test  Text  ", "Test Text"),
+            ]
+        )
+        TEXT_TRUNCATE_CASES: ClassVar[list[tuple[str, int, bool]]] = [
+            ("VeryLongText", 5, True),
+            ("Hi", 10, False),
+        ]
+        CACHE_NORMALIZE_CASES: ClassVar[
+            list[tuple[object, type | tuple[type, ...]]]
+        ] = [
+            ({"a": 1, "b": 2}, dict),
+            ([1, 2, 3], list),
+            ("string", str),
+            (42, (int, float, str, dict, list, tuple)),
+            ({"a": {"b": {"c": 1}}, "d": [1, 2, 3]}, dict),
+        ]
+        VALIDATION_PIPELINE_CASES: ClassVar[
+            list[tuple[str, Sequence[Callable[[str], r[bool]]], bool, str | None]]
+        ] = [
+            (
+                "abc123",
+                [
+                    lambda d: r[bool].ok(True) if len(d) > 0 else r[bool].fail("Empty"),
+                    lambda d: (
+                        r[bool].ok(True) if d.isalnum() else r[bool].fail("Non-alnum")
+                    ),
+                ],
+                True,
+                None,
+            ),
+            ("test", [lambda d: r[bool].fail("First failed")], False, "First failed"),
+            ("test", [], True, None),
+        ]
+        TYPE_CHECKER_CASES: ClassVar[list[tuple[tuple[type, ...], type, bool]]] = [
+            ((str,), str, True),
+            ((str, int), str, True),
+            ((str, int), int, True),
+            ((str,), int, False),
+            ((int,), str, False),
+        ]
 
     @pytest.mark.parametrize(
         ("description", "value", "expected"),

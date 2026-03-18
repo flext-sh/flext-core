@@ -38,7 +38,7 @@ from flext_core._models.service import FlextModelsService
 from tests.test_utils import assertion_helpers
 
 
-class TestConfigServiceViaDI:
+class TestDiServicesAccess:
     """Test FlextSettings accessibility via DI."""
 
     def test_config_via_container_get_global(self) -> None:
@@ -87,10 +87,6 @@ class TestConfigServiceViaDI:
         finally:
             di_container.unwire()
 
-
-class TestLoggerServiceViaDI:
-    """Test FlextLogger accessibility via DI."""
-
     def test_logger_via_runtime_structlog(self) -> None:
         """Test accessing logger via FlextRuntime.structlog()."""
         structlog_module = FlextRuntime.structlog()
@@ -127,10 +123,6 @@ class TestLoggerServiceViaDI:
         assert custom_logger_result.is_success
         assert isinstance(custom_logger_result.value, p.Logger)
 
-
-class TestContextServiceViaDI:
-    """Test FlextContext accessibility via DI."""
-
     def test_context_via_runtime_create(self) -> None:
         """Test creating context via FlextContext.create()."""
         context = FlextContext.create()
@@ -162,10 +154,6 @@ class TestContextServiceViaDI:
         assert custom_context_result.is_success
         assert isinstance(custom_context_result.value, p.Context)
         assert custom_context_result.value is custom_context
-
-
-class TestServicesIntegrationViaDI:
-    """Test integration of all services via DI."""
 
     def test_all_services_via_service_runtime(self) -> None:
         """Test all services accessible via single service runtime."""
@@ -242,9 +230,4 @@ class TestServicesIntegrationViaDI:
             di_container.unwire()
 
 
-__all__ = [
-    "TestConfigServiceViaDI",
-    "TestContextServiceViaDI",
-    "TestLoggerServiceViaDI",
-    "TestServicesIntegrationViaDI",
-]
+__all__ = ["TestDiServicesAccess"]
