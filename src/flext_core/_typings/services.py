@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from types import ModuleType
-from typing import Protocol, runtime_checkable
+from types import GenericAlias, ModuleType, UnionType
+from typing import Protocol, TypeAliasType, runtime_checkable
 
 from pydantic import BaseModel
 
@@ -73,7 +73,12 @@ class FlextTypesServices:
     # Other Types
     type SortableObjectType = str | int | float
     type TypeHintSpecifier = (
-        type | str | Callable[[FlextTypingBase.Scalar], FlextTypingBase.Scalar]
+        type
+        | str
+        | UnionType
+        | GenericAlias
+        | TypeAliasType
+        | Callable[[FlextTypingBase.Scalar], FlextTypingBase.Scalar]
     )
     type TypeOriginSpecifier = TypeHintSpecifier
     type GenericTypeArgument = str | type[FlextTypingBase.Scalar]

@@ -46,7 +46,7 @@ class FlextUtilitiesArgs:
     _V = m.Validators
 
     @staticmethod
-    def _validate_enum_type(candidate: object) -> r[type[StrEnum]]:
+    def _validate_enum_type(candidate: t.MessageTypeSpecifier) -> r[type[StrEnum]]:
         """Validate that candidate is a StrEnum subclass."""
         try:
             return r[type[StrEnum]].ok(
@@ -56,7 +56,7 @@ class FlextUtilitiesArgs:
             return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")
 
     @staticmethod
-    def get_enum_params(func: Callable[..., object]) -> Mapping[str, type[StrEnum]]:
+    def get_enum_params(func: Callable[..., R]) -> Mapping[str, type[StrEnum]]:
         """Extract parameters that are StrEnum from function signature.
 
         Example:
@@ -66,7 +66,7 @@ class FlextUtilitiesArgs:
              # params = {"status": Status}
 
         """
-        hints: dict[str, object]
+        hints: dict[str, t.TypeHintSpecifier]
         try:
             resolved_hints = get_type_hints(func, include_extras=True)
             hints = {str(name): hint for name, hint in resolved_hints.items()}
@@ -74,7 +74,7 @@ class FlextUtilitiesArgs:
             fallback_annotations = getattr(func, "__annotations__", None)
             if isinstance(fallback_annotations, Mapping):
                 try:
-                    hints = TypeAdapter(dict[str, object]).validate_python(
+                    hints = TypeAdapter(dict[str, t.TypeHintSpecifier]).validate_python(
                         fallback_annotations,
                     )
                 except ValidationError:
