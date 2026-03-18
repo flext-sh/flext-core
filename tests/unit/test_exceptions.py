@@ -33,6 +33,12 @@ from flext_core import FlextConstants, FlextRuntime, e
 from tests import c, m
 
 
+_BASE_SCENARIOS: list[t.Any] = []
+_SPECIFIC_TYPE_SCENARIOS: list[t.Any] = []
+_FACTORY_SCENARIOS: list[t.Any] = []
+_TYPE_SCENARIOS: list[t.Any] = []
+
+
 class Teste:
     """Comprehensive test suite for e using u."""
 

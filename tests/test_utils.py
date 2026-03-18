@@ -9,35 +9,33 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import TypeVar, override
+from typing import override
 
 from pydantic import BaseModel
 
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextDecorators,
     FlextDispatcher,
-    FlextExceptions,
-    FlextHandlers,
     FlextLogger,
-    FlextMixins,
     FlextRegistry,
     FlextRuntime,
-    FlextService,
     FlextSettings,
-    FlextUtilities,
+    T,
+    T_co,
+    d,
+    e,
+    h,
     r,
+    s,
     t,
+    x,
 )
+from tests import m, t, u
 
-from .models import TestsFlextModels
-
-T = TypeVar("T")
-T_co = TypeVar("T_co", covariant=True)
 FlextTestResult = r[T]
 FlextTestResultCo = r[T_co]
-type StandardTestCase = TestsFlextModels.StandardTestCaseModel
+type StandardTestCase = m.StandardTestCaseModel
 
 
 class TestUtils:
@@ -70,9 +68,9 @@ class TestUtils:
             *,
             expected_success: bool = True,
             error_contains: str | None = None,
-        ) -> TestsFlextModels.StandardTestCaseModel:
+        ) -> m.StandardTestCaseModel:
             """Create standardized operation test case."""
-            return TestsFlextModels.StandardTestCaseModel(
+            return m.StandardTestCaseModel(
                 description=description,
                 input_data={"operation": operation, **input_data},
                 expected_result=expected_result,
@@ -136,7 +134,7 @@ class TestUtils:
         @staticmethod
         def assert_operation_result(
             operation_func: Callable[[], r[t.Container]],
-            test_case: TestsFlextModels.StandardTestCaseModel,
+            test_case: m.StandardTestCaseModel,
             context: str = "",
         ) -> Path | bool | datetime | float | int | str:
             """Execute operation and assert result matches test case."""
@@ -170,9 +168,9 @@ class TestUtils:
         def create_test_entity(
             unique_id: str = "test-123",
             name: str = "Test Entity",
-        ) -> TestsFlextModels.UtilityEntityModel:
+        ) -> m.UtilityEntityModel:
             """Create test entity fixture."""
-            return TestsFlextModels.UtilityEntityModel(
+            return m.UtilityEntityModel(
                 unique_id=unique_id,
                 name=name,
                 value=name,
@@ -181,9 +179,9 @@ class TestUtils:
         @staticmethod
         def create_test_value_object(
             value: t.ContainerValue = "test_value",
-        ) -> TestsFlextModels.UtilityValueModel:
+        ) -> m.UtilityValueModel:
             """Create test value object fixture."""
-            return TestsFlextModels.UtilityValueModel(value=value)
+            return m.UtilityValueModel(value=value)
 
         @staticmethod
         def create_test_container_instance() -> FlextContainer:
@@ -196,9 +194,9 @@ class TestUtils:
             return FlextContext()
 
         @staticmethod
-        def create_test_decorators_instance() -> type[FlextDecorators]:
+        def create_test_decorators_instance() -> type[d]:
             """Create test decorators fixture."""
-            return FlextDecorators
+            return d
 
         @staticmethod
         def create_test_dispatcher_instance() -> FlextDispatcher:
@@ -206,14 +204,14 @@ class TestUtils:
             return FlextDispatcher()
 
         @staticmethod
-        def create_test_exceptions_instance() -> type[FlextExceptions]:
+        def create_test_exceptions_instance() -> type[e]:
             """Create test exceptions fixture."""
-            return FlextExceptions
+            return e
 
         @staticmethod
-        def create_test_handlers_instance() -> type[FlextHandlers[object, object]]:
+        def create_test_handlers_instance() -> type[h[object, object]]:
             """Create test handlers fixture."""
-            return FlextHandlers
+            return h
 
         @staticmethod
         def create_test_loggings_instance() -> type[FlextLogger]:
@@ -221,9 +219,9 @@ class TestUtils:
             return FlextLogger
 
         @staticmethod
-        def create_test_mixins_instance() -> type[FlextMixins]:
+        def create_test_mixins_instance() -> type[x]:
             """Create test mixins fixture."""
-            return FlextMixins
+            return x
 
         @staticmethod
         def create_test_registry_instance() -> FlextRegistry:
@@ -241,10 +239,10 @@ class TestUtils:
             return FlextRuntime
 
         @staticmethod
-        def create_test_service_instance() -> FlextService[t.ConfigMap]:
+        def create_test_service_instance() -> s[t.ConfigMap]:
             """Create test service fixture."""
 
-            class TestFlextService(FlextService[t.ConfigMap]):
+            class TestFlextService(s[t.ConfigMap]):
                 """Concrete test service implementation."""
 
                 @override
@@ -262,9 +260,9 @@ class TestUtils:
             return FlextSettings
 
         @staticmethod
-        def create_test_utilities_instance() -> type[FlextUtilities]:
+        def create_test_utilities_instance() -> type[u]:
             """Create test utilities fixture."""
-            return FlextUtilities
+            return u
 
         @staticmethod
         def create_test_service_result(

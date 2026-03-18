@@ -8,7 +8,7 @@ import libcst as cst
 from libcst.metadata import MetadataWrapper
 
 _nested_class_propagation = importlib.import_module(
-    "flext_infra.refactor.transformers.nested_class_propagation",
+    "flext_infra.transformers.nested_class_propagation",
 )
 NestedClassPropagationTransformer = getattr(
     _nested_class_propagation,
