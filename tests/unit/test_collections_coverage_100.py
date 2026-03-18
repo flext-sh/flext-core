@@ -1,9 +1,3 @@
-"""Real tests to achieve 100% collections coverage - no mocks.
-
-Module: flext_core._models.collections
-Scope: m.Categories, Statistics, Config, Results, Options
-"""
-
 from __future__ import annotations
 
 from typing import Annotated, ClassVar
@@ -17,8 +11,6 @@ from tests import m, t
 
 
 class TestFlextModelsCollectionsCoverage100:
-    """Single-class collections coverage suite."""
-
     class TestConfig(m.Config):
         timeout: int = 30
         retries: int = 3

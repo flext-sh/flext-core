@@ -19,7 +19,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from .factories import (
+    from .factories import TestHelperFactories
+    from .factories_impl import (
         FailingService,
         FailingServiceAuto,
         FailingServiceAutoFactory,
@@ -46,38 +47,48 @@ if TYPE_CHECKING:
     from .scenarios import TestHelperScenarios
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FailingService": ("tests.helpers.factories", "FailingService"),
-    "FailingServiceAuto": ("tests.helpers.factories", "FailingServiceAuto"),
+    "FailingService": ("tests.helpers.factories_impl", "FailingService"),
+    "FailingServiceAuto": ("tests.helpers.factories_impl", "FailingServiceAuto"),
     "FailingServiceAutoFactory": (
-        "tests.helpers.factories",
+        "tests.helpers.factories_impl",
         "FailingServiceAutoFactory",
     ),
-    "FailingServiceFactory": ("tests.helpers.factories", "FailingServiceFactory"),
-    "GenericModelFactory": ("tests.helpers.factories", "GenericModelFactory"),
-    "GetUserService": ("tests.helpers.factories", "GetUserService"),
-    "GetUserServiceAuto": ("tests.helpers.factories", "GetUserServiceAuto"),
+    "FailingServiceFactory": ("tests.helpers.factories_impl", "FailingServiceFactory"),
+    "GenericModelFactory": ("tests.helpers.factories_impl", "GenericModelFactory"),
+    "GetUserService": ("tests.helpers.factories_impl", "GetUserService"),
+    "GetUserServiceAuto": ("tests.helpers.factories_impl", "GetUserServiceAuto"),
     "GetUserServiceAutoFactory": (
-        "tests.helpers.factories",
+        "tests.helpers.factories_impl",
         "GetUserServiceAutoFactory",
     ),
-    "GetUserServiceFactory": ("tests.helpers.factories", "GetUserServiceFactory"),
-    "ServiceFactoryRegistry": ("tests.helpers.factories", "ServiceFactoryRegistry"),
-    "ServiceTestCase": ("tests.helpers.factories", "ServiceTestCase"),
-    "ServiceTestCaseFactory": ("tests.helpers.factories", "ServiceTestCaseFactory"),
-    "ServiceTestCases": ("tests.helpers.factories", "ServiceTestCases"),
-    "TestDataGenerators": ("tests.helpers.factories", "TestDataGenerators"),
+    "GetUserServiceFactory": ("tests.helpers.factories_impl", "GetUserServiceFactory"),
+    "ServiceFactoryRegistry": (
+        "tests.helpers.factories_impl",
+        "ServiceFactoryRegistry",
+    ),
+    "ServiceTestCase": ("tests.helpers.factories_impl", "ServiceTestCase"),
+    "ServiceTestCaseFactory": (
+        "tests.helpers.factories_impl",
+        "ServiceTestCaseFactory",
+    ),
+    "ServiceTestCases": ("tests.helpers.factories_impl", "ServiceTestCases"),
+    "TestDataGenerators": ("tests.helpers.factories_impl", "TestDataGenerators"),
+    "TestHelperFactories": ("tests.helpers.factories", "TestHelperFactories"),
     "TestHelperScenarios": ("tests.helpers.scenarios", "TestHelperScenarios"),
-    "User": ("tests.helpers.factories", "User"),
-    "UserFactory": ("tests.helpers.factories", "UserFactory"),
-    "ValidatingService": ("tests.helpers.factories", "ValidatingService"),
-    "ValidatingServiceAuto": ("tests.helpers.factories", "ValidatingServiceAuto"),
+    "User": ("tests.helpers.factories_impl", "User"),
+    "UserFactory": ("tests.helpers.factories_impl", "UserFactory"),
+    "ValidatingService": ("tests.helpers.factories_impl", "ValidatingService"),
+    "ValidatingServiceAuto": ("tests.helpers.factories_impl", "ValidatingServiceAuto"),
     "ValidatingServiceAutoFactory": (
-        "tests.helpers.factories",
+        "tests.helpers.factories_impl",
         "ValidatingServiceAutoFactory",
     ),
-    "ValidatingServiceFactory": ("tests.helpers.factories", "ValidatingServiceFactory"),
-    "reset_all_factories": ("tests.helpers.factories", "reset_all_factories"),
-    "s": ("tests.helpers.factories", "GetUserService"),
+    "ValidatingServiceFactory": (
+        "tests.helpers.factories_impl",
+        "ValidatingServiceFactory",
+    ),
+    "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
+    "s": ("tests.helpers.factories_impl", "GetUserService"),
 }
 
 __all__ = [
@@ -95,6 +106,7 @@ __all__ = [
     "ServiceTestCaseFactory",
     "ServiceTestCases",
     "TestDataGenerators",
+    "TestHelperFactories",
     "TestHelperScenarios",
     "User",
     "UserFactory",

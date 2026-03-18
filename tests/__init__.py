@@ -52,7 +52,8 @@ if TYPE_CHECKING:
         whitespace_strings,
     )
     from .constants import TestsFlextConstants, c
-    from .helpers.factories import (
+    from .helpers.factories import TestHelperFactories
+    from .helpers.factories_impl import (
         FailingService,
         FailingServiceAuto,
         FailingServiceAutoFactory,
@@ -180,11 +181,7 @@ if TYPE_CHECKING:
         TestCollectionUtilitiesCoverage,
     )
     from .unit.test_collections_coverage_100 import (
-        TestFlextModelsCollectionsCategories,
-        TestFlextModelsCollectionsOptions,
-        TestFlextModelsCollectionsResults,
-        TestFlextModelsCollectionsSettings,
-        TestFlextModelsCollectionsStatistics,
+        TestFlextModelsCollectionsCoverage100,
     )
     from .unit.test_config import TestFlextSettings
     from .unit.test_constants import TestConstants
@@ -209,31 +206,9 @@ if TYPE_CHECKING:
     )
     from .unit.test_coverage_76_lines import TestCoverage76Lines
     from .unit.test_coverage_context import TestCoverageContext
-    from .unit.test_coverage_exceptions import (
-        TestExceptionContext,
-        TestExceptionEdgeCases,
-        TestExceptionFactory,
-        TestExceptionIntegration,
-        TestExceptionLogging,
-        TestExceptionMetrics,
-        TestExceptionProperties,
-        TestExceptionSerialization,
-        TestFlextExceptionsHierarchy,
-        TestHierarchicalExceptionSystem,
-    )
+    from .unit.test_coverage_exceptions import TestCoverageExceptions
     from .unit.test_coverage_loggings import TestCoverageLoggings
-    from .unit.test_coverage_models import (
-        TestAggregateRoots,
-        TestCommands,
-        TestDomainEvents,
-        TestEntities,
-        TestMetadata,
-        TestModelIntegration,
-        TestModelSerialization,
-        TestModelValidation,
-        TestQueries,
-        TestValues,
-    )
+    from .unit.test_coverage_models import TestCoverageModels
     from .unit.test_decorators import TestFlextDecorators
     from .unit.test_decorators_discovery_full_coverage import (
         TestDecoratorsDiscoveryFullCoverage,
@@ -268,14 +243,6 @@ if TYPE_CHECKING:
         test_not_found_error_correlation_id_selection_and_extra_kwargs,
     )
     from .unit.test_final_75_percent_push import TestFinal75PercentPush
-    from .unit.test_handler_decorator_discovery import (
-        TestHandlerDecoratorMetadata,
-        TestHandlerDiscoveryClass,
-        TestHandlerDiscoveryEdgeCases,
-        TestHandlerDiscoveryIntegration,
-        TestHandlerDiscoveryModule,
-        TestHandlerDiscoveryServiceIntegration,
-    )
     from .unit.test_handlers import TestFlextHandlers
     from .unit.test_handlers_full_coverage import (
         TestHandlersFullCoverage,
@@ -287,16 +254,7 @@ if TYPE_CHECKING:
     from .unit.test_mixins import TestFlextMixinsNestedClasses
     from .unit.test_mixins_full_coverage import TestMixinsFullCoverage
     from .unit.test_models import TestModels
-    from .unit.test_models_79_coverage import (
-        TestFlextModelsAggregateRoot,
-        TestFlextModelsCommand,
-        TestFlextModelsDomainEvent,
-        TestFlextModelsEdgeCases,
-        TestFlextModelsEntity,
-        TestFlextModelsIntegration,
-        TestFlextModelsQuery,
-        TestFlextModelsValue,
-    )
+    from .unit.test_models_79_coverage import TestModels79Coverage
     from .unit.test_models_base_full_coverage import TestModelsBaseFullCoverage
     from .unit.test_models_collections_full_coverage import (
         TestModelsCollectionsFullCoverage,
@@ -439,22 +397,7 @@ if TYPE_CHECKING:
         test_with_resource_cleanup_runs,
     )
     from .unit.test_result_coverage_100 import TestrCoverage
-    from .unit.test_result_exception_carrying import (
-        TestAltPropagatesException,
-        TestCreateFromCallableCarriesException,
-        TestErrorOrPatternUnchanged,
-        TestExceptionPropertyAccess,
-        TestFailNoExceptionBackwardCompat,
-        TestFailWithException,
-        TestFlatMapPropagatesException,
-        TestFromValidationCarriesException,
-        TestLashPropagatesException,
-        TestMapPropagatesException,
-        TestMonadicOperationsUnchanged,
-        TestOkNoneGuardStillRaises,
-        TestSafeCarriesException,
-        TestTraversePropagatesException,
-    )
+    from .unit.test_result_exception_carrying import TestResultExceptionCarrying
     from .unit.test_result_full_coverage import (
         test_from_validation_and_to_model_paths,
         test_init_fallback_and_lazy_returns_result_property,
@@ -530,7 +473,9 @@ if TYPE_CHECKING:
         test_args_get_enum_params_branches,
     )
     from .unit.test_utilities_cache_coverage_100 import (
-        CacheScenarios,
+        ClearCacheScenario,
+        NormalizeComponentScenario,
+        SortKeyScenario,
         TestuCacheClearObjectCache,
         TestuCacheGenerateCacheKey,
         TestuCacheHasCacheAttributes,
@@ -538,6 +483,7 @@ if TYPE_CHECKING:
         TestuCacheNormalizeComponent,
         TestuCacheSortDictKeys,
         TestuCacheSortKey,
+        UtilitiesCacheCoverage100Namespace,
     )
     from .unit.test_utilities_checker_full_coverage import (
         TestUtilitiesCheckerFullCoverage,
@@ -549,16 +495,6 @@ if TYPE_CHECKING:
         TestUtilitiesCollectionFullCoverage,
     )
     from .unit.test_utilities_configuration_coverage_100 import (
-        BadSingletonForTest,
-        ConfigWithoutModelConfigForTest,
-        DataclassConfigForTest,
-        FailingOptionsForTest,
-        OptionsModelForTest,
-        SingletonWithoutGetGlobalForTest,
-        SingletonWithoutModelDumpForTest,
-        StrictOptionsForTest,
-        TestConfigConstants,
-        TestConfigModels,
         TestFlextUtilitiesConfiguration,
     )
     from .unit.test_utilities_configuration_full_coverage import (
@@ -621,6 +557,7 @@ if TYPE_CHECKING:
         TestuMapperConversions,
         TestuMapperExtract,
         TestuMapperUtils,
+        UtilitiesMapperCoverage100Namespace,
     )
     from .unit.test_utilities_mapper_full_coverage import (
         AttrObject,
@@ -628,6 +565,7 @@ if TYPE_CHECKING:
         BadMapping,
         BadString,
         ExplodingLenList,
+        UtilitiesMapperFullCoverageNamespace,
         mapper,
         test_accessor_take_pick_as_or_flat_and_agg_branches,
         test_at_take_and_as_branches,
@@ -679,11 +617,7 @@ if TYPE_CHECKING:
         TMessage,
     )
     from .unit.test_utilities_type_guards_coverage_100 import (
-        TestuTypeGuardsIsDictNonEmpty,
-        TestuTypeGuardsIsListNonEmpty,
-        TestuTypeGuardsIsStringNonEmpty,
-        TestuTypeGuardsNormalizeToMetadata,
-        TypeGuardsScenarios,
+        TestUtilitiesTypeGuardsCoverage100,
     )
     from .unit.test_version import TestFlextVersion
     from .utilities import TestsFlextUtilities, u
@@ -692,22 +626,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AttrObject": ("tests.unit.test_utilities_mapper_full_coverage", "AttrObject"),
     "BadBool": ("tests.unit.test_utilities_mapper_full_coverage", "BadBool"),
     "BadMapping": ("tests.unit.test_utilities_mapper_full_coverage", "BadMapping"),
-    "BadSingletonForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "BadSingletonForTest",
-    ),
     "BadString": ("tests.unit.test_utilities_mapper_full_coverage", "BadString"),
-    "CacheScenarios": (
+    "ClearCacheScenario": (
         "tests.unit.test_utilities_cache_coverage_100",
-        "CacheScenarios",
-    ),
-    "ConfigWithoutModelConfigForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "ConfigWithoutModelConfigForTest",
-    ),
-    "DataclassConfigForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "DataclassConfigForTest",
+        "ClearCacheScenario",
     ),
     "ExplodingLenList": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -717,36 +639,32 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_pagination_coverage_100",
         "ExtractPageParamsScenario",
     ),
-    "FailingOptionsForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "FailingOptionsForTest",
-    ),
-    "FailingService": ("tests.helpers.factories", "FailingService"),
-    "FailingServiceAuto": ("tests.helpers.factories", "FailingServiceAuto"),
+    "FailingService": ("tests.helpers.factories_impl", "FailingService"),
+    "FailingServiceAuto": ("tests.helpers.factories_impl", "FailingServiceAuto"),
     "FailingServiceAutoFactory": (
-        "tests.helpers.factories",
+        "tests.helpers.factories_impl",
         "FailingServiceAutoFactory",
     ),
-    "FailingServiceFactory": ("tests.helpers.factories", "FailingServiceFactory"),
+    "FailingServiceFactory": ("tests.helpers.factories_impl", "FailingServiceFactory"),
     "FlextProtocols": ("tests.unit.protocols", "FlextProtocols"),
     "FlextTestResult": ("tests.test_utils", "FlextTestResult"),
     "FlextTestResultCo": ("tests.test_utils", "FlextTestResultCo"),
     "FunctionalExternalService": ("tests.conftest", "FunctionalExternalService"),
-    "GenericModelFactory": ("tests.helpers.factories", "GenericModelFactory"),
-    "GetUserService": ("tests.helpers.factories", "GetUserService"),
-    "GetUserServiceAuto": ("tests.helpers.factories", "GetUserServiceAuto"),
+    "GenericModelFactory": ("tests.helpers.factories_impl", "GenericModelFactory"),
+    "GetUserService": ("tests.helpers.factories_impl", "GetUserService"),
+    "GetUserServiceAuto": ("tests.helpers.factories_impl", "GetUserServiceAuto"),
     "GetUserServiceAutoFactory": (
-        "tests.helpers.factories",
+        "tests.helpers.factories_impl",
         "GetUserServiceAutoFactory",
     ),
-    "GetUserServiceFactory": ("tests.helpers.factories", "GetUserServiceFactory"),
+    "GetUserServiceFactory": ("tests.helpers.factories_impl", "GetUserServiceFactory"),
     "NestedClassPropagationTransformer": (
         "tests.unit.test_transformer_nested_class_propagation",
         "NestedClassPropagationTransformer",
     ),
-    "OptionsModelForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "OptionsModelForTest",
+    "NormalizeComponentScenario": (
+        "tests.unit.test_utilities_cache_coverage_100",
+        "NormalizeComponentScenario",
     ),
     "PaginationScenarios": (
         "tests.unit.test_pagination_coverage_100",
@@ -761,22 +679,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_service_additional",
         "RuntimeCloneService",
     ),
-    "ServiceFactoryRegistry": ("tests.helpers.factories", "ServiceFactoryRegistry"),
-    "ServiceTestCase": ("tests.helpers.factories", "ServiceTestCase"),
-    "ServiceTestCaseFactory": ("tests.helpers.factories", "ServiceTestCaseFactory"),
-    "ServiceTestCases": ("tests.helpers.factories", "ServiceTestCases"),
+    "ServiceFactoryRegistry": (
+        "tests.helpers.factories_impl",
+        "ServiceFactoryRegistry",
+    ),
+    "ServiceTestCase": ("tests.helpers.factories_impl", "ServiceTestCase"),
+    "ServiceTestCaseFactory": (
+        "tests.helpers.factories_impl",
+        "ServiceTestCaseFactory",
+    ),
+    "ServiceTestCases": ("tests.helpers.factories_impl", "ServiceTestCases"),
     "SimpleObj": ("tests.unit.test_utilities_mapper_coverage_100", "SimpleObj"),
-    "SingletonWithoutGetGlobalForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "SingletonWithoutGetGlobalForTest",
-    ),
-    "SingletonWithoutModelDumpForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "SingletonWithoutModelDumpForTest",
-    ),
-    "StrictOptionsForTest": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "StrictOptionsForTest",
+    "SortKeyScenario": (
+        "tests.unit.test_utilities_cache_coverage_100",
+        "SortKeyScenario",
     ),
     "T": ("tests.typings", "T"),
     "TMessage": ("tests.unit.test_utilities_type_checker_coverage_100", "TMessage"),
@@ -785,11 +701,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestAdvancedPatterns": (
         "tests.integration.patterns.test_advanced_patterns",
         "TestAdvancedPatterns",
-    ),
-    "TestAggregateRoots": ("tests.unit.test_coverage_models", "TestAggregateRoots"),
-    "TestAltPropagatesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestAltPropagatesException",
     ),
     "TestArchitecturalPatterns": (
         "tests.integration.patterns.test_architectural_patterns",
@@ -856,18 +767,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_collection_utilities_coverage_100",
         "TestCollectionUtilitiesCoverage",
     ),
-    "TestCommands": ("tests.unit.test_coverage_models", "TestCommands"),
     "TestCompleteFlextSystemIntegration": (
         "tests.integration.test_system",
         "TestCompleteFlextSystemIntegration",
-    ),
-    "TestConfigConstants": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "TestConfigConstants",
-    ),
-    "TestConfigModels": (
-        "tests.unit.test_utilities_configuration_coverage_100",
-        "TestConfigModels",
     ),
     "TestConstants": ("tests.unit.test_constants", "TestConstants"),
     "TestContainerFullCoverage": (
@@ -888,16 +790,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "TestCoverage76Lines": ("tests.unit.test_coverage_76_lines", "TestCoverage76Lines"),
     "TestCoverageContext": ("tests.unit.test_coverage_context", "TestCoverageContext"),
+    "TestCoverageExceptions": (
+        "tests.unit.test_coverage_exceptions",
+        "TestCoverageExceptions",
+    ),
     "TestCoverageLoggings": (
         "tests.unit.test_coverage_loggings",
         "TestCoverageLoggings",
     ),
-    "TestCreateFromCallableCarriesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestCreateFromCallableCarriesException",
-    ),
+    "TestCoverageModels": ("tests.unit.test_coverage_models", "TestCoverageModels"),
     "TestDIIncremental": ("tests.unit.test_di_incremental", "TestDIIncremental"),
-    "TestDataGenerators": ("tests.helpers.factories", "TestDataGenerators"),
+    "TestDataGenerators": ("tests.helpers.factories_impl", "TestDataGenerators"),
     "TestDecoratorsDiscoveryFullCoverage": (
         "tests.unit.test_decorators_discovery_full_coverage",
         "TestDecoratorsDiscoveryFullCoverage",
@@ -932,8 +835,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.test_documented_patterns",
         "TestDocumentedPatterns",
     ),
-    "TestDomainEvents": ("tests.unit.test_coverage_models", "TestDomainEvents"),
-    "TestEntities": ("tests.unit.test_coverage_models", "TestEntities"),
     "TestEntityCoverageEdgeCases": (
         "tests.unit.test_entity_coverage",
         "TestEntityCoverageEdgeCases",
@@ -942,73 +843,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_enum_utilities_coverage_100",
         "TestEnumUtilitiesCoverage",
     ),
-    "TestErrorOrPatternUnchanged": (
-        "tests.unit.test_result_exception_carrying",
-        "TestErrorOrPatternUnchanged",
-    ),
-    "TestExceptionContext": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionContext",
-    ),
-    "TestExceptionEdgeCases": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionEdgeCases",
-    ),
-    "TestExceptionFactory": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionFactory",
-    ),
-    "TestExceptionIntegration": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionIntegration",
-    ),
-    "TestExceptionLogging": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionLogging",
-    ),
-    "TestExceptionMetrics": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionMetrics",
-    ),
-    "TestExceptionProperties": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionProperties",
-    ),
-    "TestExceptionPropertyAccess": (
-        "tests.unit.test_result_exception_carrying",
-        "TestExceptionPropertyAccess",
-    ),
-    "TestExceptionSerialization": (
-        "tests.unit.test_coverage_exceptions",
-        "TestExceptionSerialization",
-    ),
     "TestFactoriesHelpers": (
         "tests.unit.flext_tests.test_factories",
         "TestFactoriesHelpers",
-    ),
-    "TestFailNoExceptionBackwardCompat": (
-        "tests.unit.test_result_exception_carrying",
-        "TestFailNoExceptionBackwardCompat",
-    ),
-    "TestFailWithException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestFailWithException",
     ),
     "TestFinal75PercentPush": (
         "tests.unit.test_final_75_percent_push",
         "TestFinal75PercentPush",
     ),
-    "TestFlatMapPropagatesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestFlatMapPropagatesException",
-    ),
     "TestFlextContainer": ("tests.unit.test_container", "TestFlextContainer"),
     "TestFlextContext": ("tests.unit.test_context", "TestFlextContext"),
     "TestFlextDecorators": ("tests.unit.test_decorators", "TestFlextDecorators"),
-    "TestFlextExceptionsHierarchy": (
-        "tests.unit.test_coverage_exceptions",
-        "TestFlextExceptionsHierarchy",
-    ),
     "TestFlextHandlers": ("tests.unit.test_handlers", "TestFlextHandlers"),
     "TestFlextInfraNamespaceValidator": (
         "tests.unit.test_namespace_validator",
@@ -1018,61 +863,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_mixins",
         "TestFlextMixinsNestedClasses",
     ),
-    "TestFlextModelsAggregateRoot": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsAggregateRoot",
-    ),
-    "TestFlextModelsCollectionsCategories": (
+    "TestFlextModelsCollectionsCoverage100": (
         "tests.unit.test_collections_coverage_100",
-        "TestFlextModelsCollectionsCategories",
-    ),
-    "TestFlextModelsCollectionsOptions": (
-        "tests.unit.test_collections_coverage_100",
-        "TestFlextModelsCollectionsOptions",
-    ),
-    "TestFlextModelsCollectionsResults": (
-        "tests.unit.test_collections_coverage_100",
-        "TestFlextModelsCollectionsResults",
-    ),
-    "TestFlextModelsCollectionsSettings": (
-        "tests.unit.test_collections_coverage_100",
-        "TestFlextModelsCollectionsSettings",
-    ),
-    "TestFlextModelsCollectionsStatistics": (
-        "tests.unit.test_collections_coverage_100",
-        "TestFlextModelsCollectionsStatistics",
-    ),
-    "TestFlextModelsCommand": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsCommand",
+        "TestFlextModelsCollectionsCoverage100",
     ),
     "TestFlextModelsContainer": (
         "tests.unit.test_models_container",
         "TestFlextModelsContainer",
-    ),
-    "TestFlextModelsDomainEvent": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsDomainEvent",
-    ),
-    "TestFlextModelsEdgeCases": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsEdgeCases",
-    ),
-    "TestFlextModelsEntity": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsEntity",
-    ),
-    "TestFlextModelsIntegration": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsIntegration",
-    ),
-    "TestFlextModelsQuery": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsQuery",
-    ),
-    "TestFlextModelsValue": (
-        "tests.unit.test_models_79_coverage",
-        "TestFlextModelsValue",
     ),
     "TestFlextProtocols": ("tests.unit.test_protocols", "TestFlextProtocols"),
     "TestFlextRegistry": ("tests.unit.test_registry", "TestFlextRegistry"),
@@ -1108,37 +905,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestFlextUtilitiesReliability",
     ),
     "TestFlextVersion": ("tests.unit.test_version", "TestFlextVersion"),
-    "TestFromValidationCarriesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestFromValidationCarriesException",
-    ),
     "TestFunction": (
         "tests.integration.patterns.test_advanced_patterns",
         "TestFunction",
-    ),
-    "TestHandlerDecoratorMetadata": (
-        "tests.unit.test_handler_decorator_discovery",
-        "TestHandlerDecoratorMetadata",
-    ),
-    "TestHandlerDiscoveryClass": (
-        "tests.unit.test_handler_decorator_discovery",
-        "TestHandlerDiscoveryClass",
-    ),
-    "TestHandlerDiscoveryEdgeCases": (
-        "tests.unit.test_handler_decorator_discovery",
-        "TestHandlerDiscoveryEdgeCases",
-    ),
-    "TestHandlerDiscoveryIntegration": (
-        "tests.unit.test_handler_decorator_discovery",
-        "TestHandlerDiscoveryIntegration",
-    ),
-    "TestHandlerDiscoveryModule": (
-        "tests.unit.test_handler_decorator_discovery",
-        "TestHandlerDiscoveryModule",
-    ),
-    "TestHandlerDiscoveryServiceIntegration": (
-        "tests.unit.test_handler_decorator_discovery",
-        "TestHandlerDiscoveryServiceIntegration",
     ),
     "TestHandlersFullCoverage": (
         "tests.unit.test_handlers_full_coverage",
@@ -1148,11 +917,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_transformer_helper_consolidation",
         "TestHelperConsolidationTransformer",
     ),
+    "TestHelperFactories": ("tests.helpers.factories", "TestHelperFactories"),
     "TestHelperScenarios": ("tests.helpers.scenarios", "TestHelperScenarios"),
-    "TestHierarchicalExceptionSystem": (
-        "tests.unit.test_coverage_exceptions",
-        "TestHierarchicalExceptionSystem",
-    ),
     "TestIdempotency": (
         "tests.integration.test_refactor_nesting_idempotency",
         "TestIdempotency",
@@ -1160,10 +926,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestInfraIntegration": (
         "tests.integration.test_infra_integration",
         "TestInfraIntegration",
-    ),
-    "TestLashPropagatesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestLashPropagatesException",
     ),
     "TestLibraryIntegration": (
         "tests.integration.test_integration",
@@ -1177,11 +939,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_loggings_strict_returns",
         "TestLoggingsStrictReturns",
     ),
-    "TestMapPropagatesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestMapPropagatesException",
-    ),
-    "TestMetadata": ("tests.unit.test_coverage_models", "TestMetadata"),
     "TestMigrationValidation": (
         "tests.integration.test_migration_validation",
         "TestMigrationValidation",
@@ -1190,13 +947,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_mixins_full_coverage",
         "TestMixinsFullCoverage",
     ),
-    "TestModelIntegration": ("tests.unit.test_coverage_models", "TestModelIntegration"),
-    "TestModelSerialization": (
-        "tests.unit.test_coverage_models",
-        "TestModelSerialization",
-    ),
-    "TestModelValidation": ("tests.unit.test_coverage_models", "TestModelValidation"),
     "TestModels": ("tests.unit.test_models", "TestModels"),
+    "TestModels79Coverage": (
+        "tests.unit.test_models_79_coverage",
+        "TestModels79Coverage",
+    ),
     "TestModelsBaseFullCoverage": (
         "tests.unit.test_models_base_full_coverage",
         "TestModelsBaseFullCoverage",
@@ -1206,14 +961,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestModelsCollectionsFullCoverage",
     ),
     "TestModule": ("tests.unit.test_loggings_full_coverage", "TestModule"),
-    "TestMonadicOperationsUnchanged": (
-        "tests.unit.test_result_exception_carrying",
-        "TestMonadicOperationsUnchanged",
-    ),
-    "TestOkNoneGuardStillRaises": (
-        "tests.unit.test_result_exception_carrying",
-        "TestOkNoneGuardStillRaises",
-    ),
     "TestPaginationCoverage100": (
         "tests.unit.test_pagination_coverage_100",
         "TestPaginationCoverage100",
@@ -1242,18 +989,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_refactor_nesting_project",
         "TestProjectLevelRefactor",
     ),
-    "TestQueries": ("tests.unit.test_coverage_models", "TestQueries"),
     "TestRefactorPolicyMRO": (
         "tests.integration.test_refactor_policy_mro",
         "TestRefactorPolicyMRO",
     ),
+    "TestResultExceptionCarrying": (
+        "tests.unit.test_result_exception_carrying",
+        "TestResultExceptionCarrying",
+    ),
     "TestRuntimeCoverage100": (
         "tests.unit.test_runtime_coverage_100",
         "TestRuntimeCoverage100",
-    ),
-    "TestSafeCarriesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestSafeCarriesException",
     ),
     "TestService": ("tests.integration.test_service", "TestService"),
     "TestService100Coverage": (
@@ -1271,10 +1017,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestServiceResultProperty": (
         "tests.test_service_result_property",
         "TestServiceResultProperty",
-    ),
-    "TestTraversePropagatesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestTraversePropagatesException",
     ),
     "TestTypings": ("tests.unit.test_typings", "TestTypings"),
     "TestTypingsFullCoverage": (
@@ -1330,8 +1072,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_text_full_coverage",
         "TestUtilitiesTextFullCoverage",
     ),
+    "TestUtilitiesTypeGuardsCoverage100": (
+        "tests.unit.test_utilities_type_guards_coverage_100",
+        "TestUtilitiesTypeGuardsCoverage100",
+    ),
     "TestUtils": ("tests.test_utils", "TestUtils"),
-    "TestValues": ("tests.unit.test_coverage_models", "TestValues"),
     "TestWorkspaceLevelRefactor": (
         "tests.integration.test_refactor_nesting_workspace",
         "TestWorkspaceLevelRefactor",
@@ -1408,44 +1153,39 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_type_checker_coverage_100",
         "TestuTypeChecker",
     ),
-    "TestuTypeGuardsIsDictNonEmpty": (
-        "tests.unit.test_utilities_type_guards_coverage_100",
-        "TestuTypeGuardsIsDictNonEmpty",
-    ),
-    "TestuTypeGuardsIsListNonEmpty": (
-        "tests.unit.test_utilities_type_guards_coverage_100",
-        "TestuTypeGuardsIsListNonEmpty",
-    ),
-    "TestuTypeGuardsIsStringNonEmpty": (
-        "tests.unit.test_utilities_type_guards_coverage_100",
-        "TestuTypeGuardsIsStringNonEmpty",
-    ),
-    "TestuTypeGuardsNormalizeToMetadata": (
-        "tests.unit.test_utilities_type_guards_coverage_100",
-        "TestuTypeGuardsNormalizeToMetadata",
-    ),
     "TextUtilityContract": (
         "tests.unit.contracts.text_contract",
         "TextUtilityContract",
     ),
-    "TypeGuardsScenarios": (
-        "tests.unit.test_utilities_type_guards_coverage_100",
-        "TypeGuardsScenarios",
-    ),
     "UnknownHint": ("tests.unit.test_utilities_args_full_coverage", "UnknownHint"),
-    "User": ("tests.helpers.factories", "User"),
-    "UserFactory": ("tests.helpers.factories", "UserFactory"),
+    "User": ("tests.helpers.factories_impl", "User"),
+    "UserFactory": ("tests.helpers.factories_impl", "UserFactory"),
+    "UtilitiesCacheCoverage100Namespace": (
+        "tests.unit.test_utilities_cache_coverage_100",
+        "UtilitiesCacheCoverage100Namespace",
+    ),
+    "UtilitiesMapperCoverage100Namespace": (
+        "tests.unit.test_utilities_mapper_coverage_100",
+        "UtilitiesMapperCoverage100Namespace",
+    ),
+    "UtilitiesMapperFullCoverageNamespace": (
+        "tests.unit.test_utilities_mapper_full_coverage",
+        "UtilitiesMapperFullCoverageNamespace",
+    ),
     "ValidatePaginationParamsScenario": (
         "tests.unit.test_pagination_coverage_100",
         "ValidatePaginationParamsScenario",
     ),
-    "ValidatingService": ("tests.helpers.factories", "ValidatingService"),
-    "ValidatingServiceAuto": ("tests.helpers.factories", "ValidatingServiceAuto"),
+    "ValidatingService": ("tests.helpers.factories_impl", "ValidatingService"),
+    "ValidatingServiceAuto": ("tests.helpers.factories_impl", "ValidatingServiceAuto"),
     "ValidatingServiceAutoFactory": (
-        "tests.helpers.factories",
+        "tests.helpers.factories_impl",
         "ValidatingServiceAutoFactory",
     ),
-    "ValidatingServiceFactory": ("tests.helpers.factories", "ValidatingServiceFactory"),
+    "ValidatingServiceFactory": (
+        "tests.helpers.factories_impl",
+        "ValidatingServiceFactory",
+    ),
     "assert_rejects": ("tests.conftest", "assert_rejects"),
     "assert_validates": ("tests.conftest", "assert_validates"),
     "assertion_helpers": ("tests.test_utils", "assertion_helpers"),
@@ -1529,7 +1269,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
     "r": ("tests.unit.test_automated_result", "TestAutomatedResult"),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
-    "reset_all_factories": ("tests.helpers.factories", "reset_all_factories"),
+    "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
     "reset_global_container": ("tests.conftest", "reset_global_container"),
     "reset_runtime_state": (
         "tests.unit.test_runtime_full_coverage",
@@ -1541,7 +1281,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "runtime_module",
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
-    "s": ("tests.helpers.factories", "GetUserService"),
+    "s": ("tests.helpers.factories_impl", "GetUserService"),
     "sample_data": ("tests.conftest", "sample_data"),
     "t": ("tests.typings", "t"),
     "temp_dir": ("tests.conftest", "temp_dir"),
@@ -2397,14 +2137,10 @@ __all__ = [
     "AttrObject",
     "BadBool",
     "BadMapping",
-    "BadSingletonForTest",
     "BadString",
-    "CacheScenarios",
-    "ConfigWithoutModelConfigForTest",
-    "DataclassConfigForTest",
+    "ClearCacheScenario",
     "ExplodingLenList",
     "ExtractPageParamsScenario",
-    "FailingOptionsForTest",
     "FailingService",
     "FailingServiceAuto",
     "FailingServiceAutoFactory",
@@ -2419,7 +2155,7 @@ __all__ = [
     "GetUserServiceAutoFactory",
     "GetUserServiceFactory",
     "NestedClassPropagationTransformer",
-    "OptionsModelForTest",
+    "NormalizeComponentScenario",
     "PaginationScenarios",
     "PreparePaginationDataScenario",
     "Provide",
@@ -2429,16 +2165,12 @@ __all__ = [
     "ServiceTestCaseFactory",
     "ServiceTestCases",
     "SimpleObj",
-    "SingletonWithoutGetGlobalForTest",
-    "SingletonWithoutModelDumpForTest",
-    "StrictOptionsForTest",
+    "SortKeyScenario",
     "T",
     "TMessage",
     "T_co",
     "T_contra",
     "TestAdvancedPatterns",
-    "TestAggregateRoots",
-    "TestAltPropagatesException",
     "TestArchitecturalPatterns",
     "TestAutomatedArchitecture",
     "TestAutomatedExceptions",
@@ -2456,10 +2188,7 @@ __all__ = [
     "TestAutomatedFlextUtilities",
     "TestAutomatedResult",
     "TestCollectionUtilitiesCoverage",
-    "TestCommands",
     "TestCompleteFlextSystemIntegration",
-    "TestConfigConstants",
-    "TestConfigModels",
     "TestConstants",
     "TestContainerFullCoverage",
     "TestContainerMemory",
@@ -2467,8 +2196,9 @@ __all__ = [
     "TestContext100Coverage",
     "TestCoverage76Lines",
     "TestCoverageContext",
+    "TestCoverageExceptions",
     "TestCoverageLoggings",
-    "TestCreateFromCallableCarriesException",
+    "TestCoverageModels",
     "TestDIIncremental",
     "TestDataGenerators",
     "TestDecoratorsDiscoveryFullCoverage",
@@ -2481,46 +2211,18 @@ __all__ = [
     "TestDispatcherTimeoutCoverage100",
     "TestDocker",
     "TestDocumentedPatterns",
-    "TestDomainEvents",
-    "TestEntities",
     "TestEntityCoverageEdgeCases",
     "TestEnumUtilitiesCoverage",
-    "TestErrorOrPatternUnchanged",
-    "TestExceptionContext",
-    "TestExceptionEdgeCases",
-    "TestExceptionFactory",
-    "TestExceptionIntegration",
-    "TestExceptionLogging",
-    "TestExceptionMetrics",
-    "TestExceptionProperties",
-    "TestExceptionPropertyAccess",
-    "TestExceptionSerialization",
     "TestFactoriesHelpers",
-    "TestFailNoExceptionBackwardCompat",
-    "TestFailWithException",
     "TestFinal75PercentPush",
-    "TestFlatMapPropagatesException",
     "TestFlextContainer",
     "TestFlextContext",
     "TestFlextDecorators",
-    "TestFlextExceptionsHierarchy",
     "TestFlextHandlers",
     "TestFlextInfraNamespaceValidator",
     "TestFlextMixinsNestedClasses",
-    "TestFlextModelsAggregateRoot",
-    "TestFlextModelsCollectionsCategories",
-    "TestFlextModelsCollectionsOptions",
-    "TestFlextModelsCollectionsResults",
-    "TestFlextModelsCollectionsSettings",
-    "TestFlextModelsCollectionsStatistics",
-    "TestFlextModelsCommand",
+    "TestFlextModelsCollectionsCoverage100",
     "TestFlextModelsContainer",
-    "TestFlextModelsDomainEvent",
-    "TestFlextModelsEdgeCases",
-    "TestFlextModelsEntity",
-    "TestFlextModelsIntegration",
-    "TestFlextModelsQuery",
-    "TestFlextModelsValue",
     "TestFlextProtocols",
     "TestFlextRegistry",
     "TestFlextRuntime",
@@ -2534,37 +2236,23 @@ __all__ = [
     "TestFlextUtilitiesConfiguration",
     "TestFlextUtilitiesReliability",
     "TestFlextVersion",
-    "TestFromValidationCarriesException",
     "TestFunction",
-    "TestHandlerDecoratorMetadata",
-    "TestHandlerDiscoveryClass",
-    "TestHandlerDiscoveryEdgeCases",
-    "TestHandlerDiscoveryIntegration",
-    "TestHandlerDiscoveryModule",
-    "TestHandlerDiscoveryServiceIntegration",
     "TestHandlersFullCoverage",
     "TestHelperConsolidationTransformer",
+    "TestHelperFactories",
     "TestHelperScenarios",
-    "TestHierarchicalExceptionSystem",
     "TestIdempotency",
     "TestInfraIntegration",
-    "TestLashPropagatesException",
     "TestLibraryIntegration",
     "TestLoggingsErrorPaths",
     "TestLoggingsStrictReturns",
-    "TestMapPropagatesException",
-    "TestMetadata",
     "TestMigrationValidation",
     "TestMixinsFullCoverage",
-    "TestModelIntegration",
-    "TestModelSerialization",
-    "TestModelValidation",
     "TestModels",
+    "TestModels79Coverage",
     "TestModelsBaseFullCoverage",
     "TestModelsCollectionsFullCoverage",
     "TestModule",
-    "TestMonadicOperationsUnchanged",
-    "TestOkNoneGuardStillRaises",
     "TestPaginationCoverage100",
     "TestPatternsCommands",
     "TestPatternsLogging",
@@ -2572,16 +2260,14 @@ __all__ = [
     "TestPerformanceBenchmarks",
     "TestPhase2CoverageFinal",
     "TestProjectLevelRefactor",
-    "TestQueries",
     "TestRefactorPolicyMRO",
+    "TestResultExceptionCarrying",
     "TestRuntimeCoverage100",
-    "TestSafeCarriesException",
     "TestService",
     "TestService100Coverage",
     "TestServiceBootstrap",
     "TestServiceFullCoverage",
     "TestServiceResultProperty",
-    "TestTraversePropagatesException",
     "TestTypings",
     "TestTypingsFullCoverage",
     "TestUtilities",
@@ -2597,8 +2283,8 @@ __all__ = [
     "TestUtilitiesGeneratorsFullCoverage",
     "TestUtilitiesParserFullCoverage",
     "TestUtilitiesTextFullCoverage",
+    "TestUtilitiesTypeGuardsCoverage100",
     "TestUtils",
-    "TestValues",
     "TestWorkspaceLevelRefactor",
     "Teste",
     "Testr",
@@ -2627,15 +2313,13 @@ __all__ = [
     "TestuMapperUtils",
     "TestuStringParser",
     "TestuTypeChecker",
-    "TestuTypeGuardsIsDictNonEmpty",
-    "TestuTypeGuardsIsListNonEmpty",
-    "TestuTypeGuardsIsStringNonEmpty",
-    "TestuTypeGuardsNormalizeToMetadata",
     "TextUtilityContract",
-    "TypeGuardsScenarios",
     "UnknownHint",
     "User",
     "UserFactory",
+    "UtilitiesCacheCoverage100Namespace",
+    "UtilitiesMapperCoverage100Namespace",
+    "UtilitiesMapperFullCoverageNamespace",
     "ValidatePaginationParamsScenario",
     "ValidatingService",
     "ValidatingServiceAuto",

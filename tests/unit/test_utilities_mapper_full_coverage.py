@@ -16,7 +16,7 @@ from flext_core import r
 from tests import p, t, u
 
 
-class TestUtilitiesMapperFullCoverage:
+class UtilitiesMapperFullCoverageNamespace:
     class _PortModel(BaseModel):
         """Model with port/nested for mapper take/extract tests."""
 
@@ -1146,117 +1146,109 @@ class TestUtilitiesMapperFullCoverage:
         tm.that(dict_fields, eq={"missing": 7})
 
 
-_PortModel = TestUtilitiesMapperFullCoverage._PortModel
-_MaybeModel = TestUtilitiesMapperFullCoverage._MaybeModel
-_GroupModel = TestUtilitiesMapperFullCoverage._GroupModel
-_BadItems = TestUtilitiesMapperFullCoverage._BadItems
-_BadIter = TestUtilitiesMapperFullCoverage._BadIter
-_AtCallable = TestUtilitiesMapperFullCoverage._AtCallable
-_ExtractFieldCallable = TestUtilitiesMapperFullCoverage._ExtractFieldCallable
-_TakeCallable = TestUtilitiesMapperFullCoverage._TakeCallable
-_BuildApplyConvertCallable = TestUtilitiesMapperFullCoverage._BuildApplyConvertCallable
+_PortModel = UtilitiesMapperFullCoverageNamespace._PortModel
+_MaybeModel = UtilitiesMapperFullCoverageNamespace._MaybeModel
+_GroupModel = UtilitiesMapperFullCoverageNamespace._GroupModel
+_BadItems = UtilitiesMapperFullCoverageNamespace._BadItems
+_BadIter = UtilitiesMapperFullCoverageNamespace._BadIter
+_AtCallable = UtilitiesMapperFullCoverageNamespace._AtCallable
+_ExtractFieldCallable = UtilitiesMapperFullCoverageNamespace._ExtractFieldCallable
+_TakeCallable = UtilitiesMapperFullCoverageNamespace._TakeCallable
+_BuildApplyConvertCallable = (
+    UtilitiesMapperFullCoverageNamespace._BuildApplyConvertCallable
+)
 _ExtractTransformOptionsCallable = (
-    TestUtilitiesMapperFullCoverage._ExtractTransformOptionsCallable
+    UtilitiesMapperFullCoverageNamespace._ExtractTransformOptionsCallable
 )
-_BuildApplyOpCallable = TestUtilitiesMapperFullCoverage._BuildApplyOpCallable
-_TransformCallable = TestUtilitiesMapperFullCoverage._TransformCallable
-_MapDictKeysCallable = TestUtilitiesMapperFullCoverage._MapDictKeysCallable
-_BuildFlagsCallable = TestUtilitiesMapperFullCoverage._BuildFlagsCallable
-_at_obj = TestUtilitiesMapperFullCoverage._at_obj
-_extract_field_obj = TestUtilitiesMapperFullCoverage._extract_field_obj
-_take_obj = TestUtilitiesMapperFullCoverage._take_obj
-_build_apply_convert_obj = TestUtilitiesMapperFullCoverage._build_apply_convert_obj
+_BuildApplyOpCallable = UtilitiesMapperFullCoverageNamespace._BuildApplyOpCallable
+_TransformCallable = UtilitiesMapperFullCoverageNamespace._TransformCallable
+_MapDictKeysCallable = UtilitiesMapperFullCoverageNamespace._MapDictKeysCallable
+_BuildFlagsCallable = UtilitiesMapperFullCoverageNamespace._BuildFlagsCallable
+_at_obj = UtilitiesMapperFullCoverageNamespace._at_obj
+_extract_field_obj = UtilitiesMapperFullCoverageNamespace._extract_field_obj
+_take_obj = UtilitiesMapperFullCoverageNamespace._take_obj
+_build_apply_convert_obj = UtilitiesMapperFullCoverageNamespace._build_apply_convert_obj
 _extract_transform_options_obj = (
-    TestUtilitiesMapperFullCoverage._extract_transform_options_obj
+    UtilitiesMapperFullCoverageNamespace._extract_transform_options_obj
 )
-_build_apply_sort_obj = TestUtilitiesMapperFullCoverage._build_apply_sort_obj
-_build_apply_unique_obj = TestUtilitiesMapperFullCoverage._build_apply_unique_obj
-_build_apply_slice_obj = TestUtilitiesMapperFullCoverage._build_apply_slice_obj
-_build_apply_group_obj = TestUtilitiesMapperFullCoverage._build_apply_group_obj
-_transform_obj = TestUtilitiesMapperFullCoverage._transform_obj
-_map_dict_keys_obj = TestUtilitiesMapperFullCoverage._map_dict_keys_obj
-_build_flags_obj = TestUtilitiesMapperFullCoverage._build_flags_obj
-AttrObject = TestUtilitiesMapperFullCoverage.AttrObject
-BadString = TestUtilitiesMapperFullCoverage.BadString
-BadBool = TestUtilitiesMapperFullCoverage.BadBool
-_parse_int = TestUtilitiesMapperFullCoverage._parse_int
-_plus_one = TestUtilitiesMapperFullCoverage._plus_one
-_times_two = TestUtilitiesMapperFullCoverage._times_two
-_raise_value_error = TestUtilitiesMapperFullCoverage._raise_value_error
-_normalize_not_dict = TestUtilitiesMapperFullCoverage._normalize_not_dict
-_negative = TestUtilitiesMapperFullCoverage._negative
+_build_apply_sort_obj = UtilitiesMapperFullCoverageNamespace._build_apply_sort_obj
+_build_apply_unique_obj = UtilitiesMapperFullCoverageNamespace._build_apply_unique_obj
+_build_apply_slice_obj = UtilitiesMapperFullCoverageNamespace._build_apply_slice_obj
+_build_apply_group_obj = UtilitiesMapperFullCoverageNamespace._build_apply_group_obj
+_transform_obj = UtilitiesMapperFullCoverageNamespace._transform_obj
+_map_dict_keys_obj = UtilitiesMapperFullCoverageNamespace._map_dict_keys_obj
+_build_flags_obj = UtilitiesMapperFullCoverageNamespace._build_flags_obj
+AttrObject = UtilitiesMapperFullCoverageNamespace.AttrObject
+BadString = UtilitiesMapperFullCoverageNamespace.BadString
+BadBool = UtilitiesMapperFullCoverageNamespace.BadBool
+_parse_int = UtilitiesMapperFullCoverageNamespace._parse_int
+_plus_one = UtilitiesMapperFullCoverageNamespace._plus_one
+_times_two = UtilitiesMapperFullCoverageNamespace._times_two
+_raise_value_error = UtilitiesMapperFullCoverageNamespace._raise_value_error
+_normalize_not_dict = UtilitiesMapperFullCoverageNamespace._normalize_not_dict
+_negative = UtilitiesMapperFullCoverageNamespace._negative
 test_bad_string_and_bad_bool_raise_value_error = (
-    TestUtilitiesMapperFullCoverage.test_bad_string_and_bad_bool_raise_value_error
+    UtilitiesMapperFullCoverageNamespace.test_bad_string_and_bad_bool_raise_value_error
 )
-ExplodingLenList = TestUtilitiesMapperFullCoverage.ExplodingLenList
-BadMapping = TestUtilitiesMapperFullCoverage.BadMapping
-mapper = TestUtilitiesMapperFullCoverage.mapper
+ExplodingLenList = UtilitiesMapperFullCoverageNamespace.ExplodingLenList
+BadMapping = UtilitiesMapperFullCoverageNamespace.BadMapping
+mapper = UtilitiesMapperFullCoverageNamespace.mapper
 test_type_guards_and_narrowing_failures = (
-    TestUtilitiesMapperFullCoverage.test_type_guards_and_narrowing_failures
+    UtilitiesMapperFullCoverageNamespace.test_type_guards_and_narrowing_failures
 )
-test_narrow_to_string_keyed_dict_and_mapping_paths = (
-    TestUtilitiesMapperFullCoverage.test_narrow_to_string_keyed_dict_and_mapping_paths
-)
+test_narrow_to_string_keyed_dict_and_mapping_paths = UtilitiesMapperFullCoverageNamespace.test_narrow_to_string_keyed_dict_and_mapping_paths
 test_general_value_helpers_and_logger = (
-    TestUtilitiesMapperFullCoverage.test_general_value_helpers_and_logger
+    UtilitiesMapperFullCoverageNamespace.test_general_value_helpers_and_logger
 )
 test_invert_and_json_conversion_branches = (
-    TestUtilitiesMapperFullCoverage.test_invert_and_json_conversion_branches
+    UtilitiesMapperFullCoverageNamespace.test_invert_and_json_conversion_branches
 )
 test_ensure_and_extract_array_index_helpers = (
-    TestUtilitiesMapperFullCoverage.test_ensure_and_extract_array_index_helpers
+    UtilitiesMapperFullCoverageNamespace.test_ensure_and_extract_array_index_helpers
 )
 test_extract_error_paths_and_prop_accessor = (
-    TestUtilitiesMapperFullCoverage.test_extract_error_paths_and_prop_accessor
+    UtilitiesMapperFullCoverageNamespace.test_extract_error_paths_and_prop_accessor
 )
 test_at_take_and_as_branches = (
-    TestUtilitiesMapperFullCoverage.test_at_take_and_as_branches
+    UtilitiesMapperFullCoverageNamespace.test_at_take_and_as_branches
 )
 test_extract_field_value_and_ensure_variants = (
-    TestUtilitiesMapperFullCoverage.test_extract_field_value_and_ensure_variants
+    UtilitiesMapperFullCoverageNamespace.test_extract_field_value_and_ensure_variants
 )
 test_filter_map_normalize_convert_helpers = (
-    TestUtilitiesMapperFullCoverage.test_filter_map_normalize_convert_helpers
+    UtilitiesMapperFullCoverageNamespace.test_filter_map_normalize_convert_helpers
 )
 test_convert_default_fallback_matrix = (
-    TestUtilitiesMapperFullCoverage.test_convert_default_fallback_matrix
+    UtilitiesMapperFullCoverageNamespace.test_convert_default_fallback_matrix
 )
 test_convert_sequence_branch_returns_tuple = (
-    TestUtilitiesMapperFullCoverage.test_convert_sequence_branch_returns_tuple
+    UtilitiesMapperFullCoverageNamespace.test_convert_sequence_branch_returns_tuple
 )
 test_transform_option_extract_and_step_helpers = (
-    TestUtilitiesMapperFullCoverage.test_transform_option_extract_and_step_helpers
+    UtilitiesMapperFullCoverageNamespace.test_transform_option_extract_and_step_helpers
 )
-test_build_apply_transform_and_process_error_paths = (
-    TestUtilitiesMapperFullCoverage.test_build_apply_transform_and_process_error_paths
-)
+test_build_apply_transform_and_process_error_paths = UtilitiesMapperFullCoverageNamespace.test_build_apply_transform_and_process_error_paths
 test_group_sort_unique_slice_chunk_branches = (
-    TestUtilitiesMapperFullCoverage.test_group_sort_unique_slice_chunk_branches
+    UtilitiesMapperFullCoverageNamespace.test_group_sort_unique_slice_chunk_branches
 )
 test_field_and_fields_multi_branches = (
-    TestUtilitiesMapperFullCoverage.test_field_and_fields_multi_branches
+    UtilitiesMapperFullCoverageNamespace.test_field_and_fields_multi_branches
 )
 test_construct_transform_and_deep_eq_branches = (
-    TestUtilitiesMapperFullCoverage.test_construct_transform_and_deep_eq_branches
+    UtilitiesMapperFullCoverageNamespace.test_construct_transform_and_deep_eq_branches
 )
-test_process_context_data_and_related_convenience = (
-    TestUtilitiesMapperFullCoverage.test_process_context_data_and_related_convenience
-)
+test_process_context_data_and_related_convenience = UtilitiesMapperFullCoverageNamespace.test_process_context_data_and_related_convenience
 test_small_mapper_convenience_methods = (
-    TestUtilitiesMapperFullCoverage.test_small_mapper_convenience_methods
+    UtilitiesMapperFullCoverageNamespace.test_small_mapper_convenience_methods
 )
 test_map_flags_collect_and_invert_branches = (
-    TestUtilitiesMapperFullCoverage.test_map_flags_collect_and_invert_branches
+    UtilitiesMapperFullCoverageNamespace.test_map_flags_collect_and_invert_branches
 )
 test_conversion_and_extract_success_branches = (
-    TestUtilitiesMapperFullCoverage.test_conversion_and_extract_success_branches
+    UtilitiesMapperFullCoverageNamespace.test_conversion_and_extract_success_branches
 )
-test_accessor_take_pick_as_or_flat_and_agg_branches = (
-    TestUtilitiesMapperFullCoverage.test_accessor_take_pick_as_or_flat_and_agg_branches
-)
-test_remaining_build_fields_construct_and_eq_paths = (
-    TestUtilitiesMapperFullCoverage.test_remaining_build_fields_construct_and_eq_paths
-)
+test_accessor_take_pick_as_or_flat_and_agg_branches = UtilitiesMapperFullCoverageNamespace.test_accessor_take_pick_as_or_flat_and_agg_branches
+test_remaining_build_fields_construct_and_eq_paths = UtilitiesMapperFullCoverageNamespace.test_remaining_build_fields_construct_and_eq_paths
 test_remaining_uncovered_branches = (
-    TestUtilitiesMapperFullCoverage.test_remaining_uncovered_branches
+    UtilitiesMapperFullCoverageNamespace.test_remaining_uncovered_branches
 )

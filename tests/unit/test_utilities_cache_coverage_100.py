@@ -20,7 +20,6 @@ from collections import UserDict
 from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast, override
 
-import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -30,7 +29,7 @@ from ..test_utils import assertion_helpers
 from ._models import TestUnitModels
 
 
-class TestUtilitiesCacheCoverage100:
+class UtilitiesCacheCoverage100Namespace:
     class NormalizeComponentScenario(BaseModel):
         """Normalize component test scenario."""
 
@@ -81,129 +80,125 @@ class TestUtilitiesCacheCoverage100:
             str | None, Field(default=None, description="Optional cache attribute name")
         ] = None
 
-    class CacheScenarios:
-        """Centralized cache test scenarios."""
+    NORMALIZE_COMPONENT_SCENARIOS: ClassVar[list[NormalizeComponentScenario]] = [
+        NormalizeComponentScenario(
+            name="pydantic_model",
+            component=TestUnitModels.CacheTestModel(name="test", value=42),
+            expected_type=dict,
+        ),
+        NormalizeComponentScenario(
+            name="nested_pydantic_model",
+            component=TestUnitModels.NestedModel(
+                inner=TestUnitModels.CacheTestModel(name="inner", value=10),
+                count=5,
+            ),
+            expected_type=dict,
+        ),
+        NormalizeComponentScenario(
+            name="string_primitive",
+            component="hello",
+            expected_type=str,
+            expected_value="hello",
+        ),
+        NormalizeComponentScenario(
+            name="int_primitive",
+            component=42,
+            expected_type=int,
+            expected_value=42,
+        ),
+        NormalizeComponentScenario(
+            name="float_primitive",
+            component=math.pi,
+            expected_type=float,
+            expected_value=math.pi,
+        ),
+        NormalizeComponentScenario(
+            name="bool_primitive",
+            component=True,
+            expected_type=bool,
+            expected_value=True,
+        ),
+        NormalizeComponentScenario(
+            name="none_primitive",
+            component=None,
+            expected_type=type(None),
+            expected_value=None,
+        ),
+        NormalizeComponentScenario(
+            name="set_of_ints",
+            component={1, 2, 3},
+            expected_type=tuple,
+        ),
+        NormalizeComponentScenario(
+            name="set_of_strings",
+            component={"a", "b", "c"},
+            expected_type=tuple,
+        ),
+        NormalizeComponentScenario(
+            name="empty_set",
+            component=set(),
+            expected_type=tuple,
+            expected_value=(),
+        ),
+        NormalizeComponentScenario(
+            name="list_of_ints",
+            component=[1, 2, 3],
+            expected_type=list,
+        ),
+        NormalizeComponentScenario(
+            name="tuple_of_strings",
+            component=("a", "b", "c"),
+            expected_type=list,
+        ),
+        NormalizeComponentScenario(
+            name="simple_dict",
+            component={"key": "value"},
+            expected_type=dict,
+        ),
+        NormalizeComponentScenario(
+            name="nested_dict",
+            component={"a": {"b": {"c": 123}}},
+            expected_type=dict,
+        ),
+        NormalizeComponentScenario(
+            name="custom_object",
+            component=str(object()),
+            expected_type=str,
+        ),
+    ]
 
-        NORMALIZE_COMPONENT: ClassVar[list[NormalizeComponentScenario]] = [
-            NormalizeComponentScenario(
-                name="pydantic_model",
-                component=TestUnitModels.CacheTestModel(name="test", value=42),
-                expected_type=dict,
-            ),
-            NormalizeComponentScenario(
-                name="nested_pydantic_model",
-                component=TestUnitModels.NestedModel(
-                    inner=TestUnitModels.CacheTestModel(name="inner", value=10),
-                    count=5,
-                ),
-                expected_type=dict,
-            ),
-            NormalizeComponentScenario(
-                name="string_primitive",
-                component="hello",
-                expected_type=str,
-                expected_value="hello",
-            ),
-            NormalizeComponentScenario(
-                name="int_primitive",
-                component=42,
-                expected_type=int,
-                expected_value=42,
-            ),
-            NormalizeComponentScenario(
-                name="float_primitive",
-                component=math.pi,
-                expected_type=float,
-                expected_value=math.pi,
-            ),
-            NormalizeComponentScenario(
-                name="bool_primitive",
-                component=True,
-                expected_type=bool,
-                expected_value=True,
-            ),
-            NormalizeComponentScenario(
-                name="none_primitive",
-                component=None,
-                expected_type=type(None),
-                expected_value=None,
-            ),
-            NormalizeComponentScenario(
-                name="set_of_ints",
-                component={1, 2, 3},
-                expected_type=tuple,
-            ),
-            NormalizeComponentScenario(
-                name="set_of_strings",
-                component={"a", "b", "c"},
-                expected_type=tuple,
-            ),
-            NormalizeComponentScenario(
-                name="empty_set",
-                component=set(),
-                expected_type=tuple,
-                expected_value=(),
-            ),
-            NormalizeComponentScenario(
-                name="list_of_ints",
-                component=[1, 2, 3],
-                expected_type=list,
-            ),
-            NormalizeComponentScenario(
-                name="tuple_of_strings",
-                component=("a", "b", "c"),
-                expected_type=list,
-            ),
-            NormalizeComponentScenario(
-                name="simple_dict",
-                component={"key": "value"},
-                expected_type=dict,
-            ),
-            NormalizeComponentScenario(
-                name="nested_dict",
-                component={"a": {"b": {"c": 123}}},
-                expected_type=dict,
-            ),
-            NormalizeComponentScenario(
-                name="custom_object",
-                component=str(object()),
-                expected_type=str,
-            ),
-        ]
-        SORT_KEY: ClassVar[list[SortKeyScenario]] = [
-            SortKeyScenario(
-                name="string_key", key="hello", expected_tuple=(0, "hello")
-            ),
-            SortKeyScenario(
-                name="string_uppercase",
-                key="HELLO",
-                expected_tuple=(0, "hello"),
-            ),
-            SortKeyScenario(
-                name="string_mixed_case",
-                key="HeLlO",
-                expected_tuple=(0, "hello"),
-            ),
-            SortKeyScenario(name="int_key", key=42, expected_tuple=(1, "42")),
-            SortKeyScenario(name="float_key", key=math.pi, expected_tuple=(1, "")),
-            SortKeyScenario(name="negative_int", key=-5, expected_tuple=(1, "-5")),
-            SortKeyScenario(name="zero", key=0, expected_tuple=(1, "0")),
-            SortKeyScenario(
-                name="custom_object",
-                key=str(object()),
-                expected_tuple=(0, str(object()).lower()),
-            ),
-            SortKeyScenario(
-                name="list_key",
-                key=str([1, 2]),
-                expected_tuple=(0, str([1, 2]).lower()),
-            ),
-            SortKeyScenario(
-                name="dict_key",
-                key=cast("str | int | float", str({"a": 1})),
-                expected_tuple=(0, str({"a": 1}).lower()),
-            ),
-        ]
+    SORT_KEY_SCENARIOS: ClassVar[list[SortKeyScenario]] = [
+        SortKeyScenario(name="string_key", key="hello", expected_tuple=(0, "hello")),
+        SortKeyScenario(
+            name="string_uppercase",
+            key="HELLO",
+            expected_tuple=(0, "hello"),
+        ),
+        SortKeyScenario(
+            name="string_mixed_case",
+            key="HeLlO",
+            expected_tuple=(0, "hello"),
+        ),
+        SortKeyScenario(name="int_key", key=42, expected_tuple=(1, "42")),
+        SortKeyScenario(name="float_key", key=math.pi, expected_tuple=(1, "")),
+        SortKeyScenario(name="negative_int", key=-5, expected_tuple=(1, "-5")),
+        SortKeyScenario(name="zero", key=0, expected_tuple=(1, "0")),
+        SortKeyScenario(
+            name="custom_object",
+            key=str(object()),
+            expected_tuple=(0, str(object()).lower()),
+        ),
+        SortKeyScenario(
+            name="list_key",
+            key=str([1, 2]),
+            expected_tuple=(0, str([1, 2]).lower()),
+        ),
+        SortKeyScenario(
+            name="dict_key",
+            key=cast("str | int | float", str({"a": 1})),
+            expected_tuple=(0, str({"a": 1}).lower()),
+        ),
+    ]
 
     class TestuCacheLogger:
         """Test FlextUtilitiesCache.logger property."""
@@ -220,24 +215,18 @@ class TestUtilitiesCacheCoverage100:
     class TestuCacheNormalizeComponent:
         """Test FlextUtilitiesCache.normalize_component."""
 
-        @pytest.mark.parametrize(
-            "scenario",
-            CacheScenarios.NORMALIZE_COMPONENT,
-            ids=lambda s: s.name,
-        )
-        def test_normalize_component(
-            self, scenario: NormalizeComponentScenario
-        ) -> None:
+        def test_normalize_component(self) -> None:
             """Test normalize_component with various scenarios."""
-            result = u.normalize_component(
-                cast(
-                    "t.NormalizedValue | BaseModel | set[t.NormalizedValue]",
-                    scenario.component,
+            for scenario in NORMALIZE_COMPONENT_SCENARIOS:
+                result = u.normalize_component(
+                    cast(
+                        "t.NormalizedValue | BaseModel | set[t.NormalizedValue]",
+                        scenario.component,
+                    )
                 )
-            )
-            assert isinstance(result, scenario.expected_type)
-            if scenario.expected_value is not None:
-                assert result == scenario.expected_value
+                assert isinstance(result, scenario.expected_type)
+                if scenario.expected_value is not None:
+                    assert result == scenario.expected_value
 
         def test_normalize_pydantic_model(self) -> None:
             """Test normalize_component with Pydantic model."""
@@ -343,19 +332,17 @@ class TestUtilitiesCacheCoverage100:
     class TestuCacheSortKey:
         """Test FlextUtilitiesCache.sort_key."""
 
-        @pytest.mark.parametrize(
-            "scenario", CacheScenarios.SORT_KEY, ids=lambda s: s.name
-        )
-        def test_sort_key(self, scenario: SortKeyScenario) -> None:
+        def test_sort_key(self) -> None:
             """Test sort_key with various scenarios."""
-            result = u.sort_key(scenario.key)
-            if scenario.name in {"custom_object", "float_key"}:
-                assert result[0] == scenario.expected_tuple[0]
-                assert isinstance(result[1], str)
-                if scenario.name == "float_key":
-                    assert result[1] == "3.14" or result[1].startswith("3.1")
-            else:
-                assert result == scenario.expected_tuple
+            for scenario in SORT_KEY_SCENARIOS:
+                result = u.sort_key(scenario.key)
+                if scenario.name in {"custom_object", "float_key"}:
+                    assert result[0] == scenario.expected_tuple[0]
+                    assert isinstance(result[1], str)
+                    if scenario.name == "float_key":
+                        assert result[1] == "3.14" or result[1].startswith("3.1")
+                else:
+                    assert result == scenario.expected_tuple
 
         def test_sort_key_string_case_insensitive(self) -> None:
             """Test sort_key handles string case-insensitively."""
@@ -676,7 +663,8 @@ class TestUtilitiesCacheCoverage100:
             assert key1 != key2
 
     __all__ = [
-        "CacheScenarios",
+        "NORMALIZE_COMPONENT_SCENARIOS",
+        "SORT_KEY_SCENARIOS",
         "TestuCacheClearObjectCache",
         "TestuCacheGenerateCacheKey",
         "TestuCacheHasCacheAttributes",
@@ -687,18 +675,27 @@ class TestUtilitiesCacheCoverage100:
     ]
 
 
-NormalizeComponentScenario = TestUtilitiesCacheCoverage100.NormalizeComponentScenario
-SortKeyScenario = TestUtilitiesCacheCoverage100.SortKeyScenario
-ClearCacheScenario = TestUtilitiesCacheCoverage100.ClearCacheScenario
-CacheScenarios = TestUtilitiesCacheCoverage100.CacheScenarios
-TestuCacheLogger = TestUtilitiesCacheCoverage100.TestuCacheLogger
+NormalizeComponentScenario = (
+    UtilitiesCacheCoverage100Namespace.NormalizeComponentScenario
+)
+SortKeyScenario = UtilitiesCacheCoverage100Namespace.SortKeyScenario
+ClearCacheScenario = UtilitiesCacheCoverage100Namespace.ClearCacheScenario
+NORMALIZE_COMPONENT_SCENARIOS = (
+    UtilitiesCacheCoverage100Namespace.NORMALIZE_COMPONENT_SCENARIOS
+)
+SORT_KEY_SCENARIOS = UtilitiesCacheCoverage100Namespace.SORT_KEY_SCENARIOS
+TestuCacheLogger = UtilitiesCacheCoverage100Namespace.TestuCacheLogger
 TestuCacheNormalizeComponent = (
-    TestUtilitiesCacheCoverage100.TestuCacheNormalizeComponent
+    UtilitiesCacheCoverage100Namespace.TestuCacheNormalizeComponent
 )
-TestuCacheSortKey = TestUtilitiesCacheCoverage100.TestuCacheSortKey
-TestuCacheSortDictKeys = TestUtilitiesCacheCoverage100.TestuCacheSortDictKeys
-TestuCacheClearObjectCache = TestUtilitiesCacheCoverage100.TestuCacheClearObjectCache
+TestuCacheSortKey = UtilitiesCacheCoverage100Namespace.TestuCacheSortKey
+TestuCacheSortDictKeys = UtilitiesCacheCoverage100Namespace.TestuCacheSortDictKeys
+TestuCacheClearObjectCache = (
+    UtilitiesCacheCoverage100Namespace.TestuCacheClearObjectCache
+)
 TestuCacheHasCacheAttributes = (
-    TestUtilitiesCacheCoverage100.TestuCacheHasCacheAttributes
+    UtilitiesCacheCoverage100Namespace.TestuCacheHasCacheAttributes
 )
-TestuCacheGenerateCacheKey = TestUtilitiesCacheCoverage100.TestuCacheGenerateCacheKey
+TestuCacheGenerateCacheKey = (
+    UtilitiesCacheCoverage100Namespace.TestuCacheGenerateCacheKey
+)

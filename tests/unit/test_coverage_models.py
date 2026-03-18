@@ -1,22 +1,4 @@
-"""Comprehensive coverage tests for FlextModels DDD patterns.
-
-Module: flext_core.models
-Scope: FlextModels - Value Objects, Entities, Aggregate Roots, Commands, Queries, Domain Events, Metadata
-
-This module provides extensive tests for Domain-Driven Design patterns:
-- Value Objects (immutable, value-based equality)
-- Entities (identity-based, lifecycle tracking)
-- Aggregate Roots (consistency boundaries)
-- Commands/Queries (CQRS patterns)
-- Domain Events (event sourcing)
-- Metadata (flexible attribute tracking)
-
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
-and aggressive parametrization for DRY testing.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Comprehensive coverage tests for FlextModels DDD patterns."""
 
 from __future__ import annotations
 
@@ -25,26 +7,29 @@ from datetime import datetime
 from typing import override
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
 from flext_core._models.domain_event import _ComparableConfigMap
-from tests import m
+from tests import m, t
 
 
-class ModelScenarios:
-    """Centralized model test scenarios using FlextConstants."""
+class TestCoverageModels:
+    class GetUserQuery(m.Query):
+        pass
 
+    class ListAccountsQuery(m.Query):
+        page: int
+        limit: int
 
-class TestValues:
-    """Test immutable value objects using FlextTestsUtilities."""
+    class SearchProductsQuery(m.Query):
+        keyword: str
+        category: str | None = None
+        min_price: float | None = None
+        max_price: float | None = None
 
     def test_value_object_creation(self) -> None:
-        """Test creating a value object."""
-
         class Money(m.Value):
-            """Money value object."""
-
             amount: float
             currency: str
 
@@ -53,11 +38,7 @@ class TestValues:
         tm.that(money.currency, eq="USD")
 
     def test_value_object_immutability(self) -> None:
-        """Test value object is immutable."""
-
         class Point(m.Value):
-            """Point value object."""
-
             x: float
             y: float
 
@@ -66,11 +47,7 @@ class TestValues:
             setattr(point, "x", 3.0)
 
     def test_value_object_equality_by_value(self) -> None:
-        """Test value objects compared by value."""
-
         class Color(m.Value):
-            """Color value object."""
-
             red: int
             green: int
             blue: int
@@ -80,20 +57,16 @@ class TestValues:
         tm.that(color1, eq=color2)
 
     def test_value_object_validation(self) -> None:
-        """Test value object validation."""
-
         class Email(m.Value):
-            """Email value object with validation."""
-
             address: str
 
             @field_validator("address")
             @classmethod
-            def validate_email(cls, v: str) -> str:
-                if "@" not in v:
+            def validate_email(cls, value: str) -> str:
+                if "@" not in value:
                     error_msg = "Invalid email format"
                     raise ValueError(error_msg)
-                return v.lower()
+                return value.lower()
 
         email = Email(address="USER@EXAMPLE.COM")
         tm.that(email.address, eq="user@example.com")
@@ -101,20 +74,14 @@ class TestValues:
             Email(address="notanemail")
 
     def test_value_object_hashable(self) -> None:
-        """Test value objects are hashable."""
-
         class ISBN(m.Value):
-            """ISBN value object."""
-
             code: str
 
             def __hash__(self) -> int:
-                """Hash based on code value."""
                 return hash(self.code)
 
             @override
             def __eq__(self, other: object) -> bool:
-                """Equality based on code value."""
                 if not isinstance(other, ISBN):
                     return False
                 return self.code == other.code
@@ -124,16 +91,8 @@ class TestValues:
         isbn_set: set[ISBN] = {isbn1, isbn2}
         tm.that(len(isbn_set), eq=1)
 
-
-class TestEntities:
-    """Test domain entities with identity using FlextTestsUtilities."""
-
     def test_entity_creation(self) -> None:
-        """Test creating an entity."""
-
         class Person(m.Entity):
-            """Person entity."""
-
             name: str
             age: int
 
@@ -144,11 +103,7 @@ class TestEntities:
         tm.that(person.updated_at, none=False)
 
     def test_entity_identity_tracking(self) -> None:
-        """Test entities are compared by identity."""
-
         class Account(m.Entity):
-            """Account entity."""
-
             name: str
             balance: float
 
@@ -158,11 +113,7 @@ class TestEntities:
         tm.that(account1, ne=account2)
 
     def test_entity_lifecycle_tracking(self) -> None:
-        """Test entity creation and update timestamps."""
-
         class Document(m.Entity):
-            """Document entity."""
-
             title: str
 
         doc = Document(title="Test Doc", domain_events=[])
@@ -171,21 +122,17 @@ class TestEntities:
         tm.that(doc.created_at <= doc.updated_at, eq=True)
 
     def test_entity_validation(self) -> None:
-        """Test entity field validation."""
-
         class User(m.Entity):
-            """User entity with validation."""
-
             email: str
             username: str
 
             @field_validator("username")
             @classmethod
-            def validate_username(cls, v: str) -> str:
-                if len(v) < 3:
+            def validate_username(cls, value: str) -> str:
+                if len(value) < 3:
                     error_msg = "Username must be at least 3 characters"
                     raise ValueError(error_msg)
-                return v
+                return value
 
         user = User(email="user@example.com", username="alice", domain_events=[])
         tm.that(user.username, eq="alice")
@@ -193,11 +140,7 @@ class TestEntities:
             User(email="user@example.com", username="ab", domain_events=[])
 
     def test_entity_model_dump_serialization(self) -> None:
-        """Test entity serialization using Pydantic model_dump."""
-
         class Product(m.Entity):
-            """Product entity."""
-
             name: str
             price: float
 
@@ -213,16 +156,8 @@ class TestEntities:
             eq=True,
         )
 
-
-class TestAggregateRoots:
-    """Test aggregate roots for consistency boundaries using FlextTestsUtilities."""
-
     def test_aggregate_root_creation(self) -> None:
-        """Test creating an aggregate root."""
-
         class Order(m.AggregateRoot):
-            """Order aggregate root."""
-
             order_number: str
             status: str
 
@@ -231,11 +166,7 @@ class TestAggregateRoots:
         tm.that(order.unique_id, none=False)
 
     def test_aggregate_root_invariants(self) -> None:
-        """Test aggregate root enforces invariants."""
-
         class Account(m.AggregateRoot):
-            """Account with business rules."""
-
             balance: float
             currency: str
 
@@ -243,11 +174,7 @@ class TestAggregateRoots:
         tm.that(account.balance >= 0.0, eq=True)
 
     def test_aggregate_root_lifecycle(self) -> None:
-        """Test aggregate root lifecycle."""
-
         class Project(m.AggregateRoot):
-            """Project aggregate root."""
-
             name: str
             status: str
 
@@ -255,31 +182,21 @@ class TestAggregateRoots:
         tm.that(project.status, eq="planning")
         tm.that(project.created_at, none=False)
 
-
-class TestCommands:
-    """Test CQRS command pattern using FlextTestsUtilities."""
-
     def test_command_creation(self) -> None:
-        """Test creating a command."""
-
         class CreateUserCommand(m.Command):
-            """Command to create a user."""
-
             email: str
             username: str
 
         cmd = CreateUserCommand(
-            email="user@example.com", username="alice", command_id="cmd-test-1"
+            email="user@example.com",
+            username="alice",
+            command_id="cmd-test-1",
         )
         tm.that(cmd.email, eq="user@example.com")
         tm.that(cmd.command_id, none=False)
 
     def test_command_mutation_behavior(self) -> None:
-        """Test command mutation behavior with validate_assignment."""
-
         class UpdateProfileCommand(m.Command):
-            """Command to update profile."""
-
             name: str
             bio: str
 
@@ -292,21 +209,17 @@ class TestCommands:
         tm.that(cmd.name, ne=original_name)
 
     def test_command_validation(self) -> None:
-        """Test command validation."""
-
         class DepositCommand(m.Command):
-            """Command with validation."""
-
             account_id: str
             amount: float
 
             @field_validator("amount")
             @classmethod
-            def validate_amount(cls, v: float) -> float:
-                if v <= 0:
+            def validate_amount(cls, value: float) -> float:
+                if value <= 0:
                     error_msg = "Amount must be positive"
                     raise ValueError(error_msg)
-                return v
+                return value
 
         cmd = DepositCommand(
             account_id="ACC-001", amount=100.0, command_id="cmd-test-3"
@@ -315,33 +228,8 @@ class TestCommands:
         with pytest.raises(ValidationError):
             DepositCommand(account_id="ACC-001", amount=-50.0, command_id="cmd-test-4")
 
-
-class GetUserQuery(m.Query):
-    """Query to get a user."""
-
-
-class ListAccountsQuery(m.Query):
-    """Query to list accounts."""
-
-    page: int
-    limit: int
-
-
-class SearchProductsQuery(m.Query):
-    """Query to search products."""
-
-    keyword: str
-    category: str | None = None
-    min_price: float | None = None
-    max_price: float | None = None
-
-
-class TestQueries:
-    """Test CQRS query pattern using FlextTestsUtilities."""
-
     def test_query_creation(self) -> None:
-        """Test creating a query."""
-        query = GetUserQuery(
+        query = type(self).GetUserQuery(
             filters=t.Dict(root={"user_id": "USER-001"}),
             query_type="get_user",
             pagination=m.Pagination(),
@@ -352,8 +240,7 @@ class TestQueries:
         tm.that(query.query_type, eq="get_user")
 
     def test_query_mutation_behavior(self) -> None:
-        """Test query mutation behavior with validate_assignment."""
-        query = ListAccountsQuery(
+        query = type(self).ListAccountsQuery(
             page=1,
             limit=10,
             filters=t.Dict(root={}),
@@ -366,8 +253,7 @@ class TestQueries:
         tm.that(query.page, ne=original_page)
 
     def test_query_with_filters(self) -> None:
-        """Test query with filtering."""
-        query = SearchProductsQuery(
+        query = type(self).SearchProductsQuery(
             keyword="laptop",
             category="electronics",
             min_price=500.0,
@@ -381,17 +267,12 @@ class TestQueries:
         if query.min_price is not None:
             tm.that(math.isclose(query.min_price, 500.0), eq=True)
 
-
-class TestDomainEvents:
-    """Test domain events for event sourcing using FlextTestsUtilities."""
-
     def test_domain_event_creation(self) -> None:
-        """Test creating a domain event with data payload."""
         event = m.DomainEvent(
             event_type="UserCreated",
             aggregate_id="USER-001",
             data=_ComparableConfigMap(
-                root={"user_id": "USER-001", "email": "user@example.com"},
+                root={"user_id": "USER-001", "email": "user@example.com"}
             ),
         )
         tm.that(event.event_type, eq="UserCreated")
@@ -402,7 +283,6 @@ class TestDomainEvents:
         tm.that(event.created_at, none=False)
 
     def test_domain_event_equality(self) -> None:
-        """Test domain events can be compared and tracked."""
         event1 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
@@ -418,10 +298,8 @@ class TestDomainEvents:
         tm.that(event1.aggregate_id, eq=event2.aggregate_id)
 
     def test_domain_event_timestamp(self) -> None:
-        """Test domain events have timestamps."""
-
         class AccountUpdatedEvent(m.DomainEvent):
-            """Event: account was updated."""
+            pass
 
         event = AccountUpdatedEvent(
             event_type="AccountUpdated",
@@ -432,10 +310,8 @@ class TestDomainEvents:
         tm.that(isinstance(event.created_at, datetime), eq=True)
 
     def test_domain_event_causality(self) -> None:
-        """Test domain events track causality via id and timestamps."""
-
         class PaymentProcessedEvent(m.DomainEvent):
-            """Event: payment was processed."""
+            pass
 
         event = PaymentProcessedEvent(
             event_type="PaymentProcessed",
@@ -445,17 +321,11 @@ class TestDomainEvents:
         tm.that(event.unique_id, none=False)
         tm.that(event.created_at, none=False)
 
-
-class TestMetadata:
-    """Test flexible metadata model using FlextTestsUtilities."""
-
     def test_metadata_creation(self) -> None:
-        """Test creating metadata."""
         metadata = m.Metadata(attributes={"user_id": "123", "operation": "create"})
         tm.that(metadata.attributes["user_id"], eq="123")
 
     def test_metadata_with_various_types(self) -> None:
-        """Test metadata with different attribute types."""
         metadata = m.Metadata(
             attributes={
                 "string": "value",
@@ -467,26 +337,18 @@ class TestMetadata:
         tm.that(metadata.attributes["string"], eq="value")
         tm.that(metadata.attributes["number"], eq=42)
 
-
-class TestModelValidation:
-    """Test model validation patterns using FlextTestsUtilities."""
-
     def test_model_validation_error_handling(self) -> None:
-        """Test model validation error handling."""
-
         class ValidatedEntity(m.Entity):
-            """Entity with validation."""
-
             email: str
             age: int
 
             @field_validator("age")
             @classmethod
-            def validate_age(cls, v: int) -> int:
-                if v < 0 or v > 150:
+            def validate_age(cls, value: int) -> int:
+                if value < 0 or value > 150:
                     error_msg = "Invalid age"
                     raise ValueError(error_msg)
-                return v
+                return value
 
         entity = ValidatedEntity(email="user@example.com", age=30, domain_events=[])
         tm.that(entity.age, eq=30)
@@ -494,30 +356,26 @@ class TestModelValidation:
             ValidatedEntity(email="user@example.com", age=200, domain_events=[])
 
     def test_multiple_field_validation(self) -> None:
-        """Test multiple field validators."""
-
         class Profile(m.Entity):
-            """Profile with multiple validators."""
-
             username: str
             email: str
             bio: str | None = None
 
             @field_validator("username")
             @classmethod
-            def validate_username(cls, v: str) -> str:
-                if len(v) < 3:
+            def validate_username(cls, value: str) -> str:
+                if len(value) < 3:
                     error_msg = "Username too short"
                     raise ValueError(error_msg)
-                return v
+                return value
 
             @field_validator("email")
             @classmethod
-            def validate_email(cls, v: str) -> str:
-                if "@" not in v:
+            def validate_email(cls, value: str) -> str:
+                if "@" not in value:
                     error_msg = "Invalid email"
                     raise ValueError(error_msg)
-                return v
+                return value
 
         profile = Profile(
             username="alice",
@@ -527,16 +385,8 @@ class TestModelValidation:
         )
         tm.that(profile.username, eq="alice")
 
-
-class TestModelSerialization:
-    """Test model serialization patterns using FlextTestsUtilities."""
-
     def test_entity_model_dump(self) -> None:
-        """Test model_dump serialization."""
-
         class Task(m.Entity):
-            """Task entity."""
-
             title: str
             completed: bool
 
@@ -547,11 +397,7 @@ class TestModelSerialization:
         tm.that(dumped, has="unique_id")
 
     def test_command_serialization(self) -> None:
-        """Test command serialization."""
-
         class SendEmailCommand(m.Command):
-            """Command to send email."""
-
             recipient: str
             subject: str
             body: str
@@ -567,12 +413,8 @@ class TestModelSerialization:
         tm.that(dumped["subject"], eq="Test")
 
     def test_aggregate_root_serialization(self) -> None:
-        """Test aggregate root serialization."""
-
         class ShoppingCart(m.AggregateRoot):
-            """Shopping cart aggregate."""
-
-            items: list[dict[str, t.Tests.object]]
+            items: list[dict[str, int | str]]
             total: float
 
         cart = ShoppingCart(
@@ -587,16 +429,8 @@ class TestModelSerialization:
         tm.that(len(dumped["items"]), eq=2)
         tm.that(math.isclose(dumped["total"], 99.99), eq=True)
 
-
-class TestModelIntegration:
-    """Test model integration with r using FlextTestsUtilities."""
-
     def test_entity_model_validation(self) -> None:
-        """Test entity model validation via model_validate."""
-
         class Customer(m.Entity):
-            """Customer entity."""
-
             name: str
             email: str
 
@@ -611,29 +445,16 @@ class TestModelIntegration:
         tm.that(validated.email, eq="john@example.com")
 
     def test_command_factory_pattern(self) -> None:
-        """Test command creation as factories."""
-
         class RegisterUserCommand(m.Command):
-            """User registration command."""
-
             email: str
             password: str
 
         cmd = RegisterUserCommand(
-            email="user@example.com", password="secure123", command_id="cmd-test-6"
+            email="user@example.com",
+            password="secure123",
+            command_id="cmd-test-6",
         )
         tm.that(cmd.email, eq="user@example.com")
 
 
-__all__ = [
-    "TestAggregateRoots",
-    "TestCommands",
-    "TestDomainEvents",
-    "TestEntities",
-    "TestMetadata",
-    "TestModelIntegration",
-    "TestModelSerialization",
-    "TestModelValidation",
-    "TestQueries",
-    "TestValues",
-]
+__all__ = ["TestCoverageModels"]

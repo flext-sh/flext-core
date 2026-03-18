@@ -27,7 +27,7 @@ from ..test_utils import assertion_helpers
 from ._models import TestUnitModels
 
 
-class TestUtilitiesMapperCoverage100:
+class UtilitiesMapperCoverage100Namespace:
     class SimpleObj(BaseModel):
         """Simple test object."""
 
@@ -505,24 +505,24 @@ class TestUtilitiesMapperCoverage100:
             tm.that(u.agg([], "v"), eq=0)
 
 
-SimpleObj = TestUtilitiesMapperCoverage100.SimpleObj
-_DoubleOp = TestUtilitiesMapperCoverage100._DoubleOp
-_GreaterThanTwoOp = TestUtilitiesMapperCoverage100._GreaterThanTwoOp
-_TimesTenOp = TestUtilitiesMapperCoverage100._TimesTenOp
-_PlusFiveOp = TestUtilitiesMapperCoverage100._PlusFiveOp
-_GroupLenOp = TestUtilitiesMapperCoverage100._GroupLenOp
-_GetKeyAOp = TestUtilitiesMapperCoverage100._GetKeyAOp
-_IntConvertOp = TestUtilitiesMapperCoverage100._IntConvertOp
-_DOUBLE_OP = TestUtilitiesMapperCoverage100._DOUBLE_OP
-_GT_TWO_OP = TestUtilitiesMapperCoverage100._GT_TWO_OP
-_TIMES_TEN_OP = TestUtilitiesMapperCoverage100._TIMES_TEN_OP
-_PLUS_FIVE_OP = TestUtilitiesMapperCoverage100._PLUS_FIVE_OP
-_GROUP_LEN_OP = TestUtilitiesMapperCoverage100._GROUP_LEN_OP
-_GET_KEY_A_OP = TestUtilitiesMapperCoverage100._GET_KEY_A_OP
-_INT_CONVERT_OP = TestUtilitiesMapperCoverage100._INT_CONVERT_OP
-TestuMapperExtract = TestUtilitiesMapperCoverage100.TestuMapperExtract
-TestuMapperAccessors = TestUtilitiesMapperCoverage100.TestuMapperAccessors
-TestuMapperUtils = TestUtilitiesMapperCoverage100.TestuMapperUtils
-TestuMapperConversions = TestUtilitiesMapperCoverage100.TestuMapperConversions
-TestuMapperBuild = TestUtilitiesMapperCoverage100.TestuMapperBuild
-TestuMapperAdvanced = TestUtilitiesMapperCoverage100.TestuMapperAdvanced
+SimpleObj = UtilitiesMapperCoverage100Namespace.SimpleObj
+_DoubleOp = UtilitiesMapperCoverage100Namespace._DoubleOp
+_GreaterThanTwoOp = UtilitiesMapperCoverage100Namespace._GreaterThanTwoOp
+_TimesTenOp = UtilitiesMapperCoverage100Namespace._TimesTenOp
+_PlusFiveOp = UtilitiesMapperCoverage100Namespace._PlusFiveOp
+_GroupLenOp = UtilitiesMapperCoverage100Namespace._GroupLenOp
+_GetKeyAOp = UtilitiesMapperCoverage100Namespace._GetKeyAOp
+_IntConvertOp = UtilitiesMapperCoverage100Namespace._IntConvertOp
+_DOUBLE_OP = UtilitiesMapperCoverage100Namespace._DOUBLE_OP
+_GT_TWO_OP = UtilitiesMapperCoverage100Namespace._GT_TWO_OP
+_TIMES_TEN_OP = UtilitiesMapperCoverage100Namespace._TIMES_TEN_OP
+_PLUS_FIVE_OP = UtilitiesMapperCoverage100Namespace._PLUS_FIVE_OP
+_GROUP_LEN_OP = UtilitiesMapperCoverage100Namespace._GROUP_LEN_OP
+_GET_KEY_A_OP = UtilitiesMapperCoverage100Namespace._GET_KEY_A_OP
+_INT_CONVERT_OP = UtilitiesMapperCoverage100Namespace._INT_CONVERT_OP
+TestuMapperExtract = UtilitiesMapperCoverage100Namespace.TestuMapperExtract
+TestuMapperAccessors = UtilitiesMapperCoverage100Namespace.TestuMapperAccessors
+TestuMapperUtils = UtilitiesMapperCoverage100Namespace.TestuMapperUtils
+TestuMapperConversions = UtilitiesMapperCoverage100Namespace.TestuMapperConversions
+TestuMapperBuild = UtilitiesMapperCoverage100Namespace.TestuMapperBuild
+TestuMapperAdvanced = UtilitiesMapperCoverage100Namespace.TestuMapperAdvanced
