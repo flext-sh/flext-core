@@ -7,7 +7,7 @@ from io import StringIO
 from pathlib import Path
 
 from flext_infra import u
-from flext_infra.refactor import __main__ as refactor_main
+from flext_infra.refactor.__main__ import FlextInfraRefactorCommand
 
 
 def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> None:
@@ -30,7 +30,7 @@ def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> Non
         output_format="json",
     )
     with redirect_stdout(buffer):
-        run_code = refactor_main._run_centralize_pydantic(
+        run_code = FlextInfraRefactorCommand.run_centralize_pydantic(
             cli,
             normalize_remaining=True,
         )
@@ -69,7 +69,7 @@ def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
         output_format="json",
     )
     with redirect_stdout(buffer):
-        run_code = refactor_main._run_ultrawork_models(
+        run_code = FlextInfraRefactorCommand.run_ultrawork_models(
             cli,
             normalize_remaining=True,
         )
@@ -109,7 +109,7 @@ def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
         output_format="json",
     )
     with redirect_stdout(buffer):
-        run_code = refactor_main._run_namespace_enforce(
+        run_code = FlextInfraRefactorCommand.run_namespace_enforce(
             cli,
         )
     captured = buffer.getvalue()

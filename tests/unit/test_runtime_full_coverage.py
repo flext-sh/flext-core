@@ -43,48 +43,48 @@ def test_reuse_existing_runtime_scenarios() -> None:
     suite = runtime_tests.TestFlextRuntime()
     _ = c.Logging.DEFAULT_LEVEL
     _ = u.ensure_str("x")
-    for case in runtime_tests.RuntimeScenarios.DICT_LIKE_SCENARIOS:
+    scenarios = runtime_tests.TestFlextRuntime.RuntimeScenarios
+    for case in scenarios.dict_like_scenarios():
         suite.test_dict_like_validation(case)
-    for case in runtime_tests.RuntimeScenarios.LIST_LIKE_SCENARIOS:
+    for case in scenarios.list_like_scenarios():
         suite.test_list_like_validation(case)
-    for case in runtime_tests.RuntimeScenarios.JSON_SCENARIOS:
+    for case in scenarios.json_scenarios():
         suite.test_json_validation(case)
-    for case in runtime_tests.RuntimeScenarios.IDENTIFIER_SCENARIOS:
+    for case in scenarios.identifier_scenarios():
         suite.test_identifier_validation(case)
-    for case in runtime_tests.RuntimeScenarios.SERIALIZATION_SCENARIOS:
+    for case in scenarios.serialization_scenarios():
         suite.test_safe_get_attribute(case)
-    for case in runtime_tests.RuntimeScenarios.GENERIC_ARGS_SCENARIOS:
+    for case in scenarios.generic_args_scenarios():
         suite.test_extract_generic_args(case)
-    for case in runtime_tests.RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS:
+    for case in scenarios.sequence_type_scenarios():
         suite.test_sequence_type_detection(case)
-    for case in runtime_tests.RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS:
+    for case in scenarios.structlog_config_scenarios():
         suite.test_structlog_configuration(case)
 
 
 def test_reuse_existing_runtime_coverage_branches() -> None:
-    dict_like = runtime_cov_tests.TestRuntimeDictLike()
-    dict_like.test_is_dict_like_with_exception_on_items()
-    dict_like.test_is_dict_like_with_exception_on_items_typeerror()
-    dict_like.test_is_dict_like_with_userdict()
-    dict_like.test_is_dict_like_with_missing_attributes()
-    dict_like.test_is_dict_like_with_missing_keys()
-    dict_like.test_is_dict_like_with_missing_items()
-    dict_like.test_is_dict_like_with_missing_get()
-    type_check = runtime_cov_tests.TestRuntimeTypeChecking()
-    type_check.test_extract_generic_args_with_type_mapping()
-    type_check.test_is_sequence_type_with_type_mapping()
-    type_check.test_level_based_context_filter_malformed_prefix()
-    type_check.test_configure_structlog_with_config_object()
-    type_check.test_enable_runtime_checking()
-    type_check.test_is_valid_json_exception_path()
-    type_check.test_is_valid_identifier_non_string()
-    type_check.test_extract_generic_args_with_typing_get_args()
-    type_check.test_extract_generic_args_exception_path()
-    type_check.test_is_sequence_type_with_origin()
-    type_check.test_is_sequence_type_with_sequence_subclass()
-    type_check.test_is_sequence_type_exception_path()
-    type_check.test_level_based_context_filter_with_level_prefixed()
-    type_check.test_configure_structlog_with_config_additional_processors()
+    coverage = runtime_cov_tests.TestRuntimeCoverage100()
+    coverage.test_is_dict_like_with_exception_on_items()
+    coverage.test_is_dict_like_with_exception_on_items_typeerror()
+    coverage.test_is_dict_like_with_userdict()
+    coverage.test_is_dict_like_with_missing_attributes()
+    coverage.test_is_dict_like_with_missing_keys()
+    coverage.test_is_dict_like_with_missing_items()
+    coverage.test_is_dict_like_with_missing_get()
+    coverage.test_extract_generic_args_with_type_mapping()
+    coverage.test_is_sequence_type_with_type_mapping()
+    coverage.test_level_based_context_filter_malformed_prefix()
+    coverage.test_configure_structlog_with_config_object()
+    coverage.test_enable_runtime_checking()
+    coverage.test_is_valid_json_exception_path()
+    coverage.test_is_valid_identifier_non_string()
+    coverage.test_extract_generic_args_with_typing_get_args()
+    coverage.test_extract_generic_args_exception_path()
+    coverage.test_is_sequence_type_with_origin()
+    coverage.test_is_sequence_type_with_sequence_subclass()
+    coverage.test_is_sequence_type_exception_path()
+    coverage.test_level_based_context_filter_with_level_prefixed()
+    coverage.test_configure_structlog_with_config_additional_processors()
 
 
 def test_async_log_writer_paths() -> None:
