@@ -687,15 +687,18 @@ class TestUtilitiesCacheCoverage100:
     ]
 
 
-
 NormalizeComponentScenario = TestUtilitiesCacheCoverage100.NormalizeComponentScenario
 SortKeyScenario = TestUtilitiesCacheCoverage100.SortKeyScenario
 ClearCacheScenario = TestUtilitiesCacheCoverage100.ClearCacheScenario
 CacheScenarios = TestUtilitiesCacheCoverage100.CacheScenarios
 TestuCacheLogger = TestUtilitiesCacheCoverage100.TestuCacheLogger
-TestuCacheNormalizeComponent = TestUtilitiesCacheCoverage100.TestuCacheNormalizeComponent
+TestuCacheNormalizeComponent = (
+    TestUtilitiesCacheCoverage100.TestuCacheNormalizeComponent
+)
 TestuCacheSortKey = TestUtilitiesCacheCoverage100.TestuCacheSortKey
 TestuCacheSortDictKeys = TestUtilitiesCacheCoverage100.TestuCacheSortDictKeys
 TestuCacheClearObjectCache = TestUtilitiesCacheCoverage100.TestuCacheClearObjectCache
-TestuCacheHasCacheAttributes = TestUtilitiesCacheCoverage100.TestuCacheHasCacheAttributes
+TestuCacheHasCacheAttributes = (
+    TestUtilitiesCacheCoverage100.TestuCacheHasCacheAttributes
+)
 TestuCacheGenerateCacheKey = TestUtilitiesCacheCoverage100.TestuCacheGenerateCacheKey

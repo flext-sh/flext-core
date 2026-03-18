@@ -505,7 +505,6 @@ class TestUtilitiesMapperCoverage100:
             tm.that(u.agg([], "v"), eq=0)
 
 
-
 SimpleObj = TestUtilitiesMapperCoverage100.SimpleObj
 _DoubleOp = TestUtilitiesMapperCoverage100._DoubleOp
 _GreaterThanTwoOp = TestUtilitiesMapperCoverage100._GreaterThanTwoOp
