@@ -94,43 +94,43 @@ class FlextContainer(p.Container):
             "user_overrides": registration_kwargs.get("_user_overrides"),
             "container_config": registration_kwargs.get("_container_config"),
         })
-        return m.ServiceRegistrationSpec(
-            config=(
+        return m.ServiceRegistrationSpec.model_validate({
+            "config": (
                 override_registration.config
                 if override_registration.config is not None
                 else base_registration.config
             ),
-            context=(
+            "context": (
                 override_registration.context
                 if override_registration.context is not None
                 else base_registration.context
             ),
-            services=(
+            "services": (
                 override_registration.services
                 if override_registration.services is not None
                 else base_registration.services
             ),
-            factories=(
+            "factories": (
                 override_registration.factories
                 if override_registration.factories is not None
                 else base_registration.factories
             ),
-            resources=(
+            "resources": (
                 override_registration.resources
                 if override_registration.resources is not None
                 else base_registration.resources
             ),
-            user_overrides=(
+            "user_overrides": (
                 override_registration.user_overrides
                 if override_registration.user_overrides is not None
                 else base_registration.user_overrides
             ),
-            container_config=(
+            "container_config": (
                 override_registration.container_config
                 if override_registration.container_config is not None
                 else base_registration.container_config
             ),
-        )
+        })
 
     @staticmethod
     def _resolve_scoped_registration(
@@ -148,43 +148,43 @@ class FlextContainer(p.Container):
         override_registration = m.ServiceRegistrationSpec.model_validate(
             registration_kwargs
         )
-        return m.ServiceRegistrationSpec(
-            config=(
+        return m.ServiceRegistrationSpec.model_validate({
+            "config": (
                 override_registration.config
                 if override_registration.config is not None
                 else registration.config
             ),
-            context=(
+            "context": (
                 override_registration.context
                 if override_registration.context is not None
                 else registration.context
             ),
-            services=(
+            "services": (
                 override_registration.services
                 if override_registration.services is not None
                 else registration.services
             ),
-            factories=(
+            "factories": (
                 override_registration.factories
                 if override_registration.factories is not None
                 else registration.factories
             ),
-            resources=(
+            "resources": (
                 override_registration.resources
                 if override_registration.resources is not None
                 else registration.resources
             ),
-            user_overrides=(
+            "user_overrides": (
                 override_registration.user_overrides
                 if override_registration.user_overrides is not None
                 else registration.user_overrides
             ),
-            container_config=(
+            "container_config": (
                 override_registration.container_config
                 if override_registration.container_config is not None
                 else registration.container_config
             ),
-        )
+        })
 
     def __new__(
         cls,
@@ -464,9 +464,6 @@ class FlextContainer(p.Container):
                                 else:
                                     raw_result = _factory_func_ref()
                                 try:
-                                    if not u.is_registerable_service(raw_result):
-                                        msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
-                                        raise TypeError(msg)
                                     m.ServiceRegistration(
                                         name=_factory_name,
                                         service=raw_result,
@@ -1046,10 +1043,8 @@ class FlextContainer(p.Container):
                     scoped_context = FlextContext()
             else:
                 scoped_context = FlextContext()
-        elif u.is_context(context):
-            scoped_context = context
         else:
-            scoped_context = self.context.clone()
+            scoped_context = context
         if subproject:
             _ = scoped_context.set("subproject", subproject)
         cloned_services: dict[str, m.ServiceRegistration] = {

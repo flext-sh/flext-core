@@ -307,8 +307,6 @@ class FlextModelsContainer:
         ] = True
 
     class ServiceRegistrationSpec(FlextModelFoundation.ArbitraryTypesModel):
-        """Input specification for container bootstrap and scoped creation."""
-
         config: Annotated[
             p.Settings | None,
             Field(

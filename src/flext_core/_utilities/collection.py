@@ -245,9 +245,11 @@ class FlextUtilitiesCollection:
         total = len(items)
         for processed, item in enumerate(items, 1):
             item_typed: T = item
-            if pre_validate is not None and (not pre_validate(item_typed)):
-                results.append(None)
-                continue
+            if pre_validate is not None:
+                normalized_item: t.MetadataValue = str(item_typed)
+                if not pre_validate(normalized_item):
+                    results.append(None)
+                    continue
             try:
                 result_raw = operation(item)
                 if isinstance(result_raw, r):
