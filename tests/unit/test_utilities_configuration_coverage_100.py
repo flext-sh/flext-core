@@ -22,9 +22,9 @@ class TestFlextUtilitiesConfiguration:
 
         @staticmethod
         def that(
-            value: t.Tests.object,
+            value: t.NormalizedValue,
             *,
-            eq: t.Tests.object = None,
+            eq: t.NormalizedValue = None,
             none: bool | None = None,
             contains: str | None = None,
         ) -> None:
@@ -114,6 +114,8 @@ class TestFlextUtilitiesConfiguration:
 
     @unique
     class ParameterNames(StrEnum):
+        """Parameter names enumeration."""
+
         NAME = "name"
         TIMEOUT = "timeout"
         ENABLED = "enabled"
@@ -123,7 +125,7 @@ class TestFlextUtilitiesConfiguration:
         INDENT = "indent"
         SORT_KEYS = "sort_keys"
 
-    def _create_test_dict(self) -> dict[str, t.Tests.object]:
+    def _create_test_dict(self) -> dict[str, t.NormalizedValue]:
         return {
             self.ParameterNames.NAME.value: "test",
             self.ParameterNames.TIMEOUT.value: 60,
@@ -165,7 +167,7 @@ class TestFlextUtilitiesConfiguration:
     def test_set_parameter_on_pydantic_model(
         self,
         param_name: str,
-        value: t.Tests.object,
+        value: t.NormalizedValue,
     ) -> None:
         config = TestUnitModels.ConfigModelForTest(name="test", timeout=30)
         result = u.set_parameter(config, param_name, value)

@@ -44,7 +44,7 @@ class TestuTypeChecker:
 
     @staticmethod
     def _message_type(
-        value: type[dict[str, t.Tests.object] | int | str],
+        value: type[dict[str, t.NormalizedValue] | int | str],
     ) -> t.MessageTypeSpecifier:
         return cast("t.MessageTypeSpecifier", value)
 
@@ -62,15 +62,15 @@ class TestuTypeChecker:
         def handle(self, message: int) -> r[int]:
             return r[int].ok(message * 2)
 
-    class DictHandler(h[dict[str, t.Tests.object], dict[str, t.Tests.object]]):
+    class DictHandler(h[dict[str, t.NormalizedValue], dict[str, t.NormalizedValue]]):
         """Handler for dictionary messages."""
 
         @override
         def handle(
             self,
-            message: dict[str, t.Tests.object],
-        ) -> r[dict[str, t.Tests.object]]:
-            return r[dict[str, t.Tests.object]].ok({
+            message: dict[str, t.NormalizedValue],
+        ) -> r[dict[str, t.NormalizedValue]]:
+            return r[dict[str, t.NormalizedValue]].ok({
                 "processed": True,
                 **message,
             })
@@ -172,7 +172,7 @@ class TestuTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (self._message_type(dict),)
         tm.that(u.can_handle_message_type(accepted, str), eq=False)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
-        dict_type: type[dict[str, t.Tests.object]] = dict
+        dict_type: type[dict[str, t.NormalizedValue]] = dict
         tm.that(u.can_handle_message_type(accepted, dict_type), eq=True)
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -207,7 +207,7 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         tm.that(u._evaluate_type_compatibility(self._type_origin(dict), dict), eq=True)
-        dict_type: type[dict[str, t.Tests.object]] = dict
+        dict_type: type[dict[str, t.NormalizedValue]] = dict
         tm.that(
             u._evaluate_type_compatibility(self._type_origin(dict), dict_type), eq=True
         )

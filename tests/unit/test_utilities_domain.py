@@ -35,13 +35,13 @@ from ._models import TestUnitModels
 def _build_domain_test_entity(
     *,
     name: str,
-    value: t.Tests.object,
-    **_kwargs: t.Tests.object,
+    value: t.NormalizedValue,
+    **_kwargs: t.NormalizedValue,
 ) -> m.DomainTestEntity:
     return m.DomainTestEntity(name=name, value=cast("int", value), domain_events=[])
 
 
-def _convert_to_general_value(obj: object) -> t.Tests.object:
+def _convert_to_general_value(obj: object) -> t.NormalizedValue:
     """Convert object to object (handles Pydantic models).
 
     Args:
@@ -74,7 +74,7 @@ def _convert_to_general_value(obj: object) -> t.Tests.object:
     return str(obj)
 
 
-def _require_payload_str(value: t.Tests.object) -> str:
+def _require_payload_str(value: t.NormalizedValue) -> str:
     if isinstance(value, str):
         return value
     msg = f"Expected str payload, got {type(value).__name__}"
@@ -82,8 +82,8 @@ def _require_payload_str(value: t.Tests.object) -> str:
 
 
 def _require_payload_mapping(
-    value: t.Tests.object,
-) -> Mapping[str, t.Tests.object]:
+    value: t.NormalizedValue,
+) -> Mapping[str, t.NormalizedValue]:
     if isinstance(value, Mapping):
         return value
     msg = f"Expected mapping payload, got {type(value).__name__}"
@@ -92,13 +92,13 @@ def _require_payload_mapping(
 
 def _as_test_payload(
     value: type[t.Primitives],
-) -> t.Tests.object:
+) -> t.NormalizedValue:
     return cast("t.Tests.object", value)
 
 
 def _as_payload_map(
     value: TestUnitModels.InputPayloadMap,
-) -> Mapping[str, t.Tests.object]:
+) -> Mapping[str, t.NormalizedValue]:
     return cast("Mapping[str, t.Tests.object]", value)
 
 

@@ -176,7 +176,7 @@ class TestUtilitiesParserFullCoverage:
         parser3 = u()
         original_hasattr = hasattr
 
-        def _patched_hasattr(obj: test_t.Tests.object, name: str) -> bool:
+        def _patched_hasattr(obj: test_t.NormalizedValue, name: str) -> bool:
             if name == "__class__":
                 return False
             return original_hasattr(obj, name)

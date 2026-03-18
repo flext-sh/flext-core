@@ -29,7 +29,7 @@ pytestmark = [pytest.mark.unit]
 
 class TestDeprecationWarnings:
     def test_normalize_to_container_functional_equivalence(self) -> None:
-        test_cases: list[test_t.Tests.object] = [
+        test_cases: list[test_t.NormalizedValue] = [
             "str",
             42,
             math.pi,

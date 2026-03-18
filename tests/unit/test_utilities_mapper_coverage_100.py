@@ -276,8 +276,8 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_convert_to_json_value(self) -> None:
             obj = SimpleObj(name="test", value=1)
-            payload: dict[str, t.Tests.object] = {"obj": obj}
-            res: dict[str, t.Tests.object] = {}
+            payload: dict[str, t.NormalizedValue] = {"obj": obj}
+            res: dict[str, t.NormalizedValue] = {}
             for key, val in payload.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -289,13 +289,13 @@ class UtilitiesMapperCoverage100Namespace:
         def test_convert_to_json_safe(self) -> None:
             obj = SimpleObj(name="test", value=1)
             now = datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC)
-            payload: dict[str, t.Tests.object] = {
+            payload: dict[str, t.NormalizedValue] = {
                 "obj": obj,
                 "path": Path("/tmp/example"),
                 "when": now,
             }
 
-            res: dict[str, t.Tests.object] = {}
+            res: dict[str, t.NormalizedValue] = {}
             for key, val in payload.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -311,8 +311,8 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(res["when"], eq="2026-03-12T10:30:45+00:00")
 
         def test_convert_dict_to_json(self) -> None:
-            d: dict[str, t.Tests.object] = {"a": SimpleObj(name="test", value=1)}
-            res: dict[str, t.Tests.object] = {}
+            d: dict[str, t.NormalizedValue] = {"a": SimpleObj(name="test", value=1)}
+            res: dict[str, t.NormalizedValue] = {}
             for key, val in d.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -321,12 +321,12 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(res["a"], eq={"name": "test", "value": 1})
 
         def test_convert_list_to_json(self) -> None:
-            test_list: list[dict[str, t.Tests.object]] = [
+            test_list: list[dict[str, t.NormalizedValue]] = [
                 {"a": SimpleObj(name="test", value=1)}
             ]
-            res: list[dict[str, t.Tests.object]] = []
+            res: list[dict[str, t.NormalizedValue]] = []
             for item in test_list:
-                item_dict: dict[str, t.Tests.object] = {}
+                item_dict: dict[str, t.NormalizedValue] = {}
                 for key, val in item.items():
                     if isinstance(val, BaseModel):
                         item_dict[key] = val.model_dump(mode="json")

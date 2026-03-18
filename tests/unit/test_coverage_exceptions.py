@@ -159,7 +159,7 @@ class TestCoverageExceptions:
     ]
 
     FACTORY_CREATION: ClassVar[
-        list[tuple[str, dict[str, t.Tests.object], type[FlextExceptions.BaseError]]]
+        list[tuple[str, dict[str, t.NormalizedValue], type[FlextExceptions.BaseError]]]
     ] = [
         (
             "ValidationError",
@@ -187,7 +187,7 @@ class TestCoverageExceptions:
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         if scenario.kwargs:
             type_kwargs: dict[str, type] = {}
-            metadata_kwargs: dict[str, t.Tests.object] = {}
+            metadata_kwargs: dict[str, t.NormalizedValue] = {}
             for key, value in scenario.kwargs.items():
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
@@ -225,11 +225,11 @@ class TestCoverageExceptions:
 
     def test_exception_in_railway_pattern(self) -> None:
         def validate_and_process(
-            data: dict[str, t.Tests.object],
-        ) -> r[dict[str, t.Tests.object]]:
+            data: dict[str, t.NormalizedValue],
+        ) -> r[dict[str, t.NormalizedValue]]:
             if not data.get("id"):
-                return r[dict[str, t.Tests.object]].fail("Missing id")
-            return r[dict[str, t.Tests.object]].ok(data)
+                return r[dict[str, t.NormalizedValue]].fail("Missing id")
+            return r[dict[str, t.NormalizedValue]].ok(data)
 
         tm.fail(validate_and_process({}))
         tm.ok(validate_and_process({"id": "123"}))
@@ -358,10 +358,10 @@ class TestCoverageExceptions:
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: dict[str, t.Tests.object],
+        kwargs: dict[str, t.NormalizedValue],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
-        converted_kwargs: dict[str, t.Tests.object] = {
+        converted_kwargs: dict[str, t.NormalizedValue] = {
             key: cast("t.MetadataAttributeValue", value)
             for key, value in kwargs.items()
         }

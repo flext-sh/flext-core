@@ -25,7 +25,7 @@ class TestModelsCollectionsFullCoverage:
 
     class _Results(m.Results):
         value: int | bool | None = None
-        data: dict[str, t.Tests.object] = Field(default_factory=dict)
+        data: dict[str, t.NormalizedValue] = Field(default_factory=dict)
 
     @staticmethod
     def _default_tags() -> list[str]:

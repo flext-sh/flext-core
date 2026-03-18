@@ -12,13 +12,13 @@ from pydantic import BaseModel, ConfigDict, Field
 class _ValidationLikeError(Exception):
     """Validation-like error for tests."""
 
-    def errors(self) -> list[dict[str, t.Tests.object]]:
+    def errors(self) -> list[dict[str, t.NormalizedValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
-type TestCaseMap = Mapping[str, t.Tests.object]
+type TestCaseMap = Mapping[str, t.NormalizedValue]
 
-type InputPayloadMap = dict[str, t.Tests.object]
+type InputPayloadMap = dict[str, t.NormalizedValue]
 
 __all__ = [
     "BadConfigForTest",
@@ -93,12 +93,12 @@ class _ErrorsModel(BaseModel):
     @override
     def model_validate(
         cls,
-        obj: t.Tests.object,
+        obj: t.NormalizedValue,
         *,
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, t.Tests.object] | None = None,
+        context: dict[str, t.NormalizedValue] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -114,12 +114,12 @@ class _PlainErrorModel(BaseModel):
     @override
     def model_validate(
         cls,
-        obj: t.Tests.object,
+        obj: t.NormalizedValue,
         *,
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, t.Tests.object] | None = None,
+        context: dict[str, t.NormalizedValue] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -214,7 +214,7 @@ class _FakeConfig(BaseModel):
     timeout: int = 10
 
     @property
-    def data(self) -> dict[str, t.Tests.object]:
+    def data(self) -> dict[str, t.NormalizedValue]:
         return {"timeout": self.timeout}
 
 
@@ -247,7 +247,7 @@ class ComplexModel(BaseModel):
     """Complex test model."""
 
     id: int
-    data: dict[str, t.Tests.object]
+    data: dict[str, t.NormalizedValue]
     items: list[str]
 
 

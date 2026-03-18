@@ -60,14 +60,14 @@ class TestFlextRegistry:
             ),
         ] = False
 
-    class ConcreteTestHandler(h[t.Tests.object, t.Tests.object]):
+    class ConcreteTestHandler(h[t.NormalizedValue, t.NormalizedValue]):
         """Test handler for registry."""
 
         @override
-        def handle(self, message: t.Tests.object) -> r[t.Tests.object]:
-            return r[t.Tests.object].ok(f"processed_{message}")
+        def handle(self, message: t.NormalizedValue) -> r[t.NormalizedValue]:
+            return r[t.NormalizedValue].ok(f"processed_{message}")
 
-        def __call__(self, message: t.Tests.object) -> r[t.Tests.object]:
+        def __call__(self, message: t.NormalizedValue) -> r[t.NormalizedValue]:
             return self.handle(message)
 
     _HANDLER_REGISTRATION: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [

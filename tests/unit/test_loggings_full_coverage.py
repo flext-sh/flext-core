@@ -49,7 +49,7 @@ class TestModule:
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: dict[str, t.Tests.object] = {}
+            self.store: dict[str, t.NormalizedValue] = {}
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)
@@ -61,7 +61,7 @@ class TestModule:
         def clear_contextvars(self) -> None:
             self.store.clear()
 
-        def get_contextvars(self) -> dict[str, t.Tests.object]:
+        def get_contextvars(self) -> dict[str, t.NormalizedValue]:
             return dict(self.store)
 
     class _StructlogShim:
@@ -226,7 +226,7 @@ class TestModule:
             co_qualname = "MyType.run"
 
         class _Frame:
-            f_locals: ClassVar[dict[str, t.Tests.object]] = {}
+            f_locals: ClassVar[dict[str, t.NormalizedValue]] = {}
             f_code = _Code()
 
         tm.that(
@@ -350,7 +350,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: dict[str, t.Tests.object] = {}
+        captured: dict[str, t.NormalizedValue] = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None
@@ -405,7 +405,7 @@ class TestModule:
             co_qualname = "MyClass.run"
 
         class _UpperFrame:
-            f_locals: ClassVar[dict[str, t.Tests.object]] = {}
+            f_locals: ClassVar[dict[str, t.NormalizedValue]] = {}
             f_code = _CodeUpper()
 
         monkeypatch.setattr(c.Validation, "LEVEL_PREFIX_PARTS_COUNT", 2)
@@ -424,7 +424,7 @@ class TestModule:
         class _CallerFrame:
             f_code = _CodeMethod()
             f_lineno = 40
-            f_locals: ClassVar[dict[str, t.Tests.object]] = {}
+            f_locals: ClassVar[dict[str, t.NormalizedValue]] = {}
 
         def _calling_frame() -> types.FrameType:
             return cast("types.FrameType", cast("object", _CallerFrame()))
@@ -493,7 +493,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: dict[str, t.Tests.object] = {}
+        captured: dict[str, t.NormalizedValue] = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None

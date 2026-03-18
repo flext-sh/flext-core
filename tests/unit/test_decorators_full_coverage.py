@@ -198,7 +198,7 @@ class TestDecoratorsFullCoverage:
         tm.that(isinstance(result_exc, Exception), eq=True)
         tm.that(calls["n"], eq=2)
 
-        def _fake_retry_config(**_kw: test_t.Tests.object) -> SimpleNamespace:
+        def _fake_retry_config(**_kw: test_t.NormalizedValue) -> SimpleNamespace:
             return SimpleNamespace(
                 max_retries=0,
                 initial_delay_seconds=0.1,

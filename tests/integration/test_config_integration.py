@@ -38,12 +38,12 @@ class TestFlextSettingsSingletonIntegration:
 
         test_name: Annotated[str, Field(description="Configuration test case name")]
         config_data: Annotated[
-            dict[str, t.Tests.object],
+            dict[str, t.NormalizedValue],
             Field(
                 description="Input configuration payload",
             ),
         ]
-        expected_values: dict[str, t.Tests.object] = Field(
+        expected_values: dict[str, t.NormalizedValue] = Field(
             default_factory=dict,
             description="Expected effective values",
         )

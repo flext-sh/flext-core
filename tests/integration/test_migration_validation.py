@@ -204,18 +204,18 @@ class TestMigrationValidation:
             def process_data(
                 self,
                 data: dict[str, str],
-            ) -> r[dict[str, t.Tests.object]]:
+            ) -> r[dict[str, t.NormalizedValue]]:
                 """Typical data processing method."""
                 if not data:
-                    return r[dict[str, t.Tests.object]].fail(
+                    return r[dict[str, t.NormalizedValue]].fail(
                         "Data required",
                     )
                 self.logger.info("Processing data", size=len(data))
-                processed: dict[str, t.Tests.object] = {
+                processed: dict[str, t.NormalizedValue] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return r[dict[str, t.Tests.object]].ok(processed)
+                return r[dict[str, t.NormalizedValue]].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})

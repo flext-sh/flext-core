@@ -144,11 +144,11 @@ class TestUtilitiesCollectionCoverage:
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Map scenario name")]
         items: Annotated[
-            list[t.Tests.object]
-            | tuple[t.Tests.object, ...]
-            | dict[str, t.Tests.object]
-            | set[t.Tests.object]
-            | frozenset[t.Tests.object],
+            list[t.NormalizedValue]
+            | tuple[t.NormalizedValue, ...]
+            | dict[str, t.NormalizedValue]
+            | set[t.NormalizedValue]
+            | frozenset[t.NormalizedValue],
             (
                 Field(
                     description="Collection input for map operation",
@@ -156,16 +156,16 @@ class TestUtilitiesCollectionCoverage:
             ),
         ]
         mapper: Annotated[
-            Callable[[t.Tests.object], t.Tests.object],
+            Callable[[t.NormalizedValue], t.NormalizedValue],
             Field(description="Mapper callable under test"),
         ]
         expected_result: Annotated[
             (
-                list[t.Tests.object]
-                | tuple[t.Tests.object, ...]
-                | dict[str, t.Tests.object]
-                | set[t.Tests.object]
-                | frozenset[t.Tests.object]
+                list[t.NormalizedValue]
+                | tuple[t.NormalizedValue, ...]
+                | dict[str, t.NormalizedValue]
+                | set[t.NormalizedValue]
+                | frozenset[t.NormalizedValue]
             ),
             Field(description="Expected mapped output"),
         ]
@@ -186,17 +186,17 @@ class TestUtilitiesCollectionCoverage:
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Find scenario name")]
         items: Annotated[
-            list[t.Tests.object]
-            | tuple[t.Tests.object, ...]
-            | dict[str, t.Tests.object],
+            list[t.NormalizedValue]
+            | tuple[t.NormalizedValue, ...]
+            | dict[str, t.NormalizedValue],
             Field(description="Input items for find"),
         ]
         predicate: Annotated[
-            Callable[[t.Tests.object], bool],
+            Callable[[t.NormalizedValue], bool],
             Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            t.Tests.object | None, Field(description="Expected found value")
+            t.NormalizedValue | None, Field(description="Expected found value")
         ]
         return_key: Annotated[
             bool, Field(default=False, description="Whether to return dictionary key")
@@ -208,25 +208,25 @@ class TestUtilitiesCollectionCoverage:
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Filter scenario name")]
         items: Annotated[
-            list[t.Tests.object]
-            | tuple[t.Tests.object, ...]
-            | dict[str, t.Tests.object],
+            list[t.NormalizedValue]
+            | tuple[t.NormalizedValue, ...]
+            | dict[str, t.NormalizedValue],
             Field(description="Input items for filter"),
         ]
         predicate: Annotated[
-            Callable[[t.Tests.object], bool],
+            Callable[[t.NormalizedValue], bool],
             Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            list[t.Tests.object]
-            | tuple[t.Tests.object, ...]
-            | dict[str, t.Tests.object],
+            list[t.NormalizedValue]
+            | tuple[t.NormalizedValue, ...]
+            | dict[str, t.NormalizedValue],
             Field(
                 description="Expected filtered output",
             ),
         ]
         mapper: Annotated[
-            Callable[[t.Tests.object], t.Tests.object] | None,
+            Callable[[t.NormalizedValue], t.NormalizedValue] | None,
             Field(default=None, description="Optional mapping callable"),
         ] = None
 
@@ -236,11 +236,11 @@ class TestUtilitiesCollectionCoverage:
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Count scenario name")]
         items: Annotated[
-            Sequence[t.Tests.object], Field(description="Input items for count")
+            Sequence[t.NormalizedValue], Field(description="Input items for count")
         ]
         expected_count: Annotated[int, Field(description="Expected item count")]
         predicate: Annotated[
-            Callable[[t.Tests.object], bool] | None,
+            Callable[[t.NormalizedValue], bool] | None,
             Field(default=None, description="Optional predicate filter"),
         ] = None
 
@@ -250,20 +250,20 @@ class TestUtilitiesCollectionCoverage:
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Process scenario name")]
         items: Annotated[
-            Sequence[t.Tests.object], Field(description="Input items for process")
+            Sequence[t.NormalizedValue], Field(description="Input items for process")
         ]
         processor: Annotated[
-            Callable[[t.Tests.object], t.Tests.object],
+            Callable[[t.NormalizedValue], t.NormalizedValue],
             Field(description="Processor callable under test"),
         ]
         expected_result: Annotated[
-            t.Tests.object, Field(description="Expected processing result")
+            t.NormalizedValue, Field(description="Expected processing result")
         ]
         on_error: Annotated[
             str, Field(default="collect", description="Error handling mode")
         ] = "collect"
         predicate: Annotated[
-            Callable[[t.Tests.object], bool] | None,
+            Callable[[t.NormalizedValue], bool] | None,
             Field(default=None, description="Optional predicate filter"),
         ] = None
         filter_keys: Annotated[
@@ -361,39 +361,39 @@ class TestUtilitiesCollectionCoverage:
         """Centralized collection utilities test scenarios."""
 
         @staticmethod
-        def _double(value: t.Tests.object) -> t.Tests.object:
+        def _double(value: t.NormalizedValue) -> t.NormalizedValue:
             return cast("int", value) * 2
 
         @staticmethod
-        def _upper(value: t.Tests.object) -> t.Tests.object:
+        def _upper(value: t.NormalizedValue) -> t.NormalizedValue:
             return cast("str", value).upper()
 
         @staticmethod
-        def _is_even(value: t.Tests.object) -> bool:
+        def _is_even(value: t.NormalizedValue) -> bool:
             return cast("int", value) % 2 == 0
 
         @staticmethod
-        def _is_odd(value: t.Tests.object) -> bool:
+        def _is_odd(value: t.NormalizedValue) -> bool:
             return cast("int", value) % 2 != 0
 
         @staticmethod
-        def _greater_than_two(value: t.Tests.object) -> bool:
+        def _greater_than_two(value: t.NormalizedValue) -> bool:
             return cast("int", value) > 2
 
         @staticmethod
-        def _greater_than_one(value: t.Tests.object) -> bool:
+        def _greater_than_one(value: t.NormalizedValue) -> bool:
             return cast("int", value) > 1
 
         @staticmethod
-        def _greater_than_ten(value: t.Tests.object) -> bool:
+        def _greater_than_ten(value: t.NormalizedValue) -> bool:
             return cast("int", value) > 10
 
         @staticmethod
-        def _greater_than_fifteen(value: t.Tests.object) -> bool:
+        def _greater_than_fifteen(value: t.NormalizedValue) -> bool:
             return cast("int", value) > 15
 
         @staticmethod
-        def _equals_two(value: t.Tests.object) -> bool:
+        def _equals_two(value: t.NormalizedValue) -> bool:
             return value == 2
 
         @staticmethod

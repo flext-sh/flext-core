@@ -45,7 +45,7 @@ def test_narrow_contextvar_exception_branch(
 ) -> None:
     FlextContext()
 
-    def _raise_type_error(_value: t.Tests.object) -> None:
+    def _raise_type_error(_value: t.NormalizedValue) -> None:
         msg = "bad"
         raise TypeError(msg)
 
@@ -81,10 +81,10 @@ def test_set_set_all_get_validation_and_error_paths(
     tm.ok(ctx.set(t.ConfigMap(root={})))
 
     class _BadVar:
-        def get(self) -> dict[str, t.Tests.object]:
+        def get(self) -> dict[str, t.NormalizedValue]:
             return {}
 
-        def set(self, _v: t.Tests.object) -> None:
+        def set(self, _v: t.NormalizedValue) -> None:
             msg = "boom"
             raise TypeError(msg)
 

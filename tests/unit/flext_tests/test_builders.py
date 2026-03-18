@@ -18,7 +18,7 @@ from flext_core import r
 from tests.test_utils import assertion_helpers
 
 
-def _as_builder_dict(value: t.Tests.object) -> t.Tests.Builders.BuilderDict:
+def _as_builder_dict(value: t.NormalizedValue) -> t.Tests.Builders.BuilderDict:
     assert isinstance(value, Mapping)
     typed_mapping = cast("Mapping[str, t.Tests.object]", value)
     return cast("t.Tests.Builders.BuilderDict", dict(typed_mapping.items()))
@@ -32,7 +32,7 @@ def _as_builder_result(
 
 
 def _as_parametrized_cases(
-    value: t.Tests.object,
+    value: t.NormalizedValue,
 ) -> list[t.Tests.Builders.ParametrizedCase]:
     assert isinstance(value, list)
     return cast("list[t.Tests.Builders.ParametrizedCase]", value)
@@ -209,7 +209,7 @@ class TestFlextTestsBuilders:
     def test_add_with_items_and_map(self) -> None:
         """Test add() with items and items_map."""
 
-        def _double_item(item: t.Tests.object) -> t.Tests.object:
+        def _double_item(item: t.NormalizedValue) -> t.NormalizedValue:
             assert isinstance(item, int)
             return item * 2
 
@@ -361,7 +361,7 @@ class TestFlextTestsBuilders:
 
         def _double_x(
             data: t.Tests.Builders.BuilderOutputDict,
-        ) -> t.Tests.object:
+        ) -> t.NormalizedValue:
             assert isinstance(data["x"], int)
             return data["x"] * 2
 
@@ -660,7 +660,7 @@ class TestFlextTestsBuilders:
 
     def test_result_assert_failure_delegates_to_tu(self) -> None:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
-        result: r[t.Tests.object] = r[t.Tests.object].fail("Error")
+        result: r[t.NormalizedValue] = r[t.NormalizedValue].fail("Error")
         error: str = tb.Tests.Result.assert_failure(result)
         assert "Error" in error
 

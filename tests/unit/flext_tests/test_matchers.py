@@ -139,7 +139,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_passes(self) -> None:
         """Test tm.that() with keys parameter for config validation."""
-        config: dict[str, t.Tests.object] = {
+        config: dict[str, t.NormalizedValue] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 30,
@@ -161,7 +161,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_zero_timeout(self) -> None:
         """Test tm.that() with zero timeout."""
-        config: dict[str, t.Tests.object] = {
+        config: dict[str, t.NormalizedValue] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 0,
@@ -238,21 +238,21 @@ class TestFlextTestsMatchers:
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
         data: dict[str, t.Tests.Testobject] = {"user": {"name": "John", "age": 30}}
-        result = r[t.Tests.object].ok(data)
+        result = r[t.NormalizedValue].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
         data: dict[str, t.Tests.Testobject] = {"user": {"email": "test@example.com"}}
-        result = r[t.Tests.object].ok(data)
+        result = r[t.NormalizedValue].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
         data: dict[str, t.Tests.Testobject] = {"user": {"name": "John"}}
-        result = r[t.Tests.object].ok(data)
+        result = r[t.NormalizedValue].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         assert value == "John"
 

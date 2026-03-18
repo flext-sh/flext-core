@@ -13,17 +13,17 @@ from flext_core import FlextHandlers, FlextRegistry, h, r
 from tests import c, m, p, t
 
 
-class _Handler(FlextHandlers[test_t.Tests.object, t.Container]):
+class _Handler(FlextHandlers[test_t.NormalizedValue, t.Container]):
     """Test handler implementation."""
 
     @override
-    def handle(self, message: test_t.Tests.object) -> r[t.Container]:
+    def handle(self, message: test_t.NormalizedValue) -> r[t.Container]:
         if isinstance(message, (str, int, float, bool)):
             return r[t.Container].ok(message)
         return r[t.Container].fail("unsupported message")
 
     @override
-    def __call__(self, message: test_t.Tests.object) -> r[t.Container]:
+    def __call__(self, message: test_t.NormalizedValue) -> r[t.Container]:
         return self.handle(message)
 
 
@@ -124,7 +124,7 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
 
     def fake_scan(
         _module: ModuleType,
-    ) -> list[tuple[str, Callable[..., test_t.Tests.object], m.DecoratorConfig]]:
+    ) -> list[tuple[str, Callable[..., test_t.NormalizedValue], m.DecoratorConfig]]:
         cfg = m.DecoratorConfig(command=str, middleware=[])
         return [("x", discovered_handler.handle, cfg)]
 

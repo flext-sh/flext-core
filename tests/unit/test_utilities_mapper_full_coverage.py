@@ -21,7 +21,7 @@ class UtilitiesMapperFullCoverageNamespace:
         """Model with port/nested for mapper take/extract tests."""
 
         port: int = 0
-        nested: Annotated[dict[str, test_t.Tests.object], Field(default_factory=dict)]
+        nested: Annotated[dict[str, test_t.NormalizedValue], Field(default_factory=dict)]
 
     class _MaybeModel(BaseModel):
         """Model with optional field for take tests."""
@@ -332,14 +332,14 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(model.model_dump(mode="json"), eq={"x": 1})
         path_val = Path("/tmp")
         tm.that(path_val.as_posix(), eq="/tmp")
-        as_json: dict[str, test_t.Tests.object] = {}
+        as_json: dict[str, test_t.NormalizedValue] = {}
         for key, val in {"x": Path("/tmp")}.items():
             if isinstance(val, Path):
                 as_json[str(key)] = val.as_posix()
             else:
                 as_json[str(key)] = val
         tm.that(as_json["x"], eq="/tmp")
-        list_json: list[dict[str, test_t.Tests.object]] = [{"a": 1}, {"b": "opaque"}]
+        list_json: list[dict[str, test_t.NormalizedValue]] = [{"a": 1}, {"b": "opaque"}]
         tm.that(list_json, is_=list)
         tm.that(list_json[0]["a"], eq=1)
 
@@ -348,7 +348,7 @@ class UtilitiesMapperFullCoverageNamespace:
             "path": Path("/tmp"),
             "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
         }
-        safe_json: dict[str, test_t.Tests.object] = {}
+        safe_json: dict[str, test_t.NormalizedValue] = {}
         for key, val in payload.items():
             if isinstance(val, BaseModel):
                 safe_json[key] = val.model_dump(mode="json")
@@ -619,7 +619,7 @@ class UtilitiesMapperFullCoverageNamespace:
             _strip_none: bool,
             _strip_empty: bool,
             _to_json: bool,
-        ) -> dict[str, test_t.Tests.object]:
+        ) -> dict[str, test_t.NormalizedValue]:
             raise RuntimeError(msg)
 
         msg = "explode transform"
@@ -909,7 +909,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 return "plain"
 
         tm.that(str(Plain()), eq="plain")
-        plain_dict: dict[str, test_t.Tests.object] = {"1": str(Plain())}
+        plain_dict: dict[str, test_t.NormalizedValue] = {"1": str(Plain())}
         tm.that(plain_dict, eq={"1": "plain"})
         plain_list: list[int | dict[str, str]] = [1, {"k": str(Plain())}]
         tm.that(plain_list, eq=[1, {"k": "plain"}])
@@ -987,7 +987,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.flat([[1, 2], [3]]), eq=[1, 2, 3])
         tm.that(mapper._extract_field_value({"x": 1}, "x"), eq=1)
         tm.that(mapper.agg([{"v": 1}, {"v": 2}], "v"), eq=3)
-        mixed_items: tuple[dict[str, test_t.Tests.object], ...] = (
+        mixed_items: tuple[dict[str, test_t.NormalizedValue], ...] = (
             {"v": 1},
             {"v": "no"},
         )

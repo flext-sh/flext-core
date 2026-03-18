@@ -282,8 +282,8 @@ class TestRuntimeCoverage100:
         def custom_processor(
             logger: p.Logger | None,
             method_name: str,
-            event_dict: dict[str, t.Tests.object],
-        ) -> dict[str, t.Tests.object]:
+            event_dict: dict[str, t.NormalizedValue],
+        ) -> dict[str, t.NormalizedValue]:
             event_dict["custom"] = True
             return event_dict
 

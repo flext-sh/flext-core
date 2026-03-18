@@ -1092,7 +1092,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.Tests.object] = {
+        dict_like_converted: dict[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -1277,15 +1277,15 @@ class Teste:
     def test_create_with_dict_like_metadata_normalization(self) -> None:
         """Test create normalizes dict-like metadata values - tests lines 1376-1379."""
 
-        class DictLike(Mapping[str, t.Tests.object]):
-            _obj: t.Tests.object
+        class DictLike(Mapping[str, t.NormalizedValue]):
+            _obj: t.NormalizedValue
 
             @override
             def __init__(self) -> None:
                 self._obj = str(id(self))
 
             @override
-            def __getitem__(self, key: str) -> t.Tests.object:
+            def __getitem__(self, key: str) -> t.NormalizedValue:
                 if key == "key1":
                     return "value1"
                 if key == "key2":
@@ -1301,7 +1301,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.Tests.object] = {
+        dict_like_converted: dict[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -1325,7 +1325,7 @@ class Teste:
         class DictLike(Mapping[str, object]):
             @override
             def __getitem__(self, key: str) -> object:
-                mapping: dict[str, t.Tests.object] = {"key1": "value1", "key2": 123}
+                mapping: dict[str, t.NormalizedValue] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
                 raise KeyError(key)
@@ -1339,7 +1339,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.Tests.object] = {
+        dict_like_converted: dict[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -1360,15 +1360,15 @@ class Teste:
     def test_create_with_dict_like_metadata_normalize_values(self) -> None:
         """Test create normalizes dict-like metadata values - tests line 1379."""
 
-        class DictLike(Mapping[str, t.Tests.object]):
-            _obj: t.Tests.object
+        class DictLike(Mapping[str, t.NormalizedValue]):
+            _obj: t.NormalizedValue
 
             @override
             def __init__(self) -> None:
                 self._obj = str(id(self))
 
             @override
-            def __getitem__(self, key: str) -> t.Tests.object:
+            def __getitem__(self, key: str) -> t.NormalizedValue:
                 if key == "key1":
                     return self._obj
                 raise KeyError(key)
@@ -1382,7 +1382,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.Tests.object] = {
+        dict_like_converted: dict[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))

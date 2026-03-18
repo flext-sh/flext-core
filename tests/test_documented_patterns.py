@@ -156,6 +156,8 @@ class TestDocumentedPatterns:
             return user
 
     class TestFactories:
+        """Factory methods for test cases."""
+
         @staticmethod
         def success_cases() -> list[tuple[str, str]]:
             return [
@@ -195,6 +197,8 @@ class TestDocumentedPatterns:
             ]
 
     class GetUserService(FlextService[User]):
+        """Service to get user."""
+
         user_id: str = ""
 
         @override
@@ -210,6 +214,8 @@ class TestDocumentedPatterns:
             )
 
     class SendEmailService(FlextService[EmailResponse]):
+        """Service to send email."""
+
         to: str = ""
         subject: str = ""
 
@@ -222,6 +228,8 @@ class TestDocumentedPatterns:
             )
 
     class ValidationService(FlextService[t.ConfigMap]):
+        """Service to validate values."""
+
         value: int = 0
 
         @override
@@ -235,6 +243,8 @@ class TestDocumentedPatterns:
             )
 
     class MultiOperationService(FlextService[t.ConfigMap]):
+        """Service for multiple operations."""
+
         operation: str = ""
         value: int = 0
 

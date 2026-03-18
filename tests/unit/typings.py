@@ -4,9 +4,9 @@ from collections.abc import Mapping
 
 from tests import t
 
-type TestCaseMap = Mapping[str, t.Tests.object]
+type TestCaseMap = Mapping[str, t.NormalizedValue]
 
-type InputPayloadMap = dict[str, t.Tests.object]
+type InputPayloadMap = dict[str, t.NormalizedValue]
 
 type SampleValue = t.Primitives | None
 

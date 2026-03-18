@@ -231,7 +231,7 @@ class TestConstants:
     )
     def test_type_safety_constant_types(
         self,
-        value: test_t.Tests.object,
+        value: test_t.NormalizedValue,
         expected_type: type,
     ) -> None:
         """Test that constants have correct types."""

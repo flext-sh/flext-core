@@ -64,20 +64,20 @@ class TestFactoriesHelpers:
 
     @staticmethod
     def as_single_payload_result(
-        value: r[t.Tests.object] | list[r[t.Tests.object]],
-    ) -> r[t.Tests.object]:
+        value: r[t.NormalizedValue] | list[r[t.NormalizedValue]],
+    ) -> r[t.NormalizedValue]:
         return value if isinstance(value, r) else value[0]
 
     @staticmethod
     def as_payload_list(
-        value: list[t.Tests.object] | r[list[t.Tests.object]],
-    ) -> list[t.Tests.object]:
+        value: list[t.NormalizedValue] | r[list[t.NormalizedValue]],
+    ) -> list[t.NormalizedValue]:
         return value if isinstance(value, list) else value.value
 
     @staticmethod
     def as_payload_mapping(
-        value: Mapping[str, t.Tests.object] | r[Mapping[str, t.Tests.object]],
-    ) -> Mapping[str, t.Tests.object]:
+        value: Mapping[str, t.NormalizedValue] | r[Mapping[str, t.NormalizedValue]],
+    ) -> Mapping[str, t.NormalizedValue]:
         return value if isinstance(value, Mapping) else value.value
 
     def test_user_creation_default(self) -> None:

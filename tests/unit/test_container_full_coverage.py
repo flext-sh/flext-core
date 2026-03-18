@@ -347,7 +347,7 @@ class TestContainerFullCoverage:
         )
         c._config = FlextSettings(app_name="base")
         c._context = FlextContext()
-        captured: dict[str, t.Tests.object] = {}
+        captured: dict[str, t.NormalizedValue] = {}
 
         def _fake_create_scoped_instance(**kwargs: t.Scalar) -> FlextContainer:
             captured.update(kwargs)

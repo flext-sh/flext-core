@@ -60,7 +60,7 @@ class TestModels:
             TestModels.ModelType, Field(description="Model type under creation test")
         ]
         field_data: Annotated[
-            dict[str, test_t.Tests.object], Field(description="Model input payload")
+            dict[str, test_t.NormalizedValue], Field(description="Model input payload")
         ]
         expected_checks: Annotated[
             list[str], Field(description="Expected validation check labels")
@@ -729,10 +729,10 @@ class TestModels:
             name: str
             handler_called: bool = False
             handler_data: Annotated[
-                dict[str, test_t.Tests.object], Field(default_factory=dict)
+                dict[str, test_t.NormalizedValue], Field(default_factory=dict)
             ]
 
-            def _apply_test_event(self, data: dict[str, test_t.Tests.object]) -> None:
+            def _apply_test_event(self, data: dict[str, test_t.NormalizedValue]) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
@@ -752,7 +752,7 @@ class TestModels:
             name: str
 
             def _apply_failing_event(
-                self, _data: dict[str, test_t.Tests.object]
+                self, _data: dict[str, test_t.NormalizedValue]
             ) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)

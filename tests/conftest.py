@@ -97,7 +97,7 @@ def mock_external_service() -> FunctionalExternalService:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, t.Tests.object]:
+def sample_data() -> dict[str, t.NormalizedValue]:
     """Provide sample test data for integration tests."""
     return {
         "string": "test_value",
@@ -130,9 +130,9 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> r[dict[str, t.Tests.object]]:
+def flext_result_success() -> r[dict[str, t.NormalizedValue]]:
     """Successful r fixture available to all FLEXT projects."""
-    return r[dict[str, t.Tests.object]].ok({"success": True})
+    return r[dict[str, t.NormalizedValue]].ok({"success": True})
 
 
 @pytest.fixture
@@ -282,8 +282,8 @@ def out_of_range() -> list[tuple[int, int, int]]:
 
 
 def assert_validates(
-    model_class: type, field_name: str, value: t.Tests.object
-) -> t.Tests.object:
+    model_class: type, field_name: str, value: t.NormalizedValue
+) -> t.NormalizedValue:
     """Validate a value against a model field and return the validated value.
 
     Args:
@@ -308,7 +308,7 @@ def assert_validates(
 def assert_rejects(
     model_class: type,
     field_name: str,
-    value: t.Tests.object,
+    value: t.NormalizedValue,
     error_type: type[Exception] | None = None,
 ) -> str:
     """Assert that a value is rejected during validation.

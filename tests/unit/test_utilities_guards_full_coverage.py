@@ -18,10 +18,10 @@ from ._models import TestUnitModels
 
 
 def _is_type_obj(
-    value: t.Tests.object, type_spec: str | type | tuple[type, ...]
+    value: t.NormalizedValue, type_spec: str | type | tuple[type, ...]
 ) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
-    fn: Callable[[t.Tests.object, str | type | tuple[type, ...]], bool] = getattr(
+    fn: Callable[[t.NormalizedValue, str | type | tuple[type, ...]], bool] = getattr(
         u,
         "is_type",
     )
@@ -152,7 +152,7 @@ def test_is_flexible_value_covers_all_branches() -> None:
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
-    plain_obj: t.Tests.object = cast("t.Tests.object", object())
+    plain_obj: t.NormalizedValue = cast("t.Tests.object", object())
     tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "container"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "command_bus"), eq=True)
@@ -208,7 +208,7 @@ def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
 
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
-    plain_obj: t.Tests.object = cast("t.Tests.object", object())
+    plain_obj: t.NormalizedValue = cast("t.Tests.object", object())
     tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "context"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "handler"), eq=True)

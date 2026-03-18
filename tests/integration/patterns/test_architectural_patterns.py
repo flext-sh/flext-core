@@ -68,7 +68,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, t.Tests.object] = {}
+                self._config: dict[str, t.NormalizedValue] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -85,13 +85,13 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> r[dict[str, t.Tests.object]]:
+            def build(self) -> r[dict[str, t.NormalizedValue]]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[dict[str, t.Tests.object]].fail(
+                    return r[dict[str, t.NormalizedValue]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[dict[str, t.Tests.object]].ok(self._config.copy())
+                return r[dict[str, t.NormalizedValue]].ok(self._config.copy())
 
         config_result = (
             ConfigurationBuilder()
@@ -252,14 +252,14 @@ class TestArchitecturalPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: list[dict[str, t.Tests.object]] = []
+        observers: list[dict[str, t.NormalizedValue]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: dict[str, t.Tests.object] = {"name": "Observer1", "state": None}
-        obs2: dict[str, t.Tests.object] = {"name": "Observer2", "state": None}
+        obs1: dict[str, t.NormalizedValue] = {"name": "Observer1", "state": None}
+        obs2: dict[str, t.NormalizedValue] = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
         notify_all("new_state")
         assert obs1["state"] == "new_state"

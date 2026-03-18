@@ -61,15 +61,15 @@ class TestMixinsFullCoverage:
     class _RuntimeContainer:
         def __init__(self) -> None:
             super().__init__()
-            self.configured: dict[str, t.Tests.object] | None = None
-            self.wired: dict[str, t.Tests.object] | None = None
+            self.configured: dict[str, t.NormalizedValue] | None = None
+            self.wired: dict[str, t.NormalizedValue] | None = None
 
         def scoped(
             self, **_kwargs: t.Scalar
         ) -> TestMixinsFullCoverage._RuntimeContainer:
             return self
 
-        def configure(self, overrides: dict[str, t.Tests.object]) -> None:
+        def configure(self, overrides: dict[str, t.NormalizedValue]) -> None:
             self.configured = overrides
 
         def wire_modules(self, **kwargs: t.Scalar) -> None:
@@ -82,7 +82,7 @@ class TestMixinsFullCoverage:
             return False
 
         def register(
-            self, _name: str, _value: t.Tests.object, *, kind: str = "service"
+            self, _name: str, _value: t.NormalizedValue, *, kind: str = "service"
         ) -> TestMixinsFullCoverage._RuntimeContainer:
             _ = kind
             return self
@@ -93,8 +93,8 @@ class TestMixinsFullCoverage:
         def get_config(self) -> t.ConfigMap:
             return t.ConfigMap(root={})
 
-        def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.Tests.object]:
-            return r[t.Tests.object].fail("not implemented")
+        def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.NormalizedValue]:
+            return r[t.NormalizedValue].fail("not implemented")
 
         @property
         def context(self) -> None:
@@ -113,7 +113,7 @@ class TestMixinsFullCoverage:
             super().__init__()
             self.success: bool = success
             self.logger: t.Container | BaseModel | None = logger
-            self.factories: dict[str, t.Tests.object] = {}
+            self.factories: dict[str, t.NormalizedValue] = {}
             self.register_calls: list[tuple[str, str]] = []
 
         def get_typed(
@@ -143,7 +143,7 @@ class TestMixinsFullCoverage:
         def register(
             self,
             name: str,
-            value: t.Tests.object,
+            value: t.NormalizedValue,
             *,
             kind: str = "service",
         ) -> TestMixinsFullCoverage._ContainerForLogger:
@@ -250,7 +250,7 @@ class TestMixinsFullCoverage:
             def has_service(self, _name: str) -> bool:
                 return True
 
-            def register(self, _name: str, _value: t.Tests.object) -> _AlreadyContainer:
+            def register(self, _name: str, _value: t.NormalizedValue) -> _AlreadyContainer:
                 return self
 
         monkeypatch.setattr(
@@ -264,7 +264,7 @@ class TestMixinsFullCoverage:
             def has_service(self, _name: str) -> bool:
                 return False
 
-            def register(self, _name: str, _value: t.Tests.object) -> _FailContainer:
+            def register(self, _name: str, _value: t.NormalizedValue) -> _FailContainer:
                 return self
 
         monkeypatch.setattr(
@@ -469,17 +469,17 @@ class TestMixinsFullCoverage:
             config_overrides=None,
             initial_context=None,
         )
-        captured: dict[str, t.Tests.object] = {}
+        captured: dict[str, t.NormalizedValue] = {}
 
         class _RegContainer:
             def __init__(self) -> None:
                 super().__init__()
-                self._services: dict[str, t.Tests.object] = {}
+                self._services: dict[str, t.NormalizedValue] = {}
 
             def has_service(self, name: str) -> bool:
                 return name in self._services
 
-            def register(self, name: str, value: t.Tests.object) -> _RegContainer:
+            def register(self, name: str, value: t.NormalizedValue) -> _RegContainer:
                 self._services[name] = value
                 captured["name"] = name
                 captured["value"] = value

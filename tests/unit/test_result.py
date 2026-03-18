@@ -69,10 +69,10 @@ class Testr:
             self,
             name: str,
             operation_type: StrEnum,
-            value: t.Tests.object,
+            value: t.NormalizedValue,
             *,
             is_success_expected: bool = True,
-            expected_result: t.Tests.object | None = None,
+            expected_result: t.NormalizedValue | None = None,
         ) -> None:
             super().__init__(
                 name=name,
@@ -372,7 +372,7 @@ class Testr:
 
         Replaces 10+ lines of manual test case creation.
         """
-        success_values: list[t.Tests.object] = ["value1", "value2", "value3"]
+        success_values: list[t.NormalizedValue] = ["value1", "value2", "value3"]
         failure_errors: list[str] = ["error1", "error2"]
         error_codes: list[str | None] = ["CODE1", None]
         cases = u.Tests.GenericHelpers.create_parametrized_cases(
@@ -721,7 +721,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: dict[str, t.Tests.object] = result.fold(
+        response: dict[str, t.NormalizedValue] = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

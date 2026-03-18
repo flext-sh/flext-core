@@ -40,7 +40,7 @@ m = TestsFlextModels
 t = TestsFlextTypes
 u = TestsFlextUtilities
 
-_object = t.Tests.object
+_object = t.NormalizedValue
 
 
 def _parse_delimited_cases() -> list[m.ParseDelimitedCase]:

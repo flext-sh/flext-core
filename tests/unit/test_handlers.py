@@ -24,14 +24,14 @@ class TestFlextHandlers:
         def handle(self, message: str) -> r[str]:
             return r[str].ok(f"processed_{message}")
 
-    class ValidationTestHandler(h[t.Tests.object, str]):
+    class ValidationTestHandler(h[t.NormalizedValue, str]):
         """Test handler for validation."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
         @override
-        def handle(self, message: t.Tests.object) -> r[str]:
+        def handle(self, message: t.NormalizedValue) -> r[str]:
             return r[str].ok(f"processed_{message}")
 
     class FailingTestHandler(h[str, str]):
@@ -75,7 +75,7 @@ class TestFlextHandlers:
         ),
     ]
 
-    VALIDATION_TYPES: ClassVar[list[tuple[str, t.Tests.object]]] = [
+    VALIDATION_TYPES: ClassVar[list[tuple[str, t.NormalizedValue]]] = [
         ("str", "test_message"),
         ("int", 42),
         ("float", math.pi),
@@ -215,13 +215,13 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[dict[str, t.Tests.object], str]):
+        class DictHandler(h[dict[str, t.NormalizedValue], str]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: dict[str, t.Tests.object]) -> r[str]:
+            def handle(self, message: dict[str, t.NormalizedValue]) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
         config = u.Tests.HandlerHelpers.create_handler_config(
@@ -231,7 +231,7 @@ class TestFlextHandlers:
             handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
         handler = DictHandler(config=config)
-        dict_message: dict[str, t.Tests.object] = {
+        dict_message: dict[str, t.NormalizedValue] = {
             "command_id": "cmd_123",
             "data": "test_data",
         }
@@ -445,7 +445,7 @@ class TestFlextHandlers:
     def test_handlers_message_validation_types(
         self,
         type_name: str,
-        message: t.Tests.object,
+        message: t.NormalizedValue,
     ) -> None:
         config = u.Tests.HandlerHelpers.create_handler_config(
             f"test_{type_name}_message",

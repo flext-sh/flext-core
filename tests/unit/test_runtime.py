@@ -1034,8 +1034,8 @@ class TestFlextRuntime:
             def custom_processor(
                 _logger: p.Logger,
                 _method_name: str,
-                event_dict: dict[str, t.Tests.object],
-            ) -> dict[str, t.Tests.object]:
+                event_dict: dict[str, t.NormalizedValue],
+            ) -> dict[str, t.NormalizedValue]:
                 event_dict["custom"] = True
                 return event_dict
 

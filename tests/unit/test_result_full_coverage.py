@@ -16,7 +16,7 @@ from ._models import TestUnitModels
 
 
 class _ValidationLikeError(ValueError):
-    def errors(self) -> list[dict[str, t.Tests.object]]:
+    def errors(self) -> list[dict[str, t.NormalizedValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 

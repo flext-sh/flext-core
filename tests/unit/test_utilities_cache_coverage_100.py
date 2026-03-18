@@ -37,14 +37,14 @@ class UtilitiesCacheCoverage100Namespace:
 
         name: Annotated[str, Field(description="Normalize scenario name")]
         component: Annotated[
-            t.Tests.object | set[t.Primitives | None] | None,
+            t.NormalizedValue | set[t.Primitives | None] | None,
             Field(default=None, description="Input component to normalize"),
         ] = None
         expected_type: Annotated[
             type, Field(description="Expected normalized value type")
         ]
         expected_value: Annotated[
-            t.Tests.object | None,
+            t.NormalizedValue | None,
             Field(default=None, description="Optional expected normalized value"),
         ] = None
 
@@ -68,7 +68,7 @@ class UtilitiesCacheCoverage100Namespace:
 
         name: Annotated[str, Field(description="Cache clear scenario name")]
         obj: Annotated[
-            t.Tests.object, Field(description="Object under cache clear test")
+            t.NormalizedValue, Field(description="Object under cache clear test")
         ]
         has_cache_attr: Annotated[
             bool, Field(description="Whether object exposes cache attribute")
@@ -523,7 +523,7 @@ class UtilitiesCacheCoverage100Namespace:
                     self._cache = object()
 
                 @override
-                def __setattr__(self, name: str, value: t.Tests.object | None) -> None:
+                def __setattr__(self, name: str, value: t.NormalizedValue | None) -> None:
                     if name == "_cache" and value is None:
                         raise TypeError(error_msg)
                     super().__setattr__(name, value)
@@ -602,7 +602,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             class TestObject:
                 def __init__(self) -> None:
-                    self._cache: dict[str, t.Tests.object] = {}  # Test double
+                    self._cache: dict[str, t.NormalizedValue] = {}  # Test double
 
             obj = TestObject()
             assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True
@@ -622,8 +622,8 @@ class UtilitiesCacheCoverage100Namespace:
 
             class TestObject:
                 def __init__(self) -> None:
-                    self._cache: dict[str, t.Tests.object] = {}
-                    self.cache: dict[str, t.Tests.object] = {}
+                    self._cache: dict[str, t.NormalizedValue] = {}
+                    self.cache: dict[str, t.NormalizedValue] = {}
 
             obj = TestObject()
             assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True

@@ -51,9 +51,9 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: dict[str, t.Tests.object] = {}
-            self._when: dict[str, t.Tests.object] = {}
-            self._then: dict[str, t.Tests.object] = {}
+            self._given: dict[str, t.NormalizedValue] = {}
+            self._when: dict[str, t.NormalizedValue] = {}
+            self._then: dict[str, t.NormalizedValue] = {}
             self._tags: list[str] = []
             self._priority = "normal"
 
@@ -130,7 +130,7 @@ class TestAdvancedPatterns:
 
             """
 
-            def convert_dict_value(value: t.Tests.object) -> str | int | bool:
+            def convert_dict_value(value: t.NormalizedValue) -> str | int | bool:
                 """Convert object to str | int | bool."""
                 if isinstance(value, (str, int, bool)):
                     return value
@@ -188,8 +188,8 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: dict[str, t.Tests.object] = {}
-            self._validation_rules: dict[str, t.Tests.object] = {}
+            self._data: dict[str, t.NormalizedValue] = {}
+            self._validation_rules: dict[str, t.NormalizedValue] = {}
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_id method.
@@ -216,7 +216,7 @@ class TestAdvancedPatterns:
 
         def with_metadata(
             self,
-            **kwargs: t.Tests.object,
+            **kwargs: t.NormalizedValue,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_metadata method.
 
@@ -255,7 +255,7 @@ class TestAdvancedPatterns:
 
         def with_validation_rules(
             self,
-            **kwargs: t.Tests.object,
+            **kwargs: t.NormalizedValue,
         ) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_validation_rules method.
 
@@ -266,7 +266,7 @@ class TestAdvancedPatterns:
             self._validation_rules = kwargs
             return self
 
-        def build(self) -> dict[str, t.Tests.object]:
+        def build(self) -> dict[str, t.NormalizedValue]:
             """Build method.
 
             Returns:
@@ -363,18 +363,18 @@ class TestAdvancedPatterns:
 
         def __init__(
             self,
-            data: list[t.Tests.object]
-            | dict[str, t.Tests.object]
+            data: list[t.NormalizedValue]
+            | dict[str, t.NormalizedValue]
             | str
-            | tuple[t.Tests.object, ...],
+            | tuple[t.NormalizedValue, ...],
         ) -> None:
             """Initialize assertionbuilder:."""
             super().__init__()
             self.data: (
-                list[t.Tests.object]
-                | dict[str, t.Tests.object]
+                list[t.NormalizedValue]
+                | dict[str, t.NormalizedValue]
                 | str
-                | tuple[t.Tests.object, ...]
+                | tuple[t.NormalizedValue, ...]
             ) = data
             self._assertions: list[Callable[[], None]] = []
 
@@ -438,10 +438,10 @@ class TestAdvancedPatterns:
             self,
             condition: Callable[
                 [
-                    list[t.Tests.object]
-                    | dict[str, t.Tests.object]
+                    list[t.NormalizedValue]
+                    | dict[str, t.NormalizedValue]
                     | str
-                    | tuple[t.Tests.object, ...],
+                    | tuple[t.NormalizedValue, ...],
                 ],
                 bool,
             ],
@@ -476,6 +476,8 @@ class TestAdvancedPatterns:
                 assertion()
 
     class PatternMarker:
+        """Marker for test patterns."""
+
         def __call__[F: Callable[..., None]](self, pattern: str) -> Callable[[F], F]:
             def decorator(func: F) -> F:
                 setattr(func, "_test_pattern", pattern)
@@ -570,7 +572,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, t.Tests.object] = {
+        test_data: dict[str, t.NormalizedValue] = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -674,7 +676,7 @@ class TestAdvancedPatterns:
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
-        nested_mapping: dict[str, t.Tests.object] = (
+        nested_mapping: dict[str, t.NormalizedValue] = (
             nested_data if isinstance(nested_data, dict) else {}
         )
         nested_dict = nested_mapping.get("id")

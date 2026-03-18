@@ -940,7 +940,7 @@ def test_runtime_result_remaining_paths() -> None:
 
 
 def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    events: list[tuple[str, dict[str, t.Tests.object]]] = []
+    events: list[tuple[str, dict[str, t.NormalizedValue]]] = []
 
     class Logger:
         def info(self, message: str, **kwargs: t.Scalar) -> None:
