@@ -37,8 +37,6 @@ if TYPE_CHECKING:
         TRuntime,
         TV_co,
         U,
-        ValidatedParams,
-        ValidatedReturn,
     )
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.validation import FlextTypesValidation
@@ -49,10 +47,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTypesServices": ("flext_core._typings.services", "FlextTypesServices"),
     "FlextTypesValidation": ("flext_core._typings.validation", "FlextTypesValidation"),
     "FlextTypingBase": ("flext_core._typings.base", "FlextTypingBase"),
-    "FlextTypingContainers": (
-        "flext_core._typings.containers",
-        "FlextTypingContainers",
-    ),
+    "FlextTypingContainers": ("flext_core._typings.containers", "FlextTypingContainers"),
     "MessageT_contra": ("flext_core._typings.generics", "MessageT_contra"),
     "P": ("flext_core._typings.generics", "P"),
     "R": ("flext_core._typings.generics", "R"),
@@ -67,8 +62,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "T_co": ("flext_core._typings.generics", "T_co"),
     "T_contra": ("flext_core._typings.generics", "T_contra"),
     "U": ("flext_core._typings.generics", "U"),
-    "ValidatedParams": ("flext_core._typings.generics", "ValidatedParams"),
-    "ValidatedReturn": ("flext_core._typings.generics", "ValidatedReturn"),
 }
 
 __all__ = [
@@ -92,8 +85,6 @@ __all__ = [
     "T_co",
     "T_contra",
     "U",
-    "ValidatedParams",
-    "ValidatedReturn",
 ]
 
 

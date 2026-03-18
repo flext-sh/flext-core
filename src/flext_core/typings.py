@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from pydantic import BaseModel
 
@@ -34,8 +34,6 @@ from flext_core._typings.generics import (
     TRuntime,
     TV_co,
     U,
-    ValidatedParams,
-    ValidatedReturn,
 )
 
 if TYPE_CHECKING:
@@ -53,6 +51,10 @@ class FlextTypes(
     ``object`` and ``Any`` are strictly forbidden in domain state.
     ``None`` is **never** baked into definitions.
     """
+
+    # --- Parameter specifications and type variables for validated functions ---
+    ValidatedParams = ParamSpec("ValidatedParams")
+    ValidatedReturn = TypeVar("ValidatedReturn")
 
     type RuntimeAtomic = FlextTypesCore.Container | BaseModel
     type RuntimeData = (
@@ -93,6 +95,10 @@ class FlextTypes(
 
 
 t = FlextTypes
+
+# Re-export class attributes at module level for backward compatibility
+ValidatedParams = FlextTypes.ValidatedParams
+ValidatedReturn = FlextTypes.ValidatedReturn
 
 __all__ = [
     "TV",
