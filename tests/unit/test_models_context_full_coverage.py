@@ -52,7 +52,7 @@ def test_structlog_proxy_context_var_default_when_key_missing(
 ) -> None:
     proxy = FlextModelsContext.StructlogProxyContextVar[str]("missing_key", default="d")
     monkeypatch.setattr(
-        "flext_core._models.context.structlog.contextvars.get_contextvars",
+        "flext_core._models._context._proxy_var.structlog.contextvars.get_contextvars",
         lambda: {"other": "x"},
     )
     tm.that(proxy.get(), eq="d")

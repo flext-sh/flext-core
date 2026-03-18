@@ -1,24 +1,25 @@
-"""Rule 0 violation: loose constants, functions, enums outside class."""
-
 from __future__ import annotations
 
 from enum import StrEnum, unique
 
 
+class FlextTestConstants:
+    VALUE = 1
+
+
+MAX_RETRIES = 3
+
+
+def helper() -> None:
+    pass
+
+
+@unique
+class Status(StrEnum):
+    ACTIVE = "active"
+
+
 class Rule0LooseItemsFixture:
-    class FlextTestConstants:
-        """Main constants class."""
+    """Fixture demonstrating loose items violation."""
 
-        VALUE = 1
-
-    MAX_RETRIES = 3
-
-    @staticmethod
-    def helper() -> None:
-        """Loose function — NOT in allowlist."""
-
-    @unique
-    class Status(StrEnum):
-        """Loose class — 2nd outer class — VIOLATION."""
-
-        ACTIVE = "active"
+    pass

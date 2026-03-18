@@ -45,7 +45,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.fixtures.namespace_validator.rule1_magic_number",
         "FlextTestUtilities",
     ),
-    "LooseTypeAlias": ("tests.fixtures.namespace_validator.typings", "LooseTypeAlias"),
+    "LooseTypeAlias": (
+        "tests.fixtures.namespace_validator.typings",
+        "LooseTypeAlias",
+    ),
     "MAX_RETRIES": (
         "tests.fixtures.namespace_validator.rule1_loose_constant",
         "MAX_RETRIES",

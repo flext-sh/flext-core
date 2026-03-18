@@ -242,11 +242,10 @@ class TestEnumUtilitiesCoverage:
     @pytest.mark.parametrize("scenario", IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        value_typed: bool | float | int | str | StrEnum = (
-            scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, StrEnum))
-            else str(scenario.value)
-        )
+        if isinstance(scenario.value, (str, int, float, bool, self.Status)):
+            value_typed: bool | float | int | str | self.Status = scenario.value
+        else:
+            value_typed = str(scenario.value)
         result = u.is_subset(self.Status, scenario.valid_members, value_typed)
         tm.that(result, eq=scenario.expected)
 
@@ -272,7 +271,12 @@ class TestEnumUtilitiesCoverage:
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
-        result = u.parse_or_default(self.Status, scenario.value, scenario.default)
+        # Narrow the type from StrEnum to Status
+        if isinstance(scenario.default, self.Status):
+            default: self.Status = scenario.default
+        else:
+            default = self.Status.PENDING
+        result = u.parse_or_default(self.Status, scenario.value, default)
         tm.that(result, eq=scenario.expected)
 
     @pytest.mark.parametrize(

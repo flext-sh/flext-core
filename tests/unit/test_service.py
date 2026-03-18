@@ -69,7 +69,7 @@ class TestsCore:
 
         @override
         def execute(self) -> r[TestsCore.UserData]:
-            return r["TestsCore.UserData"].ok(
+            return r[TestsCore.UserData].ok(
                 TestsCore.UserData(user_id=1, name="test_user")
             )
 

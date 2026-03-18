@@ -1,15 +1,15 @@
-"""Rule 0 violation: multiple outer classes (expected 1)."""
-
 from __future__ import annotations
 
 
+class FlextTestConstants:
+    VALUE = 1
+
+
+class FlextTestModels:
+    NAME = "test"
+
+
 class Rule0MultipleClassesFixture:
-    class FlextTestConstants:
-        """First outer class."""
+    """Fixture demonstrating multiple classes violation."""
 
-        VALUE = 1
-
-    class FlextTestModels:
-        """Second outer class — VIOLATION."""
-
-        NAME = "test"
+    pass

@@ -34,7 +34,7 @@ from tests import m, t, u
 
 FlextTestResult = r[T]
 FlextTestResultCo = r[T_co]
-type StandardTestCase = m.Tests.StandardTestCaseModel
+type StandardTestCase = m.StandardTestCaseModel
 
 
 class TestUtils:

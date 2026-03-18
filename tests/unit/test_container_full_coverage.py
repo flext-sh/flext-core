@@ -411,13 +411,10 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(FlextContainer, "register", capture_register)
         _ = FlextContainer.create(auto_register_factories=True)
         wrapper = captured["factory.captured"]
-        tm.that(wrapper(), eq=7)
-        tm.that(
-            wrapper(
-                _factory_config=types.SimpleNamespace(fn=123, name="factory.captured")
-            ),
-            eq=t.ConfigMap(root={}),
-        )
+        assert wrapper() == 7
+        assert wrapper(
+            _factory_config=types.SimpleNamespace(fn=123, name="factory.captured")
+        ) == t.ConfigMap(root={})
         monkeypatch.setattr(FlextContainer, "register", original_register)
 
     def test_initialize_di_components_second_type_error_branch(

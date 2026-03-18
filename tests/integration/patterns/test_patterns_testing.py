@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import gc
 import time
-from collections.abc import Callable, Iterator, Mapping, Sequence, Sized
+from collections.abc import Callable, Generator, Iterator, Mapping, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -468,7 +468,7 @@ class TestPatternsTesting:
             ContextManager[FixtureFixturesDict],
         ]:
             @contextmanager
-            def _ctx() -> Iterator[FixtureFixturesDict]:
+            def _ctx() -> Generator[FixtureFixturesDict]:
                 for f in self._setups:
                     if callable(f):
                         _ = f()

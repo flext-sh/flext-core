@@ -1,17 +1,19 @@
-"""Rule 1 violation: StrEnum class outside Constants class."""
-
 from __future__ import annotations
 
 from enum import StrEnum, unique
 
 
+class FlextTestModels:
+    pass
+
+
+@unique
+class Status(StrEnum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+
+
 class Rule1LooseEnumFixture:
-    class FlextTestModels:
-        """Models namespace."""
+    """Fixture demonstrating loose enum violation."""
 
-    @unique
-    class Status(StrEnum):
-        """StrEnum outside Constants — VIOLATION."""
-
-        ACTIVE = "active"
-        INACTIVE = "inactive"
+    pass
