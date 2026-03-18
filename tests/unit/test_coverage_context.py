@@ -79,10 +79,14 @@ class TestCoverageContext:
             start_time = metadata.get("start_time")
             tm.that(start_time is not None, eq=True)
             time.sleep(expected_sleep)
-        duration = metadata.get("duration_seconds", 0)
-        tm.that(isinstance(duration, float), eq=True)
-        tm.that(duration >= expected_sleep * 0.8, eq=True)
-        tm.that(duration < expected_sleep * 2, eq=True)
+        duration_value = metadata.get("duration_seconds", 0)
+        tm.that(isinstance(duration_value, float), eq=True)
+        if isinstance(duration_value, (int, float)):
+            duration_float: float = float(duration_value)
+        else:
+            duration_float = 0.0
+        tm.that(duration_float >= expected_sleep * 0.8, eq=True)
+        tm.that(duration_float < expected_sleep * 2, eq=True)
         tm.that("start_time" in metadata, eq=True)
         tm.that("end_time" in metadata, eq=True)
         tm.that("operation_name" in metadata, eq=True)

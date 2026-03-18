@@ -347,10 +347,13 @@ class TestContainerFullCoverage:
         )
         c._config = FlextSettings(app_name="base")
         c._context = FlextContext()
-        captured: dict[str, t.NormalizedValue] = {}
+        captured: dict[str, object] = {}
 
-        def _fake_create_scoped_instance(**kwargs: t.Scalar) -> FlextContainer:
-            captured.update(kwargs)
+        def _fake_create_scoped_instance(
+            *, registration: m.ServiceRegistrationSpec, **kwargs: object
+        ) -> FlextContainer:
+            captured["config"] = registration.config
+            captured["context"] = registration.context
             return c
 
         monkeypatch.setattr(
@@ -361,7 +364,7 @@ class TestContainerFullCoverage:
         tm.that(isinstance(captured["config"], p.Settings), eq=True)
         _ = c.scoped(
             config=_FalseConfig(),
-            context=_ContextNoClone(),
+            context=FlextContext(),
         )
         tm.that(isinstance(captured["context"], p.Context), eq=True)
 

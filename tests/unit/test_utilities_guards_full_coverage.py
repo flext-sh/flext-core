@@ -10,6 +10,7 @@ from typing import cast
 import pytest
 from flext_tests import tm
 from pydantic import BaseModel
+from pydantic_core import ValidationError
 
 from flext_core import m as core_m, r
 from tests import c, m, t, u
@@ -267,7 +268,6 @@ def test_guard_in_has_empty_none_helpers() -> None:
 
 
 def test_chk_exercises_missed_branches() -> None:
-    from pydantic_core import ValidationError
 
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(none=True).model_dump()), eq=True)
     tm.that(not u.chk(None, **core_m.GuardCheckSpec(none=False).model_dump()), eq=True)
