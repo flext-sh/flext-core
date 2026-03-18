@@ -35,7 +35,8 @@ from flext_core import (
     t,
 )
 from flext_core._models.service import FlextModelsService
-from tests.test_utils import assertion_helpers
+
+from ..test_utils import assertion_helpers
 
 
 class TestDiServicesAccess:

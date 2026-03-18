@@ -11,12 +11,10 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from tests import m, t
+from flext_core import m, t
 
 
-class TestDictMixinOperations:
-    """Tests for _DictMixin operations via t.Dict, t.ConfigMap, etc."""
-
+class TestTypingsFullCoverage:
     def test_setitem(self) -> None:
         """__setitem__ works on Dict (line 320)."""
         d = t.Dict(root={"a": "1"})
@@ -36,7 +34,7 @@ class TestDictMixinOperations:
         assert "x" in keys
         assert "y" in keys
 
-    def test_values(self) -> None:
+    def test_dict_values(self) -> None:
         """values() returns values view (line 351)."""
         d = t.Dict(root={"a": "1", "b": "2"})
         vals = list(d.values())
@@ -77,10 +75,6 @@ class TestDictMixinOperations:
         assert d2.setdefault("x", "y") == "y"
         assert d2["x"] == "y"
 
-
-class TestConfigMapDictOps:
-    """Test dict mixin ops on ConfigMap specifically."""
-
     def test_configmap_setitem(self) -> None:
         """ConfigMap supports __setitem__."""
         cm = t.ConfigMap(root={"key": "val"})
@@ -92,10 +86,6 @@ class TestConfigMapDictOps:
         cm = t.ConfigMap(root={"a": "1", "b": "2"})
         assert set(cm.keys()) == {"a", "b"}
 
-
-class TestValidatorCallable:
-    """Tests for t.ValidatorCallable."""
-
     def test_validator_callable_invocation(self) -> None:
         """ValidatorCallable can be called (line 457)."""
 
@@ -104,10 +94,6 @@ class TestValidatorCallable:
 
         vc = m.ValidatorCallable(root=upper)
         assert vc("hello") == "HELLO"
-
-
-class TestValidatorMapMixin:
-    """Tests for _ValidatorMapMixin operations via FieldValidatorMap."""
 
     def test_items(self) -> None:
         """items() returns validator items (line 470)."""

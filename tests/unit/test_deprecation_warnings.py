@@ -27,7 +27,7 @@ from tests import t
 pytestmark = [pytest.mark.unit]
 
 
-class TestRuntimeNormalizeMethods:
+class TestDeprecationWarnings:
     def test_normalize_to_container_functional_equivalence(self) -> None:
         test_cases: list[test_t.Tests.object] = [
             "str",
@@ -47,10 +47,6 @@ class TestRuntimeNormalizeMethods:
             )
             tm.that(type(normalized_result), eq=type(strict_result))
 
-
-class TestGuardsDeprecatedMethods:
-    """Deprecated guard methods must emit DeprecationWarning."""
-
     def test_is_general_value_type_emits_deprecation(self) -> None:
         """FlextUtilitiesGuards.is_general_value_type -> is_container."""
         with warnings.catch_warnings(record=True) as w:
@@ -62,10 +58,6 @@ class TestGuardsDeprecatedMethods:
             ]
             tm.that(len(deprecation_warnings), gt=0)
             tm.that(str(deprecation_warnings[0].message), has="is_container")
-
-
-class TestMapperDeprecatedMethods:
-    """Deprecated mapper methods must emit DeprecationWarning."""
 
     def test_narrow_to_general_value_type_emits_deprecation(self) -> None:
         """FlextUtilitiesMapper.narrow_to_general_value_type -> narrow_to_container."""
@@ -91,8 +83,6 @@ class TestMapperDeprecatedMethods:
             tm.that(len(deprecation_warnings), gt=0)
             tm.that(str(deprecation_warnings[0].message), has="narrow_to_container")
 
-
-class TestFacadeNormalizeAliases:
     def test_facade_normalize_to_container(self) -> None:
         result = FlextUtilities.normalize_to_container("facade_test")
         tm.that(result, eq="facade_test")
@@ -100,10 +90,6 @@ class TestFacadeNormalizeAliases:
     def test_facade_normalize_to_metadata(self) -> None:
         result = FlextUtilities.normalize_to_metadata("facade_meta")
         tm.that(result, eq="facade_meta")
-
-
-class TestStrictContainerNormalization:
-    """Non-deprecated normalization methods work correctly with strict types."""
 
     def test_normalize_to_container_scalar_passthrough(self) -> None:
         """Scalars pass through normalize_to_container unchanged."""

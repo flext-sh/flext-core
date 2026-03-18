@@ -14,23 +14,17 @@ import re
 import pytest
 from hypothesis import given, strategies as st
 
-from tests import u
+from flext_core import u
 
 from .contracts.text_contract import TextUtilityContract
 
 
-class TestTextLogger:
-    """Tests for u.logger property."""
-
+class TestUtilitiesTextFullCoverage(TextUtilityContract):
     def test_logger_property_returns_logger(self) -> None:
         """Logger property returns a structlog logger instance."""
         logger = u().logger
         assert logger is not None
         assert hasattr(logger, "info")
-
-
-class TestSafeString(TextUtilityContract):
-    """Tests for u.safe_string()."""
 
     @pytest.mark.parametrize(
         ("value", "message"),
@@ -52,10 +46,6 @@ class TestSafeString(TextUtilityContract):
     ) -> None:
         """Valid strings are stripped and preserved."""
         self.assert_safe_string_valid(value, expected)
-
-
-class TestFormatAppId(TextUtilityContract):
-    """Tests for u.format_app_id()."""
 
     @pytest.mark.parametrize(
         ("name", "expected"),
@@ -82,10 +72,6 @@ class TestFormatAppId(TextUtilityContract):
         assert formatted == name.lower().replace(" ", "-").replace("_", "-")
         assert " " not in formatted
         assert "_" not in formatted
-
-
-class TestCleanText(TextUtilityContract):
-    """Tests for u.clean_text()."""
 
     @pytest.mark.parametrize(
         ("raw", "expected"),

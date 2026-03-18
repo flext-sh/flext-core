@@ -12,8 +12,8 @@ from tests import m
 from ..test_utils import assertion_helpers
 
 
-class TestCorrelationDomain:
-    """Correlation domain behavior tests."""
+class TestCoverageContext:
+    """Coverage tests for currently supported FlextContext APIs."""
 
     def test_new_correlation_context(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
@@ -29,10 +29,6 @@ class TestCorrelationDomain:
         ) as correlation_id:
             tm.that(correlation_id, eq=explicit_id)
             tm.that(FlextContext.Correlation.get_correlation_id(), eq=explicit_id)
-
-
-class TestServiceDomain:
-    """Service domain behavior tests."""
 
     def test_get_service_from_container(self) -> None:
         container = FlextContainer(_context=FlextContext())
@@ -55,10 +51,6 @@ class TestServiceDomain:
         FlextContext.set_container(container)
         result = FlextContext.Service.get_service("nonexistent_service_xyz")
         _ = assertion_helpers.assert_flext_result_failure(result)
-
-
-class TestPerformanceDomain:
-    """Performance domain behavior tests."""
 
     def test_timed_operation_context(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
@@ -94,10 +86,6 @@ class TestPerformanceDomain:
         tm.that("operation_name" in metadata, eq=True)
         tm.that(metadata["operation_name"], eq="slow_operation")
 
-
-class TestUtilitiesDomain:
-    """Utilities domain behavior tests."""
-
     def test_ensure_correlation_id_creates_if_missing(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
@@ -109,10 +97,6 @@ class TestUtilitiesDomain:
         FlextContext.Correlation.set_correlation_id(existing_id)
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
         tm.that(correlation_id, eq=existing_id)
-
-
-class TestContextDataModel:
-    """Context data model initialization tests."""
 
     def test_context_with_context_data_model(self) -> None:
         context_data = m.ContextData(
@@ -127,10 +111,4 @@ class TestContextDataModel:
         tm.that(result2.value, eq="value2")
 
 
-__all__ = [
-    "TestContextDataModel",
-    "TestCorrelationDomain",
-    "TestPerformanceDomain",
-    "TestServiceDomain",
-    "TestUtilitiesDomain",
-]
+__all__ = ["TestCoverageContext"]

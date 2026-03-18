@@ -24,73 +24,75 @@ from pydantic import BaseModel, ValidationError
 
 from tests import m, u
 
-_expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, TypeError)
-
-
-def _service_reg_with_metadata(
-    name: str,
-    service: str,
-    metadata: t.Tests.object,
-) -> m.ServiceRegistration:
-    """Create ServiceRegistration with arbitrary metadata for validation testing."""
-    return m.ServiceRegistration.model_validate({
-        "name": name,
-        "service": service,
-        "metadata": metadata,
-    })
-
-
-def _factory_reg_with_metadata(
-    name: str,
-    factory: Callable[[], t.Scalar],
-    metadata: t.Tests.object,
-) -> m.FactoryRegistration:
-    """Create FactoryRegistration with arbitrary metadata for validation testing."""
-    return m.FactoryRegistration.model_validate({
-        "name": name,
-        "factory": factory,
-        "metadata": metadata,
-    })
-
-
-def _normalize_metadata_obj(value: list[int]) -> m.Metadata:
-    """Call ensure_metadata with arbitrary object for error-path testing."""
-    fn: Callable[..., m.Metadata] = getattr(u, "ensure_metadata")
-    return fn(value)
-
-
-class ContainerModelsScenarios:
-    """Test scenarios for container models."""
-
-    METADATA_VALUES: ClassVar[list[tuple[object, bool]]] = [
-        (None, True),
-        ({}, True),
-        ({"key": "value"}, True),
-        ({"nested": {"deep": "value"}}, True),
-        ({"list": [1, 2, 3]}, True),
-        ({"int": 42, "str": "test", "bool": True}, True),
-        (m.Metadata(attributes={"test": "value"}), True),
-        ("invalid_string", False),
-        (123, False),
-        ([1, 2, 3], False),
-    ]
-    CONTAINER_CONFIG_VALUES: ClassVar[
-        list[dict[str, t.NormalizedValue | BaseModel]]
-    ] = [
-        {},
-        {"enable_singleton": False},
-        {"enable_factory_caching": False},
-        {"max_services": 500},
-        {"max_factories": 250},
-        {"enable_auto_registration": True},
-        {"enable_lifecycle_hooks": False},
-        {"lazy_loading": False},
-        {"enable_singleton": False, "max_services": 2000},
-    ]
-
 
 class TestFlextModelsContainer:
     """Test suite for FlextModelsContainer models."""
+
+    _EXPECTED_VALIDATION_ERRORS: ClassVar[tuple[type[Exception], ...]] = (
+        ValidationError,
+        TypeError,
+    )
+
+    class _ContainerModelsScenarios:
+        """Test scenarios for container models."""
+
+        METADATA_VALUES: ClassVar[list[tuple[object, bool]]] = [
+            (None, True),
+            ({}, True),
+            ({"key": "value"}, True),
+            ({"nested": {"deep": "value"}}, True),
+            ({"list": [1, 2, 3]}, True),
+            ({"int": 42, "str": "test", "bool": True}, True),
+            (m.Metadata(attributes={"test": "value"}), True),
+            ("invalid_string", False),
+            (123, False),
+            ([1, 2, 3], False),
+        ]
+        CONTAINER_CONFIG_VALUES: ClassVar[
+            list[dict[str, t.NormalizedValue | BaseModel]]
+        ] = [
+            {},
+            {"enable_singleton": False},
+            {"enable_factory_caching": False},
+            {"max_services": 500},
+            {"max_factories": 250},
+            {"enable_auto_registration": True},
+            {"enable_lifecycle_hooks": False},
+            {"lazy_loading": False},
+            {"enable_singleton": False, "max_services": 2000},
+        ]
+
+    @staticmethod
+    def _service_reg_with_metadata(
+        name: str,
+        service: str,
+        metadata: t.Tests.object,
+    ) -> m.ServiceRegistration:
+        """Create ServiceRegistration with arbitrary metadata for validation testing."""
+        return m.ServiceRegistration.model_validate({
+            "name": name,
+            "service": service,
+            "metadata": metadata,
+        })
+
+    @staticmethod
+    def _factory_reg_with_metadata(
+        name: str,
+        factory: Callable[[], t.Scalar],
+        metadata: t.Tests.object,
+    ) -> m.FactoryRegistration:
+        """Create FactoryRegistration with arbitrary metadata for validation testing."""
+        return m.FactoryRegistration.model_validate({
+            "name": name,
+            "factory": factory,
+            "metadata": metadata,
+        })
+
+    @staticmethod
+    def _normalize_metadata_obj(value: list[int]) -> m.Metadata:
+        """Call ensure_metadata with arbitrary object for error-path testing."""
+        fn: Callable[..., m.Metadata] = getattr(u, "ensure_metadata")
+        return fn(value)
 
     def test_is_dict_like_static_method(self) -> None:
         """Test dict-like checking using utilities."""
@@ -108,7 +110,7 @@ class TestFlextModelsContainer:
 
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
-        ContainerModelsScenarios.METADATA_VALUES,
+        _ContainerModelsScenarios.METADATA_VALUES,
     )
     def test_service_registration_metadata_validation(
         self,
@@ -117,7 +119,7 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
         if should_pass:
-            registration = _service_reg_with_metadata(
+            registration = self._service_reg_with_metadata(
                 "test_service",
                 "test_value",
                 metadata_value,
@@ -125,8 +127,12 @@ class TestFlextModelsContainer:
             tm.that(registration.metadata, none=False)
             tm.that(hasattr(registration.metadata, "attributes"), eq=True)
         else:
-            with pytest.raises(_expected_validation_errors):
-                _service_reg_with_metadata("test_service", "test_value", metadata_value)
+            with pytest.raises(self._EXPECTED_VALIDATION_ERRORS):
+                self._service_reg_with_metadata(
+                    "test_service",
+                    "test_value",
+                    metadata_value,
+                )
 
     def test_service_registration_defaults(self) -> None:
         """Test ServiceRegistration default values."""
@@ -156,7 +162,7 @@ class TestFlextModelsContainer:
 
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
-        ContainerModelsScenarios.METADATA_VALUES,
+        _ContainerModelsScenarios.METADATA_VALUES,
     )
     def test_factory_registration_metadata_validation(
         self,
@@ -169,7 +175,7 @@ class TestFlextModelsContainer:
             return "test"
 
         if should_pass:
-            registration = _factory_reg_with_metadata(
+            registration = self._factory_reg_with_metadata(
                 "test_factory",
                 factory,
                 metadata_value,
@@ -177,8 +183,12 @@ class TestFlextModelsContainer:
             tm.that(registration.metadata, none=False)
             tm.that(hasattr(registration.metadata, "attributes"), eq=True)
         else:
-            with pytest.raises(_expected_validation_errors):
-                _factory_reg_with_metadata("test_factory", factory, metadata_value)
+            with pytest.raises(self._EXPECTED_VALIDATION_ERRORS):
+                self._factory_reg_with_metadata(
+                    "test_factory",
+                    factory,
+                    metadata_value,
+                )
 
     def test_factory_registration_defaults(self) -> None:
         """Test FactoryRegistration default values."""
@@ -219,7 +229,7 @@ class TestFlextModelsContainer:
 
     @pytest.mark.parametrize(
         "config_dict",
-        ContainerModelsScenarios.CONTAINER_CONFIG_VALUES,
+        _ContainerModelsScenarios.CONTAINER_CONFIG_VALUES,
         ids=lambda x: f"config_{len(x)}_fields",
     )
     def test_container_config_creation(
@@ -333,10 +343,6 @@ class TestFlextModelsContainer:
         metadata_dump = registration.metadata.model_dump()
         tm.that(metadata_dump.get("attributes", {}), eq={})
 
-
-class TestFlextUtilitiesModelNormalizeToMetadata:
-    """Test suite for FlextUtilitiesModel.normalize_to_metadata() method."""
-
     def test_normalize_to_metadata_none(self) -> None:
         """Test normalize_to_metadata with None returns empty Metadata."""
         result = u.ensure_metadata(None)
@@ -390,4 +396,4 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            _normalize_metadata_obj([1, 2, 3])
+            self._normalize_metadata_obj([1, 2, 3])

@@ -29,111 +29,131 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings, p
 
 
-class ConfigTestCase(BaseModel):
-    """Factory for configuration test cases."""
-
-    model_config = ConfigDict(frozen=True)
-
-    test_name: Annotated[str, Field(description="Configuration test case name")]
-    config_data: Annotated[
-        dict[str, t.Tests.object],
-        Field(
-            description="Input configuration payload",
-        ),
-    ]
-    expected_values: dict[str, t.Tests.object] = Field(
-        default_factory=dict,
-        description="Expected effective values",
-    )
-    file_format: str = Field(default="json", description="Configuration file format")
-    env_vars: dict[str, str] = Field(
-        default_factory=dict,
-        description="Environment variable overrides",
-    )
-    description: Annotated[
-        str, Field(default="", description="Human-readable test description")
-    ] = ""
-
-    def create_temp_file(self, temp_dir: Path) -> Path:
-        """Create temporary config file."""
-        file_path = temp_dir / f"test_config.{self.file_format}"
-        if self.file_format == "json":
-            with Path(file_path).open("w", encoding="utf-8") as f:
-                json.dump(self.config_data, f, indent=2)
-        elif self.file_format == "yaml":
-            with Path(file_path).open("w", encoding="utf-8") as f:
-                yaml.dump(self.config_data, f, default_flow_style=False)
-        elif self.file_format == "toml":
-            content = "\n".join((f"{k} = {v!r}" for k, v in self.config_data.items()))
-            _ = file_path.write_text(content)
-        return file_path
-
-
-class ThreadSafetyTest(BaseModel):
-    """Factory for thread safety test configurations."""
-
-    model_config = ConfigDict(frozen=True)
-
-    thread_count: Annotated[
-        int, Field(default=5, description="Number of concurrent threads")
-    ] = 5
-    operations_per_thread: Annotated[
-        int, Field(default=10, description="Operations per thread")
-    ] = 10
-    description: Annotated[
-        str, Field(default="", description="Thread safety scenario description")
-    ] = ""
-
-
-class ConfigTestFactories:
-    """Centralized factories for configuration tests."""
-
-    @staticmethod
-    def basic_config_cases() -> list[ConfigTestCase]:
-        """Generate basic configuration test cases."""
-        return [
-            ConfigTestCase(
-                test_name="basic_json",
-                config_data={"app_name": "test_app", "debug": True, "port": 8080},
-                expected_values={"app_name": "test_app", "debug": True, "port": 8080},
-                file_format="json",
-                description="Basic JSON configuration",
-            ),
-            ConfigTestCase(
-                test_name="basic_yaml",
-                config_data={"database_url": "sqlite:///test.db", "timeout": 30},
-                expected_values={"database_url": "sqlite:///test.db", "timeout": 30},
-                file_format="yaml",
-                description="Basic YAML configuration",
-            ),
-            ConfigTestCase(
-                test_name="env_override",
-                config_data={"max_connections": 10},
-                expected_values={"max_connections": 20},
-                env_vars={"FLEXT_MAX_CONNECTIONS": "20"},
-                description="Environment variable override",
-            ),
-        ]
-
-    @staticmethod
-    def thread_safety_cases() -> list[ThreadSafetyTest]:
-        """Generate thread safety test cases."""
-        return [
-            ThreadSafetyTest(
-                thread_count=3,
-                operations_per_thread=5,
-                description="Light concurrent access",
-            ),
-            ThreadSafetyTest(
-                thread_count=10,
-                operations_per_thread=20,
-                description="Heavy concurrent access",
-            ),
-        ]
-
-
 class TestFlextSettingsSingletonIntegration:
     """Test FlextSettings singleton pattern and integration with all modules using factories."""
+
+    class _ConfigTestCase(BaseModel):
+        """Factory for configuration test cases."""
+
+        model_config = ConfigDict(frozen=True)
+
+        test_name: Annotated[str, Field(description="Configuration test case name")]
+        config_data: Annotated[
+            dict[str, t.Tests.object],
+            Field(
+                description="Input configuration payload",
+            ),
+        ]
+        expected_values: dict[str, t.Tests.object] = Field(
+            default_factory=dict,
+            description="Expected effective values",
+        )
+        file_format: str = Field(
+            default="json", description="Configuration file format"
+        )
+        env_vars: dict[str, str] = Field(
+            default_factory=dict,
+            description="Environment variable overrides",
+        )
+        description: Annotated[
+            str,
+            Field(default="", description="Human-readable test description"),
+        ] = ""
+
+        def create_temp_file(self, temp_dir: Path) -> Path:
+            """Create temporary config file."""
+            file_path = temp_dir / f"test_config.{self.file_format}"
+            if self.file_format == "json":
+                with Path(file_path).open("w", encoding="utf-8") as f:
+                    json.dump(self.config_data, f, indent=2)
+            elif self.file_format == "yaml":
+                with Path(file_path).open("w", encoding="utf-8") as f:
+                    yaml.dump(self.config_data, f, default_flow_style=False)
+            elif self.file_format == "toml":
+                content = "\n".join(
+                    (f"{k} = {v!r}" for k, v in self.config_data.items()),
+                )
+                _ = file_path.write_text(content)
+            return file_path
+
+    class _ThreadSafetyTest(BaseModel):
+        """Factory for thread safety test configurations."""
+
+        model_config = ConfigDict(frozen=True)
+
+        thread_count: Annotated[
+            int,
+            Field(default=5, description="Number of concurrent threads"),
+        ] = 5
+        operations_per_thread: Annotated[
+            int,
+            Field(default=10, description="Operations per thread"),
+        ] = 10
+        description: Annotated[
+            str,
+            Field(default="", description="Thread safety scenario description"),
+        ] = ""
+
+    class _ConfigTestFactories:
+        """Centralized factories for configuration tests."""
+
+        @staticmethod
+        def basic_config_cases() -> list[
+            TestFlextSettingsSingletonIntegration._ConfigTestCase
+        ]:
+            """Generate basic configuration test cases."""
+            return [
+                TestFlextSettingsSingletonIntegration._ConfigTestCase(
+                    test_name="basic_json",
+                    config_data={
+                        "app_name": "test_app",
+                        "debug": True,
+                        "port": 8080,
+                    },
+                    expected_values={
+                        "app_name": "test_app",
+                        "debug": True,
+                        "port": 8080,
+                    },
+                    file_format="json",
+                    description="Basic JSON configuration",
+                ),
+                TestFlextSettingsSingletonIntegration._ConfigTestCase(
+                    test_name="basic_yaml",
+                    config_data={"database_url": "sqlite:///test.db", "timeout": 30},
+                    expected_values={
+                        "database_url": "sqlite:///test.db",
+                        "timeout": 30,
+                    },
+                    file_format="yaml",
+                    description="Basic YAML configuration",
+                ),
+                TestFlextSettingsSingletonIntegration._ConfigTestCase(
+                    test_name="env_override",
+                    config_data={"max_connections": 10},
+                    expected_values={"max_connections": 20},
+                    env_vars={"FLEXT_MAX_CONNECTIONS": "20"},
+                    description="Environment variable override",
+                ),
+            ]
+
+        @staticmethod
+        def thread_safety_cases() -> list[
+            TestFlextSettingsSingletonIntegration._ThreadSafetyTest
+        ]:
+            """Generate thread safety test cases."""
+            return [
+                TestFlextSettingsSingletonIntegration._ThreadSafetyTest(
+                    thread_count=3,
+                    operations_per_thread=5,
+                    description="Light concurrent access",
+                ),
+                TestFlextSettingsSingletonIntegration._ThreadSafetyTest(
+                    thread_count=10,
+                    operations_per_thread=20,
+                    description="Heavy concurrent access",
+                ),
+            ]
 
     def setup_method(self) -> None:
         """Reset singleton instances before each test."""
@@ -147,8 +167,8 @@ class TestFlextSettingsSingletonIntegration:
         container = FlextContainer()
         container.clear_all()
 
-    @pytest.mark.parametrize("case", ConfigTestFactories.basic_config_cases())
-    def test_singleton_pattern_with_factories(self, case: ConfigTestCase) -> None:
+    @pytest.mark.parametrize("case", _ConfigTestFactories.basic_config_cases())
+    def test_singleton_pattern_with_factories(self, case: _ConfigTestCase) -> None:
         """Test that FlextSettings.get_global() returns the same instance."""
         config1 = FlextSettings.get_global()
         config2 = FlextSettings.get_global()
