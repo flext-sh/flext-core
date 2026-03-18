@@ -389,7 +389,7 @@ class TestPatternsTesting:
             super().__init__()
             self.name = name
             self._scenarios: list[TestPatternsTesting.MockScenario] = []
-            self._setup_data: dict[str, FlextTypes.Container] = {}
+            self._setup_data: dict[str, tt.NormalizedValue] = {}
             self._tags: list[str] = []
 
         def add_scenarios(
@@ -400,7 +400,7 @@ class TestPatternsTesting:
             return self
 
         def with_setup_data(
-            self, **kwargs: FlextTypes.Container
+            self, **kwargs: tt.NormalizedValue
         ) -> TestPatternsTesting.SuiteBuilder:
             self._setup_data.update(kwargs)
             return self
@@ -410,10 +410,11 @@ class TestPatternsTesting:
             return self
 
         def build(self) -> FixtureSuiteDict:
+            tags: list[tt.NormalizedValue] = list(self._tags)
             return {
                 "suite_name": self.name,
                 "scenario_count": len(self._scenarios),
-                "tags": self._tags,
+                "tags": tags,
                 "setup_data": self._setup_data,
             }
 
@@ -626,7 +627,7 @@ class TestPatternsTesting:
         assert all(len(param) == 3 for param in params)
 
     def test_assertion_builder(self) -> None:
-        test_data = ["apple", "banana", "cherry"]
+        test_data: tuple[str, ...] = ("apple", "banana", "cherry")
 
         def check_all_strings(x: tt.NormalizedValue) -> bool:
             values = self.Helpers.as_object_dict({"items": x}).get("items")
@@ -641,8 +642,9 @@ class TestPatternsTesting:
 
     @Helpers.mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
-        def arrange_data(*_args: tt.NormalizedValue) -> dict[str, list[int]]:
-            return {"numbers": [1, 2, 3, 4, 5]}
+        def arrange_data() -> tt.NormalizedValue:
+            numbers: list[tt.NormalizedValue] = [1, 2, 3, 4, 5]
+            return {"numbers": numbers}
 
         def act_on_data(data: tt.NormalizedValue) -> tt.NormalizedValue:
             payload = self.Helpers.as_object_dict(data)

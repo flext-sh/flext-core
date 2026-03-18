@@ -43,13 +43,13 @@ class TestContainerFullCoverage:
         def clone(self) -> _ContextNoClone:
             return self
 
-        def get(self, key: str, scope: str = "") -> r[t.Container | BaseModel]:
-            return r[t.Container | BaseModel].fail("err")
+        def get(self, key: str, scope: str = "") -> r[t.RuntimeAtomic]:
+            return r[t.RuntimeAtomic].fail("err")
 
         def set(
             self,
             key_or_data: str | t.ConfigMap,
-            value: t.Container | BaseModel | None = None,
+            value: t.RuntimeAtomic | None = None,
             *,
             scope: str = "",
         ) -> r[bool]:
@@ -58,20 +58,49 @@ class TestContainerFullCoverage:
         def has(self, key: str, scope: str = "") -> bool:
             return False
 
-        def keys(self, scope: str = "") -> list[str]:
+        def keys(self) -> list[str]:
             return []
 
-        def values(self, scope: str = "") -> list[t.Container | BaseModel]:
+        def values(self) -> list[t.NormalizedValue]:
             return []
 
-        def items(self, scope: str = "") -> list[tuple[str, t.Container | BaseModel]]:
+        def items(self) -> list[tuple[str, t.NormalizedValue]]:
             return []
 
-        def remove(self, key: str, scope: str = "") -> r[bool]:
+        def remove(self, key: str, scope: str = "") -> None:
+            pass
+
+        def clear(self) -> None:
+            pass
+
+        def merge(
+            self,
+            other: p.Context | t.ConfigMap | Mapping[str, t.NormalizedValue],
+        ) -> _ContextNoClone:
+            return self
+
+        def validate_context(self) -> r[bool]:
             return r[bool].ok(True)
 
-        def clear(self, scope: str = "") -> r[bool]:
-            return r[bool].ok(True)
+        def export(
+            self,
+            *,
+            include_statistics: bool = False,
+            include_metadata: bool = False,
+            as_dict: bool = True,
+        ) -> BaseModel | Mapping[str, t.NormalizedValue]:
+            _ = include_statistics
+            _ = include_metadata
+            _ = as_dict
+            return {}
+
+        def get_metadata(self, key: str) -> r[t.RuntimeAtomic]:
+            _ = key
+            return r[t.RuntimeAtomic].fail("missing")
+
+        def set_metadata(self, key: str, value: t.MetadataValue) -> None:
+            _ = key
+            _ = value
 
     class _BridgeNoProvide:
         pass
@@ -558,7 +587,7 @@ class TestContainerFullCoverage:
             resources={"rx": lambda: "rv"},
         )
         base._config = _FalseConfig()
-        base._context = _ContextNoClone()
+        base._context = None
         _ = base.scoped()
 
     def test_additional_container_branches_cover_fluent_and_lookup_paths(self) -> None:
@@ -689,7 +718,7 @@ class TestContainerFullCoverage:
             }
             fac_call = c2.get("fac-call")
             tm.ok(fac_call)
-            tm.that(fac_call.value, eq="value")
+            assert fac_call.value == "value"
             c2._factories = {
                 "boom": m.FactoryRegistration(
                     name="boom",

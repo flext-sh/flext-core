@@ -155,7 +155,7 @@ class TestFlextModelsContainer:
             tags=["test", "integration"],
         )
         tm.that(registration.name, eq="full_service")
-        tm.that(registration.service, eq=t.ConfigMap(root={"data": "value"}))
+        assert registration.service == t.ConfigMap(root={"data": "value"})
         tm.that(registration.metadata, eq=metadata)
         tm.that(registration.service_type, eq="TestService")
         tm.that(registration.tags, eq=["test", "integration"])
@@ -198,7 +198,7 @@ class TestFlextModelsContainer:
 
         registration = m.FactoryRegistration(name="test", factory=factory)
         tm.that(registration.is_singleton, eq=False)
-        tm.that(registration.cached_instance, none=True)
+        assert registration.cached_instance is None
         tm.that(registration.invocation_count, eq=0)
         tm.that(isinstance(registration.registration_time, datetime), eq=True)
         registration.metadata = None
@@ -224,7 +224,7 @@ class TestFlextModelsContainer:
         tm.that(callable(registration.factory), eq=True)
         tm.that(registration.metadata, eq=metadata)
         tm.that(registration.is_singleton, eq=True)
-        tm.that(registration.cached_instance, eq="cached_value")
+        assert registration.cached_instance == "cached_value"
         tm.that(registration.invocation_count, eq=5)
 
     @pytest.mark.parametrize(

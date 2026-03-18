@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import Annotated, Any, ClassVar, cast
 
 import pytest
 from flext_tests import tm, u
@@ -246,7 +246,12 @@ class TestEnumUtilitiesCoverage:
             value_typed: bool | float | int | str | self.Status = scenario.value
         else:
             value_typed = str(scenario.value)
-        result = u.is_subset(self.Status, scenario.valid_members, value_typed)
+        valid_members: frozenset[self.Status] = scenario.valid_members  # type: ignore[assignment]
+        result = u.is_subset(
+            self.Status,
+            valid_members,
+            value_typed,
+        )
         tm.that(result, eq=scenario.expected)
 
     @pytest.mark.parametrize("scenario", PARSE, ids=lambda s: s.name)
@@ -276,7 +281,7 @@ class TestEnumUtilitiesCoverage:
             default: self.Status = scenario.default
         else:
             default = self.Status.PENDING
-        result = u.parse_or_default(self.Status, scenario.value, default)
+        result = u.parse_or_default(self.Status, scenario.value, cast("Any", default))
         tm.that(result, eq=scenario.expected)
 
     @pytest.mark.parametrize(
