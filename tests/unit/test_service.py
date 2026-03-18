@@ -59,6 +59,8 @@ class TestsCore:
         ] = None
 
     class UserData(BaseModel):
+        """User data model."""
+
         user_id: int
         name: str
 

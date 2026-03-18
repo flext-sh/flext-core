@@ -16,6 +16,8 @@ from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e, t
 class TestTypings:
     @unique
     class TypeVarCategory(StrEnum):
+        """TypeVar category enumeration."""
+
         CORE = "core"
         COVARIANT = "covariant"
         CONTRAVARIANT = "contravariant"
