@@ -31,7 +31,6 @@ from flext_core import FlextConstants, FlextRuntime, e
 from tests import c, m
 
 
-
 class Teste:
     """Comprehensive test suite for e using u."""
 
