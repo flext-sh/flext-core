@@ -42,9 +42,7 @@ Provide = FlextRuntime.DependencyIntegration.Provide
 inject = FlextRuntime.DependencyIntegration.inject
 
 
-class TestDIBridgeRealExecution:
-    """Test DI bridge methods with real code execution."""
-
+class TestDIIncremental:
     def test_dependency_providers_returns_valid_module(self) -> None:
         """Test dependency_providers returns valid providers module."""
         providers_module = FlextRuntime.dependency_providers()
@@ -84,10 +82,6 @@ class TestDIBridgeRealExecution:
         tm.that(repr(service_module) != "", eq=True)
         tm.that(repr(resource_module) != "", eq=True)
         tm.that(callable(bridge.config), eq=True)
-
-
-class TestDependencyIntegrationRealExecution:
-    """Test DependencyIntegration methods with real code execution."""
 
     def test_register_object_with_real_container(self) -> None:
         """Test register_object with real container execution."""
@@ -196,10 +190,6 @@ class TestDependencyIntegrationRealExecution:
         finally:
             di_container.unwire()
 
-
-class TestContainerDIRealExecution:
-    """Test FlextDI methods with real execution."""
-
     def test_wire_modules_real_execution(self) -> None:
         """Test container.wire_modules with real code."""
         container = FlextContainer()
@@ -262,10 +252,6 @@ class TestContainerDIRealExecution:
         config_obj = scoped.config
         tm.that(config_obj.app_name, eq="scoped_app")
 
-
-class TestServiceBootstrapWithDI:
-    """Test service bootstrap with DI real execution."""
-
     def test_create_service_runtime_with_resources(self) -> None:
         """Test create_service_runtime with resources."""
         lifecycle = {"created": False}
@@ -316,10 +302,6 @@ class TestServiceBootstrapWithDI:
         factory_result = service.container.get("custom_factory")
         tm.ok(factory_result)
         tm.that(factory_result.value == {"custom": "data"}, eq=True)
-
-
-class TestRealWiringScenarios:
-    """Test real-world wiring scenarios with DI."""
 
     def test_handler_wiring_with_inject(self) -> None:
         """Test handler wiring with @inject decorator."""
@@ -532,12 +514,3 @@ class TestRealWiringScenarios:
         tm.that(value1 == "value1", eq=True)
         tm.that(value2 == "value2", eq=True)
         tm.that(value1 != value2, eq=True)
-
-
-__all__ = [
-    "TestContainerDIRealExecution",
-    "TestDIBridgeRealExecution",
-    "TestDependencyIntegrationRealExecution",
-    "TestRealWiringScenarios",
-    "TestServiceBootstrapWithDI",
-]

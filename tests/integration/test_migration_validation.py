@@ -43,9 +43,7 @@ from flext_core import (
 )
 
 
-class TestMigrationScenario1:
-    """Test Scenario 1: Existing Application Using r (No Changes Required)."""
-
+class TestMigrationValidation:
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 
@@ -76,10 +74,6 @@ class TestMigrationScenario1:
         assert success_result.is_success
         assert success_result.value == "user@example.com"
 
-
-class TestMigrationScenario2:
-    """Test Scenario 2: Using FlextContainer for Dependency Injection."""
-
     def test_container_global_instance(self) -> None:
         """Verify FlextContainer() continues working."""
         container = FlextContainer()
@@ -102,10 +96,6 @@ class TestMigrationScenario2:
         service = resolution_result.value
         assert isinstance(service, TestService)
         assert service.name == "test"
-
-
-class TestMigrationScenario4:
-    """Test Scenario 4: Service Layer with FlextService."""
 
     def test_service_base_class_extension(self) -> None:
         """Verify FlextService extension pattern continues working."""
@@ -145,10 +135,6 @@ class TestMigrationScenario4:
         assert result.is_success
         assert result.value["username"] == "alice"
 
-
-class TestMigrationScenario5:
-    """Test Scenario 5: Logging with FlextLogger."""
-
     def test_logger_structured_logging(self) -> None:
         """Verify FlextLogger continues working."""
         logger = FlextLogger(__name__)
@@ -157,10 +143,6 @@ class TestMigrationScenario5:
         logger.debug("Debug message")
         logger.warning("Warning message")
         logger.error("Error message")
-
-
-class TestBackwardCompatibility:
-    """Test complete backward compatibility with 0.9.9 API surface."""
 
     def test_all_stable_apis_accessible(self) -> None:
         """Verify all guaranteed stable APIs from API_STABILITY.md are accessible."""
@@ -207,10 +189,6 @@ class TestBackwardCompatibility:
         assert mapped.value == "TEST"
         container = FlextContainer()
         assert container is not None
-
-
-class TestMigrationComplexity:
-    """Verify migration guide complexity rating (0/5 difficulty, <5 minutes)."""
 
     def test_application_functionality_works(self) -> None:
         """Verify application functionality works correctly."""

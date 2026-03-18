@@ -5,21 +5,20 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 
-class FlextTestConstants:
-    """Main constants class."""
+class Rule0LooseItemsFixture:
+    class FlextTestConstants:
+        """Main constants class."""
 
-    VALUE = 1
+        VALUE = 1
 
+    MAX_RETRIES = 3
 
-MAX_RETRIES = 3
+    @staticmethod
+    def helper() -> None:
+        """Loose function — NOT in allowlist."""
 
+    @unique
+    class Status(StrEnum):
+        """Loose class — 2nd outer class — VIOLATION."""
 
-def helper() -> None:
-    """Loose function — NOT in allowlist."""
-
-
-@unique
-class Status(StrEnum):
-    """Loose class — 2nd outer class — VIOLATION."""
-
-    ACTIVE = "active"
+        ACTIVE = "active"

@@ -60,41 +60,39 @@ class TestFlextContainer:
     class ContainerScenarios:
         """Centralized container test scenarios using c."""
 
-        SERVICE_SCENARIOS: ClassVar[list[TestFlextContainer.ServiceScenario]] = [
-            TestFlextContainer.ServiceScenario(
+        SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
+            ServiceScenario(
                 name="test_service",
                 service="test_service_value",
                 description="Simple string service",
             ),
-            TestFlextContainer.ServiceScenario(
+            ServiceScenario(
                 name="service_instance",
                 service=42,
                 description="Integer service instance",
             ),
-            TestFlextContainer.ServiceScenario(
+            ServiceScenario(
                 name="string_service",
                 service="test_value",
                 description="String service",
             ),
         ]
-        TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            list[TestFlextContainer.TypedRetrievalScenario]
-        ] = [
-            TestFlextContainer.TypedRetrievalScenario(
+        TYPED_RETRIEVAL_SCENARIOS: ClassVar[list[TypedRetrievalScenario]] = [
+            TypedRetrievalScenario(
                 name="dict_service",
                 service="test_dict_service",
                 expected_type=str,
                 should_pass=True,
                 description="String service",
             ),
-            TestFlextContainer.TypedRetrievalScenario(
+            TypedRetrievalScenario(
                 name="string_service",
                 service="test_string",
                 expected_type=str,
                 should_pass=True,
                 description="String service",
             ),
-            TestFlextContainer.TypedRetrievalScenario(
+            TypedRetrievalScenario(
                 name="list_service",
                 service=123,
                 expected_type=int,
@@ -143,7 +141,7 @@ class TestFlextContainer:
         "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_register_service(
-        self, scenario: TestFlextContainer.ServiceScenario, clean_container: p.Container
+        self, scenario: ServiceScenario, clean_container: p.Container
     ) -> None:
         """Test service registration with various types using fixtures."""
         result = clean_container.register(scenario.name, scenario.service)
@@ -153,7 +151,7 @@ class TestFlextContainer:
         "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_with_service_fluent(
-        self, scenario: TestFlextContainer.ServiceScenario, clean_container: p.Container
+        self, scenario: ServiceScenario, clean_container: p.Container
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
         container = clean_container
@@ -260,7 +258,7 @@ class TestFlextContainer:
         "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_get_service(
-        self, scenario: TestFlextContainer.ServiceScenario, clean_container: p.Container
+        self, scenario: ServiceScenario, clean_container: p.Container
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
@@ -302,7 +300,7 @@ class TestFlextContainer:
     )
     def test_get_typed_correct(
         self,
-        scenario: TestFlextContainer.TypedRetrievalScenario,
+        scenario: TypedRetrievalScenario,
         clean_container: p.Container,
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""

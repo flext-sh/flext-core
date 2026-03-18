@@ -58,12 +58,18 @@ class TestsCore:
             Field(default=None, description="Optional scenario service kwargs"),
         ] = None
 
-    class UserService(s[dict[str, object]]):
+    class UserData(BaseModel):
+        user_id: int
+        name: str
+
+    class UserService(s["TestsCore.UserData"]):
         """Basic user service for standard testing."""
 
         @override
-        def execute(self) -> r[dict[str, object]]:
-            return r[dict[str, object]].ok({"user_id": 1, "name": "test_user"})
+        def execute(self) -> r[TestsCore.UserData]:
+            return r["TestsCore.UserData"].ok(
+                TestsCore.UserData(user_id=1, name="test_user")
+            )
 
     class ComplexService(s[str]):
         """Service with custom validation rules."""
@@ -122,8 +128,8 @@ class TestsCore:
         @staticmethod
         def create_service(
             scenario: TestsCore.ServiceScenario,
-        ) -> s[t.ConfigMap] | s[str] | s[bool]:
-            kwargs_raw: Mapping[str, t.Scalar] = scenario.service_kwargs or {}
+        ) -> s[TestsCore.UserData] | s[str] | s[bool]:
+            kwargs_raw: Mapping[str, object] = scenario.service_kwargs or {}
             if scenario.scenario_type == TestsCore.ServiceScenarioType.BASIC_USER:
                 return TestsCore.UserService()
             if scenario.scenario_type in {
@@ -217,8 +223,8 @@ class TestsCore:
         result = service.execute()
         _ = u.Tests.Result.assert_success(result)
         data = result.value
-        assert isinstance(data, t.ConfigMap)
-        assert "user_id" in data
+        assert isinstance(data, self.UserData)
+        assert data.user_id == 1
 
     def test_is_valid_scenarios(self) -> None:
         """Test is_valid with various service scenarios."""

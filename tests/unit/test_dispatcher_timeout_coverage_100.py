@@ -26,66 +26,64 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core._dispatcher import TimeoutEnforcer
 
 
-class TimeoutEnforcerScenario(BaseModel):
-    """TimeoutEnforcer test scenario."""
+class TestDispatcherTimeoutCoverage100:
+    class _TimeoutEnforcerScenario(BaseModel):
+        model_config = ConfigDict(frozen=True)
 
-    model_config = ConfigDict(frozen=True)
+        name: Annotated[str, Field(description="Timeout enforcer scenario name")]
+        use_timeout_executor: Annotated[
+            bool,
+            Field(description="Whether timeout executor is enabled"),
+        ]
+        executor_workers: Annotated[
+            int,
+            Field(description="Configured executor worker count"),
+        ]
+        expected_workers: Annotated[
+            int, Field(description="Expected resolved worker count")
+        ]
+        should_use_executor: Annotated[
+            bool,
+            Field(description="Expected executor usage flag"),
+        ]
 
-    name: Annotated[str, Field(description="Timeout enforcer scenario name")]
-    use_timeout_executor: Annotated[
-        bool, Field(description="Whether timeout executor is enabled")
-    ]
-    executor_workers: Annotated[
-        int, Field(description="Configured executor worker count")
-    ]
-    expected_workers: Annotated[
-        int, Field(description="Expected resolved worker count")
-    ]
-    should_use_executor: Annotated[
-        bool, Field(description="Expected executor usage flag")
-    ]
-
-
-class TimeoutEnforcerScenarios:
-    """Centralized timeout enforcer test scenarios."""
-
-    INIT_SCENARIOS: ClassVar[list[TimeoutEnforcerScenario]] = [
-        TimeoutEnforcerScenario(
+    _INIT_SCENARIOS: ClassVar[list[_TimeoutEnforcerScenario]] = [
+        _TimeoutEnforcerScenario(
             name="executor_enabled_multiple_workers",
             use_timeout_executor=True,
             executor_workers=5,
             expected_workers=5,
             should_use_executor=True,
         ),
-        TimeoutEnforcerScenario(
+        _TimeoutEnforcerScenario(
             name="executor_enabled_single_worker",
             use_timeout_executor=True,
             executor_workers=1,
             expected_workers=1,
             should_use_executor=True,
         ),
-        TimeoutEnforcerScenario(
+        _TimeoutEnforcerScenario(
             name="executor_disabled",
             use_timeout_executor=False,
             executor_workers=3,
             expected_workers=3,
             should_use_executor=False,
         ),
-        TimeoutEnforcerScenario(
+        _TimeoutEnforcerScenario(
             name="executor_enabled_zero_workers_clamped",
             use_timeout_executor=True,
             executor_workers=0,
             expected_workers=1,
             should_use_executor=True,
         ),
-        TimeoutEnforcerScenario(
+        _TimeoutEnforcerScenario(
             name="executor_enabled_negative_workers_clamped",
             use_timeout_executor=True,
             executor_workers=-5,
             expected_workers=1,
             should_use_executor=True,
         ),
-        TimeoutEnforcerScenario(
+        _TimeoutEnforcerScenario(
             name="executor_enabled_large_worker_count",
             use_timeout_executor=True,
             executor_workers=100,
@@ -94,16 +92,8 @@ class TimeoutEnforcerScenarios:
         ),
     ]
 
-
-class TestTimeoutEnforcerInitialization:
-    """Test TimeoutEnforcer initialization."""
-
-    @pytest.mark.parametrize(
-        "scenario",
-        TimeoutEnforcerScenarios.INIT_SCENARIOS,
-        ids=lambda s: s.name,
-    )
-    def test_initialization(self, scenario: TimeoutEnforcerScenario) -> None:
+    @pytest.mark.parametrize("scenario", _INIT_SCENARIOS, ids=lambda s: s.name)
+    def test_initialization(self, scenario: _TimeoutEnforcerScenario) -> None:
         """Test TimeoutEnforcer initialization with various scenarios."""
         enforcer = TimeoutEnforcer(
             use_timeout_executor=scenario.use_timeout_executor,
@@ -114,10 +104,6 @@ class TestTimeoutEnforcerInitialization:
         status = enforcer.get_executor_status()
         tm.that(status["executor_active"], eq=False)
         tm.that(status["executor_workers"], eq=0)
-
-
-class TestTimeoutEnforcerExecutorManagement:
-    """Test TimeoutEnforcer executor management."""
 
     def test_ensure_executor_creates_on_demand(self) -> None:
         """Test ensure_executor creates executor on demand."""
@@ -163,17 +149,12 @@ class TestTimeoutEnforcerExecutorManagement:
         tm.that(status["executor_workers"], eq=7)
 
     def test_get_executor_status_after_reset(self) -> None:
-        """Test get_executor_status after reset."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=4)
         enforcer.ensure_executor()
         enforcer.reset_executor()
         status = enforcer.get_executor_status()
         tm.that(status["executor_active"], eq=False)
         tm.that(status["executor_workers"], eq=0)
-
-
-class TestTimeoutEnforcerCleanup:
-    """Test TimeoutEnforcer cleanup."""
 
     def test_cleanup_with_executor(self) -> None:
         """Test cleanup with active executor."""
@@ -206,10 +187,6 @@ class TestTimeoutEnforcerCleanup:
         enforcer.reset_executor()
         enforcer.cleanup()
         tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
-
-
-class TestTimeoutEnforcerEdgeCases:
-    """Test TimeoutEnforcer edge cases."""
 
     def test_executor_thread_name_prefix(self) -> None:
         """Test executor uses correct thread name prefix."""
@@ -246,12 +223,3 @@ class TestTimeoutEnforcerEdgeCases:
         elapsed = time.time() - start
         assert all(abs(r - 0.1) < 1e-09 for r in results)
         tm.that(elapsed, lt=0.5)
-
-
-__all__ = [
-    "TestTimeoutEnforcerCleanup",
-    "TestTimeoutEnforcerEdgeCases",
-    "TestTimeoutEnforcerExecutorManagement",
-    "TestTimeoutEnforcerInitialization",
-    "TimeoutEnforcerScenarios",
-]

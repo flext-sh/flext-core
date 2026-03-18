@@ -80,10 +80,6 @@ class TestFactoriesHelpers:
     ) -> Mapping[str, t.Tests.object]:
         return value if isinstance(value, Mapping) else value.value
 
-
-class TestUser:
-    """Test suite for User model."""
-
     def test_user_creation_default(self) -> None:
         """Test User model creation with defaults."""
         user = m.Tests.User(
@@ -105,10 +101,6 @@ class TestUser:
             active=False,
         )
         assert user.active is False
-
-
-class TestConfig:
-    """Test suite for Config model."""
 
     def test_config_creation_default(self) -> None:
         """Test Config model creation with defaults."""
@@ -133,10 +125,6 @@ class TestConfig:
         assert config.debug is False
         assert config.timeout == 60
 
-
-class TestService:
-    """Test suite for Service model."""
-
     def test_service_creation_minimal(self) -> None:
         """Test Service model creation with minimal fields."""
         service = m.Tests.Service(id="test-123")
@@ -157,10 +145,6 @@ class TestService:
         assert service.type == "database"
         assert service.name == "Database Service"
         assert service.status == "inactive"
-
-
-class TestFlextTestsFactoriesModernAPI:
-    """Test suite for FlextTestsFactories using modern API (tt.model, tt.op, tt.svc)."""
 
     def test_model_user_default(self) -> None:
         """Test tt.model('user') with default parameters."""
@@ -431,11 +415,7 @@ class TestFlextTestsFactoriesModernAPI:
         result = service.validate_business_rules()
         assert isinstance(result, r)
 
-
-class TestsFlextTestsFactoriesModel:
-    """Tests for tt.model() unified method."""
-
-    def test_model_user_default(self) -> None:
+    def test_model_user_default_unified(self) -> None:
         """Test user model creation with defaults."""
         user_result = tt.model("user")
         user = TestFactoriesHelpers.extract_model(user_result)
@@ -445,7 +425,7 @@ class TestsFlextTestsFactoriesModel:
         assert "@example.com" in user.email
         assert user.active is True
 
-    def test_model_user_custom(self) -> None:
+    def test_model_user_custom_unified(self) -> None:
         """Test user model creation with custom parameters."""
         user_result = tt.model("user", name="Custom User", email="custom@test.com")
         user = TestFactoriesHelpers.extract_model(user_result)
@@ -565,10 +545,6 @@ class TestsFlextTestsFactoriesModel:
         assert isinstance(result_typed, r)
         assert result_typed.is_failure
 
-
-class TestsFlextTestsFactoriesRes:
-    """Tests for tt.res() unified method."""
-
     def test_res_ok(self) -> None:
         """Test successful result creation."""
         result_raw = tt.res("ok", value=42)
@@ -675,10 +651,6 @@ class TestsFlextTestsFactoriesRes:
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 10
 
-
-class TestsFlextTestsFactoriesList:
-    """Tests for tt.list() method."""
-
     def test_list_from_model(self) -> None:
         """Test list creation from model kind."""
         users_raw = tt.list("user", count=3)
@@ -761,10 +733,6 @@ class TestsFlextTestsFactoriesList:
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
 
-
-class TestsFlextTestsFactoriesDict:
-    """Tests for tt.dict_factory() method."""
-
     def test_dict_from_model(self) -> None:
         """Test dict creation from model kind."""
         users_raw = tt.dict_factory("user", count=3)
@@ -841,10 +809,6 @@ class TestsFlextTestsFactoriesDict:
         assert isinstance(result, r)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
-
-
-class TestsFlextTestsFactoriesGeneric:
-    """Tests for tt.generic() method."""
 
     def test_generic_simple(self) -> None:
         """Test generic type instantiation."""

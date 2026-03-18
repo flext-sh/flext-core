@@ -29,13 +29,7 @@ from flext_core import r
 pytestmark = [pytest.mark.integration]
 
 
-class TestContainerIntegration:
-    """Test container integration: service registration and retrieval."""
-
-
-class TestWorkspaceDetectionOrchestrationFlow:
-    """Test workspace detection → orchestration flow with shared state."""
-
+class TestInfraIntegration:
     @pytest.mark.integration
     def test_workspace_detector_and_orchestrator_share_state(
         self,
@@ -70,10 +64,6 @@ class TestWorkspaceDetectionOrchestrationFlow:
         assert detector is not None
         assert isinstance(detector, FlextInfraWorkspaceDetector)
 
-
-class TestBaseMkGenerationFlow:
-    """Test BaseMk generation flow with real command validation."""
-
     @pytest.mark.integration
     def test_basemk_template_engine_and_generator_flow(self, tmp_path: Path) -> None:
         """Test BaseMk template engine → generator flow.
@@ -101,10 +91,6 @@ class TestBaseMkGenerationFlow:
         assert generated.is_success
         assert isinstance(generated.value, str)
         assert "check" in generated.value
-
-
-class TestOutputSingletonConsistency:
-    """Test output singleton consistency across modules."""
 
     @pytest.mark.integration
     def test_output_singleton_is_same_instance_everywhere(self) -> None:
@@ -147,10 +133,6 @@ class TestOutputSingletonConsistency:
         assert callable(output.info)
         assert callable(output.header)
         assert callable(output.progress)
-
-
-class TestServicerChaining:
-    """Test service r chaining via .map()/.flat_map()."""
 
     @pytest.mark.integration
     def test_service_result_chaining_with_map(self) -> None:
@@ -226,10 +208,6 @@ class TestServicerChaining:
         assert result.is_success
         assert result.value == 26
 
-
-class TestPathResolverDiscoveryFlow:
-    """Test path resolver → discovery flow using u.Infra MRO."""
-
     @pytest.mark.integration
     def test_discover_projects_via_mro(self, tmp_path: Path) -> None:
         """Test u.Infra.discover_projects flow.
@@ -245,14 +223,6 @@ class TestPathResolverDiscoveryFlow:
     def test_path_utilities_via_mro(self, tmp_path: Path) -> None:
         """Test u.Infra path utility methods are available via MRO."""
         assert callable(u.Infra.workspace_root_from_file)
-
-
-class TestCrossModuleIntegration:
-    """Test cross-module integration scenarios."""
-
-
-class TestIntegrationWithRealCommandServices:
-    """Test integration scenarios with real subprocess-backed services via u.Infra."""
 
     @pytest.mark.integration
     def test_git_service_current_branch_in_real_repo(self, tmp_path: Path) -> None:

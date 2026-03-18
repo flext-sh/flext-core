@@ -16,326 +16,277 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, cast
 
 import pytest
 from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
-from tests import t
+from flext_core import t
 
 
-@unique
-class Status(StrEnum):
-    """Test StrEnum for collection testing."""
+class TestCollectionUtilitiesCoverage:
+    @unique
+    class Status(StrEnum):
+        ACTIVE = "active"
+        PENDING = "pending"
+        INACTIVE = "inactive"
 
-    ACTIVE = "active"
-    PENDING = "pending"
-    INACTIVE = "inactive"
+    @unique
+    class Priority(StrEnum):
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
 
+    class ParseSequenceScenario(BaseModel):
+        model_config = ConfigDict(frozen=True)
+        name: Annotated[str, Field(description="Parse sequence scenario name")]
+        values: Annotated[
+            list[str | TestCollectionUtilitiesCoverage.Status],
+            Field(description="Input sequence values"),
+        ]
+        expected_success: Annotated[
+            bool, Field(description="Whether parsing should succeed")
+        ]
+        expected_count: Annotated[
+            int | None, Field(default=None, description="Expected parsed item count")
+        ] = None
+        expected_error: Annotated[
+            str | None,
+            Field(default=None, description="Expected error message fragment"),
+        ] = None
 
-@unique
-class Priority(StrEnum):
-    """Test StrEnum for collection testing."""
+    class CoerceListValidatorScenario(BaseModel):
+        model_config = ConfigDict(frozen=True)
+        name: Annotated[str, Field(description="Coerce list scenario name")]
+        value: Annotated[object, Field(description="Input value for list coercion")]
+        expected_success: Annotated[
+            bool, Field(description="Whether coercion should succeed")
+        ]
+        expected_error: Annotated[
+            str | None,
+            Field(default=None, description="Expected error message fragment"),
+        ] = None
 
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
+    class ParseMappingScenario(BaseModel):
+        model_config = ConfigDict(frozen=True)
+        name: Annotated[str, Field(description="Parse mapping scenario name")]
+        mapping: Annotated[
+            dict[str, str | TestCollectionUtilitiesCoverage.Status],
+            Field(description="Input mapping values"),
+        ]
+        expected_success: Annotated[
+            bool, Field(description="Whether parsing should succeed")
+        ]
+        expected_count: Annotated[
+            int | None, Field(default=None, description="Expected parsed entry count")
+        ] = None
+        expected_error: Annotated[
+            str | None,
+            Field(default=None, description="Expected error message fragment"),
+        ] = None
 
+    def _parse_sequence_scenarios(
+        self,
+    ) -> list[TestCollectionUtilitiesCoverage.ParseSequenceScenario]:
+        return [
+            self.ParseSequenceScenario(
+                name="valid_strings",
+                values=["active", "pending"],
+                expected_success=True,
+                expected_count=2,
+            ),
+            self.ParseSequenceScenario(
+                name="valid_enums",
+                values=[self.Status.ACTIVE, self.Status.PENDING],
+                expected_success=True,
+                expected_count=2,
+            ),
+            self.ParseSequenceScenario(
+                name="mixed_strings_and_enums",
+                values=["active", self.Status.PENDING],
+                expected_success=True,
+                expected_count=2,
+            ),
+            self.ParseSequenceScenario(
+                name="invalid_string",
+                values=["invalid"],
+                expected_success=False,
+                expected_error="Invalid Status values",
+            ),
+            self.ParseSequenceScenario(
+                name="multiple_invalid",
+                values=["active", "invalid1", "invalid2"],
+                expected_success=False,
+                expected_error="Invalid Status values",
+            ),
+            self.ParseSequenceScenario(
+                name="empty_sequence",
+                values=[],
+                expected_success=True,
+                expected_count=0,
+            ),
+        ]
 
-class ParseSequenceScenario(BaseModel):
-    """Parse sequence test scenario."""
+    def _coerce_list_validator_scenarios(
+        self,
+    ) -> list[TestCollectionUtilitiesCoverage.CoerceListValidatorScenario]:
+        return [
+            self.CoerceListValidatorScenario(
+                name="valid_list_strings",
+                value=["active", "pending"],
+                expected_success=True,
+            ),
+            self.CoerceListValidatorScenario(
+                name="valid_tuple_strings",
+                value=("active", "pending"),
+                expected_success=True,
+            ),
+            self.CoerceListValidatorScenario(
+                name="valid_set_strings",
+                value=list({"active", "pending"}),
+                expected_success=True,
+            ),
+            self.CoerceListValidatorScenario(
+                name="valid_frozenset_strings",
+                value=list(frozenset({"active", "pending"})),
+                expected_success=True,
+            ),
+            self.CoerceListValidatorScenario(
+                name="valid_list_enums",
+                value=[self.Status.ACTIVE, self.Status.PENDING],
+                expected_success=True,
+            ),
+            self.CoerceListValidatorScenario(
+                name="invalid_not_sequence",
+                value="not a sequence",
+                expected_success=False,
+                expected_error="Expected sequence",
+            ),
+            self.CoerceListValidatorScenario(
+                name="invalid_string_in_list",
+                value=["active", "invalid"],
+                expected_success=False,
+                expected_error="Invalid Status",
+            ),
+            self.CoerceListValidatorScenario(
+                name="invalid_type_in_list",
+                value=["active", 123],
+                expected_success=False,
+                expected_error="Expected str",
+            ),
+        ]
 
-    model_config = ConfigDict(frozen=True)
-    name: Annotated[str, Field(description="Parse sequence scenario name")]
-    values: Annotated[list[str | Status], Field(description="Input sequence values")]
-    expected_success: Annotated[
-        bool, Field(description="Whether parsing should succeed")
-    ]
-    expected_count: Annotated[
-        int | None, Field(default=None, description="Expected parsed item count")
-    ] = None
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ] = None
+    def _parse_mapping_scenarios(
+        self,
+    ) -> list[TestCollectionUtilitiesCoverage.ParseMappingScenario]:
+        return [
+            self.ParseMappingScenario(
+                name="valid_strings",
+                mapping={"user1": "active", "user2": "pending"},
+                expected_success=True,
+                expected_count=2,
+            ),
+            self.ParseMappingScenario(
+                name="valid_enums",
+                mapping={"user1": self.Status.ACTIVE, "user2": self.Status.PENDING},
+                expected_success=True,
+                expected_count=2,
+            ),
+            self.ParseMappingScenario(
+                name="mixed_strings_and_enums",
+                mapping={"user1": "active", "user2": self.Status.PENDING},
+                expected_success=True,
+                expected_count=2,
+            ),
+            self.ParseMappingScenario(
+                name="invalid_string",
+                mapping={"user1": "invalid"},
+                expected_success=False,
+                expected_error="Invalid Status values",
+            ),
+            self.ParseMappingScenario(
+                name="empty_mapping",
+                mapping={},
+                expected_success=True,
+                expected_count=0,
+            ),
+        ]
 
+    def test_parse_sequence(self) -> None:
+        for scenario in self._parse_sequence_scenarios():
+            result = u.parse_sequence(self.Status, scenario.values)
+            if scenario.expected_success:
+                _ = u.Tests.Result.assert_success(result)
+                parsed = result.value
+                tm.that(len(parsed), eq=scenario.expected_count)
+                tm.that(parsed, is_=(list, tuple))
+            else:
+                _ = u.Tests.Result.assert_failure(result)
+                error_msg = result.error
+                assert error_msg is not None and scenario.expected_error is not None
+                tm.that(error_msg, has=scenario.expected_error)
 
-class CoerceListValidatorScenario(BaseModel):
-    """Coerce list validator test scenario."""
+    def test_coerce_list_validator(self) -> None:
+        validator = u.coerce_list_validator(self.Status)
+        for scenario in self._coerce_list_validator_scenarios():
+            if scenario.expected_success:
+                result = validator(cast("t.NormalizedValue", scenario.value))
+                tm.that(result, is_=list)
+                tm.that(all(isinstance(item, self.Status) for item in result), eq=True)
+            else:
+                with pytest.raises(Exception) as exc_info:
+                    validator(cast("t.NormalizedValue", scenario.value))
+                expected_error = scenario.expected_error
+                assert expected_error is not None
+                tm.that(isinstance(exc_info.value, (TypeError, ValueError)), eq=True)
+                tm.that(str(exc_info.value), has=expected_error)
 
-    model_config = ConfigDict(frozen=True)
-    name: Annotated[str, Field(description="Coerce list scenario name")]
-    value: Annotated[object, Field(description="Input value for list coercion")]
-    expected_success: Annotated[
-        bool, Field(description="Whether coercion should succeed")
-    ]
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ] = None
-
-
-class ParseMappingScenario(BaseModel):
-    """Parse mapping test scenario."""
-
-    model_config = ConfigDict(frozen=True)
-    name: Annotated[str, Field(description="Parse mapping scenario name")]
-    mapping: Annotated[
-        dict[str, str | Status], Field(description="Input mapping values")
-    ]
-    expected_success: Annotated[
-        bool, Field(description="Whether parsing should succeed")
-    ]
-    expected_count: Annotated[
-        int | None, Field(default=None, description="Expected parsed entry count")
-    ] = None
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ] = None
-
-
-class CollectionScenarios:
-    """Centralized collection test scenarios."""
-
-    PARSE_SEQUENCE: ClassVar[list[ParseSequenceScenario]] = [
-        ParseSequenceScenario(
-            name="valid_strings",
-            values=["active", "pending"],
-            expected_success=True,
-            expected_count=2,
-            expected_error=None,
-        ),
-        ParseSequenceScenario(
-            name="valid_enums",
-            values=[Status.ACTIVE, Status.PENDING],
-            expected_success=True,
-            expected_count=2,
-            expected_error=None,
-        ),
-        ParseSequenceScenario(
-            name="mixed_strings_and_enums",
-            values=["active", Status.PENDING],
-            expected_success=True,
-            expected_count=2,
-            expected_error=None,
-        ),
-        ParseSequenceScenario(
-            name="invalid_string",
-            values=["invalid"],
-            expected_success=False,
-            expected_count=None,
-            expected_error="Invalid Status values",
-        ),
-        ParseSequenceScenario(
-            name="multiple_invalid",
-            values=["active", "invalid1", "invalid2"],
-            expected_success=False,
-            expected_count=None,
-            expected_error="Invalid Status values",
-        ),
-        ParseSequenceScenario(
-            name="empty_sequence",
-            values=[],
-            expected_success=True,
-            expected_count=0,
-            expected_error=None,
-        ),
-    ]
-    COERCE_LIST_VALIDATOR: ClassVar[list[CoerceListValidatorScenario]] = [
-        CoerceListValidatorScenario(
-            name="valid_list_strings",
-            value=["active", "pending"],
-            expected_success=True,
-            expected_error=None,
-        ),
-        CoerceListValidatorScenario(
-            name="valid_tuple_strings",
-            value=("active", "pending"),
-            expected_success=True,
-            expected_error=None,
-        ),
-        CoerceListValidatorScenario(
-            name="valid_set_strings",
-            value=list({"active", "pending"}),
-            expected_success=True,
-            expected_error=None,
-        ),
-        CoerceListValidatorScenario(
-            name="valid_frozenset_strings",
-            value=list(frozenset({"active", "pending"})),
-            expected_success=True,
-            expected_error=None,
-        ),
-        CoerceListValidatorScenario(
-            name="valid_list_enums",
-            value=[Status.ACTIVE, Status.PENDING],
-            expected_success=True,
-            expected_error=None,
-        ),
-        CoerceListValidatorScenario(
-            name="invalid_not_sequence",
-            value="not a sequence",
-            expected_success=False,
-            expected_error="Expected sequence",
-        ),
-        CoerceListValidatorScenario(
-            name="invalid_string_in_list",
-            value=["active", "invalid"],
-            expected_success=False,
-            expected_error="Invalid Status",
-        ),
-        CoerceListValidatorScenario(
-            name="invalid_type_in_list",
-            value=["active", 123],
-            expected_success=False,
-            expected_error="Expected str",
-        ),
-    ]
-    PARSE_MAPPING: ClassVar[list[ParseMappingScenario]] = [
-        ParseMappingScenario(
-            name="valid_strings",
-            mapping={"user1": "active", "user2": "pending"},
-            expected_success=True,
-            expected_count=2,
-            expected_error=None,
-        ),
-        ParseMappingScenario(
-            name="valid_enums",
-            mapping={"user1": Status.ACTIVE, "user2": Status.PENDING},
-            expected_success=True,
-            expected_count=2,
-            expected_error=None,
-        ),
-        ParseMappingScenario(
-            name="mixed_strings_and_enums",
-            mapping={"user1": "active", "user2": Status.PENDING},
-            expected_success=True,
-            expected_count=2,
-            expected_error=None,
-        ),
-        ParseMappingScenario(
-            name="invalid_string",
-            mapping={"user1": "invalid"},
-            expected_success=False,
-            expected_count=None,
-            expected_error="Invalid Status values",
-        ),
-        ParseMappingScenario(
-            name="empty_mapping",
-            mapping={},
-            expected_success=True,
-            expected_count=0,
-            expected_error=None,
-        ),
-    ]
-
-
-class TestuCollectionParseSequence:
-    """Test FlextUtilitiesCollection.parse_sequence."""
-
-    @pytest.mark.parametrize(
-        "scenario",
-        CollectionScenarios.PARSE_SEQUENCE,
-        ids=lambda s: s.name,
-    )
-    def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
-        """Test parse_sequence with various scenarios."""
-        result = u.parse_sequence(Status, scenario.values)
-        if scenario.expected_success:
-            _ = u.Tests.Result.assert_success(result)
-            parsed = result.value
-            tm.that(len(parsed), eq=scenario.expected_count)
-            tm.that(parsed, is_=(list, tuple))
-        else:
-            _ = u.Tests.Result.assert_failure(result)
-            error_msg = result.error
-            assert error_msg is not None and scenario.expected_error is not None
-            tm.that(error_msg, has=scenario.expected_error)
-
-
-class TestuCollectionCoerceListValidator:
-    """Test FlextUtilitiesCollection.coerce_list_validator."""
-
-    @pytest.mark.parametrize(
-        "scenario",
-        CollectionScenarios.COERCE_LIST_VALIDATOR,
-        ids=lambda s: s.name,
-    )
-    def test_coerce_list_validator(self, scenario: CoerceListValidatorScenario) -> None:
-        """Test coerce_list_validator with various scenarios."""
-        validator = u.coerce_list_validator(Status)
-        if scenario.expected_success:
-            result = validator(cast("t.NormalizedValue", scenario.value))
-            tm.that(result, is_=list)
-            tm.that(all(isinstance(item, Status) for item in result), eq=True)
-        else:
-            with pytest.raises(Exception) as exc_info:
-                validator(cast("t.NormalizedValue", scenario.value))
-            expected_error = scenario.expected_error
-            assert expected_error is not None
-            tm.that(isinstance(exc_info.value, (TypeError, ValueError)), eq=True)
-            tm.that(str(exc_info.value), has=expected_error)
-
-
-class TestuCollectionParseMapping:
-    """Test FlextUtilitiesCollection.parse_mapping."""
-
-    @pytest.mark.parametrize(
-        "scenario",
-        CollectionScenarios.PARSE_MAPPING,
-        ids=lambda s: s.name,
-    )
-    def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
-        """Test parse_mapping with various scenarios."""
-        result = u.parse_mapping(Status, scenario.mapping)
-        if scenario.expected_success:
-            _ = u.Tests.Result.assert_success(result)
-            parsed = result.value
-            tm.that(len(parsed), eq=scenario.expected_count)
-            tm.that(parsed, is_=dict)
-            tm.that(all(isinstance(v, Status) for v in parsed.values()), eq=True)
-        else:
-            _ = u.Tests.Result.assert_failure(result)
-            error_msg = result.error
-            assert error_msg is not None and scenario.expected_error is not None
-            tm.that(error_msg, has=scenario.expected_error)
-
-
-class TestuCollectionCoerceDictValidator:
-    """Test FlextUtilitiesCollection.coerce_dict_validator."""
+    def test_parse_mapping(self) -> None:
+        for scenario in self._parse_mapping_scenarios():
+            result = u.parse_mapping(self.Status, scenario.mapping)
+            if scenario.expected_success:
+                _ = u.Tests.Result.assert_success(result)
+                parsed = result.value
+                tm.that(len(parsed), eq=scenario.expected_count)
+                tm.that(parsed, is_=dict)
+                tm.that(
+                    all(isinstance(v, self.Status) for v in parsed.values()), eq=True
+                )
+            else:
+                _ = u.Tests.Result.assert_failure(result)
+                error_msg = result.error
+                assert error_msg is not None and scenario.expected_error is not None
+                tm.that(error_msg, has=scenario.expected_error)
 
     def test_coerce_dict_validator_valid_strings(self) -> None:
-        """Test coerce_dict_validator with valid string values."""
-        validator = u.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(self.Status)
         result = validator({"user1": "active", "user2": "pending"})
         tm.that(result, is_=dict)
-        tm.that(result["user1"], eq=Status.ACTIVE)
-        tm.that(result["user2"], eq=Status.PENDING)
+        tm.that(result["user1"], eq=self.Status.ACTIVE)
+        tm.that(result["user2"], eq=self.Status.PENDING)
 
     def test_coerce_dict_validator_valid_enums(self) -> None:
-        """Test coerce_dict_validator with valid enum values."""
-        validator = u.coerce_dict_validator(Status)
-        result = validator({"user1": Status.ACTIVE, "user2": Status.PENDING})
+        validator = u.coerce_dict_validator(self.Status)
+        result = validator({"user1": self.Status.ACTIVE, "user2": self.Status.PENDING})
         tm.that(result, is_=dict)
-        tm.that(result["user1"], eq=Status.ACTIVE)
-        tm.that(result["user2"], eq=Status.PENDING)
+        tm.that(result["user1"], eq=self.Status.ACTIVE)
+        tm.that(result["user2"], eq=self.Status.PENDING)
 
     def test_coerce_dict_validator_invalid_not_dict(self) -> None:
-        """Test coerce_dict_validator with non-dict value."""
-        validator = u.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(self.Status)
         with pytest.raises(TypeError) as exc_info:
             validator("not a dict")
         tm.that(str(exc_info.value), has="Expected dict")
 
     def test_coerce_dict_validator_invalid_string(self) -> None:
-        """Test coerce_dict_validator with invalid string value."""
-        validator = u.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(self.Status)
         with pytest.raises(ValueError) as exc_info:
             validator({"user1": "invalid"})
         tm.that(str(exc_info.value), has="Invalid Status")
 
     def test_coerce_dict_validator_invalid_type(self) -> None:
-        """Test coerce_dict_validator with invalid type value."""
-        validator = u.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(self.Status)
         with pytest.raises(TypeError) as exc_info:
             validator({"user1": 123})
         tm.that(str(exc_info.value), has="Expected str")

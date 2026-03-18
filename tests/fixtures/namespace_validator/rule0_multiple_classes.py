@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 
-class FlextTestConstants:
-    """First outer class."""
+class Rule0MultipleClassesFixture:
+    class FlextTestConstants:
+        """First outer class."""
 
-    VALUE = 1
+        VALUE = 1
 
+    class FlextTestModels:
+        """Second outer class — VIOLATION."""
 
-class FlextTestModels:
-    """Second outer class — VIOLATION."""
-
-    NAME = "test"
+        NAME = "test"

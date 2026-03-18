@@ -5,13 +5,13 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 
-class FlextTestModels:
-    """Models namespace."""
+class Rule1LooseEnumFixture:
+    class FlextTestModels:
+        """Models namespace."""
 
+    @unique
+    class Status(StrEnum):
+        """StrEnum outside Constants — VIOLATION."""
 
-@unique
-class Status(StrEnum):
-    """StrEnum outside Constants — VIOLATION."""
-
-    ACTIVE = "active"
-    INACTIVE = "inactive"
+        ACTIVE = "active"
+        INACTIVE = "inactive"

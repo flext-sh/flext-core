@@ -33,383 +33,378 @@ from flext_core import FlextConstants, FlextRuntime, e
 from tests import c, m
 
 
-@unique
-class ExceptionScenarioType(StrEnum):
-    """Exception test scenario types for organization."""
-
-    BASE_ERROR = "base_error"
-    WITH_CODE = "with_code"
-    WITH_CORRELATION = "with_correlation"
-    WITH_METADATA = "with_metadata"
-    WITH_EXTRA_KWARGS = "with_extra_kwargs"
-    TO_DICT = "to_dict"
-    STRING_REPRESENTATION = "string_representation"
-    SPECIFIC_TYPE = "specific_type"
-    FACTORY_METHOD = "factory_method"
-    FACTORY_INVALID = "factory_invalid"
-    EXCEPTION_RAISING = "exception_raising"
-    EXCEPTION_CHAINING = "exception_chaining"
-
-
-@unique
-class ExceptionTypeScenarioType(StrEnum):
-    """Exception type testing scenarios."""
-
-    VALIDATION = "validation"
-    CONFIGURATION = "configuration"
-    CONNECTION = "connection"
-    TIMEOUT = "timeout"
-    AUTHENTICATION = "authentication"
-    AUTHORIZATION = "authorization"
-    NOT_FOUND = "not_found"
-    CONFLICT = "conflict"
-    RATE_LIMIT = "rate_limit"
-    CIRCUIT_BREAKER = "circuit_breaker"
-    TYPE_ERROR = "type_error"
-    OPERATION = "operation"
-
-
-class ExceptionScenario(m.Value):
-    """Exception test scenario definition."""
-
-    model_config = ConfigDict(frozen=True)
-
-    name: Annotated[str, Field(description="Exception scenario name")]
-    scenario_type: Annotated[
-        ExceptionScenarioType, Field(description="Exception scenario type")
-    ]
-    exception_type: Annotated[
-        type[e.BaseError] | None,
-        Field(default=None, description="Exception class for the scenario"),
-    ] = None
-    should_raise: Annotated[
-        bool, Field(default=False, description="Whether scenario should raise")
-    ] = False
-    error_factory_type: Annotated[
-        str | None,
-        Field(default=None, description="Factory type name for create() tests"),
-    ] = None
-
-
-class ExceptionTypeScenario(m.Value):
-    """Exception type instantiation test scenario."""
-
-    model_config = ConfigDict(frozen=True)
-
-    name: Annotated[str, Field(description="Exception type scenario name")]
-    scenario_type: Annotated[
-        ExceptionTypeScenarioType,
-        Field(
-            description="Exception type scenario category",
-        ),
-    ]
-    exception_class: Annotated[
-        type[e.BaseError],
-        Field(
-            description="Exception class to instantiate",
-        ),
-    ]
-
-
-class ExceptionScenarios:
-    """Centralized exception test scenarios using FlextConstants."""
-
-    BASE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
-        ExceptionScenario(
-            name="base_error_init",
-            scenario_type=ExceptionScenarioType.BASE_ERROR,
-            exception_type=e.BaseError,
-        ),
-        ExceptionScenario(
-            name="base_error_with_code",
-            scenario_type=ExceptionScenarioType.WITH_CODE,
-            exception_type=e.BaseError,
-        ),
-        ExceptionScenario(
-            name="base_error_with_correlation",
-            scenario_type=ExceptionScenarioType.WITH_CORRELATION,
-            exception_type=e.BaseError,
-        ),
-        ExceptionScenario(
-            name="base_error_with_metadata",
-            scenario_type=ExceptionScenarioType.WITH_METADATA,
-            exception_type=e.BaseError,
-        ),
-        ExceptionScenario(
-            name="base_error_with_kwargs",
-            scenario_type=ExceptionScenarioType.WITH_EXTRA_KWARGS,
-            exception_type=e.BaseError,
-        ),
-        ExceptionScenario(
-            name="base_error_to_dict",
-            scenario_type=ExceptionScenarioType.TO_DICT,
-            exception_type=e.BaseError,
-        ),
-        ExceptionScenario(
-            name="base_error_str_repr",
-            scenario_type=ExceptionScenarioType.STRING_REPRESENTATION,
-            exception_type=e.BaseError,
-        ),
-    ]
-    SPECIFIC_TYPE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
-        ExceptionScenario(
-            name="validation_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.ValidationError,
-        ),
-        ExceptionScenario(
-            name="configuration_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.ConfigurationError,
-        ),
-        ExceptionScenario(
-            name="connection_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.ConnectionError,
-        ),
-        ExceptionScenario(
-            name="timeout_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.TimeoutError,
-        ),
-        ExceptionScenario(
-            name="authentication_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.AuthenticationError,
-        ),
-        ExceptionScenario(
-            name="authorization_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.AuthorizationError,
-        ),
-        ExceptionScenario(
-            name="not_found_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.NotFoundError,
-        ),
-        ExceptionScenario(
-            name="conflict_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.ConflictError,
-        ),
-        ExceptionScenario(
-            name="rate_limit_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.RateLimitError,
-        ),
-        ExceptionScenario(
-            name="circuit_breaker_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.CircuitBreakerError,
-        ),
-        ExceptionScenario(
-            name="type_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.TypeError,
-        ),
-        ExceptionScenario(
-            name="operation_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=e.OperationError,
-        ),
-    ]
-    FACTORY_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
-        ExceptionScenario(
-            name="create_error_validation",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="ValidationError",
-        ),
-        ExceptionScenario(
-            name="create_error_configuration",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="ConfigurationError",
-        ),
-        ExceptionScenario(
-            name="create_error_connection",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="ConnectionError",
-        ),
-        ExceptionScenario(
-            name="create_error_timeout",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="TimeoutError",
-        ),
-        ExceptionScenario(
-            name="create_error_authentication",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="AuthenticationError",
-        ),
-        ExceptionScenario(
-            name="create_error_authorization",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="AuthorizationError",
-        ),
-        ExceptionScenario(
-            name="create_error_not_found",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="NotFoundError",
-        ),
-        ExceptionScenario(
-            name="create_error_conflict",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="ConflictError",
-        ),
-        ExceptionScenario(
-            name="create_error_rate_limit",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="RateLimitError",
-        ),
-        ExceptionScenario(
-            name="create_error_circuit_breaker",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="CircuitBreakerError",
-        ),
-        ExceptionScenario(
-            name="create_error_type",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="TypeError",
-        ),
-        ExceptionScenario(
-            name="create_error_operation",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            exception_type=None,
-            should_raise=False,
-            error_factory_type="OperationError",
-        ),
-        ExceptionScenario(
-            name="create_error_invalid",
-            scenario_type=ExceptionScenarioType.FACTORY_INVALID,
-        ),
-        ExceptionScenario(
-            name="exception_raising",
-            scenario_type=ExceptionScenarioType.EXCEPTION_RAISING,
-            exception_type=e.ValidationError,
-            should_raise=True,
-        ),
-        ExceptionScenario(
-            name="exception_chaining",
-            scenario_type=ExceptionScenarioType.EXCEPTION_CHAINING,
-            exception_type=e.OperationError,
-            should_raise=True,
-        ),
-    ]
-    TYPE_SCENARIOS: ClassVar[list[ExceptionTypeScenario]] = [
-        ExceptionTypeScenario(
-            name="instantiate_validation",
-            scenario_type=ExceptionTypeScenarioType.VALIDATION,
-            exception_class=e.ValidationError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_configuration",
-            scenario_type=ExceptionTypeScenarioType.CONFIGURATION,
-            exception_class=e.ConfigurationError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_connection",
-            scenario_type=ExceptionTypeScenarioType.CONNECTION,
-            exception_class=e.ConnectionError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_timeout",
-            scenario_type=ExceptionTypeScenarioType.TIMEOUT,
-            exception_class=e.TimeoutError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_authentication",
-            scenario_type=ExceptionTypeScenarioType.AUTHENTICATION,
-            exception_class=e.AuthenticationError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_authorization",
-            scenario_type=ExceptionTypeScenarioType.AUTHORIZATION,
-            exception_class=e.AuthorizationError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_not_found",
-            scenario_type=ExceptionTypeScenarioType.NOT_FOUND,
-            exception_class=e.NotFoundError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_conflict",
-            scenario_type=ExceptionTypeScenarioType.CONFLICT,
-            exception_class=e.ConflictError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_rate_limit",
-            scenario_type=ExceptionTypeScenarioType.RATE_LIMIT,
-            exception_class=e.RateLimitError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_circuit_breaker",
-            scenario_type=ExceptionTypeScenarioType.CIRCUIT_BREAKER,
-            exception_class=e.CircuitBreakerError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_type_error",
-            scenario_type=ExceptionTypeScenarioType.TYPE_ERROR,
-            exception_class=e.TypeError,
-        ),
-        ExceptionTypeScenario(
-            name="instantiate_operation",
-            scenario_type=ExceptionTypeScenarioType.OPERATION,
-            exception_class=e.OperationError,
-        ),
-    ]
-
-
 class Teste:
     """Comprehensive test suite for e using FlextTestsUtilities."""
+
+    @unique
+    class ExceptionScenarioType(StrEnum):
+        """Exception test scenario types for organization."""
+
+        BASE_ERROR = "base_error"
+        WITH_CODE = "with_code"
+        WITH_CORRELATION = "with_correlation"
+        WITH_METADATA = "with_metadata"
+        WITH_EXTRA_KWARGS = "with_extra_kwargs"
+        TO_DICT = "to_dict"
+        STRING_REPRESENTATION = "string_representation"
+        SPECIFIC_TYPE = "specific_type"
+        FACTORY_METHOD = "factory_method"
+        FACTORY_INVALID = "factory_invalid"
+        EXCEPTION_RAISING = "exception_raising"
+        EXCEPTION_CHAINING = "exception_chaining"
+
+    @unique
+    class ExceptionTypeScenarioType(StrEnum):
+        """Exception type testing scenarios."""
+
+        VALIDATION = "validation"
+        CONFIGURATION = "configuration"
+        CONNECTION = "connection"
+        TIMEOUT = "timeout"
+        AUTHENTICATION = "authentication"
+        AUTHORIZATION = "authorization"
+        NOT_FOUND = "not_found"
+        CONFLICT = "conflict"
+        RATE_LIMIT = "rate_limit"
+        CIRCUIT_BREAKER = "circuit_breaker"
+        TYPE_ERROR = "type_error"
+        OPERATION = "operation"
+
+    class ExceptionScenario(m.Value):
+        """Exception test scenario definition."""
+
+        model_config = ConfigDict(frozen=True)
+
+        name: Annotated[str, Field(description="Exception scenario name")]
+        scenario_type: Annotated[
+            ExceptionScenarioType, Field(description="Exception scenario type")
+        ]
+        exception_type: Annotated[
+            type[e.BaseError] | None,
+            Field(default=None, description="Exception class for the scenario"),
+        ] = None
+        should_raise: Annotated[
+            bool, Field(default=False, description="Whether scenario should raise")
+        ] = False
+        error_factory_type: Annotated[
+            str | None,
+            Field(default=None, description="Factory type name for create() tests"),
+        ] = None
+
+    class ExceptionTypeScenario(m.Value):
+        """Exception type instantiation test scenario."""
+
+        model_config = ConfigDict(frozen=True)
+
+        name: Annotated[str, Field(description="Exception type scenario name")]
+        scenario_type: Annotated[
+            ExceptionTypeScenarioType,
+            Field(
+                description="Exception type scenario category",
+            ),
+        ]
+        exception_class: Annotated[
+            type[e.BaseError],
+            Field(
+                description="Exception class to instantiate",
+            ),
+        ]
+
+    class ExceptionScenarios:
+        """Centralized exception test scenarios using FlextConstants."""
+
+        BASE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
+            ExceptionScenario(
+                name="base_error_init",
+                scenario_type=ExceptionScenarioType.BASE_ERROR,
+                exception_type=e.BaseError,
+            ),
+            ExceptionScenario(
+                name="base_error_with_code",
+                scenario_type=ExceptionScenarioType.WITH_CODE,
+                exception_type=e.BaseError,
+            ),
+            ExceptionScenario(
+                name="base_error_with_correlation",
+                scenario_type=ExceptionScenarioType.WITH_CORRELATION,
+                exception_type=e.BaseError,
+            ),
+            ExceptionScenario(
+                name="base_error_with_metadata",
+                scenario_type=ExceptionScenarioType.WITH_METADATA,
+                exception_type=e.BaseError,
+            ),
+            ExceptionScenario(
+                name="base_error_with_kwargs",
+                scenario_type=ExceptionScenarioType.WITH_EXTRA_KWARGS,
+                exception_type=e.BaseError,
+            ),
+            ExceptionScenario(
+                name="base_error_to_dict",
+                scenario_type=ExceptionScenarioType.TO_DICT,
+                exception_type=e.BaseError,
+            ),
+            ExceptionScenario(
+                name="base_error_str_repr",
+                scenario_type=ExceptionScenarioType.STRING_REPRESENTATION,
+                exception_type=e.BaseError,
+            ),
+        ]
+        SPECIFIC_TYPE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
+            ExceptionScenario(
+                name="validation_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.ValidationError,
+            ),
+            ExceptionScenario(
+                name="configuration_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.ConfigurationError,
+            ),
+            ExceptionScenario(
+                name="connection_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.ConnectionError,
+            ),
+            ExceptionScenario(
+                name="timeout_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.TimeoutError,
+            ),
+            ExceptionScenario(
+                name="authentication_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.AuthenticationError,
+            ),
+            ExceptionScenario(
+                name="authorization_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.AuthorizationError,
+            ),
+            ExceptionScenario(
+                name="not_found_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.NotFoundError,
+            ),
+            ExceptionScenario(
+                name="conflict_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.ConflictError,
+            ),
+            ExceptionScenario(
+                name="rate_limit_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.RateLimitError,
+            ),
+            ExceptionScenario(
+                name="circuit_breaker_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.CircuitBreakerError,
+            ),
+            ExceptionScenario(
+                name="type_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.TypeError,
+            ),
+            ExceptionScenario(
+                name="operation_error",
+                scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
+                exception_type=e.OperationError,
+            ),
+        ]
+        FACTORY_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
+            ExceptionScenario(
+                name="create_error_validation",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="ValidationError",
+            ),
+            ExceptionScenario(
+                name="create_error_configuration",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="ConfigurationError",
+            ),
+            ExceptionScenario(
+                name="create_error_connection",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="ConnectionError",
+            ),
+            ExceptionScenario(
+                name="create_error_timeout",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="TimeoutError",
+            ),
+            ExceptionScenario(
+                name="create_error_authentication",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="AuthenticationError",
+            ),
+            ExceptionScenario(
+                name="create_error_authorization",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="AuthorizationError",
+            ),
+            ExceptionScenario(
+                name="create_error_not_found",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="NotFoundError",
+            ),
+            ExceptionScenario(
+                name="create_error_conflict",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="ConflictError",
+            ),
+            ExceptionScenario(
+                name="create_error_rate_limit",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="RateLimitError",
+            ),
+            ExceptionScenario(
+                name="create_error_circuit_breaker",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="CircuitBreakerError",
+            ),
+            ExceptionScenario(
+                name="create_error_type",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="TypeError",
+            ),
+            ExceptionScenario(
+                name="create_error_operation",
+                scenario_type=ExceptionScenarioType.FACTORY_METHOD,
+                exception_type=None,
+                should_raise=False,
+                error_factory_type="OperationError",
+            ),
+            ExceptionScenario(
+                name="create_error_invalid",
+                scenario_type=ExceptionScenarioType.FACTORY_INVALID,
+            ),
+            ExceptionScenario(
+                name="exception_raising",
+                scenario_type=ExceptionScenarioType.EXCEPTION_RAISING,
+                exception_type=e.ValidationError,
+                should_raise=True,
+            ),
+            ExceptionScenario(
+                name="exception_chaining",
+                scenario_type=ExceptionScenarioType.EXCEPTION_CHAINING,
+                exception_type=e.OperationError,
+                should_raise=True,
+            ),
+        ]
+        TYPE_SCENARIOS: ClassVar[list[ExceptionTypeScenario]] = [
+            ExceptionTypeScenario(
+                name="instantiate_validation",
+                scenario_type=ExceptionTypeScenarioType.VALIDATION,
+                exception_class=e.ValidationError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_configuration",
+                scenario_type=ExceptionTypeScenarioType.CONFIGURATION,
+                exception_class=e.ConfigurationError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_connection",
+                scenario_type=ExceptionTypeScenarioType.CONNECTION,
+                exception_class=e.ConnectionError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_timeout",
+                scenario_type=ExceptionTypeScenarioType.TIMEOUT,
+                exception_class=e.TimeoutError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_authentication",
+                scenario_type=ExceptionTypeScenarioType.AUTHENTICATION,
+                exception_class=e.AuthenticationError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_authorization",
+                scenario_type=ExceptionTypeScenarioType.AUTHORIZATION,
+                exception_class=e.AuthorizationError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_not_found",
+                scenario_type=ExceptionTypeScenarioType.NOT_FOUND,
+                exception_class=e.NotFoundError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_conflict",
+                scenario_type=ExceptionTypeScenarioType.CONFLICT,
+                exception_class=e.ConflictError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_rate_limit",
+                scenario_type=ExceptionTypeScenarioType.RATE_LIMIT,
+                exception_class=e.RateLimitError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_circuit_breaker",
+                scenario_type=ExceptionTypeScenarioType.CIRCUIT_BREAKER,
+                exception_class=e.CircuitBreakerError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_type_error",
+                scenario_type=ExceptionTypeScenarioType.TYPE_ERROR,
+                exception_class=e.TypeError,
+            ),
+            ExceptionTypeScenario(
+                name="instantiate_operation",
+                scenario_type=ExceptionTypeScenarioType.OPERATION,
+                exception_class=e.OperationError,
+            ),
+        ]
 
     @pytest.mark.parametrize(
         "scenario",
         ExceptionScenarios.BASE_SCENARIOS,
         ids=lambda s: s.name,
     )
-    def test_base_exception_scenarios(self, scenario: ExceptionScenario) -> None:
+    def test_base_exception_scenarios(self, scenario: Teste.ExceptionScenario) -> None:
         """Test base exception creation and behavior."""
-        if scenario.scenario_type == ExceptionScenarioType.BASE_ERROR:
+        if scenario.scenario_type == Teste.ExceptionScenarioType.BASE_ERROR:
             error = e.BaseError("Test error")
             tm.that(error.message, eq="Test error")
             tm.that(error.error_code, eq=c.Errors.UNKNOWN_ERROR)
             tm.that(error.correlation_id is None, eq=True)
             tm.that(isinstance(error.metadata.attributes, dict), eq=True)
-        elif scenario.scenario_type == ExceptionScenarioType.WITH_CODE:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.WITH_CODE:
             error = e.BaseError("Test error", error_code="TEST_001")
             tm.that(error.error_code, eq="TEST_001")
             tm.that(str(error), eq="[TEST_001] Test error")
-        elif scenario.scenario_type == ExceptionScenarioType.WITH_CORRELATION:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.WITH_CORRELATION:
             error = e.BaseError("Test error", correlation_id="corr-123")
             tm.that(error.correlation_id, eq="corr-123")
-        elif scenario.scenario_type == ExceptionScenarioType.WITH_METADATA:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.WITH_METADATA:
             metadata = {"field": "email", "value": "invalid"}
             error = e.BaseError("Test error", metadata=metadata)
             tm.that(error.metadata.attributes["field"], eq="email")
-        elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.WITH_EXTRA_KWARGS:
             error = e.BaseError("Test error", field="email", value="invalid")
             tm.that(error.metadata.attributes["field"], eq="email")
-        elif scenario.scenario_type == ExceptionScenarioType.TO_DICT:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.TO_DICT:
             error = e.BaseError(
                 "Test error",
                 error_code="TEST_001",
@@ -420,7 +415,9 @@ class Teste:
             tm.that(error_dict["error_type"], eq="BaseError")
             tm.that(error_dict["message"], eq="Test error")
             tm.that(error_dict["error_code"], eq="TEST_001")
-        elif scenario.scenario_type == ExceptionScenarioType.STRING_REPRESENTATION:
+        elif (
+            scenario.scenario_type == Teste.ExceptionScenarioType.STRING_REPRESENTATION
+        ):
             error1 = e.BaseError("Test error")
             tm.that(str(error1), eq="[UNKNOWN_ERROR] Test error")
             error2 = e.BaseError("Test error", error_code="TEST_001")
@@ -431,7 +428,7 @@ class Teste:
         ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS,
         ids=lambda s: s.name,
     )
-    def test_specific_exception_types(self, scenario: ExceptionScenario) -> None:
+    def test_specific_exception_types(self, scenario: Teste.ExceptionScenario) -> None:
         """Test specific exception type instantiation."""
         tm.that(scenario.exception_type, none=False)
         if scenario.exception_type == e.ValidationError:
@@ -592,25 +589,25 @@ class Teste:
         ExceptionScenarios.FACTORY_SCENARIOS,
         ids=lambda s: s.name,
     )
-    def test_factory_methods(self, scenario: ExceptionScenario) -> None:
+    def test_factory_methods(self, scenario: Teste.ExceptionScenario) -> None:
         """Test exception factory methods."""
-        if scenario.scenario_type == ExceptionScenarioType.FACTORY_METHOD:
+        if scenario.scenario_type == Teste.ExceptionScenarioType.FACTORY_METHOD:
             tm.that(scenario.error_factory_type, none=False)
             if scenario.error_factory_type is None:
                 pytest.fail("scenario.error_factory_type must be set")
             error = e.create(scenario.error_factory_type, "Test error")
             tm.that(type(error).__name__, eq=scenario.error_factory_type)
             tm.that(error.message, eq="Test error")
-        elif scenario.scenario_type == ExceptionScenarioType.FACTORY_INVALID:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.FACTORY_INVALID:
             with pytest.raises(ValueError, match="Unknown error type"):
                 e.create("InvalidError", "Test error")
-        elif scenario.scenario_type == ExceptionScenarioType.EXCEPTION_RAISING:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.EXCEPTION_RAISING:
             error_msg = "Test error"
             with pytest.raises(e.ValidationError) as exc_info:
                 raise e.ValidationError(error_msg, error_code="TEST_001")
             tm.that(exc_info.value.message, eq=error_msg)
             tm.that(exc_info.value.error_code, eq="TEST_001")
-        elif scenario.scenario_type == ExceptionScenarioType.EXCEPTION_CHAINING:
+        elif scenario.scenario_type == Teste.ExceptionScenarioType.EXCEPTION_CHAINING:
             operation_error_msg = "Operation failed"
             with pytest.raises(e.OperationError) as exc_op_info:
                 raise e.OperationError(operation_error_msg) from e.ConfigurationError(
@@ -626,7 +623,9 @@ class Teste:
         ExceptionScenarios.TYPE_SCENARIOS,
         ids=lambda s: s.name,
     )
-    def test_exception_type_scenarios(self, scenario: ExceptionTypeScenario) -> None:
+    def test_exception_type_scenarios(
+        self, scenario: Teste.ExceptionTypeScenario
+    ) -> None:
         """Test comprehensive exception type instantiation."""
         exc = scenario.exception_class(f"{scenario.scenario_type} error")
         tm.that(str(exc), has=f"{scenario.scenario_type} error")

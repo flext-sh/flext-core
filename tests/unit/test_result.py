@@ -85,128 +85,123 @@ class Testr:
                 expected_result=expected_result,
             )
 
-    class ResultScenarios:
-        """Centralized result test scenarios using c."""
+    STRING_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
+        ResultScenario(
+            name="creation_success_string",
+            operation_type=ResultOperationType.CREATION_SUCCESS,
+            value="success",
+        ),
+        ResultScenario(
+            name="creation_failure_message",
+            operation_type=ResultOperationType.CREATION_FAILURE,
+            value="error message",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="unwrap_or_success",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="value",
+        ),
+        ResultScenario(
+            name="unwrap_or_failure",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="map_failure",
+            operation_type=ResultOperationType.MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="flat_map_failure",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="alt_success",
+            operation_type=ResultOperationType.ALT,
+            value="success",
+        ),
+        ResultScenario(
+            name="alt_failure",
+            operation_type=ResultOperationType.ALT,
+            value="original_error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="lash_success",
+            operation_type=ResultOperationType.LASH,
+            value="success",
+        ),
+        ResultScenario(
+            name="lash_failure",
+            operation_type=ResultOperationType.LASH,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="or_operator_success",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="value",
+        ),
+        ResultScenario(
+            name="or_operator_failure",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="error",
+            is_success_expected=False,
+        ),
+    ]
+    INT_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
+        ResultScenario(
+            name="unwrap_success",
+            operation_type=ResultOperationType.UNWRAP,
+            value=42,
+        ),
+        ResultScenario(
+            name="map_success",
+            operation_type=ResultOperationType.MAP,
+            value=5,
+        ),
+        ResultScenario(
+            name="flat_map_success",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value=5,
+        ),
+        ResultScenario(
+            name="filter_passes",
+            operation_type=ResultOperationType.FILTER,
+            value=10,
+        ),
+        ResultScenario(
+            name="filter_fails",
+            operation_type=ResultOperationType.FILTER,
+            value=3,
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="railway_composition",
+            operation_type=ResultOperationType.RAILWAY_COMPOSITION,
+            value=5,
+        ),
+    ]
+    BOOL_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
+        ResultScenario(
+            name="bool_conversion_success",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=True,
+        ),
+        ResultScenario(
+            name="bool_conversion_failure",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=False,
+        ),
+    ]
 
-        STRING_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
-            Testr.ResultScenario(
-                name="creation_success_string",
-                operation_type=Testr.ResultOperationType.CREATION_SUCCESS,
-                value="success",
-            ),
-            Testr.ResultScenario(
-                name="creation_failure_message",
-                operation_type=Testr.ResultOperationType.CREATION_FAILURE,
-                value="error message",
-                is_success_expected=False,
-            ),
-            Testr.ResultScenario(
-                name="unwrap_or_success",
-                operation_type=Testr.ResultOperationType.UNWRAP_OR,
-                value="value",
-            ),
-            Testr.ResultScenario(
-                name="unwrap_or_failure",
-                operation_type=Testr.ResultOperationType.UNWRAP_OR,
-                value="error",
-                is_success_expected=False,
-            ),
-            Testr.ResultScenario(
-                name="map_failure",
-                operation_type=Testr.ResultOperationType.MAP,
-                value="error",
-                is_success_expected=False,
-            ),
-            Testr.ResultScenario(
-                name="flat_map_failure",
-                operation_type=Testr.ResultOperationType.FLAT_MAP,
-                value="error",
-                is_success_expected=False,
-            ),
-            Testr.ResultScenario(
-                name="alt_success",
-                operation_type=Testr.ResultOperationType.ALT,
-                value="success",
-            ),
-            Testr.ResultScenario(
-                name="alt_failure",
-                operation_type=Testr.ResultOperationType.ALT,
-                value="original_error",
-                is_success_expected=False,
-            ),
-            Testr.ResultScenario(
-                name="lash_success",
-                operation_type=Testr.ResultOperationType.LASH,
-                value="success",
-            ),
-            Testr.ResultScenario(
-                name="lash_failure",
-                operation_type=Testr.ResultOperationType.LASH,
-                value="error",
-                is_success_expected=False,
-            ),
-            Testr.ResultScenario(
-                name="or_operator_success",
-                operation_type=Testr.ResultOperationType.OR_OPERATOR,
-                value="value",
-            ),
-            Testr.ResultScenario(
-                name="or_operator_failure",
-                operation_type=Testr.ResultOperationType.OR_OPERATOR,
-                value="error",
-                is_success_expected=False,
-            ),
-        ]
-        INT_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
-            Testr.ResultScenario(
-                name="unwrap_success",
-                operation_type=Testr.ResultOperationType.UNWRAP,
-                value=42,
-            ),
-            Testr.ResultScenario(
-                name="map_success",
-                operation_type=Testr.ResultOperationType.MAP,
-                value=5,
-            ),
-            Testr.ResultScenario(
-                name="flat_map_success",
-                operation_type=Testr.ResultOperationType.FLAT_MAP,
-                value=5,
-            ),
-            Testr.ResultScenario(
-                name="filter_passes",
-                operation_type=Testr.ResultOperationType.FILTER,
-                value=10,
-            ),
-            Testr.ResultScenario(
-                name="filter_fails",
-                operation_type=Testr.ResultOperationType.FILTER,
-                value=3,
-                is_success_expected=False,
-            ),
-            Testr.ResultScenario(
-                name="railway_composition",
-                operation_type=Testr.ResultOperationType.RAILWAY_COMPOSITION,
-                value=5,
-            ),
-        ]
-        BOOL_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
-            Testr.ResultScenario(
-                name="bool_conversion_success",
-                operation_type=Testr.ResultOperationType.BOOL_CONVERSION,
-                value=True,
-            ),
-            Testr.ResultScenario(
-                name="bool_conversion_failure",
-                operation_type=Testr.ResultOperationType.BOOL_CONVERSION,
-                value=False,
-            ),
-        ]
-
-    @pytest.mark.parametrize(
-        "scenario", ResultScenarios.STRING_SCENARIOS, ids=lambda s: s.name
-    )
-    def test_result_string_operations(self, scenario: Testr.ResultScenario) -> None:
+    @pytest.mark.parametrize("scenario", STRING_SCENARIOS, ids=lambda s: s.name)
+    def test_result_string_operations(self, scenario: ResultScenario) -> None:
         """Test r with string values across all scenarios."""
         op_type = scenario.operation_type
         value = scenario.value
@@ -272,10 +267,8 @@ class Testr:
             default = "default"
             tm.that(result_or | default, eq=value if is_success else default)
 
-    @pytest.mark.parametrize(
-        "scenario", ResultScenarios.INT_SCENARIOS, ids=lambda s: s.name
-    )
-    def test_result_int_operations(self, scenario: Testr.ResultScenario) -> None:
+    @pytest.mark.parametrize("scenario", INT_SCENARIOS, ids=lambda s: s.name)
+    def test_result_int_operations(self, scenario: ResultScenario) -> None:
         """Test r with integer values across all scenarios."""
         op_type = scenario.operation_type
         value = scenario.value
@@ -323,10 +316,8 @@ class Testr:
             )
             u.Tests.Result.assert_success_with_value(res3, expected)
 
-    @pytest.mark.parametrize(
-        "scenario", ResultScenarios.BOOL_SCENARIOS, ids=lambda s: s.name
-    )
-    def test_result_bool_operations(self, scenario: Testr.ResultScenario) -> None:
+    @pytest.mark.parametrize("scenario", BOOL_SCENARIOS, ids=lambda s: s.name)
+    def test_result_bool_operations(self, scenario: ResultScenario) -> None:
         """Test r with boolean values across all scenarios."""
         if scenario.operation_type == self.ResultOperationType.BOOL_CONVERSION:
             result = (

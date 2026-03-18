@@ -90,7 +90,7 @@ class TestFlextRuntime:
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         name: Annotated[str, Field(description="Runtime test case name")]
         operation: Annotated[
-            TestFlextRuntime.RuntimeOperationType,
+            RuntimeOperationType,
             Field(description="Runtime operation type"),
         ]
         test_input: Annotated[
@@ -110,439 +110,439 @@ class TestFlextRuntime:
     class RuntimeScenarios:
         """Centralized runtime test scenarios using c."""
 
-        DICT_LIKE_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        DICT_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="dict_like_empty",
-                operation=TestFlextRuntime.RuntimeOperationType.DICT_LIKE_VALID,
+                operation=RuntimeOperationType.DICT_LIKE_VALID,
                 test_input={},
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dict_like_single_key",
-                operation=TestFlextRuntime.RuntimeOperationType.DICT_LIKE_VALID,
+                operation=RuntimeOperationType.DICT_LIKE_VALID,
                 test_input={"key": "value"},
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dict_like_nested",
-                operation=TestFlextRuntime.RuntimeOperationType.DICT_LIKE_VALID,
+                operation=RuntimeOperationType.DICT_LIKE_VALID,
                 test_input={"nested": {"dict": True}},
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dict_like_invalid_list",
-                operation=TestFlextRuntime.RuntimeOperationType.DICT_LIKE_INVALID,
+                operation=RuntimeOperationType.DICT_LIKE_INVALID,
                 test_input=[],
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dict_like_invalid_string",
-                operation=TestFlextRuntime.RuntimeOperationType.DICT_LIKE_INVALID,
+                operation=RuntimeOperationType.DICT_LIKE_INVALID,
                 test_input="string",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dict_like_invalid_int",
-                operation=TestFlextRuntime.RuntimeOperationType.DICT_LIKE_INVALID,
+                operation=RuntimeOperationType.DICT_LIKE_INVALID,
                 test_input=123,
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dict_like_invalid_none",
-                operation=TestFlextRuntime.RuntimeOperationType.DICT_LIKE_INVALID,
+                operation=RuntimeOperationType.DICT_LIKE_INVALID,
                 test_input=None,
                 expected_result=False,
             ),
         ]
-        LIST_LIKE_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        LIST_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="list_like_empty",
-                operation=TestFlextRuntime.RuntimeOperationType.LIST_LIKE_VALID,
+                operation=RuntimeOperationType.LIST_LIKE_VALID,
                 test_input=[],
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="list_like_integers",
-                operation=TestFlextRuntime.RuntimeOperationType.LIST_LIKE_VALID,
+                operation=RuntimeOperationType.LIST_LIKE_VALID,
                 test_input=[1, 2, 3],
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="list_like_strings",
-                operation=TestFlextRuntime.RuntimeOperationType.LIST_LIKE_VALID,
+                operation=RuntimeOperationType.LIST_LIKE_VALID,
                 test_input=["a", "b", "c"],
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="list_like_invalid_dict",
-                operation=TestFlextRuntime.RuntimeOperationType.LIST_LIKE_INVALID,
+                operation=RuntimeOperationType.LIST_LIKE_INVALID,
                 test_input={},
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="list_like_invalid_string",
-                operation=TestFlextRuntime.RuntimeOperationType.LIST_LIKE_INVALID,
+                operation=RuntimeOperationType.LIST_LIKE_INVALID,
                 test_input="string",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="list_like_invalid_int",
-                operation=TestFlextRuntime.RuntimeOperationType.LIST_LIKE_INVALID,
+                operation=RuntimeOperationType.LIST_LIKE_INVALID,
                 test_input=123,
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="list_like_invalid_none",
-                operation=TestFlextRuntime.RuntimeOperationType.LIST_LIKE_INVALID,
+                operation=RuntimeOperationType.LIST_LIKE_INVALID,
                 test_input=None,
                 expected_result=False,
             ),
         ]
-        JSON_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        JSON_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="json_valid_object",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_VALID,
+                operation=RuntimeOperationType.JSON_VALID,
                 test_input='{"key": "value"}',
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_valid_empty_array",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_VALID,
+                operation=RuntimeOperationType.JSON_VALID,
                 test_input="[]",
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_valid_array",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_VALID,
+                operation=RuntimeOperationType.JSON_VALID,
                 test_input="[1, 2, 3]",
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_valid_string",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_VALID,
+                operation=RuntimeOperationType.JSON_VALID,
                 test_input='"string"',
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_valid_null",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_VALID,
+                operation=RuntimeOperationType.JSON_VALID,
                 test_input="null",
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_invalid_plain_text",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_INVALID,
+                operation=RuntimeOperationType.JSON_INVALID,
                 test_input="not json",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_invalid_malformed",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_INVALID,
+                operation=RuntimeOperationType.JSON_INVALID,
                 test_input="{invalid}",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_invalid_empty",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_INVALID,
+                operation=RuntimeOperationType.JSON_INVALID,
                 test_input="",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_non_string_dict",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_NON_STRING,
+                operation=RuntimeOperationType.JSON_NON_STRING,
                 test_input={"key": "value"},
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_non_string_list",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_NON_STRING,
+                operation=RuntimeOperationType.JSON_NON_STRING,
                 test_input=[1, 2, 3],
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="json_non_string_none",
-                operation=TestFlextRuntime.RuntimeOperationType.JSON_NON_STRING,
+                operation=RuntimeOperationType.JSON_NON_STRING,
                 test_input=None,
                 expected_result=False,
             ),
         ]
-        IDENTIFIER_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        IDENTIFIER_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="identifier_valid_lowercase",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_VALID,
+                operation=RuntimeOperationType.IDENTIFIER_VALID,
                 test_input="variable",
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_valid_private",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_VALID,
+                operation=RuntimeOperationType.IDENTIFIER_VALID,
                 test_input="_private",
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_valid_class_name",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_VALID,
+                operation=RuntimeOperationType.IDENTIFIER_VALID,
                 test_input="ClassName",
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_valid_snake_case",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_VALID,
+                operation=RuntimeOperationType.IDENTIFIER_VALID,
                 test_input="function_name",
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_invalid_starts_with_digit",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_INVALID,
+                operation=RuntimeOperationType.IDENTIFIER_INVALID,
                 test_input="123invalid",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_invalid_hyphen",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_INVALID,
+                operation=RuntimeOperationType.IDENTIFIER_INVALID,
                 test_input="invalid-name",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_invalid_space",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_INVALID,
+                operation=RuntimeOperationType.IDENTIFIER_INVALID,
                 test_input="invalid name",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_invalid_empty",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_INVALID,
+                operation=RuntimeOperationType.IDENTIFIER_INVALID,
                 test_input="",
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_non_string_int",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_NON_STRING,
+                operation=RuntimeOperationType.IDENTIFIER_NON_STRING,
                 test_input=123,
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="identifier_non_string_none",
-                operation=TestFlextRuntime.RuntimeOperationType.IDENTIFIER_NON_STRING,
+                operation=RuntimeOperationType.IDENTIFIER_NON_STRING,
                 test_input=None,
                 expected_result=False,
             ),
         ]
-        GENERIC_ARGS_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        GENERIC_ARGS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="extract_generic_list",
-                operation=TestFlextRuntime.RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
+                operation=RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
                 test_input=list[str],
                 expected_result=(str,),
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="extract_generic_dict",
-                operation=TestFlextRuntime.RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
+                operation=RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
                 test_input=dict[str, int],
                 expected_result=(str, int),
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="extract_generic_non_generic_str",
-                operation=TestFlextRuntime.RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
+                operation=RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
                 test_input=str,
                 expected_result=(),
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="extract_generic_non_generic_int",
-                operation=TestFlextRuntime.RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
+                operation=RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
                 test_input=int,
                 expected_result=(),
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="extract_generic_exception_none",
-                operation=TestFlextRuntime.RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
+                operation=RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
                 test_input=None,
                 expected_result=(),
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="extract_generic_exception_string",
-                operation=TestFlextRuntime.RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
+                operation=RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
                 test_input="not a type",
                 expected_result=(),
             ),
         ]
-        SEQUENCE_TYPE_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        SEQUENCE_TYPE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="sequence_type_list_of_str",
-                operation=TestFlextRuntime.RuntimeOperationType.SEQUENCE_TYPE_VALID,
+                operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
                 test_input=list[str],
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="sequence_type_tuple",
-                operation=TestFlextRuntime.RuntimeOperationType.SEQUENCE_TYPE_VALID,
+                operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
                 test_input=tuple[int, ...],
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="sequence_type_str_is_sequence",
-                operation=TestFlextRuntime.RuntimeOperationType.SEQUENCE_TYPE_VALID,
+                operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
                 test_input=str,
                 expected_result=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="sequence_type_invalid_dict",
-                operation=TestFlextRuntime.RuntimeOperationType.SEQUENCE_TYPE_INVALID,
+                operation=RuntimeOperationType.SEQUENCE_TYPE_INVALID,
                 test_input=dict[str, int],
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="sequence_type_invalid_int",
-                operation=TestFlextRuntime.RuntimeOperationType.SEQUENCE_TYPE_INVALID,
+                operation=RuntimeOperationType.SEQUENCE_TYPE_INVALID,
                 test_input=int,
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="sequence_type_exception_none",
-                operation=TestFlextRuntime.RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
+                operation=RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
                 test_input=None,
                 expected_result=False,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="sequence_type_exception_string",
-                operation=TestFlextRuntime.RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
+                operation=RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
                 test_input="not a type",
                 expected_result=False,
             ),
         ]
-        SERIALIZATION_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        SERIALIZATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="safe_get_attribute_exists",
-                operation=TestFlextRuntime.RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS,
+                operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS,
                 test_input=None,
                 expected_result="value",
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="safe_get_attribute_missing_with_default",
-                operation=TestFlextRuntime.RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT,
+                operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT,
                 test_input=None,
                 expected_result="default",
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="safe_get_attribute_missing_no_default",
-                operation=TestFlextRuntime.RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT,
+                operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT,
                 test_input=None,
                 expected_result=None,
             ),
         ]
-        LIBRARY_ACCESS_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        LIBRARY_ACCESS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="structlog_module",
-                operation=TestFlextRuntime.RuntimeOperationType.STRUCTLOG_MODULE,
+                operation=RuntimeOperationType.STRUCTLOG_MODULE,
                 test_input=None,
                 expected_result=structlog,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dependency_providers",
-                operation=TestFlextRuntime.RuntimeOperationType.DEPENDENCY_PROVIDERS_MODULE,
+                operation=RuntimeOperationType.DEPENDENCY_PROVIDERS_MODULE,
                 test_input=None,
                 expected_result=providers,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dependency_containers",
-                operation=TestFlextRuntime.RuntimeOperationType.DEPENDENCY_CONTAINERS_MODULE,
+                operation=RuntimeOperationType.DEPENDENCY_CONTAINERS_MODULE,
                 test_input=None,
                 expected_result=containers,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dependency_wiring_configuration",
-                operation=TestFlextRuntime.RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION,
+                operation=RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dependency_wiring_factories",
-                operation=TestFlextRuntime.RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES,
+                operation=RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="dependency_wiring_automation",
-                operation=TestFlextRuntime.RuntimeOperationType.DEPENDENCY_WIRING_AUTOMATION,
+                operation=RuntimeOperationType.DEPENDENCY_WIRING_AUTOMATION,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="service_runtime_automation",
-                operation=TestFlextRuntime.RuntimeOperationType.SERVICE_RUNTIME_AUTOMATION,
+                operation=RuntimeOperationType.SERVICE_RUNTIME_AUTOMATION,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="mixins_runtime_automation",
-                operation=TestFlextRuntime.RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION,
+                operation=RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION,
             ),
         ]
-        STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="configure_defaults",
-                operation=TestFlextRuntime.RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS,
+                operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS,
                 test_input=None,
                 expected_result=None,
                 should_reset_config=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="configure_custom_level",
-                operation=TestFlextRuntime.RuntimeOperationType.CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL,
+                operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL,
                 test_input=None,
                 expected_result=None,
                 should_reset_config=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="configure_json_renderer",
-                operation=TestFlextRuntime.RuntimeOperationType.CONFIGURE_STRUCTLOG_JSON_RENDERER,
+                operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_JSON_RENDERER,
                 test_input=None,
                 expected_result=None,
                 should_reset_config=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="configure_additional_processors",
-                operation=TestFlextRuntime.RuntimeOperationType.CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS,
+                operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS,
                 test_input=None,
                 expected_result=None,
                 should_reset_config=True,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="configure_idempotent",
-                operation=TestFlextRuntime.RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT,
+                operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT,
                 test_input=None,
                 expected_result=None,
                 should_reset_config=True,
             ),
         ]
-        INTEGRATION_SCENARIOS: ClassVar[list[TestFlextRuntime.RuntimeTestCase]] = [
-            TestFlextRuntime.RuntimeTestCase(
+        INTEGRATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+            RuntimeTestCase(
                 name="constants_patterns",
-                operation=TestFlextRuntime.RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS,
+                operation=RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="layer_hierarchy",
-                operation=TestFlextRuntime.RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY,
+                operation=RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="track_service_resolution_success",
-                operation=TestFlextRuntime.RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS,
+                operation=RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="track_service_resolution_failure",
-                operation=TestFlextRuntime.RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE,
+                operation=RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="track_domain_event_with_aggregate",
-                operation=TestFlextRuntime.RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE,
+                operation=RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="track_domain_event_without_aggregate",
-                operation=TestFlextRuntime.RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE,
+                operation=RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="setup_service_infrastructure_full",
-                operation=TestFlextRuntime.RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL,
+                operation=RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="setup_service_infrastructure_minimal",
-                operation=TestFlextRuntime.RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL,
+                operation=RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL,
             ),
-            TestFlextRuntime.RuntimeTestCase(
+            RuntimeTestCase(
                 name="setup_service_without_correlation",
-                operation=TestFlextRuntime.RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION,
+                operation=RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION,
             ),
         ]
 
@@ -554,9 +554,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.DICT_LIKE_SCENARIOS, ids=lambda c: c.name
     )
-    def test_dict_like_validation(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation.
 
         Business Rule: is_dict_like accepts object compatible objects.
@@ -570,9 +568,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.LIST_LIKE_SCENARIOS, ids=lambda c: c.name
     )
-    def test_list_like_validation(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation.
 
         Business Rule: is_list_like accepts object compatible objects.
@@ -586,7 +582,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.JSON_SCENARIOS, ids=lambda c: c.name
     )
-    def test_json_validation(self, test_case: TestFlextRuntime.RuntimeTestCase) -> None:
+    def test_json_validation(self, test_case: RuntimeTestCase) -> None:
         """Test JSON string validation.
 
         Business Rule: None is a valid test input - validates that is_valid_json
@@ -599,9 +595,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.IDENTIFIER_SCENARIOS, ids=lambda c: c.name
     )
-    def test_identifier_validation(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_identifier_validation(self, test_case: RuntimeTestCase) -> None:
         """Test Python identifier validation.
 
         Business Rule: None is a valid test input - validates that is_valid_identifier
@@ -616,9 +610,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.SERIALIZATION_SCENARIOS, ids=lambda c: c.name
     )
-    def test_safe_get_attribute(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_safe_get_attribute(self, test_case: RuntimeTestCase) -> None:
         """Test safe attribute retrieval."""
         if test_case.operation == self.RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS:
 
@@ -653,9 +645,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.GENERIC_ARGS_SCENARIOS, ids=lambda c: c.name
     )
-    def test_extract_generic_args(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_extract_generic_args(self, test_case: RuntimeTestCase) -> None:
         """Test extraction of generic type arguments.
 
         Business Rule: extract_generic_args accepts TypeHintSpecifier compatible objects.
@@ -669,9 +659,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS, ids=lambda c: c.name
     )
-    def test_sequence_type_detection(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_sequence_type_detection(self, test_case: RuntimeTestCase) -> None:
         """Test sequence type detection.
 
         Business Rule: is_sequence_type accepts TypeHintSpecifier compatible objects.
@@ -685,9 +673,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS, ids=lambda c: c.name
     )
-    def test_external_library_access(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_external_library_access(self, test_case: RuntimeTestCase) -> None:
         """Test external library access."""
         if test_case.operation == self.RuntimeOperationType.STRUCTLOG_MODULE:
             module = FlextRuntime.structlog()
@@ -922,9 +908,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS, ids=lambda c: c.name
     )
-    def test_structlog_configuration(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_structlog_configuration(self, test_case: RuntimeTestCase) -> None:
         """Test structlog configuration."""
         if test_case.should_reset_config:
             self.RuntimeScenarios.reset_structlog_config()
@@ -973,9 +957,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.INTEGRATION_SCENARIOS, ids=lambda c: c.name
     )
-    def test_runtime_integration(
-        self, test_case: TestFlextRuntime.RuntimeTestCase
-    ) -> None:
+    def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
         """Test FlextRuntime integration scenarios."""
         if (
             test_case.operation
