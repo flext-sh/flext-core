@@ -40,7 +40,7 @@ class FlextLogger(FlextRuntime, p.Logger):
     _scoped_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
     _level_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
     _structlog_instance: p.Logger | None = None
-    type _LogArg = t.ScalarOrModel | Exception
+    type _LogArg = t.RuntimeData | Exception
 
     def __init__(
         self,
@@ -125,7 +125,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             return t.ConfigMap(root={})
 
     @classmethod
-    def bind_context(cls, scope: str, **context: t.RuntimeAtomic) -> r[bool]:
+    def bind_context(cls, scope: str, **context: t.RuntimeData) -> r[bool]:
         """Bind context variables to a specific scope.
 
         Business Rule: Binds context variables to a specific scope (APPLICATION, REQUEST,
@@ -208,7 +208,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
 
     @classmethod
-    def bind_context_for_level(cls, level: str, **context: t.RuntimeAtomic) -> r[bool]:
+    def bind_context_for_level(cls, level: str, **context: t.RuntimeData) -> r[bool]:
         """Bind context variables that only appear in logs at specified level or higher.
 
         Business Rule: Binds context variables with level prefix (`_level_{level}_`) for
@@ -260,7 +260,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
     @classmethod
-    def bind_global_context(cls, **context: t.RuntimeAtomic) -> r[bool]:
+    def bind_global_context(cls, **context: t.RuntimeData) -> r[bool]:
         """Bind context globally using FlextRuntime.structlog() contextvars.
 
         Business Rule: Binds context variables globally using structlog contextvars,
@@ -396,7 +396,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         cls,
         container: p.Container,
         level: str | None = None,
-        **context: t.Container,
+        **context: t.RuntimeData,
     ) -> FlextLogger:
         """Create logger configured for a specific container.
 
@@ -433,7 +433,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
     @classmethod
     @contextmanager
-    def scoped_context(cls, scope: str, **context: t.Container) -> Iterator[None]:
+    def scoped_context(cls, scope: str, **context: t.RuntimeData) -> Iterator[None]:
         """Context manager for automatic scoped context cleanup.
 
         Business Rule: Context manager that binds context variables to a specific scope
@@ -553,7 +553,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         cls,
         container: p.Container,
         level: c.Settings.LogLevel | str | None = None,
-        **context: t.Container,
+        **context: t.RuntimeData,
     ) -> Iterator[FlextLogger]:
         """Context manager for container-scoped logging.
 
@@ -761,7 +761,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         return FlextRuntime.get_logger(name)
 
     @override
-    def bind(self, **context: t.Container) -> Self:
+    def bind(self, **context: t.RuntimeData) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
         bound_logger = self.logger.bind(**self._to_container_context(context))
         return self.__class__.create_bound_logger(self.name, bound_logger)
@@ -771,7 +771,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         *,
         exception: Exception | None,
         exc_info: bool,
-        context: Mapping[str, t.Container | Exception],
+        context: Mapping[str, t.RuntimeData | Exception],
     ) -> t.ConfigMap:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
@@ -805,8 +805,8 @@ class FlextLogger(FlextRuntime, p.Logger):
     def critical(
         self,
         msg: str,
-        *args: t.Container,
-        **kw: t.Container | Exception,
+        *args: t.RuntimeData,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log critical message - Logger.Log implementation.
 
@@ -825,8 +825,8 @@ class FlextLogger(FlextRuntime, p.Logger):
     def debug(
         self,
         msg: str,
-        *args: t.Container,
-        **kw: t.Container | Exception,
+        *args: t.RuntimeData,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log debug message - Logger.Log implementation.
 
@@ -845,8 +845,8 @@ class FlextLogger(FlextRuntime, p.Logger):
     def error(
         self,
         msg: str,
-        *args: t.Container,
-        **kw: t.Container | Exception,
+        *args: t.RuntimeData,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log error message - Logger.Log implementation.
 
@@ -865,8 +865,8 @@ class FlextLogger(FlextRuntime, p.Logger):
     def exception(
         self,
         msg: str,
-        *args: t.Container,
-        **kw: t.Container | Exception,
+        *args: t.RuntimeData,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
@@ -912,7 +912,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         level: str,
         message: str,
         *args: _LogArg,
-        **context: t.Container,
+        **context: t.RuntimeData,
     ) -> r[bool]:
         """Log message with specified level - Logger.Log implementation.
 
@@ -943,7 +943,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         return self._log(level_enum, message, *converted_args, **context)
 
     @override
-    def new(self, **context: t.Container) -> Self:
+    def new(self, **context: t.RuntimeData) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
         return self.bind(**context)
 
@@ -951,7 +951,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         message: str,
         *args: _LogArg,
-        **kwargs: t.Container,
+        **kwargs: t.RuntimeData,
     ) -> r[bool]:
         """Log trace message - Logger.Log implementation."""
         try:
@@ -994,8 +994,8 @@ class FlextLogger(FlextRuntime, p.Logger):
     def info(
         self,
         msg: str,
-        *args: t.Container,
-        **kw: t.Container | Exception,
+        *args: t.RuntimeData,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log info message - Logger.Log implementation."""
         return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
@@ -1004,8 +1004,8 @@ class FlextLogger(FlextRuntime, p.Logger):
     def warning(
         self,
         msg: str,
-        *args: t.Container,
-        **kw: t.Container | Exception,
+        *args: t.RuntimeData,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log warning message - Logger.Log implementation."""
         return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
@@ -1014,8 +1014,8 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         _level: c.Settings.LogLevel | str,
         event: str,
-        *args: t.Container,
-        **context: t.Container | Exception,
+        *args: t.RuntimeData,
+        **context: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Internal logging method - consolidates all log level methods.
 
@@ -1047,8 +1047,8 @@ class FlextLogger(FlextRuntime, p.Logger):
         self,
         level: c.Settings.LogLevel,
         msg: str,
-        *args: t.Container,
-        **kw: t.Container | Exception,
+        *args: t.RuntimeData,
+        **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         return self._log(level, msg, *args, **kw)
 

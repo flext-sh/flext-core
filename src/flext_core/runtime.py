@@ -851,46 +851,44 @@ class FlextRuntime:
                 override_options = FlextModelsService.DependencyContainerCreationOptions.model_validate(
                     runtime_kwargs,
                 )
-                container_options = (
-                    FlextModelsService.DependencyContainerCreationOptions(
-                        config=(
-                            override_options.config
-                            if override_options.config is not None
-                            else base_options.config
-                        ),
-                        services=(
-                            override_options.services
-                            if override_options.services is not None
-                            else base_options.services
-                        ),
-                        factories=(
-                            override_options.factories
-                            if override_options.factories is not None
-                            else base_options.factories
-                        ),
-                        resources=(
-                            override_options.resources
-                            if override_options.resources is not None
-                            else base_options.resources
-                        ),
-                        wire_modules=(
-                            override_options.wire_modules
-                            if override_options.wire_modules is not None
-                            else base_options.wire_modules
-                        ),
-                        wire_packages=(
-                            override_options.wire_packages
-                            if override_options.wire_packages is not None
-                            else base_options.wire_packages
-                        ),
-                        wire_classes=(
-                            override_options.wire_classes
-                            if override_options.wire_classes is not None
-                            else base_options.wire_classes
-                        ),
-                        factory_cache=override_options.factory_cache,
-                    )
-                )
+                container_options = FlextModelsService.DependencyContainerCreationOptions.model_validate({
+                    "config": (
+                        override_options.config
+                        if override_options.config is not None
+                        else base_options.config
+                    ),
+                    "services": (
+                        override_options.services
+                        if override_options.services is not None
+                        else base_options.services
+                    ),
+                    "factories": (
+                        override_options.factories
+                        if override_options.factories is not None
+                        else base_options.factories
+                    ),
+                    "resources": (
+                        override_options.resources
+                        if override_options.resources is not None
+                        else base_options.resources
+                    ),
+                    "wire_modules": (
+                        override_options.wire_modules
+                        if override_options.wire_modules is not None
+                        else base_options.wire_modules
+                    ),
+                    "wire_packages": (
+                        override_options.wire_packages
+                        if override_options.wire_packages is not None
+                        else base_options.wire_packages
+                    ),
+                    "wire_classes": (
+                        override_options.wire_classes
+                        if override_options.wire_classes is not None
+                        else base_options.wire_classes
+                    ),
+                    "factory_cache": override_options.factory_cache,
+                })
             else:
                 container_options = base_options
             config = container_options.config

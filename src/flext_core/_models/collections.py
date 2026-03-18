@@ -339,6 +339,65 @@ class FlextModelsCollections:
             ),
         ] = None
 
+    class CollectionBatchSpec(FlextModelFoundation.ArbitraryTypesModel):
+        size: Annotated[
+            int | None,
+            Field(
+                default=None,
+                title="Batch Size",
+                description="Optional batch size hint for compatibility and slicing behavior.",
+            ),
+        ] = None
+        on_error: Annotated[
+            str | None,
+            Field(
+                default=None,
+                title="Error Mode",
+                description="Error handling mode: fail immediately, collect errors, or skip failed items.",
+            ),
+        ] = None
+        parallel: Annotated[
+            bool,
+            Field(
+                default=False,
+                title="Parallel",
+                description="Whether parallel processing should be requested by callers.",
+            ),
+        ] = False
+        progress: Annotated[
+            Callable[[int, int], None] | None,
+            Field(
+                default=None,
+                title="Progress Callback",
+                description="Optional callback receiving processed and total item counts.",
+            ),
+        ] = None
+        progress_interval: Annotated[
+            int,
+            Field(
+                default=1,
+                ge=1,
+                title="Progress Interval",
+                description="How often progress callback is invoked during processing.",
+            ),
+        ] = 1
+        pre_validate: Annotated[
+            Callable[[t.ValueOrModel], bool] | None,
+            Field(
+                default=None,
+                title="Pre Validate",
+                description="Optional predicate to filter items before operation execution.",
+            ),
+        ] = None
+        flatten: Annotated[
+            bool,
+            Field(
+                default=False,
+                title="Flatten",
+                description="Whether list-like operation results should be flattened into a single output list.",
+            ),
+        ] = False
+
     class GuardCheckSpec(FlextModelFoundation.ArbitraryTypesModel):
         eq: Annotated[
             t.NormalizedValue | None,

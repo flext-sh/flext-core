@@ -184,33 +184,62 @@ class FlextUtilitiesCollection:
         items: Sequence[T],
         operation: Callable[[T], t.Serializable | r[t.Serializable]],
         *,
-        size: int | None = None,
-        on_error: str | None = None,
-        parallel: bool = False,
-        progress: Callable[[int, int], None] | None = None,
-        progress_interval: int = 1,
-        pre_validate: Callable[[T], bool] | None = None,
-        flatten: bool = False,
+        spec: m.CollectionBatchSpec | None = None,
+        **batch_kwargs: t.RuntimeData
+        | Callable[[int, int], None]
+        | Callable[[T], bool],
     ) -> r[m.BatchResultDict]:
         """Process items in batches with progress tracking.
 
         Args:
             items: Items to process
             operation: Function that returns R or r[R]
-            size: Batch size (not used, for signature compatibility)
-            on_error: "fail" to stop, "skip" to silently skip, "collect" to collect errors
-            parallel: Enable parallel processing (not implemented, for signature compatibility)
-            progress: Callback for progress tracking
-            progress_interval: How often to call progress callback
-            pre_validate: Optional validation function
-            flatten: Flatten list results
+            spec: Batch execution specification.
 
         """
-        _ = size
-        _ = parallel
-        _ = progress_interval
-        do_flatten = flatten
-        error_mode = on_error or "fail"
+        base_spec = spec if spec is not None else m.CollectionBatchSpec()
+        if batch_kwargs:
+            override_spec = m.CollectionBatchSpec.model_validate(batch_kwargs)
+            resolved_spec = m.CollectionBatchSpec(
+                size=override_spec.size
+                if override_spec.size is not None
+                else base_spec.size,
+                on_error=(
+                    override_spec.on_error
+                    if override_spec.on_error is not None
+                    else base_spec.on_error
+                ),
+                parallel=override_spec.parallel
+                if batch_kwargs.get("parallel") is not None
+                else base_spec.parallel,
+                progress=(
+                    override_spec.progress
+                    if override_spec.progress is not None
+                    else base_spec.progress
+                ),
+                progress_interval=(
+                    override_spec.progress_interval
+                    if batch_kwargs.get("progress_interval") is not None
+                    else base_spec.progress_interval
+                ),
+                pre_validate=(
+                    override_spec.pre_validate
+                    if override_spec.pre_validate is not None
+                    else base_spec.pre_validate
+                ),
+                flatten=override_spec.flatten
+                if batch_kwargs.get("flatten") is not None
+                else base_spec.flatten,
+            )
+        else:
+            resolved_spec = base_spec
+        _ = resolved_spec.size
+        _ = resolved_spec.parallel
+        progress = resolved_spec.progress
+        progress_interval = resolved_spec.progress_interval
+        pre_validate = resolved_spec.pre_validate
+        do_flatten = resolved_spec.flatten
+        error_mode = resolved_spec.on_error or "fail"
         results: list[t.NormalizedValue] = []
         errors: list[tuple[int, str]] = []
         total = len(items)

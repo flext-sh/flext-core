@@ -69,18 +69,127 @@ class FlextContainer(p.Container):
     _resources: dict[str, m.ResourceRegistration]
     _global_config: m.ContainerConfig
 
+    @staticmethod
+    def _resolve_bootstrap_registration(
+        registration: m.ServiceRegistrationSpec | None,
+        **registration_kwargs: t.RuntimeData
+        | p.Settings
+        | p.Context
+        | m.ContainerConfig
+        | Mapping[str, m.ServiceRegistration]
+        | Mapping[str, m.FactoryRegistration]
+        | Mapping[str, m.ResourceRegistration],
+    ) -> m.ServiceRegistrationSpec:
+        base_registration = (
+            registration if registration is not None else m.ServiceRegistrationSpec()
+        )
+        if not registration_kwargs:
+            return base_registration
+        override_registration = m.ServiceRegistrationSpec.model_validate({
+            "config": registration_kwargs.get("_config"),
+            "context": registration_kwargs.get("_context"),
+            "services": registration_kwargs.get("_services"),
+            "factories": registration_kwargs.get("_factories"),
+            "resources": registration_kwargs.get("_resources"),
+            "user_overrides": registration_kwargs.get("_user_overrides"),
+            "container_config": registration_kwargs.get("_container_config"),
+        })
+        return m.ServiceRegistrationSpec(
+            config=(
+                override_registration.config
+                if override_registration.config is not None
+                else base_registration.config
+            ),
+            context=(
+                override_registration.context
+                if override_registration.context is not None
+                else base_registration.context
+            ),
+            services=(
+                override_registration.services
+                if override_registration.services is not None
+                else base_registration.services
+            ),
+            factories=(
+                override_registration.factories
+                if override_registration.factories is not None
+                else base_registration.factories
+            ),
+            resources=(
+                override_registration.resources
+                if override_registration.resources is not None
+                else base_registration.resources
+            ),
+            user_overrides=(
+                override_registration.user_overrides
+                if override_registration.user_overrides is not None
+                else base_registration.user_overrides
+            ),
+            container_config=(
+                override_registration.container_config
+                if override_registration.container_config is not None
+                else base_registration.container_config
+            ),
+        )
+
+    @staticmethod
+    def _resolve_scoped_registration(
+        registration: m.ServiceRegistrationSpec,
+        **registration_kwargs: t.RuntimeData
+        | p.Settings
+        | p.Context
+        | m.ContainerConfig
+        | Mapping[str, m.ServiceRegistration]
+        | Mapping[str, m.FactoryRegistration]
+        | Mapping[str, m.ResourceRegistration],
+    ) -> m.ServiceRegistrationSpec:
+        if not registration_kwargs:
+            return registration
+        override_registration = m.ServiceRegistrationSpec.model_validate(
+            registration_kwargs
+        )
+        return m.ServiceRegistrationSpec(
+            config=(
+                override_registration.config
+                if override_registration.config is not None
+                else registration.config
+            ),
+            context=(
+                override_registration.context
+                if override_registration.context is not None
+                else registration.context
+            ),
+            services=(
+                override_registration.services
+                if override_registration.services is not None
+                else registration.services
+            ),
+            factories=(
+                override_registration.factories
+                if override_registration.factories is not None
+                else registration.factories
+            ),
+            resources=(
+                override_registration.resources
+                if override_registration.resources is not None
+                else registration.resources
+            ),
+            user_overrides=(
+                override_registration.user_overrides
+                if override_registration.user_overrides is not None
+                else registration.user_overrides
+            ),
+            container_config=(
+                override_registration.container_config
+                if override_registration.container_config is not None
+                else registration.container_config
+            ),
+        )
+
     def __new__(
         cls,
         *,
-        _config: p.Settings | None = None,
-        _context: p.Context | None = None,
-        _services: Mapping[str, m.ServiceRegistration] | None = None,
-        _factories: Mapping[str, m.FactoryRegistration] | None = None,
-        _resources: Mapping[str, m.ResourceRegistration] | None = None,
-        _user_overrides: Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
-        | t.ConfigMap
-        | None = None,
-        _container_config: m.ContainerConfig | None = None,
+        registration: m.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -88,6 +197,7 @@ class FlextContainer(p.Container):
         while preserving singleton semantics for runtime callers. Double-checked
         locking protects against duplicate initialization under concurrency.
         """
+        _ = registration
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:
@@ -98,15 +208,7 @@ class FlextContainer(p.Container):
     def __init__(
         self,
         *,
-        _config: p.Settings | None = None,
-        _context: p.Context | None = None,
-        _services: Mapping[str, m.ServiceRegistration] | None = None,
-        _factories: Mapping[str, m.FactoryRegistration] | None = None,
-        _resources: Mapping[str, m.ResourceRegistration] | None = None,
-        _user_overrides: Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
-        | t.ConfigMap
-        | None = None,
-        _container_config: m.ContainerConfig | None = None,
+        registration: m.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Wire the Dependency Injector container and supporting registries.
 
@@ -117,17 +219,20 @@ class FlextContainer(p.Container):
         super().__init__()
         if hasattr(self, "_di_container"):
             return
+        init_registration = (
+            registration if registration is not None else m.ServiceRegistrationSpec()
+        )
         self.containers = FlextRuntime.dependency_containers()
         self.providers = FlextRuntime.dependency_providers()
         self.initialize_di_components()
         self.initialize_registrations(
-            services=_services,
-            factories=_factories,
-            resources=_resources,
-            global_config=_container_config,
-            user_overrides=_user_overrides,
-            config=_config,
-            context=_context,
+            services=init_registration.services,
+            factories=init_registration.factories,
+            resources=init_registration.resources,
+            global_config=init_registration.container_config,
+            user_overrides=init_registration.user_overrides,
+            config=init_registration.config,
+            context=init_registration.context,
         )
         self.sync_config_to_di()
         self.register_existing_providers()
@@ -148,8 +253,8 @@ class FlextContainer(p.Container):
         """Return the execution context bound to this container.
 
         The context must be provided during container initialization via the
-        `_context` parameter in `__init__` or `get_global()`. If no context
-        was provided, this property will raise an error.
+        registration specification in `__init__` or `get_global()`. If no
+        context was provided, this property will raise an error.
 
         Raises:
             RuntimeError: If context was not provided during initialization.
@@ -160,7 +265,7 @@ class FlextContainer(p.Container):
 
         """
         if not hasattr(self, "_context") or self._context is None:
-            error_msg = "Context not initialized. Provide context during container creation: FlextContainer.get_global(context=...) or FlextContainer(_context=...)"
+            error_msg = "Context not initialized. Provide context during container creation via FlextContainer(registration=m.ServiceRegistrationSpec(context=...)) or FlextContainer.get_global(context=...)"
             raise RuntimeError(error_msg)
         return self._context
 
@@ -214,13 +319,7 @@ class FlextContainer(p.Container):
     def _create_scoped_instance(
         cls,
         *,
-        config: p.Settings,
-        context: p.Context,
-        services: Mapping[str, m.ServiceRegistration],
-        factories: Mapping[str, m.FactoryRegistration],
-        resources: Mapping[str, m.ResourceRegistration],
-        user_overrides: t.ConfigMap,
-        container_config: m.ContainerConfig,
+        registration: m.ServiceRegistrationSpec,
     ) -> FlextContainer:
         """Create a scoped container instance bypassing singleton pattern.
 
@@ -232,13 +331,13 @@ class FlextContainer(p.Container):
         instance.providers = FlextRuntime.dependency_providers()
         instance.initialize_di_components()
         instance.initialize_registrations(
-            services=services,
-            factories=factories,
-            resources=resources,
-            global_config=container_config,
-            user_overrides=user_overrides,
-            config=config,
-            context=context,
+            services=registration.services,
+            factories=registration.factories,
+            resources=registration.resources,
+            global_config=registration.container_config,
+            user_overrides=registration.user_overrides,
+            config=registration.config,
+            context=registration.context,
         )
         instance.sync_config_to_di()
         instance.register_existing_providers()
@@ -371,7 +470,12 @@ class FlextContainer(p.Container):
         and context. Subsequent calls return the same instance without modifying
         previously applied settings.
         """
-        return cls(_config=config, _context=context)
+        instance = cls()
+        if config is not None:
+            instance._config = config
+        if context is not None:
+            instance._context = context
+        return instance
 
     @classmethod
     def reset_for_testing(cls) -> None:
@@ -956,13 +1060,15 @@ class FlextContainer(p.Container):
                 )
         user_overrides_copy = t.ConfigMap(root=dict(self._user_overrides.items()))
         return FlextContainer._create_scoped_instance(
-            config=base_config,
-            context=scoped_context,
-            services=cloned_services,
-            factories=cloned_factories,
-            resources=cloned_resources,
-            user_overrides=user_overrides_copy,
-            container_config=self._global_config.model_copy(deep=True),
+            registration=m.ServiceRegistrationSpec.model_validate({
+                "config": base_config,
+                "context": scoped_context,
+                "services": cloned_services,
+                "factories": cloned_factories,
+                "resources": cloned_resources,
+                "user_overrides": user_overrides_copy,
+                "container_config": self._global_config.model_copy(deep=True),
+            }),
         )
 
     def sync_config_to_di(self) -> None:

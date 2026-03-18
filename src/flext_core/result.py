@@ -100,11 +100,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 self._result = Success(self.value)
             else:
                 self._result = Failure(self.error or "")
-        result = self._result
-        if result is None:
-            msg = "Internal result wrapper was not initialized"
-            raise RuntimeError(msg)
-        return result
+        return self._result  # type: ignore[return-value]  # PrivateAttr union includes None but guaranteed non-None here
 
     @classmethod
     def _fail_like[S](

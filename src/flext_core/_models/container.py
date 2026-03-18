@@ -19,7 +19,7 @@ from typing import Annotated, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core import FlextRuntime, c, t
+from flext_core import FlextRuntime, c, p, t
 from flext_core._models import FlextModelFoundation
 
 
@@ -305,6 +305,68 @@ class FlextModelsContainer:
                 description="Enable lazy loading of services",
             ),
         ] = True
+
+    class ServiceRegistrationSpec(FlextModelFoundation.ArbitraryTypesModel):
+        """Input specification for container bootstrap and scoped creation."""
+
+        config: Annotated[
+            p.Settings | None,
+            Field(
+                default=None,
+                title="Config",
+                description="Settings instance bound to the container runtime.",
+            ),
+        ] = None
+        context: Annotated[
+            p.Context | None,
+            Field(
+                default=None,
+                title="Context",
+                description="Execution context attached to the container.",
+            ),
+        ] = None
+        services: Annotated[
+            Mapping[str, FlextModelsContainer.ServiceRegistration] | None,
+            Field(
+                default=None,
+                title="Services",
+                description="Pre-registered service instances for bootstrap.",
+            ),
+        ] = None
+        factories: Annotated[
+            Mapping[str, FlextModelsContainer.FactoryRegistration] | None,
+            Field(
+                default=None,
+                title="Factories",
+                description="Pre-registered factory callables for bootstrap.",
+            ),
+        ] = None
+        resources: Annotated[
+            Mapping[str, FlextModelsContainer.ResourceRegistration] | None,
+            Field(
+                default=None,
+                title="Resources",
+                description="Pre-registered resource factories for bootstrap.",
+            ),
+        ] = None
+        user_overrides: Annotated[
+            Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
+            | t.ConfigMap
+            | None,
+            Field(
+                default=None,
+                title="User Overrides",
+                description="User-level configuration overrides applied after defaults.",
+            ),
+        ] = None
+        container_config: Annotated[
+            FlextModelsContainer.ContainerConfig | None,
+            Field(
+                default=None,
+                title="Container Config",
+                description="Container configuration model controlling DI behavior.",
+            ),
+        ] = None
 
     class FactoryDecoratorConfig(BaseModel):
         """Configuration extracted from @d.factory() decorator.

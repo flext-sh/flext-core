@@ -36,8 +36,8 @@ class FlextProtocolsLogging:
         def critical(
             self,
             msg: str,
-            *args: t.Container,
-            **kw: t.Container | Exception,
+            *args: t.RuntimeData,
+            **kw: t.RuntimeData | Exception,
         ) -> r[bool] | None:
             """Log critical message."""
             ...
@@ -45,8 +45,8 @@ class FlextProtocolsLogging:
         def debug(
             self,
             msg: str,
-            *args: t.Container,
-            **kw: t.Container | Exception,
+            *args: t.RuntimeData,
+            **kw: t.RuntimeData | Exception,
         ) -> r[bool] | None:
             """Log debug message."""
             ...
@@ -54,8 +54,8 @@ class FlextProtocolsLogging:
         def error(
             self,
             msg: str,
-            *args: t.Container,
-            **kw: t.Container | Exception,
+            *args: t.RuntimeData,
+            **kw: t.RuntimeData | Exception,
         ) -> r[bool] | None:
             """Log error message."""
             ...
@@ -63,8 +63,8 @@ class FlextProtocolsLogging:
         def exception(
             self,
             msg: str,
-            *args: t.Container,
-            **kw: t.Container | Exception,
+            *args: t.RuntimeData,
+            **kw: t.RuntimeData | Exception,
         ) -> r[bool] | None:
             """Log exception with traceback."""
             ...
@@ -72,8 +72,8 @@ class FlextProtocolsLogging:
         def info(
             self,
             msg: str,
-            *args: t.Container,
-            **kw: t.Container | Exception,
+            *args: t.RuntimeData,
+            **kw: t.RuntimeData | Exception,
         ) -> r[bool] | None:
             """Log info message."""
             ...
@@ -81,8 +81,8 @@ class FlextProtocolsLogging:
         def warning(
             self,
             msg: str,
-            *args: t.Container,
-            **kw: t.Container | Exception,
+            *args: t.RuntimeData,
+            **kw: t.RuntimeData | Exception,
         ) -> r[bool] | None:
             """Log warning message."""
             ...

@@ -157,40 +157,11 @@ class FlextError(BaseModel):
             | dict(self.details)
         )
 
+    @override
+    @override
     def __str__(self) -> str:
         """String representation (full message with code)."""
         return f"{self.code}: {self.message}"
 
 
-class ResultErrorData(BaseModel):
-    """Container for structured error data in Result failures.
-
-    Used internally by FlextResult to store structured error information
-    while maintaining backward compatibility with free-form error strings.
-
-    This model is typically created via FlextError.to_dict() and stored
-    in Result.error_data.
-    """
-
-    domain: str | None = Field(
-        default=None,
-        description="Error domain from ErrorDomain enum",
-    )
-
-    code: str | None = Field(
-        default=None,
-        description="Specific error code",
-    )
-
-    message: str | None = Field(
-        default=None,
-        description="Additional context beyond error message",
-    )
-
-    details: t.ConfigMap = Field(
-        default_factory=lambda: t.ConfigMap(root={}),
-        description="Additional metadata",
-    )
-
-
-__all__ = ["ErrorDomain", "FlextError", "ResultErrorData"]
+__all__ = ["ErrorDomain", "FlextError"]

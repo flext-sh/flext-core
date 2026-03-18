@@ -196,7 +196,7 @@ class FlextService[
         config_type_raw = self.config_type or (
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
-        config_type_val: type[p.Settings] | None
+        config_type_val: type[p.Settings]
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_type_val = config_type_raw
         else:
@@ -238,10 +238,7 @@ class FlextService[
             bootstrap_opts.wire_classes if bootstrap_opts is not None else None
         )
         config_type_for_options: type[FlextSettings] | None = (
-            config_type_val
-            if config_type_val is not None
-            and issubclass(config_type_val, FlextSettings)
-            else None
+            config_type_val if issubclass(config_type_val, FlextSettings) else None
         )
         config_overrides_scalar: Mapping[str, t.Scalar] | None = None
         if config_overrides is not None:
@@ -304,63 +301,12 @@ class FlextService[
         )
         if runtime_kwargs:
             override_options = m.RuntimeBootstrapOptions.model_validate(runtime_kwargs)
-            runtime_options = m.RuntimeBootstrapOptions(
-                config_type=(
-                    override_options.config_type
-                    if override_options.config_type is not None
-                    else base_options.config_type
-                ),
-                config_overrides=(
-                    override_options.config_overrides
-                    if override_options.config_overrides is not None
-                    else base_options.config_overrides
-                ),
-                context=(
-                    override_options.context
-                    if override_options.context is not None
-                    else base_options.context
-                ),
-                subproject=(
-                    override_options.subproject
-                    if override_options.subproject is not None
-                    else base_options.subproject
-                ),
-                services=(
-                    override_options.services
-                    if override_options.services is not None
-                    else base_options.services
-                ),
-                factories=(
-                    override_options.factories
-                    if override_options.factories is not None
-                    else base_options.factories
-                ),
-                resources=(
-                    override_options.resources
-                    if override_options.resources is not None
-                    else base_options.resources
-                ),
-                container_overrides=(
-                    override_options.container_overrides
-                    if override_options.container_overrides is not None
-                    else base_options.container_overrides
-                ),
-                wire_modules=(
-                    override_options.wire_modules
-                    if override_options.wire_modules is not None
-                    else base_options.wire_modules
-                ),
-                wire_packages=(
-                    override_options.wire_packages
-                    if override_options.wire_packages is not None
-                    else base_options.wire_packages
-                ),
-                wire_classes=(
-                    override_options.wire_classes
-                    if override_options.wire_classes is not None
-                    else base_options.wire_classes
-                ),
-            )
+            overrides: dict[str, t.ValueOrModel] = {
+                field: getattr(override_options, field)
+                for field in m.RuntimeBootstrapOptions.model_fields
+                if getattr(override_options, field) is not None
+            }
+            runtime_options = base_options.model_copy(update=overrides)
         else:
             runtime_options = base_options
         config_type = runtime_options.config_type

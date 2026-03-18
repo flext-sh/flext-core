@@ -696,7 +696,6 @@ class FlextModelFoundation:
         """Mixin for unique identifiers."""
 
         model_config = ConfigDict(
-            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
             str_strip_whitespace=True,
@@ -719,7 +718,6 @@ class FlextModelFoundation:
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
         model_config = ConfigDict(
-            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -759,7 +757,6 @@ class FlextModelFoundation:
         """Mixin for versioning with optimistic locking."""
 
         model_config = ConfigDict(
-            defer_build=True,
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
