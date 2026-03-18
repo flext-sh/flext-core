@@ -1,0 +1,29 @@
+tests/unit/test_refactor_policy_family_rules.py
+  44bb703bc24d0347 7-8
+tests/unit/test_transformer_helper_consolidation.py
+  44bb703bc24d0347 6
+tests/unit/test_transformer_class_nesting.py
+  44bb703bc24d0347 6
+tests/unit/test_models_generic_full_coverage.py
+  44bb703bc24d0347 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "437bb1f478adb9ef9e5f2623c5e2a7aa1214b77c",
+  "prompts": {
+    "44bb703bc24d0347": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdca4d4affe53hqF7OI0VvMfx",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 5,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
