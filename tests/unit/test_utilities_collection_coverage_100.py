@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, cast
 
 import pytest
 from flext_tests import t, tm, u
@@ -342,416 +342,517 @@ class TestUtilitiesCollectionCoverage:
             Field(default=None, description="Expected error message fragment"),
         ] = None
 
+    globals()["FixtureStatus"] = FixtureStatus
+    globals()["FixturePriority"] = FixturePriority
+    globals()["ParseSequenceScenario"] = ParseSequenceScenario
+    globals()["CoerceListScenario"] = CoerceListScenario
+    globals()["ParseMappingScenario"] = ParseMappingScenario
+    globals()["CoerceDictScenario"] = CoerceDictScenario
+    globals()["MapScenario"] = MapScenario
+    globals()["FindScenario"] = FindScenario
+    globals()["FilterScenario"] = FilterScenario
+    globals()["CountScenario"] = CountScenario
+    globals()["ProcessScenario"] = ProcessScenario
+    globals()["GroupScenario"] = GroupScenario
+    globals()["ChunkScenario"] = ChunkScenario
+    globals()["BatchScenario"] = BatchScenario
+
     class CollectionUtilitiesScenarios:
         """Centralized collection utilities test scenarios."""
 
-        PARSE_SEQUENCE_CASES: ClassVar[list[ParseSequenceScenario]] = [
-            ParseSequenceScenario(
-                name="valid_strings",
-                enum_cls=FixtureStatus,
-                values=["active", "pending"],
-                expected_success=True,
-                expected_count=2,
-            ),
-            ParseSequenceScenario(
-                name="valid_enums",
-                enum_cls=FixtureStatus,
-                values=[FixtureStatus.ACTIVE, FixtureStatus.PENDING],
-                expected_success=True,
-                expected_count=2,
-            ),
-            ParseSequenceScenario(
-                name="mixed_strings_enums",
-                enum_cls=FixtureStatus,
-                values=["active", FixtureStatus.PENDING, "completed"],
-                expected_success=True,
-                expected_count=3,
-            ),
-            ParseSequenceScenario(
-                name="empty_list",
-                enum_cls=FixtureStatus,
-                values=[],
-                expected_success=True,
-                expected_count=0,
-            ),
-            ParseSequenceScenario(
-                name="invalid_string",
-                enum_cls=FixtureStatus,
-                values=["invalid_status"],
-                expected_success=False,
-                error_contains="Invalid",
-            ),
-            ParseSequenceScenario(
-                name="mixed_valid_invalid",
-                enum_cls=FixtureStatus,
-                values=["active", "invalid", "pending"],
-                expected_success=False,
-                error_contains="Invalid",
-            ),
-            ParseSequenceScenario(
-                name="single_valid",
-                enum_cls=FixturePriority,
-                values=["high"],
-                expected_success=True,
-                expected_count=1,
-            ),
-            ParseSequenceScenario(
-                name="single_invalid",
-                enum_cls=FixturePriority,
-                values=["invalid_priority"],
-                expected_success=False,
-                error_contains="Invalid",
-            ),
-        ]
-        COERCE_LIST_CASES: ClassVar[list[CoerceListScenario]] = [
-            CoerceListScenario(
-                name="valid_list_strings",
-                enum_cls=FixtureStatus,
-                value=["active", "pending"],
-                expected_success=True,
-                expected_count=2,
-            ),
-            CoerceListScenario(
-                name="valid_list_enums",
-                enum_cls=FixtureStatus,
-                value=[FixtureStatus.ACTIVE, FixtureStatus.PENDING],
-                expected_success=True,
-                expected_count=2,
-            ),
-            CoerceListScenario(
-                name="valid_tuple",
-                enum_cls=FixtureStatus,
-                value=("active", "pending"),
-                expected_success=True,
-                expected_count=2,
-            ),
-            CoerceListScenario(
-                name="valid_set",
-                enum_cls=FixtureStatus,
-                value=list({"active", "pending"}),
-                expected_success=True,
-                expected_count=2,
-            ),
-            CoerceListScenario(
-                name="valid_frozenset",
-                enum_cls=FixtureStatus,
-                value=list(frozenset(["active", "pending"])),
-                expected_success=True,
-                expected_count=2,
-            ),
-            CoerceListScenario(
-                name="empty_list",
-                enum_cls=FixtureStatus,
-                value=[],
-                expected_success=True,
-                expected_count=0,
-            ),
-            CoerceListScenario(
-                name="invalid_type_int",
-                enum_cls=FixtureStatus,
-                value=123,
-                expected_success=False,
-                error_type=TypeError,
-                error_contains="Expected sequence",
-            ),
-            CoerceListScenario(
-                name="invalid_type_str",
-                enum_cls=FixtureStatus,
-                value="active",
-                expected_success=False,
-                error_type=TypeError,
-                error_contains="Expected sequence",
-            ),
-            CoerceListScenario(
-                name="invalid_string_in_list",
-                enum_cls=FixtureStatus,
-                value=["active", "invalid_status"],
-                expected_success=False,
-                error_type=ValueError,
-                error_contains="Invalid",
-            ),
-            CoerceListScenario(
-                name="invalid_type_in_list",
-                enum_cls=FixtureStatus,
-                value=["active", 123],
-                expected_success=False,
-                error_type=TypeError,
-                error_contains="Expected str",
-            ),
-        ]
-        PARSE_MAPPING_CASES: ClassVar[list[ParseMappingScenario]] = [
-            ParseMappingScenario(
-                name="valid_strings",
-                enum_cls=FixtureStatus,
-                mapping={"user1": "active", "user2": "pending"},
-                expected_success=True,
-                expected_keys=["user1", "user2"],
-            ),
-            ParseMappingScenario(
-                name="valid_enums",
-                enum_cls=FixtureStatus,
-                mapping={"user1": FixtureStatus.ACTIVE, "user2": FixtureStatus.PENDING},
-                expected_success=True,
-                expected_keys=["user1", "user2"],
-            ),
-            ParseMappingScenario(
-                name="mixed_strings_enums",
-                enum_cls=FixtureStatus,
-                mapping={"user1": "active", "user2": FixtureStatus.PENDING},
-                expected_success=True,
-                expected_keys=["user1", "user2"],
-            ),
-            ParseMappingScenario(
-                name="empty_dict",
-                enum_cls=FixtureStatus,
-                mapping={},
-                expected_success=True,
-                expected_keys=[],
-            ),
-            ParseMappingScenario(
-                name="invalid_string",
-                enum_cls=FixtureStatus,
-                mapping={"user1": "invalid_status"},
-                expected_success=False,
-                error_contains="Invalid",
-            ),
-            ParseMappingScenario(
-                name="mixed_valid_invalid",
-                enum_cls=FixtureStatus,
-                mapping={"user1": "active", "user2": "invalid"},
-                expected_success=False,
-                error_contains="Invalid",
-            ),
-            ParseMappingScenario(
-                name="single_valid",
-                enum_cls=FixturePriority,
-                mapping={"task1": "high"},
-                expected_success=True,
-                expected_keys=["task1"],
-            ),
-            ParseMappingScenario(
-                name="single_invalid",
-                enum_cls=FixturePriority,
-                mapping={"task1": "invalid_priority"},
-                expected_success=False,
-                error_contains="Invalid",
-            ),
-        ]
-        COERCE_DICT_CASES: ClassVar[list[CoerceDictScenario]] = [
-            CoerceDictScenario(
-                name="valid_dict_strings",
-                enum_cls=FixtureStatus,
-                value={"user1": "active", "user2": "pending"},
-                expected_success=True,
-                expected_keys=["user1", "user2"],
-            ),
-            CoerceDictScenario(
-                name="valid_dict_enums",
-                enum_cls=FixtureStatus,
-                value={"user1": FixtureStatus.ACTIVE, "user2": FixtureStatus.PENDING},
-                expected_success=True,
-                expected_keys=["user1", "user2"],
-            ),
-            CoerceDictScenario(
-                name="empty_dict",
-                enum_cls=FixtureStatus,
-                value={},
-                expected_success=True,
-                expected_keys=[],
-            ),
-            CoerceDictScenario(
-                name="invalid_type_int",
-                enum_cls=FixtureStatus,
-                value=123,
-                expected_success=False,
-                error_type=TypeError,
-                error_contains="Expected dict",
-            ),
-            CoerceDictScenario(
-                name="invalid_type_list",
-                enum_cls=FixtureStatus,
-                value=["active", "pending"],
-                expected_success=False,
-                error_type=TypeError,
-                error_contains="Expected dict",
-            ),
-            CoerceDictScenario(
-                name="invalid_string_in_dict",
-                enum_cls=FixtureStatus,
-                value={"user1": "active", "user2": "invalid_status"},
-                expected_success=False,
-                error_type=ValueError,
-                error_contains="Invalid",
-            ),
-            CoerceDictScenario(
-                name="invalid_type_in_dict",
-                enum_cls=FixtureStatus,
-                value={"user1": "active", "user2": 123},
-                expected_success=False,
-                error_type=TypeError,
-                error_contains="Expected str",
-            ),
-        ]
-        MAP_CASES: ClassVar[list[MapScenario]] = [
-            MapScenario(
-                name="list_ints",
-                items=[1, 2, 3],
-                mapper=lambda x: cast("int", x) * 2,
-                expected_result=[2, 4, 6],
-            ),
-            MapScenario(
-                name="tuple_ints",
-                items=(1, 2, 3),
-                mapper=lambda x: cast("int", x) * 2,
-                expected_result=(2, 4, 6),
-            ),
-            MapScenario(
-                name="set_ints",
-                items={1, 2, 3},
-                mapper=lambda x: cast("int", x) * 2,
-                expected_result={2, 4, 6},
-            ),
-            MapScenario(
-                name="dict_values",
-                items={"a": 1, "b": 2},
-                mapper=lambda v: cast("int", v) * 2,
-                expected_result={"a": 2, "b": 4},
-            ),
-            MapScenario(
-                name="frozenset_ints",
-                items=frozenset({1, 2, 3}),
-                mapper=lambda x: cast("int", x) * 2,
-                expected_result=frozenset({2, 4, 6}),
-            ),
-            MapScenario(
-                name="strings_upper",
-                items=["hello", "world"],
-                mapper=lambda x: cast("str", x).upper(),
-                expected_result=["HELLO", "WORLD"],
-            ),
-        ]
-        FIND_CASES: ClassVar[list[FindScenario]] = [
-            FindScenario(
-                name="list_find",
-                items=[1, 2, 3, 4],
-                predicate=lambda x: cast("int", x) % 2 == 0,
-                expected_result=2,
-            ),
-            FindScenario(
-                name="list_not_found",
-                items=[1, 3, 5],
-                predicate=lambda x: cast("int", x) % 2 == 0,
-                expected_result=None,
-            ),
-            FindScenario(
-                name="dict_find_value",
-                items={"a": 1, "b": 2},
-                predicate=lambda v: v == 2,
-                expected_result=2,
-            ),
-            FindScenario(
-                name="dict_find_other",
-                items={"x": 10, "y": 20},
-                predicate=lambda v: cast("int", v) > 15,
-                expected_result=20,
-            ),
-        ]
-        FILTER_CASES: ClassVar[list[FilterScenario]] = [
-            FilterScenario(
-                name="list_filter",
-                items=[1, 2, 3, 4],
-                predicate=lambda x: cast("int", x) % 2 == 0,
-                expected_result=[2, 4],
-            ),
-            FilterScenario(
-                name="list_filter_map",
-                items=[1, 2, 3, 4],
-                predicate=lambda x: cast("int", x) > 2,
-                mapper=lambda x: cast("int", x) * 2,
-                expected_result=[6, 8],
-            ),
-            FilterScenario(
-                name="dict_filter",
-                items={"a": 1, "b": 2, "c": 3},
-                predicate=lambda v: cast("int", v) % 2 != 0,
-                expected_result={"a": 1, "c": 3},
-            ),
-            FilterScenario(
-                name="dict_filter_map",
-                items={"a": 1, "b": 4},
-                predicate=lambda v: cast("int", v) > 2,
-                mapper=lambda v: cast("int", v) * 2,
-                expected_result={"b": 8},
-            ),
-            FilterScenario(
-                name="list_filter_empty",
-                items=[1, 3, 5],
-                predicate=lambda x: cast("int", x) > 10,
-                expected_result=[],
-            ),
-            FilterScenario(
-                name="list_filter_all",
-                items=[2, 4, 6],
-                predicate=lambda x: cast("int", x) % 2 == 0,
-                expected_result=[2, 4, 6],
-            ),
-        ]
-        COUNT_CASES: ClassVar[list[CountScenario]] = [
-            CountScenario(name="count_list", items=[1, 2, 3, 4], expected_count=4),
-            CountScenario(
-                name="count_predicate",
-                items=[1, 2, 3, 4],
-                predicate=lambda x: cast("int", x) % 2 == 0,
-                expected_count=2,
-            ),
-        ]
-        PROCESS_CASES: ClassVar[list[ProcessScenario]] = [
-            ProcessScenario(
-                name="process_list",
-                items=[1, 2, 3],
-                processor=lambda x: cast("int", x) * 2,
-                expected_result=[2, 4, 6],
-            ),
-            ProcessScenario(
-                name="process_list_skip",
-                items=[1, 2, 3],
-                processor=lambda x: cast("int", x) * 2,
-                expected_result=[4, 6],
-                predicate=lambda x: cast("int", x) > 1,
-            ),
-            ProcessScenario(
-                name="process_strings",
-                items=["a", "b", "c"],
-                processor=lambda x: cast("str", x).upper(),
-                expected_result=["A", "B", "C"],
-            ),
-            ProcessScenario(
-                name="process_empty",
-                items=[],
-                processor=lambda x: cast("int", x) * 2,
-                expected_result=[],
-            ),
-        ]
-        GROUP_CASES: ClassVar[list[GroupScenario]] = [
-            GroupScenario(
-                name="group_by_len",
-                items=["cat", "dog", "house"],
-                key=lambda x: len(x),
-                expected_result={3: ["cat", "dog"], 5: ["house"]},
-            ),
-        ]
-        CHUNK_CASES: ClassVar[list[ChunkScenario]] = [
-            ChunkScenario(
-                name="chunk_list",
-                items=[1, 2, 3, 4, 5],
-                size=2,
-                expected_result=[[1, 2], [3, 4], [5]],
-            ),
-        ]
+        @staticmethod
+        def _double(value: t.Tests.object) -> t.Tests.object:
+            return cast("int", value) * 2
+
+        @staticmethod
+        def _upper(value: t.Tests.object) -> t.Tests.object:
+            return cast("str", value).upper()
+
+        @staticmethod
+        def _is_even(value: t.Tests.object) -> bool:
+            return cast("int", value) % 2 == 0
+
+        @staticmethod
+        def _is_odd(value: t.Tests.object) -> bool:
+            return cast("int", value) % 2 != 0
+
+        @staticmethod
+        def _greater_than_two(value: t.Tests.object) -> bool:
+            return cast("int", value) > 2
+
+        @staticmethod
+        def _greater_than_one(value: t.Tests.object) -> bool:
+            return cast("int", value) > 1
+
+        @staticmethod
+        def _greater_than_ten(value: t.Tests.object) -> bool:
+            return cast("int", value) > 10
+
+        @staticmethod
+        def _greater_than_fifteen(value: t.Tests.object) -> bool:
+            return cast("int", value) > 15
+
+        @staticmethod
+        def _equals_two(value: t.Tests.object) -> bool:
+            return value == 2
+
+        @staticmethod
+        def _by_length(value: str) -> int:
+            return len(value)
+
+        @staticmethod
+        def parse_sequence_cases() -> list[
+            TestUtilitiesCollectionCoverage.ParseSequenceScenario
+        ]:
+            return [
+                ParseSequenceScenario(
+                    name="valid_strings",
+                    enum_cls=FixtureStatus,
+                    values=["active", "pending"],
+                    expected_success=True,
+                    expected_count=2,
+                ),
+                ParseSequenceScenario(
+                    name="valid_enums",
+                    enum_cls=FixtureStatus,
+                    values=[FixtureStatus.ACTIVE, FixtureStatus.PENDING],
+                    expected_success=True,
+                    expected_count=2,
+                ),
+                ParseSequenceScenario(
+                    name="mixed_strings_enums",
+                    enum_cls=FixtureStatus,
+                    values=["active", FixtureStatus.PENDING, "completed"],
+                    expected_success=True,
+                    expected_count=3,
+                ),
+                ParseSequenceScenario(
+                    name="empty_list",
+                    enum_cls=FixtureStatus,
+                    values=[],
+                    expected_success=True,
+                    expected_count=0,
+                ),
+                ParseSequenceScenario(
+                    name="invalid_string",
+                    enum_cls=FixtureStatus,
+                    values=["invalid_status"],
+                    expected_success=False,
+                    error_contains="Invalid",
+                ),
+                ParseSequenceScenario(
+                    name="mixed_valid_invalid",
+                    enum_cls=FixtureStatus,
+                    values=["active", "invalid", "pending"],
+                    expected_success=False,
+                    error_contains="Invalid",
+                ),
+                ParseSequenceScenario(
+                    name="single_valid",
+                    enum_cls=FixturePriority,
+                    values=["high"],
+                    expected_success=True,
+                    expected_count=1,
+                ),
+                ParseSequenceScenario(
+                    name="single_invalid",
+                    enum_cls=FixturePriority,
+                    values=["invalid_priority"],
+                    expected_success=False,
+                    error_contains="Invalid",
+                ),
+            ]
+
+        @staticmethod
+        def coerce_list_cases() -> list[
+            TestUtilitiesCollectionCoverage.CoerceListScenario
+        ]:
+            return [
+                CoerceListScenario(
+                    name="valid_list_strings",
+                    enum_cls=FixtureStatus,
+                    value=["active", "pending"],
+                    expected_success=True,
+                    expected_count=2,
+                ),
+                CoerceListScenario(
+                    name="valid_list_enums",
+                    enum_cls=FixtureStatus,
+                    value=[FixtureStatus.ACTIVE, FixtureStatus.PENDING],
+                    expected_success=True,
+                    expected_count=2,
+                ),
+                CoerceListScenario(
+                    name="valid_tuple",
+                    enum_cls=FixtureStatus,
+                    value=("active", "pending"),
+                    expected_success=True,
+                    expected_count=2,
+                ),
+                CoerceListScenario(
+                    name="valid_set",
+                    enum_cls=FixtureStatus,
+                    value=list({"active", "pending"}),
+                    expected_success=True,
+                    expected_count=2,
+                ),
+                CoerceListScenario(
+                    name="valid_frozenset",
+                    enum_cls=FixtureStatus,
+                    value=list(frozenset(["active", "pending"])),
+                    expected_success=True,
+                    expected_count=2,
+                ),
+                CoerceListScenario(
+                    name="empty_list",
+                    enum_cls=FixtureStatus,
+                    value=[],
+                    expected_success=True,
+                    expected_count=0,
+                ),
+                CoerceListScenario(
+                    name="invalid_type_int",
+                    enum_cls=FixtureStatus,
+                    value=123,
+                    expected_success=False,
+                    error_type=TypeError,
+                    error_contains="Expected sequence",
+                ),
+                CoerceListScenario(
+                    name="invalid_type_str",
+                    enum_cls=FixtureStatus,
+                    value="active",
+                    expected_success=False,
+                    error_type=TypeError,
+                    error_contains="Expected sequence",
+                ),
+                CoerceListScenario(
+                    name="invalid_string_in_list",
+                    enum_cls=FixtureStatus,
+                    value=["active", "invalid_status"],
+                    expected_success=False,
+                    error_type=ValueError,
+                    error_contains="Invalid",
+                ),
+                CoerceListScenario(
+                    name="invalid_type_in_list",
+                    enum_cls=FixtureStatus,
+                    value=["active", 123],
+                    expected_success=False,
+                    error_type=TypeError,
+                    error_contains="Expected str",
+                ),
+            ]
+
+        @staticmethod
+        def parse_mapping_cases() -> list[
+            TestUtilitiesCollectionCoverage.ParseMappingScenario
+        ]:
+            return [
+                ParseMappingScenario(
+                    name="valid_strings",
+                    enum_cls=FixtureStatus,
+                    mapping={"user1": "active", "user2": "pending"},
+                    expected_success=True,
+                    expected_keys=["user1", "user2"],
+                ),
+                ParseMappingScenario(
+                    name="valid_enums",
+                    enum_cls=FixtureStatus,
+                    mapping={
+                        "user1": FixtureStatus.ACTIVE,
+                        "user2": FixtureStatus.PENDING,
+                    },
+                    expected_success=True,
+                    expected_keys=["user1", "user2"],
+                ),
+                ParseMappingScenario(
+                    name="mixed_strings_enums",
+                    enum_cls=FixtureStatus,
+                    mapping={"user1": "active", "user2": FixtureStatus.PENDING},
+                    expected_success=True,
+                    expected_keys=["user1", "user2"],
+                ),
+                ParseMappingScenario(
+                    name="empty_dict",
+                    enum_cls=FixtureStatus,
+                    mapping={},
+                    expected_success=True,
+                    expected_keys=[],
+                ),
+                ParseMappingScenario(
+                    name="invalid_string",
+                    enum_cls=FixtureStatus,
+                    mapping={"user1": "invalid_status"},
+                    expected_success=False,
+                    error_contains="Invalid",
+                ),
+                ParseMappingScenario(
+                    name="mixed_valid_invalid",
+                    enum_cls=FixtureStatus,
+                    mapping={"user1": "active", "user2": "invalid"},
+                    expected_success=False,
+                    error_contains="Invalid",
+                ),
+                ParseMappingScenario(
+                    name="single_valid",
+                    enum_cls=FixturePriority,
+                    mapping={"task1": "high"},
+                    expected_success=True,
+                    expected_keys=["task1"],
+                ),
+                ParseMappingScenario(
+                    name="single_invalid",
+                    enum_cls=FixturePriority,
+                    mapping={"task1": "invalid_priority"},
+                    expected_success=False,
+                    error_contains="Invalid",
+                ),
+            ]
+
+        @staticmethod
+        def coerce_dict_cases() -> list[
+            TestUtilitiesCollectionCoverage.CoerceDictScenario
+        ]:
+            return [
+                CoerceDictScenario(
+                    name="valid_dict_strings",
+                    enum_cls=FixtureStatus,
+                    value={"user1": "active", "user2": "pending"},
+                    expected_success=True,
+                    expected_keys=["user1", "user2"],
+                ),
+                CoerceDictScenario(
+                    name="valid_dict_enums",
+                    enum_cls=FixtureStatus,
+                    value={
+                        "user1": FixtureStatus.ACTIVE,
+                        "user2": FixtureStatus.PENDING,
+                    },
+                    expected_success=True,
+                    expected_keys=["user1", "user2"],
+                ),
+                CoerceDictScenario(
+                    name="empty_dict",
+                    enum_cls=FixtureStatus,
+                    value={},
+                    expected_success=True,
+                    expected_keys=[],
+                ),
+                CoerceDictScenario(
+                    name="invalid_type_int",
+                    enum_cls=FixtureStatus,
+                    value=123,
+                    expected_success=False,
+                    error_type=TypeError,
+                    error_contains="Expected dict",
+                ),
+                CoerceDictScenario(
+                    name="invalid_type_list",
+                    enum_cls=FixtureStatus,
+                    value=["active", "pending"],
+                    expected_success=False,
+                    error_type=TypeError,
+                    error_contains="Expected dict",
+                ),
+                CoerceDictScenario(
+                    name="invalid_string_in_dict",
+                    enum_cls=FixtureStatus,
+                    value={"user1": "active", "user2": "invalid_status"},
+                    expected_success=False,
+                    error_type=ValueError,
+                    error_contains="Invalid",
+                ),
+                CoerceDictScenario(
+                    name="invalid_type_in_dict",
+                    enum_cls=FixtureStatus,
+                    value={"user1": "active", "user2": 123},
+                    expected_success=False,
+                    error_type=TypeError,
+                    error_contains="Expected str",
+                ),
+            ]
+
+        @staticmethod
+        def map_cases() -> list[TestUtilitiesCollectionCoverage.MapScenario]:
+            return [
+                MapScenario(
+                    name="list_ints",
+                    items=[1, 2, 3],
+                    mapper=lambda x: cast("int", x) * 2,
+                    expected_result=[2, 4, 6],
+                ),
+                MapScenario(
+                    name="tuple_ints",
+                    items=(1, 2, 3),
+                    mapper=lambda x: cast("int", x) * 2,
+                    expected_result=(2, 4, 6),
+                ),
+                MapScenario(
+                    name="set_ints",
+                    items={1, 2, 3},
+                    mapper=lambda x: cast("int", x) * 2,
+                    expected_result={2, 4, 6},
+                ),
+                MapScenario(
+                    name="dict_values",
+                    items={"a": 1, "b": 2},
+                    mapper=lambda v: cast("int", v) * 2,
+                    expected_result={"a": 2, "b": 4},
+                ),
+                MapScenario(
+                    name="frozenset_ints",
+                    items=frozenset({1, 2, 3}),
+                    mapper=lambda x: cast("int", x) * 2,
+                    expected_result=frozenset({2, 4, 6}),
+                ),
+                MapScenario(
+                    name="strings_upper",
+                    items=["hello", "world"],
+                    mapper=lambda x: cast("str", x).upper(),
+                    expected_result=["HELLO", "WORLD"],
+                ),
+            ]
+
+        @staticmethod
+        def find_cases() -> list[TestUtilitiesCollectionCoverage.FindScenario]:
+            return [
+                FindScenario(
+                    name="list_find",
+                    items=[1, 2, 3, 4],
+                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    expected_result=2,
+                ),
+                FindScenario(
+                    name="list_not_found",
+                    items=[1, 3, 5],
+                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    expected_result=None,
+                ),
+                FindScenario(
+                    name="dict_find_value",
+                    items={"a": 1, "b": 2},
+                    predicate=lambda v: v == 2,
+                    expected_result=2,
+                ),
+                FindScenario(
+                    name="dict_find_other",
+                    items={"x": 10, "y": 20},
+                    predicate=lambda v: cast("int", v) > 15,
+                    expected_result=20,
+                ),
+            ]
+
+        @staticmethod
+        def filter_cases() -> list[TestUtilitiesCollectionCoverage.FilterScenario]:
+            return [
+                FilterScenario(
+                    name="list_filter",
+                    items=[1, 2, 3, 4],
+                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    expected_result=[2, 4],
+                ),
+                FilterScenario(
+                    name="list_filter_map",
+                    items=[1, 2, 3, 4],
+                    predicate=lambda x: cast("int", x) > 2,
+                    mapper=lambda x: cast("int", x) * 2,
+                    expected_result=[6, 8],
+                ),
+                FilterScenario(
+                    name="dict_filter",
+                    items={"a": 1, "b": 2, "c": 3},
+                    predicate=lambda v: cast("int", v) % 2 != 0,
+                    expected_result={"a": 1, "c": 3},
+                ),
+                FilterScenario(
+                    name="dict_filter_map",
+                    items={"a": 1, "b": 4},
+                    predicate=lambda v: cast("int", v) > 2,
+                    mapper=lambda v: cast("int", v) * 2,
+                    expected_result={"b": 8},
+                ),
+                FilterScenario(
+                    name="list_filter_empty",
+                    items=[1, 3, 5],
+                    predicate=lambda x: cast("int", x) > 10,
+                    expected_result=[],
+                ),
+                FilterScenario(
+                    name="list_filter_all",
+                    items=[2, 4, 6],
+                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    expected_result=[2, 4, 6],
+                ),
+            ]
+
+        @staticmethod
+        def count_cases() -> list[TestUtilitiesCollectionCoverage.CountScenario]:
+            return [
+                CountScenario(name="count_list", items=[1, 2, 3, 4], expected_count=4),
+                CountScenario(
+                    name="count_predicate",
+                    items=[1, 2, 3, 4],
+                    predicate=lambda x: cast("int", x) % 2 == 0,
+                    expected_count=2,
+                ),
+            ]
+
+        @staticmethod
+        def process_cases() -> list[TestUtilitiesCollectionCoverage.ProcessScenario]:
+            return [
+                ProcessScenario(
+                    name="process_list",
+                    items=[1, 2, 3],
+                    processor=lambda x: cast("int", x) * 2,
+                    expected_result=[2, 4, 6],
+                ),
+                ProcessScenario(
+                    name="process_list_skip",
+                    items=[1, 2, 3],
+                    processor=lambda x: cast("int", x) * 2,
+                    expected_result=[4, 6],
+                    predicate=lambda x: cast("int", x) > 1,
+                ),
+                ProcessScenario(
+                    name="process_strings",
+                    items=["a", "b", "c"],
+                    processor=lambda x: cast("str", x).upper(),
+                    expected_result=["A", "B", "C"],
+                ),
+                ProcessScenario(
+                    name="process_empty",
+                    items=[],
+                    processor=lambda x: cast("int", x) * 2,
+                    expected_result=[],
+                ),
+            ]
+
+        @staticmethod
+        def group_cases() -> list[TestUtilitiesCollectionCoverage.GroupScenario]:
+            return [
+                GroupScenario(
+                    name="group_by_len",
+                    items=["cat", "dog", "house"],
+                    key=lambda x: len(x),
+                    expected_result={3: ["cat", "dog"], 5: ["house"]},
+                ),
+            ]
+
+        @staticmethod
+        def chunk_cases() -> list[TestUtilitiesCollectionCoverage.ChunkScenario]:
+            return [
+                ChunkScenario(
+                    name="chunk_list",
+                    items=[1, 2, 3, 4, 5],
+                    size=2,
+                    expected_result=[[1, 2], [3, 4], [5]],
+                ),
+            ]
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.PARSE_SEQUENCE_CASES,
+        CollectionUtilitiesScenarios.parse_sequence_cases(),
         ids=lambda s: s.name,
     )
     def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
@@ -792,7 +893,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.COERCE_LIST_CASES,
+        CollectionUtilitiesScenarios.coerce_list_cases(),
         ids=lambda s: s.name,
     )
     def test_coerce_list_validator(self, scenario: CoerceListScenario) -> None:
@@ -832,7 +933,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.PARSE_MAPPING_CASES,
+        CollectionUtilitiesScenarios.parse_mapping_cases(),
         ids=lambda s: s.name,
     )
     def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
@@ -879,7 +980,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.COERCE_DICT_CASES,
+        CollectionUtilitiesScenarios.coerce_dict_cases(),
         ids=lambda s: s.name,
     )
     def test_coerce_dict_validator(self, scenario: CoerceDictScenario) -> None:
@@ -924,7 +1025,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.MAP_CASES,
+        CollectionUtilitiesScenarios.map_cases(),
         ids=lambda s: s.name,
     )
     def test_map(self, scenario: MapScenario) -> None:
@@ -936,7 +1037,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.FIND_CASES,
+        CollectionUtilitiesScenarios.find_cases(),
         ids=lambda s: s.name,
     )
     def test_find(self, scenario: FindScenario) -> None:
@@ -953,7 +1054,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.FILTER_CASES,
+        CollectionUtilitiesScenarios.filter_cases(),
         ids=lambda s: s.name,
     )
     def test_filter(self, scenario: FilterScenario) -> None:
@@ -967,7 +1068,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.COUNT_CASES,
+        CollectionUtilitiesScenarios.count_cases(),
         ids=lambda s: s.name,
     )
     def test_count(self, scenario: CountScenario) -> None:
@@ -977,7 +1078,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.PROCESS_CASES,
+        CollectionUtilitiesScenarios.process_cases(),
         ids=lambda s: s.name,
     )
     def test_process(self, scenario: ProcessScenario) -> None:
@@ -1000,7 +1101,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.GROUP_CASES,
+        CollectionUtilitiesScenarios.group_cases(),
         ids=lambda s: s.name,
     )
     def test_group(self, scenario: GroupScenario) -> None:
@@ -1010,7 +1111,7 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.CHUNK_CASES,
+        CollectionUtilitiesScenarios.chunk_cases(),
         ids=lambda s: s.name,
     )
     def test_chunk(self, scenario: ChunkScenario) -> None:

@@ -29,9 +29,58 @@ from typing import cast
 import pytest
 
 from flext_core import r
-from tests import c, m, t, u
+
+from ..constants import TestsFlextConstants
+from ..models import TestsFlextModels
+from ..typings import TestsFlextTypes
+from ..utilities import TestsFlextUtilities
+
+c = TestsFlextConstants
+m = TestsFlextModels
+t = TestsFlextTypes
+u = TestsFlextUtilities
 
 _object = t.Tests.object
+
+
+def _parse_delimited_cases() -> list[m.ParseDelimitedCase]:
+    builder = cast(
+        "Callable[[], list[m.ParseDelimitedCase]]",
+        globals()["StringParserTestFactory"].parse_delimited_cases,
+    )
+    return builder()
+
+
+def _split_escape_cases() -> list[m.SplitEscapeCase]:
+    builder = cast(
+        "Callable[[], list[m.SplitEscapeCase]]",
+        globals()["StringParserTestFactory"].split_escape_cases,
+    )
+    return builder()
+
+
+def _normalize_whitespace_cases() -> list[m.NormalizeWhitespaceCase]:
+    builder = cast(
+        "Callable[[], list[m.NormalizeWhitespaceCase]]",
+        globals()["StringParserTestFactory"].normalize_whitespace_cases,
+    )
+    return builder()
+
+
+def _regex_pipeline_cases() -> list[m.RegexPipelineCase]:
+    builder = cast(
+        "Callable[[], list[m.RegexPipelineCase]]",
+        globals()["StringParserTestFactory"].regex_pipeline_cases,
+    )
+    return builder()
+
+
+def _object_key_cases() -> list[m.ObjectKeyCase]:
+    builder = cast(
+        "Callable[[], list[m.ObjectKeyCase]]",
+        globals()["StringParserTestFactory"].object_key_cases,
+    )
+    return builder()
 
 
 class TestuStringParser:
@@ -379,6 +428,8 @@ class TestuStringParser:
                 ),
             ]
 
+    globals()["StringParserTestFactory"] = StringParserTestFactory
+
     @pytest.fixture
     def parser(self) -> u:
         """Create parser instance."""
@@ -389,7 +440,7 @@ class TestuStringParser:
 
         @pytest.mark.parametrize(
             "case",
-            TestuStringParser.StringParserTestFactory.parse_delimited_cases(),
+            _parse_delimited_cases(),
         )
         def test_parse_delimited(
             self,
@@ -440,9 +491,7 @@ class TestuStringParser:
     class TestSplitWithEscape:
         """Test split_on_char_with_escape method."""
 
-        @pytest.mark.parametrize(
-            "case", TestuStringParser.StringParserTestFactory.split_escape_cases()
-        )
+        @pytest.mark.parametrize("case", _split_escape_cases())
         def test_split_with_escape(
             self,
             parser: u,
@@ -479,7 +528,7 @@ class TestuStringParser:
 
         @pytest.mark.parametrize(
             "case",
-            TestuStringParser.StringParserTestFactory.normalize_whitespace_cases(),
+            _normalize_whitespace_cases(),
         )
         def test_normalize_whitespace(
             self,
@@ -512,9 +561,7 @@ class TestuStringParser:
     class TestRegexPipeline:
         """Test apply_regex_pipeline method."""
 
-        @pytest.mark.parametrize(
-            "case", TestuStringParser.StringParserTestFactory.regex_pipeline_cases()
-        )
+        @pytest.mark.parametrize("case", _regex_pipeline_cases())
         def test_apply_regex_pipeline(
             self,
             parser: u,
@@ -597,9 +644,7 @@ class TestuStringParser:
     class TestGetObjectKey:
         """Test get_object_key method."""
 
-        @pytest.mark.parametrize(
-            "case", TestuStringParser.StringParserTestFactory.object_key_cases()
-        )
+        @pytest.mark.parametrize("case", _object_key_cases())
         def test_get_object_key(
             self,
             parser: u,

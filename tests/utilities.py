@@ -18,7 +18,7 @@ from collections.abc import Callable, Iterator
 from typing import Never, override
 
 from flext_infra import FlextInfraUtilities
-from flext_tests import FlextTestsUtilities, t, tm
+from flext_tests import t, tm, u
 
 from flext_core import r
 

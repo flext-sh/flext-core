@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from .flext_tests.test_factories import TestFactoriesHelpers
     from .flext_tests.test_files import TestFlextTestsFiles
     from .flext_tests.test_matchers import TestFlextTestsMatchers
-    from .flext_tests.test_utilities import TestUtilities, TestUtilities as u
+    from .flext_tests.test_utilities import TestUtilities
     from .protocols import FlextProtocols, p
     from .test_args_coverage_100 import TestFlextUtilitiesArgs
     from .test_automated_architecture import TestAutomatedArchitecture
@@ -75,7 +75,7 @@ if TYPE_CHECKING:
     from .test_collection_utilities_coverage_100 import TestCollectionUtilitiesCoverage
     from .test_collections_coverage_100 import TestFlextModelsCollectionsCoverage100
     from .test_config import TestFlextSettings
-    from .test_constants import TestConstants, TestConstants as c
+    from .test_constants import TestConstants
     from .test_constants_full_coverage import (
         test_constants_auto_enum_and_bimapping_paths,
     )
@@ -99,7 +99,7 @@ if TYPE_CHECKING:
     from .test_coverage_context import TestCoverageContext
     from .test_coverage_exceptions import TestCoverageExceptions
     from .test_coverage_loggings import TestCoverageLoggings
-    from .test_coverage_models import TestCoverageModels, TestCoverageModels as m
+    from .test_coverage_models import TestCoverageModels
     from .test_decorators import TestFlextDecorators
     from .test_decorators_discovery_full_coverage import (
         TestDecoratorsDiscoveryFullCoverage,
@@ -481,7 +481,7 @@ if TYPE_CHECKING:
         test_utilities_reliability_compose_returns_non_result_directly,
         test_utilities_reliability_uncovered_retry_compose_and_sequence_paths,
     )
-    from .test_utilities_string_parser import TestuStringParser
+    from .test_utilities_string_parser import TestuStringParser, c, m, t, u
     from .test_utilities_text_full_coverage import TestUtilitiesTextFullCoverage
     from .test_utilities_type_checker_coverage_100 import (
         T,
@@ -922,7 +922,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_full_coverage",
         "UtilitiesMapperFullCoverageNamespace",
     ),
-    "c": ("tests.unit.test_constants", "TestConstants"),
+    "c": ("tests.unit.test_utilities_string_parser", "c"),
     "contracts": ("tests.unit.contracts", ""),
     "create_compare_entities_cases": (
         "tests.unit.test_utilities_domain",
@@ -980,7 +980,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "infra_workflow_linter": ("tests.unit.conftest_infra", "infra_workflow_linter"),
     "infra_workflow_syncer": ("tests.unit.conftest_infra", "infra_workflow_syncer"),
     "inject": ("tests.unit.test_di_incremental", "inject"),
-    "m": ("tests.unit.test_coverage_models", "TestCoverageModels"),
+    "m": ("tests.unit.test_utilities_string_parser", "m"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
     "p": ("tests.unit.protocols", "p"),
     "pytestmark": ("tests.unit.test_utilities_type_checker_coverage_100", "pytestmark"),
@@ -996,6 +996,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
     "s": ("tests.unit.test_automated_service", "TestAutomatedFlextService"),
+    "t": ("tests.unit.test_utilities_string_parser", "t"),
     "test_accessor_take_pick_as_or_flat_and_agg_branches": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_accessor_take_pick_as_or_flat_and_agg_branches",
@@ -1824,7 +1825,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_additional",
         "test_with_resource_cleanup_runs",
     ),
-    "u": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
+    "u": ("tests.unit.test_utilities_string_parser", "u"),
     "x": ("tests.unit.test_automated_mixins", "TestAutomatedFlextMixins"),
 }
 
@@ -2006,6 +2007,7 @@ __all__ = [
     "runtime_module",
     "runtime_tests",
     "s",
+    "t",
     "test_accessor_take_pick_as_or_flat_and_agg_branches",
     "test_aliases_are_available",
     "test_args_get_enum_params_annotated_unwrap_branch",

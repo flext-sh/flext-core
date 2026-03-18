@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 
-from flext_tests import FlextTestsUtilities, tm, u
+from flext_tests import tm, u
 
 from flext_core import FlextContainer, FlextContext, t
 from tests import m

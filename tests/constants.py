@@ -17,7 +17,7 @@ from enum import StrEnum, unique
 from typing import Annotated, Final, Literal
 
 from flext_infra import FlextInfraConstants
-from flext_tests import FlextTestsConstants
+from flext_tests import c
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t

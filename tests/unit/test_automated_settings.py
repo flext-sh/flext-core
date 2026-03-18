@@ -7,7 +7,7 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
-from flext_tests import FlextTestsFiles, tb, tf, tm, tt
+from flext_tests import tb, tf, tm, tt
 from hypothesis import given, settings, strategies as st
 from pydantic_settings import BaseSettings
 

@@ -5,7 +5,7 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import FlextTestsUtilities, t, u
+from flext_tests import t, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRegistry, h, r

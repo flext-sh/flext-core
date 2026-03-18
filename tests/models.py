@@ -19,7 +19,7 @@ from enum import StrEnum, unique
 from typing import Annotated, override
 
 from flext_infra import FlextInfraModels
-from flext_tests import FlextTestsModels
+from flext_tests import m
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels, t

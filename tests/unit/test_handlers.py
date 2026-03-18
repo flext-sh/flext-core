@@ -4,7 +4,7 @@ import math
 from typing import Annotated, ClassVar, override
 
 import pytest
-from flext_tests import FlextTestsUtilities, t, u
+from flext_tests import t, u
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextExceptions, h, r, x
