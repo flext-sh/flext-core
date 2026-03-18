@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Generator, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
 from typing import (
@@ -212,7 +212,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         return normalized
 
     @contextmanager
-    def track(self, operation_name: str) -> Iterator[Mapping[str, t.ValueOrModel]]:
+    def track(self, operation_name: str) -> Generator[Mapping[str, t.ValueOrModel]]:
         """Track operation performance with timing and automatic context cleanup."""
         stats: t.ConfigMap = self._operation_stats.get(
             operation_name,

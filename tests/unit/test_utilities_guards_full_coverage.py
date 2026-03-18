@@ -272,9 +272,9 @@ def test_chk_exercises_missed_branches() -> None:
     tm.that(not u.chk(None, **core_m.GuardCheckSpec(none=False).model_dump()), eq=True)
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(is_=int).model_dump()), eq=True)
     with pytest.raises(ValidationError):
-        u.chk("a", is_=list[int])
+        u.chk("a", is_=cast(t.NormalizedValue, list[int]))
     with pytest.raises(ValidationError):
-        u.chk("a", not_=list[int])
+        u.chk("a", not_=cast(t.NormalizedValue, list[int]))
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(not_=str).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(eq=2).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(ne=1).model_dump()), eq=True)

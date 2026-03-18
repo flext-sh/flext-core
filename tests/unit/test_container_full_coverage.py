@@ -55,6 +55,24 @@ class TestContainerFullCoverage:
         ) -> r[bool]:
             return r[bool].ok(True)
 
+        def has(self, key: str, scope: str = "") -> bool:
+            return False
+
+        def keys(self, scope: str = "") -> list[str]:
+            return []
+
+        def values(self, scope: str = "") -> list[t.Container | BaseModel]:
+            return []
+
+        def items(self, scope: str = "") -> list[tuple[str, t.Container | BaseModel]]:
+            return []
+
+        def remove(self, key: str, scope: str = "") -> r[bool]:
+            return r[bool].ok(True)
+
+        def clear(self, scope: str = "") -> r[bool]:
+            return r[bool].ok(True)
+
     class _BridgeNoProvide:
         pass
 
@@ -164,7 +182,8 @@ class TestContainerFullCoverage:
     def test_provide_property_paths(self, monkeypatch: _MonkeyPatch) -> None:
         c = FlextContainer.create()
         monkeypatch.setattr(c, "_di_bridge", _BridgeGoodProvide())
-        tm.that(c.provide("x"), eq="x")
+        result: str = c.provide("x")
+        tm.that(result, eq="x")
         monkeypatch.setattr(c, "_di_bridge", _BridgeBadProvide())
         with pytest.raises(RuntimeError):
             _ = c.provide

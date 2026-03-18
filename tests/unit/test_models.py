@@ -1050,10 +1050,10 @@ class TestModels:
         """Test HandlerExecutionContext model creation."""
         context = m.ExecutionContext.create_for_handler(
             handler_name="ProcessOrderCommand",
-            handler_mode="command",
+            handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
         assert context.handler_name == "ProcessOrderCommand"
-        assert context.handler_mode == "command"
+        assert context.handler_mode == c.Cqrs.HandlerType.COMMAND
         assert isinstance(context, m.ExecutionContext)
 
     def test_registration_details_model(self) -> None:

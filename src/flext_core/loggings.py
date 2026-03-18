@@ -17,7 +17,7 @@ import time
 import traceback
 import types
 import warnings
-from collections.abc import Iterator, Mapping
+from collections.abc import Generator, Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
@@ -433,7 +433,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
     @classmethod
     @contextmanager
-    def scoped_context(cls, scope: str, **context: t.RuntimeData) -> Iterator[None]:
+    def scoped_context(cls, scope: str, **context: t.RuntimeData) -> Generator[None]:
         """Context manager for automatic scoped context cleanup.
 
         Business Rule: Context manager that binds context variables to a specific scope
@@ -554,7 +554,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         container: p.Container,
         level: c.Settings.LogLevel | str | None = None,
         **context: t.RuntimeData,
-    ) -> Iterator[FlextLogger]:
+    ) -> Generator[FlextLogger]:
         """Context manager for container-scoped logging.
 
         Creates a logger bound to container context for the duration of the context

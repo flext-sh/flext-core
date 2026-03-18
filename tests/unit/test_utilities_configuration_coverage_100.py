@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from flext_tests import t, tm
@@ -283,7 +283,7 @@ class TestFlextUtilitiesConfiguration:
     def test_build_options_from_kwargs_unexpected_error(self) -> None:
         result = u.build_options_from_kwargs(
             model_class=self.FailingOptionsForTest,
-            explicit_options=object(),
+            explicit_options=cast(self.FailingOptionsForTest | None, object()),
             default_factory=self.FailingOptionsForTest,
             value="new",
         )
