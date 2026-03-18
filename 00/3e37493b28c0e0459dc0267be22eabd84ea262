@@ -1,0 +1,36 @@
+tests/benchmark/test_refactor_nesting_performance.py
+  44bb703bc24d0347 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "003e37493b28c0e0459dc0267be22eabd84ea262",
+  "prompts": {
+    "44bb703bc24d0347": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdca4d4affe53hqF7OI0VvMfx",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "7e95dfea5ab20cb4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fe3ad47affebncQ373nCzCJvB",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 275,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
