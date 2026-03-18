@@ -146,7 +146,7 @@ class Ex05FlextMixins(Examples):
             "context_stack.push_context",
             stack.push_context(
                 m.ExecutionContext.create_for_handler(
-                    handler_name="Q", handler_mode="query"
+                    handler_name="Q", handler_mode=c.Cqrs.HandlerType.QUERY
                 )
             ).is_success,
         )
