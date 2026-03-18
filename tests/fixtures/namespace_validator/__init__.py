@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from .rule0_no_class import MAX_VALUE, helper
     from .rule0_wrong_prefix import RandomConstants
     from .rule1_loose_constant import DEFAULT_TIMEOUT, MAX_RETRIES
-    from .rule1_loose_enum import Rule1LooseEnumFixture
+    from .rule1_loose_enum import Rule1LooseEnumFixture, Status
     from .rule1_magic_number import FlextTestUtilities, u
     from .rule1_valid_constants import FlextTestConstants, c
     from .rule2_typevar_wrong_module import FlextTestModels, m
@@ -45,10 +45,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.fixtures.namespace_validator.rule1_magic_number",
         "FlextTestUtilities",
     ),
-    "LooseTypeAlias": (
-        "tests.fixtures.namespace_validator.typings",
-        "LooseTypeAlias",
-    ),
+    "LooseTypeAlias": ("tests.fixtures.namespace_validator.typings", "LooseTypeAlias"),
     "MAX_RETRIES": (
         "tests.fixtures.namespace_validator.rule1_loose_constant",
         "MAX_RETRIES",
@@ -70,6 +67,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.fixtures.namespace_validator.rule1_loose_enum",
         "Rule1LooseEnumFixture",
     ),
+    "Status": ("tests.fixtures.namespace_validator.rule1_loose_enum", "Status"),
     "c": ("tests.fixtures.namespace_validator.rule1_valid_constants", "c"),
     "helper": ("tests.fixtures.namespace_validator.rule0_no_class", "helper"),
     "m": ("tests.fixtures.namespace_validator.rule2_typevar_wrong_module", "m"),
@@ -90,6 +88,7 @@ __all__ = [
     "Rule0LooseItemsFixture",
     "Rule0MultipleClassesFixture",
     "Rule1LooseEnumFixture",
+    "Status",
     "c",
     "helper",
     "m",

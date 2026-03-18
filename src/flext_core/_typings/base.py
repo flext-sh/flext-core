@@ -11,9 +11,9 @@ class FlextTypingBase:
     type Container = Scalar | Path
     type NormalizedValue = (
         Container
-        | list["FlextTypingBase.NormalizedValue"]
-        | dict[str, "FlextTypingBase.NormalizedValue"]
-        | tuple["FlextTypingBase.NormalizedValue", ...]
+        | list[FlextTypingBase.NormalizedValue]
+        | dict[str, FlextTypingBase.NormalizedValue]
+        | tuple[FlextTypingBase.NormalizedValue, ...]
         | None
     )
     type ContainerMapping = dict[str, NormalizedValue]

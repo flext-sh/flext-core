@@ -627,7 +627,7 @@ class TestPatternsTesting:
         assert all(len(param) == 3 for param in params)
 
     def test_assertion_builder(self) -> None:
-        test_data: tuple[str, ...] = ("apple", "banana", "cherry")
+        test_data: list[str] = ["apple", "banana", "cherry"]
 
         def check_all_strings(x: tt.NormalizedValue) -> bool:
             values = self.Helpers.as_object_dict({"items": x}).get("items")
