@@ -66,19 +66,23 @@ class FlextGenericModels:
             ),
         ]
         source: Annotated[
-            str | None, Field(default=None, description="Source system")
+            str | None,
+            Field(default=None, description="Source system"),
         ] = None
         user_id: Annotated[str | None, Field(default=None, description="User ID")] = (
             None
         )
         tenant_id: Annotated[
-            str | None, Field(default=None, description="Tenant ID")
+            str | None,
+            Field(default=None, description="Tenant ID"),
         ] = None
         environment: Annotated[
-            str | None, Field(default=None, description="Environment")
+            str | None,
+            Field(default=None, description="Environment"),
         ] = None
         version: Annotated[
-            str, Field(default="1.0.0", description="Schema version")
+            str,
+            Field(default="1.0.0", description="Schema version"),
         ] = "1.0.0"
         metadata: Annotated[
             t.Dict,
@@ -93,10 +97,12 @@ class FlextGenericModels:
         ] = None
         message_type: Annotated[str, Field(default="", description="Message type")] = ""
         dispatch_type: Annotated[
-            str, Field(default="", description="Dispatch type")
+            str,
+            Field(default="", description="Dispatch type"),
         ] = ""
         timeout_override: Annotated[
-            int | None, Field(default=None, description="Timeout override seconds")
+            int | None,
+            Field(default=None, description="Timeout override seconds"),
         ] = None
 
     class Service(FlextModelFoundation.FrozenStrictModel):
@@ -107,31 +113,39 @@ class FlextGenericModels:
 
         name: Annotated[str, Field(description="Service name")]
         version: Annotated[
-            str | None, Field(default=None, description="Service version")
+            str | None,
+            Field(default=None, description="Service version"),
         ] = None
         status: Annotated[
-            str, Field(default=c.Cqrs.CommonStatus.ACTIVE, description="Service status")
+            str,
+            Field(default=c.Cqrs.CommonStatus.ACTIVE, description="Service status"),
         ] = c.Cqrs.CommonStatus.ACTIVE
         uptime_seconds: Annotated[
-            float | None, Field(default=None, description="Uptime in seconds")
+            float | None,
+            Field(default=None, description="Uptime in seconds"),
         ] = None
         start_time: Annotated[
-            datetime | None, Field(default=None, description="Start time")
+            datetime | None,
+            Field(default=None, description="Start time"),
         ] = None
         last_health_check: Annotated[
-            datetime | None, Field(default=None, description="Last health check")
+            datetime | None,
+            Field(default=None, description="Last health check"),
         ] = None
         health_status: Annotated[
-            str, Field(default="unknown", description="Health status")
+            str,
+            Field(default="unknown", description="Health status"),
         ] = "unknown"
         port: Annotated[int | None, Field(default=None, description="Port")] = None
         host: Annotated[str | None, Field(default=None, description="Host")] = None
         pid: Annotated[int | None, Field(default=None, description="Process ID")] = None
         memory_usage_mb: Annotated[
-            float | None, Field(default=None, description="Memory MB")
+            float | None,
+            Field(default=None, description="Memory MB"),
         ] = None
         cpu_usage_percent: Annotated[
-            float | None, Field(default=None, description="CPU %")
+            float | None,
+            Field(default=None, description="CPU %"),
         ] = None
         metadata: Annotated[
             t.Dict,
@@ -162,13 +176,16 @@ class FlextGenericModels:
             ),
         ]
         source: Annotated[
-            str | None, Field(default=None, description="Config source")
+            str | None,
+            Field(default=None, description="Config source"),
         ] = None
         environment: Annotated[
-            str | None, Field(default=None, description="Target environment")
+            str | None,
+            Field(default=None, description="Target environment"),
         ] = None
         version: Annotated[
-            str, Field(default="1.0.0", description="Schema version")
+            str,
+            Field(default="1.0.0", description="Schema version"),
         ] = "1.0.0"
         checksum: Annotated[str | None, Field(default=None, description="Checksum")] = (
             None
@@ -216,16 +233,20 @@ class FlextGenericModels:
             ),
         ]
         service_name: Annotated[
-            str | None, Field(default=None, description="Service name")
+            str | None,
+            Field(default=None, description="Service name"),
         ] = None
         service_version: Annotated[
-            str | None, Field(default=None, description="Service version")
+            str | None,
+            Field(default=None, description="Service version"),
         ] = None
         duration_ms: Annotated[
-            float | None, Field(default=None, description="Check duration ms")
+            float | None,
+            Field(default=None, description="Check duration ms"),
         ] = None
         environment: Annotated[
-            str | None, Field(default=None, description="Environment")
+            str | None,
+            Field(default=None, description="Environment"),
         ] = None
         metadata: Annotated[
             t.Dict,
@@ -263,19 +284,24 @@ class FlextGenericModels:
         warning_count: Annotated[int, Field(default=0, description="Warnings")] = 0
         retry_count: Annotated[int, Field(default=0, description="Retries")] = 0
         start_time: Annotated[
-            datetime | None, Field(default=None, description="Start time")
+            datetime | None,
+            Field(default=None, description="Start time"),
         ] = None
         last_update: Annotated[
-            datetime | None, Field(default=None, description="Last update")
+            datetime | None,
+            Field(default=None, description="Last update"),
         ] = None
         estimated_total: Annotated[
-            int | None, Field(default=None, description="Estimated total")
+            int | None,
+            Field(default=None, description="Estimated total"),
         ] = None
         current_item: Annotated[
-            str | None, Field(default=None, description="Current item")
+            str | None,
+            Field(default=None, description="Current item"),
         ] = None
         operation_name: Annotated[
-            str | None, Field(default=None, description="Operation name")
+            str | None,
+            Field(default=None, description="Operation name"),
         ] = None
         metadata: Annotated[
             t.Dict,
@@ -311,7 +337,9 @@ class FlextGenericModels:
             self._update_timestamp()
 
         def start_operation(
-            self, name: str | None = None, estimated_total: int | None = None
+            self,
+            name: str | None = None,
+            estimated_total: int | None = None,
         ) -> None:
             """Start the operation tracking."""
             self.operation_name = name
@@ -346,19 +374,24 @@ class FlextGenericModels:
             Field(default_factory=list, description="Skipped items"),
         ]
         start_time: Annotated[
-            datetime | None, Field(default=None, description="Start time")
+            datetime | None,
+            Field(default=None, description="Start time"),
         ] = None
         end_time: Annotated[
-            datetime | None, Field(default=None, description="End time")
+            datetime | None,
+            Field(default=None, description="End time"),
         ] = None
         source_format: Annotated[
-            str | None, Field(default=None, description="Source format")
+            str | None,
+            Field(default=None, description="Source format"),
         ] = None
         target_format: Annotated[
-            str | None, Field(default=None, description="Target format")
+            str | None,
+            Field(default=None, description="Target format"),
         ] = None
         total_input_count: Annotated[
-            int | None, Field(default=None, description="Total input count")
+            int | None,
+            Field(default=None, description="Total input count"),
         ] = None
         metadata: Annotated[
             t.Dict,
@@ -423,7 +456,8 @@ class FlextGenericModels:
                     elif raw_item is not None:
                         result_list.append(str(raw_item))
             if isinstance(
-                item, (str, int, float, bool, datetime, Path, list, dict, tuple)
+                item,
+                (str, int, float, bool, datetime, Path, list, dict, tuple),
             ):
                 result_list.append(item)
             elif item is not None:

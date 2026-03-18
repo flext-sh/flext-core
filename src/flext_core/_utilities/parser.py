@@ -55,7 +55,8 @@ class FlextUtilitiesParser:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.is_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
-                value, case="lower"
+                value,
+                case="lower",
             )
             if normalized_val in {"true", "1", "yes", "on"}:
                 return r[bool].ok(value=True)
@@ -69,7 +70,8 @@ class FlextUtilitiesParser:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
-                lambda: float(str(value)), error_code="FLOAT_COERCE_ERROR"
+                lambda: float(str(value)),
+                error_code="FLOAT_COERCE_ERROR",
             )
         return r[float].fail(
             f"Cannot coerce {value.__class__.__name__} to float",
@@ -81,7 +83,8 @@ class FlextUtilitiesParser:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
-                lambda: int(float(str(value))), error_code="INT_COERCE_ERROR"
+                lambda: int(float(str(value))),
+                error_code="INT_COERCE_ERROR",
             )
         return r[int].fail(
             f"Cannot coerce {value.__class__.__name__} to int",
@@ -211,7 +214,10 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_enum[T: StrEnum](
-        value: str, target: type[T], *, case_insensitive: bool
+        value: str,
+        target: type[T],
+        *,
+        case_insensitive: bool,
     ) -> r[T]:
         """Parse StrEnum with optional case-insensitivity. Returns None if not enum."""
         if StrEnum not in target.__mro__:
@@ -224,7 +230,8 @@ class FlextUtilitiesParser:
         if case_insensitive:
             for member_name, member_value in members.items():
                 name_matches = FlextUtilitiesParser._parse_normalize_compare(
-                    member_name, value
+                    member_name,
+                    value,
                 )
                 value_attr = getattr(member_value, "value", None)
                 value_matches = (
@@ -281,7 +288,7 @@ class FlextUtilitiesParser:
         """Parse Pydantic BaseModel. Returns None if not model."""
         if not FlextUtilitiesGuards.is_mapping(value):
             return r[TModel].fail(
-                f"{field_prefix}Expected dict for model, got {value.__class__.__name__}"
+                f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
             )
         value_dict_data: dict[str, t.NormalizedValue] = {
             str(k): v for k, v in value.items()
@@ -357,7 +364,8 @@ class FlextUtilitiesParser:
         """Helper: Try enum parsing, return None if not enum."""
         if not issubclass(target, StrEnum):
             return r[T].fail(
-                f"{field_prefix}Target is not a StrEnum", error_code="TARGET_NOT_ENUM"
+                f"{field_prefix}Target is not a StrEnum",
+                error_code="TARGET_NOT_ENUM",
             )
         members = TypeAdapter(dict[str, T]).validate_python(target.__members__)
         value_str = str(value)
@@ -379,7 +387,9 @@ class FlextUtilitiesParser:
         target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"
         error_msg = f"Cannot parse '{value_str}' as {target_name}"
         return FlextUtilitiesParser._parse_with_default(
-            default, default_factory, f"{field_prefix}{error_msg}"
+            default,
+            default_factory,
+            f"{field_prefix}{error_msg}",
         )
 
     @staticmethod
@@ -399,7 +409,10 @@ class FlextUtilitiesParser:
                 error_code="TARGET_NOT_MODEL",
             )
         model_result = FlextUtilitiesParser._parse_model(
-            value, target, field_prefix, strict=strict
+            value,
+            target,
+            field_prefix,
+            strict=strict,
         )
         if model_result.is_success:
             validated_model = TypeAdapter(target).validate_python(model_result.value)
@@ -438,7 +451,7 @@ class FlextUtilitiesParser:
                 float_val = float_result.value
                 if not isinstance(float_val, float):
                     return r[t.Primitives].fail(
-                        f"Expected float, got {type(float_val).__name__}"
+                        f"Expected float, got {type(float_val).__name__}",
                     )
                 return r[t.Primitives].ok(float_val)
             if target is str:
@@ -461,19 +474,19 @@ class FlextUtilitiesParser:
                 and (not isinstance(default, bool))
             ):
                 return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
             if target is float and isinstance(default, float):
                 return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
             if target is str and isinstance(default, str):
                 return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
             if target is bool and isinstance(default, bool):
                 return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
                 )
         return r[t.Primitives].fail(
             f"{field_prefix}Unsupported primitive target: {target.__name__}",
@@ -482,7 +495,9 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_with_default[T](
-        default: T | None, default_factory: Callable[[], T] | None, error_msg: str
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+        error_msg: str,
     ) -> r[T]:
         """Return default or error for parse failures."""
         if default is not None:
@@ -527,7 +542,7 @@ class FlextUtilitiesParser:
             return r[bool].fail("Escape character cannot be empty")
         if split_char == escape_char:
             return r[bool].fail(
-                "Split character and escape character cannot be the same"
+                "Split character and escape character cannot be the same",
             )
         return r[bool].ok(value=True)
 
@@ -569,7 +584,9 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def conv_str_list(
-        value: t.NormalizedValue, *, default: list[str] | None = None
+        value: t.NormalizedValue,
+        *,
+        default: list[str] | None = None,
     ) -> list[str]:
         """Convert to str_list (builder: conv().str_list()).
 
@@ -614,7 +631,9 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def conv_str_list_truthy(
-        value: t.NormalizedValue | None, *, default: list[str] | None = None
+        value: t.NormalizedValue | None,
+        *,
+        default: list[str] | None = None,
     ) -> list[str]:
         """Convert to str_list and filter truthy.
 
@@ -636,25 +655,33 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: t.NormalizedValue, target_type: type[bool], default: bool
+        value: t.NormalizedValue,
+        target_type: type[bool],
+        default: bool,
     ) -> bool: ...
 
     @overload
     @staticmethod
     def convert(
-        value: t.NormalizedValue, target_type: type[int], default: int
+        value: t.NormalizedValue,
+        target_type: type[int],
+        default: int,
     ) -> int: ...
 
     @overload
     @staticmethod
     def convert(
-        value: t.NormalizedValue, target_type: type[float], default: float
+        value: t.NormalizedValue,
+        target_type: type[float],
+        default: float,
     ) -> float: ...
 
     @overload
     @staticmethod
     def convert(
-        value: t.NormalizedValue, target_type: type[str], default: str
+        value: t.NormalizedValue,
+        target_type: type[str],
+        default: str,
     ) -> str: ...
 
     @staticmethod
@@ -849,7 +876,10 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_str(
-        value: t.NormalizedValue, *, case: str | None = None, default: str = ""
+        value: t.NormalizedValue,
+        *,
+        case: str | None = None,
+        default: str = "",
     ) -> str:
         """Normalize string (builder: norm().str()).
 
@@ -941,7 +971,7 @@ class FlextUtilitiesParser:
             )
             if primitive_result.is_success:
                 validated_primitive = TypeAdapter(target).validate_python(
-                    primitive_result.value
+                    primitive_result.value,
                 )
                 return r[T].ok(validated_primitive)
             return FlextUtilitiesParser._parse_with_default(
@@ -950,11 +980,17 @@ class FlextUtilitiesParser:
                 primitive_result.error or f"{field_prefix}Primitive coercion failed",
             )
         return FlextUtilitiesParser._parse_try_direct(
-            value, target, default, default_factory, field_prefix
+            value,
+            target,
+            default,
+            default_factory,
+            field_prefix,
         )
 
     def apply_regex_pipeline(
-        self, text: str | None, patterns: list[tuple[str, str] | tuple[str, str, int]]
+        self,
+        text: str | None,
+        patterns: list[tuple[str, str] | tuple[str, str, int]],
     ) -> r[str]:
         r"""Apply sequence of regex substitutions to text.
 
@@ -1001,7 +1037,7 @@ class FlextUtilitiesParser:
             process_result = self._process_all_patterns(text, patterns)
             if process_result.is_failure:
                 return r[str].fail(
-                    process_result.error or "Unknown error in pattern processing"
+                    process_result.error or "Unknown error in pattern processing",
                 )
             proc_val = process_result.value
             result_text, applied_patterns = proc_val
@@ -1101,7 +1137,10 @@ class FlextUtilitiesParser:
         return key
 
     def normalize_whitespace(
-        self, text: str, pattern: str = "\\s+", replacement: str = " "
+        self,
+        text: str,
+        pattern: str = "\\s+",
+        replacement: str = " ",
     ) -> r[str]:
         r"""Normalize whitespace in text using regex pattern.
 
@@ -1219,16 +1258,17 @@ class FlextUtilitiesParser:
         )
         if not text:
             self._parser_log.debug(
-                "Empty text provided, returning empty list", operation="parse_delimited"
+                "Empty text provided, returning empty list",
+                operation="parse_delimited",
             )
             return r[list[str]].ok([])
         if not delimiter or len(delimiter) != 1:
             return r[list[str]].fail(
-                f"Delimiter must be exactly one character, got '{delimiter}'"
+                f"Delimiter must be exactly one character, got '{delimiter}'",
             )
         if delimiter.isspace() or not delimiter.isprintable():
             return r[list[str]].fail(
-                f"Delimiter cannot be a whitespace or control character: '{delimiter}'"
+                f"Delimiter cannot be a whitespace or control character: '{delimiter}'",
             )
         try:
             self._parser_log.debug(
@@ -1243,7 +1283,10 @@ class FlextUtilitiesParser:
                 raw_components_count=len(components),
             )
             result = self._process_components(
-                components, strip=strip, remove_empty=remove_empty, validator=validator
+                components,
+                strip=strip,
+                remove_empty=remove_empty,
+                validator=validator,
             )
             if result.is_failure:
                 return result
@@ -1269,7 +1312,10 @@ class FlextUtilitiesParser:
             return r[list[str]].fail(f"Failed to parse delimited string: {e}")
 
     def split_on_char_with_escape(
-        self, text: str, split_char: str, escape_char: str = "\\"
+        self,
+        text: str,
+        split_char: str,
+        escape_char: str = "\\",
     ) -> r[list[str]]:
         r"""Split string on character, respecting escape sequences.
 
@@ -1319,7 +1365,10 @@ class FlextUtilitiesParser:
         before_length = len(params.text)
         try:
             result_text = re.sub(
-                params.pattern, params.replacement, params.text, flags=params.flags
+                params.pattern,
+                params.replacement,
+                params.text,
+                flags=params.flags,
             )
         except (re.PatternError, ValueError) as e:
             return r[str].fail(f"Invalid regex pattern '{params.pattern}': {e}")
@@ -1334,7 +1383,10 @@ class FlextUtilitiesParser:
         return r[str].ok(result_text)
 
     def _execute_escape_splitting(
-        self, text: str, split_char: str, escape_char: str
+        self,
+        text: str,
+        split_char: str,
+        escape_char: str,
     ) -> r[list[str]]:
         """Execute escape-aware splitting with logging and error handling.
 
@@ -1364,7 +1416,7 @@ class FlextUtilitiesParser:
             split_result = self._process_escape_splitting(text, split_char, escape_char)
             if split_result.is_failure:
                 return r[list[str]].fail(
-                    split_result.error or "Unknown error in escape splitting"
+                    split_result.error or "Unknown error in escape splitting",
                 )
             split_val = split_result.value
             components, escape_count = split_val
@@ -1391,28 +1443,31 @@ class FlextUtilitiesParser:
 
     @overload
     def _extract_pattern_components(
-        self, pattern_tuple: tuple[str, str]
+        self,
+        pattern_tuple: tuple[str, str],
     ) -> r[tuple[str, str, int]]: ...
 
     @overload
     def _extract_pattern_components(
-        self, pattern_tuple: tuple[str, str, int]
+        self,
+        pattern_tuple: tuple[str, str, int],
     ) -> r[tuple[str, str, int]]: ...
 
     def _extract_pattern_components(
-        self, pattern_tuple: tuple[str, str] | tuple[str, str, int]
+        self,
+        pattern_tuple: tuple[str, str] | tuple[str, str, int],
     ) -> r[tuple[str, str, int]]:
         """Extract pattern, replacement, and flags from tuple."""
         tuple_len = len(pattern_tuple)
         try:
             if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
                 pattern_val, replacement_val = TypeAdapter(
-                    tuple[str, str]
+                    tuple[str, str],
                 ).validate_python(pattern_tuple)
                 return r[tuple[str, str, int]].ok((pattern_val, replacement_val, 0))
             if tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
                 pattern_val, replacement_val, flags_val = TypeAdapter(
-                    tuple[str, str, int]
+                    tuple[str, str, int],
                 ).validate_python(pattern_tuple)
                 return r[tuple[str, str, int]].ok((
                     pattern_val,
@@ -1422,13 +1477,13 @@ class FlextUtilitiesParser:
         except ValidationError:
             if tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
                 return r[tuple[str, str, int]].fail(
-                    "validation error: pattern/replacement must be strings and flags must be integer"
+                    "validation error: pattern/replacement must be strings and flags must be integer",
                 )
             return r[tuple[str, str, int]].fail(
-                "validation error: pattern and replacement must be strings"
+                "validation error: pattern and replacement must be strings",
             )
         return r[tuple[str, str, int]].fail(
-            f"Invalid pattern tuple length {tuple_len}, expected 2 or 3"
+            f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
         )
 
     def _get_safe_text_length(self, text: str | None) -> int:
@@ -1452,7 +1507,9 @@ class FlextUtilitiesParser:
         return -1
 
     def _handle_pipeline_edge_cases(
-        self, text: str | None, patterns: list[tuple[str, str] | tuple[str, str, int]]
+        self,
+        text: str | None,
+        patterns: list[tuple[str, str] | tuple[str, str, int]],
     ) -> r[str]:
         """Handle edge cases for regex pipeline application.
 
@@ -1482,7 +1539,9 @@ class FlextUtilitiesParser:
         return r[str].fail("Continue pipeline", error_code="PIPELINE_CONTINUE")
 
     def _process_all_patterns(
-        self, text: str, patterns: list[tuple[str, str] | tuple[str, str, int]]
+        self,
+        text: str,
+        patterns: list[tuple[str, str] | tuple[str, str, int]],
     ) -> r[tuple[str, int]]:
         """Process all regex patterns and return final text and count."""
         result_text = text
@@ -1497,7 +1556,7 @@ class FlextUtilitiesParser:
             if pattern_result.is_failure:
                 return r[tuple[str, int]].fail(
                     pattern_result.error
-                    or "Unknown error extracting pattern components"
+                    or "Unknown error extracting pattern components",
                 )
             pattern_val = pattern_result.value
             pattern, replacement, flags = pattern_val
@@ -1512,13 +1571,13 @@ class FlextUtilitiesParser:
             )
             if params_result.is_failure:
                 return r[tuple[str, int]].fail(
-                    params_result.error or "Unknown error creating params"
+                    params_result.error or "Unknown error creating params",
                 )
             params_val = params_result.value
             apply_result = self._apply_single_pattern(params_val)
             if apply_result.is_failure:
                 return r[tuple[str, int]].fail(
-                    apply_result.error or "Unknown error applying pattern"
+                    apply_result.error or "Unknown error applying pattern",
                 )
             result_text_val = apply_result.value
             result_text = result_text_val
@@ -1536,12 +1595,14 @@ class FlextUtilitiesParser:
         """Process components with strip, remove_empty, and validator."""
         if strip:
             self._parser_log.debug(
-                "Stripping whitespace from components", operation="parse_delimited"
+                "Stripping whitespace from components",
+                operation="parse_delimited",
             )
             components = [c.strip() for c in components]
         if remove_empty:
             self._parser_log.debug(
-                "Removing empty components", operation="parse_delimited"
+                "Removing empty components",
+                operation="parse_delimited",
             )
             components = [c for c in components if c.strip()]
         if validator:
@@ -1564,7 +1625,10 @@ class FlextUtilitiesParser:
         return r[list[str]].ok(components)
 
     def _process_escape_splitting(
-        self, text: str, split_char: str, escape_char: str
+        self,
+        text: str,
+        split_char: str,
+        escape_char: str,
     ) -> r[tuple[list[str], int]]:
         """Process text with escape character handling and return components."""
         components: list[str] = []

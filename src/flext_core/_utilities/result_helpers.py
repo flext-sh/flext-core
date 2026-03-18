@@ -88,7 +88,7 @@ class FlextUtilitiesResultHelpers:
                 if default is not None:
                     return r[list[T]].ok(default)
                 return r[list[T]].fail(
-                    items.error or "Failed to extract values from result"
+                    items.error or "Failed to extract values from result",
                 )
             value_mapping = items.value
             return r[list[T]].ok(list(value_mapping.values()))

@@ -138,12 +138,12 @@ class FlextUtilitiesGuardsTypeProtocol:
             case "sequence_not_str":
                 return bool(
                     isinstance(value, (list, tuple, range))
-                    and (not isinstance(value, str))
+                    and (not isinstance(value, str)),
                 )
             case "sequence_not_str_bytes":
                 return bool(
                     isinstance(value, (list, tuple, range))
-                    and (not isinstance(value, (str, bytes)))
+                    and (not isinstance(value, (str, bytes))),
                 )
             case "sized":
                 return bool(hasattr(value, "__len__"))
@@ -192,7 +192,8 @@ class FlextUtilitiesGuardsTypeProtocol:
             type_name = type_spec.lower()
             if type_name in _get_protocol_specs():
                 return FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value, type_name
+                    value,
+                    type_name,
                 )
             if type_name in c.Guards.STRING_METHOD_MAP:
                 if type_name in {
@@ -202,24 +203,28 @@ class FlextUtilitiesGuardsTypeProtocol:
                 }:
                     return (
                         FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
-                            type_name, value
+                            type_name,
+                            value,
                         )
                         if FlextUtilitiesGuardsTypeCore.is_container(value)
                         else False
                     )
                 return FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
-                    type_name, value
+                    type_name,
+                    value,
                 )
             return False
         if isinstance(type_spec, tuple):
             return isinstance(value, type_spec)
         if type_spec in _get_protocol_type_map():
             return FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                value, _get_protocol_type_map()[type_spec]
+                value,
+                _get_protocol_type_map()[type_spec],
             )
         try:
             return isinstance(
-                value, getattr(type_spec, "__origin__", None) or type_spec
+                value,
+                getattr(type_spec, "__origin__", None) or type_spec,
             )
         except TypeError:
             return False

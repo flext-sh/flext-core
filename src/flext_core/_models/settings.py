@@ -131,7 +131,8 @@ class FlextModelsConfig:
         @field_validator("context", mode="before")
         @classmethod
         def validate_context(
-            cls, v: BaseModel | Mapping[str, t.Scalar] | t.Scalar | None
+            cls,
+            v: BaseModel | Mapping[str, t.Scalar] | t.Scalar | None,
         ) -> Mapping[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 
@@ -142,7 +143,9 @@ class FlextModelsConfig:
             if v is None:
                 return {}
             return FlextRuntime.ensure_trace_context(
-                v, include_correlation_id=True, include_timestamp=True
+                v,
+                include_correlation_id=True,
+                include_timestamp=True,
             )
 
     class RetryConfiguration(
@@ -252,7 +255,8 @@ class FlextModelsConfig:
         @field_validator("custom_validators", mode="after")
         @classmethod
         def validate_additional_validators(
-            cls, v: list[p.ValidatorSpec]
+            cls,
+            v: list[p.ValidatorSpec],
         ) -> list[p.ValidatorSpec]:
             """Validate custom validators are callable."""
             for validator in v:
@@ -310,13 +314,14 @@ class FlextModelsConfig:
         ) -> TypeAdapter[list[FlextModelsConfig.BatchProcessingConfig]]:
             if cls._batch_list_adapter is None:
                 cls._batch_list_adapter = TypeAdapter(
-                    list[FlextModelsConfig.BatchProcessingConfig]
+                    list[FlextModelsConfig.BatchProcessingConfig],
                 )
             return cls._batch_list_adapter
 
         @classmethod
         def validate_batch(
-            cls, models: list[t.ValueOrModel]
+            cls,
+            models: list[t.ValueOrModel],
         ) -> list[FlextModelsConfig.BatchProcessingConfig]:
             batch_result = r[
                 list[FlextModelsConfig.BatchProcessingConfig]
@@ -440,7 +445,7 @@ class FlextModelsConfig:
             json_schema_extra={
                 "title": "RateLimiterState",
                 "description": "State tracking for rate limiter functionality",
-            }
+            },
         )
         processor_name: Annotated[
             str,
@@ -705,7 +710,8 @@ class FlextModelsConfig:
             ),
         ] = None
         operation_id: Annotated[
-            str, Field(description="Operation ID for timeout tracking")
+            str,
+            Field(description="Operation ID for timeout tracking"),
         ]
 
     class RuntimeScopeOptions(FlextModelsCollections.Config):
@@ -861,7 +867,8 @@ class FlextModelsConfig:
         config_source: Annotated[
             str | None,
             Field(
-                default=None, description="Source of configuration (file, env, etc.)"
+                default=None,
+                description="Source of configuration (file, env, etc.)",
             ),
         ] = None
 
@@ -1030,7 +1037,8 @@ class FlextModelsConfig:
         service_name: Annotated[
             str | None,
             Field(
-                default=None, description="Service name where circuit breaker opened"
+                default=None,
+                description="Service name where circuit breaker opened",
             ),
         ] = None
         failure_count: Annotated[
@@ -1203,7 +1211,9 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(
-            validate_assignment=True, use_enum_values=True, extra="forbid"
+            validate_assignment=True,
+            use_enum_values=True,
+            extra="forbid",
         )
         dispatcher_timeout_seconds: Annotated[
             float,

@@ -188,7 +188,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_attr(
-        obj: p.HasModelDump | BaseModel | p.Base, parameter: str
+        obj: p.HasModelDump | BaseModel | p.Base,
+        parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Try to get attribute value from object via direct attribute access.
 
@@ -222,7 +223,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, t.ValueOrModel], parameter: str
+        obj: Mapping[str, t.ValueOrModel],
+        parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Try to get parameter from dict-like object.
 
@@ -267,7 +269,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_model_dump(
-        obj: p.HasModelDump, parameter: str
+        obj: p.HasModelDump,
+        parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
         """Try to get parameter from HasModelDump protocol object.
 
@@ -424,7 +427,7 @@ class FlextUtilitiesConfiguration:
         except (AttributeError, RuntimeError, KeyError) as e:
             class_name = getattr(model_class, "__name__", "UnknownModel")
             FlextUtilitiesConfiguration._get_logger().exception(
-                "Unexpected error building options model"
+                "Unexpected error building options model",
             )
             return r[T_Model].fail(f"Unexpected error building {class_name}: {e}")
 
@@ -449,11 +452,11 @@ class FlextUtilitiesConfiguration:
                 register_result = container.register(name, value)
                 if not isinstance(register_result, p.ResultLike):
                     return r[int].fail(
-                        f"Bulk registration failed at {name}: register returned non-result"
+                        f"Bulk registration failed at {name}: register returned non-result",
                     )
                 if register_result.is_failure:
                     return r[int].fail(
-                        f"Bulk registration failed at {name}: {register_result.error}"
+                        f"Bulk registration failed at {name}: {register_result.error}",
                     )
                 count += 1
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -575,12 +578,14 @@ class FlextUtilitiesConfiguration:
     ) -> t.ValueOrModel:
         if isinstance(obj, p.HasModelDump):
             found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
-                obj, parameter
+                obj,
+                parameter,
             )
             if found:
                 return value
         found_d, duck_v = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            obj, parameter
+            obj,
+            parameter,
         )
         if found_d:
             return duck_v
@@ -610,7 +615,9 @@ class FlextUtilitiesConfiguration:
         contains_method = getattr(obj, "__contains__", None)
         if callable(contains_method) and contains_method(parameter):
             get_method: Callable[[str], t.ValueOrModel | None] = getattr(
-                obj, "get", _default_get
+                obj,
+                "get",
+                _default_get,
             )
             raw_val: t.ValueOrModel | None = get_method(parameter)
             if raw_val is None:
@@ -679,13 +686,15 @@ class FlextUtilitiesConfiguration:
                 instance = get_global_attr()
                 found, value = (
                     FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-                        instance, parameter
+                        instance,
+                        parameter,
                     )
                 )
                 if found:
                     return value
                 found, value = FlextUtilitiesConfiguration._try_get_attr(
-                    instance, parameter
+                    instance,
+                    parameter,
                 )
                 if found:
                     return value
@@ -721,7 +730,7 @@ class FlextUtilitiesConfiguration:
                 return r[bool].fail("Factory registration failed")
             if register_result.is_failure:
                 return r[bool].fail(
-                    register_result.error or "Factory registration failed"
+                    register_result.error or "Factory registration failed",
                 )
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -729,7 +738,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def register_singleton(
-        container: p.Container, name: str, instance: t.Scalar | t.ConfigMap | t.Dict
+        container: p.Container,
+        name: str,
+        instance: t.Scalar | t.ConfigMap | t.Dict,
     ) -> r[bool]:
         """Register singleton with standard error handling.
 
@@ -811,7 +822,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_singleton(
-        singleton_class: type, parameter: str, value: t.Scalar | t.ConfigMap
+        singleton_class: type,
+        parameter: str,
+        value: t.Scalar | t.ConfigMap,
     ) -> FlextRuntime.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
@@ -847,12 +860,12 @@ class FlextUtilitiesConfiguration:
         """
         if not hasattr(singleton_class, "get_global"):
             return r[bool].fail(
-                f"Class {singleton_class.__name__} does not have get_global method"
+                f"Class {singleton_class.__name__} does not have get_global method",
             )
         get_global_attr = getattr(singleton_class, "get_global", None)
         if get_global_attr is None or not callable(get_global_attr):
             return r[bool].fail(
-                f"get_global is not callable on {singleton_class.__name__}"
+                f"get_global is not callable on {singleton_class.__name__}",
             )
         instance = get_global_attr()
         model_dump_attr = getattr(instance, "model_dump", None)
@@ -862,7 +875,7 @@ class FlextUtilitiesConfiguration:
         if success:
             return r[bool].ok(value=True)
         return r[bool].fail(
-            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}"
+            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}",
         )
 
     @staticmethod

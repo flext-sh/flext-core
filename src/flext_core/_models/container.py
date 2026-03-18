@@ -36,7 +36,7 @@ class FlextModelsContainer:
     def _normalize_metadata(value: t.MetadataInput) -> FlextModelFoundation.Metadata:
         if value is None:
             return FlextModelFoundation.Metadata.model_validate({
-                c.Mixins.FIELD_ATTRIBUTES: {}
+                c.Mixins.FIELD_ATTRIBUTES: {},
             })
         if FlextModelsContainer._is_metadata_instance(value):
             return value
@@ -44,7 +44,7 @@ class FlextModelsContainer:
             msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
             raise TypeError(msg)
         return FlextModelFoundation.Metadata.model_validate({
-            c.Mixins.FIELD_ATTRIBUTES: dict(value.items())
+            c.Mixins.FIELD_ATTRIBUTES: dict(value.items()),
         })
 
     class _MetadataValidatorMixin:
@@ -62,7 +62,9 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(
-            frozen=False, validate_assignment=True, arbitrary_types_allowed=True
+            frozen=False,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
         )
         name: Annotated[
             str,
@@ -122,7 +124,7 @@ class FlextModelsContainer:
                 normalized_mapping: dict[str, t.ValueOrModel] = {}
                 for key, item in v.items():
                     normalized_mapping[str(key)] = FlextRuntime.normalize_to_container(
-                        item
+                        item,
                     )
                 return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
@@ -147,7 +149,9 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(
-            frozen=False, validate_assignment=True, arbitrary_types_allowed=True
+            frozen=False,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
         )
         name: Annotated[
             str,
@@ -208,7 +212,9 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(
-            frozen=False, validate_assignment=True, arbitrary_types_allowed=True
+            frozen=False,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
         )
         name: Annotated[
             str,

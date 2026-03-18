@@ -34,19 +34,7 @@ class FlextConstantsCqrs:
             OPERATION = "operation"
             SAGA = "saga"
 
-        @unique
-        class CommonStatus(StrEnum):
-            """CQRS common status enumeration."""
-
-            ACTIVE = "active"
-            INACTIVE = "inactive"
-            PENDING = "pending"
-            RUNNING = "running"
-            COMPLETED = "completed"
-            FAILED = "failed"
-            CANCELLED = "cancelled"
-            COMPENSATING = "compensating"
-            ARCHIVED = "archived"
+        CommonStatus = FlextConstantsBase.CommonStatus
 
         @unique
         class MetricType(StrEnum):

@@ -64,10 +64,14 @@ class FlextLogger(FlextRuntime, p.Logger):
             _level = getattr(config, "level", _level)
             _service_name = getattr(config, c.Context.KEY_SERVICE_NAME, _service_name)
             _service_version = getattr(
-                config, c.Context.KEY_SERVICE_VERSION, _service_version
+                config,
+                c.Context.KEY_SERVICE_VERSION,
+                _service_version,
             )
             _correlation_id = getattr(
-                config, c.Context.KEY_CORRELATION_ID, _correlation_id
+                config,
+                c.Context.KEY_CORRELATION_ID,
+                _correlation_id,
             )
             _force_new = getattr(config, "force_new", _force_new)
         context = {}
@@ -183,10 +187,10 @@ class FlextLogger(FlextRuntime, p.Logger):
                 key: cls._to_container_value(value) for key, value in context.items()
             }
             current_context_obj: dict[str, t.NormalizedValue] = dict(
-                current_context.items()
+                current_context.items(),
             )
             incoming_context_obj: dict[str, t.NormalizedValue] = dict(
-                incoming_context.items()
+                incoming_context.items(),
             )
             merge_result = u.merge(
                 current_context_obj,
@@ -600,7 +604,8 @@ class FlextLogger(FlextRuntime, p.Logger):
             return Path(filename).name
         except (OSError, RuntimeError, TypeError, ValueError) as exc:
             FlextLogger._report_internal_logging_failure(
-                "convert_to_relative_path", exc
+                "convert_to_relative_path",
+                exc,
             )
             return Path(filename).name
 
@@ -744,7 +749,8 @@ class FlextLogger(FlextRuntime, p.Logger):
             return config.effective_log_level.upper() == c.Settings.LogLevel.DEBUG.value
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             FlextLogger._report_internal_logging_failure(
-                "should_include_stack_trace", exc
+                "should_include_stack_trace",
+                exc,
             )
             return True
 
@@ -775,7 +781,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                 root={
                     "exception_type": exception.__class__.__name__,
                     "exception_message": str(exception),
-                }
+                },
             )
             merged_root: dict[str, t.ValueOrModel] = dict(context_dict.root)
             merged_root.update(dict(exception_data.root))
@@ -783,8 +789,10 @@ class FlextLogger(FlextRuntime, p.Logger):
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
                     traceback.format_exception(
-                        exception.__class__, exception, exception.__traceback__
-                    )
+                        exception.__class__,
+                        exception,
+                        exception.__traceback__,
+                    ),
                 )
         elif exc_info and include_stack_trace:
             context_dict["stack_trace"] = traceback.format_exc()
@@ -1101,7 +1109,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                     "duration_seconds": elapsed,
                     c.Cqrs.HandlerType.OPERATION: self._operation_name,
                     c.Mixins.FIELD_STATUS: status,
-                }
+                },
             )
             if not is_success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""

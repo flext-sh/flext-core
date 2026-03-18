@@ -34,7 +34,10 @@ class FlextUtilitiesFileOps:
 
     @staticmethod
     def write_file(
-        path: Path, content: str | bytes, *, encoding: str = "utf-8"
+        path: Path,
+        content: str | bytes,
+        *,
+        encoding: str = "utf-8",
     ) -> None:
         """Write content to *path*, discarding the byte-count return value.
 

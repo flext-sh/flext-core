@@ -19,10 +19,19 @@ class FlextTypingBase:
     )
     NUMERIC_TYPES: tuple[type[int], type[float]] = (int, float)
     SCALAR_TYPES: tuple[
-        type[str], type[int], type[float], type[bool], type[datetime]
+        type[str],
+        type[int],
+        type[float],
+        type[bool],
+        type[datetime],
     ] = (str, int, float, bool, datetime)
     CONTAINER_TYPES: tuple[
-        type[str], type[int], type[float], type[bool], type[datetime], type[Path]
+        type[str],
+        type[int],
+        type[float],
+        type[bool],
+        type[datetime],
+        type[Path],
     ] = (str, int, float, bool, datetime, Path)
 
     type NormalizedValue = (

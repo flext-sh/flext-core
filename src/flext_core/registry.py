@@ -111,7 +111,8 @@ class FlextRegistry(s[bool]):
                 raise TypeError(msg)
 
     def __init_subclass__(
-        cls, **kwargs: t.Scalar | t.ConfigMap | Sequence[t.Scalar]
+        cls,
+        **kwargs: t.Scalar | t.ConfigMap | Sequence[t.Scalar],
     ) -> None:
         """Auto-create per-subclass class-level storage.
 
@@ -207,7 +208,11 @@ class FlextRegistry(s[bool]):
         return r[bool].ok(value=True)
 
     def get_plugin(
-        self, category: str, name: str, *, scope: str = "instance"
+        self,
+        category: str,
+        name: str,
+        *,
+        scope: str = "instance",
     ) -> r[t.RuntimeAtomic | None]:
         """Get a registered plugin by category and name.
 
@@ -224,12 +229,12 @@ class FlextRegistry(s[bool]):
                     if k.startswith(f"{category}::")
                 ]
                 return r[t.RuntimeAtomic | None].fail(
-                    f"{category} '{name}' not found. Available: {available}"
+                    f"{category} '{name}' not found. Available: {available}",
                 )
             raw_result = self.container.get(key)
             if raw_result.is_failure:
                 return r[t.RuntimeAtomic | None].fail(
-                    f"Failed to retrieve {category} '{name}': {raw_result.error}"
+                    f"Failed to retrieve {category} '{name}': {raw_result.error}",
                 )
             return r[t.RuntimeAtomic | None].ok(self._narrow_value(raw_result.value))
         cls = type(self)
@@ -240,10 +245,10 @@ class FlextRegistry(s[bool]):
                 if k.startswith(f"{category}::")
             ]
             return r[t.RuntimeAtomic | None].fail(
-                f"{category} '{name}' not found. Available: {available}"
+                f"{category} '{name}' not found. Available: {available}",
             )
         return r[t.RuntimeAtomic | None].ok(
-            self._narrow_value(cls._class_plugin_storage[key])
+            self._narrow_value(cls._class_plugin_storage[key]),
         )
 
     def list_plugins(self, category: str, *, scope: str = "instance") -> r[list[str]]:
@@ -340,7 +345,7 @@ class FlextRegistry(s[bool]):
             else:
                 summary.errors.append(
                     reg_result.error
-                    or f"Failed to register binding for {message_type_name}"
+                    or f"Failed to register binding for {message_type_name}",
                 )
         return self._finalize_summary(summary)
 
@@ -379,7 +384,7 @@ class FlextRegistry(s[bool]):
 
         if registration_result.is_failure:
             return r[m.RegistrationDetails].fail(
-                registration_result.error or "Dispatcher registration failed"
+                registration_result.error or "Dispatcher registration failed",
             )
 
         self._registered_keys.add(handler_id)
@@ -388,11 +393,12 @@ class FlextRegistry(s[bool]):
                 registration_id=handler_id,
                 handler_mode=handler_mode,
                 status=status,
-            )
+            ),
         )
 
     def register_handlers(
-        self, handlers: Sequence[t.HandlerLike]
+        self,
+        handlers: Sequence[t.HandlerLike],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -411,7 +417,7 @@ class FlextRegistry(s[bool]):
                 self._add_successful_registration(key, result.value, summary)
             else:
                 summary.errors.append(
-                    result.error or f"Failed to register handler '{key}'"
+                    result.error or f"Failed to register handler '{key}'",
                 )
         return self._finalize_summary(summary)
 
@@ -501,7 +507,9 @@ class FlextRegistry(s[bool]):
         summary.registered.append(registration)
 
     def _create_registration_details(
-        self, reg_result: m.RegistrationResult, key: str
+        self,
+        reg_result: m.RegistrationResult,
+        key: str,
     ) -> m.RegistrationDetails:
         """Create RegistrationDetails from registration result (DRY helper).
 
@@ -529,7 +537,8 @@ class FlextRegistry(s[bool]):
         )
 
     def _finalize_summary(
-        self, summary: FlextRegistry.Summary
+        self,
+        summary: FlextRegistry.Summary,
     ) -> r[FlextRegistry.Summary]:
         """Finalize summary based on error state.
 

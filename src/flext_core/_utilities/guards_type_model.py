@@ -48,7 +48,7 @@ class FlextUtilitiesGuardsTypeModel:
                     return False
             return True
         return FlextUtilitiesGuardsTypeCore.is_mapping(
-            value
+            value,
         ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
 
     @staticmethod

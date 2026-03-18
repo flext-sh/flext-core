@@ -42,8 +42,8 @@ class FlextUtilitiesModel:
     ) -> dict[str, t.ValueOrModel]:
         normalized_result = r[dict[str, t.NormalizedValue]].create_from_callable(
             lambda: FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
-                value
-            )
+                value,
+            ),
         )
         if normalized_result.is_failure:
             return {}
@@ -162,13 +162,16 @@ class FlextUtilitiesModel:
         instance = instance_result.value
         if not isinstance(instance, model_cls):
             return r[M].fail(
-                f"Expected {model_cls.__name__}, got {type(instance).__name__}"
+                f"Expected {model_cls.__name__}, got {type(instance).__name__}",
             )
         return r[M].ok(instance)
 
     @staticmethod
     def load[T_Model: BaseModel](
-        model_cls: type[T_Model], data: t.ConfigMap, *, strict: bool = False
+        model_cls: type[T_Model],
+        data: t.ConfigMap,
+        *,
+        strict: bool = False,
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with r.
 
@@ -189,14 +192,14 @@ class FlextUtilitiesModel:
 
         """
         instance_result = r[T_Model].create_from_callable(
-            lambda: model_cls.model_validate(data, strict=strict)
+            lambda: model_cls.model_validate(data, strict=strict),
         )
         if instance_result.is_failure:
             return r[T_Model].fail(f"Model validation failed: {instance_result.error}")
         instance = instance_result.value
         if not isinstance(instance, model_cls):
             return r[T_Model].fail(
-                f"Expected {model_cls.__name__}, got {type(instance).__name__}"
+                f"Expected {model_cls.__name__}, got {type(instance).__name__}",
             )
         return r[T_Model].ok(instance)
 
@@ -222,14 +225,14 @@ class FlextUtilitiesModel:
         """
         merged = {**defaults, **overrides}
         instance_result = r[M].create_from_callable(
-            lambda: model_cls.model_validate(merged)
+            lambda: model_cls.model_validate(merged),
         )
         if instance_result.is_failure:
             return r[M].fail(f"Model validation failed: {instance_result.error}")
         instance = instance_result.value
         if not isinstance(instance, model_cls):
             return r[M].fail(
-                f"Expected {model_cls.__name__}, got {type(instance).__name__}"
+                f"Expected {model_cls.__name__}, got {type(instance).__name__}",
             )
         return r[M].ok(instance)
 
@@ -277,7 +280,7 @@ class FlextUtilitiesModel:
                     safe_attrs[str_k] = v
                 elif FlextRuntime.is_dict_like(v):
                     nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(
-                        v
+                        v,
                     )
                     plain_mapping: dict[str, t.NormalizedValue] = {}
                     for nested_key, nested_value in nested_mapping.items():
@@ -337,14 +340,14 @@ class FlextUtilitiesModel:
 
         """
         updated_result = r[M].create_from_callable(
-            lambda: instance.model_copy(update=updates)
+            lambda: instance.model_copy(update=updates),
         )
         if updated_result.is_failure:
             return r[M].fail(f"Model update failed: {updated_result.error}")
         updated = updated_result.value
         if not isinstance(updated, instance.__class__):
             return r[M].fail(
-                f"Expected {instance.__class__.__name__}, got {type(updated).__name__}"
+                f"Expected {instance.__class__.__name__}, got {type(updated).__name__}",
             )
         return r[M].ok(updated)
 
@@ -370,7 +373,7 @@ class FlextUtilitiesModel:
                     normalized_value = str(value)
                 normalized_model_dump[str(key)] = normalized_value
             config_map_result = r[t.ConfigMap].create_from_callable(
-                lambda: t.ConfigMap(normalized_model_dump)
+                lambda: t.ConfigMap(normalized_model_dump),
             )
             if config_map_result.is_failure:
                 return t.ConfigMap(root={"value": str(model_dump_result)})
@@ -379,9 +382,9 @@ class FlextUtilitiesModel:
             obj_mapping_result = r[dict[str, t.NormalizedValue]].create_from_callable(
                 lambda: (
                     FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
-                        obj
+                        obj,
                     )
-                )
+                ),
             )
             if obj_mapping_result.is_failure:
                 return t.ConfigMap(root={})
@@ -394,7 +397,7 @@ class FlextUtilitiesModel:
                 )
                 normalized_mapping[str(key)] = normalized_mapping_value
             config_map_result = r[t.ConfigMap].create_from_callable(
-                lambda: t.ConfigMap(normalized_mapping)
+                lambda: t.ConfigMap(normalized_mapping),
             )
             if config_map_result.is_failure:
                 return t.ConfigMap(root={})
@@ -405,7 +408,7 @@ class FlextUtilitiesModel:
         if isinstance(normalized, Mapping):
             normalized_obj: t.ValueOrModel = normalized
             normalized_map = FlextUtilitiesModel._normalize_str_object_mapping(
-                normalized_obj
+                normalized_obj,
             )
             return t.ConfigMap(root=normalized_map)
         return t.ConfigMap(root={})

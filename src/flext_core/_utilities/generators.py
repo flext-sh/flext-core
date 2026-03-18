@@ -192,7 +192,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def create_dynamic_type_subclass(
-        name: str, base_class: type, attributes: t.ConfigMap
+        name: str,
+        base_class: type,
+        attributes: t.ConfigMap,
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
@@ -387,10 +389,13 @@ class FlextUtilitiesGenerators:
                 return f"{actual_prefix}{separator}{uuid_part}"
             if all_parts:
                 return FlextUtilitiesGenerators._generate_prefixed_id(
-                    actual_prefix, *all_parts, length=id_length
+                    actual_prefix,
+                    *all_parts,
+                    length=id_length,
                 )
             return FlextUtilitiesGenerators._generate_prefixed_id(
-                actual_prefix, length=id_length
+                actual_prefix,
+                length=id_length,
             )
         return FlextUtilitiesGenerators._generate_id()
 

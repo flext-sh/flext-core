@@ -57,7 +57,7 @@ class FlextModelsContainers(FlextTypingContainers):
                 title="Service Registry Map",
                 description="Service registry entries keyed by service identifiers.",
                 examples=[
-                    {"user_service": "UserService", "session_factory": "build_session"}
+                    {"user_service": "UserService", "session_factory": "build_session"},
                 ],
             ),
         ]
@@ -183,7 +183,8 @@ class FlextModelsContainers(FlextTypingContainers):
         """Result payload model for batch operation outputs."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True, extra="forbid"
+            validate_assignment=True,
+            extra="forbid",
         )
         results: Annotated[
             list[t.Scalar | None],

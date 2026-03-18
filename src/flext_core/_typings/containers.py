@@ -107,7 +107,7 @@ class FlextTypingContainers:
                 title="Configuration Map",
                 description="Configuration entries keyed by normalized setting names.",
                 examples=[
-                    {"timeout_seconds": 30, "environment": "dev", "debug": False}
+                    {"timeout_seconds": 30, "environment": "dev", "debug": False},
                 ],
             ),
         ]

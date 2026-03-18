@@ -45,12 +45,18 @@ class FlextProtocolsDI:
 
         @overload
         def get[T: t.RegisterableService](
-            self, name: str, *, type_cls: type[T]
+            self,
+            name: str,
+            *,
+            type_cls: type[T],
         ) -> r[T]: ...
 
         @overload
         def get(
-            self, name: str, *, type_cls: None = None
+            self,
+            name: str,
+            *,
+            type_cls: None = None,
         ) -> r[t.RegisterableService]: ...
 
         def get_config(self) -> t.ConfigMap:

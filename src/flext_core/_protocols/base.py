@@ -32,8 +32,6 @@ class FlextProtocolsBase:
     class Base(Protocol):
         """Base protocol for FLEXT structural types."""
 
-        pass
-
     @runtime_checkable
     class Model(Base, Protocol):
         """Structural typing protocol for Pydantic v2 models.

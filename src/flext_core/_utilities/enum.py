@@ -53,7 +53,8 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def _is_member_by_value[E: StrEnum](
-        value: t.Scalar | E, enum_cls: type[E]
+        value: t.Scalar | E,
+        enum_cls: type[E],
     ) -> TypeIs[E]:
         """Check membership by value (internal helper)."""
         if isinstance(value, enum_cls):
@@ -82,7 +83,7 @@ class FlextUtilitiesEnum:
         """Validate strict string input for parsing paths."""
         try:
             return r[str].ok(
-                FlextUtilitiesEnum._V.strict_string_adapter().validate_python(value)
+                FlextUtilitiesEnum._V.strict_string_adapter().validate_python(value),
             )
         except ValidationError:
             return r[str].fail("Value is not a valid string input")
@@ -202,7 +203,8 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def create_discriminated_union(
-        _discriminator_field: str, *enum_classes: type[StrEnum]
+        _discriminator_field: str,
+        *enum_classes: type[StrEnum],
     ) -> Mapping[str, type[StrEnum]]:
         """Create discriminated union mapping for Pydantic models.
 
@@ -327,7 +329,8 @@ class FlextUtilitiesEnum:
             by_name_value = FlextUtilitiesEnum._validate_str(value)
             if by_name and by_name_value.is_success:
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
-                    str(by_name_value.value), enum_cls
+                    str(by_name_value.value),
+                    enum_cls,
                 )
                 return is_member_result
             result_bool: bool = FlextUtilitiesEnum._is_member_by_value(value, enum_cls)
@@ -347,7 +350,8 @@ class FlextUtilitiesEnum:
             validated_value = FlextUtilitiesEnum._validate_str(value)
             if validated_value.is_success:
                 coerced: E = FlextUtilitiesEnum._coerce(
-                    enum_cls, str(validated_value.value)
+                    enum_cls,
+                    str(validated_value.value),
                 )
                 return coerced
             value_str: str = str(value)
@@ -392,7 +396,9 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def is_subset[E: StrEnum](
-        enum_cls: type[E], valid_members: frozenset[E], value: t.Scalar | E
+        enum_cls: type[E],
+        valid_members: frozenset[E],
+        value: t.Scalar | E,
     ) -> bool:
         """TypeIs for subset of a StrEnum.
 
@@ -472,7 +478,9 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def parse_or_default[E: StrEnum](
-        enum_cls: type[E], value: str | E | None, default: E
+        enum_cls: type[E],
+        value: str | E | None,
+        default: E,
     ) -> E:
         """Convert with fallback to default (never fails).
 

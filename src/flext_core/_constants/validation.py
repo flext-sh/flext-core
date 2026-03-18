@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
+from flext_core._constants.base import FlextConstantsBase
+
 
 class FlextConstantsValidation:
     """Constants for validation and error handling."""
@@ -94,26 +96,7 @@ class FlextConstantsValidation:
 
         FAILURE_LEVEL_DEFAULT: Final[FailureLevel] = FailureLevel.PERMISSIVE
 
-        @unique
-        class ErrorType(StrEnum):
-            """Error type enumeration for error categorization."""
-
-            VALIDATION = "validation"
-            CONFIGURATION = "configuration"
-            OPERATION = "operation"
-            CONNECTION = "connection"
-            TIMEOUT = "timeout"
-            AUTHORIZATION = "authorization"
-            AUTHENTICATION = "authentication"
-            NOT_FOUND = "not_found"
-            ATTRIBUTE_ACCESS = "attribute_access"
-            CONFLICT = "conflict"
-            RATE_LIMIT = "rate_limit"
-            CIRCUIT_BREAKER = "circuit_breaker"
-            TYPE_ERROR = "type_error"
-            VALUE_ERROR = "value_error"
-            RUNTIME_ERROR = "runtime_error"
-            SYSTEM_ERROR = "system_error"
+        ErrorType = FlextConstantsBase.ErrorType
 
     class Guards:
         STRING_METHOD_MAP: frozenset[str] = frozenset({

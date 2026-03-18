@@ -91,7 +91,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_entity_by_id(
-        entity: t.RuntimeData, id_attr: str = c.Mixins.FIELD_ID
+        entity: t.RuntimeData,
+        id_attr: str = c.Mixins.FIELD_ID,
     ) -> int:
         """Generate hash for entity based on unique ID and type.
 
@@ -146,7 +147,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_entity_has_id(
-        entity: t.RuntimeData, id_attr: str = c.Mixins.FIELD_ID
+        entity: t.RuntimeData,
+        id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Validate that entity has a non-None unique ID.
 

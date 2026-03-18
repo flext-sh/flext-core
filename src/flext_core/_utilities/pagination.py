@@ -90,12 +90,12 @@ class FlextUtilitiesPagination:
         page_result = r[int].ok(0).map(lambda _: int(page_str))
         if page_result.is_failure:
             return r[tuple[int, int]].fail(
-                f"Invalid page parameters: {page_result.error}"
+                f"Invalid page parameters: {page_result.error}",
             )
         page_size_result = r[int].ok(0).map(lambda _: int(page_size_str))
         if page_size_result.is_failure:
             return r[tuple[int, int]].fail(
-                f"Invalid page parameters: {page_size_result.error}"
+                f"Invalid page parameters: {page_size_result.error}",
             )
         page = page_result.value
         page_size = page_size_result.value
@@ -165,7 +165,7 @@ class FlextUtilitiesPagination:
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
             return r[dict[str, list[t.RuntimeAtomic] | t.PaginationMeta]].fail(
-                f"Page {page} exceeds total pages {total_pages}"
+                f"Page {page} exceeds total pages {total_pages}",
             )
         has_next: bool = page < total_pages
         has_prev: bool = page > 1
@@ -188,7 +188,10 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def validate_pagination_params(
-        *, page: int, page_size: int | None, max_page_size: int
+        *,
+        page: int,
+        page_size: int | None,
+        max_page_size: int,
     ) -> r[Mapping[str, int]]:
         """Validate pagination parameters.
 

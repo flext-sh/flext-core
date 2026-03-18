@@ -71,7 +71,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _operation_stats: dict[str, t.ConfigMap] = PrivateAttr(
-        default_factory=dict[str, t.ConfigMap]
+        default_factory=dict[str, t.ConfigMap],
     )
 
     _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
@@ -152,7 +152,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     @staticmethod
     def _with_operation_context(
-        operation_name: str, **operation_data: t.Scalar
+        operation_name: str,
+        **operation_data: t.Scalar,
     ) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         FlextMixins._propagate_context(operation_name)
@@ -160,17 +161,17 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             debug_keys = {"schema", "params"}
             error_keys = {"stack_trace", "exception", "traceback", "error_details"}
             debug_data: t.ConfigMap = t.ConfigMap(
-                root={k: v for k, v in operation_data.items() if k in debug_keys}
+                root={k: v for k, v in operation_data.items() if k in debug_keys},
             )
             error_data: t.ConfigMap = t.ConfigMap(
-                root={k: v for k, v in operation_data.items() if k in error_keys}
+                root={k: v for k, v in operation_data.items() if k in error_keys},
             )
             normal_data: t.ConfigMap = t.ConfigMap(
                 root={
                     k: v
                     for k, v in operation_data.items()
                     if k not in debug_keys and k not in error_keys
-                }
+                },
             )
             all_context_data: t.ConfigMap = normal_data.model_copy()
             if debug_data:
@@ -193,7 +194,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     for key, value in normal_data.root.items()
                 }
                 _ = FlextLogger.bind_context(
-                    c.Context.SCOPE_OPERATION, **normal_metadata_context
+                    c.Context.SCOPE_OPERATION,
+                    **normal_metadata_context,
                 )
 
     @staticmethod
@@ -211,7 +213,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         stats: t.ConfigMap = self._operation_stats.get(
             operation_name,
             t.ConfigMap(
-                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
+                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
             ),
         )
         op_count_raw = u.get(stats, "operation_count", default=0)
@@ -255,7 +257,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     log_debug = getattr(self.logger, "debug", None)
                     if callable(log_debug):
                         log_debug(
-                            "Tracked operation raised expected exception", exc_info=exc
+                            "Tracked operation raised expected exception",
+                            exc_info=exc,
                         )
                     err_raw = u.get(stats, "error_count", default=0)
                     stats["error_count"] = (
@@ -295,7 +298,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 c.Context.KEY_SERVICE_NAME: self.__class__.__name__,
                 "service_module": self.__class__.__module__,
                 **context_data,
-            }
+            },
         )
         self.logger.info(
             "Service initialized",
@@ -335,7 +338,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 else:
                     try:
                         options = m.RuntimeBootstrapOptions.model_validate(
-                            options_raw, from_attributes=True
+                            options_raw,
+                            from_attributes=True,
                         )
                     except ValidationError:
                         options = None
@@ -426,7 +430,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         candidate: type | t.ValueOrModel,
     ) -> TypeIs[type[FlextSettings]]:
         return isinstance(candidate, type) and callable(
-            getattr(candidate, "get_global", None)
+            getattr(candidate, "get_global", None),
         )
 
     def _init_service(self, service_name: str | None = None) -> None:
@@ -448,7 +452,9 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 )
 
     def _log_config_once(
-        self, config: t.ConfigMap, message: str = "Configuration loaded"
+        self,
+        config: t.ConfigMap,
+        message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context."""
         config_typed: t.ConfigMap = t.ConfigMap(root=dict(config.items()))
@@ -464,13 +470,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         context_data: t.ConfigMap = t.ConfigMap(
             root={
                 c.Context.KEY_CORRELATION_ID: FlextRuntime.normalize_to_container(
-                    correlation_id or ""
+                    correlation_id or "",
                 ),
                 c.Cqrs.HandlerType.OPERATION: FlextRuntime.normalize_to_container(
-                    operation_name or ""
+                    operation_name or "",
                 ),
                 **{k: FlextRuntime.normalize_to_container(v) for k, v in extra.items()},
-            }
+            },
         )
         log_method = (
             getattr(self.logger, level)
@@ -565,7 +571,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 return r[dict[str, t.Scalar]].ok({})
 
             def push_context(
-                self, ctx: m.ExecutionContext | Mapping[str, t.Scalar]
+                self,
+                ctx: m.ExecutionContext | Mapping[str, t.Scalar],
             ) -> r[bool]:
                 """Push an execution context or mapping onto the context stack."""
                 if not hasattr(self, "_stack"):
@@ -575,11 +582,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     return r[bool].ok(value=True)
                 ctx_mapping: dict[str, t.Scalar] = {str(k): v for k, v in ctx.items()}
                 handler_name_raw: t.Scalar | None = ctx_mapping.get(
-                    "handler_name", c.Mixins.IDENTIFIER_UNKNOWN
+                    "handler_name",
+                    c.Mixins.IDENTIFIER_UNKNOWN,
                 )
                 handler_name: str = str(handler_name_raw)
                 handler_mode_raw: t.Scalar | None = ctx_mapping.get(
-                    c.Mixins.FIELD_HANDLER_MODE, c.Cqrs.HandlerType.OPERATION
+                    c.Mixins.FIELD_HANDLER_MODE,
+                    c.Cqrs.HandlerType.OPERATION,
                 )
                 handler_mode_str: str = str(handler_mode_raw)
                 handler_mode_literal: c.Cqrs.HandlerType = (
@@ -594,7 +603,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     else c.Cqrs.HandlerType.OPERATION
                 )
                 execution_ctx = m.ExecutionContext.create_for_handler(
-                    handler_name=handler_name, handler_mode=handler_mode_literal
+                    handler_name=handler_name,
+                    handler_mode=handler_mode_literal,
                 )
                 self._stack.append(execution_ctx)
                 return r[bool].ok(value=True)
@@ -637,7 +647,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                         )
                     if validation_result.value is not True:
                         return r[TValidation].fail(
-                            f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}"
+                            f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}",
                         )
                     result = r[TValidation].ok(current_data)
             return result
@@ -691,7 +701,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     return r[bool].fail(error_msg)
                 if not callable(getattr(obj, method_name, None)):
                     return r[bool].fail(
-                        f"Processor {obj.__class__.__name__}.{method_name} is not callable"
+                        f"Processor {obj.__class__.__name__}.{method_name} is not callable",
                     )
             return r[bool].ok(value=True)
 
@@ -711,12 +721,12 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             if protocol_name not in protocol_required_attrs:
                 supported = ", ".join(protocol_required_attrs.keys())
                 return r[bool].fail(
-                    f"Unknown protocol: {protocol_name}. Supported: {supported}"
+                    f"Unknown protocol: {protocol_name}. Supported: {supported}",
                 )
             for attr in protocol_required_attrs[protocol_name]:
                 if not hasattr(obj, attr):
                     return r[bool].fail(
-                        f"{obj.__class__.__name__} missing '{attr}' required by {protocol_name}"
+                        f"{obj.__class__.__name__} missing '{attr}' required by {protocol_name}",
                     )
             return r[bool].ok(value=True)
 

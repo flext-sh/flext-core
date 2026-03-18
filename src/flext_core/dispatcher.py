@@ -46,7 +46,8 @@ class FlextDispatcher:
             route_name = u.get_message_route(message)
         except (TypeError, ValueError) as e:
             return r[t.RuntimeAtomic].fail(
-                f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
+                f"Dispatch failed: {e!s}",
+                error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
         handler_entry = self._handlers.get(route_name)
         if not handler_entry:
@@ -67,7 +68,9 @@ class FlextDispatcher:
         return self._execute_handler(resolved_handler, message, route_name)
 
     def dispatch_typed[DispatchValueT](
-        self, message: p.Routable, expected_type: type[DispatchValueT]
+        self,
+        message: p.Routable,
+        expected_type: type[DispatchValueT],
     ) -> r[DispatchValueT]:
         """Dispatch a message and return a strongly typed payload.
 
@@ -80,7 +83,7 @@ class FlextDispatcher:
                 return r[DispatchValueT].ok(value)
             if isinstance(value, BaseModel):
                 return r[DispatchValueT].fail(
-                    f"Expected {expected_type.__name__}, got {value.__class__.__name__}"
+                    f"Expected {expected_type.__name__}, got {value.__class__.__name__}",
                 )
             return u.parse(value, expected_type)
 
@@ -117,7 +120,10 @@ class FlextDispatcher:
         return r[bool].ok(value=True)
 
     def register_handler(
-        self, handler: t.DispatchableHandler, *, is_event: bool = False
+        self,
+        handler: t.DispatchableHandler,
+        *,
+        is_event: bool = False,
     ) -> r[bool]:
         """Register a handler for a specific message type.
 
@@ -158,11 +164,12 @@ class FlextDispatcher:
                     accepted_message_types,
                 ))
                 self._logger.info(
-                    "Registered auto-discovery handler", handler=str(handler)
+                    "Registered auto-discovery handler",
+                    handler=str(handler),
                 )
                 return r[bool].ok(value=True)
             return r[bool].fail(
-                "Handler must expose message_type, event_type, or can_handle"
+                "Handler must expose message_type, event_type, or can_handle",
             )
         if is_event:
             if route_name not in self._event_subscribers:
@@ -197,7 +204,7 @@ class FlextDispatcher:
                 value: t.RuntimeAtomic | None = raw_output.value
                 if not u.is_container(value):
                     return dispatch_result.fail(
-                        "Handler returned non-container value in success result"
+                        "Handler returned non-container value in success result",
                     )
                 return dispatch_result.ok(value)
             if raw_output is None:

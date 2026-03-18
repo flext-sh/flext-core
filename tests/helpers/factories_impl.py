@@ -164,44 +164,6 @@ class GetUserServiceFactory:
         cls._counter = count(1)
 
 
-class ValidatingServiceFactory:
-    """Factory for ValidatingService."""
-
-    _words: ClassVar[list[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
-    _word_index: ClassVar[int] = 0
-
-    @classmethod
-    def _next_word(cls) -> str:
-        """Get next word from rotation."""
-        word = cls._words[cls._word_index % len(cls._words)]
-        cls._word_index += 1
-        return word
-
-    @classmethod
-    def build(
-        cls,
-        *,
-        value_input: str | None = None,
-        min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT,
-    ) -> ValidatingService:
-        """Build a ValidatingService instance."""
-        actual_value = value_input if value_input is not None else cls._next_word()
-        return ValidatingService.model_construct(
-            value_input=actual_value,
-            min_length=min_length,
-        )
-
-    @classmethod
-    def build_batch(cls, size: int) -> list[ValidatingService]:
-        """Build multiple ValidatingService instances with auto-generated values."""
-        return [cls.build() for _ in range(size)]
-
-    @classmethod
-    def reset(cls) -> None:
-        """Reset factory state."""
-        cls._word_index = 0
-
-
 class FailingServiceFactory:
     """Factory for FailingService."""
 
@@ -243,8 +205,8 @@ class GetUserServiceAutoFactory:
         cls._counter = count(1)
 
 
-class _ValidatingFactoryBase[TService: ValidatingService | ValidatingServiceAuto]:
-    _service_cls: ClassVar[type[TService]]
+class ValidatingServiceAutoFactory:
+    """Factory for ValidatingServiceAuto."""
 
     _words: ClassVar[list[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
     _word_index: ClassVar[int] = 0
@@ -262,15 +224,17 @@ class _ValidatingFactoryBase[TService: ValidatingService | ValidatingServiceAuto
         *,
         value_input: str | None = None,
         min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT,
-    ) -> TService:
+    ) -> ValidatingServiceAuto:
+        """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
-        return cls._service_cls.model_construct(
+        return ValidatingServiceAuto.model_construct(
             value_input=actual_value,
             min_length=min_length,
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[TService]:
+    def build_batch(cls, size: int) -> list[ValidatingServiceAuto]:
+        """Build multiple ValidatingServiceAuto instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
     @classmethod
@@ -279,16 +243,42 @@ class _ValidatingFactoryBase[TService: ValidatingService | ValidatingServiceAuto
         cls._word_index = 0
 
 
-class ValidatingServiceFactory(_ValidatingFactoryBase[ValidatingService]):
+class ValidatingServiceFactory:
     """Factory for ValidatingService."""
 
-    _service_cls: ClassVar[type[ValidatingService]] = ValidatingService
+    _words: ClassVar[list[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
+    _word_index: ClassVar[int] = 0
 
+    @classmethod
+    def _next_word(cls) -> str:
+        """Get next word from rotation."""
+        word = cls._words[cls._word_index % len(cls._words)]
+        cls._word_index += 1
+        return word
 
-class ValidatingServiceAutoFactory(_ValidatingFactoryBase[ValidatingServiceAuto]):
-    """Factory for ValidatingServiceAuto."""
+    @classmethod
+    def build(
+        cls,
+        *,
+        value_input: str | None = None,
+        min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT,
+    ) -> ValidatingService:
+        """Build a ValidatingService instance."""
+        actual_value = value_input if value_input is not None else cls._next_word()
+        return ValidatingService.model_construct(
+            value_input=actual_value,
+            min_length=min_length,
+        )
 
-    _service_cls: ClassVar[type[ValidatingServiceAuto]] = ValidatingServiceAuto
+    @classmethod
+    def build_batch(cls, size: int) -> list[ValidatingService]:
+        """Build multiple ValidatingService instances with auto-generated values."""
+        return [cls.build() for _ in range(size)]
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset factory state."""
+        cls._word_index = 0
 
 
 class FailingServiceAutoFactory:

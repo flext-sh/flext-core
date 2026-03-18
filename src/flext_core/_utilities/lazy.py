@@ -56,7 +56,8 @@ def lazy_getattr(
 
 
 def cleanup_submodule_namespace(
-    module_name: str, lazy_imports: Mapping[str, tuple[str, str]]
+    module_name: str,
+    lazy_imports: Mapping[str, tuple[str, str]],
 ) -> None:
     """Remove submodules from namespace to force __getattr__ usage.
 

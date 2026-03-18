@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 
-from flext_core import p, r, t
+from flext_core import m, p, r, t
 from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
 
 
@@ -56,7 +56,10 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         if isinstance(condition, type):
             if FlextUtilitiesGuardsEnsure.is_container(value):
                 return FlextUtilitiesGuardsEnsure._guard_check_type(
-                    value, condition, context_name, error_msg
+                    value,
+                    condition,
+                    context_name,
+                    error_msg,
                 )
             return (
                 error_msg
@@ -65,7 +68,10 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         if FlextUtilitiesGuardsEnsure._is_type_tuple(condition):
             if FlextUtilitiesGuardsEnsure.is_container(value):
                 return FlextUtilitiesGuardsEnsure._guard_check_type(
-                    value, condition, context_name, error_msg
+                    value,
+                    condition,
+                    context_name,
+                    error_msg,
                 )
             return (
                 error_msg
@@ -78,7 +84,10 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 )
             typed_value: t.NormalizedValue = value
             return FlextUtilitiesGuardsEnsure._guard_check_validator(
-                typed_value, condition, context_name, error_msg
+                typed_value,
+                condition,
+                context_name,
+                error_msg,
             )
         if isinstance(condition, str):
             if not FlextUtilitiesGuardsEnsure.is_container(value):
@@ -87,11 +96,17 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 )
             typed_value_s: t.NormalizedValue = value
             return FlextUtilitiesGuardsEnsure._guard_check_string_shortcut(
-                typed_value_s, condition, context_name, error_msg
+                typed_value_s,
+                condition,
+                context_name,
+                error_msg,
             )
         if callable(condition):
             return FlextUtilitiesGuardsEnsure._guard_check_predicate(
-                value, condition, context_name, error_msg
+                value,
+                condition,
+                context_name,
+                error_msg,
             )
         return error_msg or f"{context_name} invalid guard condition type"
 
@@ -221,7 +236,10 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _guard_handle_failure[T](
-        error_message: str, *, return_value: bool, default: T | None
+        error_message: str,
+        *,
+        return_value: bool,
+        default: T | None,
     ) -> r[T] | T:
         if return_value:
             if default is not None:
@@ -234,24 +252,25 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def chk(
         value: t.NormalizedValue,
-        *,
-        eq: t.NormalizedValue | None = None,
-        ne: t.NormalizedValue | None = None,
-        gt: float | None = None,
-        gte: float | None = None,
-        lt: float | None = None,
-        lte: float | None = None,
-        is_: type | None = None,
-        not_: type | None = None,
-        in_: Sequence[t.NormalizedValue] | None = None,
-        not_in: Sequence[t.NormalizedValue] | None = None,
-        none: bool | None = None,
-        empty: bool | None = None,
-        match: str | None = None,
-        contains: t.NormalizedValue | None = None,
-        starts: str | None = None,
-        ends: str | None = None,
+        spec: m.GuardCheckSpec | None = None,
     ) -> bool:
+        guard_spec = spec if spec is not None else m.GuardCheckSpec()
+        eq = guard_spec.eq
+        ne = guard_spec.ne
+        gt = guard_spec.gt
+        gte = guard_spec.gte
+        lt = guard_spec.lt
+        lte = guard_spec.lte
+        is_ = guard_spec.is_
+        not_ = guard_spec.not_
+        in_ = guard_spec.in_
+        not_in = guard_spec.not_in
+        none = guard_spec.none
+        empty = guard_spec.empty
+        match = guard_spec.match
+        contains = guard_spec.contains
+        starts = guard_spec.starts
+        ends = guard_spec.ends
         if none is True and value is not None:
             return False
         if none is False and value is None:
@@ -385,7 +404,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def extract_mapping_or_none(value: t.NormalizedValue) -> r[t.ConfigMap]:
         if isinstance(
-            value, Mapping
+            value,
+            Mapping,
         ) and FlextUtilitiesGuardsEnsure.is_configuration_mapping(value):
             return r[t.ConfigMap].ok(value)
         return r[t.ConfigMap].fail("Value is not a configuration mapping")
@@ -417,7 +437,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                     item for item in validator if isinstance(item, type)
                 )
                 if len(tuple_types) == len(validator) and isinstance(
-                    value, tuple_types
+                    value,
+                    tuple_types,
                 ):
                     if return_value:
                         return (
@@ -486,15 +507,22 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return value if return_value else r[T].ok(value)
             failure_message = error_message or f"{context_name} guard failed"
             return FlextUtilitiesGuardsEnsure._guard_handle_failure(
-                failure_message, return_value=return_value, default=default
+                failure_message,
+                return_value=return_value,
+                default=default,
             )
         for condition in conditions:
             condition_error = FlextUtilitiesGuardsEnsure._guard_check_condition(
-                value, condition, context_name, error_message
+                value,
+                condition,
+                context_name,
+                error_message,
             )
             if condition_error:
                 return FlextUtilitiesGuardsEnsure._guard_handle_failure(
-                    condition_error, return_value=return_value, default=default
+                    condition_error,
+                    return_value=return_value,
+                    default=default,
                 )
         return value if return_value else r[T].ok(value)
 

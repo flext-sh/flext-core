@@ -95,7 +95,8 @@ class FlextTypesServices:
     type ValidatorCallable = Callable[[ScalarOrModel | None], ScalarOrModel | None]
 
     type MapperCallable = Callable[
-        [FlextTypingBase.NormalizedValue], FlextTypingBase.NormalizedValue
+        [FlextTypingBase.NormalizedValue],
+        FlextTypingBase.NormalizedValue,
     ]
     type MapperInput = MapperCallable | FlextTypingBase.NormalizedValue
     type StrictValue = (

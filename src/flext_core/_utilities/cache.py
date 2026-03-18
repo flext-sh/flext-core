@@ -172,7 +172,7 @@ class FlextUtilitiesCache:
     ) -> str:
         if isinstance(command, Mapping):
             command_map = m.Validators.dict_str_metadata_adapter().validate_python(
-                command
+                command,
             )
             sorted_data = FlextUtilitiesCache.sort_dict_keys(command_map)
             return f"{command_type.__name__}_{hash(str(sorted_data))}"

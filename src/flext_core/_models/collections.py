@@ -92,6 +92,24 @@ class FlextModelsCollections:
                 return cls._merge_dicts(non_none)
             return non_none[-1]
 
+        @classmethod
+        def _aggregate_dumped_models(
+            cls,
+            items: Sequence[
+                FlextModelFoundation.ArbitraryTypesModel
+                | FlextModelFoundation.FrozenValueModel
+            ],
+        ) -> Mapping[str, t.MetadataValue]:
+            if not items:
+                return {}
+            aggregated: dict[str, t.MetadataValue | None] = {}
+            for item in items:
+                for key, value in item.model_dump().items():
+                    aggregated[key] = cls._resolve_conflict(aggregated.get(key), value)
+            return {
+                key: value for key, value in aggregated.items() if value is not None
+            }
+
     class Categories(FlextModelFoundation.ArbitraryTypesModel):
         """Generic categorized collection with dynamic categories.
 
@@ -111,7 +129,9 @@ class FlextModelsCollections:
         """
 
         model_config = ConfigDict(
-            strict=True, validate_default=True, validate_assignment=True
+            strict=True,
+            validate_default=True,
+            validate_assignment=True,
         )
         categories: dict[str, list[t.MetadataValue]] = Field(
             default_factory=dict,
@@ -124,7 +144,8 @@ class FlextModelsCollections:
         @classmethod
         @override
         def __class_getitem__(
-            cls, typevar_values: type | tuple[type, ...]
+            cls,
+            typevar_values: type | tuple[type, ...],
         ) -> type[FlextModelsCollections.Categories]:
             _ = typevar_values
             return cls
@@ -140,7 +161,9 @@ class FlextModelsCollections:
             return sum(len(entries) for entries in self.categories.values())
 
         def add_entries(
-            self, category: str, entries: Sequence[t.MetadataValue]
+            self,
+            category: str,
+            entries: Sequence[t.MetadataValue],
         ) -> None:
             if category not in self.categories:
                 self.categories[category] = []
@@ -150,7 +173,9 @@ class FlextModelsCollections:
             self.categories.clear()
 
         def get(
-            self, category: str, default: Sequence[t.MetadataValue] | None = None
+            self,
+            category: str,
+            default: Sequence[t.MetadataValue] | None = None,
         ) -> Sequence[t.MetadataValue]:
             if default is None:
                 return self.categories.get(category, [])
@@ -178,13 +203,7 @@ class FlextModelsCollections:
             Combines statistics by summing numerics, concatenating lists,
             merging mappings, and keeping last value for other types.
             """
-            if not stats_list:
-                return {}
-            result: dict[str, t.MetadataValue | None] = {}
-            for stats in stats_list:
-                for key, value in stats.model_dump().items():
-                    result[key] = cls._resolve_conflict(result.get(key), value)
-            return {k: v for k, v in result.items() if v is not None}
+            return cls._aggregate_dumped_models(stats_list)
 
         @classmethod
         def from_mapping(cls, data: Mapping[str, t.MetadataValue]) -> Self:
@@ -215,13 +234,7 @@ class FlextModelsCollections:
             Combines results by summing numerics, concatenating lists,
             merging mappings, and keeping last value for other types.
             """
-            if not results_list:
-                return {}
-            result: dict[str, t.MetadataValue | None] = {}
-            for res in results_list:
-                for key, value in res.model_dump().items():
-                    result[key] = cls._resolve_conflict(result.get(key), value)
-            return {k: v for k, v in result.items() if v is not None}
+            return cls._aggregate_dumped_models(results_list)
 
         @classmethod
         def combine(cls, *results: Self) -> Self:
@@ -260,7 +273,9 @@ class FlextModelsCollections:
         """
 
         model_config = ConfigDict(
-            arbitrary_types_allowed=True, extra="forbid", validate_assignment=True
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            validate_assignment=True,
         )
 
         @override
@@ -321,6 +336,136 @@ class FlextModelsCollections:
             Field(
                 default=None,
                 description="Optional validator function for components",
+            ),
+        ] = None
+
+    class GuardCheckSpec(FlextModelFoundation.ArbitraryTypesModel):
+        eq: Annotated[
+            t.NormalizedValue | None,
+            Field(
+                default=None,
+                title="Equals",
+                description="Require the value to equal this value.",
+            ),
+        ] = None
+        ne: Annotated[
+            t.NormalizedValue | None,
+            Field(
+                default=None,
+                title="Not Equals",
+                description="Require the value to differ from this value.",
+            ),
+        ] = None
+        gt: Annotated[
+            float | None,
+            Field(
+                default=None,
+                title="Greater Than",
+                description="Require numeric or length-derived value to be greater than this value.",
+            ),
+        ] = None
+        gte: Annotated[
+            float | None,
+            Field(
+                default=None,
+                title="Greater Than Or Equal",
+                description="Require numeric or length-derived value to be greater than or equal to this value.",
+            ),
+        ] = None
+        lt: Annotated[
+            float | None,
+            Field(
+                default=None,
+                title="Less Than",
+                description="Require numeric or length-derived value to be less than this value.",
+            ),
+        ] = None
+        lte: Annotated[
+            float | None,
+            Field(
+                default=None,
+                title="Less Than Or Equal",
+                description="Require numeric or length-derived value to be less than or equal to this value.",
+            ),
+        ] = None
+        is_: Annotated[
+            type | None,
+            Field(
+                default=None,
+                title="Is Type",
+                description="Require the value to be an instance of this type.",
+            ),
+        ] = None
+        not_: Annotated[
+            type | None,
+            Field(
+                default=None,
+                title="Not Type",
+                description="Require the value to not be an instance of this type.",
+            ),
+        ] = None
+        in_: Annotated[
+            Sequence[t.NormalizedValue] | None,
+            Field(
+                default=None,
+                title="In Values",
+                description="Require the value to be present in this sequence.",
+            ),
+        ] = None
+        not_in: Annotated[
+            Sequence[t.NormalizedValue] | None,
+            Field(
+                default=None,
+                title="Not In Values",
+                description="Require the value to not be present in this sequence.",
+            ),
+        ] = None
+        none: Annotated[
+            bool | None,
+            Field(
+                default=None,
+                title="None Constraint",
+                description="When True, require None. When False, require non-None.",
+            ),
+        ] = None
+        empty: Annotated[
+            bool | None,
+            Field(
+                default=None,
+                title="Empty Constraint",
+                description="When True, require empty value; when False, require non-empty.",
+            ),
+        ] = None
+        match: Annotated[
+            str | None,
+            Field(
+                default=None,
+                title="Regex Match",
+                description="Require string value to match this regular expression.",
+            ),
+        ] = None
+        contains: Annotated[
+            t.NormalizedValue | None,
+            Field(
+                default=None,
+                title="Contains",
+                description="Require string or iterable value to contain this item.",
+            ),
+        ] = None
+        starts: Annotated[
+            str | None,
+            Field(
+                default=None,
+                title="Starts With",
+                description="Require string value to start with this prefix.",
+            ),
+        ] = None
+        ends: Annotated[
+            str | None,
+            Field(
+                default=None,
+                title="Ends With",
+                description="Require string value to end with this suffix.",
             ),
         ] = None
 

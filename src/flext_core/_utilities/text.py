@@ -36,7 +36,9 @@ class FlextUtilitiesText:
 
         """
         return re.sub(
-            r"\s+", " ", re.sub(c.Utilities.CONTROL_CHARS_PATTERN, "", text)
+            r"\s+",
+            " ",
+            re.sub(c.Utilities.CONTROL_CHARS_PATTERN, "", text),
         ).strip()
 
     @staticmethod

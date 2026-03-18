@@ -58,7 +58,8 @@ class FlextModelsHandler:
         @field_validator("handler", mode="before")
         @classmethod
         def validate_handler(
-            cls, v: t.HandlerCallable | p.Base | BaseModel
+            cls,
+            v: t.HandlerCallable | p.Base | BaseModel,
         ) -> t.HandlerCallable | p.Base | BaseModel:
             if not callable(v):
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
@@ -194,7 +195,7 @@ class FlextModelsHandler:
             json_schema_extra={
                 "title": "RegistrationDetails",
                 "description": "Handler registration tracking details",
-            }
+            },
         )
         registration_id: Annotated[
             str,
@@ -324,7 +325,9 @@ class FlextModelsHandler:
 
         @classmethod
         def create_for_handler(
-            cls, handler_name: str, handler_mode: c.Cqrs.HandlerType
+            cls,
+            handler_name: str,
+            handler_mode: c.Cqrs.HandlerType,
         ) -> Self:
             """Create execution context for a handler.
 
@@ -416,7 +419,8 @@ class FlextModelsHandler:
 
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         command: Annotated[
-            type, Field(description="Command type this handler processes")
+            type,
+            Field(description="Command type this handler processes"),
         ]
         priority: Annotated[
             int,

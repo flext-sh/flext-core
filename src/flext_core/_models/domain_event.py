@@ -30,13 +30,13 @@ class _ComparableConfigMap(t.ConfigMap):
             return self.root == other
         if isinstance(other, Mapping):
             typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                other
+                other,
             )
             other_mapping = t.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(value)
                     for key, value in typed_other.items()
-                }
+                },
             ).root
             return self.root == other_mapping
         return super().__eq__(other)
@@ -76,7 +76,7 @@ class FlextModelsDomainEvent:
                     FlextModelsDomainEvent.metadata_to_normalized(
                         value
                         if FlextUtilitiesGuardsTypeCore.is_scalar(value)
-                        else str(value)
+                        else str(value),
                     )
                 )
             return normalized_map
@@ -85,7 +85,7 @@ class FlextModelsDomainEvent:
                 FlextModelsDomainEvent.metadata_to_normalized(
                     value
                     if FlextUtilitiesGuardsTypeCore.is_scalar(value)
-                    else str(value)
+                    else str(value),
                 )
                 for value in item
             ]
@@ -102,24 +102,24 @@ class FlextModelsDomainEvent:
             return _ComparableConfigMap(root=dict(value.items()))
         if isinstance(value, dict):
             typed_value = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                value
+                value,
             )
             intermediate = t.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(item)
                     for key, item in typed_value.items()
-                }
+                },
             )
             return _ComparableConfigMap(root=intermediate.root)
         if isinstance(value, Mapping):
             typed_mapping = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                value
+                value,
             )
             intermediate = t.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(item)
                     for key, item in typed_mapping.items()
-                }
+                },
             )
             return _ComparableConfigMap(root=intermediate.root)
         if value is None:
@@ -142,7 +142,7 @@ class FlextModelsDomainEvent:
                     else str(value)
                 )
                 for key, value in data.items()
-            }
+            },
         )
 
     class Entry(
@@ -166,7 +166,8 @@ class FlextModelsDomainEvent:
             _ComparableConfigMap,
             BeforeValidator(lambda v: FlextModelsDomainEvent._normalize_event_data(v)),
         ] = Field(
-            default_factory=_ComparableConfigMap, description="Event data container"
+            default_factory=_ComparableConfigMap,
+            description="Event data container",
         )
 
 

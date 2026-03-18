@@ -26,7 +26,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _coerce_guard_value(value: t.Serializable) -> t.NormalizedValue:
         validated_result = r[t.Serializable].create_from_callable(
-            lambda: m.Validators.serializable_adapter().validate_python(value)
+            lambda: m.Validators.serializable_adapter().validate_python(value),
         )
         if validated_result.is_failure:
             return str(value)
@@ -56,13 +56,13 @@ class FlextUtilitiesCollection:
         data: t.NormalizedValue,
     ) -> r[dict[str, t.NormalizedValue]]:
         return r[dict[str, t.NormalizedValue]].create_from_callable(
-            lambda: m.Validators.dict_str_metadata_adapter().validate_python(data)
+            lambda: m.Validators.dict_str_metadata_adapter().validate_python(data),
         )
 
     @staticmethod
     def _validate_list_container(data: t.NormalizedValue) -> r[list[t.Container]]:
         return r[list[t.Container]].create_from_callable(
-            lambda: m.Validators.list_container_adapter().validate_python(data)
+            lambda: m.Validators.list_container_adapter().validate_python(data),
         )
 
     @staticmethod
@@ -96,7 +96,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _normalize_unknown_value(value: object) -> t.NormalizedValue:
         validated_result = r[t.Serializable].create_from_callable(
-            lambda: m.Validators.serializable_adapter().validate_python(value)
+            lambda: m.Validators.serializable_adapter().validate_python(value),
         )
         if validated_result.is_failure:
             return str(value)
@@ -123,7 +123,7 @@ class FlextUtilitiesCollection:
         data: t.NormalizedValue,
     ) -> list[tuple[str, t.NormalizedValue]]:
         normalized_mapping = m.Validators.dict_str_metadata_adapter().validate_python(
-            data
+            data,
         )
         return list(normalized_mapping.items())
 
@@ -146,7 +146,9 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: dict[str, t.NormalizedValue], key: str, value: t.NormalizedValue
+        result: dict[str, t.NormalizedValue],
+        key: str,
+        value: t.NormalizedValue,
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -160,7 +162,7 @@ class FlextUtilitiesCollection:
                 result[key] = merged.value
                 return r[bool].ok(value=True)
             return r[bool].fail(
-                f"Failed to merge nested dict for key {key}: {merged.error}"
+                f"Failed to merge nested dict for key {key}: {merged.error}",
             )
         result[key] = value
         return r[bool].ok(value=True)
@@ -223,7 +225,7 @@ class FlextUtilitiesCollection:
                     if result_raw.is_success:
                         result_value = (
                             m.Validators.serializable_adapter().validate_python(
-                                result_raw.unwrap_or(None)
+                                result_raw.unwrap_or(None),
                             )
                         )
                         if do_flatten and isinstance(result_value, list):
@@ -234,8 +236,8 @@ class FlextUtilitiesCollection:
                                 ):
                                     results.append(
                                         FlextUtilitiesCollection._coerce_guard_value(
-                                            inner_item
-                                        )
+                                            inner_item,
+                                        ),
                                     )
                                 else:
                                     inner_item_obj: object = inner_item
@@ -244,16 +246,16 @@ class FlextUtilitiesCollection:
                         if isinstance(result_value, dict):
                             dict_value: dict[str, t.Serializable] = result_value
                             value = FlextUtilitiesCollection._coerce_guard_value(
-                                dict_value
+                                dict_value,
                             )
                         elif isinstance(result_value, list):
                             list_value: list[t.Serializable] = result_value
                             value = FlextUtilitiesCollection._coerce_guard_value(
-                                list_value
+                                list_value,
                             )
                         elif isinstance(result_value, t.SCALAR_TYPES):
                             value = FlextUtilitiesCollection._coerce_guard_value(
-                                result_value
+                                result_value,
                             )
                         else:
                             result_value_obj: object = result_value
@@ -266,7 +268,7 @@ class FlextUtilitiesCollection:
                         error_msg = result_raw.error or "Unknown error"
                         if error_mode == "fail":
                             return r[m.BatchResultDict].fail(
-                                f"Batch processing failed: {error_msg}"
+                                f"Batch processing failed: {error_msg}",
                             )
                         if error_mode == "collect":
                             errors.append((processed - 1, str(error_msg)))
@@ -284,8 +286,8 @@ class FlextUtilitiesCollection:
                             ):
                                 results.append(
                                     FlextUtilitiesCollection._coerce_guard_value(
-                                        inner_item
-                                    )
+                                        inner_item,
+                                    ),
                                 )
                             else:
                                 inner_item_obj_flat: object = inner_item
@@ -294,16 +296,16 @@ class FlextUtilitiesCollection:
                     if isinstance(normalized_result_raw, dict):
                         raw_dict: dict[str, t.Serializable] = normalized_result_raw
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            raw_dict
+                            raw_dict,
                         )
                     elif isinstance(normalized_result_raw, list):
                         raw_list: list[t.Serializable] = normalized_result_raw
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            raw_list
+                            raw_list,
                         )
                     elif isinstance(normalized_result_raw, t.SCALAR_TYPES):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            normalized_result_raw
+                            normalized_result_raw,
                         )
                     else:
                         raw_unknown: object = normalized_result_raw
@@ -376,28 +378,28 @@ class FlextUtilitiesCollection:
     def coerce_dict_to_bool() -> Callable[[t.NormalizedValue], Mapping[str, bool]]:
         """Create validator that coerces dict values to bool."""
         return FlextUtilitiesCollection._coerce_dict_values(
-            FlextUtilitiesCollection._coerce_value_to_bool
+            FlextUtilitiesCollection._coerce_value_to_bool,
         )
 
     @staticmethod
     def coerce_dict_to_float() -> Callable[[t.NormalizedValue], Mapping[str, float]]:
         """Create validator that coerces dict values to float."""
         return FlextUtilitiesCollection._coerce_dict_values(
-            FlextUtilitiesCollection._coerce_value_to_float
+            FlextUtilitiesCollection._coerce_value_to_float,
         )
 
     @staticmethod
     def coerce_dict_to_int() -> Callable[[t.NormalizedValue], Mapping[str, int]]:
         """Create validator that coerces dict values to int."""
         return FlextUtilitiesCollection._coerce_dict_values(
-            FlextUtilitiesCollection._coerce_value_to_int
+            FlextUtilitiesCollection._coerce_value_to_int,
         )
 
     @staticmethod
     def coerce_dict_to_str() -> Callable[[t.NormalizedValue], Mapping[str, str]]:
         """Create validator that coerces dict values to str."""
         return FlextUtilitiesCollection._coerce_dict_values(
-            FlextUtilitiesCollection._coerce_value_to_str
+            FlextUtilitiesCollection._coerce_value_to_str,
         )
 
     @staticmethod
@@ -475,7 +477,7 @@ class FlextUtilitiesCollection:
     def coerce_list_to_bool() -> Callable[[Sequence[t.NormalizedValue]], list[bool]]:
         """Create validator that coerces sequence values to bool."""
         return FlextUtilitiesCollection._coerce_list_values(
-            FlextUtilitiesCollection._coerce_value_to_bool
+            FlextUtilitiesCollection._coerce_value_to_bool,
         )
 
     @staticmethod
@@ -504,21 +506,21 @@ class FlextUtilitiesCollection:
     def coerce_list_to_float() -> Callable[[Sequence[t.NormalizedValue]], list[float]]:
         """Create validator that coerces sequence values to float."""
         return FlextUtilitiesCollection._coerce_list_values(
-            FlextUtilitiesCollection._coerce_value_to_float
+            FlextUtilitiesCollection._coerce_value_to_float,
         )
 
     @staticmethod
     def coerce_list_to_int() -> Callable[[Sequence[t.NormalizedValue]], list[int]]:
         """Create validator that coerces sequence values to int."""
         return FlextUtilitiesCollection._coerce_list_values(
-            FlextUtilitiesCollection._coerce_value_to_int
+            FlextUtilitiesCollection._coerce_value_to_int,
         )
 
     @staticmethod
     def coerce_list_to_str() -> Callable[[Sequence[t.NormalizedValue]], list[str]]:
         """Create validator that coerces sequence values to str."""
         return FlextUtilitiesCollection._coerce_list_values(
-            FlextUtilitiesCollection._coerce_value_to_str
+            FlextUtilitiesCollection._coerce_value_to_str,
         )
 
     @staticmethod
@@ -538,7 +540,7 @@ class FlextUtilitiesCollection:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
             normalized_items_result = FlextUtilitiesCollection._validate_list_container(
-                data
+                data,
             )
             if normalized_items_result.is_failure:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
@@ -634,19 +636,28 @@ class FlextUtilitiesCollection:
     @overload
     @staticmethod
     def filter(
-        items: list[T], predicate: Callable[[T], bool], *, mapper: None = None
+        items: list[T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
     ) -> list[T]: ...
 
     @overload
     @staticmethod
     def filter(
-        items: list[T], predicate: Callable[[T], bool], *, mapper: Callable[[T], U]
+        items: list[T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
     ) -> list[U]: ...
 
     @overload
     @staticmethod
     def filter(
-        items: tuple[T, ...], predicate: Callable[[T], bool], *, mapper: None = None
+        items: tuple[T, ...],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
     ) -> tuple[T, ...]: ...
 
     @overload
@@ -661,13 +672,19 @@ class FlextUtilitiesCollection:
     @overload
     @staticmethod
     def filter(
-        items: dict[str, T], predicate: Callable[[T], bool], *, mapper: None = None
+        items: dict[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
     ) -> dict[str, T]: ...
 
     @overload
     @staticmethod
     def filter(
-        items: dict[str, T], predicate: Callable[[T], bool], *, mapper: Callable[[T], U]
+        items: dict[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
     ) -> dict[str, U]: ...
 
     @staticmethod
@@ -702,7 +719,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def find(
-        items: list[T] | tuple[T, ...] | dict[str, T], predicate: Callable[[T], bool]
+        items: list[T] | tuple[T, ...] | dict[str, T],
+        predicate: Callable[[T], bool],
     ) -> r[T]:
         """Find first item matching predicate with generic type support.
 
@@ -909,15 +927,17 @@ class FlextUtilitiesCollection:
             result = base.copy()
             for key, value in other.items():
                 merge_result = FlextUtilitiesCollection._merge_deep_single_key(
-                    result, key, value
+                    result,
+                    key,
+                    value,
                 )
                 if merge_result.is_failure:
                     return r[dict[str, t.NormalizedValue]].fail(
-                        merge_result.error or "Unknown error"
+                        merge_result.error or "Unknown error",
                     )
             return r[dict[str, t.NormalizedValue]].ok(result)
         return r[dict[str, t.NormalizedValue]].fail(
-            f"Unknown merge strategy: {strategy}"
+            f"Unknown merge strategy: {strategy}",
         )
 
     @staticmethod
@@ -938,7 +958,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def parse_mapping[E: StrEnum](
-        enum_cls: type[E], mapping: dict[str, str | E]
+        enum_cls: type[E],
+        mapping: dict[str, str | E],
     ) -> r[dict[str, E]]:
         """Parse dict values from strings to StrEnum.
 
@@ -961,7 +982,7 @@ class FlextUtilitiesCollection:
         )
         if mapping_items_result.is_failure:
             return r[dict[str, E]].fail(
-                f"Parse mapping failed: {mapping_items_result.error}"
+                f"Parse mapping failed: {mapping_items_result.error}",
             )
         for key, value_raw in mapping_items_result.value:
             enum_result = r[E].ok(value_raw).map(enum_cls)
@@ -972,13 +993,14 @@ class FlextUtilitiesCollection:
         if errors:
             enum_name = getattr(enum_cls, "__name__", "Enum")
             return r[dict[str, E]].fail(
-                f"Invalid {enum_name} values: {', '.join(errors)}"
+                f"Invalid {enum_name} values: {', '.join(errors)}",
             )
         return r[dict[str, E]].ok(result)
 
     @staticmethod
     def parse_sequence(
-        enum_cls: type[StrEnum], values: Sequence[str | StrEnum]
+        enum_cls: type[StrEnum],
+        values: Sequence[str | StrEnum],
     ) -> r[tuple[StrEnum, ...]]:
         """Parse sequence of strings to tuple of StrEnum."""
         parsed: list[StrEnum] = []
@@ -990,7 +1012,7 @@ class FlextUtilitiesCollection:
         )
         if enumerate_result.is_failure:
             return r[tuple[StrEnum, ...]].fail(
-                f"Parse sequence failed: {enumerate_result.error}"
+                f"Parse sequence failed: {enumerate_result.error}",
             )
         for idx, val in enumerate_result.value:
             if isinstance(val, enum_cls):
@@ -1004,13 +1026,14 @@ class FlextUtilitiesCollection:
         if errors:
             enum_name = getattr(enum_cls, "__name__", "Enum")
             return r[tuple[StrEnum, ...]].fail(
-                f"Invalid {enum_name} values: {', '.join(errors)}"
+                f"Invalid {enum_name} values: {', '.join(errors)}",
             )
         return r[tuple[StrEnum, ...]].ok(tuple(parsed))
 
     @staticmethod
     def partition(
-        items: Sequence[T], predicate: Callable[[T], bool]
+        items: Sequence[T],
+        predicate: Callable[[T], bool],
     ) -> tuple[list[T], list[T]]:
         """Split items by predicate: (matches, non-matches).
 
@@ -1078,7 +1101,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def unique(
-        items: Sequence[T], key_func: Callable[[T], Hashable] | None = None
+        items: Sequence[T],
+        key_func: Callable[[T], Hashable] | None = None,
     ) -> list[T]:
         """Get unique items preserving order.
 

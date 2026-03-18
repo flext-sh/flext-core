@@ -87,12 +87,14 @@ class FlextUtilitiesDeprecation:
                 category=DeprecationWarning,
             )
         return _stdlib_deprecated(
-            "This callable is deprecated.", category=DeprecationWarning
+            "This callable is deprecated.",
+            category=DeprecationWarning,
         )
 
     @staticmethod
     def deprecated_class[TClass: type](
-        replacement: str | None = None, version: str | None = None
+        replacement: str | None = None,
+        version: str | None = None,
     ) -> Callable[[TClass], TClass]:
         has_replacement = replacement is not None
         has_version = version is not None
@@ -115,7 +117,9 @@ class FlextUtilitiesDeprecation:
 
     @staticmethod
     def deprecated_parameter(
-        param_name: str, replacement: str | None = None, version: str | None = None
+        param_name: str,
+        replacement: str | None = None,
+        version: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Warn when a deprecated parameter is passed by keyword."""
 
@@ -130,7 +134,9 @@ class FlextUtilitiesDeprecation:
                     if replacement:
                         message_parts.append(f"Use '{replacement}' instead")
                     warnings.warn(
-                        ". ".join(message_parts), DeprecationWarning, stacklevel=2
+                        ". ".join(message_parts),
+                        DeprecationWarning,
+                        stacklevel=2,
                     )
                 return func(*args, **kwargs)
 

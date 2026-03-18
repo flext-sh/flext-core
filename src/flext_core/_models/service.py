@@ -161,7 +161,7 @@ class FlextModelsService:
                 description="Ordered batch operations to execute for the target service.",
                 title="Batch Operations",
                 examples=[
-                    [{"operation_name": "validate"}, {"operation_name": "persist"}]
+                    [{"operation_name": "validate"}, {"operation_name": "persist"}],
                 ],
             ),
         ]

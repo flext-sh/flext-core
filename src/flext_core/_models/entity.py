@@ -102,15 +102,17 @@ class FlextModelsEntity:
             """
             if not event_type:
                 return r[FlextModelsDomainEvent.Entry].fail(
-                    "Domain event name must be a non-empty string"
+                    "Domain event name must be a non-empty string",
                 )
             if len(self.domain_events) >= c.Validation.MAX_UNCOMMITTED_EVENTS:
                 return r[FlextModelsDomainEvent.Entry].fail(
-                    f"Cannot add event: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}"
+                    f"Cannot add event: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
             data_map = FlextModelsDomainEvent.to_config_map(data)
             event = FlextModelsDomainEvent.Entry(
-                event_type=event_type, aggregate_id=self.unique_id, data=data_map
+                event_type=event_type,
+                aggregate_id=self.unique_id,
+                data=data_map,
             )
             self.domain_events.append(event)
             handler_event_type_raw = data_map.get("event_type", event_type)
@@ -141,18 +143,18 @@ class FlextModelsEntity:
             """
             if not isinstance(events, (list, tuple)):
                 return r[list[FlextModelsDomainEvent.Entry]].fail(
-                    "Events must be a list or tuple"
+                    "Events must be a list or tuple",
                 )
             event_items = list(events)
             total_after = len(self.domain_events) + len(event_items)
             if total_after > c.Validation.MAX_UNCOMMITTED_EVENTS:
                 return r[list[FlextModelsDomainEvent.Entry]].fail(
-                    f"Cannot add {len(events)} events: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}"
+                    f"Cannot add {len(events)} events: would exceed max events limit of {c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
             for event_type, _ in event_items:
                 if not event_type:
                     return r[list[FlextModelsDomainEvent.Entry]].fail(
-                        "Event name must be non-empty string"
+                        "Event name must be non-empty string",
                     )
             created_events: list[FlextModelsDomainEvent.Entry] = []
             for event_type, data in event_items:

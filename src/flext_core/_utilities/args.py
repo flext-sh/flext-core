@@ -50,7 +50,7 @@ class FlextUtilitiesArgs:
         """Validate that candidate is a StrEnum subclass."""
         try:
             return r[type[StrEnum]].ok(
-                FlextUtilitiesArgs._V.enum_type_adapter().validate_python(candidate)
+                FlextUtilitiesArgs._V.enum_type_adapter().validate_python(candidate),
             )
         except ValidationError:
             return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")
@@ -75,7 +75,7 @@ class FlextUtilitiesArgs:
             if isinstance(fallback_annotations, Mapping):
                 try:
                     hints = TypeAdapter(dict[str, object]).validate_python(
-                        fallback_annotations
+                        fallback_annotations,
                     )
                 except ValidationError:
                     return {}
@@ -96,7 +96,7 @@ class FlextUtilitiesArgs:
                 validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
             else:
                 validated_hint = r[type[StrEnum]].fail(
-                    "Candidate is not a valid StrEnum type"
+                    "Candidate is not a valid StrEnum type",
                 )
             if validated_hint.is_success:
                 enum_params[name] = validated_hint.value
@@ -111,11 +111,11 @@ class FlextUtilitiesArgs:
                         isinstance(current_arg, type) and issubclass(current_arg, Enum)
                     ):
                         validated_arg = FlextUtilitiesArgs._validate_enum_type(
-                            current_arg
+                            current_arg,
                         )
                     else:
                         validated_arg = r[type[StrEnum]].fail(
-                            "Candidate is not a valid StrEnum type"
+                            "Candidate is not a valid StrEnum type",
                         )
                     if validated_arg.is_success:
                         enum_params[name] = validated_arg.value
@@ -153,7 +153,7 @@ class FlextUtilitiesArgs:
                     errors.append(f"{field}: '{value}' not in [{valid}]")
         if errors:
             return r[Mapping[str, t.ValueOrModel]].fail(
-                f"Invalid values: {'; '.join(errors)}"
+                f"Invalid values: {'; '.join(errors)}",
             )
         return r[Mapping[str, t.ValueOrModel]].ok(parsed)
 

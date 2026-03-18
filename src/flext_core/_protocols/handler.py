@@ -24,7 +24,8 @@ class FlextProtocolsHandler:
 
     @runtime_checkable
     class Handler[MessageT: FlextProtocolsBase.Model, ResultT](
-        FlextProtocolsBase.Base, Protocol
+        FlextProtocolsBase.Base,
+        Protocol,
     ):
         def can_handle(self, message_type: type) -> bool: ...
 
@@ -91,7 +92,8 @@ class FlextProtocolsHandler:
             self,
             command: FlextProtocolsBase.Model,
             next_handler: Callable[
-                [FlextProtocolsBase.Model], FlextProtocolsResult.Result[TResult]
+                [FlextProtocolsBase.Model],
+                FlextProtocolsResult.Result[TResult],
             ],
         ) -> FlextProtocolsResult.Result[TResult]: ...
 

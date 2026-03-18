@@ -79,7 +79,7 @@ class FlextModelsResult:
             logger = self._result_logger
             if logger is None:
                 logger = structlog.get_logger(__name__)
-                setattr(self, "_result_logger", logger)
+                self._result_logger = logger
             return logger
 
         @property
@@ -160,21 +160,23 @@ class FlextModelsResult:
                 error_code=None,
                 error_data=t.ConfigMap(root={}),
             )
-            setattr(instance, "_payload", value)
+            instance._payload = value
             return instance
 
         def filter(
-            self, predicate: Callable[[T], bool]
+            self,
+            predicate: Callable[[T], bool],
         ) -> FlextModelsResult.RuntimeResult[T]:
             """Filter success value using predicate."""
             if self.is_success and (not predicate(self.value)):
                 return FlextModelsResult.RuntimeResult[T].fail(
-                    error="Filter predicate failed"
+                    error="Filter predicate failed",
                 )
             return self
 
         def flat_map[U](
-            self, func: Callable[[T], FlextModelsResult.RuntimeResult[U]]
+            self,
+            func: Callable[[T], FlextModelsResult.RuntimeResult[U]],
         ) -> FlextModelsResult.RuntimeResult[U]:
             """Chain operations returning RuntimeResult."""
             if self.is_success:
@@ -186,7 +188,8 @@ class FlextModelsResult:
             )
 
         def flow_through[U](
-            self, *funcs: Callable[[T | U], FlextModelsResult.RuntimeResult[U]]
+            self,
+            *funcs: Callable[[T | U], FlextModelsResult.RuntimeResult[U]],
         ) -> FlextModelsResult.RuntimeResult[T] | FlextModelsResult.RuntimeResult[U]:
             """Chain multiple operations in sequence.
 
@@ -212,7 +215,9 @@ class FlextModelsResult:
             return current
 
         def fold[U](
-            self, on_failure: Callable[[str], U], on_success: Callable[[T], U]
+            self,
+            on_failure: Callable[[str], U],
+            on_success: Callable[[T], U],
         ) -> U:
             """Fold result into single value (catamorphism)."""
             if self.is_success:
@@ -220,7 +225,8 @@ class FlextModelsResult:
             return on_failure(self.error or "")
 
         def lash(
-            self, func: Callable[[str], FlextModelsResult.RuntimeResult[T]]
+            self,
+            func: Callable[[str], FlextModelsResult.RuntimeResult[T]],
         ) -> FlextModelsResult.RuntimeResult[T]:
             """Apply recovery function on failure."""
             if not self.is_success:
@@ -247,7 +253,8 @@ class FlextModelsResult:
             )
 
         def map_error(
-            self, func: Callable[[str], str]
+            self,
+            func: Callable[[str], str],
         ) -> FlextModelsResult.RuntimeResult[T]:
             """Transform error message."""
             if not self.is_success:
@@ -259,7 +266,8 @@ class FlextModelsResult:
             return self
 
         def recover(
-            self, func: Callable[[str], T]
+            self,
+            func: Callable[[str], T],
         ) -> FlextModelsResult.RuntimeResult[T]:
             """Recover from failure with fallback value."""
             if not self.is_success:
@@ -274,7 +282,8 @@ class FlextModelsResult:
             return self
 
         def tap_error(
-            self, func: Callable[[str], None]
+            self,
+            func: Callable[[str], None],
         ) -> FlextModelsResult.RuntimeResult[T]:
             """Apply side effect to error, return unchanged."""
             if not self.is_success:

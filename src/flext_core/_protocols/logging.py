@@ -145,7 +145,8 @@ class FlextProtocolsLogging:
             ...
 
         def __and__(
-            self, other: FlextProtocolsLogging.ValidatorSpec
+            self,
+            other: FlextProtocolsLogging.ValidatorSpec,
         ) -> FlextProtocolsLogging.ValidatorSpec:
             """Compose with AND - both validators must pass."""
             ...
@@ -155,7 +156,8 @@ class FlextProtocolsLogging:
             ...
 
         def __or__(
-            self, other: FlextProtocolsLogging.ValidatorSpec
+            self,
+            other: FlextProtocolsLogging.ValidatorSpec,
         ) -> FlextProtocolsLogging.ValidatorSpec:
             """Compose with OR - at least one validator must pass."""
             ...

@@ -35,7 +35,9 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def _calculate_retry_delay(
-        attempt: int, delay_seconds: float, backoff_multiplier: float
+        attempt: int,
+        delay_seconds: float,
+        backoff_multiplier: float,
     ) -> float:
         """Calculate delay for retry attempt with exponential backoff."""
         current_delay = delay_seconds * backoff_multiplier**attempt
@@ -256,8 +258,8 @@ class FlextUtilitiesReliability:
                 try:
                     op_dict = dict(
                         FlextUtilitiesReliability._V.dict_str_metadata_adapter().validate_python(
-                            op
-                        )
+                            op,
+                        ),
                     )
                 except ValidationError:
                     op_dict = {}
@@ -299,7 +301,8 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def flow_through[T, U](
-        result: r[T | U], *funcs: Callable[[T | U], r[T | U]]
+        result: r[T | U],
+        *funcs: Callable[[T | U], r[T | U]],
     ) -> r[T | U]:
         """Chain multiple operations in a pipeline.
 
@@ -328,7 +331,9 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def fold_result[T, U](
-        result: r[T], on_failure: Callable[[str], U], on_success: Callable[[T], U]
+        result: r[T],
+        on_failure: Callable[[str], U],
+        on_success: Callable[[T], U],
     ) -> U:
         """Fold r into single value (catamorphism).
 
@@ -409,11 +414,13 @@ class FlextUtilitiesReliability:
         for pattern, result in cases:
             if isinstance(pattern, type) and isinstance(input_value, pattern):
                 return r[t.Container].ok(
-                    FlextUtilitiesReliability._resolve_match_output(result, value)
+                    FlextUtilitiesReliability._resolve_match_output(result, value),
                 )
             if pattern == input_value:
                 return r[t.Container].ok(
-                    FlextUtilitiesReliability._resolve_match_output(result, input_value)
+                    FlextUtilitiesReliability._resolve_match_output(
+                        result, input_value
+                    ),
                 )
             if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:
@@ -421,14 +428,15 @@ class FlextUtilitiesReliability:
                     if pred_result:
                         return r[t.Container].ok(
                             FlextUtilitiesReliability._resolve_match_output(
-                                result, input_value
-                            )
+                                result,
+                                input_value,
+                            ),
                         )
                 except (ValueError, TypeError, AttributeError):
                     pass
         if default is not None:
             return r[t.Container].ok(
-                FlextUtilitiesReliability._resolve_match_output(default, input_value)
+                FlextUtilitiesReliability._resolve_match_output(default, input_value),
             )
         return r[t.Container].fail("No match found and no default provided")
 
@@ -467,7 +475,7 @@ class FlextUtilitiesReliability:
             if FlextUtilitiesGuards.is_container(value):
                 return r[t.Container].ok(value)
             return r[t.Container].fail(
-                f"Value is not a Container type: {type(value).__name__}"
+                f"Value is not a Container type: {type(value).__name__}",
             )
         current: t.NormalizedValue = value
         for i, op in enumerate(operations):
@@ -478,13 +486,13 @@ class FlextUtilitiesReliability:
                         if on_error == "stop":
                             err_msg = op_result.error or "Unknown error"
                             return r[t.Container].fail(
-                                f"Pipeline step {i} failed: {err_msg}"
+                                f"Pipeline step {i} failed: {err_msg}",
                             )
                         continue
                     result_value = op_result.value
                     if isinstance(result_value, BaseModel):
                         current = FlextUtilitiesMapper.narrow_to_container(
-                            result_value.model_dump(mode="python")
+                            result_value.model_dump(mode="python"),
                         )
                     elif FlextUtilitiesGuards.is_container(result_value):
                         current = result_value
@@ -505,7 +513,7 @@ class FlextUtilitiesReliability:
         if FlextUtilitiesGuards.is_container(current):
             return r[t.Container].ok(current)
         return r[t.Container].fail(
-            f"Pipeline result is not a Container type: {type(current).__name__}"
+            f"Pipeline result is not a Container type: {type(current).__name__}",
         )
 
     @staticmethod
@@ -551,7 +559,7 @@ class FlextUtilitiesReliability:
         )
         if max_attempts_value < c.Reliability.RETRY_COUNT_MIN:
             return r[TResult].fail(
-                f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}"
+                f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}",
             )
         last_error: str | None = None
         for attempt in range(max_attempts_value):
@@ -562,7 +570,9 @@ class FlextUtilitiesReliability:
                 last_error = result.error or "Unknown error"
                 if attempt < max_attempts_value - 1:
                     current_delay = FlextUtilitiesReliability._calculate_retry_delay(
-                        attempt, delay_seconds_value, backoff_multiplier_value
+                        attempt,
+                        delay_seconds_value,
+                        backoff_multiplier_value,
                     )
                     if current_delay > 0:
                         time.sleep(current_delay)
@@ -579,12 +589,14 @@ class FlextUtilitiesReliability:
                 last_error = str(e)
                 if attempt < max_attempts_value - 1:
                     current_delay = FlextUtilitiesReliability._calculate_retry_delay(
-                        attempt, delay_seconds_value, backoff_multiplier_value
+                        attempt,
+                        delay_seconds_value,
+                        backoff_multiplier_value,
                     )
                     if current_delay > 0:
                         time.sleep(current_delay)
         return r[TResult].fail(
-            f"Operation failed after {max_attempts_value} attempts: {last_error}"
+            f"Operation failed after {max_attempts_value} attempts: {last_error}",
         )
 
     @staticmethod
@@ -685,7 +697,8 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def with_timeout[TTimeout](
-        operation: Callable[[], r[TTimeout]], timeout_seconds: float
+        operation: Callable[[], r[TTimeout]],
+        timeout_seconds: float,
     ) -> r[TTimeout]:
         """Execute an operation with a hard timeout using railway patterns."""
         if timeout_seconds <= c.INITIAL_TIME:
@@ -706,11 +719,11 @@ class FlextUtilitiesReliability:
         thread.join(timeout_seconds)
         if thread.is_alive():
             return r[TTimeout].fail(
-                f"Operation timed out after {timeout_seconds} seconds"
+                f"Operation timed out after {timeout_seconds} seconds",
             )
         if exception_container[0]:
             return r[TTimeout].fail(
-                f"Operation failed with exception: {exception_container[0]}"
+                f"Operation failed with exception: {exception_container[0]}",
             )
         if result_container[0] is None:
             return r[TTimeout].fail("Operation completed but returned no result")

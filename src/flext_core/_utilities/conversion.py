@@ -94,7 +94,7 @@ class FlextUtilitiesConversion:
                 try:
                     default_str = (
                         FlextUtilitiesConversion._V.str_adapter().validate_python(
-                            default
+                            default,
                         )
                     )
                 except ValidationError:
@@ -106,7 +106,7 @@ class FlextUtilitiesConversion:
                 try:
                     default_list = (
                         FlextUtilitiesConversion._V.tags_adapter().validate_python(
-                            default
+                            default,
                         )
                     )
                 except ValidationError:
@@ -118,21 +118,26 @@ class FlextUtilitiesConversion:
             raw_values: list[t.StrictValue]
             try:
                 raw_values = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
-                    value
+                    value,
                 )
             except ValidationError as err:
                 error_msg = "join mode requires Sequence"
                 raise TypeError(error_msg) from err
             str_values: list[str] = [str(v) for v in raw_values]
             return FlextUtilitiesConversion.join(
-                str_values, separator=separator, case=case
+                str_values,
+                separator=separator,
+                case=case,
             )
         error_msg = f"Unknown mode: {mode}"
         raise ValueError(error_msg)
 
     @staticmethod
     def join(
-        values: Sequence[str], *, separator: str = " ", case: str | None = None
+        values: Sequence[str],
+        *,
+        separator: str = " ",
+        case: str | None = None,
     ) -> str:
         """Join string values with separator and optional case conversion.
 
@@ -197,7 +202,7 @@ class FlextUtilitiesConversion:
                 return r[t.Scalar].ok(str(value))
         try:
             strict_value = FlextUtilitiesConversion._V.strict_json_scalar_adapter().validate_python(
-                value
+                value,
             )
             return r[t.Scalar].ok(strict_value)
         except ValidationError:
@@ -221,7 +226,7 @@ class FlextUtilitiesConversion:
             return str(value)
         try:
             float_value = FlextUtilitiesConversion._V.float_adapter().validate_python(
-                value
+                value,
             )
             if float_value.is_integer():
                 return str(int(float_value))
@@ -232,7 +237,9 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: t.StrictValue, *, default: list[str] | None = None
+        value: t.StrictValue,
+        *,
+        default: list[str] | None = None,
     ) -> list[str]:
         """Convert value to list of strings.
 
@@ -252,7 +259,7 @@ class FlextUtilitiesConversion:
         try:
             list_value = (
                 FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
-                    value
+                    value,
                 )
             )
             return [str(item) for item in list_value if item is not None]
@@ -262,7 +269,9 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list_safe(
-        value: t.StrictValue, *, filter_list_like: bool = True
+        value: t.StrictValue,
+        *,
+        filter_list_like: bool = True,
     ) -> list[str]:
         """Convert value to list[str] with safe nested list handling.
 
@@ -292,7 +301,7 @@ class FlextUtilitiesConversion:
         elif value_class is list:
             try:
                 items = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
-                    value
+                    value,
                 )
             except ValidationError:
                 items = []

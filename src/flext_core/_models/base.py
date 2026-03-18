@@ -129,7 +129,7 @@ class FlextModelFoundation:
             """Lazy-load strict string TypeAdapter on first access."""
             if cls._strict_string_adapter is None:
                 cls._strict_string_adapter = TypeAdapter(
-                    Annotated[str, Field(strict=True)]
+                    Annotated[str, Field(strict=True)],
                 )
             return cls._strict_string_adapter
 
@@ -174,7 +174,7 @@ class FlextModelFoundation:
         ) -> TypeAdapter[dict[str, t.NormalizedValue]]:
             if cls._dict_str_metadata_adapter is None:
                 cls._dict_str_metadata_adapter = TypeAdapter(
-                    dict[str, t.NormalizedValue]
+                    dict[str, t.NormalizedValue],
                 )
             return cls._dict_str_metadata_adapter
 
@@ -188,7 +188,7 @@ class FlextModelFoundation:
         def tuple_serializable_adapter(cls) -> TypeAdapter[tuple[t.Serializable, ...]]:
             if cls._tuple_serializable_adapter is None:
                 cls._tuple_serializable_adapter = TypeAdapter(
-                    tuple[t.Serializable, ...]
+                    tuple[t.Serializable, ...],
                 )
             return cls._tuple_serializable_adapter
 
@@ -216,7 +216,7 @@ class FlextModelFoundation:
         ) -> TypeAdapter[dict[t.SortableObjectType, t.Serializable | None]]:
             if cls._sortable_dict_adapter is None:
                 cls._sortable_dict_adapter = TypeAdapter(
-                    dict[t.SortableObjectType, t.Serializable | None]
+                    dict[t.SortableObjectType, t.Serializable | None],
                 )
             return cls._sortable_dict_adapter
 
@@ -298,7 +298,7 @@ class FlextModelFoundation:
         ) -> TypeAdapter[Callable[..., t.Container]]:
             if cls._structlog_processor_adapter is None:
                 cls._structlog_processor_adapter = TypeAdapter(
-                    Callable[..., t.Container]
+                    Callable[..., t.Container],
                 )
             return cls._structlog_processor_adapter
 
@@ -410,7 +410,10 @@ class FlextModelFoundation:
         """Immutable value model for value objects."""
 
         model_config = ConfigDict(
-            defer_build=True, frozen=True, validate_assignment=True, extra="forbid"
+            defer_build=True,
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
         )
 
     class TaggedModel(BaseModel):
@@ -533,7 +536,7 @@ class FlextModelFoundation:
                     raise ValueError(msg)
             return (
                 FlextModelFoundation.Validators.metadata_map_adapter().validate_python(
-                    result
+                    result,
                 )
             )
 
@@ -587,7 +590,8 @@ class FlextModelFoundation:
         ] = None
 
     MessageUnion = Annotated[
-        CommandMessage | QueryMessage | EventMessage, Discriminator("message_type")
+        CommandMessage | QueryMessage | EventMessage,
+        Discriminator("message_type"),
     ]
 
     class SuccessResult(BaseModel):
@@ -626,7 +630,8 @@ class FlextModelFoundation:
         partial_success_rate: float
 
     OperationResult = Annotated[
-        SuccessResult | FailureResult | PartialResult, Discriminator("result_type")
+        SuccessResult | FailureResult | PartialResult,
+        Discriminator("result_type"),
     ]
 
     class ValidOutcome(BaseModel):
@@ -658,7 +663,8 @@ class FlextModelFoundation:
         validation_time_ms: float
 
     ValidationOutcome = Annotated[
-        ValidOutcome | InvalidOutcome | WarningOutcome, Discriminator("outcome_type")
+        ValidOutcome | InvalidOutcome | WarningOutcome,
+        Discriminator("outcome_type"),
     ]
 
     class FrozenStrictModel(BaseModel):
@@ -720,7 +726,9 @@ class FlextModelFoundation:
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
         model_config = ConfigDict(
-            defer_build=True, arbitrary_types_allowed=True, validate_assignment=True
+            defer_build=True,
+            arbitrary_types_allowed=True,
+            validate_assignment=True,
         )
         created_at: Annotated[
             datetime,
@@ -758,7 +766,9 @@ class FlextModelFoundation:
         """Mixin for versioning with optimistic locking."""
 
         model_config = ConfigDict(
-            defer_build=True, arbitrary_types_allowed=True, validate_assignment=True
+            defer_build=True,
+            arbitrary_types_allowed=True,
+            validate_assignment=True,
         )
         version: Annotated[
             int,

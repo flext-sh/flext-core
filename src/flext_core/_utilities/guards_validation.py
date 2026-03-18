@@ -15,7 +15,9 @@ class FlextUtilitiesGuardsValidation:
             "^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
         )
         return FlextUtilitiesGuardsValidation.validate_pattern(
-            hostname, hostname_pattern, field_name
+            hostname,
+            hostname_pattern,
+            field_name,
         )
 
     @staticmethod
@@ -32,11 +34,11 @@ class FlextUtilitiesGuardsValidation:
             return r[T].fail(f"{field_name} length is invalid")
         if min_length is not None and length < min_length:
             return r[T].fail(
-                f"{field_name} must have at least {min_length} characters/items"
+                f"{field_name} must have at least {min_length} characters/items",
             )
         if max_length is not None and length > max_length:
             return r[T].fail(
-                f"{field_name} must have at most {max_length} characters/items"
+                f"{field_name} must have at most {max_length} characters/items",
             )
         return r[T].ok(value)
 
@@ -65,12 +67,15 @@ class FlextUtilitiesGuardsValidation:
     def validate_uri(uri: str, field_name: str = "uri") -> r[str]:
         uri_pattern = "^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\s]+$"
         return FlextUtilitiesGuardsValidation.validate_pattern(
-            uri, uri_pattern, field_name
+            uri,
+            uri_pattern,
+            field_name,
         )
 
     @staticmethod
     def validate_pydantic_model[T: BaseModel](
-        model_class: type[T], data: Mapping[str, t.NormalizedValue]
+        model_class: type[T],
+        data: Mapping[str, t.NormalizedValue],
     ) -> r[T]:
         try:
             validated = model_class.model_validate(data)

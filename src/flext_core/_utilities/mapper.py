@@ -48,7 +48,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_exclude_keys(
-        result: t.ContainerMapping, *, exclude_keys: set[str] | None
+        result: t.ContainerMapping,
+        *,
+        exclude_keys: set[str] | None,
     ) -> t.ContainerMapping:
         """Apply exclude keys step."""
         if exclude_keys:
@@ -60,7 +62,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_filter_keys(
-        result: t.ContainerMapping, *, filter_keys: set[str] | None
+        result: t.ContainerMapping,
+        *,
+        filter_keys: set[str] | None,
     ) -> t.ContainerMapping:
         """Apply filter keys step."""
         if filter_keys:
@@ -73,12 +77,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_map_keys(
-        result: t.ContainerMapping, *, map_keys: Mapping[str, str] | None
+        result: t.ContainerMapping,
+        *,
+        map_keys: Mapping[str, str] | None,
     ) -> t.ContainerMapping:
         """Apply map keys step."""
         if map_keys:
             mapped: r[t.ContainerMapping] = FlextUtilitiesMapper.map_dict_keys(
-                result, map_keys
+                result,
+                map_keys,
             )
             if mapped.is_success:
                 mapped_value: t.ContainerMapping = mapped.value
@@ -90,12 +97,14 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_normalize(
-        result: t.ContainerMapping, *, normalize: bool
+        result: t.ContainerMapping,
+        *,
+        normalize: bool,
     ) -> t.ContainerMapping:
         """Apply normalize step."""
         if normalize:
             normalized: t.NormalizedValue = FlextUtilitiesCache.normalize_component(
-                result
+                result,
             )
             if isinstance(normalized, Mapping):
                 normalized_result: dict[str, t.NormalizedValue] = {}
@@ -108,18 +117,23 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_empty(
-        result: t.ContainerMapping, *, strip_empty: bool
+        result: t.ContainerMapping,
+        *,
+        strip_empty: bool,
     ) -> t.ContainerMapping:
         """Apply strip empty step."""
         if strip_empty:
             return FlextUtilitiesMapper.filter_dict(
-                result, lambda _k, v: v not in ("", [], {}, None)
+                result,
+                lambda _k, v: v not in ("", [], {}, None),
             )
         return result
 
     @staticmethod
     def _apply_strip_none(
-        result: t.ContainerMapping, *, strip_none: bool
+        result: t.ContainerMapping,
+        *,
+        strip_none: bool,
     ) -> t.ContainerMapping:
         """Apply strip none step."""
         if strip_none:
@@ -141,10 +155,12 @@ class FlextUtilitiesMapper:
         result = FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
         result = FlextUtilitiesMapper._apply_map_keys(result, map_keys=map_keys)
         result = FlextUtilitiesMapper._apply_filter_keys(
-            result, filter_keys=filter_keys
+            result,
+            filter_keys=filter_keys,
         )
         result = FlextUtilitiesMapper._apply_exclude_keys(
-            result, exclude_keys=exclude_keys
+            result,
+            exclude_keys=exclude_keys,
         )
         result = FlextUtilitiesMapper._apply_strip_none(result, strip_none=strip_none)
         return FlextUtilitiesMapper._apply_strip_empty(result, strip_empty=strip_empty)
@@ -181,7 +197,8 @@ class FlextUtilitiesMapper:
         if "convert" not in ops:
             return current
         convert_func_result = FlextUtilitiesMapper._get_callable_from_dict(
-            ops, "convert"
+            ops,
+            "convert",
         )
         if convert_func_result.is_failure:
             return current
@@ -214,8 +231,8 @@ class FlextUtilitiesMapper:
                 t.NormalizedValue
             ].create_from_callable(
                 lambda: FlextUtilitiesMapper.narrow_to_container(
-                    convert_callable_raw(value)
-                )
+                    convert_callable_raw(value),
+                ),
             )
             if converted_result.is_success:
                 result_val: t.NormalizedValue = converted_result.value
@@ -320,7 +337,8 @@ class FlextUtilitiesMapper:
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
             return FlextUtilitiesMapper.filter_dict(
-                current_dict, lambda _k, v: bool(filter_pred(v))
+                current_dict,
+                lambda _k, v: bool(filter_pred(v)),
             )
         return default if not bool(filter_pred(current)) else current
 
@@ -358,7 +376,8 @@ class FlextUtilitiesMapper:
             return grouped
         if callable(group_spec_raw):
             group_callable_result = FlextUtilitiesMapper._get_callable_from_dict(
-                ops, "group"
+                ops,
+                "group",
             )
             if group_callable_result.is_failure:
                 return current
@@ -366,7 +385,7 @@ class FlextUtilitiesMapper:
             grouped_callable: dict[str, t.ContainerList] = {}
             for item in current_list:
                 key_result = r[t.NormalizedValue].create_from_callable(
-                    partial(group_callable, item)
+                    partial(group_callable, item),
                 )
                 if key_result.is_failure:
                     continue
@@ -394,7 +413,7 @@ class FlextUtilitiesMapper:
             seq_current: Sequence[t.NormalizedValue] = current
             return [
                 FlextUtilitiesMapper.narrow_to_container(
-                    map_callable(FlextUtilitiesMapper.narrow_to_container(x))
+                    map_callable(FlextUtilitiesMapper.narrow_to_container(x)),
                 )
                 for x in seq_current
             ]
@@ -429,7 +448,7 @@ class FlextUtilitiesMapper:
                     result.append(
                         x_general.lower()
                         if normalize_case == "lower"
-                        else x_general.upper()
+                        else x_general.upper(),
                     )
                 else:
                     result.append(x_general)
@@ -447,7 +466,8 @@ class FlextUtilitiesMapper:
         if "process" not in ops:
             return current
         process_func_result = FlextUtilitiesMapper._get_callable_from_dict(
-            ops, "process"
+            ops,
+            "process",
         )
         if process_func_result.is_failure:
             return current
@@ -458,7 +478,7 @@ class FlextUtilitiesMapper:
                 seq_current: Sequence[t.NormalizedValue] = current
                 return [
                     FlextUtilitiesMapper.narrow_to_container(
-                        process_callable(FlextUtilitiesMapper.narrow_to_container(x))
+                        process_callable(FlextUtilitiesMapper.narrow_to_container(x)),
                     )
                     for x in seq_current
                 ]
@@ -472,7 +492,7 @@ class FlextUtilitiesMapper:
                 }
             current_general = FlextUtilitiesMapper.narrow_to_container(current)
             return FlextUtilitiesMapper.narrow_to_container(
-                process_callable(current_general)
+                process_callable(current_general),
             )
 
         process_result: r[t.NormalizedValue] = r[
@@ -555,7 +575,8 @@ class FlextUtilitiesMapper:
             )
         if callable(sort_spec_raw):
             sort_callable_result = FlextUtilitiesMapper._get_callable_from_dict(
-                ops, "sort"
+                ops,
+                "sort",
             )
             if sort_callable_result.is_failure:
                 return current
@@ -565,7 +586,7 @@ class FlextUtilitiesMapper:
                 return str(sort_callable(item))
 
             sorted_result = r[t.ContainerList].create_from_callable(
-                lambda: sorted(current_list, key=sort_key)
+                lambda: sorted(current_list, key=sort_key),
             )
             if sorted_result.is_failure:
                 return current
@@ -580,7 +601,7 @@ class FlextUtilitiesMapper:
                 FlextUtilitiesMapper.narrow_to_container(
                     item
                     if FlextUtilitiesGuardsTypeCore.is_primitive(item) or item is None
-                    else str(item)
+                    else str(item),
                 )
                 for item in current_list
             ]
@@ -599,7 +620,8 @@ class FlextUtilitiesMapper:
     ) -> t.NormalizedValue:
         """Helper: Apply transform operation."""
         if "transform" not in ops or not FlextUtilitiesGuards.is_type(
-            current, "mapping"
+            current,
+            "mapping",
         ):
             return current
         transform_opts_val = ops["transform"]
@@ -609,7 +631,7 @@ class FlextUtilitiesMapper:
         if not isinstance(transform_opts_raw, Mapping):
             return current
         transform_opts = FlextUtilitiesMapper._narrow_to_configuration_dict(
-            FlextUtilitiesMapper.narrow_to_container(transform_opts_raw)
+            FlextUtilitiesMapper.narrow_to_container(transform_opts_raw),
         )
         (
             normalize_bool,
@@ -631,7 +653,7 @@ class FlextUtilitiesMapper:
                 exclude_keys=exclude_keys_set,
                 strip_none=strip_none_bool,
                 strip_empty=strip_empty_bool,
-            )
+            ),
         )
         if transform_result.is_failure:
             if on_error == "stop":
@@ -727,7 +749,7 @@ class FlextUtilitiesMapper:
                 return r[t.NormalizedValue].fail(f"found_none:{key_part}")
             if FlextUtilitiesGuards.is_container(attr_val):
                 return r[t.NormalizedValue].ok(
-                    FlextUtilitiesMapper.narrow_to_container(attr_val)
+                    FlextUtilitiesMapper.narrow_to_container(attr_val),
                 )
             return r[t.NormalizedValue].ok(str(attr_val))
         if isinstance(current, BaseModel):
@@ -743,7 +765,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_handle_array_index(
-        current: t.NormalizedValue, array_match: str
+        current: t.NormalizedValue,
+        array_match: str,
     ) -> r[t.NormalizedValue]:
         """Helper: Handle array indexing with support for negative indices.
 
@@ -825,7 +848,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_callable_from_dict(
-        ops: Mapping[str, t.MapperInput], key: str
+        ops: Mapping[str, t.MapperInput],
+        key: str,
     ) -> r[t.MapperCallable]:
         value: t.MapperInput = ops.get(key)
         if callable(value):
@@ -834,7 +858,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_raw(
-        data: p.AccessibleData, key: str, *, default: t.NormalizedValue = None
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
         """Internal helper for raw get without DSL conversion."""
         match data:
@@ -875,7 +902,7 @@ class FlextUtilitiesMapper:
             normalized_dict: dict[str, t.NormalizedValue] = {}
             for key, item in value.items():
                 normalized_dict[str(key)] = FlextUtilitiesMapper.narrow_to_container(
-                    item
+                    item,
                 )
             return normalized_dict
         error_msg = f"Cannot narrow {value.__class__.__name__} to ConfigurationDict"
@@ -890,10 +917,10 @@ class FlextUtilitiesMapper:
             return value
         if isinstance(value, Mapping):
             narrowed_dict: dict[str, t.ValueOrModel] = dict(
-                FlextUtilitiesMapper._narrow_to_configuration_dict(value)
+                FlextUtilitiesMapper._narrow_to_configuration_dict(value),
             )
             coerced_result = r[t.ConfigMap].create_from_callable(
-                lambda: t.ConfigMap(root=narrowed_dict)
+                lambda: t.ConfigMap(root=narrowed_dict),
             )
             if coerced_result.is_success:
                 val: t.ConfigMap = coerced_result.value
@@ -996,7 +1023,8 @@ class FlextUtilitiesMapper:
             for item in items_list:
                 if isinstance(item, BaseModel):
                     val_raw = FlextUtilitiesMapper._extract_field_value(
-                        item, field_name
+                        item,
+                        field_name,
                     )
                 elif hasattr(item, "__getitem__") and hasattr(item, "__contains__"):
                     # Extract from mapping-like via attribute access
@@ -1194,10 +1222,16 @@ class FlextUtilitiesMapper:
         current = FlextUtilitiesMapper._build_apply_normalize(current, ops)
         current = FlextUtilitiesMapper._build_apply_convert(current, ops)
         current = FlextUtilitiesMapper._build_apply_transform(
-            current, ops, default_val, on_error
+            current,
+            ops,
+            default_val,
+            on_error,
         )
         current = FlextUtilitiesMapper._build_apply_process(
-            current, ops, default_val, on_error
+            current,
+            ops,
+            default_val,
+            on_error,
         )
         current = FlextUtilitiesMapper._build_apply_group(current, ops)
         current = FlextUtilitiesMapper._build_apply_sort(current, ops)
@@ -1250,7 +1284,7 @@ class FlextUtilitiesMapper:
         flags_result = r[Mapping[str, bool]].create_from_callable(_build_flags)
         return flags_result.fold(
             on_failure=lambda e: r[Mapping[str, bool]].fail(
-                f"Failed to build flags dict: {e}"
+                f"Failed to build flags dict: {e}",
             ),
             on_success=lambda _: flags_result,
         )
@@ -1287,7 +1321,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def collect_active_keys(
-        source: Mapping[str, bool], key_mapping: Mapping[str, str]
+        source: Mapping[str, bool],
+        key_mapping: Mapping[str, str],
     ) -> r[list[str]]:
         """Collect list of output keys where source value is True.
 
@@ -1318,7 +1353,7 @@ class FlextUtilitiesMapper:
         active_keys_result = r[list[str]].create_from_callable(_collect_keys)
         return active_keys_result.fold(
             on_failure=lambda e: r[list[str]].fail(
-                f"Failed to collect active keys: {e}"
+                f"Failed to collect active keys: {e}",
             ),
             on_success=lambda _: active_keys_result,
         )
@@ -1396,7 +1431,10 @@ class FlextUtilitiesMapper:
                     constructed[target_key] = field_default
                     continue
                 extracted_result = FlextUtilitiesMapper.extract(
-                    source, source_field, default=field_default, required=False
+                    source,
+                    source_field,
+                    default=field_default,
+                    required=False,
                 )
                 extracted_raw = (
                     extracted_result.value
@@ -1406,7 +1444,8 @@ class FlextUtilitiesMapper:
                 if field_ops is not None and extracted_raw is not None:
                     if isinstance(field_ops, Mapping):
                         extracted = FlextUtilitiesMapper.build(
-                            extracted_raw, ops=dict(field_ops)
+                            extracted_raw,
+                            ops=dict(field_ops),
                         )
                     else:
                         extracted = extracted_raw
@@ -1414,7 +1453,7 @@ class FlextUtilitiesMapper:
                     extracted = extracted_raw
                 final_value: t.NormalizedValue = (
                     FlextUtilitiesMapper.narrow_to_container(
-                        extracted if extracted is not None else field_default
+                        extracted if extracted is not None else field_default,
                     )
                 )
                 constructed[target_key] = final_value
@@ -1494,7 +1533,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def ensure_str_list(
-        value: t.NormalizedValue, default: list[str] | None = None
+        value: t.NormalizedValue,
+        default: list[str] | None = None,
     ) -> list[str]:
         """Ensure value is a list of strings, converting if needed.
 
@@ -1628,15 +1668,15 @@ class FlextUtilitiesMapper:
                 if current is None:
                     if required:
                         return r[t.NormalizedValue].fail(
-                            f"Path '{separator.join(parts[:i])}' is None"
+                            f"Path '{separator.join(parts[:i])}' is None",
                         )
                     if default is None:
                         return r[t.NormalizedValue].fail(
-                            f"Path '{separator.join(parts[:i])}' is None and default is None"
+                            f"Path '{separator.join(parts[:i])}' is None and default is None",
                         )
                     return r[t.NormalizedValue].ok(default)
                 key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
-                    part
+                    part,
                 )
                 get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
                 if get_result.is_failure:
@@ -1647,18 +1687,19 @@ class FlextUtilitiesMapper:
                         path_context = separator.join(parts[:i])
                         if required:
                             return r[t.NormalizedValue].fail(
-                                f"Key '{key_part}' not found at '{path_context}'"
+                                f"Key '{key_part}' not found at '{path_context}'",
                             )
                         if default is None:
                             return r[t.NormalizedValue].fail(
-                                f"Key '{key_part}' not found at '{path_context}' and default is None"
+                                f"Key '{key_part}' not found at '{path_context}' and default is None",
                             )
                         return r[t.NormalizedValue].ok(default)
                 else:
                     current = get_result.value
                 if array_match and current is not None:
                     index_result = FlextUtilitiesMapper._extract_handle_array_index(
-                        current, array_match
+                        current,
+                        array_match,
                     )
                     if index_result.is_failure:
                         error_str = index_result.error or ""
@@ -1667,11 +1708,11 @@ class FlextUtilitiesMapper:
                         else:
                             if required:
                                 return r[t.NormalizedValue].fail(
-                                    f"Array error at '{key_part}': {index_result.error}"
+                                    f"Array error at '{key_part}': {index_result.error}",
                                 )
                             if default is None:
                                 return r[t.NormalizedValue].fail(
-                                    f"Array error at '{key_part}': {index_result.error} and default is None"
+                                    f"Array error at '{key_part}': {index_result.error} and default is None",
                                 )
                             return r[t.NormalizedValue].ok(default)
                     else:
@@ -1681,12 +1722,12 @@ class FlextUtilitiesMapper:
                     return r[t.NormalizedValue].fail("Extracted value is None")
                 if default is None:
                     return r[t.NormalizedValue].fail(
-                        "Extracted value is None and default is None"
+                        "Extracted value is None and default is None",
                     )
                 return r[t.NormalizedValue].ok(default)
             if FlextUtilitiesGuards.is_container(current):
                 return r[t.NormalizedValue].ok(
-                    FlextUtilitiesMapper.narrow_to_container(current)
+                    FlextUtilitiesMapper.narrow_to_container(current),
                 )
             return r[t.NormalizedValue].ok(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
@@ -1784,11 +1825,11 @@ class FlextUtilitiesMapper:
                     if isinstance(obj, Mapping):
                         if name in obj:
                             result[name] = FlextUtilitiesMapper.narrow_to_container(
-                                obj[name]
+                                obj[name],
                             )
                         elif isinstance(field_config, Mapping):
                             default_value = field_config.get(
-                                c.Mixins.IDENTIFIER_DEFAULT
+                                c.Mixins.IDENTIFIER_DEFAULT,
                             )
                             if default_value is not None:
                                 result[name] = default_value
@@ -1796,7 +1837,7 @@ class FlextUtilitiesMapper:
                             result[name] = field_config
                     elif hasattr(obj, name):
                         result[name] = FlextUtilitiesMapper.narrow_to_container(
-                            getattr(obj, name)
+                            getattr(obj, name),
                         )
                     elif isinstance(field_config, Mapping):
                         default_value = field_config.get(c.Mixins.IDENTIFIER_DEFAULT)
@@ -1807,11 +1848,11 @@ class FlextUtilitiesMapper:
                 if isinstance(obj, Mapping):
                     if field_name in obj:
                         result[field_name] = FlextUtilitiesMapper.narrow_to_container(
-                            obj[field_name]
+                            obj[field_name],
                         )
                 elif hasattr(obj, field_name):
                     result[field_name] = FlextUtilitiesMapper.narrow_to_container(
-                        getattr(obj, field_name)
+                        getattr(obj, field_name),
                     )
         return result
 
@@ -1874,7 +1915,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def find_callable[T](
-        callables: Mapping[str, Callable[[T], bool]], value: T
+        callables: Mapping[str, Callable[[T], bool]],
+        value: T,
     ) -> r[str]:
         """Find first matching callable key from dict of predicates.
 
@@ -1910,7 +1952,7 @@ class FlextUtilitiesMapper:
 
         for name, predicate in callables.items():
             predicate_result = r[bool].create_from_callable(
-                build_predicate_call(predicate)
+                build_predicate_call(predicate),
             )
             if predicate_result.is_success and predicate_result.value:
                 return r[str].ok(name)
@@ -1939,7 +1981,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def get(
-        data: p.AccessibleData, key: str, *, default: t.NormalizedValue = None
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
         """Unified get function for dict/object access with default.
 
@@ -1974,7 +2019,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def invert_dict(
-        source: Mapping[str, str], *, handle_collisions: str = "last"
+        source: Mapping[str, str],
+        *,
+        handle_collisions: str = "last",
     ) -> Mapping[str, str]:
         """Invert dict mapping (values become keys, keys become values).
 
@@ -2069,7 +2116,7 @@ class FlextUtilitiesMapper:
         mapped_result = r[t.ContainerMapping].create_from_callable(_map_keys)
         return mapped_result.fold(
             on_failure=lambda e: r[t.ContainerMapping].fail(
-                f"Failed to map dict keys: {e}"
+                f"Failed to map dict keys: {e}",
             ),
             on_success=lambda _: mapped_result,
         )
@@ -2190,7 +2237,7 @@ class FlextUtilitiesMapper:
         """
         field_overrides_config: t.ContainerMapping = {
             k: FlextUtilitiesMapper.narrow_to_container(
-                FlextRuntime.normalize_to_container(v)
+                FlextRuntime.normalize_to_container(v),
             )
             for k, v in specific_fields.items()
         }
@@ -2199,7 +2246,7 @@ class FlextUtilitiesMapper:
             primary_data=context,
             secondary_data=extra_kwargs,
             transformer=lambda value: FlextUtilitiesMapper.narrow_to_container(
-                FlextRuntime.normalize_to_metadata(value)
+                FlextRuntime.normalize_to_metadata(value),
             ),
             field_overrides=field_overrides_config,
             merge_strategy="merge",
@@ -2256,7 +2303,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def pick(
-        data: p.AccessibleData, *keys: str, as_dict: bool = True
+        data: p.AccessibleData,
+        *keys: str,
+        as_dict: bool = True,
     ) -> t.ContainerMapping | t.ContainerList:
         """Pick multiple fields at once (mnemonic: pick = select fields).
 
@@ -2394,7 +2443,8 @@ class FlextUtilitiesMapper:
             else:
                 primary_general = FlextUtilitiesMapper.narrow_to_container(primary_data)
                 if FlextRuntime.is_dict_like(primary_general) and isinstance(
-                    primary_general, Mapping
+                    primary_general,
+                    Mapping,
                 ):
                     primary_source = {
                         str(key): item_value
@@ -2406,7 +2456,8 @@ class FlextUtilitiesMapper:
                     for key, value in primary_source.items()
                 }
                 transformed_primary = FlextUtilitiesMapper.transform_values(
-                    primary_dict, transformer
+                    primary_dict,
+                    transformer,
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
@@ -2418,10 +2469,11 @@ class FlextUtilitiesMapper:
                 }
             else:
                 secondary_general = FlextUtilitiesMapper.narrow_to_container(
-                    secondary_data
+                    secondary_data,
                 )
                 if FlextRuntime.is_dict_like(secondary_general) and isinstance(
-                    secondary_general, Mapping
+                    secondary_general,
+                    Mapping,
                 ):
                     secondary_source = {
                         str(key): item_value
@@ -2433,7 +2485,8 @@ class FlextUtilitiesMapper:
                     for key, value in secondary_source.items()
                 }
                 transformed_secondary = FlextUtilitiesMapper.transform_values(
-                    secondary_dict, transformer
+                    secondary_dict,
+                    transformer,
                 )
                 if merge_strategy == "secondary_only":
                     result = dict(transformed_secondary)
@@ -2445,13 +2498,16 @@ class FlextUtilitiesMapper:
                 result[key] = transformed_value
         if filter_keys:
             result = dict(
-                FlextUtilitiesMapper.filter_dict(result, lambda k, _v: k in filter_keys)
+                FlextUtilitiesMapper.filter_dict(
+                    result, lambda k, _v: k in filter_keys
+                ),
             )
         if exclude_keys:
             result = dict(
                 FlextUtilitiesMapper.filter_dict(
-                    result, lambda k, _v: k not in exclude_keys
-                )
+                    result,
+                    lambda k, _v: k not in exclude_keys,
+                ),
             )
         return result
 
@@ -2568,7 +2624,8 @@ class FlextUtilitiesMapper:
         """
         if isinstance(key_or_n, str):
             if isinstance(
-                data_or_items, Mapping
+                data_or_items,
+                Mapping,
             ) and FlextUtilitiesGuards.is_configuration_mapping(data_or_items):
                 data: p.AccessibleData = data_or_items
             elif isinstance(data_or_items, BaseModel):
@@ -2590,7 +2647,7 @@ class FlextUtilitiesMapper:
         if isinstance(data_or_items, (list, tuple)):
             items_list: t.ContainerList = [
                 FlextUtilitiesMapper.narrow_to_container(
-                    FlextUtilitiesMapper.narrow_to_container(item)
+                    FlextUtilitiesMapper.narrow_to_container(item),
                 )
                 for item in data_or_items
             ]
@@ -2645,7 +2702,7 @@ class FlextUtilitiesMapper:
                 exclude_keys=exclude_keys,
                 strip_none=strip_none,
                 strip_empty=strip_empty,
-            )
+            ),
         )
         return transform_result.fold(
             on_failure=lambda e: r[t.ContainerMapping].fail(f"Transform failed: {e}"),

@@ -6,11 +6,41 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Final
 
 
 class FlextConstantsBase:
     """Constants for root and foundational values."""
+
+    class CommonStatus(StrEnum):
+        ACTIVE = "active"
+        INACTIVE = "inactive"
+        PENDING = "pending"
+        RUNNING = "running"
+        COMPLETED = "completed"
+        FAILED = "failed"
+        CANCELLED = "cancelled"
+        COMPENSATING = "compensating"
+        ARCHIVED = "archived"
+
+    class ErrorType(StrEnum):
+        VALIDATION = "validation"
+        CONFIGURATION = "configuration"
+        OPERATION = "operation"
+        CONNECTION = "connection"
+        TIMEOUT = "timeout"
+        AUTHORIZATION = "authorization"
+        AUTHENTICATION = "authentication"
+        NOT_FOUND = "not_found"
+        ATTRIBUTE_ACCESS = "attribute_access"
+        CONFLICT = "conflict"
+        RATE_LIMIT = "rate_limit"
+        CIRCUIT_BREAKER = "circuit_breaker"
+        TYPE_ERROR = "type_error"
+        VALUE_ERROR = "value_error"
+        RUNTIME_ERROR = "runtime_error"
+        SYSTEM_ERROR = "system_error"
 
     NAME: Final[str] = "FLEXT"
     INITIAL_TIME: Final[float] = 0.0

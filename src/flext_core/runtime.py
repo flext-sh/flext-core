@@ -77,7 +77,14 @@ from pydantic import (
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
-from flext_core import T, c, p, t
+from flext_core._typings.generics import T
+from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextProtocols
+from flext_core.typings import FlextTypes
+
+c = FlextConstants
+p = FlextProtocols
+t = FlextTypes
 from flext_core._models import FlextModelFoundation
 from flext_core._models.result import FlextModelsResult
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore
@@ -201,14 +208,18 @@ class FlextRuntime:
             self._stream_encoding: str = getattr(stream, "encoding", "utf-8")
             self._stream_errors: str | None = getattr(stream, "errors", None)
             self._stream_newlines: str | tuple[str, ...] | None = getattr(
-                stream, "newlines", None
+                stream,
+                "newlines",
+                None,
             )
             self.queue: queue.Queue[str | None] = queue.Queue(
-                maxsize=c.Logging.ASYNC_QUEUE_SIZE
+                maxsize=c.Logging.ASYNC_QUEUE_SIZE,
             )
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
-                target=self._worker, daemon=True, name="flext-async-log-writer"
+                target=self._worker,
+                daemon=True,
+                name="flext-async-log-writer",
             )
             self.thread.start()
             _ = atexit.register(self.shutdown)
@@ -280,7 +291,8 @@ class FlextRuntime:
                     continue
                 except (OSError, ValueError, TypeError) as exc:
                     self._writer_log.warning(
-                        "Async log writer stream operation failed", exc_info=exc
+                        "Async log writer stream operation failed",
+                        exc_info=exc,
                     )
                     with contextlib.suppress(OSError, ValueError, TypeError):
                         _ = self.stream.write("Error in async log writer\n")
@@ -542,7 +554,7 @@ class FlextRuntime:
             if type_hint in {list, tuple, str}:
                 return True
             if isinstance(type_hint, type) and FlextRuntime._is_sequence_type_class(
-                type_hint
+                type_hint,
             ):
                 return True
             if isinstance(type_hint, type) and getattr(type_hint, "__name__", "") in {
@@ -646,7 +658,7 @@ class FlextRuntime:
             ):
                 return {
                     str(inner_key): _to_plain_container(
-                        FlextRuntime.normalize_to_container(inner_value)
+                        FlextRuntime.normalize_to_container(inner_value),
                     )
                     for inner_key, inner_value in value.root.items()
                 }
@@ -848,7 +860,10 @@ class FlextRuntime:
             if factories:
                 for name, factory in factories.items():
                     _ = cls.register_factory(
-                        di_container, name, factory, cache=factory_cache
+                        di_container,
+                        name,
+                        factory,
+                        cache=factory_cache,
                     )
             if resources:
                 for name, resource_factory in resources.items():
@@ -864,7 +879,8 @@ class FlextRuntime:
 
         @classmethod
         def create_layered_bridge(
-            cls, config: t.ConfigMap | None = None
+            cls,
+            config: t.ConfigMap | None = None,
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -948,7 +964,9 @@ class FlextRuntime:
 
         @staticmethod
         def register_object(
-            di_container: containers.DynamicContainer, name: str, instance: T
+            di_container: containers.DynamicContainer,
+            name: str,
+            instance: T,
         ) -> providers.Provider[T]:
             """Register a concrete instance using ``providers.Object``.
 
@@ -1009,7 +1027,9 @@ class FlextRuntime:
                         modules_to_wire.append(module)
             _ = packages
             wiring.wire(
-                modules=modules_to_wire or None, packages=None, container=container
+                modules=modules_to_wire or None,
+                packages=None,
+                container=container,
             )
 
     @classmethod
@@ -1055,16 +1075,22 @@ class FlextRuntime:
             log_level = getattr(config, "log_level", log_level)
             console_renderer = getattr(config, "console_renderer", console_renderer)
             additional_processors_from_config = getattr(
-                config, "additional_processors", None
+                config,
+                "additional_processors",
+                None,
             )
             if additional_processors_from_config:
                 additional_processors = additional_processors_from_config
             wrapper_class_factory = getattr(
-                config, "wrapper_class_factory", wrapper_class_factory
+                config,
+                "wrapper_class_factory",
+                wrapper_class_factory,
             )
             logger_factory = getattr(config, "logger_factory", logger_factory)
             cache_logger_on_first_use = getattr(
-                config, "cache_logger_on_first_use", cache_logger_on_first_use
+                config,
+                "cache_logger_on_first_use",
+                cache_logger_on_first_use,
             )
             async_logging = getattr(config, "async_logging", True)
         if cls._structlog_configured:
@@ -1250,7 +1276,8 @@ class FlextRuntime:
                     required_level_name = parts[2]
                     actual_key = parts[3]
                     required_level = level_hierarchy.get(
-                        required_level_name.lower(), 10
+                        required_level_name.lower(),
+                        10,
                     )
                     if current_level >= required_level:
                         filtered_dict[actual_key] = value
@@ -1311,7 +1338,7 @@ class FlextRuntime:
             _ = structlog.contextvars.bind_contextvars(service_name=service_name)
             if service_version:
                 _ = structlog.contextvars.bind_contextvars(
-                    service_version=service_version
+                    service_version=service_version,
                 )
             if enable_context_correlation:
                 alphabet = string.ascii_letters + string.digits
@@ -1319,7 +1346,7 @@ class FlextRuntime:
                     f"flext-{''.join(secrets.choice(alphabet) for _ in range(12))}"
                 )
                 _ = structlog.contextvars.bind_contextvars(
-                    correlation_id=correlation_id
+                    correlation_id=correlation_id,
                 )
             logger = structlog.get_logger(__name__)
             logger.info(
@@ -1417,7 +1444,8 @@ class FlextRuntime:
                 }
             except (TypeError, ValueError, AttributeError, RuntimeError) as exc:
                 logging.getLogger(__name__).debug(
-                    "Failed to convert mapping context to string dict", exc_info=exc
+                    "Failed to convert mapping context to string dict",
+                    exc_info=exc,
                 )
                 parsed_context = {}
             context_dict = t.ConfigMap(parsed_context)
@@ -1470,7 +1498,8 @@ class FlextRuntime:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.RuntimeData, obj_b: t.RuntimeData
+        obj_a: t.RuntimeData,
+        obj_b: t.RuntimeData,
     ) -> bool:
         """Compare value objects by their values (all attributes)."""
         if FlextRuntime._is_scalar(obj_a):
@@ -1522,7 +1551,7 @@ class FlextRuntime:
         return int(
             getattr(logging, default_log_level)
             if hasattr(logging, default_log_level)
-            else logging.INFO
+            else logging.INFO,
         )
 
     @staticmethod
@@ -1576,7 +1605,7 @@ class FlextRuntime:
                 validated_codes.append(code_int)
             except ValueError:
                 return FlextRuntime.RuntimeResult[list[int]].fail(
-                    f"Cannot convert to integer: {code}"
+                    f"Cannot convert to integer: {code}",
                 )
         return FlextRuntime.RuntimeResult[list[int]].ok(validated_codes)
 

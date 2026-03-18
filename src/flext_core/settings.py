@@ -60,7 +60,8 @@ class FlextSettings(BaseSettings, FlextRuntime):
 
     app_name: Annotated[str, Field(default="flext", description="Application name")]
     version: Annotated[
-        str, Field(default=__version__, description="Application version")
+        str,
+        Field(default=__version__, description="Application version"),
     ]
     debug: Annotated[bool, Field(default=False, description="Enable debug mode")]
     trace: Annotated[bool, Field(default=False, description="Enable trace mode")]
@@ -80,15 +81,18 @@ class FlextSettings(BaseSettings, FlextRuntime):
         Field(default=c.Settings.DEFAULT_ENABLE_CACHING, description="Enable caching"),
     ]
     cache_ttl: Annotated[
-        int, Field(default=c.Defaults.CACHE_TTL, description="Cache TTL")
+        int,
+        Field(default=c.Defaults.CACHE_TTL, description="Cache TTL"),
     ]
     database_url: Annotated[
-        str, Field(default=c.Defaults.DATABASE_URL, description="Database URL")
+        str,
+        Field(default=c.Defaults.DATABASE_URL, description="Database URL"),
     ]
     database_pool_size: Annotated[
         int,
         Field(
-            default=c.Performance.DEFAULT_DB_POOL_SIZE, description="Database pool size"
+            default=c.Performance.DEFAULT_DB_POOL_SIZE,
+            description="Database pool size",
         ),
     ]
     circuit_breaker_threshold: Annotated[
@@ -115,17 +119,20 @@ class FlextSettings(BaseSettings, FlextRuntime):
     retry_delay: Annotated[
         int,
         Field(
-            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS, description="Retry delay"
+            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+            description="Retry delay",
         ),
     ]
     max_retry_attempts: Annotated[
         int,
         Field(
-            default=c.Reliability.MAX_RETRY_ATTEMPTS, description="Max retry attempts"
+            default=c.Reliability.MAX_RETRY_ATTEMPTS,
+            description="Max retry attempts",
         ),
     ]
     enable_timeout_executor: Annotated[
-        bool, Field(default=True, description="Enable timeout executor")
+        bool,
+        Field(default=True, description="Enable timeout executor"),
     ]
     dispatcher_enable_logging: Annotated[
         bool,
@@ -156,16 +163,20 @@ class FlextSettings(BaseSettings, FlextRuntime):
         ),
     ]
     executor_workers: Annotated[
-        int, Field(default=c.Container.DEFAULT_WORKERS, description="Executor workers")
+        int,
+        Field(default=c.Container.DEFAULT_WORKERS, description="Executor workers"),
     ]
     timeout_seconds: Annotated[
-        float, Field(default=c.Network.DEFAULT_TIMEOUT, description="Default timeout")
+        float,
+        Field(default=c.Network.DEFAULT_TIMEOUT, description="Default timeout"),
     ]
     max_workers: Annotated[
-        int, Field(default=c.Processing.DEFAULT_MAX_WORKERS, description="Max workers")
+        int,
+        Field(default=c.Processing.DEFAULT_MAX_WORKERS, description="Max workers"),
     ]
     max_batch_size: Annotated[
-        int, Field(default=c.Performance.MAX_BATCH_SIZE, description="Max batch size")
+        int,
+        Field(default=c.Performance.MAX_BATCH_SIZE, description="Max batch size"),
     ]
     api_key: Annotated[str | None, Field(default=None, description="API key")]
     exception_failure_level: Annotated[
@@ -260,7 +271,9 @@ class FlextSettings(BaseSettings, FlextRuntime):
         return instance
 
     def apply_override(
-        self, key: str, value: t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar]
+        self,
+        key: str,
+        value: t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar],
     ) -> bool:
         """Validate and apply a configuration override.
 
@@ -339,7 +352,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
                 for key, value in self._namespace_registry.items():
                     key_normalized = u.normalize_alnum(key)
                     if normalized == key_normalized or normalized.startswith(
-                        key_normalized
+                        key_normalized,
                     ):
                         namespace_key = key
                         config_class = value
@@ -454,7 +467,9 @@ class FlextSettings(BaseSettings, FlextRuntime):
         return decorator
 
     def get_namespace(
-        self, namespace: str, config_type: type[T_Namespace]
+        self,
+        namespace: str,
+        config_type: type[T_Namespace],
     ) -> T_Namespace:
         """Get configuration instance for a namespace.
 

@@ -84,7 +84,7 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Pagination",
                 "description": "Pagination model for query results with computed fields",
-            }
+            },
         )
         page: Annotated[
             int,
@@ -207,7 +207,7 @@ class FlextModelsCqrs:
         ) -> TypeAdapter[BaseModel | t.Dict | Mapping[str, t.Scalar] | None]:
             if cls._pagination_input_adapter is None:
                 cls._pagination_input_adapter = TypeAdapter(
-                    FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.Scalar] | None
+                    FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.Scalar] | None,
                 )
             return cls._pagination_input_adapter
 
@@ -229,7 +229,7 @@ class FlextModelsCqrs:
                     else pagination_cls.model_validate(parsed_input.model_dump())
                     if isinstance(parsed_input, FlextModelsCqrs.Pagination)
                     else pagination_cls.model_validate(dict(parsed_input))
-                )
+                ),
             )
             if validate_result.is_failure:
                 return pagination_cls()
@@ -242,7 +242,7 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Dispatcher",
                 "description": "CQRS dispatcher configuration",
-            }
+            },
         )
         enable_middleware: Annotated[
             bool,
@@ -286,7 +286,7 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Handler",
                 "description": "CQRS handler configuration",
-            }
+            },
         )
         handler_id: Annotated[str, Field(description="Unique handler identifier")]
         handler_name: Annotated[str, Field(description="Human-readable handler name")]
@@ -368,7 +368,7 @@ class FlextModelsCqrs:
                         "command_timeout": c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
                         "max_command_retries": c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
                         c.Mixins.FIELD_METADATA: None,
-                    }
+                    },
                 )
 
             def build(self) -> FlextModelsCqrs.Handler:
@@ -464,7 +464,8 @@ class FlextModelsCqrs:
         ]
 
     type FlextMessage = Annotated[
-        Command | Query | Event, Discriminator("message_type")
+        Command | Query | Event,
+        Discriminator("message_type"),
     ]
 
     @staticmethod

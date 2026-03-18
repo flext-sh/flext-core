@@ -11,7 +11,7 @@ import pytest
 from flext_tests import tm
 from pydantic import BaseModel
 
-from flext_core import r
+from flext_core import m as core_m, r
 from tests import c, m, t, u
 
 from ._models import TestUnitModels
@@ -267,17 +267,17 @@ def test_guard_in_has_empty_none_helpers() -> None:
 
 
 def test_chk_exercises_missed_branches() -> None:
-    tm.that(not u.chk(1, none=True), eq=True)
-    tm.that(not u.chk(None, none=False), eq=True)
-    tm.that(not u.chk("a", is_=int), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(none=True)), eq=True)
+    tm.that(not u.chk(None, core_m.GuardCheckSpec(none=False)), eq=True)
+    tm.that(not u.chk("a", core_m.GuardCheckSpec(is_=int)), eq=True)
     with pytest.raises(TypeError):
-        u.chk("a", is_=list[int])
+        u.chk("a", core_m.GuardCheckSpec(is_=list[int]))
     with pytest.raises(TypeError):
-        u.chk("a", not_=list[int])
-    tm.that(not u.chk("a", not_=str), eq=True)
-    tm.that(not u.chk(1, eq=2), eq=True)
-    tm.that(not u.chk(1, ne=1), eq=True)
-    tm.that(not u.chk(1, in_=[2, 3]), eq=True)
+        u.chk("a", core_m.GuardCheckSpec(not_=list[int]))
+    tm.that(not u.chk("a", core_m.GuardCheckSpec(not_=str)), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(eq=2)), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(ne=1)), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(in_=[2, 3])), eq=True)
 
 
 def test_guards_bool_shortcut_and_issubclass_typeerror(
@@ -301,23 +301,23 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
     tm.that(not _is_type_obj(cast("t.Tests.object", _SomeType), "handler"), eq=True)
-    tm.that(not u.chk(1, not_in=[1, 2]), eq=True)
-    tm.that(not u.chk(1, gt=1), eq=True)
-    tm.that(not u.chk(1, gte=2), eq=True)
-    tm.that(not u.chk(1, lt=1), eq=True)
-    tm.that(not u.chk(2, lte=1), eq=True)
-    tm.that(not u.chk(1, empty=True), eq=True)
-    tm.that(not u.chk("", empty=False), eq=True)
-    tm.that(not u.chk("abc", starts="z"), eq=True)
-    tm.that(not u.chk("abc", ends="z"), eq=True)
-    tm.that(not u.chk("abc", match="\\d+"), eq=True)
-    tm.that(not u.chk("abc", contains="z"), eq=True)
-    tm.that(not u.chk({"k": "v"}, contains="x"), eq=True)
-    tm.that(not u.chk(["k"], contains="x"), eq=True)
-    tm.that(not u.chk("abc", contains="x"), eq=True)
-    tm.that(u.chk("abc", contains=1), eq=True)
-    tm.that(u.chk("abc", gte=3, lte=3), eq=True)
-    tm.that(u.chk("", empty=True), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(not_in=[1, 2])), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(gt=1)), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(gte=2)), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(lt=1)), eq=True)
+    tm.that(not u.chk(2, core_m.GuardCheckSpec(lte=1)), eq=True)
+    tm.that(not u.chk(1, core_m.GuardCheckSpec(empty=True)), eq=True)
+    tm.that(not u.chk("", core_m.GuardCheckSpec(empty=False)), eq=True)
+    tm.that(not u.chk("abc", core_m.GuardCheckSpec(starts="z")), eq=True)
+    tm.that(not u.chk("abc", core_m.GuardCheckSpec(ends="z")), eq=True)
+    tm.that(not u.chk("abc", core_m.GuardCheckSpec(match="\\d+")), eq=True)
+    tm.that(not u.chk("abc", core_m.GuardCheckSpec(contains="z")), eq=True)
+    tm.that(not u.chk({"k": "v"}, core_m.GuardCheckSpec(contains="x")), eq=True)
+    tm.that(not u.chk(["k"], core_m.GuardCheckSpec(contains="x")), eq=True)
+    tm.that(not u.chk("abc", core_m.GuardCheckSpec(contains="x")), eq=True)
+    tm.that(u.chk("abc", core_m.GuardCheckSpec(contains=1)), eq=True)
+    tm.that(u.chk("abc", core_m.GuardCheckSpec(gte=3, lte=3)), eq=True)
+    tm.that(u.chk("", core_m.GuardCheckSpec(empty=True)), eq=True)
 
 
 def test_guard_instance_attribute_access_warnings() -> None:

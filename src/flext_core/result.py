@@ -67,10 +67,11 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                     is_success=True,
                     error_data=validated_error_data,
                 )
-                setattr(self, "_result", source)
-                setattr(self, "_payload", source.unwrap())
+                self._result = source
+                self._payload = source.unwrap()
                 self.result_logger.debug(
-                    "Result source is success path during initialization", exc_info=exc
+                    "Result source is success path during initialization",
+                    exc_info=exc,
                 )
                 return
             super().__init__(
@@ -79,7 +80,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 is_success=False,
                 error_data=validated_error_data,
             )
-            setattr(self, "_result", source)
+            self._result = source
             return
         super().__init__(
             error=error,
@@ -87,18 +88,18 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             is_success=is_success,
             error_data=validated_error_data,
         )
-        setattr(self, "_result", source)
+        self._result = source
         if value is not None and is_success:
-            setattr(self, "_payload", value)
+            self._payload = value
 
     @property
     def _returns_result(self) -> Result[T, str]:
         """Access the internal returns library Result[T, str] for advanced operations."""
         if self._result is None:
             if self.is_success:
-                setattr(self, "_result", Success(self.value))
+                self._result = Success(self.value)
             else:
-                setattr(self, "_result", Failure(self.error or ""))
+                self._result = Failure(self.error or "")
         result = self._result
         if result is None:
             msg = "Internal result wrapper was not initialized"
@@ -107,7 +108,10 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @classmethod
     def _fail_like[S](
-        cls, source: FlextRuntime.RuntimeResult[S], *, default_error: str = ""
+        cls,
+        source: FlextRuntime.RuntimeResult[S],
+        *,
+        default_error: str = "",
     ) -> FlextResult[S]:
         if source.is_success:
             msg = "Cannot mirror failure from successful result"
@@ -121,7 +125,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @classmethod
     def _from_runtime_result[U](
-        cls, source: FlextRuntime.RuntimeResult[U]
+        cls,
+        source: FlextRuntime.RuntimeResult[U],
     ) -> FlextResult[U]:
         if source.is_success:
             return FlextResult[U].ok(source.value)
@@ -151,10 +156,13 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             Exception,
         ) as e:
             logging.getLogger(__name__).debug(
-                f"{failure_prefix} during model validation", exc_info=e
+                "%s during model validation",
+                failure_prefix,
+                exc_info=e,
             )
             return FlextResult[UModel].fail(
-                f"{failure_prefix}: {cls._model_error_message(e)}", exception=e
+                f"{failure_prefix}: {cls._model_error_message(e)}",
+                exception=e,
             )
 
     @classmethod
@@ -173,14 +181,17 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @classmethod
     def create_from_callable[V](
-        cls, func: Callable[[], V | None], error_code: str | None = None
+        cls,
+        func: Callable[[], V | None],
+        error_code: str | None = None,
     ) -> FlextResult[V]:
         """Create result from callable, catching exceptions."""
         try:
             value = func()
             if value is None:
                 return FlextResult[V].fail(
-                    "Callable returned None", error_code=error_code
+                    "Callable returned None",
+                    error_code=error_code,
                 )
             return FlextResult[V].ok(value)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
@@ -228,8 +239,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             error=error_msg,
             is_success=False,
         )
-        setattr(result, "_result", Failure(error_msg))
-        setattr(result, "_exception", exception)
+        result._result = Failure(error_msg)
+        result._exception = exception
         return result
 
     @classmethod
@@ -267,7 +278,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
         """
         result = FlextResult[U](value=value, is_success=True)
-        setattr(result, "_result", Success(value))
+        result._result = Success(value)
         return result
 
     @classmethod
@@ -373,7 +384,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 ArithmeticError,
             ) as e:
                 logging.getLogger(__name__).debug(
-                    "FlextResult.safe callable failed", exc_info=e
+                    "FlextResult.safe callable failed",
+                    exc_info=e,
                 )
                 return FlextResult[U].fail(str(e), exception=e)
 
@@ -409,7 +421,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @override
     def flat_map[U](
-        self, func: Callable[[T], FlextRuntime.RuntimeResult[U]]
+        self,
+        func: Callable[[T], FlextRuntime.RuntimeResult[U]],
     ) -> FlextResult[U]:
         """Chain operations returning FlextResult.
 
@@ -438,7 +451,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @override
     def flow_through[U](
-        self, *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]]
+        self,
+        *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]],
     ) -> FlextResult[T] | FlextResult[U]:
         """Chain multiple operations in a pipeline.
 
@@ -467,7 +481,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 if result_value is not None:
                     inner: FlextRuntime.RuntimeResult[U] = func(result_value)
                     converted: FlextResult[U] = FlextResult[U]._from_runtime_result(
-                        inner
+                        inner,
                     )
                     current = converted
                 else:
@@ -478,7 +492,9 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @override
     def fold[U](
-        self, on_failure: Callable[[str], U], on_success: Callable[[T], U]
+        self,
+        on_failure: Callable[[str], U],
+        on_success: Callable[[T], U],
     ) -> U:
         """Catamorphism - reduce result to a single value.
 
@@ -515,7 +531,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @override
     def lash(
-        self, func: Callable[[str], FlextRuntime.RuntimeResult[T]]
+        self,
+        func: Callable[[str], FlextRuntime.RuntimeResult[T]],
     ) -> FlextResult[T]:
         """Apply recovery function on failure.
 
@@ -550,10 +567,10 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
                 self.result_logger.debug("FlextResult.map callable failed", exc_info=e)
                 result = FlextResult[U](error=str(e), is_success=False)
-                setattr(result, "_exception", e)
+                result._exception = e
                 return result
         result = FlextResult[U](error=self.error or "", is_success=False)
-        setattr(result, "_exception", self._exception)
+        result._exception = self._exception
         return result
 
     @override
@@ -676,7 +693,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             Exception,
         ) as e:
             logging.getLogger(__name__).debug(
-                "Model conversion failed during model validation", exc_info=e
+                "Model conversion failed during model validation",
+                exc_info=e,
             )
             return FlextResult[U].fail(
                 f"Model conversion failed: {self._model_error_message(e)}",

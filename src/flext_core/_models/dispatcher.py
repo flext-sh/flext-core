@@ -29,17 +29,20 @@ class FlextModelsDispatcher:
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
         use_timeout_executor: bool = Field(
-            description="Whether timeout executor is enabled"
+            description="Whether timeout executor is enabled",
         )
         executor_workers: int = Field(
-            description="Number of worker threads for timeout executor"
+            description="Number of worker threads for timeout executor",
         )
         _executor: concurrent.futures.ThreadPoolExecutor | None = PrivateAttr(
-            default=None
+            default=None,
         )
 
         def __init__(
-            self, *, use_timeout_executor: bool, executor_workers: int
+            self,
+            *,
+            use_timeout_executor: bool,
+            executor_workers: int,
         ) -> None:
             """Initialize the timeout coordinator.
 
@@ -58,7 +61,8 @@ class FlextModelsDispatcher:
         @override
         def model_post_init(self, __context: object, /) -> None:
             self.executor_workers = max(
-                self.executor_workers, c.Reliability.RETRY_COUNT_MIN
+                self.executor_workers,
+                c.Reliability.RETRY_COUNT_MIN,
             )
 
         def cleanup(self) -> None:
@@ -127,33 +131,36 @@ class FlextModelsDispatcher:
 
         threshold: int = Field(description="Failure count before opening circuit")
         recovery_timeout: float = Field(
-            description="Seconds before attempting recovery"
+            description="Seconds before attempting recovery",
         )
         success_threshold: int = Field(
-            description="Successes needed to close from half-open"
+            description="Successes needed to close from half-open",
         )
         _failures: dict[str, int] = PrivateAttr(
-            default_factory=lambda: dict[str, int]()
+            default_factory=lambda: dict[str, int](),
         )
         _states: dict[str, str] = PrivateAttr(default_factory=lambda: dict[str, str]())
         _opened_at: dict[str, float] = PrivateAttr(
-            default_factory=lambda: dict[str, float]()
+            default_factory=lambda: dict[str, float](),
         )
         _success_counts: dict[str, int] = PrivateAttr(
-            default_factory=lambda: dict[str, int]()
+            default_factory=lambda: dict[str, int](),
         )
         _recovery_successes: dict[str, int] = PrivateAttr(
-            default_factory=lambda: dict[str, int]()
+            default_factory=lambda: dict[str, int](),
         )
         _recovery_failures: dict[str, int] = PrivateAttr(
-            default_factory=lambda: dict[str, int]()
+            default_factory=lambda: dict[str, int](),
         )
         _total_successes: dict[str, int] = PrivateAttr(
-            default_factory=lambda: dict[str, int]()
+            default_factory=lambda: dict[str, int](),
         )
 
         def __init__(
-            self, threshold: int, recovery_timeout: float, success_threshold: int
+            self,
+            threshold: int,
+            recovery_timeout: float,
+            success_threshold: int,
         ) -> None:
             """Initialize circuit breaker manager.
 
@@ -195,7 +202,7 @@ class FlextModelsDispatcher:
                             "message_type": message_type,
                             "state": self.get_state(message_type),
                             "failure_count": self.get_failure_count(message_type),
-                        }
+                        },
                     ),
                 )
             return r[bool].ok(value=True)
@@ -271,7 +278,8 @@ class FlextModelsDispatcher:
 
             """
             return self._states.get(
-                message_type, c.Reliability.CircuitBreakerState.CLOSED
+                message_type,
+                c.Reliability.CircuitBreakerState.CLOSED,
             )
 
         def get_threshold(self) -> int:
@@ -329,19 +337,22 @@ class FlextModelsDispatcher:
         def transition_to_closed(self, message_type: str) -> None:
             """Transition to CLOSED state."""
             self.transition_to_state(
-                message_type, c.Reliability.CircuitBreakerState.CLOSED
+                message_type,
+                c.Reliability.CircuitBreakerState.CLOSED,
             )
 
         def transition_to_half_open(self, message_type: str) -> None:
             """Transition to HALF_OPEN state."""
             self.transition_to_state(
-                message_type, c.Reliability.CircuitBreakerState.HALF_OPEN
+                message_type,
+                c.Reliability.CircuitBreakerState.HALF_OPEN,
             )
 
         def transition_to_open(self, message_type: str) -> None:
             """Transition to OPEN state."""
             self.transition_to_state(
-                message_type, c.Reliability.CircuitBreakerState.OPEN
+                message_type,
+                c.Reliability.CircuitBreakerState.OPEN,
             )
 
         def transition_to_state(self, message_type: str, new_state: str) -> None:
@@ -365,18 +376,21 @@ class FlextModelsDispatcher:
 
         max_requests: int = Field(description="Maximum requests allowed per window")
         window_seconds: float = Field(
-            description="Time window in seconds for rate limiting"
+            description="Time window in seconds for rate limiting",
         )
         jitter_factor: float = Field(
             default=0.1,
             description="Jitter variance as fraction between 0.0 and 1.0",
         )
         _windows: dict[str, tuple[float, int]] = PrivateAttr(
-            default_factory=lambda: dict[str, tuple[float, int]]()
+            default_factory=lambda: dict[str, tuple[float, int]](),
         )
 
         def __init__(
-            self, max_requests: int, window_seconds: float, jitter_factor: float = 0.1
+            self,
+            max_requests: int,
+            window_seconds: float,
+            jitter_factor: float = 0.1,
         ) -> None:
             """Initialize rate limiter manager.
 
@@ -421,7 +435,7 @@ class FlextModelsDispatcher:
                             "window_seconds": self.window_seconds,
                             "current_count": count,
                             "retry_after": retry_after,
-                        }
+                        },
                     ),
                 )
             self._windows[message_type] = (window_start, count + 1)
@@ -460,10 +474,10 @@ class FlextModelsDispatcher:
 
         max_attempts: int = Field(description="Maximum retry attempts allowed")
         retry_delay: float = Field(
-            description="Base delay in seconds between retry attempts"
+            description="Base delay in seconds between retry attempts",
         )
         _attempts: dict[str, int] = PrivateAttr(
-            default_factory=lambda: dict[str, int]()
+            default_factory=lambda: dict[str, int](),
         )
         _exponential_factor: float = PrivateAttr(default=2.0)
         _max_delay: float = PrivateAttr(default=c.Reliability.DEFAULT_MAX_DELAY_SECONDS)

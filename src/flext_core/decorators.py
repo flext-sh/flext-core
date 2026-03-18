@@ -406,7 +406,9 @@ class FlextDecorators:
 
     @staticmethod
     def log_operation(
-        operation_name: str | None = None, *, track_perf: bool = False
+        operation_name: str | None = None,
+        *,
+        track_perf: bool = False,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically log operation execution with structured logging.
 
@@ -731,7 +733,8 @@ class FlextDecorators:
                     retry_args: tuple[t.ValueOrModel, ...] = tuple(
                         FlextRuntime.normalize_to_container(a)
                         if isinstance(
-                            a, (str, int, float, bool, datetime, Path, BaseModel)
+                            a,
+                            (str, int, float, bool, datetime, Path, BaseModel),
                         )
                         else str(a)
                         if a is not None
@@ -758,7 +761,11 @@ class FlextDecorators:
                     )
                     if isinstance(retry_result, Exception):
                         FlextDecorators._handle_retry_exhaustion(
-                            retry_result, retry_func, attempts, error_code, logger
+                            retry_result,
+                            retry_func,
+                            attempts,
+                            error_code,
+                            logger,
                         )
                     return retry_result
                 except (
@@ -769,7 +776,11 @@ class FlextDecorators:
                     KeyError,
                 ) as exc:
                     FlextDecorators._handle_retry_exhaustion(
-                        exc, retry_func, attempts, error_code, logger
+                        exc,
+                        retry_func,
+                        attempts,
+                        error_code,
+                        logger,
                     )
 
             return wrapper
@@ -799,7 +810,8 @@ class FlextDecorators:
                 correlation_id = current_id
         FlextContext.Request.set_operation_name(operation)
         binding_result = FlextLogger.bind_context(
-            c.Context.SCOPE_OPERATION, operation=operation
+            c.Context.SCOPE_OPERATION,
+            operation=operation,
         )
         if binding_result.is_failure:
             logger.warning(
@@ -814,7 +826,10 @@ class FlextDecorators:
 
     @staticmethod
     def _clear_operation_scope(
-        *, logger: p.Logger, function_name: str, operation: str
+        *,
+        logger: p.Logger,
+        function_name: str,
+        operation: str,
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
         clear_result = FlextLogger.clear_scope(c.Context.SCOPE_OPERATION)
@@ -828,8 +843,8 @@ class FlextDecorators:
                         "extra": {
                             "function": function_name,
                             c.Cqrs.HandlerType.OPERATION: operation,
-                        }
-                    }
+                        },
+                    },
                 ),
             )
 
@@ -918,7 +933,7 @@ class FlextDecorators:
             if isinstance(logger, FlextLogger):
                 fallback_logger = logger.logger
             elif hasattr(logger, "logger"):
-                candidate_logger = getattr(logger, "logger")
+                candidate_logger = logger.logger
                 if isinstance(candidate_logger, p.Logger):
                     fallback_logger = candidate_logger
             if fallback_logger is None:
@@ -937,7 +952,8 @@ class FlextDecorators:
                         }
                     for extra_key, extra_value in extra_items.items():
                         if isinstance(
-                            extra_value, (str, int, float, bool, datetime, Path)
+                            extra_value,
+                            (str, int, float, bool, datetime, Path),
                         ):
                             warning_context[f"extra_{extra_key}"] = extra_value
                         else:
@@ -1096,7 +1112,8 @@ class FlextDecorators:
                 if inject_deps:
                     result = FlextDecorators.inject(**inject_deps)(result)
                 return FlextDecorators.log_operation(
-                    operation_name=operation_name, track_perf=track_perf
+                    operation_name=operation_name,
+                    track_perf=track_perf,
                 )(result)
 
             return railway_decorator
@@ -1106,14 +1123,18 @@ class FlextDecorators:
             if inject_deps:
                 result = FlextDecorators.inject(**inject_deps)(result)
             return FlextDecorators.log_operation(
-                operation_name=operation_name, track_perf=track_perf
+                operation_name=operation_name,
+                track_perf=track_perf,
             )(result)
 
         return standard_decorator
 
     @staticmethod
     def factory(
-        name: str, *, singleton: bool = False, lazy: bool = True
+        name: str,
+        *,
+        singleton: bool = False,
+        lazy: bool = True,
     ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
         """Decorator to mark functions as factories for DI container.
 
@@ -1145,7 +1166,8 @@ class FlextDecorators:
 
     @staticmethod
     def timeout(
-        timeout_seconds: float | None = None, error_code: str | None = None
+        timeout_seconds: float | None = None,
+        error_code: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
@@ -1235,7 +1257,9 @@ class FlextDecorators:
 
     @staticmethod
     def track_operation(
-        operation_name: str | None = None, *, track_correlation: bool = True
+        operation_name: str | None = None,
+        *,
+        track_correlation: bool = True,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to track operation execution with FlextRuntime.Integration.
 
@@ -1370,7 +1394,7 @@ class FlextDecorators:
                 finally:
                     if context_vars:
                         unbind_result = FlextLogger.unbind_global_context(
-                            *tuple(context_vars.keys())
+                            *tuple(context_vars.keys()),
                         )
                         if unbind_result.is_failure:
                             logger.warning(

@@ -48,7 +48,7 @@ class FlextModelsContext:
             return out
         if isinstance(v, Mapping):
             validated = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                v
+                v,
             )
             return dict(validated)
         if isinstance(v, BaseModel):
@@ -67,8 +67,8 @@ class FlextModelsContext:
         if isinstance(v, Mapping):
             return FlextModelFoundation.Metadata.model_validate({
                 c.Mixins.FIELD_ATTRIBUTES: FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                    v
-                )
+                    v,
+                ),
             })
         return v
 
@@ -115,7 +115,7 @@ class FlextModelsContext:
                 normalized_mapping = dict(v)
             working_value = {
                 str(k): FlextModelsContext.ContextData.normalize_to_serializable_value(
-                    val
+                    val,
                 )
                 for k, val in normalized_mapping.items()
             }
@@ -220,7 +220,7 @@ class FlextModelsContext:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
                 _ = structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value
+                    token.key: token.previous_value,
                 })
 
         def get(self) -> t.ValueOrModel | None:
@@ -261,7 +261,8 @@ class FlextModelsContext:
                 structlog.contextvars.unbind_contextvars(self._key)
             prev_value: t.ValueOrModel | None = current_value
             return FlextModelsContext.StructlogProxyToken(
-                key=self._key, previous_value=prev_value
+                key=self._key,
+                previous_value=prev_value,
             )
 
     class Token(FlextModelsEntity.Value):
@@ -367,11 +368,12 @@ class FlextModelsContext:
 
         @classmethod
         def normalize_to_serializable_value(
-            cls, val: t.ValueOrModel
+            cls,
+            val: t.ValueOrModel,
         ) -> t.NormalizedValue:
             normalized = cls.normalize_to_container(val)
             if normalized is None or FlextUtilitiesGuardsTypeCore.is_primitive(
-                normalized
+                normalized,
             ):
                 return normalized
             if isinstance(
@@ -390,7 +392,7 @@ class FlextModelsContext:
                 }
             if isinstance(normalized, Mapping):
                 normalized_map = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                    normalized
+                    normalized,
                 )
                 return {
                     str(key): cls.normalize_to_serializable_value(val)
@@ -469,7 +471,7 @@ class FlextModelsContext:
         statistics: Annotated[
             Mapping[str, t.NormalizedValue],
             BeforeValidator(
-                lambda v: FlextModelsContext._normalize_statistics_before(v)
+                lambda v: FlextModelsContext._normalize_statistics_before(v),
             ),
             Field(
                 default_factory=dict,
@@ -520,7 +522,8 @@ class FlextModelsContext:
             ),
         ] = ""
         scope_type: Annotated[
-            str, Field(default="", description="Type/category of scope")
+            str,
+            Field(default="", description="Type/category of scope"),
         ] = ""
         data: Annotated[
             Mapping[str, t.ValueOrModel],
@@ -623,7 +626,8 @@ class FlextModelsContext:
         """
 
         user_id: Annotated[
-            str | None, Field(default=None, description="Associated user ID")
+            str | None,
+            Field(default=None, description="Associated user ID"),
         ] = None
         correlation_id: Annotated[
             str | None,
@@ -640,13 +644,16 @@ class FlextModelsContext:
             ),
         ] = None
         request_id: Annotated[
-            str | None, Field(default=None, description="HTTP request identifier")
+            str | None,
+            Field(default=None, description="HTTP request identifier"),
         ] = None
         session_id: Annotated[
-            str | None, Field(default=None, description="User session identifier")
+            str | None,
+            Field(default=None, description="User session identifier"),
         ] = None
         tenant_id: Annotated[
-            str | None, Field(default=None, description="Tenant/Organization ID")
+            str | None,
+            Field(default=None, description="Tenant/Organization ID"),
         ] = None
         handler_mode: Annotated[
             str | None,
@@ -657,7 +664,8 @@ class FlextModelsContext:
             Field(default=None, description="Type of message being processed"),
         ] = None
         message_id: Annotated[
-            str | None, Field(default=None, description="Unique message identifier")
+            str | None,
+            Field(default=None, description="Unique message identifier"),
         ] = None
         custom_fields: Annotated[
             Mapping[str, t.ValueOrModel],
@@ -687,10 +695,12 @@ class FlextModelsContext:
         """Domain-specific context data storage."""
 
         domain_name: Annotated[
-            str | None, Field(default=None, description="Domain name/identifier")
+            str | None,
+            Field(default=None, description="Domain name/identifier"),
         ] = None
         domain_type: Annotated[
-            str | None, Field(default=None, description="Type of domain")
+            str | None,
+            Field(default=None, description="Type of domain"),
         ] = None
         domain_data: Annotated[
             Mapping[str, t.ValueOrModel],

@@ -102,7 +102,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             self._config_model = config
         else:
             self._config_model = m.Handler(
-                handler_id=f"handler_{id(self)}", handler_name=self.__class__.__name__
+                handler_id=f"handler_{id(self)}",
+                handler_name=self.__class__.__name__,
             )
         handler_type = self._config_model.handler_mode
         valid_handler_types = {
@@ -260,7 +261,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             resolved_type = handler_type
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler")
-            or "unknown_handler"
+            or "unknown_handler",
         )
         config = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",
@@ -318,7 +319,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             """
             if not hasattr(func, c.Discovery.HANDLER_ATTR):
                 config = m.DecoratorConfig(
-                    command=command, priority=priority, timeout=timeout, middleware=[]
+                    command=command,
+                    priority=priority,
+                    timeout=timeout,
+                    middleware=[],
                 )
                 if middleware is not None:
                     config = config.model_copy(update={"middleware": list(middleware)})
@@ -445,13 +449,14 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 root={
                     "handler_name": popped.handler_name,
                     c.Mixins.FIELD_HANDLER_MODE: popped.handler_mode,
-                }
+                },
             )
             return r[t.ConfigMap].ok(context_dict)
         return r[t.ConfigMap].ok(popped)
 
     def push_context(
-        self, ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue]
+        self,
+        ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue],
     ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
@@ -464,7 +469,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             else c.Mixins.IDENTIFIER_UNKNOWN
         )
         handler_mode_raw = ctx.get(
-            c.Mixins.FIELD_HANDLER_MODE, c.Cqrs.HandlerType.OPERATION
+            c.Mixins.FIELD_HANDLER_MODE,
+            c.Cqrs.HandlerType.OPERATION,
         )
         handler_mode_str = (
             str(handler_mode_raw)
@@ -483,7 +489,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             else c.Cqrs.HandlerType.OPERATION
         )
         execution_ctx = m.ExecutionContext.create_for_handler(
-            handler_name=handler_name, handler_mode=handler_mode_literal
+            handler_name=handler_name,
+            handler_mode=handler_mode_literal,
         )
         self._stack.append(execution_ctx)
         return r[bool].ok(value=True)
@@ -525,7 +532,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         return r[bool].ok(value=True)
 
     def _record_execution_metrics(
-        self, *, success: bool, error: str | None = None
+        self,
+        *,
+        success: bool,
+        error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time_value = self._execution_context.execution_time_ms
@@ -561,7 +571,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         """
         handler_mode = getattr(
-            self._config_model.handler_mode, "value", self._config_model.handler_mode
+            self._config_model.handler_mode,
+            "value",
+            self._config_model.handler_mode,
         )
         valid_operations = {
             c.Dispatcher.HANDLER_MODE_COMMAND,
@@ -680,7 +692,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 method = getattr(target_class, name, None)
                 if hasattr(method, c.Discovery.HANDLER_ATTR):
                     config: m.DecoratorConfig = getattr(
-                        method, c.Discovery.HANDLER_ATTR
+                        method,
+                        c.Discovery.HANDLER_ATTR,
                     )
                     handlers.append((name, config))
             return sorted(handlers, key=lambda x: x[1].priority, reverse=True)
@@ -729,7 +742,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 def narrowed_func(
                     message: t.RuntimeAtomic,
                     captured_callable: Callable[
-                        ..., t.RuntimeAtomic | None
+                        ...,
+                        t.RuntimeAtomic | None,
                     ] = callable_func,
                     **kwargs: t.Scalar,
                 ) -> t.Scalar | None:

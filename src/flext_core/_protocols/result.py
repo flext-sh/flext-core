@@ -112,14 +112,17 @@ class FlextProtocolsResult:
 
         @classmethod
         def accumulate_errors[TItem](
-            cls, *results: FlextProtocolsResult.Result[TItem]
+            cls,
+            *results: FlextProtocolsResult.Result[TItem],
         ) -> FlextProtocolsResult.Result[Sequence[TItem]]:
             """Collect all successes, fail if any failure."""
             ...
 
         @classmethod
         def create_from_callable(
-            cls, func: Callable[[], T], error_code: str | None = None
+            cls,
+            func: Callable[[], T],
+            error_code: str | None = None,
         ) -> FlextProtocolsResult.Result[T]:
             """Create result from callable, catching exceptions."""
             ...
@@ -136,7 +139,8 @@ class FlextProtocolsResult:
             ...
 
         def filter(
-            self, predicate: Callable[[T], bool]
+            self,
+            predicate: Callable[[T], bool],
         ) -> FlextProtocolsResult.Result[T]:
             """Filter success value using predicate.
 
@@ -146,19 +150,22 @@ class FlextProtocolsResult:
             ...
 
         def flat_map[U](
-            self, func: Callable[[T], FlextProtocolsResult.Result[U]]
+            self,
+            func: Callable[[T], FlextProtocolsResult.Result[U]],
         ) -> FlextProtocolsResult.Result[U]:
             """Chain operations returning Result."""
             ...
 
         def flow_through[U](
-            self, *funcs: Callable[[T | U], FlextProtocolsResult.Result[U]]
+            self,
+            *funcs: Callable[[T | U], FlextProtocolsResult.Result[U]],
         ) -> FlextProtocolsResult.Result[U]:
             """Chain multiple operations in a pipeline."""
             ...
 
         def lash(
-            self, func: Callable[[str], FlextProtocolsResult.Result[T]]
+            self,
+            func: Callable[[str], FlextProtocolsResult.Result[T]],
         ) -> FlextProtocolsResult.Result[T]:
             """Apply recovery function on failure."""
             ...
@@ -168,7 +175,8 @@ class FlextProtocolsResult:
             ...
 
         def map_error(
-            self, func: Callable[[str], str]
+            self,
+            func: Callable[[str], str],
         ) -> FlextProtocolsResult.Result[T]:
             """Transform error message on failure.
 

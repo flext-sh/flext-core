@@ -46,7 +46,7 @@ from flext_core import (
 class FlextService[
     TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel] = t.NormalizedValue
     | BaseModel
-    | Sequence[t.ValueOrModel]
+    | Sequence[t.ValueOrModel],
 ](x, ABC):
     """Base class for domain services in FLEXT applications.
 
@@ -79,21 +79,26 @@ class FlextService[
     # --- Service Bootstrap Configuration ---
     config_type: type[FlextSettings] | None = None
     config_overrides: dict[str, t.NormalizedValue] | None = Field(
-        default=None, exclude=True
+        default=None,
+        exclude=True,
     )
     initial_context: p.Context | None = None
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, t.RegisterableService] | None = Field(
-        default=None, exclude=True
+        default=None,
+        exclude=True,
     )
     factories: Mapping[str, t.FactoryCallable] | None = Field(
-        default=None, exclude=True
+        default=None,
+        exclude=True,
     )
     resources: Mapping[str, t.ResourceCallable] | None = Field(
-        default=None, exclude=True
+        default=None,
+        exclude=True,
     )
     container_overrides: Mapping[str, t.Scalar] | None = Field(
-        default=None, exclude=True
+        default=None,
+        exclude=True,
     )
     wire_modules: Sequence[ModuleType] | None = Field(default=None, exclude=True)
     wire_packages: Sequence[str] | None = Field(default=None, exclude=True)
@@ -115,7 +120,8 @@ class FlextService[
         """
         runtime = self._create_initial_runtime()
         with FlextContext.create().Service.service_context(
-            self.__class__.__name__, runtime.config.version
+            self.__class__.__name__,
+            runtime.config.version,
         ):
             pass
 
@@ -148,7 +154,7 @@ class FlextService[
     _container: p.Container | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: list[tuple[str, m.DecoratorConfig]] = PrivateAttr(
-        default_factory=lambda: list[tuple[str, m.DecoratorConfig]]()
+        default_factory=lambda: list[tuple[str, m.DecoratorConfig]](),
     )
 
     @property
@@ -306,7 +312,9 @@ class FlextService[
             runtime_container.configure(container_overrides)
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire_modules(
-                modules=wire_modules, packages=wire_packages, classes=wire_classes
+                modules=wire_modules,
+                packages=wire_packages,
+                classes=wire_classes,
             )
         return m.ServiceRuntime(
             config=runtime_config,
@@ -330,7 +338,8 @@ class FlextService[
     @field_validator("services", mode="before")
     @classmethod
     def _normalize_scoped_services(
-        cls, services: Mapping[str, t.RegisterableService] | None
+        cls,
+        services: Mapping[str, t.RegisterableService] | None,
     ) -> Mapping[str, t.RegisterableService] | None:
         """Normalize and validate scoped services using Pydantic model."""
         if services is None:
@@ -399,7 +408,8 @@ class FlextService[
         if validation_result.is_failure:
             exc = getattr(validation_result, "_exception", None)
             self.logger.debug(
-                "Service business rule validation failed", exc_info=bool(exc)
+                "Service business rule validation failed",
+                exc_info=bool(exc),
             )
             return False
         return validation_result.value

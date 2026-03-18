@@ -42,7 +42,11 @@ class FlextProtocolsContext:
 
         @overload
         def set(
-            self, key_or_data: str, value: t.RuntimeAtomic, *, scope: str = ...
+            self,
+            key_or_data: str,
+            value: t.RuntimeAtomic,
+            *,
+            scope: str = ...,
         ) -> r[bool]: ...
 
         @overload
