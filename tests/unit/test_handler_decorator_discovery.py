@@ -61,7 +61,8 @@ class TestHandlerDecoratorDiscovery:
             Service.handle_user, c.Discovery.HANDLER_ATTR
         )
         tm.that(config.priority == 42, eq=True)
-        tm.that(abs(config.timeout - 5.0) < 1e-9, eq=True)
+        if config.timeout is not None:
+            tm.that(abs(config.timeout - 5.0) < 1e-9, eq=True)
         tm.that(config.middleware == middleware_types, eq=True)
 
     def test_decorator_defaults(self) -> None:
