@@ -9,11 +9,14 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import Protocol, TypeAliasType, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, TypeAliasType, runtime_checkable
 
 from pydantic import BaseModel
 
 from flext_core import FlextTypingBase, FlextTypingContainers
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 class FlextTypesServices:
@@ -74,6 +77,10 @@ class FlextTypesServices:
     type HandlerCallable = Callable[..., BaseModel | None]
     type HandlerLike = Callable[..., BaseModel]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
+    type LoggerFactory = Callable[[], p.Logger] | p.Logger | None
+    type StructlogProcessor = Callable[
+        ..., Mapping[str, FlextTypingBase.NormalizedValue]
+    ]
 
     # Other Types
     type SortableObjectType = str | int | float

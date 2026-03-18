@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 from flext_tests import t
+from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, r, t as core_t
 
@@ -51,7 +52,7 @@ class FunctionalExternalService:
             processed = f"processed_{input_data}"
             self.processed_items.append(processed)
             return r[str].ok(processed)
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             return r[str].fail(f"Processing failed: {e}")
 
     def get_call_count(self) -> int:
@@ -301,7 +302,7 @@ def assert_validates(
     try:
         instance = model_class(**{field_name: value})
         return getattr(instance, field_name)
-    except Exception as e:
+    except (ValidationError, ValueError, TypeError) as e:
         pytest.fail(f"Validation failed for {field_name}={value}: {e}")
 
 
@@ -332,7 +333,7 @@ def assert_rejects(
             f"Expected validation to fail for {field_name}={value}, but got: {getattr(instance, field_name)}",
             pytrace=False,
         )
-    except Exception as e:
+    except (ValidationError, ValueError, TypeError) as e:
         error_msg = str(e)
         if error_type and (not isinstance(e, error_type)):
             pytest.fail(

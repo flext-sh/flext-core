@@ -56,5 +56,14 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         | Pattern[str]
         | type
     )
+    type JsonValue = (
+        str
+        | int
+        | float
+        | bool
+        | None
+        | list[FlextTypesCore.JsonValue]
+        | dict[str, FlextTypesCore.JsonValue]
+    )
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, FlextTypingBase.Scalar]

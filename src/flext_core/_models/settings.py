@@ -573,7 +573,7 @@ class FlextModelsConfig:
             ),
         ] = True
         additional_processors: Annotated[
-            list[Callable[..., t.Container]],
+            list[t.StructlogProcessor],
             Field(
                 default_factory=list,
                 description="Optional extra processors after standard FLEXT processors",

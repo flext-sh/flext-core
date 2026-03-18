@@ -626,7 +626,7 @@ class FlextRuntime:
 
     @staticmethod
     def _is_structlog_processor(
-        value: t.RuntimeData,
+        value: object,
     ) -> TypeGuard[structlog.types.Processor]:
         return callable(value)
 
@@ -1085,7 +1085,7 @@ class FlextRuntime:
         config: BaseModel | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[t.Container] | None = None,
+        additional_processors: Sequence[t.StructlogProcessor] | None = None,
         wrapper_class_factory: Callable[[], type[p.Logger]] | None = None,
         logger_factory: Callable[[], p.Logger] | None = None,
         cache_logger_on_first_use: bool = True,
@@ -1165,19 +1165,16 @@ class FlextRuntime:
             wrapper_arg = wrapper_class_factory()
         else:
             wrapper_arg = module.make_filtering_bound_logger(level_to_use)
-        factory_to_use: Callable[..., object] | object | None
+        factory_to_use: t.LoggerFactory
         if logger_factory is not None:
             factory_to_use = logger_factory
         elif async_logging:
             if cls._async_writer is None:
                 cls._async_writer = cls._AsyncLogWriter(sys.stdout)
-            print_logger_factory_cls = getattr(module, "PrintLoggerFactory", None)
-            if print_logger_factory_cls is not None:
-                factory_to_use = print_logger_factory_cls(file=cls._async_writer)
-            else:
-                factory_to_use = module.PrintLoggerFactory()
+            _ = getattr(module, "PrintLoggerFactory", None)
+            factory_to_use = lambda: cls.get_logger()
         else:
-            factory_to_use = module.PrintLoggerFactory()
+            factory_to_use = lambda: cls.get_logger()
         configure_fn = module.configure if hasattr(module, "configure") else None
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
@@ -1194,7 +1191,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: list[t.Container] | None = None,
+        additional_processors: list[t.StructlogProcessor] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
