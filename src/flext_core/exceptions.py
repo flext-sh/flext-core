@@ -1326,6 +1326,9 @@ class FlextExceptions:
     class OperationError(BaseError):
         """Exception raised for general operation failures."""
 
+        operation: str | None
+        reason: str | None
+
         def __init__(
             self,
             message: str,
@@ -1354,6 +1357,9 @@ class FlextExceptions:
 
     class AttributeAccessError(BaseError):
         """Exception raised for attribute access errors."""
+
+        attribute_name: str | None
+        attribute_context: t.MetadataValue | None
 
         def __init__(
             self,

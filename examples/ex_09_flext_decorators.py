@@ -168,15 +168,19 @@ class Ex09FlextDecorators(Examples):
         )
         self.check("factory.custom.singleton", getattr(custom_cfg, "singleton", None))
         self.check("factory.custom.lazy", getattr(custom_cfg, "lazy", None))
+        default_result = factory_default(t.ConfigMap(root={}))
         self.check(
             "factory.default.call_matches",
-            factory_default(t.ConfigMap(root={})).model_dump().get("value")
-            == default_value,
+            default_result.model_dump().get("value") == default_value
+            if default_result is not None
+            else False,
         )
+        custom_result = factory_custom(t.ConfigMap(root={}))
         self.check(
             "factory.custom.call_matches",
-            factory_custom(t.ConfigMap(root={})).model_dump().get("value")
-            == custom_value,
+            custom_result.model_dump().get("value") == custom_value
+            if custom_result is not None
+            else False,
         )
 
     def _demo_inject(self) -> None:

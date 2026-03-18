@@ -117,7 +117,7 @@ class Teste:
 
     @pytest.mark.parametrize(
         "scenario",
-        BASE_SCENARIOS,
+        _BASE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_base_exception_scenarios(self, scenario: Teste.ExceptionScenario) -> None:
@@ -163,7 +163,7 @@ class Teste:
 
     @pytest.mark.parametrize(
         "scenario",
-        SPECIFIC_TYPE_SCENARIOS,
+        _SPECIFIC_TYPE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_specific_exception_types(self, scenario: Teste.ExceptionScenario) -> None:
@@ -324,7 +324,7 @@ class Teste:
 
     @pytest.mark.parametrize(
         "scenario",
-        FACTORY_SCENARIOS,
+        _FACTORY_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_factory_methods(self, scenario: Teste.ExceptionScenario) -> None:
@@ -358,7 +358,7 @@ class Teste:
 
     @pytest.mark.parametrize(
         "scenario",
-        TYPE_SCENARIOS,
+        _TYPE_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_exception_type_scenarios(

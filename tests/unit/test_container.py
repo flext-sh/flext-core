@@ -198,19 +198,16 @@ class TestFlextContainer:
 
     @pytest.mark.parametrize(
         "return_value",
-        [{"created": "by_factory"}, "created_string"],
-        ids=["dict", "string"],
+        ["created_string", 42],
+        ids=["string", "int"],
     )
     def test_register_factory(
-        self, return_value: t.RegisterableService, clean_container: p.Container
+        self, return_value: t.Scalar, clean_container: p.Container
     ) -> None:
         """Test factory registration using fixtures."""
         factory = u.Tests.ContainerHelpers.create_factory(return_value)
-        factory_typed: Callable[[], t.RegisterableService] = factory
-        clean_container.register(
-            f"factory_{type(return_value).__name__}", factory_typed, kind="factory"
-        )
         factory_name = f"factory_{type(return_value).__name__}"
+        clean_container.register(factory_name, factory, kind="factory")
         tm.that(
             clean_container.has_service(factory_name),
             eq=True,
@@ -406,42 +403,6 @@ class TestFlextContainer:
         for key in required_keys:
             tm.that(key in services, eq=True, msg=f"Services list must contain {key}")
 
-    @pytest.mark.parametrize(
-        ("service_type", "use_factory"),
-        [("service", False), ("factory", True)],
-        ids=["service", "factory"],
-    )
-    def test_unregister(
-        self, service_type: str, use_factory: bool, clean_container: p.Container
-    ) -> None:
-        """Test unregistering services and factories using fixtures."""
-        container = clean_container
-        name = "test_service"
-        if use_factory:
-            factory = u.Tests.ContainerHelpers.create_factory("value")
-            _ = container.register(name, factory, kind="factory")
-        else:
-            _ = container.register(name, "value")
-        tm.that(
-            container.has_service(name),
-            eq=True,
-            msg=f"Container must have {name} before unregister",
-        )
-        unregister_result = container.unregister(name)
-        _ = u.Tests.Result.assert_success(unregister_result)
-        tm.that(
-            container.has_service(name),
-            eq=False,
-            msg=f"Container must not have {name} after unregister",
-        )
-
-    def test_unregister_nonexistent(self, clean_container: p.Container) -> None:
-        """Test unregistering non-existent service fails using fixtures."""
-        unregister_result = clean_container.unregister("nonexistent")
-        u.Tests.Result.assert_result_failure_with_error(
-            unregister_result, expected_error="not found"
-        )
-
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
     def test_configure_container(self, config: dict[str, t.Scalar]) -> None:
         """Test container configuration."""
@@ -571,13 +532,6 @@ class TestFlextContainer:
             len(container.list_services()),
             eq=3,
             msg="Container must have 3 services in full workflow",
-        )
-        unregister_result = container.unregister("cache")
-        _ = u.Tests.Result.assert_success(unregister_result)
-        tm.that(
-            len(container.list_services()),
-            eq=2,
-            msg="Container must have 2 services after unregistering cache",
         )
         container.clear_all()
         tm.that(

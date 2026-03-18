@@ -74,7 +74,7 @@ class FlextProtocolsDI:
         def register(
             self,
             name: str,
-            impl: t.RegisterableService,
+            impl: object,
             *,
             kind: str = "service",
         ) -> Self:
