@@ -1,0 +1,74 @@
+src/flext_core/_models/result.py
+  9027e42e029f3d23 26
+src/flext_core/service.py
+  9027e42e029f3d23 254-266
+src/flext_core/loggings.py
+  9027e42e029f3d23 807-809,822,827-829,842,847-849,862,869,940-943,996-998,1001,1006-1008,1011,1017-1018,1032-1033,1049-1051,1053
+tests/unit/test_pagination_coverage_100.py
+  7e4bd68f4a321035 19,26-41,48-57,388-389,392,427-428,431,465-466,469
+src/flext_core/errors.py
+  41de24182e2f0106 1-11,13-19,21-88,90-132,134-148,150-196
+src/flext_core/_protocols/result.py
+  41de24182e2f0106 238
+src/flext_core/mixins.py
+  9027e42e029f3d23 204-205,207-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "dc12f2b488575a4f0573bd3020c8e87fa9d032c1",
+  "prompts": {
+    "0fb2d9539512fe80": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2feca499dffeo7Yde2XRqw4tW3",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 3,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "41de24182e2f0106": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fe7f911-8a72-4792-b2cb-f3c62ff8bbce",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 199,
+      "total_deletions": 10,
+      "accepted_lines": 192,
+      "overriden_lines": 2
+    },
+    "7e4bd68f4a321035": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2febe79e4ffeDXNStRSxM8Kvcu",
+        "model": "openai/gpt-5.3-codex"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 14,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    },
+    "9027e42e029f3d23": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fe9479fdffeeo4oN8TM96s1da",
+        "model": "openai/gpt-5.3-codex"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 59,
+      "total_deletions": 89,
+      "accepted_lines": 56,
+      "overriden_lines": 0
+    }
+  }
+}
