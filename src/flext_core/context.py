@@ -607,7 +607,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
     def merge(
         self,
-        other: FlextContext | t.ConfigMap | Mapping[str, t.NormalizedValue],
+        other: p.Context | t.ConfigMap | Mapping[str, t.NormalizedValue],
     ) -> Self:
         """Merge another context or dictionary into this context.
 

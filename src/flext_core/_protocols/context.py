@@ -10,6 +10,7 @@ from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
 from flext_core import t
@@ -111,10 +112,11 @@ class FlextProtocolsContext:
         def export(
             self,
             *,
-            include_metadata: bool = ...,
             include_statistics: bool = ...,
-        ) -> r[t.ConfigMap]:
-            """Export context state as serializable ConfigMap."""
+            include_metadata: bool = ...,
+            as_dict: bool = ...,
+        ) -> BaseModel | Mapping[str, t.NormalizedValue]:
+            """Export context state as serializable ConfigMap or dict."""
             ...
 
     @runtime_checkable

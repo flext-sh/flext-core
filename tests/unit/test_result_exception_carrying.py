@@ -11,11 +11,16 @@ from flext_core import r
 
 class TestResultExceptionCarrying:
     class BrokenSized:
+        """Sized object that raises on __len__."""
+
         def __len__(self) -> int:
+            """Raise TypeError on length call."""
             msg = "no length"
             raise TypeError(msg)
 
     class UserModel(BaseModel):
+        """User model for testing."""
+
         name: str
         age: int
 
