@@ -1172,9 +1172,9 @@ class FlextRuntime:
             if cls._async_writer is None:
                 cls._async_writer = cls._AsyncLogWriter(sys.stdout)
             _ = getattr(module, "PrintLoggerFactory", None)
-            factory_to_use = lambda name=None: cls.get_logger(name)
+            factory_to_use = None
         else:
-            factory_to_use = lambda name=None: cls.get_logger(name)
+            factory_to_use = None
         configure_fn = module.configure if hasattr(module, "configure") else None
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
