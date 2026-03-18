@@ -237,35 +237,42 @@ class FlextService[
         wire_classes = self.wire_classes or (
             bootstrap_opts.wire_classes if bootstrap_opts is not None else None
         )
+        config_type_for_options: type[FlextSettings] | None = (
+            config_type_val
+            if config_type_val is not None
+            and issubclass(config_type_val, FlextSettings)
+            else None
+        )
+        config_overrides_scalar: Mapping[str, t.Scalar] | None = None
+        if config_overrides is not None:
+            normalized_overrides: dict[str, t.Scalar] = {
+                key: value
+                for key, value in config_overrides.items()
+                if u.is_scalar(value)
+            }
+            config_overrides_scalar = normalized_overrides or None
+        runtime_options = m.RuntimeBootstrapOptions.model_validate({
+            "config_type": config_type_for_options,
+            "config_overrides": config_overrides_scalar,
+            "context": context_val,
+            "subproject": subproject,
+            "services": services,
+            "factories": factories,
+            "resources": resources,
+            "container_overrides": container_overrides,
+            "wire_modules": wire_modules,
+            "wire_packages": wire_packages,
+            "wire_classes": wire_classes,
+        })
         return self._create_runtime(
-            config_type=config_type_val,
-            config_overrides=config_overrides,
-            context=context_val,
-            subproject=subproject,
-            services=services,
-            factories=factories,
-            resources=resources,
-            container_overrides=container_overrides,
-            wire_modules=wire_modules,
-            wire_packages=wire_packages,
-            wire_classes=wire_classes,
+            runtime_options=runtime_options,
         )
 
     @classmethod
     def _create_runtime(
         cls,
-        *,
-        config_type: type[p.Settings] | None = None,
-        config_overrides: Mapping[str, t.NormalizedValue] | None = None,
-        context: p.Context | None = None,
-        subproject: str | None = None,
-        services: Mapping[str, t.RegisterableService] | None = None,
-        factories: Mapping[str, t.FactoryCallable] | None = None,
-        resources: Mapping[str, t.ResourceCallable] | None = None,
-        container_overrides: Mapping[str, t.Scalar] | None = None,
-        wire_modules: Sequence[ModuleType] | None = None,
-        wire_packages: Sequence[str] | None = None,
-        wire_classes: Sequence[type] | None = None,
+        runtime_options: m.RuntimeBootstrapOptions | None = None,
+        **runtime_kwargs: t.RuntimeData,
     ) -> m.ServiceRuntime:
         """Materialize config, context, and container with DI wiring in one call.
 
@@ -290,6 +297,88 @@ class FlextService[
         This method is called by :meth:`_create_initial_runtime` which uses
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
+        base_options = (
+            runtime_options
+            if runtime_options is not None
+            else m.RuntimeBootstrapOptions()
+        )
+        if runtime_kwargs:
+            override_options = m.RuntimeBootstrapOptions.model_validate(runtime_kwargs)
+            runtime_options = m.RuntimeBootstrapOptions(
+                config_type=(
+                    override_options.config_type
+                    if override_options.config_type is not None
+                    else base_options.config_type
+                ),
+                config_overrides=(
+                    override_options.config_overrides
+                    if override_options.config_overrides is not None
+                    else base_options.config_overrides
+                ),
+                context=(
+                    override_options.context
+                    if override_options.context is not None
+                    else base_options.context
+                ),
+                subproject=(
+                    override_options.subproject
+                    if override_options.subproject is not None
+                    else base_options.subproject
+                ),
+                services=(
+                    override_options.services
+                    if override_options.services is not None
+                    else base_options.services
+                ),
+                factories=(
+                    override_options.factories
+                    if override_options.factories is not None
+                    else base_options.factories
+                ),
+                resources=(
+                    override_options.resources
+                    if override_options.resources is not None
+                    else base_options.resources
+                ),
+                container_overrides=(
+                    override_options.container_overrides
+                    if override_options.container_overrides is not None
+                    else base_options.container_overrides
+                ),
+                wire_modules=(
+                    override_options.wire_modules
+                    if override_options.wire_modules is not None
+                    else base_options.wire_modules
+                ),
+                wire_packages=(
+                    override_options.wire_packages
+                    if override_options.wire_packages is not None
+                    else base_options.wire_packages
+                ),
+                wire_classes=(
+                    override_options.wire_classes
+                    if override_options.wire_classes is not None
+                    else base_options.wire_classes
+                ),
+            )
+        else:
+            runtime_options = base_options
+        config_type = runtime_options.config_type
+        config_overrides = runtime_options.config_overrides
+        context = runtime_options.context
+        subproject = runtime_options.subproject
+        services = runtime_options.services
+        factories = runtime_options.factories
+        resources = runtime_options.resources
+        container_overrides = runtime_options.container_overrides
+        raw_wire_modules = runtime_options.wire_modules
+        wire_modules: Sequence[ModuleType] | None = (
+            [module for module in raw_wire_modules if isinstance(module, ModuleType)]
+            if raw_wire_modules is not None
+            else None
+        )
+        wire_packages = runtime_options.wire_packages
+        wire_classes = runtime_options.wire_classes
         config_cls: type[FlextSettings] = (
             config_type
             if isinstance(config_type, type) and issubclass(config_type, FlextSettings)

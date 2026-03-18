@@ -27,6 +27,9 @@ class FlextProtocolsResult:
 
         Defined at root level to allow self-referencing in method signatures
         (e.g., `def map[U](...) -> FlextProtocolsResult.Result[U]`).
+
+        All methods enforce strict typing with explicit return types and
+        comprehensive error handling via structured error support.
         """
 
         @classmethod
@@ -77,12 +80,12 @@ class FlextProtocolsResult:
 
         @property
         def error_code(self) -> str | None:
-            """Error code for categorization."""
+            """Error code for categorization (structured error support)."""
             ...
 
         @property
         def error_data(self) -> t.ConfigMap | None:
-            """Error metadata (optional)."""
+            """Error metadata with structured error context (optional)."""
             ...
 
         @property
@@ -92,12 +95,12 @@ class FlextProtocolsResult:
 
         @property
         def is_failure(self) -> bool:
-            """Failure status."""
+            """Failure status (strict: not is_success)."""
             ...
 
         @property
         def is_success(self) -> bool:
-            """Success status."""
+            """Success status (strict: True only when operation succeeded)."""
             ...
 
         @property
@@ -107,7 +110,7 @@ class FlextProtocolsResult:
 
         @property
         def value(self) -> T:
-            """Result value (available on success, never None)."""
+            """Result value (available on success, strictly typed as T)."""
             ...
 
         @classmethod
@@ -115,7 +118,7 @@ class FlextProtocolsResult:
             cls,
             *results: FlextProtocolsResult.Result[TItem],
         ) -> FlextProtocolsResult.Result[Sequence[TItem]]:
-            """Collect all successes, fail if any failure."""
+            """Collect all successes, fail if any failure with combined errors."""
             ...
 
         @classmethod
@@ -124,7 +127,24 @@ class FlextProtocolsResult:
             func: Callable[[], T],
             error_code: str | None = None,
         ) -> FlextProtocolsResult.Result[T]:
-            """Create result from callable, catching exceptions."""
+            """Create result from callable, catching exceptions and returning structured errors."""
+            ...
+
+        @classmethod
+        def fail(
+            cls,
+            error: str | None,
+            error_code: str | None = None,
+            error_data: t.ConfigMap | None = None,
+            *,
+            exception: BaseException | None = None,
+        ) -> FlextProtocolsResult.Result[T]:
+            """Create failed result with error message and structured error support."""
+            ...
+
+        @classmethod
+        def ok(cls, value: T) -> FlextProtocolsResult.Result[T]:
+            """Create successful result wrapping value (strict: value must be non-None unless T includes None)."""
             ...
 
         @classmethod
@@ -153,25 +173,33 @@ class FlextProtocolsResult:
             self,
             func: Callable[[T], FlextProtocolsResult.Result[U]],
         ) -> FlextProtocolsResult.Result[U]:
-            """Chain operations returning Result."""
+            """Chain operations returning Result (monadic bind)."""
             ...
 
         def flow_through[U](
             self,
             *funcs: Callable[[T | U], FlextProtocolsResult.Result[U]],
         ) -> FlextProtocolsResult.Result[U]:
-            """Chain multiple operations in a pipeline."""
+            """Chain multiple operations in a pipeline (sequential composition)."""
+            ...
+
+        def fold[U](
+            self,
+            on_failure: Callable[[str], U],
+            on_success: Callable[[T], U],
+        ) -> U:
+            """Catamorphism - reduce result to single value (strict typing)."""
             ...
 
         def lash(
             self,
             func: Callable[[str], FlextProtocolsResult.Result[T]],
         ) -> FlextProtocolsResult.Result[T]:
-            """Apply recovery function on failure."""
+            """Apply recovery function on failure (monadic catch)."""
             ...
 
         def map[U](self, func: Callable[[T], U]) -> FlextProtocolsResult.Result[U]:
-            """Transform success value using function."""
+            """Transform success value using function (monadic map)."""
             ...
 
         def map_error(
@@ -184,12 +212,30 @@ class FlextProtocolsResult:
             """
             ...
 
+        def recover(
+            self,
+            func: Callable[[str], T],
+        ) -> FlextProtocolsResult.Result[T]:
+            """Recover from failure with fallback value (safe alternative to lash)."""
+            ...
+
+        def tap(self, func: Callable[[T], None]) -> FlextProtocolsResult.Result[T]:
+            """Apply side effect to success value, return unchanged."""
+            ...
+
+        def tap_error(
+            self,
+            func: Callable[[str], None],
+        ) -> FlextProtocolsResult.Result[T]:
+            """Apply side effect to error on failure, return unchanged."""
+            ...
+
         def unwrap(self) -> T:
-            """Unwrap success value (raises on failure)."""
+            """Unwrap success value (raises RuntimeError on failure)."""
             ...
 
         def unwrap_or(self, default: T) -> T:
-            """Unwrap success value or return default on failure."""
+            """Unwrap success value or return default on failure (safe alternative to unwrap)."""
             ...
 
     @runtime_checkable
@@ -248,6 +294,54 @@ class FlextProtocolsResult:
         def model_dump(self) -> Mapping[str, t.Scalar]:
             """Dump model data to dictionary."""
             ...
+
+    @runtime_checkable
+    class StructuredError(Protocol):
+        """Protocol for structured error handling in Results.
+
+        Enables categorized error handling with error domains instead of
+        free-form error strings. Supports error routing and categorization
+        across the FLEXT ecosystem.
+
+        Usage:
+            result = r[User].fail(
+                "User not found",
+                error_code="NOT_FOUND",
+                error_data={"user_id": "123"},
+            )
+            if result.error_code == "NOT_FOUND":
+                return 404
+        """
+
+        @property
+        def error_domain(self) -> str | None:
+            """Error domain category (e.g., 'VALIDATION', 'NETWORK', 'AUTH')."""
+            ...
+
+        @property
+        def error_code(self) -> str | None:
+            """Specific error code for routing and categorization."""
+            ...
+
+        @property
+        def error_message(self) -> str | None:
+            """Human-readable error message."""
+            ...
+
+        def is_error_domain(self, domain: str) -> bool:
+            """Check if error belongs to a specific domain."""
+            ...
+
+    @runtime_checkable
+    class ErrorDomain(Protocol):
+        """Protocol for error domain enumeration.
+
+        Defines standard error categories for structured error handling
+        across FLEXT. Enables strict error routing and categorization.
+        """
+
+        value: str  # e.g., "VALIDATION", "NETWORK", "AUTH"
+        name: str  # e.g., "ValidationError", "NetworkError"
 
 
 __all__ = ["FlextProtocolsResult"]

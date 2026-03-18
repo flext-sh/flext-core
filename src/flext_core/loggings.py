@@ -804,10 +804,9 @@ class FlextLogger(FlextRuntime, p.Logger):
     @override
     def critical(
         self,
-        event: str,
-        *,
-        error: Exception | None = None,
-        **kw: t.RuntimeData | Exception,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool]:
         """Log critical message - Logger.Log implementation.
 
@@ -820,20 +819,14 @@ class FlextLogger(FlextRuntime, p.Logger):
         response. All critical messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        return self._log_standard_level(
-            c.Settings.LogLevel.CRITICAL,
-            event,
-            error=error,
-            **kw,
-        )
+        return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
 
     @override
     def debug(
         self,
-        event: str,
-        *,
-        error: Exception | None = None,
-        **kw: t.RuntimeData | Exception,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool]:
         """Log debug message - Logger.Log implementation.
 
@@ -846,20 +839,14 @@ class FlextLogger(FlextRuntime, p.Logger):
         All debug messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        return self._log_standard_level(
-            c.Settings.LogLevel.DEBUG,
-            event,
-            error=error,
-            **kw,
-        )
+        return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
 
     @override
     def error(
         self,
-        event: str,
-        *,
-        error: Exception | None = None,
-        **kw: t.RuntimeData | Exception,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool]:
         """Log error message - Logger.Log implementation.
 
@@ -872,19 +859,14 @@ class FlextLogger(FlextRuntime, p.Logger):
         error messages go through this method, ensuring consistent log formatting and
         context inclusion across FLEXT.
         """
-        return self._log_standard_level(
-            c.Settings.LogLevel.ERROR,
-            event,
-            error=error,
-            **kw,
-        )
+        return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
 
     @override
     def exception(
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.RuntimeData | Exception,
+        **kw: t.Container | Exception,
     ) -> r[bool]:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
@@ -955,7 +937,10 @@ class FlextLogger(FlextRuntime, p.Logger):
         level_enum: c.Settings.LogLevel | str = level
         with suppress(ValueError, AttributeError):
             level_enum = c.Settings.LogLevel(level.upper())
-        return self._log(level_enum, message, *args, **context)
+        converted_args: tuple[t.Container, ...] = tuple(
+            FlextLogger._to_scalar_value(arg) for arg in args
+        )
+        return self._log(level_enum, message, *converted_args, **context)
 
     @override
     def new(self, **context: t.Container) -> Self:
@@ -1008,40 +993,29 @@ class FlextLogger(FlextRuntime, p.Logger):
     @override
     def info(
         self,
-        event: str,
-        *,
-        error: Exception | None = None,
-        **kw: t.RuntimeData | Exception,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool]:
         """Log info message - Logger.Log implementation."""
-        return self._log_standard_level(
-            c.Settings.LogLevel.INFO,
-            event,
-            error=error,
-            **kw,
-        )
+        return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
 
     @override
     def warning(
         self,
-        event: str,
-        *,
-        error: Exception | None = None,
-        **kw: t.RuntimeData | Exception,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool]:
         """Log warning message - Logger.Log implementation."""
-        return self._log_standard_level(
-            c.Settings.LogLevel.WARNING,
-            event,
-            error=error,
-            **kw,
-        )
+        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
 
     def _log(
         self,
         _level: c.Settings.LogLevel | str,
         event: str,
-        **context: t.RuntimeData | Exception,
+        *args: t.Container,
+        **context: t.Container | Exception,
     ) -> r[bool]:
         """Internal logging method - consolidates all log level methods.
 
@@ -1055,6 +1029,8 @@ class FlextLogger(FlextRuntime, p.Logger):
                 source_path := FlextLogger._get_caller_source_path()
             ):
                 context["source"] = source_path
+            for idx, arg in enumerate(args):
+                context[f"arg_{idx}"] = arg
             match _level:
                 case c.Settings.LogLevel() as enum_level:
                     level_raw: str = enum_level.value
@@ -1070,14 +1046,11 @@ class FlextLogger(FlextRuntime, p.Logger):
     def _log_standard_level(
         self,
         level: c.Settings.LogLevel,
-        event: str,
-        *,
-        error: Exception | None = None,
-        **kw: t.RuntimeData | Exception,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool]:
-        if error is not None:
-            kw["error"] = error
-        return self._log(level, event, **kw)
+        return self._log(level, msg, *args, **kw)
 
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""

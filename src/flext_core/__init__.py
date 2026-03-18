@@ -127,6 +127,7 @@ if TYPE_CHECKING:
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
     from flext_core.dispatcher import FlextDispatcher
+    from flext_core.errors import ErrorDomain, FlextError, ResultErrorData
     from flext_core.exceptions import FlextExceptions, Metadata, e
     from flext_core.handlers import FlextHandlers, h
     from flext_core.loggings import FlextLogger
@@ -140,6 +141,7 @@ if TYPE_CHECKING:
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
         TV,
+        BaseModel,
         EnumT,
         FlextTypes,
         MessageT_contra,
@@ -162,11 +164,13 @@ if TYPE_CHECKING:
     from flext_core.utilities import FlextUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "BaseModel": ("flext_core.typings", "BaseModel"),
     "CircuitBreakerManager": (
         "flext_core._dispatcher.reliability",
         "CircuitBreakerManager",
     ),
     "EnumT": ("flext_core.typings", "EnumT"),
+    "ErrorDomain": ("flext_core.errors", "ErrorDomain"),
     "FactoryDecoratorsDiscovery": (
         "flext_core._decorators.discovery",
         "FactoryDecoratorsDiscovery",
@@ -196,6 +200,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextContext": ("flext_core.context", "FlextContext"),
     "FlextDecorators": ("flext_core.decorators", "FlextDecorators"),
     "FlextDispatcher": ("flext_core.dispatcher", "FlextDispatcher"),
+    "FlextError": ("flext_core.errors", "FlextError"),
     "FlextExceptions": ("flext_core.exceptions", "FlextExceptions"),
     "FlextGenericModels": ("flext_core._models.generic", "FlextGenericModels"),
     "FlextHandlers": ("flext_core.handlers", "FlextHandlers"),
@@ -329,6 +334,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "PROJECT_KIND_SERVICE": ("flext_core.constants", "PROJECT_KIND_SERVICE"),
     "R": ("flext_core.typings", "R"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
+    "ResultErrorData": ("flext_core.errors", "ResultErrorData"),
     "ResultT": ("flext_core.typings", "ResultT"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
     "T": ("flext_core.typings", "T"),
@@ -378,8 +384,10 @@ __all__ = [
     "PROJECT_KIND_LIBRARY",
     "PROJECT_KIND_SERVICE",
     "TV",
+    "BaseModel",
     "CircuitBreakerManager",
     "EnumT",
+    "ErrorDomain",
     "FactoryDecoratorsDiscovery",
     "FlextConstants",
     "FlextConstantsBase",
@@ -394,6 +402,7 @@ __all__ = [
     "FlextContext",
     "FlextDecorators",
     "FlextDispatcher",
+    "FlextError",
     "FlextExceptions",
     "FlextGenericModels",
     "FlextHandlers",
@@ -467,6 +476,7 @@ __all__ = [
     "P",
     "R",
     "RateLimiterManager",
+    "ResultErrorData",
     "ResultT",
     "RetryPolicy",
     "T",

@@ -77,7 +77,11 @@ from pydantic import (
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
+from flext_core._models import FlextModelFoundation
+from flext_core._models.result import FlextModelsResult
+from flext_core._models.service import FlextModelsService
 from flext_core._typings.generics import T
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
@@ -85,9 +89,6 @@ from flext_core.typings import FlextTypes
 c = FlextConstants
 p = FlextProtocols
 t = FlextTypes
-from flext_core._models import FlextModelFoundation
-from flext_core._models.result import FlextModelsResult
-from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 
 
 class FlextRuntime:
@@ -813,19 +814,9 @@ class FlextRuntime:
         @classmethod
         def create_container(
             cls,
-            *,
-            config: t.ConfigMap | None = None,
-            services: Mapping[str, t.RegisterableService] | None = None,
-            factories: Mapping[
-                str,
-                Callable[[], t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar]],
-            ]
+            container_options: FlextModelsService.DependencyContainerCreationOptions
             | None = None,
-            resources: Mapping[str, t.ResourceCallable] | None = None,
-            wire_modules: Sequence[ModuleType] | None = None,
-            wire_packages: Sequence[str] | None = None,
-            wire_classes: Sequence[type] | None = None,
-            factory_cache: bool = True,
+            **runtime_kwargs: t.RuntimeData,
         ) -> containers.DynamicContainer:
             """Create a DynamicContainer with optional pre-registration and wiring.
 
@@ -851,6 +842,65 @@ class FlextRuntime:
                 without manual follow-up registration calls.
 
             """
+            base_options = (
+                container_options
+                if container_options is not None
+                else FlextModelsService.DependencyContainerCreationOptions()
+            )
+            if runtime_kwargs:
+                override_options = FlextModelsService.DependencyContainerCreationOptions.model_validate(
+                    runtime_kwargs,
+                )
+                container_options = (
+                    FlextModelsService.DependencyContainerCreationOptions(
+                        config=(
+                            override_options.config
+                            if override_options.config is not None
+                            else base_options.config
+                        ),
+                        services=(
+                            override_options.services
+                            if override_options.services is not None
+                            else base_options.services
+                        ),
+                        factories=(
+                            override_options.factories
+                            if override_options.factories is not None
+                            else base_options.factories
+                        ),
+                        resources=(
+                            override_options.resources
+                            if override_options.resources is not None
+                            else base_options.resources
+                        ),
+                        wire_modules=(
+                            override_options.wire_modules
+                            if override_options.wire_modules is not None
+                            else base_options.wire_modules
+                        ),
+                        wire_packages=(
+                            override_options.wire_packages
+                            if override_options.wire_packages is not None
+                            else base_options.wire_packages
+                        ),
+                        wire_classes=(
+                            override_options.wire_classes
+                            if override_options.wire_classes is not None
+                            else base_options.wire_classes
+                        ),
+                        factory_cache=override_options.factory_cache,
+                    )
+                )
+            else:
+                container_options = base_options
+            config = container_options.config
+            services = container_options.services
+            factories = container_options.factories
+            resources = container_options.resources
+            wire_modules = container_options.wire_modules
+            wire_packages = container_options.wire_packages
+            wire_classes = container_options.wire_classes
+            factory_cache = container_options.factory_cache
             di_container = cls.DynamicContainerWithConfig()
             if config is not None:
                 _ = cls.bind_configuration(di_container, config)

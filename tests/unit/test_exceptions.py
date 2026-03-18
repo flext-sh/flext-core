@@ -77,7 +77,7 @@ class Teste:
 
         name: Annotated[str, Field(description="Exception scenario name")]
         scenario_type: Annotated[
-            ExceptionScenarioType, Field(description="Exception scenario type")
+            Teste.ExceptionScenarioType, Field(description="Exception scenario type")
         ]
         exception_type: Annotated[
             type[e.BaseError] | None,
@@ -98,7 +98,7 @@ class Teste:
 
         name: Annotated[str, Field(description="Exception type scenario name")]
         scenario_type: Annotated[
-            ExceptionTypeScenarioType,
+            Teste.ExceptionTypeScenarioType,
             Field(
                 description="Exception type scenario category",
             ),

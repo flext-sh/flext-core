@@ -10,6 +10,7 @@ from __future__ import annotations
 import operator
 
 from flext_tests import u
+from flext_tests.domains import td
 
 
 class TestFlextTestsDomains:

@@ -348,5 +348,71 @@ class FlextModelsService:
         wire_packages: Sequence[str] | None = None
         wire_classes: Sequence[type] | None = None
 
+    class DependencyContainerCreationOptions(FlextModelFoundation.ArbitraryTypesModel):
+        config: Annotated[
+            t.ConfigMap | None,
+            Field(
+                default=None,
+                title="Configuration",
+                description="Optional configuration mapping bound to dependency container providers.",
+            ),
+        ] = None
+        services: Annotated[
+            Mapping[str, t.RegisterableService] | None,
+            Field(
+                default=None,
+                title="Services",
+                description="Object providers registered before optional wiring.",
+            ),
+        ] = None
+        factories: Annotated[
+            Mapping[str, t.FactoryCallable] | None,
+            Field(
+                default=None,
+                title="Factories",
+                description="Factory providers registered with singleton/factory semantics.",
+            ),
+        ] = None
+        resources: Annotated[
+            Mapping[str, t.ResourceCallable] | None,
+            Field(
+                default=None,
+                title="Resources",
+                description="Lifecycle resource providers registered before wiring.",
+            ),
+        ] = None
+        wire_modules: Annotated[
+            Sequence[ModuleType] | None,
+            Field(
+                default=None,
+                title="Wire Modules",
+                description="Modules wired for dependency-injector @inject resolution.",
+            ),
+        ] = None
+        wire_packages: Annotated[
+            Sequence[str] | None,
+            Field(
+                default=None,
+                title="Wire Packages",
+                description="Package names considered for dependency wiring.",
+            ),
+        ] = None
+        wire_classes: Annotated[
+            Sequence[type] | None,
+            Field(
+                default=None,
+                title="Wire Classes",
+                description="Classes whose modules are wired for dependency resolution.",
+            ),
+        ] = None
+        factory_cache: Annotated[
+            bool,
+            Field(
+                default=True,
+                title="Factory Cache",
+                description="Whether registered factories use singleton caching semantics.",
+            ),
+        ] = True
+
 
 __all__ = ["FlextModelsService"]

@@ -201,11 +201,15 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     @staticmethod
     def _normalize_log_payload(
         payload: Mapping[str, t.ValueOrModel],
-    ) -> dict[str, t.RuntimeAtomic]:
-        normalized_payload: dict[str, t.RuntimeAtomic] = {}
+    ) -> dict[str, t.Container]:
+        normalized: dict[str, t.Container] = {}
         for key, value in payload.items():
-            normalized_payload[str(key)] = FlextRuntime.normalize_to_container(value)
-        return normalized_payload
+            atomic = FlextRuntime.normalize_to_container(value)
+            if isinstance(atomic, BaseModel):
+                normalized[str(key)] = str(atomic.model_dump())
+            else:
+                normalized[str(key)] = atomic
+        return normalized
 
     @contextmanager
     def track(self, operation_name: str) -> Iterator[Mapping[str, t.ValueOrModel]]:

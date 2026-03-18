@@ -23,7 +23,7 @@ class FlextModelsResult:
 
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
-            frozen=True,
+            frozen=False,
             populate_by_name=True,
         )
 

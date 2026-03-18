@@ -375,7 +375,6 @@ class FlextModelFoundation:
         """Base model with arbitrary types support."""
 
         model_config = ConfigDict(
-            defer_build=True,
             validate_assignment=True,
             extra=c.ModelConfig.EXTRA_FORBID,
             arbitrary_types_allowed=True,
@@ -386,7 +385,6 @@ class FlextModelFoundation:
         """Strict boundary model for API/external boundaries."""
 
         model_config = ConfigDict(
-            defer_build=True,
             strict=True,
             validate_assignment=True,
             extra="forbid",
@@ -399,7 +397,6 @@ class FlextModelFoundation:
         """Flexible internal model for domain logic."""
 
         model_config = ConfigDict(
-            defer_build=True,
             validate_assignment=True,
             extra="ignore",
             str_strip_whitespace=True,
@@ -410,7 +407,6 @@ class FlextModelFoundation:
         """Immutable value model for value objects."""
 
         model_config = ConfigDict(
-            defer_build=True,
             frozen=True,
             validate_assignment=True,
             extra="forbid",
@@ -419,14 +415,13 @@ class FlextModelFoundation:
     class TaggedModel(BaseModel):
         """Base pattern for tagged discriminated unions."""
 
-        model_config = ConfigDict(defer_build=True, extra="forbid")
+        model_config = ConfigDict(extra="forbid")
         tag: ClassVar[str]
 
     class DynamicConfigModel(BaseModel):
         """Model for dynamic configuration - allows extra fields."""
 
         model_config = ConfigDict(
-            defer_build=True,
             validate_assignment=True,
             extra="allow",
             arbitrary_types_allowed=True,
@@ -437,7 +432,6 @@ class FlextModelFoundation:
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
         model_config = ConfigDict(
-            defer_build=True,
             extra=c.ModelConfig.EXTRA_FORBID,
             frozen=True,
             validate_assignment=True,
@@ -671,7 +665,6 @@ class FlextModelFoundation:
         """Immutable base model with strict validation."""
 
         model_config = ConfigDict(
-            defer_build=True,
             validate_assignment=True,
             validate_return=True,
             validate_default=True,

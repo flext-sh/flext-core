@@ -47,6 +47,7 @@ __all__ = [
     "_SampleEntity",
     "_SvcModel",
     "_TargetModel",
+    "_ValidationLikeError",
 ]
 
 

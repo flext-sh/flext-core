@@ -253,8 +253,12 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     def chk(
         value: t.NormalizedValue,
         spec: m.GuardCheckSpec | None = None,
+        **criteria: t.GuardInput,
     ) -> bool:
         guard_spec = spec if spec is not None else m.GuardCheckSpec()
+        if criteria:
+            criteria_spec = m.GuardCheckSpec.model_validate(criteria)
+            guard_spec = guard_spec.model_copy(update=criteria_spec.model_dump())
         eq = guard_spec.eq
         ne = guard_spec.ne
         gt = guard_spec.gt

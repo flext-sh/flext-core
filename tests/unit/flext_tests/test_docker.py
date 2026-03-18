@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 from docker import DockerClient
 from flext_tests import c
+from flext_tests.docker import tk
 
 from flext_core import r
 from tests.test_utils import assertion_helpers

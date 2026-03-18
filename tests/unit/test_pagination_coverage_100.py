@@ -16,24 +16,45 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Annotated, cast
+from typing import Annotated, TypeGuard
 
 import pytest
 from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 
+def _is_extract_scenario(
+    obj: BaseModel,
+) -> TypeGuard[TestPaginationCoverage100.ExtractPageParamsScenario]:
+    return isinstance(obj, TestPaginationCoverage100.ExtractPageParamsScenario)
+
+
+def _is_validate_scenario(
+    obj: BaseModel,
+) -> TypeGuard[TestPaginationCoverage100.ValidatePaginationParamsScenario]:
+    return isinstance(obj, TestPaginationCoverage100.ValidatePaginationParamsScenario)
+
+
+def _is_prepare_scenario(
+    obj: BaseModel,
+) -> TypeGuard[TestPaginationCoverage100.PreparePaginationDataScenario]:
+    return isinstance(obj, TestPaginationCoverage100.PreparePaginationDataScenario)
+
+
 def _case_factories(
     getter_name: str,
     count: int,
 ) -> list[Callable[[], BaseModel]]:
-    return [
-        lambda index=index: cast(
-            "Callable[[], BaseModel]",
-            getattr(TestPaginationCoverage100, getter_name),
-        )()[index]
-        for index in range(count)
-    ]
+    results: list[Callable[[], BaseModel]] = []
+    for index in range(count):
+
+        def _factory(idx: int = index) -> BaseModel:
+            getter = getattr(TestPaginationCoverage100, getter_name)
+            scenarios: list[BaseModel] = getter()
+            return scenarios[idx]
+
+        results.append(_factory)
+    return results
 
 
 class TestPaginationCoverage100:
@@ -364,7 +385,11 @@ class TestPaginationCoverage100:
         scenario_factory: Callable[[], BaseModel],
     ) -> None:
         """Test extract_page_params with various scenarios."""
-        scenario = cast("ExtractPageParamsScenario", scenario_factory())
+        raw = scenario_factory()
+        if not _is_extract_scenario(raw):
+            msg = "expected ExtractPageParamsScenario"
+            raise AssertionError(msg)
+        scenario = raw
         result = u.extract_page_params(
             scenario.query_params,
             default_page=scenario.default_page,
@@ -399,7 +424,11 @@ class TestPaginationCoverage100:
         scenario_factory: Callable[[], BaseModel],
     ) -> None:
         """Test validate_pagination_params with various scenarios."""
-        scenario = cast("ValidatePaginationParamsScenario", scenario_factory())
+        raw = scenario_factory()
+        if not _is_validate_scenario(raw):
+            msg = "expected ValidatePaginationParamsScenario"
+            raise AssertionError(msg)
+        scenario = raw
         result = u.validate_pagination_params(
             page=scenario.page,
             page_size=scenario.page_size,
@@ -433,7 +462,11 @@ class TestPaginationCoverage100:
         scenario_factory: Callable[[], BaseModel],
     ) -> None:
         """Test prepare_pagination_data with various scenarios."""
-        scenario = cast("PreparePaginationDataScenario", scenario_factory())
+        raw = scenario_factory()
+        if not _is_prepare_scenario(raw):
+            msg = "expected PreparePaginationDataScenario"
+            raise AssertionError(msg)
+        scenario = raw
         result = u.prepare_pagination_data(
             scenario.data,
             scenario.total,

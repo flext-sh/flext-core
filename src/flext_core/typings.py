@@ -96,6 +96,7 @@ t = FlextTypes
 
 __all__ = [
     "TV",
+    "BaseModel",
     "EnumT",
     "FlextTypes",
     "MessageT_contra",
