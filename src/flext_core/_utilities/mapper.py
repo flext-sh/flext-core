@@ -48,10 +48,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_exclude_keys(
-        result: Mapping[str, object],
+        result: Mapping[str, t.NormalizedValue],
         *,
         exclude_keys: set[str] | None,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Apply exclude keys step."""
         if exclude_keys:
             filtered_result: dict[str, t.NormalizedValue] = dict(result)
@@ -62,10 +62,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_filter_keys(
-        result: Mapping[str, object],
+        result: Mapping[str, t.NormalizedValue],
         *,
         filter_keys: set[str] | None,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Apply filter keys step."""
         if filter_keys:
             filtered_dict: dict[str, t.NormalizedValue] = {}
@@ -77,18 +77,18 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_map_keys(
-        result: Mapping[str, object],
+        result: Mapping[str, t.NormalizedValue],
         *,
         map_keys: Mapping[str, str] | None,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Apply map keys step."""
         if map_keys:
-            mapped: r[Mapping[str, object]] = FlextUtilitiesMapper.map_dict_keys(
+            mapped: r[Mapping[str, t.NormalizedValue]] = FlextUtilitiesMapper.map_dict_keys(
                 result,
                 map_keys,
             )
             if mapped.is_success:
-                mapped_value: Mapping[str, object] = mapped.value
+                mapped_value: Mapping[str, t.NormalizedValue] = mapped.value
                 return {
                     str(key): FlextUtilitiesMapper.narrow_to_container(value)
                     for key, value in mapped_value.items()
@@ -97,10 +97,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_normalize(
-        result: Mapping[str, object],
+        result: Mapping[str, t.NormalizedValue],
         *,
         normalize: bool,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Apply normalize step."""
         if normalize:
             normalized: t.NormalizedValue = FlextUtilitiesCache.normalize_component(
@@ -117,10 +117,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_empty(
-        result: Mapping[str, object],
+        result: Mapping[str, t.NormalizedValue],
         *,
         strip_empty: bool,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Apply strip empty step."""
         if strip_empty:
             return FlextUtilitiesMapper.filter_dict(
@@ -131,10 +131,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_none(
-        result: Mapping[str, object],
+        result: Mapping[str, t.NormalizedValue],
         *,
         strip_none: bool,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Apply strip none step."""
         if strip_none:
             return FlextUtilitiesMapper.filter_dict(result, lambda _k, v: v is not None)
@@ -142,7 +142,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_transform_steps(
-        result: Mapping[str, object],
+        result: Mapping[str, t.NormalizedValue],
         *,
         normalize: bool,
         map_keys: Mapping[str, str] | None,
@@ -150,7 +150,7 @@ class FlextUtilitiesMapper:
         exclude_keys: set[str] | None,
         strip_none: bool,
         strip_empty: bool,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Apply transform steps to result dict."""
         result = FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
         result = FlextUtilitiesMapper._apply_map_keys(result, map_keys=map_keys)
@@ -214,7 +214,7 @@ class FlextUtilitiesMapper:
             else ""
         )
         if fallback is None:
-            converter_defaults: Mapping[str, object] = {
+            converter_defaults: dict[str, t.NormalizedValue] = {
                 "int": 0,
                 "float": 0.0,
                 "str": "",
@@ -263,7 +263,7 @@ class FlextUtilitiesMapper:
             if ensure_default_raw is not None and not callable(ensure_default_raw)
             else None
         )
-        default_map: Mapping[str, object] = {
+        default_map: dict[str, t.NormalizedValue] = {
             "str_list": [],
             "dict": {},
             "list": [],
@@ -1891,9 +1891,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def filter_dict(
-        source: Mapping[str, object],
+        source: Mapping[str, t.NormalizedValue],
         predicate: Callable[[str, t.NormalizedValue], bool],
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Filter dict by predicate function on key-value pairs.
 
         Args:

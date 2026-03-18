@@ -587,7 +587,7 @@ class TestContainerFullCoverage:
             resources={"rx": lambda: "rv"},
         )
         base._config = _FalseConfig()
-        base._context = None
+        base._context = FlextContext()
         _ = base.scoped()
 
     def test_additional_container_branches_cover_fluent_and_lookup_paths(self) -> None:

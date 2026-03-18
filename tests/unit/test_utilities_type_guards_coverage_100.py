@@ -128,14 +128,13 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     @pytest.mark.parametrize("scenario", IS_LIST_NON_EMPTY, ids=lambda s: s.name)
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
-        value: NormalizedValue = None
         if scenario.value == "has_items":
-            value = [1, 2, 3]
+            value: NormalizedValue = [1, 2, 3]
         elif scenario.value == "empty":
-            value: list[int] = []
+            value = list[int]()
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
-        elif scenario.value == "string" or isinstance(scenario.value, int):
+        else:
             value = scenario.value
         result = FlextUtilitiesGuards.is_type(value, "list_non_empty")
         tm.that(result, eq=scenario.expected_result)
