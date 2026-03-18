@@ -1165,14 +1165,15 @@ class FlextRuntime:
             wrapper_arg = wrapper_class_factory()
         else:
             wrapper_arg = module.make_filtering_bound_logger(level_to_use)
-        factory_to_use: t.LoggerFactory
+        factory_to_use: t.LoggerFactory | None
         if logger_factory is not None:
             factory_to_use = logger_factory
         elif async_logging:
             if cls._async_writer is None:
                 cls._async_writer = cls._AsyncLogWriter(sys.stdout)
-            _ = getattr(module, "PrintLoggerFactory", None)
-            factory_to_use = None
+            factory_to_use = getattr(module, "PrintLoggerFactory", None)
+            if not callable(factory_to_use):
+                factory_to_use = getattr(module, "PrintLoggerFactory", None)
         else:
             factory_to_use = None
         configure_fn = module.configure if hasattr(module, "configure") else None
