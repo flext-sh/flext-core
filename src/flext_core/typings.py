@@ -94,14 +94,6 @@ class FlextTypes(
 
 t = FlextTypes
 
-
-def __getattr__(name: str) -> object:
-    if hasattr(FlextTypes, name):
-        return getattr(FlextTypes, name)
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)
-
-
 __all__ = [
     "TV",
     "BaseModel",

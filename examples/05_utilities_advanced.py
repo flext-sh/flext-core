@@ -103,7 +103,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
     def _demonstrate_data_mapping() -> None:
         """Show Mapper utilities."""
         print("\n=== Data Mapping ===")
-        source_dict: dict[str, str] = {"old_key": "value", "foo": "bar"}
+        source_dict = {"old_key": "value", "foo": "bar"}
         mapped_dict = u.transform_values(source_dict, str)
         key_mapping_dict: dict[str, str] = {"old_key": "new_key", "foo": "bar"}
         map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
