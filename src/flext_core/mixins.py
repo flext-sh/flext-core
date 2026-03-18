@@ -329,7 +329,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
         options: m.RuntimeBootstrapOptions | None = None
         try:
-            options_raw: object = getattr(
+            options_raw: t.BootstrapInput = getattr(
                 self,
                 "_runtime_bootstrap_options",
                 lambda: None,
