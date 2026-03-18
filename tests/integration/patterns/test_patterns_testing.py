@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import gc
 import time
-from collections.abc import Callable, Generator, Iterator, Mapping, Sequence, Sized
+from collections.abc import Callable, Generator, Mapping, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
 from datetime import datetime
 from pathlib import Path

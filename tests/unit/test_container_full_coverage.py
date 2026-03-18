@@ -182,8 +182,8 @@ class TestContainerFullCoverage:
     def test_provide_property_paths(self, monkeypatch: _MonkeyPatch) -> None:
         c = FlextContainer.create()
         monkeypatch.setattr(c, "_di_bridge", _BridgeGoodProvide())
-        result: str = c.provide("x")
-        tm.that(result, eq="x")
+        result = c.provide("x")
+        assert result == "x"
         monkeypatch.setattr(c, "_di_bridge", _BridgeBadProvide())
         with pytest.raises(RuntimeError):
             _ = c.provide

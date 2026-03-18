@@ -17,7 +17,7 @@ import time
 import traceback
 import types
 import warnings
-from collections.abc import Generator, Iterator, Mapping
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
