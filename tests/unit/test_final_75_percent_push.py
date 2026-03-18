@@ -17,45 +17,42 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 import pytest
-from flext_tests import tm
+from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextExceptions, r
-from tests import u
 
 
-class ResultOperationScenario(BaseModel):
-    """r operation test scenario."""
+class TestFinal75PercentPush:
+    """Simple tests targeting uncovered lines using FlextTestsUtilities."""
 
-    model_config = ConfigDict(frozen=True)
+    class ResultOperationScenario(BaseModel):
+        """r operation test scenario."""
 
-    name: Annotated[str, Field(description="Result operation scenario name")]
-    initial_value: Annotated[int | None, Field(description="Initial result value")]
-    operations: Annotated[list[str], Field(description="Operation chain to apply")]
-    expected_success: Annotated[bool, Field(description="Expected success state")]
-    expected_value: Annotated[
-        int | None, Field(default=None, description="Expected resulting value")
-    ] = None
+        model_config = ConfigDict(frozen=True)
 
+        name: Annotated[str, Field(description="Result operation scenario name")]
+        initial_value: Annotated[int | None, Field(description="Initial result value")]
+        operations: Annotated[list[str], Field(description="Operation chain to apply")]
+        expected_success: Annotated[bool, Field(description="Expected success state")]
+        expected_value: Annotated[
+            int | None, Field(default=None, description="Expected resulting value")
+        ] = None
 
-class ExceptionTypeScenario(BaseModel):
-    """Exception type test scenario."""
+    class ExceptionTypeScenario(BaseModel):
+        """Exception type test scenario."""
 
-    model_config = ConfigDict(frozen=True)
+        model_config = ConfigDict(frozen=True)
 
-    name: Annotated[str, Field(description="Exception scenario name")]
-    exception_type: Annotated[
-        type[FlextExceptions.BaseError],
-        Field(
-            description="Exception class under test",
-        ),
-    ]
-    message: Annotated[str, Field(description="Exception message")]
-    expected_in_str: Annotated[str, Field(description="Expected string marker")]
-
-
-class CoverageScenarios:
-    """Centralized coverage test scenarios using FlextConstants."""
+        name: Annotated[str, Field(description="Exception scenario name")]
+        exception_type: Annotated[
+            type[FlextExceptions.BaseError],
+            Field(
+                description="Exception class under test",
+            ),
+        ]
+        message: Annotated[str, Field(description="Exception message")]
+        expected_in_str: Annotated[str, Field(description="Expected string marker")]
 
     RESULT_OPERATIONS: ClassVar[list[ResultOperationScenario]] = [
         ResultOperationScenario(
@@ -159,10 +156,6 @@ class CoverageScenarios:
         ),
     ]
 
-
-class TestCoveragePush75Percent:
-    """Simple tests targeting uncovered lines using FlextTestsUtilities."""
-
     def test_result_basic_ok(self) -> None:
         """Test basic r ok."""
         result = r[int].ok(42)
@@ -177,7 +170,7 @@ class TestCoveragePush75Percent:
 
     @pytest.mark.parametrize(
         "scenario",
-        CoverageScenarios.RESULT_OPERATIONS,
+        RESULT_OPERATIONS,
         ids=lambda s: s.name,
     )
     def test_result_operations(self, scenario: ResultOperationScenario) -> None:
@@ -249,7 +242,7 @@ class TestCoveragePush75Percent:
 
     @pytest.mark.parametrize(
         "scenario",
-        CoverageScenarios.EXCEPTION_TYPES,
+        EXCEPTION_TYPES,
         ids=lambda s: s.name,
     )
     def test_exception_types(self, scenario: ExceptionTypeScenario) -> None:
@@ -325,4 +318,4 @@ class TestCoveragePush75Percent:
         tm.fail(r2)
 
 
-__all__ = ["TestCoveragePush75Percent"]
+__all__ = ["TestFinal75PercentPush"]

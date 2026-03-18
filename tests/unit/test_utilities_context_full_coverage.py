@@ -20,8 +20,28 @@ from tests import u
 from ._models import _FakeConfig
 
 
-class TestCreateStrProxy:
-    """Tests for u.create_str_proxy()."""
+class TestUtilitiesContextFullCoverage:
+    class _FakeRuntime:
+        """Fake runtime class with all expected attributes."""
+
+        def __init__(self) -> None:
+            self._dispatcher = object()
+            self._registry = object()
+            self._context = object()
+            self._config = _FakeConfig(timeout=10)
+
+    class _FakeContext:
+        def clone(self) -> TestUtilitiesContextFullCoverage._FakeContext:
+            return TestUtilitiesContextFullCoverage._FakeContext()
+
+        def set(self, key: str, value: t.Scalar) -> None:
+            _ = (key, value)
+
+        def get(self, key: str) -> None:
+            _ = key
+
+    class _MinimalRuntime:
+        pass
 
     def test_create_str_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[str] with given key."""
@@ -33,10 +53,6 @@ class TestCreateStrProxy:
         """Creates proxy with default value."""
         proxy = u.create_str_proxy("my_key", default="fallback")
         assert proxy._default == "fallback"
-
-
-class TestCreateDatetimeProxy:
-    """Tests for u.Context.create_datetime_proxy()."""
 
     def test_create_datetime_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[datetime] with given key."""
@@ -50,10 +66,6 @@ class TestCreateDatetimeProxy:
         proxy = u.create_datetime_proxy("start_time", now)
         assert proxy._default == now
 
-
-class TestCreateDictProxy:
-    """Tests for u.Context.create_dict_proxy()."""
-
     def test_create_dict_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[dict] with given key."""
         proxy = u.create_dict_proxy("metadata")
@@ -66,59 +78,34 @@ class TestCreateDictProxy:
         proxy = u.create_dict_proxy("metadata", default_val)
         assert proxy._default == default_val
 
-
-class _FakeRuntime:
-    """Fake runtime class with all expected attributes."""
-
-    def __init__(self) -> None:
-        self._dispatcher = object()
-        self._registry = object()
-        self._context = object()
-        self._config = _FakeConfig(timeout=10)
-
-
-class _FakeContext:
-    def clone(self) -> _FakeContext:
-        return _FakeContext()
-
-    def set(self, key: str, value: t.Scalar) -> None:
-        _ = (key, value)
-
-    def get(self, key: str) -> None:
-        _ = key
-
-
-class TestCloneRuntime:
-    """Tests for u.Context.clone_runtime()."""
-
     def test_clone_runtime_copies_dispatcher(self) -> None:
         """Cloned runtime has the same _dispatcher."""
-        runtime = _FakeRuntime()
+        runtime = self._FakeRuntime()
         cloned = u.clone_runtime(runtime)
         assert cloned._dispatcher is runtime._dispatcher
 
     def test_clone_runtime_copies_registry(self) -> None:
         """Cloned runtime has the same _registry."""
-        runtime = _FakeRuntime()
+        runtime = self._FakeRuntime()
         cloned = u.clone_runtime(runtime)
         assert cloned._registry is runtime._registry
 
     def test_clone_runtime_uses_provided_context(self) -> None:
         """When context is provided, cloned runtime uses it."""
-        runtime = _FakeRuntime()
+        runtime = self._FakeRuntime()
         new_context = FlextContext.create()
         cloned = u.clone_runtime(runtime, context=new_context)
         assert cloned._context is new_context
 
     def test_clone_runtime_copies_context_when_not_provided(self) -> None:
         """When context is None, cloned runtime copies original context."""
-        runtime = _FakeRuntime()
+        runtime = self._FakeRuntime()
         cloned = u.clone_runtime(runtime)
         assert cloned._context is runtime._context
 
     def test_clone_runtime_applies_config_overrides(self) -> None:
         """When config_overrides provided, model_copy is called with them."""
-        runtime = _FakeRuntime()
+        runtime = self._FakeRuntime()
         cloned = u.clone_runtime(
             runtime, config_overrides=t.ConfigMap(root={"timeout": 30})
         )
@@ -127,23 +114,15 @@ class TestCloneRuntime:
 
     def test_clone_runtime_copies_config_when_no_overrides(self) -> None:
         """When no config_overrides, config is copied as-is."""
-        runtime = _FakeRuntime()
+        runtime = self._FakeRuntime()
         cloned = u.clone_runtime(runtime)
         assert cloned._config is runtime._config
 
     def test_clone_runtime_handles_missing_attributes(self) -> None:
         """Runtime without optional attributes still clones successfully."""
-
-        class MinimalRuntime:
-            pass
-
-        runtime = MinimalRuntime()
+        runtime = self._MinimalRuntime()
         cloned = u.clone_runtime(runtime)
-        assert isinstance(cloned, MinimalRuntime)
-
-
-class TestCloneContainer:
-    """Tests for u.Context.clone_container()."""
+        assert isinstance(cloned, self._MinimalRuntime)
 
     def test_clone_container_calls_scoped(self) -> None:
         """Calls container.scoped() with provided args."""

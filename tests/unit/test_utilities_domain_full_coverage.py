@@ -15,24 +15,18 @@ from typing import Annotated, cast, override
 
 from pydantic import BaseModel, Field
 
-from tests import t, u
+from flext_core import t, u
 
 from ._models import _FrozenEntity, _SampleEntity
 
 
-class TestDomainLogger:
-    """Tests for u.logger property."""
-
+class TestUtilitiesDomainFullCoverage:
     def test_logger_property_returns_logger(self) -> None:
         """Logger property returns a structlog logger (line 32)."""
         domain_util = u()
         logger = domain_util.logger
         assert logger is not None
         assert hasattr(logger, "info")
-
-
-class TestDomainHashValue:
-    """Tests for u.hash_value_object_by_value()."""
 
     def test_hash_with_hashable_non_primitive(self) -> None:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""
@@ -55,10 +49,6 @@ class TestDomainHashValue:
         entity = EntityWithList(tags=["a", "b"])
         result = u.hash_value_object_by_value(entity)
         assert isinstance(result, int)
-
-
-class TestValidateValueImmutable:
-    """Tests for u.validate_value_object_immutable()."""
 
     def test_frozen_model_is_immutable(self) -> None:
         """Pydantic model with frozen=True detected as immutable (lines 197-200)."""
@@ -90,47 +80,47 @@ class TestValidateValueImmutable:
         result = u.validate_value_object_immutable("hello")
         assert isinstance(result, bool)
 
+    def test_validate_value_object_immutable_exception_and_no_setattr_branch(
+        self,
+    ) -> None:
+        class _BrokenConfigDict:
+            """Dict-like object whose get() raises TypeError."""
 
-def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> None:
+            def get(self, key: str, default: bool | None = None) -> bool:
+                _ = key
+                _ = default
+                msg = "bad config"
+                raise TypeError(msg)
 
-    class _BrokenConfigDict:
-        """Dict-like object whose get() raises TypeError."""
+            def __getitem__(self, key: str) -> bool:
+                msg = "bad config"
+                raise TypeError(msg)
 
-        def get(self, key: str, default: bool | None = None) -> bool:
-            _ = key
-            _ = default
-            msg = "bad config"
-            raise TypeError(msg)
+            def __iter__(self) -> Iterator[str]:
+                return iter(())
 
-        def __getitem__(self, key: str) -> bool:
-            msg = "bad config"
-            raise TypeError(msg)
+            def __len__(self) -> int:
+                return 0
 
-        def __iter__(self) -> Iterator[str]:
-            return iter(())
+        class _BrokenConfig:
+            model_config: _BrokenConfigDict = _BrokenConfigDict()
 
-        def __len__(self) -> int:
-            return 0
+        class _NoSetattrVisible:
+            @override
+            def __getattribute__(self, name: str) -> object:
+                if name == "__setattr__":
+                    raise AttributeError(name)
+                return object.__getattribute__(self, name)
 
-    class _BrokenConfig:
-        model_config: _BrokenConfigDict = _BrokenConfigDict()
-
-    class _NoSetattrVisible:
-        @override
-        def __getattribute__(self, name: str) -> object:
-            if name == "__setattr__":
-                raise AttributeError(name)
-            return object.__getattribute__(self, name)
-
-    assert (
-        u.validate_value_object_immutable(
-            cast("t.RuntimeData", _BrokenConfig()),
+        assert (
+            u.validate_value_object_immutable(
+                cast("t.RuntimeData", _BrokenConfig()),
+            )
+            is False
         )
-        is False
-    )
-    assert (
-        u.validate_value_object_immutable(
-            cast("t.RuntimeData", _NoSetattrVisible()),
+        assert (
+            u.validate_value_object_immutable(
+                cast("t.RuntimeData", _NoSetattrVisible()),
+            )
+            is False
         )
-        is False
-    )
