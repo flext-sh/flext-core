@@ -233,7 +233,7 @@ class TestCollectionUtilitiesCoverage:
             if scenario.expected_success:
                 result = validator(cast("t.NormalizedValue", scenario.value))
                 tm.that(result, is_=list)
-                tm.that(all(isinstance(item, self.Status) for item in result), eq=True)
+                tm.that(all(item in self.Status for item in result), eq=True)
             else:
                 with pytest.raises(Exception) as exc_info:
                     validator(cast("t.NormalizedValue", scenario.value))
@@ -250,9 +250,7 @@ class TestCollectionUtilitiesCoverage:
                 parsed = result.value
                 tm.that(len(parsed), eq=scenario.expected_count)
                 tm.that(parsed, is_=dict)
-                tm.that(
-                    all(isinstance(v, self.Status) for v in parsed.values()), eq=True
-                )
+                tm.that(all(v in self.Status for v in parsed.values()), eq=True)
             else:
                 _ = u.Tests.Result.assert_failure(result)
                 error_msg = result.error

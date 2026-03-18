@@ -749,6 +749,11 @@ class TestUtilitiesCollectionCoverage:
             ),
         ]
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.PARSE_SEQUENCE_CASES,
+        ids=lambda s: s.name,
+    )
     def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
         """Test parse_sequence with various scenarios."""
         result = u.parse_sequence(scenario.enum_cls, scenario.values)
@@ -785,6 +790,11 @@ class TestUtilitiesCollectionCoverage:
         error_message = result.error or ""
         assert "invalid1" in error_message or "invalid2" in error_message
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.COERCE_LIST_CASES,
+        ids=lambda s: s.name,
+    )
     def test_coerce_list_validator(self, scenario: CoerceListScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
         validator = u.coerce_list_validator(scenario.enum_cls)
@@ -820,6 +830,11 @@ class TestUtilitiesCollectionCoverage:
         dumped2 = model2.model_dump()
         tm.that(len(dumped2["statuses"]), eq=2)
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.PARSE_MAPPING_CASES,
+        ids=lambda s: s.name,
+    )
     def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
         """Test parse_mapping with various scenarios."""
         result = u.parse_mapping(scenario.enum_cls, scenario.mapping)
@@ -862,6 +877,11 @@ class TestUtilitiesCollectionCoverage:
         error_message = result.error or ""
         assert "invalid1" in error_message or "invalid2" in error_message
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.COERCE_DICT_CASES,
+        ids=lambda s: s.name,
+    )
     def test_coerce_dict_validator(self, scenario: CoerceDictScenario) -> None:
         """Test coerce_dict_validator with various scenarios."""
         validator = u.coerce_dict_validator(scenario.enum_cls)
@@ -902,6 +922,11 @@ class TestUtilitiesCollectionCoverage:
         tm.that(len(model2.user_statuses), eq=2)
         assert all(isinstance(s, FixtureStatus) for s in model2.user_statuses.values())
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.MAP_CASES,
+        ids=lambda s: s.name,
+    )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
         if isinstance(scenario.items, (r, FlextRuntime.RuntimeResult)):
@@ -909,6 +934,11 @@ class TestUtilitiesCollectionCoverage:
         result = u.map(scenario.items, scenario.mapper)
         assert result == scenario.expected_result
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.FIND_CASES,
+        ids=lambda s: s.name,
+    )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
         result = u.find(
@@ -921,6 +951,11 @@ class TestUtilitiesCollectionCoverage:
             assert result.is_success
             assert result.value == scenario.expected_result
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.FILTER_CASES,
+        ids=lambda s: s.name,
+    )
     def test_filter(self, scenario: FilterScenario) -> None:
         """Test filter with various scenarios."""
         result = u.filter(
@@ -930,11 +965,21 @@ class TestUtilitiesCollectionCoverage:
         )
         assert result == scenario.expected_result
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.COUNT_CASES,
+        ids=lambda s: s.name,
+    )
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
         result = u.count(scenario.items, scenario.predicate)
         assert result == scenario.expected_count
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.PROCESS_CASES,
+        ids=lambda s: s.name,
+    )
     def test_process(self, scenario: ProcessScenario) -> None:
         """Test process with various scenarios."""
         result = u.process(
@@ -953,11 +998,21 @@ class TestUtilitiesCollectionCoverage:
             _ = assertion_helpers.assert_flext_result_success(result)
             assert result.value == scenario.expected_result
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.GROUP_CASES,
+        ids=lambda s: s.name,
+    )
     def test_group(self, scenario: GroupScenario) -> None:
         """Test group_by with various scenarios."""
         result = u.group_by(scenario.items, scenario.key)
         assert result == scenario.expected_result
 
+    @pytest.mark.parametrize(
+        "scenario",
+        CollectionUtilitiesScenarios.CHUNK_CASES,
+        ids=lambda s: s.name,
+    )
     def test_chunk(self, scenario: ChunkScenario) -> None:
         """Test chunk with various scenarios."""
         result = u.chunk(scenario.items, scenario.size)
