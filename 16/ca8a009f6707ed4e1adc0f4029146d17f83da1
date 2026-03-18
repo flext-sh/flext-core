@@ -1,0 +1,36 @@
+src/flext_core/_typings/services.py
+  6c64f6d393d3af6e 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "16ca8a009f6707ed4e1adc0f4029146d17f83da1",
+  "prompts": {
+    "6c64f6d393d3af6e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fd143f57ffedD55rH9R9SpvRH",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 25,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    },
+    "7b00d79ef8e2013c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fe4f524cffe2P0ZrkPayKFWfS",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 3,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
