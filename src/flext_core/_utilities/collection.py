@@ -270,7 +270,7 @@ class FlextUtilitiesCollection:
                                         ),
                                     )
                                 else:
-                                    inner_item_obj: object = inner_item
+                                    inner_item_obj: t.NormalizedValue = inner_item
                                     results.append(str(inner_item_obj))
                             continue
                         if isinstance(result_value, dict):
@@ -288,7 +288,7 @@ class FlextUtilitiesCollection:
                                 result_value,
                             )
                         else:
-                            result_value_obj: object = result_value
+                            result_value_obj: t.NormalizedValue = result_value
                             value = str(result_value_obj)
                         if do_flatten and isinstance(value, list):
                             results.extend(value)
@@ -320,7 +320,7 @@ class FlextUtilitiesCollection:
                                     ),
                                 )
                             else:
-                                inner_item_obj_flat: object = inner_item
+                                inner_item_obj_flat: t.NormalizedValue = inner_item
                                 results.append(str(inner_item_obj_flat))
                         continue
                     if isinstance(normalized_result_raw, dict):
@@ -338,10 +338,10 @@ class FlextUtilitiesCollection:
                             normalized_result_raw,
                         )
                     else:
-                        raw_unknown: object = normalized_result_raw
+                        raw_unknown: t.NormalizedValue = normalized_result_raw
                         direct_result = str(raw_unknown)
                 except (TypeError, ValueError):
-                    raw_error: object = result_raw
+                    raw_error: t.NormalizedValue = result_raw
                     direct_result = str(raw_error)
                 if do_flatten and isinstance(direct_result, list):
                     results.extend(direct_result)
