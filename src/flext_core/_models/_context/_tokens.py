@@ -1,0 +1,75 @@
+"""Context token models for variable reset operations.
+
+Token models track context variable state changes and enable rollback
+to previous values in context managers and error handlers.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from typing import Annotated
+
+from pydantic import Field
+
+from flext_core import c, t
+from flext_core._models import FlextModelsEntity
+
+
+class FlextModelsContextTokens:
+    """Namespace for context token models."""
+
+    class StructlogProxyToken(FlextModelsEntity.Value):
+        """Token for resetting structlog context variables.
+
+        Used by StructlogProxyContextVar to track previous values and enable
+        rollback to previous context state.
+
+        Attributes:
+            key: The context variable key being tracked
+            previous_value: The value before the set operation (None if unset)
+
+        """
+
+        key: Annotated[
+            str,
+            Field(
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                pattern=c.Platform.PATTERN_IDENTIFIER_WITH_UNDERSCORE,
+                description="Context variable key (alphanumeric, underscore)",
+                examples=["correlation_id", "service_name", "user_id"],
+            ),
+        ]
+        previous_value: Annotated[
+            t.ValueOrModel | None,
+            Field(default=None, description="Previous value before set operation"),
+        ] = None
+
+    class Token(FlextModelsEntity.Value):
+        """Token for context variable reset operations.
+
+        Used by FlextContext to track context variable changes and enable
+        rollback to previous values.
+
+        Attributes:
+            key: The context variable key being tracked
+            old_value: The value before the set operation (None if unset)
+
+        """
+
+        key: Annotated[
+            str,
+            Field(
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Unique key for the context variable",
+                examples=["user_id", "request_id", "session_id"],
+            ),
+        ]
+        old_value: Annotated[
+            t.ValueOrModel | None,
+            Field(default=None, description="Previous value before set operation"),
+        ]
+
+
+__all__ = ["FlextModelsContextTokens"]

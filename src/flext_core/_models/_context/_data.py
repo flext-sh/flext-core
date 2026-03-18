@@ -1,0 +1,197 @@
+"""Context data models with serialization validation.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from typing import Annotated
+
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_validator,
+)
+
+from flext_core import FlextRuntime, c, t
+from flext_core._models import (
+    FlextModelFoundation,
+    FlextModelsEntity,
+)
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+
+
+class FlextModelsContextData:
+    """Namespace for context data models."""
+
+    @staticmethod
+    def normalize_to_mapping(
+        v: t.ValueOrModel,
+    ) -> Mapping[str, t.NormalizedValue]:
+        if v is None:
+            out: dict[str, t.NormalizedValue] = {}
+            return out
+        if isinstance(v, Mapping):
+            validated = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                v,
+            )
+            return dict(validated)
+        if isinstance(v, BaseModel):
+            return v.model_dump()
+        msg = f"Cannot normalize {type(v)} to Mapping"
+        raise ValueError(msg)
+
+    @staticmethod
+    def normalize_metadata_before(
+        v: t.ValueOrModel | None,
+    ) -> t.ValueOrModel | None:
+        if v is None:
+            return None
+        if isinstance(v, FlextModelFoundation.Metadata):
+            return v
+        if isinstance(v, Mapping):
+            return FlextModelFoundation.Metadata.model_validate({
+                c.Mixins.FIELD_ATTRIBUTES: FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                    v,
+                ),
+            })
+        return v
+
+    class SerializableDataValidatorMixin:
+        @field_validator("data", mode="before")
+        @classmethod
+        def validate_dict_serializable(
+            cls,
+            v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
+        ) -> Mapping[str, t.NormalizedValue]:
+            """Validate that data values are JSON-serializable."""
+            working_value: dict[str, t.NormalizedValue]
+            normalized_mapping: Mapping[str, t.ValueOrModel]
+            if v is None:
+                return {}
+            if isinstance(v, FlextModelFoundation.Metadata):
+                normalized_metadata: dict[str, t.ValueOrModel] = {
+                    key: FlextRuntime.normalize_to_container(value)
+                    for key, value in v.attributes.items()
+                }
+                normalized_mapping = normalized_metadata
+            elif isinstance(v, BaseModel):
+                dump_result = v.model_dump()
+                normalized_mapping = {
+                    str(k): FlextRuntime.normalize_to_container(dv)
+                    for k, dv in dump_result.items()
+                }
+            else:
+                normalized_mapping = dict(v)
+            working_value = {
+                str(
+                    k
+                ): FlextModelsContextData.ContextData.normalize_to_serializable_value(
+                    val,
+                )
+                for k, val in normalized_mapping.items()
+            }
+            FlextModelsContextData.ContextData.check_json_serializable(working_value)
+            return dict(working_value)
+
+    class ContextData(SerializableDataValidatorMixin, FlextModelsEntity.Value):
+        """Lightweight container for initializing context state."""
+
+        data: Annotated[
+            t.Dict,
+            Field(
+                default_factory=t.Dict,
+                description="Initial context data as key-value pairs",
+            ),
+        ] = Field(default_factory=t.Dict)
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | t.Dict | None,
+            BeforeValidator(
+                lambda v: FlextModelsContextData._normalize_metadata_before(v)
+            ),
+            Field(
+                default=None,
+                description="Context metadata (creation info, source, etc.)",
+            ),
+        ] = None
+        model_config = ConfigDict(extra=c.ModelConfig.EXTRA_IGNORE)
+
+        @classmethod
+        def check_json_serializable(cls, obj: t.ValueOrModel, path: str = "") -> None:
+            """Recursively check if object is JSON-serializable."""
+            if obj is None or FlextUtilitiesGuardsTypeCore.is_primitive(obj):
+                return
+            if FlextRuntime.is_dict_like(obj):
+                for key, val in obj.items():
+                    cls.check_json_serializable(val, f"{path}.{key}")
+                return
+            if FlextRuntime.is_list_like(obj) and (not isinstance(obj, (str, bytes))):
+                seq_obj: Sequence[t.NormalizedValue] = obj
+                for i, item in enumerate(seq_obj):
+                    cls.check_json_serializable(item, f"{path}[{i}]")
+                return
+            msg = f"Non-JSON-serializable type {obj.__class__.__name__} at {path}"
+            raise TypeError(msg)
+
+        @classmethod
+        def normalize_to_serializable_value(
+            cls,
+            val: t.ValueOrModel,
+        ) -> t.NormalizedValue:
+            normalized = cls.normalize_to_container(val)
+            if normalized is None or FlextUtilitiesGuardsTypeCore.is_primitive(
+                normalized,
+            ):
+                return normalized
+            if isinstance(
+                normalized,
+                (t.ConfigMap, t.Dict),
+            ):
+                return {
+                    str(key): cls.normalize_to_serializable_value(item_value)
+                    for key, item_value in normalized.root.items()
+                }
+            if isinstance(normalized, BaseModel):
+                dumped_model = normalized.model_dump()
+                return {
+                    str(key): cls.normalize_to_serializable_value(item_value)
+                    for key, item_value in dumped_model.items()
+                }
+            if isinstance(normalized, Mapping):
+                normalized_map = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                    normalized,
+                )
+                return {
+                    str(key): cls.normalize_to_serializable_value(val)
+                    for key, val in normalized_map.items()
+                }
+            if FlextRuntime.is_list_like(normalized):
+                return [
+                    cls.normalize_to_serializable_value(item) for item in normalized
+                ]
+            return str(normalized)
+
+        @staticmethod
+        def normalize_to_container(
+            val: t.ValueOrModel,
+        ) -> t.ValueOrModel:
+            """Normalize to container; raises TypeError for non-normalizable types."""
+            if val is None:
+                return ""
+            if isinstance(val, t.SCALAR_TYPES):
+                return val
+            if isinstance(val, BaseModel):
+                return val
+            if FlextRuntime.is_dict_like(val) or FlextRuntime.is_list_like(val):
+                return FlextRuntime.normalize_to_container(val)
+            if hasattr(val, "__iter__"):
+                return str(val)
+            msg = f"Non-normalizable type {type(val).__name__}"
+            raise TypeError(msg)
+
+
+__all__ = ["FlextModelsContextData"]
