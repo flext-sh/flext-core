@@ -73,7 +73,7 @@ class TestModule:
     ) -> None:
         shim = self._StructlogShim()
 
-        def _structlog_accessor():
+        def _structlog_accessor() -> object:
             return shim
 
         monkeypatch.setattr(
@@ -140,7 +140,7 @@ class TestModule:
     ) -> None:
         shim = self._StructlogShim()
 
-        def _structlog_accessor():
+        def _structlog_accessor() -> object:
             return shim
 
         monkeypatch.setattr(
@@ -189,7 +189,7 @@ class TestModule:
     ) -> None:
         fake = self._FakeBindable()
 
-        def _get_logger(_name: str | None = None):
+        def _get_logger(_name: str | None = None) -> object:
             return fake
 
         monkeypatch.setattr(FlextRuntime, "get_logger", staticmethod(_get_logger))

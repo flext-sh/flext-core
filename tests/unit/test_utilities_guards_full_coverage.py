@@ -267,13 +267,15 @@ def test_guard_in_has_empty_none_helpers() -> None:
 
 
 def test_chk_exercises_missed_branches() -> None:
+    from pydantic_core import ValidationError
+
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(none=True).model_dump()), eq=True)
     tm.that(not u.chk(None, **core_m.GuardCheckSpec(none=False).model_dump()), eq=True)
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(is_=int).model_dump()), eq=True)
-    with pytest.raises(TypeError):
-        u.chk("a", **core_m.GuardCheckSpec(is_=list[int]).model_dump())
-    with pytest.raises(TypeError):
-        u.chk("a", **core_m.GuardCheckSpec(not_=list[int]).model_dump())
+    with pytest.raises(ValidationError):
+        u.chk("a", is_=list[int])
+    with pytest.raises(ValidationError):
+        u.chk("a", not_=list[int])
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(not_=str).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(eq=2).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(ne=1).model_dump()), eq=True)
@@ -335,10 +337,10 @@ def test_guard_instance_attribute_access_warnings() -> None:
     guards = u()
     method = guards.is_type
     tm.that(callable(method), eq=True)
-    private_method = cast(
-        "Callable[..., t.Tests.object]", getattr(guards, "_is_mapping")
+    mapping_method = cast(
+        "Callable[..., t.Tests.object]", getattr(guards, "is_mapping")
     )
-    tm.that(callable(private_method), eq=True)
+    tm.that(callable(mapping_method), eq=True)
 
 
 def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:

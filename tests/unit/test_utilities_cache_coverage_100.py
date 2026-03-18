@@ -37,7 +37,7 @@ class UtilitiesCacheCoverage100Namespace:
 
         name: Annotated[str, Field(description="Normalize scenario name")]
         component: Annotated[
-            t.NormalizedValue | set[t.Primitives | None] | None,
+            t.NormalizedValue | BaseModel | set[t.Primitives | None] | None,
             Field(default=None, description="Input component to normalize"),
         ] = None
         expected_type: Annotated[

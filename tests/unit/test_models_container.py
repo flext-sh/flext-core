@@ -325,8 +325,9 @@ class TestFlextModelsContainer:
             metadata=None,
         )
         tm.that(registration.metadata, none=False)
-        metadata_dump = registration.metadata.model_dump()
-        tm.that(metadata_dump.get("attributes", {}), eq={})
+        if registration.metadata is not None:
+            metadata_dump = registration.metadata.model_dump()
+            tm.that(metadata_dump.get("attributes", {}), eq={})
 
     def test_factory_registration_metadata_none_handling(self) -> None:
         """Test FactoryRegistration handles None metadata correctly."""

@@ -24,7 +24,7 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (pkg / "service.py").write_text(
-        "from flext_core.constants import System\nfrom flext_infra.constants import Infra\n\nVALUE = 1",
+        "from flext_core.constants import c, m, r, t, u, p\nfrom flext_infra.constants import c, m, t, u, p\n\nVALUE = 1",
         encoding="utf-8",
     )
 

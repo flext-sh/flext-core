@@ -32,10 +32,10 @@ from pydantic import ConfigDict, Field
 from flext_core import FlextConstants, FlextRuntime, e
 from tests import c, m
 
-_BASE_SCENARIOS: list[t.Any] = []
-_SPECIFIC_TYPE_SCENARIOS: list[t.Any] = []
-_FACTORY_SCENARIOS: list[t.Any] = []
-_TYPE_SCENARIOS: list[t.Any] = []
+_BASE_SCENARIOS: list[object] = []
+_SPECIFIC_TYPE_SCENARIOS: list[object] = []
+_FACTORY_SCENARIOS: list[object] = []
+_TYPE_SCENARIOS: list[object] = []
 
 
 class Teste:

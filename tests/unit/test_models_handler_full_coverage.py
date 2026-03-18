@@ -14,11 +14,13 @@ def test_models_handler_branches() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
-    req = m.RegistrationRequest(handler=lambda value: value, handler_mode="command")
-    assert req.handler_mode == "command"
+    req = m.RegistrationRequest(
+        handler=lambda value: value, handler_mode=c.Cqrs.HandlerType.COMMAND
+    )
+    assert req.handler_mode == c.Cqrs.HandlerType.COMMAND
     with pytest.raises(Exception, match="Handler must be callable"):
         m.Registration.model_validate({"name": "bad", "handler": 1})
-    ctx = m.ExecutionContext.create_for_handler("h1", "command")
+    ctx = m.ExecutionContext.create_for_handler("h1", c.Cqrs.HandlerType.COMMAND)
     raw_execution_time = ctx.execution_time_ms
     execution_time_ms = (
         raw_execution_time() if callable(raw_execution_time) else raw_execution_time
@@ -31,7 +33,7 @@ def test_models_handler_branches() -> None:
 
 
 def test_models_handler_uncovered_mode_and_reset_paths() -> None:
-    ctx = m.ExecutionContext.create_for_handler("h2", "query")
+    ctx = m.ExecutionContext.create_for_handler("h2", c.Cqrs.HandlerType.QUERY)
     assert ctx.is_running is False
     ctx.start_execution()
     assert ctx.is_running
