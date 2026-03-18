@@ -1,0 +1,23 @@
+tests/unit/test_exceptions.py
+  cb80ad40c18b820a 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "55bd24edd51cfd48880dbfb71d33c77296786c2f",
+  "prompts": {
+    "cb80ad40c18b820a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fdc03bd6ffe3BcJvHQhqoIf3d",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
