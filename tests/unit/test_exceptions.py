@@ -23,7 +23,7 @@ from __future__ import annotations
 import time
 from collections.abc import Iterator, Mapping
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast, override
+from typing import Annotated, cast, override
 
 import pytest
 from flext_tests import t, tm, u
