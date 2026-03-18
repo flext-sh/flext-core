@@ -1,0 +1,25 @@
+tests/unit/test_utilities_type_guards_coverage_100.py
+  7e95dfea5ab20cb4 135
+tests/integration/patterns/test_patterns_testing.py
+  7e95dfea5ab20cb4 630
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "80ae0f6e785fe26996852f688b47a44d080e4e6b",
+  "prompts": {
+    "7e95dfea5ab20cb4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2fe3ad47affebncQ373nCzCJvB",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
