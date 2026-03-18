@@ -76,8 +76,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if ctx_value is None:
             return {}
 
-        if isinstance(ctx_value, BaseModel):
-            ctx_value = getattr(ctx_value, "root", ctx_value.model_dump())
+        if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
+            ctx_value = ctx_value.root
+        elif isinstance(ctx_value, BaseModel):
+            ctx_value = ctx_value.model_dump()
         elif u.is_mapping(ctx_value):
             pass
         else:
@@ -137,14 +139,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         super().__init__(**data)
         context_data = m.ContextData()
         if self.initial_data is not None:
-            if hasattr(self.initial_data, c.Mixins.FIELD_DATA) and hasattr(
-                self.initial_data,
-                c.Mixins.FIELD_METADATA,
-            ):
-                context_data = m.ContextData.model_validate(
-                    self.initial_data,
-                    from_attributes=True,
-                )
+            if isinstance(self.initial_data, m.ContextData):
+                context_data = self.initial_data
             elif isinstance(self.initial_data, t.ConfigMap):
                 context_data = m.ContextData(
                     data=t.Dict(
@@ -998,16 +994,18 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         """
         counter_attr: str = f"{operation}s"
-        if hasattr(self._statistics, counter_attr):
-            current_value: int = getattr(self._statistics, counter_attr, 0)
-            setattr(self._statistics, counter_attr, current_value + 1)
+        update_fields: dict[str, t.ValueOrModel] = {}
+        if counter_attr in m.ContextStatistics.model_fields:
+            current_value = getattr(self._statistics, counter_attr, 0)
+            if isinstance(current_value, int):
+                update_fields[counter_attr] = current_value + 1
         operations = dict(self._statistics.operations.items())
-        value = operations.get(operation)
-        if isinstance(value, int):
-            operations[operation] = value + 1
-            self._statistics = self._statistics.model_copy(
-                update={"operations": operations},
-            )
+        op_value = operations.get(operation)
+        if isinstance(op_value, int):
+            operations[operation] = op_value + 1
+            update_fields["operations"] = operations
+        if update_fields:
+            self._statistics = self._statistics.model_copy(update=update_fields)
 
     _container: p.Container | None = None
 
