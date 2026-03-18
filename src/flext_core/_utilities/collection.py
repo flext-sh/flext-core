@@ -17,19 +17,7 @@ from itertools import batched, chain
 from typing import overload
 
 from flext_core import T, U, m, r, t
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 
 class FlextUtilitiesCollection:
