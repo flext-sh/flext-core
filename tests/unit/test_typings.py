@@ -28,8 +28,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e
-from tests import t
+from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e, t
 
 
 class TestTypings:
@@ -52,7 +51,7 @@ class TestTypings:
 
         name: Annotated[str, Field(description="Type variable test case name")]
         category: Annotated[
-            TypeVarCategory,
+            TestTypings.TypeVarCategory,
             Field(description="Type variable category"),
         ]
         type_var: Annotated[

@@ -7,12 +7,9 @@ from enum import StrEnum, unique
 from typing import cast, override
 
 import pytest
-from flext_tests import tm
-
-from tests import u
+from flext_tests import tm, u
 
 
-@unique
 class TestUtilitiesEnumFullCoverage:
     @unique
     class Status(StrEnum):
@@ -118,10 +115,15 @@ class TestUtilitiesEnumFullCoverage:
         tm.that(inverse, eq={"1": "one", "2": "two"})
 
     def test_create_enum_executes_factory_path(self) -> None:
-        dynamic_status = u.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"})
-        tm.that(dynamic_status.OK.value, eq="ok")
-        tm.that(dynamic_status.ERR.value, eq="err")
-        tm.that(dynamic_status.OK in dynamic_status.__members__.values(), eq=True)
+        dynamic_status = cast(
+            "type[StrEnum]",
+            u.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"}),
+        )
+        ok_member = dynamic_status.__members__["OK"]
+        err_member = dynamic_status.__members__["ERR"]
+        tm.that(ok_member.value, eq="ok")
+        tm.that(err_member.value, eq="err")
+        tm.that(ok_member in dynamic_status.__members__.values(), eq=True)
 
     def test_shortcuts_delegate_to_primary_methods(self) -> None:
         tm.that(u.is_member(self.Status, "active"), eq=True)

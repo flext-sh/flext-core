@@ -35,69 +35,65 @@ from flext_core._models.domain_event import _ComparableConfigMap
 from tests import c, m, t
 
 
-@unique
-class ModelType(StrEnum):
-    """Model types for parametrized testing."""
-
-    ENTITY = "entity"
-    VALUE = "value"
-    AGGREGATE = "aggregate"
-    COMMAND = "command"
-    QUERY = "query"
-    EVENT = "event"
-    METADATA = "metadata"
-    PAYLOAD = "payload"
-
-
-class ModelCreationScenario(BaseModel):
-    """Scenario for testing model creation."""
-
-    model_config = ConfigDict(frozen=True)
-
-    model_type: Annotated[
-        ModelType, Field(description="Model type under creation test")
-    ]
-    field_data: Annotated[
-        dict[str, test_t.Tests.object], Field(description="Model input payload")
-    ]
-    expected_checks: Annotated[
-        list[str], Field(description="Expected validation check labels")
-    ]
-    description: Annotated[
-        str, Field(default="", description="Scenario description")
-    ] = ""
-
-
-class SampleAggregate(m.AggregateRoot):
-    """Sample aggregate root for testing."""
-
-    name: str
-    status: str = "active"
-
-    def change_status(self, new_status: str) -> None:
-        """Change status and add domain event."""
-        self.status = new_status
-        result = self.add_domain_event(
-            "status_changed",
-            t.ConfigMap(root={"old_status": "active", "new_status": new_status}),
-        )
-        if result.is_failure:
-            error_msg = f"Failed to add domain event: {result.error}"
-            raise ValueError(error_msg)
-
-
-class EventAggregate(m.AggregateRoot):
-    """Test aggregate for domain events."""
-
-    name: str
-
-    def trigger_event(self) -> None:
-        """Trigger a test event."""
-        _ = self.add_domain_event("test_event", t.ConfigMap(root={"data": "test"}))
-
-
-class TestFlextModels:
+class TestModels:
     """Test suite for m using FlextTestsUtilities and c."""
+
+    @unique
+    class ModelType(StrEnum):
+        """Model types for parametrized testing."""
+
+        ENTITY = "entity"
+        VALUE = "value"
+        AGGREGATE = "aggregate"
+        COMMAND = "command"
+        QUERY = "query"
+        EVENT = "event"
+        METADATA = "metadata"
+        PAYLOAD = "payload"
+
+    class ModelCreationScenario(BaseModel):
+        """Scenario for testing model creation."""
+
+        model_config = ConfigDict(frozen=True)
+
+        model_type: Annotated[
+            TestModels.ModelType, Field(description="Model type under creation test")
+        ]
+        field_data: Annotated[
+            dict[str, test_t.Tests.object], Field(description="Model input payload")
+        ]
+        expected_checks: Annotated[
+            list[str], Field(description="Expected validation check labels")
+        ]
+        description: Annotated[
+            str, Field(default="", description="Scenario description")
+        ] = ""
+
+    class SampleAggregate(m.AggregateRoot):
+        """Sample aggregate root for testing."""
+
+        name: str
+        status: str = "active"
+
+        def change_status(self, new_status: str) -> None:
+            """Change status and add domain event."""
+            self.status = new_status
+            result = self.add_domain_event(
+                "status_changed",
+                t.ConfigMap(root={"old_status": "active", "new_status": new_status}),
+            )
+            if result.is_failure:
+                error_msg = f"Failed to add domain event: {result.error}"
+                raise ValueError(error_msg)
+
+    class EventAggregate(m.AggregateRoot):
+        """Test aggregate for domain events."""
+
+        name: str
+
+        def trigger_event(self) -> None:
+            """Trigger a test event."""
+            _ = self.add_domain_event("test_event", t.ConfigMap(root={"data": "test"}))
 
     def test_models_initialization(self) -> None:
         """Test models initialization with real validation."""
@@ -1070,4 +1066,4 @@ class TestFlextModels:
         assert details.status == "running"
 
 
-__all__ = ["TestFlextModels"]
+__all__ = ["TestModels"]

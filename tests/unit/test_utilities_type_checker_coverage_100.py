@@ -24,104 +24,12 @@ from collections import UserDict as BaseUserDict
 from typing import TypeVar, cast, get_origin, override
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import t, tm, u
 
 from flext_core import h, r
-from tests import u
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")
-
-
-def _type_origin(value: t.TypeHintSpecifier) -> t.TypeOriginSpecifier:
-    return value
-
-
-def _message_type(
-    value: type[dict[str, t.Tests.object] | int | str],
-) -> t.MessageTypeSpecifier:
-    return cast("t.MessageTypeSpecifier", value)
-
-
-class StringHandler(h[str, str]):
-    """Handler for string messages."""
-
-    @override
-    def handle(self, message: str) -> r[str]:
-        """Handle string message."""
-        return r[str].ok(f"Processed: {message}")
-
-
-class IntHandler(h[int, int]):
-    """Handler for int messages."""
-
-    @override
-    def handle(self, message: int) -> r[int]:
-        """Handle int message."""
-        return r[int].ok(message * 2)
-
-
-class DictHandler(h[dict[str, t.Tests.object], dict[str, t.Tests.object]]):
-    """Handler for dict messages."""
-
-    @override
-    def handle(
-        self,
-        message: dict[str, t.Tests.object],
-    ) -> r[dict[str, t.Tests.object]]:
-        """Handle dict message."""
-        return r[dict[str, t.Tests.object]].ok({
-            "processed": True,
-            **message,
-        })
-
-
-class ObjectHandler(h[object, t.Container]):
-    """Handler for object messages (universal)."""
-
-    @override
-    def handle(self, message: object) -> r[t.Container]:
-        """Handle any message."""
-        if isinstance(message, (str, int, float, bool)):
-            return r[t.Container].ok(message)
-        return r[t.Container].fail("unsupported message")
-
-
-class ExplicitTypeHandler:
-    """Handler with explicit type annotation (no generic)."""
-
-    def handle(self, message: str) -> str:
-        """Handle string message."""
-        return message.upper()
-
-
-class NoHandleMethod:
-    """Class without handle method."""
-
-    def process(self, data: str) -> str:
-        """Process data."""
-        return data
-
-
-class NonCallableHandle:
-    """Class with non-callable handle attribute."""
-
-    handle: str = "not a method"
-
-
-class _BadSignatureCallable:
-    __signature__ = "bad-signature"
-
-    def __call__(self, x: int) -> str:
-        return str(x)
-
-
-class GenericHandler[TMessage]:
-    """Generic handler without h base."""
-
-    def handle(self, message: TMessage) -> TMessage:
-        """Handle generic message."""
-        return message
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
@@ -130,29 +38,88 @@ pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 class TestuTypeChecker:
     """Comprehensive tests for u."""
 
+    @staticmethod
+    def _type_origin(value: t.TypeHintSpecifier) -> t.TypeOriginSpecifier:
+        return value
+
+    @staticmethod
+    def _message_type(
+        value: type[dict[str, t.Tests.object] | int | str],
+    ) -> t.MessageTypeSpecifier:
+        return cast("t.MessageTypeSpecifier", value)
+
+    class StringHandler(h[str, str]):
+        @override
+        def handle(self, message: str) -> r[str]:
+            return r[str].ok(f"Processed: {message}")
+
+    class IntHandler(h[int, int]):
+        @override
+        def handle(self, message: int) -> r[int]:
+            return r[int].ok(message * 2)
+
+    class DictHandler(h[dict[str, t.Tests.object], dict[str, t.Tests.object]]):
+        @override
+        def handle(
+            self,
+            message: dict[str, t.Tests.object],
+        ) -> r[dict[str, t.Tests.object]]:
+            return r[dict[str, t.Tests.object]].ok({
+                "processed": True,
+                **message,
+            })
+
+    class ObjectHandler(h[object, t.Container]):
+        @override
+        def handle(self, message: object) -> r[t.Container]:
+            if isinstance(message, (str, int, float, bool)):
+                return r[t.Container].ok(message)
+            return r[t.Container].fail("unsupported message")
+
+    class ExplicitTypeHandler:
+        def handle(self, message: str) -> str:
+            return message.upper()
+
+    class NoHandleMethod:
+        def process(self, data: str) -> str:
+            return data
+
+    class NonCallableHandle:
+        handle: str = "not a method"
+
+    class _BadSignatureCallable:
+        __signature__ = "bad-signature"
+
+        def __call__(self, x: int) -> str:
+            return str(x)
+
+    class GenericHandler[TMessage]:
+        def handle(self, message: TMessage) -> TMessage:
+            return message
+
     def test_compute_accepted_message_types_from_generic(self) -> None:
         """Test compute_accepted_message_types extracts from generic base."""
-        types = u.compute_accepted_message_types(StringHandler)
+        types = u.compute_accepted_message_types(self.StringHandler)
         tm.that(len(types), eq=1)
         tm.that(types[0], eq=str)
-        types = u.compute_accepted_message_types(IntHandler)
+        types = u.compute_accepted_message_types(self.IntHandler)
         tm.that(len(types), eq=1)
         tm.that(types[0], eq=int)
 
     def test_compute_accepted_message_types_from_explicit(self) -> None:
         """Test compute_accepted_message_types extracts from explicit annotation."""
-        types = u.compute_accepted_message_types(ExplicitTypeHandler)
+        types = u.compute_accepted_message_types(self.ExplicitTypeHandler)
         tm.that(len(types), eq=1)
         tm.that(types[0], eq=str)
 
     def test_compute_accepted_message_types_no_handle_method(self) -> None:
         """Test compute_accepted_message_types returns empty for class without handle."""
-        types = u.compute_accepted_message_types(NoHandleMethod)
+        types = u.compute_accepted_message_types(self.NoHandleMethod)
         tm.that(len(types), eq=0)
 
     def test_compute_accepted_message_types_dict_handler(self) -> None:
         """Test compute_accepted_message_types with dict handler."""
-        types = u.compute_accepted_message_types(DictHandler)
+        types = u.compute_accepted_message_types(self.DictHandler)
         tm.that(len(types), eq=1)
         origin = get_origin(types[0])
         if origin is None:
@@ -163,7 +130,7 @@ class TestuTypeChecker:
 
     def test_compute_accepted_message_types_object_handler(self) -> None:
         """Test compute_accepted_message_types with object handler (universal)."""
-        types = u.compute_accepted_message_types(ObjectHandler)
+        types = u.compute_accepted_message_types(self.ObjectHandler)
         tm.that(len(types), eq=1)
         tm.that(types[0], eq=object)
 
@@ -184,7 +151,7 @@ class TestuTypeChecker:
 
     def test_can_handle_message_type_dict_compatibility(self) -> None:
         """Test can_handle_message_type with dict type compatibility."""
-        accepted: tuple[t.MessageTypeSpecifier, ...] = (_message_type(dict),)
+        accepted: tuple[t.MessageTypeSpecifier, ...] = (self._message_type(dict),)
         tm.that(u.can_handle_message_type(accepted, str), eq=False)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
         dict_type: type[dict[str, t.Tests.object]] = dict
@@ -198,9 +165,9 @@ class TestuTypeChecker:
     def test_can_handle_message_type_multiple_accepted(self) -> None:
         """Test can_handle_message_type with multiple accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (
-            _message_type(str),
-            _message_type(int),
-            _message_type(dict),
+            self._message_type(str),
+            self._message_type(int),
+            self._message_type(dict),
         )
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, int), eq=True)
@@ -221,9 +188,11 @@ class TestuTypeChecker:
 
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
-        tm.that(u._evaluate_type_compatibility(_type_origin(dict), dict), eq=True)
+        tm.that(u._evaluate_type_compatibility(self._type_origin(dict), dict), eq=True)
         dict_type: type[dict[str, t.Tests.object]] = dict
-        tm.that(u._evaluate_type_compatibility(_type_origin(dict), dict_type), eq=True)
+        tm.that(
+            u._evaluate_type_compatibility(self._type_origin(dict), dict_type), eq=True
+        )
 
     def test_evaluate_type_compatibility_subclass(self) -> None:
         """Test _evaluate_type_compatibility with subclass relationship."""
@@ -251,10 +220,10 @@ class TestuTypeChecker:
     def test_check_dict_compatibility_both_dict(self) -> None:
         """Test _check_dict_compatibility with both types being dict."""
         result = u._check_dict_compatibility(
-            _type_origin(dict),
+            self._type_origin(dict),
             dict,
-            _type_origin(dict),
-            _type_origin(dict),
+            self._type_origin(dict),
+            self._type_origin(dict),
         )
         tm.that(result, eq=True)
 
@@ -265,10 +234,10 @@ class TestuTypeChecker:
             """Custom dict subclass."""
 
         result = u._check_dict_compatibility(
-            _type_origin(dict),
+            self._type_origin(dict),
             CustomDict,
-            _type_origin(dict),
-            _type_origin(dict),
+            self._type_origin(dict),
+            self._type_origin(dict),
         )
         tm.that(result, eq=True)
 
@@ -279,16 +248,16 @@ class TestuTypeChecker:
 
     def test_extract_generic_message_types_flext_handlers(self) -> None:
         """Test _extract_generic_message_types with h base."""
-        types = u._extract_generic_message_types(StringHandler)
+        types = u._extract_generic_message_types(self.StringHandler)
         tm.that(len(types), eq=1)
         tm.that(types[0], eq=str)
-        types = u._extract_generic_message_types(IntHandler)
+        types = u._extract_generic_message_types(self.IntHandler)
         tm.that(len(types), eq=1)
         tm.that(types[0], eq=int)
 
     def test_extract_generic_message_types_no_flext_handlers(self) -> None:
         """Test _extract_generic_message_types without h base."""
-        types = u._extract_generic_message_types(ExplicitTypeHandler)
+        types = u._extract_generic_message_types(self.ExplicitTypeHandler)
         tm.that(len(types), eq=0)
 
     def test_extract_generic_message_types_no_orig_bases(self) -> None:
@@ -303,7 +272,7 @@ class TestuTypeChecker:
     def test_extract_message_type_from_handle_with_annotation(self) -> None:
         """Test _extract_message_type_from_handle with type annotation."""
         message_type_result = u._extract_message_type_from_handle(
-            ExplicitTypeHandler,
+            self.ExplicitTypeHandler,
         )
         tm.ok(message_type_result)
         tm.that(message_type_result.value, eq=str)
@@ -311,14 +280,14 @@ class TestuTypeChecker:
     def test_extract_message_type_from_handle_no_handle_method(self) -> None:
         """Test _extract_message_type_from_handle without handle method."""
         message_type_result = u._extract_message_type_from_handle(
-            NoHandleMethod,
+            self.NoHandleMethod,
         )
         assert message_type_result.is_failure
 
     def test_extract_message_type_from_handle_non_callable(self) -> None:
         """Test _extract_message_type_from_handle with non-callable handle."""
         message_type_result = u._extract_message_type_from_handle(
-            NonCallableHandle,
+            self.NonCallableHandle,
         )
         assert message_type_result.is_failure
 
@@ -337,7 +306,7 @@ class TestuTypeChecker:
 
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
-        signature = u._get_method_signature(_BadSignatureCallable())
+        signature = u._get_method_signature(self._BadSignatureCallable())
         assert signature.is_failure
 
     def test_get_type_hints_safe_valid_method(self) -> None:
@@ -374,10 +343,10 @@ class TestuTypeChecker:
         dict_type: type[dict[str, str]] = dict[str, str]
         origin = get_origin(dict_type) or dict_type
         result = u._handle_type_or_origin_check(
-            _type_origin(dict),
-            _type_origin(dict_type),
-            _type_origin(dict),
-            _type_origin(origin),
+            self._type_origin(dict),
+            self._type_origin(dict_type),
+            self._type_origin(dict),
+            self._type_origin(origin),
         )
         tm.that(result, is_=bool)
 

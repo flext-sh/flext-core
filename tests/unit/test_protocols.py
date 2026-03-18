@@ -31,42 +31,41 @@ from flext_core import r
 from tests import p, t, u
 
 
-@unique
-class ProtocolCategoryType(StrEnum):
-    """Protocol category types for organization."""
+class TestFlextProtocols:
+    @unique
+    class ProtocolCategoryType(StrEnum):
+        FOUNDATION = "foundation"
+        DOMAIN = "domain"
+        INFRASTRUCTURE = "infrastructure"
+        APPLICATION = "application"
+        COMMANDS = "commands"
+        EXTENSIONS = "extensions"
 
-    FOUNDATION = "foundation"
-    DOMAIN = "domain"
-    INFRASTRUCTURE = "infrastructure"
-    APPLICATION = "application"
-    COMMANDS = "commands"
-    EXTENSIONS = "extensions"
+    class ProtocolDefinitionScenario(BaseModel):
+        model_config = ConfigDict(frozen=True)
 
+        name: Annotated[str, Field(description="Protocol definition scenario name")]
+        protocol_name: Annotated[str, Field(description="Protocol attribute name")]
+        category: Annotated[
+            TestFlextProtocols.ProtocolCategoryType,
+            Field(description="Protocol category"),
+        ]
 
-class ProtocolDefinitionScenario(BaseModel):
-    """Protocol definition test scenario."""
+    class ProtocolAvailabilityScenario(BaseModel):
+        model_config = ConfigDict(frozen=True)
 
-    model_config = ConfigDict(frozen=True)
+        name: Annotated[str, Field(description="Protocol availability scenario name")]
+        category: Annotated[
+            TestFlextProtocols.ProtocolCategoryType,
+            Field(description="Protocol category"),
+        ]
+        protocol_names: Annotated[
+            list[str], Field(description="Expected protocol names")
+        ]
 
-    name: Annotated[str, Field(description="Protocol definition scenario name")]
-    protocol_name: Annotated[str, Field(description="Protocol attribute name")]
-    category: Annotated[ProtocolCategoryType, Field(description="Protocol category")]
-
-
-class ProtocolAvailabilityScenario(BaseModel):
-    """Protocol availability test scenario."""
-
-    model_config = ConfigDict(frozen=True)
-
-    name: Annotated[str, Field(description="Protocol availability scenario name")]
-    category: Annotated[ProtocolCategoryType, Field(description="Protocol category")]
-    protocol_names: Annotated[list[str], Field(description="Expected protocol names")]
-
-
-class ProtocolScenarios:
-    """Centralized protocol test scenarios."""
-
-    DEFINITION_SCENARIOS: ClassVar[list[ProtocolDefinitionScenario]] = [
+    _DEFINITION_SCENARIOS: ClassVar[
+        list[TestFlextProtocols.ProtocolDefinitionScenario]
+    ] = [
         ProtocolDefinitionScenario(
             name="result_protocol",
             protocol_name="Result",
@@ -103,16 +102,13 @@ class ProtocolScenarios:
             category=ProtocolCategoryType.COMMANDS,
         ),
     ]
-    AVAILABILITY_SCENARIOS: ClassVar[list[ProtocolAvailabilityScenario]] = [
+    _AVAILABILITY_SCENARIOS: ClassVar[
+        list[TestFlextProtocols.ProtocolAvailabilityScenario]
+    ] = [
         ProtocolAvailabilityScenario(
             name="all_foundation_protocols_available",
             category=ProtocolCategoryType.FOUNDATION,
-            protocol_names=[
-                "Result",
-                "ResultLike",
-                "HasModelDump",
-                "Model",
-            ],
+            protocol_names=["Result", "ResultLike", "HasModelDump", "Model"],
         ),
         ProtocolAvailabilityScenario(
             name="all_domain_protocols_available",
@@ -141,16 +137,15 @@ class ProtocolScenarios:
         ),
     ]
 
-
-class TestFlextProtocols:
-    """Comprehensive test suite for p using FlextTestsUtilities."""
-
     @pytest.mark.parametrize(
         "scenario",
-        ProtocolScenarios.DEFINITION_SCENARIOS,
+        _DEFINITION_SCENARIOS,
         ids=lambda s: s.name,
     )
-    def test_protocol_definition(self, scenario: ProtocolDefinitionScenario) -> None:
+    def test_protocol_definition(
+        self,
+        scenario: TestFlextProtocols.ProtocolDefinitionScenario,
+    ) -> None:
         """Test protocol definitions are accessible and valid."""
         protocol = getattr(p, scenario.protocol_name)
         assert protocol is not None, f"Protocol {scenario.protocol_name} must exist"
@@ -163,12 +158,12 @@ class TestFlextProtocols:
 
     @pytest.mark.parametrize(
         "scenario",
-        ProtocolScenarios.AVAILABILITY_SCENARIOS,
+        _AVAILABILITY_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_protocol_availability(
         self,
-        scenario: ProtocolAvailabilityScenario,
+        scenario: TestFlextProtocols.ProtocolAvailabilityScenario,
     ) -> None:
         """Test that protocols are available by category with real validation."""
         for proto_name in scenario.protocol_names:
@@ -370,6 +365,3 @@ class TestFlextProtocols:
             empty=False,
             msg="Container value must be non-empty string",
         )
-
-
-__all__ = ["TestFlextProtocols"]

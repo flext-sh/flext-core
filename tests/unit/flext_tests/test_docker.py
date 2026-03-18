@@ -25,8 +25,8 @@ from flext_core import r
 from tests.test_utils import assertion_helpers
 
 
-class TestContainerStatus:
-    """Test suite for c.Tests.Docker.ContainerStatus enum."""
+class TestDocker:
+    """Test suite for flext_tests.docker module."""
 
     def test_container_status_values(self) -> None:
         """Test c.Tests.Docker.ContainerStatus enum values."""
@@ -34,10 +34,6 @@ class TestContainerStatus:
         assert c.Tests.Docker.ContainerStatus.STOPPED.value == "stopped"
         assert c.Tests.Docker.ContainerStatus.NOT_FOUND.value == "not_found"
         assert c.Tests.Docker.ContainerStatus.ERROR.value == "error"
-
-
-class TestContainerInfo:
-    """Test suite for FlextTestsDocker.ContainerInfo model."""
 
     def test_container_info_creation(self) -> None:
         """Test FlextTestsDocker.ContainerInfo creation with required fields."""
@@ -63,10 +59,6 @@ class TestContainerInfo:
             container_id="abc123",
         )
         assert info.container_id == "abc123"
-
-
-class TestFlextTestsDocker:
-    """Test suite for FlextTestsDocker class."""
 
     @pytest.fixture
     def docker_manager(self, tmp_path: Path) -> FlextTestsDocker:
@@ -266,10 +258,6 @@ class TestFlextTestsDocker:
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == []
 
-
-class TestFlextTestsDockerWorkerId:
-    """Test worker_id functionality."""
-
     def test_default_worker_id(self) -> None:
         """Test default worker_id is 'master'."""
         manager = FlextTestsDocker()
@@ -287,10 +275,6 @@ class TestFlextTestsDockerWorkerId:
         manager = FlextTestsDocker(worker_id="test_worker")
         manager._dirty_containers.clear()
         assert "test_worker" in str(manager._state_file)
-
-
-class TestFlextTestsDockerWorkspaceRoot:
-    """Test workspace_root functionality."""
 
     def test_default_workspace_root(self) -> None:
         """Test default workspace_root is cwd."""
