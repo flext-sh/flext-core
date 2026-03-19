@@ -10,14 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core import (
-        _constants,
-        _dispatcher,
-        _models,
-        _protocols,
-        _typings,
-        _utilities,
-    )
+    from flext_core import _constants, _models, _protocols, _typings, _utilities
     from flext_core.__version__ import (
         __all__,
         __author__,
@@ -37,12 +30,6 @@ if TYPE_CHECKING:
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
-    from flext_core._dispatcher.reliability import (
-        CircuitBreakerManager,
-        RateLimiterManager,
-        RetryPolicy,
-    )
-    from flext_core._dispatcher.timeout import TimeoutEnforcer
     from flext_core._models.base import FlextModelFoundation
     from flext_core._models.collections import FlextModelsCollections
     from flext_core._models.container import FlextModelsContainer
@@ -148,10 +135,6 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BaseModel": ("flext_core.typings", "BaseModel"),
-    "CircuitBreakerManager": (
-        "flext_core._dispatcher.reliability",
-        "CircuitBreakerManager",
-    ),
     "EnumT": ("flext_core.typings", "EnumT"),
     "ErrorDomain": ("flext_core.errors", "ErrorDomain"),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
@@ -319,9 +302,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "PROJECT_KIND_LIBRARY": ("flext_core.constants", "PROJECT_KIND_LIBRARY"),
     "PROJECT_KIND_SERVICE": ("flext_core.constants", "PROJECT_KIND_SERVICE"),
     "R": ("flext_core.typings", "R"),
-    "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
     "ResultT": ("flext_core.typings", "ResultT"),
-    "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
     "T": ("flext_core.typings", "T"),
     "TRuntime": ("flext_core.typings", "TRuntime"),
     "TV": ("flext_core.typings", "TV"),
@@ -331,7 +312,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "T_Settings": ("flext_core.typings", "T_Settings"),
     "T_co": ("flext_core.typings", "T_co"),
     "T_contra": ("flext_core.typings", "T_contra"),
-    "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
     "U": ("flext_core.typings", "U"),
     "__all__": ("flext_core.__version__", "__all__"),
     "__author__": ("flext_core.__version__", "__author__"),
@@ -343,7 +323,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__version__": ("flext_core.__version__", "__version__"),
     "__version_info__": ("flext_core.__version__", "__version_info__"),
     "_constants": ("flext_core._constants", ""),
-    "_dispatcher": ("flext_core._dispatcher", ""),
     "_models": ("flext_core._models", ""),
     "_protocols": ("flext_core._protocols", ""),
     "_typings": ("flext_core._typings", ""),
@@ -367,7 +346,6 @@ __all__ = [
     "PROJECT_KIND_SERVICE",
     "TV",
     "BaseModel",
-    "CircuitBreakerManager",
     "EnumT",
     "ErrorDomain",
     "FlextConstants",
@@ -457,9 +435,7 @@ __all__ = [
     "Metadata",
     "P",
     "R",
-    "RateLimiterManager",
     "ResultT",
-    "RetryPolicy",
     "T",
     "TRuntime",
     "TV_co",
@@ -468,7 +444,6 @@ __all__ = [
     "T_Settings",
     "T_co",
     "T_contra",
-    "TimeoutEnforcer",
     "U",
     "__all__",
     "__author__",
@@ -480,7 +455,6 @@ __all__ = [
     "__version__",
     "__version_info__",
     "_constants",
-    "_dispatcher",
     "_models",
     "_protocols",
     "_typings",

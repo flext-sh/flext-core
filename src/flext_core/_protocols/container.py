@@ -72,7 +72,7 @@ class FlextProtocolsContainer:
         def register(
             self,
             name: str,
-            impl: object,
+            impl: t.RegisterableService,
             *,
             kind: str = "service",
         ) -> Self:

@@ -82,7 +82,7 @@ class FlextProtocolsBase:
     @classmethod
     def check_protocol_compliance(
         cls,
-        instance: object,
+        instance: t.NormalizedValue,
         protocol: type,
     ) -> bool:
         """Check protocol compliance via stdlib isinstance().

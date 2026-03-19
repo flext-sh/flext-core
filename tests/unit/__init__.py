@@ -112,6 +112,9 @@ if TYPE_CHECKING:
     from .test_dispatcher_full_coverage import TestDispatcherFullCoverage
     from .test_dispatcher_minimal import TestDispatcherMinimal
     from .test_dispatcher_reliability import (
+        CircuitBreakerManager,
+        RateLimiterManager,
+        RetryPolicy,
         test_circuit_breaker_transitions_and_metrics,
         test_rate_limiter_blocks_then_recovers,
         test_rate_limiter_jitter_application,
@@ -120,7 +123,10 @@ if TYPE_CHECKING:
     from .test_dispatcher_reliability_full_coverage import (
         test_dispatcher_reliability_branch_paths,
     )
-    from .test_dispatcher_timeout_coverage_100 import TestDispatcherTimeoutCoverage100
+    from .test_dispatcher_timeout_coverage_100 import (
+        TestDispatcherTimeoutCoverage100,
+        TimeoutEnforcer,
+    )
     from .test_entity_coverage import TestEntityCoverageEdgeCases
     from .test_enum_utilities_coverage_100 import TestEnumUtilitiesCoverage
     from .test_exceptions import Teste
@@ -499,6 +505,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BadBool": ("tests.unit.test_utilities_mapper_full_coverage", "BadBool"),
     "BadMapping": ("tests.unit.test_utilities_mapper_full_coverage", "BadMapping"),
     "BadString": ("tests.unit.test_utilities_mapper_full_coverage", "BadString"),
+    "CircuitBreakerManager": (
+        "tests.unit.test_dispatcher_reliability",
+        "CircuitBreakerManager",
+    ),
     "ClearCacheScenario": (
         "tests.unit.test_utilities_cache_coverage_100",
         "ClearCacheScenario",
@@ -522,6 +532,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "NormalizeComponentScenario",
     ),
     "Provide": ("tests.unit.test_di_incremental", "Provide"),
+    "RateLimiterManager": (
+        "tests.unit.test_dispatcher_reliability",
+        "RateLimiterManager",
+    ),
+    "RetryPolicy": ("tests.unit.test_dispatcher_reliability", "RetryPolicy"),
     "RuntimeCloneService": (
         "tests.unit.test_service_additional",
         "RuntimeCloneService",
@@ -908,6 +923,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TextUtilityContract": (
         "tests.unit.contracts.text_contract",
         "TextUtilityContract",
+    ),
+    "TimeoutEnforcer": (
+        "tests.unit.test_dispatcher_timeout_coverage_100",
+        "TimeoutEnforcer",
     ),
     "UnknownHint": ("tests.unit.test_utilities_args_full_coverage", "UnknownHint"),
     "UtilitiesCacheCoverage100Namespace": (
@@ -1837,12 +1856,15 @@ __all__ = [
     "BadBool",
     "BadMapping",
     "BadString",
+    "CircuitBreakerManager",
     "ClearCacheScenario",
     "ExplodingLenList",
     "FlextProtocols",
     "NestedClassPropagationTransformer",
     "NormalizeComponentScenario",
     "Provide",
+    "RateLimiterManager",
+    "RetryPolicy",
     "RuntimeCloneService",
     "SimpleObj",
     "SortKeyScenario",
@@ -1962,6 +1984,7 @@ __all__ = [
     "TestuStringParser",
     "TestuTypeChecker",
     "TextUtilityContract",
+    "TimeoutEnforcer",
     "UnknownHint",
     "UtilitiesCacheCoverage100Namespace",
     "UtilitiesMapperCoverage100Namespace",

@@ -6,12 +6,12 @@ import time
 
 from flext_tests import tm
 
-from flext_core._dispatcher.reliability import (
-    CircuitBreakerManager,
-    RateLimiterManager,
-    RetryPolicy,
-)
+from flext_core import FlextModelsDispatcher
 from tests import c
+
+CircuitBreakerManager = FlextModelsDispatcher.CircuitBreakerManager
+RateLimiterManager = FlextModelsDispatcher.RateLimiterManager
+RetryPolicy = FlextModelsDispatcher.RetryPolicy
 
 
 def test_circuit_breaker_transitions_and_metrics() -> None:

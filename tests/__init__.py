@@ -221,6 +221,9 @@ if TYPE_CHECKING:
     from .unit.test_dispatcher_full_coverage import TestDispatcherFullCoverage
     from .unit.test_dispatcher_minimal import TestDispatcherMinimal
     from .unit.test_dispatcher_reliability import (
+        CircuitBreakerManager,
+        RateLimiterManager,
+        RetryPolicy,
         test_circuit_breaker_transitions_and_metrics,
         test_rate_limiter_blocks_then_recovers,
         test_rate_limiter_jitter_application,
@@ -231,6 +234,7 @@ if TYPE_CHECKING:
     )
     from .unit.test_dispatcher_timeout_coverage_100 import (
         TestDispatcherTimeoutCoverage100,
+        TimeoutEnforcer,
     )
     from .unit.test_entity_coverage import TestEntityCoverageEdgeCases
     from .unit.test_enum_utilities_coverage_100 import TestEnumUtilitiesCoverage
@@ -622,6 +626,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BadBool": ("tests.unit.test_utilities_mapper_full_coverage", "BadBool"),
     "BadMapping": ("tests.unit.test_utilities_mapper_full_coverage", "BadMapping"),
     "BadString": ("tests.unit.test_utilities_mapper_full_coverage", "BadString"),
+    "CircuitBreakerManager": (
+        "tests.unit.test_dispatcher_reliability",
+        "CircuitBreakerManager",
+    ),
     "ClearCacheScenario": (
         "tests.unit.test_utilities_cache_coverage_100",
         "ClearCacheScenario",
@@ -659,6 +667,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "NormalizeComponentScenario",
     ),
     "Provide": ("tests.unit.test_di_incremental", "Provide"),
+    "RateLimiterManager": (
+        "tests.unit.test_dispatcher_reliability",
+        "RateLimiterManager",
+    ),
+    "RetryPolicy": ("tests.unit.test_dispatcher_reliability", "RetryPolicy"),
     "RuntimeCloneService": (
         "tests.unit.test_service_additional",
         "RuntimeCloneService",
@@ -1143,6 +1156,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TextUtilityContract": (
         "tests.unit.contracts.text_contract",
         "TextUtilityContract",
+    ),
+    "TimeoutEnforcer": (
+        "tests.unit.test_dispatcher_timeout_coverage_100",
+        "TimeoutEnforcer",
     ),
     "UnknownHint": ("tests.unit.test_utilities_args_full_coverage", "UnknownHint"),
     "User": ("tests.helpers.factories_impl", "User"),
@@ -2121,6 +2138,7 @@ __all__ = [
     "BadBool",
     "BadMapping",
     "BadString",
+    "CircuitBreakerManager",
     "ClearCacheScenario",
     "ExplodingLenList",
     "FailingService",
@@ -2140,6 +2158,8 @@ __all__ = [
     "NestedClassPropagationTransformer",
     "NormalizeComponentScenario",
     "Provide",
+    "RateLimiterManager",
+    "RetryPolicy",
     "RuntimeCloneService",
     "ServiceFactoryRegistry",
     "ServiceTestCase",
@@ -2295,6 +2315,7 @@ __all__ = [
     "TestuStringParser",
     "TestuTypeChecker",
     "TextUtilityContract",
+    "TimeoutEnforcer",
     "UnknownHint",
     "User",
     "UserFactory",

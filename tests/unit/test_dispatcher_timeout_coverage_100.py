@@ -23,7 +23,9 @@ import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core._dispatcher import TimeoutEnforcer
+from flext_core import FlextModelsDispatcher
+
+TimeoutEnforcer = FlextModelsDispatcher.TimeoutEnforcer
 
 
 class TestDispatcherTimeoutCoverage100:

@@ -28,7 +28,7 @@ import pytest
 from flext_tests import t, tm, u
 
 from flext_core import FlextConstants, FlextRuntime, e
-from tests import c, m
+from tests import m
 
 
 class Teste:
