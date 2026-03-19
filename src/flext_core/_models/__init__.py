@@ -41,7 +41,10 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextGenericModels": ("flext_core._models.generic", "FlextGenericModels"),
     "FlextModelFoundation": ("flext_core._models.base", "FlextModelFoundation"),
-    "FlextModelsCollections": ("flext_core._models.collections", "FlextModelsCollections"),
+    "FlextModelsCollections": (
+        "flext_core._models.collections",
+        "FlextModelsCollections",
+    ),
     "FlextModelsConfig": ("flext_core._models.settings", "FlextModelsConfig"),
     "FlextModelsContainer": ("flext_core._models.container", "FlextModelsContainer"),
     "FlextModelsContainers": ("flext_core._models.containers", "FlextModelsContainers"),
@@ -49,7 +52,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextModelsCqrs": ("flext_core._models.cqrs", "FlextModelsCqrs"),
     "FlextModelsDecorators": ("flext_core._models.decorators", "FlextModelsDecorators"),
     "FlextModelsDispatcher": ("flext_core._models.dispatcher", "FlextModelsDispatcher"),
-    "FlextModelsDomainEvent": ("flext_core._models.domain_event", "FlextModelsDomainEvent"),
+    "FlextModelsDomainEvent": (
+        "flext_core._models.domain_event",
+        "FlextModelsDomainEvent",
+    ),
     "FlextModelsEntity": ("flext_core._models.entity", "FlextModelsEntity"),
     "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
     "FlextModelsResult": ("flext_core._models.result", "FlextModelsResult"),

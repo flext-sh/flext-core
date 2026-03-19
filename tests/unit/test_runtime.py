@@ -1039,8 +1039,7 @@ class TestFlextRuntime:
                 event_dict["custom"] = True
                 return event_dict
 
-            _ = custom_processor
-            FlextRuntime.configure_structlog(additional_processors=["custom_processor"])
+            FlextRuntime.configure_structlog(additional_processors=[custom_processor])
             tm.that(FlextRuntime._structlog_configured is True, eq=True)
         elif (
             test_case.operation

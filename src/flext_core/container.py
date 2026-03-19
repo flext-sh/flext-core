@@ -614,7 +614,8 @@ class FlextContainer(p.Container):
                         f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
                     )
                 return r[T].ok(service_for_check)
-            return r[t.RegisterableService].ok(service)
+            narrowed_service: t.RegisterableService = service
+            return r[t.RegisterableService].ok(narrowed_service)
         if name in self._factories:
             try:
                 factory_registration = self._factories[name]

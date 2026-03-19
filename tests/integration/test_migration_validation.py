@@ -108,7 +108,7 @@ class TestMigrationValidation:
             )
 
             @override
-            def model_post_init(self, __context: t.Container | None, /) -> None:
+            def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
                 super().model_post_init(__context)
 
             @override

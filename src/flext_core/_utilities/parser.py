@@ -210,7 +210,12 @@ class FlextUtilitiesParser:
         if str_result.is_failure:
             return r[str].fail(str_result.error or "String conversion failed")
         str_repr = str_result.value
-        obj_class_name: str = type(obj).__name__
+        obj_type = type(obj)
+        try:
+            name_val = obj_type.__name__
+            obj_class_name = name_val if isinstance(name_val, str) else "Unknown"
+        except (AttributeError, TypeError):
+            obj_class_name = "Unknown"
         if str_repr and str_repr != f"<{obj_class_name} object>":
             return r[str].ok(str_repr)
         return r[str].fail("String conversion did not yield a usable key")
@@ -1113,13 +1118,19 @@ class FlextUtilitiesParser:
             True
 
         """
-        obj_type_name: str = type(obj).__name__
+        obj_type = type(obj)
+        try:
+            name_val = obj_type.__name__
+            obj_type_name = name_val if isinstance(name_val, str) else "Unknown"
+        except (AttributeError, TypeError):
+            obj_type_name = "Unknown"
         self._parser_log.debug(
             "Starting object key extraction",
             operation="get_object_key",
             obj_type=obj_type_name,
             has_name_attr=hasattr(obj, "__name__"),
         )
+        key: str
         if isinstance(obj, str):
             key = obj
         elif hasattr(obj, "__name__"):
@@ -1136,12 +1147,22 @@ class FlextUtilitiesParser:
             ak = attr_key.value
             key = ak
         elif hasattr(obj, "__class__"):
-            key = type(obj).__name__
+            obj_class_type = type(obj)
+            try:
+                name_val = obj_class_type.__name__
+                key = name_val if isinstance(name_val, str) else "Unknown"
+            except (AttributeError, TypeError):
+                key = "Unknown"
         elif (str_key := self._extract_key_from_str_conversion(obj)).is_success:
             sk = str_key.value
             key = sk
         else:
-            key = type(obj).__name__
+            final_type = type(obj)
+            try:
+                name_val = final_type.__name__
+                key = name_val if isinstance(name_val, str) else "Unknown"
+            except (AttributeError, TypeError):
+                key = "Unknown"
         return key
 
     def normalize_whitespace(
