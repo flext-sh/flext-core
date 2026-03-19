@@ -1,0 +1,31 @@
+tests/unit/test_runtime.py
+  0d765820e48d17d1 1042
+examples/logging_config_once_pattern.py
+  0d765820e48d17d1 44,63
+src/flext_core/_utilities/parser.py
+  0d765820e48d17d1 213-215,217-218,1121-1123,1125-1126,1133,1150-1152,1154-1155,1160-1162,1164-1165
+tests/integration/test_migration_validation.py
+  0d765820e48d17d1 111
+src/flext_core/container.py
+  0d765820e48d17d1 617-618
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "2fb3eb603aedf8292e9d043b9ff3311bba7567c1",
+  "prompts": {
+    "0d765820e48d17d1": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f934dfa1ffezLYkC3QVM6yoZs",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 115,
+      "total_deletions": 82,
+      "accepted_lines": 27,
+      "overriden_lines": 4
+    }
+  }
+}
