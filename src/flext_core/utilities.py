@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_core import t
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesCache,
@@ -36,7 +37,6 @@ from flext_core._utilities import (
     FlextUtilitiesText,
 )
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 
 class FlextUtilities(
