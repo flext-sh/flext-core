@@ -44,32 +44,16 @@ if TYPE_CHECKING:
     from .test_automated_architecture import TestAutomatedArchitecture
     from .test_automated_container import TestAutomatedFlextContainer
     from .test_automated_context import TestAutomatedFlextContext
-    from .test_automated_decorators import (
-        TestAutomatedFlextDecorators,
-        TestAutomatedFlextDecorators as d,
-    )
+    from .test_automated_decorators import TestAutomatedFlextDecorators
     from .test_automated_dispatcher import TestAutomatedFlextDispatcher
-    from .test_automated_exceptions import (
-        EXCEPTION_CLASSES,
-        TestAutomatedExceptions,
-        TestAutomatedExceptions as e,
-    )
-    from .test_automated_handlers import (
-        TestAutomatedFlextHandlers,
-        TestAutomatedFlextHandlers as h,
-    )
+    from .test_automated_exceptions import EXCEPTION_CLASSES, TestAutomatedExceptions
+    from .test_automated_handlers import TestAutomatedFlextHandlers
     from .test_automated_loggings import TestAutomatedFlextLogger
-    from .test_automated_mixins import (
-        TestAutomatedFlextMixins,
-        TestAutomatedFlextMixins as x,
-    )
+    from .test_automated_mixins import TestAutomatedFlextMixins
     from .test_automated_registry import TestAutomatedFlextRegistry
-    from .test_automated_result import TestAutomatedResult, TestAutomatedResult as r
+    from .test_automated_result import TestAutomatedResult
     from .test_automated_runtime import TestAutomatedFlextRuntime
-    from .test_automated_service import (
-        TestAutomatedFlextService,
-        TestAutomatedFlextService as s,
-    )
+    from .test_automated_service import TestAutomatedFlextService
     from .test_automated_settings import TestAutomatedFlextSettings
     from .test_automated_utilities import TestAutomatedFlextUtilities
     from .test_collection_utilities_coverage_100 import TestCollectionUtilitiesCoverage
@@ -967,14 +951,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_domain",
         "create_validate_value_object_immutable_cases",
     ),
-    "d": ("tests.unit.test_automated_decorators", "TestAutomatedFlextDecorators"),
-    "e": ("tests.unit.test_automated_exceptions", "TestAutomatedExceptions"),
     "flext_tests": ("tests.unit.flext_tests", ""),
     "generators_module": (
         "tests.unit.test_utilities_generators_full_coverage",
         "generators_module",
     ),
-    "h": ("tests.unit.test_automated_handlers", "TestAutomatedFlextHandlers"),
     "handlers_module": ("tests.unit.test_handlers_full_coverage", "handlers_module"),
     "infra_git": ("tests.unit.conftest_infra", "infra_git"),
     "infra_git_repo": ("tests.unit.conftest_infra", "infra_git_repo"),
@@ -1003,7 +984,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
     "p": ("tests.unit.protocols", "p"),
     "pytestmark": ("tests.unit.test_utilities_type_checker_coverage_100", "pytestmark"),
-    "r": ("tests.unit.test_automated_result", "TestAutomatedResult"),
     "reset_runtime_state": (
         "tests.unit.test_runtime_full_coverage",
         "reset_runtime_state",
@@ -1014,7 +994,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "runtime_module",
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
-    "s": ("tests.unit.test_automated_service", "TestAutomatedFlextService"),
     "t": ("tests.unit.test_utilities_string_parser", "t"),
     "test_accessor_take_pick_as_or_flat_and_agg_branches": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -1845,7 +1824,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_with_resource_cleanup_runs",
     ),
     "u": ("tests.unit.test_utilities_string_parser", "u"),
-    "x": ("tests.unit.test_automated_mixins", "TestAutomatedFlextMixins"),
 }
 
 __all__ = [
@@ -1997,11 +1975,8 @@ __all__ = [
     "create_hash_value_object_cases",
     "create_validate_entity_has_id_cases",
     "create_validate_value_object_immutable_cases",
-    "d",
-    "e",
     "flext_tests",
     "generators_module",
-    "h",
     "handlers_module",
     "infra_git",
     "infra_git_repo",
@@ -2024,12 +1999,10 @@ __all__ = [
     "mapper",
     "p",
     "pytestmark",
-    "r",
     "reset_runtime_state",
     "runtime_cov_tests",
     "runtime_module",
     "runtime_tests",
-    "s",
     "t",
     "test_accessor_take_pick_as_or_flat_and_agg_branches",
     "test_aliases_are_available",
@@ -2239,7 +2212,6 @@ __all__ = [
     "test_validation_like_error_structure",
     "test_with_resource_cleanup_runs",
     "u",
-    "x",
 ]
 
 

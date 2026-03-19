@@ -10,6 +10,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_infra.decorators import d
+    from flext_infra.exceptions import e
+    from flext_infra.handlers import h
+    from flext_infra.mixins import x
+    from flext_infra.result import r
+    from flext_infra.service import s
+
     from flext_core.typings import FlextTypes
 
     from . import (
@@ -60,7 +67,6 @@ if TYPE_CHECKING:
         FailingServiceFactory,
         GenericModelFactory,
         GetUserService,
-        GetUserService as s,
         GetUserServiceAuto,
         GetUserServiceAutoFactory,
         GetUserServiceFactory,
@@ -150,29 +156,14 @@ if TYPE_CHECKING:
     from .unit.test_automated_architecture import TestAutomatedArchitecture
     from .unit.test_automated_container import TestAutomatedFlextContainer
     from .unit.test_automated_context import TestAutomatedFlextContext
-    from .unit.test_automated_decorators import (
-        TestAutomatedFlextDecorators,
-        TestAutomatedFlextDecorators as d,
-    )
+    from .unit.test_automated_decorators import TestAutomatedFlextDecorators
     from .unit.test_automated_dispatcher import TestAutomatedFlextDispatcher
-    from .unit.test_automated_exceptions import (
-        TestAutomatedExceptions,
-        TestAutomatedExceptions as e,
-    )
-    from .unit.test_automated_handlers import (
-        TestAutomatedFlextHandlers,
-        TestAutomatedFlextHandlers as h,
-    )
+    from .unit.test_automated_exceptions import TestAutomatedExceptions
+    from .unit.test_automated_handlers import TestAutomatedFlextHandlers
     from .unit.test_automated_loggings import TestAutomatedFlextLogger
-    from .unit.test_automated_mixins import (
-        TestAutomatedFlextMixins,
-        TestAutomatedFlextMixins as x,
-    )
+    from .unit.test_automated_mixins import TestAutomatedFlextMixins
     from .unit.test_automated_registry import TestAutomatedFlextRegistry
-    from .unit.test_automated_result import (
-        TestAutomatedResult,
-        TestAutomatedResult as r,
-    )
+    from .unit.test_automated_result import TestAutomatedResult
     from .unit.test_automated_runtime import TestAutomatedFlextRuntime
     from .unit.test_automated_service import TestAutomatedFlextService
     from .unit.test_automated_settings import TestAutomatedFlextSettings
@@ -1217,8 +1208,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_domain",
         "create_validate_value_object_immutable_cases",
     ),
-    "d": ("tests.unit.test_automated_decorators", "TestAutomatedFlextDecorators"),
-    "e": ("tests.unit.test_automated_exceptions", "TestAutomatedExceptions"),
+    "d": ("flext_infra.decorators", "d"),
+    "e": ("flext_infra.exceptions", "e"),
     "empty_strings": ("tests.conftest", "empty_strings"),
     "fixture_factory": ("tests.test_utils", "fixture_factory"),
     "flext_result_failure": ("tests.conftest", "flext_result_failure"),
@@ -1229,7 +1220,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "generators_module",
     ),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
-    "h": ("tests.unit.test_automated_handlers", "TestAutomatedFlextHandlers"),
+    "h": ("flext_infra.handlers", "h"),
     "handlers_module": ("tests.unit.test_handlers_full_coverage", "handlers_module"),
     "helpers": ("tests.helpers", ""),
     "infra_git": ("tests.unit.conftest_infra", "infra_git"),
@@ -1267,7 +1258,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
     "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
-    "r": ("tests.unit.test_automated_result", "TestAutomatedResult"),
+    "r": ("flext_infra.result", "r"),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
     "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
     "reset_global_container": ("tests.conftest", "reset_global_container"),
@@ -1281,7 +1272,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "runtime_module",
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
-    "s": ("tests.helpers.factories_impl", "GetUserService"),
+    "s": ("flext_infra.service", "s"),
     "sample_data": ("tests.conftest", "sample_data"),
     "t": ("tests.typings", "t"),
     "temp_dir": ("tests.conftest", "temp_dir"),
@@ -2130,7 +2121,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "valid_uris": ("tests.conftest", "valid_uris"),
     "validation_scenarios": ("tests.conftest", "validation_scenarios"),
     "whitespace_strings": ("tests.conftest", "whitespace_strings"),
-    "x": ("tests.unit.test_automated_mixins", "TestAutomatedFlextMixins"),
+    "x": ("flext_infra.mixins", "x"),
 }
 
 __all__ = [

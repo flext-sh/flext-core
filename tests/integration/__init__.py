@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from .test_refactor_nesting_project import TestProjectLevelRefactor
     from .test_refactor_nesting_workspace import TestWorkspaceLevelRefactor
     from .test_refactor_policy_mro import TestRefactorPolicyMRO
-    from .test_service import TestService, TestService as s
+    from .test_service import TestService
     from .test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -97,7 +97,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
-    "s": ("tests.integration.test_service", "TestService"),
     "test_class_nesting_refactor_single_file_end_to_end": (
         "tests.integration.test_refactor_nesting_file",
         "test_class_nesting_refactor_single_file_end_to_end",
@@ -123,7 +122,6 @@ __all__ = [
     "TestWorkspaceLevelRefactor",
     "patterns",
     "pytestmark",
-    "s",
     "test_class_nesting_refactor_single_file_end_to_end",
 ]
 

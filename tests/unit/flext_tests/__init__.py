@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from .test_factories import TestFactoriesHelpers
     from .test_files import TestFlextTestsFiles
     from .test_matchers import TestFlextTestsMatchers
-    from .test_utilities import TestUtilities, TestUtilities as u
+    from .test_utilities import TestUtilities
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
@@ -45,7 +45,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestFlextTestsMatchers",
     ),
     "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
-    "u": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
 }
 
 __all__ = [
@@ -56,7 +55,6 @@ __all__ = [
     "TestFlextTestsFiles",
     "TestFlextTestsMatchers",
     "TestUtilities",
-    "u",
 ]
 
 

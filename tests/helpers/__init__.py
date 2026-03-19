@@ -27,7 +27,6 @@ if TYPE_CHECKING:
         FailingServiceFactory,
         GenericModelFactory,
         GetUserService,
-        GetUserService as s,
         GetUserServiceAuto,
         GetUserServiceAutoFactory,
         GetUserServiceFactory,
@@ -88,7 +87,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "ValidatingServiceFactory",
     ),
     "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
-    "s": ("tests.helpers.factories_impl", "GetUserService"),
 }
 
 __all__ = [
@@ -115,7 +113,6 @@ __all__ = [
     "ValidatingServiceAutoFactory",
     "ValidatingServiceFactory",
     "reset_all_factories",
-    "s",
 ]
 
 
