@@ -195,6 +195,7 @@ if TYPE_CHECKING:
     from .unit.test_coverage_exceptions import TestCoverageExceptions
     from .unit.test_coverage_loggings import TestCoverageLoggings
     from .unit.test_coverage_models import TestCoverageModels
+    from .unit.test_coverage_utilities import Testu
     from .unit.test_decorators import TestFlextDecorators
     from .unit.test_decorators_discovery_full_coverage import (
         TestDecoratorsDiscoveryFullCoverage,
@@ -451,7 +452,6 @@ if TYPE_CHECKING:
     )
     from .unit.test_typings import TestTypings
     from .unit.test_typings_full_coverage import TestTypingsFullCoverage
-    from .unit.test_utilities import Testu
     from .unit.test_utilities_args_full_coverage import (
         UnknownHint,
         test_args_get_enum_params_annotated_unwrap_branch,
@@ -1077,7 +1077,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestsFlextProtocols": ("tests.protocols", "TestsFlextProtocols"),
     "TestsFlextServiceBase": ("tests.base", "TestsFlextServiceBase"),
     "TestsFlextTypes": ("tests.typings", "TestsFlextTypes"),
-    "Testu": ("tests.unit.test_utilities", "Testu"),
+    "Testu": ("tests.unit.test_coverage_utilities", "Testu"),
     "TestuCacheClearObjectCache": (
         "tests.unit.test_utilities_cache_coverage_100",
         "TestuCacheClearObjectCache",

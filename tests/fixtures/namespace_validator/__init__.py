@@ -13,15 +13,15 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from .rule0_loose_items import Rule0LooseItemsFixture
-    from .rule0_multiple_classes import Rule0MultipleClassesFixture
+    from .rule0_multiple_classes import FlextTestConstants, Rule0MultipleClassesFixture
     from .rule0_no_class import MAX_VALUE, helper
     from .rule0_wrong_prefix import RandomConstants
     from .rule1_loose_constant import DEFAULT_TIMEOUT, MAX_RETRIES
-    from .rule1_loose_enum import Rule1LooseEnumFixture, Status
+    from .rule1_loose_enum import FlextTestModels, Rule1LooseEnumFixture, Status
     from .rule1_magic_number import FlextTestUtilities, u
-    from .rule1_valid_constants import FlextTestConstants, c
-    from .rule2_typevar_wrong_module import FlextTestModels, m
-    from .rule2_valid_types import FlextTestTypes, t
+    from .rule1_method_in_constants import c
+    from .rule2_composite_type_loose import m
+    from .rule2_protocol_in_types import FlextTestTypes, t
     from .typings import LooseTypeAlias
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -30,15 +30,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "DEFAULT_TIMEOUT",
     ),
     "FlextTestConstants": (
-        "tests.fixtures.namespace_validator.rule1_valid_constants",
+        "tests.fixtures.namespace_validator.rule0_multiple_classes",
         "FlextTestConstants",
     ),
     "FlextTestModels": (
-        "tests.fixtures.namespace_validator.rule2_typevar_wrong_module",
+        "tests.fixtures.namespace_validator.rule1_loose_enum",
         "FlextTestModels",
     ),
     "FlextTestTypes": (
-        "tests.fixtures.namespace_validator.rule2_valid_types",
+        "tests.fixtures.namespace_validator.rule2_protocol_in_types",
         "FlextTestTypes",
     ),
     "FlextTestUtilities": (
@@ -68,10 +68,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "Rule1LooseEnumFixture",
     ),
     "Status": ("tests.fixtures.namespace_validator.rule1_loose_enum", "Status"),
-    "c": ("tests.fixtures.namespace_validator.rule1_valid_constants", "c"),
+    "c": ("tests.fixtures.namespace_validator.rule1_method_in_constants", "c"),
     "helper": ("tests.fixtures.namespace_validator.rule0_no_class", "helper"),
-    "m": ("tests.fixtures.namespace_validator.rule2_typevar_wrong_module", "m"),
-    "t": ("tests.fixtures.namespace_validator.rule2_valid_types", "t"),
+    "m": ("tests.fixtures.namespace_validator.rule2_composite_type_loose", "m"),
+    "t": ("tests.fixtures.namespace_validator.rule2_protocol_in_types", "t"),
     "u": ("tests.fixtures.namespace_validator.rule1_magic_number", "u"),
 }
 
