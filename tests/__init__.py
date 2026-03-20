@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra import d, e, h, r, s, x
+    from flext_infra import c, d, e, h, m, p, s, t, x
 
     from flext_core.typings import FlextTypes
 
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
         validation_scenarios,
         whitespace_strings,
     )
-    from .constants import TestsFlextConstants, c
+    from .constants import TestsFlextConstants
     from .helpers.factories import TestHelperFactories
     from .helpers.factories_impl import (
         FailingService,
@@ -106,19 +106,20 @@ if TYPE_CHECKING:
     from .integration.test_refactor_policy_mro import TestRefactorPolicyMRO
     from .integration.test_service import TestService
     from .integration.test_system import TestCompleteFlextSystemIntegration
-    from .models import TestsFlextModels, m
-    from .protocols import TestsFlextProtocols, p
+    from .models import TestsFlextModels
+    from .protocols import TestsFlextProtocols
     from .test_documented_patterns import TestDocumentedPatterns
     from .test_service_result_property import TestServiceResultProperty
     from .test_utils import (
         FlextTestResult,
+        FlextTestResult as r,
         FlextTestResultCo,
         TestUtils,
         assertion_helpers,
         fixture_factory,
         test_data_factory,
     )
-    from .typings import T, T_co, T_contra, TestsFlextTypes, t
+    from .typings import T, T_co, T_contra, TestsFlextTypes
     from .unit import contracts as contracts, flext_tests as flext_tests
     from .unit.conftest_infra import (
         infra_git,
@@ -605,7 +606,7 @@ if TYPE_CHECKING:
         TestUtilitiesTypeGuardsCoverage100,
     )
     from .unit.test_version import TestFlextVersion
-    from .utilities import FlextCoreTestUtilities, u
+    from .utilities import FlextCoreTestUtilities, FlextCoreTestUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AttrObject": ("tests.unit.test_utilities_mapper_full_coverage", "AttrObject"),
@@ -1176,7 +1177,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "assert_validates": ("tests.conftest", "assert_validates"),
     "assertion_helpers": ("tests.test_utils", "assertion_helpers"),
     "benchmark": ("tests.benchmark", ""),
-    "c": ("tests.constants", "c"),
+    "c": ("flext_infra", "c"),
     "clean_container": ("tests.conftest", "clean_container"),
     "contracts": ("tests.unit.contracts", ""),
     "create_compare_entities_cases": (
@@ -1245,15 +1246,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "invalid_hostnames": ("tests.conftest", "invalid_hostnames"),
     "invalid_port_numbers": ("tests.conftest", "invalid_port_numbers"),
     "invalid_uris": ("tests.conftest", "invalid_uris"),
-    "m": ("tests.models", "m"),
+    "m": ("flext_infra", "m"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
     "mock_external_service": ("tests.conftest", "mock_external_service"),
     "out_of_range": ("tests.conftest", "out_of_range"),
-    "p": ("tests.protocols", "p"),
+    "p": ("flext_infra", "p"),
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
     "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
-    "r": ("flext_infra", "r"),
+    "r": ("tests.test_utils", "FlextTestResult"),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
     "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
     "reset_global_container": ("tests.conftest", "reset_global_container"),
@@ -1269,7 +1270,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
     "s": ("flext_infra", "s"),
     "sample_data": ("tests.conftest", "sample_data"),
-    "t": ("tests.typings", "t"),
+    "t": ("flext_infra", "t"),
     "temp_dir": ("tests.conftest", "temp_dir"),
     "temp_directory": ("tests.conftest", "temp_directory"),
     "temp_file": ("tests.conftest", "temp_file"),
@@ -2107,7 +2108,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_additional",
         "test_with_resource_cleanup_runs",
     ),
-    "u": ("tests.utilities", "u"),
+    "u": ("tests.utilities", "FlextCoreTestUtilities"),
     "unit": ("tests.unit", ""),
     "valid_hostnames": ("tests.conftest", "valid_hostnames"),
     "valid_port_numbers": ("tests.conftest", "valid_port_numbers"),

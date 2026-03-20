@@ -93,29 +93,30 @@ if TYPE_CHECKING:
         PROJECT_KIND_LIBRARY,
         PROJECT_KIND_SERVICE,
         FlextConstants,
-        c,
+        FlextConstants as c,
     )
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
-    from flext_core.decorators import FlextDecorators, d
+    from flext_core.decorators import FlextDecorators, FlextDecorators as d
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.errors import ErrorDomain, FlextError
-    from flext_core.exceptions import FlextExceptions, Metadata, e
-    from flext_core.handlers import FlextHandlers, h
+    from flext_core.exceptions import FlextExceptions, FlextExceptions as e, Metadata
+    from flext_core.handlers import FlextHandlers, FlextHandlers as h
     from flext_core.loggings import FlextLogger
-    from flext_core.mixins import FlextMixins, x
-    from flext_core.models import FlextModels, m
-    from flext_core.protocols import FlextProtocols, p
+    from flext_core.mixins import FlextMixins, FlextMixins as x
+    from flext_core.models import FlextModels, FlextModels as m
+    from flext_core.protocols import FlextProtocols, FlextProtocols as p
     from flext_core.registry import FlextRegistry
-    from flext_core.result import FlextResult, r
+    from flext_core.result import FlextResult, FlextResult as r
     from flext_core.runtime import FlextRuntime
-    from flext_core.service import FlextService, s
+    from flext_core.service import FlextService, FlextService as s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
         TV,
         BaseModel,
         EnumT,
         FlextTypes,
+        FlextTypes as t,
         MessageT_contra,
         P,
         R,
@@ -129,9 +130,8 @@ if TYPE_CHECKING:
         TRuntime,
         TV_co,
         U,
-        t,
     )
-    from flext_core.utilities import FlextUtilities, u
+    from flext_core.utilities import FlextUtilities, FlextUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BaseModel": ("flext_core.typings", "BaseModel"),
@@ -327,17 +327,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "_protocols": ("flext_core._protocols", ""),
     "_typings": ("flext_core._typings", ""),
     "_utilities": ("flext_core._utilities", ""),
-    "c": ("flext_core.constants", "c"),
-    "d": ("flext_core.decorators", "d"),
-    "e": ("flext_core.exceptions", "e"),
-    "h": ("flext_core.handlers", "h"),
-    "m": ("flext_core.models", "m"),
-    "p": ("flext_core.protocols", "p"),
-    "r": ("flext_core.result", "r"),
-    "s": ("flext_core.service", "s"),
-    "t": ("flext_core.typings", "t"),
-    "u": ("flext_core.utilities", "u"),
-    "x": ("flext_core.mixins", "x"),
+    "c": ("flext_core.constants", "FlextConstants"),
+    "d": ("flext_core.decorators", "FlextDecorators"),
+    "e": ("flext_core.exceptions", "FlextExceptions"),
+    "h": ("flext_core.handlers", "FlextHandlers"),
+    "m": ("flext_core.models", "FlextModels"),
+    "p": ("flext_core.protocols", "FlextProtocols"),
+    "r": ("flext_core.result", "FlextResult"),
+    "s": ("flext_core.service", "FlextService"),
+    "t": ("flext_core.typings", "FlextTypes"),
+    "u": ("flext_core.utilities", "FlextUtilities"),
+    "x": ("flext_core.mixins", "FlextMixins"),
 }
 
 __all__ = [
