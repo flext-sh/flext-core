@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra import c, d, e, h, m, p, s, t, x
+    from flext_infra import d, e, h, x
 
     from flext_core.typings import FlextTypes
 
@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from .benchmark.test_refactor_nesting_performance import TestPerformanceBenchmarks
     from .conftest import (
         FunctionalExternalService,
+        FunctionalExternalService as s,
         assert_rejects,
         assert_validates,
         clean_container,
@@ -53,7 +54,7 @@ if TYPE_CHECKING:
         validation_scenarios,
         whitespace_strings,
     )
-    from .constants import TestsFlextConstants
+    from .constants import TestsFlextConstants, TestsFlextConstants as c
     from .helpers.factories import TestHelperFactories
     from .helpers.factories_impl import (
         FailingService,
@@ -106,8 +107,8 @@ if TYPE_CHECKING:
     from .integration.test_refactor_policy_mro import TestRefactorPolicyMRO
     from .integration.test_service import TestService
     from .integration.test_system import TestCompleteFlextSystemIntegration
-    from .models import TestsFlextModels
-    from .protocols import TestsFlextProtocols
+    from .models import TestsFlextModels, TestsFlextModels as m
+    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
     from .test_documented_patterns import TestDocumentedPatterns
     from .test_service_result_property import TestServiceResultProperty
     from .test_utils import (
@@ -119,7 +120,7 @@ if TYPE_CHECKING:
         fixture_factory,
         test_data_factory,
     )
-    from .typings import T, T_co, T_contra, TestsFlextTypes
+    from .typings import T, T_co, T_contra, TestsFlextTypes, TestsFlextTypes as t
     from .unit import contracts as contracts, flext_tests as flext_tests
     from .unit.conftest_infra import (
         infra_git,
@@ -1177,7 +1178,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "assert_validates": ("tests.conftest", "assert_validates"),
     "assertion_helpers": ("tests.test_utils", "assertion_helpers"),
     "benchmark": ("tests.benchmark", ""),
-    "c": ("flext_infra", "c"),
+    "c": ("tests.constants", "TestsFlextConstants"),
     "clean_container": ("tests.conftest", "clean_container"),
     "contracts": ("tests.unit.contracts", ""),
     "create_compare_entities_cases": (
@@ -1246,11 +1247,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "invalid_hostnames": ("tests.conftest", "invalid_hostnames"),
     "invalid_port_numbers": ("tests.conftest", "invalid_port_numbers"),
     "invalid_uris": ("tests.conftest", "invalid_uris"),
-    "m": ("flext_infra", "m"),
+    "m": ("tests.models", "TestsFlextModels"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
     "mock_external_service": ("tests.conftest", "mock_external_service"),
     "out_of_range": ("tests.conftest", "out_of_range"),
-    "p": ("flext_infra", "p"),
+    "p": ("tests.protocols", "TestsFlextProtocols"),
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
     "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
@@ -1268,9 +1269,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "runtime_module",
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
-    "s": ("flext_infra", "s"),
+    "s": ("tests.conftest", "FunctionalExternalService"),
     "sample_data": ("tests.conftest", "sample_data"),
-    "t": ("flext_infra", "t"),
+    "t": ("tests.typings", "TestsFlextTypes"),
     "temp_dir": ("tests.conftest", "temp_dir"),
     "temp_directory": ("tests.conftest", "temp_directory"),
     "temp_file": ("tests.conftest", "temp_file"),
