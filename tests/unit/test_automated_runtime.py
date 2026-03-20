@@ -6,7 +6,7 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ from flext_core import FlextRuntime
 
 class TestAutomatedFlextRuntime:
     def test_is_base_model_and_collections(self) -> None:
-        model = tt.model("user")
+        model = m.Tests.User(id="1", name="Test", email="test@test.com")
         tm.that(FlextRuntime.is_base_model(model), eq=True)
         tm.that(FlextRuntime.is_base_model("value"), eq=False)
 
@@ -84,7 +84,9 @@ class TestAutomatedFlextRuntime:
         tm.that(FlextRuntime.is_valid_json(value), is_=bool)
 
     def test_benchmark_type_guards(self) -> None:
-        models = tt.batch("user", count=8)
+        models = [
+            m.Tests.User(id="1", name="Test", email="test@test.com") for _ in range(8)
+        ]
         dict_like = {"alpha": 1, "beta": 2}
         start = perf_counter()
         for _ in range(800):

@@ -5,7 +5,7 @@ from __future__ import annotations
 from time import perf_counter
 
 import pytest
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, strategies as st
 
 from flext_core import FlextUtilities as u_cls
@@ -38,7 +38,7 @@ class TestAutomatedFlextUtilities:
         tm.that(len(generated_uuid), gt=0)
 
     def test_type_guards_and_collection_helpers(self) -> None:
-        model = tt.model("user")
+        model = m.Tests.User(id="1", name="Test", email="test@test.com")
         numbers = [1, 2, 3]
         tm.that(u_cls.is_base_model(model), eq=True)
         tm.that(u_cls.is_scalar(42), eq=True)
@@ -72,7 +72,9 @@ class TestAutomatedFlextUtilities:
         tm.that(len(generated), gt=0)
 
     def test_benchmark_generate(self) -> None:
-        users = tt.batch("user", count=3)
+        users = [
+            m.Tests.User(id="1", name="Test", email="test@test.com") for _ in range(3)
+        ]
         tm.that(len(users), gt=0)
         start = perf_counter()
         for _ in range(2000):

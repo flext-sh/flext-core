@@ -7,7 +7,7 @@ from collections.abc import Generator
 from time import perf_counter
 
 import pytest
-from flext_tests import tk, tm, tt
+from flext_tests import tk, tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer, FlextContext
@@ -123,7 +123,7 @@ class TestAutomatedFlextContainer:
     @pytest.mark.performance
     def test_register_get_benchmark(self) -> None:
         container = FlextContainer.create()
-        op = tt.op("add")
+        op = u.Tests.Factory.add_operation
         tm.that(callable(op), eq=True)
 
         def bench_factory() -> int:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from time import perf_counter
 
-from flext_tests import tm, tt
+from flext_tests import tm
 
 from flext_core import FlextDispatcher, FlextHandlers, r
 from tests import m, t
@@ -65,7 +65,7 @@ class TestAutomatedFlextDispatcher:
         )
         tm.ok(dispatcher.register_handler(handler), eq=True)
         command = m.Command(command_type="bench_route", command_id="cmd-4")
-        op = tt.op("simple")
+        op = u.Tests.Factory.simple_operation
         _ = op()
         start = perf_counter()
         result = r[str].ok("init")

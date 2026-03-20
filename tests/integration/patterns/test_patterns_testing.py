@@ -15,15 +15,14 @@ from pathlib import Path
 from typing import TypeIs
 
 import pytest
-from flext_tests import t as tt
 from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, P, R, t
 
-type FixtureCaseDict = dict[str, tt.NormalizedValue]
-type FixtureDataDict = dict[str, tt.NormalizedValue]
-type FixtureFixturesDict = dict[str, tt.NormalizedValue]
-type FixtureSuiteDict = dict[str, tt.NormalizedValue]
+type FixtureCaseDict = dict[str, t.NormalizedValue]
+type FixtureDataDict = dict[str, t.NormalizedValue]
+type FixtureFixturesDict = dict[str, t.NormalizedValue]
+type FixtureSuiteDict = dict[str, t.NormalizedValue]
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
@@ -58,42 +57,42 @@ class TestPatternsTesting:
             return str(value)
 
         @staticmethod
-        def as_object_dict(value: tt.NormalizedValue) -> dict[str, tt.NormalizedValue]:
+        def as_object_dict(value: t.NormalizedValue) -> dict[str, t.NormalizedValue]:
             if not TestPatternsTesting.Helpers.is_object_mapping(value):
                 return {}
-            output: dict[str, tt.NormalizedValue] = {}
+            output: dict[str, t.NormalizedValue] = {}
             for key, item in value.items():
                 output[str(key)] = item
             return output
 
         @staticmethod
         def as_object_list(
-            value: tt.NormalizedValue,
-        ) -> list[tt.NormalizedValue] | None:
+            value: t.NormalizedValue,
+        ) -> list[t.NormalizedValue] | None:
             if not TestPatternsTesting.Helpers.is_object_list(value):
                 return None
             return list(value)
 
         @staticmethod
         def is_object_mapping(
-            value: tt.NormalizedValue,
-        ) -> TypeIs[Mapping[str, tt.NormalizedValue]]:
+            value: t.NormalizedValue,
+        ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
             return isinstance(value, Mapping)
 
         @staticmethod
         def is_object_list(
-            value: tt.NormalizedValue,
-        ) -> TypeIs[list[tt.NormalizedValue]]:
+            value: t.NormalizedValue,
+        ) -> TypeIs[list[t.NormalizedValue]]:
             return isinstance(value, list)
 
         @staticmethod
         def is_object_container_sequence(
-            value: tt.NormalizedValue,
+            value: t.NormalizedValue,
         ) -> bool:
             return isinstance(value, (list, tuple, set))
 
         @staticmethod
-        def as_int_list(value: tt.NormalizedValue) -> list[int] | None:
+        def as_int_list(value: t.NormalizedValue) -> list[int] | None:
             object_list = TestPatternsTesting.Helpers.as_object_list(value)
             if object_list is None:
                 return None
@@ -116,16 +115,16 @@ class TestPatternsTesting:
 
         @staticmethod
         def arrange_act_assert(
-            _arrange_func: Callable[[], tt.NormalizedValue],
-            _act_func: Callable[[tt.NormalizedValue], tt.NormalizedValue],
-            _assert_func: Callable[[tt.NormalizedValue, tt.NormalizedValue], None],
+            _arrange_func: Callable[[], t.NormalizedValue],
+            _act_func: Callable[[t.NormalizedValue], t.NormalizedValue],
+            _assert_func: Callable[[t.NormalizedValue, t.NormalizedValue], None],
         ) -> Callable[
-            [Callable[[], tt.NormalizedValue]], Callable[[], tt.NormalizedValue]
+            [Callable[[], t.NormalizedValue]], Callable[[], t.NormalizedValue]
         ]:
             def decorator(
-                _test_func: Callable[[], tt.NormalizedValue],
-            ) -> Callable[[], tt.NormalizedValue]:
-                def wrapper() -> tt.NormalizedValue:
+                _test_func: Callable[[], t.NormalizedValue],
+            ) -> Callable[[], t.NormalizedValue]:
+                def wrapper() -> t.NormalizedValue:
                     data = _arrange_func()
                     result = _act_func(data)
                     _assert_func(result, data)
@@ -334,7 +333,7 @@ class TestPatternsTesting:
     class AssertionBuilder:
         """Builder for assertions."""
 
-        def __init__(self, data: tt.NormalizedValue) -> None:
+        def __init__(self, data: t.NormalizedValue) -> None:
             super().__init__()
             self._data = data
             self._checks: list[tuple[str, object]] = []
@@ -351,7 +350,7 @@ class TestPatternsTesting:
             return self
 
         def contains(
-            self, item: tt.NormalizedValue
+            self, item: t.NormalizedValue
         ) -> TestPatternsTesting.AssertionBuilder:
             data = self._data
             if TestPatternsTesting.Helpers.is_object_mapping(data):
@@ -373,7 +372,7 @@ class TestPatternsTesting:
 
         def satisfies(
             self,
-            predicate: Callable[[tt.NormalizedValue], bool],
+            predicate: Callable[[t.NormalizedValue], bool],
             message: str = "",
         ) -> TestPatternsTesting.AssertionBuilder:
             assert predicate(self._data), message
@@ -389,7 +388,7 @@ class TestPatternsTesting:
             super().__init__()
             self.name = name
             self._scenarios: list[TestPatternsTesting.MockScenario] = []
-            self._setup_data: dict[str, tt.NormalizedValue] = {}
+            self._setup_data: dict[str, t.NormalizedValue] = {}
             self._tags: list[str] = []
 
         def add_scenarios(
@@ -400,7 +399,7 @@ class TestPatternsTesting:
             return self
 
         def with_setup_data(
-            self, **kwargs: tt.NormalizedValue
+            self, **kwargs: t.NormalizedValue
         ) -> TestPatternsTesting.SuiteBuilder:
             self._setup_data.update(kwargs)
             return self
@@ -410,7 +409,7 @@ class TestPatternsTesting:
             return self
 
         def build(self) -> FixtureSuiteDict:
-            tags: list[tt.NormalizedValue] = list(self._tags)
+            tags: list[t.NormalizedValue] = list(self._tags)
             return {
                 "suite_name": self.name,
                 "scenario_count": len(self._scenarios),
@@ -629,7 +628,7 @@ class TestPatternsTesting:
     def test_assertion_builder(self) -> None:
         test_data: list[str] = ["apple", "banana", "cherry"]
 
-        def check_all_strings(x: tt.NormalizedValue) -> bool:
+        def check_all_strings(x: t.NormalizedValue) -> bool:
             values = self.Helpers.as_object_dict({"items": x}).get("items")
             values_list = self.Helpers.as_object_list(values)
             if values_list is None:
@@ -642,11 +641,11 @@ class TestPatternsTesting:
 
     @Helpers.mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
-        def arrange_data() -> tt.NormalizedValue:
-            numbers: list[tt.NormalizedValue] = [1, 2, 3, 4, 5]
+        def arrange_data() -> t.NormalizedValue:
+            numbers: list[t.NormalizedValue] = [1, 2, 3, 4, 5]
             return {"numbers": numbers}
 
-        def act_on_data(data: tt.NormalizedValue) -> tt.NormalizedValue:
+        def act_on_data(data: t.NormalizedValue) -> t.NormalizedValue:
             payload = self.Helpers.as_object_dict(data)
             if "numbers" in payload:
                 numbers = self.Helpers.as_int_list(payload["numbers"])
@@ -656,7 +655,7 @@ class TestPatternsTesting:
             return 0
 
         def assert_result(
-            result: tt.NormalizedValue, original_data: tt.NormalizedValue
+            result: t.NormalizedValue, original_data: t.NormalizedValue
         ) -> None:
             assert result == 15
             payload = self.Helpers.as_object_dict(original_data)
@@ -709,7 +708,7 @@ class TestPatternsTesting:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
-        empty_setup: dict[str, tt.NormalizedValue] = {}
+        empty_setup: dict[str, t.NormalizedValue] = {}
         typed_setup_data = (
             {str(key): item for key, item in setup_data.items()}
             if isinstance(setup_data, dict)
@@ -733,7 +732,7 @@ class TestPatternsTesting:
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
         with fixture_builder.setup_context()():
-            test_request: dict[str, tt.NormalizedValue] = {
+            test_request: dict[str, t.NormalizedValue] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -742,8 +741,8 @@ class TestPatternsTesting:
             }
 
             def process_api_request(
-                request: dict[str, tt.NormalizedValue],
-            ) -> dict[str, tt.NormalizedValue]:
+                request: dict[str, t.NormalizedValue],
+            ) -> dict[str, t.NormalizedValue]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -754,15 +753,15 @@ class TestPatternsTesting:
 
             result = process_api_request(test_request)
 
-            def check_status_success(x: tt.NormalizedValue) -> bool:
+            def check_status_success(x: t.NormalizedValue) -> bool:
                 payload = self.Helpers.as_object_dict(x)
                 return payload.get("status") == "success"
 
-            def check_correlation_id(x: tt.NormalizedValue) -> bool:
+            def check_correlation_id(x: t.NormalizedValue) -> bool:
                 payload = self.Helpers.as_object_dict(x)
                 return "correlation_id" in payload
 
-            def check_valid_method(x: tt.NormalizedValue) -> bool:
+            def check_valid_method(x: t.NormalizedValue) -> bool:
                 payload = self.Helpers.as_object_dict(x)
                 method = payload.get("method")
                 return isinstance(method, str) and method in {

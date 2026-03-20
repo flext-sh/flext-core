@@ -6,7 +6,7 @@ from collections.abc import Callable
 from typing import override
 
 import pytest
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextMixins, r, s
@@ -90,7 +90,7 @@ class TestAutomatedFlextMixins:
     )
     def test_track_benchmark(self, mode: str, benchmark: Callable[..., object]) -> None:
         svc = self._MixinTestService()
-        simple = tt.op("simple")
+        simple = u.Tests.Factory.simple_operation
 
         if mode == "raw":
             raw_value = simple()

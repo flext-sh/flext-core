@@ -6,7 +6,7 @@ import time
 from collections.abc import Callable
 
 import pytest
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextDecorators, e
@@ -113,7 +113,7 @@ class TestAutomatedFlextDecorators:
     def test_railway_benchmark_overhead(
         self, mode: str, benchmark: Callable[..., object]
     ) -> None:
-        raw_add = tt.op("add")
+        raw_add = u.Tests.Factory.add_operation
 
         @FlextDecorators.railway()
         def wrapped_add(a: int, b: int) -> int:

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextExceptions
@@ -31,7 +31,7 @@ class TestAutomatedExceptions:
     """Real functionality tests for FlextExceptions."""
 
     def test_base_error_init_to_dict_and_string(self) -> None:
-        cfg = tt.model("config")
+        cfg = m.Tests.Config()
         tm.that(hasattr(cfg, "model_dump"), eq=True)
         ctx = {"source": "test", "debug": True}
         err = FlextExceptions.BaseError(

@@ -7,7 +7,7 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
-from flext_tests import tf, tm, tt, u
+from flext_tests import tf, tm, u
 from hypothesis import given, settings, strategies as st
 from pydantic_settings import BaseSettings
 
@@ -129,7 +129,7 @@ class TestAutomatedFlextSettings:
     def test_apply_override_benchmark(self) -> None:
         settings_obj = FlextSettings.get_global()
         keys = ["debug", "trace", "max_workers"]
-        formatter = tt.op("format")
+        formatter = u.Tests.Factory.format_operation
         tm.that(callable(formatter), eq=True)
         start = perf_counter()
         for idx in range(400):

@@ -6,7 +6,7 @@ import math
 from collections.abc import Callable
 
 import pytest
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import r, t
@@ -38,7 +38,7 @@ class TestAutomatedResult:
         tm.ok(result, eq=expected)
 
     def test_fail_with_error_code_and_data(self) -> None:
-        config_model = tt.model("config")
+        config_model = m.Tests.Config()
         tm.that(hasattr(config_model, "model_dump"), eq=True)
         error_data = {"debug": True, "source": "tests"}
         result = r[str].fail("bad", error_code="E001", error_data=error_data)
@@ -83,8 +83,8 @@ class TestAutomatedResult:
         items = [1, 2, 3]
         traversed = r[int].traverse(items, lambda x: r[int].ok(x * 10))
         tm.ok(traversed, eq=[10, 20, 30])
-        generated_ok = tt.res("ok", value=1)
-        generated_fail = tt.res("fail", error="boom")
+        generated_ok = r[int].ok(1)
+        generated_fail = r[str].fail("boom")
         tm.that(isinstance(generated_ok, list), eq=False)
         tm.that(isinstance(generated_fail, list), eq=False)
         accumulated = r[int].accumulate_errors(r[int].ok(1), r[int].fail("boom"))

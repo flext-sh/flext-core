@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from time import perf_counter
 
-from flext_tests import tm, tt, u
+from flext_tests import tm, u
 from hypothesis import given, strategies as st
 
 from flext_core import FlextLogger, FlextRuntime
@@ -50,7 +50,7 @@ class TestAutomatedFlextLogger:
 
     def test_benchmark_info_throughput(self) -> None:
         logger = FlextLogger.create_module_logger("tests.logger.benchmark")
-        users = tt.batch("user", count=1)
+        users = [m.Tests.User(id="1", name="Test", email="test@test.com")]
         tm.that(len(users), gt=0)
         start = perf_counter()
         for _ in range(1200):

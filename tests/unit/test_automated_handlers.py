@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
@@ -85,7 +85,7 @@ class TestAutomatedFlextHandlers:
             handler_name="bench_handler",
         )
         tm.ok(r[str].ok("bench"), eq="bench")
-        op = tt.op("simple")
+        op = u.Tests.Factory.simple_operation
         _ = op()
         start = time.perf_counter()
         last_success = True

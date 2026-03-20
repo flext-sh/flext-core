@@ -5,7 +5,7 @@ from __future__ import annotations
 from time import perf_counter
 
 import pytest
-from flext_tests import tm, tt
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContext
@@ -77,7 +77,7 @@ class TestAutomatedFlextContext:
     def test_set_get_benchmark_cycle(self) -> None:
         ctx = FlextContext.create()
         keys = ["a", "b", "c", "d", "e"]
-        value_factory = tt.op("format")
+        value_factory = u.Tests.Factory.format_operation
         tm.that(callable(value_factory), eq=True)
         start = perf_counter()
         for i in range(400):
