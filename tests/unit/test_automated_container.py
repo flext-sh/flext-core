@@ -7,7 +7,7 @@ from collections.abc import Generator
 from time import perf_counter
 
 import pytest
-from flext_tests import tb, tk, tm, tt
+from flext_tests import tk, tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer, FlextContext
@@ -76,7 +76,7 @@ class TestAutomatedFlextContainer:
 
     def test_scoped_and_configure(self) -> None:
         container = FlextContainer.create()
-        _ = tb().add("max_services", 10).build()
+        _ = {"max_services": 10}
         config_override = {"max_services": 10}
         _ = container.configure(config_override)
         tm.that(container.get_config()["max_services"], eq=10)

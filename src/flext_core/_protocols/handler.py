@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import r, t
+from flext_core._protocols.base import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsResult, r
+    from flext_core import FlextProtocolsResult, r, t
 
 
 class FlextProtocolsHandler:

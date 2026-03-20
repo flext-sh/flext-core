@@ -6,7 +6,7 @@ from collections.abc import Callable
 from typing import override
 
 import pytest
-from flext_tests import tb, tm, tt
+from flext_tests import tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextMixins, r, s
@@ -30,7 +30,7 @@ class TestAutomatedFlextMixins:
 
     @pytest.mark.parametrize(
         "operation_name",
-        tb.Tests.Batch.scenarios(("track_a", "track_a"), ("track_b", "track_b")),
+        [("track_a", "track_a"), ("track_b", "track_b")],
         ids=lambda case: case[0],
     )
     def test_track_context_manager(self, operation_name: str) -> None:
@@ -85,7 +85,7 @@ class TestAutomatedFlextMixins:
     @pytest.mark.performance
     @pytest.mark.parametrize(
         "mode",
-        tb.Tests.Batch.scenarios(("raw", "raw"), ("track", "track")),
+        [("raw", "raw"), ("track", "track")],
         ids=lambda case: case[0],
     )
     def test_track_benchmark(self, mode: str, benchmark: Callable[..., object]) -> None:

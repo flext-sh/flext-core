@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from time import perf_counter
 from typing import override
 
-from flext_tests import tb, tm, tt
+from flext_tests import tm, tt
 from hypothesis import given, strategies as st
 
 from flext_core import r, s
@@ -75,7 +75,7 @@ class TestAutomatedFlextService:
         iterations = 1000
         op = tt.op("simple")
         _ = op()
-        tm.ok(tb.Tests.Result.ok("seed"), eq="seed")
+        tm.ok(r[str].ok("seed"), eq="seed")
         start = perf_counter()
         result = r[str].ok("init")
         for _ in range(iterations):

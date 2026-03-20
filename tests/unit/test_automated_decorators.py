@@ -6,7 +6,7 @@ import time
 from collections.abc import Callable
 
 import pytest
-from flext_tests import tb, tm, tt
+from flext_tests import tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextDecorators, e
@@ -15,7 +15,7 @@ from flext_core import FlextDecorators, e
 class TestAutomatedFlextDecorators:
     @pytest.mark.parametrize(
         ("case", "values"),
-        tb.Tests.Batch.scenarios(("small", (1, 2, 3)), ("larger", (5, 7, 12))),
+        [("small", (1, 2, 3)), ("larger", (5, 7, 12))],
         ids=lambda case: case[0],
     )
     def test_railway_wraps_success(
@@ -107,7 +107,7 @@ class TestAutomatedFlextDecorators:
     @pytest.mark.performance
     @pytest.mark.parametrize(
         "mode",
-        tb.Tests.Batch.scenarios(("raw", "raw"), ("railway", "railway")),
+        [("raw", "raw"), ("railway", "railway")],
         ids=lambda case: case[0],
     )
     def test_railway_benchmark_overhead(

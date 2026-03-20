@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
+from flext_core._constants.base import FlextConstantsBase
+
 
 class FlextConstantsSettings:
     """Constants for utilities and settings."""

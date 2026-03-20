@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 
+from pydantic import BaseModel
+
 from flext_core import p, r, t
 from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
 from flext_core.models import m

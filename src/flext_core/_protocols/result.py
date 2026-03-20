@@ -11,6 +11,7 @@ from types import TracebackType
 from typing import Protocol, override, runtime_checkable
 
 from flext_core import FlextTypes as t
+from flext_core._protocols.base import FlextProtocolsBase
 
 
 class FlextProtocolsResult:

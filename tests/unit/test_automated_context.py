@@ -5,7 +5,7 @@ from __future__ import annotations
 from time import perf_counter
 
 import pytest
-from flext_tests import tb, tm, tt
+from flext_tests import tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContext
@@ -13,7 +13,7 @@ from flext_core import FlextContext
 
 class TestAutomatedFlextContext:
     def test_create_set_get_has_remove_clear(self) -> None:
-        _ = tb().add("seed", "yes").build()
+        _ = {"seed": "yes"}
         ctx = FlextContext.create()
         tm.ok(ctx.set("alpha", "value"), eq=True)
         tm.ok(ctx.get("alpha"), eq="value")

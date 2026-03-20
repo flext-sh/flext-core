@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from time import perf_counter
 
-from flext_tests import tb, tm, tt
+from flext_tests import tm, tt
 
 from flext_core import FlextDispatcher, FlextHandlers, r
 from tests import m, t
@@ -45,7 +45,7 @@ class TestAutomatedFlextDispatcher:
             handler_name="event_handler",
         )
         tm.ok(dispatcher.register_handler(event_handler), eq=True)
-        tm.ok(tb.Tests.Result.ok("payload"), eq="payload")
+        tm.ok(r[str].ok("payload"), eq="payload")
         event_data = t.Dict.model_validate({"item": "created"})
         event_metadata = t.Dict.model_validate({})
         event = m.Event(

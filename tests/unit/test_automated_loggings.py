@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from time import perf_counter
 
-from flext_tests import tb, tm, tt
+from flext_tests import tm, tt
 from hypothesis import given, strategies as st
 
 from flext_core import FlextLogger, FlextRuntime
@@ -28,7 +28,7 @@ class TestAutomatedFlextLogger:
 
     def test_bind_unbind_and_new(self) -> None:
         logger = FlextLogger.create_module_logger("tests.logger.bind")
-        request_id = tb.Tests.Data.short_id()
+        request_id = u.generate("ulid", 8)
         bound = logger.bind(request_id=request_id)
         unbound = bound.unbind("request_id", safe=True)
         fresh = logger.new(flow_id=request_id)
@@ -37,7 +37,7 @@ class TestAutomatedFlextLogger:
         tm.that(fresh.name, eq=logger.name)
 
     def test_global_context_bind_and_clear(self) -> None:
-        correlation_id = tb.Tests.Data.id()
+        correlation_id = u.generate()
         bind_result = FlextLogger.bind_global_context(correlation_id=correlation_id)
         clear_result = FlextLogger.clear_global_context()
         tm.ok(bind_result, eq=True)

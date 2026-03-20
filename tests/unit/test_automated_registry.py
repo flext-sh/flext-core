@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
-from flext_tests import tb, tm
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextRegistry, r
@@ -40,7 +40,7 @@ class TestAutomatedFlextRegistry:
 
     @pytest.mark.parametrize(
         ("category", "name"),
-        tb.Tests.Batch.scenarios(("validators", "email"), ("validators", "phone")),
+        [("validators", "email"), ("validators", "phone")],
         ids=lambda case: f"{case[0]}-{case[1]}",
     )
     def test_register_get_list_unregister_plugin(

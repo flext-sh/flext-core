@@ -6,7 +6,7 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
-from flext_tests import tb, tm, tt
+from flext_tests import tm, tt
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ from flext_core import FlextRuntime
 
 class TestAutomatedFlextRuntime:
     def test_is_base_model_and_collections(self) -> None:
-        model = tb.Tests.Model.user()
+        model = tt.model("user")
         tm.that(FlextRuntime.is_base_model(model), eq=True)
         tm.that(FlextRuntime.is_base_model("value"), eq=False)
 

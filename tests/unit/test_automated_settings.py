@@ -7,7 +7,7 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
-from flext_tests import tb, tf, tm, tt
+from flext_tests import tf, tm, tt
 from hypothesis import given, settings, strategies as st
 from pydantic_settings import BaseSettings
 
@@ -39,7 +39,7 @@ class TestAutomatedFlextSettings:
         class DemoNamespace(BaseSettings):
             enabled: bool = True
 
-        namespace = f"ns_{tb.Tests.Data.short_id(6)}"
+        namespace = f"ns_{u.generate('ulid', 6)}"
         FlextSettings.register_namespace(namespace, DemoNamespace)
         settings_obj = FlextSettings.get_global()
         ns_cfg = settings_obj.get_namespace(namespace, DemoNamespace)
