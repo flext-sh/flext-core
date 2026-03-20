@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core import t
 
 
 class FlextProtocolsConfig:

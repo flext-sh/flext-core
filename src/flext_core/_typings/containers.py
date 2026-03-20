@@ -6,8 +6,6 @@ from typing import Annotated, override
 
 from pydantic import BaseModel, Field, RootModel
 
-from flext_core import FlextTypingBase
-
 
 class FlextTypingContainers:
     class RootDict[RootValueT](typing.Protocol):

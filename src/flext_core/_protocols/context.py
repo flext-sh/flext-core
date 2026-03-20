@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
-from flext_core import t
+from flext_core import r, t
 
 if TYPE_CHECKING:
     from flext_core import r

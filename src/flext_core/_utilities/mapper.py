@@ -19,7 +19,6 @@ from flext_core import c, p, r, t
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.runtime import FlextRuntime
 
 

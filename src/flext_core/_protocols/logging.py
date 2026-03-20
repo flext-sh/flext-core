@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core import r, t
 
 if TYPE_CHECKING:
     from flext_core import r
