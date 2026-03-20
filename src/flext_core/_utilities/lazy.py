@@ -44,11 +44,11 @@ def lazy_getattr(
         if not attr_name:
             module_globals[name] = module
             return module
-        module_dict = vars(module)
-        if attr_name not in module_dict:
+        try:
+            value = getattr(module, attr_name)
+        except AttributeError:
             msg = f"module {module_path!r} has no attribute {attr_name!r}"
-            raise AttributeError(msg)
-        value = module_dict[attr_name]
+            raise AttributeError(msg) from None
         module_globals[name] = value
         return value
     msg = f"module {module_name!r} has no attribute {name!r}"
