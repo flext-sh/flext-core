@@ -19,8 +19,18 @@ from typing import Annotated, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core import FlextRuntime, c, p, t
+from flext_core import c, p, t
 from flext_core._models import FlextModelFoundation
+
+
+def _generate_datetime_utc() -> datetime:
+
+    return _generate_datetime_utc()
+
+
+def _normalize_to_container(value: object) -> object:
+
+    return _normalize_to_container(value)
 
 
 class FlextModelsContainer:
@@ -82,10 +92,10 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             Field(
-                default_factory=FlextRuntime.generate_datetime_utc,
+                default_factory=_generate_datetime_utc,
                 description="UTC timestamp when service was registered",
             ),
-        ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
+        ] = Field(default_factory=_generate_datetime_utc)
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.ConfigMap | None,
             Field(
@@ -123,14 +133,14 @@ class FlextModelsContainer:
             if isinstance(v, Mapping):
                 normalized_mapping: dict[str, t.ValueOrModel] = {}
                 for key, item in v.items():
-                    normalized_mapping[str(key)] = FlextRuntime.normalize_to_container(
+                    normalized_mapping[str(key)] = _normalize_to_container(
                         item,
                     )
                 return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
                 normalized_sequence: list[t.Container] = []
                 for item in v:
-                    normalized_item = FlextRuntime.normalize_to_container(item)
+                    normalized_item = _normalize_to_container(item)
                     container_item: t.Container = str(normalized_item)
                     normalized_sequence.append(container_item)
                 return t.ObjectList(root=normalized_sequence)
@@ -169,10 +179,10 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             Field(
-                default_factory=FlextRuntime.generate_datetime_utc,
+                default_factory=_generate_datetime_utc,
                 description="UTC timestamp when factory was registered",
             ),
-        ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
+        ] = Field(default_factory=_generate_datetime_utc)
         is_singleton: Annotated[
             bool,
             Field(
@@ -232,10 +242,10 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             Field(
-                default_factory=FlextRuntime.generate_datetime_utc,
+                default_factory=_generate_datetime_utc,
                 description="UTC timestamp when resource was registered",
             ),
-        ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
+        ] = Field(default_factory=_generate_datetime_utc)
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.ConfigMap | None,
             Field(

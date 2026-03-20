@@ -16,7 +16,10 @@ from enum import StrEnum
 from itertools import batched, chain
 from typing import overload
 
-from flext_core import FlextUtilitiesGuardsTypeCore, T, U, m, r, t
+from flext_core import r, t
+from flext_core._typings.generics import T, U
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.models import m
 
 
 class FlextUtilitiesCollection:

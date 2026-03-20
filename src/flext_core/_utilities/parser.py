@@ -18,16 +18,11 @@ from typing import overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import (
-    FlextRuntime,
-    FlextUtilitiesGuards,
-    FlextUtilitiesModel,
-    c,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core import c, p, r, t
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core.models import m
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesParser:

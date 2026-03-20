@@ -19,16 +19,11 @@ from typing import TypeIs
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import (
-    FlextRuntime,
-    FlextUtilitiesGuards,
-    FlextUtilitiesMapper,
-    c,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core import c, p, r, t
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.mapper import FlextUtilitiesMapper
+from flext_core.models import m
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesReliability:

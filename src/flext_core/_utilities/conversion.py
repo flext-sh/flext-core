@@ -14,7 +14,8 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import m, r, t
+from flext_core import r, t
+from flext_core.models import m
 
 
 class FlextUtilitiesConversion:

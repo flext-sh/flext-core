@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextRuntime, c, p, t
+from flext_core import c, p, t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesDomain:

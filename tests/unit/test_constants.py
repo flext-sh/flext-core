@@ -57,7 +57,7 @@ class TestConstants:
         ConstantPathScenario(path="Validation.MAX_NAME_LENGTH", expected=100),
         ConstantPathScenario(path="Validation.MAX_EMAIL_LENGTH", expected=254),
         ConstantPathScenario(path="Validation.MIN_PHONE_DIGITS", expected=10),
-        ConstantPathScenario(path="Defaults.TIMEOUT", expected=30),
+        ConstantPathScenario(path="DEFAULT_TIMEOUT_SECONDS", expected=30),
         ConstantPathScenario(path="Reliability.DEFAULT_TIMEOUT_SECONDS", expected=30),
         ConstantPathScenario(path="Utilities.MAX_TIMEOUT_SECONDS", expected=3600),
         ConstantPathScenario(path="Logging.DEFAULT_LEVEL", expected="INFO"),
@@ -292,8 +292,8 @@ class TestConstants:
         tm.that(c.Network.MIN_PORT, gte=0)
         tm.that(c.Network.MAX_PORT, lte=65535)
         tm.that(c.Network.MIN_PORT, lte=c.Network.MAX_PORT)
-        tm.that(c.Defaults.TIMEOUT, gt=0)
-        tm.that(c.Utilities.MAX_TIMEOUT_SECONDS, gt=c.Defaults.TIMEOUT)
+        tm.that(c.DEFAULT_TIMEOUT_SECONDS, gt=0)
+        tm.that(c.Utilities.MAX_TIMEOUT_SECONDS, gt=c.DEFAULT_TIMEOUT_SECONDS)
         tm.that(c.Validation.MIN_NAME_LENGTH, gt=0)
         tm.that(c.Validation.MIN_NAME_LENGTH, lt=c.Validation.MAX_NAME_LENGTH)
 
@@ -305,7 +305,7 @@ class TestConstants:
 
     def test_integration_cross_category_consistency(self) -> None:
         """Test consistency across related constant categories."""
-        tm.that(c.Defaults.TIMEOUT, eq=c.Reliability.DEFAULT_TIMEOUT_SECONDS)
+        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=c.Reliability.DEFAULT_TIMEOUT_SECONDS)
         tm.that(c.Cqrs.DEFAULT_HANDLER_TYPE, eq=c.Dispatcher.DEFAULT_HANDLER_MODE)
 
     def test_integration_pattern_and_validation_consistency(self) -> None:

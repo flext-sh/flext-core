@@ -16,7 +16,8 @@ from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, c, r, t
+from flext_core import c, r, t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesPagination:

@@ -15,7 +15,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from flext_core import m, p, t
+from flext_core import p, t
+from flext_core.models import m
 
 
 class FlextUtilitiesContext:

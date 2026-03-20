@@ -22,7 +22,8 @@ from typing import (
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 from pydantic.errors import PydanticSchemaGenerationError
 
-from flext_core import m, r, t
+from flext_core import r, t
+from flext_core.models import m
 from flext_core.typings import P, R
 
 

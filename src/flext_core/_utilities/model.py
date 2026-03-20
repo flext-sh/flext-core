@@ -13,7 +13,11 @@ from collections.abc import Mapping
 import orjson
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, FlextUtilitiesGuardsTypeCore, c, m, r, t
+from flext_core import c, r, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core.models import m
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesModel:
