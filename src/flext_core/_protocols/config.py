@@ -10,7 +10,6 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -29,7 +28,7 @@ class FlextProtocolsConfig:
 
     @runtime_checkable
     class Settings(
-        FlextProtocolsResult.HasModelDump,
+        FlextProtocolsBase.HasModelDump,
         FlextProtocolsBase.Base,
         Protocol,
     ):
