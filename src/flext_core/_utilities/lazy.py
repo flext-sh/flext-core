@@ -82,7 +82,8 @@ def cleanup_submodule_namespace(
                 and parts[: len(current_parts)] == current_parts
             ):
                 submodule_names.add(parts[len(current_parts)])
+    module_dict = vars(current_module)
     for sub_name in submodule_names:
-        attr = getattr(current_module, sub_name, None)
+        attr = module_dict.get(sub_name)
         if attr is not None and isinstance(attr, type(sys)):
             delattr(current_module, sub_name)
