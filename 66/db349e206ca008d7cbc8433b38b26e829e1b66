@@ -1,0 +1,40 @@
+src/flext_core/_constants/settings.py
+  10db0d9e8b79e691 13
+src/flext_core/_constants/validation.py
+  10db0d9e8b79e691 13
+src/flext_core/_protocols/result.py
+  10db0d9e8b79e691 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "66db349e206ca008d7cbc8433b38b26e829e1b66",
+  "prompts": {
+    "10db0d9e8b79e691": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f73c8e60ffep4uqTZzg14M7L8",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 2
+    },
+    "368fb8be6b85b0b7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f74ae14fffeVDeXScl43zDHl2",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
