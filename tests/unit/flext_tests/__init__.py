@@ -17,7 +17,6 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-    from .test_builders import TestFlextTestsBuilders
     from .test_docker import TestDocker
     from .test_domains import TestFlextTestsDomains
     from .test_factories import TestFactoriesHelpers
@@ -27,30 +26,16 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
-    "TestFactoriesHelpers": (
-        "tests.unit.flext_tests.test_factories",
-        "TestFactoriesHelpers",
-    ),
-    "TestFlextTestsBuilders": (
-        "tests.unit.flext_tests.test_builders",
-        "TestFlextTestsBuilders",
-    ),
-    "TestFlextTestsDomains": (
-        "tests.unit.flext_tests.test_domains",
-        "TestFlextTestsDomains",
-    ),
+    "TestFactoriesHelpers": ("tests.unit.flext_tests.test_factories", "TestFactoriesHelpers"),
+    "TestFlextTestsDomains": ("tests.unit.flext_tests.test_domains", "TestFlextTestsDomains"),
     "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
-    "TestFlextTestsMatchers": (
-        "tests.unit.flext_tests.test_matchers",
-        "TestFlextTestsMatchers",
-    ),
+    "TestFlextTestsMatchers": ("tests.unit.flext_tests.test_matchers", "TestFlextTestsMatchers"),
     "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
 }
 
 __all__ = [
     "TestDocker",
     "TestFactoriesHelpers",
-    "TestFlextTestsBuilders",
     "TestFlextTestsDomains",
     "TestFlextTestsFiles",
     "TestFlextTestsMatchers",

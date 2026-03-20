@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from time import perf_counter
 
-from flext_tests import tm, tt
+from flext_tests import tm, tt, u
 from hypothesis import given, strategies as st
 
 from flext_core import FlextLogger, FlextRuntime
