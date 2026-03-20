@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
+from flext_core import FlextConstantsBase
+
 
 class FlextConstantsPlatform:
     """Constants for platform and operational constraints."""
@@ -37,7 +39,7 @@ class FlextConstantsPlatform:
             """Reliability constants for system behavior."""
 
             MAX_RETRY_ATTEMPTS: Final[int] = 3
-            DEFAULT_TIMEOUT: Final[int] = FlextConstantsBase.Network.DEFAULT_TIMEOUT
+            DEFAULT_TIMEOUT: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
             CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
             HEADER_REQUEST_ID: Final[str] = "X-Request-ID"
 
