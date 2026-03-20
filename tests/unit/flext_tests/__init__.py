@@ -26,10 +26,19 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
-    "TestFactoriesHelpers": ("tests.unit.flext_tests.test_factories", "TestFactoriesHelpers"),
-    "TestFlextTestsDomains": ("tests.unit.flext_tests.test_domains", "TestFlextTestsDomains"),
+    "TestFactoriesHelpers": (
+        "tests.unit.flext_tests.test_factories",
+        "TestFactoriesHelpers",
+    ),
+    "TestFlextTestsDomains": (
+        "tests.unit.flext_tests.test_domains",
+        "TestFlextTestsDomains",
+    ),
     "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
-    "TestFlextTestsMatchers": ("tests.unit.flext_tests.test_matchers", "TestFlextTestsMatchers"),
+    "TestFlextTestsMatchers": (
+        "tests.unit.flext_tests.test_matchers",
+        "TestFlextTestsMatchers",
+    ),
     "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
 }
 

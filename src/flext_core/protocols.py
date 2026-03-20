@@ -6,32 +6,39 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._protocols import (
-    FlextProtocolsBase,
-    FlextProtocolsConfig,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsRegistry,
-    FlextProtocolsResult,
-    FlextProtocolsService,
-)
+
+def __getattr__(name: str) -> object:
+    """Lazy-load FlextProtocols on first access."""
+    if name == "FlextProtocols":
+        # Import only when accessed
+        from flext_core._protocols.base import FlextProtocolsBase
+        from flext_core._protocols.config import FlextProtocolsConfig
+        from flext_core._protocols.container import FlextProtocolsContainer
+        from flext_core._protocols.context import FlextProtocolsContext
+        from flext_core._protocols.handler import FlextProtocolsHandler
+        from flext_core._protocols.logging import FlextProtocolsLogging
+        from flext_core._protocols.registry import FlextProtocolsRegistry
+        from flext_core._protocols.result import FlextProtocolsResult
+        from flext_core._protocols.service import FlextProtocolsService
+
+        class FlextProtocols(
+            FlextProtocolsBase,
+            FlextProtocolsContext,
+            FlextProtocolsResult,
+            FlextProtocolsConfig,
+            FlextProtocolsContainer,
+            FlextProtocolsService,
+            FlextProtocolsHandler,
+            FlextProtocolsLogging,
+            FlextProtocolsRegistry,
+        ):
+            """Runtime-checkable structural typing protocols for FLEXT framework."""
+
+        return FlextProtocols
+    if name == "p":
+        return __getattr__("FlextProtocols")
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
 
 
-class FlextProtocols(
-    FlextProtocolsBase,
-    FlextProtocolsContext,
-    FlextProtocolsResult,
-    FlextProtocolsConfig,
-    FlextProtocolsContainer,
-    FlextProtocolsService,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsRegistry,
-):
-    """Runtime-checkable structural typing protocols for FLEXT framework."""
-
-
-p = FlextProtocols
 __all__ = ["FlextProtocols", "p"]

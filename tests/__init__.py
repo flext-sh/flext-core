@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra import d, e, h, x
+    from flext_infra import d, e, h, r, s, x
 
     from flext_core.typings import FlextTypes
 
@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from .benchmark.test_refactor_nesting_performance import TestPerformanceBenchmarks
     from .conftest import (
         FunctionalExternalService,
-        FunctionalExternalService as s,
         assert_rejects,
         assert_validates,
         clean_container,
@@ -113,7 +112,6 @@ if TYPE_CHECKING:
     from .test_service_result_property import TestServiceResultProperty
     from .test_utils import (
         FlextTestResult,
-        FlextTestResult as r,
         FlextTestResultCo,
         TestUtils,
         assertion_helpers,
@@ -141,7 +139,6 @@ if TYPE_CHECKING:
         infra_workflow_syncer,
     )
     from .unit.contracts.text_contract import TextUtilityContract
-    from .unit.flext_tests.test_builders import TestFlextTestsBuilders
     from .unit.flext_tests.test_docker import TestDocker
     from .unit.flext_tests.test_domains import TestFlextTestsDomains
     from .unit.flext_tests.test_factories import TestFactoriesHelpers
@@ -864,10 +861,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_config_integration",
         "TestFlextSettingsSingletonIntegration",
     ),
-    "TestFlextTestsBuilders": (
-        "tests.unit.flext_tests.test_builders",
-        "TestFlextTestsBuilders",
-    ),
     "TestFlextTestsDomains": (
         "tests.unit.flext_tests.test_domains",
         "TestFlextTestsDomains",
@@ -1255,7 +1248,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
     "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
-    "r": ("tests.test_utils", "FlextTestResult"),
+    "r": ("flext_infra", "r"),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
     "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
     "reset_global_container": ("tests.conftest", "reset_global_container"),
@@ -1269,7 +1262,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "runtime_module",
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
-    "s": ("tests.conftest", "FunctionalExternalService"),
+    "s": ("flext_infra", "s"),
     "sample_data": ("tests.conftest", "sample_data"),
     "t": ("tests.typings", "TestsFlextTypes"),
     "temp_dir": ("tests.conftest", "temp_dir"),
@@ -2217,7 +2210,6 @@ __all__ = [
     "TestFlextRuntime",
     "TestFlextSettings",
     "TestFlextSettingsSingletonIntegration",
-    "TestFlextTestsBuilders",
     "TestFlextTestsDomains",
     "TestFlextTestsFiles",
     "TestFlextTestsMatchers",

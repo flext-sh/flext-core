@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, TypeIs
 
@@ -24,13 +24,7 @@ from flext_core._models import FlextModelFoundation
 
 
 def _generate_datetime_utc() -> datetime:
-
-    return _generate_datetime_utc()
-
-
-def _normalize_to_container(value: object) -> object:
-
-    return _normalize_to_container(value)
+    return datetime.now(UTC)
 
 
 class FlextModelsContainer:
@@ -133,15 +127,62 @@ class FlextModelsContainer:
             if isinstance(v, Mapping):
                 normalized_mapping: dict[str, t.ValueOrModel] = {}
                 for key, item in v.items():
-                    normalized_mapping[str(key)] = _normalize_to_container(
+                    if isinstance(item, datetime):
+                        normalized_mapping[str(key)] = (
+                            item.replace(tzinfo=timezone.utc)
+                            if item.tzinfo is None
+                            else item
+                        )
+                    elif isinstance(item, Path):
+                        normalized_mapping[str(key)] = str(item)
+                    elif isinstance(
                         item,
-                    )
+                        (
+                            str,
+                            int,
+                            float,
+                            bool,
+                            list,
+                            dict,
+                            tuple,
+                            type(None),
+                            BaseModel,
+                        ),
+                    ):
+                        normalized_mapping[str(key)] = item
+                    else:
+                        msg = f"Invalid type in Mapping: {type(item)}"
+                        raise ValueError(msg)
                 return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
                 normalized_sequence: list[t.Container] = []
                 for item in v:
-                    normalized_item = _normalize_to_container(item)
-                    container_item: t.Container = str(normalized_item)
+                    if isinstance(item, datetime):
+                        item = (
+                            item.replace(tzinfo=timezone.utc)
+                            if item.tzinfo is None
+                            else item
+                        )
+                    elif isinstance(item, Path):
+                        item = str(item)
+                    elif not isinstance(
+                        item,
+                        (
+                            str,
+                            int,
+                            float,
+                            bool,
+                            list,
+                            dict,
+                            tuple,
+                            type(None),
+                            BaseModel,
+                        ),
+                    ):
+                        msg = f"Invalid type in Sequence: {type(item)}"
+                        raise ValueError(msg)
+
+                    container_item: t.Container = str(item)
                     normalized_sequence.append(container_item)
                 return t.ObjectList(root=normalized_sequence)
             if hasattr(v, "__dict__"):

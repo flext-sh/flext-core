@@ -90,19 +90,13 @@ if TYPE_CHECKING:
     from examples.ex_02_flext_settings import Ex02FlextSettings
     from examples.ex_03_flext_logger import Ex03FlextLogger
     from examples.ex_04_flext_dispatcher import Ex04FlextDispatcher
-    from examples.ex_05_flext_mixins import Ex05FlextMixins, Ex05FlextMixins as x
+    from examples.ex_05_flext_mixins import Ex05FlextMixins
     from examples.ex_06_flext_context import Ex06FlextContext
-    from examples.ex_07_flext_exceptions import (
-        Ex07FlextExceptions,
-        Ex07FlextExceptions as e,
-    )
+    from examples.ex_07_flext_exceptions import Ex07FlextExceptions
     from examples.ex_08_flext_container import Ex08FlextContainer
-    from examples.ex_09_flext_decorators import (
-        Ex09FlextDecorators,
-        Ex09FlextDecorators as d,
-    )
-    from examples.ex_10_flext_handlers import Ex10FlextHandlers, Ex10FlextHandlers as h
-    from examples.ex_11_flext_service import Ex11FlextService, Ex11FlextService as s
+    from examples.ex_09_flext_decorators import Ex09FlextDecorators
+    from examples.ex_10_flext_handlers import Ex10FlextHandlers
+    from examples.ex_11_flext_service import Ex11FlextService
     from examples.ex_12_flext_registry import Ex12FlextRegistry
     from examples.logging_config_once_pattern import (
         DatabaseService,
@@ -203,14 +197,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "UserInput": ("examples.models", "UserInput"),
     "UserProfile": ("examples.models", "UserProfile"),
     "_models": ("examples._models", ""),
-    "d": ("examples.ex_09_flext_decorators", "Ex09FlextDecorators"),
-    "e": ("examples.ex_07_flext_exceptions", "Ex07FlextExceptions"),
     "em": ("examples.models", "em"),
-    "h": ("examples.ex_10_flext_handlers", "Ex10FlextHandlers"),
     "m": ("examples.models", "FlextCoreExampleModels"),
     "main": ("examples.logging_config_once_pattern", "main"),
-    "s": ("examples.ex_11_flext_service", "Ex11FlextService"),
-    "x": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
 }
 
 __all__ = [
@@ -294,14 +283,9 @@ __all__ = [
     "UserInput",
     "UserProfile",
     "_models",
-    "d",
-    "e",
     "em",
-    "h",
     "m",
     "main",
-    "s",
-    "x",
 ]
 
 

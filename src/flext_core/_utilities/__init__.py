@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.guards_type_protocol import (
         FlextUtilitiesGuardsTypeProtocol,
     )
-    from flext_core._utilities.guards_validation import FlextUtilitiesGuardsValidation
     from flext_core._utilities.mapper import FlextUtilitiesMapper
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.pagination import FlextUtilitiesPagination
@@ -105,10 +104,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._utilities.guards_type_protocol",
         "FlextUtilitiesGuardsTypeProtocol",
     ),
-    "FlextUtilitiesGuardsValidation": (
-        "flext_core._utilities.guards_validation",
-        "FlextUtilitiesGuardsValidation",
-    ),
     "FlextUtilitiesMapper": ("flext_core._utilities.mapper", "FlextUtilitiesMapper"),
     "FlextUtilitiesModel": ("flext_core._utilities.model", "FlextUtilitiesModel"),
     "FlextUtilitiesPagination": (
@@ -147,7 +142,6 @@ __all__ = [
     "FlextUtilitiesGuardsTypeCore",
     "FlextUtilitiesGuardsTypeModel",
     "FlextUtilitiesGuardsTypeProtocol",
-    "FlextUtilitiesGuardsValidation",
     "FlextUtilitiesMapper",
     "FlextUtilitiesModel",
     "FlextUtilitiesPagination",

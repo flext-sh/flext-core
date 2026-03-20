@@ -23,6 +23,7 @@ from flext_core._models import (
     FlextModelsEntity,
 )
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsContextData:
