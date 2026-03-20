@@ -141,7 +141,6 @@ if TYPE_CHECKING:
     from .unit.contracts.text_contract import TextUtilityContract
     from .unit.flext_tests.test_docker import TestDocker
     from .unit.flext_tests.test_domains import TestFlextTestsDomains
-    from .unit.flext_tests.test_factories import TestFactoriesHelpers
     from .unit.flext_tests.test_files import TestFlextTestsFiles
     from .unit.flext_tests.test_matchers import TestFlextTestsMatchers
     from .unit.flext_tests.test_utilities import TestUtilities
@@ -824,10 +823,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestEnumUtilitiesCoverage": (
         "tests.unit.test_enum_utilities_coverage_100",
         "TestEnumUtilitiesCoverage",
-    ),
-    "TestFactoriesHelpers": (
-        "tests.unit.flext_tests.test_factories",
-        "TestFactoriesHelpers",
     ),
     "TestFinal75PercentPush": (
         "tests.unit.test_final_75_percent_push",
@@ -2195,7 +2190,6 @@ __all__ = [
     "TestDocumentedPatterns",
     "TestEntityCoverageEdgeCases",
     "TestEnumUtilitiesCoverage",
-    "TestFactoriesHelpers",
     "TestFinal75PercentPush",
     "TestFlextContainer",
     "TestFlextContext",

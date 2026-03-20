@@ -1,12 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Unit tests for flext_tests namespace.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Flext tests package."""
 
 from __future__ import annotations
 
@@ -19,17 +14,12 @@ if TYPE_CHECKING:
 
     from .test_docker import TestDocker
     from .test_domains import TestFlextTestsDomains
-    from .test_factories import TestFactoriesHelpers
     from .test_files import TestFlextTestsFiles
     from .test_matchers import TestFlextTestsMatchers
     from .test_utilities import TestUtilities
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
-    "TestFactoriesHelpers": (
-        "tests.unit.flext_tests.test_factories",
-        "TestFactoriesHelpers",
-    ),
     "TestFlextTestsDomains": (
         "tests.unit.flext_tests.test_domains",
         "TestFlextTestsDomains",
@@ -44,7 +34,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     "TestDocker",
-    "TestFactoriesHelpers",
     "TestFlextTestsDomains",
     "TestFlextTestsFiles",
     "TestFlextTestsMatchers",
