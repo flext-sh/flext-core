@@ -1,0 +1,38 @@
+tests/models.py
+  b6306429276b6627 22
+src/flext_core/_utilities/lazy.py
+  71f6e8950d33620c 85,87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "aa9c2018b6460574d2318c01e585d3ecaac6cde8",
+  "prompts": {
+    "71f6e8950d33620c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2f7812dfcfferRgTWLD14Y3NYe",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "b6306429276b6627": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6e763e2b-70ce-4f27-84de-9d3ebd2be259",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
