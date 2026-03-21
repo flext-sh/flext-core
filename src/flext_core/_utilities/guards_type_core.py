@@ -15,7 +15,11 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypeIs
 
-from flext_core import t
+from flext_core._typings.base import FlextTypingBase
+
+# Alias para uso em runtime e type hints
+# FlextTypingBase fornece os types e constantes necessários
+t = FlextTypingBase
 
 
 class FlextUtilitiesGuardsTypeCore:
