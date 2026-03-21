@@ -10,7 +10,7 @@ from flext_tests import tm
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime
+from flext_core import FlextRuntime, m
 
 
 class TestAutomatedFlextRuntime:
