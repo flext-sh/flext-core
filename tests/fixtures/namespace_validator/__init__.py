@@ -29,18 +29,48 @@ if TYPE_CHECKING:
     from .typings import LooseTypeAlias
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "DEFAULT_TIMEOUT": ("tests.fixtures.namespace_validator.rule1_loose_constant", "DEFAULT_TIMEOUT"),
-    "FlextTestConstants": ("tests.fixtures.namespace_validator.rule0_multiple_classes", "FlextTestConstants"),
-    "FlextTestModels": ("tests.fixtures.namespace_validator.rule1_loose_enum", "FlextTestModels"),
-    "FlextTestTypes": ("tests.fixtures.namespace_validator.rule2_protocol_in_types", "FlextTestTypes"),
-    "FlextTestUtilities": ("tests.fixtures.namespace_validator.rule1_magic_number", "FlextTestUtilities"),
+    "DEFAULT_TIMEOUT": (
+        "tests.fixtures.namespace_validator.rule1_loose_constant",
+        "DEFAULT_TIMEOUT",
+    ),
+    "FlextTestConstants": (
+        "tests.fixtures.namespace_validator.rule0_multiple_classes",
+        "FlextTestConstants",
+    ),
+    "FlextTestModels": (
+        "tests.fixtures.namespace_validator.rule1_loose_enum",
+        "FlextTestModels",
+    ),
+    "FlextTestTypes": (
+        "tests.fixtures.namespace_validator.rule2_protocol_in_types",
+        "FlextTestTypes",
+    ),
+    "FlextTestUtilities": (
+        "tests.fixtures.namespace_validator.rule1_magic_number",
+        "FlextTestUtilities",
+    ),
     "LooseTypeAlias": ("tests.fixtures.namespace_validator.typings", "LooseTypeAlias"),
-    "MAX_RETRIES": ("tests.fixtures.namespace_validator.rule1_loose_constant", "MAX_RETRIES"),
+    "MAX_RETRIES": (
+        "tests.fixtures.namespace_validator.rule1_loose_constant",
+        "MAX_RETRIES",
+    ),
     "MAX_VALUE": ("tests.fixtures.namespace_validator.rule0_no_class", "MAX_VALUE"),
-    "RandomConstants": ("tests.fixtures.namespace_validator.rule0_wrong_prefix", "RandomConstants"),
-    "Rule0LooseItemsFixture": ("tests.fixtures.namespace_validator.rule0_loose_items", "Rule0LooseItemsFixture"),
-    "Rule0MultipleClassesFixture": ("tests.fixtures.namespace_validator.rule0_multiple_classes", "Rule0MultipleClassesFixture"),
-    "Rule1LooseEnumFixture": ("tests.fixtures.namespace_validator.rule1_loose_enum", "Rule1LooseEnumFixture"),
+    "RandomConstants": (
+        "tests.fixtures.namespace_validator.rule0_wrong_prefix",
+        "RandomConstants",
+    ),
+    "Rule0LooseItemsFixture": (
+        "tests.fixtures.namespace_validator.rule0_loose_items",
+        "Rule0LooseItemsFixture",
+    ),
+    "Rule0MultipleClassesFixture": (
+        "tests.fixtures.namespace_validator.rule0_multiple_classes",
+        "Rule0MultipleClassesFixture",
+    ),
+    "Rule1LooseEnumFixture": (
+        "tests.fixtures.namespace_validator.rule1_loose_enum",
+        "Rule1LooseEnumFixture",
+    ),
     "Status": ("tests.fixtures.namespace_validator.rule1_loose_enum", "Status"),
     "c": ("tests.fixtures.namespace_validator.rule1_method_in_constants", "c"),
     "helper": ("tests.fixtures.namespace_validator.rule0_no_class", "helper"),
