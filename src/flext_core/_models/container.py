@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, TypeIs
 
@@ -131,9 +131,7 @@ class FlextModelsContainer:
                 for key, item in v.items():
                     if isinstance(item, datetime):
                         normalized_mapping[str(key)] = (
-                            item.replace(tzinfo=timezone.utc)
-                            if item.tzinfo is None
-                            else item
+                            item.replace(tzinfo=UTC) if item.tzinfo is None else item
                         )
                     elif isinstance(item, Path):
                         normalized_mapping[str(key)] = str(item)
@@ -160,11 +158,7 @@ class FlextModelsContainer:
                 normalized_sequence: list[t.Container] = []
                 for item in v:
                     if isinstance(item, datetime):
-                        item = (
-                            item.replace(tzinfo=timezone.utc)
-                            if item.tzinfo is None
-                            else item
-                        )
+                        item = item.replace(tzinfo=UTC) if item.tzinfo is None else item
                     elif isinstance(item, Path):
                         item = str(item)
                     elif not isinstance(
