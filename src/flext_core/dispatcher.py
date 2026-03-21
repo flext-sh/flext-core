@@ -161,7 +161,7 @@ class FlextDispatcher:
                 self._auto_handlers.append((
                     handler,
                     resolved_handler,
-                    accepted_message_types,
+                    tuple(accepted_message_types),
                 ))
                 self._logger.info(
                     "Registered auto-discovery handler",

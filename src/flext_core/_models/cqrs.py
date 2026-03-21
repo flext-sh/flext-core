@@ -25,6 +25,7 @@ from pydantic import (
 )
 
 from flext_core import FlextModelFoundation, c, p, r, t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsCqrs:

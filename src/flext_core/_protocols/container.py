@@ -29,6 +29,27 @@ class FlextProtocolsContainer:
         root: dict[str, RootValueT]
 
     @runtime_checkable
+    class ProviderLike[T_co](Protocol):
+        """DI-free abstraction for dependency injection providers.
+
+        Provides a framework-independent contract for dependency injection
+        providers. Real providers in ``FlextRuntime.DependencyIntegration``
+        implement this Protocol structurally.
+
+        Usage::
+
+            provider: p.ProviderLike[MyService]
+            service = provider()  # Returns MyService instance
+
+        This Protocol avoids coupling the ``_protocols`` layer to
+        ``dependency_injector``, keeping the architecture boundary clean.
+        """
+
+        def __call__(self) -> T_co:
+            """Resolve and return the provided dependency."""
+            ...
+
+    @runtime_checkable
     class Container(FlextProtocolsConfig.Configurable, Protocol):
         """Dependency injection container protocol.
 

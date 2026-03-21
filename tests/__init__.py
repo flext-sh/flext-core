@@ -149,6 +149,7 @@ if TYPE_CHECKING:
     )
     from .typings import T_co, T_contra, TestsFlextTypes, TestsFlextTypes as t
     from .unit import contracts as contracts, flext_tests as flext_tests
+    from .unit._models import TestUnitModels
     from .unit._models_impl import (
         BadConfigForTest,
         CacheTestModel,
@@ -1135,6 +1136,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_typings_full_coverage",
         "TestTypingsFullCoverage",
     ),
+    "TestUnitModels": ("tests.unit._models", "TestUnitModels"),
     "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
     "TestUtilitiesCheckerFullCoverage": (
         "tests.unit.test_utilities_checker_full_coverage",
@@ -2432,6 +2434,7 @@ __all__ = [
     "TestServiceResultProperty",
     "TestTypings",
     "TestTypingsFullCoverage",
+    "TestUnitModels",
     "TestUtilities",
     "TestUtilitiesCheckerFullCoverage",
     "TestUtilitiesCollectionCoverage",

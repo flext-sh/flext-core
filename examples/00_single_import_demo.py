@@ -2,7 +2,7 @@
 
 Direct framework access using Python 3.13+ advanced features, minimal code bloat,
 maximal functionality via c centralized StrEnum/Literals, railway patterns,
-context management, runtime type checking with beartype, FlextModels DDD patterns,
+context management, runtime type checking with Pydantic v2, FlextModels DDD patterns,
 dependency injection, dispatcher CQRS, and comprehensive flext-core integration.
 Uses PEP 695 type aliases, advanced collections.abc patterns, Pydantic 2 with StrEnum,
 and strict Python 3.13+ only - no backward compatibility.

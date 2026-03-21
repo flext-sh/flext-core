@@ -16,7 +16,7 @@ import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Annotated, ClassVar, Final, Self, overload
+from typing import Annotated, ClassVar, Final, Self, overload, override
 
 from pydantic import BaseModel, Field, PrivateAttr
 
@@ -310,6 +310,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return r[bool].fail("Value must be serializable")
         return r[bool].ok(value=True)
 
+    @override
     def clear(self) -> None:
         """Clear all data from the context including metadata.
 
@@ -451,6 +452,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             },
         )
 
+    @override
     def get(self, key: str, scope: str = c.SCOPE_GLOBAL) -> r[t.RuntimeAtomic]:
         """Get a value from the context.
 
@@ -534,6 +536,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         )
         return r[t.RuntimeAtomic].ok(normalized_value)
 
+    @override
     def has(self, key: str, scope: str = c.SCOPE_GLOBAL) -> bool:
         """Check if a key exists in the context.
 
@@ -552,6 +555,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         scope_data = self._get_from_contextvar(scope)
         return key in scope_data
 
+    @override
     def items(self) -> list[tuple[str, t.NormalizedValue]]:
         """Get all items (key-value pairs) in the context.
 
@@ -583,6 +587,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         return self._scope_vars
 
+    @override
     def keys(self) -> list[str]:
         """Get all keys in the context.
 
@@ -600,6 +605,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
+    @override
     def merge(
         self,
         other: p.Context | t.ConfigMap | Mapping[str, t.NormalizedValue],
@@ -780,6 +786,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                     return r[bool].fail("Invalid key found in context")
         return r[bool].ok(value=True)
 
+    @override
     def values(self) -> list[t.NormalizedValue]:
         """Get all values in the context.
 

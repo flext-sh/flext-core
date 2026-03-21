@@ -24,6 +24,8 @@ class FlextTypesServices:
 
     type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
+    type RuntimeData = ValueOrModel  # Alias for runtime processing functions
+    type RuntimeAtomic = FlextTypingBase.Container | BaseModel  # Atomic runtime types
 
     type BootstrapInput = (
         BaseModel | Mapping[str, FlextTypingBase.NormalizedValue] | None
@@ -61,7 +63,25 @@ class FlextTypesServices:
     )
     type HandlerCallable = Callable[..., BaseModel | None]
     type HandlerLike = Callable[..., BaseModel]
-    type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
+    type DispatchableHandler = (
+        BaseModel | Callable[..., BaseModel | FlextTypesServices.RuntimeAtomic | None]
+    )
+    type ResolvedHandlerCallable = Callable[
+        ..., BaseModel | FlextTypesServices.RuntimeAtomic | None
+    ]
+    type RegisteredHandler = tuple[
+        FlextTypesServices.DispatchableHandler,
+        FlextTypesServices.ResolvedHandlerCallable,
+    ]
+    type AutoHandlerRegistration = tuple[
+        FlextTypesServices.DispatchableHandler,
+        FlextTypesServices.ResolvedHandlerCallable,
+        tuple[FlextTypesServices.MessageTypeSpecifier, ...],
+    ]
+    type RegistrablePlugin = (
+        FlextTypesServices.ScalarOrModel
+        | Callable[..., FlextTypesServices.ScalarOrModel]
+    )
     type LoggerFactory = Callable[[], p.Logger] | p.Logger | None
     type StructlogProcessor = Callable[
         ..., Mapping[str, FlextTypingBase.NormalizedValue]
