@@ -1,0 +1,23 @@
+src/flext_core/_models/_context/_proxy_var.py
+  01c8faa05c8b90f0 16-18,60,69-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "25f5763680488245b40ad1c8a8201ee6f60e2b08",
+  "prompts": {
+    "01c8faa05c8b90f0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "310e4ce5-8c39-4800-bac2-326425db0d61",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 8,
+      "accepted_lines": 6,
+      "overriden_lines": 1
+    }
+  }
+}
