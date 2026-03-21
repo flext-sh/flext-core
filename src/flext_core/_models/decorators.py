@@ -14,7 +14,7 @@ from typing import Annotated
 
 from pydantic import ConfigDict, Field
 
-from flext_core._models import FlextModelFoundation
+from flext_core import FlextModelFoundation
 
 
 class FlextModelsDecorators:

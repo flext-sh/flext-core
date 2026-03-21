@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
-
-from flext_core._constants import (
+from flext_core import (
     FlextConstantsBase,
     FlextConstantsCqrs,
     FlextConstantsDomain,
@@ -18,10 +16,6 @@ from flext_core._constants import (
     FlextConstantsSettings,
     FlextConstantsValidation,
 )
-
-PROJECT_KIND_LIBRARY: Final[str] = "library"
-PROJECT_KIND_APPLICATION: Final[str] = "application"
-PROJECT_KIND_SERVICE: Final[str] = "service"
 
 
 class FlextConstants(
@@ -34,24 +28,15 @@ class FlextConstants(
     FlextConstantsInfrastructure,
     FlextConstantsMixins,
 ):
-    """Centralized constants for the FLEXT ecosystem (Layer 0)."""
+    """Centralized constants for the FLEXT ecosystem (Layer 0).
 
-    TIMEOUT: Final[int] = FlextConstantsBase.Network.DEFAULT_TIMEOUT
-    VALIDATION_ERROR: Final[str] = FlextConstantsValidation.Errors.VALIDATION_ERROR
-    NOT_FOUND: Final[str] = FlextConstantsValidation.Errors.NOT_FOUND
-    ENCODING: Final[str] = FlextConstantsSettings.Utilities.DEFAULT_ENCODING
-    PAGE_SIZE: Final[int] = FlextConstantsInfrastructure.Pagination.DEFAULT_PAGE_SIZE
-    MAX_RETRIES: Final[int] = FlextConstantsPlatform.Reliability.MAX_RETRY_ATTEMPTS
-    PROJECT_KIND_LIBRARY: Final[str] = PROJECT_KIND_LIBRARY
-    PROJECT_KIND_APPLICATION: Final[str] = PROJECT_KIND_APPLICATION
-    PROJECT_KIND_SERVICE: Final[str] = PROJECT_KIND_SERVICE
+    This class acts as a facade, composing all constant subclasses via MRO.
+    All constants are accessible via inheritance—do not duplicate parent attributes.
+    """
 
 
 c = FlextConstants
 __all__ = [
-    "PROJECT_KIND_APPLICATION",
-    "PROJECT_KIND_LIBRARY",
-    "PROJECT_KIND_SERVICE",
     "FlextConstants",
     "c",
 ]

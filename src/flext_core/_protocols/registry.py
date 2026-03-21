@@ -9,12 +9,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
+from pydantic import BaseModel
+
+from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 if TYPE_CHECKING:
-    from pydantic import BaseModel
-
-    from flext_core import FlextProtocolsResult, m, r, t
+    from flext_core import m, r
 
 
 class FlextProtocolsRegistry:

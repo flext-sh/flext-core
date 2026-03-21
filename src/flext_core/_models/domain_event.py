@@ -16,9 +16,7 @@ from typing import Annotated, override
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import c, t
-from flext_core._models import FlextModelFoundation
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, c, t
 
 
 class _ComparableConfigMap(t.ConfigMap):

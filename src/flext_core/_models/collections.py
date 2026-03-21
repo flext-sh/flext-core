@@ -14,8 +14,7 @@ from typing import Annotated, Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_core import t
-from flext_core._models import FlextModelFoundation
+from flext_core import FlextModelFoundation, t
 
 
 class FlextModelsCollections:

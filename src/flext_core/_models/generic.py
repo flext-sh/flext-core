@@ -24,8 +24,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from flext_core import c, t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core import FlextModelFoundation, FlextModelsContainers, c, t
 
 
 class FlextGenericModels:

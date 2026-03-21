@@ -7,12 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
+from pydantic import BaseModel
 
-if TYPE_CHECKING:
-    from flext_core import FlextProtocolsResult, t
+from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 
 class FlextProtocolsService:
@@ -58,6 +57,19 @@ class FlextProtocolsService:
             Reflects real implementations like FlextService which perform
             business rule validation without external command parameters.
             """
+            ...
+
+    @runtime_checkable
+    class DispatchableService(Protocol):
+        """Structural protocol for dispatch-capable service objects in the DI container.
+
+        Matches FlextDispatcher and similar services that expose a dispatch method.
+        Parameter uses Protocol bound since dispatch implementations accept varying
+        message protocols (Routable, Command, Query).
+        """
+
+        def dispatch(self, message: BaseModel, /) -> BaseModel:
+            """Dispatch a message and return the result."""
             ...
 
 

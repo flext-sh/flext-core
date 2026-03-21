@@ -21,8 +21,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import FlextRuntime, c, m, t
-from flext_core._utilities import FlextUtilitiesGuardsTypeCore
+from flext_core import FlextRuntime, c, m, t, u
 
 
 class FlextExceptions:
@@ -498,7 +497,7 @@ class FlextExceptions:
         correlation_id_raw = extra_kwargs.pop(c.Context.KEY_CORRELATION_ID, None)
         correlation_id_str = (
             e._safe_optional_str(correlation_id_raw)
-            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
+            if u.is_scalar(correlation_id_raw)
             else None
         )
         normalized_extra_kwargs: dict[str, t.MetadataValue] = {
@@ -513,7 +512,7 @@ class FlextExceptions:
                 normalized_val = FlextRuntime.normalize_to_metadata(val)
 
                 def to_normalized(value: t.MetadataValue) -> t.NormalizedValue:
-                    if FlextUtilitiesGuardsTypeCore.is_scalar(value):
+                    if u.is_scalar(value):
                         return value
                     if isinstance(value, Mapping):
                         return {
@@ -1503,7 +1502,7 @@ class FlextExceptions:
         correlation_id_raw = kwargs.get(c.Context.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
+            if u.is_scalar(correlation_id_raw)
             else None
         )
         metadata_raw = kwargs.get(c.Mixins.FIELD_METADATA)
@@ -1582,7 +1581,7 @@ class FlextExceptions:
         correlation_id_raw = merged_kwargs.get(c.Context.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
+            if u.is_scalar(correlation_id_raw)
             else None
         )
         auto_log_raw = merged_kwargs.get(field_auto_log)
@@ -1591,15 +1590,11 @@ class FlextExceptions:
             correlation_id,
             merged_kwargs.get(field_metadata),
             e._safe_bool(
-                auto_log_raw
-                if FlextUtilitiesGuardsTypeCore.is_scalar(auto_log_raw)
-                else None,
+                auto_log_raw if u.is_scalar(auto_log_raw) else None,
                 default=False,
             ),
             e._safe_bool(
-                auto_correlation_raw
-                if FlextUtilitiesGuardsTypeCore.is_scalar(auto_correlation_raw)
-                else None,
+                auto_correlation_raw if u.is_scalar(auto_correlation_raw) else None,
                 default=False,
             ),
             merged_kwargs.get(field_config),

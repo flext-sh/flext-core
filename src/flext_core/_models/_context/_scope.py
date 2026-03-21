@@ -11,9 +11,8 @@ from typing import Annotated
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import c, t
-from flext_core._models import FlextModelFoundation
-from flext_core._models._context._data import FlextModelsContextData
+from flext_core import FlextModelFoundation, c, t
+from flext_core._models._context import FlextModelsContextData
 
 
 class FlextModelsContextScope:

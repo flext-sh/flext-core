@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import t
-from flext_core._utilities import (
+from flext_core import (
+    FlextRuntime,
     FlextUtilitiesArgs,
     FlextUtilitiesCache,
     FlextUtilitiesChecker,
@@ -35,8 +35,8 @@ from flext_core._utilities import (
     FlextUtilitiesReliability,
     FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
+    t,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilities(

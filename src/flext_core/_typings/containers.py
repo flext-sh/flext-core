@@ -1,3 +1,29 @@
+"""FlextTypingContainers - Pydantic RootModel container types for payload handling.
+
+**Purpose:** Strongly-typed container models with Pydantic v2 validation + dict/list protocols.
+
+**What It Declares:**
+- RootDictModel[T]: Base class implementing dict protocol over RootModel[dict[str, T]]
+- ObjectList: RootModel[list[Container]] for batch operations
+- Dict: Validated dict for request/response payloads
+- ConfigMap: Validated dict for configuration entries
+
+**Why It Serves:**
+- Type safety with Pydantic v2 validation
+- Backward compatible dict/list interfaces
+- Semantic clarity (Dict vs ConfigMap express intent)
+- Protocol compliance (Mapping/Sequence) for legacy code
+
+**Where It's Used:**
+- Dict: request/response payloads, event data
+- ConfigMap: settings, container configuration
+- ObjectList: bulk processing, batch operations
+- Protocol: Throughout FLEXT via t.Container, t.ConfigMap
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 import typing
@@ -10,10 +36,15 @@ from flext_core import FlextTypingBase
 
 
 class FlextTypingContainers:
-    class RootDict[RootValueT](typing.Protocol):
-        root: dict[str, RootValueT]
+    """Container type system for FLEXT."""
 
     class RootDictModel[DictValueT](RootModel[dict[str, DictValueT]]):
+        """Dict-backed RootModel with full dict protocol.
+
+        Wraps typed dict in Pydantic v2 validation, exposes all dict methods
+        (__getitem__, __setitem__, keys(), items(), get(), etc.).
+        """
+
         def __getitem__(self, key: str) -> DictValueT:
             return self.root[key]
 
@@ -61,6 +92,8 @@ class FlextTypingContainers:
             return self.root.values()
 
     class ObjectList(RootModel[list[FlextTypingBase.Container]]):
+        """Ordered list of strongly-typed container values for batch operations."""
+
         root: Annotated[
             list[FlextTypingBase.Container],
             Field(
@@ -75,6 +108,11 @@ class FlextTypingContainers:
         ]
 
     class Dict(RootDictModel[FlextTypingBase.NormalizedValue | BaseModel]):
+        """Validated dict payload for requests, responses, and data transfer.
+
+        Type-safe dict[str, NormalizedValue | BaseModel] with full dict protocol.
+        """
+
         root: Annotated[
             dict[str, FlextTypingBase.NormalizedValue | BaseModel],
             Field(
@@ -100,6 +138,11 @@ class FlextTypingContainers:
             return value
 
     class ConfigMap(RootDictModel[FlextTypingBase.NormalizedValue | BaseModel]):
+        """Configuration container for settings and environment parameters.
+
+        Semantically distinct Dict for configuration (not data).
+        """
+
         root: Annotated[
             dict[str, FlextTypingBase.NormalizedValue | BaseModel],
             Field(
@@ -112,5 +155,4 @@ class FlextTypingContainers:
             ),
         ]
 
-    _RootDict = RootDict
     _RootDictModel = RootDictModel

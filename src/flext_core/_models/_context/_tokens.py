@@ -13,8 +13,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core import c, t
-from flext_core._models import FlextModelsEntity
+from flext_core import FlextModelsEntity, c, t
 
 
 class FlextModelsContextTokens:

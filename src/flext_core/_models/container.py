@@ -19,8 +19,9 @@ from typing import Annotated, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core import c, p, t
 from flext_core._models import FlextModelFoundation
+from flext_core.constants import FlextConstants as c
+from flext_core.typings import FlextTypes as t
 
 
 def _generate_datetime_utc() -> datetime:
@@ -79,7 +80,7 @@ class FlextModelsContainer:
             ),
         ]
         service: Annotated[
-            t.RegisterableService | t.DispatchableService,
+            t.RegisterableService,
             SkipValidation,
             Field(..., description="Service instance (protocols, models, callables)"),
         ]
@@ -358,10 +359,17 @@ class FlextModelsContainer:
         ] = True
 
     class ServiceRegistrationSpec(FlextModelFoundation.ArbitraryTypesModel):
-        model_config = ConfigDict(strict=True)
+        """Bootstrap specification for container registration.
+
+        Holds pre-registered services, factories, resources, and configuration.
+        Deferred to TIER 1 to avoid circular imports with p/t.
+        """
+
+        model_config = ConfigDict(strict=True, arbitrary_types_allowed=True)
 
         config: Annotated[
-            p.Settings | None,
+            BaseModel | None,
+            SkipValidation,
             Field(
                 default=None,
                 title="Config",
@@ -369,7 +377,8 @@ class FlextModelsContainer:
             ),
         ] = None
         context: Annotated[
-            p.Context | None,
+            BaseModel | None,
+            SkipValidation,
             Field(
                 default=None,
                 title="Context",
@@ -377,7 +386,8 @@ class FlextModelsContainer:
             ),
         ] = None
         services: Annotated[
-            Mapping[str, FlextModelsContainer.ServiceRegistration] | None,
+            Mapping[str, BaseModel] | None,
+            SkipValidation,
             Field(
                 default=None,
                 title="Services",
@@ -385,7 +395,8 @@ class FlextModelsContainer:
             ),
         ] = None
         factories: Annotated[
-            Mapping[str, FlextModelsContainer.FactoryRegistration] | None,
+            Mapping[str, BaseModel] | None,
+            SkipValidation,
             Field(
                 default=None,
                 title="Factories",
@@ -393,7 +404,8 @@ class FlextModelsContainer:
             ),
         ] = None
         resources: Annotated[
-            Mapping[str, FlextModelsContainer.ResourceRegistration] | None,
+            Mapping[str, BaseModel] | None,
+            SkipValidation,
             Field(
                 default=None,
                 title="Resources",
@@ -401,9 +413,8 @@ class FlextModelsContainer:
             ),
         ] = None
         user_overrides: Annotated[
-            Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
-            | t.ConfigMap
-            | None,
+            BaseModel | Mapping[str, BaseModel] | Sequence[BaseModel] | None,
+            SkipValidation,
             Field(
                 default=None,
                 title="User Overrides",
@@ -412,6 +423,7 @@ class FlextModelsContainer:
         ] = None
         container_config: Annotated[
             FlextModelsContainer.ContainerConfig | None,
+            SkipValidation,
             Field(
                 default=None,
                 title="Container Config",

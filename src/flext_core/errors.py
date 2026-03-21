@@ -14,7 +14,7 @@ from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core.typings import FlextTypes as t
+from flext_core import t
 
 
 class ErrorDomain(StrEnum):

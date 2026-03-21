@@ -30,8 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import c, t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core import FlextUtilitiesGuardsTypeCore, c, t
 
 
 class FlextModelFoundation:

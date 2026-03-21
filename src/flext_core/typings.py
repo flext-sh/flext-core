@@ -8,12 +8,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, ParamSpec, TypeVar
-
 from pydantic import BaseModel
 
-from flext_core._typings import (
+from flext_core import (
     FlextTypesCore,
     FlextTypesServices,
     FlextTypesValidation,
@@ -36,9 +33,6 @@ from flext_core._typings.generics import (
     U,
 )
 
-if TYPE_CHECKING:
-    from flext_core import p
-
 
 class FlextTypes(
     FlextTypesCore,
@@ -52,46 +46,7 @@ class FlextTypes(
     ``None`` is **never** baked into definitions.
     """
 
-    # --- Parameter specifications and type variables for validated functions ---
-    ValidatedParams = ParamSpec("ValidatedParams")
-    ValidatedReturn = TypeVar("ValidatedReturn")
-
-    type RuntimeAtomic = FlextTypesCore.Container | BaseModel
-    type RuntimeData = (
-        FlextTypesCore.NormalizedValue
-        | FlextTypesServices.MetadataValue
-        | FlextTypesCore.ContainerValue
-        | Mapping[str, FlextTypesCore.NormalizedValue | BaseModel]
-        | Sequence[FlextTypesCore.NormalizedValue]
-        | p.HasModelDump
-    )
-
-    # --- Dispatcher type aliases ---
-    type DispatchableHandler = (
-        Callable[
-            ...,
-            p.ResultLike[FlextTypesCore.Container | BaseModel]
-            | FlextTypesCore.Container
-            | BaseModel
-            | None,
-        ]
-        | p.DispatchMessage
-        | p.Handle
-        | p.Execute
-    )
-    type ResolvedHandlerCallable = Callable[
-        [p.Routable],
-        p.ResultLike[FlextTypesCore.Container | BaseModel]
-        | FlextTypesCore.Container
-        | BaseModel
-        | None,
-    ]
-    type RegisteredHandler = tuple[DispatchableHandler, ResolvedHandlerCallable]
-    type AutoHandlerRegistration = tuple[
-        DispatchableHandler,
-        ResolvedHandlerCallable,
-        tuple[FlextTypesServices.MessageTypeSpecifier, ...],
-    ]
+    pass
 
 
 t = FlextTypes

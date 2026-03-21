@@ -10,15 +10,23 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
-from flext_core._protocols.config import FlextProtocolsConfig
-from flext_core._protocols.context import FlextProtocolsContext
+from flext_core import FlextProtocolsConfig, FlextProtocolsContext, t
 
 if TYPE_CHECKING:
-    from flext_core import r, t
+    from flext_core import r
 
 
 class FlextProtocolsContainer:
     """Protocols for DI container behavior."""
+
+    class RootDict[RootValueT](Protocol):
+        """Protocol for dict-like root model objects.
+
+        Represents the structure of Pydantic RootModel and similar
+        objects that wrap a dict with a root attribute.
+        """
+
+        root: dict[str, RootValueT]
 
     @runtime_checkable
     class Container(FlextProtocolsConfig.Configurable, Protocol):

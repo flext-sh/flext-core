@@ -10,15 +10,14 @@ from collections.abc import Callable, Mapping, Sequence
 from types import TracebackType
 from typing import Protocol, override, runtime_checkable
 
-from flext_core import FlextTypes as t
-from flext_core._protocols.base import FlextProtocolsBase as _Base
+from flext_core import FlextProtocolsBase, t
 
 
 class FlextProtocolsResult:
     """Protocols for railway result contracts and model dump shape."""
 
     @runtime_checkable
-    class Result[T](_Base.Base, Protocol):
+    class Result[T](FlextProtocolsBase.Base, Protocol):
         """Result type interface for railway-oriented programming.
 
         Used extensively for all operations that can fail. Provides

@@ -17,8 +17,7 @@ from typing import Annotated, Literal, Self
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
-from flext_core import c, p, t
-from flext_core._models import FlextModelFoundation
+from flext_core import FlextModelFoundation, c, p, t
 
 
 class FlextModelsService:

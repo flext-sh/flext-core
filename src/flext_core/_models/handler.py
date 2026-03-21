@@ -22,8 +22,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import c, p, t
-from flext_core._models import FlextModelFoundation
+from flext_core import FlextModelFoundation, c, p, t
 
 
 class FlextModelsHandler:

@@ -20,7 +20,7 @@ from flext_core._models import (
     FlextModelFoundation,
     FlextModelsEntity,
 )
-from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models._context import FlextModelsContextData
 
 
 class FlextModelsContextExport:

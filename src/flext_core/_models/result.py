@@ -7,8 +7,7 @@ from typing import Annotated, Self, cast, override
 import structlog
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import FlextTypes as t
+from flext_core import p, t
 
 
 class FlextModelsResult:

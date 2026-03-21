@@ -9,12 +9,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import TYPE_CHECKING, Protocol, TypeAliasType, runtime_checkable
+from typing import TYPE_CHECKING, TypeAliasType
 
 from pydantic import BaseModel
 
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -24,20 +23,6 @@ class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
     type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
-
-    @runtime_checkable
-    class DispatchableService(Protocol):
-        """Structural protocol for dispatch-capable service objects in the DI container.
-
-        Matches FlextDispatcher and similar services that expose a dispatch method.
-        Parameter uses Protocol bound since dispatch implementations accept varying
-        message protocols (Routable, Command, Query).
-        """
-
-        def dispatch(self, message: BaseModel, /) -> BaseModel:
-            """Dispatch a message and return the result."""
-            ...
-
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
 
     type BootstrapInput = (
@@ -54,7 +39,6 @@ class FlextTypesServices:
         | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
         | Callable[..., FlextTypingBase.Container | BaseModel]
         | Callable[..., FlextTypesServices.RegisterableService]
-        | FlextTypesServices.DispatchableService
     )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]

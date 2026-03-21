@@ -7,20 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase as _Base
-from flext_core._protocols.result import FlextProtocolsResult as _Result
-
-if TYPE_CHECKING:
-    from flext_core import t
+from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 
 class FlextProtocolsConfig:
     """Protocols for configurable components and settings."""
 
     @runtime_checkable
-    class Configurable(_Base.Base, Protocol):
+    class Configurable(FlextProtocolsBase.Base, Protocol):
         """Protocol for component configuration."""
 
         def configure(self, config: Mapping[str, t.Container] | None = None) -> Self:
@@ -29,8 +25,8 @@ class FlextProtocolsConfig:
 
     @runtime_checkable
     class Settings(
-        _Result.HasModelDump,
-        _Base.Base,
+        FlextProtocolsResult.HasModelDump,
+        FlextProtocolsBase.Base,
         Protocol,
     ):
         """Configuration protocol based on Pydantic BaseSettings pattern.
