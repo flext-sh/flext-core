@@ -10,10 +10,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-
-if TYPE_CHECKING:
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,
@@ -89,6 +85,7 @@ if TYPE_CHECKING:
     )
     from examples._models.exconfig import ExConfigAppConfig
     from examples._models.shared import SharedHandle, SharedPerson
+    from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),

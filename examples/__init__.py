@@ -10,10 +10,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-
-if TYPE_CHECKING:
     from examples import _models
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
@@ -115,6 +111,7 @@ if TYPE_CHECKING:
         em,
     )
     from examples.shared import Examples
+    from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DatabaseService": ("examples.logging_config_once_pattern", "DatabaseService"),

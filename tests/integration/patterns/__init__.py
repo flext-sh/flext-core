@@ -24,8 +24,6 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-
-if TYPE_CHECKING:
     from .test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .test_architectural_patterns import TestArchitecturalPatterns
     from .test_patterns_commands import TestPatternsCommands

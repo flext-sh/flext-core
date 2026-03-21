@@ -12,8 +12,6 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
-
-if TYPE_CHECKING:
     from . import contracts as contracts, flext_tests as flext_tests
     from .conftest_infra import (
         infra_git,

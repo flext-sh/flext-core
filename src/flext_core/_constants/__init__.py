@@ -10,10 +10,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
-
-if TYPE_CHECKING:
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
@@ -22,6 +18,7 @@ if TYPE_CHECKING:
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
+    from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
