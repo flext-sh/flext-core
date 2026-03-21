@@ -1,0 +1,51 @@
+src/flext_core/_models/base.py
+  9a31f3b890f00fda 623,703,788,796,803
+src/flext_core/_models/settings.py
+  9a31f3b890f00fda 91,116,124,160,172,236,276,284,292,377,386,454,469,476,525,555,663,698,1175,1182,1209,1216,1224,1231,1238,1245,1252
+src/flext_core/_models/_context/_scope.py
+  9a31f3b890f00fda 25,47-48,51-52,55-56,59-60
+src/flext_core/_models/service.py
+  9a31f3b890f00fda 66,92,96,102,125,230,287,303
+src/flext_core/_models/cqrs.py
+  9a31f3b890f00fda 51,88,96
+examples/04_config_basics.py
+  9a31f3b890f00fda 60
+src/flext_core/_models/generic.py
+  9a31f3b890f00fda 139,142,146,150
+src/flext_core/_models/domain_event.py
+  9a31f3b890f00fda 161-162
+src/flext_core/_models/collections.py
+  9a31f3b890f00fda 377
+src/flext_core/_models/container.py
+  9a31f3b890f00fda 77,210,251,271,320,328,456
+src/flext_core/_models/_context/_tokens.py
+  9a31f3b890f00fda 35,60
+src/flext_core/_models/handler.py
+  9a31f3b890f00fda 39,197,263,419
+src/flext_core/_models/decorators.py
+  9a31f3b890f00fda 17,36-37
+src/flext_core/_typings/validation.py
+  9a31f3b890f00fda 19,21-22,24-47
+tests/unit/test_typings.py
+  9a31f3b890f00fda 73,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "4a4c7093e35439b6ca4e6bee9cb1f7366fc5362d",
+  "prompts": {
+    "9a31f3b890f00fda": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8baac876-0fac-4945-ade4-a7a013891fd3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 120,
+      "total_deletions": 170,
+      "accepted_lines": 106,
+      "overriden_lines": 0
+    }
+  }
+}
