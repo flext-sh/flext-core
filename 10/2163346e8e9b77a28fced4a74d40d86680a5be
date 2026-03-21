@@ -1,0 +1,36 @@
+src/flext_core/_typings/validation.py
+  7d92cadfcdb5a40e 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "102163346e8e9b77a28fced4a74d40d86680a5be",
+  "prompts": {
+    "1557cde67c9eb455": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c2f0bae-d656-4965-a9c5-b52eaf07bc46",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 47,
+      "total_deletions": 0,
+      "accepted_lines": 47,
+      "overriden_lines": 0
+    },
+    "7d92cadfcdb5a40e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2ef162a8affeCJh0x30UVhVjRT",
+        "model": "openai/gpt-5.2"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 4,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    }
+  }
+}
