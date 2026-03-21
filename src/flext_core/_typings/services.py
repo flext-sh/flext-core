@@ -24,8 +24,15 @@ class FlextTypesServices:
 
     type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
-    type RuntimeData = ValueOrModel  # Alias for runtime processing functions
-    type RuntimeAtomic = FlextTypingBase.Container | BaseModel  # Atomic runtime types
+    type RuntimeData = (
+        FlextTypingBase.Scalar
+        | Path
+        | BaseModel
+        | Sequence[FlextTypingBase.Scalar | BaseModel]
+        | Mapping[str, FlextTypingBase.Scalar | BaseModel]
+        | None
+    )
+    type RuntimeAtomic = FlextTypingBase.Container | BaseModel
 
     type BootstrapInput = (
         BaseModel | Mapping[str, FlextTypingBase.NormalizedValue] | None
