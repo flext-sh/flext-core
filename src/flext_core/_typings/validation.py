@@ -19,7 +19,7 @@ class FlextTypesValidation:
     """Portable validation type aliases with annotated-types constraints.
 
     All types use ``annotated-types`` (Gt, Ge, Le, Len) for framework-independent
-    constraints that Pydantic v2, beartype, and other checkers understand natively.
+    constraints that Pydantic v2 and other checkers understand natively.
 
     Access via ``t.PortNumber``, ``t.NonEmptyStr``, etc.
     """
