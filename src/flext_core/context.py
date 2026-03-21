@@ -20,10 +20,10 @@ from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import FlextLogger, FlextRuntime, c, m, p, r, t, u
+from flext_core import FlextLogger, c, m, p, r, t, u
 
 
-class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
+class FlextContext(m.ArbitraryTypesModel, u):
     """Context manager for correlation, request data, and timing metadata.
 
     The dispatcher and decorators rely on FlextContext to move correlation IDs,
@@ -51,7 +51,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             raw = value.model_dump()
             result: dict[str, t.NormalizedValue] = {}
             for k, v in raw.items():
-                container_val = FlextRuntime.normalize_to_container(v)
+                container_val = u.normalize_to_container(v)
                 if isinstance(container_val, BaseModel):
                     result[str(k)] = str(container_val)
                 else:
@@ -99,10 +99,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 if value is None:
                     normalized[key] = None
                     continue
-                normalized_value = FlextRuntime.normalize_to_container(value)
+                normalized_value = u.normalize_to_container(value)
                 if isinstance(normalized_value, BaseModel):
-                    metadata_normalized = FlextRuntime.normalize_to_container(
-                        FlextRuntime.normalize_to_metadata(normalized_value),
+                    metadata_normalized = u.normalize_to_container(
+                        u.normalize_to_metadata(normalized_value),
                     )
                     if isinstance(metadata_normalized, (*t.CONTAINER_TYPES,)):
                         normalized[key] = metadata_normalized
@@ -275,7 +275,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         """
         if scope == c.Context.SCOPE_GLOBAL:
-            normalized = FlextRuntime.normalize_to_container(value)
+            normalized = u.normalize_to_container(value)
             _ = FlextLogger.bind_global_context(**{key: normalized})
 
     @staticmethod
@@ -296,8 +296,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             return r[bool].fail("Value cannot be None")
         value_for_guard: t.NormalizedValue = (
             FlextContext._to_normalized(
-                FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(value),
+                u.normalize_to_container(
+                    u.normalize_to_metadata(value),
                 ),
             )
             if isinstance(value, BaseModel)
@@ -396,8 +396,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                     metadata_value = t.ConfigMap(
                         root=dict(v.items()),
                     )
-                normalized_metadata_map[k] = FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(metadata_value),
+                normalized_metadata_map[k] = u.normalize_to_container(
+                    u.normalize_to_metadata(metadata_value),
                 )
             metadata_for_model = t.ConfigMap(root=normalized_metadata_map)
         statistics_mapping: t.Dict = t.Dict(
@@ -424,7 +424,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         metadata_root: t.ConfigMap | None = (
             t.ConfigMap(
                 root={
-                    k: FlextRuntime.normalize_to_container(v)
+                    k: u.normalize_to_container(v)
                     for k, v in metadata_for_model.items()
                 },
             )
@@ -435,7 +435,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             data=dict(all_data.items()),
             metadata=m.Metadata(
                 attributes={
-                    key: FlextRuntime.normalize_to_metadata(value)
+                    key: u.normalize_to_metadata(value)
                     for key, value in metadata_root.items()
                 },
             )
@@ -443,8 +443,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             else None,
             statistics={
                 key: FlextContext._to_normalized(
-                    FlextRuntime.normalize_to_container(
-                        FlextRuntime.normalize_to_metadata(value),
+                    u.normalize_to_container(
+                        u.normalize_to_metadata(value),
                     ),
                 )
                 for key, value in statistics_mapping.items()
@@ -496,7 +496,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'",
             )
 
-        normalized = FlextRuntime.normalize_to_container(value)
+        normalized = u.normalize_to_container(value)
         return r[t.RuntimeAtomic].ok(normalized)
 
     def get_metadata(self, key: str) -> r[t.RuntimeAtomic]:
@@ -529,7 +529,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if key not in self._metadata.attributes:
             return r[t.RuntimeAtomic].fail(f"Metadata key '{key}' not found")
         raw_value: t.MetadataValue = self._metadata.attributes[key]
-        normalized_value: t.RuntimeAtomic = FlextRuntime.normalize_to_container(
+        normalized_value: t.RuntimeAtomic = u.normalize_to_container(
             raw_value,
         )
         return r[t.RuntimeAtomic].ok(normalized_value)
@@ -746,7 +746,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             value: The metadata value
 
         """
-        normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata(value)
+        normalized_value: t.MetadataValue = u.normalize_to_metadata(value)
         updated_attributes = dict(self._metadata.attributes.items())
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
@@ -946,7 +946,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         _ = ctx_var.set(updated)
         if scope == c.Context.SCOPE_GLOBAL:
             normalized_context: dict[str, t.RuntimeAtomic] = {
-                key: FlextRuntime.normalize_to_container(value)
+                key: u.normalize_to_container(value)
                 for key, value in data.items()
                 if value is not None
             }
@@ -1321,8 +1321,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             operation_metadata_value: t.NormalizedValue = ""
             if operation_metadata_raw is not None:
                 operation_metadata_value = FlextContext._to_normalized(
-                    FlextRuntime.normalize_to_container(
-                        FlextRuntime.normalize_to_metadata(operation_metadata_raw),
+                    u.normalize_to_container(
+                        u.normalize_to_metadata(operation_metadata_raw),
                     ),
                 )
             raw_ctx: dict[str, t.ValueOrModel | None] = {

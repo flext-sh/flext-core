@@ -25,10 +25,10 @@ from typing import ClassVar, Self, override
 from pydantic import BaseModel
 from structlog.typing import Context
 
-from flext_core import FlextRuntime, FlextSettings, c, p, r, t, u
+from flext_core import FlextSettings, c, p, r, t, u
 
 
-class FlextLogger(FlextRuntime, p.Logger):
+class FlextLogger(u, p.Logger):
     """Context-aware logger tuned for dispatcher-centric CQRS flows.
 
     FlextLogger layers structured logging on ``structlog`` with scoped contexts,
@@ -81,7 +81,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             context[c.Context.KEY_SERVICE_VERSION] = _service_version
         if _correlation_id:
             context[c.Context.KEY_CORRELATION_ID] = _correlation_id
-        base_logger = FlextRuntime.get_logger(name)
+        base_logger = u.get_logger(name)
         self._structlog_instance = (
             base_logger.bind(**context) if context else base_logger
         )
@@ -102,7 +102,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Wrapped structlog logger instance."""
         instance = self._structlog_instance
         if instance is None:
-            instance = FlextRuntime.get_logger(getattr(self, "name", __name__))
+            instance = u.get_logger(getattr(self, "name", __name__))
             self._structlog_instance = instance
         return instance
 
@@ -110,7 +110,7 @@ class FlextLogger(FlextRuntime, p.Logger):
     def _get_global_context(cls) -> t.ConfigMap:
         """Get current global context (internal use only)."""
         try:
-            context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
+            context_vars = u.structlog().contextvars.get_contextvars()
             context_map: dict[str, t.Container] = (
                 {
                     str(k): cls._to_container_value(v)
@@ -202,7 +202,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             for key, value in merged_value.items():
                 merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
-            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
+            u.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
@@ -212,8 +212,8 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Bind context variables that only appear in logs at specified level or higher.
 
         Business Rule: Binds context variables with level prefix (`_level_{level}_`) for
-        conditional inclusion based on log level. Uses FlextRuntime for centralized logging
-        management. Context variables are filtered by FlextRuntime.level_based_context_filter()
+        conditional inclusion based on log level. Uses u for centralized logging
+        management. Context variables are filtered by u.level_based_context_filter()
         processor based on log level hierarchy. Normalizes log level to standard format
         (DEBUG, INFO, WARNING, ERROR, CRITICAL).
 
@@ -221,7 +221,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         including verbose context only at appropriate log levels. All level-based context
         is filtered automatically by structlog processors, ensuring efficient log processing.
 
-        Uses FlextRuntime for centralized logging management. Context variables
+        Uses u for centralized logging management. Context variables
         are prefixed with `_level_{level}_` so they can be filtered by log level.
 
         Args:
@@ -254,18 +254,18 @@ class FlextLogger(FlextRuntime, p.Logger):
                 for key, value in normalized_context.items()
             }
             cls._level_contexts[level_normalized].update(normalized_context)
-            FlextRuntime.structlog().contextvars.bind_contextvars(**prefixed_context)
+            u.structlog().contextvars.bind_contextvars(**prefixed_context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
     @classmethod
     def bind_global_context(cls, **context: t.RuntimeData) -> r[bool]:
-        """Bind context globally using FlextRuntime.structlog() contextvars.
+        """Bind context globally using u.structlog() contextvars.
 
         Business Rule: Binds context variables globally using structlog contextvars,
         ensuring all subsequent log messages include these context variables automatically.
-        Uses FlextRuntime for centralized logging management. Global context persists
+        Uses u for centralized logging management. Global context persists
         across all loggers until explicitly cleared or unbound.
 
         Audit Implication: Global context binding ensures audit trail completeness by
@@ -290,7 +290,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """
         try:
             normalized_context = cls._to_container_context(context)
-            FlextRuntime.structlog().contextvars.bind_contextvars(**normalized_context)
+            u.structlog().contextvars.bind_contextvars(**normalized_context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to bind global context: {exc}")
@@ -300,7 +300,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Clear all globally bound context.
 
         Business Rule: Clears all globally bound context variables, removing them from
-        all subsequent log messages. Uses FlextRuntime for centralized logging management.
+        all subsequent log messages. Uses u for centralized logging management.
         This operation is irreversible - all context must be rebound if needed.
 
         Audit Implication: Clearing global context removes audit trail context from
@@ -314,7 +314,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
         """
         try:
-            FlextRuntime.structlog().contextvars.clear_contextvars()
+            u.structlog().contextvars.clear_contextvars()
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to clear global context: {exc}")
@@ -348,7 +348,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             if scope in cls._scoped_contexts:
                 keys = list(cls._scoped_contexts[scope].keys())
                 if keys:
-                    FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
+                    u.structlog().contextvars.unbind_contextvars(*keys)
                 cls._scoped_contexts[scope] = {}
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
@@ -365,7 +365,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
         Business Rule: Creates a FlextLogger instance for a specific module, using
         the module name for logger identification. Logger inherits global and scoped
-        context automatically. Uses FlextRuntime for centralized logging management.
+        context automatically. Uses u for centralized logging management.
         Logger name is immutable after creation, ensuring consistent logger identity.
 
         Audit Implication: Module logger creation ensures audit trail completeness by
@@ -388,7 +388,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             structlog is automatically configured on first logger creation.
 
         """
-        FlextRuntime.ensure_structlog_configured()
+        u.ensure_structlog_configured()
         return cls(name)
 
     @classmethod
@@ -473,7 +473,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Unbind context variables that were bound for a specific log level.
 
         Business Rule: Unbinds context variables that were bound for a specific log level,
-        removing them from logs at that level or higher. Uses FlextRuntime for centralized
+        removing them from logs at that level or higher. Uses u for centralized
         logging management. Only specified keys are removed; other level-based context
         remains intact. Normalizes log level to standard format (DEBUG, INFO, WARNING,
         ERROR, CRITICAL).
@@ -513,7 +513,7 @@ class FlextLogger(FlextRuntime, p.Logger):
                 if level_normalized in cls._level_contexts:
                     _ = cls._level_contexts[level_normalized].pop(key, None)
             if prefixed_keys:
-                FlextRuntime.structlog().contextvars.unbind_contextvars(*prefixed_keys)
+                u.structlog().contextvars.unbind_contextvars(*prefixed_keys)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to unbind context for level {level}: {e}")
@@ -523,7 +523,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Unbind specific keys from global context.
 
         Business Rule: Unbinds specific context keys from global context, removing them
-        from all subsequent log messages. Uses FlextRuntime for centralized logging management.
+        from all subsequent log messages. Uses u for centralized logging management.
         Only specified keys are removed; other global context remains intact.
 
         Audit Implication: Unbinding global context removes specific audit trail context
@@ -542,7 +542,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """
         try:
             unbind_keys: list[str] = [str(key) for key in keys]
-            FlextRuntime.structlog().contextvars.unbind_contextvars(*unbind_keys)
+            u.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to unbind global context: {exc}")
@@ -661,7 +661,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             return value
         if isinstance(value, BaseModel):
             return value.model_dump_json()
-        normalized = FlextRuntime.normalize_to_container(value)
+        normalized = u.normalize_to_container(value)
         if u.is_scalar(normalized) or isinstance(normalized, Path):
             return normalized
         return normalized.model_dump_json()
@@ -734,7 +734,7 @@ class FlextLogger(FlextRuntime, p.Logger):
     @staticmethod
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
         with suppress(AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            FlextRuntime.structlog().get_logger("flext_core.loggings").warning(
+            u.structlog().get_logger("flext_core.loggings").warning(
                 "Internal logger operation failed",
                 operation=operation,
                 error=exc,
@@ -757,8 +757,8 @@ class FlextLogger(FlextRuntime, p.Logger):
     @override
     @staticmethod
     def get_logger(name: str | None = None) -> p.Logger:
-        """Get structlog logger instance (alias for FlextRuntime.get_logger)."""
-        return FlextRuntime.get_logger(name)
+        """Get structlog logger instance (alias for u.get_logger)."""
+        return u.get_logger(name)
 
     @override
     def bind(self, **context: t.RuntimeData) -> Self:
@@ -798,7 +798,7 @@ class FlextLogger(FlextRuntime, p.Logger):
             context_dict["stack_trace"] = traceback.format_exc()
         for key, value in context.items():
             if not isinstance(value, BaseException):
-                context_dict[key] = FlextRuntime.normalize_to_container(value)
+                context_dict[key] = u.normalize_to_container(value)
         return context_dict
 
     @override
@@ -811,7 +811,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses u for centralized logging management.
 
         Audit Implication: Critical logging ensures audit trail completeness by recording
         critical messages about severe failures. Critical messages are always included
@@ -831,7 +831,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Log debug message - Logger.Log implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses u for centralized logging management.
 
         Audit Implication: Debug logging ensures audit trail completeness by recording
         detailed diagnostic information. Debug messages are typically filtered in
@@ -851,7 +851,7 @@ class FlextLogger(FlextRuntime, p.Logger):
         """Log error message - Logger.Log implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses u for centralized logging management.
 
         Audit Implication: Error logging ensures audit trail completeness by recording
         error messages about failures. Error messages are always included in production
@@ -918,7 +918,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
         Business Rule: Logs a message with specified level, converting level string
         to LogLevel enum if possible. Uses _log method for actual logging. Context
-        mapping is merged with logger's bound context. Uses FlextRuntime for centralized
+        mapping is merged with logger's bound context. Uses u for centralized
         logging management.
 
         Audit Implication: Logging ensures audit trail completeness by recording
@@ -1021,7 +1021,7 @@ class FlextLogger(FlextRuntime, p.Logger):
 
         Business Rule: Internal method that consolidates all log level methods (debug,
         info, warning, error, critical) into a single implementation. Delegates to
-        structlog logger. Uses FlextRuntime for centralized logging management.
+        structlog logger. Uses u for centralized logging management.
         Returns r[bool] indicating success or failure.
         """
         try:

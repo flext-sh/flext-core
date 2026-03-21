@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import re
 
-from flext_core import c, p, r
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, c, p, r
 
 
 class FlextUtilitiesText:

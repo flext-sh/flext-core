@@ -27,7 +27,6 @@ from flext_core import (
     FlextContext,
     FlextDispatcher,
     FlextLogger,
-    FlextRuntime,
     FlextSettings,
     c,
     m,
@@ -211,8 +210,8 @@ class FlextContainer(p.Container):
             registration,
             **registration_kwargs,
         )
-        self.containers = FlextRuntime.dependency_containers()
-        self.providers = FlextRuntime.dependency_providers()
+        self.containers = u.dependency_containers()
+        self.providers = u.dependency_providers()
         self.initialize_di_components()
         self.initialize_registrations(
             services=init_registration.services,
@@ -320,15 +319,15 @@ class FlextContainer(p.Container):
         """Create a scoped container instance bypassing singleton pattern.
 
         This is an internal factory method to safely create non-singleton containers.
-        Uses direct attribute assignment (no frozen=True, compatible with FlextRuntime pattern).
+        Uses direct attribute assignment (no frozen=True, compatible with u pattern).
         """
         scoped_registration = cls._resolve_scoped_registration(
             registration,
             **registration_kwargs,
         )
-        instance = FlextRuntime.create_instance(cls)
-        instance.containers = FlextRuntime.dependency_containers()
-        instance.providers = FlextRuntime.dependency_providers()
+        instance = u.create_instance(cls)
+        instance.containers = u.dependency_containers()
+        instance.providers = u.dependency_providers()
         instance.initialize_di_components()
         instance.initialize_registrations(
             services=scoped_registration.services,
@@ -534,7 +533,7 @@ class FlextContainer(p.Container):
         config_map: Mapping[str, t.Container] = config
         processed_dict = t.ConfigMap(root={})
         for key, value in config_map.items():
-            processed_dict[str(key)] = FlextRuntime.normalize_to_container(value)
+            processed_dict[str(key)] = u.normalize_to_container(value)
         merged = t.ConfigMap(root=dict(self._user_overrides.items()))
         merged.update(dict(processed_dict.items()))
         self._user_overrides = merged
@@ -657,7 +656,7 @@ class FlextContainer(p.Container):
         config_dict_raw = self._global_config.model_dump()
         return t.ConfigMap(
             root={
-                str(key): FlextRuntime.normalize_to_container(value)
+                str(key): u.normalize_to_container(value)
                 for key, value in config_dict_raw.items()
             },
         )
@@ -676,7 +675,7 @@ class FlextContainer(p.Container):
         Can be called from __init__ or _create_scoped_instance.
         Sets private attributes directly - this is internal initialization.
         """
-        bridge_tuple = FlextRuntime.DependencyIntegration.create_layered_bridge()
+        bridge_tuple = u.DependencyIntegration.create_layered_bridge()
         bridge = bridge_tuple[0]
         service_module = bridge_tuple[1]
         resource_module = bridge_tuple[2]
@@ -805,7 +804,7 @@ class FlextContainer(p.Container):
                     service_type=service_impl.__class__.__name__,
                 )
                 self._services[name] = registration
-                provider = FlextRuntime.DependencyIntegration.register_object(
+                provider = u.DependencyIntegration.register_object(
                     self._di_services,
                     name,
                     service_impl,
@@ -832,7 +831,7 @@ class FlextContainer(p.Container):
                     factory=normalized_factory,
                 )
                 self._factories[name] = factory_reg
-                provider = FlextRuntime.DependencyIntegration.register_factory(
+                provider = u.DependencyIntegration.register_factory(
                     self._di_services,
                     name,
                     normalized_factory,
@@ -847,7 +846,7 @@ class FlextContainer(p.Container):
                 return self
             resource_reg = m.ResourceRegistration(name=name, factory=impl)
             self._resources[name] = resource_reg
-            provider = FlextRuntime.DependencyIntegration.register_resource(
+            provider = u.DependencyIntegration.register_resource(
                 self._di_resources,
                 name,
                 impl,
@@ -919,7 +918,7 @@ class FlextContainer(p.Container):
             )
             self._services[dispatcher_name] = registration
             if not hasattr(self._di_services, dispatcher_name):
-                provider = FlextRuntime.DependencyIntegration.register_object(
+                provider = u.DependencyIntegration.register_object(
                     self._di_services,
                     dispatcher_name,
                     service_candidate,
@@ -932,7 +931,7 @@ class FlextContainer(p.Container):
         for name, registration in self._services.items():
             if hasattr(self._di_services, name) or hasattr(self._di_container, name):
                 continue
-            provider = FlextRuntime.DependencyIntegration.register_object(
+            provider = u.DependencyIntegration.register_object(
                 self._di_services,
                 name,
                 registration.service,
@@ -942,7 +941,7 @@ class FlextContainer(p.Container):
         for name, factory_registration in self._factories.items():
             if hasattr(self._di_services, name) or hasattr(self._di_container, name):
                 continue
-            provider = FlextRuntime.DependencyIntegration.register_factory(
+            provider = u.DependencyIntegration.register_factory(
                 self._di_services,
                 name,
                 factory_registration.factory,
@@ -953,7 +952,7 @@ class FlextContainer(p.Container):
         for name, resource_registration in self._resources.items():
             if hasattr(self._di_resources, name) or hasattr(self._di_container, name):
                 continue
-            provider = FlextRuntime.DependencyIntegration.register_resource(
+            provider = u.DependencyIntegration.register_resource(
                 self._di_resources,
                 name,
                 resource_registration.factory,
@@ -1080,11 +1079,11 @@ class FlextContainer(p.Container):
         config_dict_raw = self._global_config.model_dump()
         config_map = t.ConfigMap(
             root={
-                str(key): FlextRuntime.normalize_to_container(value)
+                str(key): u.normalize_to_container(value)
                 for key, value in config_dict_raw.items()
             },
         )
-        _ = FlextRuntime.DependencyIntegration.bind_configuration(
+        _ = u.DependencyIntegration.bind_configuration(
             self._di_container,
             config_map,
         )
@@ -1148,7 +1147,7 @@ class FlextContainer(p.Container):
         classes: Sequence[type] | None = None,
     ) -> None:
         """Wire modules/packages to the DI bridge for @inject/Provide usage."""
-        FlextRuntime.DependencyIntegration.wire(
+        u.DependencyIntegration.wire(
             self._di_container,
             modules=modules,
             packages=packages,

@@ -5,13 +5,10 @@ from __future__ import annotations
 import functools
 import warnings
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 from warnings import deprecated as _stdlib_deprecated
 
-from flext_core import t
-
-if TYPE_CHECKING:
-    from flext_core import P, R
+from flext_core import P, R, t
 
 
 class FlextUtilitiesDeprecation:

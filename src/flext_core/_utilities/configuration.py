@@ -50,9 +50,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import c, e, p, r, t
-from flext_core._typings.generics import T_Model
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, T_Model, c, e, p, r, t
 
 
 class FlextUtilitiesConfiguration:

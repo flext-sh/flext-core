@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
-from flext_core import p, r, t
-from flext_core._typings.generics import T
-from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core import FlextUtilitiesGuards, T, p, r, t
 
 
 class FlextUtilitiesResultHelpers:

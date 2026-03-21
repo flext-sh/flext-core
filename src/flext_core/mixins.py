@@ -28,7 +28,6 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextLogger,
-    FlextRuntime,
     FlextSettings,
     c,
     m,
@@ -39,7 +38,7 @@ from flext_core import (
 )
 
 
-class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
+class FlextMixins(m.ArbitraryTypesModel, u):
     """Composable behaviors for dispatcher-driven services and handlers.
 
     These mixins centralize DI container access, structured logging, and
@@ -56,7 +55,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     - ``track``: Context manager that records timing/err counts per operation.
     - ``_with_operation_context`` / ``_clear_operation_context``: Scoped
       context bindings used by dispatcher pipelines.
-    - Delegated ``FlextRuntime``/``r`` helpers for railway flows.
+    - Delegated ``u``/``r`` helpers for railway flows.
 
     Example:
         class MyService(x):
@@ -184,13 +183,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 all_context_data = merged_error
             if all_context_data:
                 metadata_context: dict[str, t.RuntimeAtomic] = {
-                    key: FlextRuntime.normalize_to_container(value)
+                    key: u.normalize_to_container(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
                 normal_metadata_context: dict[str, t.RuntimeAtomic] = {
-                    key: FlextRuntime.normalize_to_container(value)
+                    key: u.normalize_to_container(value)
                     for key, value in normal_data.root.items()
                 }
                 _ = FlextLogger.bind_context(
@@ -204,7 +203,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     ) -> dict[str, t.Container]:
         normalized: dict[str, t.Container] = {}
         for key, value in payload.items():
-            atomic = FlextRuntime.normalize_to_container(value)
+            atomic = u.normalize_to_container(value)
             if isinstance(atomic, BaseModel):
                 normalized[str(key)] = str(atomic.model_dump())
             else:
@@ -227,10 +226,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
                 metrics_map: dict[str, t.ValueOrModel] = (
-                    {
-                        str(k): FlextRuntime.normalize_to_container(v)
-                        for k, v in metrics.items()
-                    }
+                    {str(k): u.normalize_to_container(v) for k, v in metrics.items()}
                     if hasattr(metrics, "items")
                     else {}
                 )
@@ -473,13 +469,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         operation_name = FlextContext.Request.get_operation_name()
         context_data: t.ConfigMap = t.ConfigMap(
             root={
-                c.Context.KEY_CORRELATION_ID: FlextRuntime.normalize_to_container(
+                c.Context.KEY_CORRELATION_ID: u.normalize_to_container(
                     correlation_id or "",
                 ),
-                c.Cqrs.HandlerType.OPERATION: FlextRuntime.normalize_to_container(
+                c.Cqrs.HandlerType.OPERATION: u.normalize_to_container(
                     operation_name or "",
                 ),
-                **{k: FlextRuntime.normalize_to_container(v) for k, v in extra.items()},
+                **{k: u.normalize_to_container(v) for k, v in extra.items()},
             },
         )
         log_method = (
@@ -638,7 +634,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                         if validation_result.error_data is not None:
                             normalized_error_data: dict[str, t.Container] = {}
                             for key, value in validation_result.error_data.root.items():
-                                normalized = FlextRuntime.normalize_to_container(value)
+                                normalized = u.normalize_to_container(value)
                                 if isinstance(normalized, BaseModel):
                                     normalized_error_data[str(key)] = str(normalized)
                                 else:

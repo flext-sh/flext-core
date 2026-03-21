@@ -52,7 +52,7 @@ class FlextService[
 
     Subclasses implement ``execute`` to run business logic and return
     ``r`` (r) values. The base inherits :class:`x` (which extends
-    :class:`FlextRuntime`) so services can reuse runtime automation for creating
+    :class:`u`) so services can reuse runtime automation for creating
     scoped config/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
 
@@ -274,7 +274,7 @@ class FlextService[
         """Materialize config, context, and container with DI wiring in one call.
 
         This method provides the same parameterized automation previously found in
-        ``FlextRuntime.create_service_runtime`` but uses the factory methods of each
+        ``u.create_service_runtime`` but uses the factory methods of each
         class directly (Clean Architecture - each class knows how to instantiate itself).
 
         All runtime components are created via the bootstrap options pattern:

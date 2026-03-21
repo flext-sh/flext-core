@@ -26,7 +26,6 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextLogger,
-    FlextRuntime,
     P,
     R,
     T,
@@ -731,7 +730,7 @@ class FlextDecorators:
                 )
                 try:
                     retry_args: tuple[t.ValueOrModel, ...] = tuple(
-                        FlextRuntime.normalize_to_container(a)
+                        u.normalize_to_container(a)
                         if isinstance(
                             a,
                             (str, int, float, bool, datetime, Path, BaseModel),
@@ -747,9 +746,7 @@ class FlextDecorators:
                             value,
                             (str, int, float, bool, datetime, Path, BaseModel),
                         ):
-                            retry_kwargs[str(key)] = (
-                                FlextRuntime.normalize_to_container(value)
-                            )
+                            retry_kwargs[str(key)] = u.normalize_to_container(value)
                         elif value is not None:
                             retry_kwargs[str(key)] = str(value)
                     retry_result = FlextDecorators._execute_retry_loop(
@@ -922,7 +919,7 @@ class FlextDecorators:
     @staticmethod
     def _handle_log_result(
         *,
-        result: r[bool] | p.Result[bool] | FlextRuntime.RuntimeResult[bool],
+        result: r[bool] | p.Result[bool] | u.RuntimeResult[bool],
         logger: p.Logger,
         fallback_message: str,
         kwargs: t.ConfigMap,
@@ -941,7 +938,7 @@ class FlextDecorators:
             fallback_kwargs = t.ConfigMap(root=kwargs.root)
             warning_context: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
-                if key == "extra" and FlextRuntime.is_dict_like(value):
+                if key == "extra" and u.is_dict_like(value):
                     extra_items: Mapping[str, t.ValueOrModel]
                     if isinstance(value, t.ConfigMap):
                         extra_items = value.root
@@ -1261,11 +1258,11 @@ class FlextDecorators:
         *,
         track_correlation: bool = True,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Decorator to track operation execution with FlextRuntime.Integration.
+        """Decorator to track operation execution with u.Integration.
 
         Combines correlation ID management and structured logging using
-        FlextRuntime.Integration pattern (Layer 0.5). Performance tracking
-        happens automatically via FlextRuntime.Integration.
+        u.Integration pattern (Layer 0.5). Performance tracking
+        happens automatically via u.Integration.
         No circular imports - uses structlog directly.
 
         Args:
@@ -1286,13 +1283,13 @@ class FlextDecorators:
                     # Automatic tracking:
                     # - Correlation ID ensured
                     # - Operation name bound to context
-                    # - Performance metrics via FlextRuntime.Integration
+                    # - Performance metrics via u.Integration
                     # - All via structlog directly (no circular imports)
                     return self._create(user_data)
             ```
 
         Note:
-            This decorator uses FlextRuntime.Integration which accesses
+            This decorator uses u.Integration which accesses
             structlog directly (Layer 0.5), avoiding circular imports between
             Foundation and Infrastructure layers.
 
@@ -1434,7 +1431,7 @@ class FlextDecorators:
             ```
 
         Note:
-            Uses FlextRuntime.Integration for context management via
+            Uses u.Integration for context management via
             structlog.contextvars (single source of truth).
 
         """

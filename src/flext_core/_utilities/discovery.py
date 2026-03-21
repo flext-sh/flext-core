@@ -12,8 +12,7 @@ from __future__ import annotations
 import operator
 from types import ModuleType
 
-from flext_core import c
-from flext_core.models import m
+from flext_core import c, m
 
 
 class FlextUtilitiesDiscovery:

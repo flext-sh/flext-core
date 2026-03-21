@@ -44,10 +44,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from flext_core import c, p, r, t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core.models import m
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, FlextUtilitiesGuardsTypeCore, c, m, p, r, t
 
 
 class FlextUtilitiesCache:

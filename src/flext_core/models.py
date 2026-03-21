@@ -64,6 +64,8 @@ class FlextModels(
     and JSON-ready serialization for all exported types.
     """
 
+    pass
+
 
 m = FlextModels
 

@@ -31,12 +31,14 @@ if TYPE_CHECKING:
         infra_workflow_linter,
         infra_workflow_syncer,
     )
-    from .contracts.text_contract import TextUtilityContract
-    from .flext_tests.test_docker import TestDocker
-    from .flext_tests.test_domains import TestFlextTestsDomains
-    from .flext_tests.test_files import TestFlextTestsFiles
-    from .flext_tests.test_matchers import TestFlextTestsMatchers
-    from .flext_tests.test_utilities import TestUtilities
+    from .contracts import TextUtilityContract
+    from .flext_tests import (
+        TestDocker,
+        TestFlextTestsDomains,
+        TestFlextTestsFiles,
+        TestFlextTestsMatchers,
+        TestUtilities,
+    )
     from .protocols import FlextProtocols, p
     from .test_args_coverage_100 import TestFlextUtilitiesArgs
     from .test_automated_architecture import TestAutomatedArchitecture
@@ -645,7 +647,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_dispatcher_timeout_coverage_100",
         "TestDispatcherTimeoutCoverage100",
     ),
-    "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
+    "TestDocker": ("tests.unit.flext_tests", "TestDocker"),
     "TestEntityCoverageEdgeCases": (
         "tests.unit.test_entity_coverage",
         "TestEntityCoverageEdgeCases",
@@ -682,15 +684,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestFlextRegistry": ("tests.unit.test_registry", "TestFlextRegistry"),
     "TestFlextRuntime": ("tests.unit.test_runtime", "TestFlextRuntime"),
     "TestFlextSettings": ("tests.unit.test_config", "TestFlextSettings"),
-    "TestFlextTestsDomains": (
-        "tests.unit.flext_tests.test_domains",
-        "TestFlextTestsDomains",
-    ),
-    "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
-    "TestFlextTestsMatchers": (
-        "tests.unit.flext_tests.test_matchers",
-        "TestFlextTestsMatchers",
-    ),
+    "TestFlextTestsDomains": ("tests.unit.flext_tests", "TestFlextTestsDomains"),
+    "TestFlextTestsFiles": ("tests.unit.flext_tests", "TestFlextTestsFiles"),
+    "TestFlextTestsMatchers": ("tests.unit.flext_tests", "TestFlextTestsMatchers"),
     "TestFlextUtilitiesArgs": (
         "tests.unit.test_args_coverage_100",
         "TestFlextUtilitiesArgs",
@@ -775,7 +771,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_typings_full_coverage",
         "TestTypingsFullCoverage",
     ),
-    "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
+    "TestUtilities": ("tests.unit.flext_tests", "TestUtilities"),
     "TestUtilitiesCheckerFullCoverage": (
         "tests.unit.test_utilities_checker_full_coverage",
         "TestUtilitiesCheckerFullCoverage",
@@ -894,10 +890,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_type_checker_coverage_100",
         "TestuTypeChecker",
     ),
-    "TextUtilityContract": (
-        "tests.unit.contracts.text_contract",
-        "TextUtilityContract",
-    ),
+    "TextUtilityContract": ("tests.unit.contracts", "TextUtilityContract"),
     "TimeoutEnforcer": (
         "tests.unit.test_dispatcher_timeout_coverage_100",
         "TimeoutEnforcer",

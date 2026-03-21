@@ -7,8 +7,7 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import c, p, t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core import FlextUtilitiesGuardsTypeCore, c, p, t
 
 
 class FlextUtilitiesGuardsTypeProtocol:

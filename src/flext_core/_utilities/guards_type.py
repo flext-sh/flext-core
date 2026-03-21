@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+from flext_core import (
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesGuardsTypeProtocol,
+)
 
 
 class FlextUtilitiesGuardsType(

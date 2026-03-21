@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
 from flext_core import (
     FlextRuntime,
     FlextUtilitiesArgs,
@@ -35,7 +33,6 @@ from flext_core import (
     FlextUtilitiesReliability,
     FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
-    t,
 )
 
 
@@ -69,18 +66,9 @@ class FlextUtilities(
     Use direct methods only: u.get, u.parse, u.map, u.from_kwargs, u.batch, u.extract,
     u.warn_once, etc. No subdivided namespaces (no u.* at call sites).
     Subprojects use their project u. Aliases/namespaces: MRO registration protocol only.
-
-    Usage:
-        from flext_core import u
-        result = u.parse(value, int)
-        value = u.get(data, "key")
-        mapped = u.map(items, fn)
     """
 
-    @staticmethod
-    @override
-    def empty(items: t.NormalizedValue | None) -> bool:
-        return FlextUtilitiesResultHelpers.empty(items)
+    pass
 
 
 u = FlextUtilities

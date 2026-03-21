@@ -26,18 +26,17 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import (
-    FlextModelsConfig,
-    FlextRuntime,
     T_Namespace,
     T_Settings,
     __version__,
     c,
+    m,
     t,
     u,
 )
 
 
-class FlextSettings(BaseSettings, FlextRuntime):
+class FlextSettings(BaseSettings, u):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)
@@ -307,7 +306,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
         Type annotation stays framework-level to avoid DI imports in this module.
         """
         if self._di_provider is None:
-            providers_module = FlextRuntime.dependency_providers()
+            providers_module = u.dependency_providers()
             self._di_provider = providers_module.Singleton(lambda: self)
         provider = self._di_provider
         if provider is None:
@@ -337,9 +336,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
         )
         return self
 
-    AutoConfig: ClassVar[type[FlextModelsConfig.AutoConfig]] = (
-        FlextModelsConfig.AutoConfig
-    )
+    AutoConfig: ClassVar[type[m.AutoConfig]] = m.AutoConfig
 
     _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
     _context_overrides: ClassVar[dict[str, dict[str, t.Scalar]]] = {}
