@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._context import (
+from flext_core import (
     FlextModelsContextData,
     FlextModelsContextExport,
     FlextModelsContextMetadata,
