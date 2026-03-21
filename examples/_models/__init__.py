@@ -10,6 +10,10 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
+
+if TYPE_CHECKING:
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,
@@ -92,10 +96,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),
     "Ex01DemonstrationResult": ("examples._models.ex01", "Ex01DemonstrationResult"),
     "Ex01InvalidPersonPayload": ("examples._models.ex01", "Ex01InvalidPersonPayload"),
-    "Ex01RunDemonstrationCommand": (
-        "examples._models.ex01",
-        "Ex01RunDemonstrationCommand",
-    ),
+    "Ex01RunDemonstrationCommand": ("examples._models.ex01", "Ex01RunDemonstrationCommand"),
     "Ex01User": ("examples._models.ex01", "Ex01User"),
     "Ex01ValidPersonPayload": ("examples._models.ex01", "Ex01ValidPersonPayload"),
     "Ex02CacheService": ("examples._models.ex02", "Ex02CacheService"),
@@ -219,7 +220,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: dict[str, object] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:

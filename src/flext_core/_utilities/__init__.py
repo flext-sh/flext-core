@@ -18,6 +18,10 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
+
+if TYPE_CHECKING:
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.cache import FlextUtilitiesCache
     from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -52,73 +56,28 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),
     "FlextUtilitiesCache": ("flext_core._utilities.cache", "FlextUtilitiesCache"),
     "FlextUtilitiesChecker": ("flext_core._utilities.checker", "FlextUtilitiesChecker"),
-    "FlextUtilitiesCollection": (
-        "flext_core._utilities.collection",
-        "FlextUtilitiesCollection",
-    ),
-    "FlextUtilitiesConfiguration": (
-        "flext_core._utilities.configuration",
-        "FlextUtilitiesConfiguration",
-    ),
+    "FlextUtilitiesCollection": ("flext_core._utilities.collection", "FlextUtilitiesCollection"),
+    "FlextUtilitiesConfiguration": ("flext_core._utilities.configuration", "FlextUtilitiesConfiguration"),
     "FlextUtilitiesContext": ("flext_core._utilities.context", "FlextUtilitiesContext"),
-    "FlextUtilitiesConversion": (
-        "flext_core._utilities.conversion",
-        "FlextUtilitiesConversion",
-    ),
-    "FlextUtilitiesDeprecation": (
-        "flext_core._utilities.deprecation",
-        "FlextUtilitiesDeprecation",
-    ),
-    "FlextUtilitiesDiscovery": (
-        "flext_core._utilities.discovery",
-        "FlextUtilitiesDiscovery",
-    ),
+    "FlextUtilitiesConversion": ("flext_core._utilities.conversion", "FlextUtilitiesConversion"),
+    "FlextUtilitiesDeprecation": ("flext_core._utilities.deprecation", "FlextUtilitiesDeprecation"),
+    "FlextUtilitiesDiscovery": ("flext_core._utilities.discovery", "FlextUtilitiesDiscovery"),
     "FlextUtilitiesDomain": ("flext_core._utilities.domain", "FlextUtilitiesDomain"),
     "FlextUtilitiesEnum": ("flext_core._utilities.enum", "FlextUtilitiesEnum"),
-    "FlextUtilitiesFileOps": (
-        "flext_core._utilities.file_ops",
-        "FlextUtilitiesFileOps",
-    ),
-    "FlextUtilitiesGenerators": (
-        "flext_core._utilities.generators",
-        "FlextUtilitiesGenerators",
-    ),
+    "FlextUtilitiesFileOps": ("flext_core._utilities.file_ops", "FlextUtilitiesFileOps"),
+    "FlextUtilitiesGenerators": ("flext_core._utilities.generators", "FlextUtilitiesGenerators"),
     "FlextUtilitiesGuards": ("flext_core._utilities.guards", "FlextUtilitiesGuards"),
-    "FlextUtilitiesGuardsEnsure": (
-        "flext_core._utilities.guards_ensure",
-        "FlextUtilitiesGuardsEnsure",
-    ),
-    "FlextUtilitiesGuardsType": (
-        "flext_core._utilities.guards_type",
-        "FlextUtilitiesGuardsType",
-    ),
-    "FlextUtilitiesGuardsTypeCore": (
-        "flext_core._utilities.guards_type_core",
-        "FlextUtilitiesGuardsTypeCore",
-    ),
-    "FlextUtilitiesGuardsTypeModel": (
-        "flext_core._utilities.guards_type_model",
-        "FlextUtilitiesGuardsTypeModel",
-    ),
-    "FlextUtilitiesGuardsTypeProtocol": (
-        "flext_core._utilities.guards_type_protocol",
-        "FlextUtilitiesGuardsTypeProtocol",
-    ),
+    "FlextUtilitiesGuardsEnsure": ("flext_core._utilities.guards_ensure", "FlextUtilitiesGuardsEnsure"),
+    "FlextUtilitiesGuardsType": ("flext_core._utilities.guards_type", "FlextUtilitiesGuardsType"),
+    "FlextUtilitiesGuardsTypeCore": ("flext_core._utilities.guards_type_core", "FlextUtilitiesGuardsTypeCore"),
+    "FlextUtilitiesGuardsTypeModel": ("flext_core._utilities.guards_type_model", "FlextUtilitiesGuardsTypeModel"),
+    "FlextUtilitiesGuardsTypeProtocol": ("flext_core._utilities.guards_type_protocol", "FlextUtilitiesGuardsTypeProtocol"),
     "FlextUtilitiesMapper": ("flext_core._utilities.mapper", "FlextUtilitiesMapper"),
     "FlextUtilitiesModel": ("flext_core._utilities.model", "FlextUtilitiesModel"),
-    "FlextUtilitiesPagination": (
-        "flext_core._utilities.pagination",
-        "FlextUtilitiesPagination",
-    ),
+    "FlextUtilitiesPagination": ("flext_core._utilities.pagination", "FlextUtilitiesPagination"),
     "FlextUtilitiesParser": ("flext_core._utilities.parser", "FlextUtilitiesParser"),
-    "FlextUtilitiesReliability": (
-        "flext_core._utilities.reliability",
-        "FlextUtilitiesReliability",
-    ),
-    "FlextUtilitiesResultHelpers": (
-        "flext_core._utilities.result_helpers",
-        "FlextUtilitiesResultHelpers",
-    ),
+    "FlextUtilitiesReliability": ("flext_core._utilities.reliability", "FlextUtilitiesReliability"),
+    "FlextUtilitiesResultHelpers": ("flext_core._utilities.result_helpers", "FlextUtilitiesResultHelpers"),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
 }
 
@@ -152,7 +111,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: dict[str, object] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:

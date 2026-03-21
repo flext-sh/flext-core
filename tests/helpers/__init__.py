@@ -19,6 +19,10 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+
+if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
     from .factories import TestHelperFactories
     from .factories_impl import (
         FailingService,
@@ -116,7 +120,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: dict[str, object] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:

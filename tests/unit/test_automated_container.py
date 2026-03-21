@@ -7,7 +7,7 @@ from collections.abc import Generator
 from time import perf_counter
 
 import pytest
-from flext_tests import tk, tm
+from flext_tests import tk, tm, u
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer, FlextContext

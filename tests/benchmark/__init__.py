@@ -12,23 +12,18 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+
+if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
     from .test_container_memory import TestContainerMemory, get_memory_usage
     from .test_container_performance import TestContainerPerformance
     from .test_refactor_nesting_performance import TestPerformanceBenchmarks
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestContainerMemory": (
-        "tests.benchmark.test_container_memory",
-        "TestContainerMemory",
-    ),
-    "TestContainerPerformance": (
-        "tests.benchmark.test_container_performance",
-        "TestContainerPerformance",
-    ),
-    "TestPerformanceBenchmarks": (
-        "tests.benchmark.test_refactor_nesting_performance",
-        "TestPerformanceBenchmarks",
-    ),
+    "TestContainerMemory": ("tests.benchmark.test_container_memory", "TestContainerMemory"),
+    "TestContainerPerformance": ("tests.benchmark.test_container_performance", "TestContainerPerformance"),
+    "TestPerformanceBenchmarks": ("tests.benchmark.test_refactor_nesting_performance", "TestPerformanceBenchmarks"),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
 }
 
@@ -40,7 +35,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: dict[str, object] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:

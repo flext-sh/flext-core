@@ -608,7 +608,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
     @override
     def merge(
         self,
-        other: p.Context | t.ConfigMap | Mapping[str, t.NormalizedValue],
+        base: p.Context | t.ConfigMap | Mapping[str, t.NormalizedValue],
     ) -> Self:
         """Merge another context or dictionary into this context.
 
@@ -616,7 +616,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         FlextLogger for logging integration (global scope only).
 
         Args:
-            other: Another FlextContext or dictionary to merge
+            base: Another FlextContext or dictionary to merge
 
         Returns:
             Self for chaining
@@ -625,8 +625,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
         if not self._active:
             return self
         exported_map: t.ConfigMap | None = None
-        if isinstance(other, FlextContext):
-            exported_result = other.export(as_dict=True)
+        if isinstance(base, FlextContext):
+            exported_result = base.export(as_dict=True)
             if not isinstance(exported_result, BaseModel):
                 try:
                     exported_items: dict[str, t.ValueOrModel] = dict(
@@ -638,18 +638,18 @@ class FlextContext(m.ArbitraryTypesModel, u):
                         "Context export payload validation failed",
                         exc_info=exc,
                     )
-        elif isinstance(other, t.ConfigMap):
-            exported_map = other
+        elif isinstance(base, t.ConfigMap):
+            exported_map = base
         else:
             try:
-                mapping_root: dict[str, t.ValueOrModel] = dict(other.items())
+                mapping_root: dict[str, t.ValueOrModel] = dict(base.items())
                 exported_map = t.ConfigMap(root=mapping_root)
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
                     "Context export payload validation failed",
                     exc_info=exc,
                 )
-        if exported_map is not None and isinstance(other, FlextContext):
+        if exported_map is not None and isinstance(base, FlextContext):
             for scope_name, scope_payload in exported_map.items():
                 if scope_name not in {
                     c.SCOPE_GLOBAL,

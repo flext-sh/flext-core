@@ -24,7 +24,7 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
-from flext_tests import tm
+from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from time import perf_counter
 from typing import override
 
-from flext_tests import tm
+from flext_tests import tm, u
 from hypothesis import given, strategies as st
 
 from flext_core import r, s

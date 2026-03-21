@@ -12,6 +12,10 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
+
+if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
     from . import patterns as patterns
     from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .patterns.test_architectural_patterns import TestArchitecturalPatterns
@@ -34,77 +38,26 @@ if TYPE_CHECKING:
     from .test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "EXPECTED_BULK_SIZE": (
-        "tests.integration.patterns.test_patterns_logging",
-        "EXPECTED_BULK_SIZE",
-    ),
-    "TestAdvancedPatterns": (
-        "tests.integration.patterns.test_advanced_patterns",
-        "TestAdvancedPatterns",
-    ),
-    "TestArchitecturalPatterns": (
-        "tests.integration.patterns.test_architectural_patterns",
-        "TestArchitecturalPatterns",
-    ),
-    "TestCompleteFlextSystemIntegration": (
-        "tests.integration.test_system",
-        "TestCompleteFlextSystemIntegration",
-    ),
-    "TestFlextSettingsSingletonIntegration": (
-        "tests.integration.test_config_integration",
-        "TestFlextSettingsSingletonIntegration",
-    ),
-    "TestFunction": (
-        "tests.integration.patterns.test_advanced_patterns",
-        "TestFunction",
-    ),
-    "TestIdempotency": (
-        "tests.integration.test_refactor_nesting_idempotency",
-        "TestIdempotency",
-    ),
-    "TestInfraIntegration": (
-        "tests.integration.test_infra_integration",
-        "TestInfraIntegration",
-    ),
-    "TestLibraryIntegration": (
-        "tests.integration.test_integration",
-        "TestLibraryIntegration",
-    ),
-    "TestMigrationValidation": (
-        "tests.integration.test_migration_validation",
-        "TestMigrationValidation",
-    ),
-    "TestPatternsCommands": (
-        "tests.integration.patterns.test_patterns_commands",
-        "TestPatternsCommands",
-    ),
-    "TestPatternsLogging": (
-        "tests.integration.patterns.test_patterns_logging",
-        "TestPatternsLogging",
-    ),
-    "TestPatternsTesting": (
-        "tests.integration.patterns.test_patterns_testing",
-        "TestPatternsTesting",
-    ),
-    "TestProjectLevelRefactor": (
-        "tests.integration.test_refactor_nesting_project",
-        "TestProjectLevelRefactor",
-    ),
-    "TestRefactorPolicyMRO": (
-        "tests.integration.test_refactor_policy_mro",
-        "TestRefactorPolicyMRO",
-    ),
+    "EXPECTED_BULK_SIZE": ("tests.integration.patterns.test_patterns_logging", "EXPECTED_BULK_SIZE"),
+    "TestAdvancedPatterns": ("tests.integration.patterns.test_advanced_patterns", "TestAdvancedPatterns"),
+    "TestArchitecturalPatterns": ("tests.integration.patterns.test_architectural_patterns", "TestArchitecturalPatterns"),
+    "TestCompleteFlextSystemIntegration": ("tests.integration.test_system", "TestCompleteFlextSystemIntegration"),
+    "TestFlextSettingsSingletonIntegration": ("tests.integration.test_config_integration", "TestFlextSettingsSingletonIntegration"),
+    "TestFunction": ("tests.integration.patterns.test_advanced_patterns", "TestFunction"),
+    "TestIdempotency": ("tests.integration.test_refactor_nesting_idempotency", "TestIdempotency"),
+    "TestInfraIntegration": ("tests.integration.test_infra_integration", "TestInfraIntegration"),
+    "TestLibraryIntegration": ("tests.integration.test_integration", "TestLibraryIntegration"),
+    "TestMigrationValidation": ("tests.integration.test_migration_validation", "TestMigrationValidation"),
+    "TestPatternsCommands": ("tests.integration.patterns.test_patterns_commands", "TestPatternsCommands"),
+    "TestPatternsLogging": ("tests.integration.patterns.test_patterns_logging", "TestPatternsLogging"),
+    "TestPatternsTesting": ("tests.integration.patterns.test_patterns_testing", "TestPatternsTesting"),
+    "TestProjectLevelRefactor": ("tests.integration.test_refactor_nesting_project", "TestProjectLevelRefactor"),
+    "TestRefactorPolicyMRO": ("tests.integration.test_refactor_policy_mro", "TestRefactorPolicyMRO"),
     "TestService": ("tests.integration.test_service", "TestService"),
-    "TestWorkspaceLevelRefactor": (
-        "tests.integration.test_refactor_nesting_workspace",
-        "TestWorkspaceLevelRefactor",
-    ),
+    "TestWorkspaceLevelRefactor": ("tests.integration.test_refactor_nesting_workspace", "TestWorkspaceLevelRefactor"),
     "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
-    "test_class_nesting_refactor_single_file_end_to_end": (
-        "tests.integration.test_refactor_nesting_file",
-        "test_class_nesting_refactor_single_file_end_to_end",
-    ),
+    "test_class_nesting_refactor_single_file_end_to_end": ("tests.integration.test_refactor_nesting_file", "test_class_nesting_refactor_single_file_end_to_end"),
 }
 
 __all__ = [
@@ -131,7 +84,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: dict[str, object] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:

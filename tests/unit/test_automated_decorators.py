@@ -6,7 +6,7 @@ import time
 from collections.abc import Callable
 
 import pytest
-from flext_tests import tm
+from flext_tests import tm, u
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextDecorators, e

@@ -13,10 +13,11 @@ from typing import TYPE_CHECKING, TypeAliasType
 
 from pydantic import BaseModel
 
-from flext_core import FlextTypingBase, FlextTypingContainers
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.containers import FlextTypingContainers
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core.protocols import FlextProtocols as p
 
 
 class FlextTypesServices:
@@ -24,14 +25,7 @@ class FlextTypesServices:
 
     type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
-    type RuntimeData = (
-        FlextTypingBase.Scalar
-        | Path
-        | BaseModel
-        | Sequence[FlextTypingBase.Scalar | BaseModel]
-        | Mapping[str, FlextTypingBase.Scalar | BaseModel]
-        | None
-    )
+    type RuntimeData = ValueOrModel
     type RuntimeAtomic = FlextTypingBase.Container | BaseModel
 
     type BootstrapInput = (

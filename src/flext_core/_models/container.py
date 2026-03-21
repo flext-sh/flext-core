@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validat
 
 from flext_core._models import FlextModelFoundation
 from flext_core.constants import FlextConstants as c
+from flext_core.protocols import FlextProtocols as p
 from flext_core.typings import FlextTypes as t
 
 
@@ -358,21 +359,21 @@ class FlextModelsContainer:
         model_config = ConfigDict(strict=True, arbitrary_types_allowed=True)
 
         config: Annotated[
-            BaseModel | None,
+            p.Settings | None,
             SkipValidation,
             Field(
                 default=None,
                 title="Config",
-                description="Settings instance bound to the container runtime (p.Settings).",
+                description="Settings instance bound to the container runtime.",
             ),
         ] = None
         context: Annotated[
-            BaseModel | None,
+            p.Context | None,
             SkipValidation,
             Field(
                 default=None,
                 title="Context",
-                description="Execution context attached to the container (p.Context).",
+                description="Execution context attached to the container.",
             ),
         ] = None
         services: Annotated[
@@ -475,11 +476,3 @@ class FlextModelsContainer:
 
 
 __all__ = ["FlextModelsContainer"]
-
-
-def _rebuild_models_with_protocols() -> None:
-    """Rebuild models after protocols are available.
-
-    Called from flext_core/__init__.py after p is available.
-    """
-    FlextModelsContainer.ServiceRegistrationSpec.model_rebuild()

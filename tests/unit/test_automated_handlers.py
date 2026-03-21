@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from flext_tests import tm
+from flext_tests import tm, u
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 

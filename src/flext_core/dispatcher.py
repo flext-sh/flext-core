@@ -11,10 +11,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Callable
 
 from pydantic import BaseModel
 
 from flext_core import FlextLogger, c, p, r, t, u
+
+type DispatcherResolvedCallable = Callable[
+    [p.Routable],
+    t.RuntimeAtomic | p.ResultLike[t.RuntimeAtomic] | None,
+]
 
 
 class FlextDispatcher:
@@ -28,9 +34,29 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: dict[str, t.RegisteredHandler] = {}
-        self._auto_handlers: list[t.AutoHandlerRegistration] = []
-        self._event_subscribers: dict[str, list[t.RegisteredHandler]] = {}
+        self._handlers: dict[
+            str,
+            tuple[
+                t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
+                DispatcherResolvedCallable,
+            ],
+        ] = {}
+        self._auto_handlers: list[
+            tuple[
+                t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
+                DispatcherResolvedCallable,
+                tuple[t.MessageTypeSpecifier, ...],
+            ]
+        ] = []
+        self._event_subscribers: dict[
+            str,
+            list[
+                tuple[
+                    t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
+                    DispatcherResolvedCallable,
+                ]
+            ],
+        ] = {}
 
     def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
         """Dispatch a CQRS message to its registered handler.
@@ -121,7 +147,7 @@ class FlextDispatcher:
 
     def register_handler(
         self,
-        handler: t.DispatchableHandler,
+        handler: t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
         *,
         is_event: bool = False,
     ) -> r[bool]:
@@ -138,7 +164,10 @@ class FlextDispatcher:
 
         """
         route_name: str | None = None
-        accepted_message_types = u.compute_accepted_message_types(handler.__class__)
+        accepted_message_types: tuple[t.MessageTypeSpecifier, ...] = tuple(
+            u.compute_accepted_message_types(handler.__class__),
+        )
+        resolved_handler: DispatcherResolvedCallable
         if isinstance(handler, p.DispatchMessage):
             resolved_handler = handler.dispatch_message
         elif isinstance(handler, p.Handle):
@@ -146,6 +175,8 @@ class FlextDispatcher:
         elif isinstance(handler, p.Execute):
             resolved_handler = handler.execute
         else:
+            if not callable(handler):
+                return r[bool].fail("Handler must be callable")
             resolved_handler = handler
         handler_message_type = getattr(handler, "message_type", None)
         if isinstance(handler_message_type, str):
@@ -161,7 +192,7 @@ class FlextDispatcher:
                 self._auto_handlers.append((
                     handler,
                     resolved_handler,
-                    tuple(accepted_message_types),
+                    accepted_message_types,
                 ))
                 self._logger.info(
                     "Registered auto-discovery handler",
@@ -183,7 +214,7 @@ class FlextDispatcher:
 
     def _execute_handler(
         self,
-        resolved_handler: t.ResolvedHandlerCallable,
+        resolved_handler: DispatcherResolvedCallable,
         message: p.Routable,
         route_name: str,
     ) -> r[t.RuntimeAtomic]:

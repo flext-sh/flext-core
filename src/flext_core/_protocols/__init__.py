@@ -14,6 +14,10 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+
+
+if TYPE_CHECKING:
     from flext_core._protocols.base import FlextProtocolsBase
     from flext_core._protocols.config import FlextProtocolsConfig
     from flext_core._protocols.container import FlextProtocolsContainer
@@ -28,17 +32,11 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),
     "FlextProtocolsConfig": ("flext_core._protocols.config", "FlextProtocolsConfig"),
-    "FlextProtocolsContainer": (
-        "flext_core._protocols.container",
-        "FlextProtocolsContainer",
-    ),
+    "FlextProtocolsContainer": ("flext_core._protocols.container", "FlextProtocolsContainer"),
     "FlextProtocolsContext": ("flext_core._protocols.context", "FlextProtocolsContext"),
     "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
     "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
-    "FlextProtocolsRegistry": (
-        "flext_core._protocols.registry",
-        "FlextProtocolsRegistry",
-    ),
+    "FlextProtocolsRegistry": ("flext_core._protocols.registry", "FlextProtocolsRegistry"),
     "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
     "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
 }
@@ -56,7 +54,7 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: dict[str, object] = {}
+_LAZY_CACHE: dict[str, FlextTypes.ModuleExport] = {}
 
 
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
