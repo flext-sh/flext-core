@@ -57,6 +57,23 @@ if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.containers import FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
+    from flext_core._typings.generics import (
+        TV,
+        EnumT,
+        MessageT_contra,
+        P,
+        R,
+        ResultT,
+        T,
+        T_co,
+        T_contra,
+        T_Model,
+        T_Namespace,
+        T_Settings,
+        TRuntime,
+        TV_co,
+        U,
+    )
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.validation import FlextTypesValidation
     from flext_core._utilities.args import FlextUtilitiesArgs
@@ -104,31 +121,12 @@ if TYPE_CHECKING:
     from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, FlextService as s
     from flext_core.settings import FlextSettings
-    from flext_core.typings import (
-        TV,
-        BaseModel,
-        EnumT,
-        FlextTypes,
-        FlextTypes as t,
-        MessageT_contra,
-        P,
-        R,
-        ResultT,
-        T,
-        T_co,
-        T_contra,
-        T_Model,
-        T_Namespace,
-        T_Settings,
-        TRuntime,
-        TV_co,
-        U,
-    )
+    from flext_core.typings import BaseModel, FlextTypes, FlextTypes as t
     from flext_core.utilities import FlextUtilities, FlextUtilities as u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BaseModel": ("flext_core.typings", "BaseModel"),
-    "EnumT": ("flext_core.typings", "EnumT"),
+    "EnumT": ("flext_core._typings.generics", "EnumT"),
     "ErrorDomain": ("flext_core.errors", "ErrorDomain"),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
     "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
@@ -284,21 +282,21 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextUtilitiesResultHelpers",
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
-    "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
+    "MessageT_contra": ("flext_core._typings.generics", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
-    "P": ("flext_core.typings", "P"),
-    "R": ("flext_core.typings", "R"),
-    "ResultT": ("flext_core.typings", "ResultT"),
-    "T": ("flext_core.typings", "T"),
-    "TRuntime": ("flext_core.typings", "TRuntime"),
-    "TV": ("flext_core.typings", "TV"),
-    "TV_co": ("flext_core.typings", "TV_co"),
-    "T_Model": ("flext_core.typings", "T_Model"),
-    "T_Namespace": ("flext_core.typings", "T_Namespace"),
-    "T_Settings": ("flext_core.typings", "T_Settings"),
-    "T_co": ("flext_core.typings", "T_co"),
-    "T_contra": ("flext_core.typings", "T_contra"),
-    "U": ("flext_core.typings", "U"),
+    "P": ("flext_core._typings.generics", "P"),
+    "R": ("flext_core._typings.generics", "R"),
+    "ResultT": ("flext_core._typings.generics", "ResultT"),
+    "T": ("flext_core._typings.generics", "T"),
+    "TRuntime": ("flext_core._typings.generics", "TRuntime"),
+    "TV": ("flext_core._typings.generics", "TV"),
+    "TV_co": ("flext_core._typings.generics", "TV_co"),
+    "T_Model": ("flext_core._typings.generics", "T_Model"),
+    "T_Namespace": ("flext_core._typings.generics", "T_Namespace"),
+    "T_Settings": ("flext_core._typings.generics", "T_Settings"),
+    "T_co": ("flext_core._typings.generics", "T_co"),
+    "T_contra": ("flext_core._typings.generics", "T_contra"),
+    "U": ("flext_core._typings.generics", "U"),
     "__all__": ("flext_core.__version__", "__all__"),
     "__author__": ("flext_core.__version__", "__author__"),
     "__author_email__": ("flext_core.__version__", "__author_email__"),

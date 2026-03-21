@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .patterns.test_architectural_patterns import TestArchitecturalPatterns
     from .patterns.test_patterns_commands import TestPatternsCommands
-    from .patterns.test_patterns_logging import TestPatternsLogging
+    from .patterns.test_patterns_logging import EXPECTED_BULK_SIZE, TestPatternsLogging
     from .patterns.test_patterns_testing import TestPatternsTesting
     from .test_config_integration import TestFlextSettingsSingletonIntegration
     from .test_infra_integration import TestInfraIntegration
@@ -34,6 +34,10 @@ if TYPE_CHECKING:
     from .test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "EXPECTED_BULK_SIZE": (
+        "tests.integration.patterns.test_patterns_logging",
+        "EXPECTED_BULK_SIZE",
+    ),
     "TestAdvancedPatterns": (
         "tests.integration.patterns.test_advanced_patterns",
         "TestAdvancedPatterns",
@@ -104,6 +108,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "EXPECTED_BULK_SIZE",
     "TestAdvancedPatterns",
     "TestArchitecturalPatterns",
     "TestCompleteFlextSystemIntegration",

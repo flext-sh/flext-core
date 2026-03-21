@@ -54,6 +54,25 @@ if TYPE_CHECKING:
         whitespace_strings,
     )
     from .constants import TestsFlextConstants, TestsFlextConstants as c
+    from .fixtures.namespace_validator.rule0_loose_items import Rule0LooseItemsFixture
+    from .fixtures.namespace_validator.rule0_multiple_classes import (
+        FlextTestConstants,
+        Rule0MultipleClassesFixture,
+    )
+    from .fixtures.namespace_validator.rule0_no_class import MAX_VALUE, helper
+    from .fixtures.namespace_validator.rule0_wrong_prefix import RandomConstants
+    from .fixtures.namespace_validator.rule1_loose_constant import (
+        DEFAULT_TIMEOUT,
+        MAX_RETRIES,
+    )
+    from .fixtures.namespace_validator.rule1_loose_enum import (
+        FlextTestModels,
+        Rule1LooseEnumFixture,
+        Status,
+    )
+    from .fixtures.namespace_validator.rule1_magic_number import FlextTestUtilities
+    from .fixtures.namespace_validator.rule2_protocol_in_types import FlextTestTypes
+    from .fixtures.namespace_validator.typings import LooseTypeAlias
     from .helpers.factories import TestHelperFactories
     from .helpers.factories_impl import (
         FailingService,
@@ -88,7 +107,10 @@ if TYPE_CHECKING:
         TestArchitecturalPatterns,
     )
     from .integration.patterns.test_patterns_commands import TestPatternsCommands
-    from .integration.patterns.test_patterns_logging import TestPatternsLogging
+    from .integration.patterns.test_patterns_logging import (
+        EXPECTED_BULK_SIZE,
+        TestPatternsLogging,
+    )
     from .integration.patterns.test_patterns_testing import TestPatternsTesting
     from .integration.test_config_integration import (
         TestFlextSettingsSingletonIntegration,
@@ -97,7 +119,6 @@ if TYPE_CHECKING:
     from .integration.test_integration import TestLibraryIntegration
     from .integration.test_migration_validation import TestMigrationValidation
     from .integration.test_refactor_nesting_file import (
-        pytestmark,
         test_class_nesting_refactor_single_file_end_to_end,
     )
     from .integration.test_refactor_nesting_idempotency import TestIdempotency
@@ -118,7 +139,7 @@ if TYPE_CHECKING:
         fixture_factory,
         test_data_factory,
     )
-    from .typings import T, T_co, T_contra, TestsFlextTypes, TestsFlextTypes as t
+    from .typings import T_co, T_contra, TestsFlextTypes, TestsFlextTypes as t
     from .unit import contracts as contracts, flext_tests as flext_tests
     from .unit.conftest_infra import (
         infra_git,
@@ -151,7 +172,10 @@ if TYPE_CHECKING:
     from .unit.test_automated_context import TestAutomatedFlextContext
     from .unit.test_automated_decorators import TestAutomatedFlextDecorators
     from .unit.test_automated_dispatcher import TestAutomatedFlextDispatcher
-    from .unit.test_automated_exceptions import TestAutomatedExceptions
+    from .unit.test_automated_exceptions import (
+        EXCEPTION_CLASSES,
+        TestAutomatedExceptions,
+    )
     from .unit.test_automated_handlers import TestAutomatedFlextHandlers
     from .unit.test_automated_loggings import TestAutomatedFlextLogger
     from .unit.test_automated_mixins import TestAutomatedFlextMixins
@@ -456,6 +480,8 @@ if TYPE_CHECKING:
         test_args_get_enum_params_branches,
     )
     from .unit.test_utilities_cache_coverage_100 import (
+        NORMALIZE_COMPONENT_SCENARIOS,
+        SORT_KEY_SCENARIOS,
         ClearCacheScenario,
         NormalizeComponentScenario,
         SortKeyScenario,
@@ -596,8 +622,10 @@ if TYPE_CHECKING:
     from .unit.test_utilities_string_parser import TestuStringParser
     from .unit.test_utilities_text_full_coverage import TestUtilitiesTextFullCoverage
     from .unit.test_utilities_type_checker_coverage_100 import (
+        T,
         TestuTypeChecker,
         TMessage,
+        pytestmark,
     )
     from .unit.test_utilities_type_guards_coverage_100 import (
         TestUtilitiesTypeGuardsCoverage100,
@@ -618,6 +646,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_cache_coverage_100",
         "ClearCacheScenario",
     ),
+    "DEFAULT_TIMEOUT": (
+        "tests.fixtures.namespace_validator.rule1_loose_constant",
+        "DEFAULT_TIMEOUT",
+    ),
+    "EXCEPTION_CLASSES": ("tests.unit.test_automated_exceptions", "EXCEPTION_CLASSES"),
+    "EXPECTED_BULK_SIZE": (
+        "tests.integration.patterns.test_patterns_logging",
+        "EXPECTED_BULK_SIZE",
+    ),
     "ExplodingLenList": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "ExplodingLenList",
@@ -631,8 +668,24 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FailingServiceFactory": ("tests.helpers.factories_impl", "FailingServiceFactory"),
     "FlextCoreTestUtilities": ("tests.utilities", "FlextCoreTestUtilities"),
     "FlextProtocols": ("tests.unit.protocols", "FlextProtocols"),
+    "FlextTestConstants": (
+        "tests.fixtures.namespace_validator.rule0_multiple_classes",
+        "FlextTestConstants",
+    ),
+    "FlextTestModels": (
+        "tests.fixtures.namespace_validator.rule1_loose_enum",
+        "FlextTestModels",
+    ),
     "FlextTestResult": ("tests.test_utils", "FlextTestResult"),
     "FlextTestResultCo": ("tests.test_utils", "FlextTestResultCo"),
+    "FlextTestTypes": (
+        "tests.fixtures.namespace_validator.rule2_protocol_in_types",
+        "FlextTestTypes",
+    ),
+    "FlextTestUtilities": (
+        "tests.fixtures.namespace_validator.rule1_magic_number",
+        "FlextTestUtilities",
+    ),
     "FunctionalExternalService": ("tests.conftest", "FunctionalExternalService"),
     "GenericModelFactory": ("tests.helpers.factories_impl", "GenericModelFactory"),
     "GetUserService": ("tests.helpers.factories_impl", "GetUserService"),
@@ -642,6 +695,16 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "GetUserServiceAutoFactory",
     ),
     "GetUserServiceFactory": ("tests.helpers.factories_impl", "GetUserServiceFactory"),
+    "LooseTypeAlias": ("tests.fixtures.namespace_validator.typings", "LooseTypeAlias"),
+    "MAX_RETRIES": (
+        "tests.fixtures.namespace_validator.rule1_loose_constant",
+        "MAX_RETRIES",
+    ),
+    "MAX_VALUE": ("tests.fixtures.namespace_validator.rule0_no_class", "MAX_VALUE"),
+    "NORMALIZE_COMPONENT_SCENARIOS": (
+        "tests.unit.test_utilities_cache_coverage_100",
+        "NORMALIZE_COMPONENT_SCENARIOS",
+    ),
     "NestedClassPropagationTransformer": (
         "tests.unit.test_transformer_nested_class_propagation",
         "NestedClassPropagationTransformer",
@@ -651,14 +714,34 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "NormalizeComponentScenario",
     ),
     "Provide": ("tests.unit.test_di_incremental", "Provide"),
+    "RandomConstants": (
+        "tests.fixtures.namespace_validator.rule0_wrong_prefix",
+        "RandomConstants",
+    ),
     "RateLimiterManager": (
         "tests.unit.test_dispatcher_reliability",
         "RateLimiterManager",
     ),
     "RetryPolicy": ("tests.unit.test_dispatcher_reliability", "RetryPolicy"),
+    "Rule0LooseItemsFixture": (
+        "tests.fixtures.namespace_validator.rule0_loose_items",
+        "Rule0LooseItemsFixture",
+    ),
+    "Rule0MultipleClassesFixture": (
+        "tests.fixtures.namespace_validator.rule0_multiple_classes",
+        "Rule0MultipleClassesFixture",
+    ),
+    "Rule1LooseEnumFixture": (
+        "tests.fixtures.namespace_validator.rule1_loose_enum",
+        "Rule1LooseEnumFixture",
+    ),
     "RuntimeCloneService": (
         "tests.unit.test_service_additional",
         "RuntimeCloneService",
+    ),
+    "SORT_KEY_SCENARIOS": (
+        "tests.unit.test_utilities_cache_coverage_100",
+        "SORT_KEY_SCENARIOS",
     ),
     "ServiceFactoryRegistry": (
         "tests.helpers.factories_impl",
@@ -675,7 +758,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_cache_coverage_100",
         "SortKeyScenario",
     ),
-    "T": ("tests.typings", "T"),
+    "Status": ("tests.fixtures.namespace_validator.rule1_loose_enum", "Status"),
+    "T": ("tests.unit.test_utilities_type_checker_coverage_100", "T"),
     "TMessage": ("tests.unit.test_utilities_type_checker_coverage_100", "TMessage"),
     "T_co": ("tests.typings", "T_co"),
     "T_contra": ("tests.typings", "T_contra"),
@@ -1207,6 +1291,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
     "h": ("flext_infra", "h"),
     "handlers_module": ("tests.unit.test_handlers_full_coverage", "handlers_module"),
+    "helper": ("tests.fixtures.namespace_validator.rule0_no_class", "helper"),
     "helpers": ("tests.helpers", ""),
     "infra_git": ("tests.unit.conftest_infra", "infra_git"),
     "infra_git_repo": ("tests.unit.conftest_infra", "infra_git_repo"),
@@ -1242,7 +1327,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "p": ("tests.protocols", "TestsFlextProtocols"),
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
     "patterns": ("tests.integration.patterns", ""),
-    "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
+    "pytestmark": ("tests.unit.test_utilities_type_checker_coverage_100", "pytestmark"),
     "r": ("flext_infra", "r"),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
     "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
@@ -2110,6 +2195,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "DEFAULT_TIMEOUT",
+    "EXCEPTION_CLASSES",
+    "EXPECTED_BULK_SIZE",
+    "MAX_RETRIES",
+    "MAX_VALUE",
+    "NORMALIZE_COMPONENT_SCENARIOS",
+    "SORT_KEY_SCENARIOS",
     "AttrObject",
     "BadBool",
     "BadMapping",
@@ -2123,19 +2215,28 @@ __all__ = [
     "FailingServiceFactory",
     "FlextCoreTestUtilities",
     "FlextProtocols",
+    "FlextTestConstants",
+    "FlextTestModels",
     "FlextTestResult",
     "FlextTestResultCo",
+    "FlextTestTypes",
+    "FlextTestUtilities",
     "FunctionalExternalService",
     "GenericModelFactory",
     "GetUserService",
     "GetUserServiceAuto",
     "GetUserServiceAutoFactory",
     "GetUserServiceFactory",
+    "LooseTypeAlias",
     "NestedClassPropagationTransformer",
     "NormalizeComponentScenario",
     "Provide",
+    "RandomConstants",
     "RateLimiterManager",
     "RetryPolicy",
+    "Rule0LooseItemsFixture",
+    "Rule0MultipleClassesFixture",
+    "Rule1LooseEnumFixture",
     "RuntimeCloneService",
     "ServiceFactoryRegistry",
     "ServiceTestCase",
@@ -2143,6 +2244,7 @@ __all__ = [
     "ServiceTestCases",
     "SimpleObj",
     "SortKeyScenario",
+    "Status",
     "T",
     "TMessage",
     "T_co",
@@ -2324,6 +2426,7 @@ __all__ = [
     "get_memory_usage",
     "h",
     "handlers_module",
+    "helper",
     "helpers",
     "infra_git",
     "infra_git_repo",

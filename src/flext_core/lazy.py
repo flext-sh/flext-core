@@ -63,6 +63,7 @@ def cleanup_submodule_namespace(
 
     When submodules are imported, Python adds them to the parent module's
     namespace. This removes them so attribute access goes through __getattr__.
+    Supports unlimited hierarchy depth for nested submodules.
 
     Args:
         module_name: The __name__ of the module to clean up.
