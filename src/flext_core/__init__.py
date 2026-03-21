@@ -22,79 +22,71 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
-    from flext_core._constants import (
-        FlextConstantsBase,
-        FlextConstantsCqrs,
-        FlextConstantsDomain,
-        FlextConstantsInfrastructure,
-        FlextConstantsMixins,
-        FlextConstantsPlatform,
-        FlextConstantsSettings,
-        FlextConstantsValidation,
-    )
-    from flext_core._models import (
-        FlextGenericModels,
-        FlextModelFoundation,
-        FlextModelsCollections,
-        FlextModelsConfig,
-        FlextModelsContainer,
-        FlextModelsContainers,
-        FlextModelsContext,
-        FlextModelsCqrs,
-        FlextModelsDecorators,
-        FlextModelsDispatcher,
-        FlextModelsDomainEvent,
-        FlextModelsEntity,
-        FlextModelsHandler,
-        FlextModelsResult,
-        FlextModelsService,
-    )
-    from flext_core._protocols import (
-        FlextProtocolsBase,
-        FlextProtocolsConfig,
-        FlextProtocolsContainer,
-        FlextProtocolsContext,
-        FlextProtocolsHandler,
-        FlextProtocolsLogging,
-        FlextProtocolsRegistry,
-        FlextProtocolsResult,
-        FlextProtocolsService,
-    )
-    from flext_core._typings import (
-        FlextTypesCore,
-        FlextTypesServices,
-        FlextTypesValidation,
-        FlextTypingBase,
-        FlextTypingContainers,
-    )
-    from flext_core._utilities import (
-        FlextUtilitiesArgs,
-        FlextUtilitiesCache,
-        FlextUtilitiesChecker,
-        FlextUtilitiesCollection,
-        FlextUtilitiesConfiguration,
-        FlextUtilitiesContext,
-        FlextUtilitiesConversion,
-        FlextUtilitiesDeprecation,
-        FlextUtilitiesDiscovery,
-        FlextUtilitiesDomain,
-        FlextUtilitiesEnum,
-        FlextUtilitiesFileOps,
-        FlextUtilitiesGenerators,
-        FlextUtilitiesGuards,
-        FlextUtilitiesGuardsEnsure,
-        FlextUtilitiesGuardsType,
-        FlextUtilitiesGuardsTypeCore,
-        FlextUtilitiesGuardsTypeModel,
+    from flext_core._constants.base import FlextConstantsBase
+    from flext_core._constants.cqrs import FlextConstantsCqrs
+    from flext_core._constants.domain import FlextConstantsDomain
+    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+    from flext_core._constants.mixins import FlextConstantsMixins
+    from flext_core._constants.platform import FlextConstantsPlatform
+    from flext_core._constants.settings import FlextConstantsSettings
+    from flext_core._constants.validation import FlextConstantsValidation
+    from flext_core._models.base import FlextModelFoundation
+    from flext_core._models.collections import FlextModelsCollections
+    from flext_core._models.container import FlextModelsContainer
+    from flext_core._models.containers import FlextModelsContainers
+    from flext_core._models.context import FlextModelsContext
+    from flext_core._models.cqrs import FlextModelsCqrs
+    from flext_core._models.decorators import FlextModelsDecorators
+    from flext_core._models.dispatcher import FlextModelsDispatcher
+    from flext_core._models.domain_event import FlextModelsDomainEvent
+    from flext_core._models.entity import FlextModelsEntity
+    from flext_core._models.generic import FlextGenericModels
+    from flext_core._models.handler import FlextModelsHandler
+    from flext_core._models.result import FlextModelsResult
+    from flext_core._models.service import FlextModelsService
+    from flext_core._models.settings import FlextModelsConfig
+    from flext_core._protocols.base import FlextProtocolsBase
+    from flext_core._protocols.config import FlextProtocolsConfig
+    from flext_core._protocols.container import FlextProtocolsContainer
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core._protocols.registry import FlextProtocolsRegistry
+    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols.service import FlextProtocolsService
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.containers import FlextTypingContainers
+    from flext_core._typings.core import FlextTypesCore
+    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings.validation import FlextTypesValidation
+    from flext_core._utilities.args import FlextUtilitiesArgs
+    from flext_core._utilities.cache import FlextUtilitiesCache
+    from flext_core._utilities.checker import FlextUtilitiesChecker
+    from flext_core._utilities.collection import FlextUtilitiesCollection
+    from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+    from flext_core._utilities.context import FlextUtilitiesContext
+    from flext_core._utilities.conversion import FlextUtilitiesConversion
+    from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
+    from flext_core._utilities.discovery import FlextUtilitiesDiscovery
+    from flext_core._utilities.domain import FlextUtilitiesDomain
+    from flext_core._utilities.enum import FlextUtilitiesEnum
+    from flext_core._utilities.file_ops import FlextUtilitiesFileOps
+    from flext_core._utilities.generators import FlextUtilitiesGenerators
+    from flext_core._utilities.guards import FlextUtilitiesGuards
+    from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
+    from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+    from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+    from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+    from flext_core._utilities.guards_type_protocol import (
         FlextUtilitiesGuardsTypeProtocol,
-        FlextUtilitiesMapper,
-        FlextUtilitiesModel,
-        FlextUtilitiesPagination,
-        FlextUtilitiesParser,
-        FlextUtilitiesReliability,
-        FlextUtilitiesResultHelpers,
-        FlextUtilitiesText,
     )
+    from flext_core._utilities.mapper import FlextUtilitiesMapper
+    from flext_core._utilities.model import FlextUtilitiesModel
+    from flext_core._utilities.pagination import FlextUtilitiesPagination
+    from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.reliability import FlextUtilitiesReliability
+    from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
+    from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, FlextConstants as c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
@@ -139,108 +131,159 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnumT": ("flext_core.typings", "EnumT"),
     "ErrorDomain": ("flext_core.errors", "ErrorDomain"),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
-    "FlextConstantsBase": ("flext_core._constants", "FlextConstantsBase"),
-    "FlextConstantsCqrs": ("flext_core._constants", "FlextConstantsCqrs"),
-    "FlextConstantsDomain": ("flext_core._constants", "FlextConstantsDomain"),
+    "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
+    "FlextConstantsCqrs": ("flext_core._constants.cqrs", "FlextConstantsCqrs"),
+    "FlextConstantsDomain": ("flext_core._constants.domain", "FlextConstantsDomain"),
     "FlextConstantsInfrastructure": (
-        "flext_core._constants",
+        "flext_core._constants.infrastructure",
         "FlextConstantsInfrastructure",
     ),
-    "FlextConstantsMixins": ("flext_core._constants", "FlextConstantsMixins"),
-    "FlextConstantsPlatform": ("flext_core._constants", "FlextConstantsPlatform"),
-    "FlextConstantsSettings": ("flext_core._constants", "FlextConstantsSettings"),
-    "FlextConstantsValidation": ("flext_core._constants", "FlextConstantsValidation"),
+    "FlextConstantsMixins": ("flext_core._constants.mixins", "FlextConstantsMixins"),
+    "FlextConstantsPlatform": (
+        "flext_core._constants.platform",
+        "FlextConstantsPlatform",
+    ),
+    "FlextConstantsSettings": (
+        "flext_core._constants.settings",
+        "FlextConstantsSettings",
+    ),
+    "FlextConstantsValidation": (
+        "flext_core._constants.validation",
+        "FlextConstantsValidation",
+    ),
     "FlextContainer": ("flext_core.container", "FlextContainer"),
     "FlextContext": ("flext_core.context", "FlextContext"),
     "FlextDecorators": ("flext_core.decorators", "FlextDecorators"),
     "FlextDispatcher": ("flext_core.dispatcher", "FlextDispatcher"),
     "FlextError": ("flext_core.errors", "FlextError"),
     "FlextExceptions": ("flext_core.exceptions", "FlextExceptions"),
-    "FlextGenericModels": ("flext_core._models", "FlextGenericModels"),
+    "FlextGenericModels": ("flext_core._models.generic", "FlextGenericModels"),
     "FlextHandlers": ("flext_core.handlers", "FlextHandlers"),
     "FlextLogger": ("flext_core.loggings", "FlextLogger"),
     "FlextMixins": ("flext_core.mixins", "FlextMixins"),
-    "FlextModelFoundation": ("flext_core._models", "FlextModelFoundation"),
+    "FlextModelFoundation": ("flext_core._models.base", "FlextModelFoundation"),
     "FlextModels": ("flext_core.models", "FlextModels"),
-    "FlextModelsCollections": ("flext_core._models", "FlextModelsCollections"),
-    "FlextModelsConfig": ("flext_core._models", "FlextModelsConfig"),
-    "FlextModelsContainer": ("flext_core._models", "FlextModelsContainer"),
-    "FlextModelsContainers": ("flext_core._models", "FlextModelsContainers"),
-    "FlextModelsContext": ("flext_core._models", "FlextModelsContext"),
-    "FlextModelsCqrs": ("flext_core._models", "FlextModelsCqrs"),
-    "FlextModelsDecorators": ("flext_core._models", "FlextModelsDecorators"),
-    "FlextModelsDispatcher": ("flext_core._models", "FlextModelsDispatcher"),
-    "FlextModelsDomainEvent": ("flext_core._models", "FlextModelsDomainEvent"),
-    "FlextModelsEntity": ("flext_core._models", "FlextModelsEntity"),
-    "FlextModelsHandler": ("flext_core._models", "FlextModelsHandler"),
-    "FlextModelsResult": ("flext_core._models", "FlextModelsResult"),
-    "FlextModelsService": ("flext_core._models", "FlextModelsService"),
+    "FlextModelsCollections": (
+        "flext_core._models.collections",
+        "FlextModelsCollections",
+    ),
+    "FlextModelsConfig": ("flext_core._models.settings", "FlextModelsConfig"),
+    "FlextModelsContainer": ("flext_core._models.container", "FlextModelsContainer"),
+    "FlextModelsContainers": ("flext_core._models.containers", "FlextModelsContainers"),
+    "FlextModelsContext": ("flext_core._models.context", "FlextModelsContext"),
+    "FlextModelsCqrs": ("flext_core._models.cqrs", "FlextModelsCqrs"),
+    "FlextModelsDecorators": ("flext_core._models.decorators", "FlextModelsDecorators"),
+    "FlextModelsDispatcher": ("flext_core._models.dispatcher", "FlextModelsDispatcher"),
+    "FlextModelsDomainEvent": (
+        "flext_core._models.domain_event",
+        "FlextModelsDomainEvent",
+    ),
+    "FlextModelsEntity": ("flext_core._models.entity", "FlextModelsEntity"),
+    "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
+    "FlextModelsResult": ("flext_core._models.result", "FlextModelsResult"),
+    "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
     "FlextProtocols": ("flext_core.protocols", "FlextProtocols"),
-    "FlextProtocolsBase": ("flext_core._protocols", "FlextProtocolsBase"),
-    "FlextProtocolsConfig": ("flext_core._protocols", "FlextProtocolsConfig"),
-    "FlextProtocolsContainer": ("flext_core._protocols", "FlextProtocolsContainer"),
-    "FlextProtocolsContext": ("flext_core._protocols", "FlextProtocolsContext"),
-    "FlextProtocolsHandler": ("flext_core._protocols", "FlextProtocolsHandler"),
-    "FlextProtocolsLogging": ("flext_core._protocols", "FlextProtocolsLogging"),
-    "FlextProtocolsRegistry": ("flext_core._protocols", "FlextProtocolsRegistry"),
-    "FlextProtocolsResult": ("flext_core._protocols", "FlextProtocolsResult"),
-    "FlextProtocolsService": ("flext_core._protocols", "FlextProtocolsService"),
+    "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),
+    "FlextProtocolsConfig": ("flext_core._protocols.config", "FlextProtocolsConfig"),
+    "FlextProtocolsContainer": (
+        "flext_core._protocols.container",
+        "FlextProtocolsContainer",
+    ),
+    "FlextProtocolsContext": ("flext_core._protocols.context", "FlextProtocolsContext"),
+    "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
+    "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
+    "FlextProtocolsRegistry": (
+        "flext_core._protocols.registry",
+        "FlextProtocolsRegistry",
+    ),
+    "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
+    "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
     "FlextRegistry": ("flext_core.registry", "FlextRegistry"),
     "FlextResult": ("flext_core.result", "FlextResult"),
     "FlextRuntime": ("flext_core.runtime", "FlextRuntime"),
     "FlextService": ("flext_core.service", "FlextService"),
     "FlextSettings": ("flext_core.settings", "FlextSettings"),
     "FlextTypes": ("flext_core.typings", "FlextTypes"),
-    "FlextTypesCore": ("flext_core._typings", "FlextTypesCore"),
-    "FlextTypesServices": ("flext_core._typings", "FlextTypesServices"),
-    "FlextTypesValidation": ("flext_core._typings", "FlextTypesValidation"),
-    "FlextTypingBase": ("flext_core._typings", "FlextTypingBase"),
-    "FlextTypingContainers": ("flext_core._typings", "FlextTypingContainers"),
+    "FlextTypesCore": ("flext_core._typings.core", "FlextTypesCore"),
+    "FlextTypesServices": ("flext_core._typings.services", "FlextTypesServices"),
+    "FlextTypesValidation": ("flext_core._typings.validation", "FlextTypesValidation"),
+    "FlextTypingBase": ("flext_core._typings.base", "FlextTypingBase"),
+    "FlextTypingContainers": (
+        "flext_core._typings.containers",
+        "FlextTypingContainers",
+    ),
     "FlextUtilities": ("flext_core.utilities", "FlextUtilities"),
-    "FlextUtilitiesArgs": ("flext_core._utilities", "FlextUtilitiesArgs"),
-    "FlextUtilitiesCache": ("flext_core._utilities", "FlextUtilitiesCache"),
-    "FlextUtilitiesChecker": ("flext_core._utilities", "FlextUtilitiesChecker"),
-    "FlextUtilitiesCollection": ("flext_core._utilities", "FlextUtilitiesCollection"),
+    "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),
+    "FlextUtilitiesCache": ("flext_core._utilities.cache", "FlextUtilitiesCache"),
+    "FlextUtilitiesChecker": ("flext_core._utilities.checker", "FlextUtilitiesChecker"),
+    "FlextUtilitiesCollection": (
+        "flext_core._utilities.collection",
+        "FlextUtilitiesCollection",
+    ),
     "FlextUtilitiesConfiguration": (
-        "flext_core._utilities",
+        "flext_core._utilities.configuration",
         "FlextUtilitiesConfiguration",
     ),
-    "FlextUtilitiesContext": ("flext_core._utilities", "FlextUtilitiesContext"),
-    "FlextUtilitiesConversion": ("flext_core._utilities", "FlextUtilitiesConversion"),
-    "FlextUtilitiesDeprecation": ("flext_core._utilities", "FlextUtilitiesDeprecation"),
-    "FlextUtilitiesDiscovery": ("flext_core._utilities", "FlextUtilitiesDiscovery"),
-    "FlextUtilitiesDomain": ("flext_core._utilities", "FlextUtilitiesDomain"),
-    "FlextUtilitiesEnum": ("flext_core._utilities", "FlextUtilitiesEnum"),
-    "FlextUtilitiesFileOps": ("flext_core._utilities", "FlextUtilitiesFileOps"),
-    "FlextUtilitiesGenerators": ("flext_core._utilities", "FlextUtilitiesGenerators"),
-    "FlextUtilitiesGuards": ("flext_core._utilities", "FlextUtilitiesGuards"),
+    "FlextUtilitiesContext": ("flext_core._utilities.context", "FlextUtilitiesContext"),
+    "FlextUtilitiesConversion": (
+        "flext_core._utilities.conversion",
+        "FlextUtilitiesConversion",
+    ),
+    "FlextUtilitiesDeprecation": (
+        "flext_core._utilities.deprecation",
+        "FlextUtilitiesDeprecation",
+    ),
+    "FlextUtilitiesDiscovery": (
+        "flext_core._utilities.discovery",
+        "FlextUtilitiesDiscovery",
+    ),
+    "FlextUtilitiesDomain": ("flext_core._utilities.domain", "FlextUtilitiesDomain"),
+    "FlextUtilitiesEnum": ("flext_core._utilities.enum", "FlextUtilitiesEnum"),
+    "FlextUtilitiesFileOps": (
+        "flext_core._utilities.file_ops",
+        "FlextUtilitiesFileOps",
+    ),
+    "FlextUtilitiesGenerators": (
+        "flext_core._utilities.generators",
+        "FlextUtilitiesGenerators",
+    ),
+    "FlextUtilitiesGuards": ("flext_core._utilities.guards", "FlextUtilitiesGuards"),
     "FlextUtilitiesGuardsEnsure": (
-        "flext_core._utilities",
+        "flext_core._utilities.guards_ensure",
         "FlextUtilitiesGuardsEnsure",
     ),
-    "FlextUtilitiesGuardsType": ("flext_core._utilities", "FlextUtilitiesGuardsType"),
+    "FlextUtilitiesGuardsType": (
+        "flext_core._utilities.guards_type",
+        "FlextUtilitiesGuardsType",
+    ),
     "FlextUtilitiesGuardsTypeCore": (
-        "flext_core._utilities",
+        "flext_core._utilities.guards_type_core",
         "FlextUtilitiesGuardsTypeCore",
     ),
     "FlextUtilitiesGuardsTypeModel": (
-        "flext_core._utilities",
+        "flext_core._utilities.guards_type_model",
         "FlextUtilitiesGuardsTypeModel",
     ),
     "FlextUtilitiesGuardsTypeProtocol": (
-        "flext_core._utilities",
+        "flext_core._utilities.guards_type_protocol",
         "FlextUtilitiesGuardsTypeProtocol",
     ),
-    "FlextUtilitiesMapper": ("flext_core._utilities", "FlextUtilitiesMapper"),
-    "FlextUtilitiesModel": ("flext_core._utilities", "FlextUtilitiesModel"),
-    "FlextUtilitiesPagination": ("flext_core._utilities", "FlextUtilitiesPagination"),
-    "FlextUtilitiesParser": ("flext_core._utilities", "FlextUtilitiesParser"),
-    "FlextUtilitiesReliability": ("flext_core._utilities", "FlextUtilitiesReliability"),
+    "FlextUtilitiesMapper": ("flext_core._utilities.mapper", "FlextUtilitiesMapper"),
+    "FlextUtilitiesModel": ("flext_core._utilities.model", "FlextUtilitiesModel"),
+    "FlextUtilitiesPagination": (
+        "flext_core._utilities.pagination",
+        "FlextUtilitiesPagination",
+    ),
+    "FlextUtilitiesParser": ("flext_core._utilities.parser", "FlextUtilitiesParser"),
+    "FlextUtilitiesReliability": (
+        "flext_core._utilities.reliability",
+        "FlextUtilitiesReliability",
+    ),
     "FlextUtilitiesResultHelpers": (
-        "flext_core._utilities",
+        "flext_core._utilities.result_helpers",
         "FlextUtilitiesResultHelpers",
     ),
-    "FlextUtilitiesText": ("flext_core._utilities", "FlextUtilitiesText"),
+    "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core.typings", "P"),

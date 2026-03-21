@@ -13,14 +13,11 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from . import patterns as patterns
-    from .patterns import (
-        TestAdvancedPatterns,
-        TestArchitecturalPatterns,
-        TestFunction,
-        TestPatternsCommands,
-        TestPatternsLogging,
-        TestPatternsTesting,
-    )
+    from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
+    from .patterns.test_architectural_patterns import TestArchitecturalPatterns
+    from .patterns.test_patterns_commands import TestPatternsCommands
+    from .patterns.test_patterns_logging import TestPatternsLogging
+    from .patterns.test_patterns_testing import TestPatternsTesting
     from .test_config_integration import TestFlextSettingsSingletonIntegration
     from .test_infra_integration import TestInfraIntegration
     from .test_integration import TestLibraryIntegration
@@ -37,9 +34,12 @@ if TYPE_CHECKING:
     from .test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestAdvancedPatterns": ("tests.integration.patterns", "TestAdvancedPatterns"),
+    "TestAdvancedPatterns": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestAdvancedPatterns",
+    ),
     "TestArchitecturalPatterns": (
-        "tests.integration.patterns",
+        "tests.integration.patterns.test_architectural_patterns",
         "TestArchitecturalPatterns",
     ),
     "TestCompleteFlextSystemIntegration": (
@@ -50,7 +50,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_config_integration",
         "TestFlextSettingsSingletonIntegration",
     ),
-    "TestFunction": ("tests.integration.patterns", "TestFunction"),
+    "TestFunction": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestFunction",
+    ),
     "TestIdempotency": (
         "tests.integration.test_refactor_nesting_idempotency",
         "TestIdempotency",
@@ -67,9 +70,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_migration_validation",
         "TestMigrationValidation",
     ),
-    "TestPatternsCommands": ("tests.integration.patterns", "TestPatternsCommands"),
-    "TestPatternsLogging": ("tests.integration.patterns", "TestPatternsLogging"),
-    "TestPatternsTesting": ("tests.integration.patterns", "TestPatternsTesting"),
+    "TestPatternsCommands": (
+        "tests.integration.patterns.test_patterns_commands",
+        "TestPatternsCommands",
+    ),
+    "TestPatternsLogging": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestPatternsLogging",
+    ),
+    "TestPatternsTesting": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestPatternsTesting",
+    ),
     "TestProjectLevelRefactor": (
         "tests.integration.test_refactor_nesting_project",
         "TestProjectLevelRefactor",
