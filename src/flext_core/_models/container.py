@@ -363,7 +363,7 @@ class FlextModelsContainer:
             Field(
                 default=None,
                 title="Config",
-                description="Settings instance bound to the container runtime.",
+                description="Settings instance bound to the container runtime (p.Settings).",
             ),
         ] = None
         context: Annotated[
@@ -372,11 +372,11 @@ class FlextModelsContainer:
             Field(
                 default=None,
                 title="Context",
-                description="Execution context attached to the container.",
+                description="Execution context attached to the container (p.Context).",
             ),
         ] = None
         services: Annotated[
-            Mapping[str, BaseModel] | None,
+            Mapping[str, FlextModelsContainer.ServiceRegistration] | None,
             SkipValidation,
             Field(
                 default=None,
@@ -385,7 +385,7 @@ class FlextModelsContainer:
             ),
         ] = None
         factories: Annotated[
-            Mapping[str, BaseModel] | None,
+            Mapping[str, FlextModelsContainer.FactoryRegistration] | None,
             SkipValidation,
             Field(
                 default=None,
@@ -394,7 +394,7 @@ class FlextModelsContainer:
             ),
         ] = None
         resources: Annotated[
-            Mapping[str, BaseModel] | None,
+            Mapping[str, FlextModelsContainer.ResourceRegistration] | None,
             SkipValidation,
             Field(
                 default=None,
@@ -403,7 +403,12 @@ class FlextModelsContainer:
             ),
         ] = None
         user_overrides: Annotated[
-            BaseModel | Mapping[str, BaseModel] | Sequence[BaseModel] | None,
+            t.ConfigMap
+            | Mapping[
+                str,
+                t.ConfigMap | Sequence[t.Scalar] | bool | datetime | float | int | str,
+            ]
+            | None,
             SkipValidation,
             Field(
                 default=None,
@@ -470,3 +475,11 @@ class FlextModelsContainer:
 
 
 __all__ = ["FlextModelsContainer"]
+
+
+def _rebuild_models_with_protocols() -> None:
+    """Rebuild models after protocols are available.
+
+    Called from flext_core/__init__.py after p is available.
+    """
+    FlextModelsContainer.ServiceRegistrationSpec.model_rebuild()
