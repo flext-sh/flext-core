@@ -61,7 +61,7 @@ from examples import (
     SharedPerson,
 )
 
-from .examples import Ex03Email, Ex03Money, Ex03Order, Ex03OrderItem, Ex03User
+from ._models import Ex03Email, Ex03Money, Ex03Order, Ex03OrderItem, Ex03User
 
 
 class FlextCoreExampleModels:
