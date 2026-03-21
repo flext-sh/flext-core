@@ -77,6 +77,8 @@ class FlextConstantsValidation:
 
     @unique
     class ErrorType(StrEnum):
+        """Structured error categories for validation and runtime failures."""
+
         VALIDATION = "validation"
         CONFIGURATION = "configuration"
         OPERATION = "operation"

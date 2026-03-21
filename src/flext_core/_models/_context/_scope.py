@@ -22,11 +22,8 @@ class FlextModelsContextScope:
         """Scope-specific data container for context management."""
 
         scope_name: Annotated[
-            str,
-            Field(
-                min_length=c.RETRY_COUNT_MIN,
-                description="Name of the scope",
-            ),
+            t.NonEmptyStr,
+            Field(description="Name of the scope"),
         ] = ""
         scope_type: Annotated[
             str,
@@ -47,20 +44,20 @@ class FlextModelsContextScope:
         """Statistics tracking for context operations."""
 
         sets: Annotated[
-            int,
-            Field(default=c.ZERO, ge=c.ZERO, description="Number of set operations"),
+            t.NonNegativeInt,
+            Field(default=c.ZERO, description="Number of set operations"),
         ] = c.ZERO
         gets: Annotated[
-            int,
-            Field(default=c.ZERO, ge=c.ZERO, description="Number of get operations"),
+            t.NonNegativeInt,
+            Field(default=c.ZERO, description="Number of get operations"),
         ] = c.ZERO
         removes: Annotated[
-            int,
-            Field(default=c.ZERO, ge=c.ZERO, description="Number of remove operations"),
+            t.NonNegativeInt,
+            Field(default=c.ZERO, description="Number of remove operations"),
         ] = c.ZERO
         clears: Annotated[
-            int,
-            Field(default=c.ZERO, ge=c.ZERO, description="Number of clear operations"),
+            t.NonNegativeInt,
+            Field(default=c.ZERO, description="Number of clear operations"),
         ] = c.ZERO
         operations: Annotated[
             Mapping[str, t.NormalizedValue],

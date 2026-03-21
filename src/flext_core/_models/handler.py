@@ -36,11 +36,8 @@ class FlextModelsHandler:
         """Handler registration with advanced validation."""
 
         name: Annotated[
-            str,
-            Field(
-                min_length=c.RETRY_COUNT_MIN,
-                description="Handler name",
-            ),
+            t.NonEmptyStr,
+            Field(description="Handler name"),
         ]
         handler: Annotated[
             t.HandlerCallable,
@@ -197,9 +194,8 @@ class FlextModelsHandler:
             },
         )
         registration_id: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
-                min_length=c.RETRY_COUNT_MIN,
                 description="Unique registration identifier",
                 examples=["reg-abc123", "handler-create-user-001"],
             ),
@@ -264,9 +260,8 @@ class FlextModelsHandler:
             },
         )
         handler_name: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
-                min_length=c.RETRY_COUNT_MIN,
                 description="Name of the handler being executed",
                 examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
             ),
@@ -274,7 +269,6 @@ class FlextModelsHandler:
         handler_mode: Annotated[
             c.HandlerType,
             Field(
-                min_length=c.RETRY_COUNT_MIN,
                 description="Mode of handler execution",
                 examples=["command", "query", "event"],
             ),
@@ -422,11 +416,10 @@ class FlextModelsHandler:
             Field(description="Command type this handler processes"),
         ]
         priority: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=c.DEFAULT_PRIORITY,
                 description="Handler priority (higher = processed first)",
-                ge=0,
             ),
         ] = c.DEFAULT_PRIORITY
         timeout: Annotated[

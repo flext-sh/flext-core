@@ -339,6 +339,8 @@ class FlextModelsCollections:
         ] = None
 
     class CollectionBatchSpec(FlextModelFoundation.ArbitraryTypesModel):
+        """Batch processing options for collection operations."""
+
         size: Annotated[
             int | None,
             Field(
@@ -372,10 +374,9 @@ class FlextModelsCollections:
             ),
         ] = None
         progress_interval: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=1,
-                ge=1,
                 title="Progress Interval",
                 description="How often progress callback is invoked during processing.",
             ),
@@ -398,6 +399,8 @@ class FlextModelsCollections:
         ] = False
 
     class GuardCheckSpec(FlextModelFoundation.ArbitraryTypesModel):
+        """Specification for guard conditions used in collection filters."""
+
         eq: Annotated[
             t.NormalizedValue | None,
             Field(

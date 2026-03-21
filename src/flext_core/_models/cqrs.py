@@ -48,10 +48,9 @@ class FlextModelsCqrs:
             ),
         ] = "command"
         command_type: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 default=c.DEFAULT_COMMAND_TYPE,
-                min_length=c.RETRY_COUNT_MIN,
                 description="Command type identifier",
             ),
         ] = c.DEFAULT_COMMAND_TYPE
@@ -86,19 +85,17 @@ class FlextModelsCqrs:
             },
         )
         page: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_PAGE_NUMBER,
-                ge=c.RETRY_COUNT_MIN,
                 description="Page number (1-based indexing)",
                 examples=[1, 2, 10, 100],
             ),
         ] = c.DEFAULT_PAGE_NUMBER
         size: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_PAGE_SIZE,
-                ge=c.RETRY_COUNT_MIN,
                 le=c.MAX_PAGE_SIZE_EXAMPLE,
                 description="Number of items per page (max 1000)",
                 examples=[10, 20, 50, 100],

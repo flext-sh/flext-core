@@ -1,3 +1,9 @@
+"""Result pattern models and helpers for Flext core.
+
+This module defines runtime result wrappers, operations, and helper methods
+for consistent success/failure semantics across the Flext architecture.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

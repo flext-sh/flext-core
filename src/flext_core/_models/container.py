@@ -53,6 +53,8 @@ class FlextModelsContainer:
         })
 
     class _MetadataValidatorMixin:
+        """Mixin to provide metadata field coercion/normalization for models."""
+
         @field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
@@ -72,10 +74,9 @@ class FlextModelsContainer:
             arbitrary_types_allowed=True,
         )
         name: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 ...,
-                min_length=c.RETRY_COUNT_MIN,
                 description="Service identifier/name",
             ),
         ]
@@ -206,10 +207,9 @@ class FlextModelsContainer:
             arbitrary_types_allowed=True,
         )
         name: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 ...,
-                min_length=c.RETRY_COUNT_MIN,
                 description="Factory identifier/name",
             ),
         ]
@@ -248,10 +248,9 @@ class FlextModelsContainer:
             ),
         ] = None
         invocation_count: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=c.ZERO,
-                ge=c.ZERO,
                 description="Number of times factory has been invoked",
             ),
         ] = c.ZERO
@@ -269,10 +268,9 @@ class FlextModelsContainer:
             arbitrary_types_allowed=True,
         )
         name: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 ...,
-                min_length=c.RETRY_COUNT_MIN,
                 description="Resource identifier/name",
             ),
         ]
@@ -319,19 +317,17 @@ class FlextModelsContainer:
             ),
         ] = True
         max_services: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_MAX_SERVICES,
-                ge=c.RETRY_COUNT_MIN,
                 le=c.MAX_BATCH_SIZE,
                 description="Maximum number of services allowed in registry",
             ),
         ] = c.DEFAULT_MAX_SERVICES
         max_factories: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_MAX_FACTORIES,
-                ge=c.RETRY_COUNT_MIN,
                 le=c.MAX_FACTORIES,
                 description="Maximum number of factories allowed in registry",
             ),
@@ -457,10 +453,9 @@ class FlextModelsContainer:
 
         model_config = ConfigDict(frozen=True)
         name: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 ...,
-                min_length=c.RETRY_COUNT_MIN,
                 description="Name to register this factory under in the container",
             ),
         ]

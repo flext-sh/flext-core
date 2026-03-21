@@ -18,7 +18,13 @@ class FlextUtilitiesDeprecation:
 
     @classmethod
     def warn_once(cls, identifier: str, message: str) -> None:
-        """Emit one deprecation warning per identifier."""
+        """Emit one deprecation warning per identifier (deduplicated).
+
+        Args:
+            identifier: Unique identifier for the warning.
+            message: Warning message to emit.
+
+        """
         if identifier not in cls._warned_once:
             cls._warned_once.add(identifier)
             warnings.warn(message, DeprecationWarning, stacklevel=2)
@@ -32,7 +38,15 @@ class FlextUtilitiesDeprecation:
         *,
         removal_version: str = "0.14.0",
     ) -> None:
-        """Warn on broad input unions that should be narrowed."""
+        """Warn when broad polymorphic input type is used instead of preferred type.
+
+        Args:
+            value: Value whose type will be warned about.
+            context: Name of function/context where polymorphic type was used.
+            preferred: Preferred type or pattern to use instead.
+            removal_version: Version when broad union will be removed (default: "0.14.0").
+
+        """
         type_name = type(value).__name__
         identifier = f"polymorphic_{context}_{type_name}"
         cls.warn_once(
@@ -47,6 +61,17 @@ class FlextUtilitiesDeprecation:
         version: str | None = None,
         reason: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Mark function as deprecated with optional metadata.
+
+        Args:
+            replacement: Recommended replacement function/pattern.
+            version: Version when function will be removed.
+            reason: Reason for deprecation.
+
+        Returns:
+            Decorator that marks function as deprecated.
+
+        """
         has_replacement = replacement is not None
         has_version = version is not None
         has_reason = reason is not None
@@ -96,6 +121,16 @@ class FlextUtilitiesDeprecation:
         replacement: str | None = None,
         version: str | None = None,
     ) -> Callable[[TClass], TClass]:
+        """Mark class as deprecated with optional metadata.
+
+        Args:
+            replacement: Recommended replacement class.
+            version: Version when class will be removed.
+
+        Returns:
+            Decorator that marks class as deprecated.
+
+        """
         has_replacement = replacement is not None
         has_version = version is not None
 
@@ -121,7 +156,17 @@ class FlextUtilitiesDeprecation:
         replacement: str | None = None,
         version: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Warn when a deprecated parameter is passed by keyword."""
+        """Warn when a deprecated parameter is passed by keyword.
+
+        Args:
+            param_name: Name of the deprecated parameter.
+            replacement: Recommended replacement parameter name.
+            version: Version when parameter will be removed.
+
+        Returns:
+            Decorator that warns when parameter is used.
+
+        """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 

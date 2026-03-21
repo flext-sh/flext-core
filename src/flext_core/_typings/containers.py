@@ -154,5 +154,3 @@ class FlextTypingContainers:
                 ],
             ),
         ]
-
-    _RootDictModel = RootDictModel

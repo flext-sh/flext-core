@@ -1,3 +1,5 @@
+"""Core type aliases for Flext typing conventions and containers."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -5,6 +7,8 @@ from pathlib import Path
 
 
 class FlextTypingBase:
+    """Base type alias namespace for Flext core type-safe contracts."""
+
     type Primitives = str | int | float | bool
     type Numeric = int | float
     type Scalar = Primitives | datetime

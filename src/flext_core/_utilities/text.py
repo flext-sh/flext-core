@@ -43,36 +43,31 @@ class FlextUtilitiesText:
 
     @staticmethod
     def format_app_id(name: str) -> str:
-        """Format application ID.
+        """Format application ID by normalizing name to lowercase with hyphens.
 
-        Converts a name to a valid application ID by lowercasing
-        and replacing spaces and underscores with hyphens.
+        Converts spaces and underscores to hyphens and lowercases the result.
 
         Args:
-            name: Application name to format
+            name: Application name to format.
 
         Returns:
-            Formatted application ID (lowercase, hyphens)
-
-        Example:
-            app_id = u.format_app_id("My Application_Name")
-            # → "my-application-name"
+            Formatted application ID (lowercase, hyphens).
 
         """
         return name.lower().replace(" ", "-").replace("_", "-")
 
     @staticmethod
     def safe_string(text: str | None) -> str:
-        """Validate and clean text string.
+        """Validate and clean text string, ensuring non-empty result.
 
         Args:
-            text: Text to validate and clean
+            text: Text to validate and clean.
 
         Returns:
-            str: Cleaned text with whitespace stripped
+            Cleaned text with whitespace stripped.
 
         Raises:
-            ValueError: If text is ``None``, empty, or whitespace-only
+            ValueError: If text is None, empty, or whitespace-only.
 
         """
         if text is None:
@@ -90,7 +85,17 @@ class FlextUtilitiesText:
         max_length: int = c.DEFAULT_SIZE,
         suffix: str = "...",
     ) -> r[str]:
-        """Truncate text to maximum length with suffix."""
+        """Truncate text to maximum length and append suffix if needed.
+
+        Args:
+            text: Text to truncate.
+            max_length: Maximum length including suffix (default: DEFAULT_SIZE).
+            suffix: Suffix to append if truncated (default: "...").
+
+        Returns:
+            r[str] with truncated text or original if already short enough.
+
+        """
         if len(text) <= max_length:
             return r[str].ok(text)
         truncated = text[: max_length - len(suffix)] + suffix
@@ -100,18 +105,14 @@ class FlextUtilitiesText:
     def normalize_alnum(text: str) -> str:
         """Strip non-alphanumeric characters and lowercase the result.
 
-        Useful for fuzzy namespace matching where hyphens, underscores,
-        and other punctuation should be ignored.
+        Useful for fuzzy matching and case-insensitive namespace comparison
+        where hyphens, underscores, and punctuation should be ignored.
 
         Args:
             text: Text to normalize.
 
         Returns:
             Lowercase string with only alphanumeric characters.
-
-        Example:
-            >>> u.normalize_alnum("flext-ldap")
-            'flextldap'
 
         """
         return "".join(ch for ch in text.lower() if ch.isalnum())

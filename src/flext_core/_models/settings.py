@@ -53,6 +53,8 @@ class FlextModelsConfig:
         return FlextRuntime.get_log_level_from_config()
 
     class AutoConfig(FlextModelFoundation.ArbitraryTypesModel):
+        """Automatic settings wrapper for BaseSettings classes."""
+
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
         config_class: Annotated[
@@ -86,10 +88,9 @@ class FlextModelsConfig:
             arbitrary_types_allowed=True,
         )
         operation_id: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 default_factory=FlextRuntime.generate_id,
-                min_length=c.RETRY_COUNT_MIN,
                 description="Unique operation identifier",
             ),
         ]
@@ -112,19 +113,17 @@ class FlextModelsConfig:
             ),
         ]
         timeout_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=c.TIMEOUT,
-                gt=c.ZERO,
                 le=c.MAX_TIMEOUT_SECONDS,
                 description="Operation timeout from c (Constants default)",
             ),
         ] = c.TIMEOUT
         retry_attempts: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=c.MAX_RETRY_ATTEMPTS,
-                ge=c.ZERO,
                 le=c.MAX_RETRY_ATTEMPTS,
                 description="Maximum retry attempts from c (Constants default)",
             ),
@@ -158,10 +157,9 @@ class FlextModelsConfig:
         """Retry configuration with advanced validation."""
 
         max_retries: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.MAX_RETRY_ATTEMPTS,
-                ge=c.RETRY_COUNT_MIN,
                 le=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
                 validation_alias=AliasChoices("max_attempts", "max_retries"),
@@ -171,10 +169,9 @@ class FlextModelsConfig:
         ] = c.MAX_RETRY_ATTEMPTS
         exponential_backoff: bool = True
         backoff_multiplier: Annotated[
-            float,
+            t.BackoffMultiplier,
             Field(
                 default=c.DEFAULT_BACKOFF_MULTIPLIER,
-                ge=float(c.RETRY_COUNT_MIN),
                 description="Backoff multiplier for exponential backoff",
             ),
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
@@ -236,10 +233,9 @@ class FlextModelsConfig:
         """Validation configuration."""
 
         max_validation_errors: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_MAX_VALIDATION_ERRORS,
-                ge=c.RETRY_COUNT_MIN,
                 le=c.MAX_RETRY_STATUS_CODES,
                 description="Maximum validation errors",
             ),
@@ -277,7 +273,7 @@ class FlextModelsConfig:
         ] = None
 
         batch_size: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.MAX_BATCH_SIZE,
                 le=c.MAX_VALIDATION_SIZE,
@@ -285,7 +281,7 @@ class FlextModelsConfig:
             ),
         ] = c.MAX_BATCH_SIZE
         max_workers: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_MAX_WORKERS,
                 le=c.MAX_WORKERS_THRESHOLD,
@@ -293,7 +289,7 @@ class FlextModelsConfig:
             ),
         ] = c.DEFAULT_MAX_WORKERS
         timeout_per_item: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=c.TIMEOUT,
                 description="Timeout per item (Config has priority over Constants)",
@@ -378,7 +374,7 @@ class FlextModelsConfig:
             ),
         ]
         timeout_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=c.TIMEOUT,
                 le=c.MAX_TIMEOUT_SECONDS,
@@ -387,7 +383,7 @@ class FlextModelsConfig:
         ] = c.TIMEOUT
         retry_on_failure: bool = True
         max_retries: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=c.MAX_RETRY_ATTEMPTS,
                 description="Max retries (default from constants)",
@@ -455,10 +451,9 @@ class FlextModelsConfig:
             Field(default="", description="Name of the rate limiter processor"),
         ] = ""
         count: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=c.ZERO,
-                ge=c.ZERO,
                 description="Current request count in window",
             ),
         ] = c.ZERO
@@ -471,18 +466,16 @@ class FlextModelsConfig:
             ),
         ] = c.INITIAL_TIME
         limit: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
-                ge=c.RETRY_COUNT_MIN,
                 description="Maximum requests allowed per window",
             ),
         ] = c.DEFAULT_RATE_LIMIT_MAX_REQUESTS
         window_seconds: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-                ge=c.RETRY_COUNT_MIN,
                 description="Duration of rate limit window in seconds",
             ),
         ] = c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
@@ -529,10 +522,9 @@ class FlextModelsConfig:
             ),
         ] = None
         timeout_seconds: Annotated[
-            float | None,
+            t.PositiveFloat | None,
             Field(
                 default=None,
-                gt=c.ZERO,
                 le=c.MAX_TIMEOUT_SECONDS,
                 description="Command timeout in seconds (max 5 min)",
             ),
@@ -560,10 +552,9 @@ class FlextModelsConfig:
         """
 
         log_level: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default_factory=FlextRuntime.get_log_level_from_config,
-                ge=c.ZERO,
                 le=c.MAX_CUSTOM_VALIDATORS,
                 description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
             ),
@@ -669,10 +660,9 @@ class FlextModelsConfig:
             ),
         ] = None
         timeout_override: Annotated[
-            int | None,
+            t.NonNegativeInt | None,
             Field(
                 default=None,
-                ge=c.ZERO,
                 description="Optional timeout override in seconds",
             ),
         ] = None
@@ -705,10 +695,9 @@ class FlextModelsConfig:
             ),
         ] = None
         timeout_override: Annotated[
-            int | None,
+            t.NonNegativeInt | None,
             Field(
                 default=None,
-                ge=c.ZERO,
                 description="Optional timeout override in seconds",
             ),
         ] = None
@@ -1183,18 +1172,16 @@ class FlextModelsConfig:
             ),
         ] = None
         attempts: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.MAX_RETRY_ATTEMPTS,
-                ge=c.RETRY_COUNT_MIN,
                 description="Number of retry attempts (used if retry_config is None)",
             ),
         ] = c.MAX_RETRY_ATTEMPTS
         delay: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=float(c.DEFAULT_RETRY_DELAY_SECONDS),
-                gt=c.INITIAL_TIME,
                 description="Initial delay between retries (used if retry_config is None)",
             ),
         ] = float(c.DEFAULT_RETRY_DELAY_SECONDS)
@@ -1219,60 +1206,52 @@ class FlextModelsConfig:
             extra="forbid",
         )
         dispatcher_timeout_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=30.0,
-                gt=0,
                 description="Timeout in seconds for dispatcher operations",
             ),
         ] = 30.0
         executor_workers: Annotated[
-            int,
+            t.WorkerCount,
             Field(
                 default=4,
-                ge=1,
                 le=256,
                 description="Number of executor worker threads",
             ),
         ] = 4
         circuit_breaker_threshold: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=5,
-                ge=1,
                 description="Circuit breaker failure threshold",
             ),
         ] = 5
         rate_limit_max_requests: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=1000,
-                ge=1,
                 description="Maximum requests for rate limiting",
             ),
         ] = 1000
         rate_limit_window_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=60.0,
-                gt=0,
                 description="Rate limit window in seconds",
             ),
         ] = 60.0
         max_retry_attempts: Annotated[
-            int,
+            t.RetryCount,
             Field(
                 default=3,
-                ge=0,
-                le=10,
                 description="Maximum retry attempts",
             ),
         ] = 3
         retry_delay: Annotated[
-            float,
+            t.NonNegativeFloat,
             Field(
                 default=1.0,
-                ge=0,
                 description="Delay between retries in seconds",
             ),
         ] = 1.0

@@ -14,7 +14,7 @@ from typing import Annotated
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextModelFoundation
+from flext_core import FlextModelFoundation, t
 
 
 class FlextModelsDecorators:
@@ -33,8 +33,8 @@ class FlextModelsDecorators:
 
         model_config = ConfigDict(frozen=True, extra="forbid", validate_assignment=True)
         timeout_seconds: Annotated[
-            float,
-            Field(gt=0, description="Timeout duration in seconds (must be positive)"),
+            t.PositiveFloat,
+            Field(description="Timeout duration in seconds (must be positive)"),
         ]
         error_code: Annotated[
             str | None,

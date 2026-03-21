@@ -57,9 +57,7 @@ class AppConfig(FlextSettings):
         max_length=FlextConstants.MAX_HOSTNAME_LENGTH,
         description="API server hostname",
     )
-    api_port: t.Validation.PortNumber = Field(
-        default=8080, description="API server port number"
-    )
+    api_port: t.PortNumber = Field(default=8080, description="API server port number")
     debug: bool = Field(default=False, description="Enable debug mode")
     max_workers: int = Field(default=4, description="Maximum number of worker threads")
     cache_enabled: bool = Field(default=True, description="Enable caching")

@@ -1,5 +1,9 @@
 """FlextTypesValidation - constrained validation aliases.
 
+Uses ``annotated-types`` constraints (Gt, Ge, Le, Len) instead of Pydantic
+``Field()`` so that the aliases are portable beyond Pydantic validators.
+Pydantic v2 natively understands these constraints.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -8,24 +12,36 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import Field
+from annotated_types import Ge, Gt, Le, Len
 
 
 class FlextTypesValidation:
-    """Validation type aliases with Pydantic constraints."""
+    """Portable validation type aliases with annotated-types constraints.
 
-    class Validation:
-        """Validation type aliases with Pydantic constraints."""
+    All types use ``annotated-types`` (Gt, Ge, Le, Len) for framework-independent
+    constraints that Pydantic v2, beartype, and other checkers understand natively.
 
-        type PortNumber = Annotated[int, Field(ge=1, le=65535)]
-        type PositiveTimeout = Annotated[float, Field(gt=0.0, le=300.0)]
-        type RetryCount = Annotated[int, Field(ge=0, le=10)]
-        type WorkerCount = Annotated[int, Field(ge=1, le=100)]
-        type NonEmptyStr = Annotated[str, Field(min_length=1)]
-        type StrippedStr = Annotated[str, Field(min_length=1)]
-        type UriString = Annotated[str, Field(min_length=1)]
-        type HostnameStr = Annotated[str, Field(min_length=1)]
-        type PositiveInt = Annotated[int, Field(gt=0)]
-        type NonNegativeInt = Annotated[int, Field(ge=0)]
-        type BoundedStr = Annotated[str, Field(min_length=1, max_length=255)]
-        type TimestampStr = Annotated[str, Field(min_length=1)]
+    Access via ``t.PortNumber``, ``t.NonEmptyStr``, etc.
+    """
+
+    # -- string constraints --------------------------------------------------
+    type NonEmptyStr = Annotated[str, Len(1)]
+    type StrippedStr = Annotated[str, Len(1)]
+    type BoundedStr = Annotated[str, Len(1, 255)]
+    type HostnameStr = Annotated[str, Len(1)]
+    type UriString = Annotated[str, Len(1)]
+    type TimestampStr = Annotated[str, Len(1)]
+
+    # -- integer constraints --------------------------------------------------
+    type PositiveInt = Annotated[int, Gt(0)]
+    type NonNegativeInt = Annotated[int, Ge(0)]
+    type PortNumber = Annotated[int, Ge(1), Le(65535)]
+    type RetryCount = Annotated[int, Ge(0), Le(10)]
+    type WorkerCount = Annotated[int, Ge(1), Le(100)]
+
+    # -- float constraints ----------------------------------------------------
+    type PositiveFloat = Annotated[float, Gt(0.0)]
+    type NonNegativeFloat = Annotated[float, Ge(0.0)]
+    type PositiveTimeout = Annotated[float, Gt(0.0), Le(300.0)]
+    type BackoffMultiplier = Annotated[float, Ge(1.0)]
+    type Percentage = Annotated[float, Ge(0.0), Le(100.0)]

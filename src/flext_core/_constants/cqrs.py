@@ -44,6 +44,8 @@ class FlextConstantsCqrs:
 
     @unique
     class CommonStatus(StrEnum):
+        """Standard lifecycle statuses used across CQRS operations."""
+
         ACTIVE = "active"
         INACTIVE = "inactive"
         PENDING = "pending"

@@ -620,7 +620,7 @@ class FlextModelFoundation:
                 description="Non-fatal warning messages generated during partial processing.",
             ),
         ]
-        partial_success_rate: float
+        partial_success_rate: t.Percentage
 
     OperationResult = Annotated[
         SuccessResult | FailureResult | PartialResult,
@@ -700,11 +700,10 @@ class FlextModelFoundation:
             str_strip_whitespace=True,
         )
         unique_id: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 default_factory=lambda: str(uuid.uuid4()),
                 description="Unique identifier",
-                min_length=1,
                 frozen=False,
             ),
         ] = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -786,27 +785,24 @@ class FlextModelFoundation:
 
         model_config = ConfigDict(populate_by_name=True)
         max_retries: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=c.DEFAULT_MAX_RETRIES,
-                ge=c.ZERO,
                 alias="max_attempts",
                 description="Maximum retry attempts",
             ),
         ] = c.DEFAULT_MAX_RETRIES
         initial_delay_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=c.DEFAULT_RETRY_DELAY_SECONDS,
-                gt=c.ZERO,
                 description="Initial delay between retries",
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
         max_delay_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=c.RETRY_BACKOFF_MAX,
-                gt=c.ZERO,
                 description="Maximum delay between retries",
             ),
         ] = c.RETRY_BACKOFF_MAX

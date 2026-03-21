@@ -16,7 +16,7 @@ from typing import Annotated, override
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, c, t
+from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, t
 
 
 class _ComparableConfigMap(t.ConfigMap):
@@ -158,8 +158,8 @@ class FlextModelsDomainEvent:
                 description="Message type discriminator for union routing - always 'event'",
             ),
         ] = "event"
-        event_type: Annotated[str, Field(min_length=c.RETRY_COUNT_MIN)]
-        aggregate_id: Annotated[str, Field(min_length=c.RETRY_COUNT_MIN)]
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
         data: Annotated[
             _ComparableConfigMap,
             BeforeValidator(lambda v: FlextModelsDomainEvent._normalize_event_data(v)),

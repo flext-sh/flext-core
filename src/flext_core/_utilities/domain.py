@@ -26,6 +26,16 @@ class FlextUtilitiesDomain:
         obj_a: t.RuntimeData,
         obj_b: t.RuntimeData,
     ) -> bool:
+        """Check if two objects are of the same type.
+
+        Args:
+            obj_a: First object to compare.
+            obj_b: Second object to compare.
+
+        Returns:
+            True if both objects are instances of the same type.
+
+        """
         return isinstance(obj_a, type(obj_b))
 
     @staticmethod
@@ -39,18 +49,12 @@ class FlextUtilitiesDomain:
         Generic comparison for DDD entities - compares by identity, not by value.
 
         Args:
-            entity_a: First entity
-            entity_b: Second entity
-            id_attr: Attribute name for unique ID (default: "unique_id")
+            entity_a: First entity to compare.
+            entity_b: Second entity to compare.
+            id_attr: Attribute name for unique ID (default: "unique_id").
 
         Returns:
-            True if same entity (same ID and type), False otherwise
-
-        Example:
-            >>> user1 = User(unique_id="123", name="Alice")
-            >>> user2 = User(unique_id="123", name="Bob")  # Same ID
-            >>> FlextUtilitiesDomain.compare_entities_by_id(user1, user2)
-            True
+            True if both entities have same ID and type, False otherwise.
 
         """
         if not FlextUtilitiesDomain.same_type(entity_b, entity_a):
@@ -69,17 +73,11 @@ class FlextUtilitiesDomain:
         Generic comparison for DDD Value Objects - compares by value, not identity.
 
         Args:
-            obj_a: First value object
-            obj_b: Second value object
+            obj_a: First value object to compare.
+            obj_b: Second value object to compare.
 
         Returns:
-            True if same values (same type and all attributes equal)
-
-        Example:
-            >>> addr1 = Address(street="123 Main", city="NYC")
-            >>> addr2 = Address(street="123 Main", city="NYC")
-            >>> FlextUtilitiesDomain.compare_value_objects_by_value(addr1, addr2)
-            True
+            True if same type and all attributes equal, False otherwise.
 
         """
         if not FlextUtilitiesDomain.same_type(obj_b, obj_a):
@@ -97,17 +95,14 @@ class FlextUtilitiesDomain:
         """Generate hash for entity based on unique ID and type.
 
         Generic hashing for DDD entities - uses identity (ID + type), not value.
+        Falls back to object identity hash if ID is missing.
 
         Args:
-            entity: Entity to hash
-            id_attr: Attribute name for unique ID (default: "unique_id")
+            entity: Entity to hash.
+            id_attr: Attribute name for unique ID (default: "unique_id").
 
         Returns:
-            Hash value based on entity ID and type
-
-        Example:
-            >>> user = User(unique_id="123", name="Alice")
-            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
+            Hash value based on entity ID and type, or object identity if ID missing.
 
         """
         entity_id = getattr(entity, id_attr, None)
@@ -120,16 +115,13 @@ class FlextUtilitiesDomain:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
+        Falls back to repr-based hash if __dict__ is unavailable.
 
         Args:
-            obj: Value object to hash
+            obj: Value object to hash.
 
         Returns:
-            Hash value based on all object attributes
-
-        Example:
-            >>> addr = Address(street="123 Main", city="NYC")
-            >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
+            Hash value based on all object attributes or repr hash as fallback.
 
         """
         try:

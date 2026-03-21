@@ -135,15 +135,19 @@ class FlextGenericModels:
             str,
             Field(default="unknown", description="Health status"),
         ] = "unknown"
-        port: Annotated[int | None, Field(default=None, description="Port")] = None
-        host: Annotated[str | None, Field(default=None, description="Host")] = None
+        port: Annotated[
+            t.PortNumber | None, Field(default=None, description="Port")
+        ] = None
+        host: Annotated[
+            t.HostnameStr | None, Field(default=None, description="Host")
+        ] = None
         pid: Annotated[int | None, Field(default=None, description="Process ID")] = None
         memory_usage_mb: Annotated[
-            float | None,
+            t.NonNegativeFloat | None,
             Field(default=None, description="Memory MB"),
         ] = None
         cpu_usage_percent: Annotated[
-            float | None,
+            t.NonNegativeFloat | None,
             Field(default=None, description="CPU %"),
         ] = None
         metadata: Annotated[

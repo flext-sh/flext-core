@@ -64,6 +64,8 @@ class FlextModelsContextData:
         return v
 
     class SerializableDataValidatorMixin:
+        """Mixin validating that data is JSON-serializable for context models."""
+
         @field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(

@@ -782,6 +782,8 @@ class FlextDecorators:
         return decorator
 
     class _HasLogger(Protocol):
+        """Protocol indicating a logger-carrying object contract."""
+
         logger: p.Logger
 
     type _LoggerCarrier = _HasLogger | FlextLogger | t.Container | BaseModel

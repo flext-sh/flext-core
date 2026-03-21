@@ -70,7 +70,7 @@ class TestTypings:
 
     def test_hostname_validation_success(self) -> None:
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
-            t.Validation.HostnameStr,
+            t.HostnameStr,
         )
         localhost = hostname_adapter.validate_python(FlextConstants.LOCALHOST)
         tm.that(localhost, eq=FlextConstants.LOCALHOST)
@@ -79,7 +79,7 @@ class TestTypings:
 
     def test_hostname_validation_error(self) -> None:
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
-            t.Validation.HostnameStr,
+            t.HostnameStr,
         )
         with pytest.raises(PydanticValidationError):
             hostname_adapter.validate_python("")

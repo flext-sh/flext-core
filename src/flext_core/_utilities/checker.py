@@ -30,6 +30,15 @@ class FlextUtilitiesChecker:
     def _is_module_export_callable(
         value: object,
     ) -> TypeIs[Callable[..., t.ModuleExport]]:
+        """Check if value is a callable that returns module exports.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is callable, narrowed to Callable[..., ModuleExport].
+
+        """
         return callable(value)
 
     @property
@@ -39,12 +48,29 @@ class FlextUtilitiesChecker:
 
     @staticmethod
     def _is_subclass_of(candidate: t.TypeHintSpecifier, parent: type) -> bool:
-        """Safe subclass check that never raises TypeError."""
+        """Safe subclass check that never raises TypeError.
+
+        Args:
+            candidate: Potential subclass to check.
+            parent: Parent class to check against.
+
+        Returns:
+            True if candidate is a class and subclass of parent, False otherwise.
+
+        """
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
     def _is_dict_type(cls, candidate: t.TypeHintSpecifier) -> bool:
-        """Check if candidate is ``dict`` or a subclass of ``dict``."""
+        """Check if candidate is dict or a subclass of dict.
+
+        Args:
+            candidate: Type to check.
+
+        Returns:
+            True if candidate is dict or dict subclass, False otherwise.
+
+        """
         return cls._is_subclass_of(candidate, dict)
 
     @classmethod
@@ -218,7 +244,17 @@ class FlextUtilitiesChecker:
         type_hints: Mapping[str, t.TypeHintSpecifier | None],
         param_name: str,
     ) -> r[t.MessageTypeSpecifier]:
-        """Extract message type from parameter hints or annotation."""
+        """Extract message type from parameter hints or signature annotation.
+
+        Args:
+            parameter: Parameter to extract type from.
+            type_hints: Type hints mapping for the function.
+            param_name: Name of the parameter.
+
+        Returns:
+            r[MessageTypeSpecifier] with extracted type or failure message.
+
+        """
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
@@ -244,7 +280,15 @@ class FlextUtilitiesChecker:
         cls,
         handle_method: Callable[..., t.ModuleExport],
     ) -> r[inspect.Signature]:
-        """Extract signature from handle method."""
+        """Extract signature from handle method.
+
+        Args:
+            handle_method: Method to extract signature from.
+
+        Returns:
+            r[Signature] with method signature or failure message.
+
+        """
         try:
             return r[inspect.Signature].ok(inspect.signature(handle_method))
         except (TypeError, ValueError):
@@ -256,7 +300,16 @@ class FlextUtilitiesChecker:
         handle_method: Callable[..., t.ModuleExport],
         handler_class: type,
     ) -> Mapping[str, t.TypeHintSpecifier | None]:
-        """Safely extract type hints from handle method."""
+        """Safely extract type hints from handle method.
+
+        Args:
+            handle_method: Method to extract type hints from.
+            handler_class: Handler class for local namespace context.
+
+        Returns:
+            Mapping of parameter names to type hints, empty dict on error.
+
+        """
         try:
             return get_type_hints(
                 handle_method,
@@ -275,11 +328,11 @@ class FlextUtilitiesChecker:
         """Handle instance checking for non-type objects.
 
         Args:
-            message_type: Message type to check
-            origin_type: Origin type to check against
+            message_type: Message type or instance to check.
+            origin_type: Origin type to check against.
 
         Returns:
-            True if instance check passes
+            True if instance or subclass check passes, True on TypeError.
 
         """
         try:
@@ -303,13 +356,13 @@ class FlextUtilitiesChecker:
         """Handle type checking for types or objects with __origin__.
 
         Args:
-            expected_type: Expected type
-            message_type: Message type
-            origin_type: Origin of expected type
-            message_origin: Origin of message type
+            expected_type: Expected type.
+            message_type: Message type or instance.
+            origin_type: Origin of expected type.
+            message_origin: Origin of message type.
 
         Returns:
-            True if types are compatible
+            True if types are compatible or match, False otherwise.
 
         """
         try:

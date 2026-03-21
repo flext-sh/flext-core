@@ -1,3 +1,5 @@
+"""Protocol-based guards utilities for Flext type checking."""
+
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
@@ -11,6 +13,13 @@ from flext_core import FlextUtilitiesGuardsTypeCore, c, p, t
 
 
 class FlextUtilitiesGuardsTypeProtocol:
+    """Protocol-based type guards for flext type checking.
+
+    Provides static methods for checking whether values conform to flext framework
+    protocols (Context, Handler, Service, etc.) and Python type specifications.
+    Uses caching for performance-critical protocol lookups.
+    """
+
     _protocol_specs_cache: Mapping[str, Callable[[t.NormalizedValue], bool]] | None = (
         None
     )
@@ -18,6 +27,13 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _get_protocol_specs() -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
+        """Get cached mapping of protocol names to type check predicates.
+
+        Returns:
+            Mapping of protocol name (str) to predicate function that validates if
+            a value implements that protocol.
+
+        """
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
                 c.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
@@ -34,6 +50,12 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _get_protocol_type_map() -> Mapping[type, str]:
+        """Get cached mapping of protocol types to their string names.
+
+        Returns:
+            Mapping of protocol type (class) to its canonical string identifier.
+
+        """
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
@@ -54,18 +76,48 @@ class FlextUtilitiesGuardsTypeProtocol:
     def is_context(
         value: object,
     ) -> TypeIs[p.Context]:
+        """Check if value is a Context protocol instance.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value implements Context protocol, False otherwise.
+
+        """
         return isinstance(value, p.Context)
 
     @staticmethod
     def is_handler_callable(
         value: object,
     ) -> TypeIs[t.HandlerCallable]:
+        """Check if value is a callable handler function.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is callable, False otherwise.
+
+        """
         return callable(value)
 
     @staticmethod
     def is_handler_type(
         value: t.NormalizedValue | t.HandlerCallable,
     ) -> TypeIs[t.HandlerLike]:
+        """Check if value can be used as a handler.
+
+        Handlers can be callables, mappings, BaseModel instances,
+        or objects with handle/can_handle methods.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is a valid handler-like type, False otherwise.
+
+        """
         return (
             callable(value)
             or isinstance(value, Mapping)
@@ -82,30 +134,78 @@ class FlextUtilitiesGuardsTypeProtocol:
     def is_registerable(
         value: object,
     ) -> TypeIs[t.RegisterableService]:
+        """Check if value can be registered as a service.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is a registerable service type, False otherwise.
+
+        """
         return FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
 
     @staticmethod
     def is_factory(
         value: object,
     ) -> TypeIs[t.FactoryCallable]:
+        """Check if value is a factory callable.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is callable, False otherwise.
+
+        """
         return callable(value)
 
     @staticmethod
     def is_resource(
         value: object,
     ) -> TypeIs[t.ResourceCallable]:
+        """Check if value is a resource factory callable.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is callable, False otherwise.
+
+        """
         return callable(value)
 
     @staticmethod
     def is_result_like(
         value: object,
     ) -> TypeIs[p.ResultLike[t.RuntimeAtomic]]:
+        """Check if value is a ResultLike protocol instance.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value implements ResultLike protocol, False otherwise.
+
+        """
         return isinstance(value, p.ResultLike)
 
     @staticmethod
     def is_registerable_service(
         value: object,
     ) -> TypeIs[t.RegisterableService]:
+        """Check if value can be registered as a service in the DI container.
+
+        Accepts None, primitives, BaseModel, Path, Mapping, callables, sequences
+        (except str/bytes), Context, and objects with __dict__ or bind/info attrs.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is a registerable service, False otherwise.
+
+        """
         return (
             value is None
             or isinstance(value, (str, int, float, bool, BaseModel, Path, Mapping))
@@ -121,6 +221,16 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _run_string_type_check(type_name: str, value: t.NormalizedValue) -> bool:
+        """Check value against a string type specification.
+
+        Args:
+            type_name: String identifier for the type to check (e.g., 'str', 'list', 'dict').
+            value: Value to check.
+
+        Returns:
+            True if value matches the type specification, False otherwise.
+
+        """
         match type_name:
             case "str":
                 return bool(isinstance(value, str))
@@ -171,6 +281,16 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _check_protocol(value: t.NormalizedValue, name: str) -> bool:
+        """Check if value implements a named protocol.
+
+        Args:
+            value: Value to check.
+            name: Protocol name to verify against.
+
+        Returns:
+            True if value implements the protocol, False otherwise or on error.
+
+        """
         if name == c.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.is_context(value)
         try:
@@ -182,6 +302,15 @@ class FlextUtilitiesGuardsTypeProtocol:
     def _is_type_tuple(
         value: t.GuardInput,
     ) -> TypeIs[tuple[type, ...]]:
+        """Check if value is a tuple of types.
+
+        Args:
+            value: Value to check.
+
+        Returns:
+            True if value is a tuple, False otherwise.
+
+        """
         return isinstance(value, tuple)
 
     @staticmethod
@@ -189,6 +318,19 @@ class FlextUtilitiesGuardsTypeProtocol:
         value: t.NormalizedValue,
         type_spec: str | type | tuple[type, ...],
     ) -> bool:
+        """Check if value matches a type specification.
+
+        Supports string type names (e.g., 'str', 'dict'), protocol types,
+        actual type objects, and tuples of types for isinstance checks.
+
+        Args:
+            value: Value to check.
+            type_spec: Type specification (string name, type, or tuple of types).
+
+        Returns:
+            True if value matches the type specification, False otherwise.
+
+        """
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
             if type_name in FlextUtilitiesGuardsTypeProtocol._get_protocol_specs():

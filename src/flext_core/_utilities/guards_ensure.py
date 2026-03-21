@@ -1,3 +1,5 @@
+"""Type guard helpers with defensive assertions for normalized runtime data."""
+
 from __future__ import annotations
 
 import re
@@ -9,10 +11,23 @@ from flext_core import FlextUtilitiesGuardsType, m, p, r, t
 
 
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
+    """Ensure-style guard utility methods for data validation and normalization."""
+
     @staticmethod
     def _is_general_value_list(
         value: t.NormalizedValue,
     ) -> bool:
+        """Check if input value is a general list type.
+
+        Args:
+            value: The value to check. (t.NormalizedValue): The normalized value to be checked.
+
+        Returns:
+
+        Raises:
+            None
+
+        """
         return value.__class__ is list
 
     @staticmethod

@@ -63,10 +63,9 @@ class FlextModelsService:
         """Retry configuration for operations."""
 
         exponential_base: Annotated[
-            float,
+            t.BackoffMultiplier,
             Field(
                 default=c.RETRY_BACKOFF_BASE,
-                ge=1.0,
                 description="Exponential backoff base used to calculate retry delay growth.",
                 title="Exponential Base",
                 examples=[2.0],
@@ -90,26 +89,19 @@ class FlextModelsService:
         """Domain service execution request with advanced validation."""
 
         service_name: Annotated[
-            str,
-            Field(
-                min_length=c.RETRY_COUNT_MIN,
-                description="Service name",
-            ),
+            t.NonEmptyStr,
+            Field(description="Service name"),
         ]
         method_name: Annotated[
-            str,
-            Field(
-                min_length=c.RETRY_COUNT_MIN,
-                description="Method to execute",
-            ),
+            t.NonEmptyStr,
+            Field(description="Method to execute"),
         ]
         parameters: FlextModelsService.ServiceParameters | None = None
         context: FlextModelsService.TraceContext | None = None
         timeout_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=c.TIMEOUT,
-                gt=c.ZERO,
                 le=c.MAX_TIMEOUT_SECONDS,
                 description="Timeout from FlextSettings (Config has priority over Constants)",
             ),
@@ -130,9 +122,8 @@ class FlextModelsService:
         """Single operation in a batch."""
 
         operation_name: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
-                min_length=1,
                 description="Operation name executed as part of the batch request.",
                 title="Operation Name",
                 examples=["create_user", "sync_records"],
@@ -236,10 +227,9 @@ class FlextModelsService:
         ] = c.DEFAULT_RESOURCE_TYPE
         resource_id: str | None = None
         resource_limit: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.MAX_BATCH_SIZE,
-                gt=c.ZERO,
                 description="Maximum number of resources to retrieve or process in this request.",
                 title="Resource Limit",
                 examples=[100, 500],
@@ -294,10 +284,9 @@ class FlextModelsService:
         """Operation execution request."""
 
         operation_name: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 max_length=c.MAX_OPERATION_NAME_LENGTH,
-                min_length=c.RETRY_COUNT_MIN,
                 description="Operation name",
             ),
         ]
@@ -311,10 +300,9 @@ class FlextModelsService:
         arguments: FlextModelsService.ServiceParameters | None = None
         keyword_arguments: FlextModelsService.ServiceParameters | None = None
         timeout_seconds: Annotated[
-            float,
+            t.PositiveFloat,
             Field(
                 default=c.TIMEOUT,
-                gt=c.ZERO,
                 le=c.MAX_TIMEOUT_SECONDS,
                 description="Timeout from FlextSettings (Config has priority over Constants)",
             ),
@@ -348,6 +336,8 @@ class FlextModelsService:
         wire_classes: Sequence[type] | None = None
 
     class DependencyContainerCreationOptions(FlextModelFoundation.ArbitraryTypesModel):
+        """Options used to create and populate dependency container instances."""
+
         config: Annotated[
             t.ConfigMap | None,
             Field(

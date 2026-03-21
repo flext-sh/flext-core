@@ -25,12 +25,16 @@ class FlextProtocolsHandler:
         FlextProtocolsBase.Base,
         Protocol,
     ):
+        """Protocol that defines a typed message handler contract."""
+
         def can_handle(self, message_type: type) -> bool: ...
 
         def handle(self, message: MessageT) -> r[ResultT]: ...
 
     @runtime_checkable
     class DispatchMessage(Protocol):
+        """Protocol for routing a message through a dispatch path."""
+
         def dispatch_message(
             self,
             message: FlextProtocolsBase.Routable,
@@ -43,6 +47,8 @@ class FlextProtocolsHandler:
 
     @runtime_checkable
     class Handle(Protocol):
+        """Protocol for handle behaviors in CQRS message workflows."""
+
         def handle(
             self,
             message: FlextProtocolsBase.Routable,
@@ -55,6 +61,8 @@ class FlextProtocolsHandler:
 
     @runtime_checkable
     class Execute(Protocol):
+        """Protocol to execute routed messages and return transformed results."""
+
         def execute(
             self,
             message: FlextProtocolsBase.Routable,
@@ -67,6 +75,8 @@ class FlextProtocolsHandler:
 
     @runtime_checkable
     class Dispatcher(FlextProtocolsBase.Base, Protocol):
+        """Protocol for dispatching and publishing messages in CQRS systems."""
+
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
@@ -86,6 +96,8 @@ class FlextProtocolsHandler:
 
     @runtime_checkable
     class Middleware(FlextProtocolsBase.Base, Protocol):
+        """Protocol for middleware layers in handler execution chains."""
+
         def process[TResult](
             self,
             command: FlextProtocolsBase.Model,

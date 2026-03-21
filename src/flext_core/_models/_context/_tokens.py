@@ -32,9 +32,8 @@ class FlextModelsContextTokens:
         """
 
         key: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
-                min_length=c.RETRY_COUNT_MIN,
                 pattern=c.PATTERN_IDENTIFIER_WITH_UNDERSCORE,
                 description="Context variable key (alphanumeric, underscore)",
                 examples=["correlation_id", "service_name", "user_id"],
@@ -58,9 +57,8 @@ class FlextModelsContextTokens:
         """
 
         key: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
-                min_length=c.RETRY_COUNT_MIN,
                 description="Unique key for the context variable",
                 examples=["user_id", "request_id", "session_id"],
             ),
