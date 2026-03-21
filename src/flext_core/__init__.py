@@ -30,6 +30,12 @@ if TYPE_CHECKING:
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
+    from flext_core._models._context._data import FlextModelsContextData
+    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core._models._context._metadata import FlextModelsContextMetadata
+    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._scope import FlextModelsContextScope
+    from flext_core._models._context._tokens import FlextModelsContextTokens
     from flext_core._models.base import FlextModelFoundation
     from flext_core._models.collections import FlextModelsCollections
     from flext_core._models.container import FlextModelsContainer
@@ -169,6 +175,30 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextModelsContainer": ("flext_core._models.container", "FlextModelsContainer"),
     "FlextModelsContainers": ("flext_core._models.containers", "FlextModelsContainers"),
     "FlextModelsContext": ("flext_core._models.context", "FlextModelsContext"),
+    "FlextModelsContextData": (
+        "flext_core._models._context._data",
+        "FlextModelsContextData",
+    ),
+    "FlextModelsContextExport": (
+        "flext_core._models._context._export",
+        "FlextModelsContextExport",
+    ),
+    "FlextModelsContextMetadata": (
+        "flext_core._models._context._metadata",
+        "FlextModelsContextMetadata",
+    ),
+    "FlextModelsContextProxyVar": (
+        "flext_core._models._context._proxy_var",
+        "FlextModelsContextProxyVar",
+    ),
+    "FlextModelsContextScope": (
+        "flext_core._models._context._scope",
+        "FlextModelsContextScope",
+    ),
+    "FlextModelsContextTokens": (
+        "flext_core._models._context._tokens",
+        "FlextModelsContextTokens",
+    ),
     "FlextModelsCqrs": ("flext_core._models.cqrs", "FlextModelsCqrs"),
     "FlextModelsDecorators": ("flext_core._models.decorators", "FlextModelsDecorators"),
     "FlextModelsDispatcher": ("flext_core._models.dispatcher", "FlextModelsDispatcher"),
@@ -355,6 +385,12 @@ __all__ = [
     "FlextModelsContainer",
     "FlextModelsContainers",
     "FlextModelsContext",
+    "FlextModelsContextData",
+    "FlextModelsContextExport",
+    "FlextModelsContextMetadata",
+    "FlextModelsContextProxyVar",
+    "FlextModelsContextScope",
+    "FlextModelsContextTokens",
     "FlextModelsCqrs",
     "FlextModelsDecorators",
     "FlextModelsDispatcher",

@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from . import patterns as patterns
+    from .patterns._models import TestIntegrationPatternModels
     from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .patterns.test_architectural_patterns import TestArchitecturalPatterns
     from .patterns.test_patterns_commands import TestPatternsCommands
@@ -66,6 +67,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_infra_integration",
         "TestInfraIntegration",
     ),
+    "TestIntegrationPatternModels": (
+        "tests.integration.patterns._models",
+        "TestIntegrationPatternModels",
+    ),
     "TestLibraryIntegration": (
         "tests.integration.test_integration",
         "TestLibraryIntegration",
@@ -116,6 +121,7 @@ __all__ = [
     "TestFunction",
     "TestIdempotency",
     "TestInfraIntegration",
+    "TestIntegrationPatternModels",
     "TestLibraryIntegration",
     "TestMigrationValidation",
     "TestPatternsCommands",
