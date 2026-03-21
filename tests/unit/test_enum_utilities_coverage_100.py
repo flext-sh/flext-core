@@ -246,7 +246,7 @@ class TestEnumUtilitiesCoverage:
             value_typed: bool | float | int | str | self.Status = scenario.value
         else:
             value_typed = str(scenario.value)
-        valid_members: frozenset[self.Status] = scenario.valid_members  # type: ignore[assignment]
+        valid_members: frozenset[self.Status] = scenario.valid_members
         result = u.is_subset(
             self.Status,
             valid_members,

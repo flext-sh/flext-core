@@ -20,7 +20,7 @@ from flext_core import FlextContainer, FlextContext, FlextSettings, r, t as core
 
 setattr(builtins, "t", core_t)
 
-from .helpers.scenarios import (  # noqa: E402 — must run after builtins.t assignment above
+from .helpers.scenarios import (
     TestHelperScenarios,
 )
 

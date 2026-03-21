@@ -100,7 +100,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 self._result = Success(self.value)
             else:
                 self._result = Failure(self.error or "")
-        return self._result  # type: ignore[return-value]  # PrivateAttr union includes None but guaranteed non-None here
+        return self._result
 
     @classmethod
     def _fail_like[S](
