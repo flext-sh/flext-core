@@ -1,0 +1,38 @@
+tests/unit/test_automated_runtime.py
+  7d92cadfcdb5a40e 13
+src/flext_core/constants.py
+  01c8faa05c8b90f0 31-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "96b5aeb8dcc4d0b1e18acc2dfd6e8317293b1f75",
+  "prompts": {
+    "01c8faa05c8b90f0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "310e4ce5-8c39-4800-bac2-326425db0d61",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 2,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "7d92cadfcdb5a40e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2ef162a8affeCJh0x30UVhVjRT",
+        "model": "openai/gpt-5.2"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
