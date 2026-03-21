@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from flext_core._protocols.registry import FlextProtocolsRegistry
     from flext_core._protocols.result import FlextProtocolsResult
     from flext_core._protocols.service import FlextProtocolsService
-    from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),

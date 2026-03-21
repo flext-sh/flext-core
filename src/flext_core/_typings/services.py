@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING, TypeAliasType
 
 from pydantic import BaseModel
 
-from flext_core import FlextTypingBase
-from flext_core import FlextTypingContainers
+from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import FlextProtocols as p

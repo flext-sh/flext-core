@@ -14,8 +14,7 @@ from re import Pattern
 from pydantic import ConfigDict
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextTypingBase
-from flext_core import FlextTypingContainers
+from flext_core import FlextTypingBase, FlextTypingContainers
 
 
 class FlextTypesCore(FlextTypingBase, FlextTypingContainers):

@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
     from . import contracts as contracts, flext_tests as flext_tests
     from .conftest_infra import (
         infra_git,

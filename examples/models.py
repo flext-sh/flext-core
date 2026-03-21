@@ -2,22 +2,18 @@
 
 from __future__ import annotations
 
-from ._models.ex00 import Ex00UserInput, Ex00UserProfile
-from ._models.ex01 import (
+from examples import (
+    Ex00UserInput,
+    Ex00UserProfile,
     Ex01DemonstrationResult,
     Ex01InvalidPersonPayload,
     Ex01RunDemonstrationCommand,
     Ex01User,
     Ex01ValidPersonPayload,
-)
-from ._models.ex02 import (
     Ex02CacheService,
     Ex02DatabaseService,
     Ex02EmailService,
     Ex02TestConfig,
-)
-from ._models.ex03 import Ex03Email, Ex03Money, Ex03Order, Ex03OrderItem, Ex03User
-from ._models.ex04 import (
     Ex04AutoCommand,
     Ex04CreateUser,
     Ex04DeleteUser,
@@ -27,23 +23,18 @@ from ._models.ex04 import (
     Ex04Ping,
     Ex04UnknownQuery,
     Ex04UserCreated,
-)
-from ._models.ex05 import (
     Ex05BadProcessor,
     Ex05GoodProcessor,
     Ex05HandlerBad,
     Ex05HandlerLike,
     Ex05StatusEnum,
     Ex05UserModel,
-)
-from ._models.ex07 import (
     Ex07CreateUserCommand,
     Ex07DemoPlugin,
     Ex07GetUserQuery,
     Ex07UserCreatedEvent,
-)
-from ._models.ex08 import Ex08Order, Ex08User
-from ._models.ex10 import (
+    Ex08Order,
+    Ex08User,
     Ex10CommandBusStub,
     Ex10ContextPayload,
     Ex10DerivedMessage,
@@ -53,8 +44,6 @@ from ._models.ex10 import (
     Ex10ProcessorGood,
     Ex10ProtocolHandler,
     Ex10ServiceStub,
-)
-from ._models.ex11 import (
     Ex11CommandBusStub,
     Ex11EntityStub,
     Ex11HandlerLike,
@@ -62,11 +51,17 @@ from ._models.ex11 import (
     Ex11Payload,
     Ex11ProcessorProtocolBad,
     Ex11ProcessorProtocolGood,
+    Ex12CommandA,
+    Ex12CommandB,
+    Ex14CreateUserCommand,
+    Ex14GetUserQuery,
+    Ex14UserDTO,
+    ExConfigAppConfig,
+    SharedHandle,
+    SharedPerson,
 )
-from ._models.ex12 import Ex12CommandA, Ex12CommandB
-from ._models.ex14 import Ex14CreateUserCommand, Ex14GetUserQuery, Ex14UserDTO
-from ._models.exconfig import ExConfigAppConfig
-from ._models.shared import SharedHandle, SharedPerson
+
+from .examples import Ex03Email, Ex03Money, Ex03Order, Ex03OrderItem, Ex03User
 
 
 class FlextCoreExampleModels:

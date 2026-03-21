@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
     from . import patterns as patterns
     from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .patterns.test_architectural_patterns import TestArchitecturalPatterns

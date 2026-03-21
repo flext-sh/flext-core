@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
-    from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),

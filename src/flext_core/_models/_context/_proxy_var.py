@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 import structlog.contextvars
 
 if TYPE_CHECKING:
-    from flext_core import t
-    from flext_core._models._context._tokens import (
+    from flext_core import (
         FlextModelsContextTokens,
+        t,
     )
 
 

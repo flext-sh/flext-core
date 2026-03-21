@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
     from .text_contract import TextUtilityContract
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

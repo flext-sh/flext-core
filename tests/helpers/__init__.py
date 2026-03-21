@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
     from .factories import TestHelperFactories
     from .factories_impl import (
         FailingService,

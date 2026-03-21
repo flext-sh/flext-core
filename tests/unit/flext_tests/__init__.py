@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
     from .test_docker import TestDocker
     from .test_domains import TestFlextTestsDomains
     from .test_files import TestFlextTestsFiles
@@ -24,9 +22,15 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
-    "TestFlextTestsDomains": ("tests.unit.flext_tests.test_domains", "TestFlextTestsDomains"),
+    "TestFlextTestsDomains": (
+        "tests.unit.flext_tests.test_domains",
+        "TestFlextTestsDomains",
+    ),
     "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
-    "TestFlextTestsMatchers": ("tests.unit.flext_tests.test_matchers", "TestFlextTestsMatchers"),
+    "TestFlextTestsMatchers": (
+        "tests.unit.flext_tests.test_matchers",
+        "TestFlextTestsMatchers",
+    ),
     "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
 }
 

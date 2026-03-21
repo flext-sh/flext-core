@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 if TYPE_CHECKING:
     from flext_infra import d, e, h, r, s, x
 
-    from flext_core.typings import FlextTypes
-
     from . import (
         benchmark as benchmark,
         helpers as helpers,

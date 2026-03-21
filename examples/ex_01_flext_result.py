@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from examples.shared import Examples
+from examples import Examples
 from flext_core import r, t
 
 

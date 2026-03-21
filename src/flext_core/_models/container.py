@@ -19,10 +19,12 @@ from typing import Annotated, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core._models import FlextModelFoundation
-from flext_core.constants import FlextConstants as c
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import FlextTypes as t
+from flext_core import (
+    FlextConstants as c,
+    FlextModelFoundation,
+    FlextProtocols as p,
+    FlextTypes as t,
+)
 
 
 def _generate_datetime_utc() -> datetime:

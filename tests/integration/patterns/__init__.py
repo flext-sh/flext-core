@@ -26,8 +26,6 @@ if TYPE_CHECKING:
 
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
-
     from .test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .test_architectural_patterns import TestArchitecturalPatterns
     from .test_patterns_commands import TestPatternsCommands
@@ -35,13 +33,34 @@ if TYPE_CHECKING:
     from .test_patterns_testing import TestPatternsTesting, pytestmark
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "EXPECTED_BULK_SIZE": ("tests.integration.patterns.test_patterns_logging", "EXPECTED_BULK_SIZE"),
-    "TestAdvancedPatterns": ("tests.integration.patterns.test_advanced_patterns", "TestAdvancedPatterns"),
-    "TestArchitecturalPatterns": ("tests.integration.patterns.test_architectural_patterns", "TestArchitecturalPatterns"),
-    "TestFunction": ("tests.integration.patterns.test_advanced_patterns", "TestFunction"),
-    "TestPatternsCommands": ("tests.integration.patterns.test_patterns_commands", "TestPatternsCommands"),
-    "TestPatternsLogging": ("tests.integration.patterns.test_patterns_logging", "TestPatternsLogging"),
-    "TestPatternsTesting": ("tests.integration.patterns.test_patterns_testing", "TestPatternsTesting"),
+    "EXPECTED_BULK_SIZE": (
+        "tests.integration.patterns.test_patterns_logging",
+        "EXPECTED_BULK_SIZE",
+    ),
+    "TestAdvancedPatterns": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestAdvancedPatterns",
+    ),
+    "TestArchitecturalPatterns": (
+        "tests.integration.patterns.test_architectural_patterns",
+        "TestArchitecturalPatterns",
+    ),
+    "TestFunction": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestFunction",
+    ),
+    "TestPatternsCommands": (
+        "tests.integration.patterns.test_patterns_commands",
+        "TestPatternsCommands",
+    ),
+    "TestPatternsLogging": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestPatternsLogging",
+    ),
+    "TestPatternsTesting": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestPatternsTesting",
+    ),
     "pytestmark": ("tests.integration.patterns.test_patterns_testing", "pytestmark"),
 }
 
