@@ -55,7 +55,7 @@ class FlextModelsCqrs:
             ),
         ] = c.DEFAULT_COMMAND_TYPE
         command_id: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"),
                 description="Unique command identifier used for tracing and idempotency checks.",
@@ -63,7 +63,7 @@ class FlextModelsCqrs:
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ]
-        issuer_id: str | None = None
+        issuer_id: t.NonEmptyStr | None = None
 
         @property
         def event_type(self) -> str | None:
@@ -143,12 +143,15 @@ class FlextModelsCqrs:
             title="Pagination",
             examples=[{"page": 1, "size": 50}],
         )
-        query_id: str = Field(
-            default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
-            description="Unique query identifier used for tracing and cache correlation.",
-            title="Query Id",
-            examples=["query_01HZX7Q0P5N6M2"],
-        )
+        query_id: Annotated[
+            t.NonEmptyStr,
+            Field(
+                default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
+                description="Unique query identifier used for tracing and cache correlation.",
+                title="Query Id",
+                examples=["query_01HZX7Q0P5N6M2"],
+            ),
+        ]
         query_type: str | None = None
 
         @property
@@ -260,7 +263,7 @@ class FlextModelsCqrs:
             ),
         ] = c.TIMEOUT
         max_cache_size: Annotated[
-            int,
+            t.PositiveInt,
             Field(
                 default=c.DEFAULT_MAX_CACHE_SIZE,
                 description="Maximum cache size",
@@ -284,8 +287,12 @@ class FlextModelsCqrs:
                 "description": "CQRS handler configuration",
             },
         )
-        handler_id: Annotated[str, Field(description="Unique handler identifier")]
-        handler_name: Annotated[str, Field(description="Human-readable handler name")]
+        handler_id: Annotated[
+            t.NonEmptyStr, Field(description="Unique handler identifier")
+        ]
+        handler_name: Annotated[
+            t.NonEmptyStr, Field(description="Human-readable handler name")
+        ]
         handler_type: Annotated[
             c.HandlerType,
             Field(
@@ -417,7 +424,7 @@ class FlextModelsCqrs:
                 description="Message type discriminator (always 'event')",
             ),
         ] = "event"
-        event_type: Annotated[str, Field(description="Event type identifier")]
+        event_type: Annotated[t.NonEmptyStr, Field(description="Event type identifier")]
 
         @property
         def command_type(self) -> str | None:
@@ -430,13 +437,13 @@ class FlextModelsCqrs:
             return None
 
         aggregate_id: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 description="ID of the aggregate that generated this event",
             ),
         ]
         event_id: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
                 description="Unique event identifier used for deduplication and observability.",

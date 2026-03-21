@@ -6,18 +6,26 @@ from flext_core import m
 
 
 class Ex04CreateUser(m.Command):
+    """Command to create a new user in example 04."""
+
     username: str
 
 
 class Ex04GetUser(m.Query):
+    """Query to get a user record by username in example 04."""
+
     username: str
 
 
 class Ex04DeleteUser(m.Command):
+    """Command to delete a user in example 04."""
+
     username: str
 
 
 class Ex04FailingDelete(m.Command):
+    """Command deliberately fails to demonstrate error handling in example 04."""
+
     username: str
 
 

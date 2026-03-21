@@ -342,7 +342,7 @@ class FlextModelsCollections:
         """Batch processing options for collection operations."""
 
         size: Annotated[
-            int | None,
+            t.PositiveInt | None,
             Field(
                 default=None,
                 title="Batch Size",
@@ -534,11 +534,17 @@ class FlextModelsCollections:
         """Parameters for regex pattern application."""
 
         text: Annotated[str, Field(description="Text to apply pattern to")]
-        pattern: Annotated[str, Field(description="Regex pattern")]
+        pattern: Annotated[t.NonEmptyStr, Field(description="Regex pattern")]
         replacement: Annotated[str, Field(description="Replacement string")]
-        flags: Annotated[int, Field(default=0, description="Regex flags")] = 0
-        pattern_index: Annotated[int, Field(description="Index of pattern in pipeline")]
-        total_patterns: Annotated[int, Field(description="Total number of patterns")]
+        flags: Annotated[
+            t.NonNegativeInt, Field(default=0, description="Regex flags")
+        ] = 0
+        pattern_index: Annotated[
+            t.NonNegativeInt, Field(description="Index of pattern in pipeline")
+        ]
+        total_patterns: Annotated[
+            t.PositiveInt, Field(description="Total number of patterns")
+        ]
 
 
 __all__ = ["FlextModelsCollections"]

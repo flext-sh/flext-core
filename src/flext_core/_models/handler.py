@@ -80,15 +80,15 @@ class FlextModelsHandler:
         including status, mode, and identification.
         """
 
-        handler_name: Annotated[str, Field(description="Name of the handler")]
+        handler_name: Annotated[t.NonEmptyStr, Field(description="Name of the handler")]
         status: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 description="Registration status (registered, skipped, failed)",
             ),
         ]
         mode: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(description="Registration mode (auto_discovery, explicit)"),
         ]
         handler_mode: Annotated[

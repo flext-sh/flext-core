@@ -68,11 +68,11 @@ class FlextGenericModels:
             str | None,
             Field(default=None, description="Source system"),
         ] = None
-        user_id: Annotated[str | None, Field(default=None, description="User ID")] = (
-            None
-        )
+        user_id: Annotated[
+            t.NonEmptyStr | None, Field(default=None, description="User ID")
+        ] = None
         tenant_id: Annotated[
-            str | None,
+            t.NonEmptyStr | None,
             Field(default=None, description="Tenant ID"),
         ] = None
         environment: Annotated[
@@ -110,7 +110,7 @@ class FlextGenericModels:
         Used by: FlextService.get_info(), monitoring, health checks.
         """
 
-        name: Annotated[str, Field(description="Service name")]
+        name: Annotated[t.NonEmptyStr, Field(description="Service name")]
         version: Annotated[
             str | None,
             Field(default=None, description="Service version"),
@@ -141,7 +141,9 @@ class FlextGenericModels:
         host: Annotated[
             t.HostnameStr | None, Field(default=None, description="Host")
         ] = None
-        pid: Annotated[int | None, Field(default=None, description="Process ID")] = None
+        pid: Annotated[
+            t.PositiveInt | None, Field(default=None, description="Process ID")
+        ] = None
         memory_usage_mb: Annotated[
             t.NonNegativeFloat | None,
             Field(default=None, description="Memory MB"),
@@ -244,7 +246,7 @@ class FlextGenericModels:
             Field(default=None, description="Service version"),
         ] = None
         duration_ms: Annotated[
-            float | None,
+            t.NonNegativeFloat | None,
             Field(default=None, description="Check duration ms"),
         ] = None
         environment: Annotated[
@@ -281,11 +283,21 @@ class FlextGenericModels:
         Used by: batch operations, migrations, sync, data processing.
         """
 
-        success_count: Annotated[int, Field(default=0, description="Successes")] = 0
-        failure_count: Annotated[int, Field(default=0, description="Failures")] = 0
-        skipped_count: Annotated[int, Field(default=0, description="Skipped")] = 0
-        warning_count: Annotated[int, Field(default=0, description="Warnings")] = 0
-        retry_count: Annotated[int, Field(default=0, description="Retries")] = 0
+        success_count: Annotated[
+            t.NonNegativeInt, Field(default=0, description="Successes")
+        ] = 0
+        failure_count: Annotated[
+            t.NonNegativeInt, Field(default=0, description="Failures")
+        ] = 0
+        skipped_count: Annotated[
+            t.NonNegativeInt, Field(default=0, description="Skipped")
+        ] = 0
+        warning_count: Annotated[
+            t.NonNegativeInt, Field(default=0, description="Warnings")
+        ] = 0
+        retry_count: Annotated[
+            t.NonNegativeInt, Field(default=0, description="Retries")
+        ] = 0
         start_time: Annotated[
             datetime | None,
             Field(default=None, description="Start time"),
@@ -295,7 +307,7 @@ class FlextGenericModels:
             Field(default=None, description="Last update"),
         ] = None
         estimated_total: Annotated[
-            int | None,
+            t.NonNegativeInt | None,
             Field(default=None, description="Estimated total"),
         ] = None
         current_item: Annotated[
@@ -393,7 +405,7 @@ class FlextGenericModels:
             Field(default=None, description="Target format"),
         ] = None
         total_input_count: Annotated[
-            int | None,
+            t.NonNegativeInt | None,
             Field(default=None, description="Total input count"),
         ] = None
         metadata: Annotated[

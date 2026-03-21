@@ -45,7 +45,12 @@ class FlextVersion:
 
     @classmethod
     def get_package_info(cls) -> Mapping[str, str]:
-        """Get comprehensive package information dictionary."""
+        """Get comprehensive package information dictionary.
+
+        Returns:
+            Mapping[str, str]: Metadata including name, version, author, license, and url.
+
+        """
         return {
             "name": cls.__title__,
             "version": cls.__version__,
@@ -60,12 +65,15 @@ class FlextVersion:
     def get_version_info(cls) -> tuple[int | str, ...]:
         """Get package version as comparison-friendly tuple.
 
-        Returns version information as a tuple for easy numeric comparison.
-        Each element is either an integer (for numeric version parts) or
-        string (for pre-release identifiers).
+        Args:
+            None.
 
         Returns:
-            tuple[int | str, ...]: Version tuple for comparison (e.g., (1, 0, 0))
+            tuple[int | str, ...]: Version tuple for comparison.
+
+        Notes:
+            Each element is either an integer (numeric version-segment) or a
+            string (pre-release identifier).
 
         """
         return cls.__version_info__
@@ -74,18 +82,31 @@ class FlextVersion:
     def get_version_string(cls) -> str:
         """Get package version as human-readable string.
 
-        Returns the package version in string format suitable for display
-        and logging. Follows PEP 440 semantic versioning format.
+        Args:
+            None.
 
         Returns:
-            str: Version string (e.g., "1.0.0", "1.0.0rc1")
+            str: Semantic version string.
+
+        Notes:
+            This follows PEP 440 semantic versioning.
 
         """
         return cls.__version__
 
     @classmethod
     def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
-        """Check if current version meets minimum version requirement."""
+        """Check if current version meets minimum version requirement.
+
+        Args:
+            major: Major version to compare.
+            minor: Minor version to compare.
+            patch: Patch version to compare.
+
+        Returns:
+            bool: True if current version is greater or equal to provided version.
+
+        """
         return cls.__version_info__ >= (major, minor, patch)
 
 

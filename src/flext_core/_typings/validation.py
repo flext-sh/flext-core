@@ -38,6 +38,9 @@ class FlextTypesValidation:
     type PortNumber = Annotated[int, Ge(1), Le(65535)]
     type RetryCount = Annotated[int, Ge(0), Le(10)]
     type WorkerCount = Annotated[int, Ge(1), Le(100)]
+    type HttpStatusCode = Annotated[int, Ge(100), Le(599)]
+    type BatchSize = Annotated[int, Ge(1), Le(10000)]
+    type MaxLength = Annotated[int, Ge(1)]
 
     # -- float constraints ----------------------------------------------------
     type PositiveFloat = Annotated[float, Gt(0.0)]
@@ -45,3 +48,4 @@ class FlextTypesValidation:
     type PositiveTimeout = Annotated[float, Gt(0.0), Le(300.0)]
     type BackoffMultiplier = Annotated[float, Ge(1.0)]
     type Percentage = Annotated[float, Ge(0.0), Le(100.0)]
+    type DecimalFraction = Annotated[float, Ge(0.0), Le(1.0)]

@@ -107,7 +107,6 @@ if TYPE_CHECKING:
     )
     from .helpers.scenarios import TestHelperScenarios
     from .integration import patterns as patterns
-    from .integration.patterns._models import TestIntegrationPatternModels
     from .integration.patterns.test_advanced_patterns import (
         TestAdvancedPatterns,
         TestFunction,
@@ -150,7 +149,6 @@ if TYPE_CHECKING:
     )
     from .typings import T_co, T_contra, TestsFlextTypes, TestsFlextTypes as t
     from .unit import contracts as contracts, flext_tests as flext_tests
-    from .unit._models import TestUnitModels
     from .unit._models_impl import (
         BadConfigForTest,
         CacheTestModel,
@@ -1041,10 +1039,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_infra_integration",
         "TestInfraIntegration",
     ),
-    "TestIntegrationPatternModels": (
-        "tests.integration.patterns._models",
-        "TestIntegrationPatternModels",
-    ),
     "TestLibraryIntegration": (
         "tests.integration.test_integration",
         "TestLibraryIntegration",
@@ -1141,7 +1135,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_typings_full_coverage",
         "TestTypingsFullCoverage",
     ),
-    "TestUnitModels": ("tests.unit._models", "TestUnitModels"),
     "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
     "TestUtilitiesCheckerFullCoverage": (
         "tests.unit.test_utilities_checker_full_coverage",
@@ -2412,7 +2405,6 @@ __all__ = [
     "TestHelperScenarios",
     "TestIdempotency",
     "TestInfraIntegration",
-    "TestIntegrationPatternModels",
     "TestLibraryIntegration",
     "TestLoggingsErrorPaths",
     "TestLoggingsStrictReturns",
@@ -2440,7 +2432,6 @@ __all__ = [
     "TestServiceResultProperty",
     "TestTypings",
     "TestTypingsFullCoverage",
-    "TestUnitModels",
     "TestUtilities",
     "TestUtilitiesCheckerFullCoverage",
     "TestUtilitiesCollectionCoverage",
@@ -2806,13 +2797,40 @@ __all__ = [
 ]
 
 
+_LAZY_CACHE: dict[str, object] = {}
+
+
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+    """Lazy-load module attributes on first access (PEP 562).
+
+    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
+    accesses during process lifetime.
+
+    Args:
+        name: Attribute name requested by dir()/import.
+
+    Returns:
+        Lazy-loaded module export type.
+
+    Raises:
+        AttributeError: If attribute not registered.
+
+    """
+    if name in _LAZY_CACHE:
+        return _LAZY_CACHE[name]
+
+    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+    _LAZY_CACHE[name] = value
+    return value
 
 
 def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
+    """Return list of available attributes for dir() and autocomplete.
+
+    Returns:
+        List of public names from module exports.
+
+    """
     return sorted(__all__)
 
 

@@ -214,7 +214,7 @@ class FlextModelsContainers:
             ),
         ] = 0
         success_count: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=0,
                 title="Success Count",
@@ -223,7 +223,7 @@ class FlextModelsContainers:
             ),
         ] = 0
         error_count: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=0,
                 title="Error Count",

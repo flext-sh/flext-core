@@ -13,7 +13,7 @@ import concurrent.futures
 import secrets
 import time
 from collections.abc import Mapping
-from typing import override
+from typing import Annotated, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -31,9 +31,12 @@ class FlextModelsDispatcher:
         use_timeout_executor: bool = Field(
             description="Whether timeout executor is enabled",
         )
-        executor_workers: int = Field(
-            description="Number of worker threads for timeout executor",
-        )
+        executor_workers: Annotated[
+            t.PositiveInt,
+            Field(
+                description="Number of worker threads for timeout executor",
+            ),
+        ]
         _executor: concurrent.futures.ThreadPoolExecutor | None = PrivateAttr(
             default=None,
         )
@@ -129,13 +132,22 @@ class FlextModelsDispatcher:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        threshold: int = Field(description="Failure count before opening circuit")
-        recovery_timeout: float = Field(
-            description="Seconds before attempting recovery",
-        )
-        success_threshold: int = Field(
-            description="Successes needed to close from half-open",
-        )
+        threshold: Annotated[
+            t.PositiveInt,
+            Field(description="Failure count before opening circuit"),
+        ]
+        recovery_timeout: Annotated[
+            t.PositiveFloat,
+            Field(
+                description="Seconds before attempting recovery",
+            ),
+        ]
+        success_threshold: Annotated[
+            t.PositiveInt,
+            Field(
+                description="Successes needed to close from half-open",
+            ),
+        ]
         _failures: dict[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
@@ -372,11 +384,13 @@ class FlextModelsDispatcher:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        max_requests: int = Field(description="Maximum requests allowed per window")
-        window_seconds: float = Field(
+        max_requests: t.PositiveInt = Field(
+            description="Maximum requests allowed per window"
+        )
+        window_seconds: t.PositiveFloat = Field(
             description="Time window in seconds for rate limiting",
         )
-        jitter_factor: float = Field(
+        jitter_factor: t.DecimalFraction = Field(
             default=0.1,
             description="Jitter variance as fraction between 0.0 and 1.0",
         )
@@ -470,8 +484,10 @@ class FlextModelsDispatcher:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        max_attempts: int = Field(description="Maximum retry attempts allowed")
-        retry_delay: float = Field(
+        max_attempts: t.PositiveInt = Field(
+            description="Maximum retry attempts allowed"
+        )
+        retry_delay: t.PositiveFloat = Field(
             description="Base delay in seconds between retry attempts",
         )
         _attempts: dict[str, int] = PrivateAttr(

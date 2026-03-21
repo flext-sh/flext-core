@@ -27,10 +27,14 @@ class Ex01RunDemonstrationCommand(m.Command):
 
 
 class Ex01ValidPersonPayload(m.Value):
+    """Valid person payload model for demo validation."""
+
     name: str
     age: int
 
 
 class Ex01InvalidPersonPayload(m.Value):
+    """Invalid person payload model (for failure path tests)."""
+
     name: str
     age: str

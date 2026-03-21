@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
     from . import patterns as patterns
-    from .patterns._models import TestIntegrationPatternModels
     from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .patterns.test_architectural_patterns import TestArchitecturalPatterns
     from .patterns.test_patterns_commands import TestPatternsCommands
@@ -67,10 +66,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_infra_integration",
         "TestInfraIntegration",
     ),
-    "TestIntegrationPatternModels": (
-        "tests.integration.patterns._models",
-        "TestIntegrationPatternModels",
-    ),
     "TestLibraryIntegration": (
         "tests.integration.test_integration",
         "TestLibraryIntegration",
@@ -121,7 +116,6 @@ __all__ = [
     "TestFunction",
     "TestIdempotency",
     "TestInfraIntegration",
-    "TestIntegrationPatternModels",
     "TestLibraryIntegration",
     "TestMigrationValidation",
     "TestPatternsCommands",
@@ -137,13 +131,40 @@ __all__ = [
 ]
 
 
+_LAZY_CACHE: dict[str, object] = {}
+
+
 def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+    """Lazy-load module attributes on first access (PEP 562).
+
+    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
+    accesses during process lifetime.
+
+    Args:
+        name: Attribute name requested by dir()/import.
+
+    Returns:
+        Lazy-loaded module export type.
+
+    Raises:
+        AttributeError: If attribute not registered.
+
+    """
+    if name in _LAZY_CACHE:
+        return _LAZY_CACHE[name]
+
+    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+    _LAZY_CACHE[name] = value
+    return value
 
 
 def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
+    """Return list of available attributes for dir() and autocomplete.
+
+    Returns:
+        List of public names from module exports.
+
+    """
     return sorted(__all__)
 
 

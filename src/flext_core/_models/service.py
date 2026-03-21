@@ -42,19 +42,25 @@ class FlextModelsService:
     class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""
 
-        trace_id: str = Field(
-            default_factory=lambda: str(uuid.uuid4()),
-            description="Distributed trace identifier shared across related service calls.",
-            title="Trace Id",
-            examples=["c8f2d73e-9870-4cba-b873-5b4a3f7b95f4"],
-        )
-        span_id: str = Field(
-            default_factory=lambda: str(uuid.uuid4()),
-            description="Span identifier for the current service operation within a trace.",
-            title="Span Id",
-            examples=["9fd8d2fd-a4bc-4b15-9e8a-47f6c7dd6a11"],
-        )
-        parent_span_id: str | None = None
+        trace_id: Annotated[
+            t.NonEmptyStr,
+            Field(
+                default_factory=lambda: str(uuid.uuid4()),
+                description="Distributed trace identifier shared across related service calls.",
+                title="Trace Id",
+                examples=["c8f2d73e-9870-4cba-b873-5b4a3f7b95f4"],
+            ),
+        ]
+        span_id: Annotated[
+            t.NonEmptyStr,
+            Field(
+                default_factory=lambda: str(uuid.uuid4()),
+                description="Span identifier for the current service operation within a trace.",
+                title="Span Id",
+                examples=["9fd8d2fd-a4bc-4b15-9e8a-47f6c7dd6a11"],
+            ),
+        ]
+        parent_span_id: t.NonEmptyStr | None = None
 
     class ServiceRetryConfiguration(
         FlextModelFoundation.FrozenStrictModel,
@@ -141,7 +147,7 @@ class FlextModelsService:
     class DomainServiceBatchRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service batch request."""
 
-        service_name: str
+        service_name: t.NonEmptyStr
         operations: Annotated[
             list[FlextModelsService.BatchOperation],
             Field(
@@ -175,7 +181,7 @@ class FlextModelsService:
     class DomainServiceMetricsRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service metrics request."""
 
-        service_name: str
+        service_name: t.NonEmptyStr
         metric_types: Annotated[
             list[Literal["performance", "errors", "throughput"]],
             Field(
@@ -183,7 +189,7 @@ class FlextModelsService:
                 description="Types of metrics to collect",
             ),
         ]
-        time_range_seconds: int = c.DEFAULT_TIME_RANGE_SECONDS
+        time_range_seconds: t.PositiveInt = c.DEFAULT_TIME_RANGE_SECONDS
         aggregation: Annotated[
             str,
             Field(
@@ -214,7 +220,7 @@ class FlextModelsService:
     class DomainServiceResourceRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service resource request."""
 
-        service_name: str = c.DEFAULT_SERVICE_NAME
+        service_name: t.NonEmptyStr = c.DEFAULT_SERVICE_NAME
         resource_type: Annotated[
             str,
             Field(
@@ -259,9 +265,9 @@ class FlextModelsService:
     class AclResponse(FlextModelFoundation.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
 
-        resource: Annotated[str, Field(description="Resource identifier")]
-        user: Annotated[str, Field(description="User identifier")]
-        action: Annotated[str, Field(description="Requested action")]
+        resource: Annotated[t.NonEmptyStr, Field(description="Resource identifier")]
+        user: Annotated[t.NonEmptyStr, Field(description="User identifier")]
+        action: Annotated[t.NonEmptyStr, Field(description="Requested action")]
         allowed: Annotated[bool, Field(description="Whether access is allowed")]
         permissions: Annotated[
             list[str],

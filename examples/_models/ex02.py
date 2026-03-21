@@ -15,6 +15,8 @@ class Ex02TestConfig(FlextSettings):
 
 
 class Ex02DatabaseService(m.Value):
+    """Database service model used in example 02 settings integration."""
+
     config: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
@@ -28,6 +30,8 @@ class Ex02DatabaseService(m.Value):
 
 
 class Ex02CacheService(m.Value):
+    """Cache service model used in example 02 settings integration."""
+
     config: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 
@@ -40,6 +44,8 @@ class Ex02CacheService(m.Value):
 
 
 class Ex02EmailService(m.Value):
+    """Email service model used in example 02 settings integration."""
+
     config: t.ConfigMap
     status: c.CommonStatus = c.CommonStatus.PENDING
 

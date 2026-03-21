@@ -538,7 +538,7 @@ class FlextModelFoundation:
 
         message_type: Literal["command"] = "command"
         command_type: str
-        issuer_id: str | None = None
+        issuer_id: t.NonEmptyStr | None = None
         data: Annotated[
             t.Dict,
             Field(
@@ -565,8 +565,8 @@ class FlextModelFoundation:
         """Event message with discriminated union support."""
 
         message_type: Literal["event"] = "event"
-        event_type: str
-        aggregate_id: str
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
         data: Annotated[
             t.Dict,
             Field(
@@ -759,10 +759,9 @@ class FlextModelFoundation:
             validate_assignment=True,
         )
         version: Annotated[
-            int,
+            t.NonNegativeInt,
             Field(
                 default=c.DEFAULT_VERSION,
-                ge=c.MIN_VERSION,
                 description="Version number for optimistic locking",
                 frozen=False,
             ),

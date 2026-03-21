@@ -675,7 +675,7 @@ class FlextModelsConfig:
         """
 
         message_type: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(
                 description="Message type name for routing and circuit breaker",
             ),
@@ -702,7 +702,7 @@ class FlextModelsConfig:
             ),
         ] = None
         operation_id: Annotated[
-            str,
+            t.NonEmptyStr,
             Field(description="Operation ID for timeout tracking"),
         ]
 
@@ -1079,8 +1079,12 @@ class FlextModelsConfig:
         Groups operation context and performance tracking.
         """
 
-        func_name: Annotated[str, Field(description="Function name for logging")]
-        func_module: Annotated[str, Field(description="Function module for logging")]
+        func_name: Annotated[
+            t.NonEmptyStr, Field(description="Function name for logging")
+        ]
+        func_module: Annotated[
+            t.NonEmptyStr, Field(description="Function module for logging")
+        ]
         correlation_id: Annotated[
             str | None,
             Field(default=None, description="Correlation ID for distributed tracing"),
@@ -1117,9 +1121,9 @@ class FlextModelsConfig:
         Groups logger, operation context, and exception details.
         """
 
-        op_name: Annotated[str, Field(description="Operation name")]
-        func_name: Annotated[str, Field(description="Function name")]
-        func_module: Annotated[str, Field(description="Function module")]
+        op_name: Annotated[t.NonEmptyStr, Field(description="Operation name")]
+        func_name: Annotated[t.NonEmptyStr, Field(description="Function name")]
+        func_module: Annotated[t.NonEmptyStr, Field(description="Function module")]
         correlation_id: Annotated[
             str | None,
             Field(default=None, description="Correlation ID for distributed tracing"),
