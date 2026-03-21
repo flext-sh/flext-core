@@ -23,13 +23,13 @@ class Ex06FlextContext(Examples):
         ctx = FlextContext.create(operation_id="op-demo", user_id="user-1")
         _ = ctx.set("meta_from_create", "v")
         self.check("create.instance", type(ctx).__name__)
-        self.check("create.has.operation", ctx.has(c.Context.KEY_OPERATION_ID))
-        self.check("create.has.user", ctx.has(c.Context.KEY_USER_ID))
+        self.check("create.has.operation", ctx.has(c.KEY_OPERATION_ID))
+        self.check("create.has.user", ctx.has(c.KEY_USER_ID))
         self.check("set.success", (_ := ctx.set("k1", "v1")).is_success)
         seed = FlextContext.create()
         _ = seed.set("k2", 2)
         _ = seed.set("k3", True)
-        payload = seed.iter_scope_vars()[c.Context.SCOPE_GLOBAL].get()
+        payload = seed.iter_scope_vars()[c.SCOPE_GLOBAL].get()
         self.check(
             "set_all.success", ctx.set(payload or t.ConfigMap(root={})).is_success
         )
@@ -180,33 +180,31 @@ class Ex06FlextContext(Examples):
         with FlextContext.Performance.timed_operation("bulk-sync") as op_meta:
             self.check(
                 "timed_operation.has_start",
-                c.Context.METADATA_KEY_START_TIME in op_meta,
+                c.METADATA_KEY_START_TIME in op_meta,
             )
             self.check(
                 "timed_operation.has_name",
-                op_meta.get(c.Context.KEY_OPERATION_NAME) or "",
+                op_meta.get(c.KEY_OPERATION_NAME) or "",
             )
             full_context = FlextContext.Serialization.get_full_context()
             self.check(
                 "serialization.has_correlation_key",
-                c.Context.KEY_CORRELATION_ID in full_context,
+                c.KEY_CORRELATION_ID in full_context,
             )
             self.check(
                 "serialization.has_operation_name",
-                full_context.get(c.Context.KEY_OPERATION_NAME) or "",
+                full_context.get(c.KEY_OPERATION_NAME) or "",
             )
-        self.check(
-            "timed_operation.has_end", c.Context.METADATA_KEY_END_TIME in op_meta
-        )
+        self.check("timed_operation.has_end", c.METADATA_KEY_END_TIME in op_meta)
         self.check(
             "timed_operation.has_duration",
-            c.Context.METADATA_KEY_DURATION_SECONDS in op_meta,
+            c.METADATA_KEY_DURATION_SECONDS in op_meta,
         )
         FlextContext.Utilities.clear_context()
         cleared_context = FlextContext.Serialization.get_full_context()
         self.check(
             "utilities.clear_context.correlation",
-            cleared_context.get(c.Context.KEY_CORRELATION_ID) or "",
+            cleared_context.get(c.KEY_CORRELATION_ID) or "",
         )
         ensured = FlextContext.Utilities.ensure_correlation_id()
         self.check("utilities.ensure_correlation_id.non_empty", len(ensured) > 0)

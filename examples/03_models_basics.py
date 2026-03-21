@@ -220,9 +220,7 @@ class Email(m.Value):
     """Email value object with advanced Pydantic 2 EmailStr validation."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
-    address: Annotated[
-        EmailStr, Field(min_length=5, max_length=c.Validation.MAX_EMAIL_LENGTH)
-    ]
+    address: Annotated[EmailStr, Field(min_length=5, max_length=c.MAX_EMAIL_LENGTH)]
 
 
 class Money(m.Value):
@@ -230,7 +228,7 @@ class Money(m.Value):
 
     model_config = m.DOMAIN_MODEL_CONFIG
     amount: Annotated[Decimal, Field(gt=Decimal(0))]
-    currency: c.Domain.Currency | str = Field(default=c.Domain.Currency.USD)
+    currency: c.Currency | str = Field(default=c.Currency.USD)
 
     def add(self, other: Money) -> r[Money]:
         """Railway pattern for currency-aware addition."""
@@ -243,11 +241,9 @@ class User(m.Entity):
     """User entity with comprehensive validation and domain rules."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
-    name: str = Field(
-        min_length=c.Validation.MIN_NAME_LENGTH, max_length=c.Validation.MAX_NAME_LENGTH
-    )
+    name: str = Field(min_length=c.MIN_NAME_LENGTH, max_length=c.MAX_NAME_LENGTH)
     email: Email
-    age: Annotated[int, Field(ge=c.Validation.MIN_AGE, le=c.Validation.MAX_AGE)]
+    age: Annotated[int, Field(ge=c.MIN_AGE, le=c.MAX_AGE)]
 
 
 class OrderItem(m.Value):
@@ -274,14 +270,14 @@ class Order(m.AggregateRoot):
     model_config = m.DOMAIN_MODEL_CONFIG
     customer_id: str = Field(min_length=1)
     items: list[OrderItem] = Field(default_factory=lambda: list[OrderItem]())
-    status: c.Domain.OrderStatus = Field(default=c.Domain.OrderStatus.PENDING)
+    status: c.OrderStatus = Field(default=c.OrderStatus.PENDING)
 
     @property
     @computed_field
     def total(self) -> Money:
         """Railway-aware order total calculation."""
         if not self.items:
-            return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
+            return Money(amount=Decimal(0), currency=c.Currency.USD)
         currency = self.items[0].price.currency
         total_amount = Decimal(
             sum(item.price.amount * item.quantity for item in self.items)
@@ -290,7 +286,7 @@ class Order(m.AggregateRoot):
 
     def add_item(self, item: OrderItem) -> r[Order]:
         """Railway pattern for item addition with domain rules."""
-        if self.status != c.Domain.OrderStatus.PENDING:
+        if self.status != c.OrderStatus.PENDING:
             return r[Order].fail("Cannot modify non-pending order")
         if any(existing.product_id == item.product_id for existing in self.items):
             return r[Order].fail("Product already in order")
@@ -301,9 +297,9 @@ class Order(m.AggregateRoot):
         """Railway pattern for order confirmation."""
         if not self.items:
             return r[Order].fail("Cannot confirm empty order")
-        if self.status != c.Domain.OrderStatus.PENDING:
+        if self.status != c.OrderStatus.PENDING:
             return r[Order].fail("Order already processed")
-        self.status = c.Domain.OrderStatus.CONFIRMED
+        self.status = c.OrderStatus.CONFIRMED
         return r.ok(self)
 
 
@@ -320,7 +316,7 @@ class DomainModelService(s[t.ConfigMap]):
 
         money_result = (
             r[Money]
-            .ok(Money(amount=Decimal("10.00"), currency=c.Domain.Currency.USD))
+            .ok(Money(amount=Decimal("10.00"), currency=c.Currency.USD))
             .flat_map(add_money)
         )
 

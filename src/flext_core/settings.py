@@ -56,12 +56,12 @@ class FlextSettings(BaseSettings, u):
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     model_config = SettingsConfigDict(
-        env_prefix=c.Platform.ENV_PREFIX,
-        env_nested_delimiter=c.Platform.ENV_NESTED_DELIMITER,
+        env_prefix=c.ENV_PREFIX,
+        env_nested_delimiter=c.ENV_NESTED_DELIMITER,
         env_file=u.resolve_env_file(),
-        env_file_encoding=c.Utilities.DEFAULT_ENCODING,
+        env_file_encoding=c.DEFAULT_ENCODING,
         case_sensitive=False,
-        extra=c.ModelConfig.EXTRA_IGNORE,
+        extra=c.EXTRA_IGNORE,
         validate_assignment=True,
     )
 
@@ -73,8 +73,8 @@ class FlextSettings(BaseSettings, u):
     debug: Annotated[bool, Field(default=False, description="Enable debug mode")]
     trace: Annotated[bool, Field(default=False, description="Enable trace mode")]
     log_level: Annotated[
-        c.Settings.LogLevel,
-        Field(default=c.Settings.LogLevel.INFO, description="Log level"),
+        c.LogLevel,
+        Field(default=c.LogLevel.INFO, description="Log level"),
     ]
     async_logging: Annotated[
         bool,
@@ -85,55 +85,55 @@ class FlextSettings(BaseSettings, u):
     ]
     enable_caching: Annotated[
         bool,
-        Field(default=c.Settings.DEFAULT_ENABLE_CACHING, description="Enable caching"),
+        Field(default=c.DEFAULT_ENABLE_CACHING, description="Enable caching"),
     ]
     cache_ttl: Annotated[
         int,
-        Field(default=c.Defaults.CACHE_TTL, description="Cache TTL"),
+        Field(default=c.CACHE_TTL, description="Cache TTL"),
     ]
     database_url: Annotated[
         str,
-        Field(default=c.Defaults.DATABASE_URL, description="Database URL"),
+        Field(default=c.DATABASE_URL, description="Database URL"),
     ]
     database_pool_size: Annotated[
         int,
         Field(
-            default=c.Performance.DEFAULT_DB_POOL_SIZE,
+            default=c.DEFAULT_DB_POOL_SIZE,
             description="Database pool size",
         ),
     ]
     circuit_breaker_threshold: Annotated[
         int,
         Field(
-            default=c.Reliability.DEFAULT_FAILURE_THRESHOLD,
+            default=c.DEFAULT_FAILURE_THRESHOLD,
             description="Circuit breaker threshold",
         ),
     ]
     rate_limit_max_requests: Annotated[
         int,
         Field(
-            default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+            default=c.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
             description="Rate limit max requests",
         ),
     ]
     rate_limit_window_seconds: Annotated[
         int,
         Field(
-            default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+            default=c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
             description="Rate limit window",
         ),
     ]
     retry_delay: Annotated[
         int,
         Field(
-            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+            default=c.DEFAULT_RETRY_DELAY_SECONDS,
             description="Retry delay",
         ),
     ]
     max_retry_attempts: Annotated[
         int,
         Field(
-            default=c.Reliability.MAX_RETRY_ATTEMPTS,
+            default=c.MAX_RETRY_ATTEMPTS,
             description="Max retry attempts",
         ),
     ]
@@ -144,52 +144,52 @@ class FlextSettings(BaseSettings, u):
     dispatcher_enable_logging: Annotated[
         bool,
         Field(
-            default=c.Dispatcher.DEFAULT_ENABLE_LOGGING,
+            default=c.DEFAULT_ENABLE_LOGGING,
             description="Enable dispatcher logging",
         ),
     ]
     dispatcher_auto_context: Annotated[
         bool,
         Field(
-            default=c.Dispatcher.DEFAULT_AUTO_CONTEXT,
+            default=c.DEFAULT_AUTO_CONTEXT,
             description="Auto context in dispatcher",
         ),
     ]
     dispatcher_timeout_seconds: Annotated[
         float,
         Field(
-            default=c.Dispatcher.DEFAULT_TIMEOUT_SECONDS,
+            default=c.DEFAULT_TIMEOUT_SECONDS,
             description="Dispatcher timeout",
         ),
     ]
     dispatcher_enable_metrics: Annotated[
         bool,
         Field(
-            default=c.Dispatcher.DEFAULT_ENABLE_METRICS,
+            default=c.DEFAULT_ENABLE_METRICS,
             description="Enable dispatcher metrics",
         ),
     ]
     executor_workers: Annotated[
         int,
-        Field(default=c.Container.DEFAULT_WORKERS, description="Executor workers"),
+        Field(default=c.DEFAULT_WORKERS, description="Executor workers"),
     ]
     timeout_seconds: Annotated[
         float,
-        Field(default=c.Network.DEFAULT_TIMEOUT, description="Default timeout"),
+        Field(default=c.DEFAULT_TIMEOUT, description="Default timeout"),
     ]
     max_workers: Annotated[
         int,
-        Field(default=c.Processing.DEFAULT_MAX_WORKERS, description="Max workers"),
+        Field(default=c.DEFAULT_MAX_WORKERS, description="Max workers"),
     ]
     max_batch_size: Annotated[
         int,
-        Field(default=c.Performance.MAX_BATCH_SIZE, description="Max batch size"),
+        Field(default=c.MAX_BATCH_SIZE, description="Max batch size"),
     ]
     api_key: Annotated[str | None, Field(default=None, description="API key")]
     exception_failure_level: Annotated[
-        c.Exceptions.FailureLevel,
+        c.FailureLevel,
         Field(
-            default=c.Exceptions.FAILURE_LEVEL_DEFAULT,
+            default=c.FAILURE_LEVEL_DEFAULT,
             description="Exception failure level",
         ),
     ]
@@ -237,7 +237,7 @@ class FlextSettings(BaseSettings, u):
 
     @computed_field
     @property
-    def effective_log_level(self) -> c.Settings.LogLevel:
+    def effective_log_level(self) -> c.LogLevel:
         """Get effective log level based on debug/trace flags."""
         return u.resolve_effective_log_level(
             trace=self.trace,

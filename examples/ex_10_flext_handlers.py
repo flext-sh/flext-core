@@ -102,7 +102,7 @@ class Ex10FlextHandlers(Examples):
         named_h = FlextHandlers.create_from_callable(
             lambda message: f"named:{message}",
             handler_name=named_handler_name,
-            handler_type=c.Cqrs.HandlerType.QUERY,
+            handler_type=c.HandlerType.QUERY,
         )
         self.check("callable.named.handler_name", named_h.handler_name)
         self.check(
@@ -114,7 +114,7 @@ class Ex10FlextHandlers(Examples):
             named_h.handle(probe_named).unwrap_or("-") == f"named:{probe_named}",
         )
         mode_enum_h = FlextHandlers.create_from_callable(
-            lambda message: f"enum:{message}", mode=c.Cqrs.HandlerType.EVENT
+            lambda message: f"enum:{message}", mode=c.HandlerType.EVENT
         )
         self.check("callable.mode_enum", mode_enum_h.mode.value)
         self.check(
@@ -134,8 +134,8 @@ class Ex10FlextHandlers(Examples):
             handler_config=m.Handler(
                 handler_id=cfg_handler_id,
                 handler_name=cfg_handler_name,
-                handler_mode=c.Cqrs.HandlerType.SAGA,
-                handler_type=c.Cqrs.HandlerType.SAGA,
+                handler_mode=c.HandlerType.SAGA,
+                handler_type=c.HandlerType.SAGA,
             ),
         )
         self.check("callable.handler_config.name", config_h.handler_name)
@@ -258,13 +258,13 @@ class Ex10FlextHandlers(Examples):
             "dispatch.mode_mismatch",
             handler.dispatch_message(
                 cast("msg_type", _Message(text="go")),
-                operation=c.Dispatcher.HANDLER_MODE_QUERY,
+                operation=c.HANDLER_MODE_QUERY,
             ).error,
         )
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                cast("msg_type", "explode"), operation=c.Dispatcher.HANDLER_MODE_COMMAND
+                cast("msg_type", "explode"), operation=c.HANDLER_MODE_COMMAND
             ).error,
         )
         self.check(

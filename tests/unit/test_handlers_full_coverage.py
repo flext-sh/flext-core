@@ -45,19 +45,19 @@ class TestHandlersFullCoverage:
 
     def test_handler_type_literal_and_invalid(self) -> None:
         assert (
-            FlextHandlers._handler_type_to_literal(c.Cqrs.HandlerType.OPERATION)
+            FlextHandlers._handler_type_to_literal(c.HandlerType.OPERATION)
             == "operation"
         )
-        assert FlextHandlers._handler_type_to_literal(c.Cqrs.HandlerType.SAGA) == "saga"
+        assert FlextHandlers._handler_type_to_literal(c.HandlerType.SAGA) == "saga"
         with pytest.raises(ValueError, match="Unsupported handler type"):
-            FlextHandlers._handler_type_to_literal(cast("c.Cqrs.HandlerType", "bad"))
+            FlextHandlers._handler_type_to_literal(cast("c.HandlerType", "bad"))
 
     def test_invalid_handler_mode_init_raises(self) -> None:
         invalid_config = m.Handler.model_construct(
             handler_id="h1",
             handler_name="bad",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=cast("c.Cqrs.HandlerType", "invalid"),
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=cast("c.HandlerType", "invalid"),
             command_timeout=10,
             max_command_retries=1,
             metadata=None,
@@ -73,18 +73,18 @@ class TestHandlersFullCoverage:
             handler_config=m.Handler(
                 handler_id="cfg",
                 handler_name="cfg",
-                handler_type=c.Cqrs.HandlerType.COMMAND,
-                handler_mode=c.Cqrs.HandlerType.COMMAND,
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
             ),
         )
         assert handler_from_config.handler_name == "cfg"
         enum_mode_handler = h.create_from_callable(
             lambda msg: msg,
-            mode=c.Cqrs.HandlerType.QUERY,
+            mode=c.HandlerType.QUERY,
         )
-        assert enum_mode_handler.mode == c.Cqrs.HandlerType.QUERY
+        assert enum_mode_handler.mode == c.HandlerType.QUERY
         str_mode_handler = h.create_from_callable(lambda msg: msg, mode="event")
-        assert str_mode_handler.mode == c.Cqrs.HandlerType.EVENT
+        assert str_mode_handler.mode == c.HandlerType.EVENT
         invalid_general = h.create_from_callable(lambda msg: msg)
         invalid_general_result = invalid_general.handle(cast("t.Scalar", "{1, 2, 3}"))
         assert invalid_general_result.is_success
@@ -97,21 +97,21 @@ class TestHandlersFullCoverage:
             config=m.Handler(
                 handler_id="q2",
                 handler_name="q2",
-                handler_type=c.Cqrs.HandlerType.QUERY,
-                handler_mode=c.Cqrs.HandlerType.QUERY,
+                handler_type=c.HandlerType.QUERY,
+                handler_mode=c.HandlerType.QUERY,
             ),
         )
-        qr = qh._run_pipeline("query", operation=c.Dispatcher.HANDLER_MODE_QUERY)
+        qr = qh._run_pipeline("query", operation=c.HANDLER_MODE_QUERY)
         assert qr.is_success
         eh = self._EventHandler(
             config=m.Handler(
                 handler_id="e2",
                 handler_name="e2",
-                handler_type=c.Cqrs.HandlerType.EVENT,
-                handler_mode=c.Cqrs.HandlerType.EVENT,
+                handler_type=c.HandlerType.EVENT,
+                handler_mode=c.HandlerType.EVENT,
             ),
         )
-        er = eh._run_pipeline("event", operation=c.Cqrs.HandlerType.EVENT.value)
+        er = eh._run_pipeline("event", operation=c.HandlerType.EVENT.value)
         assert er.is_success
 
     def test_discovery_narrowed_function_paths(self) -> None:

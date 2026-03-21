@@ -12,11 +12,11 @@ class Ex00UserProfile(m.Entity):
 
     name: str = Field(min_length=1)
     email: str = Field(min_length=1)
-    status: c.Domain.Status = c.Domain.Status.ACTIVE
+    status: c.Status = c.Status.ACTIVE
 
     def activate(self) -> r[None]:
         """Activate user once."""
-        if self.status == c.Domain.Status.ACTIVE:
+        if self.status == c.Status.ACTIVE:
             return r[None].fail("Already active")
         return r.ok(None)
 

@@ -95,7 +95,7 @@ class TestArchitecturalPatterns:
 
         config_result = (
             ConfigurationBuilder()
-            .with_database(FlextConstants.Network.LOCALHOST, 5432)
+            .with_database(FlextConstants.LOCALHOST, 5432)
             .with_logging("INFO")
             .with_cache(enabled=True)
             .build()
@@ -105,7 +105,7 @@ class TestArchitecturalPatterns:
         assert isinstance(config, dict)
         database = config.get("database")
         assert isinstance(database, dict)
-        assert database.get("host") == FlextConstants.Network.LOCALHOST
+        assert database.get("host") == FlextConstants.LOCALHOST
         logging = config.get("logging")
         assert isinstance(logging, dict)
         assert logging.get("level") == "INFO"

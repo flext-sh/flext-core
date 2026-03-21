@@ -37,7 +37,7 @@ class FlextUtilitiesDiscovery:
             candidate = vars(module).get(name)
             if candidate is None:
                 continue
-            if callable(candidate) and hasattr(candidate, c.Discovery.FACTORY_ATTR):
+            if callable(candidate) and hasattr(candidate, c.FACTORY_ATTR):
                 return True
         return False
 
@@ -68,8 +68,8 @@ class FlextUtilitiesDiscovery:
             func = vars(module).get(name)
             if func is None:
                 continue
-            if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
-                config_raw = vars(func).get(c.Discovery.FACTORY_ATTR)
+            if callable(func) and hasattr(func, c.FACTORY_ATTR):
+                config_raw = vars(func).get(c.FACTORY_ATTR)
                 if not isinstance(config_raw, m.FactoryDecoratorConfig):
                     continue
                 config: m.FactoryDecoratorConfig = config_raw

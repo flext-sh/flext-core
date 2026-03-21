@@ -85,12 +85,12 @@ from flext_core import c
 
 # Bind context to APPLICATION scope
 FlextLogger.Context.bind_context(
-    scope=c.Context.SCOPE_APPLICATION, user_id="user-123", tenant_id="tenant-456"
+    scope=c.SCOPE_APPLICATION, user_id="user-123", tenant_id="tenant-456"
 )
 
 # Bind context to REQUEST scope
 FlextLogger.Context.bind_context(
-    scope=c.Context.SCOPE_REQUEST,
+    scope=c.SCOPE_REQUEST,
     request_id="req-789",
     http_method="POST",
     endpoint="/api/users",
@@ -98,7 +98,7 @@ FlextLogger.Context.bind_context(
 
 # Bind context to OPERATION scope
 FlextLogger.Context.bind_context(
-    scope=c.Context.SCOPE_OPERATION,
+    scope=c.SCOPE_OPERATION,
     operation_id="op-abc",
     handler_name="CreateUserHandler",
 )
@@ -112,10 +112,10 @@ logger.info("Processing user creation")  # Includes all scoped contexts
 
 ```python
 # Unbind specific keys from a scope
-FlextLogger.Context.unbind_context(scope=c.Context.SCOPE_REQUEST, keys=["request_id"])
+FlextLogger.Context.unbind_context(scope=c.SCOPE_REQUEST, keys=["request_id"])
 
 # Unbind all context from a scope
-FlextLogger.Context.unbind_context(scope=c.Context.SCOPE_OPERATION)
+FlextLogger.Context.unbind_context(scope=c.SCOPE_OPERATION)
 ```
 
 ### 3. Level Context
@@ -168,7 +168,7 @@ All context is automatically propagated to log messages. You don't need to manua
 
 ```python
 # Set context once
-FlextLogger.Context.bind_context(scope=c.Context.SCOPE_REQUEST, request_id="req-123")
+FlextLogger.Context.bind_context(scope=c.SCOPE_REQUEST, request_id="req-123")
 
 # All log messages in this scope automatically include request_id
 logger = FlextLogger.create_module_logger(__name__)
@@ -199,7 +199,7 @@ class UserHandler:
     def handle_request(self, request_id: str, user_id: str):
         # Bind REQUEST scope context
         FlextLogger.Context.bind_context(
-            scope=c.Context.SCOPE_REQUEST, request_id=request_id, user_id=user_id
+            scope=c.SCOPE_REQUEST, request_id=request_id, user_id=user_id
         )
 
         try:
@@ -208,7 +208,7 @@ class UserHandler:
             self.logger.info("Request completed")
         finally:
             # Clean up REQUEST scope context
-            FlextLogger.Context.unbind_context(scope=c.Context.SCOPE_REQUEST)
+            FlextLogger.Context.unbind_context(scope=c.SCOPE_REQUEST)
 ```
 
 ## Auto-Configuration

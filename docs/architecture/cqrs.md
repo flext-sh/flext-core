@@ -128,7 +128,7 @@ from flext_core._models.cqrs import FlextModelsCqrs
 config = FlextModelsCqrs.Handler(
     handler_id="user_handler_001",
     handler_name="CreateUserHandler",
-    handler_mode=c.Cqrs.HandlerType.COMMAND,
+    handler_mode=c.HandlerType.COMMAND,
 )
 
 handler = CreateUserHandler(config=config)

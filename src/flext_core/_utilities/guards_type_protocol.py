@@ -20,8 +20,8 @@ class FlextUtilitiesGuardsTypeProtocol:
     def _get_protocol_specs() -> Mapping[str, Callable[[t.NormalizedValue], bool]]:
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
-                c.Mixins.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
-                c.Mixins.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
+                c.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
+                c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
                 "command_bus": lambda v: isinstance(v, p.Dispatcher),
                 "handler": lambda v: isinstance(v, p.Handler),
@@ -37,8 +37,8 @@ class FlextUtilitiesGuardsTypeProtocol:
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
-                    p.Settings: c.Mixins.FIELD_CONFIG,
-                    p.Context: c.Mixins.FIELD_CONTEXT,
+                    p.Settings: c.FIELD_CONFIG,
+                    p.Context: c.FIELD_CONTEXT,
                     p.Container: "container",
                     p.Dispatcher: "command_bus",
                     p.Handler: "handler",
@@ -171,7 +171,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _check_protocol(value: t.NormalizedValue, name: str) -> bool:
-        if name == c.Mixins.FIELD_CONTEXT:
+        if name == c.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.is_context(value)
         try:
             return FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()[name](value)
@@ -196,7 +196,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                     value,
                     type_name,
                 )
-            if type_name in c.Guards.STRING_METHOD_MAP:
+            if type_name in c.STRING_METHOD_MAP:
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",

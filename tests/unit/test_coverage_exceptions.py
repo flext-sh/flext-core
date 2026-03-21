@@ -173,7 +173,7 @@ class TestCoverageExceptions:
         ),
         (
             "ConnectionError",
-            {"host": FlextConstants.Network.LOCALHOST},
+            {"host": FlextConstants.LOCALHOST},
             FlextExceptions.ConnectionError,
         ),
         (
@@ -404,7 +404,7 @@ class TestCoverageExceptions:
         tm.that(error_str or "Test message" in error_str, has="VALIDATION_ERROR")
 
     def test_failure_level_enum_values(self) -> None:
-        failure_level = FlextConstants.Exceptions.FailureLevel
+        failure_level = FlextConstants.FailureLevel
         tm.that(
             all(
                 hasattr(failure_level, level)
@@ -414,13 +414,13 @@ class TestCoverageExceptions:
         )
 
     def test_failure_level_string_values(self) -> None:
-        failure_level = FlextConstants.Exceptions.FailureLevel
+        failure_level = FlextConstants.FailureLevel
         tm.that(failure_level.STRICT.value, eq="strict")
         tm.that(failure_level.WARN.value, eq="warn")
         tm.that(failure_level.PERMISSIVE.value, eq="permissive")
 
     def test_failure_level_comparison(self) -> None:
-        failure_level = FlextConstants.Exceptions.FailureLevel
+        failure_level = FlextConstants.FailureLevel
         strict_val: str = str(failure_level.STRICT.value)
         warn_val: str = str(failure_level.WARN.value)
         permissive_val: str = str(failure_level.PERMISSIVE.value)

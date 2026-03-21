@@ -10,4 +10,4 @@ class Ex08User(m.Entity):
 
 class Ex08Order(m.AggregateRoot):
     customer_id: str
-    status: c.Domain.Status = c.Domain.Status.ACTIVE
+    status: c.Status = c.Status.ACTIVE

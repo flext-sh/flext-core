@@ -83,13 +83,13 @@ class FlextDecorators:
        - Enables functional error handling without try/except
 
     5. **@retry**: Automatic retry logic with exponential/linear backoff
-       - Uses FlextConstants.Reliability for defaults
+       - Uses FlextConstants for defaults
        - Supports exponential and linear backoff strategies
        - Logs retry attempts and exhaustion
        - Integration with FlextLogger for retry tracking
 
     6. **@timeout**: Automatic operation timeout enforcement
-       - Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
+       - Uses FlextConstants.DEFAULT_TIMEOUT_SECONDS
        - Checks timeout after operation completion
        - Raises e.TimeoutError on violation
        - Tracks duration even on exceptions for accurate timeout detection
@@ -467,7 +467,7 @@ class FlextDecorators:
                         "func_module": func.__module__,
                     }
                     if correlation_id is not None:
-                        start_extra[c.Context.KEY_CORRELATION_ID] = correlation_id
+                        start_extra[c.KEY_CORRELATION_ID] = correlation_id
                     if correlation_id is not None:
                         logger.debug(
                             "%s_started",
@@ -489,7 +489,7 @@ class FlextDecorators:
                         "success": True,
                     }
                     if correlation_id is not None:
-                        completion_extra[c.Context.KEY_CORRELATION_ID] = correlation_id
+                        completion_extra[c.KEY_CORRELATION_ID] = correlation_id
                     if track_perf:
                         duration = time.perf_counter() - start_time
                         completion_extra["duration_ms"] = (
@@ -508,12 +508,12 @@ class FlextDecorators:
                     failure_extra: dict[str, t.NormalizedValue] = {
                         "function": func.__name__,
                         "success": False,
-                        c.Cqrs.WarningLevel.ERROR: str(exc),
+                        c.WarningLevel.ERROR: str(exc),
                         "error_type": exc.__class__.__name__,
-                        c.Cqrs.HandlerType.OPERATION: op_name,
+                        c.HandlerType.OPERATION: op_name,
                     }
                     if correlation_id is not None:
-                        failure_extra[c.Context.KEY_CORRELATION_ID] = correlation_id
+                        failure_extra[c.KEY_CORRELATION_ID] = correlation_id
                     tracked_duration = (
                         time.perf_counter() - start_time if track_perf else 0.0
                     )
@@ -661,17 +661,17 @@ class FlextDecorators:
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically retry failed operations with exponential backoff.
 
-        Uses FlextConstants.Reliability for default values and
+        Uses FlextConstants for default values and
         e for structured error handling, integrating foundation
         modules.
 
         Args:
             max_attempts: Maximum retry attempts (default:
-                FlextConstants.Reliability.DEFAULT_MAX_RETRIES)
+                FlextConstants.DEFAULT_MAX_RETRIES)
             delay_seconds: Initial delay between retries (default:
-                FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
+                FlextConstants.DEFAULT_RETRY_DELAY_SECONDS)
             backoff_strategy: Backoff strategy ('exponential' or 'linear',
-                default: FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY)
+                default: FlextConstants.DEFAULT_BACKOFF_STRATEGY)
             error_code: Optional error code for failures
 
         Returns:
@@ -686,7 +686,7 @@ class FlextDecorators:
                 @FlextDecorators.retry(
                     max_attempts=5,
                     delay_seconds=2.0,
-                    backoff_strategy=c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
+                    backoff_strategy=c.BACKOFF_STRATEGY_EXPONENTIAL,
                 )
                 def unreliable_operation(self) -> t.ConfigMap:
                     # Automatically retries on failure with exponential backoff
@@ -694,24 +694,22 @@ class FlextDecorators:
             ```
 
         Note:
-            Uses FlextConstants.Reliability for defaults, ensuring consistency
+            Uses FlextConstants for defaults, ensuring consistency
             across the entire ecosystem. Logs retry attempts automatically.
 
         """
         attempts: int = (
-            max_attempts
-            if max_attempts is not None
-            else c.Reliability.DEFAULT_MAX_RETRIES
+            max_attempts if max_attempts is not None else c.DEFAULT_MAX_RETRIES
         )
         delay: float = (
             delay_seconds
             if delay_seconds is not None
-            else float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
+            else float(c.DEFAULT_RETRY_DELAY_SECONDS)
         )
         strategy: str = (
             backoff_strategy
             if backoff_strategy is not None
-            else c.Reliability.DEFAULT_BACKOFF_STRATEGY
+            else c.DEFAULT_BACKOFF_STRATEGY
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -723,8 +721,7 @@ class FlextDecorators:
                 retry_config = m.RetryConfiguration(
                     max_retries=attempts,
                     initial_delay_seconds=delay,
-                    exponential_backoff=strategy
-                    == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
+                    exponential_backoff=strategy == c.BACKOFF_STRATEGY_EXPONENTIAL,
                     retry_on_exceptions=[],
                     retry_on_status_codes=[],
                 )
@@ -807,7 +804,7 @@ class FlextDecorators:
                 correlation_id = current_id
         FlextContext.Request.set_operation_name(operation)
         binding_result = FlextLogger.bind_context(
-            c.Context.SCOPE_OPERATION,
+            c.SCOPE_OPERATION,
             operation=operation,
         )
         if binding_result.is_failure:
@@ -829,7 +826,7 @@ class FlextDecorators:
         operation: str,
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
-        clear_result = FlextLogger.clear_scope(c.Context.SCOPE_OPERATION)
+        clear_result = FlextLogger.clear_scope(c.SCOPE_OPERATION)
         if clear_result.is_failure:
             FlextDecorators._handle_log_result(
                 result=clear_result,
@@ -839,7 +836,7 @@ class FlextDecorators:
                     root={
                         "extra": {
                             "function": function_name,
-                            c.Cqrs.HandlerType.OPERATION: operation,
+                            c.HandlerType.OPERATION: operation,
                         },
                     },
                 ),
@@ -877,9 +874,9 @@ class FlextDecorators:
         attempts = retry_config.max_retries
         delay = retry_config.initial_delay_seconds
         strategy = (
-            c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL
+            c.BACKOFF_STRATEGY_EXPONENTIAL
             if retry_config.exponential_backoff
-            else c.Reliability.BACKOFF_STRATEGY_LINEAR
+            else c.BACKOFF_STRATEGY_LINEAR
         )
         last_exception: Exception | None = None
         current_delay = delay
@@ -905,9 +902,9 @@ class FlextDecorators:
                     error=str(e),
                     error_type=e.__class__.__name__,
                 )
-                if strategy == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL:
+                if strategy == c.BACKOFF_STRATEGY_EXPONENTIAL:
                     current_delay *= 2
-                elif strategy == c.Reliability.BACKOFF_STRATEGY_LINEAR:
+                elif strategy == c.BACKOFF_STRATEGY_LINEAR:
                     current_delay += delay
                 if attempt == attempts:
                     break
@@ -984,7 +981,7 @@ class FlextDecorators:
             error_type=last_exception.__class__.__name__,
         )
         effective_error_code: str = (
-            _error_code if _error_code is not None else c.Errors.TIMEOUT_ERROR
+            _error_code if _error_code is not None else c.TIMEOUT_ERROR
         )
         timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
         raise e.TimeoutError(
@@ -1156,7 +1153,7 @@ class FlextDecorators:
         def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply factory configuration metadata to function."""
             config = m.FactoryDecoratorConfig(name=name, singleton=singleton, lazy=lazy)
-            setattr(func, c.Discovery.FACTORY_ATTR, config)
+            setattr(func, c.FACTORY_ATTR, config)
             return func
 
         return decorator
@@ -1168,13 +1165,13 @@ class FlextDecorators:
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
-        Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS for default
+        Uses FlextConstants.DEFAULT_TIMEOUT_SECONDS for default
         timeout and e.TimeoutError for structured error
         handling.
 
         Args:
             timeout_seconds: Timeout in seconds (default:
-                c.Reliability.DEFAULT_TIMEOUT_SECONDS)
+                c.DEFAULT_TIMEOUT_SECONDS)
             error_code: Optional error code for timeout
 
         Returns:
@@ -1200,7 +1197,7 @@ class FlextDecorators:
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
-            else c.Reliability.DEFAULT_TIMEOUT_SECONDS
+            else c.DEFAULT_TIMEOUT_SECONDS
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -1240,7 +1237,7 @@ class FlextDecorators:
                         msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {exc.__class__.__name__}"
                         raise e.TimeoutError(
                             msg,
-                            error_code=error_code or c.Errors.TIMEOUT_ERROR,
+                            error_code=error_code or c.TIMEOUT_ERROR,
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             duration_seconds=duration,

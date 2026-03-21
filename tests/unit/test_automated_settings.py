@@ -49,7 +49,7 @@ class TestAutomatedFlextSettings:
         settings_obj = FlextSettings.get_global(
             overrides={"debug": True, "trace": False}
         )
-        tm.that(settings_obj.effective_log_level, eq=c.Settings.LogLevel.INFO)
+        tm.that(settings_obj.effective_log_level, eq=c.LogLevel.INFO)
 
     def test_reset_for_testing_creates_new_instance(self) -> None:
         first = FlextSettings.get_global()
@@ -103,10 +103,10 @@ class TestAutomatedFlextSettings:
             st.tuples(
                 st.just("log_level"),
                 st.sampled_from([
-                    c.Settings.LogLevel.DEBUG,
-                    c.Settings.LogLevel.INFO,
-                    c.Settings.LogLevel.WARNING,
-                    c.Settings.LogLevel.ERROR,
+                    c.LogLevel.DEBUG,
+                    c.LogLevel.INFO,
+                    c.LogLevel.WARNING,
+                    c.LogLevel.ERROR,
                 ]),
             ),
             st.tuples(st.just("invalid_key"), st.text(min_size=1, max_size=10)),
@@ -115,7 +115,7 @@ class TestAutomatedFlextSettings:
     @settings(max_examples=50)
     def test_apply_override_returns_bool_property(
         self,
-        pair: tuple[str, bool | int | str | c.Settings.LogLevel],
+        pair: tuple[str, bool | int | str | c.LogLevel],
     ) -> None:
         key, value = pair
         FlextSettings.reset_for_testing()

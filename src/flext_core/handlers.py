@@ -77,14 +77,12 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
-    _HANDLER_TYPE_LITERALS: ClassVar[
-        Mapping[c.Cqrs.HandlerType, c.Cqrs.HandlerType]
-    ] = {
-        c.Cqrs.HandlerType.COMMAND: c.Cqrs.HandlerType.COMMAND,
-        c.Cqrs.HandlerType.QUERY: c.Cqrs.HandlerType.QUERY,
-        c.Cqrs.HandlerType.EVENT: c.Cqrs.HandlerType.EVENT,
-        c.Cqrs.HandlerType.OPERATION: c.Cqrs.HandlerType.OPERATION,
-        c.Cqrs.HandlerType.SAGA: c.Cqrs.HandlerType.SAGA,
+    _HANDLER_TYPE_LITERALS: ClassVar[Mapping[c.HandlerType, c.HandlerType]] = {
+        c.HandlerType.COMMAND: c.HandlerType.COMMAND,
+        c.HandlerType.QUERY: c.HandlerType.QUERY,
+        c.HandlerType.EVENT: c.HandlerType.EVENT,
+        c.HandlerType.OPERATION: c.HandlerType.OPERATION,
+        c.HandlerType.SAGA: c.HandlerType.SAGA,
     }
 
     def __init__(self, *, config: m.Handler | None = None) -> None:
@@ -107,11 +105,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             )
         handler_type = self._config_model.handler_mode
         valid_handler_types = {
-            c.Cqrs.HandlerType.COMMAND,
-            c.Cqrs.HandlerType.QUERY,
-            c.Cqrs.HandlerType.EVENT,
-            c.Cqrs.HandlerType.OPERATION,
-            c.Cqrs.HandlerType.SAGA,
+            c.HandlerType.COMMAND,
+            c.HandlerType.QUERY,
+            c.HandlerType.EVENT,
+            c.HandlerType.OPERATION,
+            c.HandlerType.SAGA,
         }
         if handler_type not in valid_handler_types:
             error_msg = f"Invalid handler mode: {handler_type}"
@@ -153,7 +151,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             if klass is FlextHandlers:
                 msg = f"{cls.__qualname__} must implement a handle() method"
                 raise TypeError(msg)
-            if c.Mixins.METHOD_HANDLE in klass.__dict__:
+            if c.METHOD_HANDLE in klass.__dict__:
                 break
 
     @property
@@ -167,11 +165,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         return self._config_model.handler_name
 
     @property
-    def mode(self) -> c.Cqrs.HandlerType:
+    def mode(self) -> c.HandlerType:
         """Get handler mode from configuration.
 
         Returns:
-            c.Cqrs.HandlerType: The handler mode (command, query, event, saga)
+            c.HandlerType: The handler mode (command, query, event, saga)
 
         """
         return self._config_model.handler_mode
@@ -181,8 +179,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         cls,
         handler_callable: Callable[[t.Scalar], t.Scalar],
         handler_name: str | None = None,
-        handler_type: c.Cqrs.HandlerType | None = None,
-        mode: c.Cqrs.HandlerType | str | None = None,
+        handler_type: c.HandlerType | None = None,
+        mode: c.HandlerType | str | None = None,
         handler_config: m.Handler | None = None,
     ) -> FlextHandlers[t.Scalar, t.Scalar]:
         """Create a handler instance from a callable function.
@@ -248,15 +246,15 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         if handler_config is not None:
             return CallableHandler(handler_fn=handler_callable, config=handler_config)
-        resolved_type: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND
+        resolved_type: c.HandlerType = c.HandlerType.COMMAND
         if mode is not None:
-            if isinstance(mode, c.Cqrs.HandlerType):
+            if isinstance(mode, c.HandlerType):
                 resolved_type = mode
-            elif mode not in u.values(c.Cqrs.HandlerType):
+            elif mode not in u.values(c.HandlerType):
                 error_msg = f"Invalid handler mode: {mode}"
                 raise e.ValidationError(error_msg)
             else:
-                resolved_type = c.Cqrs.HandlerType(str(mode))
+                resolved_type = c.HandlerType(str(mode))
         elif handler_type is not None:
             resolved_type = handler_type
         resolved_name: str = handler_name or str(
@@ -273,8 +271,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @staticmethod
     def _handler_type_to_literal(
-        handler_type: c.Cqrs.HandlerType,
-    ) -> c.Cqrs.HandlerType:
+        handler_type: c.HandlerType,
+    ) -> c.HandlerType:
         """Convert handler type to canonical HandlerType."""
         if handler_type in FlextHandlers._HANDLER_TYPE_LITERALS:
             return FlextHandlers._HANDLER_TYPE_LITERALS[handler_type]
@@ -285,8 +283,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def handler(
         command: type,
         *,
-        priority: int = c.Discovery.DEFAULT_PRIORITY,
-        timeout: float | None = c.Discovery.DEFAULT_TIMEOUT,
+        priority: int = c.DEFAULT_PRIORITY,
+        timeout: float | None = c.DEFAULT_TIMEOUT,
         middleware: list[type[p.Middleware]] | None = None,
     ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
         """Decorator to mark methods as handlers for commands.
@@ -317,7 +315,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             When multiple @h.handler() decorators are stacked, the first (innermost)
             one to run takes precedence.
             """
-            if not hasattr(func, c.Discovery.HANDLER_ATTR):
+            if not hasattr(func, c.HANDLER_ATTR):
                 config = m.DecoratorConfig(
                     command=command,
                     priority=priority,
@@ -326,7 +324,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 )
                 if middleware is not None:
                     config = config.model_copy(update={"middleware": list(middleware)})
-                setattr(func, c.Discovery.HANDLER_ATTR, config)
+                setattr(func, c.HANDLER_ATTR, config)
             return func
 
         return decorator
@@ -364,7 +362,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def dispatch_message(
         self,
         message: MessageT_contra,
-        operation: str = c.Dispatcher.HANDLER_MODE_COMMAND,
+        operation: str = c.HANDLER_MODE_COMMAND,
     ) -> r[ResultT]:
         """Dispatch message through the handler execution pipeline.
 
@@ -448,7 +446,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             context_dict = t.ConfigMap(
                 root={
                     "handler_name": popped.handler_name,
-                    c.Mixins.FIELD_HANDLER_MODE: popped.handler_mode,
+                    c.FIELD_HANDLER_MODE: popped.handler_mode,
                 },
             )
             return r[t.ConfigMap].ok(context_dict)
@@ -462,31 +460,31 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
             return r[bool].ok(value=True)
-        handler_name_raw = ctx.get("handler_name", c.Mixins.IDENTIFIER_UNKNOWN)
+        handler_name_raw = ctx.get("handler_name", c.IDENTIFIER_UNKNOWN)
         handler_name = (
             str(handler_name_raw)
             if handler_name_raw is not None
-            else c.Mixins.IDENTIFIER_UNKNOWN
+            else c.IDENTIFIER_UNKNOWN
         )
         handler_mode_raw = ctx.get(
-            c.Mixins.FIELD_HANDLER_MODE,
-            c.Cqrs.HandlerType.OPERATION,
+            c.FIELD_HANDLER_MODE,
+            c.HandlerType.OPERATION,
         )
         handler_mode_str = (
             str(handler_mode_raw)
             if handler_mode_raw is not None
-            else c.Cqrs.HandlerType.OPERATION
+            else c.HandlerType.OPERATION
         )
-        handler_mode_literal: c.Cqrs.HandlerType = (
-            c.Cqrs.HandlerType.COMMAND
-            if handler_mode_str == c.Cqrs.HandlerType.COMMAND
-            else c.Cqrs.HandlerType.QUERY
-            if handler_mode_str == c.Cqrs.HandlerType.QUERY
-            else c.Cqrs.HandlerType.EVENT
-            if handler_mode_str == c.Cqrs.HandlerType.EVENT
-            else c.Cqrs.HandlerType.SAGA
+        handler_mode_literal: c.HandlerType = (
+            c.HandlerType.COMMAND
+            if handler_mode_str == c.HandlerType.COMMAND
+            else c.HandlerType.QUERY
+            if handler_mode_str == c.HandlerType.QUERY
+            else c.HandlerType.EVENT
+            if handler_mode_str == c.HandlerType.EVENT
+            else c.HandlerType.SAGA
             if handler_mode_str == "saga"
-            else c.Cqrs.HandlerType.OPERATION
+            else c.HandlerType.OPERATION
         )
         execution_ctx = m.ExecutionContext.create_for_handler(
             handler_name=handler_name,
@@ -549,12 +547,12 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         _ = self.record_metric("execution_time_ms", exec_time)
         _ = self.record_metric("success", success)
         if error is not None:
-            _ = self.record_metric(c.Cqrs.WarningLevel.ERROR, error)
+            _ = self.record_metric(c.WarningLevel.ERROR, error)
 
     def _run_pipeline(
         self,
         message: MessageT_contra,
-        operation: str = c.Dispatcher.HANDLER_MODE_COMMAND,
+        operation: str = c.HANDLER_MODE_COMMAND,
     ) -> r[ResultT]:
         """Run the handler execution pipeline (internal).
 
@@ -576,9 +574,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             self._config_model.handler_mode,
         )
         valid_operations = {
-            c.Dispatcher.HANDLER_MODE_COMMAND,
-            c.Dispatcher.HANDLER_MODE_QUERY,
-            c.Cqrs.HandlerType.EVENT.value,
+            c.HANDLER_MODE_COMMAND,
+            c.HANDLER_MODE_QUERY,
+            c.HandlerType.EVENT.value,
         }
         if operation != handler_mode and operation in valid_operations:
             error_msg = f"Handler with mode '{handler_mode}' cannot execute {operation} pipelines"
@@ -637,7 +635,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
             """
             return any(
-                hasattr(getattr(target_class, name, None), c.Discovery.HANDLER_ATTR)
+                hasattr(getattr(target_class, name, None), c.HANDLER_ATTR)
                 for name in dir(target_class)
             )
 
@@ -661,7 +659,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
             """
             return any(
-                hasattr(getattr(module, name, None), c.Discovery.HANDLER_ATTR)
+                hasattr(getattr(module, name, None), c.HANDLER_ATTR)
                 for name in dir(module)
                 if not name.startswith("_") and callable(getattr(module, name, None))
             )
@@ -690,10 +688,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handlers: list[tuple[str, m.DecoratorConfig]] = []
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
-                if hasattr(method, c.Discovery.HANDLER_ATTR):
+                if hasattr(method, c.HANDLER_ATTR):
                     config: m.DecoratorConfig = getattr(
                         method,
-                        c.Discovery.HANDLER_ATTR,
+                        c.HANDLER_ATTR,
                     )
                     handlers.append((name, config))
             return sorted(handlers, key=lambda x: x[1].priority, reverse=True)
@@ -732,11 +730,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 func = getattr(module, name, None)
                 if not u.is_handler_callable(func):
                     continue
-                if not hasattr(func, c.Discovery.HANDLER_ATTR):
+                if not hasattr(func, c.HANDLER_ATTR):
                     continue
                 if not callable(func):
                     continue
-                config: m.DecoratorConfig = getattr(func, c.Discovery.HANDLER_ATTR)
+                config: m.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
                 callable_func: Callable[..., t.RuntimeAtomic | None] = func
 
                 def narrowed_func(
@@ -757,7 +755,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                         return result
                     return str(result)
 
-                setattr(narrowed_func, c.Discovery.HANDLER_ATTR, config)
+                setattr(narrowed_func, c.HANDLER_ATTR, config)
                 handlers.append((name, narrowed_func, config))
             return sorted(handlers, key=lambda x: (-x[2].priority, x[0]))
 

@@ -72,10 +72,10 @@ class TestTypings:
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
             t.Validation.HostnameStr,
         )
-        localhost = hostname_adapter.validate_python(FlextConstants.Network.LOCALHOST)
-        tm.that(localhost, eq=FlextConstants.Network.LOCALHOST)
-        loopback = hostname_adapter.validate_python(FlextConstants.Network.LOOPBACK_IP)
-        tm.that(loopback, eq=FlextConstants.Network.LOOPBACK_IP)
+        localhost = hostname_adapter.validate_python(FlextConstants.LOCALHOST)
+        tm.that(localhost, eq=FlextConstants.LOCALHOST)
+        loopback = hostname_adapter.validate_python(FlextConstants.LOOPBACK_IP)
+        tm.that(loopback, eq=FlextConstants.LOOPBACK_IP)
 
     def test_hostname_validation_error(self) -> None:
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(

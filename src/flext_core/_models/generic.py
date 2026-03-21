@@ -117,8 +117,8 @@ class FlextGenericModels:
         ] = None
         status: Annotated[
             str,
-            Field(default=c.Cqrs.CommonStatus.ACTIVE, description="Service status"),
-        ] = c.Cqrs.CommonStatus.ACTIVE
+            Field(default=c.CommonStatus.ACTIVE, description="Service status"),
+        ] = c.CommonStatus.ACTIVE
         uptime_seconds: Annotated[
             float | None,
             Field(default=None, description="Uptime in seconds"),

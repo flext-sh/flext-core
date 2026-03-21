@@ -16,7 +16,7 @@ class Ex02TestConfig(FlextSettings):
 
 class Ex02DatabaseService(m.Value):
     config: t.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
+    status: c.CommonStatus = c.CommonStatus.PENDING
 
     def connect(self) -> r[bool]:
         return r[bool].ok(True)
@@ -29,7 +29,7 @@ class Ex02DatabaseService(m.Value):
 
 class Ex02CacheService(m.Value):
     config: t.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
+    status: c.CommonStatus = c.CommonStatus.PENDING
 
     def set(self, key: str, value: str) -> r[bool]:
         if not key:
@@ -41,7 +41,7 @@ class Ex02CacheService(m.Value):
 
 class Ex02EmailService(m.Value):
     config: t.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.PENDING
+    status: c.CommonStatus = c.CommonStatus.PENDING
 
     def send(self, to: str, subject: str, body: str) -> r[bool]:
         if not to or not subject or (not body):

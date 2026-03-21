@@ -446,7 +446,7 @@ class TestDecoratorsFullCoverage:
         def build(_value: BaseModel) -> BaseModel:
             return t.ConfigMap(root={"v": 7})
 
-        tm.that(hasattr(build, c.Discovery.FACTORY_ATTR), eq=True)
+        tm.that(hasattr(build, c.FACTORY_ATTR), eq=True)
 
     def test_track_performance_success_and_failure_paths(
         self,

@@ -49,29 +49,29 @@ class TestFlextHandlers:
 
         model_config = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Handler type scenario name")]
-        handler_type: Annotated[c.Cqrs.HandlerType, Field(description="Type")]
-        handler_mode: Annotated[c.Cqrs.HandlerType, Field(description="Mode")]
+        handler_type: Annotated[c.HandlerType, Field(description="Type")]
+        handler_mode: Annotated[c.HandlerType, Field(description="Mode")]
 
     HANDLER_TYPES: ClassVar[list[HandlerTypeScenario]] = [
         HandlerTypeScenario(
             name="command",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         ),
         HandlerTypeScenario(
             name="query",
-            handler_type=c.Cqrs.HandlerType.QUERY,
-            handler_mode=c.Cqrs.HandlerType.QUERY,
+            handler_type=c.HandlerType.QUERY,
+            handler_mode=c.HandlerType.QUERY,
         ),
         HandlerTypeScenario(
             name="event",
-            handler_type=c.Cqrs.HandlerType.EVENT,
-            handler_mode=c.Cqrs.HandlerType.EVENT,
+            handler_type=c.HandlerType.EVENT,
+            handler_mode=c.HandlerType.EVENT,
         ),
         HandlerTypeScenario(
             name="saga",
-            handler_type=c.Cqrs.HandlerType.SAGA,
-            handler_mode=c.Cqrs.HandlerType.SAGA,
+            handler_type=c.HandlerType.SAGA,
+            handler_mode=c.HandlerType.SAGA,
         ),
     ]
 
@@ -96,12 +96,12 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_2",
             "Test Handler 2",
-            handler_type=c.Cqrs.HandlerType.QUERY,
-            handler_mode=c.Cqrs.HandlerType.QUERY,
+            handler_type=c.HandlerType.QUERY,
+            handler_mode=c.HandlerType.QUERY,
         )
         handlers = self.ConcreteTestHandler(config=config)
         assert handlers is not None
-        assert handlers._config_model.handler_type == c.Cqrs.HandlerType.QUERY
+        assert handlers._config_model.handler_type == c.HandlerType.QUERY
 
     def test_handlers_handle_success(self) -> None:
         config = u.Tests.HandlerHelpers.create_handler_config(
@@ -128,13 +128,13 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_handler_5",
             "Test Handler 5",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         handler = self.ConcreteTestHandler(config=config)
         assert handler._config_model.handler_id == "test_handler_5"
         assert handler._config_model.handler_name == "Test Handler 5"
-        assert handler._config_model.handler_type == c.Cqrs.HandlerType.COMMAND
+        assert handler._config_model.handler_type == c.HandlerType.COMMAND
 
     def test_handlers_execution_context(self) -> None:
         config = u.Tests.HandlerHelpers.create_handler_config(
@@ -227,8 +227,8 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_dict_command_id",
             "Test Pipeline Dict Command ID",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         handler = DictHandler(config=config)
         dict_message: dict[str, t.NormalizedValue] = {
@@ -242,8 +242,8 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_mode_error",
             "Test Pipeline Mode Error",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         handler = self.ConcreteTestHandler(config=config)
         result = handler._run_pipeline("test_message", operation="query")
@@ -270,8 +270,8 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_cannot_handle",
             "Test Pipeline Cannot Handle",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         handler = RestrictiveHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
@@ -298,8 +298,8 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_validation_failure",
             "Test Pipeline Validation Failure",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         handler = ValidationFailingHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
@@ -323,8 +323,8 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_exception",
             "Test Pipeline Exception",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         handler = ExceptionHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
@@ -340,7 +340,7 @@ class TestFlextHandlers:
         handler = h.create_from_callable(
             simple_handler,
             handler_name="simple_handler",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
         )
         assert handler is not None
         assert handler.handler_name == "simple_handler"
@@ -354,7 +354,7 @@ class TestFlextHandlers:
         handler = h.create_from_callable(
             result_handler,
             handler_name="result_handler",
-            handler_type=c.Cqrs.HandlerType.QUERY,
+            handler_type=c.HandlerType.QUERY,
         )
         assert handler.handler_name == "result_handler"
         result = handler.handle("test")
@@ -369,7 +369,7 @@ class TestFlextHandlers:
         handler = h.create_from_callable(
             failing_handler,
             handler_name="failing_handler",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
         )
         result = handler.handle("test")
         u.Tests.Result.assert_result_failure_with_error(
@@ -410,11 +410,11 @@ class TestFlextHandlers:
         config = u.Tests.HandlerHelpers.create_handler_config(
             "test_mode_property",
             "Test Mode Property",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         handler = self.ConcreteTestHandler(config=config)
-        assert handler.mode == c.Cqrs.HandlerType.COMMAND
+        assert handler.mode == c.HandlerType.COMMAND
 
     @pytest.mark.parametrize(
         ("handler_type", "handler_mode"),
@@ -423,8 +423,8 @@ class TestFlextHandlers:
     )
     def test_handlers_validate_generic(
         self,
-        handler_type: c.Cqrs.HandlerType,
-        handler_mode: c.Cqrs.HandlerType,
+        handler_type: c.HandlerType,
+        handler_mode: c.HandlerType,
     ) -> None:
         handler_type_name = str(handler_type)
         config = u.Tests.HandlerHelpers.create_handler_config(

@@ -50,7 +50,7 @@ class TestModelsCollectionsFullCoverage:
         categories.add_entries("x", ["a"])
         categories.clear()
         assert categories.categories == {}
-        assert c.Errors.UNKNOWN_ERROR
+        assert c.UNKNOWN_ERROR
         assert r[int].ok(1).is_success
         result = u.find([1], lambda value: value == 1)
         assert result.is_success and result.value == 1

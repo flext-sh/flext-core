@@ -65,13 +65,13 @@ class FlextModelsService:
         exponential_base: Annotated[
             float,
             Field(
-                default=c.Reliability.RETRY_BACKOFF_BASE,
+                default=c.RETRY_BACKOFF_BASE,
                 ge=1.0,
                 description="Exponential backoff base used to calculate retry delay growth.",
                 title="Exponential Base",
                 examples=[2.0],
             ),
-        ] = c.Reliability.RETRY_BACKOFF_BASE
+        ] = c.RETRY_BACKOFF_BASE
         retry_on_timeout: bool = True
 
     class ServiceParameters(FlextModelFoundation.DynamicConfigModel):
@@ -92,14 +92,14 @@ class FlextModelsService:
         service_name: Annotated[
             str,
             Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Service name",
             ),
         ]
         method_name: Annotated[
             str,
             Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Method to execute",
             ),
         ]
@@ -108,12 +108,12 @@ class FlextModelsService:
         timeout_seconds: Annotated[
             float,
             Field(
-                default=c.Defaults.TIMEOUT,
+                default=c.TIMEOUT,
                 gt=c.ZERO,
-                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                le=c.MAX_TIMEOUT_SECONDS,
                 description="Timeout from FlextSettings (Config has priority over Constants)",
             ),
-        ] = c.Defaults.TIMEOUT
+        ] = c.TIMEOUT
         execution: bool = False
         enable_validation: bool = True
 
@@ -155,8 +155,8 @@ class FlextModelsService:
             list[FlextModelsService.BatchOperation],
             Field(
                 default_factory=list,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
-                max_length=c.Performance.MAX_BATCH_OPERATIONS,
+                min_length=c.RETRY_COUNT_MIN,
+                max_length=c.MAX_BATCH_OPERATIONS,
                 description="Ordered batch operations to execute for the target service.",
                 title="Batch Operations",
                 examples=[
@@ -169,17 +169,17 @@ class FlextModelsService:
         batch_size: Annotated[
             int,
             Field(
-                default=c.Performance.MAX_BATCH_SIZE,
+                default=c.MAX_BATCH_SIZE,
                 description="Batch size from FlextSettings (Config has priority over Constants)",
             ),
-        ] = c.Performance.MAX_BATCH_SIZE
+        ] = c.MAX_BATCH_SIZE
         timeout_per_operation: Annotated[
             float,
             Field(
-                default=c.Defaults.TIMEOUT,
+                default=c.TIMEOUT,
                 description="Timeout per operation from FlextSettings",
             ),
-        ] = c.Defaults.TIMEOUT
+        ] = c.TIMEOUT
 
     class DomainServiceMetricsRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service metrics request."""
@@ -188,20 +188,20 @@ class FlextModelsService:
         metric_types: Annotated[
             list[Literal["performance", "errors", "throughput"]],
             Field(
-                default_factory=lambda: list(c.Cqrs.DEFAULT_METRIC_CATEGORIES),
+                default_factory=lambda: list(c.DEFAULT_METRIC_CATEGORIES),
                 description="Types of metrics to collect",
             ),
         ]
-        time_range_seconds: int = c.Performance.DEFAULT_TIME_RANGE_SECONDS
+        time_range_seconds: int = c.DEFAULT_TIME_RANGE_SECONDS
         aggregation: Annotated[
             str,
             Field(
-                default=c.Cqrs.Aggregation.AVG,
+                default=c.Aggregation.AVG,
                 description="Aggregation strategy applied when summarizing metric values.",
                 title="Aggregation",
                 examples=["avg", "sum", "max"],
             ),
-        ] = c.Cqrs.Aggregation.AVG
+        ] = c.Aggregation.AVG
         group_by: Annotated[
             list[str],
             Field(
@@ -223,37 +223,37 @@ class FlextModelsService:
     class DomainServiceResourceRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service resource request."""
 
-        service_name: str = c.Dispatcher.DEFAULT_SERVICE_NAME
+        service_name: str = c.DEFAULT_SERVICE_NAME
         resource_type: Annotated[
             str,
             Field(
-                default=c.Dispatcher.DEFAULT_RESOURCE_TYPE,
-                pattern=c.Platform.PATTERN_IDENTIFIER,
+                default=c.DEFAULT_RESOURCE_TYPE,
+                pattern=c.PATTERN_IDENTIFIER,
                 description="Logical resource type targeted by the request, validated as an identifier.",
                 title="Resource Type",
                 examples=["user", "invoice", "job"],
             ),
-        ] = c.Dispatcher.DEFAULT_RESOURCE_TYPE
+        ] = c.DEFAULT_RESOURCE_TYPE
         resource_id: str | None = None
         resource_limit: Annotated[
             int,
             Field(
-                default=c.Performance.MAX_BATCH_SIZE,
+                default=c.MAX_BATCH_SIZE,
                 gt=c.ZERO,
                 description="Maximum number of resources to retrieve or process in this request.",
                 title="Resource Limit",
                 examples=[100, 500],
             ),
-        ] = c.Performance.MAX_BATCH_SIZE
+        ] = c.MAX_BATCH_SIZE
         action: Annotated[
             str,
             Field(
-                default=c.Cqrs.Action.GET,
+                default=c.Action.GET,
                 description="Requested operation to perform on the target resource type.",
                 title="Action",
                 examples=["get", "create", "update", "delete"],
             ),
-        ] = c.Cqrs.Action.GET
+        ] = c.Action.GET
         data: FlextModelsService.ServiceData | None = None
         filters: FlextModelsService.ServiceFilters | None = None
 
@@ -296,8 +296,8 @@ class FlextModelsService:
         operation_name: Annotated[
             str,
             Field(
-                max_length=c.Performance.MAX_OPERATION_NAME_LENGTH,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                max_length=c.MAX_OPERATION_NAME_LENGTH,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Operation name",
             ),
         ]
@@ -313,12 +313,12 @@ class FlextModelsService:
         timeout_seconds: Annotated[
             float,
             Field(
-                default=c.Defaults.TIMEOUT,
+                default=c.TIMEOUT,
                 gt=c.ZERO,
-                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                le=c.MAX_TIMEOUT_SECONDS,
                 description="Timeout from FlextSettings (Config has priority over Constants)",
             ),
-        ] = c.Defaults.TIMEOUT
+        ] = c.TIMEOUT
         retry_config: FlextModelsService.ServiceRetryConfiguration | None = None
 
         @model_validator(mode="after")

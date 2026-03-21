@@ -52,9 +52,7 @@ class RailwayService(s[DemonstrationResult]):
     @staticmethod
     def _build_result_data(_: None) -> r[DemonstrationResult]:
         """Build result data using centralized t and DRY patterns."""
-        patterns = tuple(
-            member.value for member in c.Cqrs.HandlerType.__members__.values()
-        )
+        patterns = tuple(member.value for member in c.HandlerType.__members__.values())
         result_data = DemonstrationResult(
             demonstrations_completed=len(patterns),
             patterns_covered=patterns,
@@ -78,9 +76,7 @@ class RailwayService(s[DemonstrationResult]):
         """Create user validator using u (DRY)."""
 
         def validate_user(email: str) -> r[User]:
-            email_validation = u.validate_pattern(
-                email, c.Platform.PATTERN_EMAIL, "email"
-            )
+            email_validation = u.validate_pattern(email, c.PATTERN_EMAIL, "email")
             if email_validation.is_failure:
                 return r[User].fail(email_validation.error or "Invalid email")
             return r.ok(User(name="Demo User", email=email, domain_events=[]))
@@ -95,11 +91,9 @@ class RailwayService(s[DemonstrationResult]):
         traversed = r.traverse(results, lambda r_val: r_val)
         traversed_val = traversed.value
         print(f".traverse(): {len(traversed_val)} results")
-        test_value = c.Validation.FILTER_THRESHOLD + c.Validation.MIN_AGE
-        filtered = (
-            r[int].ok(test_value).filter(lambda x: x > c.Validation.FILTER_THRESHOLD)
-        )
-        print(f".filter(>{c.Validation.FILTER_THRESHOLD}): {filtered.is_success}")
+        test_value = c.FILTER_THRESHOLD + c.MIN_AGE
+        filtered = r[int].ok(test_value).filter(lambda x: x > c.FILTER_THRESHOLD)
+        print(f".filter(>{c.FILTER_THRESHOLD}): {filtered.is_success}")
 
     @staticmethod
     def _demonstrate_error_recovery() -> None:
@@ -129,7 +123,7 @@ class RailwayService(s[DemonstrationResult]):
                 error_message,
                 field="email",
                 value="invalid-email",
-                error_code=c.Errors.VALIDATION_ERROR,
+                error_code=c.VALIDATION_ERROR,
             )
         except e.ValidationError as exc:
             result: r[str] = r[str].fail(exc.message, error_code=exc.error_code)
@@ -142,13 +136,13 @@ class RailwayService(s[DemonstrationResult]):
         success = r.ok("Operation successful")
         print(f"✅ .ok(): {success.value}")
         failure: r[str] = r[str].fail(
-            "Validation failed", error_code=c.Errors.VALIDATION_ERROR
+            "Validation failed", error_code=c.VALIDATION_ERROR
         )
         print(f"❌ .fail(): {failure.error}")
 
         def risky_operation() -> int:
             zero = c.ZERO
-            return c.Validation.MAX_AGE // zero
+            return c.MAX_AGE // zero
 
         from_callable = r[int].create_from_callable(risky_operation)
         print(f"🔥 .create_from_callable(): {from_callable.error}")
@@ -167,7 +161,7 @@ class RailwayService(s[DemonstrationResult]):
         test_value = "test"
 
         def validate_length(v: str) -> r[str]:
-            return u.validate_length(v, min_length=c.Validation.MIN_USERNAME_LENGTH)
+            return u.validate_length(v, min_length=c.MIN_USERNAME_LENGTH)
 
         chained = r.ok(test_value).flat_map(validate_length).map(to_upper)
         print(f".flat_map chain: {chained.value}")
@@ -197,19 +191,19 @@ class RailwayService(s[DemonstrationResult]):
             .flat_map(
                 lambda email: u.validate_length(
                     email,
-                    min_length=c.Validation.MIN_USERNAME_LENGTH,
-                    max_length=c.Validation.MAX_NAME_LENGTH,
+                    min_length=c.MIN_USERNAME_LENGTH,
+                    max_length=c.MAX_NAME_LENGTH,
                 )
             )
         )
         print(f"Validation chain with User model: {result.is_success}")
         test_email_2 = "user@domain.com"
         validation_results = [
-            u.validate_pattern(test_email_2, c.Platform.PATTERN_EMAIL, "email"),
+            u.validate_pattern(test_email_2, c.PATTERN_EMAIL, "email"),
             u.validate_length(
                 test_email_2,
-                min_length=c.Validation.MIN_USERNAME_LENGTH,
-                max_length=c.Validation.MAX_NAME_LENGTH,
+                min_length=c.MIN_USERNAME_LENGTH,
+                max_length=c.MAX_NAME_LENGTH,
             ),
         ]
         all_valid = r.traverse(validation_results, lambda r: r)
@@ -224,7 +218,7 @@ class RailwayService(s[DemonstrationResult]):
         )
         failure: r[str] = r[str].fail("Not found")
         user_data = success.value
-        print(f".value success: {user_data.get(c.Mixins.FIELD_NAME, '')}")
+        print(f".value success: {user_data.get(c.FIELD_NAME, '')}")
         print(f".unwrap_or() failure: {failure.unwrap_or('default')}")
         print(f".value property: {user_data.get('email', '')}")
         print(f".value: {success.value}")
@@ -256,9 +250,7 @@ class RailwayService(s[DemonstrationResult]):
         """Handle execution errors with proper typing."""
         error_msg = f"Demonstration failed: {error}"
         self.logger.error(error_msg)
-        return r[DemonstrationResult].fail(
-            error_msg, error_code=c.Errors.EXCEPTION_ERROR
-        )
+        return r[DemonstrationResult].fail(error_msg, error_code=c.EXCEPTION_ERROR)
 
     def _log_success(self, data: DemonstrationResult) -> DemonstrationResult:
         """Log success and return data using advanced logging patterns."""
@@ -282,7 +274,7 @@ class RailwayService(s[DemonstrationResult]):
 
 def main() -> None:
     """Main entry point using centralized t and advanced features."""
-    width = c.Validation.MAX_NAME_LENGTH * 2
+    width = c.MAX_NAME_LENGTH * 2
     separator = "=" * width
     print(separator)
     print("r COMPREHENSIVE DEMONSTRATION")

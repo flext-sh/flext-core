@@ -17,7 +17,7 @@ from ._models import TestUnitModels
 
 
 def test_merge_defaults_and_dump_paths() -> None:
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
     merged = u.merge_defaults(TestUnitModels._Cfg, {"x": 1, "y": "a"}, {"x": 2})

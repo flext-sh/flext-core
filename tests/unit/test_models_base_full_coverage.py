@@ -83,6 +83,6 @@ class TestModelsBaseFullCoverage:
         assert hasattr(m, "TimestampedModel")
         ok_result = r[str].ok("ok")
         assert ok_result.value == "ok"
-        version = c.Performance.DEFAULT_VERSION
+        version = c.DEFAULT_VERSION
         assert version >= 1
         assert hasattr(u, "transform")

@@ -59,7 +59,7 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         """Show collection operation utilities."""
         print("\n=== Collection Operations ===")
         parse_result = u.parse_sequence(
-            c.Cqrs.HandlerType, ["validation", "id_generation"]
+            c.HandlerType, ["validation", "id_generation"]
         ).map(
             lambda parsed_enums: print(
                 f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}"
@@ -91,11 +91,9 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         """Show ID generation utilities using u."""
         print("\n=== ID Generation ===")
         correlation_id = u.generate("correlation")
-        print(
-            f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}..."
-        )
+        print(f"✅ Correlation ID: {correlation_id[: c.SHORT_UUID_LENGTH]}...")
         short_id = u.generate("ulid")
-        print(f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...")
+        print(f"✅ Short ID: {short_id[: c.SHORT_UUID_LENGTH]}...")
         entity_id = u.generate("entity")
         print(f"✅ Entity ID: {entity_id[:16]}...")
         batch_id = u.generate("batch", parts=(100,))
@@ -149,15 +147,13 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         """Show validation utilities using FlextConstants and u."""
         print("\n=== Validation Utilities ===")
         email = str(TEST_DATA["email"])
-        email_result = u.validate_pattern(
-            email, FlextConstants.Platform.PATTERN_EMAIL, "email"
-        )
+        email_result = u.validate_pattern(email, FlextConstants.PATTERN_EMAIL, "email")
         print(f"✅ Email validation: {email} -> {email_result.is_success}")
         name = "test"
         name_result = u.validate_length(
             name,
-            min_length=FlextConstants.Validation.MIN_USERNAME_LENGTH,
-            max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
+            min_length=FlextConstants.MIN_USERNAME_LENGTH,
+            max_length=FlextConstants.MAX_NAME_LENGTH,
         )
         print(f"✅ String validation: {name} -> {name_result.is_success}")
         uri = str(TEST_DATA["uri"])

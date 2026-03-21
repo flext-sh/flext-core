@@ -6,41 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
 from typing import Final
 
 
 class FlextConstantsBase:
     """Constants for root and foundational values."""
-
-    class CommonStatus(StrEnum):
-        ACTIVE = "active"
-        INACTIVE = "inactive"
-        PENDING = "pending"
-        RUNNING = "running"
-        COMPLETED = "completed"
-        FAILED = "failed"
-        CANCELLED = "cancelled"
-        COMPENSATING = "compensating"
-        ARCHIVED = "archived"
-
-    class ErrorType(StrEnum):
-        VALIDATION = "validation"
-        CONFIGURATION = "configuration"
-        OPERATION = "operation"
-        CONNECTION = "connection"
-        TIMEOUT = "timeout"
-        AUTHORIZATION = "authorization"
-        AUTHENTICATION = "authentication"
-        NOT_FOUND = "not_found"
-        ATTRIBUTE_ACCESS = "attribute_access"
-        CONFLICT = "conflict"
-        RATE_LIMIT = "rate_limit"
-        CIRCUIT_BREAKER = "circuit_breaker"
-        TYPE_ERROR = "type_error"
-        VALUE_ERROR = "value_error"
-        RUNTIME_ERROR = "runtime_error"
-        SYSTEM_ERROR = "system_error"
 
     NAME: Final[str] = "FLEXT"
     INITIAL_TIME: Final[float] = 0.0
@@ -51,39 +21,27 @@ class FlextConstantsBase:
     MICROSECONDS_MULTIPLIER: Final[int] = 1000000
     "Multiplier to convert seconds to microseconds."
 
-    class Network:
-        """Network configuration constants and limits."""
-
-        LOOPBACK_IP: Final[str] = "127.0.0.1"
-        LOCALHOST: Final[str] = "localhost"
-        MIN_PORT: Final[int] = 1
-        MAX_PORT: Final[int] = 65535
-        DEFAULT_TIMEOUT: Final[int] = 30
-        DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
-        MAX_CONNECTION_POOL_SIZE: Final[int] = 100
-        MAX_HOSTNAME_LENGTH: Final[int] = 253
-        HTTP_STATUS_MIN: Final[int] = 100
-        HTTP_STATUS_MAX: Final[int] = 599
-
-    class Messages:
-        """User-facing message templates."""
-
-        TYPE_MISMATCH: Final[str] = "Type mismatch"
-
-    class Defaults:
-        """Default values."""
-
-        TIMEOUT: Final[int] = 30
-        PAGE_SIZE: Final[int] = 100
-        TIMEOUT_SECONDS: Final[int] = 30
-        CACHE_TTL: Final[int] = 300
-        DEFAULT_CACHE_TTL: Final[int] = CACHE_TTL
-        DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
-        MAX_MESSAGE_LENGTH: Final[int] = 100
-        DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0
-        OPERATION_TIMEOUT_SECONDS: Final[int] = 30
-        DATABASE_URL: Final[str] = "sqlite:///:memory:"
-        DEFAULT_DATABASE_URL: Final[str] = DATABASE_URL
+    LOOPBACK_IP: Final[str] = "127.0.0.1"
+    LOCALHOST: Final[str] = "localhost"
+    MIN_PORT: Final[int] = 1
+    MAX_PORT: Final[int] = 65535
+    DEFAULT_TIMEOUT: Final[int] = 30
+    DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
+    MAX_CONNECTION_POOL_SIZE: Final[int] = 100
+    MAX_HOSTNAME_LENGTH: Final[int] = 253
+    HTTP_STATUS_MIN: Final[int] = 100
+    HTTP_STATUS_MAX: Final[int] = 599
+    TYPE_MISMATCH: Final[str] = "Type mismatch"
+    TIMEOUT: Final[int] = 30
+    PAGE_SIZE: Final[int] = 100
+    TIMEOUT_SECONDS: Final[int] = 30
+    CACHE_TTL: Final[int] = 300
+    DEFAULT_CACHE_TTL: Final[int] = CACHE_TTL
+    MAX_MESSAGE_LENGTH: Final[int] = 100
+    DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0
+    OPERATION_TIMEOUT_SECONDS: Final[int] = 30
+    DATABASE_URL: Final[str] = "sqlite:///:memory:"
+    DEFAULT_DATABASE_URL: Final[str] = DATABASE_URL
 
     DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
     MAX_TIMEOUT_SECONDS: Final[int] = 3600

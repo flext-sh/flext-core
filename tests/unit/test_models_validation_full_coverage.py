@@ -102,7 +102,7 @@ def test_facade_binding_is_correct() -> None:
 
 def test_basic_imports_work() -> None:
     """Smoke test: all standard imports resolve."""
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)

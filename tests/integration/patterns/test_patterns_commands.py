@@ -111,8 +111,8 @@ class TestPatternsCommands:
             config = FlextModels.Handler(
                 handler_id="create_user_handler",
                 handler_name="Create User Handler",
-                handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
-                handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+                handler_type=FlextConstants.HandlerType.COMMAND,
+                handler_mode=FlextConstants.HandlerType.COMMAND,
             )
             super().__init__(config=config)
 
@@ -172,8 +172,8 @@ class TestPatternsCommands:
             config = FlextModels.Handler(
                 handler_id="update_user_handler",
                 handler_name="Update User Handler",
-                handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
-                handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+                handler_type=FlextConstants.HandlerType.COMMAND,
+                handler_mode=FlextConstants.HandlerType.COMMAND,
             )
             super().__init__(config=config)
             self.updated_users: dict[str, t.NormalizedValue] = {}

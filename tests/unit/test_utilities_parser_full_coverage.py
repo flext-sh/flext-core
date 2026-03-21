@@ -96,7 +96,7 @@ class TestUtilitiesParserFullCoverage:
         parser = u()
         sample = "ok"
         tm.that(sample, eq="ok")
-        tm.that(c.Processing.PATTERN_TUPLE_MIN_LENGTH, is_=int)
+        tm.that(c.PATTERN_TUPLE_MIN_LENGTH, is_=int)
         tm.that(
             parser._safe_text_length(cast("t.NormalizedValue", self._LenRaises("x"))),
             eq="unknown",

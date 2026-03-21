@@ -24,7 +24,7 @@ class FlextModelsContextScope:
         scope_name: Annotated[
             str,
             Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Name of the scope",
             ),
         ] = ""

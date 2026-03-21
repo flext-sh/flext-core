@@ -153,7 +153,7 @@ class Ex09FlextDecorators(Examples):
             """Factory function with explicit singleton and lazy values."""
             return _FactoryPayload(value=custom_value)
 
-        attr_name = c.Discovery.FACTORY_ATTR
+        attr_name = c.FACTORY_ATTR
         default_cfg = getattr(factory_default, attr_name)
         custom_cfg = getattr(factory_custom, attr_name)
         self.check(

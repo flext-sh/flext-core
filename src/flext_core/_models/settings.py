@@ -62,10 +62,10 @@ class FlextModelsConfig:
         env_prefix: Annotated[
             str,
             Field(
-                default=c.Platform.ENV_PREFIX,
+                default=c.ENV_PREFIX,
                 description="Environment variable prefix for settings resolution",
             ),
-        ] = c.Platform.ENV_PREFIX
+        ] = c.ENV_PREFIX
         env_file: Annotated[
             str | None,
             Field(
@@ -89,7 +89,7 @@ class FlextModelsConfig:
             str,
             Field(
                 default_factory=FlextRuntime.generate_id,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Unique operation identifier",
             ),
         ]
@@ -114,21 +114,21 @@ class FlextModelsConfig:
         timeout_seconds: Annotated[
             float,
             Field(
-                default=c.Defaults.TIMEOUT,
+                default=c.TIMEOUT,
                 gt=c.ZERO,
-                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                le=c.MAX_TIMEOUT_SECONDS,
                 description="Operation timeout from c (Constants default)",
             ),
-        ] = c.Defaults.TIMEOUT
+        ] = c.TIMEOUT
         retry_attempts: Annotated[
             int,
             Field(
-                default=c.Reliability.MAX_RETRY_ATTEMPTS,
+                default=c.MAX_RETRY_ATTEMPTS,
                 ge=c.ZERO,
-                le=c.Reliability.MAX_RETRY_ATTEMPTS,
+                le=c.MAX_RETRY_ATTEMPTS,
                 description="Maximum retry attempts from c (Constants default)",
             ),
-        ] = c.Reliability.MAX_RETRY_ATTEMPTS
+        ] = c.MAX_RETRY_ATTEMPTS
         enable_validation: bool = True
 
         @field_validator("context", mode="before")
@@ -160,21 +160,21 @@ class FlextModelsConfig:
         max_retries: Annotated[
             int,
             Field(
-                default=c.Reliability.MAX_RETRY_ATTEMPTS,
-                ge=c.Reliability.RETRY_COUNT_MIN,
-                le=c.Reliability.MAX_RETRY_ATTEMPTS,
+                default=c.MAX_RETRY_ATTEMPTS,
+                ge=c.RETRY_COUNT_MIN,
+                le=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
                 validation_alias=AliasChoices("max_attempts", "max_retries"),
                 serialization_alias="max_attempts",
                 description="Maximum retry attempts from c (Constants default)",
             ),
-        ] = c.Reliability.MAX_RETRY_ATTEMPTS
+        ] = c.MAX_RETRY_ATTEMPTS
         exponential_backoff: bool = True
         backoff_multiplier: Annotated[
             float,
             Field(
                 default=c.DEFAULT_BACKOFF_MULTIPLIER,
-                ge=float(c.Reliability.RETRY_COUNT_MIN),
+                ge=float(c.RETRY_COUNT_MIN),
                 description="Backoff multiplier for exponential backoff",
             ),
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
@@ -189,7 +189,7 @@ class FlextModelsConfig:
             list[int],
             Field(
                 default_factory=list,
-                max_length=c.Validation.MAX_RETRY_STATUS_CODES,
+                max_length=c.MAX_RETRY_STATUS_CODES,
                 description="HTTP status codes to retry on",
             ),
         ]
@@ -238,19 +238,19 @@ class FlextModelsConfig:
         max_validation_errors: Annotated[
             int,
             Field(
-                default=c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
-                ge=c.Reliability.RETRY_COUNT_MIN,
-                le=c.Validation.MAX_RETRY_STATUS_CODES,
+                default=c.DEFAULT_MAX_VALIDATION_ERRORS,
+                ge=c.RETRY_COUNT_MIN,
+                le=c.MAX_RETRY_STATUS_CODES,
                 description="Maximum validation errors",
             ),
-        ] = c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS
+        ] = c.DEFAULT_MAX_VALIDATION_ERRORS
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
             list[p.ValidatorSpec],
             Field(
                 default_factory=list,
-                max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
+                max_length=c.MAX_CUSTOM_VALIDATORS,
                 description="Custom validator callables",
             ),
         ]
@@ -279,32 +279,32 @@ class FlextModelsConfig:
         batch_size: Annotated[
             int,
             Field(
-                default=c.Performance.MAX_BATCH_SIZE,
-                le=c.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
+                default=c.MAX_BATCH_SIZE,
+                le=c.MAX_VALIDATION_SIZE,
                 description="Batch size from c (Constants default)",
             ),
-        ] = c.Performance.MAX_BATCH_SIZE
+        ] = c.MAX_BATCH_SIZE
         max_workers: Annotated[
             int,
             Field(
-                default=c.Processing.DEFAULT_MAX_WORKERS,
-                le=c.Settings.MAX_WORKERS_THRESHOLD,
+                default=c.DEFAULT_MAX_WORKERS,
+                le=c.MAX_WORKERS_THRESHOLD,
                 description="Maximum workers (Config has priority over Constants)",
             ),
-        ] = c.Processing.DEFAULT_MAX_WORKERS
+        ] = c.DEFAULT_MAX_WORKERS
         timeout_per_item: Annotated[
             float,
             Field(
-                default=c.Defaults.TIMEOUT,
+                default=c.TIMEOUT,
                 description="Timeout per item (Config has priority over Constants)",
             ),
-        ] = c.Defaults.TIMEOUT
+        ] = c.TIMEOUT
         continue_on_error: bool = True
         data_items: Annotated[
             list[t.ValueOrModel],
             Field(
                 default_factory=list,
-                max_length=c.Performance.BatchProcessing.MAX_ITEMS,
+                max_length=c.MAX_ITEMS,
                 description="Ordered list of items to process in this batch; bounded by MAX_ITEMS performance constant.",
                 title="Data Items",
                 examples=[["item-a", "item-b"]],
@@ -353,7 +353,7 @@ class FlextModelsConfig:
         handler_name: Annotated[
             str,
             Field(
-                pattern=c.Platform.PATTERN_IDENTIFIER,
+                pattern=c.PATTERN_IDENTIFIER,
                 description="Handler identifier used to route execution in the dispatcher.",
                 title="Handler Name",
                 examples=["process_order", "sync_inventory"],
@@ -380,19 +380,19 @@ class FlextModelsConfig:
         timeout_seconds: Annotated[
             float,
             Field(
-                default=c.Defaults.TIMEOUT,
-                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                default=c.TIMEOUT,
+                le=c.MAX_TIMEOUT_SECONDS,
                 description="Timeout in seconds (default from constants)",
             ),
-        ] = c.Defaults.TIMEOUT
+        ] = c.TIMEOUT
         retry_on_failure: bool = True
         max_retries: Annotated[
             int,
             Field(
-                default=c.Reliability.MAX_RETRY_ATTEMPTS,
+                default=c.MAX_RETRY_ATTEMPTS,
                 description="Max retries (default from constants)",
             ),
-        ] = c.Reliability.MAX_RETRY_ATTEMPTS
+        ] = c.MAX_RETRY_ATTEMPTS
 
     class MiddlewareConfig:
         """Configuration for middleware execution.
@@ -415,10 +415,10 @@ class FlextModelsConfig:
         order: Annotated[
             int,
             Field(
-                default=c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
+                default=c.DEFAULT_MIDDLEWARE_ORDER,
                 description="Execution order in middleware chain",
             ),
-        ] = c.Defaults.DEFAULT_MIDDLEWARE_ORDER
+        ] = c.DEFAULT_MIDDLEWARE_ORDER
         name: Annotated[
             str | None,
             Field(default=None, description="Optional middleware name"),
@@ -473,19 +473,19 @@ class FlextModelsConfig:
         limit: Annotated[
             int,
             Field(
-                default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
-                ge=c.Reliability.RETRY_COUNT_MIN,
+                default=c.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+                ge=c.RETRY_COUNT_MIN,
                 description="Maximum requests allowed per window",
             ),
-        ] = c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
+        ] = c.DEFAULT_RATE_LIMIT_MAX_REQUESTS
         window_seconds: Annotated[
             int,
             Field(
-                default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-                ge=c.Reliability.RETRY_COUNT_MIN,
+                default=c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+                ge=c.RETRY_COUNT_MIN,
                 description="Duration of rate limit window in seconds",
             ),
-        ] = c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
+        ] = c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
         block_until: Annotated[
             float,
             Field(
@@ -533,7 +533,7 @@ class FlextModelsConfig:
             Field(
                 default=None,
                 gt=c.ZERO,
-                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                le=c.MAX_TIMEOUT_SECONDS,
                 description="Command timeout in seconds (max 5 min)",
             ),
         ] = None
@@ -564,7 +564,7 @@ class FlextModelsConfig:
             Field(
                 default_factory=FlextRuntime.get_log_level_from_config,
                 ge=c.ZERO,
-                le=c.Validation.MAX_CUSTOM_VALIDATORS,
+                le=c.MAX_CUSTOM_VALIDATORS,
                 description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
             ),
         ]
@@ -614,10 +614,10 @@ class FlextModelsConfig:
         level: Annotated[
             str,
             Field(
-                default=c.Logging.DEFAULT_LEVEL,
+                default=c.DEFAULT_LEVEL,
                 description="Log level (default from constants, can be overridden)",
             ),
-        ] = c.Logging.DEFAULT_LEVEL
+        ] = c.DEFAULT_LEVEL
         service_name: Annotated[
             str | None,
             Field(
@@ -1185,26 +1185,26 @@ class FlextModelsConfig:
         attempts: Annotated[
             int,
             Field(
-                default=c.Reliability.MAX_RETRY_ATTEMPTS,
-                ge=c.Reliability.RETRY_COUNT_MIN,
+                default=c.MAX_RETRY_ATTEMPTS,
+                ge=c.RETRY_COUNT_MIN,
                 description="Number of retry attempts (used if retry_config is None)",
             ),
-        ] = c.Reliability.MAX_RETRY_ATTEMPTS
+        ] = c.MAX_RETRY_ATTEMPTS
         delay: Annotated[
             float,
             Field(
-                default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
+                default=float(c.DEFAULT_RETRY_DELAY_SECONDS),
                 gt=c.INITIAL_TIME,
                 description="Initial delay between retries (used if retry_config is None)",
             ),
-        ] = float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
+        ] = float(c.DEFAULT_RETRY_DELAY_SECONDS)
         strategy: Annotated[
             str,
             Field(
-                default=c.Reliability.DEFAULT_BACKOFF_STRATEGY,
+                default=c.DEFAULT_BACKOFF_STRATEGY,
                 description="Retry strategy: 'exponential' or 'linear' (used if retry_config is None)",
             ),
-        ] = c.Reliability.DEFAULT_BACKOFF_STRATEGY
+        ] = c.DEFAULT_BACKOFF_STRATEGY
 
     class DispatcherConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for message dispatcher.
@@ -1308,7 +1308,7 @@ class FlextModelsConfig:
         arbitrary_types_allowed=False,
         extra="forbid",
     )
-    "Domain model configuration defaults.\n\n    Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because\n    constants.py cannot import ConfigDict from pydantic.\n\n    Use m.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.\n    "
+    "Domain model configuration defaults.\n\n    Moved from FlextConstants.DOMAIN_MODEL_CONFIG because\n    constants.py cannot import ConfigDict from pydantic.\n\n    Use m.DOMAIN_MODEL_CONFIG instead of c.DOMAIN_MODEL_CONFIG.\n    "
 
 
 __all__ = ["FlextModelsConfig"]

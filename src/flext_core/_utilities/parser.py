@@ -48,8 +48,8 @@ class FlextUtilitiesParser:
 
     """
 
-    PATTERN_TUPLE_MIN_LENGTH: int = c.Processing.PATTERN_TUPLE_MIN_LENGTH
-    PATTERN_TUPLE_MAX_LENGTH: int = c.Processing.PATTERN_TUPLE_MAX_LENGTH
+    PATTERN_TUPLE_MIN_LENGTH: int = c.PATTERN_TUPLE_MIN_LENGTH
+    PATTERN_TUPLE_MAX_LENGTH: int = c.PATTERN_TUPLE_MAX_LENGTH
     TUPLE_LENGTH_2: int = 2
     TUPLE_LENGTH_3: int = 3
 
@@ -526,16 +526,16 @@ class FlextUtilitiesParser:
             text_length_result = r[int].create_from_callable(lambda: len(text))
             if text_length_result.is_success:
                 return text_length_result.value
-            return c.Mixins.IDENTIFIER_UNKNOWN
+            return c.IDENTIFIER_UNKNOWN
         text_adapter: TypeAdapter[str | bytes] = TypeAdapter(str | bytes)
         try:
             text_value: str | bytes = text_adapter.validate_python(text)
         except ValidationError:
-            return c.Mixins.IDENTIFIER_UNKNOWN
+            return c.IDENTIFIER_UNKNOWN
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
         if text_length_result.is_success:
             return text_length_result.value
-        return c.Mixins.IDENTIFIER_UNKNOWN
+        return c.IDENTIFIER_UNKNOWN
 
     @staticmethod
     def _validate_split_inputs(split_char: str, escape_char: str) -> r[bool]:

@@ -45,9 +45,9 @@ Immutable defaults and identifiers with no runtime dependencies.
 from flext_core import c
 
 # Error code and configuration defaults
-error_code = c.Errors.VALIDATION_FAILED
+error_code = c.VALIDATION_FAILED
 request_timeout = c.Configuration.DEFAULT_TIMEOUT
-email_pattern = c.Validation.EMAIL_PATTERN
+email_pattern = c.EMAIL_PATTERN
 ```
 
 ### t — Type System
@@ -137,7 +137,7 @@ class ValidationException(e.BaseError):
 
     def __init__(self, field: str, value):
         super().__init__(
-            error_code=c.Errors.VALIDATION_ERROR,
+            error_code=c.VALIDATION_ERROR,
             message=f"Invalid value for {field}: {value}",
             context={"field": field, "value": value},
         )
@@ -176,7 +176,7 @@ def process(value: str) -> r[str]:
 config_dict: t.ConfigurationDict = {"key": "value"}
 
 # Constants
-error_code = c.Errors.VALIDATION_ERROR
+error_code = c.VALIDATION_ERROR
 
 # Models
 user = m.Entity(id="123", name="Alice")

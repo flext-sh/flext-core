@@ -239,7 +239,7 @@ class Ex12FlextRegistry(Examples):
         handler_mode = FlextHandlers.create_from_callable(
             lambda msg: f"{callable_prefix}:{msg}",
             handler_name=callable_name,
-            mode=c.Cqrs.HandlerType.COMMAND,
+            mode=c.HandlerType.COMMAND,
         )
         reg_one = registry.register_handler(handler_a)
         reg_dup = registry.register_handler(handler_a)

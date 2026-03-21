@@ -63,9 +63,9 @@ class Ex03FlextLogger(Examples):
         """Exercise scoped context management."""
         self.section("scoped_context")
         logger = FlextLogger.create_module_logger("examples.ex_03.scope")
-        application_scope = c.Context.SCOPE_APPLICATION
-        request_scope = c.Context.SCOPE_REQUEST
-        operation_scope = c.Context.SCOPE_OPERATION
+        application_scope = c.SCOPE_APPLICATION
+        request_scope = c.SCOPE_REQUEST
+        operation_scope = c.SCOPE_OPERATION
         self.check(
             "bind_context.application.ok",
             FlextLogger.bind_context(application_scope, app="core").is_success,

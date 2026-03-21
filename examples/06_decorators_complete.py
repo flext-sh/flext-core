@@ -93,7 +93,7 @@ class DecoratorsService(s[t.ConfigMap]):
         """Show railway decorator."""
         print("\n=== Railway Decorator ===")
 
-        @FlextDecorators.railway(error_code=c.Errors.VALIDATION_ERROR)
+        @FlextDecorators.railway(error_code=c.VALIDATION_ERROR)
         def railway_operation(value: int) -> r[int]:
             """Operation with railway pattern."""
             if value < 0:
@@ -115,7 +115,7 @@ class DecoratorsService(s[t.ConfigMap]):
         @FlextDecorators.retry(
             max_attempts=3, delay_seconds=0.1, backoff_strategy="exponential"
         )
-        @FlextDecorators.railway(error_code=c.Errors.CONNECTION_ERROR)
+        @FlextDecorators.railway(error_code=c.CONNECTION_ERROR)
         def unreliable_operation(attempt_count: list[int]) -> r[str]:
             """Operation that may fail initially but succeeds on retry."""
             attempt_count[0] += 1
@@ -129,7 +129,7 @@ class DecoratorsService(s[t.ConfigMap]):
             print(f"✅ Retry succeeded: {result.value}")
 
         @FlextDecorators.timeout(timeout_seconds=0.5)
-        @FlextDecorators.railway(error_code=c.Errors.TIMEOUT_ERROR)
+        @FlextDecorators.railway(error_code=c.TIMEOUT_ERROR)
         def fast_operation() -> r[str]:
             """Fast operation that completes within timeout."""
             time.sleep(0.1)
@@ -141,7 +141,7 @@ class DecoratorsService(s[t.ConfigMap]):
 
         @FlextDecorators.retry(max_attempts=2, delay_seconds=0.05)
         @FlextDecorators.timeout(timeout_seconds=1.0)
-        @FlextDecorators.railway(error_code=c.Errors.CONNECTION_ERROR)
+        @FlextDecorators.railway(error_code=c.CONNECTION_ERROR)
         def robust_operation(value: int) -> r[int]:
             """Operation with retry and timeout protection."""
             if value < 0:

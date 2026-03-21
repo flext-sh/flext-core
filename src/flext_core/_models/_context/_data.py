@@ -57,7 +57,7 @@ class FlextModelsContextData:
             return v
         if isinstance(v, Mapping):
             return FlextModelFoundation.Metadata.model_validate({
-                c.Mixins.FIELD_ATTRIBUTES: FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                c.FIELD_ATTRIBUTES: FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     v,
                 ),
             })
@@ -120,7 +120,7 @@ class FlextModelsContextData:
                 description="Context metadata (creation info, source, etc.)",
             ),
         ] = None
-        model_config = ConfigDict(extra=c.ModelConfig.EXTRA_IGNORE)
+        model_config = ConfigDict(extra=c.EXTRA_IGNORE)
 
         @classmethod
         def check_json_serializable(cls, obj: t.ValueOrModel, path: str = "") -> None:

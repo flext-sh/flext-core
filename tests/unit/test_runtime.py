@@ -1060,12 +1060,12 @@ class TestFlextRuntime:
             test_case.operation
             == self.RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS
         ):
-            tm.that(hasattr(c.Platform, "PATTERN_PHONE_NUMBER"), eq=True)
+            tm.that(hasattr(c, "PATTERN_PHONE_NUMBER"), eq=True)
             tm.that(FlextRuntime.is_valid_json('{"phone": "+5511987654321"}'), eq=True)
         elif (
             test_case.operation == self.RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY
         ):
-            tm.that(hasattr(c.Platform, "PATTERN_EMAIL"), eq=True)
+            tm.that(hasattr(c, "PATTERN_EMAIL"), eq=True)
         elif (
             test_case.operation
             == self.RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS

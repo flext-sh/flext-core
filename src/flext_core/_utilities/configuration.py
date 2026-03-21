@@ -133,7 +133,7 @@ class FlextUtilitiesConfiguration:
             int: Numeric logging level (e.g., logging.INFO = 20)
 
         """
-        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
+        default_log_level = c.DEFAULT_LEVEL.upper()
         return getattr(logging, default_log_level, logging.INFO)
 
     @staticmethod
@@ -173,16 +173,16 @@ class FlextUtilitiesConfiguration:
             )
 
         """
-        custom_env_file = os.environ.get(c.Platform.ENV_FILE_ENV_VAR)
+        custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
         if custom_env_file:
             custom_path = Path(custom_env_file)
             if custom_path.exists():
                 return str(custom_path.resolve())
             return custom_env_file
-        default_path = Path.cwd() / c.Platform.ENV_FILE_DEFAULT
+        default_path = Path.cwd() / c.ENV_FILE_DEFAULT
         if default_path.exists():
             return str(default_path.resolve())
-        return c.Platform.ENV_FILE_DEFAULT
+        return c.ENV_FILE_DEFAULT
 
     _NOT_FOUND: tuple[bool, None] = (False, None)
 
@@ -466,7 +466,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def create_settings_config(
         env_prefix: str,
-        env_file: str = c.Platform.ENV_FILE_DEFAULT,
+        env_file: str = c.ENV_FILE_DEFAULT,
         env_nested_delimiter: str = "__",
     ) -> Mapping[str, t.Scalar]:
         """Create a SettingsConfigDict for environment binding.
@@ -509,7 +509,7 @@ class FlextUtilitiesConfiguration:
             "env_file": env_file,
             "env_nested_delimiter": env_nested_delimiter,
             "case_sensitive": False,
-            "extra": c.ModelConfig.EXTRA_IGNORE,
+            "extra": c.EXTRA_IGNORE,
             "validate_default": True,
         }
 
@@ -923,8 +923,8 @@ class FlextUtilitiesConfiguration:
         *,
         trace: bool,
         debug: bool,
-        log_level: c.Settings.LogLevel,
-    ) -> c.Settings.LogLevel:
+        log_level: c.LogLevel,
+    ) -> c.LogLevel:
         """Resolve effective log level based on debug/trace flags.
 
         Pure function extracted from FlextSettings.effective_log_level computed field.
@@ -939,9 +939,9 @@ class FlextUtilitiesConfiguration:
 
         """
         if trace:
-            return c.Settings.LogLevel.DEBUG
+            return c.LogLevel.DEBUG
         if debug:
-            return c.Settings.LogLevel.INFO
+            return c.LogLevel.INFO
         return log_level
 
     @staticmethod

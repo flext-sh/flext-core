@@ -12,7 +12,7 @@ from flext_core import r, t
 
 
 def test_constants_auto_enum_and_bimapping_paths() -> None:
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)

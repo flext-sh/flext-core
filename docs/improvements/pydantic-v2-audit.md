@@ -115,10 +115,10 @@ $ grep -rn "\.dict()\|\.parse_obj()" src/flext_core/*.py
 ```python
 model_config = SettingsConfigDict(
     case_sensitive=False,
-    env_prefix=FlextConstants.Platform.ENV_PREFIX,
-    env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
-    env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
-    env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
+    env_prefix=FlextConstants.ENV_PREFIX,
+    env_file=FlextConstants.ENV_FILE_DEFAULT,
+    env_file_encoding=FlextConstants.DEFAULT_ENCODING,
+    env_nested_delimiter=FlextConstants.ENV_NESTED_DELIMITER,
     extra="ignore",
     use_enum_values=False,
     frozen=False,
@@ -271,10 +271,10 @@ class FlextSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         case_sensitive=False,
-        env_prefix=FlextConstants.Platform.ENV_PREFIX,  # "FLEXT_"
-        env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
-        env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
-        env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
+        env_prefix=FlextConstants.ENV_PREFIX,  # "FLEXT_"
+        env_file=FlextConstants.ENV_FILE_DEFAULT,
+        env_file_encoding=FlextConstants.DEFAULT_ENCODING,
+        env_nested_delimiter=FlextConstants.ENV_NESTED_DELIMITER,
         # ... 10 more configuration options
     )
 ```

@@ -17,7 +17,7 @@ class _SubSettings(FlextSettings):
 
 
 def test_settings_materialize_and_context_overrides() -> None:
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)

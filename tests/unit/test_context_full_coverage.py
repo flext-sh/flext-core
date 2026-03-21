@@ -65,11 +65,11 @@ def test_create_overloads_and_auto_correlation(
     monkeypatch.setattr("flext_core.context.u.generate", _generate_id)
     ctx = FlextContext.create(user_id="u1", metadata=t.ConfigMap(root={"x": 1}))
     tm.that(isinstance(ctx, p.Context), eq=True)
-    tm.that(ctx.get(c.Context.KEY_USER_ID).value, eq="u1")
+    tm.that(ctx.get(c.KEY_USER_ID).value, eq="u1")
     ctx2 = FlextContext.create(initial_data=t.ConfigMap(root={}))
-    tm.ok(ctx2.get(c.Context.KEY_OPERATION_ID))
+    tm.ok(ctx2.get(c.KEY_OPERATION_ID))
     ctx3 = FlextContext.create(operation_id="op-explicit")
-    tm.that(ctx3.get(c.Context.KEY_OPERATION_ID).value, eq="op-explicit")
+    tm.that(ctx3.get(c.KEY_OPERATION_ID).value, eq="op-explicit")
 
 
 def test_set_set_all_get_validation_and_error_paths(
@@ -114,7 +114,7 @@ def test_inactive_and_none_value_paths() -> None:
     tm.that(ctx.items(), eq=[])
     tm.that(ctx._get_all_scopes(), eq={})
     ctx2 = FlextContext()
-    ctx2._set_in_contextvar(c.Context.SCOPE_GLOBAL, t.ConfigMap(root={"k": None}))
+    ctx2._set_in_contextvar(c.SCOPE_GLOBAL, t.ConfigMap(root={"k": None}))
     tm.fail(ctx2.get("k"))
 
 
@@ -122,7 +122,7 @@ def test_clear_keys_values_items_and_validate_branches(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
-    ctx._statistics.operations = {c.Context.OPERATION_CLEAR: 1}
+    ctx._statistics.operations = {c.OPERATION_CLEAR: 1}
     ctx.clear()
     ctx._active = False
     tm.that(ctx.keys(), eq=[])
@@ -146,9 +146,9 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
-    ctx._statistics.operations = {c.Context.OPERATION_GET: 1}
-    ctx._update_statistics(c.Context.OPERATION_GET)
-    tm.that(ctx._statistics.operations[c.Context.OPERATION_GET], eq=2)
+    ctx._statistics.operations = {c.OPERATION_GET: 1}
+    ctx._update_statistics(c.OPERATION_GET)
+    tm.that(ctx._statistics.operations[c.OPERATION_GET], eq=2)
     clone_source = FlextContext()
     _ = clone_source.set("a", "b")
     original_set = FlextContext.set

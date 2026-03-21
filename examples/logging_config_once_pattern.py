@@ -101,7 +101,7 @@ def main() -> None:
     print("=== Example 1: Database Service ===")
     db_config = t.ConfigMap(
         root={
-            "host": c.Network.LOCALHOST,
+            "host": c.LOCALHOST,
             "port": 5432,
             "database": "mydb",
             "pool_size": 10,

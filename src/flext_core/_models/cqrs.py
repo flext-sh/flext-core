@@ -50,11 +50,11 @@ class FlextModelsCqrs:
         command_type: Annotated[
             str,
             Field(
-                default=c.Cqrs.DEFAULT_COMMAND_TYPE,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                default=c.DEFAULT_COMMAND_TYPE,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Command type identifier",
             ),
-        ] = c.Cqrs.DEFAULT_COMMAND_TYPE
+        ] = c.DEFAULT_COMMAND_TYPE
         command_id: Annotated[
             str,
             Field(
@@ -88,22 +88,22 @@ class FlextModelsCqrs:
         page: Annotated[
             int,
             Field(
-                default=c.Pagination.DEFAULT_PAGE_NUMBER,
-                ge=c.Reliability.RETRY_COUNT_MIN,
+                default=c.DEFAULT_PAGE_NUMBER,
+                ge=c.RETRY_COUNT_MIN,
                 description="Page number (1-based indexing)",
                 examples=[1, 2, 10, 100],
             ),
-        ] = c.Pagination.DEFAULT_PAGE_NUMBER
+        ] = c.DEFAULT_PAGE_NUMBER
         size: Annotated[
             int,
             Field(
-                default=c.Pagination.DEFAULT_PAGE_SIZE,
-                ge=c.Reliability.RETRY_COUNT_MIN,
-                le=c.Pagination.MAX_PAGE_SIZE_EXAMPLE,
+                default=c.DEFAULT_PAGE_SIZE,
+                ge=c.RETRY_COUNT_MIN,
+                le=c.MAX_PAGE_SIZE_EXAMPLE,
                 description="Number of items per page (max 1000)",
                 examples=[10, 20, 50, 100],
             ),
-        ] = c.Pagination.DEFAULT_PAGE_SIZE
+        ] = c.DEFAULT_PAGE_SIZE
 
         @computed_field
         def limit(self) -> int:
@@ -258,25 +258,25 @@ class FlextModelsCqrs:
         execution_timeout: Annotated[
             int,
             Field(
-                default=c.Defaults.TIMEOUT,
+                default=c.TIMEOUT,
                 description="Command execution timeout",
             ),
-        ] = c.Defaults.TIMEOUT
+        ] = c.TIMEOUT
         max_cache_size: Annotated[
             int,
             Field(
-                default=c.Defaults.DEFAULT_MAX_CACHE_SIZE,
+                default=c.DEFAULT_MAX_CACHE_SIZE,
                 description="Maximum cache size",
             ),
-        ] = c.Defaults.DEFAULT_MAX_CACHE_SIZE
+        ] = c.DEFAULT_MAX_CACHE_SIZE
         implementation_path: Annotated[
             str,
             Field(
-                default=c.Dispatcher.DEFAULT_DISPATCHER_PATH,
-                pattern=c.Platform.PATTERN_MODULE_PATH,
+                default=c.DEFAULT_DISPATCHER_PATH,
+                pattern=c.PATTERN_MODULE_PATH,
                 description="Implementation path",
             ),
-        ] = c.Dispatcher.DEFAULT_DISPATCHER_PATH
+        ] = c.DEFAULT_DISPATCHER_PATH
 
     class Handler(BaseModel):
         """Handler configuration model with Builder pattern support."""
@@ -290,33 +290,33 @@ class FlextModelsCqrs:
         handler_id: Annotated[str, Field(description="Unique handler identifier")]
         handler_name: Annotated[str, Field(description="Human-readable handler name")]
         handler_type: Annotated[
-            c.Cqrs.HandlerType,
+            c.HandlerType,
             Field(
-                default=c.Cqrs.HandlerType.COMMAND,
+                default=c.HandlerType.COMMAND,
                 description="Handler type",
             ),
-        ] = c.Cqrs.HandlerType.COMMAND
+        ] = c.HandlerType.COMMAND
         handler_mode: Annotated[
-            c.Cqrs.HandlerType,
+            c.HandlerType,
             Field(
-                default=c.Cqrs.HandlerType.COMMAND,
+                default=c.HandlerType.COMMAND,
                 description="Handler mode",
             ),
-        ] = c.Cqrs.HandlerType.COMMAND
+        ] = c.HandlerType.COMMAND
         command_timeout: Annotated[
             int,
             Field(
-                default=c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
+                default=c.DEFAULT_COMMAND_TIMEOUT,
                 description="Command timeout from c (default). Models use Config values in initialization.",
             ),
-        ] = c.Cqrs.DEFAULT_COMMAND_TIMEOUT
+        ] = c.DEFAULT_COMMAND_TIMEOUT
         max_command_retries: Annotated[
             int,
             Field(
-                default=c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Maximum retry attempts from c (default). Models use Config values in initialization.",
             ),
-        ] = c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
             FlextModelFoundation.Metadata | None,
             Field(
@@ -345,28 +345,28 @@ class FlextModelsCqrs:
             """Builder pattern for Handler (reduces 8 params to fluent API).
 
             Example:
-                config = (Handler.Builder(handler_type=c.Cqrs.HandlerType.COMMAND)
+                config = (Handler.Builder(handler_type=c.HandlerType.COMMAND)
                          .with_name("MyHandler")
                          .with_timeout(30)
                          .build())
 
             """
 
-            def __init__(self, handler_type: c.Cqrs.HandlerType) -> None:
+            def __init__(self, handler_type: c.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 super().__init__()
                 handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
                 self._data: t.Dict = t.Dict(
                     root={
                         "handler_type": handler_type,
-                        c.Mixins.FIELD_HANDLER_MODE: c.Dispatcher.HANDLER_MODE_COMMAND
-                        if handler_type == c.Cqrs.HandlerType.COMMAND
-                        else c.Dispatcher.HANDLER_MODE_QUERY,
+                        c.FIELD_HANDLER_MODE: c.HANDLER_MODE_COMMAND
+                        if handler_type == c.HandlerType.COMMAND
+                        else c.HANDLER_MODE_QUERY,
                         "handler_id": f"{handler_type}_handler_{handler_short_id}",
                         "handler_name": f"{handler_type.title()} Handler",
-                        "command_timeout": c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
-                        "max_command_retries": c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
-                        c.Mixins.FIELD_METADATA: None,
+                        "command_timeout": c.DEFAULT_COMMAND_TIMEOUT,
+                        "max_command_retries": c.DEFAULT_MAX_COMMAND_RETRIES,
+                        c.FIELD_METADATA: None,
                     },
                 )
 
@@ -386,7 +386,7 @@ class FlextModelsCqrs:
 
             def with_metadata(self, metadata: FlextModelFoundation.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
-                self._data.root[c.Mixins.FIELD_METADATA] = metadata
+                self._data.root[c.FIELD_METADATA] = metadata
                 return self
 
             def with_name(self, handler_name: str) -> Self:

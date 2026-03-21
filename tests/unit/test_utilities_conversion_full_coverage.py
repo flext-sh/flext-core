@@ -11,7 +11,7 @@ from tests import c, m, t, u
 
 
 def test_conversion_string_and_join_paths() -> None:
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"a": 1}), t.ConfigMap)

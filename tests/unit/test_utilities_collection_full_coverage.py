@@ -62,7 +62,7 @@ class TestUtilitiesCollectionFullCoverage:
         pass
 
     def test_find_mapping_no_match_and_merge_error_paths(self) -> None:
-        assert c.Errors.UNKNOWN_ERROR
+        assert c.UNKNOWN_ERROR
         assert isinstance(m.Categories(categories={}), m.Categories)
         assert r[int].ok(1).is_success
         assert isinstance(t.ConfigMap({"a": 1}), t.ConfigMap)

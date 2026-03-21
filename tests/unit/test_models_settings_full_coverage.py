@@ -32,7 +32,7 @@ def test_models_settings_branch_paths() -> None:
             _ = other
             return self
 
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)

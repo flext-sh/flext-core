@@ -41,7 +41,7 @@ class FlextModelsContainer:
     def _normalize_metadata(value: t.MetadataInput) -> FlextModelFoundation.Metadata:
         if value is None:
             return FlextModelFoundation.Metadata.model_validate({
-                c.Mixins.FIELD_ATTRIBUTES: {},
+                c.FIELD_ATTRIBUTES: {},
             })
         if FlextModelsContainer._is_metadata_instance(value):
             return value
@@ -49,7 +49,7 @@ class FlextModelsContainer:
             msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
             raise TypeError(msg)
         return FlextModelFoundation.Metadata.model_validate({
-            c.Mixins.FIELD_ATTRIBUTES: dict(value.items()),
+            c.FIELD_ATTRIBUTES: dict(value.items()),
         })
 
     class _MetadataValidatorMixin:
@@ -75,7 +75,7 @@ class FlextModelsContainer:
             str,
             Field(
                 ...,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Service identifier/name",
             ),
         ]
@@ -209,7 +209,7 @@ class FlextModelsContainer:
             str,
             Field(
                 ...,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Factory identifier/name",
             ),
         ]
@@ -272,7 +272,7 @@ class FlextModelsContainer:
             str,
             Field(
                 ...,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Resource identifier/name",
             ),
         ]
@@ -321,21 +321,21 @@ class FlextModelsContainer:
         max_services: Annotated[
             int,
             Field(
-                default=c.Container.DEFAULT_MAX_SERVICES,
-                ge=c.Reliability.RETRY_COUNT_MIN,
-                le=c.Performance.MAX_BATCH_SIZE,
+                default=c.DEFAULT_MAX_SERVICES,
+                ge=c.RETRY_COUNT_MIN,
+                le=c.MAX_BATCH_SIZE,
                 description="Maximum number of services allowed in registry",
             ),
-        ] = c.Container.DEFAULT_MAX_SERVICES
+        ] = c.DEFAULT_MAX_SERVICES
         max_factories: Annotated[
             int,
             Field(
-                default=c.Container.DEFAULT_MAX_FACTORIES,
-                ge=c.Reliability.RETRY_COUNT_MIN,
-                le=c.Container.MAX_FACTORIES,
+                default=c.DEFAULT_MAX_FACTORIES,
+                ge=c.RETRY_COUNT_MIN,
+                le=c.MAX_FACTORIES,
                 description="Maximum number of factories allowed in registry",
             ),
-        ] = c.Container.DEFAULT_MAX_FACTORIES
+        ] = c.DEFAULT_MAX_FACTORIES
         enable_auto_registration: Annotated[
             bool,
             Field(
@@ -460,7 +460,7 @@ class FlextModelsContainer:
             str,
             Field(
                 ...,
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Name to register this factory under in the container",
             ),
         ]

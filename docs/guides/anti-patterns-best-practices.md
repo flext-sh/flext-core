@@ -186,7 +186,7 @@ from flext_core import FlextConstants
 
 result = r[dict].fail(
     "Database connection failed after 3 retries",
-    error_code=FlextConstants.Errors.DATABASE_ERROR,
+    error_code=FlextConstants.DATABASE_ERROR,
     error_data={
         "host": "db.example.com",
         "port": 5432,

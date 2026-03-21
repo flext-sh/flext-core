@@ -101,7 +101,7 @@ class OrderService(s[t.ConfigMap]):
         order_id_raw = self._order_data.get("order_id", "ord_123")
         order_id = str(order_id_raw) if order_id_raw else "ord_123"
         result_data = t.ConfigMap(
-            root={"order_id": order_id, "status": c.Cqrs.CommonStatus.PENDING.value}
+            root={"order_id": order_id, "status": c.CommonStatus.PENDING.value}
         )
         return r[t.ConfigMap].ok(result_data)
 
@@ -115,7 +115,7 @@ class OrderService(s[t.ConfigMap]):
         correlation = correlation_id or f"order_{order_id}_{customer_id}"
         FlextContext.Correlation.set_correlation_id(correlation)
         self._enrich_context(
-            user_id=customer_id, order_id=order_id, operation=c.Cqrs.Action.CREATE.value
+            user_id=customer_id, order_id=order_id, operation=c.Action.CREATE.value
         )
         with self.track("process_order"):
             return self.execute()
@@ -155,8 +155,8 @@ class AutomationService(s[t.ConfigMap]):
             return r[t.ConfigMap].ok(
                 t.ConfigMap(
                     root={
-                        "automation_mode": c.Cqrs.ProcessingMode.SEQUENTIAL.value,
-                        "batch_size": c.Performance.BatchProcessing.DEFAULT_SIZE,
+                        "automation_mode": c.ProcessingMode.SEQUENTIAL.value,
+                        "batch_size": c.DEFAULT_SIZE,
                     }
                 )
             )
@@ -245,7 +245,7 @@ class AutomationService(s[t.ConfigMap]):
             return r[t.ConfigMap].ok(enriched)
 
         automation_input: t.ConfigMap = t.ConfigMap(
-            root={"task_type": c.Cqrs.ProcessingMode.BATCH.value, "source": "database"}
+            root={"task_type": c.ProcessingMode.BATCH.value, "source": "database"}
         )
         validate_result = validate(automation_input)
         if validate_result.is_failure:
@@ -318,7 +318,7 @@ class AutomationService(s[t.ConfigMap]):
             if not cache.root:
                 print("   📄 Loading configuration from file...")
                 cache.root["database_url"] = "postgresql://localhost:5432/testdb"
-                cache.root["cache_ttl"] = c.Defaults.DEFAULT_CACHE_TTL
+                cache.root["cache_ttl"] = c.DEFAULT_CACHE_TTL
             return cache
 
         fail_attempt: r[t.ConfigMap] = r[t.ConfigMap].fail("No cached config")
@@ -364,8 +364,8 @@ class AutomationService(s[t.ConfigMap]):
             return t.ConfigMap(
                 root={
                     "engine_id": "AUTO-ENGINE-001",
-                    "engine_type": c.Cqrs.ProcessingMode.PARALLEL.value,
-                    "worker_count": c.Performance.DEFAULT_DB_POOL_SIZE,
+                    "engine_type": c.ProcessingMode.PARALLEL.value,
+                    "worker_count": c.DEFAULT_DB_POOL_SIZE,
                 }
             )
 
@@ -381,7 +381,7 @@ class AutomationService(s[t.ConfigMap]):
         existing: t.ConfigMap = t.ConfigMap(
             root={
                 "engine_id": "CACHED-ENGINE-001",
-                "worker_count": c.Container.DEFAULT_WORKERS,
+                "worker_count": c.DEFAULT_WORKERS,
             }
         )
         success_result = r[t.ConfigMap].ok(existing)

@@ -168,8 +168,8 @@ class RegistryDispatcherService(s[t.ConfigMap]):
                             "registry_integration",
                         ],
                         "handler_types": [
-                            c.Cqrs.HandlerType.COMMAND.value,
-                            c.Cqrs.HandlerType.QUERY.value,
+                            c.HandlerType.COMMAND.value,
+                            c.HandlerType.QUERY.value,
                         ],
                         "features": [
                             "idempotent_registration",

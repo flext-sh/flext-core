@@ -41,20 +41,20 @@ class AppConfig(FlextSettings):
     """
 
     database_url: str = Field(
-        default=f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
+        default=f"postgresql://{c.DEFAULT_HOST}:5432/testdb",
         description="Database connection URL",
     )
     db_pool_size: int = Field(
         default=10,
         ge=1,
-        le=FlextConstants.Performance.MAX_DB_POOL_SIZE,
+        le=FlextConstants.MAX_DB_POOL_SIZE,
         description="Database connection pool size",
     )
     api_timeout: int = Field(default=30)
     api_host: str = Field(
-        default=c.Platform.DEFAULT_HOST,
+        default=c.DEFAULT_HOST,
         min_length=1,
-        max_length=FlextConstants.Network.MAX_HOSTNAME_LENGTH,
+        max_length=FlextConstants.MAX_HOSTNAME_LENGTH,
         description="API server hostname",
     )
     api_port: t.Validation.PortNumber = Field(
@@ -66,14 +66,14 @@ class AppConfig(FlextSettings):
     cache_ttl: int = Field(
         default=3600,
         ge=0,
-        le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
+        le=FlextConstants.MAX_TIMEOUT_SECONDS,
         description="Cache time-to-live in seconds",
     )
     worker_timeout: int = Field(default=60, description="Worker operation timeout")
     retry_attempts: int = Field(
         default=3,
         ge=0,
-        le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
+        le=FlextConstants.MAX_RETRY_ATTEMPTS,
         description="Number of retry attempts",
     )
 
@@ -122,11 +122,11 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
 
         result = r[AppConfig].ok(
             AppConfig(
-                database_url=f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
-                api_timeout=c.Network.DEFAULT_TIMEOUT,
+                database_url=f"postgresql://{c.DEFAULT_HOST}:5432/testdb",
+                api_timeout=c.DEFAULT_TIMEOUT,
                 debug=False,
                 max_workers=4,
-                log_level=FlextConstants.Settings.LogLevel.INFO,
+                log_level=FlextConstants.LogLevel.INFO,
             )
         )
         print_config(result.value)
@@ -140,7 +140,7 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
             """Set environment variables safely."""
             env_vars = {
                 "FLEXT_DEBUG": "true",
-                "FLEXT_DATABASE_URL": f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
+                "FLEXT_DATABASE_URL": f"postgresql://{c.DEFAULT_HOST}:5432/testdb",
                 "FLEXT_API_TIMEOUT": "30",
             }
             for key, value in env_vars.items():
@@ -191,8 +191,8 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
             print("\n=== Configuration Validation ===")
             try:
                 AppConfig(
-                    database_url=f"postgresql://{c.Platform.DEFAULT_HOST}/db",
-                    api_timeout=c.Network.DEFAULT_TIMEOUT,
+                    database_url=f"postgresql://{c.DEFAULT_HOST}/db",
+                    api_timeout=c.DEFAULT_TIMEOUT,
                 )
                 print("✅ Valid configuration accepted")
                 return r[bool].ok(value=True)
@@ -250,7 +250,7 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
         return r[t.ConfigMap].fail(
-            error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
+            error_msg, error_code=FlextConstants.VALIDATION_ERROR
         )
 
     @override
@@ -291,8 +291,8 @@ def demonstrate_file_config() -> r[bool]:
         config_file = Path("example_config.json")
         try:
             config_file.write_text(
-                f'{{"database_url": "postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb", "api_timeout": {c.Network.DEFAULT_TIMEOUT}}}',
-                encoding=FlextConstants.Utilities.DEFAULT_ENCODING,
+                f'{{"database_url": "postgresql://{c.DEFAULT_HOST}:5432/testdb", "api_timeout": {c.DEFAULT_TIMEOUT}}}',
+                encoding=FlextConstants.DEFAULT_ENCODING,
             )
             return r[Path].ok(config_file)
         except Exception as e:

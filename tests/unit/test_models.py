@@ -627,7 +627,7 @@ class TestModels:
         assert event.event_type == "user_created"
         assert event.aggregate_id == "user-123"
         assert getattr(event.data, "root", event.data) == {"name": "test"}
-        assert event.message_type == c.Cqrs.HandlerType.EVENT
+        assert event.message_type == c.HandlerType.EVENT
 
     def test_query_creation(self) -> None:
         """Test Query creation."""
@@ -641,7 +641,7 @@ class TestModels:
         assert query.query_id is not None
         assert query.query_type == "find_users"
         assert getattr(query.filters, "root", query.filters) == {"active": "true"}
-        assert query.message_type == c.Cqrs.HandlerType.QUERY
+        assert query.message_type == c.HandlerType.QUERY
 
     def test_aggregate_root_mark_events_as_committed(self) -> None:
         """Test mark_events_as_committed method."""
@@ -713,7 +713,7 @@ class TestModels:
             name: str
 
         aggregate = TestAggregate(name="test", domain_events=[])
-        max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
+        max_events = c.MAX_UNCOMMITTED_EVENTS
         events = [
             (f"event{i}", t.ConfigMap(root={"data": f"value{i}"}))
             for i in range(max_events + 1)
@@ -778,7 +778,7 @@ class TestModels:
         assert getattr(event.data, "root", event.data) == {"key": "value"}
         assert event.unique_id is not None
         assert event.created_at is not None
-        assert event.message_type == c.Cqrs.HandlerType.EVENT
+        assert event.message_type == c.HandlerType.EVENT
         json_data = event.model_dump_json()
         assert '"event_type":"test_event"' in json_data
 
@@ -789,7 +789,7 @@ class TestModels:
         )
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"
-        assert command.message_type == c.Cqrs.HandlerType.COMMAND
+        assert command.message_type == c.HandlerType.COMMAND
         assert command.command_id is not None
 
     def test_metadata_model_creation(self) -> None:
@@ -1050,19 +1050,19 @@ class TestModels:
         """Test HandlerExecutionContext model creation."""
         context = m.ExecutionContext.create_for_handler(
             handler_name="ProcessOrderCommand",
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
         )
         assert context.handler_name == "ProcessOrderCommand"
-        assert context.handler_mode == c.Cqrs.HandlerType.COMMAND
+        assert context.handler_mode == c.HandlerType.COMMAND
         assert isinstance(context, m.ExecutionContext)
 
     def test_registration_details_model(self) -> None:
         """Test RegistrationDetails model creation."""
         details = m.RegistrationDetails(
             registration_id="reg-123",
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_mode=c.HandlerType.COMMAND,
             timestamp="2025-01-01T00:00:00Z",
-            status=c.Cqrs.CommonStatus.RUNNING,
+            status=c.CommonStatus.RUNNING,
         )
         assert details.registration_id == "reg-123"
         assert details.status == "running"

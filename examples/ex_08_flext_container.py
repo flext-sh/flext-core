@@ -308,7 +308,7 @@ class Ex08FlextContainer(Examples):
             "result.ok.roundtrip", r[int].ok(random_ok_val).value == random_ok_val
         )
         self.check("runtime.normalize.bool", FlextRuntime.normalize_to_container(True))
-        self.check("constants.default_max_services", c.Container.DEFAULT_MAX_SERVICES)
+        self.check("constants.default_max_services", c.DEFAULT_MAX_SERVICES)
         return root
 
     def _exercise_wiring_and_scoped(self, container: FlextContainer) -> FlextContainer:

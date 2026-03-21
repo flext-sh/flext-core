@@ -11,7 +11,7 @@ from flext_core import r
 from tests import c, m, t, u
 
 
-def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:
+def _annotated_func(mode: Annotated[c.HandlerType, "meta"]) -> None:
     _ = mode
 
 
@@ -23,12 +23,12 @@ def _bad_hints_func(mode: UnknownHint) -> None:
     _ = mode
 
 
-def _no_op_func(mode: c.Cqrs.HandlerType) -> None:
+def _no_op_func(mode: c.HandlerType) -> None:
     _ = mode
 
 
 def test_args_get_enum_params_branches() -> None:
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
@@ -49,17 +49,15 @@ def test_args_get_enum_params_annotated_unwrap_branch(
         include_extras: bool = False,
     ) -> dict[str, t.TypeHintSpecifier]:
         _ = include_extras
-        return {
-            "mode": cast("t.TypeHintSpecifier", Annotated[c.Cqrs.HandlerType, "meta"])
-        }
+        return {"mode": cast("t.TypeHintSpecifier", Annotated[c.HandlerType, "meta"])}
 
     def _mock_validate_enum_type(
         candidate: type[object] | str,
-    ) -> r[type[c.Cqrs.HandlerType]]:
+    ) -> r[type[c.HandlerType]]:
         seen_candidates.append(candidate)
-        if candidate is c.Cqrs.HandlerType:
-            return r[type[c.Cqrs.HandlerType]].ok(c.Cqrs.HandlerType)
-        return r[type[c.Cqrs.HandlerType]].fail("invalid")
+        if candidate is c.HandlerType:
+            return r[type[c.HandlerType]].ok(c.HandlerType)
+        return r[type[c.HandlerType]].fail("invalid")
 
     monkeypatch.setattr(
         args_module,
@@ -72,5 +70,5 @@ def test_args_get_enum_params_annotated_unwrap_branch(
         _mock_validate_enum_type,
     )
     params = u.get_enum_params(_no_op_func)
-    assert seen_candidates == [c.Cqrs.HandlerType]
-    assert params.get("mode") is c.Cqrs.HandlerType
+    assert seen_candidates == [c.HandlerType]
+    assert params.get("mode") is c.HandlerType

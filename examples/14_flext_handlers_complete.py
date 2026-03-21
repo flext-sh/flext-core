@@ -52,21 +52,19 @@ class CommandHandler(h[CreateUserCommand, str]):
         """Handle user creation command using u validation."""
         name_validation = u.validate_length(
             message.name,
-            min_length=c.Validation.MIN_NAME_LENGTH,
-            max_length=c.Validation.MAX_NAME_LENGTH,
+            min_length=c.MIN_NAME_LENGTH,
+            max_length=c.MAX_NAME_LENGTH,
         )
         if name_validation.is_failure:
             return r[str].fail(
-                name_validation.error or c.Errors.VALIDATION_ERROR,
-                error_code=c.Errors.VALIDATION_ERROR,
+                name_validation.error or c.VALIDATION_ERROR,
+                error_code=c.VALIDATION_ERROR,
             )
-        email_validation = u.validate_pattern(
-            message.email, c.Platform.PATTERN_EMAIL, "email"
-        )
+        email_validation = u.validate_pattern(message.email, c.PATTERN_EMAIL, "email")
         if email_validation.is_failure:
             return r[str].fail(
-                email_validation.error or c.Errors.VALIDATION_ERROR,
-                error_code=c.Errors.VALIDATION_ERROR,
+                email_validation.error or c.VALIDATION_ERROR,
+                error_code=c.VALIDATION_ERROR,
             )
         return r[str].ok(f"User {message.name} created")
 
@@ -78,9 +76,7 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
     def handle(self, message: GetUserQuery) -> r[UserDTO]:
         """Handle user retrieval query using c error codes."""
         if message.user_id == "not-found":
-            return r[UserDTO].fail(
-                c.Errors.NOT_FOUND_ERROR, error_code=c.Errors.NOT_FOUND_ERROR
-            )
+            return r[UserDTO].fail(c.NOT_FOUND_ERROR, error_code=c.NOT_FOUND_ERROR)
         user = UserDTO(
             id=message.user_id, name="Example User", email="user@example.com"
         )
@@ -124,10 +120,10 @@ class HandlersService(s[t.ConfigMap]):
         """Show handler pipeline execution."""
         print("\n=== Pipeline Execution ===")
         phases = [
-            c.Cqrs.ProcessingPhase.PREPARE,
-            c.Cqrs.ProcessingPhase.EXECUTE,
-            c.Cqrs.ProcessingPhase.VALIDATE,
-            c.Cqrs.ProcessingPhase.COMPLETE,
+            c.ProcessingPhase.PREPARE,
+            c.ProcessingPhase.EXECUTE,
+            c.ProcessingPhase.VALIDATE,
+            c.ProcessingPhase.COMPLETE,
         ]
         for phase in phases:
             print(f"✅ {phase.value.capitalize()} phase")
@@ -160,8 +156,8 @@ class HandlersService(s[t.ConfigMap]):
             t.ConfigMap(
                 root={
                     "handlers_demonstrated": [
-                        c.Cqrs.HandlerType.COMMAND,
-                        c.Cqrs.HandlerType.QUERY,
+                        c.HandlerType.COMMAND,
+                        c.HandlerType.QUERY,
                         "pipeline",
                         "error_handling",
                     ],

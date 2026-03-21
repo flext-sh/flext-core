@@ -424,7 +424,7 @@ class TestFlextContainer:
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: dict[str, t.Scalar] = {"max_workers": c.Container.DEFAULT_WORKERS}
+        config: dict[str, t.Scalar] = {"max_workers": c.DEFAULT_WORKERS}
         result = container.configure(config)
         tm.that(
             result is container,
@@ -514,7 +514,7 @@ class TestFlextContainer:
     def test_full_workflow(self, clean_container: p.Container) -> None:
         """Test complete container workflow using fixtures."""
         container = clean_container
-        _ = container.register("db_connection", {"host": c.Network.LOCALHOST})
+        _ = container.register("db_connection", {"host": c.LOCALHOST})
         _ = container.register("cache", {"type": "redis"})
         factory = u.Tests.ContainerHelpers.create_factory({"logger": "instance"})
         _ = container.register("logger", factory, kind="factory")

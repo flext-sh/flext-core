@@ -51,12 +51,12 @@ class TestsFlextServiceBase(s[T]):
             Field(default=None, description="Optional display name for handler"),
         ] = None
         handler_type: Annotated[
-            c.Cqrs.HandlerType,
+            c.HandlerType,
             Field(
-                default=c.Cqrs.HandlerType.COMMAND,
+                default=c.HandlerType.COMMAND,
                 description="Handler type used for test case configuration",
             ),
-        ] = c.Cqrs.HandlerType.COMMAND
+        ] = c.HandlerType.COMMAND
         expected_result: Annotated[
             t.Container | None,
             Field(
@@ -119,7 +119,7 @@ class TestsFlextServiceBase(s[T]):
                 cases.append(
                     TestsFlextServiceBase.HandlerTestCase(
                         handler_id=str(spec["handler_id"]),
-                        handler_type=getattr(c.Cqrs.HandlerType, handler_type_name),
+                        handler_type=getattr(c.HandlerType, handler_type_name),
                         expected_result=expected_result,
                         should_fail=spec_should_fail,
                         error_message=(
@@ -151,7 +151,7 @@ class TestsFlextServiceBase(s[T]):
         def create_test_handler(
             handler_id: str,
             handler_name: str | None = None,
-            handler_type: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
+            handler_type: c.HandlerType = c.HandlerType.COMMAND,
             process_fn: Callable[
                 [t.Container],
                 r[t.Container],

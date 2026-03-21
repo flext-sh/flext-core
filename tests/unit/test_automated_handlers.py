@@ -57,9 +57,9 @@ class TestAutomatedFlextHandlers:
         handler = FlextHandlers.create_from_callable(
             handler_callable=lambda value: str(value),
             handler_name="mode",
-            handler_type=c.Cqrs.HandlerType.COMMAND,
+            handler_type=c.HandlerType.COMMAND,
         )
-        tm.that(handler.mode, eq=c.Cqrs.HandlerType.COMMAND)
+        tm.that(handler.mode, eq=c.HandlerType.COMMAND)
 
     def test_discovery_has_handlers(self) -> None:
         def _decorated(message: BaseModel) -> BaseModel:

@@ -1092,7 +1092,7 @@ class FlextUtilitiesMapper:
             Converted value or default
 
         Example:
-            port = FlextUtilitiesMapper.as_(config.get("port"), int, default=c.Platform.DEFAULT_HTTP_PORT)
+            port = FlextUtilitiesMapper.as_(config.get("port"), int, default=c.DEFAULT_HTTP_PORT)
             name = FlextUtilitiesMapper.as_(value, str, default="")
 
         """
@@ -1419,7 +1419,7 @@ class FlextUtilitiesMapper:
                         if source_field_raw is not None
                         else target_key
                     )
-                    field_default = target_spec_mapping.get(c.Mixins.IDENTIFIER_DEFAULT)
+                    field_default = target_spec_mapping.get(c.IDENTIFIER_DEFAULT)
                     field_ops = target_spec_mapping.get("ops")
                 else:
                     fallback_val: t.NormalizedValue = (
@@ -1653,7 +1653,7 @@ class FlextUtilitiesMapper:
             r containing extracted value or default
 
         Example:
-            config = {"database": {"host": c.Platform.DEFAULT_HOST, "port": 5432}}
+            config = {"database": {"host": c.DEFAULT_HOST, "port": 5432}}
             result = FlextUtilitiesMapper.extract(config, "database.port")
             # → r[t.NormalizedValue].ok(5432)
 
@@ -1833,7 +1833,7 @@ class FlextUtilitiesMapper:
                             )
                         elif isinstance(field_config, Mapping):
                             default_value = field_config.get(
-                                c.Mixins.IDENTIFIER_DEFAULT,
+                                c.IDENTIFIER_DEFAULT,
                             )
                             if default_value is not None:
                                 result[name] = default_value
@@ -1844,7 +1844,7 @@ class FlextUtilitiesMapper:
                             getattr(obj, name),
                         )
                     elif isinstance(field_config, Mapping):
-                        default_value = field_config.get(c.Mixins.IDENTIFIER_DEFAULT)
+                        default_value = field_config.get(c.IDENTIFIER_DEFAULT)
                         if default_value is not None:
                             result[name] = default_value
             elif isinstance(spec_item, str):
@@ -2016,7 +2016,7 @@ class FlextUtilitiesMapper:
             models = FlextUtilitiesMapper.get(data, "models", default=[])
 
             # Generic
-            port = FlextUtilitiesMapper.get(config, "port", default=c.Platform.DEFAULT_HTTP_PORT)
+            port = FlextUtilitiesMapper.get(config, "port", default=c.DEFAULT_HTTP_PORT)
 
         """
         return FlextUtilitiesMapper._get_raw(data, key, default=default)
@@ -2299,7 +2299,7 @@ class FlextUtilitiesMapper:
             First non-None value or default
 
         Example:
-            port = FlextUtilitiesMapper.or_(config.get("port"), env.get("PORT"), default=c.Platform.DEFAULT_HTTP_PORT)
+            port = FlextUtilitiesMapper.or_(config.get("port"), env.get("PORT"), default=c.DEFAULT_HTTP_PORT)
 
         """
         for value in values:
@@ -2616,13 +2616,13 @@ class FlextUtilitiesMapper:
         Example:
             # Extract value (original take behavior)
             port = FlextUtilitiesMapper.take(
-                config, "port", as_type=int, default=c.Platform.DEFAULT_HTTP_PORT
+                config, "port", as_type=int, default=c.DEFAULT_HTTP_PORT
             )
             name = FlextUtilitiesMapper.take(
                 obj,
                 "name",
                 as_type=str,
-                default=c.Mixins.IDENTIFIER_UNKNOWN,
+                default=c.IDENTIFIER_UNKNOWN,
             )
 
             # Take N items (generalized from take_n)

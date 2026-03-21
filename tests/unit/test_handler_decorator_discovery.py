@@ -23,7 +23,7 @@ class TestHandlerDecoratorDiscovery:
                 return r[str].ok("handled")
 
         method = Service.handle_user
-        tm.that(hasattr(method, c.Discovery.HANDLER_ATTR), eq=True)
+        tm.that(hasattr(method, c.HANDLER_ATTR), eq=True)
 
     def test_decorator_metadata_contains_command_type(self) -> None:
         class CreateCommand:
@@ -35,9 +35,7 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(
-            Service.handle_user, c.Discovery.HANDLER_ATTR
-        )
+        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(config.command is CreateCommand, eq=True)
 
     def test_decorator_priority_timeout_and_middleware(self) -> None:
@@ -57,9 +55,7 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(
-            Service.handle_user, c.Discovery.HANDLER_ATTR
-        )
+        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
         tm.that(config.priority == 42, eq=True)
         if config.timeout is not None:
             tm.that(abs(config.timeout - 5.0) < 1e-9, eq=True)
@@ -75,11 +71,9 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(
-            Service.handle_user, c.Discovery.HANDLER_ATTR
-        )
-        tm.that(config.priority == c.Discovery.DEFAULT_PRIORITY, eq=True)
-        tm.that(config.timeout == c.Discovery.DEFAULT_TIMEOUT, eq=True)
+        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        tm.that(config.priority == c.DEFAULT_PRIORITY, eq=True)
+        tm.that(config.timeout == c.DEFAULT_TIMEOUT, eq=True)
         tm.that(config.middleware == [], eq=True)
 
     def test_decorator_preserves_function_identity(self) -> None:
@@ -259,7 +253,7 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("ok")
 
-        config: m.DecoratorConfig = getattr(Service.handle, c.Discovery.HANDLER_ATTR)
+        config: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
         tm.that(config.timeout is None, eq=True)
 
     def test_multiple_decorations_overwrites_previous(self) -> None:
@@ -276,7 +270,7 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("ok")
 
-        config: m.DecoratorConfig = getattr(Service.handle, c.Discovery.HANDLER_ATTR)
+        config: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
         tm.that(config.command is DeleteCommand, eq=True)
         tm.that(config.priority == 20, eq=True)
 

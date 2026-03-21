@@ -79,7 +79,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextRuntime, "structlog", staticmethod(_structlog_accessor)
         )
-        tm.that(isinstance(c.Settings.LogLevel.DEBUG.value, str), eq=True)
+        tm.that(isinstance(c.LogLevel.DEBUG.value, str), eq=True)
         value = "ok"
         tm.that(value, eq="ok")
         logger_obj = FlextLogger.create_bound_logger(
@@ -130,7 +130,7 @@ class TestModule:
         tm.that(isinstance(created, p.Logger), eq=True)
         with FlextLogger.with_container_context(
             cast("p.Container", cast("object", _Container())),
-            level=c.Settings.LogLevel.INFO,
+            level=c.LogLevel.INFO,
             trace_id="1",
         ) as scoped:
             tm.that(isinstance(scoped, p.Logger), eq=True)
@@ -408,7 +408,7 @@ class TestModule:
             f_locals: ClassVar[dict[str, t.NormalizedValue]] = {}
             f_code = _CodeUpper()
 
-        monkeypatch.setattr(c.Validation, "LEVEL_PREFIX_PARTS_COUNT", 2)
+        monkeypatch.setattr(c, "LEVEL_PREFIX_PARTS_COUNT", 2)
         tm.that(
             FlextLogger._extract_class_name(
                 cast("types.FrameType", cast("object", _UpperFrame()))

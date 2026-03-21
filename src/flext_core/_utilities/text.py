@@ -38,7 +38,7 @@ class FlextUtilitiesText:
         return re.sub(
             r"\s+",
             " ",
-            re.sub(c.Utilities.CONTROL_CHARS_PATTERN, "", text),
+            re.sub(c.CONTROL_CHARS_PATTERN, "", text),
         ).strip()
 
     @staticmethod
@@ -87,7 +87,7 @@ class FlextUtilitiesText:
     @staticmethod
     def truncate_text(
         text: str,
-        max_length: int = c.Performance.BatchProcessing.DEFAULT_SIZE,
+        max_length: int = c.DEFAULT_SIZE,
         suffix: str = "...",
     ) -> r[str]:
         """Truncate text to maximum length with suffix."""

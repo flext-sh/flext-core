@@ -259,54 +259,54 @@ class TestsFlextConstants(c, FlextInfraConstants):
             ITERATION_COUNT: Final[int] = 1000
             TEST_BATCH_SIZE: Final[int] = 10
 
-        class Exceptions(c.Exceptions):
+        class Exceptions(c):
             """Exception handling configuration for tests."""
 
-            FailureLevel = c.Exceptions.FailureLevel
+            FailureLevel = c.FailureLevel
 
-        class Settings(c.Settings):
+        class Settings(c):
             """Configuration defaults for tests."""
 
-            LogLevel = c.Settings.LogLevel
-            Environment = c.Settings.Environment
+            LogLevel = c.LogLevel
+            Environment = c.Environment
 
-        class Logging(c.Logging):
+        class Logging(c):
             """Logging configuration for tests - real inheritance."""
 
-            ContextOperation = c.Logging.ContextOperation
+            ContextOperation = c.ContextOperation
 
-        class Domain(c.Domain):
+        class Domain(c):
             """Domain-specific constants for tests."""
 
-            Status = c.Domain.Status
-            Currency = c.Domain.Currency
-            OrderStatus = c.Domain.OrderStatus
+            Status = c.Status
+            Currency = c.Currency
+            OrderStatus = c.OrderStatus
 
-        class Cqrs(c.Cqrs):
+        class Cqrs(c):
             """CQRS pattern constants for tests."""
 
-            Status = c.Cqrs.Status
-            HandlerType = c.Cqrs.HandlerType
-            CommonStatus = c.Cqrs.CommonStatus
-            MetricType = c.Cqrs.MetricType
-            ProcessingMode = c.Cqrs.ProcessingMode
-            ProcessingPhase = c.Cqrs.ProcessingPhase
-            BindType = c.Cqrs.BindType
-            MergeStrategy = c.Cqrs.MergeStrategy
-            HealthStatus = c.Cqrs.HealthStatus
-            SpecialStatus = c.Cqrs.SpecialStatus
-            TokenType = c.Cqrs.TokenType
-            OperationStatus = c.Cqrs.OperationStatus
-            SerializationFormat = c.Cqrs.SerializationFormat
-            Compression = c.Cqrs.Compression
-            Aggregation = c.Cqrs.Aggregation
-            Action = c.Cqrs.Action
-            PersistenceLevel = c.Cqrs.PersistenceLevel
-            TargetFormat = c.Cqrs.TargetFormat
-            WarningLevel = c.Cqrs.WarningLevel
-            OutputFormat = c.Cqrs.OutputFormat
-            Mode = c.Cqrs.Mode
-            RegistrationStatus = c.Cqrs.RegistrationStatus
+            Status = c.Status
+            HandlerType = c.HandlerType
+            CommonStatus = c.CommonStatus
+            MetricType = c.MetricType
+            ProcessingMode = c.ProcessingMode
+            ProcessingPhase = c.ProcessingPhase
+            BindType = c.BindType
+            MergeStrategy = c.MergeStrategy
+            HealthStatus = c.HealthStatus
+            SpecialStatus = c.SpecialStatus
+            TokenType = c.TokenType
+            OperationStatus = c.OperationStatus
+            SerializationFormat = c.SerializationFormat
+            Compression = c.Compression
+            Aggregation = c.Aggregation
+            Action = c.Action
+            PersistenceLevel = c.PersistenceLevel
+            TargetFormat = c.TargetFormat
+            WarningLevel = c.WarningLevel
+            OutputFormat = c.OutputFormat
+            Mode = c.Mode
+            RegistrationStatus = c.RegistrationStatus
 
         @unique
         class StatusEnum(StrEnum):

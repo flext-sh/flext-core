@@ -73,7 +73,7 @@ class Testu(TextUtilityContract):
             (5, 5),
             (10, 10),
             (20, 20),
-            (None, c.Utilities.SHORT_UUID_LENGTH),
+            (None, c.SHORT_UUID_LENGTH),
         ]
         TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = (
             TextUtilityContract.CLEAN_TEXT_CASES
@@ -195,7 +195,7 @@ class Testu(TextUtilityContract):
         """Test batch ID generation."""
         batch_id = u.generate(
             "batch",
-            parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,),
+            parts=(c.DEFAULT_SIZE,),
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 
@@ -367,7 +367,7 @@ class Testu(TextUtilityContract):
 
         result: r[str] = u.retry(
             quick_success,
-            max_attempts=c.Reliability.MAX_RETRY_ATTEMPTS,
+            max_attempts=c.MAX_RETRY_ATTEMPTS,
         )
         u.Tests.Result.assert_success_with_value(result, "success")
 
@@ -384,7 +384,7 @@ class Testu(TextUtilityContract):
         result: r[str] = u.retry(
             flaky_op,
             max_attempts=5,
-            delay_seconds=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+            delay_seconds=c.DEFAULT_RETRY_DELAY_SECONDS,
         )
         u.Tests.Result.assert_success_with_value(result, "Success")
         assert call_count[0] >= 3

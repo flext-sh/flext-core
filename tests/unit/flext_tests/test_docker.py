@@ -234,7 +234,7 @@ class TestDocker:
     ) -> None:
         """Test wait_for_port_ready returns quickly for unavailable port."""
         result = docker_manager.wait_for_port_ready(
-            c.Network.LOOPBACK_IP,
+            c.LOOPBACK_IP,
             59999,
             max_wait=1,
         )

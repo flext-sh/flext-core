@@ -62,7 +62,7 @@ class FlextModelsDispatcher:
         def model_post_init(self, __context: object, /) -> None:
             self.executor_workers = max(
                 self.executor_workers,
-                c.Reliability.RETRY_COUNT_MIN,
+                c.RETRY_COUNT_MIN,
             )
 
         def cleanup(self) -> None:
@@ -81,7 +81,7 @@ class FlextModelsDispatcher:
             if self._executor is None:
                 self._executor = concurrent.futures.ThreadPoolExecutor(
                     max_workers=self.executor_workers,
-                    thread_name_prefix=c.Dispatcher.THREAD_NAME_PREFIX,
+                    thread_name_prefix=c.THREAD_NAME_PREFIX,
                 )
             return self._executor
 
@@ -196,7 +196,7 @@ class FlextModelsDispatcher:
             if self.is_open(message_type):
                 return r[bool].fail(
                     f"Circuit breaker is open for message type '{message_type}'",
-                    error_code=c.Errors.OPERATION_ERROR,
+                    error_code=c.OPERATION_ERROR,
                     error_data=t.ConfigMap(
                         root={
                             "message_type": message_type,
@@ -261,7 +261,7 @@ class FlextModelsDispatcher:
                 "open_count": sum(
                     1
                     for state in self._states.values()
-                    if state == c.Reliability.CircuitBreakerState.OPEN
+                    if state == c.CircuitBreakerState.OPEN
                 ),
                 "recovery_success_rate": recovery_success_rate,
                 "failure_rate": failure_rate,
@@ -279,7 +279,7 @@ class FlextModelsDispatcher:
             """
             return self._states.get(
                 message_type,
-                c.Reliability.CircuitBreakerState.CLOSED,
+                c.CircuitBreakerState.CLOSED,
             )
 
         def get_threshold(self) -> int:
@@ -293,22 +293,20 @@ class FlextModelsDispatcher:
                 True if circuit breaker is open, False otherwise.
 
             """
-            return (
-                self.get_state(message_type) == c.Reliability.CircuitBreakerState.OPEN
-            )
+            return self.get_state(message_type) == c.CircuitBreakerState.OPEN
 
         def record_failure(self, message_type: str) -> None:
             """Record failed operation and update state."""
             current_state = self.get_state(message_type)
             current_failures = self._failures.get(message_type, 0) + 1
             self._failures[message_type] = current_failures
-            if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
+            if current_state == c.CircuitBreakerState.HALF_OPEN:
                 self._recovery_failures[message_type] = (
                     self._recovery_failures.get(message_type, 0) + 1
                 )
                 self.transition_to_open(message_type)
             elif (
-                current_state == c.Reliability.CircuitBreakerState.CLOSED
+                current_state == c.CircuitBreakerState.CLOSED
                 and current_failures >= self.threshold
             ):
                 self.transition_to_open(message_type)
@@ -319,7 +317,7 @@ class FlextModelsDispatcher:
             self._total_successes[message_type] = (
                 self._total_successes.get(message_type, 0) + 1
             )
-            if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
+            if current_state == c.CircuitBreakerState.HALF_OPEN:
                 success_count = self._success_counts.get(message_type, 0) + 1
                 self._success_counts[message_type] = success_count
                 if success_count >= self.success_threshold:
@@ -327,7 +325,7 @@ class FlextModelsDispatcher:
                         self._recovery_successes.get(message_type, 0) + 1
                     )
                     self.transition_to_closed(message_type)
-            elif current_state == c.Reliability.CircuitBreakerState.CLOSED:
+            elif current_state == c.CircuitBreakerState.CLOSED:
                 self._failures[message_type] = 0
 
         def set_state(self, message_type: str, state: str) -> None:
@@ -338,35 +336,35 @@ class FlextModelsDispatcher:
             """Transition to CLOSED state."""
             self.transition_to_state(
                 message_type,
-                c.Reliability.CircuitBreakerState.CLOSED,
+                c.CircuitBreakerState.CLOSED,
             )
 
         def transition_to_half_open(self, message_type: str) -> None:
             """Transition to HALF_OPEN state."""
             self.transition_to_state(
                 message_type,
-                c.Reliability.CircuitBreakerState.HALF_OPEN,
+                c.CircuitBreakerState.HALF_OPEN,
             )
 
         def transition_to_open(self, message_type: str) -> None:
             """Transition to OPEN state."""
             self.transition_to_state(
                 message_type,
-                c.Reliability.CircuitBreakerState.OPEN,
+                c.CircuitBreakerState.OPEN,
             )
 
         def transition_to_state(self, message_type: str, new_state: str) -> None:
             """Transition to specified state."""
             self.set_state(message_type, new_state)
-            if new_state == c.Reliability.CircuitBreakerState.CLOSED:
+            if new_state == c.CircuitBreakerState.CLOSED:
                 self._failures[message_type] = 0
                 self._success_counts[message_type] = 0
                 if message_type in self._opened_at:
                     del self._opened_at[message_type]
-            elif new_state == c.Reliability.CircuitBreakerState.OPEN:
+            elif new_state == c.CircuitBreakerState.OPEN:
                 self._opened_at[message_type] = time.time()
                 self._success_counts[message_type] = 0
-            elif new_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
+            elif new_state == c.CircuitBreakerState.HALF_OPEN:
                 self._success_counts[message_type] = 0
 
     class RateLimiterManager(BaseModel):
@@ -427,7 +425,7 @@ class FlextModelsDispatcher:
                 retry_after = max(0, int(self.window_seconds - elapsed))
                 return r[bool].fail(
                     f"Rate limit exceeded for message type '{message_type}'",
-                    error_code=c.Errors.OPERATION_ERROR,
+                    error_code=c.OPERATION_ERROR,
                     error_data=t.ConfigMap(
                         root={
                             "message_type": message_type,
@@ -480,7 +478,7 @@ class FlextModelsDispatcher:
             default_factory=lambda: dict[str, int](),
         )
         _exponential_factor: float = PrivateAttr(default=2.0)
-        _max_delay: float = PrivateAttr(default=c.Reliability.DEFAULT_MAX_DELAY_SECONDS)
+        _max_delay: float = PrivateAttr(default=c.DEFAULT_MAX_DELAY_SECONDS)
 
         def __init__(self, max_attempts: int, retry_delay: float) -> None:
             """Initialize retry policy manager.
@@ -494,7 +492,7 @@ class FlextModelsDispatcher:
 
         @override
         def model_post_init(self, __context: object, /) -> None:
-            self.max_attempts = max(self.max_attempts, c.Reliability.RETRY_COUNT_MIN)
+            self.max_attempts = max(self.max_attempts, c.RETRY_COUNT_MIN)
             self.retry_delay = max(self.retry_delay, c.INITIAL_TIME)
 
         @staticmethod

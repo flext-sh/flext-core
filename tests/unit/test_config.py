@@ -53,9 +53,9 @@ class TestFlextSettings:
             {"debug": False, "trace": False},
         ]
         LOG_LEVEL_CASES: ClassVar[list[tuple[str, bool, bool]]] = [
-            (c.Settings.LogLevel.INFO, False, False),
-            (c.Settings.LogLevel.INFO, True, False),
-            (c.Settings.LogLevel.INFO, True, True),
+            (c.LogLevel.INFO, False, False),
+            (c.LogLevel.INFO, True, False),
+            (c.LogLevel.INFO, True, True),
         ]
         ENV_PREFIX_CASES: ClassVar[list[tuple[str, str, bool, str]]] = [
             ("DEBUG", "true", False, "INFO"),
@@ -326,7 +326,7 @@ class TestFlextSettings:
                 {env_key: env_value},
                 ["DEBUG", "LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_LOG_LEVEL"],
             ):
-                if not env_key.startswith(c.Platform.ENV_PREFIX):
+                if not env_key.startswith(c.ENV_PREFIX):
                     os.environ["DEBUG"] = "true"
                     os.environ["LOG_LEVEL"] = "ERROR"
                 config = FlextSettings()
@@ -499,12 +499,12 @@ class TestFlextSettings:
         def test_effective_log_level_trace(self) -> None:
             """Test effective_log_level with trace mode."""
             config = u.Tests.ConfigHelpers.create_test_config(trace=True, debug=True)
-            assert config.effective_log_level == c.Settings.LogLevel.DEBUG
+            assert config.effective_log_level == c.LogLevel.DEBUG
 
         def test_effective_log_level_debug(self) -> None:
             """Test effective_log_level with debug mode."""
             config = u.Tests.ConfigHelpers.create_test_config(debug=True)
-            assert config.effective_log_level == c.Settings.LogLevel.INFO
+            assert config.effective_log_level == c.LogLevel.INFO
 
         def test_effective_log_level_normal(self) -> None:
             """Test effective_log_level without debug/trace."""

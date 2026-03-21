@@ -30,9 +30,9 @@ class _Handler(FlextHandlers[test_t.NormalizedValue, t.Container]):
 def _success_details(reg_id: str) -> m.RegistrationDetails:
     return m.RegistrationDetails(
         registration_id=reg_id,
-        handler_mode=c.Cqrs.HandlerType.COMMAND,
+        handler_mode=c.HandlerType.COMMAND,
         timestamp="",
-        status=c.Cqrs.CommonStatus.RUNNING,
+        status=c.CommonStatus.RUNNING,
     )
 
 
@@ -145,8 +145,8 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
         m.RegistrationResult(handler_name="e", status="active", mode="event"),
         "k2",
     )
-    assert query_details.handler_mode == c.Cqrs.HandlerType.QUERY
-    assert event_details.handler_mode == c.Cqrs.HandlerType.EVENT
+    assert query_details.handler_mode == c.HandlerType.QUERY
+    assert event_details.handler_mode == c.HandlerType.EVENT
 
 
 def test_summary_error_paths_and_bindings_failures(

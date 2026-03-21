@@ -60,7 +60,7 @@ class TestUtilitiesCheckerFullCoverage:
         pass
 
     def test_checker_logger_and_safe_type_hints_fallback(self) -> None:
-        assert c.Errors.UNKNOWN_ERROR
+        assert c.UNKNOWN_ERROR
         assert isinstance(m.Categories(), m.Categories)
         assert r[int].ok(1).is_success
         assert isinstance(t.ConfigMap({"a": 1}), t.ConfigMap)

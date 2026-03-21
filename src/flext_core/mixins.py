@@ -140,7 +140,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
     @staticmethod
     def _clear_operation_context() -> None:
         """Clear operation scope context (preserves request/application scopes)."""
-        _ = FlextLogger.clear_scope(c.Context.SCOPE_OPERATION)
+        _ = FlextLogger.clear_scope(c.SCOPE_OPERATION)
         FlextContext.Request.set_operation_name("")
 
     @staticmethod
@@ -193,7 +193,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                     for key, value in normal_data.root.items()
                 }
                 _ = FlextLogger.bind_context(
-                    c.Context.SCOPE_OPERATION,
+                    c.SCOPE_OPERATION,
                     **normal_metadata_context,
                 )
 
@@ -295,7 +295,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         """Log service information ONCE at initialization (not bound to context)."""
         service_context: t.ConfigMap = t.ConfigMap(
             root={
-                c.Context.KEY_SERVICE_NAME: self.__class__.__name__,
+                c.KEY_SERVICE_NAME: self.__class__.__name__,
                 "service_module": self.__class__.__module__,
                 **context_data,
             },
@@ -469,10 +469,10 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         operation_name = FlextContext.Request.get_operation_name()
         context_data: t.ConfigMap = t.ConfigMap(
             root={
-                c.Context.KEY_CORRELATION_ID: u.normalize_to_container(
+                c.KEY_CORRELATION_ID: u.normalize_to_container(
                     correlation_id or "",
                 ),
-                c.Cqrs.HandlerType.OPERATION: u.normalize_to_container(
+                c.HandlerType.OPERATION: u.normalize_to_container(
                     operation_name or "",
                 ),
                 **{k: u.normalize_to_container(v) for k, v in extra.items()},
@@ -559,7 +559,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                     if isinstance(popped, m.ExecutionContext):
                         return r[dict[str, t.Scalar]].ok({
                             "handler_name": popped.handler_name,
-                            c.Mixins.FIELD_HANDLER_MODE: popped.handler_mode,
+                            c.FIELD_HANDLER_MODE: popped.handler_mode,
                         })
                     if isinstance(popped, t.ConfigMap):
                         return r[dict[str, t.Scalar]].ok({
@@ -583,24 +583,24 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 ctx_mapping: dict[str, t.Scalar] = {str(k): v for k, v in ctx.items()}
                 handler_name_raw: t.Scalar | None = ctx_mapping.get(
                     "handler_name",
-                    c.Mixins.IDENTIFIER_UNKNOWN,
+                    c.IDENTIFIER_UNKNOWN,
                 )
                 handler_name: str = str(handler_name_raw)
                 handler_mode_raw: t.Scalar | None = ctx_mapping.get(
-                    c.Mixins.FIELD_HANDLER_MODE,
-                    c.Cqrs.HandlerType.OPERATION,
+                    c.FIELD_HANDLER_MODE,
+                    c.HandlerType.OPERATION,
                 )
                 handler_mode_str: str = str(handler_mode_raw)
-                handler_mode_literal: c.Cqrs.HandlerType = (
-                    c.Cqrs.HandlerType.COMMAND
-                    if handler_mode_str == c.Cqrs.HandlerType.COMMAND
-                    else c.Cqrs.HandlerType.QUERY
-                    if handler_mode_str == c.Cqrs.HandlerType.QUERY
-                    else c.Cqrs.HandlerType.EVENT
-                    if handler_mode_str == c.Cqrs.HandlerType.EVENT
-                    else c.Cqrs.HandlerType.SAGA
+                handler_mode_literal: c.HandlerType = (
+                    c.HandlerType.COMMAND
+                    if handler_mode_str == c.HandlerType.COMMAND
+                    else c.HandlerType.QUERY
+                    if handler_mode_str == c.HandlerType.QUERY
+                    else c.HandlerType.EVENT
+                    if handler_mode_str == c.HandlerType.EVENT
+                    else c.HandlerType.SAGA
                     if handler_mode_str == "saga"
-                    else c.Cqrs.HandlerType.OPERATION
+                    else c.HandlerType.OPERATION
                 )
                 execution_ctx = m.ExecutionContext.create_for_handler(
                     handler_name=handler_name,
@@ -671,8 +671,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         def is_handler(obj: p.Base | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.Handler`` structurally."""
             return (
-                hasattr(obj, c.Mixins.METHOD_HANDLE)
-                and callable(getattr(obj, c.Mixins.METHOD_HANDLE, None))
+                hasattr(obj, c.METHOD_HANDLE)
+                and callable(getattr(obj, c.METHOD_HANDLE, None))
                 and hasattr(obj, "validate")
                 and callable(getattr(obj, "validate", None))
             )
@@ -712,7 +712,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         ) -> r[bool]:
             """Validate *obj* compliance with named protocol via duck-typing."""
             protocol_required_attrs: Mapping[str, Sequence[str]] = {
-                "Handler": [c.Mixins.METHOD_HANDLE, "can_handle"],
+                "Handler": [c.METHOD_HANDLE, "can_handle"],
                 "Service": ["execute", "get_service_info", "is_valid"],
                 "CommandBus": ["dispatch", "publish", "register_handler"],
                 "Repository": ["get_by_id", "save", "delete", "find_all"],

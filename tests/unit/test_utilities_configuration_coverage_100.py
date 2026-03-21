@@ -237,7 +237,7 @@ class TestFlextUtilitiesConfiguration:
     def test_create_settings_config(self) -> None:
         config = u.create_settings_config("MYAPP_")
         tm.that(config["env_prefix"], eq="MYAPP_")
-        tm.that(config["env_file"], eq=c.Platform.ENV_FILE_DEFAULT)
+        tm.that(config["env_file"], eq=c.ENV_FILE_DEFAULT)
         tm.that(config["env_nested_delimiter"], eq="__")
 
         custom = u.create_settings_config(

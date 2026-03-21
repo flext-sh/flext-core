@@ -79,4 +79,4 @@ def test_canonical_aliases_are_available() -> None:
     value = t.Dict(root={"k": "v"})
     assert result.value == "ok"
     assert value.root == {"k": "v"}
-    assert c.Performance.RECENT_THRESHOLD_SECONDS > 0
+    assert c.RECENT_THRESHOLD_SECONDS > 0

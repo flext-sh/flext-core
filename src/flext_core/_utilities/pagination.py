@@ -45,7 +45,7 @@ class FlextUtilitiesPagination:
             r with response dictionary or error
 
         """
-        data = pagination_data.get(c.Mixins.FIELD_DATA)
+        data = pagination_data.get(c.FIELD_DATA)
         pagination = pagination_data.get("pagination")
         if data is None or pagination is None:
             return r[Mapping[str, str]].fail("Invalid pagination data structure")
@@ -54,7 +54,7 @@ class FlextUtilitiesPagination:
             pagination if isinstance(pagination, str) else str(pagination)
         )
         response: dict[str, str] = {
-            c.Mixins.FIELD_DATA: data_val,
+            c.FIELD_DATA: data_val,
             "pagination": pagination_val,
         }
         if message is not None:
@@ -66,8 +66,8 @@ class FlextUtilitiesPagination:
         query_params: Mapping[str, str],
         *,
         default_page: int = 1,
-        default_page_size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-        max_page_size: int = c.Pagination.MAX_PAGE_SIZE_EXAMPLE,
+        default_page_size: int = c.DEFAULT_PAGE_SIZE_EXAMPLE,
+        max_page_size: int = c.MAX_PAGE_SIZE_EXAMPLE,
     ) -> r[tuple[int, int]]:
         """Extract page and page_size from query parameters.
 
@@ -120,8 +120,8 @@ class FlextUtilitiesPagination:
             Dictionary with pagination config values
 
         """
-        default_page_size = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
-        max_page_size = c.Pagination.MAX_PAGE_SIZE_EXAMPLE
+        default_page_size = c.DEFAULT_PAGE_SIZE_EXAMPLE
+        max_page_size = c.MAX_PAGE_SIZE_EXAMPLE
         if config is not None:
             default_page_size_attr = getattr(config, "default_page_size", None)
             if default_page_size_attr is not None:
@@ -182,7 +182,7 @@ class FlextUtilitiesPagination:
             "has_prev": has_prev,
         }
         return r[dict[str, list[t.RuntimeAtomic] | t.PaginationMeta]].ok({
-            c.Mixins.FIELD_DATA: data_list,
+            c.FIELD_DATA: data_list,
             "pagination": pagination_meta,
         })
 

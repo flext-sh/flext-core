@@ -15,92 +15,80 @@ from flext_core import FlextConstantsBase
 class FlextConstantsSettings:
     """Constants for utilities and settings."""
 
-    class Utilities:
-        """Utility constants."""
+    DEFAULT_ENCODING: Final[str] = "utf-8"
+    "Default encoding for string operations."
+    SERIALIZATION_ISO8601: Final = "iso8601"
+    "ISO8601 format for datetime serialization."
+    SERIALIZATION_FLOAT: Final = "float"
+    "Float format for datetime serialization."
+    SERIALIZATION_BASE64: Final = "base64"
+    "Base64 format for bytes serialization."
+    SERIALIZATION_UTF8: Final = "utf8"
+    "UTF-8 format for bytes serialization."
+    SERIALIZATION_HEX: Final = "hex"
+    "Hex format for bytes serialization."
+    MAX_TIMEOUT_SECONDS: Final[float] = FlextConstantsBase.MAX_TIMEOUT_SECONDS
+    LONG_UUID_LENGTH: Final[int] = 12
+    SHORT_UUID_LENGTH: Final[int] = 8
+    VERSION_MODULO: Final[int] = 100
+    CONTROL_CHARS_PATTERN: Final[str] = "[\\x00-\\x1F\\x7F]"
+    CACHE_ATTRIBUTE_NAMES: Final[tuple[str, ...]] = (
+        "_cache",
+        "_ttl",
+        "_cached_at",
+        "_cached_value",
+    )
 
-        DEFAULT_ENCODING: Final[str] = "utf-8"
-        "Default encoding for string operations."
-        SERIALIZATION_ISO8601: Final = "iso8601"
-        "ISO8601 format for datetime serialization."
-        SERIALIZATION_FLOAT: Final = "float"
-        "Float format for datetime serialization."
-        SERIALIZATION_BASE64: Final = "base64"
-        "Base64 format for bytes serialization."
-        SERIALIZATION_UTF8: Final = "utf8"
-        "UTF-8 format for bytes serialization."
-        SERIALIZATION_HEX: Final = "hex"
-        "Hex format for bytes serialization."
-        MAX_TIMEOUT_SECONDS: Final[float] = FlextConstantsBase.MAX_TIMEOUT_SECONDS
-        LONG_UUID_LENGTH: Final[int] = 12
-        SHORT_UUID_LENGTH: Final[int] = 8
-        VERSION_MODULO: Final[int] = 100
-        CONTROL_CHARS_PATTERN: Final[str] = "[\\x00-\\x1F\\x7F]"
-        CACHE_ATTRIBUTE_NAMES: Final[tuple[str, ...]] = (
-            "_cache",
-            "_ttl",
-            "_cached_at",
-            "_cached_value",
-        )
+    @unique
+    class ConversionMode(StrEnum):
+        """Conversion mode enumeration for type-safe conversion operations.
 
-        @unique
-        class ConversionMode(StrEnum):
-            """Conversion mode enumeration for type-safe conversion operations.
+        DRY Pattern: StrEnum provides single source of truth for conversion modes.
+        Use ConversionMode.TO_STR.value or ConversionMode.TO_STR directly.
+        """
 
-            DRY Pattern: StrEnum provides single source of truth for conversion modes.
-            Use ConversionMode.TO_STR.value or ConversionMode.TO_STR directly.
-            """
+        TO_STR = "to_str"
+        "Convert to string."
+        TO_STR_LIST = "to_str_list"
+        "Convert to list of strings."
+        NORMALIZE = "normalize"
+        "Normalize value."
+        JOIN = "join"
+        "Join values."
 
-            TO_STR = "to_str"
-            "Convert to string."
-            TO_STR_LIST = "to_str_list"
-            "Convert to list of strings."
-            NORMALIZE = "normalize"
-            "Normalize value."
-            JOIN = "join"
-            "Join values."
+    MAX_WORKERS_THRESHOLD: Final[int] = 50
+    DEFAULT_ENABLE_CACHING: Final[bool] = True
+    DEFAULT_ENABLE_TRACING: Final[bool] = False
+    DEFAULT_TIMEOUT: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+    DEFAULT_DEBUG_MODE: Final[bool] = False
+    DEFAULT_TRACE_MODE: Final[bool] = False
 
-    class Settings:
-        """Configuration defaults."""
+    @unique
+    class LogLevel(StrEnum):
+        """Standard log levels."""
 
-        MAX_WORKERS_THRESHOLD: Final[int] = 50
-        DEFAULT_ENABLE_CACHING: Final[bool] = True
-        DEFAULT_ENABLE_TRACING: Final[bool] = False
-        DEFAULT_TIMEOUT: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
-        DEFAULT_DEBUG_MODE: Final[bool] = False
-        DEFAULT_TRACE_MODE: Final[bool] = False
+        DEBUG = "DEBUG"
+        INFO = "INFO"
+        WARNING = "WARNING"
+        ERROR = "ERROR"
+        CRITICAL = "CRITICAL"
 
-        @unique
-        class LogLevel(StrEnum):
-            """Standard log levels."""
+    @unique
+    class Environment(StrEnum):
+        """Environment types."""
 
-            DEBUG = "DEBUG"
-            INFO = "INFO"
-            WARNING = "WARNING"
-            ERROR = "ERROR"
-            CRITICAL = "CRITICAL"
+        DEVELOPMENT = "development"
+        STAGING = "staging"
+        PRODUCTION = "production"
+        TESTING = "testing"
+        LOCAL = "local"
 
-        @unique
-        class Environment(StrEnum):
-            """Environment types."""
+    EXTRA_FORBID: Final = "forbid"
+    "Extra fields behavior: forbid unknown fields."
+    EXTRA_IGNORE: Final = "ignore"
+    "Extra fields behavior: ignore unknown fields."
+    EXTRA_ALLOW: Final = "allow"
+    "Extra fields behavior: allow unknown fields."
 
-            DEVELOPMENT = "development"
-            STAGING = "staging"
-            PRODUCTION = "production"
-            TESTING = "testing"
-            LOCAL = "local"
-
-    class ModelConfig:
-        """Pydantic model configuration defaults."""
-
-        EXTRA_FORBID: Final = "forbid"
-        "Extra fields behavior: forbid unknown fields."
-        EXTRA_IGNORE: Final = "ignore"
-        "Extra fields behavior: ignore unknown fields."
-        EXTRA_ALLOW: Final = "allow"
-        "Extra fields behavior: allow unknown fields."
-
-    class Security:
-        """Security constants."""
-
-        JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
-        CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12
+    JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
+    CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12

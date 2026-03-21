@@ -62,9 +62,7 @@ class TestConstants:
         ConstantPathScenario(path="Utilities.MAX_TIMEOUT_SECONDS", expected=3600),
         ConstantPathScenario(path="Logging.DEFAULT_LEVEL", expected="INFO"),
         ConstantPathScenario(path="Platform.FLEXT_API_PORT", expected=8000),
-        ConstantPathScenario(
-            path="Platform.DEFAULT_HOST", expected=c.Network.LOCALHOST
-        ),
+        ConstantPathScenario(path="Platform.DEFAULT_HOST", expected=c.LOCALHOST),
         ConstantPathScenario(path="Performance.MAX_TIMEOUT_SECONDS", expected=600),
         ConstantPathScenario(
             path="Performance.BatchProcessing.DEFAULT_SIZE",
@@ -94,7 +92,7 @@ class TestConstants:
             pattern_attr="Platform.PATTERN_URL",
             valid_cases=[
                 "https://github.com",
-                "http://FlextConstants.Network.LOCALHOST:8000",
+                "http://FlextConstants.LOCALHOST:8000",
                 "https://example.com/path?query=1",
             ],
             invalid_cases=[
@@ -142,11 +140,11 @@ class TestConstants:
     ]
     TYPE_CHECKS: ClassVar[list[tuple[object, type]]] = [
         (c.NAME, str),
-        (c.Network.MIN_PORT, int),
-        (c.Network.MAX_PORT, int),
-        (c.Validation.MIN_NAME_LENGTH, int),
-        (c.Logging.DEFAULT_LEVEL, str),
-        (c.Platform.FLEXT_API_PORT, int),
+        (c.MIN_PORT, int),
+        (c.MAX_PORT, int),
+        (c.MIN_NAME_LENGTH, int),
+        (c.DEFAULT_LEVEL, str),
+        (c.FLEXT_API_PORT, int),
     ]
     TYPE_CHECK_IDS: ClassVar[list[str]] = [
         "name_str",
@@ -192,7 +190,7 @@ class TestConstants:
     @pytest.mark.parametrize("level", LOG_LEVELS)
     def test_core_logging_enum_levels(self, level: str) -> None:
         """Test logging level enum values."""
-        actual = getattr(c.Settings.LogLevel, level)
+        actual = getattr(c.LogLevel, level)
         tm.that(actual, eq=level)
 
     @pytest.mark.parametrize(
@@ -240,13 +238,13 @@ class TestConstants:
     def test_type_safety_immutability(self) -> None:
         """Test that constants are effectively immutable."""
         tm.that(c.NAME, eq="FLEXT")
-        tm.that(c.Platform.FLEXT_API_PORT, eq=8000)
+        tm.that(c.FLEXT_API_PORT, eq=8000)
 
     def test_type_safety_nested_access_patterns(self) -> None:
         """Test various nested access patterns work correctly."""
-        tm.that(c.Errors.VALIDATION_ERROR, eq="VALIDATION_ERROR")
-        tm.that(c.Reliability.DEFAULT_TIMEOUT_SECONDS, eq=30)
-        tm.that(c.Settings.LogLevel.ERROR, eq="ERROR")
+        tm.that(c.VALIDATION_ERROR, eq="VALIDATION_ERROR")
+        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=30)
+        tm.that(c.LogLevel.ERROR, eq="ERROR")
 
     @pytest.mark.parametrize("category", REQUIRED_CATEGORIES)
     def test_completeness_required_categories_exist(self, category: str) -> None:
@@ -258,7 +256,7 @@ class TestConstants:
         tm.that(c.__doc__, none=False)
         doc_lower = c.__doc__.lower() if c.__doc__ else ""
         tm.that("layer 0" in doc_lower, eq=True)
-        documented_classes = [c.Network, c.Validation, c.Errors, c.Platform, c.Logging]
+        documented_classes = [c.Network, c, c, c, c]
         for cls in documented_classes:
             tm.that(
                 cls.__doc__,
@@ -272,7 +270,7 @@ class TestConstants:
             "Platform.PATTERN_EMAIL",
         )
         long_email = "a" * 64 + "@" + "b" * 63 + ".com"
-        tm.that(len(long_email), lte=c.Validation.MAX_EMAIL_LENGTH)
+        tm.that(len(long_email), lte=c.MAX_EMAIL_LENGTH)
         tm.that(
             cast("test_t.Tests.object", email_pattern.match(long_email)), none=False
         )
@@ -289,32 +287,32 @@ class TestConstants:
 
     def test_edge_cases_constant_ranges(self) -> None:
         """Test that numeric constants are in valid ranges."""
-        tm.that(c.Network.MIN_PORT, gte=0)
-        tm.that(c.Network.MAX_PORT, lte=65535)
-        tm.that(c.Network.MIN_PORT, lte=c.Network.MAX_PORT)
+        tm.that(c.MIN_PORT, gte=0)
+        tm.that(c.MAX_PORT, lte=65535)
+        tm.that(c.MIN_PORT, lte=c.MAX_PORT)
         tm.that(c.DEFAULT_TIMEOUT_SECONDS, gt=0)
-        tm.that(c.Utilities.MAX_TIMEOUT_SECONDS, gt=c.DEFAULT_TIMEOUT_SECONDS)
-        tm.that(c.Validation.MIN_NAME_LENGTH, gt=0)
-        tm.that(c.Validation.MIN_NAME_LENGTH, lt=c.Validation.MAX_NAME_LENGTH)
+        tm.that(c.MAX_TIMEOUT_SECONDS, gt=c.DEFAULT_TIMEOUT_SECONDS)
+        tm.that(c.MIN_NAME_LENGTH, gt=0)
+        tm.that(c.MIN_NAME_LENGTH, lt=c.MAX_NAME_LENGTH)
 
     def test_edge_cases_enum_completeness(self) -> None:
         """Test that enums contain all expected values."""
         for level in self.LOG_LEVELS:
-            tm.that(hasattr(c.Settings.LogLevel, level), eq=True)
-            tm.that(getattr(c.Settings.LogLevel, level), eq=level)
+            tm.that(hasattr(c.LogLevel, level), eq=True)
+            tm.that(getattr(c.LogLevel, level), eq=level)
 
     def test_integration_cross_category_consistency(self) -> None:
         """Test consistency across related constant categories."""
-        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=c.Reliability.DEFAULT_TIMEOUT_SECONDS)
-        tm.that(c.Cqrs.DEFAULT_HANDLER_TYPE, eq=c.Dispatcher.DEFAULT_HANDLER_MODE)
+        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT_SECONDS)
+        tm.that(c.DEFAULT_HANDLER_TYPE, eq=c.DEFAULT_HANDLER_MODE)
 
     def test_integration_pattern_and_validation_consistency(self) -> None:
         """Test that patterns work with validation constants."""
         email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
             "Platform.PATTERN_EMAIL",
         )
-        max_length_email = "a" * (c.Validation.MAX_EMAIL_LENGTH - 9) + "@test.com"
-        tm.that(len(max_length_email), lte=c.Validation.MAX_EMAIL_LENGTH)
+        max_length_email = "a" * (c.MAX_EMAIL_LENGTH - 9) + "@test.com"
+        tm.that(len(max_length_email), lte=c.MAX_EMAIL_LENGTH)
         tm.that(
             cast("test_t.Tests.object", email_pattern.match(max_length_email)),
             none=False,

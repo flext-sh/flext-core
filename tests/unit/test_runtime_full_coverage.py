@@ -41,7 +41,7 @@ def reset_runtime_state() -> Generator[None]:
 
 def test_reuse_existing_runtime_scenarios() -> None:
     suite = runtime_tests.TestFlextRuntime()
-    _ = c.Logging.DEFAULT_LEVEL
+    _ = c.DEFAULT_LEVEL
     _ = u.ensure_str("x")
     scenarios = runtime_tests.TestFlextRuntime.RuntimeScenarios
     for case in scenarios.dict_like_scenarios():

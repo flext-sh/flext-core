@@ -35,7 +35,7 @@ class FlextUtilitiesGenerators:
         """Random ID generation helpers."""
 
         @staticmethod
-        def generate_short_id(length: int = c.Utilities.SHORT_UUID_LENGTH) -> str:
+        def generate_short_id(length: int = c.SHORT_UUID_LENGTH) -> str:
             """Generate a short random ID (public API for backward compatibility)."""
             alphabet = string.ascii_letters + string.digits
             return "".join(secrets.choice(alphabet) for _ in range(length))
@@ -59,12 +59,12 @@ class FlextUtilitiesGenerators:
         kind_prefix_map: Mapping[str, str] = {
             "correlation": "corr",
             "entity": "ent",
-            "batch": c.Cqrs.ProcessingMode.BATCH,
+            "batch": c.ProcessingMode.BATCH,
             "transaction": "txn",
             "saga": "saga",
-            c.Cqrs.HandlerType.EVENT: "evt",
-            c.Cqrs.HandlerType.COMMAND: "cmd",
-            c.Cqrs.HandlerType.QUERY: "qry",
+            c.HandlerType.EVENT: "evt",
+            c.HandlerType.COMMAND: "cmd",
+            c.HandlerType.QUERY: "qry",
         }
         resolved_prefix = kind_prefix_map.get(kind)
         if resolved_prefix is None:
@@ -90,10 +90,8 @@ class FlextUtilitiesGenerators:
             context_dict["trace_id"] = FlextUtilitiesGenerators._generate_id()
         if "span_id" not in context_dict:
             context_dict["span_id"] = FlextUtilitiesGenerators._generate_id()
-        if include_correlation_id and c.Context.KEY_CORRELATION_ID not in context_dict:
-            context_dict[c.Context.KEY_CORRELATION_ID] = (
-                FlextUtilitiesGenerators._generate_id()
-            )
+        if include_correlation_id and c.KEY_CORRELATION_ID not in context_dict:
+            context_dict[c.KEY_CORRELATION_ID] = FlextUtilitiesGenerators._generate_id()
         if include_timestamp and "timestamp" not in context_dict:
             context_dict["timestamp"] = (
                 FlextUtilitiesGenerators.generate_iso_timestamp()
@@ -108,7 +106,7 @@ class FlextUtilitiesGenerators:
     def _generate_prefixed_id(
         prefix: str,
         *parts: t.NormalizedValue,
-        length: int = c.Utilities.SHORT_UUID_LENGTH,
+        length: int = c.SHORT_UUID_LENGTH,
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
 
@@ -367,9 +365,7 @@ class FlextUtilitiesGenerators:
         if FlextUtilitiesGenerators._should_generate_uuid(kind, actual_prefix):
             return FlextUtilitiesGenerators._generate_id()
         if kind == "ulid":
-            ulid_length = (
-                length if length is not None else c.Utilities.SHORT_UUID_LENGTH
-            )
+            ulid_length = length if length is not None else c.SHORT_UUID_LENGTH
             return FlextUtilitiesGenerators.Random.generate_short_id(ulid_length)
         if kind == "id" and actual_prefix is None:
             return FlextUtilitiesGenerators._generate_id()
@@ -380,7 +376,7 @@ class FlextUtilitiesGenerators:
                 all_parts.append(timestamp)
             if parts:
                 all_parts.extend(parts)
-            id_length = length if length is not None else c.Utilities.SHORT_UUID_LENGTH
+            id_length = length if length is not None else c.SHORT_UUID_LENGTH
             if separator != "_" or include_timestamp:
                 uuid_part = str(uuid.uuid4())[:id_length]
                 if all_parts:

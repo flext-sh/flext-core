@@ -19,15 +19,15 @@ class Ex03Money(m.Value):
     """Money value object model."""
 
     amount: Decimal
-    currency: c.Domain.Currency = c.Domain.Currency.USD
+    currency: c.Currency = c.Currency.USD
 
     @field_validator("currency", mode="before")
     @classmethod
-    def normalize_currency(cls, value: str | c.Domain.Currency) -> c.Domain.Currency:
-        if isinstance(value, c.Domain.Currency):
+    def normalize_currency(cls, value: str | c.Currency) -> c.Currency:
+        if isinstance(value, c.Currency):
             return value
         if isinstance(value, str):
-            return c.Domain.Currency(value)
+            return c.Currency(value)
         msg = "invalid currency"
         raise TypeError(msg)
 
@@ -67,7 +67,7 @@ class Ex03Order(m.AggregateRoot):
 
     customer_id: str
     items: list[t.ConfigMap] = Field(default_factory=_new_order_items)
-    status: c.Domain.Status = c.Domain.Status.ACTIVE
+    status: c.Status = c.Status.ACTIVE
 
     def add_item(self, item: Ex03OrderItem) -> r[Ex03Order]:
         """Append item to order."""

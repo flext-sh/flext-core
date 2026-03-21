@@ -87,7 +87,7 @@ class FlextUtilitiesCache:
         have cached data that needs invalidation.
 
         Attribute Detection:
-        - Checks FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
+        - Checks FlextConstants.CACHE_ATTRIBUTE_NAMES
         - Common names: _cache, _cached, cache, cached_data, etc.
         - Configurable via constants module
 
@@ -113,7 +113,7 @@ class FlextUtilitiesCache:
 
         """
         try:
-            cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
+            cache_attributes = c.CACHE_ATTRIBUTE_NAMES
             cleared_count = 0
             for attr_name in cache_attributes:
                 if hasattr(obj, attr_name):
@@ -179,7 +179,7 @@ class FlextUtilitiesCache:
         try:
             return f"{command_type.__name__}_{hash(command_str)}"
         except TypeError:
-            encoded = command_str.encode(c.Utilities.DEFAULT_ENCODING)
+            encoded = command_str.encode(c.DEFAULT_ENCODING)
             return f"{command_type.__name__}_{abs(hash(encoded))}"
 
     @staticmethod
@@ -200,7 +200,7 @@ class FlextUtilitiesCache:
             True if any known cache attribute exists, False otherwise
 
         """
-        cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
+        cache_attributes = c.CACHE_ATTRIBUTE_NAMES
         return any(hasattr(obj, attr) for attr in cache_attributes)
 
     @staticmethod

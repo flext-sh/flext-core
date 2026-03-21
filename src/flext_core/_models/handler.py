@@ -38,7 +38,7 @@ class FlextModelsHandler:
         name: Annotated[
             str,
             Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Handler name",
             ),
         ]
@@ -95,7 +95,7 @@ class FlextModelsHandler:
             Field(description="Registration mode (auto_discovery, explicit)"),
         ]
         handler_mode: Annotated[
-            c.Cqrs.HandlerType | None,
+            c.HandlerType | None,
             Field(default=None, description="Handler mode (command/query/event)"),
         ] = None
         message_type: Annotated[
@@ -107,9 +107,9 @@ class FlextModelsHandler:
         ] = None
         _GETITEM_FIELDS: ClassVar[frozenset[str]] = frozenset({
             "handler_name",
-            c.Mixins.FIELD_STATUS,
+            c.FIELD_STATUS,
             "mode",
-            c.Mixins.FIELD_HANDLER_MODE,
+            c.FIELD_HANDLER_MODE,
             "message_type",
         })
 
@@ -117,11 +117,11 @@ class FlextModelsHandler:
             match key:
                 case "handler_name":
                     return self.handler_name
-                case c.Mixins.FIELD_STATUS:
+                case c.FIELD_STATUS:
                     return self.status
                 case "mode":
                     return self.mode
-                case c.Mixins.FIELD_HANDLER_MODE:
+                case c.FIELD_HANDLER_MODE:
                     return self.handler_mode
                 case "message_type":
                     return self.message_type
@@ -149,7 +149,7 @@ class FlextModelsHandler:
             ),
         ] = None
         handler_mode: Annotated[
-            c.Cqrs.HandlerType | None,
+            c.HandlerType | None,
             Field(
                 default=None,
                 description="Handler operation mode (command, query, event)",
@@ -199,37 +199,37 @@ class FlextModelsHandler:
         registration_id: Annotated[
             str,
             Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Unique registration identifier",
                 examples=["reg-abc123", "handler-create-user-001"],
             ),
         ]
         handler_mode: Annotated[
-            c.Cqrs.HandlerType,
+            c.HandlerType,
             Field(
-                default=c.Cqrs.HandlerType.COMMAND,
+                default=c.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
                 examples=["command", "query", "event"],
             ),
-        ] = c.Cqrs.HandlerType.COMMAND
+        ] = c.HandlerType.COMMAND
         timestamp: Annotated[
             str,
             Field(
-                default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
+                default_factory=lambda: c.DEFAULT_TIMESTAMP,
                 description="ISO 8601 timestamp recording when the registration entry was created.",
                 title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
-                pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
+                pattern=c.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = Field(default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP)
+        ] = Field(default_factory=lambda: c.DEFAULT_TIMESTAMP)
         status: Annotated[
-            c.Cqrs.CommonStatus,
+            c.CommonStatus,
             Field(
-                default=c.Cqrs.CommonStatus.RUNNING,
+                default=c.CommonStatus.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
             ),
-        ] = c.Cqrs.CommonStatus.RUNNING
+        ] = c.CommonStatus.RUNNING
 
     class ExecutionContext(FlextModelFoundation.ArbitraryTypesModel):
         """Handler execution context for tracking handler performance and state.
@@ -266,15 +266,15 @@ class FlextModelsHandler:
         handler_name: Annotated[
             str,
             Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Name of the handler being executed",
                 examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
             ),
         ]
         handler_mode: Annotated[
-            c.Cqrs.HandlerType,
+            c.HandlerType,
             Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
+                min_length=c.RETRY_COUNT_MIN,
                 description="Mode of handler execution",
                 examples=["command", "query", "event"],
             ),
@@ -326,7 +326,7 @@ class FlextModelsHandler:
         def create_for_handler(
             cls,
             handler_name: str,
-            handler_mode: c.Cqrs.HandlerType,
+            handler_mode: c.HandlerType,
         ) -> Self:
             """Create execution context for a handler.
 
@@ -406,7 +406,7 @@ class FlextModelsHandler:
             >>> config = FlextModelsHandler.DecoratorConfig(
             ...     command=CreateUserCommand,
             ...     priority=10,
-            ...     timeout=c.Network.DEFAULT_TIMEOUT,
+            ...     timeout=c.DEFAULT_TIMEOUT,
             ...     middleware=[LoggingMiddleware, ValidationMiddleware],
             ... )
             >>> config.command
@@ -424,19 +424,19 @@ class FlextModelsHandler:
         priority: Annotated[
             int,
             Field(
-                default=c.Discovery.DEFAULT_PRIORITY,
+                default=c.DEFAULT_PRIORITY,
                 description="Handler priority (higher = processed first)",
                 ge=0,
             ),
-        ] = c.Discovery.DEFAULT_PRIORITY
+        ] = c.DEFAULT_PRIORITY
         timeout: Annotated[
             float | None,
             Field(
-                default=c.Discovery.DEFAULT_TIMEOUT,
+                default=c.DEFAULT_TIMEOUT,
                 description="Handler execution timeout in seconds",
                 gt=0.0,
             ),
-        ] = c.Discovery.DEFAULT_TIMEOUT
+        ] = c.DEFAULT_TIMEOUT
         middleware: Annotated[
             list[type[p.Middleware]],
             Field(

@@ -28,36 +28,36 @@ class DatabaseService(m.ArbitraryTypesModel):
 
     model_config = m.DOMAIN_MODEL_CONFIG
     config: t.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
+    status: c.CommonStatus = c.CommonStatus.INACTIVE
 
     def connect(self) -> r[bool]:
         """Connect to database with validation."""
-        if self.status == c.Cqrs.CommonStatus.ACTIVE:
+        if self.status == c.CommonStatus.ACTIVE:
             return r[bool].ok(value=True)
         url = str(self.config.get("url", ""))
         if not url:
-            return r[bool].fail(c.Errors.CONFIGURATION_ERROR)
+            return r[bool].fail(c.CONFIGURATION_ERROR)
         timeout_text = str(self.config.get("timeout", 0))
         timeout = int(timeout_text) if timeout_text.isdigit() else 0
         timeout_validation = u.validate_positive(timeout)
         if timeout_validation.is_failure:
-            return r[bool].fail(c.Errors.VALIDATION_ERROR)
-        self.status = c.Cqrs.CommonStatus.ACTIVE
+            return r[bool].fail(c.VALIDATION_ERROR)
+        self.status = c.CommonStatus.ACTIVE
         return r[bool].ok(value=True)
 
     def query(self, sql: str) -> r[t.ConfigMap]:
         """Execute query with comprehensive validation using u."""
-        if self.status != c.Cqrs.CommonStatus.ACTIVE:
-            return r[t.ConfigMap].fail(c.Errors.CONNECTION_ERROR)
+        if self.status != c.CommonStatus.ACTIVE:
+            return r[t.ConfigMap].fail(c.CONNECTION_ERROR)
         sql_keywords: tuple[str, ...] = (
-            c.Cqrs.Action.GET,
-            c.Cqrs.Action.CREATE,
-            c.Cqrs.Action.UPDATE,
-            c.Cqrs.Action.DELETE,
+            c.Action.GET,
+            c.Action.CREATE,
+            c.Action.UPDATE,
+            c.Action.DELETE,
         )
         sql_pattern = f"\\b({'|'.join(sql_keywords)})\\b"
         if not u.validate_pattern(sql, sql_pattern).is_success:
-            return r[t.ConfigMap].fail(c.Errors.VALIDATION_ERROR)
+            return r[t.ConfigMap].fail(c.VALIDATION_ERROR)
         result: t.ConfigMap = t.ConfigMap(
             root={
                 "id": u.generate("ulid"),
@@ -73,15 +73,15 @@ class CacheService(m.ArbitraryTypesModel):
 
     model_config = m.DOMAIN_MODEL_CONFIG
     config: t.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
+    status: c.CommonStatus = c.CommonStatus.INACTIVE
 
     def get(self, key: str) -> r[str | int]:
         """Get value from cache using railway pattern."""
-        if self.status != c.Cqrs.CommonStatus.ACTIVE:
-            return r[str | int].fail(c.Errors.CONNECTION_ERROR)
-        return u.validate_length(key, max_length=c.Validation.MAX_NAME_LENGTH).flat_map(
+        if self.status != c.CommonStatus.ACTIVE:
+            return r[str | int].fail(c.CONNECTION_ERROR)
+        return u.validate_length(key, max_length=c.MAX_NAME_LENGTH).flat_map(
             lambda _: (
-                r[str | int].fail(c.Errors.NOT_FOUND_ERROR)
+                r[str | int].fail(c.NOT_FOUND_ERROR)
                 if key == "missing"
                 else r[str | int].ok("cached_value")
             )
@@ -89,15 +89,13 @@ class CacheService(m.ArbitraryTypesModel):
 
     def set(self, key: str, value: str | int) -> r[bool]:
         """Set value in cache using railway pattern."""
-        if self.status != c.Cqrs.CommonStatus.ACTIVE:
-            return r[bool].fail(c.Errors.CONNECTION_ERROR)
+        if self.status != c.CommonStatus.ACTIVE:
+            return r[bool].fail(c.CONNECTION_ERROR)
         return (
             u
-            .validate_length(key, max_length=c.Validation.MAX_NAME_LENGTH)
+            .validate_length(key, max_length=c.MAX_NAME_LENGTH)
             .flat_map(
-                lambda _: u.validate_length(
-                    str(value), max_length=c.Validation.MAX_NAME_LENGTH
-                )
+                lambda _: u.validate_length(str(value), max_length=c.MAX_NAME_LENGTH)
             )
             .map(lambda _: True)
         )
@@ -108,20 +106,16 @@ class EmailService(m.ArbitraryTypesModel):
 
     model_config = m.DOMAIN_MODEL_CONFIG
     config: t.ConfigMap
-    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
+    status: c.CommonStatus = c.CommonStatus.INACTIVE
 
     def send(self, to: str, subject: str, body: str) -> r[bool]:
         """Send email with railway pattern validation."""
-        if self.status != c.Cqrs.CommonStatus.ACTIVE:
-            return r[bool].fail(c.Errors.CONNECTION_ERROR)
+        if self.status != c.CommonStatus.ACTIVE:
+            return r[bool].fail(c.CONNECTION_ERROR)
         validations = [
-            u.validate_pattern(to, c.Platform.PATTERN_EMAIL, "email"),
-            u.validate_length(
-                subject, min_length=1, max_length=c.Validation.MAX_NAME_LENGTH
-            ),
-            u.validate_length(
-                body, min_length=1, max_length=c.Defaults.MAX_MESSAGE_LENGTH
-            ),
+            u.validate_pattern(to, c.PATTERN_EMAIL, "email"),
+            u.validate_length(subject, min_length=1, max_length=c.MAX_NAME_LENGTH),
+            u.validate_length(body, min_length=1, max_length=c.MAX_MESSAGE_LENGTH),
         ]
         return r.traverse(validations, lambda r: r).map(lambda _: True)
 
@@ -180,21 +174,21 @@ class DependencyInjectionService(s[t.ConfigMap]):
             root={
                 "driver": "sqlite",
                 "url": "sqlite:///:memory:",
-                "timeout": c.Network.DEFAULT_TIMEOUT,
+                "timeout": c.DEFAULT_TIMEOUT,
             }
         )
         db_service = DatabaseService(config=db_config)
-        db_service.status = c.Cqrs.CommonStatus.ACTIVE
+        db_service.status = c.CommonStatus.ACTIVE
         cache_config: t.ConfigMap = t.ConfigMap(
-            root={"backend": "memory", "ttl": c.Defaults.DEFAULT_CACHE_TTL}
+            root={"backend": "memory", "ttl": c.DEFAULT_CACHE_TTL}
         )
         cache_service = CacheService(config=cache_config)
-        cache_service.status = c.Cqrs.CommonStatus.ACTIVE
+        cache_service.status = c.CommonStatus.ACTIVE
         email_config: t.ConfigMap = t.ConfigMap(
             root={"host": "smtp.example.com", "port": 587}
         )
         email_service = EmailService(config=email_config)
-        email_service.status = c.Cqrs.CommonStatus.ACTIVE
+        email_service.status = c.CommonStatus.ACTIVE
         _ = container.register("database", db_service)
         _ = container.register("cache", cache_service)
         _ = container.register("email", email_service)

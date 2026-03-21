@@ -81,7 +81,7 @@ class Ex02FlextSettings(Examples):
             version="9.8.7",
             debug=True,
             trace=False,
-            log_level=c.Settings.LogLevel.INFO,
+            log_level=c.LogLevel.INFO,
             async_logging=False,
             enable_caching=False,
             cache_ttl=321,
@@ -102,7 +102,7 @@ class Ex02FlextSettings(Examples):
             max_workers=7,
             max_batch_size=29,
             api_key="demo-key",
-            exception_failure_level=c.Exceptions.FAILURE_LEVEL_DEFAULT,
+            exception_failure_level=c.FAILURE_LEVEL_DEFAULT,
         )
         self.check("field.app_name", config.app_name)
         self.check("field.version", config.version)
@@ -141,9 +141,7 @@ class Ex02FlextSettings(Examples):
         """Exercise effective_log_level property and apply_override."""
         self.section("effective_log_level_and_override")
         FlextSettings.reset_for_testing()
-        config = FlextSettings(
-            debug=False, trace=False, log_level=c.Settings.LogLevel.ERROR
-        )
+        config = FlextSettings(debug=False, trace=False, log_level=c.LogLevel.ERROR)
         self.check("effective_log_level.base", config.effective_log_level)
         valid_override = config.apply_override("debug", True)
         self.check("apply_override.valid_return", valid_override)
@@ -176,13 +174,13 @@ class Ex02FlextSettings(Examples):
         FlextSettings.reset_for_testing()
         env_path = Path(sys.prefix) / "flext_settings_example.env"
         env_path.write_text("FLEXT_APP_NAME=from_env_file\n", encoding="utf-8")
-        previous = self._set_env(c.Platform.ENV_FILE_ENV_VAR, str(env_path))
+        previous = self._set_env(c.ENV_FILE_ENV_VAR, str(env_path))
         try:
             resolved = u.resolve_env_file()
             self.check("resolve_env_file.custom_path", resolved)
             auto = FlextSettings.AutoConfig(
                 config_class=self._TestConfig,
-                env_prefix=c.Platform.ENV_PREFIX,
+                env_prefix=c.ENV_PREFIX,
                 env_file=resolved,
             )
             created = auto.create_config()
@@ -192,7 +190,7 @@ class Ex02FlextSettings(Examples):
                 created.model_dump().get("service_name"),
             )
         finally:
-            self._restore_env(c.Platform.ENV_FILE_ENV_VAR, previous)
+            self._restore_env(c.ENV_FILE_ENV_VAR, previous)
             if env_path.exists():
                 env_path.unlink()
 

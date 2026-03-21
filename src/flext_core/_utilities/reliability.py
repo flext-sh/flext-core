@@ -49,7 +49,7 @@ class FlextUtilitiesReliability:
     ) -> float:
         """Calculate delay for retry attempt with exponential backoff."""
         current_delay = delay_seconds * backoff_multiplier**attempt
-        return min(current_delay, c.Reliability.RETRY_BACKOFF_MAX)
+        return min(current_delay, c.RETRY_BACKOFF_MAX)
 
     @staticmethod
     def _is_match_mapper(
@@ -551,23 +551,19 @@ class FlextUtilitiesReliability:
         """
         delay_value: float | None = delay if delay is not None else delay_seconds
         max_attempts_value: int = (
-            max_attempts
-            if max_attempts is not None
-            else c.Reliability.MAX_RETRY_ATTEMPTS
+            max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
         )
         delay_seconds_value: float = (
-            delay_value
-            if delay_value is not None
-            else c.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+            delay_value if delay_value is not None else c.DEFAULT_RETRY_DELAY_SECONDS
         )
         backoff_multiplier_value: float = (
             backoff_multiplier
             if backoff_multiplier is not None
-            else c.Reliability.RETRY_BACKOFF_BASE
+            else c.RETRY_BACKOFF_BASE
         )
-        if max_attempts_value < c.Reliability.RETRY_COUNT_MIN:
+        if max_attempts_value < c.RETRY_COUNT_MIN:
             return r[TResult].fail(
-                f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}",
+                f"Max attempts must be at least {c.RETRY_COUNT_MIN}",
             )
         last_error: str | None = None
         for attempt in range(max_attempts_value):
@@ -659,7 +655,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def with_retry[TResult](
         operation: Callable[[], r[TResult]],
-        max_attempts: int = c.Reliability.MAX_RETRY_ATTEMPTS,
+        max_attempts: int = c.MAX_RETRY_ATTEMPTS,
         should_retry_func: Callable[[int, str | None], bool] | None = None,
         cleanup_func: Callable[[], None] | None = None,
     ) -> FlextRuntime.RuntimeResult[TResult]:

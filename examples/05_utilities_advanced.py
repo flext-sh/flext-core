@@ -188,8 +188,8 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         page_result = u.extract_page_params(
             query_params,
             default_page=1,
-            default_page_size=c.Pagination.DEFAULT_PAGE_SIZE,
-            max_page_size=c.Pagination.MAX_PAGE_SIZE,
+            default_page_size=c.DEFAULT_PAGE_SIZE,
+            max_page_size=c.MAX_PAGE_SIZE,
         )
         page: int = int(query_params.get("page", "1"))
         page_size: int = int(query_params.get("page_size", "10"))
@@ -198,7 +198,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
             f" [r={'ok' if page_result.is_success else 'fail'}]"
         )
         validate_result = u.validate_pagination_params(
-            page=1, page_size=20, max_page_size=c.Pagination.MAX_PAGE_SIZE
+            page=1, page_size=20, max_page_size=c.MAX_PAGE_SIZE
         )
         print(f"✅ Validated params: is_valid={validate_result.is_success}")
 

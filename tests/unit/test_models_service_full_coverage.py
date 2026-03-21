@@ -14,7 +14,7 @@ from tests import c, m, t, u
 
 
 def test_service_request_timeout_validator_branches() -> None:
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
@@ -29,7 +29,7 @@ def test_service_request_timeout_validator_branches() -> None:
         FlextModelsService.DomainServiceExecutionRequest(
             service_name="svc",
             method_name="op",
-            timeout_seconds=c.Performance.MAX_TIMEOUT_SECONDS + 1,
+            timeout_seconds=c.MAX_TIMEOUT_SECONDS + 1,
         )
 
 
@@ -45,7 +45,7 @@ def test_service_request_timeout_post_validator_messages() -> None:
         FlextModelsService.DomainServiceExecutionRequest(
             service_name="svc",
             method_name="op",
-            timeout_seconds=c.Performance.MAX_TIMEOUT_SECONDS + 10.0,
+            timeout_seconds=c.MAX_TIMEOUT_SECONDS + 10.0,
         )
     req = FlextModelsService.DomainServiceExecutionRequest(
         service_name="svc",

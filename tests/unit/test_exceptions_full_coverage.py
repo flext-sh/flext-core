@@ -17,7 +17,7 @@ def test_base_error_normalize_metadata_merges_existing_metadata_model() -> None:
     merged = e.BaseError._normalize_metadata(err.metadata, {"b": 2})
     assert merged.attributes["a"] == 1
     assert merged.attributes["b"] == 2
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Metadata(attributes={}), m.Metadata)
     assert r[str].ok("ok").is_success
     assert u.to_str(1) == "1"

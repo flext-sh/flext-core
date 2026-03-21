@@ -108,7 +108,7 @@ from flext_core import FlextConstants
 
 result = r[dict].fail(
     "Configuration missing required field",
-    error_code=FlextConstants.Errors.CONFIG_ERROR,
+    error_code=FlextConstants.CONFIG_ERROR,
     error_data={"missing_field": "database_url"},
 )
 ```

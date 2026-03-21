@@ -37,7 +37,7 @@ class FlextExceptions:
         """Shared strict params model for exception helpers."""
 
         model_config = ConfigDict(
-            extra=c.ModelConfig.EXTRA_FORBID,
+            extra=c.EXTRA_FORBID,
             strict=True,
             validate_assignment=True,
             arbitrary_types_allowed=True,
@@ -488,13 +488,13 @@ class FlextExceptions:
             Tuple of (resolved_params, error_context, metadata, correlation_id)
 
         """
-        preserved_metadata_raw = extra_kwargs.pop(c.Mixins.FIELD_METADATA, None)
+        preserved_metadata_raw = extra_kwargs.pop(c.FIELD_METADATA, None)
         preserved_metadata = (
             FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
             if preserved_metadata_raw is not None
             else None
         )
-        correlation_id_raw = extra_kwargs.pop(c.Context.KEY_CORRELATION_ID, None)
+        correlation_id_raw = extra_kwargs.pop(c.KEY_CORRELATION_ID, None)
         correlation_id_str = (
             e._safe_optional_str(correlation_id_raw)
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
@@ -610,20 +610,20 @@ class FlextExceptions:
             except PydanticValidationError:
                 dumped_map = None
         if dumped_map is not None:
-            attrs_raw = dumped_map.get(c.Mixins.FIELD_ATTRIBUTES)
+            attrs_raw = dumped_map.get(c.FIELD_ATTRIBUTES)
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
                 attrs = {
                     k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in attrs_map.items()
                 }
-                return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: attrs})
+                return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: attrs})
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
             attrs = {
                 k: FlextRuntime.normalize_to_metadata(v) for k, v in attrs_map.items()
             }
-            return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: attrs})
+            return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: attrs})
         return None
 
     @staticmethod
@@ -655,7 +655,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str = c.Errors.UNKNOWN_ERROR,
+            error_code: str = c.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
             metadata: m.Metadata
             | Metadata
@@ -744,9 +744,9 @@ class FlextExceptions:
                         for k, v in merged_kwargs.items()
                     }
                     return m.Metadata.model_validate({
-                        c.Mixins.FIELD_ATTRIBUTES: normalized_attrs,
+                        c.FIELD_ATTRIBUTES: normalized_attrs,
                     })
-                return m.Metadata.model_validate({c.Mixins.FIELD_ATTRIBUTES: {}})
+                return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: {}})
             metadata_model = e._safe_metadata(metadata)
             if metadata_model is not None:
                 if not merged_kwargs:
@@ -758,7 +758,7 @@ class FlextExceptions:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
                 return m.Metadata.model_validate({
-                    c.Mixins.FIELD_ATTRIBUTES: merged_attrs,
+                    c.FIELD_ATTRIBUTES: merged_attrs,
                 })
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:
@@ -767,7 +767,7 @@ class FlextExceptions:
                     merged_kwargs,
                 )
             return m.Metadata.model_validate({
-                c.Mixins.FIELD_ATTRIBUTES: {"value": str(metadata)},
+                c.FIELD_ATTRIBUTES: {"value": str(metadata)},
             })
 
         @staticmethod
@@ -783,7 +783,7 @@ class FlextExceptions:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             return m.Metadata.model_validate({
-                c.Mixins.FIELD_ATTRIBUTES: {
+                c.FIELD_ATTRIBUTES: {
                     k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in merged_attrs.items()
                 },
@@ -800,7 +800,7 @@ class FlextExceptions:
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
-                c.Context.KEY_CORRELATION_ID: self.correlation_id,
+                c.KEY_CORRELATION_ID: self.correlation_id,
                 "timestamp": self.timestamp,
             }
             if self.metadata and self.metadata.attributes:
@@ -819,7 +819,7 @@ class FlextExceptions:
             *,
             field: str | None = None,
             value: t.Scalar | None = None,
-            error_code: str = c.Errors.VALIDATION_ERROR,
+            error_code: str = c.VALIDATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.ValidationErrorParams | None = None,
@@ -853,7 +853,7 @@ class FlextExceptions:
             *,
             config_key: str | None = None,
             config_source: str | None = None,
-            error_code: str = c.Errors.CONFIGURATION_ERROR,
+            error_code: str = c.CONFIGURATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.ConfigurationErrorParams | None = None,
@@ -885,7 +885,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str = c.Errors.CONNECTION_ERROR,
+            error_code: str = c.CONNECTION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.ConnectionErrorParams | None = None,
@@ -920,7 +920,7 @@ class FlextExceptions:
             *,
             timeout_seconds: float | None = None,
             operation: str | None = None,
-            error_code: str = c.Errors.TIMEOUT_ERROR,
+            error_code: str = c.TIMEOUT_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.TimeoutErrorParams | None = None,
@@ -954,7 +954,7 @@ class FlextExceptions:
             *,
             auth_method: str | None = None,
             user_id: str | None = None,
-            error_code: str = c.Errors.AUTHENTICATION_ERROR,
+            error_code: str = c.AUTHENTICATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.AuthenticationErrorParams | None = None,
@@ -964,10 +964,10 @@ class FlextExceptions:
             resolved, ctx, meta, corr = e._init_error_params(
                 context,
                 extra_kwargs,
-                {"auth_method": auth_method, c.Context.KEY_USER_ID: user_id},
+                {"auth_method": auth_method, c.KEY_USER_ID: user_id},
                 e.AuthenticationErrorParams,
                 params,
-                {"auth_method", c.Context.KEY_USER_ID},
+                {"auth_method", c.KEY_USER_ID},
             )
             super().__init__(
                 message,
@@ -986,7 +986,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str = c.Errors.AUTHORIZATION_ERROR,
+            error_code: str = c.AUTHORIZATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.AuthorizationErrorParams | None = None,
@@ -999,7 +999,7 @@ class FlextExceptions:
                 {},
                 e.AuthorizationErrorParams,
                 params,
-                {c.Context.KEY_USER_ID, "resource", "permission"},
+                {c.KEY_USER_ID, "resource", "permission"},
             )
             super().__init__(
                 message,
@@ -1021,7 +1021,7 @@ class FlextExceptions:
             *,
             resource_type: str | None = None,
             resource_id: str | None = None,
-            error_code: str = c.Errors.NOT_FOUND_ERROR,
+            error_code: str = c.NOT_FOUND_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             metadata: m.Metadata
             | Metadata
@@ -1041,8 +1041,8 @@ class FlextExceptions:
                 params,
                 {"resource_type", "resource_id"},
                 excluded_context_keys={
-                    c.Context.KEY_CORRELATION_ID,
-                    c.Mixins.FIELD_METADATA,
+                    c.KEY_CORRELATION_ID,
+                    c.FIELD_METADATA,
                 },
             )
             metadata_input = metadata if metadata is not None else meta
@@ -1063,7 +1063,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str = c.Errors.ALREADY_EXISTS,
+            error_code: str = c.ALREADY_EXISTS,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.ConflictErrorParams | None = None,
@@ -1096,7 +1096,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str = c.Errors.OPERATION_ERROR,
+            error_code: str = c.OPERATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.RateLimitErrorParams | None = None,
@@ -1129,7 +1129,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str = c.Errors.EXTERNAL_SERVICE_ERROR,
+            error_code: str = c.EXTERNAL_SERVICE_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.CircuitBreakerErrorParams | None = None,
@@ -1142,7 +1142,7 @@ class FlextExceptions:
                 {},
                 e.CircuitBreakerErrorParams,
                 params,
-                {c.Context.KEY_SERVICE_NAME, "failure_count", "reset_timeout"},
+                {c.KEY_SERVICE_NAME, "failure_count", "reset_timeout"},
             )
             super().__init__(
                 message,
@@ -1162,7 +1162,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str = c.Errors.TYPE_ERROR,
+            error_code: str = c.TYPE_ERROR,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
             context: Mapping[str, t.MetadataValue] | None = None,
@@ -1171,13 +1171,13 @@ class FlextExceptions:
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize type error with type information."""
-            preserved_metadata = extra_kwargs.pop(c.Mixins.FIELD_METADATA, None)
+            preserved_metadata = extra_kwargs.pop(c.FIELD_METADATA, None)
             normalized_metadata = (
                 FlextRuntime.normalize_to_metadata(preserved_metadata)
                 if preserved_metadata is not None
                 else None
             )
-            preserved_corr_id = extra_kwargs.pop(c.Context.KEY_CORRELATION_ID, None)
+            preserved_corr_id = extra_kwargs.pop(c.KEY_CORRELATION_ID, None)
             type_map = self._get_type_map()
             normalized_expected_type = self._normalize_type(
                 expected_type,
@@ -1334,7 +1334,7 @@ class FlextExceptions:
             *,
             operation: str | None = None,
             reason: str | None = None,
-            error_code: str = c.Errors.OPERATION_ERROR,
+            error_code: str = c.OPERATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.OperationErrorParams | None = None,
@@ -1366,7 +1366,7 @@ class FlextExceptions:
             *,
             attribute_name: str | None = None,
             attribute_context: t.MetadataValue | None = None,
-            error_code: str = c.Errors.ATTRIBUTE_ERROR,
+            error_code: str = c.ATTRIBUTE_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.AttributeAccessErrorParams | None = None,
@@ -1398,10 +1398,10 @@ class FlextExceptions:
         """Build error context dictionary."""
         error_context: t.ConfigMap = t.ConfigMap(root={})
         if correlation_id is not None:
-            error_context[c.Context.KEY_CORRELATION_ID] = correlation_id
+            error_context[c.KEY_CORRELATION_ID] = correlation_id
         e._merge_metadata_into_context(error_context, metadata_obj)
         for k, v in kwargs.items():
-            if k not in {c.Context.KEY_CORRELATION_ID, c.Mixins.FIELD_METADATA}:
+            if k not in {c.KEY_CORRELATION_ID, c.FIELD_METADATA}:
                 error_context[k] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(v),
                 )
@@ -1442,8 +1442,8 @@ class FlextExceptions:
         }
         error_class = error_classes.get(error_type) if error_type else None
         correlation_id = None
-        if error_context and c.Context.KEY_CORRELATION_ID in error_context:
-            correlation_id = str(error_context[c.Context.KEY_CORRELATION_ID])
+        if error_context and c.KEY_CORRELATION_ID in error_context:
+            correlation_id = str(error_context[c.KEY_CORRELATION_ID])
         context_payload: Mapping[str, t.MetadataValue] | None = None
         if error_context:
             context_payload = {
@@ -1453,13 +1453,13 @@ class FlextExceptions:
         if error_class is not None:
             return error_class(
                 message,
-                error_code=error_code or c.Errors.UNKNOWN_ERROR,
+                error_code=error_code or c.UNKNOWN_ERROR,
                 context=context_payload,
                 correlation_id=correlation_id,
             )
         return e.BaseError(
             message,
-            error_code=error_code or c.Errors.UNKNOWN_ERROR,
+            error_code=error_code or c.UNKNOWN_ERROR,
             context=context_payload,
             correlation_id=correlation_id,
         )
@@ -1475,17 +1475,17 @@ class FlextExceptions:
         error_patterns: list[tuple[list[str], str]] = [
             (["field", "value"], "validation"),
             (["config_key", "config_source"], "configuration"),
-            ([c.Cqrs.HandlerType.OPERATION], "operation"),
+            ([c.HandlerType.OPERATION], "operation"),
             (["host", "port"], "connection"),
             (["timeout_seconds"], "timeout"),
-            ([c.Context.KEY_USER_ID, "permission"], "authorization"),
+            ([c.KEY_USER_ID, "permission"], "authorization"),
             (["auth_method"], "authentication"),
             (["resource_id"], "not_found"),
             (["attribute_name"], "attribute_access"),
         ]
         for keys, error_type in error_patterns:
             if error_type == "authorization":
-                if c.Context.KEY_USER_ID in kwargs and "permission" in kwargs:
+                if c.KEY_USER_ID in kwargs and "permission" in kwargs:
                     return error_type
             elif any(key in kwargs for key in keys):
                 return error_type
@@ -1499,13 +1499,13 @@ class FlextExceptions:
 
         Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
         """
-        correlation_id_raw = kwargs.get(c.Context.KEY_CORRELATION_ID)
+        correlation_id_raw = kwargs.get(c.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
-        metadata_raw = kwargs.get(c.Mixins.FIELD_METADATA)
+        metadata_raw = kwargs.get(c.FIELD_METADATA)
         metadata: Metadata | Mapping[str, t.MetadataOrValue | None] | None = None
         model_dump = getattr(metadata_raw, "model_dump", None)
         if callable(model_dump):
@@ -1513,11 +1513,11 @@ class FlextExceptions:
         if metadata is None:
             metadata = e._safe_config_map(metadata_raw)
         if metadata is None:
-            attrs_raw = getattr(metadata_raw, c.Mixins.FIELD_ATTRIBUTES, None)
+            attrs_raw = getattr(metadata_raw, c.FIELD_ATTRIBUTES, None)
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
                 metadata = m.Metadata.model_validate({
-                    c.Mixins.FIELD_ATTRIBUTES: dict(attrs_map.items()),
+                    c.FIELD_ATTRIBUTES: dict(attrs_map.items()),
                 })
         return (correlation_id, metadata)
 
@@ -1562,23 +1562,23 @@ class FlextExceptions:
                 if v is None:
                     continue
                 merged_kwargs[k] = v
-        field_metadata = c.Mixins.FIELD_METADATA
-        field_auto_log = getattr(c.Mixins, "FIELD_AUTO_LOG", "auto_log")
-        field_auto_correlation = c.Mixins.FIELD_AUTO_CORRELATION
-        field_config = c.Mixins.FIELD_CONFIG
+        field_metadata = c.FIELD_METADATA
+        field_auto_log = getattr(c, "FIELD_AUTO_LOG", "auto_log")
+        field_auto_correlation = c.FIELD_AUTO_CORRELATION
+        field_config = c.FIELD_CONFIG
         extra_kwargs = {
             k: v
             for k, v in merged_kwargs.items()
             if k
             not in {
-                c.Context.KEY_CORRELATION_ID,
+                c.KEY_CORRELATION_ID,
                 field_metadata,
                 field_auto_log,
                 field_auto_correlation,
                 field_config,
             }
         }
-        correlation_id_raw = merged_kwargs.get(c.Context.KEY_CORRELATION_ID)
+        correlation_id_raw = merged_kwargs.get(c.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)

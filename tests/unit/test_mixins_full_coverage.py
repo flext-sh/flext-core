@@ -158,7 +158,7 @@ class TestMixinsFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _ = monkeypatch
-        tm.that(isinstance(c.Context.SCOPE_OPERATION, str), eq=True)
+        tm.that(isinstance(c.SCOPE_OPERATION, str), eq=True)
         tm.that(hasattr(u, "merge"), eq=True)
         tm.fail(x.fail("error"))
         conf = t.ConfigMap(root={"a": "b"})

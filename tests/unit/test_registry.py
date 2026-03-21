@@ -340,9 +340,9 @@ class TestFlextRegistry:
                 summary.registered.append(
                     m.RegistrationDetails(
                         registration_id=f"test_{i}",
-                        handler_mode=c.Cqrs.HandlerType.COMMAND,
+                        handler_mode=c.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
-                        status=c.Cqrs.CommonStatus.RUNNING,
+                        status=c.CommonStatus.RUNNING,
                     ),
                 )
         if not test_case.should_succeed:
@@ -387,10 +387,10 @@ class TestFlextRegistry:
     @pytest.mark.parametrize(
         ("mode", "expected"),
         [
-            ("command", c.Cqrs.HandlerType.COMMAND),
-            ("query", c.Cqrs.HandlerType.QUERY),
-            ("invalid", c.Cqrs.HandlerType.COMMAND),
-            (None, c.Cqrs.HandlerType.COMMAND),
+            ("command", c.HandlerType.COMMAND),
+            ("query", c.HandlerType.QUERY),
+            ("invalid", c.HandlerType.COMMAND),
+            (None, c.HandlerType.COMMAND),
         ],
         ids=["command", "query", "invalid", "none"],
     )
@@ -405,17 +405,17 @@ class TestFlextRegistry:
     @pytest.mark.parametrize(
         ("status", "expected"),
         [
-            ("active", c.Cqrs.CommonStatus.ACTIVE),
-            ("inactive", c.Cqrs.CommonStatus.INACTIVE),
-            ("invalid", c.Cqrs.CommonStatus.ACTIVE),
-            ("", c.Cqrs.CommonStatus.ACTIVE),
+            ("active", c.CommonStatus.ACTIVE),
+            ("inactive", c.CommonStatus.INACTIVE),
+            ("invalid", c.CommonStatus.ACTIVE),
+            ("", c.CommonStatus.ACTIVE),
         ],
         ids=["active", "inactive", "invalid", "empty"],
     )
     def test_safe_status_extraction(
         self,
         status: str,
-        expected: c.Cqrs.CommonStatus,
+        expected: c.CommonStatus,
     ) -> None:
         registry = u.Tests.RegistryHelpers.create_test_registry()
         assert registry._get_status(status) == expected

@@ -181,19 +181,19 @@ class FlextRegistry(s[bool]):
             return value
         return str(value)
 
-    def _get_handler_mode(self, value: t.RuntimeAtomic) -> c.Cqrs.HandlerType:
+    def _get_handler_mode(self, value: t.RuntimeAtomic) -> c.HandlerType:
         """Safe conversion to HandlerType."""
-        result = u.parse_enum(c.Cqrs.HandlerType, str(value))
+        result = u.parse_enum(c.HandlerType, str(value))
         if result.is_success:
             return result.value
-        return c.Cqrs.HandlerType.COMMAND
+        return c.HandlerType.COMMAND
 
-    def _get_status(self, value: t.RuntimeAtomic) -> c.Cqrs.CommonStatus:
+    def _get_status(self, value: t.RuntimeAtomic) -> c.CommonStatus:
         """Safe conversion to CommonStatus."""
-        result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
+        result = u.parse_enum(c.CommonStatus, str(value))
         if result.is_success:
             return result.value
-        return c.Cqrs.CommonStatus.ACTIVE
+        return c.CommonStatus.ACTIVE
 
     @override
     def execute(self) -> r[bool]:
@@ -365,12 +365,12 @@ class FlextRegistry(s[bool]):
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
-        status_raw = getattr(handler, c.Mixins.FIELD_STATUS, c.Cqrs.CommonStatus.ACTIVE)
+        status_raw = getattr(handler, c.FIELD_STATUS, c.CommonStatus.ACTIVE)
         status = self._get_status(status_raw)
         handler_mode_raw = getattr(
             handler,
-            c.Mixins.FIELD_HANDLER_MODE,
-            getattr(handler, "mode", c.Cqrs.HandlerType.COMMAND),
+            c.FIELD_HANDLER_MODE,
+            getattr(handler, "mode", c.HandlerType.COMMAND),
         )
         handler_mode = self._get_handler_mode(handler_mode_raw)
 
@@ -379,7 +379,7 @@ class FlextRegistry(s[bool]):
         registration_handler: t.HandlerLike = handler
         registration_result = self._dispatcher.register_handler(
             registration_handler,
-            is_event=(handler_mode == c.Cqrs.HandlerType.EVENT),
+            is_event=(handler_mode == c.HandlerType.EVENT),
         )
 
         if registration_result.is_failure:
@@ -522,11 +522,11 @@ class FlextRegistry(s[bool]):
 
         """
         handler_mode_val = reg_result.mode
-        handler_mode = c.Cqrs.HandlerType.COMMAND
-        if c.Cqrs.HandlerType.QUERY in handler_mode_val.lower():
-            handler_mode = c.Cqrs.HandlerType.QUERY
-        elif c.Cqrs.HandlerType.EVENT in handler_mode_val.lower():
-            handler_mode = c.Cqrs.HandlerType.EVENT
+        handler_mode = c.HandlerType.COMMAND
+        if c.HandlerType.QUERY in handler_mode_val.lower():
+            handler_mode = c.HandlerType.QUERY
+        elif c.HandlerType.EVENT in handler_mode_val.lower():
+            handler_mode = c.HandlerType.EVENT
         timestamp = getattr(reg_result, "timestamp", "")
         status = reg_result.status
         return m.RegistrationDetails(

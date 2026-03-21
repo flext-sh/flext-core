@@ -47,7 +47,7 @@ class FlextDispatcher:
         except (TypeError, ValueError) as e:
             return r[t.RuntimeAtomic].fail(
                 f"Dispatch failed: {e!s}",
-                error_code=c.Errors.COMMAND_PROCESSING_FAILED,
+                error_code=c.COMMAND_PROCESSING_FAILED,
             )
         handler_entry = self._handlers.get(route_name)
         if not handler_entry:
@@ -62,7 +62,7 @@ class FlextDispatcher:
         if not handler_entry:
             return r[t.RuntimeAtomic].fail(
                 f"No handler found for {route_name}",
-                error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
+                error_code=c.COMMAND_HANDLER_NOT_FOUND,
             )
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)
@@ -225,5 +225,5 @@ class FlextDispatcher:
             self._logger.exception("Handler execution failed", route=route_name)
             return dispatch_result.fail(
                 f"Handler execution failed: {exc}",
-                error_code=c.Errors.COMMAND_PROCESSING_FAILED,
+                error_code=c.COMMAND_PROCESSING_FAILED,
             )

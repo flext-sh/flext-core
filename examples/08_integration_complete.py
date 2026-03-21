@@ -52,7 +52,7 @@ class Order(m.AggregateRoot):
 
     customer_id: str
     items: list[str] = Field(default_factory=list)
-    status: c.Cqrs.CommonStatus = Field(default=c.Cqrs.CommonStatus.PENDING)
+    status: c.CommonStatus = Field(default=c.CommonStatus.PENDING)
 
 
 class IntegrationService(s[t.ConfigMap]):
@@ -149,9 +149,7 @@ class IntegrationService(s[t.ConfigMap]):
     def _demonstrate_utilities_integration() -> None:
         """Show u integration."""
         print("\n=== u Integration ===")
-        email_result = u.validate_pattern(
-            "test@example.com", c.Platform.PATTERN_EMAIL, "email"
-        )
+        email_result = u.validate_pattern("test@example.com", c.PATTERN_EMAIL, "email")
         if email_result.is_success:
             print("✅ Validation utility")
         correlation_id = u.generate("correlation")

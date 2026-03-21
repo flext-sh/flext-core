@@ -70,7 +70,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
     def _build_success_metadata(_: t.ConfigMap) -> t.ConfigMap:
         """Build success metadata using centralized c (DRY)."""
         all_patterns = tuple(
-            member.value for member in c.Cqrs.HandlerType.__members__.values()
+            member.value for member in c.HandlerType.__members__.values()
         )
         filtered_patterns = tuple(
             pattern
@@ -89,9 +89,9 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                 ),
                 "architecture": "context_per_thread",
                 "scope_types": (
-                    c.Context.SCOPE_GLOBAL,
-                    c.Context.SCOPE_REQUEST,
-                    c.Context.SCOPE_SESSION,
+                    c.SCOPE_GLOBAL,
+                    c.SCOPE_REQUEST,
+                    c.SCOPE_SESSION,
                 ),
             }
         )
@@ -107,20 +107,20 @@ class ContextManagementService(FlextService[t.ConfigMap]):
         ):
             correlation_id = (
                 FlextContext.Variables.Correlation.CORRELATION_ID.get()
-                or c.Context.CORRELATION_ID_PREFIX
-                + u.generate("correlation")[: c.Context.CORRELATION_ID_LENGTH]
+                or c.CORRELATION_ID_PREFIX
+                + u.generate("correlation")[: c.CORRELATION_ID_LENGTH]
             )
             context_data: t.ConfigMap = t.ConfigMap(
                 root={
-                    c.Mixins.FIELD_NAME: "context_demo",
+                    c.FIELD_NAME: "context_demo",
                     "correlation_id": correlation_id,
-                    "scope": c.Context.SCOPE_REQUEST,
+                    "scope": c.SCOPE_REQUEST,
                 }
             )
             print(f"✅ Context data: {context_data}")
             print("✅ Thread-local storage for isolation")
             print("✅ Correlation IDs for request tracking")
-            print(f"✅ Scope: {c.Context.SCOPE_REQUEST}")
+            print(f"✅ Scope: {c.SCOPE_REQUEST}")
             return r[t.ConfigMap].ok(context_data)
 
     @staticmethod
@@ -138,8 +138,8 @@ class ContextManagementService(FlextService[t.ConfigMap]):
             correlation_data: t.ConfigMap = t.ConfigMap(
                 root={
                     "correlation_id": context_correlation,
-                    "prefix": c.Context.CORRELATION_ID_PREFIX,
-                    "length": c.Context.CORRELATION_ID_LENGTH,
+                    "prefix": c.CORRELATION_ID_PREFIX,
+                    "length": c.CORRELATION_ID_LENGTH,
                 }
             )
             print(f"✅ Correlation ID: {context_correlation}")
@@ -287,7 +287,7 @@ def demonstrate_context_features() -> None:
 def main() -> None:
     """Main entry point using advanced FlextContext patterns."""
     logger = FlextLogger.create_module_logger(__name__)
-    width = c.Validation.MAX_NAME_LENGTH * 2
+    width = c.MAX_NAME_LENGTH * 2
     separator = "=" * width
     print(separator)
     print("FLEXT CONTEXT - REQUEST CONTEXT MANAGEMENT")

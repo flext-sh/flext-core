@@ -48,7 +48,7 @@ class FlextLogger(u, p.Logger):
         *,
         config: p.Settings | None = None,
         _bound_logger: p.Logger | None = None,
-        _level: c.Settings.LogLevel | str | None = None,
+        _level: c.LogLevel | str | None = None,
         _service_name: str | None = None,
         _service_version: str | None = None,
         _correlation_id: str | None = None,
@@ -62,25 +62,25 @@ class FlextLogger(u, p.Logger):
             return
         if config is not None:
             _level = getattr(config, "level", _level)
-            _service_name = getattr(config, c.Context.KEY_SERVICE_NAME, _service_name)
+            _service_name = getattr(config, c.KEY_SERVICE_NAME, _service_name)
             _service_version = getattr(
                 config,
-                c.Context.KEY_SERVICE_VERSION,
+                c.KEY_SERVICE_VERSION,
                 _service_version,
             )
             _correlation_id = getattr(
                 config,
-                c.Context.KEY_CORRELATION_ID,
+                c.KEY_CORRELATION_ID,
                 _correlation_id,
             )
             _force_new = getattr(config, "force_new", _force_new)
         context = {}
         if _service_name:
-            context[c.Context.KEY_SERVICE_NAME] = _service_name
+            context[c.KEY_SERVICE_NAME] = _service_name
         if _service_version:
-            context[c.Context.KEY_SERVICE_VERSION] = _service_version
+            context[c.KEY_SERVICE_VERSION] = _service_version
         if _correlation_id:
-            context[c.Context.KEY_CORRELATION_ID] = _correlation_id
+            context[c.KEY_CORRELATION_ID] = _correlation_id
         base_logger = u.get_logger(name)
         self._structlog_instance = (
             base_logger.bind(**context) if context else base_logger
@@ -143,7 +143,7 @@ class FlextLogger(u, p.Logger):
         bind_request_context, and bind_operation_context methods.
 
         Args:
-            scope: Scope name. Use c.Context.SCOPE_* constants:
+            scope: Scope name. Use c.SCOPE_* constants:
                    - SCOPE_APPLICATION: Persists for entire app lifetime
                    - SCOPE_REQUEST: Persists for single request/command
                    - SCOPE_OPERATION: Persists for single operation
@@ -155,7 +155,7 @@ class FlextLogger(u, p.Logger):
         Examples:
             >>> # Application-level context (app name, version, environment)
             >>> FlextLogger.bind_context(
-            ...     c.Context.SCOPE_APPLICATION,
+            ...     c.SCOPE_APPLICATION,
             ...     app_name="flext-oud-mig",
             ...     app_version="0.9.0",
             ...     environment="production",
@@ -163,7 +163,7 @@ class FlextLogger(u, p.Logger):
 
             >>> # Request-level context (correlation_id, command, user_id)
             >>> FlextLogger.bind_context(
-            ...     c.Context.SCOPE_REQUEST,
+            ...     c.SCOPE_REQUEST,
             ...     correlation_id="flext-abc123",
             ...     command="migrate",
             ...     user_id="REDACTED_LDAP_BIND_PASSWORD",
@@ -171,7 +171,7 @@ class FlextLogger(u, p.Logger):
 
             >>> # Operation-level context
             >>> FlextLogger.bind_context(
-            ...     c.Context.SCOPE_OPERATION,
+            ...     c.SCOPE_OPERATION,
             ...     operation="sync_users",
             ... )
 
@@ -243,7 +243,7 @@ class FlextLogger(u, p.Logger):
                 "debug": "debug",
                 "info": "info",
                 "warning": "warning",
-                c.Cqrs.WarningLevel.ERROR: c.Cqrs.WarningLevel.ERROR,
+                c.WarningLevel.ERROR: c.WarningLevel.ERROR,
                 "critical": "critical",
             }.get(level_lower, level_lower)
             if level_normalized not in cls._level_contexts:
@@ -334,13 +334,13 @@ class FlextLogger(u, p.Logger):
         consistent context management across FLEXT.
 
         Args:
-            scope: Scope to clear (use c.Context.SCOPE_* constants)
+            scope: Scope to clear (use c.SCOPE_* constants)
 
         Returns:
             r[bool]: Success with True if scope cleared, failure with error message otherwise.
 
         Example:
-            >>> FlextLogger.clear_scope(c.Context.SCOPE_REQUEST)
+            >>> FlextLogger.clear_scope(c.SCOPE_REQUEST)
             >>> # Clears all request-level context
 
         """
@@ -422,7 +422,7 @@ class FlextLogger(u, p.Logger):
         if level is None:
             config = (
                 container.config
-                if hasattr(container, c.Mixins.FIELD_CONFIG)
+                if hasattr(container, c.FIELD_CONFIG)
                 else FlextSettings.get_global()
             )
             level = getattr(config, "log_level", "INFO")
@@ -448,7 +448,7 @@ class FlextLogger(u, p.Logger):
         context management across FLEXT.
 
         Args:
-            scope: Scope name (use c.Context.SCOPE_* constants)
+            scope: Scope name (use c.SCOPE_* constants)
             **context: Context variables to bind
 
         Yields:
@@ -456,7 +456,7 @@ class FlextLogger(u, p.Logger):
 
         Example:
             >>> with FlextLogger.scoped_context(
-            ...     c.Context.SCOPE_OPERATION, operation="sync_users"
+            ...     c.SCOPE_OPERATION, operation="sync_users"
             ... ):
             ...     # Context automatically bound and cleared
             ...     logger.info("Operation started")
@@ -503,7 +503,7 @@ class FlextLogger(u, p.Logger):
                 "debug": "debug",
                 "info": "info",
                 "warning": "warning",
-                c.Cqrs.WarningLevel.ERROR: c.Cqrs.WarningLevel.ERROR,
+                c.WarningLevel.ERROR: c.WarningLevel.ERROR,
                 "critical": "critical",
             }.get(level_lower, level_lower)
             prefixed_keys: list[str] = []
@@ -552,7 +552,7 @@ class FlextLogger(u, p.Logger):
     def with_container_context(
         cls,
         container: p.Container,
-        level: c.Settings.LogLevel | str | None = None,
+        level: c.LogLevel | str | None = None,
         **context: t.RuntimeData,
     ) -> Generator[FlextLogger]:
         """Context manager for container-scoped logging.
@@ -576,7 +576,7 @@ class FlextLogger(u, p.Logger):
         """
         resolved_level: str | None
         match level:
-            case c.Settings.LogLevel() as enum_level:
+            case c.LogLevel() as enum_level:
                 resolved_level = enum_level.value
             case None:
                 resolved_level = None
@@ -621,7 +621,7 @@ class FlextLogger(u, p.Logger):
             qualname = frame.f_code.co_qualname
             if "." in qualname:
                 parts = qualname.rsplit(".", 1)
-                if len(parts) == c.Validation.LEVEL_PREFIX_PARTS_COUNT:
+                if len(parts) == c.LEVEL_PREFIX_PARTS_COUNT:
                     potential_class = parts[0]
                     if potential_class and potential_class[0].isupper():
                         return potential_class
@@ -746,7 +746,7 @@ class FlextLogger(u, p.Logger):
     def _should_include_stack_trace() -> bool:
         try:
             config = FlextSettings.get_global()
-            return config.effective_log_level.upper() == c.Settings.LogLevel.DEBUG.value
+            return config.effective_log_level.upper() == c.LogLevel.DEBUG.value
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             FlextLogger._report_internal_logging_failure(
                 "should_include_stack_trace",
@@ -819,7 +819,7 @@ class FlextLogger(u, p.Logger):
         response. All critical messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.CRITICAL, msg, *args, **kw)
 
     @override
     def debug(
@@ -839,7 +839,7 @@ class FlextLogger(u, p.Logger):
         All debug messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.DEBUG, msg, *args, **kw)
 
     @override
     def error(
@@ -859,7 +859,7 @@ class FlextLogger(u, p.Logger):
         error messages go through this method, ensuring consistent log formatting and
         context inclusion across FLEXT.
         """
-        return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.ERROR, msg, *args, **kw)
 
     @override
     def exception(
@@ -934,9 +934,9 @@ class FlextLogger(u, p.Logger):
             **context: Keyword context to include in structured log
 
         """
-        level_enum: c.Settings.LogLevel | str = level
+        level_enum: c.LogLevel | str = level
         with suppress(ValueError, AttributeError):
-            level_enum = c.Settings.LogLevel(level.upper())
+            level_enum = c.LogLevel(level.upper())
         converted_args: tuple[t.Container, ...] = tuple(
             FlextLogger._to_scalar_value(arg) for arg in args
         )
@@ -998,7 +998,7 @@ class FlextLogger(u, p.Logger):
         **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log info message - Logger.Log implementation."""
-        return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.INFO, msg, *args, **kw)
 
     @override
     def warning(
@@ -1008,11 +1008,11 @@ class FlextLogger(u, p.Logger):
         **kw: t.RuntimeData | Exception,
     ) -> r[bool]:
         """Log warning message - Logger.Log implementation."""
-        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.WARNING, msg, *args, **kw)
 
     def _log(
         self,
-        _level: c.Settings.LogLevel | str,
+        _level: c.LogLevel | str,
         event: str,
         *args: t.RuntimeData,
         **context: t.RuntimeData | Exception,
@@ -1032,7 +1032,7 @@ class FlextLogger(u, p.Logger):
             for idx, arg in enumerate(args):
                 context[f"arg_{idx}"] = arg
             match _level:
-                case c.Settings.LogLevel() as enum_level:
+                case c.LogLevel() as enum_level:
                     level_raw: str = enum_level.value
                 case _:
                     level_raw = str(_level)
@@ -1045,7 +1045,7 @@ class FlextLogger(u, p.Logger):
 
     def _log_standard_level(
         self,
-        level: c.Settings.LogLevel,
+        level: c.LogLevel,
         msg: str,
         *args: t.RuntimeData,
         **kw: t.RuntimeData | Exception,
@@ -1080,8 +1080,8 @@ class FlextLogger(u, p.Logger):
             context: t.ConfigMap = t.ConfigMap(
                 root={
                     "duration_seconds": elapsed,
-                    c.Cqrs.HandlerType.OPERATION: self._operation_name,
-                    c.Mixins.FIELD_STATUS: status,
+                    c.HandlerType.OPERATION: self._operation_name,
+                    c.FIELD_STATUS: status,
                 },
             )
             if not is_success:

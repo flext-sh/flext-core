@@ -32,7 +32,7 @@ class FlextUtilitiesDomain:
     def compare_entities_by_id(
         entity_a: t.RuntimeData,
         entity_b: t.RuntimeData,
-        id_attr: str = c.Mixins.FIELD_ID,
+        id_attr: str = c.FIELD_ID,
     ) -> bool:
         """Compare two entities by their unique ID attribute.
 
@@ -92,7 +92,7 @@ class FlextUtilitiesDomain:
     @staticmethod
     def hash_entity_by_id(
         entity: t.RuntimeData,
-        id_attr: str = c.Mixins.FIELD_ID,
+        id_attr: str = c.FIELD_ID,
     ) -> int:
         """Generate hash for entity based on unique ID and type.
 
@@ -148,7 +148,7 @@ class FlextUtilitiesDomain:
     @staticmethod
     def validate_entity_has_id(
         entity: t.RuntimeData,
-        id_attr: str = c.Mixins.FIELD_ID,
+        id_attr: str = c.FIELD_ID,
     ) -> bool:
         """Validate that entity has a non-None unique ID.
 

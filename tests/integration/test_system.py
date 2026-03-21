@@ -100,16 +100,16 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_constants_system(self) -> None:
         """Test hierarchical constants system."""
-        timeout_default = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
+        timeout_default = FlextConstants.DEFAULT_TIMEOUT_SECONDS
         assert isinstance(timeout_default, (int, float))
         assert timeout_default > 0
-        validation_error_code = FlextConstants.Errors.VALIDATION_ERROR
+        validation_error_code = FlextConstants.VALIDATION_ERROR
         assert isinstance(validation_error_code, str)
         assert validation_error_code == "VALIDATION_ERROR"
-        config_error_code = FlextConstants.Errors.CONFIG_ERROR
+        config_error_code = FlextConstants.CONFIG_ERROR
         assert isinstance(config_error_code, str)
         assert config_error_code == "CONFIG_ERROR"
-        min_name_length = FlextConstants.Validation.MIN_NAME_LENGTH
+        min_name_length = FlextConstants.MIN_NAME_LENGTH
         assert isinstance(min_name_length, int)
         assert min_name_length > 0
 
@@ -176,14 +176,14 @@ class TestCompleteFlextSystemIntegration:
             if not dados:
                 return r[dict[str, str]].fail(
                     "Dados não fornecidos",
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    error_code=FlextConstants.VALIDATION_ERROR,
                 )
             dados_processados: dict[str, str] = {}
             for key, value in dados.items():
                 if not u.is_string_non_empty(value):
                     return r[dict[str, str]].fail(
                         f"Campo '{key}' não pode estar vazio",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                        error_code=FlextConstants.VALIDATION_ERROR,
                     )
                 dados_processados[key] = f"processado_{value}"
             dados_processados["processado_em"] = u.generate_iso_timestamp()

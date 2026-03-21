@@ -7,7 +7,7 @@ from tests import c, m, t, u
 
 
 def test_dispatcher_reliability_branch_paths() -> None:
-    assert c.Errors.UNKNOWN_ERROR
+    assert c.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
@@ -19,7 +19,7 @@ def test_dispatcher_reliability_branch_paths() -> None:
     )
     cb.transition_to_half_open("x")
     cb.record_failure("x")
-    assert cb.get_state("x") == c.Reliability.CircuitBreakerState.OPEN
+    assert cb.get_state("x") == c.CircuitBreakerState.OPEN
     rl = FlextModelsDispatcher.RateLimiterManager(max_requests=1, window_seconds=1.5)
     assert rl.get_max_requests() == 1
     assert abs(rl.get_window_seconds() - 1.5) < 1e-9

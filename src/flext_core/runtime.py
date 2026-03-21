@@ -212,7 +212,7 @@ class FlextRuntime:
                 None,
             )
             self.queue: queue.Queue[str | None] = queue.Queue(
-                maxsize=c.Logging.ASYNC_QUEUE_SIZE,
+                maxsize=c.ASYNC_QUEUE_SIZE,
             )
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
@@ -270,7 +270,7 @@ class FlextRuntime:
         def write(self, s: str, /) -> int:
             """Write message to queue (non-blocking)."""
             with contextlib.suppress(queue.Full):
-                self.queue.put(s, block=c.Logging.ASYNC_BLOCK_ON_FULL)
+                self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
             return len(s)
 
         def _worker(self) -> None:
@@ -972,7 +972,7 @@ class FlextRuntime:
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
                 configured_container.config = configuration_provider
             else:
-                setattr(di_container, c.Mixins.FIELD_CONFIG, configuration_provider)
+                setattr(di_container, c.FIELD_CONFIG, configuration_provider)
             return configuration_provider
 
         @staticmethod
@@ -1220,7 +1220,7 @@ class FlextRuntime:
             from flext_core import FlextRuntime
 
             FlextRuntime.reconfigure_structlog(
-                log_level=c.Settings.LogLevel.DEBUG.value,
+                log_level=c.LogLevel.DEBUG.value,
                 console_renderer=True,
             )
             ```
@@ -1309,15 +1309,15 @@ class FlextRuntime:
             "debug": 10,
             "info": 20,
             "warning": 30,
-            c.Cqrs.WarningLevel.ERROR: 40,
+            c.WarningLevel.ERROR: 40,
             "critical": 50,
         }
         current_level = level_hierarchy.get(method_name.lower(), 20)
         filtered_dict: dict[str, t.Scalar] = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
-                parts = key.split("_", c.Validation.LEVEL_PREFIX_PARTS_COUNT)
-                if len(parts) >= c.Validation.LEVEL_PREFIX_PARTS_COUNT:
+                parts = key.split("_", c.LEVEL_PREFIX_PARTS_COUNT)
+                if len(parts) >= c.LEVEL_PREFIX_PARTS_COUNT:
                     required_level_name = parts[2]
                     actual_key = parts[3]
                     required_level = level_hierarchy.get(
@@ -1418,7 +1418,7 @@ class FlextRuntime:
 
             """
             context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get(c.Context.KEY_CORRELATION_ID)
+            correlation_id = context_vars.get(c.KEY_CORRELATION_ID)
             logger = structlog.get_logger(__name__)
             logger.info(
                 "Domain event emitted",
@@ -1446,7 +1446,7 @@ class FlextRuntime:
 
             """
             context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get(c.Context.KEY_CORRELATION_ID)
+            correlation_id = context_vars.get(c.KEY_CORRELATION_ID)
             logger = structlog.get_logger(__name__)
             if resolved:
                 logger.info(
@@ -1507,8 +1507,8 @@ class FlextRuntime:
             result["trace_id"] = FlextRuntime.generate_id()
         if "span_id" not in result:
             result["span_id"] = FlextRuntime.generate_id()
-        if include_correlation_id and c.Context.KEY_CORRELATION_ID not in result:
-            result[c.Context.KEY_CORRELATION_ID] = FlextRuntime.generate_id()
+        if include_correlation_id and c.KEY_CORRELATION_ID not in result:
+            result[c.KEY_CORRELATION_ID] = FlextRuntime.generate_id()
         if include_timestamp and "timestamp" not in result:
             result["timestamp"] = FlextRuntime.generate_datetime_utc().isoformat()
         return result
@@ -1592,7 +1592,7 @@ class FlextRuntime:
             int: Numeric logging level (e.g., logging.INFO = 20)
 
         """
-        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
+        default_log_level = c.DEFAULT_LEVEL.upper()
         return int(
             getattr(logging, default_log_level)
             if hasattr(logging, default_log_level)
@@ -1638,8 +1638,8 @@ class FlextRuntime:
             RuntimeResult[list[int]]: Success with normalized codes or failure
 
         """
-        min_val = min_code if min_code is not None else c.Network.HTTP_STATUS_MIN
-        max_val = max_code if max_code is not None else c.Network.HTTP_STATUS_MAX
+        min_val = min_code if min_code is not None else c.HTTP_STATUS_MIN
+        max_val = max_code if max_code is not None else c.HTTP_STATUS_MAX
         validated_codes: list[int] = []
         for code in codes:
             try:

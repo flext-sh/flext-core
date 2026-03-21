@@ -39,11 +39,11 @@ class UserProfile(BaseModel):
     name: str = Field(description="User's full name")
     email: str = Field(description="User's email address")
     unique_id: str = Field(description="Unique identifier for the user")
-    status: c.Domain.Status = Field(description="Current status of the user")
+    status: c.Status = Field(description="Current status of the user")
 
     def activate(self) -> r[bool]:
         """Railway pattern for business operations - no None returns."""
-        if self.status == c.Domain.Status.ACTIVE:
+        if self.status == c.Status.ACTIVE:
             return r[bool].fail("Already active")
         return r[bool].ok(True)
 
@@ -60,8 +60,8 @@ def validate_transform_user(data: t.ConfigMap) -> r[UserProfile]:
     email: str = email_value
     return r.traverse(
         [
-            u.validate_length(name, min_length=c.Validation.MIN_USERNAME_LENGTH),
-            u.validate_pattern(email, c.Platform.PATTERN_EMAIL, "email"),
+            u.validate_length(name, min_length=c.MIN_USERNAME_LENGTH),
+            u.validate_pattern(email, c.PATTERN_EMAIL, "email"),
         ],
         identity,
     ).flat_map(
@@ -70,13 +70,13 @@ def validate_transform_user(data: t.ConfigMap) -> r[UserProfile]:
                 unique_id=u.generate("correlation"),
                 name=name.upper(),
                 email=email.lower(),
-                status=c.Domain.Status.ACTIVE,
+                status=c.Status.ACTIVE,
             )
         )
     )
 
 
-def process_user_data(*, user_data: t.ConfigMap, operation: c.Cqrs.Action) -> r[str]:
+def process_user_data(*, user_data: t.ConfigMap, operation: c.Action) -> r[str]:
     """Decorated railway with centralized StrEnum constraints - direct functional composition."""
     return validate_transform_user(user_data).map(
         lambda profile: (
@@ -171,7 +171,7 @@ def demonstrate_utilities() -> None:
     cache_result = u.clear_object_cache(test_obj)
     validation_results = [
         u.validate_length("test", min_length=1, max_length=10),
-        u.validate_pattern("test@example.com", c.Platform.PATTERN_EMAIL, "email"),
+        u.validate_pattern("test@example.com", c.PATTERN_EMAIL, "email"),
     ]
     result = (
         r
@@ -199,15 +199,13 @@ def demonstrate_exceptions() -> None:
     def create_error_result(msg: str, field: str, value: str) -> r[str]:
         return r[str].fail(
             e.ValidationError(
-                msg, field=field, value=value, error_code=c.Errors.VALIDATION_ERROR
+                msg, field=field, value=value, error_code=c.VALIDATION_ERROR
             ).message,
-            error_code=c.Errors.VALIDATION_ERROR,
+            error_code=c.VALIDATION_ERROR,
         )
 
     def format_error_message(field: str, value: str) -> str:
-        return (
-            f"Error: {field}={value}, code: {c.Errors.VALIDATION_ERROR}, railway: True"
-        )
+        return f"Error: {field}={value}, code: {c.VALIDATION_ERROR}, railway: True"
 
     def format_exception_message(error: str) -> str:
         return f"Converted exception to result: {error}"
@@ -259,7 +257,7 @@ def execute_validation_chain(user_data: t.ConfigMap) -> None:
         .flat_map(r.ok)
         .flat_map(
             lambda output: process_user_data(
-                user_data=user_data, operation=c.Cqrs.Action.CREATE
+                user_data=user_data, operation=c.Action.CREATE
             ).map(lambda result: f"{output}\nProcess: {result}")
         )
         .map(print)

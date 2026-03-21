@@ -375,7 +375,7 @@ class FlextModelFoundation:
 
         model_config = ConfigDict(
             validate_assignment=True,
-            extra=c.ModelConfig.EXTRA_FORBID,
+            extra=c.EXTRA_FORBID,
             arbitrary_types_allowed=True,
             use_enum_values=True,
         )
@@ -431,7 +431,7 @@ class FlextModelFoundation:
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
         model_config = ConfigDict(
-            extra=c.ModelConfig.EXTRA_FORBID,
+            extra=c.EXTRA_FORBID,
             frozen=True,
             validate_assignment=True,
             populate_by_name=True,
@@ -671,9 +671,9 @@ class FlextModelFoundation:
             str_strip_whitespace=True,
             use_enum_values=True,
             arbitrary_types_allowed=True,
-            extra=c.ModelConfig.EXTRA_FORBID,
-            ser_json_timedelta=c.Utilities.SERIALIZATION_ISO8601,
-            ser_json_bytes=c.Utilities.SERIALIZATION_BASE64,
+            extra=c.EXTRA_FORBID,
+            ser_json_timedelta=c.SERIALIZATION_ISO8601,
+            ser_json_bytes=c.SERIALIZATION_BASE64,
             hide_input_in_errors=True,
             frozen=True,
         )
@@ -762,12 +762,12 @@ class FlextModelFoundation:
         version: Annotated[
             int,
             Field(
-                default=c.Performance.DEFAULT_VERSION,
-                ge=c.Performance.MIN_VERSION,
+                default=c.DEFAULT_VERSION,
+                ge=c.MIN_VERSION,
                 description="Version number for optimistic locking",
                 frozen=False,
             ),
-        ] = c.Performance.DEFAULT_VERSION
+        ] = c.DEFAULT_VERSION
 
         def increment_version(self) -> None:
             """Increment the version number."""
@@ -776,8 +776,8 @@ class FlextModelFoundation:
         @model_validator(mode="after")
         def validate_version_consistency(self) -> Self:
             """Ensure version consistency."""
-            if self.version < c.Performance.DEFAULT_VERSION:
-                msg = f"Version {self.version} is below minimum {c.Performance.DEFAULT_VERSION}"
+            if self.version < c.DEFAULT_VERSION:
+                msg = f"Version {self.version} is below minimum {c.DEFAULT_VERSION}"
                 raise ValueError(msg)
             return self
 
@@ -788,28 +788,28 @@ class FlextModelFoundation:
         max_retries: Annotated[
             int,
             Field(
-                default=c.Reliability.DEFAULT_MAX_RETRIES,
+                default=c.DEFAULT_MAX_RETRIES,
                 ge=c.ZERO,
                 alias="max_attempts",
                 description="Maximum retry attempts",
             ),
-        ] = c.Reliability.DEFAULT_MAX_RETRIES
+        ] = c.DEFAULT_MAX_RETRIES
         initial_delay_seconds: Annotated[
             float,
             Field(
-                default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+                default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 gt=c.ZERO,
                 description="Initial delay between retries",
             ),
-        ] = c.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+        ] = c.DEFAULT_RETRY_DELAY_SECONDS
         max_delay_seconds: Annotated[
             float,
             Field(
-                default=c.Reliability.RETRY_BACKOFF_MAX,
+                default=c.RETRY_BACKOFF_MAX,
                 gt=c.ZERO,
                 description="Maximum delay between retries",
             ),
-        ] = c.Reliability.RETRY_BACKOFF_MAX
+        ] = c.RETRY_BACKOFF_MAX
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

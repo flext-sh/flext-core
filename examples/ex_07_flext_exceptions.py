@@ -17,7 +17,7 @@ class Ex07FlextExceptions(Examples):
         self.section("imports")
         self.check("import.e_is_FlextExceptions", e is FlextExceptions)
         self.check("import.r_ok", r[str].ok("ok").is_success)
-        self.check("import.constant", c.Errors.UNKNOWN_ERROR)
+        self.check("import.constant", c.UNKNOWN_ERROR)
         try:
             msg = "boom"
             raise ValueError(msg)
