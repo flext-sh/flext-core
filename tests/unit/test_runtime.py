@@ -24,7 +24,7 @@ import logging
 from collections.abc import Callable
 from enum import StrEnum, unique
 from types import ModuleType
-from typing import Annotated, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 import structlog
@@ -87,7 +87,9 @@ class TestFlextRuntime:
     class RuntimeTestCase(BaseModel):
         """Runtime test case definition with parametrization data."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True, arbitrary_types_allowed=True
+        )
         name: Annotated[str, Field(description="Runtime test case name")]
         operation: Annotated[StrEnum, Field(description="Runtime operation type")]
         test_input: Annotated[

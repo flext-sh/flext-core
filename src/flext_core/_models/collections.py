@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import Annotated, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 

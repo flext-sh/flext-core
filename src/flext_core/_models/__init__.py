@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core import FlextTypes
     from flext_core._models._context._data import FlextModelsContextData
     from flext_core._models._context._export import FlextModelsContextExport
     from flext_core._models._context._metadata import FlextModelsContextMetadata
@@ -42,7 +43,6 @@ if TYPE_CHECKING:
     from flext_core._models.result import FlextModelsResult
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
-    from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextGenericModels": ("flext_core._models.generic", "FlextGenericModels"),

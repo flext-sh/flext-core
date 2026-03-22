@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, override
+from typing import Annotated, ClassVar, override
 
 from flext_tests import s, td
 from pydantic import BaseModel, ConfigDict, Field

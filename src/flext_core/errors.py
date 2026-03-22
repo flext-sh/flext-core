@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import override
+from typing import ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field
 

@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
     from .test_advanced_patterns import TestAdvancedPatterns, TestFunction
     from .test_architectural_patterns import TestArchitecturalPatterns

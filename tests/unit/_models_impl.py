@@ -152,7 +152,9 @@ class NestedModel(BaseModel):
 class ConfigModelForTest(BaseModel):
     """Test configuration model (mutable for set_parameter tests)."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(validate_assignment=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        validate_assignment=True, extra="forbid"
+    )
 
     name: str = "default_config"
     timeout: Annotated[int, Field(default=30, ge=0)] = 30
@@ -168,7 +170,9 @@ class InvalidModelForTest(BaseModel):
 class SingletonClassForTest(BaseModel):
     """Test singleton class with Pydantic validation."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(validate_assignment=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        validate_assignment=True, extra="forbid"
+    )
 
     _instance: ClassVar[SingletonClassForTest | None] = None
 

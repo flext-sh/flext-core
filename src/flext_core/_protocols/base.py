@@ -10,8 +10,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsResult
-    from flext_core.typings import FlextTypes as t
+    from flext_core import FlextProtocolsResult, FlextTypes as t
 
 
 class FlextProtocolsBase:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from types import TracebackType
-from typing import Annotated, Self, cast, override
+from typing import Annotated, ClassVar, Self, cast, override
 
 import structlog
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr

@@ -13,7 +13,7 @@ import concurrent.futures
 import secrets
 import time
 from collections.abc import Mapping
-from typing import Annotated, override
+from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 

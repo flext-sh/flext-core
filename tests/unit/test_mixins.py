@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import time
 from enum import StrEnum, unique
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field

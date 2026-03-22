@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, TypeIs
+from typing import Annotated, ClassVar, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
@@ -298,7 +298,9 @@ class FlextModelsContainer:
         Provides type-safe configuration for DI container behavior.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=False, validate_assignment=True
+        )
         enable_singleton: Annotated[
             bool,
             Field(
@@ -358,7 +360,9 @@ class FlextModelsContainer:
         Deferred to TIER 1 to avoid circular imports with p/t.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(strict=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            strict=True, arbitrary_types_allowed=True
+        )
 
         config: Annotated[
             p.Settings | None,

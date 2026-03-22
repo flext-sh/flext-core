@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import override
+from typing import ClassVar, override
 
 from pydantic import (
     BaseModel,

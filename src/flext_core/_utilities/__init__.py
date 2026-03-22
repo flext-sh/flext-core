@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core import FlextTypes
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.cache import FlextUtilitiesCache
     from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -46,7 +47,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
-    from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),

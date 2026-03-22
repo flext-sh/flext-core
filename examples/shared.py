@@ -34,6 +34,7 @@ import sys
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
+from typing import ClassVar
 
 from pydantic import ConfigDict
 

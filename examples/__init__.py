@@ -111,7 +111,7 @@ if TYPE_CHECKING:
         em,
     )
     from examples.shared import Examples
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DatabaseService": ("examples.logging_config_once_pattern", "DatabaseService"),

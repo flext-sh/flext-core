@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence, Set as AbstractSet
 from itertools import starmap
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 from twisted.python.log import msg

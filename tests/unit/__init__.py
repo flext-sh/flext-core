@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
     from . import contracts as contracts, flext_tests as flext_tests
     from .conftest_infra import (
@@ -462,6 +462,10 @@ if TYPE_CHECKING:
         test_utilities_reliability_compose_returns_non_result_directly,
         test_utilities_reliability_uncovered_retry_compose_and_sequence_paths,
     )
+    from .test_utilities_string_parser import (
+        TestuStringParser,
+        normalized_value_key_cases,
+    )
     from .test_utilities_text_full_coverage import TestUtilitiesTextFullCoverage
     from .test_utilities_type_checker_coverage_100 import (
         T,
@@ -878,6 +882,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperUtils",
     ),
+    "TestuStringParser": (
+        "tests.unit.test_utilities_string_parser",
+        "TestuStringParser",
+    ),
     "TestuTypeChecker": (
         "tests.unit.test_utilities_type_checker_coverage_100",
         "TestuTypeChecker",
@@ -958,6 +966,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "infra_workflow_syncer": ("tests.unit.conftest_infra", "infra_workflow_syncer"),
     "inject": ("tests.unit.test_di_incremental", "inject"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
+    "normalized_value_key_cases": (
+        "tests.unit.test_utilities_string_parser",
+        "normalized_value_key_cases",
+    ),
     "p": ("tests.unit.protocols", "p"),
     "pytestmark": ("tests.unit.test_utilities_type_checker_coverage_100", "pytestmark"),
     "reset_runtime_state": (
@@ -1911,6 +1923,7 @@ __all__ = [
     "TestuMapperConversions",
     "TestuMapperExtract",
     "TestuMapperUtils",
+    "TestuStringParser",
     "TestuTypeChecker",
     "TextUtilityContract",
     "TimeoutEnforcer",
@@ -1946,6 +1959,7 @@ __all__ = [
     "infra_workflow_syncer",
     "inject",
     "mapper",
+    "normalized_value_key_cases",
     "p",
     "pytestmark",
     "reset_runtime_state",

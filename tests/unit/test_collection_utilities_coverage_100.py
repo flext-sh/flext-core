@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Annotated, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from flext_tests import tm, u

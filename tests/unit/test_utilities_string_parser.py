@@ -64,7 +64,7 @@ def _regex_pipeline_cases() -> list[m.RegexPipelineCase]:
     return builder()
 
 
-def normalizedValue_key_cases() -> list[m.ObjectKeyCase]:
+def normalized_value_key_cases() -> list[m.ObjectKeyCase]:
     builder = cast(
         "Callable[[], list[m.ObjectKeyCase]]",
         globals()["StringParserTestFactory"].object_key_cases,
@@ -633,8 +633,8 @@ class TestuStringParser:
     class TestGetObjectKey:
         """Test getNormalizedValue_key method."""
 
-        @pytest.mark.parametrize("case", t.NormalizedValue_key_cases())
-        def test_getNormalizedValue_key(
+        @pytest.mark.parametrize("case", t.normalized_value_key_cases())
+        def test_get_normalized_value_key(
             self,
             parser: u,
             case: m.ObjectKeyCase,

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from enum import StrEnum, unique
-from typing import Annotated, Final
+from typing import Annotated, ClassVar, Final
 
 import pytest
 from flext_tests import tm, u

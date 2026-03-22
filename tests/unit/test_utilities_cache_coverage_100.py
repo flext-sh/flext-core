@@ -33,7 +33,9 @@ class UtilitiesCacheCoverage100Namespace:
     class NormalizeComponentScenario(BaseModel):
         """Normalize component test scenario."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True, arbitrary_types_allowed=True
+        )
 
         name: Annotated[str, Field(description="Normalize scenario name")]
         component: Annotated[

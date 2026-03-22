@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum, unique
-from typing import Annotated, override
+from typing import Annotated, ClassVar, override
 
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field

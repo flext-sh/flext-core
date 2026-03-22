@@ -19,7 +19,7 @@ import json
 import os
 import threading
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 import yaml
 from flext_tests import t

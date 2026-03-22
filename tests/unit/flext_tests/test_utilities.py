@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict

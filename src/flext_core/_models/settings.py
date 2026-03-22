@@ -55,7 +55,9 @@ class FlextModelsConfig:
     class AutoConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Automatic settings wrapper for BaseSettings classes."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True, arbitrary_types_allowed=True
+        )
 
         config_class: Annotated[
             type[BaseSettings],

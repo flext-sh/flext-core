@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import Annotated, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field

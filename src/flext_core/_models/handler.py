@@ -410,7 +410,9 @@ class FlextModelsHandler:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True, arbitrary_types_allowed=True
+        )
         command: Annotated[
             type,
             Field(description="Command type this handler processes"),

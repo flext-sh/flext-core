@@ -85,7 +85,7 @@ if TYPE_CHECKING:
     )
     from examples._models.exconfig import ExConfigAppConfig
     from examples._models.shared import SharedHandle, SharedPerson
-    from flext_core.typings import FlextTypes
+    from flext_core import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),
