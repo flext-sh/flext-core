@@ -558,8 +558,7 @@ class FlextExceptions:
 
     @staticmethod
     def _safe_config_map(
-        value: Metadata
-        | m.Metadata
+        value: m.Metadata
         | t.ConfigMap
         | Mapping[str, t.MetadataOrValue | None]
         | t.MetadataValue
@@ -585,14 +584,13 @@ class FlextExceptions:
 
     @staticmethod
     def _safe_metadata(
-        value: Metadata
-        | m.Metadata
+        value: m.Metadata
         | t.ConfigMap
         | Mapping[str, t.MetadataOrValue | None]
         | t.MetadataValue
         | t.NormalizedValue
         | None,
-    ) -> Metadata | None:
+    ) -> m.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
         if value is None:
             return None
@@ -657,11 +655,7 @@ class FlextExceptions:
             *,
             error_code: str = c.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataValue] | t.ConfigMap | None = None,
-            metadata: m.Metadata
-            | Metadata
-            | t.ConfigMap
-            | t.MetadataValue
-            | None = None,
+            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
@@ -724,9 +718,9 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: m.Metadata | Metadata | t.ConfigMap | t.MetadataValue | None,
+            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None,
             merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
-        ) -> Metadata:
+        ) -> m.Metadata:
             """Normalize metadata from various input types to m.Metadata model.
 
             Args:
@@ -774,7 +768,7 @@ class FlextExceptions:
         def _normalize_metadata_from_dict(
             metadata_dict: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap,
             merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
-        ) -> Metadata:
+        ) -> m.Metadata:
             """Normalize metadata from dict-like object."""
             merged_attrs: dict[str, t.MetadataValue | None] = {}
             for k, v in metadata_dict.items():
@@ -1023,11 +1017,7 @@ class FlextExceptions:
             resource_id: str | None = None,
             error_code: str = c.NOT_FOUND_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
-            metadata: m.Metadata
-            | Metadata
-            | t.ConfigMap
-            | t.MetadataValue
-            | None = None,
+            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
             correlation_id: str | None = None,
             params: e.NotFoundErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -1392,7 +1382,7 @@ class FlextExceptions:
     @staticmethod
     def _build_error_context(
         correlation_id: str | None,
-        metadata_obj: Metadata | Mapping[str, t.MetadataOrValue | None] | None,
+        metadata_obj: m.Metadata | Mapping[str, t.MetadataOrValue | None] | None,
         kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
     ) -> t.ConfigMap:
         """Build error context dictionary."""
@@ -1494,7 +1484,7 @@ class FlextExceptions:
     @staticmethod
     def _extract_common_kwargs(
         kwargs: Mapping[str, t.MetadataValue],
-    ) -> tuple[str | None, Metadata | Mapping[str, t.MetadataOrValue] | None]:
+    ) -> tuple[str | None, m.Metadata | Mapping[str, t.MetadataOrValue] | None]:
         """Extract correlation_id and metadata from kwargs.
 
         Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
@@ -1506,7 +1496,7 @@ class FlextExceptions:
             else None
         )
         metadata_raw = kwargs.get(c.FIELD_METADATA)
-        metadata: Metadata | Mapping[str, t.MetadataOrValue | None] | None = None
+        metadata: m.Metadata | Mapping[str, t.MetadataOrValue | None] | None = None
         model_dump = getattr(metadata_raw, "model_dump", None)
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)
@@ -1524,7 +1514,7 @@ class FlextExceptions:
     @staticmethod
     def _merge_metadata_into_context(
         context: t.ConfigMap,
-        metadata_obj: Metadata | Mapping[str, t.MetadataOrValue | None] | None,
+        metadata_obj: m.Metadata | Mapping[str, t.MetadataOrValue | None] | None,
     ) -> None:
         """Merge metadata object into context dictionary."""
         if metadata_obj is None:
@@ -1656,7 +1646,7 @@ class FlextExceptions:
     @staticmethod
     def extract_common_kwargs(
         kwargs: Mapping[str, t.MetadataValue],
-    ) -> tuple[str | None, Metadata | Mapping[str, t.MetadataOrValue] | None]:
+    ) -> tuple[str | None, m.Metadata | Mapping[str, t.MetadataOrValue] | None]:
         """Extract common correlation and metadata fields from kwargs."""
         return e._extract_common_kwargs(kwargs)
 
