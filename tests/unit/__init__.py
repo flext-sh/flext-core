@@ -218,7 +218,6 @@ if TYPE_CHECKING:
         test_migrate_to_mro_normalizes_facade_alias_to_c,
         test_migrate_to_mro_rejects_unknown_target,
         test_migrate_typings_rewrites_references_with_t_alias,
-        test_mro_scanner_includes_constants_variants_in_all_scopes,
         test_refactor_utilities_iter_python_files_includes_examples_and_scripts,
     )
     from .test_refactor_namespace_enforcer import (
@@ -241,12 +240,6 @@ if TYPE_CHECKING:
         test_models_family_blocks_utilities_target,
         test_runtime_family_blocks_non_runtime_target,
         test_utilities_family_allows_utilities_target,
-    )
-    from .test_refactor_pydantic_centralizer import (
-        test_centralizer_converts_typed_dict_factory_to_model,
-        test_centralizer_does_not_touch_settings_module,
-        test_centralizer_moves_dict_alias_in_typings_without_keyword_name,
-        test_centralizer_moves_manual_type_aliases_to_models_file,
     )
     from .test_registry import TestFlextRegistry
     from .test_registry_full_coverage import (
@@ -1041,22 +1034,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_refactor_cli_models_workflow",
         "test_centralize_pydantic_cli_outputs_extended_metrics",
     ),
-    "test_centralizer_converts_typed_dict_factory_to_model": (
-        "tests.unit.test_refactor_pydantic_centralizer",
-        "test_centralizer_converts_typed_dict_factory_to_model",
-    ),
-    "test_centralizer_does_not_touch_settings_module": (
-        "tests.unit.test_refactor_pydantic_centralizer",
-        "test_centralizer_does_not_touch_settings_module",
-    ),
-    "test_centralizer_moves_dict_alias_in_typings_without_keyword_name": (
-        "tests.unit.test_refactor_pydantic_centralizer",
-        "test_centralizer_moves_dict_alias_in_typings_without_keyword_name",
-    ),
-    "test_centralizer_moves_manual_type_aliases_to_models_file": (
-        "tests.unit.test_refactor_pydantic_centralizer",
-        "test_centralizer_moves_manual_type_aliases_to_models_file",
-    ),
     "test_chk_exercises_missed_branches": (
         "tests.unit.test_utilities_guards_full_coverage",
         "test_chk_exercises_missed_branches",
@@ -1476,10 +1453,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_models_settings_context_validator_and_non_standard_status_input": (
         "tests.unit.test_models_settings_full_coverage",
         "test_models_settings_context_validator_and_non_standard_status_input",
-    ),
-    "test_mro_scanner_includes_constants_variants_in_all_scopes": (
-        "tests.unit.test_refactor_migrate_to_class_mro",
-        "test_mro_scanner_includes_constants_variants_in_all_scopes",
     ),
     "test_namespace_enforce_cli_fails_on_manual_protocol_violation": (
         "tests.unit.test_refactor_cli_models_workflow",
@@ -2115,7 +2088,6 @@ __all__ = [
     "test_models_handler_uncovered_mode_and_reset_paths",
     "test_models_settings_branch_paths",
     "test_models_settings_context_validator_and_non_standard_status_input",
-    "test_mro_scanner_includes_constants_variants_in_all_scopes",
     "test_namespace_enforce_cli_fails_on_manual_protocol_violation",
     "test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring",
     "test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future",

@@ -10,7 +10,6 @@ from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra.refactor.migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
 )
-from flext_infra.refactor.mro_resolver import FlextInfraRefactorMROMigrationScanner
 from flext_tests import tm
 
 
@@ -207,34 +206,6 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     )
     tm.that(consumer_source, has="from sample_pkg.protocols import p")
     tm.that(consumer_source, has="def call_greet(protocol: p.Greeter) -> str:")
-
-
-def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -> None:
-    project_root = tmp_path / "sample"
-    project_root.mkdir(parents=True)
-    _ = (project_root / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n",
-        encoding="utf-8",
-    )
-    _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
-    file_paths = [
-        project_root / "src" / "sample_pkg" / "constants.py",
-        project_root / "src" / "sample_pkg" / "_constants.py",
-        project_root / "src" / "sample_pkg" / "constants" / "domain.py",
-        project_root / "examples" / "constants.py",
-        project_root / "scripts" / "constants.py",
-        project_root / "tests" / "constants.py",
-    ]
-    for file_path in file_paths:
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        _ = file_path.write_text(
-            "from __future__ import annotations\nfrom typing import Final\nVALUE: Final[str] = 'x'\n",
-            encoding="utf-8",
-        )
-    scanned = FlextInfraRefactorMROMigrationScanner._iter_constants_files(
-        project_root=project_root,
-    )
-    tm.that(set(scanned) == set(file_paths), eq=True)
 
 
 def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(

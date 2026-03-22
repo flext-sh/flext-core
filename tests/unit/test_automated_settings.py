@@ -39,7 +39,7 @@ class TestAutomatedFlextSettings:
         class DemoNamespace(BaseSettings):
             enabled: bool = True
 
-        namespace = f"ns_{u.generate('ulid', 6)}"
+        namespace = f"ns_{u.generate('ulid', length=6)}"
         FlextSettings.register_namespace(namespace, DemoNamespace)
         settings_obj = FlextSettings.get_global()
         ns_cfg = settings_obj.get_namespace(namespace, DemoNamespace)

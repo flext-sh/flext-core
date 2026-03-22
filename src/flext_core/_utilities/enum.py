@@ -257,13 +257,12 @@ class FlextUtilitiesEnum:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        enum_meta = StrEnum.__class__
-        created: type[StrEnum] = enum_meta.__call__(  # type: StrEnum metaclass
-            StrEnum,
-            name,
-            dict(values),
-        )
-        return created
+        members_list = list(values.items())
+        created = StrEnum(name, members_list)  # pyrefly: ignore[invalid-argument] -- dynamic enum creation with variable args; pyrefly expects string literals per PEP 435
+        if isinstance(created, type) and issubclass(created, StrEnum):
+            return created
+        msg = f"StrEnum({name!r}) did not produce a StrEnum subclass"
+        raise TypeError(msg)
 
     @overload
     @staticmethod

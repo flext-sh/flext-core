@@ -56,15 +56,15 @@ files = [
 
 [[package]]
 name = "attrs"
-version = "25.4.0"
+version = "26.1.0"
 description = "Classes Without Boilerplate"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373"},
-    {file = "attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11"},
+    {file = "attrs-26.1.0-py3-none-any.whl", hash = "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"},
+    {file = "attrs-26.1.0.tar.gz", hash = "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32"},
 ]
 
 [[package]]
@@ -1233,7 +1233,6 @@ files = []
 develop = false
 
 [package.dependencies]
-attrs = ">=25.4,<26"
 cachetools = ">=5.3"
 click = ">=8.2.1"
 flext-core = {path = "../flext-core"}
@@ -3466,15 +3465,15 @@ rich = ">=8.0.0"
 
 [[package]]
 name = "pytest-cov"
-version = "7.0.0"
+version = "7.1.0"
 description = "Pytest plugin for measuring coverage."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "pytest_cov-7.0.0-py3-none-any.whl", hash = "sha256:3b8e9558b16cc1479da72058bdecf8073661c7f57f7d3c5f22a1c23507f2d861"},
-    {file = "pytest_cov-7.0.0.tar.gz", hash = "sha256:33c97eda2e049a0c5298e91f519302a1334c26ac65c1a483d6206fd458361af1"},
+    {file = "pytest_cov-7.1.0-py3-none-any.whl", hash = "sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678"},
+    {file = "pytest_cov-7.1.0.tar.gz", hash = "sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2"},
 ]
 
 [package.dependencies]
@@ -4503,15 +4502,15 @@ files = [
 
 [[package]]
 name = "types-docker"
-version = "7.1.0.20260109"
+version = "7.1.0.20260322"
 description = "Typing stubs for docker"
 optional = true
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "types_docker-7.1.0.20260109-py3-none-any.whl", hash = "sha256:001a5a377d3fb287b7279cf4265b8ba3857e7d4203a16ab03e6e512f68f2f3d4"},
-    {file = "types_docker-7.1.0.20260109.tar.gz", hash = "sha256:b36ef355ec9ba8bf29bcc4e32cc61dd9138ce4d8352c599c8fbc65f1a3e87b57"},
+    {file = "types_docker-7.1.0.20260322-py3-none-any.whl", hash = "sha256:b5eaa760b158dcca067a7370a5fde11d0891ddcdbcb0a6b5e5c23b7a31e5b82e"},
+    {file = "types_docker-7.1.0.20260322.tar.gz", hash = "sha256:31259fa1c5941b24d33b13c403a6d8f08ed51965d22b6b4f7e97eb8a7b56793f"},
 ]
 
 [package.dependencies]
@@ -4537,15 +4536,15 @@ types-pyasn1 = "*"
 
 [[package]]
 name = "types-paramiko"
-version = "4.0.0.20250822"
+version = "4.0.0.20260322"
 description = "Typing stubs for paramiko"
 optional = true
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "types_paramiko-4.0.0.20250822-py3-none-any.whl", hash = "sha256:55bdb14db75ca89039725ec64ae3fa26b8d57b6991cfb476212fa8f83a59753c"},
-    {file = "types_paramiko-4.0.0.20250822.tar.gz", hash = "sha256:1b56b0cbd3eec3d2fd123c9eb2704e612b777e15a17705a804279ea6525e0c53"},
+    {file = "types_paramiko-4.0.0.20260322-py3-none-any.whl", hash = "sha256:c585bcf81b5d2fc722279763d50eca8095777ee949af8706900e9f8411af979b"},
+    {file = "types_paramiko-4.0.0.20260322.tar.gz", hash = "sha256:dfcb13d8cf52499a198ced552b78fa685369a376b143abfb90cd49f465e383a0"},
 ]
 
 [package.dependencies]
