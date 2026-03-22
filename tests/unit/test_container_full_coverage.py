@@ -292,9 +292,9 @@ class TestContainerFullCoverage:
         }
         c._factories = {"fac": m.FactoryRegistration(name="fac", factory=lambda: "v")}
         c._resources = {"res": m.ResourceRegistration(name="res", factory=lambda: "v")}
-        setattr(c._di_services, "svc", object())
-        setattr(c._di_services, "fac", object())
-        setattr(c._di_resources, "res", object())
+        setattr(c._di_services, "svc", t.NormalizedValue())
+        setattr(c._di_services, "fac", t.NormalizedValue())
+        setattr(c._di_resources, "res", t.NormalizedValue())
         c.register_existing_providers()
         c._config = _FalseConfig()
         c._context = None
@@ -327,7 +327,7 @@ class TestContainerFullCoverage:
             _raise_register_factory,
         )
         c.register("x2", lambda: "v", kind="factory")
-        setattr(c._di_resources, "dup", object())
+        setattr(c._di_resources, "dup", t.NormalizedValue())
         c.register("dup", lambda: "v", kind="resource")
         del c._di_resources.dup
         monkeypatch.setattr(
@@ -395,10 +395,10 @@ class TestContainerFullCoverage:
         )
         c._config = FlextSettings(app_name="base")
         c._context = FlextContext()
-        captured: dict[str, object] = {}
+        captured: dict[str, t.NormalizedValue] = {}
 
         def _fake_create_scoped_instance(
-            *, registration: m.ServiceRegistrationSpec, **kwargs: object
+            *, registration: m.ServiceRegistrationSpec, **kwargs: t.NormalizedValue
         ) -> FlextContainer:
             captured["config"] = registration.config
             captured["context"] = registration.context
@@ -420,7 +420,7 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: _MonkeyPatch,
     ) -> None:
-        captured: dict[str, Callable[..., object]] = {}
+        captured: dict[str, Callable[..., t.NormalizedValue]] = {}
 
         def factory_fn() -> int:
             return 7
@@ -475,7 +475,9 @@ class TestContainerFullCoverage:
             "flext_core.runtime.FlextRuntime.DependencyIntegration.create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
-        monkeypatch.setattr("flext_core.container.di_providers.Configuration", object)
+        monkeypatch.setattr(
+            "flext_core.container.di_providers.Configuration", t.NormalizedValue
+        )
         with pytest.raises(TypeError, match="cannot be None"):
             c.initialize_di_components()
 
@@ -512,7 +514,7 @@ class TestContainerFullCoverage:
                 max_factories=10,
             )
             c._user_overrides = t.ConfigMap(root={})
-            registered: dict[str, Callable[..., object]] = {}
+            registered: dict[str, Callable[..., t.NormalizedValue]] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _register(
@@ -682,7 +684,7 @@ class TestContainerFullCoverage:
                 }
 
             c._config = _CfgFallback()
-            captured: dict[str, Callable[..., object]] = {}
+            captured: dict[str, Callable[..., t.NormalizedValue]] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _capture_register(

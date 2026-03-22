@@ -80,7 +80,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
             """Factory for objects that cause errors during testing - flext-core specific."""
 
             class BadSplitString:
-                """String-like object that raises on split()."""
+                """String-like t.NormalizedValue that raises on split()."""
 
                 def split(
                     self,
@@ -100,11 +100,11 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
             def create_for_split() -> (
                 FlextCoreTestUtilities.Core.CoreBadObjects.BadSplitString
             ):
-                """Create object that fails on split()."""
+                """Create t.NormalizedValue that fails on split()."""
                 return FlextCoreTestUtilities.Core.CoreBadObjects.BadSplitString()
 
             class BadIndexString:
-                """String-like object that raises on indexing."""
+                """String-like t.NormalizedValue that raises on indexing."""
 
                 def __getitem__(self, key: int) -> str:
                     """Raise error on index attempt."""
@@ -120,7 +120,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
             def create_for_index() -> (
                 FlextCoreTestUtilities.Core.CoreBadObjects.BadIndexString
             ):
-                """Create object that fails on indexing."""
+                """Create t.NormalizedValue that fails on indexing."""
                 return FlextCoreTestUtilities.Core.CoreBadObjects.BadIndexString()
 
             class BadStrObject:
@@ -136,15 +136,16 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
             def create_for_str() -> (
                 FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject
             ):
-                """Create object that fails on str()."""
+                """Create t.NormalizedValue that fails on str()."""
                 return FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject()
 
             class BadDict(UserDict[str, t.Tests.Testobject]):
                 """Dict that raises on get()."""
 
                 @override
-                def __getitem__(self, _key: str) -> Never:
+                def __getitem__(self, key: str) -> Never:
                     """Raise error on get attempt."""
+                    _ = key
                     msg = "Bad dict get"
                     raise RuntimeError(msg)
 
@@ -165,7 +166,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
                 )
 
             class BadConfig:
-                """Config object that raises on attribute access."""
+                """Config t.NormalizedValue that raises on attribute access."""
 
                 def get_attribute(self, name: str) -> Never:
                     """Raise error on attribute access."""

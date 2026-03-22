@@ -490,7 +490,7 @@ class GenericModelFactory:
 
     @staticmethod
     def operation_context(source: str | None = None) -> m.OperationContext:
-        """Create OperationContext value object."""
+        """Create OperationContext value t.NormalizedValue."""
         return m.OperationContext.model_validate({"source": source})
 
     @staticmethod

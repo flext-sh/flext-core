@@ -33,7 +33,7 @@ class Ex11Payload(m.Value):
 
 
 class Ex11HandlerLike(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
     data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
 
     def handle(self) -> str:
@@ -45,7 +45,7 @@ class Ex11EntityStub(m.Value):
 
 
 class Ex11ProcessorProtocolGood(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
     status: str = "ok"
 
     def process(self) -> str:
@@ -53,12 +53,12 @@ class Ex11ProcessorProtocolGood(m.Value):
 
 
 class Ex11ProcessorProtocolBad(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
     status: str = "bad"
 
 
 class Ex11CommandBusStub(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     def dispatch(self, message: m.Command) -> r[str]:
         return r[str].ok(str(message))

@@ -34,16 +34,16 @@ class Ex05UserModel(m.Value):
 
 
 class Ex05HandlerBad(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
 
 class Ex05HandlerLike(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
     data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
 
 
 class Ex05GoodProcessor(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     def process(self) -> bool:
         return True
@@ -55,4 +55,4 @@ class Ex05GoodProcessor(m.Value):
 
 
 class Ex05BadProcessor(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)

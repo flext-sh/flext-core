@@ -293,7 +293,7 @@ class FlextUtilitiesGenerators:
         and ISO timestamp.
 
         Args:
-            context: Context dictionary or object to enrich (can be any type)
+            context: Context dictionary or t.NormalizedValue to enrich (can be any type)
             include_correlation_id: If True, ensure correlation_id exists
             include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
@@ -429,7 +429,7 @@ class FlextUtilitiesGenerators:
 
         Args:
             message_type: Type of message being dispatched
-            message: Message object
+            message: Message t.NormalizedValue
 
         Returns:
             str: Unique operation ID

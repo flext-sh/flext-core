@@ -55,7 +55,7 @@ class TestUtils:
             value: t.Scalar,
             **kwargs: t.Scalar,
         ) -> dict[str, bool | datetime | float | int | str]:
-            """Create standardized value object test data."""
+            """Create standardized value t.NormalizedValue test data."""
             return {"value": value, **kwargs}
 
         @staticmethod
@@ -179,7 +179,7 @@ class TestUtils:
         def create_test_value_object(
             value: t.ContainerValue = "test_value",
         ) -> m.UtilityValueModel:
-            """Create test value object fixture."""
+            """Create test value t.NormalizedValue fixture."""
             return m.UtilityValueModel(value=value)
 
         @staticmethod
@@ -208,7 +208,9 @@ class TestUtils:
             return e
 
         @staticmethod
-        def create_test_handlers_instance() -> type[h[object, object]]:
+        def create_test_handlers_instance() -> type[
+            h[t.NormalizedValue, t.NormalizedValue]
+        ]:
             """Create test handlers fixture."""
             return h
 

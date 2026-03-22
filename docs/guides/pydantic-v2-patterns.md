@@ -581,7 +581,7 @@ print(json.dumps(schemas, indent=2))
 #         "age": {"type": "integer", "minimum": 0}
 #       },
 #       "required": ["name", "email", "age"],
-#       "type": "object"
+#       "type": "t.NormalizedValue"
 #     },
 #     ...
 #   }

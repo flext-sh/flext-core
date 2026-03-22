@@ -39,7 +39,7 @@ class TestUtilitiesCollectionFullCoverage:
             msg = "iter failed"
             raise TypeError(msg)
 
-    class _BadCopyDict(UserDict[str, object]):
+    class _BadCopyDict(UserDict[str, t.NormalizedValue]):
         @override
         def copy(self) -> TestUtilitiesCollectionFullCoverage._BadCopyDict:
             msg = "copy failed"
@@ -177,7 +177,10 @@ class TestUtilitiesCollectionFullCoverage:
         tm.ok(collected)
         collected_value = collected.value
         assert collected_value.errors == []
-        tm.that("_FailureResult object" in str(collected_value.results[0]), eq=True)
+        tm.that(
+            "_FailureResult t.NormalizedValue" in str(collected_value.results[0]),
+            eq=True,
+        )
         failed = u.batch([1], lambda _item: self._FailureResult(), on_error="fail")
         tm.ok(failed)
         parsed = u.parse_sequence(

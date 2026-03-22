@@ -71,7 +71,7 @@ class FlextModelsContainer:
         Replaces: t.ConfigMap for service tracking.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=False,
             validate_assignment=True,
             arbitrary_types_allowed=True,
@@ -198,7 +198,7 @@ class FlextModelsContainer:
         Replaces: t.ConfigMap for factory tracking.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=False,
             validate_assignment=True,
             arbitrary_types_allowed=True,
@@ -259,7 +259,7 @@ class FlextModelsContainer:
         ``providers.Resource`` for connection-style dependencies (DB/HTTP).
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=False,
             validate_assignment=True,
             arbitrary_types_allowed=True,
@@ -298,7 +298,7 @@ class FlextModelsContainer:
         Provides type-safe configuration for DI container behavior.
         """
 
-        model_config = ConfigDict(frozen=False, validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False, validate_assignment=True)
         enable_singleton: Annotated[
             bool,
             Field(
@@ -358,7 +358,7 @@ class FlextModelsContainer:
         Deferred to TIER 1 to avoid circular imports with p/t.
         """
 
-        model_config = ConfigDict(strict=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(strict=True, arbitrary_types_allowed=True)
 
         config: Annotated[
             p.Settings | None,
@@ -453,7 +453,7 @@ class FlextModelsContainer:
 
         """
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[
             t.NonEmptyStr,
             Field(

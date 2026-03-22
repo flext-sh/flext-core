@@ -13,15 +13,13 @@ from pydantic import BaseModel
 from pydantic_core import ValidationError
 
 from flext_core import m as core_m, r
-from tests import c, m, t, u
-
-from ._models import TestUnitModels
+from tests import TestUnitModels, c, m, t, u
 
 
 def _is_type_obj(
     value: t.NormalizedValue, type_spec: str | type | tuple[type, ...]
 ) -> bool:
-    """Call is_type with arbitrary object for negative-case testing."""
+    """Call is_type with arbitrary t.NormalizedValue for negative-case testing."""
     fn: Callable[[t.NormalizedValue, str | type | tuple[type, ...]], bool] = getattr(
         u,
         "is_type",
@@ -30,7 +28,7 @@ def _is_type_obj(
 
 
 def _is_flexible_value_obj(value: dict[int, str] | set[int]) -> bool:
-    """Call is_flexible_value with arbitrary object for negative-case testing."""
+    """Call is_flexible_value with arbitrary t.NormalizedValue for negative-case testing."""
     fn: Callable[..., bool] = getattr(u, "is_flexible_value")
     return fn(value)
 
@@ -114,10 +112,12 @@ def test_non_empty_and_normalize_branches() -> None:
     dict_scalar_out = u.normalize_to_metadata({"k": 1})
     tm.that(dict_scalar_out == {"k": 1}, eq=True)
     dict_complex_out = u.normalize_to_metadata(
-        cast("t.NormalizedValue", {"k": object()})
+        cast("t.NormalizedValue", {"k": t.NormalizedValue()})
     )
     tm.that(isinstance(dict_complex_out, dict) and "k" in dict_complex_out, eq=True)
-    list_out = u.normalize_to_metadata(cast("t.NormalizedValue", [1, object()]))
+    list_out = u.normalize_to_metadata(
+        cast("t.NormalizedValue", [1, t.NormalizedValue()])
+    )
     tm.that(isinstance(list_out, list), eq=True)
     assert isinstance(list_out, list)
     tm.that(list_out[0] == 1, eq=True)
@@ -153,13 +153,20 @@ def test_is_flexible_value_covers_all_branches() -> None:
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
-    plain_obj: t.NormalizedValue = cast("t.Tests.object", object())
+    plain_obj: t.NormalizedValue = cast(
+        "t.Tests.t.NormalizedValue", t.NormalizedValue()
+    )
     tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "container"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "command_bus"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "handler"), eq=True)
-    tm.that(not _is_type_obj(cast("t.Tests.object", _LoggerLike()), "logger"), eq=True)
-    tm.that(_is_type_obj(cast("t.Tests.object", r[int].ok(1)), "result"), eq=True)
+    tm.that(
+        not _is_type_obj(cast("t.Tests.t.NormalizedValue", _LoggerLike()), "logger"),
+        eq=True,
+    )
+    tm.that(
+        _is_type_obj(cast("t.Tests.t.NormalizedValue", r[int].ok(1)), "result"), eq=True
+    )
     tm.that(not _is_type_obj(plain_obj, "service"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "middleware"), eq=True)
     tm.that(u.is_handler_callable(cast("t.NormalizedValue", _sample_handler)), eq=True)
@@ -168,7 +175,9 @@ def test_protocol_and_simple_guard_helpers() -> None:
     def _identity(value: t.NormalizedValue) -> t.NormalizedValue:
         return value
 
-    tm.that(_is_type_obj(cast("t.Tests.object", _identity), "callable"), eq=True)
+    tm.that(
+        _is_type_obj(cast("t.Tests.t.NormalizedValue", _identity), "callable"), eq=True
+    )
     tm.that(u.is_type(3, "int"), eq=True)
     tm.that(u.is_type([1, 2], "list_or_tuple"), eq=True)
     tm.that(u.is_type("abc", "sized"), eq=True)
@@ -197,19 +206,23 @@ def test_protocol_and_simple_guard_helpers() -> None:
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
     value_set: set[int] = set()
     tm.that(
-        not _is_type_obj(cast("t.Tests.object", value_set), "string_non_empty"),
+        not _is_type_obj(
+            cast("t.Tests.t.NormalizedValue", value_set), "string_non_empty"
+        ),
         eq=True,
     )
     tm.that(not u.is_type("x", "unknown_type_name"), eq=True)
     tm.that(u.is_type(3, (int, float)), eq=True)
     tm.that(u.is_type("x", str), eq=True)
-    invalid_spec = cast("str | type | tuple[type, ...]", cast("object", 123))
+    invalid_spec = cast("str | type | tuple[type, ...]", cast("t.NormalizedValue", 123))
     tm.that(not u.is_type("x", invalid_spec), eq=True)
 
 
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
-    plain_obj: t.NormalizedValue = cast("t.Tests.object", object())
+    plain_obj: t.NormalizedValue = cast(
+        "t.Tests.t.NormalizedValue", t.NormalizedValue()
+    )
     tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "context"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "handler"), eq=True)
@@ -301,7 +314,10 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
         return original_issubclass(cls, classinfo)
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
-    tm.that(not _is_type_obj(cast("t.Tests.object", _SomeType), "handler"), eq=True)
+    tm.that(
+        not _is_type_obj(cast("t.Tests.t.NormalizedValue", _SomeType), "handler"),
+        eq=True,
+    )
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(not_in=[1, 2]).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(gt=1).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(gte=2).model_dump()), eq=True)
@@ -337,7 +353,7 @@ def test_guard_instance_attribute_access_warnings() -> None:
     method = guards.is_type
     tm.that(callable(method), eq=True)
     mapping_method = cast(
-        "Callable[..., t.Tests.object]", getattr(guards, "is_mapping")
+        "Callable[..., t.Tests.t.NormalizedValue]", getattr(guards, "is_mapping")
     )
     tm.that(callable(mapping_method), eq=True)
 
@@ -360,7 +376,7 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
     setattr(builtins, "issubclass", _explode)
     try:
         tm.that(
-            not _is_type_obj(cast("t.Tests.object", _Candidate), "handler"),
+            not _is_type_obj(cast("t.Tests.t.NormalizedValue", _Candidate), "handler"),
             eq=True,
         )
     finally:
@@ -373,7 +389,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
     original_isinstance = builtins.isinstance
 
     def _patched_isinstance(
-        obj: object,
+        obj: t.NormalizedValue,
         classinfo: type | tuple[type, ...],
     ) -> bool:
         if obj is True and classinfo == (str, int, float, bool, type(None), datetime):
@@ -409,7 +425,10 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
     monkeypatch.setattr(builtins, "issubclass", _patched_issubclass)
-    tm.that(not _is_type_obj(cast("t.Tests.object", _Candidate), "handler"), eq=True)
+    tm.that(
+        not _is_type_obj(cast("t.Tests.t.NormalizedValue", _Candidate), "handler"),
+        eq=True,
+    )
 
 
 def test_guards_issubclass_success_when_callable_is_patched(
@@ -427,6 +446,6 @@ def test_guards_issubclass_success_when_callable_is_patched(
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
     tm.that(
-        _is_type_obj(cast("t.Tests.object", _ModelSub), "handler") is False,
+        _is_type_obj(cast("t.Tests.t.NormalizedValue", _ModelSub), "handler") is False,
         eq=True,
     )

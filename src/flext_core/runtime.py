@@ -14,7 +14,7 @@ and provides type guards and serialization utilities.
 
 **Core Components** (8 functional categories):
 1. **Type Guard Utilities** - Pattern-based type validation (email, URL, phone, UUID, path, JSON)
-2. **Serialization Utilities** - Safe object-to-dict conversion without circular imports
+2. **Serialization Utilities** - Safe t.NormalizedValue-to-dict conversion without circular imports
 3. **Type Introspection** - Optional type checking, generic arg extraction
 4. **Sequence Type Checking** - Sequence type validation via typing module
 5. **External Library Access** - Direct access to structlog, dependency-injector
@@ -140,7 +140,7 @@ class FlextRuntime:
 
     **Core Features** (10 runtime capabilities):
     1. **Type Safety** - TypeIs utilities for pattern validation
-    2. **Serialization** - Multi-strategy safe object conversion
+    2. **Serialization** - Multi-strategy safe t.NormalizedValue conversion
     3. **Type Introspection** - Generic type analysis
     4. **External Libraries** - structlog and dependency-injector adapters
     5. **Structured Logging** - Production-ready logging configuration
@@ -467,10 +467,10 @@ class FlextRuntime:
 
     @staticmethod
     def is_base_model(obj: t.RuntimeData) -> TypeIs[BaseModel]:
-        """Type guard to narrow object to BaseModel.
+        """Type guard to narrow t.NormalizedValue to BaseModel.
 
         This allows isinstance checks to narrow types for FlextRuntime methods
-        that accept object (which includes BaseModel).
+        that accept t.NormalizedValue (which includes BaseModel).
         """
         match obj:
             case BaseModel():
@@ -499,13 +499,13 @@ class FlextRuntime:
 
         Note:
             ``value`` remains broad because this guard is a boundary utility used
-            by normalization paths that accept full ``object``.
+            by normalization paths that accept full ``t.NormalizedValue``.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a ConfigMap or dict-like object, False otherwise
+            True if value is a ConfigMap or dict-like t.NormalizedValue, False otherwise
 
         """
         match value:
@@ -626,7 +626,7 @@ class FlextRuntime:
 
     @staticmethod
     def _is_structlog_processor(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeGuard[structlog.types.Processor]:
         return callable(value)
 
@@ -758,13 +758,13 @@ class FlextRuntime:
     ) -> t.ValueOrModel | None:
         """Safe attribute access without raising AttributeError.
 
-        Business Rule: Accesses object attributes safely using getattr() with
+        Business Rule: Accesses t.NormalizedValue attributes safely using getattr() with
         default value. Never raises AttributeError, always returns default if
         attribute doesn't exist. Used for safe introspection of arbitrary objects
         without type checking.
 
         Audit Implication: Safe attribute access ensures audit trail completeness
-        by preventing AttributeError exceptions during object introspection. All
+        by preventing AttributeError exceptions during t.NormalizedValue introspection. All
         attribute access is safe and logged appropriately.
 
         Args:
@@ -1094,7 +1094,7 @@ class FlextRuntime:
 
         DEBUG INSTRUMENTATION ACTIVE
 
-        Supports both config object pattern (reduced params) and individual parameters.
+        Supports both config t.NormalizedValue pattern (reduced params) and individual parameters.
 
         Args:
             config: Optional FlextModels.Config.StructlogConfig for all params
@@ -1473,7 +1473,7 @@ class FlextRuntime:
         """Ensure context dict has distributed tracing fields (bridge for _models).
 
         Args:
-            context: Context dictionary or object to enrich
+            context: Context dictionary or t.NormalizedValue to enrich
             include_correlation_id: If True, ensure correlation_id exists
             include_timestamp: If True, ensure timestamp exists
 
@@ -1611,7 +1611,7 @@ class FlextRuntime:
 
     @staticmethod
     def hash_value_object_by_value(obj: t.RuntimeData) -> int:
-        """Hash value object based on all attribute values."""
+        """Hash value t.NormalizedValue based on all attribute values."""
         if FlextRuntime._is_scalar(obj):
             return hash(obj)
         if isinstance(obj, BaseModel):

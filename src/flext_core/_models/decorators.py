@@ -31,7 +31,7 @@ class FlextModelsDecorators:
         Used by @timeout decorator to enforce operation time limits.
         """
 
-        model_config = ConfigDict(frozen=True, extra="forbid", validate_assignment=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, extra="forbid", validate_assignment=True)
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(description="Timeout duration in seconds (must be positive)"),

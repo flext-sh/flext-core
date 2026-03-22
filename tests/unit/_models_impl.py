@@ -152,7 +152,7 @@ class NestedModel(BaseModel):
 class ConfigModelForTest(BaseModel):
     """Test configuration model (mutable for set_parameter tests)."""
 
-    model_config = ConfigDict(validate_assignment=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(validate_assignment=True, extra="forbid")
 
     name: str = "default_config"
     timeout: Annotated[int, Field(default=30, ge=0)] = 30
@@ -168,7 +168,7 @@ class InvalidModelForTest(BaseModel):
 class SingletonClassForTest(BaseModel):
     """Test singleton class with Pydantic validation."""
 
-    model_config = ConfigDict(validate_assignment=True, extra="forbid")
+    model_config: ClassVar[ConfigDict] = ConfigDict(validate_assignment=True, extra="forbid")
 
     _instance: ClassVar[SingletonClassForTest | None] = None
 
@@ -191,7 +191,7 @@ class SingletonClassForTest(BaseModel):
 class BadConfigForTest(BaseModel):
     """Config that fails to instantiate."""
 
-    model_config = ConfigDict(validate_assignment=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(validate_assignment=True)
 
     def __init__(self, **kwargs: t.Scalar) -> None:
         """Raise error on init."""
@@ -225,7 +225,7 @@ class _Model(BaseModel):
 class _SampleEntity(BaseModel):
     """Test entity for domain utility tests."""
 
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     unique_id: str = "test-123"
     name: str = "test"
@@ -234,7 +234,7 @@ class _SampleEntity(BaseModel):
 class _FrozenEntity(BaseModel):
     """Frozen entity for immutability tests."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     unique_id: str = "frozen-1"
 

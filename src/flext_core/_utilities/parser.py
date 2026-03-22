@@ -151,7 +151,7 @@ class FlextUtilitiesParser:
     def _extract_key_from_attributes(
         obj: t.TypeHintSpecifier | t.NormalizedValue,
     ) -> r[str]:
-        """Extract key from object attributes (Strategy 3).
+        """Extract key from t.NormalizedValue attributes (Strategy 3).
 
         Args:
             obj: Object to extract key from.
@@ -175,10 +175,10 @@ class FlextUtilitiesParser:
     def _extract_key_from_mapping(
         obj: Mapping[str, t.NormalizedValue] | t.NormalizedValue,
     ) -> r[str]:
-        """Extract key from mapping object (Strategy 2).
+        """Extract key from mapping t.NormalizedValue (Strategy 2).
 
         Args:
-            obj: Mapping object to extract key from.
+            obj: Mapping t.NormalizedValue to extract key from.
 
         Returns:
             String key if found, None otherwise.
@@ -216,7 +216,7 @@ class FlextUtilitiesParser:
             obj_class_name = name_val if isinstance(name_val, str) else "Unknown"
         except (AttributeError, TypeError):
             obj_class_name = "Unknown"
-        if str_repr and str_repr != f"<{obj_class_name} object>":
+        if str_repr and str_repr != f"<{obj_class_name} t.NormalizedValue>":
             return r[str].ok(str_repr)
         return r[str].fail("String conversion did not yield a usable key")
 
@@ -347,7 +347,7 @@ class FlextUtilitiesParser:
         field_prefix: str,
     ) -> r[T]:
         """Helper: Try direct type call."""
-        if target is object or str(target) == "typing.Any":
+        if target is t.NormalizedValue or str(target) == "typing.Any":
             return FlextUtilitiesParser._parse_with_default(
                 default,
                 default_factory,
@@ -1078,9 +1078,9 @@ class FlextUtilitiesParser:
             return r[str].fail(f"Failed to apply regex pipeline: {e}")
 
     def get_object_key(self, obj: t.TypeHintSpecifier | t.NormalizedValue) -> str:
-        """Get comparable string key from object (generic helper).
+        """Get comparable string key from t.NormalizedValue (generic helper).
 
-        This generic helper consolidates object-to-key conversion logic from
+        This generic helper consolidates t.NormalizedValue-to-key conversion logic from
         dispatcher.py (_normalize_command_key) and provides flexible key extraction
         strategies for objects.
 
@@ -1088,7 +1088,7 @@ class FlextUtilitiesParser:
             1. Try __name__ attribute (for types, classes, functions)
             2. Try dict 'name' or 'id' key values (for dict-like objects)
             3. Try 'name' or 'id' attribute on instances
-            4. Try object class name
+            4. Try t.NormalizedValue class name
             5. Try str conversion
             6. Use type name as final fallback
 
@@ -1096,7 +1096,7 @@ class FlextUtilitiesParser:
             obj: Object to extract key from (type, class, instance, etc.)
 
         Returns:
-            String key for object (comparable, hashable)
+            String key for t.NormalizedValue (comparable, hashable)
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -1112,7 +1112,7 @@ class FlextUtilitiesParser:
             >>> parser.get_object_key({"name": "MyObj"})
             'MyObj'
             >>> # Instance
-            >>> obj = object()
+            >>> obj = t.NormalizedValue()
             >>> key = parser.get_object_key(obj)
             >>> isinstance(key, str)
             True
@@ -1125,7 +1125,7 @@ class FlextUtilitiesParser:
         except (AttributeError, TypeError):
             obj_type_name = "Unknown"
         self._parser_log.debug(
-            "Starting object key extraction",
+            "Starting t.NormalizedValue key extraction",
             operation="get_object_key",
             obj_type=obj_type_name,
             has_name_attr=hasattr(obj, "__name__"),
@@ -1252,7 +1252,7 @@ class FlextUtilitiesParser:
         Args:
             text: String to parse
             delimiter: Delimiter character/string
-            options: ParseOptions object with parsing configuration
+            options: ParseOptions t.NormalizedValue with parsing configuration
 
         Returns:
             r with list of parsed components or error

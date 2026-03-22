@@ -482,7 +482,7 @@ class TestFlextTestsMatchers:
                 self.attr2 = "value2"
 
         obj = TestClass()
-        tm.that(cast("t.Tests.object", obj), attrs=["attr1", "attr2"])
+        tm.that(cast("t.Tests.t.NormalizedValue", obj), attrs=["attr1", "attr2"])
 
     def test_that_with_methods_parameter(self) -> None:
         """Test tm.that() with methods parameter."""
@@ -495,7 +495,7 @@ class TestFlextTestsMatchers:
                 pass
 
         obj = TestClass()
-        tm.that(cast("t.Tests.object", obj), methods=["method1", "method2"])
+        tm.that(cast("t.Tests.t.NormalizedValue", obj), methods=["method1", "method2"])
 
     def test_that_with_attr_eq_tuple_parameter(self) -> None:
         """Test tm.that() with attr_eq tuple parameter."""
@@ -505,7 +505,7 @@ class TestFlextTestsMatchers:
                 self.attr = "value"
 
         obj = TestClass()
-        tm.that(cast("t.Tests.object", obj), attr_eq=("attr", "value"))
+        tm.that(cast("t.Tests.t.NormalizedValue", obj), attr_eq=("attr", "value"))
 
     def test_that_with_attr_eq_mapping_parameter(self) -> None:
         """Test tm.that() with attr_eq mapping parameter."""
@@ -517,7 +517,8 @@ class TestFlextTestsMatchers:
 
         obj = TestClass()
         tm.that(
-            cast("t.Tests.object", obj), attr_eq={"attr1": "value1", "attr2": "value2"}
+            cast("t.Tests.t.NormalizedValue", obj),
+            attr_eq={"attr1": "value1", "attr2": "value2"},
         )
 
     def test_that_with_ok_parameter(self) -> None:
@@ -548,7 +549,7 @@ class TestFlextTestsMatchers:
         tm.that(["a", 1, "c"], any=int)
 
     def test_check_returns_chain(self) -> None:
-        """Test tm.check() returns Chain object."""
+        """Test tm.check() returns Chain t.NormalizedValue."""
         result = r[int].ok(42)
         chain = tm.check(result)
         assert chain is not None

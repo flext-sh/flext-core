@@ -79,7 +79,7 @@ class FlextModelsCqrs:
     class Pagination(BaseModel):
         """Pagination model for query results."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
                 "title": "Pagination",
                 "description": "Pagination model for query results with computed fields",
@@ -116,7 +116,7 @@ class FlextModelsCqrs:
     class Query(BaseModel):
         """Query model for CQRS query operations."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "Query",
@@ -238,7 +238,7 @@ class FlextModelsCqrs:
     class Bus(BaseModel):
         """Dispatcher configuration model for CQRS routing."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
                 "title": "Dispatcher",
                 "description": "CQRS dispatcher configuration",
@@ -282,7 +282,7 @@ class FlextModelsCqrs:
     class Handler(BaseModel):
         """Handler configuration model with Builder pattern support."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
                 "title": "Handler",
                 "description": "CQRS handler configuration",
@@ -331,13 +331,13 @@ class FlextModelsCqrs:
         ] = None
 
         class ConfigParams(BaseModel):
-            """Parameter object for handler configuration (reduces parameter count)."""
+            """Parameter t.NormalizedValue for handler configuration (reduces parameter count)."""
 
-            model_config = ConfigDict(
+            model_config: ClassVar[ConfigDict] = ConfigDict(
                 arbitrary_types_allowed=True,
                 json_schema_extra={
                     "title": "HandlerConfigParams",
-                    "description": "Parameter object for handler configuration",
+                    "description": "Parameter t.NormalizedValue for handler configuration",
                 },
             )
             default_name: str | None = None

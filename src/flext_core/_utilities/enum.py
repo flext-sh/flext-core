@@ -35,7 +35,7 @@ class FlextUtilitiesEnum:
     _V = m.Validators
 
     @staticmethod
-    def _is_strenum_class(value: object) -> TypeIs[type[StrEnum]]:
+    def _is_strenum_class(value: t.NormalizedValue) -> TypeIs[type[StrEnum]]:
         return isinstance(value, type) and issubclass(value, StrEnum)
 
     @staticmethod
@@ -428,7 +428,7 @@ class FlextUtilitiesEnum:
         """Return frozenset of members (cached for performance).
 
         Business Rule: Returns immutable frozenset of all enum members.
-        Cache ensures same object returned for same enum class (identity preserved).
+        Cache ensures same t.NormalizedValue returned for same enum class (identity preserved).
         Manual cache dictionary handles enum classes efficiently.
 
         Audit Implication: Cached results ensure consistent identity across calls.
@@ -446,7 +446,7 @@ class FlextUtilitiesEnum:
         """Return frozenset of member names (cached for performance).
 
         Business Rule: Returns immutable frozenset of all enum member names.
-        Cache ensures same object returned for same enum class (identity preserved).
+        Cache ensures same t.NormalizedValue returned for same enum class (identity preserved).
         Manual cache dictionary handles enum classes efficiently.
 
         Audit Implication: Cached results ensure consistent identity across calls.
@@ -507,7 +507,7 @@ class FlextUtilitiesEnum:
         """Return frozenset of values (cached for performance).
 
         Business Rule: Returns immutable frozenset of all enum values.
-        Cache ensures same object returned for same enum class (identity preserved).
+        Cache ensures same t.NormalizedValue returned for same enum class (identity preserved).
         Manual cache dictionary handles enum classes efficiently.
 
         Audit Implication: Cached results ensure consistent identity across calls,

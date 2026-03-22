@@ -40,7 +40,9 @@ class TestDecoratorsFullCoverage:
             self.exception_calls.append((message, kwargs))
 
     class _ObjWithLogger(BaseModel):
-        logger: Annotated[object, Field(description="Logger instance holder")]
+        logger: Annotated[
+            t.NormalizedValue, Field(description="Logger instance holder")
+        ]
 
     def test_deprecated_wrapper_emits_warning_and_returns_value(self) -> None:
         @d.deprecated("old API")
@@ -81,8 +83,8 @@ class TestDecoratorsFullCoverage:
         fake_logger = self._FakeLogger()
 
         def _resolve_logger(
-            _args: tuple[object, ...],
-            _func: Callable[..., object],
+            _args: tuple[t.NormalizedValue, ...],
+            _func: Callable[..., t.NormalizedValue],
         ) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
@@ -129,8 +131,8 @@ class TestDecoratorsFullCoverage:
             return None
 
         def _resolve_logger(
-            _args: tuple[object, ...],
-            _func: Callable[..., object],
+            _args: tuple[t.NormalizedValue, ...],
+            _func: Callable[..., t.NormalizedValue],
         ) -> TestDecoratorsFullCoverage._FakeLogger:
             return TestDecoratorsFullCoverage._FakeLogger()
 
@@ -389,8 +391,8 @@ class TestDecoratorsFullCoverage:
         tm.that(ensure_calls, eq=[1])
 
         def _resolve_logger(
-            _args: tuple[object, ...],
-            _func: Callable[..., object],
+            _args: tuple[t.NormalizedValue, ...],
+            _func: Callable[..., t.NormalizedValue],
         ) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
@@ -452,8 +454,8 @@ class TestDecoratorsFullCoverage:
         fake_logger = self._FakeLogger()
 
         def _resolve_logger(
-            _args: tuple[object, ...],
-            _func: Callable[..., object],
+            _args: tuple[t.NormalizedValue, ...],
+            _func: Callable[..., t.NormalizedValue],
         ) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
@@ -511,8 +513,8 @@ class TestDecoratorsFullCoverage:
         fake_logger = self._FakeLogger()
 
         def _resolve_logger(
-            _args: tuple[object, ...],
-            _func: Callable[..., object],
+            _args: tuple[t.NormalizedValue, ...],
+            _func: Callable[..., t.NormalizedValue],
         ) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 

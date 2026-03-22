@@ -140,8 +140,8 @@ The current implementation uses manual state management:
 
 ```python
 # Internal state (handlers.py lines 177-178)
-self._context_stack: list[dict[str, object]] = []
-self._metrics: dict[str, object] = {}
+self._context_stack: list[dict[str, t.NormalizedValue]] = []
+self._metrics: dict[str, t.NormalizedValue] = {}
 
 # Methods for state management
 handler.push_context({"operation": "create_user"})

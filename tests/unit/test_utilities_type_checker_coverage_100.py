@@ -75,11 +75,11 @@ class TestuTypeChecker:
                 **message,
             })
 
-    class ObjectHandler(h[object, t.Container]):
-        """Handler for object messages."""
+    class ObjectHandler(h[t.NormalizedValue, t.Container]):
+        """Handler for t.NormalizedValue messages."""
 
         @override
-        def handle(self, message: object) -> r[t.Container]:
+        def handle(self, message: t.NormalizedValue) -> r[t.Container]:
             if isinstance(message, (str, int, float, bool)):
                 return r[t.Container].ok(message)
             return r[t.Container].fail("unsupported message")
@@ -147,10 +147,10 @@ class TestuTypeChecker:
             tm.that(origin, eq=dict)
 
     def test_compute_accepted_message_types_object_handler(self) -> None:
-        """Test compute_accepted_message_types with object handler (universal)."""
+        """Test compute_accepted_message_types with t.NormalizedValue handler (universal)."""
         types = u.compute_accepted_message_types(self.ObjectHandler)
         tm.that(len(types), eq=1)
-        tm.that(types[0], eq=object)
+        tm.that(types[0], eq=t.NormalizedValue)
 
     def test_can_handle_message_type_exact_match(self) -> None:
         """Test can_handle_message_type with exact type match."""
@@ -159,9 +159,9 @@ class TestuTypeChecker:
         tm.that(u.can_handle_message_type(accepted, int), eq=False)
 
     def test_can_handle_message_type_object_accepts_all(self) -> None:
-        """Test can_handle_message_type with object type (universal)."""
+        """Test can_handle_message_type with t.NormalizedValue type (universal)."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (
-            cast("t.MessageTypeSpecifier", object),
+            cast("t.MessageTypeSpecifier", t.NormalizedValue),
         )
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, int), eq=True)
@@ -198,8 +198,10 @@ class TestuTypeChecker:
         tm.that(u._evaluate_type_compatibility(int, int), eq=True)
 
     def test_evaluate_type_compatibility_object_accepts_all(self) -> None:
-        """Test _evaluate_type_compatibility with object type."""
-        object_type: t.TypeHintSpecifier = cast("t.TypeOriginSpecifier", object)
+        """Test _evaluate_type_compatibility with t.NormalizedValue type."""
+        object_type: t.TypeHintSpecifier = cast(
+            "t.TypeOriginSpecifier", t.NormalizedValue
+        )
         tm.that(u._evaluate_type_compatibility(object_type, str), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, int), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, dict), eq=True)
@@ -225,13 +227,15 @@ class TestuTypeChecker:
         tm.that(result_different, is_=bool)
 
     def test_check_object_type_compatibility_object_type(self) -> None:
-        """Test _check_object_type_compatibility with object type."""
-        object_type: t.TypeHintSpecifier = cast("t.TypeOriginSpecifier", object)
+        """Test _check_object_type_compatibility with t.NormalizedValue type."""
+        object_type: t.TypeHintSpecifier = cast(
+            "t.TypeOriginSpecifier", t.NormalizedValue
+        )
         result = u._check_object_type_compatibility(object_type)
         tm.that(result, eq=True)
 
     def test_check_object_type_compatibility_non_object(self) -> None:
-        """Test _check_object_type_compatibility with non-object type."""
+        """Test _check_object_type_compatibility with non-t.NormalizedValue type."""
         result = u._check_object_type_compatibility(str)
         tm.that(result, eq=False)
 
@@ -248,7 +252,7 @@ class TestuTypeChecker:
     def test_check_dict_compatibility_dict_subclass(self) -> None:
         """Test _check_dict_compatibility with dict subclass."""
 
-        class CustomDict(BaseUserDict[str, object]):
+        class CustomDict(BaseUserDict[str, t.NormalizedValue]):
             """Custom dict subclass."""
 
         result = u._check_dict_compatibility(

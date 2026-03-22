@@ -45,7 +45,7 @@ class TestCollectionUtilitiesCoverage:
     class ParseSequenceScenario(BaseModel):
         """Scenario for sequence parsing."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse sequence scenario name")]
         values: Annotated[
             list[str | TestCollectionUtilitiesCoverage.Status],
@@ -65,9 +65,11 @@ class TestCollectionUtilitiesCoverage:
     class CoerceListValidatorScenario(BaseModel):
         """Scenario for list coercion."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce list scenario name")]
-        value: Annotated[object, Field(description="Input value for list coercion")]
+        value: Annotated[
+            t.NormalizedValue, Field(description="Input value for list coercion")
+        ]
         expected_success: Annotated[
             bool, Field(description="Whether coercion should succeed")
         ]
@@ -79,7 +81,7 @@ class TestCollectionUtilitiesCoverage:
     class ParseMappingScenario(BaseModel):
         """Scenario for mapping parsing."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse mapping scenario name")]
         mapping: Annotated[
             dict[str, str | TestCollectionUtilitiesCoverage.Status],

@@ -60,7 +60,7 @@ class FlextUtilitiesCache:
        - Type-aware sorting for cross-type comparisons
 
     2. **Type Safety**:
-       - Handles all object variants
+       - Handles all t.NormalizedValue variants
        - BaseModel special handling with model_dump()
        - Graceful fallback to string representation
 
@@ -79,7 +79,7 @@ class FlextUtilitiesCache:
     def clear_object_cache(
         obj: BaseModel | p.HasModelDump | t.NormalizedValue,
     ) -> r[bool]:
-        """Clear cache-like attributes on an object.
+        """Clear cache-like attributes on an t.NormalizedValue.
 
         Business Rule: Safe Cache Invalidation
         =====================================
@@ -186,11 +186,11 @@ class FlextUtilitiesCache:
     def has_cache_attributes(
         obj: BaseModel | p.HasModelDump | t.NormalizedValue,
     ) -> bool:
-        """Check if an object exposes any known cache-related attributes.
+        """Check if an t.NormalizedValue exposes any known cache-related attributes.
 
         Business Rule: Cache Detection
         ==============================
-        Quick check to determine if an object might have cached data.
+        Quick check to determine if an t.NormalizedValue might have cached data.
         Useful for deciding whether to attempt cache clearing.
 
         Args:
@@ -277,7 +277,7 @@ class FlextUtilitiesCache:
         Type Safety:
         - Uses FlextRuntime.is_dict_like for Mapping detection
         - Returns input unchanged if not dict-like
-        - Preserves object contract
+        - Preserves t.NormalizedValue contract
 
         Args:
             data: input value
@@ -329,7 +329,7 @@ class FlextUtilitiesCache:
         - Deterministic across Python runs
 
         Args:
-            key: Sortable object (str, int, tuple, etc. - usually dict key)
+            key: Sortable t.NormalizedValue (str, int, tuple, etc. - usually dict key)
 
         Returns:
             Tuple for sorted() key function

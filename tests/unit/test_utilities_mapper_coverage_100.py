@@ -21,18 +21,15 @@ from typing import Annotated, cast
 from flext_tests import tm
 from pydantic import BaseModel, Field
 
-from tests import t, u
-
-from ..test_utils import assertion_helpers
-from ._models import TestUnitModels
+from tests import TestUnitModels, assertion_helpers, t, u
 
 
 class UtilitiesMapperCoverage100Namespace:
     class SimpleObj(BaseModel):
-        """Simple test object."""
+        """Simple test t.NormalizedValue."""
 
-        name: Annotated[str, Field(description="Simple object name")]
-        value: Annotated[int, Field(description="Simple object value")]
+        name: Annotated[str, Field(description="Simple t.NormalizedValue name")]
+        value: Annotated[int, Field(description="Simple t.NormalizedValue value")]
 
     class _DoubleOp(BaseModel):
         def __call__(self, value: float | str) -> int | float | str:
@@ -103,7 +100,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(result.value, eq=3)
 
         def test_extract_object(self) -> None:
-            """Test object attribute extraction."""
+            """Test t.NormalizedValue attribute extraction."""
             obj = SimpleObj(name="test", value=42)
             result = u.extract(obj, "name")
             _ = assertion_helpers.assert_flext_result_success(result)

@@ -135,7 +135,7 @@ class FlextModelsHandler:
         handler: Annotated[
             t.HandlerCallable | p.Handler[p.Model, t.ValueOrModel] | BaseModel,
             Field(
-                description="Handler instance (callable, object, or FlextHandlers)",
+                description="Handler instance (callable, t.NormalizedValue, or FlextHandlers)",
             ),
         ]
         message_type: Annotated[
@@ -187,7 +187,7 @@ class FlextModelsHandler:
 
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
                 "title": "RegistrationDetails",
                 "description": "Handler registration tracking details",
@@ -233,7 +233,7 @@ class FlextModelsHandler:
         Provides timing and metrics tracking for handler executions in the
         FlextContext system. Uses Pydantic 2 PrivateAttr for internal state.
 
-        This mutable context object tracks handler execution performance,
+        This mutable context t.NormalizedValue tracks handler execution performance,
         including timing, metrics, and execution state. It is designed to be
         created at the start of handler execution and updated throughout.
 
@@ -252,7 +252,7 @@ class FlextModelsHandler:
 
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "HandlerExecutionContext",
@@ -410,7 +410,7 @@ class FlextModelsHandler:
 
         """
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         command: Annotated[
             type,
             Field(description="Command type this handler processes"),

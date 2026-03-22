@@ -36,7 +36,7 @@ class FlextExceptions:
     class _ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             extra=c.EXTRA_FORBID,
             strict=True,
             validate_assignment=True,
@@ -401,7 +401,7 @@ class FlextExceptions:
             t.MetadataValue | None,
             Field(
                 default=None,
-                description="Context payload describing the object or state during access failure.",
+                description="Context payload describing the t.NormalizedValue or state during access failure.",
                 title="Attribute Context",
                 examples=[{"owner": "session"}],
             ),
@@ -724,7 +724,7 @@ class FlextExceptions:
             """Normalize metadata from various input types to m.Metadata model.
 
             Args:
-                metadata: m.Metadata instance, dict-like object, or None
+                metadata: m.Metadata instance, dict-like t.NormalizedValue, or None
                 merged_kwargs: Additional attributes to merge
 
             Returns:
@@ -769,7 +769,7 @@ class FlextExceptions:
             metadata_dict: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap,
             merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
         ) -> m.Metadata:
-            """Normalize metadata from dict-like object."""
+            """Normalize metadata from dict-like t.NormalizedValue."""
             merged_attrs: dict[str, t.MetadataValue | None] = {}
             for k, v in metadata_dict.items():
                 merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
@@ -1516,7 +1516,7 @@ class FlextExceptions:
         context: t.ConfigMap,
         metadata_obj: m.Metadata | Mapping[str, t.MetadataOrValue | None] | None,
     ) -> None:
-        """Merge metadata object into context dictionary."""
+        """Merge metadata t.NormalizedValue into context dictionary."""
         if metadata_obj is None:
             return
         metadata_model = e._safe_metadata(metadata_obj)

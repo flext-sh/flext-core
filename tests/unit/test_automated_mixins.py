@@ -10,6 +10,7 @@ from flext_tests import tm, u
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextMixins, r, s
+from tests import t
 
 
 class TestAutomatedFlextMixins:
@@ -88,7 +89,9 @@ class TestAutomatedFlextMixins:
         [("raw", "raw"), ("track", "track")],
         ids=lambda case: case[0],
     )
-    def test_track_benchmark(self, mode: str, benchmark: Callable[..., object]) -> None:
+    def test_track_benchmark(
+        self, mode: str, benchmark: Callable[..., t.NormalizedValue]
+    ) -> None:
         svc = self._MixinTestService()
         simple = u.Tests.Factory.simple_operation
 

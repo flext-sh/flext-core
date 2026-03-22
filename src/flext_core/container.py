@@ -775,14 +775,14 @@ class FlextContainer(p.Container):
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts service values for registration,
-        including object, protocols (Config, Ctx, DI, Service, Log,
+        including t.NormalizedValue, protocols (Config, Ctx, DI, Service, Log,
         Handler, Registry), and callables. This enables dependency injection of
         typed service instances and protocol implementations.
 
         Args:
             name: Unique key for the registration.
             impl: Concrete instance or callable used for registration.
-                Must be object (primitives, BaseModel, callable,
+                Must be t.NormalizedValue (primitives, BaseModel, callable,
                 sequence, or mapping).
 
         Returns:
@@ -822,7 +822,7 @@ class FlextContainer(p.Container):
                 def normalized_factory() -> t.RegisterableService:
                     raw_result = factory_fn()
                     if not u.is_registerable_service(raw_result):
-                        msg = f"Factory '{name}' returned value that does not satisfy RegisterableService protocol. Expected object, protocol, or callable."
+                        msg = f"Factory '{name}' returned value that does not satisfy RegisterableService protocol. Expected t.NormalizedValue, protocol, or callable."
                         raise ValueError(msg)
                     return raw_result
 

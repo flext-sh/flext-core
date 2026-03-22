@@ -54,7 +54,7 @@ class TestModels:
     class ModelCreationScenario(BaseModel):
         """Scenario for testing model creation."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         model_type: Annotated[
             TestModels.ModelType, Field(description="Model type under creation test")
@@ -99,7 +99,7 @@ class TestModels:
         """Test models initialization with real validation."""
         models = m()
         tm.that(
-            cast("test_t.Tests.object", models),
+            cast("test_t.Tests.t.NormalizedValue", models),
             none=False,
             msg="m instance must not be None",
         )
@@ -157,7 +157,7 @@ class TestModels:
             _ = TestEntity(name="Test User", email="invalid-email", domain_events=[])
 
     def test_models_value_object_creation(self) -> None:
-        """Test value object creation and immutability."""
+        """Test value t.NormalizedValue creation and immutability."""
 
         class TestValue(m.Value):
             data: str
@@ -586,7 +586,7 @@ class TestModels:
             _ = FailingAggregate(name="test", domain_events=[])
 
     def test_value_object_immutability(self) -> None:
-        """Test Value object immutability and equality."""
+        """Test Value t.NormalizedValue immutability and equality."""
 
         class TestValue(m.Value):
             name: str
@@ -870,7 +870,7 @@ class TestModels:
         )
         tm.that(retry.backoff_multiplier, eq=2.0, msg="backoff_multiplier must be 2.0")
         tm.that(
-            cast("test_t.Tests.object", retry.retry_on_exceptions),
+            cast("test_t.Tests.t.NormalizedValue", retry.retry_on_exceptions),
             is_=list,
             none=False,
             empty=True,

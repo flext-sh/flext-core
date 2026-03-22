@@ -699,7 +699,7 @@ class FlextUtilitiesMapper:
         | Mapping[str, t.ValueOrModel],
         field_name: str,
     ) -> t.NormalizedValue:
-        """Extract field value from item (dict or object).
+        """Extract field value from item (dict or t.NormalizedValue).
 
         Helper method to improve type inference for pyrefly.
         """
@@ -726,7 +726,7 @@ class FlextUtilitiesMapper:
         | Mapping[str, t.NormalizedValue],
         key_part: str,
     ) -> r[t.NormalizedValue]:
-        """Helper: Get raw value from dict/object/model.
+        """Helper: Get raw value from dict/t.NormalizedValue/model.
 
         Returns:
             r[t.NormalizedValue]: Ok with value if found (non-None),
@@ -899,7 +899,7 @@ class FlextUtilitiesMapper:
     def _narrow_to_configuration_dict(
         value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
     ) -> dict[str, t.NormalizedValue]:
-        """Safely narrow object to ConfigurationDict with runtime validation."""
+        """Safely narrow t.NormalizedValue to ConfigurationDict with runtime validation."""
         if FlextUtilitiesGuards.is_configuration_dict(value):
             normalized_dict: dict[str, t.NormalizedValue] = {}
             for key, item in value.items():
@@ -914,7 +914,7 @@ class FlextUtilitiesMapper:
     def _narrow_to_configuration_mapping(
         value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
     ) -> t.ConfigMap:
-        """Safely narrow object to ConfigurationMapping with runtime validation."""
+        """Safely narrow t.NormalizedValue to ConfigurationMapping with runtime validation."""
         if isinstance(value, t.ConfigMap):
             return value
         if isinstance(value, Mapping):
@@ -936,7 +936,7 @@ class FlextUtilitiesMapper:
     def _narrow_to_sequence(
         value: t.NormalizedValue | Sequence[t.NormalizedValue],
     ) -> Sequence[t.NormalizedValue]:
-        """Safely narrow object to Sequence[t.NormalizedValue]."""
+        """Safely narrow t.NormalizedValue to Sequence[t.NormalizedValue]."""
         if isinstance(value, (list, tuple)):
             narrowed_items: t.ContainerList = []
             for item_raw in value:
@@ -951,9 +951,9 @@ class FlextUtilitiesMapper:
     def _narrow_to_string_keyed_dict(
         value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
     ) -> dict[str, t.NormalizedValue]:
-        """Narrow object to ConfigurationDict (for conversion purposes).
+        """Narrow t.NormalizedValue to ConfigurationDict (for conversion purposes).
 
-        Validates that the value is a dict with string keys and object values.
+        Validates that the value is a dict with string keys and t.NormalizedValue values.
         Uses TypeGuard pattern for proper type narrowing.
         """
         if isinstance(value, Mapping):
@@ -1367,9 +1367,9 @@ class FlextUtilitiesMapper:
         *,
         on_error: str = "stop",
     ) -> Mapping[str, t.NormalizedValue]:
-        """Construct object using mnemonic specification pattern.
+        """Construct t.NormalizedValue using mnemonic specification pattern.
 
-        Builds object from mnemonic spec that maps target keys to source
+        Builds t.NormalizedValue from mnemonic spec that maps target keys to source
         fields or DSL operations. Supports field mapping, default values,
         and DSL operations.
 
@@ -1638,12 +1638,12 @@ class FlextUtilitiesMapper:
         """Safe nested data extraction with dot notation.
 
         Business Rule: Extracts nested values using dot notation paths.
-        Supports dict access, object attributes, and Pydantic model fields.
+        Supports dict access, t.NormalizedValue attributes, and Pydantic model fields.
         Array indexing supported via "key[0]" syntax. Required mode fails
         if path not found, otherwise returns default.
 
         Args:
-            data: Source data (dict, object with attributes, or Pydantic model)
+            data: Source data (dict, t.NormalizedValue with attributes, or Pydantic model)
             path: Dot-separated path (e.g., "user.profile.name")
             default: Default value if path not found
             required: Fail if path not found
@@ -1751,7 +1751,7 @@ class FlextUtilitiesMapper:
         FLEXT Pattern: Simplified single-field extraction (split from overloaded fields).
 
         Args:
-            source: Source data (dict or object)
+            source: Source data (dict or t.NormalizedValue)
             name: Field name to extract
             default: Default value if field not found
             required: If True, returns None on missing
@@ -1795,7 +1795,7 @@ class FlextUtilitiesMapper:
         obj: p.AccessibleData,
         *field_names: str | t.NormalizedValue,
     ) -> Mapping[str, t.NormalizedValue]:
-        """Extract specified fields from object.
+        """Extract specified fields from t.NormalizedValue.
 
         Supports two patterns:
         1. Simple: u.fields(obj, "name", "email", "id")
@@ -1870,7 +1870,7 @@ class FlextUtilitiesMapper:
         FLEXT Pattern: Simplified multi-field extraction (split from overloaded fields).
 
         Args:
-            source: Source data (dict or object)
+            source: Source data (dict or t.NormalizedValue)
             spec: Field specification dict {field_name: default_value}
 
         Returns:
@@ -1990,15 +1990,15 @@ class FlextUtilitiesMapper:
         *,
         default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
-        """Unified get function for dict/object access with default.
+        """Unified get function for dict/t.NormalizedValue access with default.
 
         Generic replacement for: get(), get_str(), get_list()
 
-        Automatically detects if data is dict or object and extracts value.
+        Automatically detects if data is dict or t.NormalizedValue and extracts value.
         Uses DSL conversion when default type indicates desired return type.
 
         Args:
-            data: Source data (dict or object)
+            data: Source data (dict or t.NormalizedValue)
             key: Key/attribute name
             default: Default value if not found
                 - str (e.g., "") -> returns str (generalized from get_str)
@@ -2129,7 +2129,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_dict(
-        raw: Mapping[str, t.MetadataOrValue | object | BaseModel],
+        raw: Mapping[str, t.MetadataOrValue | t.NormalizedValue | BaseModel],
     ) -> dict[str, t.NormalizedValue]:
         """Convert a dict with heterogeneous values to NormalizedValue dict.
 
@@ -2149,7 +2149,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_list(
-        raw: Sequence[t.MetadataOrValue | object | BaseModel],
+        raw: Sequence[t.MetadataOrValue | t.NormalizedValue | BaseModel],
     ) -> list[t.NormalizedValue]:
         """Convert a list with heterogeneous values to NormalizedValue list.
 
@@ -2167,7 +2167,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def narrow_to_container(
         value: t.MetadataOrValue
-        | object
+        | t.NormalizedValue
         | BaseModel
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.ValueOrModel]
@@ -2320,7 +2320,7 @@ class FlextUtilitiesMapper:
         Generic replacement for: Multiple get() calls
 
         Args:
-            data: Source data (dict or object)
+            data: Source data (dict or t.NormalizedValue)
             *keys: Field names to pick
             as_dict: If True, return dict; if False, return list
 
@@ -2420,8 +2420,8 @@ class FlextUtilitiesMapper:
         ```
 
         Args:
-            primary_data: Main data source (dict, object, or None)
-            secondary_data: Additional data to merge (dict, object, or None)
+            primary_data: Main data source (dict, t.NormalizedValue, or None)
+            secondary_data: Additional data to merge (dict, t.NormalizedValue, or None)
             transformer: Function to transform all values (default: identity)
             field_overrides: Specific field values to override/add
             merge_strategy: How to merge data ("merge", "primary_only", "secondary_only")
@@ -2525,14 +2525,14 @@ class FlextUtilitiesMapper:
     ) -> Callable[[t.ConfigModelInput], t.NormalizedValue]:
         """Create a property accessor function (functional pattern).
 
-        Returns a function that extracts a property/attribute from an object.
+        Returns a function that extracts a property/attribute from an t.NormalizedValue.
         Useful for functional programming patterns and DSL composition.
 
         Args:
             key: Property/attribute name to access
 
         Returns:
-            Function that takes an object and returns its property value
+            Function that takes an t.NormalizedValue and returns its property value
 
         Example:
             >>> get_name = FlextUtilitiesMapper.prop("name")
@@ -2544,7 +2544,7 @@ class FlextUtilitiesMapper:
         """
 
         def accessor(obj: t.ConfigModelInput) -> t.NormalizedValue:
-            """Access property from object."""
+            """Access property from t.NormalizedValue."""
             result = FlextUtilitiesMapper.get(obj, key)
             return result if result is not None else ""
 
@@ -2600,11 +2600,11 @@ class FlextUtilitiesMapper:
         Generic replacement for: list slicing, dict slicing
 
         Automatically detects operation based on second argument type:
-        - If key_or_n is str: extracts value from dict/object with type guard
+        - If key_or_n is str: extracts value from dict/t.NormalizedValue with type guard
         - If key_or_n is int: takes first N items from list/dict
 
         Args:
-            data_or_items: Source data (dict/object) or items (list/dict)
+            data_or_items: Source data (dict/t.NormalizedValue) or items (list/dict)
             key_or_n: Key name (str) or number of items (int)
             as_type: Optional type to guard against (for extraction mode)
             default: Default value if not found or type mismatch

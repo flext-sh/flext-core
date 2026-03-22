@@ -32,7 +32,7 @@ class TestAdvancedPatterns:
     """Test class demonstrating advanced testing patterns."""
 
     class MockScenario:
-        """Mock scenario object for testing purposes."""
+        """Mock scenario t.NormalizedValue for testing purposes."""
 
         def __init__(self, name: str, data: m.MockScenarioData) -> None:
             """Initialize mockscenario:."""
@@ -131,7 +131,7 @@ class TestAdvancedPatterns:
             """
 
             def convert_dict_value(value: t.NormalizedValue) -> str | int | bool:
-                """Convert object to str | int | bool."""
+                """Convert t.NormalizedValue to str | int | bool."""
                 if isinstance(value, (str, int, bool)):
                     return value
                 if isinstance(value, float):

@@ -29,7 +29,7 @@ class TestFlextRegistry:
     class RegistryTestCase(BaseModel):
         """Test case for registry operations."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Registry test case name")]
         operation: Annotated[StrEnum, Field(description="Registry operation type")]
@@ -256,7 +256,7 @@ class TestFlextRegistry:
         registry = u.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(
-                cast("t.HandlerLike", cast("object", None)),
+                cast("t.HandlerLike", cast("t.NormalizedValue", None)),
             )
         else:
             handler = self.ConcreteTestHandler()
@@ -359,7 +359,7 @@ class TestFlextRegistry:
         registry = u.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(
-                cast("t.HandlerLike", cast("object", None)),
+                cast("t.HandlerLike", cast("t.NormalizedValue", None)),
             )
             _ = u.Tests.Result.assert_failure(result)
             u.Tests.Result.assert_failure_with_error(

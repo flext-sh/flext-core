@@ -25,9 +25,9 @@ class TestUtilitiesContextFullCoverage:
         """Fake runtime class with all expected attributes."""
 
         def __init__(self) -> None:
-            self._dispatcher = object()
-            self._registry = object()
-            self._context = object()
+            self._dispatcher = t.NormalizedValue()
+            self._registry = t.NormalizedValue()
+            self._context = t.NormalizedValue()
             self._config = TestUnitModels._FakeConfig(timeout=10)
 
     class _FakeContext:

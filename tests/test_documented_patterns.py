@@ -12,7 +12,8 @@ from typing import Annotated, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, FlextService, p, r, t
+from flext_core import FlextExceptions, FlextService, p, r
+from tests import t
 
 from ._models import EmailResponse
 from .test_utils import assertion_helpers
@@ -34,7 +35,7 @@ class TestDocumentedPatterns:
     class ServiceTestCase(BaseModel):
         """Test case for service."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         user_id: Annotated[str, Field(description="User identifier for test case")]
         expected_success: Annotated[
@@ -62,7 +63,7 @@ class TestDocumentedPatterns:
     class RailwayTestCase(BaseModel):
         """Test case for railway pattern."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         user_ids: Annotated[
             list[str], Field(description="User identifiers used in pipeline")

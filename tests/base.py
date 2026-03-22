@@ -41,7 +41,7 @@ class TestsFlextServiceBase(s[T]):
     class HandlerTestCase(BaseModel):
         """Factory for handler test case configurations."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         handler_id: Annotated[
             str, Field(description="Unique handler identifier for test case")

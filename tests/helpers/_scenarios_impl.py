@@ -20,13 +20,15 @@ from tests import t
 class ValidationScenario(BaseModel):
     """Single scenario for validation testing."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Unique scenario name")]
     validator_type: Annotated[str, Field(description="Validator category under test")]
-    input_value: Annotated[object, Field(description="Input value passed to validator")]
+    input_value: Annotated[
+        t.NormalizedValue, Field(description="Input value passed to validator")
+    ]
     input_params: Annotated[
-        object | None,
+        t.NormalizedValue | None,
         Field(
             default=None,
             description="Optional validator parameters for scenario execution",
@@ -37,7 +39,7 @@ class ValidationScenario(BaseModel):
         Field(default=True, description="Whether scenario expects validation success"),
     ] = True
     expected_value: Annotated[
-        object | None,
+        t.NormalizedValue | None,
         Field(
             default=None,
             description="Expected normalized value when validation succeeds",
@@ -58,13 +60,13 @@ class ValidationScenario(BaseModel):
 class ParserScenario(BaseModel):
     """Single scenario for parser testing."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Unique parser scenario name")]
     parser_method: Annotated[str, Field(description="Parser method to execute")]
     input_data: Annotated[str, Field(description="Raw parser input data")]
     expected_output: Annotated[
-        object | None,
+        t.NormalizedValue | None,
         Field(
             default=None, description="Expected parsed output for successful scenarios"
         ),
@@ -84,7 +86,7 @@ class ParserScenario(BaseModel):
 class ReliabilityScenario(BaseModel):
     """Single scenario for reliability testing (circuit breaker, retry)."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Unique reliability scenario name")]
     strategy: Annotated[str, Field(description="Reliability strategy under test")]

@@ -645,7 +645,7 @@ class FlextUtilitiesCollection:
         """Extract mapping items as typed list for iteration.
 
         Helper function to properly type narrow Mapping.items() for pyright.
-        Converts keys to strings and values to object.
+        Converts keys to strings and values to t.NormalizedValue.
 
         Args:
             mapping: Mapping to extract items from

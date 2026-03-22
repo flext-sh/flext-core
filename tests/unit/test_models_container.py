@@ -36,7 +36,7 @@ class TestFlextModelsContainer:
     class _ContainerModelsScenarios:
         """Test scenarios for container models."""
 
-        METADATA_VALUES: ClassVar[list[tuple[object, bool]]] = [
+        METADATA_VALUES: ClassVar[list[tuple[t.NormalizedValue, bool]]] = [
             (None, True),
             ({}, True),
             ({"key": "value"}, True),
@@ -90,7 +90,7 @@ class TestFlextModelsContainer:
 
     @staticmethod
     def _normalize_metadata_obj(value: list[int]) -> m.Metadata:
-        """Call ensure_metadata with arbitrary object for error-path testing."""
+        """Call ensure_metadata with arbitrary t.NormalizedValue for error-path testing."""
         fn: Callable[..., m.Metadata] = getattr(u, "ensure_metadata")
         return fn(value)
 

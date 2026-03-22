@@ -76,7 +76,7 @@ class TestFlextUtilitiesArgs:
     class ParseKwargsScenario(BaseModel):
         """Parse kwargs test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse kwargs scenario name")]
         kwargs: Annotated[
             t.ConfigMap, Field(description="Keyword arguments input payload")
@@ -100,7 +100,7 @@ class TestFlextUtilitiesArgs:
     class ValidatedScenario(BaseModel):
         """Validated decorator test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Validated decorator scenario name")]
         input_value: Annotated[
             str | TestFlextUtilitiesArgs.StatusEnum,

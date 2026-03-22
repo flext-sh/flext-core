@@ -21,7 +21,8 @@ from typing import Annotated, override
 from flext_tests import FlextTestsModels
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels, t
+from flext_core import FlextModels
+from tests import t
 
 
 class FlextCoreTestModels(FlextTestsModels, FlextModels):
@@ -54,7 +55,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class User(FlextModels.Entity):
             """Shared user model for tests."""
 
-            model_config = ConfigDict(frozen=False)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
             user_id: str
             name: str
@@ -64,7 +65,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class ServiceTestCase(BaseModel):
             """Service execution case model for tests."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             service_type: str
             input_value: str
@@ -76,15 +77,15 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class DomainTestEntity(FlextModels.Entity):
             """Test entity for domain tests."""
 
-            model_config = ConfigDict(frozen=False)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
             name: str
             value: t.ContainerValue
 
         class DomainTestValue(FlextModels.Value):
-            """Test value object for domain tests."""
+            """Test value t.NormalizedValue for domain tests."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             data: str = ""
             count: int
@@ -97,14 +98,14 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
                 self.custom_id = custom_id
 
         class SimpleValue:
-            """Simple value object without model_dump."""
+            """Simple value t.NormalizedValue without model_dump."""
 
             def __init__(self, data: str) -> None:
-                """Initialize simple value object."""
+                """Initialize simple value t.NormalizedValue."""
                 self.data = data
 
         class ComplexValue:
-            """FlextModels.Value object with non-hashable attributes."""
+            """FlextModels.Value t.NormalizedValue with non-hashable attributes."""
 
             def __init__(self, data: str, items: list[str]) -> None:
                 """Initialize complex value with non-hashable items."""
@@ -117,7 +118,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             __slots__ = ("value",)
 
             def __init__(self, value: int) -> None:
-                """Initialize object without __dict__."""
+                """Initialize t.NormalizedValue without __dict__."""
                 object.__setattr__(self, "value", value)
 
             @override
@@ -126,19 +127,19 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
                 return f"NoDict({getattr(self, 'value', None)})"
 
         class MutableObj:
-            """Mutable object for immutability testing."""
+            """Mutable t.NormalizedValue for immutability testing."""
 
             def __init__(self, value: int) -> None:
-                """Initialize mutable object."""
+                """Initialize mutable t.NormalizedValue."""
                 self.value = value
 
         class ImmutableObj:
-            """Immutable object with custom __setattr__."""
+            """Immutable t.NormalizedValue with custom __setattr__."""
 
             _frozen: bool = True
 
             def __init__(self, value: int) -> None:
-                """Initialize immutable object."""
+                """Initialize immutable t.NormalizedValue."""
                 object.__setattr__(self, "value", value)
 
             @override
@@ -161,7 +162,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class ParseDelimitedCase(BaseModel):
             """Test case for parse_delimited method."""
 
-            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
             text: str
             delimiter: str
@@ -177,7 +178,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class SplitEscapeCase(BaseModel):
             """Test case for split_on_char_with_escape method."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             text: str
             split_char: str
@@ -189,7 +190,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class NormalizeWhitespaceCase(BaseModel):
             """Test case for normalize_whitespace method."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             text: str
             pattern: str = r"\s+"
@@ -201,7 +202,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class RegexPipelineCase(BaseModel):
             """Test case for apply_regex_pipeline method."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             text: str
             patterns: list[tuple[str, str] | tuple[str, str, int]]
@@ -212,7 +213,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class ObjectKeyCase(BaseModel):
             """Test case for get_object_key method."""
 
-            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
             obj: t.ContainerValue
             expected_contains: list[str] | None = None
@@ -222,7 +223,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class AutomatedTestScenario(BaseModel):
             """Pydantic v2 model for automated test scenarios."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             description: str
             input: t.ContainerValue
@@ -240,7 +241,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UtilityEntityModel(FlextModels.Entity):
             """Shared entity model for generic test fixtures."""
 
-            model_config = ConfigDict(frozen=False)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
             name: str
             value: t.ContainerValue
@@ -248,21 +249,21 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UtilityValueModel(FlextModels.Value):
             """Shared value model for generic test fixtures."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             value: t.ContainerValue
 
         class BddPhaseDict(BaseModel):
             """BDD phase (given/when/then) configuration."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             description: str
 
         class BddPhaseData(BaseModel):
             """BDD phase data (given/when/then)."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             description: str
             assertions: list[str]
@@ -271,7 +272,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class MockScenarioData(BaseModel):
             """Mock scenario test data."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             given: dict[str, str | int | bool]
             when: dict[str, str | int | bool]
@@ -282,7 +283,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class NestedDataDict(BaseModel):
             """Nested test data."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             key: str
             value: str | int | bool
@@ -291,7 +292,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class FixtureDataDict(BaseModel):
             """Test data for FlextTestBuilder."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             id: str
             correlation_id: str
@@ -306,7 +307,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class FixtureCaseDict(BaseModel):
             """Individual test case configuration."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             email: str
             input: str
@@ -314,7 +315,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class SuccessCaseDict(BaseModel):
             """Success test case."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             email: str
             input: str
@@ -322,7 +323,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class FailureCaseDict(BaseModel):
             """Failure test case."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             email: str
             input: str
@@ -330,7 +331,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class SetupDataDict(BaseModel):
             """Setup data for test suite."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             initialization_step: str
             configuration_key: str
@@ -340,7 +341,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class FixtureSuiteDict(BaseModel):
             """Test suite configuration."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             suite_name: str
             scenario_count: int
@@ -350,7 +351,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UserDataFixtureDict(BaseModel):
             """User fixture data."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             username: str
             email: str
@@ -359,7 +360,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class RequestDataFixtureDict(BaseModel):
             """Request fixture data."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             method: str
             path: str
@@ -368,7 +369,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class FixtureFixturesDict(BaseModel):
             """Test fixtures configuration."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             user: dict[str, FlextCoreTestModels.Core.UserDataFixtureDict]
             request: dict[str, FlextCoreTestModels.Core.RequestDataFixtureDict]
@@ -376,7 +377,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UserProfileDict(BaseModel):
             """User profile for property-based testing."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             id: str
             name: str
@@ -385,7 +386,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class ConfigTestCaseDict(BaseModel):
             """Configuration test case."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             domain: str
             port: int
@@ -395,7 +396,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class PerformanceMetricsDict(BaseModel):
             """Performance metrics from testing."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             total_operations: int
             time_elapsed: float
@@ -405,7 +406,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class StressTestResultDict(BaseModel):
             """Result from stress testing."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             iterations: int
             success_count: int
@@ -415,7 +416,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class AsyncPayloadDict(BaseModel):
             """Async event payload."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             data: str
             status: str
@@ -423,7 +424,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class AsyncTestDataDict(BaseModel):
             """Async test data."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             event_type: str
             timestamp: str
@@ -432,7 +433,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UserPayloadDict(BaseModel):
             """User command payload."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             username: str
             email: str
@@ -440,7 +441,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UpdateFieldDict(BaseModel):
             """Individual update field."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             field_name: str
             new_value: str | int | bool
@@ -448,7 +449,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UpdatePayloadDict(BaseModel):
             """Update command payload."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             target_user_id: str
             updates: dict[str, FlextCoreTestModels.Core.UpdateFieldDict]
@@ -456,7 +457,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UserDataDict(BaseModel):
             """User data response."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             id: str
             username: str
@@ -466,7 +467,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class UpdateResultDict(BaseModel):
             """Update operation result."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             user_id: str
             updated_fields: list[str]
@@ -475,7 +476,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class CommandPayloadDict(BaseModel):
             """Generic command payload."""
 
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             id: str = ""
             username: str = ""

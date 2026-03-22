@@ -30,7 +30,7 @@
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation
 
-FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value object semantics.
+FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value t.NormalizedValue semantics.
 
 ## Core Concepts
 
@@ -70,7 +70,7 @@ from decimal import Decimal
 
 
 class Money(FlextModels.Value):
-    """Money is a value object - represented by amount and currency."""
+    """Money is a value t.NormalizedValue - represented by amount and currency."""
 
     amount: Decimal
     currency: str  # "USD", "EUR", "GBP", etc.
@@ -108,20 +108,20 @@ from flext_core import FlextModels
 
 
 class Email(FlextModels.Value):
-    """Email address - value object."""
+    """Email address - value t.NormalizedValue."""
 
     address: str
 
 
 class PhoneNumber(FlextModels.Value):
-    """Phone number - value object."""
+    """Phone number - value t.NormalizedValue."""
 
     country_code: str
     number: str
 
 
 class Address(FlextModels.Value):
-    """Physical address - value object."""
+    """Physical address - value t.NormalizedValue."""
 
     street: str
     city: str
@@ -258,7 +258,7 @@ class OrderItem(FlextModels.Entity):
 
 
 class ShippingInfo(FlextModels.Value):
-    """Shipping address - value object."""
+    """Shipping address - value t.NormalizedValue."""
 
     address: str
     city: str
@@ -442,14 +442,14 @@ class OrderStatus(str, Enum):
 
 
 class Money(FlextModels.Value):
-    """Money value object."""
+    """Money value t.NormalizedValue."""
 
     amount: Decimal
     currency: str = "USD"
 
 
 class Address(FlextModels.Value):
-    """Address value object."""
+    """Address value t.NormalizedValue."""
 
     street: str
     city: str
@@ -654,7 +654,7 @@ import re
 
 
 class Email(FlextModels.Value):
-    """Email value object."""
+    """Email value t.NormalizedValue."""
 
     address: str
 
@@ -665,7 +665,7 @@ class Email(FlextModels.Value):
 
 
 class Password(FlextModels.Value):
-    """Password value object (hashed representation)."""
+    """Password value t.NormalizedValue (hashed representation)."""
 
     hash: str
 

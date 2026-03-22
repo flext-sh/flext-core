@@ -19,7 +19,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_object_list(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[list[t.NormalizedValue]]:
         """Check if value is a list of normalized values.
 
@@ -34,7 +34,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_object_tuple(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[tuple[t.NormalizedValue, ...]]:
         """Check if value is a tuple of normalized values.
 
@@ -77,7 +77,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_configuration_dict(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[t.Dict]:
         """Check if value is a valid configuration dictionary.
 
@@ -123,7 +123,7 @@ class FlextUtilitiesGuardsTypeModel:
         return True
 
     @staticmethod
-    def is_pydantic_model(value: object) -> TypeIs[p.HasModelDump]:
+    def is_pydantic_model(value: t.NormalizedValue) -> TypeIs[p.HasModelDump]:
         """Check if value is a Pydantic BaseModel with model_dump method.
 
         Args:

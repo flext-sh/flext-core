@@ -481,7 +481,9 @@ class TestFlextSettings:
                 class WrongType:
                     pass
 
-                wrong_instance = cast("FlextSettings", cast("object", WrongType()))
+                wrong_instance = cast(
+                    "FlextSettings", cast("t.NormalizedValue", WrongType())
+                )
                 FlextSettings._instances[FlextSettings] = wrong_instance
                 with pytest.raises(
                     TypeError, match="Singleton instance is not of expected type"

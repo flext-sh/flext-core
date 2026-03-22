@@ -37,7 +37,7 @@ class TestMixinsFullCoverage:
         """Mock _register_in_container that returns failure."""
         return cast(
             "r[bool]",
-            cast("object", SimpleNamespace(is_failure=True, error=None)),
+            cast("t.NormalizedValue", SimpleNamespace(is_failure=True, error=None)),
         )
 
     @staticmethod
@@ -199,7 +199,7 @@ class TestMixinsFullCoverage:
                 return cast(
                     "p.RuntimeBootstrapOptions",
                     cast(
-                        "t.Tests.object",
+                        "t.Tests.t.NormalizedValue",
                         SimpleNamespace(
                             config_type=None,
                             config_overrides=None,
@@ -221,7 +221,7 @@ class TestMixinsFullCoverage:
         tm.that(runtime, none=False)
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
-            cast("dict[str, t.Tests.object]", metrics)["duration_ms"] = 2.0
+            cast("dict[str, t.Tests.t.NormalizedValue]", metrics)["duration_ms"] = 2.0
         tm.that(hasattr(service, "_operation_stats"), eq=True)
         tm.that(service._operation_stats, has="op")
         try:
@@ -312,7 +312,7 @@ class TestMixinsFullCoverage:
             @override
             @classmethod
             def _get_or_create_logger(cls) -> FlextLogger:
-                return cast("FlextLogger", cast("object", _LocalLogger()))
+                return cast("FlextLogger", cast("t.NormalizedValue", _LocalLogger()))
 
         service = _Service(
             config_type=None,
@@ -365,13 +365,16 @@ class TestMixinsFullCoverage:
         tm.fail(fail_result)
         tm.that(
             x.ProtocolValidation.is_handler(
-                cast("t.Tests.object", SimpleNamespace(handle=self._noop)),
+                cast("t.Tests.t.NormalizedValue", SimpleNamespace(handle=self._noop)),
             ),
             eq=False,
         )
         tm.that(
             x.ProtocolValidation.is_service(
-                cast("p.Service[bool]", cast("t.Tests.object", SimpleNamespace())),
+                cast(
+                    "p.Service[bool]",
+                    cast("t.Tests.t.NormalizedValue", SimpleNamespace()),
+                ),
             ),
             eq=False,
         )
@@ -401,13 +404,13 @@ class TestMixinsFullCoverage:
             pass
 
         missing = x.ProtocolValidation.validate_processor_protocol(
-            cast("p.HasModelDump", cast("object", _ModelDumpOnly())),
+            cast("p.HasModelDump", cast("t.NormalizedValue", _ModelDumpOnly())),
         )
         bad_callable = x.ProtocolValidation.validate_processor_protocol(
             cast(
                 "p.HasModelDump",
                 cast(
-                    "object",
+                    "t.NormalizedValue",
                     SimpleNamespace(model_dump=dict, process=1, validate=lambda: True),
                 ),
             ),
@@ -416,7 +419,7 @@ class TestMixinsFullCoverage:
             cast(
                 "p.HasModelDump",
                 cast(
-                    "object",
+                    "t.NormalizedValue",
                     SimpleNamespace(
                         model_dump=dict,
                         process=self._return_true_no_args,
@@ -448,7 +451,7 @@ class TestMixinsFullCoverage:
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                 return cast(
                     "p.RuntimeBootstrapOptions",
-                    cast("t.Tests.object", {"wire_packages": ["pkg", 1]}),
+                    cast("t.Tests.t.NormalizedValue", {"wire_packages": ["pkg", 1]}),
                 )
 
         _ = _WireService(
@@ -506,7 +509,7 @@ class TestMixinsFullCoverage:
             @override
             @classmethod
             def _get_or_create_logger(cls) -> FlextLogger:
-                return cast("FlextLogger", cast("object", _WarnLogger()))
+                return cast("FlextLogger", cast("t.NormalizedValue", _WarnLogger()))
 
         class _LoggerService(x):
             pass

@@ -62,7 +62,7 @@ All documented methods exist and line numbers are accurate:
 1. **get()** - Line 491 ✅
 
    - Basic retrieval documented
-   - Returns r[object]
+   - Returns r[t.NormalizedValue]
    - Untyped retrieval pattern shown
 
 1. **get_typed()** - Line 574 ✅
@@ -144,9 +144,9 @@ The guide mentions v0.9.9 breaking changes but could be clearer:
 ```markdown
 BREAKING CHANGES (Phase 4 - v0.9.9):
 
-- register[T]() now uses generic type T instead of object
-- register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
-- get_typed[T]() now returns r[T] instead of r[object]
+- register[T]() now uses generic type T instead of t.NormalizedValue
+- register_factory[T]() now uses Callable[[], T] instead of Callable[[], t.NormalizedValue]
+- get_typed[T]() now returns r[T] instead of r[t.NormalizedValue]
 
 
 Add migration guide from v0.9.8 to v0.9.9.

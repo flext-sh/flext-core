@@ -35,11 +35,11 @@ class UtilitiesMapperFullCoverageNamespace:
 
         kind: str | None = None
 
-    class _BadItems(UserDict[str, object]):
+    class _BadItems(UserDict[str, t.NormalizedValue]):
         """UserDict that explodes on items() for error-path testing."""
 
         @override
-        def items(self) -> ItemsView[str, object]:
+        def items(self) -> ItemsView[str, t.NormalizedValue]:
             """Items method."""
             msg = "bad items"
             raise RuntimeError(msg)
@@ -76,19 +76,21 @@ class UtilitiesMapperFullCoverageNamespace:
 
     class _BuildApplyConvertCallable(Protocol):
         def __call__(
-            self, current: tuple[str, ...] | str | int, operations: Mapping[str, object]
+            self,
+            current: tuple[str, ...] | str | int,
+            operations: Mapping[str, t.NormalizedValue],
         ) -> None: ...
 
     class _ExtractTransformOptionsCallable(Protocol):
         def __call__(
-            self, transform_opts: Mapping[str, object]
-        ) -> tuple[object, ...]: ...
+            self, transform_opts: Mapping[str, t.NormalizedValue]
+        ) -> tuple[t.NormalizedValue, ...]: ...
 
     class _BuildApplyOpCallable(Protocol):
         def __call__(
             self,
             current: tuple[str, str] | tuple[int, int, int] | list[_GroupModel],
-            operations: Mapping[str, object],
+            operations: Mapping[str, t.NormalizedValue],
         ) -> None: ...
 
     class _TransformCallable(Protocol):
@@ -103,7 +105,7 @@ class UtilitiesMapperFullCoverageNamespace:
             key_map: Mapping[str, str],
             *,
             keep_unmapped: bool = True,
-        ) -> r[Mapping[str, object]]: ...
+        ) -> r[Mapping[str, t.NormalizedValue]]: ...
 
     class _BuildFlagsCallable(Protocol):
         def __call__(
@@ -115,12 +117,12 @@ class UtilitiesMapperFullCoverageNamespace:
     def _at_obj(
         items: ExplodingLenList, index: int | str, *, default: int | None = None
     ) -> None:
-        """Call Mapper.at with arbitrary object for error-path testing."""
+        """Call Mapper.at with arbitrary t.NormalizedValue for error-path testing."""
         fn: _AtCallable = getattr(u, "at")
         return fn(items, index, default=default)
 
     def _extract_field_obj(item: AttrObject, field_name: str) -> None:
-        """Call _extract_field_value with arbitrary object for testing."""
+        """Call _extract_field_value with arbitrary t.NormalizedValue for testing."""
         fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
         return fn(item, field_name)
 
@@ -134,38 +136,39 @@ class UtilitiesMapperFullCoverageNamespace:
         return fn(data_or_items, key_or_index, default=default)
 
     def _build_apply_convert_obj(
-        current: tuple[str, ...] | str | int, operations: Mapping[str, object]
+        current: tuple[str, ...] | str | int,
+        operations: Mapping[str, t.NormalizedValue],
     ) -> None:
         fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
         return fn(current, operations)
 
     def _extract_transform_options_obj(
-        transform_opts: Mapping[str, object],
-    ) -> tuple[object, ...]:
+        transform_opts: Mapping[str, t.NormalizedValue],
+    ) -> tuple[t.NormalizedValue, ...]:
         fn: _ExtractTransformOptionsCallable = getattr(u, "_extract_transform_options")
         return fn(transform_opts)
 
     def _build_apply_sort_obj(
-        current: tuple[str, str], operations: Mapping[str, object]
+        current: tuple[str, str], operations: Mapping[str, t.NormalizedValue]
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
         return fn(current, operations)
 
     def _build_apply_unique_obj(
-        current: tuple[int, int, int], operations: Mapping[str, object]
+        current: tuple[int, int, int], operations: Mapping[str, t.NormalizedValue]
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
         return fn(current, operations)
 
     def _build_apply_slice_obj(
-        current: tuple[int, int, int], operations: Mapping[str, object]
+        current: tuple[int, int, int], operations: Mapping[str, t.NormalizedValue]
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
         return fn(current, operations)
 
     def _build_apply_group_obj(
         current: list[_GroupModel],
-        operations: Mapping[str, object],
+        operations: Mapping[str, t.NormalizedValue],
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
         return fn(current, operations)
@@ -181,7 +184,7 @@ class UtilitiesMapperFullCoverageNamespace:
         key_map: Mapping[str, str],
         *,
         keep_unmapped: bool = True,
-    ) -> r[Mapping[str, object]]:
+    ) -> r[Mapping[str, t.NormalizedValue]]:
         fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
         return fn(source, key_map, keep_unmapped=keep_unmapped)
 
@@ -189,7 +192,7 @@ class UtilitiesMapperFullCoverageNamespace:
         active_flags: _BadIter,
         flag_mapping: Mapping[str, str],
     ) -> r[Mapping[str, bool]]:
-        """Call build_flags_dict with arbitrary object for error-path testing."""
+        """Call build_flags_dict with arbitrary t.NormalizedValue for error-path testing."""
         fn: _BuildFlagsCallable = getattr(u, "build_flags_dict")
         return fn(active_flags, flag_mapping)
 
@@ -197,10 +200,10 @@ class UtilitiesMapperFullCoverageNamespace:
         """AttrObject class."""
 
         name: Annotated[
-            str, Field(default="name", description="Attribute object name")
+            str, Field(default="name", description="Attribute t.NormalizedValue name")
         ] = "name"
         value: Annotated[
-            int, Field(default=1, description="Attribute object value")
+            int, Field(default=1, description="Attribute t.NormalizedValue value")
         ] = 1
 
     class BadString:
@@ -254,7 +257,7 @@ class UtilitiesMapperFullCoverageNamespace:
             msg = "len exploded"
             raise TypeError(msg)
 
-    class BadMapping(Mapping[str, object]):
+    class BadMapping(Mapping[str, t.NormalizedValue]):
         """BadMapping class."""
 
         @override
@@ -461,8 +464,8 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._build_apply_ensure(5, {"ensure": "unknown"}), eq=5)
 
     def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
-        plus_one = cast("Callable[..., object]", _plus_one)
-        times_two = cast("Callable[..., object]", _times_two)
+        plus_one = cast("Callable[..., t.NormalizedValue]", _plus_one)
+        times_two = cast("Callable[..., t.NormalizedValue]", _times_two)
         tm.that(mapper._build_apply_filter(1, {"filter": 1}, 0), eq=1)
         tm.that(
             mapper._build_apply_filter(
@@ -541,7 +544,7 @@ class UtilitiesMapperFullCoverageNamespace:
             | tuple[t.Scalar, ...]
             | set[t.Scalar]
         ]
-        | Callable[..., object],
+        | Callable[..., t.NormalizedValue],
         expected: float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...],
     ) -> None:
         operations = cast(
@@ -614,7 +617,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
 
         def explode_transform_steps(
-            _result: Mapping[str, object],
+            _result: Mapping[str, t.NormalizedValue],
             *,
             _normalize: bool,
             _map_keys: Mapping[str, str] | None,
@@ -691,7 +694,9 @@ class UtilitiesMapperFullCoverageNamespace:
 
     def test_field_and_fields_multi_branches(mapper: type[u]) -> None:
         tm.that(
-            mapper.field(cast("p.AccessibleData", object()), "missing", required=True),
+            mapper.field(
+                cast("p.AccessibleData", t.NormalizedValue()), "missing", required=True
+            ),
             none=True,
         )
         tm.that(mapper.field({}, "missing", ops={"ensure": "str"}), eq="")
@@ -1087,7 +1092,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(context, eq={"x": 1, "y": 1})
         fields_obj = mapper.fields(
-            cast("p.AccessibleData", object()),
+            cast("p.AccessibleData", t.NormalizedValue()),
             {"x": {"default": 1}},
         )
         tm.that(fields_obj, eq={"x": 1})

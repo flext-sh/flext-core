@@ -335,7 +335,7 @@ class FlextCoreTestConstants(FlextTestsConstants):
             class Identifiers(BaseModel):
                 """Test identifiers and IDs."""
 
-                model_config = ConfigDict(frozen=True)
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
                 user_id: Annotated[
                     str,
@@ -382,7 +382,7 @@ class FlextCoreTestConstants(FlextTestsConstants):
             class Names(BaseModel):
                 """Test module and component names."""
 
-                model_config = ConfigDict(frozen=True)
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
                 module_name: Annotated[
                     str,
@@ -440,7 +440,7 @@ class FlextCoreTestConstants(FlextTestsConstants):
             class ErrorData(BaseModel):
                 """Test error codes and messages."""
 
-                model_config = ConfigDict(frozen=True)
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
                 error_code: Annotated[
                     str,
@@ -480,7 +480,7 @@ class FlextCoreTestConstants(FlextTestsConstants):
             class Data(BaseModel):
                 """Test field names and data values."""
 
-                model_config = ConfigDict(frozen=True)
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
                 field_name: Annotated[
                     str,
@@ -530,7 +530,7 @@ class FlextCoreTestConstants(FlextTestsConstants):
             class PatternData(BaseModel):
                 """Test patterns and formats."""
 
-                model_config = ConfigDict(frozen=True)
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
                 slug_input: Annotated[
                     str,
@@ -557,7 +557,7 @@ class FlextCoreTestConstants(FlextTestsConstants):
             class NumericValues(BaseModel):
                 """Test port and numeric values."""
 
-                model_config = ConfigDict(frozen=True)
+                model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
                 port: Annotated[
                     int, Field(default=8080, description="Default test port")

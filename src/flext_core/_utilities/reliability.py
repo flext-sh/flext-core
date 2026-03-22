@@ -93,7 +93,7 @@ class FlextUtilitiesReliability:
 
         Args:
             attempt: Current attempt number (0-based)
-            config: Retry configuration object
+            config: Retry configuration t.NormalizedValue
 
         Returns:
             float: Delay in seconds for next attempt

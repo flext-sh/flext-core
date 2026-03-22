@@ -66,7 +66,7 @@ class TestFlextMixinsNestedClasses:
     class ServiceMixinScenario(BaseModel):
         """Service mixin test scenario definition."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Service mixin scenario name")]
         scenario_type: Annotated[
             TestFlextMixinsNestedClasses.ServiceMixinScenarioType,
@@ -87,13 +87,15 @@ class TestFlextMixinsNestedClasses:
     class ModelConversionScenario(BaseModel):
         """ModelConversion test scenario definition."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Model conversion scenario name")]
         scenario_type: Annotated[
             TestFlextMixinsNestedClasses.ModelConversionScenarioType,
             Field(description="Model conversion scenario type"),
         ]
-        input_value: Annotated[object, Field(description="Input value for conversion")]
+        input_value: Annotated[
+            t.NormalizedValue, Field(description="Input value for conversion")
+        ]
         expected_output: Annotated[
             t.ConfigMap,
             Field(description="Expected conversion output"),
@@ -102,14 +104,14 @@ class TestFlextMixinsNestedClasses:
     class ResultHandlingScenario(BaseModel):
         """ResultHandling test scenario definition."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Result handling scenario name")]
         scenario_type: Annotated[
             TestFlextMixinsNestedClasses.ResultHandlingScenarioType,
             Field(description="Result handling scenario type"),
         ]
         input_value: Annotated[
-            object,
+            t.NormalizedValue,
             Field(description="Input value for result handling"),
         ]
 

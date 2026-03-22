@@ -20,7 +20,7 @@ class TestFlextModelsCollectionsCoverage100:
     class CategoryOperationScenario(m.Value):
         """Scenario for category operations."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Category operation scenario name")]
         category: Annotated[str, Field(description="Category key")]
         entries: Annotated[

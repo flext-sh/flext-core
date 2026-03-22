@@ -55,7 +55,7 @@ class FlextModelsConfig:
     class AutoConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Automatic settings wrapper for BaseSettings classes."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
         config_class: Annotated[
             type[BaseSettings],
@@ -82,7 +82,7 @@ class FlextModelsConfig:
     class ProcessingRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=False,
             use_enum_values=True,
             arbitrary_types_allowed=True,
@@ -397,7 +397,7 @@ class FlextModelsConfig:
         within request/response processing pipeline.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "MiddlewareConfig",
@@ -440,7 +440,7 @@ class FlextModelsConfig:
         operations within the FLEXT request processing pipeline.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
                 "title": "RateLimiterState",
                 "description": "State tracking for rate limiter functionality",
@@ -492,7 +492,7 @@ class FlextModelsConfig:
         """Configuration for external command execution (Pydantic v2).
 
         Reduces parameter count for u.CommandExecution
-        run_external_command using config object pattern.
+        run_external_command using config t.NormalizedValue pattern.
         Reuses timeout pattern from ProcessingRequest and HandlerExecutionConfig.
         """
 
@@ -1068,7 +1068,7 @@ class FlextModelsConfig:
             str | None,
             Field(
                 default=None,
-                description="Type of object that attribute access failed on",
+                description="Type of t.NormalizedValue that attribute access failed on",
             ),
         ] = None
 
@@ -1149,7 +1149,7 @@ class FlextModelsConfig:
         Groups function, arguments, logger, and retry configuration.
         """
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
         func: Annotated[
             Callable[..., t.ValueOrModel],
             Field(description="Function to execute"),
@@ -1204,7 +1204,7 @@ class FlextModelsConfig:
         Provides type-safe configuration for message dispatcher behavior.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             use_enum_values=True,
             extra="forbid",

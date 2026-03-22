@@ -15,8 +15,7 @@ import pytest
 from hypothesis import given, strategies as st
 
 from flext_core import u
-
-from .contracts.text_contract import TextUtilityContract
+from tests import TextUtilityContract
 
 
 class TestUtilitiesTextFullCoverage(TextUtilityContract):

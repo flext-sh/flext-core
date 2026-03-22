@@ -56,7 +56,7 @@ class FlextUtilitiesModel:
     def _normalize_to_pydantic_value(
         value: t.ValueOrModel,
     ) -> t.Scalar | list[t.Primitives]:
-        """Normalize object to Pydantic-safe PydanticConfigValue.
+        """Normalize t.NormalizedValue to Pydantic-safe PydanticConfigValue.
 
         Converts complex types to strings, preserves primitives.
 
@@ -247,7 +247,7 @@ class FlextUtilitiesModel:
         fallbacks by centralizing all metadata normalization logic.
 
         Args:
-            value: None, dict, Mapping, Metadata, or any object
+            value: None, dict, Mapping, Metadata, or any t.NormalizedValue
 
         Returns:
             m.Metadata: Normalized metadata (empty attributes
@@ -302,7 +302,7 @@ class FlextUtilitiesModel:
     ) -> Mapping[str, t.Scalar | list[t.Primitives]]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
-        Normalizes object values to the restricted PydanticConfigValue type
+        Normalizes t.NormalizedValue values to the restricted PydanticConfigValue type
         that Pydantic can generate schemas for without recursion issues.
 
         Args:

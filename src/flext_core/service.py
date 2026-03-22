@@ -69,7 +69,7 @@ class FlextService[
 
     """
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         strict=True,
         arbitrary_types_allowed=True,
         extra="forbid",

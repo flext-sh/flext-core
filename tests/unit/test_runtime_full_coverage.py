@@ -118,10 +118,12 @@ def test_async_log_writer_paths() -> None:
 
     forced = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     forced.stream = stream
-    forced.queue = cast("queue.Queue[str | None]", cast("object", EmptyQueue()))
+    forced.queue = cast(
+        "queue.Queue[str | None]", cast("t.NormalizedValue", EmptyQueue())
+    )
     forced.stop_event = runtime_module.threading.Event()
     forced.stop_event.set()
     forced._worker()
@@ -163,10 +165,12 @@ def test_async_log_writer_paths() -> None:
     failing = FailingStream()
     broken = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     broken.stream = failing
-    broken.queue = cast("queue.Queue[str | None]", cast("object", SequenceQueue()))
+    broken.queue = cast(
+        "queue.Queue[str | None]", cast("t.NormalizedValue", SequenceQueue())
+    )
     broken.stop_event = runtime_module.threading.Event()
     broken._worker()
     tm.that(failing.messages, has="Error in async log writer\n")
@@ -188,12 +192,12 @@ def test_async_log_writer_paths() -> None:
 
     continue_writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     continue_writer.stream = stream
     continue_writer.queue = cast(
         "queue.Queue[str | None]",
-        cast("object", EmptyThenSentinelQueue()),
+        cast("t.NormalizedValue", EmptyThenSentinelQueue()),
     )
     continue_writer.stop_event = runtime_module.threading.Event()
     continue_writer._worker()
@@ -230,13 +234,17 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     stream = FlushOnlyStream()
     writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast("object", object.__new__(FlextRuntime._AsyncLogWriter)),
+        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
     )
     writer.stream = stream
-    writer.queue = cast("queue.Queue[str | None]", cast("object", FullQueue()))
+    writer.queue = cast(
+        "queue.Queue[str | None]", cast("t.NormalizedValue", FullQueue())
+    )
     writer.stop_event = runtime_module.threading.Event()
     thread = JoinRecorderThread()
-    writer.thread = cast("runtime_module.threading.Thread", cast("object", thread))
+    writer.thread = cast(
+        "runtime_module.threading.Thread", cast("t.NormalizedValue", thread)
+    )
     writer.shutdown()
     tm.that(writer.stop_event.is_set(), eq=True)
     tm.that(thread.join_timeout is not None, eq=True)
@@ -252,9 +260,9 @@ def test_runtime_create_instance_failure_branch(
     class FakeObject:
         def __new__(cls) -> Self:
             _ = cls
-            return cast("Self", object())
+            return cast("Self", t.NormalizedValue())
 
-    monkeypatch.setattr(runtime_module, "object", FakeObject, raising=False)
+    monkeypatch.setattr(runtime_module, "t.NormalizedValue", FakeObject, raising=False)
 
     class Marker:
         pass
@@ -269,7 +277,7 @@ def test_normalization_edge_branches() -> None:
     tm.that(isinstance(normalized_cfg, (t.ConfigMap, t.Dict)), eq=True)
     tm.that(getattr(normalized_cfg, "root", None), eq={"a": 1})
 
-    class DictLike(Mapping[str, object]):
+    class DictLike(Mapping[str, t.NormalizedValue]):
         @override
         def __getitem__(self, key: str) -> int:
             if key == "x":
@@ -298,7 +306,7 @@ def test_normalization_edge_branches() -> None:
         isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1}, eq=True
     )
     metadata_list = FlextRuntime.normalize_to_metadata(
-        cast("t.RuntimeData", ["a", object()]),
+        cast("t.RuntimeData", ["a", t.NormalizedValue()]),
     )
     tm.that(isinstance(metadata_list, list), eq=True)
 
@@ -483,7 +491,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
     dummy = DummyWriter()
     FlextRuntime._async_writer = cast(
         "FlextRuntime._AsyncLogWriter",
-        cast("object", dummy),
+        cast("t.NormalizedValue", dummy),
     )
     FlextRuntime._structlog_configured = True
     FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
@@ -585,14 +593,18 @@ def test_model_support_and_hash_compare_paths() -> None:
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id("a", cast("t.RuntimeData", object()))
+            FlextRuntime.compare_entities_by_id(
+                "a", cast("t.RuntimeData", t.NormalizedValue())
+            )
             is False
         ),
         eq=True,
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(cast("t.RuntimeData", object()), 3)
+            FlextRuntime.compare_entities_by_id(
+                cast("t.RuntimeData", t.NormalizedValue()), 3
+            )
             is False
         ),
         eq=True,
@@ -614,7 +626,7 @@ def test_model_support_and_hash_compare_paths() -> None:
         ),
         eq=True,
     )
-    obj = cast("t.RuntimeData", object())
+    obj = cast("t.RuntimeData", t.NormalizedValue())
     tm.that(
         FlextRuntime.hash_entity_by_id(obj),
         eq=hash(
@@ -625,7 +637,7 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_value_objects_by_value(
-                cast("t.RuntimeData", object()),
+                cast("t.RuntimeData", t.NormalizedValue()),
                 1,
             )
             is False
@@ -722,7 +734,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         bad_range.is_failure and "Invalid HTTP status code" in (bad_range.error or ""),
         eq=True,
     )
-    invalid_statuses: list[int | str] = cast("list[int | str]", [object()])
+    invalid_statuses: list[int | str] = cast("list[int | str]", [t.NormalizedValue()])
     bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
     tm.that(
         bad_type.is_failure and "Cannot convert to integer" in (bad_type.error or ""),

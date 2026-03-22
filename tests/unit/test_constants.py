@@ -33,14 +33,14 @@ class TestConstants:
     class ConstantPathScenario(BaseModel):
         """Test scenario for constant path access."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         path: Annotated[str, Field(description="Constant access path")]
         expected: Annotated[str | int, Field(description="Expected constant value")]
 
     class PatternValidationScenario(BaseModel):
         """Test scenario for pattern validation."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
         valid_cases: Annotated[
             list[str], Field(description="Inputs expected to match the pattern")
@@ -203,7 +203,7 @@ class TestConstants:
         for valid_case in scenario.valid_cases:
             match_result = compiled_pattern.match(valid_case)
             tm.that(
-                cast("test_t.Tests.object", match_result),
+                cast("test_t.Tests.t.NormalizedValue", match_result),
                 none=False,
                 msg=f"Expected '{valid_case}' to match pattern {scenario.pattern_attr}",
             )
@@ -211,7 +211,7 @@ class TestConstants:
             pattern_name = scenario.pattern_attr
             match_result = compiled_pattern.match(invalid_case)
             tm.that(
-                cast("test_t.Tests.object", match_result),
+                cast("test_t.Tests.t.NormalizedValue", match_result),
                 none=True,
                 msg=f"Expected '{invalid_case}' to NOT match pattern {pattern_name}",
             )
@@ -259,17 +259,22 @@ class TestConstants:
         long_email = "a" * 64 + "@" + "b" * 63 + ".com"
         tm.that(len(long_email), lte=c.MAX_EMAIL_LENGTH)
         tm.that(
-            cast("test_t.Tests.object", email_pattern.match(long_email)), none=False
+            cast("test_t.Tests.t.NormalizedValue", email_pattern.match(long_email)),
+            none=False,
         )
         phone_pattern = u.Tests.ConstantsHelpers.compile_pattern(
             "PATTERN_PHONE_NUMBER",
         )
         tm.that(
-            cast("test_t.Tests.object", phone_pattern.match("+123456789012345")),
+            cast(
+                "test_t.Tests.t.NormalizedValue",
+                phone_pattern.match("+123456789012345"),
+            ),
             none=False,
         )
         tm.that(
-            cast("test_t.Tests.object", phone_pattern.match("+1234567890")), none=False
+            cast("test_t.Tests.t.NormalizedValue", phone_pattern.match("+1234567890")),
+            none=False,
         )
 
     def test_edge_cases_constant_ranges(self) -> None:
@@ -301,7 +306,9 @@ class TestConstants:
         max_length_email = "a" * (c.MAX_EMAIL_LENGTH - 9) + "@test.com"
         tm.that(len(max_length_email), lte=c.MAX_EMAIL_LENGTH)
         tm.that(
-            cast("test_t.Tests.object", email_pattern.match(max_length_email)),
+            cast(
+                "test_t.Tests.t.NormalizedValue", email_pattern.match(max_length_email)
+            ),
             none=False,
         )
 

@@ -52,7 +52,7 @@ class FlextProtocolsBase:
             obj: t.ValueOrModel,
             **kwargs: t.Container,
         ) -> Self:
-            """Validate object against model."""
+            """Validate t.NormalizedValue against model."""
             ...
 
         def validate(self) -> FlextProtocolsResult.Result[bool]:

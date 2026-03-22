@@ -60,13 +60,13 @@ class TestRuntimeCoverage100:
         tm.that(result, eq=False)
 
     def test_is_dict_like_with_userdict(self) -> None:
-        """Test is_dict_like with UserDict (dict-like object)."""
+        """Test is_dict_like with UserDict (dict-like t.NormalizedValue)."""
         user_dict = UserDict({"key": "value"})
         result = FlextRuntime.is_dict_like(user_dict)
         tm.that(result, eq=True)
 
     def test_is_dict_like_with_missing_attributes(self) -> None:
-        """Test is_dict_like with object missing required attributes."""
+        """Test is_dict_like with t.NormalizedValue missing required attributes."""
 
         class NotDictLike:
             pass
@@ -76,7 +76,7 @@ class TestRuntimeCoverage100:
         tm.that(result, eq=False)
 
     def test_is_dict_like_with_missing_keys(self) -> None:
-        """Test is_dict_like with object missing keys attribute."""
+        """Test is_dict_like with t.NormalizedValue missing keys attribute."""
 
         class NotDictLike:
             def items(self) -> list[tuple[str, str]]:
@@ -90,7 +90,7 @@ class TestRuntimeCoverage100:
         tm.that(result, eq=False)
 
     def test_is_dict_like_with_missing_items(self) -> None:
-        """Test is_dict_like with object missing items attribute."""
+        """Test is_dict_like with t.NormalizedValue missing items attribute."""
 
         class NotDictLike:
             def keys(self) -> list[str]:
@@ -104,7 +104,7 @@ class TestRuntimeCoverage100:
         tm.that(result, eq=False)
 
     def test_is_dict_like_with_missing_get(self) -> None:
-        """Test is_dict_like with object missing get attribute."""
+        """Test is_dict_like with t.NormalizedValue missing get attribute."""
 
         class NotDictLike:
             def keys(self) -> list[str]:
@@ -178,7 +178,7 @@ class TestRuntimeCoverage100:
         assert malformed_key in result or "normal_key" in result
 
     def test_configure_structlog_with_config_object(self) -> None:
-        """Test configure_structlog with config object."""
+        """Test configure_structlog with config t.NormalizedValue."""
         FlextRuntime._structlog_configured = False
         FlextRuntime.configure_structlog(config=None)
         assert FlextRuntime._structlog_configured
@@ -211,7 +211,7 @@ class TestRuntimeCoverage100:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str) -> object:
+            def __getattribute__(self, name: str) -> t.NormalizedValue:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
@@ -250,7 +250,7 @@ class TestRuntimeCoverage100:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str) -> object:
+            def __getattribute__(self, name: str) -> t.NormalizedValue:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
@@ -276,7 +276,7 @@ class TestRuntimeCoverage100:
         assert "stack" not in result
 
     def test_configure_structlog_with_config_additional_processors(self) -> None:
-        """Test configure_structlog with config object having additional_processors."""
+        """Test configure_structlog with config t.NormalizedValue having additional_processors."""
         FlextRuntime._structlog_configured = False
 
         def custom_processor(

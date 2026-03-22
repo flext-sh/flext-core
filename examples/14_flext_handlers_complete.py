@@ -37,7 +37,7 @@ class GetUserQuery(m.Query):
 
 
 class UserDTO(m.Value):
-    """User data transfer object."""
+    """User data transfer t.NormalizedValue."""
 
     id: str
     name: str

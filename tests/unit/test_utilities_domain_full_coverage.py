@@ -62,7 +62,7 @@ class TestUtilitiesDomainFullCoverage:
         assert isinstance(result, bool)
 
     def test_plain_object_is_mutable(self) -> None:
-        """Plain object with default __setattr__ is mutable (line 211 branch)."""
+        """Plain t.NormalizedValue with default __setattr__ is mutable (line 211 branch)."""
 
         class PlainObj:
             pass
@@ -84,7 +84,7 @@ class TestUtilitiesDomainFullCoverage:
         self,
     ) -> None:
         class _BrokenConfigDict:
-            """Dict-like object whose get() raises TypeError."""
+            """Dict-like t.NormalizedValue whose get() raises TypeError."""
 
             def get(self, key: str, default: bool | None = None) -> bool:
                 _ = key
@@ -107,7 +107,7 @@ class TestUtilitiesDomainFullCoverage:
 
         class _NoSetattrVisible:
             @override
-            def __getattribute__(self, name: str) -> object:
+            def __getattribute__(self, name: str) -> t.NormalizedValue:
                 if name == "__setattr__":
                     raise AttributeError(name)
                 return object.__getattribute__(self, name)

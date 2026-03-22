@@ -11,9 +11,7 @@ from flext_tests import t as test_t, tm
 
 from flext_core import r
 from flext_core._utilities.parser import FlextUtilitiesParser
-from tests import c, m, t, u
-
-from ._models import TestUnitModels
+from tests import TestUnitModels, c, m, t, u
 
 
 class TestUtilitiesParserFullCoverage:
@@ -115,7 +113,7 @@ class TestUtilitiesParserFullCoverage:
 
         monkeypatch.setattr(parser, "_safe_text_length", self._raise_type_error_value)
         split_failure = parser.parse_delimited(
-            cast("str", cast("object", _SplitRaises())),
+            cast("str", cast("t.NormalizedValue", _SplitRaises())),
             ",",
         )
         tm.fail(split_failure)
@@ -132,7 +130,7 @@ class TestUtilitiesParserFullCoverage:
         )
         split_result = parser._execute_escape_splitting("a,b", ",", "\\")
         tm.fail(split_result)
-        text_obj = cast("str", cast("object", self._BoolRaises()))
+        text_obj = cast("str", cast("t.NormalizedValue", self._BoolRaises()))
         normal_split = u().split_on_char_with_escape(text_obj, ",")
         tm.fail(normal_split)
         parser2 = u()
@@ -183,18 +181,18 @@ class TestUtilitiesParserFullCoverage:
 
         monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
         tm.that(
-            parser3.get_object_key(cast("t.NormalizedValue", object())),
-            has="<object object",
+            parser3.get_object_key(cast("t.NormalizedValue", t.NormalizedValue())),
+            has="<t.NormalizedValue t.NormalizedValue",
         )
         tm.that(
             parser3.get_object_key(cast("t.NormalizedValue", _OddNoStr())),
             eq="_OddNoStr",
         )
         invalid_type = parser3._extract_pattern_components(
-            cast("tuple[str, str, int]", cast("object", ("a", 1, 0))),
+            cast("tuple[str, str, int]", cast("t.NormalizedValue", ("a", 1, 0))),
         )
         invalid_flag = parser3._extract_pattern_components(
-            cast("tuple[str, str, int]", cast("object", ("a", "b", "x"))),
+            cast("tuple[str, str, int]", cast("t.NormalizedValue", ("a", "b", "x"))),
         )
         invalid_len = parser3._extract_pattern_components(
             cast("tuple[str, str]", ("only",)),
@@ -277,7 +275,7 @@ class TestUtilitiesParserFullCoverage:
         parsed = parser.parse(
             "x",
             int,
-            default=cast("int", cast("object", _DefaultBox())),
+            default=cast("int", cast("t.NormalizedValue", _DefaultBox())),
             default_factory=lambda: 9,
         )
         tm.ok(parsed)
@@ -314,7 +312,9 @@ class TestUtilitiesParserFullCoverage:
         )
         tm.that(parser._convert_to_bool(True, default=False), eq=True)
         tm.that(
-            parser._convert_to_bool(cast("t.NormalizedValue", object()), default=True),
+            parser._convert_to_bool(
+                cast("t.NormalizedValue", t.NormalizedValue()), default=True
+            ),
             eq=True,
         )
         tm.that(
@@ -348,7 +348,7 @@ class TestUtilitiesParserFullCoverage:
             case="lower",
         )
         with pytest.raises(TypeError):
-            parser.norm_in("a", cast("list[str]", object()), case="lower")
+            parser.norm_in("a", cast("list[str]", t.NormalizedValue()), case="lower")
         tm.that(mapping_result, eq=True)
         tm.that(config_map_result, eq=True)
         original_norm_list = u.norm_list
@@ -446,16 +446,21 @@ class TestUtilitiesParserFullCoverage:
         )
         failed_str = parser._parse_try_primitive("x", str, "d", None, "field: ")
         tm.fail(failed_str)
-        tm.that(parser.convert("x", bool, cast("bool", cast("object", "d"))), eq="d")
+        tm.that(
+            parser.convert("x", bool, cast("bool", cast("t.NormalizedValue", "d"))),
+            eq="d",
+        )
         tm.that(parser._convert_to_int(5, default=7), eq=5)
         tm.that(
-            parser._convert_to_float(cast("t.NormalizedValue", object()), default=1.5),
+            parser._convert_to_float(
+                cast("t.NormalizedValue", t.NormalizedValue()), default=1.5
+            ),
             eq=1.5,
         )
         tm.that(
             abs(
                 parser._convert_to_float(
-                    cast("t.NormalizedValue", object()),
+                    cast("t.NormalizedValue", t.NormalizedValue()),
                     default=1.5,
                 )
                 - 1.5,

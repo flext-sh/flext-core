@@ -782,7 +782,7 @@ class FlextDecorators:
         return decorator
 
     class _HasLogger(Protocol):
-        """Protocol indicating a logger-carrying object contract."""
+        """Protocol indicating a logger-carrying t.NormalizedValue contract."""
 
         logger: p.Logger
 
@@ -1004,7 +1004,9 @@ class FlextDecorators:
         return isinstance(logger_value, p.Logger)
 
     @staticmethod
-    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> p.Logger:
+    def _resolve_logger(
+        args: tuple[t.NormalizedValue, ...], func: Callable[P, R]
+    ) -> p.Logger:
         """Resolve logger from first argument or create module logger.
 
         Returns:

@@ -30,7 +30,7 @@ class TestUtilitiesConfigurationFullCoverage:
         def register_factory(
             self,
             _name: str,
-            _factory: Callable[[], object],
+            _factory: Callable[[], t.NormalizedValue],
         ) -> r[bool]:
             return r[bool].ok(True)
 
@@ -46,7 +46,7 @@ class TestUtilitiesConfigurationFullCoverage:
         def register_factory(
             self,
             _name: str,
-            _factory: Callable[[], object],
+            _factory: Callable[[], t.NormalizedValue],
         ) -> r[bool]:
             return r[bool].fail("fac fail")
 
@@ -63,7 +63,7 @@ class TestUtilitiesConfigurationFullCoverage:
         def register_factory(
             self,
             _name: str,
-            _factory: Callable[[], object],
+            _factory: Callable[[], t.NormalizedValue],
         ) -> r[bool]:
             msg = "fac ex"
             raise RuntimeError(msg)
@@ -96,7 +96,10 @@ class TestUtilitiesConfigurationFullCoverage:
 
     def test_private_getters_exception_paths(self) -> None:
         assert u._try_get_from_model_dump(
-            cast("p.HasModelDump", cast("object", TestUnitModels._DumpErrorModel())),
+            cast(
+                "p.HasModelDump",
+                cast("t.NormalizedValue", TestUnitModels._DumpErrorModel()),
+            ),
             "missing",
         ) == (False, None)
         assert u._try_get_from_duck_model_dump(self._DuckDumpError(), "value") == (
@@ -118,9 +121,9 @@ class TestUtilitiesConfigurationFullCoverage:
     def test_register_singleton_register_factory_and_bulk_register_paths(
         self,
     ) -> None:
-        ok = cast("p.Container", cast("object", self._ContainerOK()))
-        fail = cast("p.Container", cast("object", self._ContainerFail()))
-        err = cast("p.Container", cast("object", self._ContainerRaise()))
+        ok = cast("p.Container", cast("t.NormalizedValue", self._ContainerOK()))
+        fail = cast("p.Container", cast("t.NormalizedValue", self._ContainerFail()))
+        err = cast("p.Container", cast("t.NormalizedValue", self._ContainerRaise()))
         singleton_ok = u.register_singleton(ok, "s", 1)
         singleton_fail = u.register_singleton(fail, "s", 1)
         singleton_err = u.register_singleton(err, "s", 1)

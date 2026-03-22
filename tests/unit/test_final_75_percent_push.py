@@ -29,7 +29,7 @@ class TestFinal75PercentPush:
     class ResultOperationScenario(BaseModel):
         """r operation test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Result operation scenario name")]
         initial_value: Annotated[int | None, Field(description="Initial result value")]
@@ -42,7 +42,7 @@ class TestFinal75PercentPush:
     class ExceptionTypeScenario(BaseModel):
         """Exception type test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Exception scenario name")]
         exception_type: Annotated[

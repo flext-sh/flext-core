@@ -373,7 +373,7 @@ class FlextModelFoundation:
     class ArbitraryTypesModel(BaseModel):
         """Base model with arbitrary types support."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             extra=c.EXTRA_FORBID,
             arbitrary_types_allowed=True,
@@ -383,7 +383,7 @@ class FlextModelFoundation:
     class StrictBoundaryModel(BaseModel):
         """Strict boundary model for API/external boundaries."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             strict=True,
             validate_assignment=True,
             extra="forbid",
@@ -395,7 +395,7 @@ class FlextModelFoundation:
     class FlexibleInternalModel(BaseModel):
         """Flexible internal model for domain logic."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             extra="ignore",
             str_strip_whitespace=True,
@@ -405,7 +405,7 @@ class FlextModelFoundation:
     class ImmutableValueModel(BaseModel):
         """Immutable value model for value objects."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
             validate_assignment=True,
             extra="forbid",
@@ -414,13 +414,13 @@ class FlextModelFoundation:
     class TaggedModel(BaseModel):
         """Base pattern for tagged discriminated unions."""
 
-        model_config = ConfigDict(extra="forbid")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
         tag: ClassVar[str]
 
     class DynamicConfigModel(BaseModel):
         """Model for dynamic configuration - allows extra fields."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             extra="allow",
             arbitrary_types_allowed=True,
@@ -430,7 +430,7 @@ class FlextModelFoundation:
     class Metadata(BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             extra=c.EXTRA_FORBID,
             frozen=True,
             validate_assignment=True,
@@ -663,7 +663,7 @@ class FlextModelFoundation:
     class FrozenStrictModel(BaseModel):
         """Immutable base model with strict validation."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
             validate_return=True,
             validate_default=True,
@@ -682,7 +682,7 @@ class FlextModelFoundation:
         """Value model with equality/hash by value."""
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.NormalizedValue) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
             return bool(self.model_dump() == other.model_dump())
@@ -694,7 +694,7 @@ class FlextModelFoundation:
     class IdentifiableMixin(BaseModel):
         """Mixin for unique identifiers."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             validate_assignment=True,
             str_strip_whitespace=True,
@@ -715,7 +715,7 @@ class FlextModelFoundation:
     class TimestampableMixin(BaseModel):
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -754,7 +754,7 @@ class FlextModelFoundation:
     class VersionableMixin(BaseModel):
         """Mixin for versioning with optimistic locking."""
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             validate_assignment=True,
         )
@@ -782,7 +782,7 @@ class FlextModelFoundation:
     class RetryConfigurationMixin(BaseModel):
         """Mixin for shared retry configuration properties."""
 
-        model_config = ConfigDict(populate_by_name=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(populate_by_name=True)
         max_retries: Annotated[
             t.NonNegativeInt,
             Field(

@@ -127,7 +127,7 @@ class FlextModelsCollections:
 
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             strict=True,
             validate_default=True,
             validate_assignment=True,
@@ -271,14 +271,14 @@ class FlextModelsCollections:
         Non-frozen models are not hashable by design.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             extra="forbid",
             validate_assignment=True,
         )
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: t.NormalizedValue) -> bool:
             if not isinstance(other, self.__class__):
                 return NotImplemented
             return self.model_dump() == other.model_dump()

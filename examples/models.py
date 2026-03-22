@@ -119,10 +119,10 @@ class FlextCoreExampleModels:
         """Example 03 facade."""
 
         class Email(Ex03Email):
-            """Email value object export."""
+            """Email value t.NormalizedValue export."""
 
         class Money(Ex03Money):
-            """Money value object export."""
+            """Money value t.NormalizedValue export."""
 
         class User(Ex03User):
             """Domain user export."""

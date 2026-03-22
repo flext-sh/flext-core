@@ -26,7 +26,7 @@ class FlextModelsDispatcher:
     class TimeoutEnforcer(BaseModel):
         """Manage timeout enforcement and dispatcher thread-pool execution."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
         use_timeout_executor: bool = Field(
             description="Whether timeout executor is enabled",
@@ -130,7 +130,7 @@ class FlextModelsDispatcher:
         handlers from cascading failures.
         """
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
         threshold: Annotated[
             t.PositiveInt,
@@ -382,7 +382,7 @@ class FlextModelsDispatcher:
     class RateLimiterManager(BaseModel):
         """Enforce per-message rate limits with a sliding window algorithm."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
         max_requests: t.PositiveInt = Field(
             description="Maximum requests allowed per window"
@@ -482,7 +482,7 @@ class FlextModelsDispatcher:
     class RetryPolicy(BaseModel):
         """Coordinate retry attempts with configurable backoff for dispatcher steps."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
         max_attempts: t.PositiveInt = Field(
             description="Maximum retry attempts allowed"

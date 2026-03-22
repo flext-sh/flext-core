@@ -28,6 +28,7 @@ from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r, s
+from tests import t
 
 
 class TestsCore:
@@ -46,15 +47,17 @@ class TestsCore:
     class ServiceScenario(BaseModel):
         """Service test scenario definition."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Service scenario name")]
-        scenario_type: Annotated[object, Field(description="Service scenario type")]
+        scenario_type: Annotated[
+            t.NormalizedValue, Field(description="Service scenario type")
+        ]
         is_valid_expected: Annotated[
             bool,
             Field(description="Expected is_valid result"),
         ]
         service_kwargs: Annotated[
-            Mapping[str, object] | None,
+            Mapping[str, t.NormalizedValue] | None,
             Field(default=None, description="Optional scenario service kwargs"),
         ] = None
 
@@ -131,7 +134,7 @@ class TestsCore:
         def create_service(
             scenario: TestsCore.ServiceScenario,
         ) -> s[TestsCore.UserData] | s[str] | s[bool]:
-            kwargs_raw: Mapping[str, object] = scenario.service_kwargs or {}
+            kwargs_raw: Mapping[str, t.NormalizedValue] = scenario.service_kwargs or {}
             if scenario.scenario_type == TestsCore.ServiceScenarioType.BASIC_USER:
                 return TestsCore.UserService()
             if scenario.scenario_type in {

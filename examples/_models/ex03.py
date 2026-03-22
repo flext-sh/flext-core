@@ -10,13 +10,13 @@ from flext_core import c, m, r, t
 
 
 class Ex03Email(m.Value):
-    """Email value object model."""
+    """Email value t.NormalizedValue model."""
 
     address: EmailStr
 
 
 class Ex03Money(m.Value):
-    """Money value object model."""
+    """Money value t.NormalizedValue model."""
 
     amount: Decimal
     currency: c.Currency = c.Currency.USD
@@ -49,7 +49,7 @@ class Ex03User(m.Entity):
 
 
 class Ex03OrderItem(m.Value):
-    """Order item value object."""
+    """Order item value t.NormalizedValue."""
 
     product_id: str
     name: str

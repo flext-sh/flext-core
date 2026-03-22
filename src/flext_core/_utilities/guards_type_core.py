@@ -31,33 +31,37 @@ class FlextUtilitiesGuardsTypeCore:
     """
 
     @staticmethod
-    def _is_object_sequence(value: object) -> TypeIs[Sequence[object]]:
+    def _is_object_sequence(
+        value: t.NormalizedValue,
+    ) -> TypeIs[Sequence[t.NormalizedValue]]:
         """Check if value is a sequence (list or tuple).
 
         Args:
             value: Object to check.
 
         Returns:
-            True if value is a list or tuple, narrowed to Sequence[object].
+            True if value is a list or tuple, narrowed to Sequence[t.NormalizedValue].
 
         """
         return isinstance(value, (list, tuple))
 
     @staticmethod
-    def _is_object_mapping(value: object) -> TypeIs[Mapping[str, object]]:
+    def _is_object_mapping(
+        value: t.NormalizedValue,
+    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         """Check if value is a mapping type.
 
         Args:
             value: Object to check.
 
         Returns:
-            True if value is a Mapping, narrowed to Mapping[str, object].
+            True if value is a Mapping, narrowed to Mapping[str, t.NormalizedValue].
 
         """
         return isinstance(value, Mapping)
 
     @staticmethod
-    def _all_container_sequence(value: Sequence[object]) -> bool:
+    def _all_container_sequence(value: Sequence[t.NormalizedValue]) -> bool:
         """Check if all items in sequence are valid containers.
 
         Args:
@@ -73,11 +77,11 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def all_container_mapping_values(value: Mapping[str, object]) -> bool:
+    def all_container_mapping_values(value: Mapping[str, t.NormalizedValue]) -> bool:
         """Check if all values in mapping are valid containers.
 
         Args:
-            value: Mapping with object values to validate.
+            value: Mapping with t.NormalizedValue values to validate.
 
         Returns:
             True if all values are containers, False otherwise.
@@ -131,7 +135,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def is_container(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[t.Container]:
         """Check if value is a valid container (recursive validation).
 
@@ -208,7 +212,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def is_mapping(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
         """Check if value is a mapping type.
 
@@ -223,7 +227,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def is_primitive(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[t.Primitives]:
         """Check if value is a primitive type (str, int, float, bool).
 
@@ -238,7 +242,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def is_scalar(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[t.Scalar]:
         """Check if value is a scalar type (str, int, float, bool, datetime).
 
@@ -265,7 +269,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_instance_of[T](value: object, type_cls: type[T]) -> TypeIs[T]:
+    def is_instance_of[T](value: t.NormalizedValue, type_cls: type[T]) -> TypeIs[T]:
         """Check if value is instance of type class (handles generics).
 
         Args:
@@ -300,16 +304,16 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def has(obj: t.NormalizedValue, key: str) -> bool:
-        """Check if object has key or attribute.
+        """Check if t.NormalizedValue has key or attribute.
 
         Uses dict subscript for dicts, hasattr for other objects.
 
         Args:
-            obj: Object to check (dict or object with attributes).
+            obj: Object to check (dict or t.NormalizedValue with attributes).
             key: Key or attribute name to check.
 
         Returns:
-            True if object has the key or attribute.
+            True if t.NormalizedValue has the key or attribute.
 
         """
         return key in obj if isinstance(obj, dict) else hasattr(obj, key)

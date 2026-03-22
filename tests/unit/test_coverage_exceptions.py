@@ -16,7 +16,7 @@ class TestCoverageExceptions:
     class ExceptionCreationScenario(BaseModel):
         """Scenario for exception creation."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Exception creation scenario name")]
         exception_type: Annotated[
             type[FlextExceptions.BaseError],

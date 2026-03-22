@@ -34,7 +34,7 @@ from flext_core import FlextContext, FlextLogger, c, e, r, t, u
 class UserProfile(BaseModel):
     """Domain entity with centralized types and business logic - no None types."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     name: str = Field(description="User's full name")
     email: str = Field(description="User's email address")

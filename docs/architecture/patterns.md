@@ -457,7 +457,7 @@ if result.is_success:
 
 **Benefits:**
 
-- ✅ Encapsulates object creation
+- ✅ Encapsulates t.NormalizedValue creation
 - ✅ Easy to add new types
 - ✅ Centralized creation logic
 

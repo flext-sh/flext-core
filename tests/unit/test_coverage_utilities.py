@@ -63,20 +63,20 @@ class Testu(TextUtilityContract):
         description: str = ""
 
     class _TestCachedObject:
-        """Mock object with cache attributes."""
+        """Mock t.NormalizedValue with cache attributes."""
 
         def __init__(self) -> None:
             self._cache: t.ConfigMap = t.ConfigMap(root={"key": "value"})
             self._simple_cache: str = "cached_value"
 
     class _TestUncachedObject:
-        """Mock object without cache attributes."""
+        """Mock t.NormalizedValue without cache attributes."""
 
         def __init__(self) -> None:
             pass
 
     class _CustomObject:
-        """Custom serializable object."""
+        """Custom serializable t.NormalizedValue."""
 
         @override
         def __str__(self) -> str:
@@ -116,7 +116,7 @@ class Testu(TextUtilityContract):
 
         @staticmethod
         def create_mock_config(**kwargs: t.Scalar) -> t.ConfigMap:
-            """Create mock config object."""
+            """Create mock config t.NormalizedValue."""
             result: dict[str, t.NormalizedValue | BaseModel] = {}
             for key, value in kwargs.items():
                 result[str(key)] = value
@@ -124,17 +124,17 @@ class Testu(TextUtilityContract):
 
         @staticmethod
         def create_mock_cached_object() -> Testu._TestCachedObject:
-            """Create mock object with cache attributes."""
+            """Create mock t.NormalizedValue with cache attributes."""
             return Testu._TestCachedObject()
 
         @staticmethod
         def create_mock_uncached_object() -> Testu._TestUncachedObject:
-            """Create mock object without cache attributes."""
+            """Create mock t.NormalizedValue without cache attributes."""
             return Testu._TestUncachedObject()
 
         @staticmethod
         def create_custom_object() -> Testu._CustomObject:
-            """Create custom serializable object."""
+            """Create custom serializable t.NormalizedValue."""
             return Testu._CustomObject()
 
         @staticmethod
@@ -321,7 +321,7 @@ class Testu(TextUtilityContract):
         tm.that(key1, ne=key2)
 
     def test_cache_clear_object(self) -> None:
-        """Test clearing object cache."""
+        """Test clearing t.NormalizedValue cache."""
         obj = self.UtilityScenarios.create_mock_cached_object()
         if isinstance(obj, BaseModel):
             result = u.clear_object_cache(obj)
@@ -341,12 +341,12 @@ class Testu(TextUtilityContract):
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_cache_has_attributes_true(self) -> None:
-        """Test detecting cache attributes on object with cache."""
+        """Test detecting cache attributes on t.NormalizedValue with cache."""
         obj = self.UtilityScenarios.create_mock_cached_object()
         assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True
 
     def test_cache_has_attributes_false(self) -> None:
-        """Test detecting cache attributes on object without cache."""
+        """Test detecting cache attributes on t.NormalizedValue without cache."""
         obj = self.UtilityScenarios.create_mock_uncached_object()
         assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is False
 
@@ -391,7 +391,7 @@ class Testu(TextUtilityContract):
         tm.that(attempt_count[0], gte=2)
 
     def test_type_checker_object_accepts_all(self) -> None:
-        """Test type checking with object (accepts all)."""
+        """Test type checking with t.NormalizedValue (accepts all)."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
 

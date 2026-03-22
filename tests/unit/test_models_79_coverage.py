@@ -105,11 +105,11 @@ class TestModels79Coverage:
         tm.that(initial_version >= 1, eq=True)
 
     def test_value_object_creation(self) -> None:
-        """Test value object creation."""
+        """Test value t.NormalizedValue creation."""
 
         class Email(BaseModel):
             address: Annotated[
-                str, Field(description="Email address for value object test")
+                str, Field(description="Email address for value t.NormalizedValue test")
             ]
 
         email1 = Email(address="test@example.com")
@@ -123,10 +123,11 @@ class TestModels79Coverage:
 
         class Price(BaseModel):
             amount: Annotated[
-                Decimal, Field(description="Price amount for value object test")
+                Decimal,
+                Field(description="Price amount for value t.NormalizedValue test"),
             ]
             currency: Annotated[
-                str, Field(description="Currency code for value object test")
+                str, Field(description="Currency code for value t.NormalizedValue test")
             ]
 
         price = Price(amount=Decimal("10.00"), currency="USD")

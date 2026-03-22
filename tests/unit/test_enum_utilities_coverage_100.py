@@ -22,6 +22,8 @@ import pytest
 from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
+from tests import t
+
 
 class TestEnumUtilitiesCoverage:
     @unique
@@ -43,20 +45,24 @@ class TestEnumUtilitiesCoverage:
     class IsMemberScenario(BaseModel):
         """Is member test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Is member scenario name")]
-        value: Annotated[object, Field(description="Input value to validate")]
+        value: Annotated[
+            t.NormalizedValue, Field(description="Input value to validate")
+        ]
         expected: Annotated[bool, Field(description="Expected membership result")]
 
     class IsSubsetScenario(BaseModel):
         """Is subset test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Is subset scenario name")]
         valid_members: Annotated[
             frozenset[StrEnum], Field(description="Allowed enum members")
         ]
-        value: Annotated[object, Field(description="Input value to validate")]
+        value: Annotated[
+            t.NormalizedValue, Field(description="Input value to validate")
+        ]
         expected: Annotated[
             bool, Field(description="Expected subset membership result")
         ]
@@ -64,7 +70,7 @@ class TestEnumUtilitiesCoverage:
     class ParseScenario(BaseModel):
         """Parse test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse scenario name")]
         value: Annotated[str | StrEnum, Field(description="Input value to parse")]
         expected_success: Annotated[
@@ -82,7 +88,7 @@ class TestEnumUtilitiesCoverage:
     class ParseOrDefaultScenario(BaseModel):
         """Parse or default test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse or default scenario name")]
         value: Annotated[
             str | StrEnum | None, Field(description="Input value to parse")
@@ -93,10 +99,11 @@ class TestEnumUtilitiesCoverage:
     class CoerceValidatorScenario(BaseModel):
         """Coerce validator test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce validator scenario name")]
         value: Annotated[
-            object | StrEnum | None, Field(description="Input value for coercion")
+            t.NormalizedValue | StrEnum | None,
+            Field(description="Input value for coercion"),
         ]
         expected_success: Annotated[
             bool, Field(description="Whether coercion should succeed")

@@ -115,7 +115,7 @@ class TestDeprecationWarnings:
     def test_normalize_to_container_unknown_becomes_str(self) -> None:
         """Unknown objects are converted to string representation."""
         result = FlextRuntime.normalize_to_container(
-            cast("t.RuntimeData", object()),
+            cast("t.RuntimeData", t.NormalizedValue()),
         )
         tm.that(isinstance(result, str), eq=True)
 

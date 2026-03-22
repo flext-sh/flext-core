@@ -126,7 +126,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         user1 = UserModel(name="Alice", status=StatusEnum.ACTIVE, age=25)
         user2 = UserModel(name="Bob", status=StatusEnum.ACTIVE, age=30)
         comparison = u.compare_value_objects_by_value(user1, user2)
-        print(f"✅ Value object comparison: {comparison}")
+        print(f"✅ Value t.NormalizedValue comparison: {comparison}")
         print("✅ Entity comparison utilities available")
         print("✅ Entity hashing utilities available")
 

@@ -30,7 +30,7 @@ class TestPhase2CoverageFinal:
     class ResultChainingScenario(BaseModel):
         """r chaining test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Result chaining scenario name")]
         initial_value: Annotated[str, Field(description="Initial string value")]

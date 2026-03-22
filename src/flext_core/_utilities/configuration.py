@@ -59,7 +59,7 @@ class FlextUtilitiesConfiguration:
     Business Rules:
     ==============
     This class provides a unified interface for accessing and manipulating
-    configuration parameters across different object types in the FLEXT ecosystem.
+    configuration parameters across different t.NormalizedValue types in the FLEXT ecosystem.
 
     1. **Type Coercion Strategy**:
        - NO automatic type coercion (Pydantic handles validation)
@@ -99,7 +99,7 @@ class FlextUtilitiesConfiguration:
         get_fn = getattr(raw, "get", None)
         if get_fn is None or not callable(get_fn):
             return (False, None)
-        sentinel = object()
+        sentinel = t.NormalizedValue()
         val = get_fn(parameter, sentinel)
         if val is sentinel:
             return (False, None)
@@ -191,7 +191,7 @@ class FlextUtilitiesConfiguration:
         obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
-        """Try to get attribute value from object via direct attribute access.
+        """Try to get attribute value from t.NormalizedValue via direct attribute access.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
         ==========================================================
@@ -202,7 +202,7 @@ class FlextUtilitiesConfiguration:
 
         Type Safety:
         - Uses direct attribute access with AttributeError handling
-        - Cast to object preserves union type safety
+        - Cast to t.NormalizedValue preserves union type safety
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
         Args:
@@ -226,7 +226,7 @@ class FlextUtilitiesConfiguration:
         obj: Mapping[str, t.ValueOrModel],
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
-        """Try to get parameter from dict-like object.
+        """Try to get parameter from dict-like t.NormalizedValue.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
         ===================================================
@@ -245,7 +245,7 @@ class FlextUtilitiesConfiguration:
         - No type coercion (preserves None vs missing distinction)
 
         Args:
-            obj: Potentially dict-like object
+            obj: Potentially dict-like t.NormalizedValue
             parameter: Key to retrieve
 
         Returns:
@@ -272,7 +272,7 @@ class FlextUtilitiesConfiguration:
         obj: p.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
-        """Try to get parameter from HasModelDump protocol object.
+        """Try to get parameter from HasModelDump protocol t.NormalizedValue.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
         ======================================================
@@ -518,12 +518,12 @@ class FlextUtilitiesConfiguration:
         obj: p.HasModelDump | BaseModel | p.Base | Mapping[str, t.ValueOrModel],
         parameter: str,
     ) -> t.ValueOrModel:
-        """Get parameter value from a configuration object.
+        """Get parameter value from a configuration t.NormalizedValue.
 
         Business Rule: Parameter Access Precedence Chain
         ================================================
         This method implements a deterministic precedence chain for parameter
-        retrieval that handles diverse object types consistently:
+        retrieval that handles diverse t.NormalizedValue types consistently:
 
         1. HasModelDump protocol → model_dump() dict access
            - Highest priority for Pydantic models
@@ -552,7 +552,7 @@ class FlextUtilitiesConfiguration:
         - Sentinel tuple pattern in helpers distinguishes "None value" from "not found"
 
         Args:
-            obj: Configuration object (HasModelDump, dict-like, or with attributes)
+            obj: Configuration t.NormalizedValue (HasModelDump, dict-like, or with attributes)
             parameter: Parameter name to retrieve
 
         Returns:
@@ -769,7 +769,7 @@ class FlextUtilitiesConfiguration:
         parameter: str,
         value: t.Scalar | t.ConfigMap,
     ) -> bool:
-        """Set parameter value on a configuration object with validation.
+        """Set parameter value on a configuration t.NormalizedValue with validation.
 
         Business Rule: Graceful Write with Pydantic Validation
         =====================================================
@@ -786,7 +786,7 @@ class FlextUtilitiesConfiguration:
         - This avoids deprecation warnings in newer Pydantic versions
 
         Validation Flow:
-        1. Check if object implements HasModelFields protocol
+        1. Check if t.NormalizedValue implements HasModelFields protocol
         2. Verify parameter exists in model_fields (prevents adding new fields)
         3. Use setattr which triggers Pydantic's validate_assignment
         4. Pydantic validates the value against field type
@@ -799,7 +799,7 @@ class FlextUtilitiesConfiguration:
         - KeyError: Field not found (shouldn't happen after model_fields check)
 
         Args:
-            obj: The configuration object (Pydantic BaseSettings instance)
+            obj: The configuration t.NormalizedValue (Pydantic BaseSettings instance)
             parameter: The parameter name to set
             value: The new value to set (will be validated by Pydantic)
 

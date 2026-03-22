@@ -29,8 +29,8 @@ class FlextUtilitiesDomain:
         """Check if two objects are of the same type.
 
         Args:
-            obj_a: First object to compare.
-            obj_b: Second object to compare.
+            obj_a: First t.NormalizedValue to compare.
+            obj_b: Second t.NormalizedValue to compare.
 
         Returns:
             True if both objects are instances of the same type.
@@ -73,8 +73,8 @@ class FlextUtilitiesDomain:
         Generic comparison for DDD Value Objects - compares by value, not identity.
 
         Args:
-            obj_a: First value object to compare.
-            obj_b: Second value object to compare.
+            obj_a: First value t.NormalizedValue to compare.
+            obj_b: Second value t.NormalizedValue to compare.
 
         Returns:
             True if same type and all attributes equal, False otherwise.
@@ -95,14 +95,14 @@ class FlextUtilitiesDomain:
         """Generate hash for entity based on unique ID and type.
 
         Generic hashing for DDD entities - uses identity (ID + type), not value.
-        Falls back to object identity hash if ID is missing.
+        Falls back to t.NormalizedValue identity hash if ID is missing.
 
         Args:
             entity: Entity to hash.
             id_attr: Attribute name for unique ID (default: "unique_id").
 
         Returns:
-            Hash value based on entity ID and type, or object identity if ID missing.
+            Hash value based on entity ID and type, or t.NormalizedValue identity if ID missing.
 
         """
         entity_id = getattr(entity, id_attr, None)
@@ -112,16 +112,16 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_value_object_by_value(obj: t.RuntimeData) -> int:
-        """Generate hash for value object based on all attribute values.
+        """Generate hash for value t.NormalizedValue based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
         Falls back to repr-based hash if __dict__ is unavailable.
 
         Args:
-            obj: Value object to hash.
+            obj: Value t.NormalizedValue to hash.
 
         Returns:
-            Hash value based on all object attributes or repr hash as fallback.
+            Hash value based on all t.NormalizedValue attributes or repr hash as fallback.
 
         """
         try:
@@ -159,10 +159,10 @@ class FlextUtilitiesDomain:
     def validate_value_object_immutable(
         obj: t.RuntimeData,
     ) -> bool:
-        """Check if value object appears to be immutable (frozen).
+        """Check if value t.NormalizedValue appears to be immutable (frozen).
 
         Args:
-            obj: Value object to check
+            obj: Value t.NormalizedValue to check
 
         Returns:
             True if appears immutable (frozen=True or no __setattr__)

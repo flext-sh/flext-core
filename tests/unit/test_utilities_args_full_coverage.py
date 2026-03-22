@@ -42,7 +42,7 @@ def test_args_get_enum_params_branches() -> None:
 def test_args_get_enum_params_annotated_unwrap_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen_candidates: list[type[object] | str] = []
+    seen_candidates: list[type[t.NormalizedValue] | str] = []
 
     def _mock_get_type_hints(
         _func: t.TypeHintSpecifier,
@@ -52,7 +52,7 @@ def test_args_get_enum_params_annotated_unwrap_branch(
         return {"mode": cast("t.TypeHintSpecifier", Annotated[c.HandlerType, "meta"])}
 
     def _mock_validate_enum_type(
-        candidate: type[object] | str,
+        candidate: type[t.NormalizedValue] | str,
     ) -> r[type[c.HandlerType]]:
         seen_candidates.append(candidate)
         if candidate is c.HandlerType:

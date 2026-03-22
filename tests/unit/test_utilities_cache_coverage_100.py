@@ -33,7 +33,7 @@ class UtilitiesCacheCoverage100Namespace:
     class NormalizeComponentScenario(BaseModel):
         """Normalize component test scenario."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
         name: Annotated[str, Field(description="Normalize scenario name")]
         component: Annotated[
@@ -51,7 +51,7 @@ class UtilitiesCacheCoverage100Namespace:
     class SortKeyScenario(BaseModel):
         """Sort key test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Sort key scenario name")]
         key: Annotated[
@@ -64,14 +64,14 @@ class UtilitiesCacheCoverage100Namespace:
     class ClearCacheScenario(BaseModel):
         """Clear cache test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Cache clear scenario name")]
         obj: Annotated[
             t.NormalizedValue, Field(description="Object under cache clear test")
         ]
         has_cache_attr: Annotated[
-            bool, Field(description="Whether object exposes cache attribute")
+            bool, Field(description="Whether t.NormalizedValue exposes cache attribute")
         ]
         expected_success: Annotated[
             bool, Field(description="Expected clear operation success flag")
@@ -162,7 +162,7 @@ class UtilitiesCacheCoverage100Namespace:
         ),
         NormalizeComponentScenario(
             name="custom_object",
-            component=str(object()),
+            component=str(t.NormalizedValue()),
             expected_type=str,
         ),
     ]
@@ -185,8 +185,8 @@ class UtilitiesCacheCoverage100Namespace:
         SortKeyScenario(name="zero", key=0, expected_tuple=(1, "0")),
         SortKeyScenario(
             name="custom_object",
-            key=str(object()),
-            expected_tuple=(0, str(object()).lower()),
+            key=str(t.NormalizedValue()),
+            expected_tuple=(0, str(t.NormalizedValue()).lower()),
         ),
         SortKeyScenario(
             name="list_key",
@@ -281,7 +281,7 @@ class UtilitiesCacheCoverage100Namespace:
                 none=False,
                 msg="Result must be tuple or list",
             )
-            result_tuple = cast("tuple[t.Tests.object, ...]", result)
+            result_tuple = cast("tuple[t.Tests.t.NormalizedValue, ...]", result)
             tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
             result_set = set(result_tuple)
             tm.that(1 in result_set, eq=True, msg="1 must be in result")
@@ -303,7 +303,7 @@ class UtilitiesCacheCoverage100Namespace:
             )
             result = u.normalize_component(cast("t.NormalizedValue", component))
             tm.that(result, is_=list, none=False, msg="Result must be list")
-            result_list = cast("list[t.Tests.object]", result)
+            result_list = cast("list[t.Tests.t.NormalizedValue]", result)
             tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
             tm.that(result_list[0], eq=1, msg="First item must be 1")
             tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
@@ -316,7 +316,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test normalize_component fallback to string for unknown types."""
 
             class CustomObject:
-                """Custom object for testing fallback."""
+                """Custom t.NormalizedValue for testing fallback."""
 
                 @override
                 def __str__(self) -> str:
@@ -408,7 +408,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test clear_object_cache with dict-like cache."""
 
             class TestObject:
-                """Test object with dict cache."""
+                """Test t.NormalizedValue with dict cache."""
 
                 _cache: dict[str, str] = {}  # Test double; per-test isolation
 
@@ -426,7 +426,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test clear_object_cache with simple cached value."""
 
             class TestObject:
-                """Test object with simple cache."""
+                """Test t.NormalizedValue with simple cache."""
 
                 _cached_value: str | None = "cached_value"
 
@@ -440,7 +440,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test clear_object_cache with cache that doesn't have clear() method."""
 
             class TestObject:
-                """Test object with non-dict cache."""
+                """Test t.NormalizedValue with non-dict cache."""
 
                 _cache: str | None = "simple_string_cache"
 
@@ -454,7 +454,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test clear_object_cache clears multiple cache attributes."""
 
             class TestObject:
-                """Test object with multiple cache attributes."""
+                """Test t.NormalizedValue with multiple cache attributes."""
 
                 _cache: dict[str, int] = {}  # Test double
                 _cached_value: str | None = "value"
@@ -476,10 +476,10 @@ class UtilitiesCacheCoverage100Namespace:
             assert len(obj._cached_at) == 0
 
         def test_clear_object_cache_no_cache_attributes(self) -> None:
-            """Test clear_object_cache with object without cache attributes."""
+            """Test clear_object_cache with t.NormalizedValue without cache attributes."""
 
             class TestObject:
-                """Test object without cache attributes."""
+                """Test t.NormalizedValue without cache attributes."""
 
                 data: str = "value"
 
@@ -492,7 +492,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test clear_object_cache with None cache value."""
 
             class TestObject:
-                """Test object with None cache."""
+                """Test t.NormalizedValue with None cache."""
 
                 _cache: dict[str, str] | None = None
 
@@ -520,7 +520,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             class BadObject:
                 def __init__(self) -> None:
-                    self._cache = object()
+                    self._cache = t.NormalizedValue()
 
                 @override
                 def __setattr__(
@@ -544,7 +544,7 @@ class UtilitiesCacheCoverage100Namespace:
                     self._cache: dict[str, str] = {}
 
                 @override
-                def __getattribute__(self, name: str) -> object:
+                def __getattribute__(self, name: str) -> t.NormalizedValue:
                     if name == "_cache":
                         raise ValueError(error_msg)
                     return super().__getattribute__(name)

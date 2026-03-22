@@ -51,7 +51,7 @@ class TestUtilitiesCollectionCoverage:
     class ParseSequenceScenario(BaseModel):
         """Parse sequence test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse sequence scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
         values: Annotated[
@@ -71,7 +71,7 @@ class TestUtilitiesCollectionCoverage:
     class CoerceListScenario(BaseModel):
         """Coerce list validator test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce list scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
         value: Annotated[
@@ -96,7 +96,7 @@ class TestUtilitiesCollectionCoverage:
     class ParseMappingScenario(BaseModel):
         """Parse mapping test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse mapping scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
         mapping: Annotated[
@@ -116,7 +116,7 @@ class TestUtilitiesCollectionCoverage:
     class CoerceDictScenario(BaseModel):
         """Coerce dict validator test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce dict scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
         value: Annotated[
@@ -141,7 +141,7 @@ class TestUtilitiesCollectionCoverage:
     class MapScenario(BaseModel):
         """Map method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Map scenario name")]
         items: Annotated[
             list[t.NormalizedValue]
@@ -183,7 +183,7 @@ class TestUtilitiesCollectionCoverage:
     class FindScenario(BaseModel):
         """Find method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Find scenario name")]
         items: Annotated[
             list[t.NormalizedValue]
@@ -205,7 +205,7 @@ class TestUtilitiesCollectionCoverage:
     class FilterScenario(BaseModel):
         """Filter method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Filter scenario name")]
         items: Annotated[
             list[t.NormalizedValue]
@@ -233,7 +233,7 @@ class TestUtilitiesCollectionCoverage:
     class CountScenario(BaseModel):
         """Count method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Count scenario name")]
         items: Annotated[
             Sequence[t.NormalizedValue], Field(description="Input items for count")
@@ -247,7 +247,7 @@ class TestUtilitiesCollectionCoverage:
     class ProcessScenario(BaseModel):
         """Process method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Process scenario name")]
         items: Annotated[
             Sequence[t.NormalizedValue], Field(description="Input items for process")
@@ -285,7 +285,7 @@ class TestUtilitiesCollectionCoverage:
     class GroupScenario(BaseModel):
         """Group method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Group scenario name")]
         items: Annotated[
             list[str] | tuple[str, ...], Field(description="Input items for group")
@@ -300,7 +300,7 @@ class TestUtilitiesCollectionCoverage:
     class ChunkScenario(BaseModel):
         """Chunk method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Chunk scenario name")]
         items: Annotated[
             list[int],
@@ -316,13 +316,16 @@ class TestUtilitiesCollectionCoverage:
     class BatchScenario(BaseModel):
         """Batch method test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Batch scenario name")]
         items: Annotated[list[int], Field(description="Input items for batch")]
         operation: Annotated[
-            Callable[..., object], Field(description="Batch operation callable")
+            Callable[..., t.NormalizedValue],
+            Field(description="Batch operation callable"),
         ]
-        expected_result: Annotated[object, Field(description="Expected batch result")]
+        expected_result: Annotated[
+            t.NormalizedValue, Field(description="Expected batch result")
+        ]
         size: Annotated[int, Field(default=100, description="Batch size")] = 100
         on_error: Annotated[
             str, Field(default="collect", description="Error handling mode")

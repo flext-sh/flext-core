@@ -138,7 +138,9 @@ class TestAutomatedResult:
         tm.that(propagated.is_failure, eq=True)
 
     @pytest.mark.performance
-    def test_result_chain_benchmark(self, benchmark: Callable[..., object]) -> None:
+    def test_result_chain_benchmark(
+        self, benchmark: Callable[..., t.NormalizedValue]
+    ) -> None:
         def chain() -> r[int]:
             return (
                 r[int].ok(42).map(lambda x: x + 1).flat_map(lambda x: r[int].ok(x * 2))

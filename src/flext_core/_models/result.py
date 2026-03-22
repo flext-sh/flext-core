@@ -26,7 +26,7 @@ class FlextModelsResult:
         Compatible with p.Result and r usage patterns.
         """
 
-        model_config = ConfigDict(
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,
             frozen=False,
             populate_by_name=True,

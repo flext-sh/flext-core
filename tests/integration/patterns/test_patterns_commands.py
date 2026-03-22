@@ -415,7 +415,7 @@ class TestPatternsCommands:
             raise AssertionError(msg)
 
     def test_can_handle_non_command_object(self) -> None:
-        """Test can_handle with non-command object."""
+        """Test can_handle with non-command t.NormalizedValue."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
             dict[str, t.NormalizedValue],

@@ -28,7 +28,7 @@ class FlextUtilitiesChecker:
 
     @staticmethod
     def _is_module_export_callable(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeIs[Callable[..., t.ModuleExport]]:
         """Check if value is a callable that returns module exports.
 
@@ -108,16 +108,16 @@ class FlextUtilitiesChecker:
         cls,
         expected_type: t.TypeHintSpecifier,
     ) -> bool:
-        """Check if expected type is object (universal compatibility).
+        """Check if expected type is t.NormalizedValue (universal compatibility).
 
         Args:
-            expected_type: Type to check for object compatibility
+            expected_type: Type to check for t.NormalizedValue compatibility
 
         Returns:
-            True if object type (accepts everything), False otherwise
+            True if t.NormalizedValue type (accepts everything), False otherwise
 
         """
-        return expected_type is object or str(expected_type) == "typing.Any"
+        return expected_type is t.NormalizedValue or str(expected_type) == "typing.Any"
 
     @classmethod
     def _evaluate_type_compatibility(

@@ -459,12 +459,14 @@ class Teste:
         tm.that(error.metadata.attributes, has="key1")
 
     def test_create_with_metadata_metadata_object(self) -> None:
-        """Test create with metadata as Metadata object - tests lines 1369-1371."""
+        """Test create with metadata as Metadata t.NormalizedValue - tests lines 1369-1371."""
         metadata_obj = m.Metadata(attributes={"key1": "value1"})
         error = e.create(
             "Test message",
             field="test_field",
-            metadata=cast("t.MetadataAttributeValue", cast("object", metadata_obj)),
+            metadata=cast(
+                "t.MetadataAttributeValue", cast("t.NormalizedValue", metadata_obj)
+            ),
         )
         tm.that(isinstance(error, e.ValidationError), eq=True)
         tm.that(error.metadata, none=False)
@@ -472,7 +474,7 @@ class Teste:
     def test_create_with_dict_like_metadata_basic(self) -> None:
         """Test create with dict-like metadata - tests lines 1376-1379."""
 
-        class DictLike(Mapping[str, object]):
+        class DictLike(Mapping[str, t.NormalizedValue]):
             @override
             def __getitem__(self, key: str) -> str:
                 if key == "key1":
@@ -718,9 +720,9 @@ class Teste:
     def test_create_with_dict_like_metadata_items_iteration(self) -> None:
         """Test create iterates dict-like metadata items - tests lines 1378-1379."""
 
-        class DictLike(Mapping[str, object]):
+        class DictLike(Mapping[str, t.NormalizedValue]):
             @override
-            def __getitem__(self, key: str) -> object:
+            def __getitem__(self, key: str) -> t.NormalizedValue:
                 mapping: dict[str, t.NormalizedValue] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
@@ -816,7 +818,7 @@ class Teste:
             error_code="TEST_ERROR",
             field="test_field",
             value=123,
-            custom_obj=cast("t.MetadataAttributeValue", str(object())),
+            custom_obj=cast("t.MetadataAttributeValue", str(t.NormalizedValue())),
         )
         tm.that(isinstance(error, e.ValidationError), eq=True)
         tm.that(error.metadata, none=False)
@@ -848,7 +850,7 @@ class Teste:
         error_factory = e()
         error = error_factory.create(
             "Test message",
-            obj=str(object()),
+            obj=str(t.NormalizedValue()),
             lst=[1, 2, 3],
             dct={"key": "value"},
         )
@@ -919,7 +921,7 @@ class Teste:
         tm.that(corr_id_dict, eq="test-id")
         tm.that(isinstance(metadata_dict, dict), eq=True)
 
-        class DictLike(Mapping[str, object]):
+        class DictLike(Mapping[str, t.NormalizedValue]):
             @override
             def __getitem__(self, key: str) -> str:
                 if key == "key":

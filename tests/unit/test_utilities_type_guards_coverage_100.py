@@ -18,7 +18,7 @@ class TestUtilitiesTypeGuardsCoverage100:
     class TypeGuardScenario(BaseModel):
         """Scenario for type guard testing."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         name: str
         value: Annotated[ScalarValue, Field(default="")]
         expected_result: bool = True
@@ -26,7 +26,7 @@ class TestUtilitiesTypeGuardsCoverage100:
     class NormalizeScenario(BaseModel):
         """Scenario for normalization testing."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         name: str
         value: Annotated[ScalarValue, Field(default="")]
         expected_type: type = str

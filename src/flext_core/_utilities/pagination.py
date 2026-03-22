@@ -114,7 +114,7 @@ class FlextUtilitiesPagination:
         """Extract pagination configuration values - no fallbacks.
 
         Args:
-            config: Configuration object or None
+            config: Configuration t.NormalizedValue or None
 
         Returns:
             Dictionary with pagination config values

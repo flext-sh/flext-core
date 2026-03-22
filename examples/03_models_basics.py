@@ -217,14 +217,14 @@ if __name__ == "__main__":
 
 
 class Email(m.Value):
-    """Email value object with advanced Pydantic 2 EmailStr validation."""
+    """Email value t.NormalizedValue with advanced Pydantic 2 EmailStr validation."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
     address: Annotated[EmailStr, Field(min_length=5, max_length=c.MAX_EMAIL_LENGTH)]
 
 
 class Money(m.Value):
-    """Money value object with StrEnum currency and railway operations."""
+    """Money value t.NormalizedValue with StrEnum currency and railway operations."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
     amount: Annotated[Decimal, Field(gt=Decimal(0))]

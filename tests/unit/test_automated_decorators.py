@@ -10,6 +10,7 @@ from flext_tests import tm, u
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextDecorators, e
+from tests import t
 
 
 class TestAutomatedFlextDecorators:
@@ -111,7 +112,7 @@ class TestAutomatedFlextDecorators:
         ids=lambda case: case[0],
     )
     def test_railway_benchmark_overhead(
-        self, mode: str, benchmark: Callable[..., object]
+        self, mode: str, benchmark: Callable[..., t.NormalizedValue]
     ) -> None:
         raw_add = u.Tests.Factory.add_operation
 

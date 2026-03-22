@@ -650,7 +650,6 @@ if TYPE_CHECKING:
         test_utilities_reliability_compose_returns_non_result_directly,
         test_utilities_reliability_uncovered_retry_compose_and_sequence_paths,
     )
-    from .unit.test_utilities_string_parser import TestuStringParser
     from .unit.test_utilities_text_full_coverage import TestUtilitiesTextFullCoverage
     from .unit.test_utilities_type_checker_coverage_100 import (
         T,
@@ -1250,10 +1249,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestuMapperUtils": (
         "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperUtils",
-    ),
-    "TestuStringParser": (
-        "tests.unit.test_utilities_string_parser",
-        "TestuStringParser",
     ),
     "TestuTypeChecker": (
         "tests.unit.test_utilities_type_checker_coverage_100",
@@ -2448,7 +2443,6 @@ __all__ = [
     "TestuMapperConversions",
     "TestuMapperExtract",
     "TestuMapperUtils",
-    "TestuStringParser",
     "TestuTypeChecker",
     "TextUtilityContract",
     "TimeoutEnforcer",

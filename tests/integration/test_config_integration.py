@@ -34,7 +34,7 @@ class TestFlextSettingsSingletonIntegration:
     class _ConfigTestCase(BaseModel):
         """Factory for configuration test cases."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         test_name: Annotated[str, Field(description="Configuration test case name")]
         config_data: Annotated[
@@ -78,7 +78,7 @@ class TestFlextSettingsSingletonIntegration:
     class _ThreadSafetyTest(BaseModel):
         """Factory for thread safety test configurations."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         thread_count: Annotated[
             int,

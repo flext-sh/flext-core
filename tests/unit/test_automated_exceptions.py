@@ -9,7 +9,7 @@ from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextExceptions
-from tests import m
+from tests import m, t
 
 EXCEPTION_CLASSES: tuple[type[FlextExceptions.BaseError], ...] = (
     FlextExceptions.BaseError,
@@ -150,7 +150,7 @@ class TestAutomatedExceptions:
     @pytest.mark.performance
     def test_exception_creation_to_dict_benchmark(
         self,
-        benchmark: Callable[..., object],
+        benchmark: Callable[..., t.NormalizedValue],
     ) -> None:
         def create_and_dump() -> dict[str, str | float | None]:
             err = FlextExceptions.OperationError(

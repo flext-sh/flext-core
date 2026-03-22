@@ -70,7 +70,7 @@ def test_execute_and_register_handler_failure_paths(
     setattr(
         registry,
         "_dispatcher",
-        cast("p.Dispatcher", cast("object", _FailDispatcher())),
+        cast("p.Dispatcher", cast("t.NormalizedValue", _FailDispatcher())),
     )
     reg_result = registry.register_handler(_as_registry_handler(_Handler()))
     assert reg_result.is_failure
@@ -91,7 +91,7 @@ def test_execute_and_register_handler_failure_paths(
     setattr(
         registry,
         "_dispatcher",
-        cast("p.Dispatcher", cast("object", _OkDispatcher())),
+        cast("p.Dispatcher", cast("t.NormalizedValue", _OkDispatcher())),
     )
 
     def _create_registration_details_none(
@@ -186,14 +186,14 @@ def test_summary_error_paths_and_bindings_failures(
     setattr(
         registry,
         "_dispatcher",
-        cast("p.Dispatcher", cast("object", _FailBindingDispatcher())),
+        cast("p.Dispatcher", cast("t.NormalizedValue", _FailBindingDispatcher())),
     )
     failed = registry.register_bindings({str: _as_registry_handler(_Handler())})
     assert failed.is_failure
     setattr(
         registry,
         "_dispatcher",
-        cast("p.Dispatcher", cast("object", _RaiseBindingDispatcher())),
+        cast("p.Dispatcher", cast("t.NormalizedValue", _RaiseBindingDispatcher())),
     )
     raised = registry.register_bindings({str: _as_registry_handler(_Handler())})
     assert raised.is_failure

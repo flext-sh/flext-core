@@ -853,7 +853,7 @@ xml-validation = ["lxml (>=4,<7)"]
 [[package]]
 name = "deepdiff"
 version = "8.6.2"
-description = "Deep Difference and Search of any Python object/data. Recreate objects by adding adding deltas to each other."
+description = "Deep Difference and Search of any Python t.NormalizedValue/data. Recreate objects by adding adding deltas to each other."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]

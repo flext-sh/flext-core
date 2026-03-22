@@ -19,7 +19,7 @@ class _CommandB(m.Command):
     amount: int
 
 
-class _ProtocolHandler(FlextHandlers[BaseModel, object]):
+class _ProtocolHandler(FlextHandlers[BaseModel, t.NormalizedValue]):
     def __init__(self, label: str, message_type: type) -> None:
         super().__init__()
         self._label = label

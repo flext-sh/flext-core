@@ -30,7 +30,7 @@ TimeoutEnforcer = FlextModelsDispatcher.TimeoutEnforcer
 
 class TestDispatcherTimeoutCoverage100:
     class _TimeoutEnforcerScenario(BaseModel):
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Timeout enforcer scenario name")]
         use_timeout_executor: Annotated[

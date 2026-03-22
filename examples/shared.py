@@ -183,7 +183,7 @@ class Examples:
     class Handle(m.Value):
         """Tiny model used to exercise ``with_resource``."""
 
-        model_config = ConfigDict(frozen=False)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
         value: int
         cleaned: bool = False
 

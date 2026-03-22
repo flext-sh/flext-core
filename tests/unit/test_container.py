@@ -39,7 +39,7 @@ class TestFlextContainer:
     class ServiceScenario(BaseModel):
         """Test scenario for service registration and retrieval."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         name: Annotated[str, Field(description="Service scenario name")]
         service: Annotated[t.Primitives, Field(description="Service value to register")]
         description: Annotated[
@@ -49,7 +49,7 @@ class TestFlextContainer:
     class TypedRetrievalScenario(BaseModel):
         """Test scenario for typed service retrieval."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         name: Annotated[str, Field(description="Typed retrieval scenario name")]
         service: Annotated[t.Primitives, Field(description="Registered service value")]
         expected_type: Annotated[type, Field(description="Expected service type")]
@@ -117,7 +117,7 @@ class TestFlextContainer:
     def test_container_initialization(self, clean_container: p.Container) -> None:
         """Test container initialization creates valid instance using fixtures."""
         tm.that(
-            cast("t.Tests.object", clean_container),
+            cast("t.Tests.t.NormalizedValue", clean_container),
             none=False,
             msg="Container must not be None",
         )
@@ -130,12 +130,12 @@ class TestFlextContainer:
         container1 = FlextContainer()
         container2 = FlextContainer()
         tm.that(
-            cast("t.Tests.object", container1),
+            cast("t.Tests.t.NormalizedValue", container1),
             none=False,
             msg="Container1 must not be None",
         )
         tm.that(
-            cast("t.Tests.object", container2),
+            cast("t.Tests.t.NormalizedValue", container2),
             none=False,
             msg="Container2 must not be None",
         )
@@ -409,7 +409,7 @@ class TestFlextContainer:
         container = FlextContainer()
         container.configure(config)
         tm.that(
-            cast("t.Tests.object", container),
+            cast("t.Tests.t.NormalizedValue", container),
             none=False,
             msg="Container must not be None after configure",
         )
@@ -462,7 +462,7 @@ class TestFlextContainer:
         container = FlextContainer()
         config = container.config
         tm.that(
-            cast("t.Tests.object", config),
+            cast("t.Tests.t.NormalizedValue", config),
             none=False,
             msg="Container config property must not be None",
         )

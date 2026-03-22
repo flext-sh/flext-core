@@ -56,7 +56,7 @@ class TestModelsBaseFullCoverage:
         left = self._FrozenValue(name="item", count=1)
         right = self._FrozenValue(name="item", count=1)
         assert left == right
-        eq_result = left.__eq__(object())
+        eq_result = left.__eq__(t.NormalizedValue())
         assert eq_result is NotImplemented
         hash_val = hash(left)
         assert isinstance(hash_val, int)

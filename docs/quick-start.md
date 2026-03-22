@@ -97,7 +97,7 @@ from flext_core import FlextModels
 
 
 class Email(m.Value):
-    """Immutable value object compared by value."""
+    """Immutable value t.NormalizedValue compared by value."""
 
     address: str
 

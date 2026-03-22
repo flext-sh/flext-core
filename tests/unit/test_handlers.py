@@ -47,7 +47,7 @@ class TestFlextHandlers:
     class HandlerTypeScenario(m.Value):
         """Scenario for handler types."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Handler type scenario name")]
         handler_type: Annotated[c.HandlerType, Field(description="Type")]
         handler_mode: Annotated[c.HandlerType, Field(description="Mode")]
@@ -534,7 +534,7 @@ class TestFlextHandlers:
 
     def test_handlers_slots_message_validation(self) -> None:
         class SlotsMessage(m.Value):
-            model_config = ConfigDict(frozen=True)
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
             value: str
             number: int
 

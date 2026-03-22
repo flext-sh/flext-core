@@ -33,7 +33,7 @@ class User(m.Entity):
 
 
 class DemonstrationResult(m.Value):
-    """Result value object for demonstration metadata."""
+    """Result value t.NormalizedValue for demonstration metadata."""
 
     demonstrations_completed: int
     patterns_covered: tuple[str, ...]

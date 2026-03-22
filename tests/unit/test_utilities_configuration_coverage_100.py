@@ -72,8 +72,10 @@ class TestFlextUtilitiesConfiguration:
     class DataclassConfigForTest(BaseModel):
         """Test config with name and value."""
 
-        name: Annotated[str, Field(description="Config object name")]
-        value: Annotated[int, Field(default=42, description="Config object value")] = 42
+        name: Annotated[str, Field(description="Config t.NormalizedValue name")]
+        value: Annotated[
+            int, Field(default=42, description="Config t.NormalizedValue value")
+        ] = 42
 
     class SingletonWithoutGetGlobalForTest:
         """Singleton without get_global method."""
@@ -156,7 +158,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_get_parameter_from_attribute_access(self) -> None:
         config = self.DataclassConfigForTest(name="test", value=42)
-        config_cast: p.HasModelDump | Mapping[str, object] = config
+        config_cast: p.HasModelDump | Mapping[str, t.NormalizedValue] = config
         result = u.get_parameter(config_cast, self.ParameterNames.VALUE.value)
         tm.that(result, eq=42)
 
@@ -283,7 +285,7 @@ class TestFlextUtilitiesConfiguration:
     def test_build_options_from_kwargs_unexpected_error(self) -> None:
         result = u.build_options_from_kwargs(
             model_class=self.FailingOptionsForTest,
-            explicit_options=cast("Any", object()),
+            explicit_options=cast("Any", t.NormalizedValue()),
             default_factory=self.FailingOptionsForTest,
             value="new",
         )

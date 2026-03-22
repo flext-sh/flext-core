@@ -122,11 +122,11 @@ class FlextModelsContextData:
                 description="Context metadata (creation info, source, etc.)",
             ),
         ] = None
-        model_config = ConfigDict(extra=c.EXTRA_IGNORE)
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_IGNORE)
 
         @classmethod
         def check_json_serializable(cls, obj: t.ValueOrModel, path: str = "") -> None:
-            """Recursively check if object is JSON-serializable."""
+            """Recursively check if t.NormalizedValue is JSON-serializable."""
             if obj is None or FlextUtilitiesGuardsTypeCore.is_primitive(obj):
                 return
             if FlextRuntime.is_dict_like(obj):

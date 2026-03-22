@@ -53,15 +53,17 @@ class Testr:
     class ResultScenario(BaseModel):
         """Generic result scenario for r tests."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Result scenario name")]
         operation_type: Annotated[StrEnum, Field(description="Result operation type")]
-        value: Annotated[object, Field(description="Input value for result operation")]
+        value: Annotated[
+            t.NormalizedValue, Field(description="Input value for result operation")
+        ]
         is_success_expected: Annotated[
             bool, Field(default=True, description="Expected success state")
         ] = True
         expected_result: Annotated[
-            object | None,
+            t.NormalizedValue | None,
             Field(default=None, description="Optional expected result payload"),
         ] = None
 

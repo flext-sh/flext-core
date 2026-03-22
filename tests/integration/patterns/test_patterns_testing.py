@@ -336,7 +336,7 @@ class TestPatternsTesting:
         def __init__(self, data: t.NormalizedValue) -> None:
             super().__init__()
             self._data = data
-            self._checks: list[tuple[str, object]] = []
+            self._checks: list[tuple[str, t.NormalizedValue]] = []
 
         def is_not_none(self) -> TestPatternsTesting.AssertionBuilder:
             assert self._data is not None
@@ -344,7 +344,7 @@ class TestPatternsTesting:
 
         def has_length(self, length: int) -> TestPatternsTesting.AssertionBuilder:
             if not isinstance(self._data, Sized):
-                msg = f"Expected Sized object, got {type(self._data)}"
+                msg = f"Expected Sized t.NormalizedValue, got {type(self._data)}"
                 raise TypeError(msg)
             assert len(self._data) == length
             return self
@@ -367,7 +367,7 @@ class TestPatternsTesting:
                 assert isinstance(item, bytes | bytearray)
                 assert item in data
                 return self
-            msg = f"Expected Container object, got {type(data)}"
+            msg = f"Expected Container t.NormalizedValue, got {type(data)}"
             raise TypeError(msg)
 
         def satisfies(
@@ -811,7 +811,7 @@ class TestPatternsTesting:
             self
             .GivenWhenThenBuilder("configuration_validation")
             .given(
-                "a configuration object",
+                "a configuration t.NormalizedValue",
                 config_environment=str(config["environment"]),
             )
             .when("configuration is validated", action="validate")

@@ -49,7 +49,7 @@ class Ex10ContextPayload(m.Value):
 
 
 class Ex10ProtocolHandler(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     def handle(self, message: m.Command) -> r[str]:
         return r[str].ok(str(message))
@@ -59,7 +59,7 @@ class Ex10ProtocolHandler(m.Value):
 
 
 class Ex10ServiceStub(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     @property
     def is_valid(self) -> bool:
@@ -76,7 +76,7 @@ class Ex10ServiceStub(m.Value):
 
 
 class Ex10CommandBusStub(m.Value):
-    model_config = ConfigDict(frozen=False)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
     def dispatch(self, message: m.Command) -> r[str]:
         return r[str].ok(str(message))

@@ -88,7 +88,7 @@ class TestUtilities:
         """Test temporary_attribute adds new attribute temporarily."""
 
         class TestObject(BaseModel):
-            model_config = ConfigDict(extra="allow")
+            model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
 
         obj = TestObject()
         with u.Tests.TestContext.temporary_attribute(obj, "new_attr", "new_value"):

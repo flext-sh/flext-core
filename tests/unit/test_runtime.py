@@ -87,14 +87,15 @@ class TestFlextRuntime:
     class RuntimeTestCase(BaseModel):
         """Runtime test case definition with parametrization data."""
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, arbitrary_types_allowed=True)
         name: Annotated[str, Field(description="Runtime test case name")]
         operation: Annotated[StrEnum, Field(description="Runtime operation type")]
         test_input: Annotated[
-            object, Field(default=None, description="Optional test input")
+            t.NormalizedValue, Field(default=None, description="Optional test input")
         ] = None
         expected_result: Annotated[
-            object, Field(default=None, description="Expected operation result")
+            t.NormalizedValue,
+            Field(default=None, description="Expected operation result"),
         ] = None
         should_reset_config: Annotated[
             bool,
@@ -637,10 +638,10 @@ class TestFlextRuntime:
     def test_dict_like_validation(
         self, test_case: TestFlextRuntime.RuntimeTestCase
     ) -> None:
-        """Test dict-like object validation.
+        """Test dict-like t.NormalizedValue validation.
 
-        Business Rule: is_dict_like accepts object compatible objects.
-        test_case.test_input may be None or various types, so we cast to object
+        Business Rule: is_dict_like accepts t.NormalizedValue compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
@@ -653,10 +654,10 @@ class TestFlextRuntime:
     def test_list_like_validation(
         self, test_case: TestFlextRuntime.RuntimeTestCase
     ) -> None:
-        """Test list-like object validation.
+        """Test list-like t.NormalizedValue validation.
 
-        Business Rule: is_list_like accepts object compatible objects.
-        test_case.test_input may be None or various types, so we cast to object
+        Business Rule: is_list_like accepts t.NormalizedValue compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)

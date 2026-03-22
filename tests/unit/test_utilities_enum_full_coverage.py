@@ -9,6 +9,8 @@ from typing import cast, override
 import pytest
 from flext_tests import tm, u
 
+from tests import t
+
 
 class TestUtilitiesEnumFullCoverage:
     @unique
@@ -164,6 +166,6 @@ class TestUtilitiesEnumFullCoverage:
 
     def test_dispatch_unknown_mode_raises(self) -> None:
         bad_mode = cast("str", "not-a-mode")
-        dispatch_any = cast("Callable[..., object]", u.dispatch)
+        dispatch_any = cast("Callable[..., t.NormalizedValue]", u.dispatch)
         with pytest.raises(ValueError, match="Unknown mode"):
             _ = dispatch_any("active", self.Status, mode=bad_mode)

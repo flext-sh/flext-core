@@ -38,7 +38,9 @@ class Testu(TextUtilityContract):
     class UtilityScenarios(TextUtilityContract):
         """Centralized utility test scenarios using c (FlextConstants)."""
 
-        TYPE_GUARD_CASES: ClassVar[dict[str, list[tuple[str, object, bool]]]] = {
+        TYPE_GUARD_CASES: ClassVar[
+            dict[str, list[tuple[str, t.NormalizedValue, bool]]]
+        ] = {
             "string": [
                 ("string_empty", "", False),
                 ("string_valid", "test", True),
@@ -87,7 +89,7 @@ class Testu(TextUtilityContract):
             ("Hi", 10, False),
         ]
         CACHE_NORMALIZE_CASES: ClassVar[
-            list[tuple[object, type | tuple[type, ...]]]
+            list[tuple[t.NormalizedValue, type | tuple[type, ...]]]
         ] = [
             ({"a": 1, "b": 2}, dict),
             ([1, 2, 3], list),
@@ -294,7 +296,7 @@ class Testu(TextUtilityContract):
         assert isinstance(key, str) and len(key) > 0
 
     def test_cache_clear_object_cache(self) -> None:
-        """Test clearing object cache."""
+        """Test clearing t.NormalizedValue cache."""
         cache_data: t.ConfigMap = t.ConfigMap(root={"test": "data"})
         result = u.clear_object_cache(cache_data)
         _ = u.Tests.Result.assert_success(result)

@@ -38,7 +38,7 @@ class TestFlextDecorators:
     class DecoratorTestCase(BaseModel):
         """Test case for decorator."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Decorator test case name")]
         operation: Annotated[str, Field(description="Decorator operation under test")]
 

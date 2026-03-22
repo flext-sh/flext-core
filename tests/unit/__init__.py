@@ -462,7 +462,6 @@ if TYPE_CHECKING:
         test_utilities_reliability_compose_returns_non_result_directly,
         test_utilities_reliability_uncovered_retry_compose_and_sequence_paths,
     )
-    from .test_utilities_string_parser import TestuStringParser, c, m, t, u
     from .test_utilities_text_full_coverage import TestUtilitiesTextFullCoverage
     from .test_utilities_type_checker_coverage_100 import (
         T,
@@ -879,10 +878,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperUtils",
     ),
-    "TestuStringParser": (
-        "tests.unit.test_utilities_string_parser",
-        "TestuStringParser",
-    ),
     "TestuTypeChecker": (
         "tests.unit.test_utilities_type_checker_coverage_100",
         "TestuTypeChecker",
@@ -908,7 +903,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_full_coverage",
         "UtilitiesMapperFullCoverageNamespace",
     ),
-    "c": ("tests.unit.test_utilities_string_parser", "c"),
     "contracts": ("tests.unit.contracts", ""),
     "create_compare_entities_cases": (
         "tests.unit.test_utilities_domain",
@@ -963,7 +957,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "infra_workflow_linter": ("tests.unit.conftest_infra", "infra_workflow_linter"),
     "infra_workflow_syncer": ("tests.unit.conftest_infra", "infra_workflow_syncer"),
     "inject": ("tests.unit.test_di_incremental", "inject"),
-    "m": ("tests.unit.test_utilities_string_parser", "m"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
     "p": ("tests.unit.protocols", "p"),
     "pytestmark": ("tests.unit.test_utilities_type_checker_coverage_100", "pytestmark"),
@@ -977,7 +970,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "runtime_module",
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
-    "t": ("tests.unit.test_utilities_string_parser", "t"),
     "test_accessor_take_pick_as_or_flat_and_agg_branches": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_accessor_take_pick_as_or_flat_and_agg_branches",
@@ -1786,7 +1778,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_result_additional",
         "test_with_resource_cleanup_runs",
     ),
-    "u": ("tests.unit.test_utilities_string_parser", "u"),
 }
 
 __all__ = [
@@ -1920,7 +1911,6 @@ __all__ = [
     "TestuMapperConversions",
     "TestuMapperExtract",
     "TestuMapperUtils",
-    "TestuStringParser",
     "TestuTypeChecker",
     "TextUtilityContract",
     "TimeoutEnforcer",
@@ -1928,7 +1918,6 @@ __all__ = [
     "UtilitiesCacheCoverage100Namespace",
     "UtilitiesMapperCoverage100Namespace",
     "UtilitiesMapperFullCoverageNamespace",
-    "c",
     "contracts",
     "create_compare_entities_cases",
     "create_compare_value_objects_cases",
@@ -1956,7 +1945,6 @@ __all__ = [
     "infra_workflow_linter",
     "infra_workflow_syncer",
     "inject",
-    "m",
     "mapper",
     "p",
     "pytestmark",
@@ -1964,7 +1952,6 @@ __all__ = [
     "runtime_cov_tests",
     "runtime_module",
     "runtime_tests",
-    "t",
     "test_accessor_take_pick_as_or_flat_and_agg_branches",
     "test_aliases_are_available",
     "test_args_get_enum_params_annotated_unwrap_branch",
@@ -2167,7 +2154,6 @@ __all__ = [
     "test_validate_tags_list_normalizes",
     "test_validation_like_error_structure",
     "test_with_resource_cleanup_runs",
-    "u",
 ]
 
 

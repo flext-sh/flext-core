@@ -9,7 +9,7 @@
 - normalize_whitespace: Basic, custom patterns, edge cases, error handling
 - apply_regex_pipeline: Basic, multiple patterns, edge cases,
   error handling, invalid inputs
-- get_object_key: Types, classes, functions, instances, dicts, objects with attributes
+- getNormalizedValue_key: Types, classes, functions, instances, dicts, objects with attributes
 
 **Coverage Target:** 100% code coverage with all edge cases and error paths tested.
 
@@ -29,18 +29,7 @@ from typing import cast
 import pytest
 
 from flext_core import r
-
-from ..constants import TestsFlextConstants
-from ..models import TestsFlextModels
-from ..typings import TestsFlextTypes
-from ..utilities import FlextCoreTestUtilities
-
-c = TestsFlextConstants
-m = TestsFlextModels
-t = TestsFlextTypes
-u = FlextCoreTestUtilities
-
-_object = t.NormalizedValue
+from tests import c, m, t, u
 
 
 def _parse_delimited_cases() -> list[m.ParseDelimitedCase]:
@@ -75,7 +64,7 @@ def _regex_pipeline_cases() -> list[m.RegexPipelineCase]:
     return builder()
 
 
-def _object_key_cases() -> list[m.ObjectKeyCase]:
+def normalizedValue_key_cases() -> list[m.ObjectKeyCase]:
     builder = cast(
         "Callable[[], list[m.ObjectKeyCase]]",
         globals()["StringParserTestFactory"].object_key_cases,
@@ -404,7 +393,7 @@ class TestuStringParser:
 
         @staticmethod
         def object_key_cases() -> list[m.ObjectKeyCase]:
-            """Generate comprehensive get_object_key test cases (object only)."""
+            """Generate comprehensive getNormalizedValue_key test cases (t.NormalizedValue only)."""
             return [
                 m.ObjectKeyCase(
                     obj={},
@@ -471,16 +460,16 @@ class TestuStringParser:
                 return parser.parse_delimited(case.text, case.delimiter)
 
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
-                cast("Callable[[], r[_object]]", operation),
+                cast("Callable[[], r[t.NormalizedValue]]", operation),
                 expected_value=case.expected,
                 expected_error=case.expected_error,
                 description=case.description,
             )
 
         def test_exception_handling(self, parser: u) -> None:
-            """Test parsing exception handling with bad object."""
+            """Test parsing exception handling with bad t.NormalizedValue."""
             bad_obj = u.Tests.CoreBadObjects.create_for_split()
-            bad_str = cast("str", cast("object", bad_obj))
+            bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.parse_delimited(
                 bad_str,
                 c.Delimiters.COMMA,
@@ -500,7 +489,7 @@ class TestuStringParser:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.object]]",
+                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
                     lambda: parser.split_on_char_with_escape(
                         case.text,
                         case.split_char,
@@ -513,9 +502,9 @@ class TestuStringParser:
             )
 
         def test_exception_handling(self, parser: u) -> None:
-            """Test split exception handling with bad object."""
-            bad_obj = u.Tests.CoreBadObjects.create_for_index()
-            bad_str = cast("str", cast("object", bad_obj))
+            """Test split exception handling with bad t.NormalizedValue."""
+            bad_obj = u.Tests.create_for_index()
+            bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.split_on_char_with_escape(
                 bad_str,
                 c.Delimiters.COMMA,
@@ -538,7 +527,7 @@ class TestuStringParser:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.object]]",
+                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
                     lambda: parser.normalize_whitespace(
                         case.text,
                         pattern=case.pattern,
@@ -551,9 +540,9 @@ class TestuStringParser:
             )
 
         def test_exception_handling(self, parser: u) -> None:
-            """Test normalization exception handling with bad object."""
-            bad_obj = u.Tests.CoreBadObjects.create_for_str()
-            bad_str = cast("str", cast("object", bad_obj))
+            """Test normalization exception handling with bad t.NormalizedValue."""
+            bad_obj = u.Tests.create_for_str()
+            bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.normalize_whitespace(bad_str)
             assert result.is_failure
             assert c.TestErrors.FAILED_NORMALIZE in (result.error or "")
@@ -570,7 +559,7 @@ class TestuStringParser:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.object]]",
+                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
                     lambda: parser.apply_regex_pipeline(case.text, case.patterns),
                 ),
                 expected_value=case.expected,
@@ -597,10 +586,10 @@ class TestuStringParser:
 
         def test_none_text(self, parser: u) -> None:
             """Test pipeline with None text."""
-            text = cast("str", cast("object", None))
+            text = cast("str", cast("t.NormalizedValue", None))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.object]]",
+                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [
@@ -617,10 +606,10 @@ class TestuStringParser:
 
         def test_invalid_text_type(self, parser: u) -> None:
             """Test pipeline with invalid text type."""
-            text = cast("str", cast("object", 123))
+            text = cast("str", cast("t.NormalizedValue", 123))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.object]]",
+                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [
@@ -642,16 +631,16 @@ class TestuStringParser:
             u.Tests.Result.assert_success_with_value(result, "test")
 
     class TestGetObjectKey:
-        """Test get_object_key method."""
+        """Test getNormalizedValue_key method."""
 
-        @pytest.mark.parametrize("case", _object_key_cases())
-        def test_get_object_key(
+        @pytest.mark.parametrize("case", t.NormalizedValue_key_cases())
+        def test_getNormalizedValue_key(
             self,
             parser: u,
             case: m.ObjectKeyCase,
         ) -> None:
-            """Test get_object_key with parametrized cases."""
-            key = parser.get_object_key(
+            """Test getNormalizedValue_key with parametrized cases."""
+            key = parser.getNormalizedValue_key(
                 cast("t.TypeHintSpecifier | t.NormalizedValue", case.obj)
             )
             assert isinstance(key, str), f"Key must be string for: {case.description}"

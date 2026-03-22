@@ -71,7 +71,9 @@ class TestAutomatedFlextRegistry:
         tm.ok(registry.get_plugin(category, name), none=False)
 
     @pytest.mark.performance
-    def test_registry_plugin_benchmark(self, benchmark: Callable[..., object]) -> None:
+    def test_registry_plugin_benchmark(
+        self, benchmark: Callable[..., t.NormalizedValue]
+    ) -> None:
         def register_and_read() -> r[bool]:
             registry = FlextRegistry.create()
             plugin = "plugin_impl"

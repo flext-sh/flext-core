@@ -41,10 +41,12 @@ class TestFlextContext:
     class ContextOperationScenario(BaseModel):
         """Test scenario for context operations."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Context operation scenario name")]
         key: Annotated[str, Field(description="Context key under test")]
-        value: Annotated[object, Field(description="Context value under test")]
+        value: Annotated[
+            t.NormalizedValue, Field(description="Context value under test")
+        ]
         expected_success: Annotated[
             bool, Field(default=True, description="Whether operation should succeed")
         ] = True

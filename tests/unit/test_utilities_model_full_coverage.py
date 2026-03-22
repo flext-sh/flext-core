@@ -11,9 +11,7 @@ from typing import cast
 from pydantic import BaseModel
 
 from flext_core import r
-from tests import c, m, t, u
-
-from ._models import TestUnitModels
+from tests import TestUnitModels, c, m, t, u
 
 
 def test_merge_defaults_and_dump_paths() -> None:
@@ -29,7 +27,7 @@ def test_merge_defaults_and_dump_paths() -> None:
 
 def test_update_exception_path() -> None:
     result = u.update(
-        cast("TestUnitModels._BadCopyModel", cast("BaseModel", object())),
+        cast("TestUnitModels._BadCopyModel", cast("BaseModel", t.NormalizedValue())),
         x=5,
     )
     assert result.is_failure

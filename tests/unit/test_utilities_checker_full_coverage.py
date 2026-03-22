@@ -36,7 +36,7 @@ class TestUtilitiesCheckerFullCoverage:
 
     class _ExplodingInstanceMeta(type):
         @override
-        def __instancecheck__(cls, instance: object) -> bool:
+        def __instancecheck__(cls, instance: t.NormalizedValue) -> bool:
             _ = instance
             msg = "no instance check"
             raise TypeError(msg)
@@ -48,7 +48,7 @@ class TestUtilitiesCheckerFullCoverage:
         pass
 
     class _FakeObjectName:
-        __name__ = "object"
+        __name__ = "t.NormalizedValue"
 
     class _DictChild(UserDict[str, str]):
         pass
@@ -100,7 +100,7 @@ class TestUtilitiesCheckerFullCoverage:
     def test_object_dict_and_type_error_fallback_paths(self) -> None:
         assert (
             u._check_object_type_compatibility(
-                cast("t.TypeOriginSpecifier", object),
+                cast("t.TypeOriginSpecifier", t.NormalizedValue),
             )
             is True
         )
@@ -118,13 +118,13 @@ class TestUtilitiesCheckerFullCoverage:
                 cast("t.TypeOriginSpecifier", self._ExplodingExpected),
                 cast("t.TypeOriginSpecifier", type("Sub", (), {})),
                 cast("t.TypeOriginSpecifier", self._ExplodingExpected),
-                cast("t.TypeOriginSpecifier", object),
+                cast("t.TypeOriginSpecifier", t.NormalizedValue),
             )
             is False
         )
         assert (
             u._handle_instance_check(
-                cast("t.TypeOriginSpecifier", object()),
+                cast("t.TypeOriginSpecifier", t.NormalizedValue()),
                 cast("t.TypeOriginSpecifier", self._ExplodingOrigin),
             )
             is True
@@ -180,7 +180,7 @@ class TestUtilitiesCheckerFullCoverage:
                 cast("t.TypeOriginSpecifier", self._ExpectedDict),
                 self._MessageDict,
                 cast("t.TypeOriginSpecifier", self._ExpectedDict),
-                cast("t.TypeOriginSpecifier", object),
+                cast("t.TypeOriginSpecifier", t.NormalizedValue),
             )
             is False
         )

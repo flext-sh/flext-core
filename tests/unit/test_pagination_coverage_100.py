@@ -61,7 +61,7 @@ class TestPaginationCoverage100:
     class ExtractPageParamsScenario(BaseModel):
         """Extract page params test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Extract page params scenario name")]
         query_params: Annotated[
@@ -86,7 +86,7 @@ class TestPaginationCoverage100:
     class ValidatePaginationParamsScenario(BaseModel):
         """Validate pagination params test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Validate pagination scenario name")]
         page: Annotated[int, Field(description="Input page number")]
@@ -105,7 +105,7 @@ class TestPaginationCoverage100:
     class PreparePaginationDataScenario(BaseModel):
         """Prepare pagination data test scenario."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Prepare pagination data scenario name")]
         data: Annotated[list[str] | None, Field(description="Input page data")]
@@ -581,7 +581,7 @@ class TestPaginationCoverage100:
         assert result["max_page_size"] == 1000
 
     def test_extract_pagination_config_with_attributes(self) -> None:
-        """Test extract_pagination_config with object attributes."""
+        """Test extract_pagination_config with t.NormalizedValue attributes."""
 
         class Config(BaseModel):
             default_page_size: int = 50
@@ -613,7 +613,7 @@ class TestPaginationCoverage100:
         assert result["max_page_size"] == 1000
 
     def test_extract_pagination_config_with_dict(self) -> None:
-        """Test extract_pagination_config with dict-like object."""
+        """Test extract_pagination_config with dict-like t.NormalizedValue."""
 
         class Config(BaseModel):
             default_page_size: int = 40

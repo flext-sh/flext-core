@@ -46,7 +46,7 @@ class TestFlextProtocols:
     class ProtocolDefinitionScenario(BaseModel):
         """Scenario for protocol definitions."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Protocol definition scenario name")]
         protocol_name: Annotated[str, Field(description="Protocol attribute name")]
@@ -55,7 +55,7 @@ class TestFlextProtocols:
     class ProtocolAvailabilityScenario(BaseModel):
         """Scenario for protocol availability."""
 
-        model_config = ConfigDict(frozen=True)
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Protocol availability scenario name")]
         category: Annotated[StrEnum, Field(description="Protocol category")]

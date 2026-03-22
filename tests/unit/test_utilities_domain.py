@@ -1,15 +1,15 @@
-"""Tests for u - Domain entity and value object operations.
+"""Tests for u - Domain entity and value t.NormalizedValue operations.
 
 Module: flext_core._utilities.domain
-Scope: u - entity/value object comparison, hashing, validation
+Scope: u - entity/value t.NormalizedValue comparison, hashing, validation
 
 Tests u functionality including:
 - Entity comparison by ID (compare_entities_by_id)
 - Entity hashing by ID (hash_entity_by_id)
-- Value object comparison by value (compare_value_objects_by_value)
-- Value object hashing by value (hash_value_object_by_value)
+- Value t.NormalizedValue comparison by value (compare_value_objects_by_value)
+- Value t.NormalizedValue hashing by value (hash_value_object_by_value)
 - Entity ID validation (validate_entity_has_id)
-- Value object immutability validation (validate_value_object_immutable)
+- Value t.NormalizedValue immutability validation (validate_value_object_immutable)
 
 Uses Python 3.13 patterns, u, constants (c), types (t),
 utilities (u), protocols (p), models (m) extensively for maximum code reuse.
@@ -41,14 +41,14 @@ def _build_domain_test_entity(
     return m.DomainTestEntity(name=name, value=cast("int", value), domain_events=[])
 
 
-def _convert_to_general_value(obj: object) -> t.NormalizedValue:
-    """Convert object to object (handles Pydantic models).
+def _convert_to_general_value(obj: t.NormalizedValue) -> t.NormalizedValue:
+    """Convert t.NormalizedValue to t.NormalizedValue (handles Pydantic models).
 
     Args:
         obj: Object to convert (Pydantic model, dict, list, or primitive)
 
     Returns:
-        object-compatible value
+        t.NormalizedValue-compatible value
 
     """
     if isinstance(obj, BaseModel):
@@ -57,18 +57,20 @@ def _convert_to_general_value(obj: object) -> t.NormalizedValue:
         return obj
     if isinstance(obj, dict):
         return cast(
-            "t.Tests.object",
+            "t.Tests.t.NormalizedValue",
             {
                 str(key): _convert_to_general_value(val)
-                for key, val in cast("dict[str, t.Tests.object]", obj).items()
+                for key, val in cast(
+                    "dict[str, t.Tests.t.NormalizedValue]", obj
+                ).items()
             },
         )
     if isinstance(obj, (list, tuple)):
         return cast(
-            "t.Tests.object",
+            "t.Tests.t.NormalizedValue",
             [
                 _convert_to_general_value(elem)
-                for elem in cast("list[t.Tests.object]", obj)
+                for elem in cast("list[t.Tests.t.NormalizedValue]", obj)
             ],
         )
     return str(obj)
@@ -93,13 +95,13 @@ def _require_payload_mapping(
 def _as_test_payload(
     value: type[t.Primitives],
 ) -> t.NormalizedValue:
-    return cast("t.Tests.object", value)
+    return cast("t.Tests.t.NormalizedValue", value)
 
 
 def _as_payload_map(
     value: TestUnitModels.InputPayloadMap,
 ) -> Mapping[str, t.NormalizedValue]:
-    return cast("Mapping[str, t.Tests.object]", value)
+    return cast("Mapping[str, t.Tests.t.NormalizedValue]", value)
 
 
 def create_compare_entities_cases() -> list[TestUnitModels.TestCaseMap]:
@@ -249,7 +251,7 @@ def create_hash_entity_cases() -> list[TestUnitModels.TestCaseMap]:
 
 
 def create_compare_value_objects_cases() -> list[TestUnitModels.TestCaseMap]:
-    """Create test cases for value object comparison using constants."""
+    """Create test cases for value t.NormalizedValue comparison using constants."""
     value_objs = u.Tests.DomainHelpers.create_test_value_objects_batch(
         data_list=[
             c.Tests.TestDomain.VALUE_DATA_TEST,
@@ -297,7 +299,7 @@ def create_compare_value_objects_cases() -> list[TestUnitModels.TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast(
-                "list[Mapping[str, t.Tests.object]]",
+                "list[Mapping[str, t.Tests.t.NormalizedValue]]",
                 input_data_list,
             ),
             expected_results=[True, False, False, True, _as_test_payload(bool), True],
@@ -306,7 +308,7 @@ def create_compare_value_objects_cases() -> list[TestUnitModels.TestCaseMap]:
 
 
 def create_hash_value_object_cases() -> list[TestUnitModels.TestCaseMap]:
-    """Create test cases for value object hashing using constants."""
+    """Create test cases for value t.NormalizedValue hashing using constants."""
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=c.Tests.TestDomain.VALUE_DATA_TEST,
         count=c.Tests.TestDomain.VALUE_COUNT_5,
@@ -342,7 +344,7 @@ def create_hash_value_object_cases() -> list[TestUnitModels.TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast(
-                "list[Mapping[str, t.Tests.object]]",
+                "list[Mapping[str, t.Tests.t.NormalizedValue]]",
                 input_data_list_hash,
             ),
             expected_results=[
@@ -436,7 +438,7 @@ def create_validate_value_object_immutable_cases() -> list[TestUnitModels.TestCa
                 "no_setattr",
             ],
             input_data_list=cast(
-                "list[Mapping[str, t.Tests.object]]",
+                "list[Mapping[str, t.Tests.t.NormalizedValue]]",
                 [
                     {"obj": value_obj},
                     {"obj": mutable_obj},
