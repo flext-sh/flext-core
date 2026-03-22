@@ -45,7 +45,7 @@ class FlextConstantsMixins:
     STATE_HEALTHY: Final[str] = "healthy"
     STATE_DEGRADED: Final[str] = "degraded"
     STATE_UNHEALTHY: Final[str] = "unhealthy"
-    STATUS_PASS: Final[str] = "PASS"
+    STATUS_PASSED: Final[str] = "PASS"
     STATUS_FAIL: Final[str] = "FAIL"
     STATUS_NO_TARGET: Final[str] = "NO_TARGET"
     STATUS_SKIP: Final[str] = "SKIP"
@@ -124,7 +124,7 @@ class FlextConstantsMixins:
     DEFAULT_TIMEOUT: Final[float | None] = None
     "Default timeout for handlers (None = no timeout)."
 
-    DEFAULT_PASSWORD: Final[str] = "test_password"
-    "Default password for test user authentication."
+    DEFAULT_TEST_CREDENTIAL: Final[str] = "test_password"
+    "Default credential for test user authentication."
     NONEXISTENT_USERNAME: Final[str] = "nonexistent"
     "Username that should not exist in test scenarios."
