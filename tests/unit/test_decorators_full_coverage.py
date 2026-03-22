@@ -12,7 +12,7 @@ import pytest
 from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
-from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, p, r
+from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, p, r, u
 from tests import c, m, t
 
 
@@ -310,10 +310,7 @@ class TestDecoratorsFullCoverage:
         def _is_dict_like(_value: t.Scalar) -> bool:
             return False
 
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextRuntime.is_dict_like",
-            _is_dict_like,
-        )
+        monkeypatch.setattr(u, "is_dict_like", _is_dict_like)
         d._handle_log_result(
             result=r[bool].fail("x", error_code="E"),
             logger=cast("FlextLogger", fake_logger),

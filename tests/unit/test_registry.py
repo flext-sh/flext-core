@@ -93,7 +93,7 @@ class TestFlextRegistry:
             operation=RegistryOperationType.REGISTER_HANDLER,
             handler_count=0,
             should_succeed=False,
-            error_pattern="Handler must expose message_type",
+            error_pattern="Handler must be callable",
         ),
     ]
     _BATCH_REGISTRATION: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [
@@ -219,7 +219,7 @@ class TestFlextRegistry:
             operation=RegistryOperationType.ERROR_HANDLING,
             handler_count=0,
             should_succeed=False,
-            error_pattern="Handler must expose message_type",
+            error_pattern="Handler must be callable",
         ),
         RegistryTestCase(
             name="dispatcher_integration",
@@ -364,7 +364,7 @@ class TestFlextRegistry:
             _ = u.Tests.Result.assert_failure(result)
             u.Tests.Result.assert_failure_with_error(
                 result,
-                "Handler must expose message_type",
+                "Handler must be callable",
             )
         else:
             handler = self.ConcreteTestHandler()

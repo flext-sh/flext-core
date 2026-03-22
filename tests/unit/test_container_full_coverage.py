@@ -183,7 +183,7 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
-            "flext_core.container.FlextUtilitiesDiscovery.scan_module",
+            "flext_core._utilities.discovery.FlextUtilitiesDiscovery.scan_module",
             _scan_factory_module,
         )
 
@@ -244,7 +244,7 @@ class TestContainerFullCoverage:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config="not-provider")
         monkeypatch.setattr(
-            "flext_core.container.FlextRuntime.DependencyIntegration.create_layered_bridge",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
         with pytest.raises(TypeError, match="Bridge must have config provider"):
@@ -318,12 +318,12 @@ class TestContainerFullCoverage:
         c.register("res", lambda: "x", kind="resource")
         tm.that(c._resources, has="res")
         monkeypatch.setattr(
-            "flext_core.container.FlextRuntime.DependencyIntegration.register_object",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.register_object",
             _raise_register_object,
         )
         c.register("x", "y")
         monkeypatch.setattr(
-            "flext_core.container.FlextRuntime.DependencyIntegration.register_factory",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.register_factory",
             _raise_register_factory,
         )
         c.register("x2", lambda: "v", kind="factory")
@@ -331,7 +331,7 @@ class TestContainerFullCoverage:
         c.register("dup", lambda: "v", kind="resource")
         del c._di_resources.dup
         monkeypatch.setattr(
-            "flext_core.container.FlextRuntime.DependencyIntegration.register_resource",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.register_resource",
             _raise_register_resource,
         )
         c.register("new", lambda: "v", kind="resource")
@@ -436,7 +436,7 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
-            "flext_core.container.FlextUtilitiesDiscovery.scan_module",
+            "flext_core._utilities.discovery.FlextUtilitiesDiscovery.scan_module",
             _scan_factory_module_captured,
         )
         original_register = FlextContainer.register
@@ -472,7 +472,7 @@ class TestContainerFullCoverage:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config=None)
         monkeypatch.setattr(
-            "flext_core.container.FlextRuntime.DependencyIntegration.create_layered_bridge",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
         monkeypatch.setattr("flext_core.container.di_providers.Configuration", object)
