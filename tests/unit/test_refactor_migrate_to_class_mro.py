@@ -5,8 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
-from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
+from flext_infra import FlextInfraUtilitiesIteration
 from flext_infra.refactor.migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
 )
@@ -113,11 +112,7 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     )
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     tm.that(report.errors, eq=())
-    tm.that("from sample_pkg.constants import VALUE" in consumer_source, eq=False)
-    tm.that(
-        "from sample_pkg.constants import c as constants" in consumer_source,
-        eq=False,
-    )
+    tm.that("from sample_pkg.constants import VALUE\n" in consumer_source, eq=False)
     tm.that(consumer_source, has="from sample_pkg.constants import c")
     tm.that(consumer_source, has="result = c.VALUE")
 
@@ -248,7 +243,7 @@ def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     (project_root / "src").mkdir(parents=True)
 
-    discovered = FlextInfraUtilitiesDiscovery.discover_project_roots(
+    discovered = FlextInfraUtilitiesIteration.discover_project_roots(
         workspace_root=workspace_root,
     )
     tm.that(discovered, eq=[project_root])

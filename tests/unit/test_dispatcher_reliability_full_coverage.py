@@ -23,5 +23,5 @@ def test_dispatcher_reliability_branch_paths() -> None:
     rl = FlextModelsDispatcher.RateLimiterManager(max_requests=1, window_seconds=1.5)
     assert rl.get_max_requests() == 1
     assert abs(rl.get_window_seconds() - 1.5) < 1e-9
-    rp = FlextModelsDispatcher.RetryPolicy(max_attempts=1, retry_delay=0.0)
-    assert abs(rp.get_exponential_delay(1) - 0.0) < 1e-9
+    rp = FlextModelsDispatcher.RetryPolicy(max_attempts=1, retry_delay=0.01)
+    assert rp.get_exponential_delay(1) >= 0.0

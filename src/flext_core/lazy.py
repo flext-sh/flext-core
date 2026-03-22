@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 def lazy_getattr(
     name: str,
     lazy_imports: Mapping[str, tuple[str, str]],
-    module_globals: dict[str, object],
+    module_globals: dict[str, FlextTypesServices.ModuleExport],
     module_name: str,
 ) -> FlextTypesServices.ModuleExport:
     """Lazy-load a module attribute on first access (PEP 562).

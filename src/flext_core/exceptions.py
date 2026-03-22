@@ -504,7 +504,7 @@ class FlextExceptions:
             key: FlextRuntime.normalize_to_metadata(value)
             for key, value in extra_kwargs.items()
         }
-        param_values: dict[str, object] = dict(
+        param_values: dict[str, t.NormalizedValue] = dict(
             e._build_param_map(context, normalized_extra_kwargs, keys=param_keys),
         )
         for key, val in named_params.items():

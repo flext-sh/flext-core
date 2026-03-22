@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra import d, e, h, r, s, x
+    from flext_tests import d, e, h, r, s, x
 
     from flext_core.typings import FlextTypes
 
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
         validation_scenarios,
         whitespace_strings,
     )
-    from .constants import TestsFlextConstants, TestsFlextConstants as c
+    from .constants import FlextCoreTestConstants, FlextCoreTestConstants as c
     from .fixtures.namespace_validator.rule0_loose_items import Rule0LooseItemsFixture
     from .fixtures.namespace_validator.rule0_multiple_classes import (
         FlextTestConstants,
@@ -135,8 +135,8 @@ if TYPE_CHECKING:
     from .integration.test_refactor_policy_mro import TestRefactorPolicyMRO
     from .integration.test_service import TestService
     from .integration.test_system import TestCompleteFlextSystemIntegration
-    from .models import TestsFlextModels, TestsFlextModels as m
-    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
+    from .models import FlextCoreTestModels, FlextCoreTestModels as m
+    from .protocols import FlextCoreTestProtocols, FlextCoreTestProtocols as p
     from .test_documented_patterns import TestDocumentedPatterns
     from .test_service_result_property import TestServiceResultProperty
     from .test_utils import (
@@ -147,7 +147,7 @@ if TYPE_CHECKING:
         fixture_factory,
         test_data_factory,
     )
-    from .typings import T_co, T_contra, TestsFlextTypes, TestsFlextTypes as t
+    from .typings import FlextCoreTestTypes, FlextCoreTestTypes as t, T_co, T_contra
     from .unit import contracts as contracts, flext_tests as flext_tests
     from .unit._models import TestUnitModels
     from .unit._models_impl import (
@@ -701,6 +701,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FailingServiceAutoFactory",
     ),
     "FailingServiceFactory": ("tests.helpers.factories_impl", "FailingServiceFactory"),
+    "FlextCoreTestConstants": ("tests.constants", "FlextCoreTestConstants"),
+    "FlextCoreTestModels": ("tests.models", "FlextCoreTestModels"),
+    "FlextCoreTestProtocols": ("tests.protocols", "FlextCoreTestProtocols"),
+    "FlextCoreTestTypes": ("tests.typings", "FlextCoreTestTypes"),
     "FlextCoreTestUtilities": ("tests.utilities", "FlextCoreTestUtilities"),
     "FlextProtocols": ("tests.unit.protocols", "FlextProtocols"),
     "FlextTestConstants": (
@@ -1192,11 +1196,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Testr": ("tests.unit.test_result", "Testr"),
     "TestrCoverage": ("tests.unit.test_result_coverage_100", "TestrCoverage"),
     "TestsCore": ("tests.unit.test_service", "TestsCore"),
-    "TestsFlextConstants": ("tests.constants", "TestsFlextConstants"),
-    "TestsFlextModels": ("tests.models", "TestsFlextModels"),
-    "TestsFlextProtocols": ("tests.protocols", "TestsFlextProtocols"),
     "TestsFlextServiceBase": ("tests.base", "TestsFlextServiceBase"),
-    "TestsFlextTypes": ("tests.typings", "TestsFlextTypes"),
     "Testu": ("tests.unit.test_coverage_utilities", "Testu"),
     "TestuCacheClearObjectCache": (
         "tests.unit.test_utilities_cache_coverage_100",
@@ -1315,7 +1315,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "assert_validates": ("tests.conftest", "assert_validates"),
     "assertion_helpers": ("tests.test_utils", "assertion_helpers"),
     "benchmark": ("tests.benchmark", ""),
-    "c": ("tests.constants", "TestsFlextConstants"),
+    "c": ("tests.constants", "FlextCoreTestConstants"),
     "clean_container": ("tests.conftest", "clean_container"),
     "contracts": ("tests.unit.contracts", ""),
     "create_compare_entities_cases": (
@@ -1342,8 +1342,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_domain",
         "create_validate_value_object_immutable_cases",
     ),
-    "d": ("flext_infra", "d"),
-    "e": ("flext_infra", "e"),
+    "d": ("flext_tests", "d"),
+    "e": ("flext_tests", "e"),
     "empty_strings": ("tests.conftest", "empty_strings"),
     "fixture_factory": ("tests.test_utils", "fixture_factory"),
     "flext_result_failure": ("tests.conftest", "flext_result_failure"),
@@ -1354,7 +1354,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "generators_module",
     ),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
-    "h": ("flext_infra", "h"),
+    "h": ("flext_tests", "h"),
     "handlers_module": ("tests.unit.test_handlers_full_coverage", "handlers_module"),
     "helper": ("tests.fixtures.namespace_validator.rule0_no_class", "helper"),
     "helpers": ("tests.helpers", ""),
@@ -1385,15 +1385,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "invalid_hostnames": ("tests.conftest", "invalid_hostnames"),
     "invalid_port_numbers": ("tests.conftest", "invalid_port_numbers"),
     "invalid_uris": ("tests.conftest", "invalid_uris"),
-    "m": ("tests.models", "TestsFlextModels"),
+    "m": ("tests.models", "FlextCoreTestModels"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
     "mock_external_service": ("tests.conftest", "mock_external_service"),
     "out_of_range": ("tests.conftest", "out_of_range"),
-    "p": ("tests.protocols", "TestsFlextProtocols"),
+    "p": ("tests.protocols", "FlextCoreTestProtocols"),
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
     "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.unit.test_utilities_type_checker_coverage_100", "pytestmark"),
-    "r": ("flext_infra", "r"),
+    "r": ("flext_tests", "r"),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
     "reset_all_factories": ("tests.helpers.factories_impl", "reset_all_factories"),
     "reset_global_container": ("tests.conftest", "reset_global_container"),
@@ -1407,9 +1407,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "runtime_module",
     ),
     "runtime_tests": ("tests.unit.test_runtime_full_coverage", "runtime_tests"),
-    "s": ("flext_infra", "s"),
+    "s": ("flext_tests", "s"),
     "sample_data": ("tests.conftest", "sample_data"),
-    "t": ("tests.typings", "TestsFlextTypes"),
+    "t": ("tests.typings", "FlextCoreTestTypes"),
     "temp_dir": ("tests.conftest", "temp_dir"),
     "temp_directory": ("tests.conftest", "temp_directory"),
     "temp_file": ("tests.conftest", "temp_file"),
@@ -2236,7 +2236,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "valid_uris": ("tests.conftest", "valid_uris"),
     "validation_scenarios": ("tests.conftest", "validation_scenarios"),
     "whitespace_strings": ("tests.conftest", "whitespace_strings"),
-    "x": ("flext_infra", "x"),
+    "x": ("flext_tests", "x"),
 }
 
 __all__ = [
@@ -2262,6 +2262,10 @@ __all__ = [
     "FailingServiceAuto",
     "FailingServiceAutoFactory",
     "FailingServiceFactory",
+    "FlextCoreTestConstants",
+    "FlextCoreTestModels",
+    "FlextCoreTestProtocols",
+    "FlextCoreTestTypes",
     "FlextCoreTestUtilities",
     "FlextProtocols",
     "FlextTestConstants",
@@ -2428,11 +2432,7 @@ __all__ = [
     "Testr",
     "TestrCoverage",
     "TestsCore",
-    "TestsFlextConstants",
-    "TestsFlextModels",
-    "TestsFlextProtocols",
     "TestsFlextServiceBase",
-    "TestsFlextTypes",
     "Testu",
     "TestuCacheClearObjectCache",
     "TestuCacheGenerateCacheKey",

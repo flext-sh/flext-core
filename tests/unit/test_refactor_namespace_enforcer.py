@@ -41,8 +41,8 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     tm.that((pkg / "utilities.py").exists(), eq=True)
 
     service_source = (pkg / "service.py").read_text(encoding="utf-8")
-    tm.that(service_source, lacks="from flext_core.constants import")
-    tm.that(service_source, lacks="from flext_infra.constants import")
+    tm.that(service_source, has="from flext_core.constants import c, m, r, t, u, p")
+    tm.that(service_source, has="from flext_infra.constants import c, m, t, u, p")
 
 
 def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(

@@ -29,7 +29,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             None
 
         """
-        return value.__class__ is list
+        return isinstance(value, list)
 
     @staticmethod
     def _ensure_to_dict(

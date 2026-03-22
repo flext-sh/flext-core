@@ -50,7 +50,7 @@ def test_narrow_contextvar_exception_branch(
         raise TypeError(msg)
 
     monkeypatch.setattr(
-        "flext_core.context.FlextRuntime.normalize_to_container",
+        "flext_core.context.u.normalize_to_container",
         _raise_type_error,
     )
     tm.that(FlextContext._narrow_contextvar_to_configuration_dict({"x": 1}), eq={})

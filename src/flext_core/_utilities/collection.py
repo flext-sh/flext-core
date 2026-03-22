@@ -93,7 +93,7 @@ class FlextUtilitiesCollection:
         return str(value)
 
     @staticmethod
-    def _normalize_unknown_value(value: object) -> t.NormalizedValue:
+    def _normalize_unknown_value(value: t.NormalizedValue) -> t.NormalizedValue:
         validated_result = r[t.Serializable].create_from_callable(
             lambda: m.Validators.serializable_adapter().validate_python(value),
         )

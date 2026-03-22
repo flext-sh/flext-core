@@ -35,7 +35,7 @@ class TestConstants:
 
         model_config = ConfigDict(frozen=True)
         path: Annotated[str, Field(description="Constant access path")]
-        expected: Annotated[object, Field(description="Expected constant value")]
+        expected: Annotated[str | int, Field(description="Expected constant value")]
 
     class PatternValidationScenario(BaseModel):
         """Test scenario for pattern validation."""
@@ -51,36 +51,30 @@ class TestConstants:
 
     CORE_CONSTANT_PATHS: ClassVar[list[ConstantPathScenario]] = [
         ConstantPathScenario(path="NAME", expected="FLEXT"),
-        ConstantPathScenario(path="Network.MIN_PORT", expected=1),
-        ConstantPathScenario(path="Network.MAX_PORT", expected=65535),
-        ConstantPathScenario(path="Validation.MIN_NAME_LENGTH", expected=2),
-        ConstantPathScenario(path="Validation.MAX_NAME_LENGTH", expected=100),
-        ConstantPathScenario(path="Validation.MAX_EMAIL_LENGTH", expected=254),
-        ConstantPathScenario(path="Validation.MIN_PHONE_DIGITS", expected=10),
+        ConstantPathScenario(path="MIN_PORT", expected=1),
+        ConstantPathScenario(path="MAX_PORT", expected=65535),
+        ConstantPathScenario(path="MIN_NAME_LENGTH", expected=2),
+        ConstantPathScenario(path="MAX_NAME_LENGTH", expected=100),
+        ConstantPathScenario(path="MAX_EMAIL_LENGTH", expected=254),
+        ConstantPathScenario(path="MIN_PHONE_DIGITS", expected=10),
         ConstantPathScenario(path="DEFAULT_TIMEOUT_SECONDS", expected=30),
-        ConstantPathScenario(path="Reliability.DEFAULT_TIMEOUT_SECONDS", expected=30),
-        ConstantPathScenario(path="Utilities.MAX_TIMEOUT_SECONDS", expected=3600),
-        ConstantPathScenario(path="Logging.DEFAULT_LEVEL", expected="INFO"),
-        ConstantPathScenario(path="Platform.FLEXT_API_PORT", expected=8000),
-        ConstantPathScenario(path="Platform.DEFAULT_HOST", expected=c.LOCALHOST),
-        ConstantPathScenario(path="Performance.MAX_TIMEOUT_SECONDS", expected=600),
-        ConstantPathScenario(
-            path="Performance.BatchProcessing.DEFAULT_SIZE",
-            expected=1000,
-        ),
-        ConstantPathScenario(path="Reliability.MAX_RETRY_ATTEMPTS", expected=3),
-        ConstantPathScenario(path="Security.JWT_DEFAULT_ALGORITHM", expected="HS256"),
-        ConstantPathScenario(path="Cqrs.DEFAULT_HANDLER_TYPE", expected="command"),
-        ConstantPathScenario(path="Container.DEFAULT_WORKERS", expected=4),
-        ConstantPathScenario(
-            path="Dispatcher.DEFAULT_HANDLER_MODE", expected="command"
-        ),
-        ConstantPathScenario(path="Mixins.FIELD_CREATED_AT", expected="created_at"),
-        ConstantPathScenario(path="Messages.TYPE_MISMATCH", expected="Type mismatch"),
+        ConstantPathScenario(path="MAX_TIMEOUT_SECONDS", expected=3600),
+        ConstantPathScenario(path="DEFAULT_LEVEL", expected="INFO"),
+        ConstantPathScenario(path="FLEXT_API_PORT", expected=8000),
+        ConstantPathScenario(path="DEFAULT_HOST", expected=c.LOCALHOST),
+        ConstantPathScenario(path="MAX_TIMEOUT_SECONDS_PERFORMANCE", expected=600),
+        ConstantPathScenario(path="DEFAULT_BATCH_SIZE", expected=1000),
+        ConstantPathScenario(path="MAX_RETRY_ATTEMPTS", expected=3),
+        ConstantPathScenario(path="JWT_DEFAULT_ALGORITHM", expected="HS256"),
+        ConstantPathScenario(path="DEFAULT_HANDLER_TYPE", expected="command"),
+        ConstantPathScenario(path="DEFAULT_WORKERS", expected=4),
+        ConstantPathScenario(path="DEFAULT_HANDLER_MODE", expected="command"),
+        ConstantPathScenario(path="FIELD_CREATED_AT", expected="created_at"),
+        ConstantPathScenario(path="TYPE_MISMATCH", expected="Type mismatch"),
     ]
     PATTERN_VALIDATION_SCENARIOS: ClassVar[list[PatternValidationScenario]] = [
         PatternValidationScenario(
-            pattern_attr="Platform.PATTERN_EMAIL",
+            pattern_attr="PATTERN_EMAIL",
             valid_cases=[
                 "test@example.com",
                 "user.name+tag@example.co.uk",
@@ -89,7 +83,7 @@ class TestConstants:
             invalid_cases=["invalid.email", "@example.com", "test@", "test@.com"],
         ),
         PatternValidationScenario(
-            pattern_attr="Platform.PATTERN_URL",
+            pattern_attr="PATTERN_URL",
             valid_cases=[
                 "https://github.com",
                 "http://FlextConstants.LOCALHOST:8000",
@@ -103,7 +97,7 @@ class TestConstants:
             ],
         ),
         PatternValidationScenario(
-            pattern_attr="Platform.PATTERN_PHONE_NUMBER",
+            pattern_attr="PATTERN_PHONE_NUMBER",
             valid_cases=[
                 "+5511987654321",
                 "5511987654321",
@@ -113,7 +107,7 @@ class TestConstants:
             invalid_cases=["123", "abc1234567890", "+abc1234567890", "123456789"],
         ),
         PatternValidationScenario(
-            pattern_attr="Platform.PATTERN_UUID",
+            pattern_attr="PATTERN_UUID",
             valid_cases=[
                 "550e8400-e29b-41d4-a716-446655440000",
                 "550e8400e29b41d4a716446655440000",
@@ -125,7 +119,7 @@ class TestConstants:
             ],
         ),
         PatternValidationScenario(
-            pattern_attr="Platform.PATTERN_PATH",
+            pattern_attr="PATTERN_PATH",
             valid_cases=[
                 "/home/user/file.txt",
                 "C:\\Users\\file.txt",
@@ -138,7 +132,7 @@ class TestConstants:
             ],
         ),
     ]
-    TYPE_CHECKS: ClassVar[list[tuple[object, type]]] = [
+    TYPE_CHECKS: ClassVar[list[tuple[str | int, type]]] = [
         (c.NAME, str),
         (c.MIN_PORT, int),
         (c.MAX_PORT, int),
@@ -154,26 +148,26 @@ class TestConstants:
         "logging_default_level_str",
         "platform_flext_api_port_int",
     ]
-    REQUIRED_CATEGORIES: ClassVar[list[str]] = [
-        "Network",
-        "Validation",
-        "Errors",
-        "Messages",
-        "Defaults",
-        "Utilities",
-        "Settings",
-        "Logging",
-        "Platform",
-        "Performance",
-        "Reliability",
-        "Security",
-        "Cqrs",
-        "Container",
-        "Dispatcher",
-        "Mixins",
-        "Context",
-        "Processing",
-        "Pagination",
+    REQUIRED_ATTRIBUTES: ClassVar[list[str]] = [
+        "MIN_PORT",
+        "MAX_PORT",
+        "MIN_NAME_LENGTH",
+        "MAX_EMAIL_LENGTH",
+        "VALIDATION_ERROR",
+        "TYPE_MISMATCH",
+        "DEFAULT_TIMEOUT_SECONDS",
+        "MAX_TIMEOUT_SECONDS",
+        "LogLevel",
+        "FLEXT_API_PORT",
+        "MAX_TIMEOUT_SECONDS_PERFORMANCE",
+        "MAX_RETRY_ATTEMPTS",
+        "JWT_DEFAULT_ALGORITHM",
+        "DEFAULT_HANDLER_TYPE",
+        "DEFAULT_WORKERS",
+        "DEFAULT_HANDLER_MODE",
+        "FIELD_CREATED_AT",
+        "DEFAULT_PAGE_SIZE",
+        "ErrorType",
     ]
     LOG_LEVELS: ClassVar[list[str]] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
@@ -246,28 +240,21 @@ class TestConstants:
         tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=30)
         tm.that(c.LogLevel.ERROR, eq="ERROR")
 
-    @pytest.mark.parametrize("category", REQUIRED_CATEGORIES)
-    def test_completeness_required_categories_exist(self, category: str) -> None:
-        """Test that all required constant categories exist."""
-        tm.that(hasattr(c, category), eq=True, msg=f"Missing category: {category}")
+    @pytest.mark.parametrize("attr", REQUIRED_ATTRIBUTES)
+    def test_completeness_required_attributes_exist(self, attr: str) -> None:
+        """Test that all required constant attributes exist."""
+        tm.that(hasattr(c, attr), eq=True, msg=f"Missing attribute: {attr}")
 
     def test_completeness_documentation_exists(self) -> None:
         """Test that constants have proper documentation."""
         tm.that(c.__doc__, none=False)
         doc_lower = c.__doc__.lower() if c.__doc__ else ""
         tm.that("layer 0" in doc_lower, eq=True)
-        documented_classes = [c.Network, c, c, c, c]
-        for cls in documented_classes:
-            tm.that(
-                cls.__doc__,
-                none=False,
-                msg=f"Missing docstring for {cls.__name__}",
-            )
 
     def test_edge_cases_pattern_edge_cases(self) -> None:
         """Test regex patterns with edge cases."""
         email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "Platform.PATTERN_EMAIL",
+            "PATTERN_EMAIL",
         )
         long_email = "a" * 64 + "@" + "b" * 63 + ".com"
         tm.that(len(long_email), lte=c.MAX_EMAIL_LENGTH)
@@ -275,7 +262,7 @@ class TestConstants:
             cast("test_t.Tests.object", email_pattern.match(long_email)), none=False
         )
         phone_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "Platform.PATTERN_PHONE_NUMBER",
+            "PATTERN_PHONE_NUMBER",
         )
         tm.that(
             cast("test_t.Tests.object", phone_pattern.match("+123456789012345")),
@@ -309,7 +296,7 @@ class TestConstants:
     def test_integration_pattern_and_validation_consistency(self) -> None:
         """Test that patterns work with validation constants."""
         email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "Platform.PATTERN_EMAIL",
+            "PATTERN_EMAIL",
         )
         max_length_email = "a" * (c.MAX_EMAIL_LENGTH - 9) + "@test.com"
         tm.that(len(max_length_email), lte=c.MAX_EMAIL_LENGTH)

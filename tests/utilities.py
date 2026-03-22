@@ -1,11 +1,11 @@
 """Utilities for flext-core tests.
 
-Provides u, extending u with flext-core-specific
+Provides FlextCoreTestUtilities, extending FlextTestsUtilities with flext-core-specific
 utilities. All generic test utilities come from flext_tests.
 
 Architecture:
-- u (flext_tests) = Generic utilities for all FLEXT projects
-- u (tests/) = flext-core-specific utilities extending u
+- FlextTestsUtilities (flext_tests) = Generic utilities for all FLEXT projects
+- FlextCoreTestUtilities (tests/) = flext-core-specific utilities extending FlextTestsUtilities
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,26 +17,25 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 from typing import Never, override
 
-from flext_infra import FlextInfraUtilities
-from flext_tests import t, tm, u
+from flext_tests import FlextTestsTypes as t, FlextTestsUtilities, tm
 
 from flext_core import r
 
 
-class FlextCoreTestUtilities(u, FlextInfraUtilities):
-    """Utilities for flext-core tests - extends u.
+class FlextCoreTestUtilities(FlextTestsUtilities):
+    """Utilities for flext-core tests - extends FlextTestsUtilities.
 
-    Architecture: Extends u with flext-core-specific utility
-    definitions. All generic utilities from u are available
+    Architecture: Extends FlextTestsUtilities with flext-core-specific utility
+    definitions. All generic utilities from FlextTestsUtilities are available
     through inheritance.
 
     Rules:
-    - NEVER redeclare utilities from u
+    - NEVER redeclare utilities from FlextTestsUtilities
     - Only flext-core-specific utilities allowed
-    - All generic utilities come from u
+    - All generic utilities come from FlextTestsUtilities
     """
 
-    class Tests(u.Tests):
+    class Core:
         """flext-core-specific test utilities namespace."""
 
         class CoreParserHelpers:
@@ -99,10 +98,10 @@ class FlextCoreTestUtilities(u, FlextInfraUtilities):
 
             @staticmethod
             def create_for_split() -> (
-                FlextCoreTestUtilities.Tests.CoreBadObjects.BadSplitString
+                FlextCoreTestUtilities.Core.CoreBadObjects.BadSplitString
             ):
                 """Create object that fails on split()."""
-                return FlextCoreTestUtilities.Tests.CoreBadObjects.BadSplitString()
+                return FlextCoreTestUtilities.Core.CoreBadObjects.BadSplitString()
 
             class BadIndexString:
                 """String-like object that raises on indexing."""
@@ -119,10 +118,10 @@ class FlextCoreTestUtilities(u, FlextInfraUtilities):
 
             @staticmethod
             def create_for_index() -> (
-                FlextCoreTestUtilities.Tests.CoreBadObjects.BadIndexString
+                FlextCoreTestUtilities.Core.CoreBadObjects.BadIndexString
             ):
                 """Create object that fails on indexing."""
-                return FlextCoreTestUtilities.Tests.CoreBadObjects.BadIndexString()
+                return FlextCoreTestUtilities.Core.CoreBadObjects.BadIndexString()
 
             class BadStrObject:
                 """Object that raises on str() conversion."""
@@ -135,16 +134,16 @@ class FlextCoreTestUtilities(u, FlextInfraUtilities):
 
             @staticmethod
             def create_for_str() -> (
-                FlextCoreTestUtilities.Tests.CoreBadObjects.BadStrObject
+                FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject
             ):
                 """Create object that fails on str()."""
-                return FlextCoreTestUtilities.Tests.CoreBadObjects.BadStrObject()
+                return FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject()
 
             class BadDict(UserDict[str, t.Tests.Testobject]):
                 """Dict that raises on get()."""
 
                 @override
-                def __getitem__(self, key: str) -> Never:
+                def __getitem__(self, _key: str) -> Never:
                     """Raise error on get attempt."""
                     msg = "Bad dict get"
                     raise RuntimeError(msg)

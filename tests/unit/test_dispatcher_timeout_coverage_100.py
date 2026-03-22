@@ -21,7 +21,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 from flext_tests import tm
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core import FlextModelsDispatcher
 
@@ -72,20 +72,6 @@ class TestDispatcherTimeoutCoverage100:
             should_use_executor=False,
         ),
         _TimeoutEnforcerScenario(
-            name="executor_enabled_zero_workers_clamped",
-            use_timeout_executor=True,
-            executor_workers=0,
-            expected_workers=1,
-            should_use_executor=True,
-        ),
-        _TimeoutEnforcerScenario(
-            name="executor_enabled_negative_workers_clamped",
-            use_timeout_executor=True,
-            executor_workers=-5,
-            expected_workers=1,
-            should_use_executor=True,
-        ),
-        _TimeoutEnforcerScenario(
             name="executor_enabled_large_worker_count",
             use_timeout_executor=True,
             executor_workers=100,
@@ -106,6 +92,21 @@ class TestDispatcherTimeoutCoverage100:
         status = enforcer.get_executor_status()
         tm.that(status["executor_active"], eq=False)
         tm.that(status["executor_workers"], eq=0)
+
+    @pytest.mark.parametrize(
+        "invalid_workers",
+        [0, -5],
+        ids=["zero_workers", "negative_workers"],
+    )
+    def test_initialization_rejects_non_positive_workers(
+        self, invalid_workers: int
+    ) -> None:
+        """Pydantic PositiveInt rejects zero and negative executor_workers."""
+        with pytest.raises(ValidationError):
+            TimeoutEnforcer(
+                use_timeout_executor=True,
+                executor_workers=invalid_workers,
+            )
 
     def test_ensure_executor_creates_on_demand(self) -> None:
         """Test ensure_executor creates executor on demand."""

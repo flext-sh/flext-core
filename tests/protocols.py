@@ -1,11 +1,11 @@
 """Protocol definitions for flext-core tests.
 
-Provides TestsFlextProtocols, extending p with flext-core-specific
+Provides FlextCoreTestProtocols, extending FlextTestsProtocols with flext-core-specific
 protocols. All generic test protocols come from flext_tests.
 
 Architecture:
-- p (flext_tests) = Generic protocols for all FLEXT projects
-- TestsFlextProtocols (tests/) = flext-core-specific protocols extending p
+- FlextTestsProtocols (flext_tests) = Generic protocols for all FLEXT projects
+- FlextCoreTestProtocols (tests/) = flext-core-specific protocols extending FlextTestsProtocols
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,23 +13,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_infra import FlextInfraProtocols
-from flext_tests import p
+from flext_tests import FlextTestsProtocols
+
+from flext_core import FlextProtocols
 
 
-class TestsFlextProtocols(p, FlextInfraProtocols):
-    """Protocol definitions for flext-core tests - extends p.
+class FlextCoreTestProtocols(FlextTestsProtocols, FlextProtocols):
+    """Protocol definitions for flext-core tests - extends FlextTestsProtocols.
 
-    Architecture: Extends p with flext-core-specific protocol
-    definitions. All generic protocols from p are available
+    Architecture: Extends FlextTestsProtocols with flext-core-specific protocol
+    definitions. All generic protocols from FlextTestsProtocols are available
     through inheritance.
 
     Rules:
-    - NEVER redeclare protocols from p
+    - NEVER redeclare protocols from FlextTestsProtocols
     - Only flext-core-specific protocols allowed
-    - All generic protocols come from p
+    - All generic protocols come from FlextTestsProtocols
     """
 
+    class Core:
+        """flext-core-specific protocol definitions namespace."""
 
-p = TestsFlextProtocols
-__all__ = ["TestsFlextProtocols", "p"]
+
+p = FlextCoreTestProtocols
+__all__ = ["FlextCoreTestProtocols", "p"]

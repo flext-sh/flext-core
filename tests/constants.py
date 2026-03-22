@@ -1,11 +1,11 @@
 """Constants for flext-core tests.
 
-Provides TestsFlextConstants, extending c with flext-core-specific
+Provides FlextCoreTestConstants, extending FlextTestsConstants with flext-core-specific
 constants. All generic test constants come from flext_tests.
 
 Architecture:
-- c (flext_tests) = Generic constants for all FLEXT projects
-- TestsFlextConstants (tests/) = flext-core-specific constants extending c
+- FlextTestsConstants (flext_tests) = Generic constants for all FLEXT projects
+- FlextCoreTestConstants (tests/) = flext-core-specific constants extending FlextTestsConstants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,26 +16,25 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Annotated, Final, Literal
 
-from flext_infra import FlextInfraConstants
-from flext_tests import c
+from flext_tests import FlextTestsConstants
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t
 
 
-class TestsFlextConstants(c, FlextInfraConstants):
-    """Constants for flext-core tests - extends c.
+class FlextCoreTestConstants(FlextTestsConstants):
+    """Constants for flext-core tests - extends FlextTestsConstants.
 
-    Architecture: Extends c with flext-core-specific constants.
-    All generic constants from c are available through inheritance.
+    Architecture: Extends FlextTestsConstants with flext-core-specific constants.
+    All generic constants from FlextTestsConstants are available through inheritance.
 
     Rules:
-    - NEVER duplicate constants from c
+    - NEVER duplicate constants from FlextTestsConstants
     - Only flext-core-specific constants allowed (not generic for other projects)
-    - All generic constants come from c
+    - All generic constants come from FlextTestsConstants
     """
 
-    class Tests(c.Tests):
+    class Core:
         """flext-core-specific test namespaces."""
 
         @unique
@@ -259,54 +258,54 @@ class TestsFlextConstants(c, FlextInfraConstants):
             ITERATION_COUNT: Final[int] = 1000
             TEST_BATCH_SIZE: Final[int] = 10
 
-        class Exceptions(c):
+        class Exceptions(FlextTestsConstants):
             """Exception handling configuration for tests."""
 
-            FailureLevel = c.FailureLevel
+            FailureLevel = FlextTestsConstants.FailureLevel
 
-        class Settings(c):
+        class Settings(FlextTestsConstants):
             """Configuration defaults for tests."""
 
-            LogLevel = c.LogLevel
-            Environment = c.Environment
+            LogLevel = FlextTestsConstants.LogLevel
+            Environment = FlextTestsConstants.Environment
 
-        class Logging(c):
+        class Logging(FlextTestsConstants):
             """Logging configuration for tests - real inheritance."""
 
-            ContextOperation = c.ContextOperation
+            ContextOperation = FlextTestsConstants.ContextOperation
 
-        class Domain(c):
+        class Domain(FlextTestsConstants):
             """Domain-specific constants for tests."""
 
-            Status = c.Status
-            Currency = c.Currency
-            OrderStatus = c.OrderStatus
+            Status = FlextTestsConstants.Status
+            Currency = FlextTestsConstants.Currency
+            OrderStatus = FlextTestsConstants.OrderStatus
 
-        class Cqrs(c):
+        class Cqrs(FlextTestsConstants):
             """CQRS pattern constants for tests."""
 
-            Status = c.Status
-            HandlerType = c.HandlerType
-            CommonStatus = c.CommonStatus
-            MetricType = c.MetricType
-            ProcessingMode = c.ProcessingMode
-            ProcessingPhase = c.ProcessingPhase
-            BindType = c.BindType
-            MergeStrategy = c.MergeStrategy
-            HealthStatus = c.HealthStatus
-            SpecialStatus = c.SpecialStatus
-            TokenType = c.TokenType
-            OperationStatus = c.OperationStatus
-            SerializationFormat = c.SerializationFormat
-            Compression = c.Compression
-            Aggregation = c.Aggregation
-            Action = c.Action
-            PersistenceLevel = c.PersistenceLevel
-            TargetFormat = c.TargetFormat
-            WarningLevel = c.WarningLevel
-            OutputFormat = c.OutputFormat
-            Mode = c.Mode
-            RegistrationStatus = c.RegistrationStatus
+            Status = FlextTestsConstants.Status
+            HandlerType = FlextTestsConstants.HandlerType
+            CommonStatus = FlextTestsConstants.CommonStatus
+            MetricType = FlextTestsConstants.MetricType
+            ProcessingMode = FlextTestsConstants.ProcessingMode
+            ProcessingPhase = FlextTestsConstants.ProcessingPhase
+            BindType = FlextTestsConstants.BindType
+            MergeStrategy = FlextTestsConstants.MergeStrategy
+            HealthStatus = FlextTestsConstants.HealthStatus
+            SpecialStatus = FlextTestsConstants.SpecialStatus
+            TokenType = FlextTestsConstants.TokenType
+            OperationStatus = FlextTestsConstants.OperationStatus
+            SerializationFormat = FlextTestsConstants.SerializationFormat
+            Compression = FlextTestsConstants.Compression
+            Aggregation = FlextTestsConstants.Aggregation
+            Action = FlextTestsConstants.Action
+            PersistenceLevel = FlextTestsConstants.PersistenceLevel
+            TargetFormat = FlextTestsConstants.TargetFormat
+            WarningLevel = FlextTestsConstants.WarningLevel
+            OutputFormat = FlextTestsConstants.OutputFormat
+            Mode = FlextTestsConstants.Mode
+            RegistrationStatus = FlextTestsConstants.RegistrationStatus
 
         @unique
         class StatusEnum(StrEnum):
@@ -573,21 +572,21 @@ class TestsFlextConstants(c, FlextInfraConstants):
                     int, Field(default=100, description="Default test batch size")
                 ] = 100
 
-    Strings = Tests.Strings
-    Delimiters = Tests.Delimiters
-    EscapeChars = Tests.EscapeChars
-    Replacements = Tests.Replacements
-    Patterns = Tests.Patterns
-    TestErrors = Tests.TestErrors
-    TestValidation = Tests.TestValidation
-    Services = Tests.Services
-    Railway = Tests.Railway
-    HTTP = Tests.HTTP
-    Mapper = Tests.Mapper
-    TestDomain = Tests.TestDomain
-    Result = Tests.Result
+    Strings = Core.Strings
+    Delimiters = Core.Delimiters
+    EscapeChars = Core.EscapeChars
+    Replacements = Core.Replacements
+    Patterns = Core.Patterns
+    TestErrors = Core.TestErrors
+    TestValidation = Core.TestValidation
+    Services = Core.Services
+    Railway = Core.Railway
+    HTTP = Core.HTTP
+    Mapper = Core.Mapper
+    TestDomain = Core.TestDomain
+    Result = Core.Result
 
 
-c = TestsFlextConstants
+c = FlextCoreTestConstants
 
-__all__ = ["TestsFlextConstants", "c"]
+__all__ = ["FlextCoreTestConstants", "c"]

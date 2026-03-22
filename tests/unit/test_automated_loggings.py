@@ -29,7 +29,7 @@ class TestAutomatedFlextLogger:
 
     def test_bind_unbind_and_new(self) -> None:
         logger = FlextLogger.create_module_logger("tests.logger.bind")
-        request_id = u.generate("ulid", 8)
+        request_id = u.generate("ulid", length=8)
         bound = logger.bind(request_id=request_id)
         unbound = bound.unbind("request_id", safe=True)
         fresh = logger.new(flow_id=request_id)
