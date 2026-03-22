@@ -7,15 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
 import structlog.contextvars
 
-if TYPE_CHECKING:
-    from flext_core import (
-        FlextModelsContextTokens,
-        t,
-    )
+from flext_core import (
+    FlextModelsContextTokens,
+    t,
+)
 
 
 class FlextModelsContextProxyVar:
@@ -57,17 +55,13 @@ class FlextModelsContextProxyVar:
 
         def set(self, value: T | None) -> FlextModelsContextTokens.StructlogProxyToken:
             """Set value in structlog context."""
-            from flext_core._models._context._tokens import (  # noqa: PLC0415
-                FlextModelsContextTokens as _FlextModelsContextTokens,
-            )
-
             current_value = self.get()
             if value is not None:
                 _ = structlog.contextvars.bind_contextvars(**{self._key: value})
             else:
                 structlog.contextvars.unbind_contextvars(self._key)
             prev_value: t.ValueOrModel | None = current_value
-            return _FlextModelsContextTokens.StructlogProxyToken(
+            return FlextModelsContextTokens.StructlogProxyToken(
                 key=self._key,
                 previous_value=prev_value,
             )

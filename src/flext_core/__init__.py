@@ -116,7 +116,7 @@ if TYPE_CHECKING:
     from flext_core.decorators import FlextDecorators, FlextDecorators as d
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.errors import ErrorDomain, FlextError
-    from flext_core.exceptions import FlextExceptions, FlextExceptions as e, Metadata
+    from flext_core.exceptions import FlextExceptions, FlextExceptions as e
     from flext_core.handlers import FlextHandlers, FlextHandlers as h
     from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, FlextMixins as x
@@ -313,7 +313,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
     "MessageT_contra": ("flext_core._typings.generics", "MessageT_contra"),
-    "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core._typings.generics", "P"),
     "R": ("flext_core._typings.generics", "R"),
     "ResultT": ("flext_core._typings.generics", "ResultT"),
@@ -448,7 +447,6 @@ __all__ = [
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
     "MessageT_contra",
-    "Metadata",
     "P",
     "R",
     "ResultT",
