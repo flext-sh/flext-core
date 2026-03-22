@@ -28,14 +28,15 @@ class FlextConstants(
     FlextConstantsInfrastructure,
     FlextConstantsMixins,
 ):
-    # NOTE: Both FlextConstantsDomain and FlextConstantsCqrs define Status (StrEnum).
-    # The MRO resolves to FlextConstantsDomain.Status first, which is correct.
-    Status = FlextConstantsDomain.Status
     """Centralized constants for the FLEXT ecosystem (Layer 0).
 
     This class acts as a facade, composing all constant subclasses via MRO.
     All constants are accessible via inheritance—do not duplicate parent attributes.
     """
+
+    # NOTE: Both FlextConstantsDomain and FlextConstantsCqrs define Status (StrEnum).
+    # The MRO resolves to FlextConstantsDomain.Status first, which is correct.
+    Status = FlextConstantsDomain.Status
 
     pass
 

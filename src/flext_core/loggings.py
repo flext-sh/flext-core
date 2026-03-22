@@ -193,8 +193,8 @@ class FlextLogger(u, p.Logger):
                 incoming_context.items(),
             )
             merge_result = u.merge(
-                current_context_obj,
                 incoming_context_obj,
+                current_context_obj,
                 strategy="deep",
             )
             merged_value = merge_result.unwrap_or(current_context_obj)

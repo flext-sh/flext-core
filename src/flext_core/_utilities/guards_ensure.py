@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextUtilitiesGuardsType, m, p, r, t
 
@@ -23,6 +23,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             value: The value to check. (t.NormalizedValue): The normalized value to be checked.
 
         Returns:
+            bool: True if value is a general list type, False otherwise.
 
         Raises:
             None
@@ -581,18 +582,17 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def validate_pattern(value: str, pattern: str, field_name: str = "value") -> r[str]:
-        import re
-
         if re.search(pattern, value) is None:
             return r[str].fail(f"{field_name} has invalid format")
         return r[str].ok(value)
 
     @staticmethod
     def validate_port_number(port: int, field_name: str = "port") -> r[int]:
+        max_port_number = 65535
         if isinstance(port, bool):
             return r[int].fail(f"{field_name} must be an integer")
-        if port < 1 or port > 65535:
-            return r[int].fail(f"{field_name} must be between 1 and 65535")
+        if port < 1 or port > max_port_number:
+            return r[int].fail(f"{field_name} must be between 1 and {max_port_number}")
         return r[int].ok(port)
 
     @staticmethod
@@ -611,8 +611,6 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         model_class: type[T],
         data: Mapping[str, t.NormalizedValue],
     ) -> r[T]:
-        from pydantic import ValidationError
-
         try:
             validated = model_class.model_validate(data)
             return r[T].ok(validated)

@@ -9,6 +9,7 @@ from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextExceptions
+from tests import m
 
 EXCEPTION_CLASSES: tuple[type[FlextExceptions.BaseError], ...] = (
     FlextExceptions.BaseError,

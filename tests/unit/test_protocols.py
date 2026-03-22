@@ -28,7 +28,7 @@ from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from tests import p, t, u
+from tests import p, t
 
 
 class TestFlextProtocols:

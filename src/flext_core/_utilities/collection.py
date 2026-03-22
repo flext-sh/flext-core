@@ -156,7 +156,7 @@ class FlextUtilitiesCollection:
             and isinstance(current_val, dict)
             and isinstance(value, dict)
         ):
-            merged = FlextUtilitiesCollection.merge(current_val, value, strategy="deep")
+            merged = FlextUtilitiesCollection.merge(value, current_val, strategy="deep")
             if merged.is_success:
                 result[key] = merged.value
                 return r[bool].ok(value=True)
@@ -908,8 +908,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge(
-        base: dict[str, t.NormalizedValue],
         other: dict[str, t.NormalizedValue],
+        base: dict[str, t.NormalizedValue],
         *,
         strategy: str = "deep",
     ) -> r[dict[str, t.NormalizedValue]]:
@@ -917,32 +917,32 @@ class FlextUtilitiesCollection:
 
         Strategies:
         - "deep": Deep merge nested dicts (default)
-        - "replace": Replace all values from other
+        - "replace": Replace all values from base
         - "override": Same as replace (alias)
         - "append": Append lists instead of replacing
-        - "filter_none": Skip None values from other
-        - "filter_empty": Skip empty values (None, "", [], {}) from other
+        - "filter_none": Skip None values from base
+        - "filter_empty": Skip empty values (None, "", [], {}) from base
         - "filter_both": Same as filter_empty (alias)
         """
         if strategy in {"replace", "override"}:
-            result: dict[str, t.NormalizedValue] = dict(base)
-            result.update(other)
+            result: dict[str, t.NormalizedValue] = dict(other)
+            result.update(base)
             return r[dict[str, t.NormalizedValue]].ok(result)
         if strategy == "filter_none":
-            result = dict(base)
-            for key, value in other.items():
+            result = dict(other)
+            for key, value in base.items():
                 if value is not None:
                     result[key] = value
             return r[dict[str, t.NormalizedValue]].ok(result)
         if strategy in {"filter_empty", "filter_both"}:
-            result = dict(base)
-            for key, value in other.items():
+            result = dict(other)
+            for key, value in base.items():
                 if not FlextUtilitiesCollection._is_empty_value(value):
                     result[key] = value
             return r[dict[str, t.NormalizedValue]].ok(result)
         if strategy == "append":
-            result = dict(base)
-            for key, value in other.items():
+            result = dict(other)
+            for key, value in base.items():
                 current_val = result.get(key)
                 if (
                     current_val is not None
@@ -954,8 +954,8 @@ class FlextUtilitiesCollection:
                     result[key] = value
             return r[dict[str, t.NormalizedValue]].ok(result)
         if strategy == "deep":
-            result = base.copy()
-            for key, value in other.items():
+            result = other.copy()
+            for key, value in base.items():
                 merge_result = FlextUtilitiesCollection._merge_deep_single_key(
                     result,
                     key,

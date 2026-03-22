@@ -155,7 +155,7 @@ class FlextModelsContainer:
                         normalized_mapping[str(key)] = item
                     else:
                         msg = f"Invalid type in Mapping: {type(item)}"
-                        raise ValueError(msg)
+                        raise TypeError(msg)
                 return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
                 normalized_sequence: list[t.Container] = []
@@ -179,7 +179,7 @@ class FlextModelsContainer:
                         ),
                     ):
                         msg = f"Invalid type in Sequence: {type(item)}"
-                        raise ValueError(msg)
+                        raise TypeError(msg)
 
                     container_item: t.Container = str(item)
                     normalized_sequence.append(container_item)

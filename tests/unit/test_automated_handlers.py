@@ -6,7 +6,7 @@ from flext_tests import tm, u
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
-from flext_core import FlextHandlers, h
+from flext_core import FlextHandlers, h, r
 from tests import c, m, t
 
 
