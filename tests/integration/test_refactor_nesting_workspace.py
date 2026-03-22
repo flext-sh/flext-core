@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from flext_infra import m
-from flext_infra.refactor.dependency_analyzer import DependencyAnalyzer
+from flext_infra.refactor._detectors.dependency_analyzer_base import DependencyAnalyzer
 from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
 
 
