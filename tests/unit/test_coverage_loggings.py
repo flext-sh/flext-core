@@ -354,7 +354,7 @@ class TestCoverageLoggings:
         tm.that(logger, none=False)
         tm.that(hasattr(logger, "info"), eq=True)
         result = assert_log_result_success(logger.info("Test info message"))
-        tm.that(hasattr(result, "value"), eq=True) or hasattr(result, "data")
+        tm.that(hasattr(result, "value"), eq=True)
 
     def test_info_with_context(self) -> None:
         """Test info logging with context.

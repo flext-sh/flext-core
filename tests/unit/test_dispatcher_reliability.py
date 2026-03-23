@@ -88,3 +88,18 @@ def test_retry_policy_behavior() -> None:
     policy.reset("cmd")
     policy.cleanup()
     tm.that(policy.should_retry(0), eq=True)
+
+
+def test_circuit_breaker_half_open_and_rate_limiter_accessors() -> None:
+    """Test transition_to_half_open, get_max_requests, get_window_seconds."""
+    cb = CircuitBreakerManager(
+        threshold=3,
+        recovery_timeout=1.0,
+        success_threshold=2,
+    )
+    cb.transition_to_half_open("x")
+    cb.record_failure("x")
+    assert cb.get_state("x") == c.CircuitBreakerState.OPEN
+    rl = RateLimiterManager(max_requests=1, window_seconds=1.5)
+    assert rl.get_max_requests() == 1
+    assert abs(rl.get_window_seconds() - 1.5) < 1e-9

@@ -16,13 +16,15 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, TypeVar, override
 
 from flext_tests import s, td
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import T, h, r
+from flext_core import h, r
 from tests import c, m, t
+
+T = TypeVar("T", bound=t.ValueOrModel)
 
 
 class TestsFlextServiceBase(s[T]):

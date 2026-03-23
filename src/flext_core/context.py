@@ -868,7 +868,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 continue
             if isinstance(v, datetime):
                 result[k] = v.isoformat()
-            elif isinstance(v, (*t.CONTAINER_TYPES, list, dict, tuple)):
+            elif isinstance(v, t.CONTAINER_AND_COLLECTION_TYPES):
                 result[k] = v
             elif isinstance(v, BaseModel):
                 result[k] = FlextContext._to_normalized(v)

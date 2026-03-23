@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 
 from pydantic import BaseModel
 
@@ -34,28 +34,20 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: MutableMapping[
-            str,
-            tuple[
-                t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
-                DispatcherResolvedCallable,
-            ],
+        self._handlers: t.RegistryDict[
+            tuple[t.HandlerProtocolVariant, DispatcherResolvedCallable]
         ] = {}
         self._auto_handlers: MutableSequence[
             tuple[
-                t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
+                t.HandlerProtocolVariant,
                 DispatcherResolvedCallable,
                 tuple[t.MessageTypeSpecifier, ...],
             ]
         ] = []
-        self._event_subscribers: MutableMapping[
-            str,
+        self._event_subscribers: t.RegistryDict[
             MutableSequence[
-                tuple[
-                    t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
-                    DispatcherResolvedCallable,
-                ]
-            ],
+                tuple[t.HandlerProtocolVariant, DispatcherResolvedCallable]
+            ]
         ] = {}
 
     def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
@@ -79,9 +71,9 @@ class FlextDispatcher:
         if not handler_entry:
             msg_type = message.__class__
             for auto_h, resolved_handler, accepted in self._auto_handlers:
-                can_handle_fn = getattr(auto_h, "can_handle", None)
                 if u.can_handle_message_type(accepted, msg_type) or (
-                    callable(can_handle_fn) and can_handle_fn(msg_type)
+                    isinstance(auto_h, p.AutoDiscoverableHandler)
+                    and auto_h.can_handle(msg_type)
                 ):
                     handler_entry = (auto_h, resolved_handler)
                     break
@@ -133,10 +125,12 @@ class FlextDispatcher:
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
         for auto_h, resolved_handler, accepted in self._auto_handlers:
-            can_handle_fn = getattr(auto_h, "can_handle", None)
             if (
                 u.can_handle_message_type(accepted, evt_type)
-                or (callable(can_handle_fn) and can_handle_fn(evt_type))
+                or (
+                    isinstance(auto_h, p.AutoDiscoverableHandler)
+                    and auto_h.can_handle(evt_type)
+                )
             ) and all(existing_handler != auto_h for existing_handler, _ in handlers):
                 handlers.append((auto_h, resolved_handler))
         if not handlers:
@@ -147,7 +141,7 @@ class FlextDispatcher:
 
     def register_handler(
         self,
-        handler: t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
+        handler: t.HandlerProtocolVariant,
         *,
         is_event: bool = False,
     ) -> r[bool]:

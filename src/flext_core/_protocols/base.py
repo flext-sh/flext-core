@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core import r, t
 
 
 class FlextProtocolsBase:
@@ -97,6 +97,20 @@ class FlextProtocolsBase:
             )
             msg = f"Class '{class_name}' does not implement protocol '{protocol_name}'"
             raise TypeError(msg)
+
+    @runtime_checkable
+    class Executable(Base, Protocol):
+        """Protocol for objects that can be executed and report service info."""
+
+        def execute(self) -> r[t.RuntimeAtomic]: ...
+
+        def get_service_info(self) -> Mapping[str, t.Container]: ...
+
+    @runtime_checkable
+    class Flushable(Protocol):
+        """Protocol for objects with a flush() method."""
+
+        def flush(self) -> None: ...
 
 
 __all__ = ["FlextProtocolsBase"]

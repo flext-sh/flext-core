@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from itertools import count
 from typing import ClassVar, cast, override
 
@@ -516,7 +516,7 @@ class GenericModelFactory:
     ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
         config_root = cast(
-            "Mapping[str, t.NormalizedValue | BaseModel]",
+            "MutableMapping[str, t.NormalizedValue | BaseModel]",
             dict(config) if config else {},
         )
         return m.Configuration.model_validate({

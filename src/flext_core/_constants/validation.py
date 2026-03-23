@@ -28,15 +28,11 @@ class FlextConstantsValidation:
     MAX_UNCOMMITTED_EVENTS: Final[int] = 100
     DISCOUNT_THRESHOLD: Final[int] = 100
     DISCOUNT_RATE: Final[float] = 0.05
-    SLOW_OPERATION_THRESHOLD: Final[float] = 0.1
-    RESOURCE_LIMIT_MIN: Final[int] = 50
     FILTER_THRESHOLD: Final[int] = 5
     RETRY_COUNT_MAX: Final[int] = 3
     MAX_WORKERS_LIMIT: Final[int] = 100
     MAX_RETRY_STATUS_CODES: Final[int] = 100
-    "Maximum number of HTTP status codes allowed in retry configuration."
     MAX_CUSTOM_VALIDATORS: Final[int] = 50
-    "Maximum number of custom validator callables allowed."
 
     VALIDATION_ERROR: Final[str] = "VALIDATION_ERROR"
     TYPE_ERROR: Final[str] = "TYPE_ERROR"
@@ -45,8 +41,6 @@ class FlextConstantsValidation:
     GENERIC_ERROR: Final[str] = "GENERIC_ERROR"
     COMMAND_PROCESSING_FAILED: Final[str] = "COMMAND_PROCESSING_FAILED"
     UNKNOWN_ERROR: Final[str] = "UNKNOWN_ERROR"
-    FIRST_ARG_FAILED_MSG: Final[str] = "First argument failed"
-    SECOND_ARG_FAILED_MSG: Final[str] = "Second argument failed"
     SERIALIZATION_ERROR: Final[str] = "SERIALIZATION_ERROR"
     MAP_ERROR: Final[str] = "MAP_ERROR"
     BIND_ERROR: Final[str] = "BIND_ERROR"
@@ -73,7 +67,6 @@ class FlextConstantsValidation:
     AUTHORIZATION_ERROR: Final[str] = "AUTHORIZATION_ERROR"
     EXCEPTION_ERROR: Final[str] = "EXCEPTION_ERROR"
     CRITICAL_ERROR: Final[str] = "CRITICAL_ERROR"
-    NONEXISTENT_ERROR: Final[str] = "NONEXISTENT_ERROR"
 
     @unique
     class ErrorType(StrEnum):

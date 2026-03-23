@@ -95,6 +95,33 @@ class FlextProtocolsHandler:
         ) -> FlextProtocolsResult.Result[bool]: ...
 
     @runtime_checkable
+    class AutoDiscoverableHandler(Protocol):
+        """Protocol for handlers that can inspect message types at runtime."""
+
+        def can_handle(self, message_type: type) -> bool: ...
+
+    @runtime_checkable
+    class CommandBus(Protocol):
+        """Protocol for command bus implementations with dispatch/publish/register."""
+
+        def dispatch(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
+
+        def publish(
+            self,
+            event: FlextProtocolsBase.Routable | Sequence[FlextProtocolsBase.Routable],
+        ) -> FlextProtocolsResult.Result[bool]: ...
+
+        def register_handler(
+            self,
+            handler: t.HandlerLike,
+            *,
+            is_event: bool = False,
+        ) -> FlextProtocolsResult.Result[bool]: ...
+
+    @runtime_checkable
     class Middleware(FlextProtocolsBase.Base, Protocol):
         """Protocol for middleware layers in handler execution chains."""
 

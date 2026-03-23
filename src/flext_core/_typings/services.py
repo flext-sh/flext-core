@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
 from typing import TYPE_CHECKING, TypeAliasType
@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
+
+    type RegistryDict[T] = MutableMapping[str, T]
 
     type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
@@ -67,15 +69,21 @@ class FlextTypesServices:
     type DispatchableHandler = (
         BaseModel | Callable[..., BaseModel | FlextTypesServices.RuntimeAtomic | None]
     )
+    type HandlerProtocolVariant = (
+        FlextTypesServices.DispatchableHandler
+        | p.DispatchMessage
+        | p.Handle
+        | p.Execute
+    )
     type ResolvedHandlerCallable = Callable[
         ..., BaseModel | FlextTypesServices.RuntimeAtomic | None
     ]
     type RegisteredHandler = tuple[
-        FlextTypesServices.DispatchableHandler,
+        FlextTypesServices.HandlerProtocolVariant,
         FlextTypesServices.ResolvedHandlerCallable,
     ]
     type AutoHandlerRegistration = tuple[
-        FlextTypesServices.DispatchableHandler,
+        FlextTypesServices.HandlerProtocolVariant,
         FlextTypesServices.ResolvedHandlerCallable,
         tuple[FlextTypesServices.MessageTypeSpecifier, ...],
     ]

@@ -123,7 +123,7 @@ class TestService:
         """Real notification service using FlextService."""
 
         _sent_notifications: MutableSequence[str] = PrivateAttr(
-            default_factory=list
+            default_factory=lambda: list[str]()
         )
         _call_count: int = PrivateAttr(default_factory=lambda: 0)
         _should_fail: bool = PrivateAttr(default=False)

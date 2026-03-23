@@ -194,6 +194,18 @@ class FlextProtocolsLogging:
             """Convert to LDIF format."""
             ...
 
+    @runtime_checkable
+    class TextStream(Protocol):
+        """Protocol for text-based output streams (stdout, stderr, file handles)."""
+
+        mode: str
+        name: str
+        encoding: str
+
+        def write(self, msg: str) -> int: ...
+
+        def flush(self) -> None: ...
+
     type AccessibleData = (
         t.ConfigMap
         | Mapping[str, t.ValueOrModel]

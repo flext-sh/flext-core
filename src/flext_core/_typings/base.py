@@ -52,3 +52,9 @@ class FlextTypingBase:
         type[datetime],
         type[Path],
     ] = (str, int, float, bool, datetime, Path)
+    CONTAINER_AND_COLLECTION_TYPES: tuple[type, ...] = (
+        *CONTAINER_TYPES,
+        list,
+        dict,
+        tuple,
+    )

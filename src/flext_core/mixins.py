@@ -651,15 +651,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
 
         @staticmethod
         def is_command_bus(obj: p.Base | BaseModel) -> bool:
-            """Check if *obj* satisfies ``p.Dispatcher`` structurally."""
-            return (
-                hasattr(obj, "dispatch")
-                and callable(getattr(obj, "dispatch", None))
-                and hasattr(obj, "publish")
-                and callable(getattr(obj, "publish", None))
-                and hasattr(obj, "register_handler")
-                and callable(getattr(obj, "register_handler", None))
-            )
+            """Check if *obj* satisfies ``p.CommandBus`` structurally."""
+            return isinstance(obj, p.CommandBus)
 
         @staticmethod
         def is_handler(obj: p.Base | BaseModel) -> bool:
@@ -673,14 +666,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
 
         @staticmethod
         def is_service(obj: p.Base | BaseModel) -> bool:
-            """Check if *obj* satisfies ``p.Service`` structurally."""
-            return (
-                hasattr(obj, "execute")
-                and callable(getattr(obj, "execute", None))
-                and hasattr(obj, "get_service_info")
-                and callable(getattr(obj, "get_service_info", None))
-                and hasattr(obj, "is_valid")
-            )
+            """Check if *obj* satisfies ``p.Executable`` structurally."""
+            return isinstance(obj, p.Executable)
 
         @staticmethod
         def validate_processor_protocol(

@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, cast
 
 import pytest
@@ -389,6 +389,28 @@ class Testu(TextUtilityContract):
         )
         u.Tests.Result.assert_success_with_value(result, "Success")
         assert call_count[0] >= 3
+
+    def test_string_conversion_edge_cases(self) -> None:
+        """Edge cases for string conversion utilities."""
+        assert u.to_str_list(None) == []
+        assert u.normalize("Ab") == "Ab"
+        assert u.join([]) == ""
+        assert u.join(["A", "B"], case="lower") == "a b"
+
+    def test_pagination_response_string_fallbacks(self) -> None:
+        """Test build_pagination_response with string fallback values."""
+        pagination_data: Mapping[
+            str,
+            str | MutableMapping[str, t.Container] | MutableSequence[t.Container],
+        ] = {
+            "data": "fallback-data",
+            "pagination": "fallback-pagination",
+        }
+        response = u.build_pagination_response(pagination_data, message="ok")
+        assert response.is_success
+        value = response.value
+        assert value["data"] == "fallback-data"
+        assert value["pagination"] == "fallback-pagination"
 
 
 __all__ = ["Testu"]

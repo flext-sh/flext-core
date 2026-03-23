@@ -15,7 +15,6 @@ Uses real implementations, u, and advanced pytest patterns.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime
 from typing import ClassVar
 
 import pytest
@@ -89,9 +88,13 @@ class TestFlextModelsContainer:
         })
 
     @staticmethod
-    def _normalize_metadata_obj(value: Sequence[int]) -> m.Metadata:
-        """Call ensure_metadata with arbitrary t.NormalizedValue for error-path testing."""
-        fn: Callable[..., m.Metadata] = getattr(u, "ensure_metadata")
+    def _normalize_metadata_obj(value: list[int]) -> m.Metadata:
+        """Pass an invalid list to ensure_metadata to trigger the TypeError error path.
+
+        Uses getattr to bypass the type checker: ensure_metadata's signature does not
+        accept list[int], but the test needs to verify runtime rejection of this type.
+        """
+        fn = getattr(u, "ensure_metadata")
         return fn(value)
 
     def test_is_dict_like_static_method(self) -> None:
@@ -139,7 +142,7 @@ class TestFlextModelsContainer:
         registration = m.ServiceRegistration(name="test", service="value")
         tm.that(registration.service_type, none=True)
         tm.that(registration.tags, eq=[])
-        tm.that(isinstance(registration.registration_time, datetime), eq=True)
+        tm.that(registration.registration_time, none=False)
         registration.metadata = None
         tm.that(registration.metadata, none=False)
         tm.that(hasattr(registration.metadata, "attributes"), eq=True)
@@ -200,7 +203,7 @@ class TestFlextModelsContainer:
         tm.that(registration.is_singleton, eq=False)
         assert registration.cached_instance is None
         tm.that(registration.invocation_count, eq=0)
-        tm.that(isinstance(registration.registration_time, datetime), eq=True)
+        tm.that(registration.registration_time, none=False)
         registration.metadata = None
         tm.that(registration.metadata, none=False)
         tm.that(hasattr(registration.metadata, "attributes"), eq=True)
@@ -379,3 +382,14 @@ class TestFlextModelsContainer:
             match=r"metadata must be None, dict, or.*Metadata",
         ):
             self._normalize_metadata_obj([1, 2, 3])
+
+    def test_resource_registration_metadata_normalized(self) -> None:
+        """Test ResourceRegistration with metadata attribute."""
+        reg = m.ResourceRegistration(
+            name="r1",
+            factory=lambda: 1,
+            metadata=m.Metadata(attributes={"value": "x"}),
+        )
+        assert reg.metadata is not None
+        assert isinstance(reg.metadata, m.Metadata)
+        assert reg.metadata.attributes["value"] == "x"

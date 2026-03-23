@@ -1,7 +1,7 @@
-"""s core functionality tests.
+"""Service core functionality tests.
 
 Module: flext_core.service
-Scope: s abstract base class - execution, validation, metadata
+Scope: Service abstract base class - execution, validation, metadata
 
 Tests core s functionality including:
 - Service creation and Pydantic configuration
@@ -24,10 +24,19 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
+import pytest
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import p, r, s
+from flext_core import (
+    FlextContext,
+    FlextModelsService,
+    FlextService,
+    FlextSettings,
+    p,
+    r,
+    s,
+)
 from tests import t
 
 
@@ -50,7 +59,7 @@ class TestsCore:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Service scenario name")]
         scenario_type: Annotated[
-            t.NormalizedValue, Field(description="Service scenario type")
+            TestsCore.ServiceScenarioType, Field(description="Service scenario type")
         ]
         is_valid_expected: Annotated[
             bool,
@@ -142,24 +151,18 @@ class TestsCore:
                 TestsCore.ServiceScenarioType.COMPLEX_INVALID,
             }:
                 name_val = kwargs_raw.get("name", "test")
-                name = str(name_val)
                 amount_val = kwargs_raw.get("amount", 0)
-                amount = int(amount_val) if isinstance(amount_val, (int, float)) else 0
                 enabled_val = kwargs_raw.get("enabled", True)
-                enabled = bool(enabled_val)
-                complex_service = TestsCore.ComplexService()
-                complex_service.name = name
-                complex_service.amount = amount
-                complex_service.enabled = enabled
-                return complex_service
+                return TestsCore.ComplexService(
+                    name=str(name_val),
+                    amount=int(amount_val) if isinstance(amount_val, (int, float)) else 0,
+                    enabled=bool(enabled_val),
+                )
             if scenario.scenario_type == TestsCore.ServiceScenarioType.FAILING:
                 return TestsCore.FailingService()
             if scenario.scenario_type == TestsCore.ServiceScenarioType.EXCEPTION:
                 should_raise_val = kwargs_raw.get("should_raise", False)
-                should_raise = bool(should_raise_val)
-                exception_service = TestsCore.ExceptionService()
-                exception_service.should_raise = should_raise
-                return exception_service
+                return TestsCore.ExceptionService(should_raise=bool(should_raise_val))
             error_msg = f"Unknown scenario type: {scenario.scenario_type}"
             raise ValueError(error_msg)
 
@@ -292,4 +295,87 @@ class TestsCore:
         _ = u.Tests.Result.assert_failure(business_result)
 
 
-__all__ = ["TestsCore"]
+class TestServiceInternals:
+    """Tests for FlextService internal runtime creation methods."""
+
+    class _Svc(FlextService[bool]):
+        @override
+        def execute(self) -> r[bool]:
+            return r[bool].ok(True)
+
+    class _FakeConfig:
+        version = "1"
+
+    def test_service_init_type_guards_and_properties(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test service init with non-standard context and config types."""
+        bad_ctx_runtime = FlextModelsService.ServiceRuntime.model_construct(
+            config=FlextSettings(),
+            context=cast("p.Context", "invalid-context"),
+            container=cast("p.Container", "invalid-container"),
+        )
+
+        def _bad_ctx_runtime_factory(
+            _cls: type[TestServiceInternals._Svc],
+        ) -> FlextModelsService.ServiceRuntime:
+            return bad_ctx_runtime
+
+        monkeypatch.setattr(
+            self._Svc,
+            "_create_initial_runtime",
+            classmethod(_bad_ctx_runtime_factory),
+        )
+        service_with_bad_ctx = self._Svc()
+        assert service_with_bad_ctx.context == "invalid-context"
+        good_ctx = FlextContext.create()
+        bad_cfg_runtime = FlextModelsService.ServiceRuntime.model_construct(
+            config=cast("p.Settings", self._FakeConfig()),
+            context=good_ctx,
+            container=cast("p.Container", "invalid-container"),
+        )
+
+        def _bad_cfg_runtime_factory(
+            _cls: type[TestServiceInternals._Svc],
+        ) -> FlextModelsService.ServiceRuntime:
+            return bad_cfg_runtime
+
+        monkeypatch.setattr(
+            self._Svc,
+            "_create_initial_runtime",
+            classmethod(_bad_cfg_runtime_factory),
+        )
+        service_with_bad_cfg = self._Svc()
+        assert isinstance(service_with_bad_cfg.config, self._FakeConfig)
+
+    def test_service_create_runtime_container_overrides_branch(self) -> None:
+        """Test _create_runtime with container_overrides."""
+        runtime = self._Svc._create_runtime(container_overrides={"strict": True})
+        assert isinstance(runtime, FlextModelsService.ServiceRuntime)
+
+    def test_service_create_initial_runtime_prefers_custom_config_type(self) -> None:
+        """Test _create_initial_runtime with custom config type via bootstrap options."""
+
+        class _CustomSettings(FlextSettings):
+            pass
+
+        svc_type = self._Svc
+
+        class _CustomSvc(svc_type):
+            @classmethod
+            @override
+            def _runtime_bootstrap_options(
+                cls,
+            ) -> FlextModelsService.RuntimeBootstrapOptions:
+                return FlextModelsService.RuntimeBootstrapOptions(
+                    config_type=_CustomSettings,
+                )
+
+        runtime = _CustomSvc()._create_initial_runtime()
+        assert isinstance(runtime.config, _CustomSettings)
+        service = self._Svc()
+        assert service.context is not None
+
+
+__all__ = ["TestServiceInternals", "TestsCore"]

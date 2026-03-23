@@ -160,7 +160,7 @@ class FlextRuntime:
         @override
         def flush(self) -> None:
             """Flush stream (best effort)."""
-            if hasattr(self.stream, "flush"):
+            if isinstance(self.stream, p.Flushable):
                 with contextlib.suppress(OSError, ValueError):
                     self.stream.flush()
 
@@ -190,7 +190,7 @@ class FlextRuntime:
                     if msg is None:
                         break
                     _ = self.stream.write(msg)
-                    if hasattr(self.stream, "flush"):
+                    if isinstance(self.stream, p.Flushable):
                         _ = self.stream.flush()
                     self.queue.task_done()
                 except queue.Empty:
