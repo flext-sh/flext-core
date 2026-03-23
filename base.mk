@@ -31,6 +31,14 @@ PR_AUTO ?= 0
 PR_DELETE_BRANCH ?= 0
 PR_CHECKS_STRICT ?= 0
 PR_RELEASE_ON_MERGE ?= 1
+FILE ?=
+FILES ?=
+CHANGED_ONLY ?=
+MATCH ?=
+RUFF_ARGS ?=
+PYRIGHT_ARGS ?=
+CHECK_ONLY ?=
+FAIL_FAST ?=
 
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
@@ -164,14 +172,14 @@ help: ## Show commands
 	$(Q)echo "================================================"
 	$(Q)echo ""
 	$(Q)echo "Core verbs:"
-	$(Q)printf "  %-14s %s\n" "setup"     "Install dependencies and hooks"
+	$(Q)printf "  %-14s %s\n" "boot"      "Install dependencies and hooks"
 	$(Q)printf "  %-14s %s\n" "build"     "Build distributable artifacts"
 	$(Q)printf "  %-14s %s\n" "check"     "Run lint gates (CHECK_GATES= to select)"
-	$(Q)printf "  %-14s %s\n" "security"  "Run all security checks"
-	$(Q)printf "  %-14s %s\n" "format"    "Run all formatting"
+	$(Q)printf "  %-14s %s\n" "scan"      "Run all security checks"
+	$(Q)printf "  %-14s %s\n" "fmt"       "Run all formatting"
 	$(Q)printf "  %-14s %s\n" "docs"      "Build docs (DOCS_PHASE= to select)"
 	$(Q)printf "  %-14s %s\n" "test"      "Run pytest (PYTEST_ARGS= for options)"
-	$(Q)printf "  %-14s %s\n" "validate"  "Run validate gates (FIX=1 to auto-fix)"
+	$(Q)printf "  %-14s %s\n" "val"       "Run validate gates (FIX=1 to auto-fix)"
 	$(Q)printf "  %-14s %s\n" "clean"     "Clean build/test/type artifacts"
 	$(Q)echo ""
 	$(Q)echo "Daemon management:"
@@ -193,7 +201,7 @@ help: ## Show commands
 	$(Q)echo "  PR_DELETE_BRANCH=0|1  PR_CHECKS_STRICT=0|1"
 	$(Q)echo "  PR_RELEASE_ON_MERGE=0|1"
 
-setup: ## Complete setup
+boot: ## Complete setup
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
 		go mod download; \
 		go mod tidy; \
@@ -280,7 +288,33 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	else \
 		gates="lint,format,pyrefly,mypy,pyright,security,markdown,go"; \
 	fi; \
-	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g' | tr ' ' ','); \
+	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g; s/\bfmt\b/format/g; s/\bscan\b/security/g' | tr ' ' ','); \
+	_files=""; \
+	if [ -n "$(FILES)" ]; then _files="$(FILES)"; fi; \
+	if [ -n "$(FILE)" ]; then \
+		if [ -n "$$_files" ]; then _files="$$_files $(FILE)"; \
+		else _files="$(FILE)"; fi; \
+	fi; \
+	if [ "$(CHANGED_ONLY)" = "1" ]; then \
+		_files=$$(git diff --name-only HEAD -- '*.py' 2>/dev/null | tr '\n' ' '); \
+	fi; \
+	if [ -n "$$_files" ]; then \
+		echo "Fast-path check: $$_files"; \
+		status=0; \
+		case ",$$gates," in \
+			*,lint,*) $(POETRY) run ruff check $$_files $(RUFF_ARGS) $(if $(filter 1,$(FIX)),--fix,) || status=$$?;; \
+		esac; \
+		case ",$$gates," in \
+			*,format,*) $(POETRY) run ruff format $$_files $(if $(filter 1,$(CHECK_ONLY)),--check,--quiet) || status=$$?;; \
+		esac; \
+		case ",$$gates," in \
+			*,pyright,*) $(POETRY) run pyright $$_files $(PYRIGHT_ARGS) || status=$$?;; \
+		esac; \
+		case ",$$gates," in \
+			*,pyrefly,*) $(POETRY) run pyrefly check $$_files || status=$$?;; \
+		esac; \
+		exit $$status; \
+	fi; \
 	project_key="$(PROJECT_NAME)"; \
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
@@ -288,14 +322,14 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(POETRY) run python -m flext_infra check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key"; \
 	exit $$?
 
-security: ## Run all security checks
+scan: ## Run all security checks
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
 		gosec ./...; \
 		exit 0; \
 	fi
 	$(Q)$(POETRY) run bandit -r $(SRC_DIR) -q -ll
 
-format: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
+fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
 		go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
 		if [ -n "$$go_files" ]; then \
@@ -305,7 +339,19 @@ format: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 			fi; \
 		fi; \
 	else \
-		$(POETRY) run ruff format . --quiet; \
+		_fmt_target="."; \
+		_fmt_files=""; \
+		if [ -n "$(FILES)" ]; then _fmt_files="$(FILES)"; fi; \
+		if [ -n "$(FILE)" ]; then \
+			if [ -n "$$_fmt_files" ]; then _fmt_files="$$_fmt_files $(FILE)"; \
+			else _fmt_files="$(FILE)"; fi; \
+		fi; \
+		if [ -n "$$_fmt_files" ]; then _fmt_target="$$_fmt_files"; fi; \
+		if [ "$(CHECK_ONLY)" = "1" ]; then \
+			$(POETRY) run ruff format $$_fmt_target --check; \
+		else \
+			$(POETRY) run ruff format $$_fmt_target --quiet; \
+		fi; \
 		if [ -f go.mod ]; then \
 			go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
 			if [ -n "$$go_files" ]; then \
@@ -363,6 +409,18 @@ test: ## Run pytest only
 		go test -v -race -coverprofile=coverage.out -covermode=atomic ./...; \
 		go tool cover -func=coverage.out; \
 	else \
+		_files=""; \
+		if [ -n "$(FILES)" ]; then _files="$(FILES)"; fi; \
+		if [ -n "$(FILE)" ]; then \
+			if [ -n "$$_files" ]; then _files="$$_files $(FILE)"; \
+			else _files="$(FILE)"; fi; \
+		fi; \
+		_pytest_run="$(TESTS_DIR)"; \
+		if [ -n "$$_files" ]; then _pytest_run="$$_files"; fi; \
+		_all_pytest_args="$(PYTEST_ARGS)"; \
+		if [ -n "$(MATCH)" ]; then _all_pytest_args="$$_all_pytest_args -k $(MATCH)"; fi; \
+		if [ "$(FAIL_FAST)" = "1" ]; then _all_pytest_args="$$_all_pytest_args -x"; fi; \
+		if [ "$(VERBOSE)" = "1" ]; then _all_pytest_args="$$_all_pytest_args -vv -s"; fi; \
 		run_id=$$(date -u +%Y%m%dT%H%M%SZ)-$$$$; \
 	report_dir="$(PYTEST_REPORTS_DIR)/$$run_id"; \
 	mkdir -p "$$report_dir"; \
@@ -377,15 +435,15 @@ test: ## Run pytest only
 	skips_file="$$report_dir/skipped-tests.txt"; \
 	command_file="$$report_dir/command.txt"; \
 	interrupted=0; \
-	echo "$(POETRY) run pytest $(TESTS_DIR) $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file --cov --cov-report=xml:$$coverage_file $(if $(filter 1,$(DIAG)),-vv,-q) $(PYTEST_ARGS)" > "$$command_file"; \
+	echo "$(POETRY) run pytest $$_pytest_run $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file --cov --cov-report=xml:$$coverage_file $(if $(filter 1,$(DIAG)),-vv,-q) $$_all_pytest_args" > "$$command_file"; \
 	trap 'interrupted=1; trap "" INT TERM' INT TERM; \
-	$(POETRY) run pytest $(TESTS_DIR) \
+	$(POETRY) run pytest $$_pytest_run \
 		$(PYTEST_REPORT_ARGS) \
 		$(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) \
 		-p no:metadata \
 		--junitxml="$$junit_file" \
 		--cov --cov-report=xml:$$coverage_file \
-		$(if $(filter 1,$(DIAG)),-vv,-q) $(PYTEST_ARGS) 2>&1 | tee "$$log_file"; \
+		$(if $(filter 1,$(DIAG)),-vv,-q) $$_all_pytest_args 2>&1 | tee "$$log_file"; \
 	rc=$${PIPESTATUS[0]}; \
 	if [ "$$interrupted" = "1" ]; then rc=130; fi; \
 	if [ -f "$$junit_file" ]; then \
@@ -430,10 +488,10 @@ test: ## Run pytest only
 	exit $$rc; \
 	fi
 
-validate: ## Run validate gates (VALIDATE_GATES=complexity,docstring to select, FIX=1)
+val: ## Run validate gates (VALIDATE_GATES=complexity,docstring to select, FIX=1)
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
 		if [ "$(FIX)" = "1" ]; then \
-			$(MAKE) format; \
+			$(MAKE) fmt; \
 		fi; \
 		go mod verify; \
 		exit 0; \
