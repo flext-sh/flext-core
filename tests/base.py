@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +38,12 @@ class TestsFlextServiceBase(s[T]):
     - Only flext-core-specific service functionality allowed
     - All generic service functionality comes from s
     """
+
+    @abstractmethod
+    @override
+    def execute(self) -> r[T]:
+        """Execute domain service logic - must be implemented by subclasses."""
+        ...
 
     class HandlerTestCase(BaseModel):
         """Factory for handler test case configurations."""

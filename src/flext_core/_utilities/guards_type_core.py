@@ -40,7 +40,7 @@ class FlextUtilitiesGuardsTypeCore:
             value: Object to check.
 
         Returns:
-            True if value is a list or tuple, narrowed to Sequence[t.NormalizedValue].
+            True if value is a list or tuple, narrowed to Sequence[NormalizedValue].
 
         """
         return isinstance(value, (list, tuple))
@@ -55,7 +55,7 @@ class FlextUtilitiesGuardsTypeCore:
             value: Object to check.
 
         Returns:
-            True if value is a Mapping, narrowed to Mapping[str, t.NormalizedValue].
+            True if value is a Mapping, narrowed to Mapping[str, NormalizedValue].
 
         """
         return isinstance(value, Mapping)

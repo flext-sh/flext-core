@@ -6,7 +6,9 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from flext_infra import FlextInfraRefactorCommand, u
+from flext_infra.refactor.__main__ import FlextInfraRefactorCommand
+
+from flext_infra import u
 
 
 def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 import pytest
 
@@ -96,7 +97,7 @@ class TestDispatcherFullCoverage:
         ) -> p.ResultLike[t.Container] | t.Container | None:
             return "invalid"
 
-        return _wrapper
+        return cast("t.DispatchableHandler", _wrapper)
 
     @staticmethod
     def _force_routable(obj: str | None) -> p.Routable:

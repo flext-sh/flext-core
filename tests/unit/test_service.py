@@ -22,12 +22,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, cast, override
 
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import r, s
+from flext_core import p, r, s
 from tests import t
 
 
@@ -271,7 +271,7 @@ class TestsCore:
         service.amount = 10
         service.enabled = True
         validation_result = u.Tests.GenericHelpers.validate_model_attributes(
-            service,
+            cast("p.Model", service),
             required_attrs=["name", "amount", "enabled"],
             optional_attrs=["validate_business_rules"],
         )
@@ -284,7 +284,7 @@ class TestsCore:
         service.amount = -1
         service.enabled = False
         validation_result = u.Tests.GenericHelpers.validate_model_attributes(
-            service,
+            cast("p.Model", service),
             required_attrs=["name"],
         )
         _ = u.Tests.Result.assert_success(validation_result)

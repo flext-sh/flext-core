@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import override
+from typing import ClassVar, override
 
 from pydantic import ConfigDict, Field, field_validator
 

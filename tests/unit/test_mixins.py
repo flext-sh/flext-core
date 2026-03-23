@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import time
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, override
 
 from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
@@ -177,6 +177,7 @@ class TestFlextMixinsNestedClasses:
                 if scenario.needs_init:
                     self._init_service("MyTestService")
 
+            @override
             def process(self) -> str:
                 """Process operation for metrics testing.
 

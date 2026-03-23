@@ -258,7 +258,7 @@ class FlextUtilitiesEnum:
 
         """
         members_list = list(values.items())
-        created = StrEnum(name, members_list)  # pyrefly: ignore[invalid-argument] -- dynamic enum creation with variable args; pyrefly expects string literals per PEP 435
+        created = StrEnum(name, members_list)
         if isinstance(created, type) and issubclass(created, StrEnum):
             return created
         msg = f"StrEnum({name!r}) did not produce a StrEnum subclass"

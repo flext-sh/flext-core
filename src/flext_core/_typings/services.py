@@ -24,7 +24,7 @@ class FlextTypesServices:
 
     type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
-    type RuntimeData = ValueOrModel
+    type RuntimeData = ValueOrModel | MetadataValue
     type RuntimeAtomic = FlextTypingBase.Container | BaseModel
 
     type BootstrapInput = (

@@ -10,7 +10,8 @@ import structlog.contextvars
 from flext_tests import t, tm
 from pydantic import BaseModel
 
-from flext_core import FlextModelFoundation, FlextModelsContext
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.context import FlextModelsContext
 from tests import m
 
 _normalize_to_mapping = FlextModelsContext.normalize_to_mapping
@@ -207,8 +208,10 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     with pytest.raises(ValueError, match="Cannot normalize"):
         _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
-    tm.that(exported.total_data_items, eq=1)
-    tm.that(exported.has_statistics is True, eq=True)
+    total_items: int = exported.total_data_items  # pyrefly: @computed_field
+    tm.that(total_items, eq=1)
+    has_stats: bool = exported.has_statistics  # pyrefly: @computed_field
+    tm.that(has_stats is True, eq=True)
 
 
 def test_scope_data_validators_and_errors() -> None:

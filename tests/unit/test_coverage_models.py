@@ -10,7 +10,7 @@ import pytest
 from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
-from flext_core import _ComparableConfigMap
+from flext_core._models.domain_event import _ComparableConfigMap
 from tests import m, t
 
 

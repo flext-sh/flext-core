@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -19,13 +20,13 @@ class FlextTypingBase:
     type Container = Scalar | Path
     type NormalizedValue = (
         Container
-        | list[FlextTypingBase.NormalizedValue]
-        | dict[str, FlextTypingBase.NormalizedValue]
+        | Sequence[FlextTypingBase.NormalizedValue]
+        | Mapping[str, FlextTypingBase.NormalizedValue]
         | tuple[FlextTypingBase.NormalizedValue, ...]
         | None
     )
-    type ContainerMapping = dict[str, NormalizedValue]
-    type ContainerList = list[NormalizedValue]
+    type ContainerMapping = Mapping[str, NormalizedValue]
+    type ContainerList = Sequence[NormalizedValue]
 
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,

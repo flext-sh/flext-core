@@ -358,7 +358,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u._get_type_hints_safe(TestClass.handle, TestClass)
-        tm.that(hints, is_=dict)
+        assert isinstance(hints, dict)
 
     def test_handle_type_or_origin_check_with_origin(self) -> None:
         """Test _handle_type_or_origin_check with __origin__ attribute."""
