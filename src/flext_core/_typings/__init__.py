@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.validation import FlextTypesValidation
 
-_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "EnumT": ("flext_core._typings.generics", "EnumT"),
     "FlextTypesCore": ("flext_core._typings.core", "FlextTypesCore"),
     "FlextTypesServices": ("flext_core._typings.services", "FlextTypesServices"),
@@ -102,7 +103,7 @@ def __getattr__(name: str) -> type:
     raise AttributeError(msg)
 
 
-def __dir__() -> list[str]:
+def __dir__() -> Sequence[str]:
     return sorted(__all__)
 
 

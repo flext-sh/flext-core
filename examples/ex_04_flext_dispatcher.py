@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import override
 
 from pydantic import BaseModel
@@ -155,7 +156,7 @@ class Ex04FlextDispatcher(Examples):
         def __init__(self) -> None:
             """Create an in-memory event sink."""
             self.event_type = Ex04FlextDispatcher.UserCreated
-            self.events: list[str] = []
+            self.events: MutableSequence[str] = []
 
         def handle(self, message: p.Routable) -> t.Container | BaseModel:
             """Store event entries when receiving UserCreated."""
@@ -171,7 +172,7 @@ class Ex04FlextDispatcher(Examples):
         def __init__(self) -> None:
             """Create an in-memory audit sink."""
             self.event_type = Ex04FlextDispatcher.UserCreated
-            self.events: list[str] = []
+            self.events: MutableSequence[str] = []
 
         def dispatch_message(self, message: p.Routable) -> t.Container | BaseModel:
             """Store audit entries when receiving UserCreated."""

@@ -37,7 +37,11 @@ class FlextUtilitiesConfiguration:
         get_fn = getattr(raw, "get", None)
         if get_fn is None or not callable(get_fn):
             return (False, None)
-        sentinel = t.NormalizedValue()
+
+        class _Sentinel:
+            pass
+
+        sentinel = _Sentinel()
         val = get_fn(parameter, sentinel)
         if val is sentinel:
             return (False, None)

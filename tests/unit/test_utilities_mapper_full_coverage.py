@@ -265,7 +265,7 @@ class UtilitiesMapperFullCoverageNamespace:
             msg = "len exploded"
             raise TypeError(msg)
 
-    class BadMapping(Mapping[str, t.NormalizedValue]):
+    class BadMapping(Mapping[str, t.NormalizedValue]):  # noqa: D106
         @override
         def __getitem__(self, _key: str) -> t.NormalizedValue:
             msg = "get exploded"

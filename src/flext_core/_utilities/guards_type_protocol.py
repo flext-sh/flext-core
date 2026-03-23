@@ -76,7 +76,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_context(
-        value: object,
+        value: t.GuardInput,
     ) -> TypeGuard[p.Context]:
         """Check if value is a Context protocol instance.
 
@@ -134,7 +134,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_registerable(
-        value: object,
+        value: t.GuardInput,
     ) -> TypeGuard[t.RegisterableService]:
         """Check if value can be registered as a service.
 
@@ -149,7 +149,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_factory(
-        value: object,
+        value: t.GuardInput,
     ) -> TypeGuard[t.FactoryCallable]:
         """Check if value is a factory callable.
 
@@ -164,7 +164,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_resource(
-        value: object,
+        value: t.GuardInput,
     ) -> TypeGuard[t.ResourceCallable]:
         """Check if value is a resource factory callable.
 
@@ -179,7 +179,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_result_like(
-        value: object,
+        value: t.GuardInput,
     ) -> TypeGuard[p.ResultLike[t.RuntimeAtomic]]:
         """Check if value is a ResultLike protocol instance.
 
@@ -200,7 +200,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_registerable_service(
-        value: object,
+        value: t.GuardInput,
     ) -> TypeGuard[t.RegisterableService]:
         """Check if value can be registered as a service in the DI container.
 

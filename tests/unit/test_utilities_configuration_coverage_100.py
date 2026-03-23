@@ -162,6 +162,16 @@ class TestFlextUtilitiesConfiguration:
         result = u.get_parameter(config_cast, self.ParameterNames.VALUE.value)
         tm.that(result, eq=42)
 
+    def test_get_parameter_from_duck_model_dump_path(self) -> None:
+        class _DumpOnly:
+            __slots__ = ()
+
+            def model_dump(self) -> Mapping[str, t.NormalizedValue]:
+                return {"timeout": 77}
+
+        result = u.get_parameter(cast("p.HasModelDump", _DumpOnly()), "timeout")
+        tm.that(result, eq=77)
+
     @pytest.mark.parametrize(
         ("param_name", "value"),
         [("timeout", 60), ("enabled", False)],

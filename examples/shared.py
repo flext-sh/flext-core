@@ -31,7 +31,7 @@ from __future__ import annotations
 import hashlib
 import string
 import sys
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
@@ -55,7 +55,7 @@ class Examples:
 
     def __init__(self, caller_file: str) -> None:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
-        self._results: list[str] = []
+        self._results: MutableSequence[str] = []
         self._caller = Path(caller_file)
         self._counter = 0
 

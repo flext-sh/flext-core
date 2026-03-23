@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import ClassVar, override
 
 from pydantic import PrivateAttr
@@ -459,8 +459,8 @@ class Ex11FlextService(Examples):
             ),
         )
 
-        taps: list[int] = []
-        tap_errors: list[str] = []
+        taps: MutableSequence[int] = []
+        tap_errors: MutableSequence[str] = []
         self.check(
             "RuntimeResult.tap", rr_ok.tap(lambda num: taps.append(num)).is_success
         )

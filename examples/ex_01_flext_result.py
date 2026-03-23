@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import override
 
 from examples import Examples
@@ -43,7 +43,7 @@ class Ex01r(Examples):
         )
         self.check("accumulate_errors.success", acc_ok.unwrap_or([]))
         self.check("accumulate_errors.failure", acc_fail.error)
-        cleaned_values: list[int] = []
+        cleaned_values: MutableSequence[int] = []
 
         def make_handle() -> Examples.Handle:
             return self.Handle(value=21)
@@ -198,8 +198,8 @@ class Ex01r(Examples):
     def side_effects_and_folds(self) -> None:
         """Exercise side-effect helpers, map_or, fold, and filter."""
         self.section("side_effects_and_folds")
-        side_effects: list[int] = []
-        error_effects: list[str] = []
+        side_effects: MutableSequence[int] = []
+        error_effects: MutableSequence[str] = []
         ok_value = r[int].ok(7)
         fail_value = r[int].fail("oops")
         self.check(

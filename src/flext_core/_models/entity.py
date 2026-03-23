@@ -62,7 +62,7 @@ class FlextModelsEntity:
         )
 
         @override
-        def __eq__(self, other: t.NormalizedValue) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
@@ -199,7 +199,7 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self: Self, other: t.NormalizedValue) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented

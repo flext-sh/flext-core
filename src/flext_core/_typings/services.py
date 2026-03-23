@@ -17,6 +17,7 @@ from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import p
+    from flext_core.dispatcher import FlextDispatcher
 
 
 class FlextTypesServices:
@@ -135,5 +136,10 @@ class FlextTypesServices:
         | BaseModel
         | FlextTypingContainers.ConfigMap
         | RegisterableService
+        | p.Context
+        | p.Settings
+        | p.Dispatcher
+        | FlextDispatcher
+        | p.ResultLike[RuntimeAtomic]
         | None
     )

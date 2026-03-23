@@ -179,10 +179,13 @@ class TestUtilitiesParserFullCoverage:
                 return False
             return original_hasattr(obj, name)
 
+        class _KeyProbe:
+            pass
+
         monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
         tm.that(
-            parser3.get_object_key(cast("t.NormalizedValue", object())),
-            has="<object object",
+            parser3.get_object_key(cast("t.NormalizedValue", _KeyProbe())),
+            has="_KeyProbe",
         )
         tm.that(
             parser3.get_object_key(cast("t.NormalizedValue", _OddNoStr())),
@@ -347,8 +350,12 @@ class TestUtilitiesParserFullCoverage:
             t.ConfigMap(root={"A": "x"}),
             case="lower",
         )
+
+        class _NotSequence:
+            pass
+
         with pytest.raises(TypeError):
-            parser.norm_in("a", cast("Sequence[str]", object()), case="lower")
+            parser.norm_in("a", cast("Sequence[str]", _NotSequence()), case="lower")
         tm.that(mapping_result, eq=True)
         tm.that(config_map_result, eq=True)
         original_norm_list = u.norm_list

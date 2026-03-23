@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, override
@@ -113,7 +113,7 @@ class TestsFlextServiceBase(s[T]):
         def _build_cases(
             *, should_fail: bool
         ) -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
-            cases: list[TestsFlextServiceBase.HandlerTestCase] = []
+            cases: MutableSequence[TestsFlextServiceBase.HandlerTestCase] = []
             for spec in td.default_handler_case_specs():
                 spec_should_fail = bool(spec.get("should_fail", False))
                 if spec_should_fail is not should_fail:

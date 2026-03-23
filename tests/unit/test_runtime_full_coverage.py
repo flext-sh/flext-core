@@ -632,7 +632,11 @@ def test_model_support_and_hash_compare_paths() -> None:
         ),
         eq=True,
     )
-    obj = cast("t.RuntimeData", object())
+
+    class _Opaque:
+        pass
+
+    obj = cast("t.RuntimeData", _Opaque())
     tm.that(
         FlextRuntime.hash_entity_by_id(obj),
         eq=hash(

@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import MutableSequence
 from typing import override
 
 from flext_core import FlextContainer, FlextDecorators, c, r, s, t
@@ -116,7 +117,7 @@ class DecoratorsService(s[t.ConfigMap]):
             max_attempts=3, delay_seconds=0.1, backoff_strategy="exponential"
         )
         @FlextDecorators.railway(error_code=c.CONNECTION_ERROR)
-        def unreliable_operation(attempt_count: list[int]) -> r[str]:
+        def unreliable_operation(attempt_count: MutableSequence[int]) -> r[str]:
             """Operation that may fail initially but succeeds on retry."""
             attempt_count[0] += 1
             if attempt_count[0] < 2:

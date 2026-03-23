@@ -23,7 +23,7 @@ class _ComparableConfigMap(t.ConfigMap):
     """ConfigMap with equality support for domain event data."""
 
     @override
-    def __eq__(self, other: t.NormalizedValue) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, dict):
             return self.root == other
         if isinstance(other, Mapping):

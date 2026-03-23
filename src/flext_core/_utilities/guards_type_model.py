@@ -34,7 +34,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_object_tuple(
-        value: t.NormalizedValue,
+        value: t.GuardInput,
     ) -> TypeIs[tuple[t.NormalizedValue, ...]]:
         """Check if value is a tuple of normalized values.
 

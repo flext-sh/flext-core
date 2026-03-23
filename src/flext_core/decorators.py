@@ -18,7 +18,7 @@ from contextlib import suppress
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Literal, NoReturn, Protocol, TypeIs, overload
+from typing import Literal, NoReturn, Protocol, TypeIs, cast, overload
 
 from pydantic import BaseModel
 
@@ -137,7 +137,9 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger = FlextDecorators._resolve_logger(args, func)
+                logger = FlextDecorators._resolve_logger(
+                    cast("tuple[t.GuardInput, ...]", args), func
+                )
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -355,7 +357,9 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(args, func)
+                logger = FlextDecorators._resolve_logger(
+                    cast("tuple[t.GuardInput, ...]", args), func
+                )
                 retry_func = func
                 retry_config = m.RetryConfiguration(
                     max_retries=attempts,
@@ -567,8 +571,8 @@ class FlextDecorators:
             fallback_logger: p.Logger | None = None
             if isinstance(logger, FlextLogger):
                 fallback_logger = logger.logger
-            elif hasattr(logger, "logger"):
-                candidate_logger = logger.logger
+            else:
+                candidate_logger: p.Logger | None = getattr(logger, "logger", None)
                 if isinstance(candidate_logger, p.Logger):
                     fallback_logger = candidate_logger
             if fallback_logger is None:
@@ -644,7 +648,7 @@ class FlextDecorators:
 
     @staticmethod
     def _resolve_logger(
-        args: tuple[t.NormalizedValue, ...], func: Callable[P, R]
+        args: tuple[t.GuardInput, ...], func: Callable[P, R]
     ) -> p.Logger:
         """Resolve logger from first argument or create module logger.
 
@@ -870,7 +874,9 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger = FlextDecorators._resolve_logger(args, func)
+                logger = FlextDecorators._resolve_logger(
+                    cast("tuple[t.GuardInput, ...]", args), func
+                )
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -919,7 +925,9 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(args, func)
+                logger = FlextDecorators._resolve_logger(
+                    cast("tuple[t.GuardInput, ...]", args), func
+                )
                 try:
                     if context_vars:
                         filtered_vars: Mapping[str, t.Container] = {

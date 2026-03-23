@@ -13,6 +13,7 @@ from collections.abc import (
     Callable,
     ItemsView,
     Mapping,
+    MutableMapping,
     Sequence,
     ValuesView,
 )
@@ -52,7 +53,7 @@ class FlextModelsContainers:
         # service classes or service factory callables, not generic container values.
 
         root: Annotated[
-            Mapping[str, type[BaseModel] | Callable[..., BaseModel]],
+            MutableMapping[str, type[BaseModel] | Callable[..., BaseModel]],
             Field(
                 default_factory=dict,
                 title="Service Registry Map",
@@ -70,7 +71,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            Mapping[str, int | str | BaseModel],
+            MutableMapping[str, int | str | BaseModel],
             Field(
                 default_factory=dict,
                 title="Error Map",
@@ -86,7 +87,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            Mapping[str, t.FactoryCallable],
+            MutableMapping[str, t.FactoryCallable],
             Field(
                 default_factory=dict,
                 title="Factory Map",
@@ -102,7 +103,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            Mapping[str, t.ResourceCallable],
+            MutableMapping[str, t.ResourceCallable],
             Field(
                 default_factory=dict,
                 title="Resource Map",

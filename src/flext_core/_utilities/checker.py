@@ -28,7 +28,7 @@ class FlextUtilitiesChecker:
 
     @staticmethod
     def _is_module_export_callable(
-        value: t.NormalizedValue,
+        value: Callable[..., t.ModuleExport] | t.GuardInput,
     ) -> TypeIs[Callable[..., t.ModuleExport]]:
         """Check if value is a callable that returns module exports.
 
@@ -172,7 +172,7 @@ class FlextUtilitiesChecker:
 
         """
         message_types: MutableSequence[t.MessageTypeSpecifier] = []
-        raw_bases: tuple[t.TypeHintSpecifier, ...] = getattr(
+        raw_bases: t.GuardInput = getattr(
             handler_class,
             "__orig_bases__",
             (),
@@ -217,9 +217,7 @@ class FlextUtilitiesChecker:
         """
         if not hasattr(handler_class, c.METHOD_HANDLE):
             return r[t.MessageTypeSpecifier].fail("Handler has no handle method")
-        handle_method_raw: Callable[..., t.ModuleExport] | None = getattr(
-            handler_class, c.METHOD_HANDLE, None
-        )
+        handle_method_raw: t.GuardInput = getattr(handler_class, c.METHOD_HANDLE, None)
         if not cls._is_module_export_callable(handle_method_raw):
             return r[t.MessageTypeSpecifier].fail(
                 "Handler handle attribute is not callable",

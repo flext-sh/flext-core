@@ -27,7 +27,7 @@ class FlextUtilitiesEnum:
     _V = m.Validators
 
     @staticmethod
-    def _is_strenum_class(value: t.NormalizedValue) -> TypeIs[type[StrEnum]]:
+    def _is_strenum_class(value: t.GuardInput) -> TypeIs[type[StrEnum]]:
         return isinstance(value, type) and issubclass(value, StrEnum)
 
     @staticmethod
@@ -180,11 +180,7 @@ class FlextUtilitiesEnum:
 
         """
         members_map = dict(values.items())
-        enum_meta = type(StrEnum)
-        enum_dict = enum_meta.__prepare__(name, (StrEnum,))
-        for key, value in members_map.items():
-            enum_dict[key] = value
-        created = enum_meta(name, (StrEnum,), enum_dict)
+        created = StrEnum(name, members_map)  # type: ignore[call-overload]
         if isinstance(created, type) and issubclass(created, StrEnum):
             return created
         msg = f"StrEnum({name!r}) did not produce a StrEnum subclass"
