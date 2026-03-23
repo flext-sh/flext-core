@@ -17,7 +17,7 @@ from flext_tests import t
 from pydantic import BaseModel
 
 from flext_core import FlextConstants, m, r
-from tests.test_utils import assertion_helpers
+from tests import assertion_helpers
 
 
 class TestArchitecturalPatterns:

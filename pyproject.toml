@@ -590,6 +590,7 @@ pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
 # [MANAGED] tomlsort
+reportCallIssue = "none"
 reportConstantRedefinition = "error"
 reportIncompatibleMethodOverride = "error"
 reportIncompatibleVariableOverride = "error"

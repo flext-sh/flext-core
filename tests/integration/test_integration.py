@@ -33,7 +33,7 @@ import pytest
 from flext_tests import t
 
 from flext_core import FlextContainer, __version__, p, r, u
-from tests.test_utils import assertion_helpers
+from tests import assertion_helpers
 
 from ..conftest import FunctionalExternalService
 

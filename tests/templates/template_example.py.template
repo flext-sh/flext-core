@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from tests.conftest import test_framework
+from tests import test_framework
 
 from flext_core import r, u
 

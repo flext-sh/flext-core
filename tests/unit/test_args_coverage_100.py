@@ -24,8 +24,7 @@ from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from tests import t
-from tests.test_utils import assertion_helpers
+from tests import assertion_helpers, t
 
 
 class TestFlextUtilitiesArgs:

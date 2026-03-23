@@ -22,7 +22,7 @@ from docker import DockerClient
 from flext_tests import c, tk
 
 from flext_core import r
-from tests.test_utils import assertion_helpers
+from tests import assertion_helpers
 
 
 class TestDocker:
