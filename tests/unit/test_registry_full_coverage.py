@@ -124,9 +124,9 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
 
     def fake_scan(
         _module: ModuleType,
-    ) -> Sequence[tuple[str, Callable[..., test_t.NormalizedValue], m.DecoratorConfig]]:
+    ) -> Sequence[tuple[str, Callable[..., t.Scalar | None], m.DecoratorConfig]]:
         cfg = m.DecoratorConfig(command=str, middleware=[])
-        return [("x", discovered_handler.handle, cfg)]
+        return [("x", cast("Callable[..., t.Scalar | None]", discovered_handler.handle), cfg)]
 
     monkeypatch.setattr(h.Discovery, "scan_module", staticmethod(fake_scan))
     monkeypatch.setattr(

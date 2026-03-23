@@ -12,7 +12,7 @@ from typing import override
 import pytest
 
 from flext_core import FlextModelsConfig, r
-from tests import c, m, t, u
+from tests import c, m, p, t, u
 
 
 def test_models_settings_branch_paths() -> None:
@@ -21,14 +21,14 @@ def test_models_settings_branch_paths() -> None:
             _ = value
             return True
 
-        def __and__(self, other: t.NormalizedValue) -> _ValidatorSpecStub:
+        def __and__(self, other: p.ValidatorSpec) -> _ValidatorSpecStub:
             _ = other
             return self
 
         def __invert__(self) -> _ValidatorSpecStub:
             return self
 
-        def __or__(self, other: t.NormalizedValue) -> _ValidatorSpecStub:
+        def __or__(self, other: p.ValidatorSpec) -> _ValidatorSpecStub:
             _ = other
             return self
 

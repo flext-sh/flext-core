@@ -22,9 +22,9 @@ class TestFlextUtilitiesConfiguration:
 
         @staticmethod
         def that(
-            value: t.NormalizedValue,
+            value: t.Tests.Testobject,
             *,
-            eq: t.NormalizedValue = None,
+            eq: t.Tests.Testobject = None,
             none: bool | None = None,
             contains: str | None = None,
         ) -> None:
@@ -179,7 +179,7 @@ class TestFlextUtilitiesConfiguration:
     def test_set_parameter_on_pydantic_model(
         self,
         param_name: str,
-        value: t.NormalizedValue,
+        value: t.Scalar,
     ) -> None:
         config = TestUnitModels.ConfigModelForTest(name="test", timeout=30)
         result = u.set_parameter(config, param_name, value)

@@ -318,8 +318,8 @@ class AutomationService(s[t.ConfigMap]):
         def load_config() -> t.ConfigMap:
             if not cache.root:
                 print("   📄 Loading configuration from file...")
-                cache.root["database_url"] = "postgresql://localhost:5432/testdb"  # type: ignore[index]
-                cache.root["cache_ttl"] = c.DEFAULT_CACHE_TTL  # type: ignore[index]
+                cache.root["database_url"] = "postgresql://localhost:5432/testdb"
+                cache.root["cache_ttl"] = c.DEFAULT_CACHE_TTL
             return cache
 
         fail_attempt: r[t.ConfigMap] = r[t.ConfigMap].fail("No cached config")

@@ -25,14 +25,14 @@ class TestFlextHandlers:
         def handle(self, message: str) -> r[str]:
             return r[str].ok(f"processed_{message}")
 
-    class ValidationTestHandler(h[t.NormalizedValue, str]):
+    class ValidationTestHandler(h[t.ValueOrModel, str]):
         """Test handler for validation."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
         @override
-        def handle(self, message: t.NormalizedValue) -> r[str]:
+        def handle(self, message: t.ValueOrModel) -> r[str]:
             return r[str].ok(f"processed_{message}")
 
     class FailingTestHandler(h[str, str]):

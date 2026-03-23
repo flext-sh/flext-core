@@ -83,7 +83,7 @@ class TestModule:
     ) -> None:
         shim = self._StructlogShim()
 
-        def _structlog_accessor() -> t.NormalizedValue:
+        def _structlog_accessor() -> TestModule._StructlogShim:
             return shim
 
         monkeypatch.setattr(
@@ -150,7 +150,7 @@ class TestModule:
     ) -> None:
         shim = self._StructlogShim()
 
-        def _structlog_accessor() -> t.NormalizedValue:
+        def _structlog_accessor() -> TestModule._StructlogShim:
             return shim
 
         monkeypatch.setattr(
@@ -199,7 +199,7 @@ class TestModule:
     ) -> None:
         fake = self._FakeBindable()
 
-        def _get_logger(_name: str | None = None) -> t.NormalizedValue:
+        def _get_logger(_name: str | None = None) -> TestModule._FakeBindable:
             return fake
 
         monkeypatch.setattr(FlextRuntime, "get_logger", staticmethod(_get_logger))
@@ -283,10 +283,6 @@ class TestModule:
 
             def exists(self) -> bool:
                 return False
-
-            @override
-            def __eq__(self, _other: t.NormalizedValue) -> bool:
-                return True
 
         tm.that(
             FlextLogger._find_workspace_root(

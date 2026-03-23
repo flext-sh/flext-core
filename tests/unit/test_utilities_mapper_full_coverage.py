@@ -122,6 +122,7 @@ class UtilitiesMapperFullCoverageNamespace:
             flag_mapping: Mapping[str, str],
         ) -> r[Mapping[str, bool]]: ...
 
+    @staticmethod
     def _at_obj(
         items: ExplodingLenList, index: int | str, *, default: int | None = None
     ) -> None:
@@ -129,11 +130,13 @@ class UtilitiesMapperFullCoverageNamespace:
         fn: _AtCallable = getattr(u, "at")
         return fn(items, index, default=default)
 
+    @staticmethod
     def _extract_field_obj(item: AttrObject, field_name: str) -> None:
         """Call _extract_field_value with arbitrary t.NormalizedValue for testing."""
         fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
         return fn(item, field_name)
 
+    @staticmethod
     def _take_obj(
         data_or_items: _MaybeModel | _PortModel | int,
         key_or_index: int | str,
@@ -143,6 +146,7 @@ class UtilitiesMapperFullCoverageNamespace:
         fn: _TakeCallable = getattr(u, "take")
         return fn(data_or_items, key_or_index, default=default)
 
+    @staticmethod
     def _build_apply_convert_obj(
         current: tuple[str, ...] | str | int,
         operations: Mapping[str, t.NormalizedValue],
@@ -150,30 +154,35 @@ class UtilitiesMapperFullCoverageNamespace:
         fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
         return fn(current, operations)
 
+    @staticmethod
     def _extract_transform_options_obj(
         transform_opts: Mapping[str, t.NormalizedValue],
     ) -> tuple[t.NormalizedValue, ...]:
         fn: _ExtractTransformOptionsCallable = getattr(u, "_extract_transform_options")
         return fn(transform_opts)
 
+    @staticmethod
     def _build_apply_sort_obj(
         current: tuple[str, str], operations: Mapping[str, t.NormalizedValue]
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
         return fn(current, operations)
 
+    @staticmethod
     def _build_apply_unique_obj(
         current: tuple[int, int, int], operations: Mapping[str, t.NormalizedValue]
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
         return fn(current, operations)
 
+    @staticmethod
     def _build_apply_slice_obj(
         current: tuple[int, int, int], operations: Mapping[str, t.NormalizedValue]
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
         return fn(current, operations)
 
+    @staticmethod
     def _build_apply_group_obj(
         current: Sequence[_GroupModel],
         operations: Mapping[str, t.NormalizedValue],
@@ -181,12 +190,14 @@ class UtilitiesMapperFullCoverageNamespace:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
         return fn(current, operations)
 
+    @staticmethod
     def _transform_obj(
         source: BadMapping, **kwargs: Mapping[str, str]
     ) -> r[Mapping[str, t.NormalizedValue]]:
         fn: _TransformCallable = getattr(u, "transform")
         return fn(source, **kwargs)
 
+    @staticmethod
     def _map_dict_keys_obj(
         source: _BadItems,
         key_map: Mapping[str, str],
@@ -196,6 +207,7 @@ class UtilitiesMapperFullCoverageNamespace:
         fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
         return fn(source, key_map, keep_unmapped=keep_unmapped)
 
+    @staticmethod
     def _build_flags_obj(
         active_flags: _BadIter,
         flag_mapping: Mapping[str, str],
@@ -231,25 +243,32 @@ class UtilitiesMapperFullCoverageNamespace:
             msg = "cannot bool"
             raise ValueError(msg)
 
+    @staticmethod
     def _parse_int(value: t.NormalizedValue | BaseModel) -> int:
         return int(cast("str", value))
 
+    @staticmethod
     def _plus_one(value: int) -> int:
         return value + 1
 
+    @staticmethod
     def _times_two(value: int) -> int:
         return value * 2
 
+    @staticmethod
     def _raise_value_error(_value: t.Scalar) -> Never:
         msg = "x"
         raise ValueError(msg)
 
+    @staticmethod
     def _normalize_not_dict(_value: t.NormalizedValue) -> str:
         return "not-a-dict"
 
+    @staticmethod
     def _negative(value: int) -> bool:
         return value < 0
 
+    @staticmethod
     def test_bad_string_and_bad_bool_raise_value_error() -> None:
         with pytest.raises(ValueError, match="cannot stringify"):
             _ = str(BadString())
@@ -265,7 +284,7 @@ class UtilitiesMapperFullCoverageNamespace:
             msg = "len exploded"
             raise TypeError(msg)
 
-    class BadMapping(Mapping[str, t.NormalizedValue]):  # noqa: D106
+    class BadMapping(Mapping[str, t.NormalizedValue]):
         @override
         def __getitem__(self, _key: str) -> t.NormalizedValue:
             msg = "get exploded"
@@ -280,16 +299,19 @@ class UtilitiesMapperFullCoverageNamespace:
         def __len__(self) -> int:
             return 1
 
+    @staticmethod
     @pytest.fixture
     def mapper() -> type[u]:
         return u
 
+    @staticmethod
     def test_type_guards_and_narrowing_failures(mapper: type[u]) -> None:
         with pytest.raises(TypeError, match="Cannot narrow"):
             mapper._narrow_to_configuration_dict(10)
         with pytest.raises(TypeError, match="Cannot narrow"):
             mapper._narrow_to_sequence("not-sequence")
 
+    @staticmethod
     def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u]) -> None:
         converted = mapper._narrow_to_string_keyed_dict(
             cast("t.NormalizedValue", {1: "x", "b": "y"}),
@@ -308,6 +330,7 @@ class UtilitiesMapperFullCoverageNamespace:
         with pytest.raises(TypeError, match="Cannot narrow"):
             mapper._narrow_to_configuration_mapping(3)
 
+    @staticmethod
     def test_general_value_helpers_and_logger(mapper: type[u]) -> None:
 
         class Stable:
@@ -324,6 +347,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.fail(callable_result)
         tm.that(u().logger, none=False)
 
+    @staticmethod
     def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
         tm.that(
             mapper.invert_dict({"a": "x", "b": "x"}, handle_collisions="first"),
@@ -374,6 +398,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(safe_json["path"], eq="/tmp")
         tm.that(safe_json["when"], eq="2026-03-12T10:30:45+00:00")
 
+    @staticmethod
     def test_ensure_and_extract_array_index_helpers(mapper: type[u]) -> None:
         tm.that(mapper.ensure(123), eq=[123])
         idx_result = mapper._extract_handle_array_index("x", "0")
@@ -386,6 +411,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.fail(idx_bad)
         tm.that(str(idx_bad.error), has="Invalid index")
 
+    @staticmethod
     def test_extract_error_paths_and_prop_accessor(mapper: type[u]) -> None:
         res_none_intermediate = mapper.extract({"a": None}, "a.b")
         tm.fail(res_none_intermediate)
@@ -445,6 +471,7 @@ class UtilitiesMapperFullCoverageNamespace:
             eq="",
         )
 
+    @staticmethod
     def test_at_take_and_as_branches(mapper: type[u]) -> None:
         tm.that(mapper.at({"a": 1}, 0, default=5).value, eq=5)
         tm.that(
@@ -458,6 +485,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.as_(12, str), eq="12")
         tm.that(mapper.as_("off", bool), eq=False)
 
+    @staticmethod
     def test_extract_field_value_and_ensure_variants(mapper: type[u]) -> None:
         tm.that(_extract_field_obj(AttrObject(name="a", value=2), "value"), eq=2)
         tm.that(_extract_field_obj(AttrObject(), "missing"), none=True)
@@ -469,6 +497,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._build_apply_ensure(5, {"ensure": "dict"}), eq={})
         tm.that(mapper._build_apply_ensure(5, {"ensure": "unknown"}), eq=5)
 
+    @staticmethod
     def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
         plus_one = cast("Callable[..., t.NormalizedValue]", _plus_one)
         times_two = cast("Callable[..., t.NormalizedValue]", _times_two)
@@ -527,6 +556,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._build_apply_normalize(1, {"normalize": "lower"}), eq=1)
         tm.that(mapper._build_apply_convert(1, {"convert": "not-callable"}), eq=1)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "convert_spec", "expected"),
         [
@@ -562,6 +592,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(_build_apply_convert_obj(value, operations), eq=expected)
 
+    @staticmethod
     def test_convert_sequence_branch_returns_tuple(mapper: type[u]) -> None:
         converted = _build_apply_convert_obj(
             ("bad",),
@@ -571,6 +602,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(converted, eq=(0,))
 
+    @staticmethod
     def test_transform_option_extract_and_step_helpers(
         mapper: type[u],
         monkeypatch: pytest.MonkeyPatch,
@@ -614,6 +646,7 @@ class UtilitiesMapperFullCoverageNamespace:
             eq="/tmp",
         )
 
+    @staticmethod
     def test_build_apply_transform_and_process_error_paths(
         mapper: type[u],
         monkeypatch: pytest.MonkeyPatch,
@@ -671,6 +704,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._build_apply_process(1, process_fail_ops, 7, "stop"), eq=7)
         tm.that(mapper._build_apply_process(1, process_fail_ops, 7, "skip"), eq=1)
 
+    @staticmethod
     def test_group_sort_unique_slice_chunk_branches(mapper: type[u]) -> None:
         tm.that(mapper._build_apply_group(1, {"group": "k"}), eq=1)
         grouped = mapper._build_apply_group(
@@ -701,6 +735,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._build_apply_chunk([1, 2], {"chunk": 0}), eq=[1, 2])
         tm.that(mapper.build([1, 2], ops=None), eq=[1, 2])
 
+    @staticmethod
     def test_field_and_fields_multi_branches(mapper: type[u]) -> None:
         tm.that(
             mapper.field(
@@ -716,8 +751,9 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(fields, eq={"name": "n", "missing": ""})
 
+    @staticmethod
     def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
-        constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
+        constructed_none = mapper.construct_spec({"x": {"field": "a", "default": 9}}, None)
         tm.that(constructed_none["x"], eq=9)
         source: Mapping[str, t.NormalizedValue | BaseModel] = {"name": "alice", "n": 3}
         spec = cast(
@@ -728,7 +764,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 "literal": 5,
             },
         )
-        constructed = mapper.construct(spec, t.ConfigMap(root=source))
+        constructed = mapper.construct_spec(spec, t.ConfigMap(root=source))
         tm.that(constructed["name"], eq="alice")
         tm.that(constructed["n"], eq=4)
         tm.that(constructed["literal"], eq=5)
@@ -748,7 +784,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 return 1
 
         with pytest.raises(ValueError, match="get exploded"):
-            mapper.construct(
+            mapper.construct_spec(
                 cast(
                     "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                     {"x": ExplodeOnGet()},
@@ -757,7 +793,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 on_error="stop",
             )
         tm.that(
-            mapper.construct(
+            mapper.construct_spec(
                 cast(
                     "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                     {"x": ExplodeOnGet()},
@@ -782,6 +818,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.deep_eq({"a": [1, 2]}, {"a": [1, 3]}), eq=False)
         tm.that(mapper.deep_eq({"a": 1}, {"a": 2}), eq=False)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "merge_strategy", ["merge", "secondary_only", "primary_only"]
     )
@@ -807,6 +844,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(normalized["field"], eq="x")
 
+    @staticmethod
     def test_small_mapper_convenience_methods(mapper: type[u]) -> None:
         tm.that(mapper.omit({"a": 1, "b": 2}, "a"), eq={"b": 2})
         tm.that(mapper.pluck([{"a": 1}, {}], "a", default=0), eq=[1, 0])
@@ -865,6 +903,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.fail(not_found_callable)
 
+    @staticmethod
     def test_map_flags_collect_and_invert_branches(mapper: type[u]) -> None:
         mapped = mapper.map_dict_keys(
             {"old": 1, "x": 2},
@@ -913,6 +952,7 @@ class UtilitiesMapperFullCoverageNamespace:
             },
         )
 
+    @staticmethod
     def test_conversion_and_extract_success_branches(mapper: type[u]) -> None:
 
         class Plain:
@@ -974,6 +1014,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.ok(idx_default)
         tm.that(idx_default.value, eq="x")
 
+    @staticmethod
     def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[u]) -> None:
         tm.that(mapper.at({"a": 1}, "a").value, eq=1)
         tm.that(mapper.at([9, 8], 0).value, eq=9)
@@ -1006,6 +1047,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.agg(mixed_items, "v"), eq=1)
         tm.that(mapper.agg([1, 2, 3], lambda x: x, fn=max), eq=3)
 
+    @staticmethod
     def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u]) -> None:
         tm.that(mapper._build_apply_ensure([1], {"ensure": "list"}), eq=[1])
         tm.that(mapper._build_apply_ensure(1, {"ensure": "str_list"}), eq=["1"])
@@ -1067,12 +1109,12 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(mapper.fields_multi(t.ConfigMap(root={"a": 1}), {"a": 0}), eq={"a": 1})
         tm.that(
-            mapper.construct({"x": {"value": 1}}, t.ConfigMap(root={"x": 0})),
+            mapper.construct_spec({"x": {"value": 1}}, t.ConfigMap(root={"x": 0})),
             eq={"x": 1},
         )
-        tm.that(mapper.construct({"x": "a"}, t.ConfigMap(root={"a": 2})), eq={"x": 2})
+        tm.that(mapper.construct_spec({"x": "a"}, t.ConfigMap(root={"a": 2})), eq={"x": 2})
         tm.that(
-            mapper.construct(
+            mapper.construct_spec(
                 {"x": {"field": "a", "ops": "noop"}},
                 t.ConfigMap(root={"a": 2}),
             ),
@@ -1100,6 +1142,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(fields_obj, eq={"x": 1})
 
+    @staticmethod
     def test_remaining_uncovered_branches(
         mapper: type[u],
         monkeypatch: pytest.MonkeyPatch,

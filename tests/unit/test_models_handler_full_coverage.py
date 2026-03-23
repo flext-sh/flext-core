@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import r
 from tests import c, m, t, u
@@ -14,8 +15,12 @@ def test_models_handler_branches() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
+
+    def _identity_handler(value: BaseModel) -> BaseModel:
+        return value
+
     req = m.RegistrationRequest(
-        handler=lambda value: value, handler_mode=c.HandlerType.COMMAND
+        handler=_identity_handler, handler_mode=c.HandlerType.COMMAND
     )
     assert req.handler_mode == c.HandlerType.COMMAND
     with pytest.raises(Exception, match="Handler must be callable"):

@@ -173,14 +173,14 @@ class TestUtilitiesCollectionFullCoverage:
     ) -> None:
         collected = u.batch(
             [1],
-            lambda _item: self._FailureResult(),
+            lambda _item: str(self._FailureResult()),
             on_error="collect",
         )
         tm.ok(collected)
         collected_value = collected.value
         assert collected_value.errors == []
         tm.that("_FailureResult" in str(collected_value.results[0]), eq=True)
-        failed = u.batch([1], lambda _item: self._FailureResult(), on_error="fail")
+        failed = u.batch([1], lambda _item: str(self._FailureResult()), on_error="fail")
         tm.ok(failed)
         parsed = u.parse_sequence(
             cast(

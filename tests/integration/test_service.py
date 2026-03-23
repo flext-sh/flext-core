@@ -47,7 +47,7 @@ class TestService:
         """
 
         _users: MutableMapping[str, TestService.UserServiceEntity] = PrivateAttr(
-            default_factory=dict
+            default_factory=lambda: dict[str, TestService.UserServiceEntity]()
         )
         _should_fail: bool = PrivateAttr(default=False)
         _call_count: int = PrivateAttr(default_factory=lambda: 0)
@@ -122,7 +122,9 @@ class TestService:
     class NotificationService(FlextService[str]):
         """Real notification service using FlextService."""
 
-        _sent_notifications: MutableSequence[str] = PrivateAttr(default_factory=list)
+        _sent_notifications: MutableSequence[str] = PrivateAttr(
+            default_factory=list
+        )
         _call_count: int = PrivateAttr(default_factory=lambda: 0)
         _should_fail: bool = PrivateAttr(default=False)
 

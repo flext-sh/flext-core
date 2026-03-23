@@ -74,8 +74,8 @@ class TestuTypeChecker:
         @override
         def handle(
             self,
-            message: Mapping[str, t.NormalizedValue],
-        ) -> r[Mapping[str, t.NormalizedValue]]:
+            message: MutableMapping[str, t.NormalizedValue],
+        ) -> r[MutableMapping[str, t.NormalizedValue]]:
             return r[Mapping[str, t.NormalizedValue]].ok({
                 "processed": True,
                 **message,
