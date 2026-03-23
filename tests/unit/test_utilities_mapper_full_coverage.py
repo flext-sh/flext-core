@@ -86,12 +86,12 @@ class UtilitiesMapperFullCoverageNamespace:
         def __call__(
             self,
             current: tuple[str, ...] | str | int,
-            operations: Mapping[str, t.NormalizedValue],
+            operations: Mapping[str, t.NormalizedValue | t.MapperCallable],
         ) -> None: ...
 
     class _ExtractTransformOptionsCallable(Protocol):
         def __call__(
-            self, transform_opts: Mapping[str, t.NormalizedValue]
+            self, transform_opts: Mapping[str, t.NormalizedValue | t.MapperCallable]
         ) -> tuple[t.NormalizedValue, ...]: ...
 
     class _BuildApplyOpCallable(Protocol):
@@ -149,14 +149,14 @@ class UtilitiesMapperFullCoverageNamespace:
     @staticmethod
     def _build_apply_convert_obj(
         current: tuple[str, ...] | str | int,
-        operations: Mapping[str, t.NormalizedValue],
+        operations: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> None:
         fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
         return fn(current, operations)
 
     @staticmethod
     def _extract_transform_options_obj(
-        transform_opts: Mapping[str, t.NormalizedValue],
+        transform_opts: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> tuple[t.NormalizedValue, ...]:
         fn: _ExtractTransformOptionsCallable = getattr(u, "_extract_transform_options")
         return fn(transform_opts)
@@ -755,7 +755,7 @@ class UtilitiesMapperFullCoverageNamespace:
     def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
         constructed_none = mapper.construct_spec({"x": {"field": "a", "default": 9}}, None)
         tm.that(constructed_none["x"], eq=9)
-        source: Mapping[str, t.NormalizedValue | BaseModel] = {"name": "alice", "n": 3}
+        source: MutableMapping[str, t.NormalizedValue | BaseModel] = {"name": "alice", "n": 3}
         spec = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
@@ -1031,7 +1031,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.as_("1", int), eq=1)
         float_value = mapper.as_("1.5", float)
         tm.that(float_value, is_=float)
-        tm.that(abs(float_value - 1.5), lt=1e-09)
+        tm.that(abs(cast(float, float_value) - 1.5), lt=1e-09)
         tm.that(mapper.as_("true", bool), eq=True)
         tm.that(mapper.as_("maybe", bool, default=False), eq=False)
         tm.that(mapper.as_(None, int, default=3), eq=3)

@@ -430,6 +430,7 @@ split-on-trailing-comma = true
   "D102",
   "D103",
   "D104",
+  "D106",
   "D107",
   "EM102",
   "F822",
@@ -489,6 +490,8 @@ split-on-trailing-comma = true
 ]
 "**/*utilities*" = [
   "C901",
+  "E402",
+  "PLC2801",
   "PLW1510",
   "S404",
   "S603",
@@ -498,6 +501,7 @@ split-on-trailing-comma = true
   "D107",
   "F822",
   "N999",
+  "PLC2701",
   "RUF067",
 ]
 "**/_utilities/parser.py" = [
