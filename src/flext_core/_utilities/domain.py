@@ -25,20 +25,23 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def same_type(
-        obj_a: t.RuntimeData,
-        obj_b: t.RuntimeData,
+        obj_a: object,
+        obj_b: object,
     ) -> bool:
-        """Check if two objects are of the same type.
+        """Exact-type identity comparison (no MRO traversal).
+
+        Equivalent to ``__class__ is`` semantics: only returns True when both
+        objects are instances of the exact same concrete type, not a subtype.
 
         Args:
-            obj_a: First t.NormalizedValue to compare.
-            obj_b: Second t.NormalizedValue to compare.
+            obj_a: First object to compare.
+            obj_b: Second object to compare.
 
         Returns:
-            True if both objects are instances of the same type.
+            True only if both objects are the exact same concrete type.
 
         """
-        return isinstance(obj_a, type(obj_b))
+        return type(obj_a) is type(obj_b)  # noqa: E721
 
     @staticmethod
     def compare_entities_by_id(

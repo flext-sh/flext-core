@@ -179,8 +179,8 @@ class FlextUtilitiesEnum:
             Newly created StrEnum class with specified members
 
         """
-        members_map = dict(values.items())
-        created = StrEnum(name, members_map)  # type: ignore[call-overload]
+        members_list = [(k, v) for k, v in values.items()]
+        created = StrEnum(name, members_list)
         if isinstance(created, type) and issubclass(created, StrEnum):
             return created
         msg = f"StrEnum({name!r}) did not produce a StrEnum subclass"
