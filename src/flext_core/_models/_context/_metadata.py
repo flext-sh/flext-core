@@ -9,15 +9,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated, Self
 
-from pydantic import BaseModel, BeforeValidator, Field, model_validator
+from pydantic import BeforeValidator, Field, model_validator
 
-from flext_core import FlextModelsContextData, c, t
+from flext_core import FlextModelFoundation, FlextModelsContextData, c, t
 
 
 class FlextModelsContextMetadata:
     """Namespace for context metadata models."""
 
-    class ContextMetadata(BaseModel):
+    class ContextMetadata(FlextModelFoundation.FlexibleInternalModel):
         """Metadata storage for context objects with full tracing support."""
 
         user_id: Annotated[
@@ -86,7 +86,7 @@ class FlextModelsContextMetadata:
             msg = "Context must have get() and set() methods"
             raise ValueError(msg)
 
-    class ContextDomainData(BaseModel):
+    class ContextDomainData(FlextModelFoundation.FlexibleInternalModel):
         """Domain-specific context data storage."""
 
         domain_name: Annotated[

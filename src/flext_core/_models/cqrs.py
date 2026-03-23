@@ -35,7 +35,7 @@ class FlextModelsCqrs:
     directly via FlextModelsCqrs.*
     """
 
-    class Command(BaseModel):
+    class Command(FlextModelFoundation.FlexibleInternalModel):
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
@@ -75,7 +75,7 @@ class FlextModelsCqrs:
             """Query type identifier (always None for commands)."""
             return None
 
-    class Pagination(BaseModel):
+    class Pagination(FlextModelFoundation.FlexibleInternalModel):
         """Pagination model for query results."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -112,11 +112,10 @@ class FlextModelsCqrs:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
 
-    class Query(BaseModel):
+    class Query(FlextModelFoundation.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "Query",
                 "description": "Query model for CQRS query operations",
@@ -234,7 +233,7 @@ class FlextModelsCqrs:
                 return pagination_cls()
             return validate_result.value
 
-    class Bus(BaseModel):
+    class Bus(FlextModelFoundation.FlexibleInternalModel):
         """Dispatcher configuration model for CQRS routing."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -278,7 +277,7 @@ class FlextModelsCqrs:
             ),
         ] = c.DEFAULT_DISPATCHER_PATH
 
-    class Handler(BaseModel):
+    class Handler(FlextModelFoundation.FlexibleInternalModel):
         """Handler configuration model with Builder pattern support."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -329,11 +328,10 @@ class FlextModelsCqrs:
             ),
         ] = None
 
-        class ConfigParams(BaseModel):
+        class ConfigParams(FlextModelFoundation.ArbitraryTypesModel):
             """Parameter t.NormalizedValue for handler configuration (reduces parameter count)."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(
-                arbitrary_types_allowed=True,
                 json_schema_extra={
                     "title": "HandlerConfigParams",
                     "description": "Parameter t.NormalizedValue for handler configuration",
@@ -408,7 +406,7 @@ class FlextModelsCqrs:
                 self._data.root["command_timeout"] = timeout
                 return self
 
-    class Event(BaseModel):
+    class Event(FlextModelFoundation.FlexibleInternalModel):
         """Event model for CQRS event operations.
 
         Events represent domain events that occur as a result of command execution.
@@ -480,7 +478,7 @@ class FlextModelsCqrs:
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)
 
-    class HandlerBatchRegistrationResult(BaseModel):
+    class HandlerBatchRegistrationResult(FlextModelFoundation.FlexibleInternalModel):
         """Result of batch handler registration."""
 
         status: str

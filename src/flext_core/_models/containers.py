@@ -17,11 +17,11 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from typing import Annotated, ClassVar
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, Field, RootModel
 
-from flext_core import t
+from flext_core import FlextModelFoundation, t
 
 
 class FlextModelsContainers:
@@ -32,7 +32,7 @@ class FlextModelsContainers:
     Access via ``t.ConfigMap``, ``t.Dict``, etc.
     """
 
-    class ErrorCodeMap(BaseModel):
+    class ErrorCodeMap(FlextModelFoundation.FlexibleInternalModel):
         """Model for nested error code mappings."""
 
         codes: Annotated[
@@ -181,13 +181,9 @@ class FlextModelsContainers:
             ),
         ]
 
-    class BatchResultDict(BaseModel):
+    class BatchResultDict(FlextModelFoundation.ArbitraryTypesModel):
         """Result payload model for batch operation outputs."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
-            extra="forbid",
-        )
         results: Annotated[
             Sequence[t.Scalar | None],
             Field(

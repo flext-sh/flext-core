@@ -64,18 +64,13 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return FlextModelsContainer._normalize_metadata(v)
 
-    class ServiceRegistration(_MetadataValidatorMixin, BaseModel):
+    class ServiceRegistration(_MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel):
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
         Replaces: t.ConfigMap for service tracking.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
-        )
         name: Annotated[
             t.NonEmptyStr,
             Field(
@@ -191,18 +186,13 @@ class FlextModelsContainer:
             msg = f"Service must be a RegisterableService type, got {type(v).__name__}"
             raise ValueError(msg)
 
-    class FactoryRegistration(_MetadataValidatorMixin, BaseModel):
+    class FactoryRegistration(_MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
         Replaces: t.ConfigMap for factory tracking.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
-        )
         name: Annotated[
             t.NonEmptyStr,
             Field(
@@ -252,18 +242,13 @@ class FlextModelsContainer:
             ),
         ] = c.ZERO
 
-    class ResourceRegistration(_MetadataValidatorMixin, BaseModel):
+    class ResourceRegistration(_MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel):
         """Model for lifecycle-managed resource registrations.
 
         Captures resource factories that dependency-injector should wrap via
         ``providers.Resource`` for connection-style dependencies (DB/HTTP).
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False,
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
-        )
         name: Annotated[
             t.NonEmptyStr,
             Field(
@@ -291,16 +276,13 @@ class FlextModelsContainer:
             ),
         ] = None
 
-    class ContainerConfig(BaseModel):
+    class ContainerConfig(FlextModelFoundation.FlexibleInternalModel):
         """Model for container configuration.
 
         Replaces: t.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=False, validate_assignment=True
-        )
         enable_singleton: Annotated[
             bool,
             Field(
@@ -433,7 +415,7 @@ class FlextModelsContainer:
             ),
         ] = None
 
-    class FactoryDecoratorConfig(BaseModel):
+    class FactoryDecoratorConfig(FlextModelFoundation.ImmutableValueModel):
         """Configuration extracted from @d.factory() decorator.
 
         Used by factory discovery to auto-register factories with FlextContainer.
@@ -457,7 +439,6 @@ class FlextModelsContainer:
 
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[
             t.NonEmptyStr,
             Field(

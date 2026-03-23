@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, override
+from typing import override
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
-from flext_core import t
+from flext_core import FlextModelFoundation, t
 
 
 class ErrorDomain(StrEnum):
@@ -52,7 +52,7 @@ class ErrorDomain(StrEnum):
         return self.value
 
 
-class FlextError(BaseModel):
+class FlextError(FlextModelFoundation.ArbitraryTypesModel):
     """Structured error with domain, code, and metadata.
 
     Replaces free-form error strings with structured error objects for
@@ -66,8 +66,6 @@ class FlextError(BaseModel):
         source: Original exception or error source (if applicable)
 
     """
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     domain: ErrorDomain = Field(
         default=ErrorDomain.UNKNOWN,

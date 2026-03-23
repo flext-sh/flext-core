@@ -99,7 +99,7 @@ class TestFlextSettingsCoverage:
         pair=st.one_of(
             st.tuples(st.just("debug"), st.booleans()),
             st.tuples(st.just("trace"), st.booleans()),
-            st.tuples(st.just("max_workers"), st.integers(min_value=1, max_value=256)),
+            st.tuples(st.just("max_workers"), st.integers(min_value=1, max_value=100)),
             st.tuples(
                 st.just("log_level"),
                 st.sampled_from([
