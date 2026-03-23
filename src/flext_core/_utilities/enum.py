@@ -29,9 +29,9 @@ class FlextUtilitiesEnum:
     - Direct integration with Pydantic BeforeValidator
     """
 
-    _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
-    _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
-    _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
+    _values_cache: ClassVar[Mapping[type[StrEnum], frozenset[str]]] = {}
+    _names_cache: ClassVar[Mapping[type[StrEnum], frozenset[str]]] = {}
+    _members_cache: ClassVar[Mapping[type[StrEnum], frozenset[StrEnum]]] = {}
     _V = m.Validators
 
     @staticmethod
@@ -108,7 +108,7 @@ class FlextUtilitiesEnum:
         return name.lower()
 
     @staticmethod
-    def bi_map[K, V](data: Mapping[K, V]) -> tuple[dict[K, V], dict[V, K]]:
+    def bi_map[K, V](data: Mapping[K, V]) -> tuple[Mapping[K, V], Mapping[V, K]]:
         """Create bidirectional mapping from dict.
 
         Returns (forward, inverse) tuple of dicts.
@@ -222,7 +222,7 @@ class FlextUtilitiesEnum:
             Mapping of discriminator values to enum classes
 
         """
-        union_map: dict[str, type[StrEnum]] = {}
+        union_map: Mapping[str, type[StrEnum]] = {}
         for enum_class in enum_classes:
             for member in enum_class.__members__.values():
                 union_map[member.value] = enum_class

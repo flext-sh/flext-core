@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from enum import Enum, StrEnum
 from functools import wraps
 from types import UnionType
@@ -66,7 +66,7 @@ class FlextUtilitiesArgs:
              # params = {"status": Status}
 
         """
-        hints: dict[str, t.TypeHintSpecifier]
+        hints: Mapping[str, t.TypeHintSpecifier]
         try:
             resolved_hints = get_type_hints(func, include_extras=True)
             hints = {str(name): hint for name, hint in resolved_hints.items()}
@@ -74,14 +74,16 @@ class FlextUtilitiesArgs:
             fallback_annotations = getattr(func, "__annotations__", None)
             if isinstance(fallback_annotations, Mapping):
                 try:
-                    hints = TypeAdapter(dict[str, t.TypeHintSpecifier]).validate_python(
+                    hints = TypeAdapter(
+                        Mapping[str, t.TypeHintSpecifier]
+                    ).validate_python(
                         fallback_annotations,
                     )
                 except (ValidationError, PydanticSchemaGenerationError):
                     return {}
             else:
                 return {}
-        enum_params: dict[str, type[StrEnum]] = {}
+        enum_params: Mapping[str, type[StrEnum]] = {}
         for name, hint in hints.items():
             if name == "return":
                 continue
@@ -139,7 +141,7 @@ class FlextUtilitiesArgs:
 
         """
         parsed = dict(kwargs)
-        errors: list[str] = []
+        errors: Sequence[str] = []
         for field, enum_cls in enum_fields.items():
             if field in parsed:
                 value = parsed[field]

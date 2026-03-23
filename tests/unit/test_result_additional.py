@@ -10,7 +10,7 @@ Exercises edge/error paths not covered in the base suite:
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import cast
 
 from flext_core import r
@@ -42,7 +42,7 @@ def test_map_error_identity_and_transform() -> None:
 
 def test_flow_through_short_circuits_on_failure() -> None:
     """flow_through must stop when a step fails."""
-    visited: list[int] = []
+    visited: Sequence[int] = []
 
     def step1(v: int) -> r[int]:
         visited.append(v)
@@ -82,16 +82,16 @@ def test_create_from_callable_and_repr() -> None:
 
 def test_with_resource_cleanup_runs() -> None:
     """with_resource should call cleanup even on success."""
-    cleanup_calls: list[str] = []
+    cleanup_calls: Sequence[str] = []
 
-    def factory() -> list[int]:
+    def factory() -> Sequence[int]:
         return []
 
-    def op(resource: list[int]) -> r[str]:
+    def op(resource: Sequence[int]) -> r[str]:
         resource.append(1)
         return r[str].ok("done")
 
-    def cleanup(resource: list[int]) -> None:
+    def cleanup(resource: Sequence[int]) -> None:
         resource.clear()
         cleanup_calls.append("ran")
 

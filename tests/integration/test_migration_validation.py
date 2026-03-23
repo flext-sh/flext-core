@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import override
 
 from flext_tests import t
@@ -47,11 +48,11 @@ class TestMigrationValidation:
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 
-        def process_user(user_id: str) -> r[dict[str, str]]:
+        def process_user(user_id: str) -> r[Mapping[str, str]]:
             if not user_id:
-                return r[dict[str, str]].fail("User ID required")
-            user_data: dict[str, str] = {"id": user_id, "name": "Alice"}
-            return r[dict[str, str]].ok(user_data)
+                return r[Mapping[str, str]].fail("User ID required")
+            user_data: Mapping[str, str] = {"id": user_id, "name": "Alice"}
+            return r[Mapping[str, str]].ok(user_data)
 
         result = process_user("user_123")
         assert result.is_success
@@ -108,7 +109,9 @@ class TestMigrationValidation:
             )
 
             @override
-            def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
+            def model_post_init(
+                self, __context: Mapping[str, t.Scalar] | None, /
+            ) -> None:
                 super().model_post_init(__context)
 
             @override
@@ -120,15 +123,15 @@ class TestMigrationValidation:
                 self,
                 username: str,
                 email: str,
-            ) -> r[dict[str, str]]:
+            ) -> r[Mapping[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
-                    return r[dict[str, str]].fail(
+                    return r[Mapping[str, str]].fail(
                         "Username and email required",
                     )
                 self._logger.info("Creating user", username=username)
                 user_data = {"username": username, "email": email}
-                return r[dict[str, str]].ok(user_data)
+                return r[Mapping[str, str]].ok(user_data)
 
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
@@ -203,19 +206,19 @@ class TestMigrationValidation:
 
             def process_data(
                 self,
-                data: dict[str, str],
-            ) -> r[dict[str, t.NormalizedValue]]:
+                data: Mapping[str, str],
+            ) -> r[Mapping[str, t.NormalizedValue]]:
                 """Typical data processing method."""
                 if not data:
-                    return r[dict[str, t.NormalizedValue]].fail(
+                    return r[Mapping[str, t.NormalizedValue]].fail(
                         "Data required",
                     )
                 self.logger.info("Processing data", size=len(data))
-                processed: dict[str, t.NormalizedValue] = {
+                processed: Mapping[str, t.NormalizedValue] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return r[dict[str, t.NormalizedValue]].ok(processed)
+                return r[Mapping[str, t.NormalizedValue]].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})

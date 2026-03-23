@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from flext_core import r
 from tests import c, m, t, u
@@ -19,7 +19,7 @@ def test_pagination_response_string_fallbacks() -> None:
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     pagination_data: Mapping[
         str,
-        str | Mapping[str, t.Container] | list[t.Container],
+        str | Mapping[str, t.Container] | Sequence[t.Container],
     ] = {
         "data": "fallback-data",
         "pagination": "fallback-pagination",

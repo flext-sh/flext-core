@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from decimal import Decimal
 from typing import Annotated, override
 
@@ -159,9 +160,9 @@ def demonstrate_advanced_pydantic_mixins() -> None:
 
         name: str
         description: str | None = None
-        tags: list[str] = Field(default_factory=list)
-        categories: list[str] = Field(default_factory=list)
-        labels: dict[str, str] = Field(default_factory=dict)
+        tags: Sequence[str] = Field(default_factory=list)
+        categories: Sequence[str] = Field(default_factory=list)
+        labels: Mapping[str, str] = Field(default_factory=dict)
         is_deleted: bool = False
 
         @model_validator(mode="after")
@@ -275,7 +276,7 @@ class Order(m.AggregateRoot):
 
     model_config = m.DOMAIN_MODEL_CONFIG
     customer_id: str = Field(min_length=1)
-    items: list[OrderItem] = Field(default_factory=lambda: list[OrderItem]())
+    items: list[OrderItem] = Field(default_factory=list)
     status: c.OrderStatus = Field(default=c.OrderStatus.PENDING)
 
     @property

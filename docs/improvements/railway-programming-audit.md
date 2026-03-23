@@ -98,7 +98,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
 
 1. **sequence()** - Line 1126
 
-   - **Purpose**: Convert list\[r[T]\] → r\[list[T]\]
+   - **Purpose**: Convert list\[r[T]\] → r\[Sequence[T]\]
    - **Missing From**: Railway guide
    - **Impact**: HIGH - Essential for batch operations
    - **Example Needed**:
@@ -106,7 +106,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
    ```python
    results = [r.ok(1), r.ok(2), r.ok(3)]
    combined = r.sequence(results)
-   # r[list[int]].ok([1, 2, 3])
+   # r[Sequence[int]].ok([1, 2, 3])
    ```
 
 1. **collect_successes()** - Line 1144

@@ -48,9 +48,9 @@ class FlextUtilitiesConversion:
         value: t.StrictValue,
         *,
         mode: Literal["to_str_list"],
-        default: list[str] | None = None,
+        default: Sequence[str] | None = None,
         case: str | None = None,
-    ) -> list[str]: ...
+    ) -> Sequence[str]: ...
 
     @overload
     @staticmethod
@@ -67,25 +67,25 @@ class FlextUtilitiesConversion:
         value: t.StrictValue,
         *,
         mode: str = "to_str",
-        default: str | list[str] | None = None,
+        default: str | Sequence[str] | None = None,
         case: str | None = None,
         separator: str = " ",
-    ) -> str | list[str]:
+    ) -> str | Sequence[str]:
         """Generalized conversion utility function.
 
         Args:
             value: Value to convert
             mode: Operation mode
                 - "to_str": Convert to string (returns str)
-                - "to_str_list": Convert to list of strings (returns list[str])
+                - "to_str_list": Convert to list of strings (returns Sequence[str])
                 - "normalize": Normalize string value (returns str)
                 - "join": Join sequence of strings (returns str)
-            default: Default value if None (str for to_str/normalize, list[str] for to_str_list)
+            default: Default value if None (str for to_str/normalize, Sequence[str] for to_str_list)
             case: Case normalization ("lower", "upper", or None)
             separator: Separator for join mode (default: " ")
 
         Returns:
-            Depends on mode - str or list[str]
+            Depends on mode - str or Sequence[str]
 
         """
         if mode == "to_str":
@@ -101,7 +101,7 @@ class FlextUtilitiesConversion:
                     default_str = None
             return FlextUtilitiesConversion.to_str(value, default=default_str)
         if mode == "to_str_list":
-            default_list: list[str] | None = None
+            default_list: Sequence[str] | None = None
             if default is not None:
                 try:
                     default_list = (
@@ -115,7 +115,7 @@ class FlextUtilitiesConversion:
         if mode == "normalize":
             return FlextUtilitiesConversion.normalize(value, case=case)
         if mode == "join":
-            raw_values: list[t.StrictValue]
+            raw_values: Sequence[t.StrictValue]
             try:
                 raw_values = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
                     value,
@@ -123,7 +123,7 @@ class FlextUtilitiesConversion:
             except ValidationError as err:
                 error_msg = "join mode requires Sequence"
                 raise TypeError(error_msg) from err
-            str_values: list[str] = [str(v) for v in raw_values]
+            str_values: Sequence[str] = [str(v) for v in raw_values]
             return FlextUtilitiesConversion.join(
                 str_values,
                 separator=separator,
@@ -239,8 +239,8 @@ class FlextUtilitiesConversion:
     def to_str_list(
         value: t.StrictValue,
         *,
-        default: list[str] | None = None,
-    ) -> list[str]:
+        default: Sequence[str] | None = None,
+    ) -> Sequence[str]:
         """Convert value to list of strings.
 
         Args:
@@ -248,7 +248,7 @@ class FlextUtilitiesConversion:
             default: Default value if None
 
         Returns:
-            list[str]: Converted list of strings
+            Sequence[str]: Converted list of strings
 
         """
         if value is None:
@@ -272,8 +272,8 @@ class FlextUtilitiesConversion:
         value: t.StrictValue,
         *,
         filter_list_like: bool = True,
-    ) -> list[str]:
-        """Convert value to list[str] with safe nested list handling.
+    ) -> Sequence[str]:
+        """Convert value to Sequence[str] with safe nested list handling.
 
         Safely handles nested list-like structures by filtering them out
         to prevent nested lists in the returned result.
@@ -283,7 +283,7 @@ class FlextUtilitiesConversion:
             filter_list_like: If True, filter out list-like items from result
 
         Returns:
-            list[str]: List of string values
+            Sequence[str]: List of string values
 
         Example:
             >>> u.to_str_list_safe("foo")
@@ -294,7 +294,7 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return []
-        items: list[t.StrictValue] = []
+        items: Sequence[t.StrictValue] = []
         value_class = value.__class__
         if value_class is str:
             items = [value]
@@ -307,7 +307,7 @@ class FlextUtilitiesConversion:
                 items = []
         else:
             items = [value]
-        filtered_items: list[t.StrictValue]
+        filtered_items: Sequence[t.StrictValue]
         if filter_list_like:
             filtered_items = [
                 item
@@ -331,8 +331,8 @@ class FlextUtilitiesConversion:
         return [str(item) for item in filtered_items]
 
     @staticmethod
-    def to_str_list_truthy(value: t.StrictValue) -> list[str]:
-        """Convert value to list[str] filtering out falsy values."""
+    def to_str_list_truthy(value: t.StrictValue) -> Sequence[str]:
+        """Convert value to Sequence[str] filtering out falsy values."""
         result = FlextUtilitiesConversion.to_str_list_safe(value, filter_list_like=True)
         return [item for item in result if item]
 

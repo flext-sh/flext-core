@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 import pytest
 from flext_tests import tm
@@ -65,7 +65,7 @@ class TestAutomatedResult:
         tm.that(r[int].fail("x").unwrap_or(77), eq=77)
 
     def test_lash_tap_recover_and_properties(self) -> None:
-        seen: list[int] = []
+        seen: Sequence[int] = []
         recovered = (
             r[int]
             .fail("broken")

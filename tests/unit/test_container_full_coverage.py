@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import ClassVar, Self, cast
 
@@ -36,7 +36,7 @@ class TestContainerFullCoverage:
         ) -> Self:
             return self
 
-        def model_dump(self) -> dict[str, t.Scalar]:
+        def model_dump(self) -> Mapping[str, t.Scalar]:
             return {}
 
     class _ContextNoClone:
@@ -58,13 +58,13 @@ class TestContainerFullCoverage:
         def has(self, key: str, scope: str = "") -> bool:
             return False
 
-        def keys(self) -> list[str]:
+        def keys(self) -> Sequence[str]:
             return []
 
-        def values(self) -> list[t.NormalizedValue]:
+        def values(self) -> Sequence[t.NormalizedValue]:
             return []
 
-        def items(self) -> list[tuple[str, t.NormalizedValue]]:
+        def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
             return []
 
         def remove(self, key: str, scope: str = "") -> None:
@@ -116,7 +116,7 @@ class TestContainerFullCoverage:
     @staticmethod
     def _scan_factory_module(
         _module: ModuleType,
-    ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
         return [
             (
                 "the_factory",
@@ -127,7 +127,7 @@ class TestContainerFullCoverage:
     @staticmethod
     def _scan_factory_module_captured(
         _module: ModuleType,
-    ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
         return [
             (
                 "factory_fn",
@@ -169,7 +169,7 @@ class TestContainerFullCoverage:
         self, monkeypatch: _MonkeyPatch
     ) -> None:
         container = FlextContainer.create()
-        called: list[str] = []
+        called: Sequence[str] = []
 
         def factory() -> int:
             return 1
@@ -395,7 +395,7 @@ class TestContainerFullCoverage:
         )
         c._config = FlextSettings(app_name="base")
         c._context = FlextContext()
-        captured: dict[str, t.NormalizedValue] = {}
+        captured: Mapping[str, t.NormalizedValue] = {}
 
         def _fake_create_scoped_instance(
             *, registration: m.ServiceRegistrationSpec, **kwargs: t.NormalizedValue
@@ -420,7 +420,7 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: _MonkeyPatch,
     ) -> None:
-        captured: dict[str, Callable[..., t.NormalizedValue]] = {}
+        captured: Mapping[str, Callable[..., t.NormalizedValue]] = {}
 
         def factory_fn() -> int:
             return 7
@@ -501,7 +501,7 @@ class TestContainerFullCoverage:
         try:
 
             class _Cfg(_FalseConfig):
-                _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "alpha": _NsAlpha,
                     "beta": _NsBeta,
                 }
@@ -514,7 +514,7 @@ class TestContainerFullCoverage:
                 max_factories=10,
             )
             c._user_overrides = t.ConfigMap(root={})
-            registered: dict[str, Callable[..., t.NormalizedValue]] = {}
+            registered: Mapping[str, Callable[..., t.NormalizedValue]] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _register(
@@ -648,7 +648,7 @@ class TestContainerFullCoverage:
         # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
         # and sync_config_to_di skips it (continue branch).
         class _CfgNoMethod(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+            _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                 "n1": _BaseSettings
             }
 
@@ -669,22 +669,22 @@ class TestContainerFullCoverage:
         try:
 
             class _CfgFallback(_FalseConfig):
-                _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n2": _NsModel
                 }
 
             class _CfgBadNamespace(_FalseConfig):
-                _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n3": _NsModel
                 }
 
             class _CfgGoodNamespace(_FalseConfig):
-                _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n4": _NsModel
                 }
 
             c._config = _CfgFallback()
-            captured: dict[str, Callable[..., t.NormalizedValue]] = {}
+            captured: Mapping[str, Callable[..., t.NormalizedValue]] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _capture_register(
@@ -742,7 +742,7 @@ class TestContainerFullCoverage:
                 ),
             }
             tm.fail(c2.get("svc-int", type_cls=int))
-            executed: list[str] = []
+            executed: Sequence[str] = []
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _track_register(

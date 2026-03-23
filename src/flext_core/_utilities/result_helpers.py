@@ -184,8 +184,8 @@ class FlextUtilitiesResultHelpers:
     def vals(
         items: Mapping[str, T] | r[Mapping[str, T]],
         *,
-        default: list[T] | None = None,
-    ) -> r[list[T]]:
+        default: Sequence[T] | None = None,
+    ) -> r[Sequence[T]]:
         """Extract list of values from mapping or result mapping.
 
         Args:
@@ -193,26 +193,26 @@ class FlextUtilitiesResultHelpers:
             default: Default list if no values available.
 
         Returns:
-            r[list[T]] with list of values, default, or failure.
+            r[Sequence[T]] with list of values, default, or failure.
 
         """
         if isinstance(items, r):
             if items.is_failure:
                 if default is not None:
-                    return r[list[T]].ok(default)
-                return r[list[T]].fail(
+                    return r[Sequence[T]].ok(default)
+                return r[Sequence[T]].fail(
                     items.error or "Failed to extract values from result",
                 )
             value_mapping = items.value
-            return r[list[T]].ok(list(value_mapping.values()))
+            return r[Sequence[T]].ok(list(value_mapping.values()))
         if items:
-            return r[list[T]].ok(list(items.values()))
+            return r[Sequence[T]].ok(list(items.values()))
         if default is not None:
-            return r[list[T]].ok(default)
-        return r[list[T]].fail("No values available")
+            return r[Sequence[T]].ok(default)
+        return r[Sequence[T]].fail("No values available")
 
     @staticmethod
-    def vals_sequence(results: Sequence[p.Result[T]]) -> list[T]:
+    def vals_sequence(results: Sequence[p.Result[T]]) -> Sequence[T]:
         """Extract values from sequence of results, filtering successes only.
 
         Args:

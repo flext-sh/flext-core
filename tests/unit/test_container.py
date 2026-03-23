@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, Any, ClassVar, cast
 
 import pytest
@@ -70,7 +70,7 @@ class TestFlextContainer:
     class ContainerScenarios:
         """Centralized container test scenarios using c."""
 
-        SERVICE_SCENARIOS: ClassVar[list[TestFlextContainer.ServiceScenario]] = [
+        SERVICE_SCENARIOS: ClassVar[Sequence[TestFlextContainer.ServiceScenario]] = [
             ServiceScenario(
                 name="test_service",
                 service="test_service_value",
@@ -88,7 +88,7 @@ class TestFlextContainer:
             ),
         ]
         TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            list[TestFlextContainer.TypedRetrievalScenario]
+            Sequence[TestFlextContainer.TypedRetrievalScenario]
         ] = [
             TypedRetrievalScenario(
                 name="dict_service",
@@ -112,7 +112,7 @@ class TestFlextContainer:
                 description="Integer service for typed retrieval",
             ),
         ]
-        CONFIG_SCENARIOS: ClassVar[list[dict[str, t.Scalar]]] = [
+        CONFIG_SCENARIOS: ClassVar[Sequence[Mapping[str, t.Scalar]]] = [
             {"max_workers": 8, "timeout_seconds": 60.0},
             {"invalid_key": "value", "another_invalid": 42},
             {},
@@ -342,12 +342,12 @@ class TestFlextContainer:
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result = clean_container.get("string_service", type_cls=dict[str, str])
+        result = clean_container.get("string_service", type_cls=Mapping[str, str])
         _ = u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = clean_container.get("nonexistent", type_cls=dict[str, str])
+        result = clean_container.get("nonexistent", type_cls=Mapping[str, str])
         u.Tests.Result.assert_result_failure_with_error(
             result, expected_error="not found"
         )
@@ -408,7 +408,7 @@ class TestFlextContainer:
             tm.that(key in services, eq=True, msg=f"Services list must contain {key}")
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
-    def test_configure_container(self, config: dict[str, t.Scalar]) -> None:
+    def test_configure_container(self, config: Mapping[str, t.Scalar]) -> None:
         """Test container configuration."""
         container = FlextContainer()
         container.configure(config)
@@ -428,7 +428,7 @@ class TestFlextContainer:
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: dict[str, t.Scalar] = {"max_workers": c.DEFAULT_WORKERS}
+        config: Mapping[str, t.Scalar] = {"max_workers": c.DEFAULT_WORKERS}
         result = container.configure(config)
         tm.that(
             result is container,

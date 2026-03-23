@@ -12,6 +12,8 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     ItemsView,
+    Mapping,
+    Sequence,
     ValuesView,
 )
 from typing import Annotated, ClassVar
@@ -33,7 +35,7 @@ class FlextModelsContainers:
         """Model for nested error code mappings."""
 
         codes: Annotated[
-            dict[str, int],
+            Mapping[str, int],
             Field(
                 default_factory=dict,
                 title="Error Codes",
@@ -50,7 +52,7 @@ class FlextModelsContainers:
         # service classes or service factory callables, not generic container values.
 
         root: Annotated[
-            dict[str, type[BaseModel] | Callable[..., BaseModel]],
+            Mapping[str, type[BaseModel] | Callable[..., BaseModel]],
             Field(
                 default_factory=dict,
                 title="Service Registry Map",
@@ -68,7 +70,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            dict[str, int | str | BaseModel],
+            Mapping[str, int | str | BaseModel],
             Field(
                 default_factory=dict,
                 title="Error Map",
@@ -84,7 +86,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            dict[str, t.FactoryCallable],
+            Mapping[str, t.FactoryCallable],
             Field(
                 default_factory=dict,
                 title="Factory Map",
@@ -100,7 +102,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            dict[str, t.ResourceCallable],
+            Mapping[str, t.ResourceCallable],
             Field(
                 default_factory=dict,
                 title="Resource Map",
@@ -122,19 +124,19 @@ class FlextModelsContainers:
             """Execute validator."""
             return self.root(value)
 
-    class _RootValidatorMapModel(RootModel[dict[str, t.ValidatorCallable]]):
+    class _RootValidatorMapModel(RootModel[Mapping[str, t.ValidatorCallable]]):
         """Shared API for validator map containers."""
 
         def items(self) -> ItemsView[str, t.ValidatorCallable]:
             """Get validator items."""
-            validated: dict[str, t.ValidatorCallable] = {
+            validated: Mapping[str, t.ValidatorCallable] = {
                 key: value for key, value in self.root.items() if callable(value)
             }
             return validated.items()
 
         def values(self) -> ValuesView[t.ValidatorCallable]:
             """Get validator values."""
-            validated: dict[str, t.ValidatorCallable] = {
+            validated: Mapping[str, t.ValidatorCallable] = {
                 key: value for key, value in self.root.items() if callable(value)
             }
             return validated.values()
@@ -143,7 +145,7 @@ class FlextModelsContainers:
         """Map of field validators."""
 
         root: Annotated[
-            dict[str, t.ValidatorCallable],
+            Mapping[str, t.ValidatorCallable],
             Field(
                 default_factory=dict,
                 title="Field Validator Map",
@@ -156,7 +158,7 @@ class FlextModelsContainers:
         """Map of consistency rules."""
 
         root: Annotated[
-            dict[str, t.ValidatorCallable],
+            Mapping[str, t.ValidatorCallable],
             Field(
                 default_factory=dict,
                 title="Consistency Rule Map",
@@ -169,7 +171,7 @@ class FlextModelsContainers:
         """Map of event validators."""
 
         root: Annotated[
-            dict[str, t.ValidatorCallable],
+            Mapping[str, t.ValidatorCallable],
             Field(
                 default_factory=dict,
                 title="Event Validator Map",
@@ -186,7 +188,7 @@ class FlextModelsContainers:
             extra="forbid",
         )
         results: Annotated[
-            list[t.Scalar | None],
+            Sequence[t.Scalar | None],
             Field(
                 default_factory=list,
                 title="Batch Results",
@@ -196,7 +198,7 @@ class FlextModelsContainers:
         ]
 
         errors: Annotated[
-            list[tuple[int, str]],
+            Sequence[tuple[int, str]],
             Field(
                 default_factory=list,
                 title="Batch Errors",

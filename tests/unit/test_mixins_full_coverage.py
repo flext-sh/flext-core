@@ -61,15 +61,15 @@ class TestMixinsFullCoverage:
     class _RuntimeContainer:
         def __init__(self) -> None:
             super().__init__()
-            self.configured: dict[str, t.NormalizedValue] | None = None
-            self.wired: dict[str, t.NormalizedValue] | None = None
+            self.configured: Mapping[str, t.NormalizedValue] | None = None
+            self.wired: Mapping[str, t.NormalizedValue] | None = None
 
         def scoped(
             self, **_kwargs: t.Scalar
         ) -> TestMixinsFullCoverage._RuntimeContainer:
             return self
 
-        def configure(self, overrides: dict[str, t.NormalizedValue]) -> None:
+        def configure(self, overrides: Mapping[str, t.NormalizedValue]) -> None:
             self.configured = overrides
 
         def wire_modules(self, **kwargs: t.Scalar) -> None:
@@ -113,8 +113,8 @@ class TestMixinsFullCoverage:
             super().__init__()
             self.success: bool = success
             self.logger: t.Container | BaseModel | None = logger
-            self.factories: dict[str, t.NormalizedValue] = {}
-            self.register_calls: list[tuple[str, str]] = []
+            self.factories: Mapping[str, t.NormalizedValue] = {}
+            self.register_calls: Sequence[tuple[str, str]] = []
 
         def get_typed(
             self, _key: str, _tp: type[t.Container | BaseModel]
@@ -221,7 +221,7 @@ class TestMixinsFullCoverage:
         tm.that(runtime, none=False)
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
-            cast("dict[str, t.NormalizedValue]", metrics)["duration_ms"] = 2.0
+            cast("Mapping[str, t.NormalizedValue]", metrics)["duration_ms"] = 2.0
         tm.that(hasattr(service, "_operation_stats"), eq=True)
         tm.that(service._operation_stats, has="op")
         try:
@@ -353,12 +353,12 @@ class TestMixinsFullCoverage:
         tm.that(cs.current_context(), none=False)
 
     def test_mixins_validation_and_protocol_paths(self) -> None:
-        validators: list[Callable[..., r[bool]]] = [
+        validators: Sequence[Callable[..., r[bool]]] = [
             self._validation_ok_false,
         ]
         bad_true = x.Validation.validate_with_result("v", validators)
         tm.fail(bad_true)
-        fail_validators: list[Callable[..., r[bool]]] = [
+        fail_validators: Sequence[Callable[..., r[bool]]] = [
             self._validation_fail_no,
         ]
         fail_result = x.Validation.validate_with_result("v", fail_validators)
@@ -474,12 +474,12 @@ class TestMixinsFullCoverage:
             config_overrides=None,
             initial_context=None,
         )
-        captured: dict[str, t.NormalizedValue] = {}
+        captured: Mapping[str, t.NormalizedValue] = {}
 
         class _RegContainer:
             def __init__(self) -> None:
                 super().__init__()
-                self._services: dict[str, t.NormalizedValue] = {}
+                self._services: Mapping[str, t.NormalizedValue] = {}
 
             def has_service(self, name: str) -> bool:
                 return name in self._services

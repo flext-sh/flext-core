@@ -29,6 +29,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 from flext_tests import t
 
@@ -52,7 +54,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: p.Container,
-        sample_data: dict[str, t.NormalizedValue],
+        sample_data: Mapping[str, t.NormalizedValue],
     ) -> None:
         """Test comprehensive integration of core library exports.
 

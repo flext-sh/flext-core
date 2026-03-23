@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import cast
 
 from flext_tests import t, tm
@@ -16,7 +17,7 @@ from ._models import TestUnitModels
 
 
 class _ValidationLikeError(ValueError):
-    def errors(self) -> list[dict[str, t.NormalizedValue]]:
+    def errors(self) -> Sequence[Mapping[str, t.NormalizedValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
@@ -73,10 +74,10 @@ def test_recover_tap_and_tap_error_paths() -> None:
     recovered: r[int] = failed_for_recover.recover(lambda _e: 42)
     tm.ok(recovered)
     tm.that(recovered.value, eq=42)
-    seen: list[int] = []
+    seen: Sequence[int] = []
     _ = r[int].ok(7).tap(lambda v: seen.append(v))
     tm.that(seen, eq=[7])
-    err_seen: list[str] = []
+    err_seen: Sequence[str] = []
     _ = r[int].fail("boom").tap_error(lambda e: err_seen.append(e))
     tm.that(err_seen, eq=["boom"])
 
@@ -102,7 +103,7 @@ def test_from_validation_and_to_model_paths() -> None:
     tm.fail(plain_result)
     tm.that("plain boom" in (plain_result.error or ""), eq=True)
     failure_to_model = (
-        r[dict[str, int]]
+        r[Mapping[str, int]]
         .fail("already failed")
         .to_model(
             TestUnitModels._TargetModel,
@@ -111,7 +112,7 @@ def test_from_validation_and_to_model_paths() -> None:
     tm.fail(failure_to_model)
     tm.that(failure_to_model.error, eq="already failed")
     success_to_model = (
-        r[dict[str, int]]
+        r[Mapping[str, int]]
         .ok({"value": 9})
         .to_model(
             TestUnitModels._TargetModel,
@@ -120,7 +121,7 @@ def test_from_validation_and_to_model_paths() -> None:
     tm.ok(success_to_model)
     tm.that(success_to_model.value.value, eq=9)
     invalid_to_model = (
-        r[dict[str, str]]
+        r[Mapping[str, str]]
         .ok({"value": "bad"})
         .to_model(
             TestUnitModels._TargetModel,

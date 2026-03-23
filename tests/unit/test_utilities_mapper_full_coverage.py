@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, ItemsView, Iterator, Mapping
+from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Never, Protocol, cast, override
@@ -22,7 +22,7 @@ class UtilitiesMapperFullCoverageNamespace:
 
         port: int = 0
         nested: Annotated[
-            dict[str, test_t.NormalizedValue], Field(default_factory=dict)
+            Mapping[str, test_t.NormalizedValue], Field(default_factory=dict)
         ]
 
     class _MaybeModel(BaseModel):
@@ -89,7 +89,7 @@ class UtilitiesMapperFullCoverageNamespace:
     class _BuildApplyOpCallable(Protocol):
         def __call__(
             self,
-            current: tuple[str, str] | tuple[int, int, int] | list[_GroupModel],
+            current: tuple[str, str] | tuple[int, int, int] | Sequence[_GroupModel],
             operations: Mapping[str, t.NormalizedValue],
         ) -> None: ...
 
@@ -167,7 +167,7 @@ class UtilitiesMapperFullCoverageNamespace:
         return fn(current, operations)
 
     def _build_apply_group_obj(
-        current: list[_GroupModel],
+        current: Sequence[_GroupModel],
         operations: Mapping[str, t.NormalizedValue],
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
@@ -337,14 +337,17 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(model.model_dump(mode="json"), eq={"x": 1})
         path_val = Path("/tmp")
         tm.that(path_val.as_posix(), eq="/tmp")
-        as_json: dict[str, test_t.NormalizedValue] = {}
+        as_json: Mapping[str, test_t.NormalizedValue] = {}
         for key, val in {"x": Path("/tmp")}.items():
             if isinstance(val, Path):
                 as_json[str(key)] = val.as_posix()
             else:
                 as_json[str(key)] = val
         tm.that(as_json["x"], eq="/tmp")
-        list_json: list[dict[str, test_t.NormalizedValue]] = [{"a": 1}, {"b": "opaque"}]
+        list_json: Sequence[Mapping[str, test_t.NormalizedValue]] = [
+            {"a": 1},
+            {"b": "opaque"},
+        ]
         tm.that(list_json, is_=list)
         tm.that(list_json[0]["a"], eq=1)
 
@@ -353,7 +356,7 @@ class UtilitiesMapperFullCoverageNamespace:
             "path": Path("/tmp"),
             "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
         }
-        safe_json: dict[str, test_t.NormalizedValue] = {}
+        safe_json: Mapping[str, test_t.NormalizedValue] = {}
         for key, val in payload.items():
             if isinstance(val, BaseModel):
                 safe_json[key] = val.model_dump(mode="json")
@@ -539,13 +542,16 @@ class UtilitiesMapperFullCoverageNamespace:
         convert_spec: type[
             int
             | float
-            | list[t.Scalar]
-            | dict[str, t.Scalar]
+            | Sequence[t.Scalar]
+            | Mapping[str, t.Scalar]
             | tuple[t.Scalar, ...]
             | set[t.Scalar]
         ]
         | Callable[..., t.NormalizedValue],
-        expected: float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...],
+        expected: float
+        | Sequence[t.Scalar]
+        | Mapping[str, t.Scalar]
+        | tuple[t.Scalar, ...],
     ) -> None:
         operations = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
@@ -626,7 +632,7 @@ class UtilitiesMapperFullCoverageNamespace:
             _strip_none: bool,
             _strip_empty: bool,
             _to_json: bool,
-        ) -> dict[str, test_t.NormalizedValue]:
+        ) -> Mapping[str, test_t.NormalizedValue]:
             raise RuntimeError(msg)
 
         msg = "explode transform"
@@ -710,7 +716,7 @@ class UtilitiesMapperFullCoverageNamespace:
     def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
         constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
         tm.that(constructed_none["x"], eq=9)
-        source: dict[str, t.NormalizedValue | BaseModel] = {"name": "alice", "n": 3}
+        source: Mapping[str, t.NormalizedValue | BaseModel] = {"name": "alice", "n": 3}
         spec = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
@@ -784,8 +790,8 @@ class UtilitiesMapperFullCoverageNamespace:
         mapper: type[u],
         merge_strategy: str,
     ) -> None:
-        primary: dict[str, t.NormalizedValue] = {"a": 1, "drop": "x"}
-        secondary: dict[str, t.NormalizedValue] = {"b": 2}
+        primary: Mapping[str, t.NormalizedValue] = {"a": 1, "drop": "x"}
+        secondary: Mapping[str, t.NormalizedValue] = {"b": 2}
         result = mapper.process_context_data(
             primary_data=primary,
             secondary_data=secondary,
@@ -846,7 +852,7 @@ class UtilitiesMapperFullCoverageNamespace:
             def __call__(self, value: int) -> bool:
                 return value == 1
 
-        predicates: dict[str, NamedPredicate] = {
+        predicates: Mapping[str, NamedPredicate] = {
             "bad": BadPredicate(),
             "no": NegativePredicate(),
             "yes": EqualOnePredicate(),
@@ -918,9 +924,9 @@ class UtilitiesMapperFullCoverageNamespace:
                 return "plain"
 
         tm.that(str(Plain()), eq="plain")
-        plain_dict: dict[str, test_t.NormalizedValue] = {"1": str(Plain())}
+        plain_dict: Mapping[str, test_t.NormalizedValue] = {"1": str(Plain())}
         tm.that(plain_dict, eq={"1": "plain"})
-        plain_list: list[int | dict[str, str]] = [1, {"k": str(Plain())}]
+        plain_list: Sequence[int | Mapping[str, str]] = [1, {"k": str(Plain())}]
         tm.that(plain_list, eq=[1, {"k": "plain"}])
         tm.that(mapper.ensure_str(None, "d"), eq="d")
         tm.that(mapper.ensure_str("x"), eq="x")
@@ -996,7 +1002,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.flat([[1, 2], [3]]), eq=[1, 2, 3])
         tm.that(mapper._extract_field_value({"x": 1}, "x"), eq=1)
         tm.that(mapper.agg([{"v": 1}, {"v": 2}], "v"), eq=3)
-        mixed_items: tuple[dict[str, test_t.NormalizedValue], ...] = (
+        mixed_items: tuple[Mapping[str, test_t.NormalizedValue], ...] = (
             {"v": 1},
             {"v": "no"},
         )
@@ -1130,10 +1136,10 @@ class UtilitiesMapperFullCoverageNamespace:
             def __call__(self) -> None:
                 return None
 
-            def keys(self) -> list[str]:
+            def keys(self) -> Sequence[str]:
                 return ["k"]
 
-            def items(self) -> list[tuple[str, int]]:
+            def items(self) -> Sequence[tuple[str, int]]:
                 return [("k", 1)]
 
             def get(self, key: str, default: int | None = None) -> int | None:

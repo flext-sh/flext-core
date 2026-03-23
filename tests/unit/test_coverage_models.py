@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import override
 
@@ -421,7 +422,7 @@ class TestCoverageModels:
 
     def test_aggregate_root_serialization(self) -> None:
         class ShoppingCart(m.AggregateRoot):
-            items: list[dict[str, int | str]]
+            items: Sequence[Mapping[str, int | str]]
             total: float
 
         cart = ShoppingCart(

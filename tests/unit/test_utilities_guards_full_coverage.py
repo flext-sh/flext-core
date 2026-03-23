@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import builtins
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from typing import cast
 
@@ -27,7 +27,7 @@ def _is_type_obj(
     return fn(value, type_spec)
 
 
-def _is_flexible_value_obj(value: dict[int, str] | set[int]) -> bool:
+def _is_flexible_value_obj(value: Mapping[int, str] | set[int]) -> bool:
     """Call is_flexible_value with arbitrary t.NormalizedValue for negative-case testing."""
     fn: Callable[..., bool] = getattr(u, "is_flexible_value")
     return fn(value)
@@ -275,9 +275,9 @@ def test_chk_exercises_missed_branches() -> None:
     tm.that(not u.chk(None, **core_m.GuardCheckSpec(none=False).model_dump()), eq=True)
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(is_=int).model_dump()), eq=True)
     with pytest.raises(ValidationError):
-        u.chk("a", is_=cast("t.NormalizedValue", list[int]))
+        u.chk("a", is_=cast("t.NormalizedValue", Sequence[int]))
     with pytest.raises(ValidationError):
-        u.chk("a", not_=cast("t.NormalizedValue", list[int]))
+        u.chk("a", not_=cast("t.NormalizedValue", Sequence[int]))
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(not_=str).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(eq=2).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(ne=1).model_dump()), eq=True)

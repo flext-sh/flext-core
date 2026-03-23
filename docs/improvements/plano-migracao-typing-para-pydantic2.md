@@ -154,7 +154,7 @@ ______________________________________________________________________
 
 - “Wrapper por conveniência” sem comportamento.
 - Dois nomes públicos para o mesmo conceito.
-- `dict[str, Any]` em fronteira pública quando há modelo.
+- `Mapping[str, Any]` em fronteira pública quando há modelo.
 - `model_config` copiado sem necessidade.
 - expansão da fachada como espelho completo de `_models`.
 

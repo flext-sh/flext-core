@@ -14,7 +14,7 @@ import secrets
 import string
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import TypeIs
 
@@ -73,7 +73,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: dict[str, str],
+        context_dict: Mapping[str, str],
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -168,7 +168,7 @@ class FlextUtilitiesGenerators:
                 raise TypeError(msg) from e
         try:
             model_data = context.model_dump()
-            model_data_typed: dict[str, t.NormalizedValue] = model_data
+            model_data_typed: Mapping[str, t.NormalizedValue] = model_data
             return model_data_typed
         except (AttributeError, TypeError, ValueError) as e:
             msg = f"Failed to dump BaseModel {type(context).__name__}: {type(e).__name__}: {e}"
@@ -268,7 +268,7 @@ class FlextUtilitiesGenerators:
         if isinstance(value, BaseModel):
             try:
                 dumped = value.model_dump()
-                dumped_typed: dict[str, t.NormalizedValue] = dumped
+                dumped_typed: Mapping[str, t.NormalizedValue] = dumped
                 return dumped_typed
             except (AttributeError, TypeError, ValueError) as e:
                 msg = f"Failed to convert BaseModel {type(value).__name__} to dict: {e}"
@@ -321,7 +321,9 @@ class FlextUtilitiesGenerators:
 
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
-        context_dict: dict[str, str] = {k: str(v) for k, v in normalized_dict.items()}
+        context_dict: Mapping[str, str] = {
+            k: str(v) for k, v in normalized_dict.items()
+        }
         FlextUtilitiesGenerators._enrich_context_fields(
             context_dict,
             include_correlation_id=include_correlation_id,
@@ -370,7 +372,7 @@ class FlextUtilitiesGenerators:
         if kind == "id" and actual_prefix is None:
             return FlextUtilitiesGenerators._generate_id()
         if actual_prefix is not None:
-            all_parts: list[t.NormalizedValue] = []
+            all_parts: Sequence[t.NormalizedValue] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, override
 
 import pytest
@@ -52,7 +53,7 @@ class TestFlextHandlers:
         handler_type: Annotated[c.HandlerType, Field(description="Type")]
         handler_mode: Annotated[c.HandlerType, Field(description="Mode")]
 
-    HANDLER_TYPES: ClassVar[list[HandlerTypeScenario]] = [
+    HANDLER_TYPES: ClassVar[Sequence[HandlerTypeScenario]] = [
         HandlerTypeScenario(
             name="command",
             handler_type=c.HandlerType.COMMAND,
@@ -75,7 +76,7 @@ class TestFlextHandlers:
         ),
     ]
 
-    VALIDATION_TYPES: ClassVar[list[tuple[str, t.NormalizedValue]]] = [
+    VALIDATION_TYPES: ClassVar[Sequence[tuple[str, t.NormalizedValue]]] = [
         ("str", "test_message"),
         ("int", 42),
         ("float", math.pi),
@@ -215,13 +216,13 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[dict[str, t.NormalizedValue], str]):
+        class DictHandler(h[Mapping[str, t.NormalizedValue], str]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: dict[str, t.NormalizedValue]) -> r[str]:
+            def handle(self, message: Mapping[str, t.NormalizedValue]) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
         config = u.Tests.HandlerHelpers.create_handler_config(
@@ -231,7 +232,7 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = DictHandler(config=config)
-        dict_message: dict[str, t.NormalizedValue] = {
+        dict_message: Mapping[str, t.NormalizedValue] = {
             "command_id": "cmd_123",
             "data": "test_data",
         }
@@ -470,7 +471,7 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = self.ConcreteTestHandler(config=config)
-        context_typed: dict[str, t.NormalizedValue] = {
+        context_typed: Mapping[str, t.NormalizedValue] = {
             "user_id": "123",
             "operation": "test",
         }

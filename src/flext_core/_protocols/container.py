@@ -26,7 +26,7 @@ class FlextProtocolsContainer:
         objects that wrap a dict with a root attribute.
         """
 
-        root: dict[str, RootValueT]
+        root: Mapping[str, RootValueT]
 
     @runtime_checkable
     class ProviderLike[T_co](Protocol):

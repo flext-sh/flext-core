@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Annotated, cast, override
 
 from flext_tests import t
@@ -53,11 +54,11 @@ class TestPatternsCommands:
         """Test command for updating users."""
 
         target_user_id: str
-        updates: dict[str, t.NormalizedValue]
+        updates: Mapping[str, t.NormalizedValue]
 
         def get_payload(self) -> m.Core.UpdatePayloadDict:
             """Get command payload."""
-            typed_updates: dict[str, m.Core.UpdateFieldDict] = {
+            typed_updates: Mapping[str, m.Core.UpdateFieldDict] = {
                 key: m.Core.UpdateFieldDict.model_validate(
                     obj={
                         "field_name": key,
@@ -97,13 +98,13 @@ class TestPatternsCommands:
     class CreateUserCommandHandler(
         FlextHandlers[
             "TestPatternsCommands.CreateUserCommand",
-            dict[str, t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
         ]
     ):
         """Test handler for CreateUserCommand."""
 
         created_users: Annotated[
-            list[dict[str, t.NormalizedValue]], Field(default_factory=list)
+            Sequence[Mapping[str, t.NormalizedValue]], Field(default_factory=list)
         ]
 
         def __init__(self) -> None:
@@ -142,27 +143,27 @@ class TestPatternsCommands:
         def handle(
             self,
             message: TestPatternsCommands.CreateUserCommand,
-        ) -> r[dict[str, t.NormalizedValue]]:
+        ) -> r[Mapping[str, t.NormalizedValue]]:
             """Handle the create user command."""
-            user_data: dict[str, t.NormalizedValue] = {
+            user_data: Mapping[str, t.NormalizedValue] = {
                 "id": f"user_{len(self.created_users) + 1}",
                 "username": message.username,
                 "email": message.email,
             }
             self.created_users.append(user_data)
-            return r[dict[str, t.NormalizedValue]].ok(user_data)
+            return r[Mapping[str, t.NormalizedValue]].ok(user_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.CreateUserCommand,
-        ) -> r[dict[str, t.NormalizedValue]]:
+        ) -> r[Mapping[str, t.NormalizedValue]]:
             """Handle the create user command (alias for handle)."""
             return self.handle(command)
 
     class UpdateUserCommandHandler(
         FlextHandlers[
             "TestPatternsCommands.UpdateUserCommand",
-            dict[str, t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
         ]
     ):
         """Test handler for UpdateUserCommand."""
@@ -176,7 +177,7 @@ class TestPatternsCommands:
                 handler_mode=FlextConstants.HandlerType.COMMAND,
             )
             super().__init__(config=config)
-            self.updated_users: dict[str, t.NormalizedValue] = {}
+            self.updated_users: Mapping[str, t.NormalizedValue] = {}
 
         def get_command_type(self) -> str:
             """Get command type this handler processes."""
@@ -204,23 +205,23 @@ class TestPatternsCommands:
         def handle(
             self,
             message: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[dict[str, t.NormalizedValue]]:
+        ) -> r[Mapping[str, t.NormalizedValue]]:
             """Handle the update user command."""
             if message.target_user_id not in self.updated_users:
                 self.updated_users[message.target_user_id] = {}
             user_updates = self.updated_users[message.target_user_id]
             if isinstance(user_updates, dict):
                 user_updates.update(message.updates)
-            result_data: dict[str, t.NormalizedValue] = {
+            result_data: Mapping[str, t.NormalizedValue] = {
                 "target_user_id": message.target_user_id,
                 "updated_fields": list(message.updates.keys()),
             }
-            return r[dict[str, t.NormalizedValue]].ok(result_data)
+            return r[Mapping[str, t.NormalizedValue]].ok(result_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[dict[str, t.NormalizedValue]]:
+        ) -> r[Mapping[str, t.NormalizedValue]]:
             """Handle the update user command (alias for handle)."""
             return self.handle(command)
 
@@ -283,7 +284,7 @@ class TestPatternsCommands:
     def _update_user_command(
         *,
         target_user_id: str,
-        updates: dict[str, t.NormalizedValue],
+        updates: Mapping[str, t.NormalizedValue],
     ) -> UpdateUserCommand:
         return TestPatternsCommands.UpdateUserCommand.model_validate(
             obj={
@@ -408,7 +409,7 @@ class TestPatternsCommands:
         """Test can_handle with wrong command type."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            dict[str, t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         if handler.can_handle(self.UpdateUserCommand):
             msg = f"Expected False, got {handler.can_handle(self.UpdateUserCommand)}"
@@ -418,7 +419,7 @@ class TestPatternsCommands:
         """Test can_handle with non-command t.NormalizedValue."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            dict[str, t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         if handler.can_handle(str):
             msg = f"Expected False, got {handler.can_handle(str)}"
@@ -428,7 +429,7 @@ class TestPatternsCommands:
         """Test successful command handling."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            dict[str, t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         command = self._create_user_command(
             username="john",
@@ -466,7 +467,7 @@ class TestPatternsCommands:
         """Test processing with command validation failure."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            dict[str, t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         command = self._create_user_command(username="", email="invalid")
         result = handler.execute(command)
@@ -499,9 +500,9 @@ class TestPatternsCommands:
 
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
-        result_data: dict[str, t.NormalizedValue] = {"id": "123", "username": "test"}
-        command_result: r[dict[str, t.NormalizedValue]] = r[
-            dict[str, t.NormalizedValue]
+        result_data: Mapping[str, t.NormalizedValue] = {"id": "123", "username": "test"}
+        command_result: r[Mapping[str, t.NormalizedValue]] = r[
+            Mapping[str, t.NormalizedValue]
         ].ok(result_data)
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
@@ -526,7 +527,7 @@ class TestPatternsCommands:
     def test_result_metadata(self) -> None:
         """Test result metadata properties."""
         result_data = {"id": "123"}
-        command_result = r[dict[str, str]].ok(result_data)
+        command_result = r[Mapping[str, str]].ok(result_data)
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)

@@ -35,7 +35,7 @@ class FlextModelsContextData:
         v: t.ValueOrModel,
     ) -> Mapping[str, t.NormalizedValue]:
         if v is None:
-            out: dict[str, t.NormalizedValue] = {}
+            out: Mapping[str, t.NormalizedValue] = {}
             return out
         if isinstance(v, Mapping):
             validated = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
@@ -73,12 +73,12 @@ class FlextModelsContextData:
             v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
         ) -> Mapping[str, t.NormalizedValue]:
             """Validate that data values are JSON-serializable."""
-            working_value: dict[str, t.NormalizedValue]
+            working_value: Mapping[str, t.NormalizedValue]
             normalized_mapping: Mapping[str, t.ValueOrModel]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata: dict[str, t.ValueOrModel] = {
+                normalized_metadata: Mapping[str, t.ValueOrModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
                 }

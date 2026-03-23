@@ -52,7 +52,7 @@ class FlextSettings(BaseSettings, u):
     - Protocol compliance via inheritance (p.Settings)
     """
 
-    _instances: ClassVar[dict[type[Self], Self]] = {}
+    _instances: ClassVar[Mapping[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
@@ -338,8 +338,8 @@ class FlextSettings(BaseSettings, u):
 
     AutoConfig: ClassVar[type[m.AutoConfig]] = m.AutoConfig
 
-    _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
-    _context_overrides: ClassVar[dict[str, dict[str, t.Scalar]]] = {}
+    _namespace_registry: ClassVar[Mapping[str, type[BaseSettings]]] = {}
+    _context_overrides: ClassVar[Mapping[str, Mapping[str, t.Scalar]]] = {}
 
     def __getattr__(self, name: str) -> BaseSettings:
         """Resolve namespace-style attribute access to registered settings."""

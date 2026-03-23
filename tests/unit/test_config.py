@@ -23,6 +23,7 @@ from __future__ import annotations
 import os
 import threading
 import time
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -38,30 +39,30 @@ class TestFlextSettings:
     class ConfigScenarios:
         """Centralized config test scenarios using c."""
 
-        INIT_CASES: ClassVar[list[dict[str, str | bool]]] = [
+        INIT_CASES: ClassVar[Sequence[Mapping[str, str | bool]]] = [
             {"app_name": "test_app", "version": "1.0.0", "debug": True},
             {"app_name": "dict_app", "version": "2.0.0", "debug": False},
             {"app_name": "valid_app", "version": "1.0.0"},
         ]
-        FIELD_ACCESS_CASES: ClassVar[list[tuple[str, str, str]]] = [
+        FIELD_ACCESS_CASES: ClassVar[Sequence[tuple[str, str, str]]] = [
             ("app_name", "test_value", "modified_value"),
             ("version", "1.0.0", "2.0.0"),
         ]
-        DEBUG_TRACE_CASES: ClassVar[list[dict[str, bool]]] = [
+        DEBUG_TRACE_CASES: ClassVar[Sequence[Mapping[str, bool]]] = [
             {"debug": True, "trace": False},
             {"debug": True, "trace": True},
             {"debug": False, "trace": False},
         ]
-        LOG_LEVEL_CASES: ClassVar[list[tuple[str, bool, bool]]] = [
+        LOG_LEVEL_CASES: ClassVar[Sequence[tuple[str, bool, bool]]] = [
             (c.LogLevel.INFO, False, False),
             (c.LogLevel.INFO, True, False),
             (c.LogLevel.INFO, True, True),
         ]
-        ENV_PREFIX_CASES: ClassVar[list[tuple[str, str, bool, str]]] = [
+        ENV_PREFIX_CASES: ClassVar[Sequence[tuple[str, str, bool, str]]] = [
             ("DEBUG", "true", False, "INFO"),
             ("FLEXT_DEBUG", "true", True, "INFO"),
         ]
-        VALIDATION_ERROR_CASES: ClassVar[list[tuple[dict[str, bool], str]]] = [
+        VALIDATION_ERROR_CASES: ClassVar[Sequence[tuple[Mapping[str, bool], str]]] = [
             ({"trace": True, "debug": False}, "Trace mode requires debug mode")
         ]
 
@@ -70,7 +71,7 @@ class TestFlextSettings:
         ConfigScenarios.INIT_CASES,
         ids=lambda d: str(u.get(d, "app_name", default="default")),
     )
-    def test_config_initialization(self, config_data: dict[str, str | bool]) -> None:
+    def test_config_initialization(self, config_data: Mapping[str, str | bool]) -> None:
         """Test config initialization with various values."""
         config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
@@ -80,7 +81,7 @@ class TestFlextSettings:
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
-        config_data: dict[str, str | bool] = {
+        config_data: Mapping[str, str | bool] = {
             "app_name": "dict_app",
             "version": "2.0.0",
             "debug": False,
@@ -199,7 +200,7 @@ class TestFlextSettings:
     def test_config_thread_safety(self) -> None:
         """Test config thread safety."""
         config = u.Tests.ConfigHelpers.create_test_config()
-        results: list[str] = []
+        results: Sequence[str] = []
 
         def set_value(thread_id: int) -> None:
             config.app_name = f"thread_{thread_id}"
@@ -246,7 +247,7 @@ class TestFlextSettings:
         ("config_data", "error_pattern"), ConfigScenarios.VALIDATION_ERROR_CASES
     )
     def test_config_validation_errors(
-        self, config_data: dict[str, bool], error_pattern: str
+        self, config_data: Mapping[str, bool], error_pattern: str
     ) -> None:
         """Test config validation with invalid inputs."""
         with pytest.raises(ValidationError) as exc_info:
@@ -276,7 +277,7 @@ class TestFlextSettings:
             f"debug_{u.get(d, 'debug')}_trace_{u.get(d, 'trace', default=False)}"
         ),
     )
-    def test_config_debug_enabled(self, debug_trace: dict[str, bool]) -> None:
+    def test_config_debug_enabled(self, debug_trace: Mapping[str, bool]) -> None:
         """Test debug enabled checking using direct fields."""
         config = u.Tests.ConfigHelpers.create_test_config(**debug_trace)
         assert config.debug == debug_trace["debug"]

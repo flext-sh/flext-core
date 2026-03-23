@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_infra import FlextInfraRefactorLooseClassScanner, m
@@ -70,7 +70,7 @@ class TestWorkspaceLevelRefactor:
                 '\nclass UtilityHelper:\n    @staticmethod\n    def help() -> str:\n        return "help"\n',
             )
         scanner = FlextInfraRefactorLooseClassScanner()
-        all_violations: list[m.Infra.LooseClassViolation] = []
+        all_violations: Sequence[m.Infra.LooseClassViolation] = []
         for proj in projects:
             result = scanner.scan(tmp_path / proj)
             assert result.is_success

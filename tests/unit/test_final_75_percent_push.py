@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 import pytest
@@ -33,7 +34,9 @@ class TestFinal75PercentPush:
 
         name: Annotated[str, Field(description="Result operation scenario name")]
         initial_value: Annotated[int | None, Field(description="Initial result value")]
-        operations: Annotated[list[str], Field(description="Operation chain to apply")]
+        operations: Annotated[
+            Sequence[str], Field(description="Operation chain to apply")
+        ]
         expected_success: Annotated[bool, Field(description="Expected success state")]
         expected_value: Annotated[
             int | None, Field(default=None, description="Expected resulting value")
@@ -54,7 +57,7 @@ class TestFinal75PercentPush:
         message: Annotated[str, Field(description="Exception message")]
         expected_in_str: Annotated[str, Field(description="Expected string marker")]
 
-    RESULT_OPERATIONS: ClassVar[list[ResultOperationScenario]] = [
+    RESULT_OPERATIONS: ClassVar[Sequence[ResultOperationScenario]] = [
         ResultOperationScenario(
             name="map",
             initial_value=5,
@@ -105,7 +108,7 @@ class TestFinal75PercentPush:
             expected_value=None,
         ),
     ]
-    EXCEPTION_TYPES: ClassVar[list[ExceptionTypeScenario]] = [
+    EXCEPTION_TYPES: ClassVar[Sequence[ExceptionTypeScenario]] = [
         ExceptionTypeScenario(
             name="base",
             exception_type=FlextExceptions.BaseError,

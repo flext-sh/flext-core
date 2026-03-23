@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
@@ -161,7 +161,7 @@ class FlextUtilitiesChecker:
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> list[t.MessageTypeSpecifier]:
+    ) -> Sequence[t.MessageTypeSpecifier]:
         """Extract message types from generic base annotations.
 
         Args:
@@ -171,7 +171,7 @@ class FlextUtilitiesChecker:
             List of message types from generic annotations
 
         """
-        message_types: list[t.MessageTypeSpecifier] = []
+        message_types: Sequence[t.MessageTypeSpecifier] = []
         raw_bases: tuple[t.TypeHintSpecifier, ...] = getattr(
             handler_class,
             "__orig_bases__",
@@ -411,7 +411,7 @@ class FlextUtilitiesChecker:
             Tuple of accepted message types
 
         """
-        message_types: list[t.MessageTypeSpecifier] = []
+        message_types: Sequence[t.MessageTypeSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
         message_types.extend(generic_types)
         if not message_types:

@@ -59,7 +59,7 @@ class Order(m.AggregateRoot):
     """Aggregate root enforcing order consistency."""
 
     customer_id: str
-    items: list[OrderItem]
+    items: Sequence[OrderItem]
     total: Decimal
 
     def add_item(self, item: OrderItem) -> r[bool]:

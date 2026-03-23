@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Annotated, cast
 
 import pytest
@@ -25,16 +26,16 @@ class TestModelsCollectionsFullCoverage:
 
     class _Results(m.Results):
         value: int | bool | None = None
-        data: dict[str, t.NormalizedValue] = Field(default_factory=dict)
+        data: Mapping[str, t.NormalizedValue] = Field(default_factory=dict)
 
     @staticmethod
-    def _default_tags() -> list[str]:
+    def _default_tags() -> Sequence[str]:
         return []
 
     class _Options(m.Options):
         score: int | float | bool | None = None
         tags: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 default_factory=lambda: (
                     TestModelsCollectionsFullCoverage._default_tags()
@@ -58,7 +59,7 @@ class TestModelsCollectionsFullCoverage:
     def test_statistics_from_dict_and_none_conflict_resolution(self) -> None:
         config_map = t.ConfigMap({"value": 5})
         loaded = self._Stats.from_mapping(
-            cast("dict[str, t.MetadataValue]", config_map.root),
+            cast("Mapping[str, t.MetadataValue]", config_map.root),
         )
         assert loaded.value == 5
         assert self._Stats._resolve_conflict(None, None) is None
@@ -72,7 +73,7 @@ class TestModelsCollectionsFullCoverage:
         assert merged.count == 2
 
     def test_results_internal_conflict_paths_and_combine(self) -> None:
-        entries: list[t.MetadataValue] = [
+        entries: Sequence[t.MetadataValue] = [
             {"ok": "v", "xs": [1, "a"]},
             {"ys": [2, 3.5]},
         ]

@@ -515,7 +515,7 @@ ComponentConfig = Annotated[
 class Pipeline(BaseModel):
     """Pipeline with multiple component types."""
 
-    components: list[ComponentConfig]
+    components: Sequence[ComponentConfig]
 
 
 # Usage - type-safe

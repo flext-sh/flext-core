@@ -668,7 +668,7 @@ class FlextRuntime:
             return str(value)
 
         if FlextRuntime.is_dict_like(val):
-            normalized_dict: dict[str, t.ValueOrModel] = {}
+            normalized_dict: Mapping[str, t.ValueOrModel] = {}
             if isinstance(val, t.ConfigMap):
                 for key, item in val.root.items():
                     normalized_item = FlextRuntime.normalize_to_container(item)
@@ -680,7 +680,7 @@ class FlextRuntime:
                     normalized_dict[str(key)] = _to_plain_container(normalized_item)
             return t.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            normalized_list: list[t.Container] = []
+            normalized_list: Sequence[t.Container] = []
             for v in val:
                 normalized_item = FlextRuntime.normalize_to_container(v)
                 if isinstance(normalized_item, (str, int, float, bool, datetime, Path)):
@@ -718,7 +718,7 @@ class FlextRuntime:
         if isinstance(val, BaseModel):
             return val.model_dump_json()
         if FlextRuntime.is_dict_like(val):
-            normalized: dict[str, t.Scalar | list[t.Scalar]] = {}
+            normalized: Mapping[str, t.Scalar | Sequence[t.Scalar]] = {}
             for k, v in val.items():
                 str_k = str(k)
                 if v is None:
@@ -734,7 +734,7 @@ class FlextRuntime:
                         FlextRuntime._normalize_to_metadata_scalar(item) for item in v
                     ]
                 elif FlextRuntime.is_dict_like(v):
-                    inner: dict[str, t.Primitives] = {}
+                    inner: Mapping[str, t.Primitives] = {}
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
                     normalized[str_k] = (
@@ -1065,7 +1065,7 @@ class FlextRuntime:
             For now, we pass None for packages when it's a Sequence[str] to avoid type errors.
             The actual wiring will be handled by modules parameter.
             """
-            modules_to_wire: list[ModuleType] = list(modules or [])
+            modules_to_wire: Sequence[ModuleType] = list(modules or [])
             if classes:
                 for target_class in classes:
                     module = inspect.getmodule(target_class)
@@ -1143,7 +1143,7 @@ class FlextRuntime:
             return
         level_to_use = log_level if log_level is not None else logging.INFO
         module = structlog
-        processors: list[structlog.types.Processor] = [
+        processors: Sequence[structlog.types.Processor] = [
             module.contextvars.merge_contextvars,
             add_log_level,
             cls.level_based_context_filter,
@@ -1193,7 +1193,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: list[t.StructlogProcessor] | None = None,
+        additional_processors: Sequence[t.StructlogProcessor] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
@@ -1313,7 +1313,7 @@ class FlextRuntime:
             "critical": 50,
         }
         current_level = level_hierarchy.get(method_name.lower(), 20)
-        filtered_dict: dict[str, t.Scalar] = {}
+        filtered_dict: Mapping[str, t.Scalar] = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
                 parts = key.split("_", c.LEVEL_PREFIX_PARTS_COUNT)
@@ -1484,7 +1484,7 @@ class FlextRuntime:
         context_dict = t.ConfigMap(root={})
         if isinstance(context, Mapping):
             try:
-                parsed_context: dict[str, t.ValueOrModel] = {
+                parsed_context: Mapping[str, t.ValueOrModel] = {
                     str(k): str(v) for k, v in context.items()
                 }
             except (TypeError, ValueError, AttributeError, RuntimeError) as exc:
@@ -1500,7 +1500,7 @@ class FlextRuntime:
             context_dict.update(context.model_dump())
         else:
             context_dict = t.ConfigMap(root={})
-        result: dict[str, str] = {}
+        result: Mapping[str, str] = {}
         for key, value in context_dict.items():
             result[key] = str(value)
         if "trace_id" not in result:
@@ -1623,10 +1623,10 @@ class FlextRuntime:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: list[int] | list[str] | list[int | str],
+        codes: Sequence[int] | Sequence[str] | Sequence[int | str],
         min_code: int | None = None,
         max_code: int | None = None,
-    ) -> RuntimeResult[list[int]]:
+    ) -> RuntimeResult[Sequence[int]]:
         """Validate and normalize HTTP status codes (bridge for _models).
 
         Args:
@@ -1635,24 +1635,24 @@ class FlextRuntime:
             max_code: Maximum valid HTTP status code (default: 599)
 
         Returns:
-            RuntimeResult[list[int]]: Success with normalized codes or failure
+            RuntimeResult[Sequence[int]]: Success with normalized codes or failure
 
         """
         min_val = min_code if min_code is not None else c.HTTP_STATUS_MIN
         max_val = max_code if max_code is not None else c.HTTP_STATUS_MAX
-        validated_codes: list[int] = []
+        validated_codes: Sequence[int] = []
         for code in codes:
             try:
                 code_int = int(str(code))
                 if not min_val <= code_int <= max_val:
                     msg = f"Invalid HTTP status code: {code} (must be {min_val}-{max_val})"
-                    return FlextRuntime.RuntimeResult[list[int]].fail(msg)
+                    return FlextRuntime.RuntimeResult[Sequence[int]].fail(msg)
                 validated_codes.append(code_int)
             except ValueError:
-                return FlextRuntime.RuntimeResult[list[int]].fail(
+                return FlextRuntime.RuntimeResult[Sequence[int]].fail(
                     f"Cannot convert to integer: {code}",
                 )
-        return FlextRuntime.RuntimeResult[list[int]].ok(validated_codes)
+        return FlextRuntime.RuntimeResult[Sequence[int]].ok(validated_codes)
 
 
 __all__ = ["FlextRuntime"]

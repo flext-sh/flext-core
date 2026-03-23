@@ -127,7 +127,7 @@ class TestFlextUtilitiesConfiguration:
         INDENT = "indent"
         SORT_KEYS = "sort_keys"
 
-    def _create_test_dict(self) -> dict[str, t.NormalizedValue]:
+    def _create_test_dict(self) -> Mapping[str, t.NormalizedValue]:
         return {
             self.ParameterNames.NAME.value: "test",
             self.ParameterNames.TIMEOUT.value: 60,

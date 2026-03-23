@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import (
@@ -178,14 +178,14 @@ class FlextModelsConfig:
             ),
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
         retry_on_exceptions: Annotated[
-            list[type[BaseException]],
+            Sequence[type[BaseException]],
             Field(
                 default_factory=list,
                 description="Exception types to retry on",
             ),
         ]
         retry_on_status_codes: Annotated[
-            list[int],
+            Sequence[int],
             Field(
                 default_factory=list,
                 max_length=c.MAX_RETRY_STATUS_CODES,
@@ -195,9 +195,11 @@ class FlextModelsConfig:
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
-        def validate_backoff_strategy(cls, v: list[int] | list[t.Scalar]) -> list[int]:
+        def validate_backoff_strategy(
+            cls, v: Sequence[int] | Sequence[t.Scalar]
+        ) -> Sequence[int]:
             """Validate status codes are valid HTTP codes."""
-            codes_for_validation: list[int] = []
+            codes_for_validation: Sequence[int] = []
             for item in v:
                 if isinstance(item, bool):
                     msg = "retry_on_status_codes item must be int or str, got bool"
@@ -220,7 +222,7 @@ class FlextModelsConfig:
                     else f"{base_msg} (invalid status code)"
                 )
                 raise ValueError(error_msg)
-            validated_codes: list[int] = result.value
+            validated_codes: Sequence[int] = result.value
             return validated_codes
 
         @model_validator(mode="after")
@@ -245,7 +247,7 @@ class FlextModelsConfig:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[p.ValidatorSpec],
+            Sequence[p.ValidatorSpec],
             Field(
                 default_factory=list,
                 max_length=c.MAX_CUSTOM_VALIDATORS,
@@ -257,8 +259,8 @@ class FlextModelsConfig:
         @classmethod
         def validate_additional_validators(
             cls,
-            v: list[p.ValidatorSpec],
-        ) -> list[p.ValidatorSpec]:
+            v: Sequence[p.ValidatorSpec],
+        ) -> Sequence[p.ValidatorSpec]:
             """Validate custom validators are callable."""
             for validator in v:
                 if not callable(validator):
@@ -271,7 +273,7 @@ class FlextModelsConfig:
         """Enhanced batch processing configuration."""
 
         _batch_list_adapter: ClassVar[
-            TypeAdapter[list[FlextModelsConfig.BatchProcessingConfig]] | None
+            TypeAdapter[Sequence[FlextModelsConfig.BatchProcessingConfig]] | None
         ] = None
 
         batch_size: Annotated[
@@ -299,7 +301,7 @@ class FlextModelsConfig:
         ] = c.TIMEOUT
         continue_on_error: bool = True
         data_items: Annotated[
-            list[t.ValueOrModel],
+            Sequence[t.ValueOrModel],
             Field(
                 default_factory=list,
                 max_length=c.MAX_ITEMS,
@@ -312,20 +314,20 @@ class FlextModelsConfig:
         @classmethod
         def _batch_adapter(
             cls,
-        ) -> TypeAdapter[list[FlextModelsConfig.BatchProcessingConfig]]:
+        ) -> TypeAdapter[Sequence[FlextModelsConfig.BatchProcessingConfig]]:
             if cls._batch_list_adapter is None:
                 cls._batch_list_adapter = TypeAdapter(
-                    list[FlextModelsConfig.BatchProcessingConfig],
+                    Sequence[FlextModelsConfig.BatchProcessingConfig],
                 )
             return cls._batch_list_adapter
 
         @classmethod
         def validate_batch(
             cls,
-            models: list[t.ValueOrModel],
-        ) -> list[FlextModelsConfig.BatchProcessingConfig]:
+            models: Sequence[t.ValueOrModel],
+        ) -> Sequence[FlextModelsConfig.BatchProcessingConfig]:
             batch_result = r[
-                list[FlextModelsConfig.BatchProcessingConfig]
+                Sequence[FlextModelsConfig.BatchProcessingConfig]
             ].create_from_callable(lambda: cls._batch_adapter().validate_python(models))
             if batch_result.is_success:
                 return batch_result.value
@@ -569,7 +571,7 @@ class FlextModelsConfig:
             ),
         ] = True
         additional_processors: Annotated[
-            list[t.StructlogProcessor],
+            Sequence[t.StructlogProcessor],
             Field(
                 default_factory=list,
                 description="Optional extra processors after standard FLEXT processors",

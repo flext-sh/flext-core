@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import cast
 
 import pytest
@@ -139,7 +140,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_passes(self) -> None:
         """Test tm.that() with keys parameter for config validation."""
-        config: dict[str, t.NormalizedValue] = {
+        config: Mapping[str, t.NormalizedValue] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 30,
@@ -161,7 +162,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_zero_timeout(self) -> None:
         """Test tm.that() with zero timeout."""
-        config: dict[str, t.NormalizedValue] = {
+        config: Mapping[str, t.NormalizedValue] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 0,
@@ -207,51 +208,51 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_has_parameter(self) -> None:
         """Test tm.ok() with has parameter."""
-        result = r[list[str]].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, has="a")
         assert value == ["a", "b", "c"]
 
     def test_ok_with_has_sequence_parameter(self) -> None:
         """Test tm.ok() with has sequence parameter."""
-        result = r[list[str]].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, has=["a", "b"])
         assert value == ["a", "b", "c"]
 
     def test_ok_with_lacks_parameter(self) -> None:
         """Test tm.ok() with lacks parameter."""
-        result = r[list[str]].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, lacks="d")
         assert value == ["a", "b", "c"]
 
     def test_ok_with_len_exact_parameter(self) -> None:
         """Test tm.ok() with len exact parameter."""
-        result = r[list[str]].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, len=3)
         assert value == ["a", "b", "c"]
 
     def test_ok_with_len_range_parameter(self) -> None:
         """Test tm.ok() with len range parameter."""
-        result = r[list[str]].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, len=(2, 4))
         assert value == ["a", "b", "c"]
 
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
-        data: dict[str, t.Tests.Testobject] = {"user": {"name": "John", "age": 30}}
+        data: Mapping[str, t.Tests.Testobject] = {"user": {"name": "John", "age": 30}}
         result = r[t.NormalizedValue].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
-        data: dict[str, t.Tests.Testobject] = {"user": {"email": "test@example.com"}}
+        data: Mapping[str, t.Tests.Testobject] = {"user": {"email": "test@example.com"}}
         result = r[t.NormalizedValue].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
-        data: dict[str, t.Tests.Testobject] = {"user": {"name": "John"}}
+        data: Mapping[str, t.Tests.Testobject] = {"user": {"name": "John"}}
         result = r[t.NormalizedValue].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         assert value == "John"
@@ -318,7 +319,7 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_empty_parameter(self) -> None:
         """Test tm.ok() with empty parameter."""
-        result = r[list[str]].ok(["a"])
+        result = r[Sequence[str]].ok(["a"])
         value = tm.ok(result, empty=False)
         assert value == ["a"]
 

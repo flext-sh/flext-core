@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
@@ -35,7 +36,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         expected_type: type = str
         expected_value: ScalarValue | None = None
 
-    IS_STRING_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
+    IS_STRING_NON_EMPTY: ClassVar[Sequence[TypeGuardScenario]] = [
         TypeGuardScenario(name="non_empty_string", value="test", expected_result=True),
         TypeGuardScenario(name="empty_string", value="", expected_result=False),
         TypeGuardScenario(name="whitespace_string", value="   ", expected_result=False),
@@ -48,14 +49,14 @@ class TestUtilitiesTypeGuardsCoverage100:
         TypeGuardScenario(name="tab_string", value="\t", expected_result=False),
     ]
 
-    IS_DICT_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
+    IS_DICT_NON_EMPTY: ClassVar[Sequence[TypeGuardScenario]] = [
         TypeGuardScenario(
             name="non_empty_dict", value="has_items", expected_result=True
         ),
         TypeGuardScenario(name="empty_dict", value="empty", expected_result=False),
     ]
 
-    IS_LIST_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
+    IS_LIST_NON_EMPTY: ClassVar[Sequence[TypeGuardScenario]] = [
         TypeGuardScenario(
             name="non_empty_list", value="has_items", expected_result=True
         ),
@@ -71,7 +72,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         TypeGuardScenario(name="none_value", value="", expected_result=False),
     ]
 
-    NORMALIZE_TO_METADATA: ClassVar[list[NormalizeScenario]] = [
+    NORMALIZE_TO_METADATA: ClassVar[Sequence[NormalizeScenario]] = [
         NormalizeScenario(name="string_value", value="test", expected_type=str),
         NormalizeScenario(
             name="int_value",
@@ -122,7 +123,7 @@ class TestUtilitiesTypeGuardsCoverage100:
     @pytest.mark.parametrize("scenario", IS_DICT_NON_EMPTY, ids=lambda s: s.name)
     def test_is_dict_non_empty(self, scenario: TypeGuardScenario) -> None:
         if scenario.value == "has_items":
-            test_value: dict[str, str] = {"key": "value"}
+            test_value: Mapping[str, str] = {"key": "value"}
         else:
             test_value = {}
         result = FlextUtilitiesGuards.is_dict_non_empty(test_value)
@@ -133,7 +134,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         if scenario.value == "has_items":
             value: NormalizedValue = [1, 2, 3]
         elif scenario.value == "empty":
-            value = list[int]()
+            value = Sequence[int]()
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         else:
@@ -195,7 +196,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
-        test_list: list[NormalizedValue] = [[1, 2], [3, 4]]
+        test_list: Sequence[NormalizedValue] = [[1, 2], [3, 4]]
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_list))
         tm.that(result, is_=list)
 
@@ -205,7 +206,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        test_list: list[NormalizedValue] = [
+        test_list: Sequence[NormalizedValue] = [
             "string",
             42,
             True,
@@ -221,7 +222,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        test_dict: dict[str, NormalizedValue] = {
+        test_dict: Mapping[str, NormalizedValue] = {
             "str": "value",
             "int": 42,
             "nested_dict": {"inner": "value"},

@@ -123,17 +123,17 @@ class FlextTypesServices:
     type StrictValue = (
         FlextTypingBase.Scalar
         | ConfigurationMapping
-        | list[FlextTypingBase.Container]
+        | Sequence[FlextTypingBase.Container]
         | None
     )
-    type PaginationMeta = dict[str, int | bool]
+    type PaginationMeta = Mapping[str, int | bool]
 
     # GuardInput uses forward references to avoid circular imports
     # These are resolved at runtime via the protocol facade
     type GuardInput = (
         FlextTypingBase.Scalar
         | Path
-        | list[FlextTypingBase.NormalizedValue]
+        | Sequence[FlextTypingBase.NormalizedValue]
         | Mapping[str, FlextTypingBase.NormalizedValue | BaseModel]
         | tuple[FlextTypingBase.NormalizedValue, ...]
         | BaseModel

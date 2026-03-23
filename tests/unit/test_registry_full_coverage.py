@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from types import ModuleType
 from typing import cast, override
 
@@ -124,7 +124,7 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
 
     def fake_scan(
         _module: ModuleType,
-    ) -> list[tuple[str, Callable[..., test_t.NormalizedValue], m.DecoratorConfig]]:
+    ) -> Sequence[tuple[str, Callable[..., test_t.NormalizedValue], m.DecoratorConfig]]:
         cfg = m.DecoratorConfig(command=str, middleware=[])
         return [("x", discovered_handler.handle, cfg)]
 

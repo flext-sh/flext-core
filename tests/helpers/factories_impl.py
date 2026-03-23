@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from itertools import count
 from typing import ClassVar, cast, override
 
@@ -92,7 +93,7 @@ class UserFactory:
     """Factory for m.Tests.User entities using native Python patterns."""
 
     _counter: ClassVar[count[int]] = count(1)
-    _names: ClassVar[list[str]] = [
+    _names: ClassVar[Sequence[str]] = [
         "Alice Johnson",
         "Bob Smith",
         "Carol Williams",
@@ -130,7 +131,7 @@ class UserFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[m.Tests.User]:
+    def build_batch(cls, size: int) -> Sequence[m.Tests.User]:
         """Build multiple m.Tests.User instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
@@ -154,7 +155,7 @@ class GetUserServiceFactory:
         return GetUserService.model_construct(user_id=actual_user_id)
 
     @classmethod
-    def build_batch(cls, size: int) -> list[GetUserService]:
+    def build_batch(cls, size: int) -> Sequence[GetUserService]:
         """Build multiple GetUserService instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
@@ -177,7 +178,7 @@ class FailingServiceFactory:
         return FailingService.model_construct(error_message=error_message)
 
     @classmethod
-    def build_batch(cls, size: int) -> list[FailingService]:
+    def build_batch(cls, size: int) -> Sequence[FailingService]:
         """Build multiple FailingService instances with default error message."""
         return [cls.build() for _ in range(size)]
 
@@ -195,7 +196,7 @@ class GetUserServiceAutoFactory:
         return GetUserServiceAuto.model_construct(user_id=actual_user_id)
 
     @classmethod
-    def build_batch(cls, size: int) -> list[GetUserServiceAuto]:
+    def build_batch(cls, size: int) -> Sequence[GetUserServiceAuto]:
         """Build multiple GetUserServiceAuto instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
@@ -208,7 +209,7 @@ class GetUserServiceAutoFactory:
 class ValidatingServiceAutoFactory:
     """Factory for ValidatingServiceAuto."""
 
-    _words: ClassVar[list[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
+    _words: ClassVar[Sequence[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
@@ -233,7 +234,7 @@ class ValidatingServiceAutoFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[ValidatingServiceAuto]:
+    def build_batch(cls, size: int) -> Sequence[ValidatingServiceAuto]:
         """Build multiple ValidatingServiceAuto instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
@@ -246,7 +247,7 @@ class ValidatingServiceAutoFactory:
 class ValidatingServiceFactory:
     """Factory for ValidatingService."""
 
-    _words: ClassVar[list[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
+    _words: ClassVar[Sequence[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
@@ -271,7 +272,7 @@ class ValidatingServiceFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[ValidatingService]:
+    def build_batch(cls, size: int) -> Sequence[ValidatingService]:
         """Build multiple ValidatingService instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
@@ -294,7 +295,7 @@ class FailingServiceAutoFactory:
         return FailingServiceAuto.model_construct(error_message=error_message)
 
     @classmethod
-    def build_batch(cls, size: int) -> list[FailingServiceAuto]:
+    def build_batch(cls, size: int) -> Sequence[FailingServiceAuto]:
         """Build multiple FailingServiceAuto instances with default error message."""
         return [cls.build() for _ in range(size)]
 
@@ -302,13 +303,13 @@ class FailingServiceAutoFactory:
 class ServiceTestCaseFactory:
     """Factory for m.Core.ServiceTestCase."""
 
-    _service_types: ClassVar[list[m.Core.ServiceTestType]] = [
+    _service_types: ClassVar[Sequence[m.Core.ServiceTestType]] = [
         m.Core.ServiceTestType.GET_USER,
         m.Core.ServiceTestType.VALIDATE,
         m.Core.ServiceTestType.FAIL,
     ]
     _type_index: ClassVar[int] = 0
-    _words: ClassVar[list[str]] = ["test", "sample", "example", "demo", "data"]
+    _words: ClassVar[Sequence[str]] = ["test", "sample", "example", "demo", "data"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
@@ -354,7 +355,7 @@ class ServiceTestCaseFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[m.Core.ServiceTestCase]:
+    def build_batch(cls, size: int) -> Sequence[m.Core.ServiceTestCase]:
         """Build multiple m.Core.ServiceTestCase instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
@@ -369,7 +370,7 @@ class ServiceFactoryRegistry:
     """Registry for service factories using pattern matching."""
 
     _factories: ClassVar[
-        dict[
+        Mapping[
             m.Core.ServiceTestType,
             type[
                 GetUserServiceFactory | ValidatingServiceFactory | FailingServiceFactory
@@ -410,7 +411,7 @@ class TestDataGenerators:
     @staticmethod
     def generate_user_success_cases(
         num_cases: int = 3,
-    ) -> list[m.Core.ServiceTestCase]:
+    ) -> Sequence[m.Core.ServiceTestCase]:
         """Generate successful user service test cases."""
         return [
             m.Core.ServiceTestCase(
@@ -424,7 +425,7 @@ class TestDataGenerators:
     @staticmethod
     def generate_validation_success_cases(
         num_cases: int = 2,
-    ) -> list[m.Core.ServiceTestCase]:
+    ) -> Sequence[m.Core.ServiceTestCase]:
         """Generate successful validation test cases."""
         return [
             m.Core.ServiceTestCase(
@@ -443,7 +444,7 @@ class TestDataGenerators:
         ]
 
     @staticmethod
-    def generate_validation_failure_cases() -> list[m.Core.ServiceTestCase]:
+    def generate_validation_failure_cases() -> Sequence[m.Core.ServiceTestCase]:
         """Generate validation failure test cases."""
         return [
             m.Core.ServiceTestCase(
@@ -467,13 +468,13 @@ class TestDataGenerators:
 class ServiceTestCases:
     """Unified factory for all test cases using advanced patterns."""
 
-    USER_SUCCESS: ClassVar[list[m.Core.ServiceTestCase]] = (
+    USER_SUCCESS: ClassVar[Sequence[m.Core.ServiceTestCase]] = (
         TestDataGenerators.generate_user_success_cases()
     )
-    VALIDATE_SUCCESS: ClassVar[list[m.Core.ServiceTestCase]] = (
+    VALIDATE_SUCCESS: ClassVar[Sequence[m.Core.ServiceTestCase]] = (
         TestDataGenerators.generate_validation_success_cases()
     )
-    VALIDATE_FAILURE: ClassVar[list[m.Core.ServiceTestCase]] = (
+    VALIDATE_FAILURE: ClassVar[Sequence[m.Core.ServiceTestCase]] = (
         TestDataGenerators.generate_validation_failure_cases()
     )
 
@@ -509,13 +510,13 @@ class GenericModelFactory:
 
     @staticmethod
     def configuration_snapshot(
-        config: dict[str, t.NormalizedValue] | None = None,
+        config: Mapping[str, t.NormalizedValue] | None = None,
         source: str | None = None,
         environment: str | None = None,
     ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
         config_root = cast(
-            "dict[str, t.NormalizedValue | BaseModel]",
+            "Mapping[str, t.NormalizedValue | BaseModel]",
             dict(config) if config else {},
         )
         return m.Configuration.model_validate({
@@ -528,7 +529,7 @@ class GenericModelFactory:
     def health_status(
         *,
         healthy: bool = True,
-        checks: dict[str, bool] | None = None,
+        checks: Mapping[str, bool] | None = None,
     ) -> m.Health:
         """Create HealthStatus."""
         return m.Health.model_validate({

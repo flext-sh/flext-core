@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
 from pydantic import PrivateAttr
@@ -177,16 +178,16 @@ class AutomationService(s[t.ConfigMap]):
         """ETL Pipeline with Error Recovery."""
         print("\n--- Data Pipeline with Error Recovery ---")
 
-        def extract() -> r[list[t.ConfigMap]]:
-            return r[list[t.ConfigMap]].ok([
+        def extract() -> r[Sequence[t.ConfigMap]]:
+            return r[Sequence[t.ConfigMap]].ok([
                 t.ConfigMap(root={"id": 1, "name": "Item A", "value": 100}),
                 t.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
             ])
 
         def transform(
-            data: list[t.ConfigMap],
-        ) -> FlextRuntime.RuntimeResult[list[t.ConfigMap]]:
-            transformed: list[t.ConfigMap] = [
+            data: Sequence[t.ConfigMap],
+        ) -> FlextRuntime.RuntimeResult[Sequence[t.ConfigMap]]:
+            transformed: Sequence[t.ConfigMap] = [
                 t.ConfigMap(
                     root={
                         **item.root,
@@ -196,13 +197,13 @@ class AutomationService(s[t.ConfigMap]):
                 )
                 for item in data
             ]
-            return r[list[t.ConfigMap]].ok(transformed)
+            return r[Sequence[t.ConfigMap]].ok(transformed)
 
         def load(
-            data: list[t.ConfigMap],
-        ) -> FlextRuntime.RuntimeResult[list[t.ConfigMap]]:
+            data: Sequence[t.ConfigMap],
+        ) -> FlextRuntime.RuntimeResult[Sequence[t.ConfigMap]]:
             print(f"   💾 Loaded {len(data)} records successfully")
-            return r[list[t.ConfigMap]].ok(data)
+            return r[Sequence[t.ConfigMap]].ok(data)
 
         extract_result = extract()
         if extract_result.is_failure:
@@ -317,8 +318,8 @@ class AutomationService(s[t.ConfigMap]):
         def load_config() -> t.ConfigMap:
             if not cache.root:
                 print("   📄 Loading configuration from file...")
-                cache.root["database_url"] = "postgresql://localhost:5432/testdb"
-                cache.root["cache_ttl"] = c.DEFAULT_CACHE_TTL
+                cache.root["database_url"] = "postgresql://localhost:5432/testdb"  # type: ignore[index]
+                cache.root["cache_ttl"] = c.DEFAULT_CACHE_TTL  # type: ignore[index]
             return cache
 
         fail_attempt: r[t.ConfigMap] = r[t.ConfigMap].fail("No cached config")

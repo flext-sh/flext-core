@@ -44,7 +44,7 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -213,7 +213,7 @@ class FlextUtilitiesConfiguration:
             (True, value) if attribute exists, (False, None) if not
 
         """
-        obj_vars: dict[str, t.NormalizedValue] = (
+        obj_vars: Mapping[str, t.NormalizedValue] = (
             vars(obj) if hasattr(obj, "__dict__") else {}
         )
         if parameter not in obj_vars:
@@ -351,7 +351,7 @@ class FlextUtilitiesConfiguration:
         Example Usage:
             def write(
                 self,
-                entries: list[Entry],
+                entries: Sequence[Entry],
                 format_options: WriteFormatOptions | None = None,
         **format_kwargs: t.Scalar,
             ) -> "FlextRuntime.RuntimeResult[str]":
@@ -401,7 +401,7 @@ class FlextUtilitiesConfiguration:
             base_class: type[BaseModel] = model_class
             valid_field_names: set[str] = set(base_class.model_fields.keys())
             valid_kwargs = t.ConfigMap(root={})
-            invalid_kwargs: list[str] = []
+            invalid_kwargs: Sequence[str] = []
             for key, value in kwargs.items():
                 if key in valid_field_names:
                     valid_kwargs[key] = value

@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from typing import cast, override
 
 import pytest
@@ -66,7 +66,7 @@ class Teste:
 
     def test_exception_repr(self) -> None:
         """Test repr() for all exception types."""
-        exceptions_to_test: list[e.BaseError] = [
+        exceptions_to_test: Sequence[e.BaseError] = [
             e.BaseError("base"),
             e.ValidationError("validation"),
             e.NotFoundError("not_found"),
@@ -128,7 +128,9 @@ class Teste:
         """Test _normalize_metadata with merged_kwargs - tests lines 211-212."""
         metadata = {"key1": "value1"}
         merged_kwargs = {"key2": "value2"}
-        merged_kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", merged_kwargs)
+        merged_kwargs_cast = cast(
+            "Mapping[str, t.MetadataAttributeValue]", merged_kwargs
+        )
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
         tm.that(hasattr(result, "attributes"), eq=True)
         tm.that(result.attributes["key1"], eq="value1")
@@ -136,8 +138,8 @@ class Teste:
 
     def test_validation_error_with_context(self) -> None:
         """Test ValidationError with context - tests lines 243-244."""
-        context_raw: dict[str, t.NormalizedValue] = {"key1": "value1", "key2": 123}
-        context: dict[str, t.MetadataValue] = {
+        context_raw: Mapping[str, t.NormalizedValue] = {"key1": "value1", "key2": 123}
+        context: Mapping[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata(v) for k, v in context_raw.items()
         }
         error = e.ValidationError(
@@ -173,14 +175,14 @@ class Teste:
 
     def test_not_found_error_with_context(self) -> None:
         """Test NotFoundError with context - tests lines 518-547."""
-        context_raw: dict[str, t.NormalizedValue] = {
+        context_raw: Mapping[str, t.NormalizedValue] = {
             "key1": "value1",
             "correlation_id": "test-id",
             "metadata": "test",
             "auto_log": True,
             "auto_correlation": True,
         }
-        context: dict[str, t.MetadataValue] = {
+        context: Mapping[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata(v) for k, v in context_raw.items()
         }
         error = e.NotFoundError(
@@ -291,9 +293,9 @@ class Teste:
 
     def test_type_error_normalize_type(self) -> None:
         """Test TypeError._normalize_type."""
-        type_map: dict[str, type] = {"str": str, "int": int}
+        type_map: Mapping[str, type] = {"str": str, "int": int}
         extra_kwargs_raw = {"expected_type": "str"}
-        extra_kwargs: dict[str, t.Container] = dict(extra_kwargs_raw)
+        extra_kwargs: Mapping[str, t.Container] = dict(extra_kwargs_raw)
         result = e.TypeError._normalize_type(
             None,
             type_map,
@@ -303,7 +305,7 @@ class Teste:
         tm.that(result is str, eq=True)
         tm.that(extra_kwargs, lacks="expected_type")
         extra_kwargs_type_raw = {"expected_type": "int"}
-        extra_kwargs_type: dict[str, t.Container] = dict(extra_kwargs_type_raw)
+        extra_kwargs_type: Mapping[str, t.Container] = dict(extra_kwargs_type_raw)
         result = e.TypeError._normalize_type(
             None,
             type_map,
@@ -490,7 +492,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.NormalizedValue] = {
+        dict_like_converted: Mapping[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -576,7 +578,7 @@ class Teste:
     def test_prepare_kwargs(self) -> None:
         """Test prepare_exception_kwargs - tests lines 945-970."""
         specific_params_raw = {"field": "test_field"}
-        specific_params: dict[str, t.MetadataValue] = {
+        specific_params: Mapping[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
@@ -589,7 +591,7 @@ class Teste:
             "field": "override_field",
             "custom": "value",
         }
-        kwargs: dict[str, t.MetadataValue] = {
+        kwargs: Mapping[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)
@@ -610,7 +612,7 @@ class Teste:
     def test_prepare_kwargs_with_empty_specific_params(self) -> None:
         """Test prepare_exception_kwargs with empty specific_params - tests line 945."""
         kwargs_raw = {"field": "test_field"}
-        kwargs: dict[str, t.MetadataValue] = {
+        kwargs: Mapping[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, {})
@@ -621,11 +623,11 @@ class Teste:
     def test_prepare_kwargs_setdefault_behavior(self) -> None:
         """Test prepare_exception_kwargs setdefault behavior - tests line 948."""
         specific_params_raw = {"field": "test_field"}
-        specific_params: dict[str, t.MetadataValue] = {
+        specific_params: Mapping[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
-        kwargs: dict[str, t.MetadataValue] = {}
+        kwargs: Mapping[str, t.MetadataValue] = {}
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
         tm.that(extra, has="field")
@@ -633,13 +635,13 @@ class Teste:
 
     def test_prepare_kwargs_with_specific_params_none(self) -> None:
         """Test prepare_exception_kwargs with None in specific_params - tests lines 947-948."""
-        specific_params_raw: dict[str, None] = {"field": None}
-        specific_params: dict[str, t.MetadataValue | None] = {
+        specific_params_raw: Mapping[str, None] = {"field": None}
+        specific_params: Mapping[str, t.MetadataValue | None] = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
         kwargs_raw = {"field": "test_field"}
-        kwargs: dict[str, t.MetadataValue] = {
+        kwargs: Mapping[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)
@@ -649,7 +651,7 @@ class Teste:
     def test_prepare_exception_kwargs_with_non_string_correlation_id(self) -> None:
         """Test prepare_exception_kwargs with non-string correlation_id - tests lines 961-966."""
         kwargs = {"correlation_id": 123}
-        kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
+        kwargs_cast = cast("Mapping[str, t.MetadataAttributeValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         corr_id, _metadata, _auto_log, _auto_corr, _config, _extra = result
         tm.that(corr_id is None, eq=True)
@@ -657,7 +659,7 @@ class Teste:
     def test_prepare_exception_kwargs_return_tuple(self) -> None:
         """Test prepare_exception_kwargs returns correct tuple - tests lines 967-970."""
         kwargs = {"field": "test"}
-        kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
+        kwargs_cast = cast("Mapping[str, t.MetadataAttributeValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         tm.that(len(result), eq=6)
         corr_id, metadata, auto_log, auto_corr, _metadata_val, extra = result
@@ -699,7 +701,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.NormalizedValue] = {
+        dict_like_converted: Mapping[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -723,7 +725,10 @@ class Teste:
         class DictLike(Mapping[str, t.NormalizedValue]):
             @override
             def __getitem__(self, key: str) -> t.NormalizedValue:
-                mapping: dict[str, t.NormalizedValue] = {"key1": "value1", "key2": 123}
+                mapping: Mapping[str, t.NormalizedValue] = {
+                    "key1": "value1",
+                    "key2": 123,
+                }
                 if key in mapping:
                     return mapping[key]
                 raise KeyError(key)
@@ -737,7 +742,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.NormalizedValue] = {
+        dict_like_converted: Mapping[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -780,7 +785,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, t.NormalizedValue] = {
+        dict_like_converted: Mapping[str, t.NormalizedValue] = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -899,7 +904,7 @@ class Teste:
             "metadata": m.Metadata(attributes={"key": "value"}),
             "field": "test_field",
         }
-        kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
+        kwargs_cast = cast("Mapping[str, t.MetadataAttributeValue]", kwargs)
         corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
         tm.that(corr_id, eq="test-id")
         tm.that(isinstance(metadata, m.Metadata), eq=True)
@@ -908,7 +913,7 @@ class Teste:
             "metadata": {"key": "value"},
             "field": "test_field",
         }
-        kwargs_dict: dict[str, t.MetadataValue] = {
+        kwargs_dict: Mapping[str, t.MetadataValue] = {
             k: cast("t.MetadataAttributeValue", v)
             if not isinstance(v, dict)
             else cast(
@@ -942,10 +947,10 @@ class Teste:
             "metadata": dict_like_obj,
             "field": "test_field",
         }
-        kwargs_dict_like: dict[str, t.MetadataValue] = {}
+        kwargs_dict_like: Mapping[str, t.MetadataValue] = {}
         for k, v in kwargs_dict_like_raw.items():
             if k == "metadata" and isinstance(v, DictLike):
-                dict_like_dict: dict[str, t.MetadataValue] = {
+                dict_like_dict: Mapping[str, t.MetadataValue] = {
                     k2: str(v2)
                     if not isinstance(v2, (str, int, float, bool, type(None)))
                     else cast("t.MetadataAttributeValue", v2)

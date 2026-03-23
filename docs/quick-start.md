@@ -205,14 +205,14 @@ class Order(FlextModels.Entity):
     """Order with identity."""
 
     id: str
-    items: list[OrderItem]
+    items: Sequence[OrderItem]
     customer_id: str
 
 
 class OrderService(FlextService):
     """Service with business logic."""
 
-    def create_order(self, customer_id: str, items: list[dict]) -> r[Order]:
+    def create_order(self, customer_id: str, items: Sequence[dict]) -> r[Order]:
         """Create order with validation."""
         if not customer_id:
             return r[Order].fail("Customer ID required")

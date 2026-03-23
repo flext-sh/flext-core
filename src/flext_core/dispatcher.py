@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 
 from pydantic import BaseModel
 
@@ -34,23 +34,23 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: dict[
+        self._handlers: Mapping[
             str,
             tuple[
                 t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
                 DispatcherResolvedCallable,
             ],
         ] = {}
-        self._auto_handlers: list[
+        self._auto_handlers: Sequence[
             tuple[
                 t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
                 DispatcherResolvedCallable,
                 tuple[t.MessageTypeSpecifier, ...],
             ]
         ] = []
-        self._event_subscribers: dict[
+        self._event_subscribers: Mapping[
             str,
-            list[
+            Sequence[
                 tuple[
                     t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
                     DispatcherResolvedCallable,
@@ -115,7 +115,7 @@ class FlextDispatcher:
 
         return self.dispatch(message).flat_map(_coerce)
 
-    def publish(self, event: p.Routable | list[p.Routable]) -> r[bool]:
+    def publish(self, event: p.Routable | Sequence[p.Routable]) -> r[bool]:
         """Publish events to all registered subscribers.
 
         Args:

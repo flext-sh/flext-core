@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -35,14 +36,14 @@ class TestPhase2CoverageFinal:
         name: Annotated[str, Field(description="Result chaining scenario name")]
         initial_value: Annotated[str, Field(description="Initial string value")]
         operations: Annotated[
-            list[str], Field(description="Operation names applied in sequence")
+            Sequence[str], Field(description="Operation names applied in sequence")
         ]
         expected_success: Annotated[bool, Field(description="Expected success state")]
         expected_value: Annotated[
             str | None, Field(default=None, description="Expected resulting value")
         ] = None
 
-    CHAINING_SCENARIOS: ClassVar[list[ResultChainingScenario]] = [
+    CHAINING_SCENARIOS: ClassVar[Sequence[ResultChainingScenario]] = [
         ResultChainingScenario(
             name="map_chaining",
             initial_value="hello",

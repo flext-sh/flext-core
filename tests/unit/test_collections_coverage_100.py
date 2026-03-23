@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
 import pytest
@@ -24,7 +25,7 @@ class TestFlextModelsCollectionsCoverage100:
         name: Annotated[str, Field(description="Category operation scenario name")]
         category: Annotated[str, Field(description="Category key")]
         entries: Annotated[
-            list[str], Field(description="Entries associated with operation")
+            Sequence[str], Field(description="Entries associated with operation")
         ]
         operation: Annotated[str, Field(description="Category operation name")]
 
@@ -36,13 +37,13 @@ class TestFlextModelsCollectionsCoverage100:
     class StatisticsItems(m.Statistics):
         """Statistics with items list."""
 
-        items: Annotated[list[str], Field(default_factory=list)]
+        items: Annotated[Sequence[str], Field(default_factory=list)]
 
     class StatisticsMixed(m.Statistics):
         """Statistics with count, items, and name."""
 
         count: int = 0
-        items: Annotated[list[str], Field(default_factory=list)]
+        items: Annotated[Sequence[str], Field(default_factory=list)]
         name: str = ""
 
     class StatisticsOptional(m.Statistics):
@@ -59,18 +60,18 @@ class TestFlextModelsCollectionsCoverage100:
     class ResultsErrors(m.Results):
         """Results with errors list."""
 
-        errors: Annotated[list[str], Field(default_factory=list)]
+        errors: Annotated[Sequence[str], Field(default_factory=list)]
 
     class ResultsMetadata(m.Results):
         """Results with metadata dictionary."""
 
-        metadata: Annotated[dict[str, str], Field(default_factory=dict)]
+        metadata: Annotated[Mapping[str, str], Field(default_factory=dict)]
 
     class ResultsMixed(m.Results):
         """Results with processed, errors, and status."""
 
         processed: int = 0
-        errors: Annotated[list[str], Field(default_factory=list)]
+        errors: Annotated[Sequence[str], Field(default_factory=list)]
         status: str = ""
 
     class ResultsOptional(m.Results):
@@ -85,7 +86,7 @@ class TestFlextModelsCollectionsCoverage100:
         verbose: bool = False
         color: bool = True
 
-    CATEGORY_OPERATIONS: ClassVar[list[CategoryOperationScenario]] = [
+    CATEGORY_OPERATIONS: ClassVar[Sequence[CategoryOperationScenario]] = [
         CategoryOperationScenario(
             name="add_new",
             category="users",
@@ -174,7 +175,7 @@ class TestFlextModelsCollectionsCoverage100:
         categories = m.Categories(categories={})
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
-        summary: dict[str, int] = {
+        summary: Mapping[str, int] = {
             name: len(entries) for name, entries in categories.categories.items()
         }
         tm.that(summary["users"], eq=2)

@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum, unique
 from typing import ClassVar, cast, override
@@ -85,22 +85,28 @@ class Testu(TextUtilityContract):
     class UtilityScenarios:
         """Centralized utility test scenarios."""
 
-        TYPE_GUARD_STRING_CASES: ClassVar[list[tuple[t.NormalizedValue, bool, str]]] = [
+        TYPE_GUARD_STRING_CASES: ClassVar[
+            Sequence[tuple[t.NormalizedValue, bool, str]]
+        ] = [
             ("hello", True, "Non-empty string passes guard"),
             ("", False, "Empty string fails guard"),
             (123, False, "Non-string fails guard"),
         ]
-        TYPE_GUARD_DICT_CASES: ClassVar[list[tuple[t.NormalizedValue, bool, str]]] = [
+        TYPE_GUARD_DICT_CASES: ClassVar[
+            Sequence[tuple[t.NormalizedValue, bool, str]]
+        ] = [
             ({"key": "value"}, True, "Non-empty dict passes guard"),
             ({}, False, "Empty dict fails guard"),
             (None, False, "None fails dict guard"),
         ]
-        TYPE_GUARD_LIST_CASES: ClassVar[list[tuple[t.NormalizedValue, bool, str]]] = [
+        TYPE_GUARD_LIST_CASES: ClassVar[
+            Sequence[tuple[t.NormalizedValue, bool, str]]
+        ] = [
             ([1, 2, 3], True, "Non-empty list passes guard"),
             ([], False, "Empty list fails guard"),
             (None, False, "None fails list guard"),
         ]
-        ID_GENERATOR_CASES: ClassVar[list[tuple[str, str | None]]] = [
+        ID_GENERATOR_CASES: ClassVar[Sequence[tuple[str, str | None]]] = [
             ("generate_id", None),
             ("generate_iso_timestamp", None),
             ("generate_correlation_id", "corr_"),
@@ -108,7 +114,9 @@ class Testu(TextUtilityContract):
             ("generate_saga_id", None),
             ("generate_event_id", None),
         ]
-        CACHE_NORMALIZATION_CASES: ClassVar[list[tuple[t.NormalizedValue, type]]] = [
+        CACHE_NORMALIZATION_CASES: ClassVar[
+            Sequence[tuple[t.NormalizedValue, type]]
+        ] = [
             ({"a": 1, "b": 2}, dict),
             ([1, 2, 3], list),
             (None, type(None)),
@@ -117,7 +125,7 @@ class Testu(TextUtilityContract):
         @staticmethod
         def create_mock_config(**kwargs: t.Scalar) -> t.ConfigMap:
             """Create mock config t.NormalizedValue."""
-            result: dict[str, t.NormalizedValue | BaseModel] = {}
+            result: Mapping[str, t.NormalizedValue | BaseModel] = {}
             for key, value in kwargs.items():
                 result[str(key)] = value
             return t.ConfigMap(root=result)
@@ -138,7 +146,7 @@ class Testu(TextUtilityContract):
             return Testu._CustomObject()
 
         @staticmethod
-        def create_flaky_operation() -> tuple[list[int], Callable[[], r[str]]]:
+        def create_flaky_operation() -> tuple[Sequence[int], Callable[[], r[str]]]:
             """Create flaky operation that eventually succeeds."""
             attempt_count = [0]
 
@@ -326,7 +334,7 @@ class Testu(TextUtilityContract):
         if isinstance(obj, BaseModel):
             result = u.clear_object_cache(obj)
         else:
-            obj_dict: dict[str, t.NormalizedValue | BaseModel] = {}
+            obj_dict: Mapping[str, t.NormalizedValue | BaseModel] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (

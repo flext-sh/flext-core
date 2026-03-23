@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -84,7 +85,7 @@ class Testr:
                 expected_result=expected_result,
             )
 
-    STRING_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
+    STRING_SCENARIOS: ClassVar[Sequence[Testr.ResultScenario]] = [
         ResultScenario(
             name="creation_success_string",
             operation_type=ResultOperationType.CREATION_SUCCESS,
@@ -153,7 +154,7 @@ class Testr:
             is_success_expected=False,
         ),
     ]
-    INT_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
+    INT_SCENARIOS: ClassVar[Sequence[Testr.ResultScenario]] = [
         ResultScenario(
             name="unwrap_success",
             operation_type=ResultOperationType.UNWRAP,
@@ -186,7 +187,7 @@ class Testr:
             value=5,
         ),
     ]
-    BOOL_SCENARIOS: ClassVar[list[Testr.ResultScenario]] = [
+    BOOL_SCENARIOS: ClassVar[Sequence[Testr.ResultScenario]] = [
         ResultScenario(
             name="bool_conversion_success",
             operation_type=ResultOperationType.BOOL_CONVERSION,
@@ -306,7 +307,7 @@ class Testr:
             res2 = res1.map(lambda v: v * 2)
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
-            result_list: list[r[str]] = [res1.map(str), res2.map(str), res3]
+            result_list: Sequence[r[str]] = [res1.map(str), res2.map(str), res3]
             u.Tests.GenericHelpers.assert_result_chain(
                 result_list,
                 expected_success_count=3,
@@ -331,7 +332,7 @@ class Testr:
 
         Tests actual chain operations and validates using generic helpers.
         """
-        results: list[r[int]] = []
+        results: Sequence[r[int]] = []
         initial_value = 5
         res1 = u.Tests.GenericHelpers.create_result_from_value(
             initial_value, error_on_none="Initial value cannot be None"
@@ -351,7 +352,7 @@ class Testr:
 
     def test_result_chain_failure_behavior(self) -> None:
         """Test result chain with failure - real behavior and limits."""
-        results: list[r[int]] = []
+        results: Sequence[r[int]] = []
         res1 = r[int].ok(10)
         results.append(res1)
         res2 = res1.map(lambda x: x * 2)
@@ -374,9 +375,9 @@ class Testr:
 
         Replaces 10+ lines of manual test case creation.
         """
-        success_values: list[t.NormalizedValue] = ["value1", "value2", "value3"]
-        failure_errors: list[str] = ["error1", "error2"]
-        error_codes: list[str | None] = ["CODE1", None]
+        success_values: Sequence[t.NormalizedValue] = ["value1", "value2", "value3"]
+        failure_errors: Sequence[str] = ["error1", "error2"]
+        error_codes: Sequence[str | None] = ["CODE1", None]
         cases = u.Tests.GenericHelpers.create_parametrized_cases(
             success_values, failure_errors, error_codes=error_codes
         )
@@ -532,18 +533,18 @@ class Testr:
 
     def test_with_resource(self) -> None:
         """Test with_resource manages resource lifecycle."""
-        resource_created: list[str] = []
-        resource_cleaned: list[str] = []
+        resource_created: Sequence[str] = []
+        resource_cleaned: Sequence[str] = []
 
-        def factory() -> list[str]:
+        def factory() -> Sequence[str]:
             resource_created.append("created")
             return ["resource"]
 
-        def op(resource: list[str]) -> r[str]:
+        def op(resource: Sequence[str]) -> r[str]:
             resource.append("used")
             return r[str].ok("success")
 
-        def cleanup(resource: list[str]) -> None:
+        def cleanup(resource: Sequence[str]) -> None:
             resource_cleaned.append("cleaned")
             resource.clear()
 
@@ -723,7 +724,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: dict[str, t.NormalizedValue] = result.fold(
+        response: Mapping[str, t.NormalizedValue] = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

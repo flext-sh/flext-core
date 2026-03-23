@@ -13,8 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, override
@@ -39,11 +38,11 @@ class TestsFlextServiceBase(s[T]):
     - All generic service functionality comes from s
     """
 
-    @abstractmethod
     @override
     def execute(self) -> r[T]:
         """Execute domain service logic - must be implemented by subclasses."""
-        ...
+        msg = "Subclasses must implement execute()"
+        raise NotImplementedError(msg)
 
     class HandlerTestCase(BaseModel):
         """Factory for handler test case configurations."""
@@ -113,7 +112,7 @@ class TestsFlextServiceBase(s[T]):
         @staticmethod
         def _build_cases(
             *, should_fail: bool
-        ) -> list[TestsFlextServiceBase.HandlerTestCase]:
+        ) -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
             cases: list[TestsFlextServiceBase.HandlerTestCase] = []
             for spec in td.default_handler_case_specs():
                 spec_should_fail = bool(spec.get("should_fail", False))
@@ -140,14 +139,14 @@ class TestsFlextServiceBase(s[T]):
             return cases
 
         @staticmethod
-        def success_cases() -> list[TestsFlextServiceBase.HandlerTestCase]:
+        def success_cases() -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
             """Generate success handler test cases."""
             return TestsFlextServiceBase.HandlerFactories._build_cases(
                 should_fail=False
             )
 
         @staticmethod
-        def failure_cases() -> list[TestsFlextServiceBase.HandlerTestCase]:
+        def failure_cases() -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
             """Generate failure handler test cases."""
             return TestsFlextServiceBase.HandlerFactories._build_cases(should_fail=True)
 

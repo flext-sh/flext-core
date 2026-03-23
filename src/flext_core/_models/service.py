@@ -149,7 +149,7 @@ class FlextModelsService:
 
         service_name: t.NonEmptyStr
         operations: Annotated[
-            list[FlextModelsService.BatchOperation],
+            Sequence[FlextModelsService.BatchOperation],
             Field(
                 default_factory=list,
                 min_length=c.RETRY_COUNT_MIN,
@@ -183,7 +183,7 @@ class FlextModelsService:
 
         service_name: t.NonEmptyStr
         metric_types: Annotated[
-            list[Literal["performance", "errors", "throughput"]],
+            Sequence[Literal["performance", "errors", "throughput"]],
             Field(
                 default_factory=lambda: list(c.DEFAULT_METRIC_CATEGORIES),
                 description="Types of metrics to collect",
@@ -200,7 +200,7 @@ class FlextModelsService:
             ),
         ] = c.Aggregation.AVG
         group_by: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 default_factory=list,
                 description="Metric dimensions used to group the resulting metric series.",
@@ -270,11 +270,11 @@ class FlextModelsService:
         action: Annotated[t.NonEmptyStr, Field(description="Requested action")]
         allowed: Annotated[bool, Field(description="Whether access is allowed")]
         permissions: Annotated[
-            list[str],
+            Sequence[str],
             Field(default_factory=list, description="Granted permissions"),
         ]
         denied_permissions: Annotated[
-            list[str],
+            Sequence[str],
             Field(default_factory=list, description="Denied permissions"),
         ]
         context: FlextModelsService.ServiceContext | None = None

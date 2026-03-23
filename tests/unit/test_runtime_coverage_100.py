@@ -27,7 +27,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like when items() raises AttributeError."""
 
         class BadDictLike:
-            def keys(self) -> list[str]:
+            def keys(self) -> Sequence[str]:
                 return []
 
             def items(self) -> Never:
@@ -45,7 +45,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like when items() raises TypeError."""
 
         class BadDictLike:
-            def keys(self) -> list[str]:
+            def keys(self) -> Sequence[str]:
                 return []
 
             def items(self) -> Never:
@@ -79,7 +79,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like with t.NormalizedValue missing keys attribute."""
 
         class NotDictLike:
-            def items(self) -> list[tuple[str, str]]:
+            def items(self) -> Sequence[tuple[str, str]]:
                 return []
 
             def get(self, key: str) -> None:
@@ -93,7 +93,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like with t.NormalizedValue missing items attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[str]:
+            def keys(self) -> Sequence[str]:
                 return []
 
             def get(self, key: str) -> None:
@@ -107,10 +107,10 @@ class TestRuntimeCoverage100:
         """Test is_dict_like with t.NormalizedValue missing get attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[str]:
+            def keys(self) -> Sequence[str]:
                 return []
 
-            def items(self) -> list[tuple[str, str]]:
+            def items(self) -> Sequence[tuple[str, str]]:
                 return []
 
         obj = NotDictLike()
@@ -169,7 +169,7 @@ class TestRuntimeCoverage100:
         """Test level_based_context_filter with malformed prefix."""
         FlextRuntime.configure_structlog()
         malformed_key = "_level_"
-        event_dict: dict[str, t.Scalar] = {
+        event_dict: Mapping[str, t.Scalar] = {
             malformed_key: "value1",
             "normal_key": "value2",
         }
@@ -201,9 +201,9 @@ class TestRuntimeCoverage100:
 
     def test_extract_generic_args_with_typing_get_args(self) -> None:
         """Test extract_generic_args when typing.get_args returns values."""
-        args = FlextRuntime.extract_generic_args(list[str])
+        args = FlextRuntime.extract_generic_args(Sequence[str])
         tm.that(args, eq=(str,))
-        args = FlextRuntime.extract_generic_args(dict[str, int])
+        args = FlextRuntime.extract_generic_args(Mapping[str, int])
         tm.that(args, eq=(str, int))
 
     def test_extract_generic_args_exception_path(self) -> None:
@@ -282,8 +282,8 @@ class TestRuntimeCoverage100:
         def custom_processor(
             logger: p.Logger | None,
             method_name: str,
-            event_dict: dict[str, t.NormalizedValue],
-        ) -> dict[str, t.NormalizedValue]:
+            event_dict: Mapping[str, t.NormalizedValue],
+        ) -> Mapping[str, t.NormalizedValue]:
             event_dict["custom"] = True
             return event_dict
 

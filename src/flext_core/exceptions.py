@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, override
 
 from pydantic import (
@@ -463,7 +463,7 @@ class FlextExceptions:
     @staticmethod
     def _init_error_params[TParams: BaseModel](
         context: Mapping[str, t.MetadataValue] | None,
-        extra_kwargs: dict[str, t.Container],
+        extra_kwargs: Mapping[str, t.Container],
         named_params: Mapping[str, t.MetadataValue | None],
         params_cls: type[TParams],
         existing_params: TParams | None,
@@ -500,11 +500,11 @@ class FlextExceptions:
             if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
             else None
         )
-        normalized_extra_kwargs: dict[str, t.MetadataValue] = {
+        normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
             key: FlextRuntime.normalize_to_metadata(value)
             for key, value in extra_kwargs.items()
         }
-        param_values: dict[str, t.NormalizedValue] = dict(
+        param_values: Mapping[str, t.NormalizedValue] = dict(
             e._build_param_map(context, normalized_extra_kwargs, keys=param_keys),
         )
         for key, val in named_params.items():
@@ -770,7 +770,7 @@ class FlextExceptions:
             merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
         ) -> m.Metadata:
             """Normalize metadata from dict-like t.NormalizedValue."""
-            merged_attrs: dict[str, t.MetadataValue | None] = {}
+            merged_attrs: Mapping[str, t.MetadataValue | None] = {}
             for k, v in metadata_dict.items():
                 merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             if merged_kwargs:
@@ -790,7 +790,7 @@ class FlextExceptions:
                 Dictionary with error_type, message, error_code, and other fields.
 
             """
-            result: dict[str, t.MetadataValue | None] = {
+            result: Mapping[str, t.MetadataValue | None] = {
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
@@ -1194,7 +1194,7 @@ class FlextExceptions:
                 if params is not None
                 else e.TypeErrorParams.model_validate(param_values)
             )
-            normalized_extra_kwargs: dict[str, t.MetadataValue] = {
+            normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in extra_kwargs.items()
             }
@@ -1291,7 +1291,7 @@ class FlextExceptions:
         params: TParams | None,
         named_params: Mapping[str, t.MetadataValue | None],
         param_keys: set[str] | frozenset[str],
-        extra_kwargs: dict[str, t.Container],
+        extra_kwargs: Mapping[str, t.Container],
     ) -> None:
         resolved, ctx, meta, corr = e._init_error_params(
             context,
@@ -1415,7 +1415,7 @@ class FlextExceptions:
             })
         if error_code is not None:
             error_context["error_code"] = error_code
-        error_classes: dict[str, type[e.BaseError]] = {
+        error_classes: Mapping[str, type[e.BaseError]] = {
             "validation": e.ValidationError,
             "configuration": e.ConfigurationError,
             "connection": e.ConnectionError,
@@ -1462,7 +1462,7 @@ class FlextExceptions:
             Error type string or None if no match
 
         """
-        error_patterns: list[tuple[list[str], str]] = [
+        error_patterns: Sequence[tuple[Sequence[str], str]] = [
             (["field", "value"], "validation"),
             (["config_key", "config_source"], "configuration"),
             ([c.HandlerType.OPERATION], "operation"),
@@ -1546,7 +1546,7 @@ class FlextExceptions:
         Mapping[str, t.MetadataValue],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
-        merged_kwargs: dict[str, t.MetadataValue] = dict(kwargs)
+        merged_kwargs: Mapping[str, t.MetadataValue] = dict(kwargs)
         if specific_params:
             for k, v in specific_params.items():
                 if v is None:
@@ -1665,7 +1665,7 @@ class FlextExceptions:
         """Prepare normalized kwargs payload for exception construction."""
         return e._prepare_exception_kwargs(kwargs, specific_params)
 
-    _exception_counts: ClassVar[dict[type, int]] = {}
+    _exception_counts: ClassVar[Mapping[type, int]] = {}
 
     def __call__(
         self,
@@ -1702,7 +1702,7 @@ class FlextExceptions:
             for exc_type, count in cls._exception_counts.items()
         ]
         exception_counts_str = ";".join(exception_counts_list)
-        exception_counts_dict: dict[str, int] = {}
+        exception_counts_dict: Mapping[str, int] = {}
         for exc_type, count in cls._exception_counts.items():
             exc_name = (
                 exc_type.__qualname__

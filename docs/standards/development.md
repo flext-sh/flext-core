@@ -300,7 +300,7 @@ class UserService:
 # ✅ CORRECT - Proper DDD patterns
 class Order(FlextModels.AggregateRoot):
     customer_id: str
-    items: list[OrderItem]
+    items: Sequence[OrderItem]
     total: Decimal
 
     def add_item(self, item: OrderItem) -> r[bool]:

@@ -110,7 +110,7 @@ class FlextModelsContainer:
             ),
         ] = None
         tags: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 default_factory=list,
                 description="Service tags for categorization",
@@ -130,7 +130,7 @@ class FlextModelsContainer:
             if callable(v):
                 return v
             if isinstance(v, Mapping):
-                normalized_mapping: dict[str, t.ValueOrModel] = {}
+                normalized_mapping: Mapping[str, t.ValueOrModel] = {}
                 for key, item in v.items():
                     if isinstance(item, datetime):
                         normalized_mapping[str(key)] = (
@@ -158,7 +158,7 @@ class FlextModelsContainer:
                         raise TypeError(msg)
                 return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
-                normalized_sequence: list[t.Container] = []
+                normalized_sequence: Sequence[t.Container] = []
                 for item in v:
                     if isinstance(item, datetime):
                         item = item.replace(tzinfo=UTC) if item.tzinfo is None else item

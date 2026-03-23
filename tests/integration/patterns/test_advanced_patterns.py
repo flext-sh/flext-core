@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import cast
 
 import pytest
@@ -51,10 +51,10 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: dict[str, t.NormalizedValue] = {}
-            self._when: dict[str, t.NormalizedValue] = {}
-            self._then: dict[str, t.NormalizedValue] = {}
-            self._tags: list[str] = []
+            self._given: Mapping[str, t.NormalizedValue] = {}
+            self._when: Mapping[str, t.NormalizedValue] = {}
+            self._then: Mapping[str, t.NormalizedValue] = {}
+            self._tags: Sequence[str] = []
             self._priority = "normal"
 
         def given(
@@ -146,7 +146,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            given_converted: dict[str, str | int | bool] = {
+            given_converted: Mapping[str, str | int | bool] = {
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
             when_mapped = u.transform_values(
@@ -157,7 +157,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            when_converted: dict[str, str | int | bool] = {
+            when_converted: Mapping[str, str | int | bool] = {
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
             then_mapped = u.transform_values(
@@ -168,7 +168,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            then_converted: dict[str, str | int | bool] = {
+            then_converted: Mapping[str, str | int | bool] = {
                 key: convert_dict_value(value) for key, value in then_mapped.items()
             }
             scenario_data = m.Core.MockScenarioData.model_validate(
@@ -188,8 +188,8 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: dict[str, t.NormalizedValue] = {}
-            self._validation_rules: dict[str, t.NormalizedValue] = {}
+            self._data: Mapping[str, t.NormalizedValue] = {}
+            self._validation_rules: Mapping[str, t.NormalizedValue] = {}
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_id method.
@@ -266,7 +266,7 @@ class TestAdvancedPatterns:
             self._validation_rules = kwargs
             return self
 
-        def build(self) -> dict[str, t.NormalizedValue]:
+        def build(self) -> Mapping[str, t.NormalizedValue]:
             """Build method.
 
             Returns:
@@ -282,13 +282,13 @@ class TestAdvancedPatterns:
             """Initialize parameterizedtestbuilder:."""
             super().__init__()
             self.test_name = test_name
-            self._cases: list[m.Core.FixtureCaseDict] = []
-            self._success_cases: list[m.Core.FixtureCaseDict] = []
-            self._failure_cases: list[m.Core.FixtureCaseDict] = []
+            self._cases: Sequence[m.Core.FixtureCaseDict] = []
+            self._success_cases: Sequence[m.Core.FixtureCaseDict] = []
+            self._failure_cases: Sequence[m.Core.FixtureCaseDict] = []
 
         def add_case(
             self,
-            **kwargs: str | int | bool | list[str],
+            **kwargs: str | int | bool | Sequence[str],
         ) -> TestAdvancedPatterns.ParameterizedTestBuilder:
             """add_case method.
 
@@ -301,7 +301,7 @@ class TestAdvancedPatterns:
 
         def add_success_cases(
             self,
-            cases: list[m.Core.FixtureCaseDict],
+            cases: Sequence[m.Core.FixtureCaseDict],
         ) -> TestAdvancedPatterns.ParameterizedTestBuilder:
             """add_success_cases method.
 
@@ -314,7 +314,7 @@ class TestAdvancedPatterns:
 
         def add_failure_cases(
             self,
-            cases: list[m.Core.FixtureCaseDict],
+            cases: Sequence[m.Core.FixtureCaseDict],
         ) -> TestAdvancedPatterns.ParameterizedTestBuilder:
             """add_failure_cases method.
 
@@ -325,20 +325,20 @@ class TestAdvancedPatterns:
             self._failure_cases.extend(cases)
             return self
 
-        def build(self) -> list[m.Core.FixtureCaseDict]:
+        def build(self) -> Sequence[m.Core.FixtureCaseDict]:
             """Build method.
 
             Returns:
-                list[FixtureCaseDict]: Copy of the test cases.
+                Sequence[FixtureCaseDict]: Copy of the test cases.
 
             """
             return list(self._cases)
 
-        def build_pytest_params(self) -> list[tuple[str, str, bool]]:
+        def build_pytest_params(self) -> Sequence[tuple[str, str, bool]]:
             """build_pytest_params method.
 
             Returns:
-                list[tuple[str, str, bool]]: Pytest parameters for testing.
+                Sequence[tuple[str, str, bool]]: Pytest parameters for testing.
 
             """
             success_params = [
@@ -349,11 +349,11 @@ class TestAdvancedPatterns:
             ]
             return success_params + failure_params
 
-        def build_test_ids(self) -> list[str]:
+        def build_test_ids(self) -> Sequence[str]:
             """build_test_ids method.
 
             Returns:
-                list[str]: List of test IDs.
+                Sequence[str]: List of test IDs.
 
             """
             return [str(c.input) for c in (*self._success_cases, *self._failure_cases)]
@@ -363,24 +363,24 @@ class TestAdvancedPatterns:
 
         def __init__(
             self,
-            data: list[t.NormalizedValue]
-            | dict[str, t.NormalizedValue]
+            data: Sequence[t.NormalizedValue]
+            | Mapping[str, t.NormalizedValue]
             | str
             | tuple[t.NormalizedValue, ...],
         ) -> None:
             """Initialize assertionbuilder:."""
             super().__init__()
             self.data: (
-                list[t.NormalizedValue]
-                | dict[str, t.NormalizedValue]
+                Sequence[t.NormalizedValue]
+                | Mapping[str, t.NormalizedValue]
                 | str
                 | tuple[t.NormalizedValue, ...]
             ) = data
-            self._assertions: list[Callable[[], None]] = []
+            self._assertions: Sequence[Callable[[], None]] = []
 
         def assert_equals(
             self,
-            expected: dict[str, bool | int | str],
+            expected: Mapping[str, bool | int | str],
         ) -> TestAdvancedPatterns.AssertionBuilder:
             """assert_equals method.
 
@@ -438,8 +438,8 @@ class TestAdvancedPatterns:
             self,
             condition: Callable[
                 [
-                    list[t.NormalizedValue]
-                    | dict[str, t.NormalizedValue]
+                    Sequence[t.NormalizedValue]
+                    | Mapping[str, t.NormalizedValue]
                     | str
                     | tuple[t.NormalizedValue, ...],
                 ],
@@ -572,7 +572,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, t.NormalizedValue] = {
+        test_data: Mapping[str, t.NormalizedValue] = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -618,14 +618,14 @@ class TestAdvancedPatterns:
                 self.call_count = 0
                 self.states = ["processing", "completed", "error"]
 
-            def process(self, _data: str) -> r[dict[str, str]]:
+            def process(self, _data: str) -> r[Mapping[str, str]]:
                 """Process data with state transitions."""
                 self.call_count += 1
                 if self.call_count == 1:
-                    return r[dict[str, str]].ok({"status": "processing"})
+                    return r[Mapping[str, str]].ok({"status": "processing"})
                 if self.call_count == 2:
-                    return r[dict[str, str]].ok({"status": "completed"})
-                return r[dict[str, str]].fail("Service unavailable")
+                    return r[Mapping[str, str]].ok({"status": "completed"})
+                return r[Mapping[str, str]].fail("Service unavailable")
 
         service = ProcessingService()
         result1 = service.process("data1")
@@ -641,7 +641,7 @@ class TestAdvancedPatterns:
 
     def test_complex_test_data_generation(self) -> None:
         """Test complex test data generation."""
-        scenarios: list[TestAdvancedPatterns.MockScenario] = []
+        scenarios: Sequence[TestAdvancedPatterns.MockScenario] = []
         for i in range(3):
             scenario = (
                 self
@@ -676,7 +676,7 @@ class TestAdvancedPatterns:
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
-        nested_mapping: dict[str, t.NormalizedValue] = (
+        nested_mapping: Mapping[str, t.NormalizedValue] = (
             nested_data if isinstance(nested_data, dict) else {}
         )
         nested_dict = nested_mapping.get("id")

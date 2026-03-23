@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, cast
 
 import pytest
@@ -39,7 +39,7 @@ class Testu(TextUtilityContract):
         """Centralized utility test scenarios using c (FlextConstants)."""
 
         TYPE_GUARD_CASES: ClassVar[
-            dict[str, list[tuple[str, t.NormalizedValue, bool]]]
+            Mapping[str, Sequence[tuple[str, t.NormalizedValue, bool]]]
         ] = {
             "string": [
                 ("string_empty", "", False),
@@ -62,7 +62,7 @@ class Testu(TextUtilityContract):
                 ("list_string", "not_list", False),
             ],
         }
-        GENERATOR_METHODS: ClassVar[list[tuple[str, str | None]]] = [
+        GENERATOR_METHODS: ClassVar[Sequence[tuple[str, str | None]]] = [
             ("generate_id", None),
             ("generate_iso_timestamp", "iso_timestamp"),
             ("generate_correlation_id", "correlation"),
@@ -71,25 +71,25 @@ class Testu(TextUtilityContract):
             ("generate_saga_id", "saga"),
             ("generate_event_id", "event"),
         ]
-        SHORT_ID_LENGTHS: ClassVar[list[tuple[int | None, int]]] = [
+        SHORT_ID_LENGTHS: ClassVar[Sequence[tuple[int | None, int]]] = [
             (5, 5),
             (10, 10),
             (20, 20),
             (None, c.SHORT_UUID_LENGTH),
         ]
-        TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = (
+        TEXT_CLEAN_CASES: ClassVar[Sequence[tuple[str, str]]] = (
             TextUtilityContract.CLEAN_TEXT_CASES
             + [
                 ("a    b    c", "a b c"),
                 ("  Test  Text  ", "Test Text"),
             ]
         )
-        TEXT_TRUNCATE_CASES: ClassVar[list[tuple[str, int, bool]]] = [
+        TEXT_TRUNCATE_CASES: ClassVar[Sequence[tuple[str, int, bool]]] = [
             ("VeryLongText", 5, True),
             ("Hi", 10, False),
         ]
         CACHE_NORMALIZE_CASES: ClassVar[
-            list[tuple[t.NormalizedValue, type | tuple[type, ...]]]
+            Sequence[tuple[t.NormalizedValue, type | tuple[type, ...]]]
         ] = [
             ({"a": 1, "b": 2}, dict),
             ([1, 2, 3], list),
@@ -98,7 +98,7 @@ class Testu(TextUtilityContract):
             ({"a": {"b": {"c": 1}}, "d": [1, 2, 3]}, dict),
         ]
         VALIDATION_PIPELINE_CASES: ClassVar[
-            list[tuple[str, Sequence[Callable[[str], r[bool]]], bool, str | None]]
+            Sequence[tuple[str, Sequence[Callable[[str], r[bool]]], bool, str | None]]
         ] = [
             (
                 "abc123",
@@ -114,7 +114,7 @@ class Testu(TextUtilityContract):
             ("test", [lambda d: r[bool].fail("First failed")], False, "First failed"),
             ("test", [], True, None),
         ]
-        TYPE_CHECKER_CASES: ClassVar[list[tuple[tuple[type, ...], type, bool]]] = [
+        TYPE_CHECKER_CASES: ClassVar[Sequence[tuple[tuple[type, ...], type, bool]]] = [
             ((str,), str, True),
             ((str, int), str, True),
             ((str, int), int, True),

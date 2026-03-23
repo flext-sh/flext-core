@@ -49,6 +49,6 @@ def test_utilities_vals_result_contract() -> None:
     assert values_from_failed_result.is_success and values_from_failed_result.value == [
         0,
     ]
-    empty_mapping: dict[str, int] = {}
+    empty_mapping: Mapping[str, int] = {}
     empty_without_default = u.vals(empty_mapping)
     assert empty_without_default.is_failure

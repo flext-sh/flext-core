@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from concurrent.futures import Future
 from typing import Annotated, ClassVar
 
@@ -49,7 +50,7 @@ class TestDispatcherTimeoutCoverage100:
             Field(description="Expected executor usage flag"),
         ]
 
-    _INIT_SCENARIOS: ClassVar[list[_TimeoutEnforcerScenario]] = [
+    _INIT_SCENARIOS: ClassVar[Sequence[_TimeoutEnforcerScenario]] = [
         _TimeoutEnforcerScenario(
             name="executor_enabled_multiple_workers",
             use_timeout_executor=True,
@@ -207,8 +208,8 @@ class TestDispatcherTimeoutCoverage100:
         def double(value: int) -> int:
             return value * 2
 
-        futures: list[Future[int]] = [executor.submit(double, i) for i in range(5)]
-        results: list[int] = [future.result() for future in futures]
+        futures: Sequence[Future[int]] = [executor.submit(double, i) for i in range(5)]
+        results: Sequence[int] = [future.result() for future in futures]
         tm.that(results, eq=[0, 2, 4, 6, 8])
 
     def test_executor_concurrent_execution(self) -> None:

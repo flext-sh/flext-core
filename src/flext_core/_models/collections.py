@@ -32,7 +32,7 @@ class FlextModelsCollections:
             cls,
             non_none: Sequence[t.MetadataValue],
         ) -> t.Numeric | None:
-            numeric: list[t.Numeric] = [
+            numeric: Sequence[t.Numeric] = [
                 v
                 for v in non_none
                 if isinstance(v, (int, float)) and not isinstance(v, bool)
@@ -43,8 +43,8 @@ class FlextModelsCollections:
         def _concatenate_lists(
             cls,
             non_none: Sequence[t.MetadataValue],
-        ) -> list[t.Scalar]:
-            combined: list[t.Scalar] = []
+        ) -> Sequence[t.Scalar]:
+            combined: Sequence[t.Scalar] = []
             for v in non_none:
                 if isinstance(v, list):
                     combined.extend(v)
@@ -55,7 +55,7 @@ class FlextModelsCollections:
             cls,
             non_none: Sequence[t.MetadataValue],
         ) -> Mapping[str, t.Scalar | Sequence[t.Scalar]]:
-            merged: dict[str, t.Scalar | Sequence[t.Scalar]] = {}
+            merged: Mapping[str, t.Scalar | Sequence[t.Scalar]] = {}
             for v in non_none:
                 if isinstance(v, Mapping):
                     for key, val in v.items():
@@ -74,7 +74,7 @@ class FlextModelsCollections:
             Strategy: booleans last-wins, numerics sum, lists concatenate,
             mappings merge, all others last-wins.
             """
-            non_none: list[t.MetadataValue] = [
+            non_none: Sequence[t.MetadataValue] = [
                 v for v in (existing, value) if v is not None
             ]
             if not non_none:
@@ -101,7 +101,7 @@ class FlextModelsCollections:
         ) -> Mapping[str, t.MetadataValue]:
             if not items:
                 return {}
-            aggregated: dict[str, t.MetadataValue | None] = {}
+            aggregated: Mapping[str, t.MetadataValue | None] = {}
             for item in items:
                 for key, value in item.model_dump().items():
                     aggregated[key] = cls._resolve_conflict(aggregated.get(key), value)
@@ -132,7 +132,7 @@ class FlextModelsCollections:
             validate_default=True,
             validate_assignment=True,
         )
-        categories: dict[str, list[t.MetadataValue]] = Field(
+        categories: Mapping[str, Sequence[t.MetadataValue]] = Field(
             default_factory=dict,
             description="Map of category name to list of items",
         )
@@ -251,7 +251,7 @@ class FlextModelsCollections:
         def merge_options(cls, *options: Self) -> Self:
             if not options:
                 return cls()
-            result: dict[str, t.MetadataValue | None] = {}
+            result: Mapping[str, t.MetadataValue | None] = {}
             for opt in options:
                 for key, value in opt.model_dump().items():
                     result[key] = cls._resolve_conflict(

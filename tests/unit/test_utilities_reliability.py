@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Final
 
@@ -115,9 +115,9 @@ class TestFlextUtilitiesReliability:
         def create_retry_operation(
             success_after: int,
             success_value: int = 42,
-        ) -> tuple[Callable[[], r[int]], list[int]]:
+        ) -> tuple[Callable[[], r[int]], Sequence[int]]:
             """Create retry operation that succeeds after N attempts."""
-            attempts: list[int] = []
+            attempts: Sequence[int] = []
 
             def op() -> r[int]:
                 attempts.append(len(attempts))
@@ -130,11 +130,11 @@ class TestFlextUtilitiesReliability:
         @staticmethod
         def create_delay_config(
             config_type: TestFlextUtilitiesReliability.DelayConfig,
-        ) -> dict[str, t.Scalar]:
+        ) -> Mapping[str, t.Scalar]:
             """Create delay configuration for given type."""
             configs: Mapping[
                 TestFlextUtilitiesReliability.DelayConfig,
-                dict[str, t.Scalar],
+                Mapping[str, t.Scalar],
             ] = {
                 TestFlextUtilitiesReliability.DelayConfig.EXPONENTIAL: {
                     "initial_delay_seconds": 0.1,
@@ -159,12 +159,12 @@ class TestFlextUtilitiesReliability:
         ) -> tuple[
             Callable[[], r[str]],
             Callable[[int, str | None], bool],
-            list[int],
-            list[str],
+            Sequence[int],
+            Sequence[str],
         ]:
             """Create controlled retry operation with should_retry and cleanup."""
-            attempts: list[int] = []
-            cleanups: list[str] = []
+            attempts: Sequence[int] = []
+            cleanups: Sequence[str] = []
 
             def op() -> r[str]:
                 attempts.append(len(attempts))

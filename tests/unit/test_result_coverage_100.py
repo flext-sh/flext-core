@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 
 import pytest
 from flext_tests import tm
@@ -359,7 +360,7 @@ class TestrCoverage:
             return r[int].ok(x * 2)
 
         items = [1, 2, 3]
-        result = r[list[int]].traverse(items, double)
+        result = r[Sequence[int]].traverse(items, double)
         self._ResultAssertions.assert_success_with_value(result, [2, 4, 6])
 
     def test_traverse_failure_propagates(self) -> None:
@@ -371,25 +372,25 @@ class TestrCoverage:
             return r[int].ok(x * 2)
 
         items = [1, 2, 3]
-        result = r[list[int]].traverse(items, double)
+        result = r[Sequence[int]].traverse(items, double)
         self._ResultAssertions.assert_failure_with_error(result, "Found 2")
 
     def test_accumulate_errors_all_success(self) -> None:
         """Test accumulate_errors with all successes."""
         results = [r[int].ok(1), r[int].ok(2), r[int].ok(3)]
-        combined = r[list[int]].accumulate_errors(*results)
+        combined = r[Sequence[int]].accumulate_errors(*results)
         self._ResultAssertions.assert_success_with_value(combined, [1, 2, 3])
 
     def test_accumulate_errors_with_failures(self) -> None:
         """Test accumulate_errors collects all error messages."""
         results = [r[int].ok(1), r[int].fail("error1"), r[int].fail("error2")]
-        combined = r[list[int]].accumulate_errors(*results)
+        combined = r[Sequence[int]].accumulate_errors(*results)
         self._ResultAssertions.assert_failure(combined)
         tm.fail(combined, has=["error1", "error2"])
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
-        resources_created: list[t.ConfigMap] = []
+        resources_created: Sequence[t.ConfigMap] = []
 
         def factory() -> t.ConfigMap:
             resource: t.ConfigMap = t.ConfigMap(root={"id": 1})
@@ -405,7 +406,7 @@ class TestrCoverage:
 
     def test_with_resource_with_cleanup(self) -> None:
         """Test with_resource executes cleanup even on success."""
-        cleanups_called: list[bool] = []
+        cleanups_called: Sequence[bool] = []
 
         def factory() -> t.ConfigMap:
             return t.ConfigMap(root={"id": 1})
@@ -488,7 +489,7 @@ class TestrCoverage:
     def test_large_value_handling(self) -> None:
         """Test handling of large values."""
         large_list = list(range(1000))
-        result = r[list[int]].ok(large_list)
+        result = r[Sequence[int]].ok(large_list)
         self._ResultAssertions.assert_success(result)
         tm.that(len(result.value), eq=1000)
 

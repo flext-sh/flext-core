@@ -49,7 +49,7 @@ def get_user(user_id: str) -> r[User]:
     pass
 
 
-def process_items(items: list[str], multiplier: int = 1) -> list[int]:
+def process_items(items: Sequence[str], multiplier: int = 1) -> Sequence[int]:
     """Process items."""
     return [len(item) * multiplier for item in items]
 
@@ -75,11 +75,11 @@ def get_user(user_id: str):  # NO Any type
 
 ```python
 # ✅ CORRECT - Be specific
-def process_users(users: list[User]) -> dict[str, User]:
+def process_users(users: Sequence[User]) -> Mapping[str, User]:
     pass
 
 
-def get_first_or_default(items: list[str], default: str) -> str:
+def get_first_or_default(items: Sequence[str], default: str) -> str:
     pass
 
 
@@ -102,7 +102,7 @@ U = TypeVar("U")
 
 
 # ✅ CORRECT
-def map_over(items: list[T], func: callable[[T], U]) -> list[U]:
+def map_over(items: Sequence[T], func: callable[[T], U]) -> Sequence[U]:
     """Map function over items."""
     return [func(item) for item in items]
 
@@ -390,16 +390,16 @@ ruff format --check src/
 ```python
 # ✅ CORRECT
 def add_user(
-    users: list[User],
+    users: Sequence[User],
     user: User,
-) -> list[User]:
+) -> Sequence[User]:
     new_users = users.copy()
     new_users.append(user)
     return new_users
 
 
 # ❌ WRONG - Mutable default
-def add_user(users: list[User] = []) -> list[User]:
+def add_user(users: Sequence[User] = []) -> Sequence[User]:
     users.append(user)  # Changes default!
     return users
 ```

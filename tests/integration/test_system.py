@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 
 from flext_core import (
     FlextConstants,
@@ -165,30 +166,30 @@ class TestCompleteFlextSystemIntegration:
         """Test complex integration scenarios."""
 
         def processar_dados_usuario(
-            dados: dict[str, str],
-        ) -> r[dict[str, str]]:
+            dados: Mapping[str, str],
+        ) -> r[Mapping[str, str]]:
             """Função que simula processamento completo usando todo o sistema.
 
             Returns:
-                r[dict[str, str]]: Resultado do processamento ou erro.
+                r[Mapping[str, str]]: Resultado do processamento ou erro.
 
             """
             if not dados:
-                return r[dict[str, str]].fail(
+                return r[Mapping[str, str]].fail(
                     "Dados não fornecidos",
                     error_code=FlextConstants.VALIDATION_ERROR,
                 )
-            dados_processados: dict[str, str] = {}
+            dados_processados: Mapping[str, str] = {}
             for key, value in dados.items():
                 if not u.is_string_non_empty(value):
-                    return r[dict[str, str]].fail(
+                    return r[Mapping[str, str]].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=FlextConstants.VALIDATION_ERROR,
                     )
                 dados_processados[key] = f"processado_{value}"
             dados_processados["processado_em"] = u.generate_iso_timestamp()
             dados_processados["processado_por"] = "sistema_flext"
-            return r[dict[str, str]].ok(dados_processados)
+            return r[Mapping[str, str]].ok(dados_processados)
 
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
         resultado_processamento = processar_dados_usuario(dados_teste)

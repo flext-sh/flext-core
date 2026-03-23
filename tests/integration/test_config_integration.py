@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
@@ -38,19 +39,19 @@ class TestFlextSettingsSingletonIntegration:
 
         test_name: Annotated[str, Field(description="Configuration test case name")]
         config_data: Annotated[
-            dict[str, t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
             Field(
                 description="Input configuration payload",
             ),
         ]
-        expected_values: dict[str, t.NormalizedValue] = Field(
+        expected_values: Mapping[str, t.NormalizedValue] = Field(
             default_factory=dict,
             description="Expected effective values",
         )
         file_format: str = Field(
             default="json", description="Configuration file format"
         )
-        env_vars: dict[str, str] = Field(
+        env_vars: Mapping[str, str] = Field(
             default_factory=dict,
             description="Environment variable overrides",
         )
@@ -97,7 +98,7 @@ class TestFlextSettingsSingletonIntegration:
         """Centralized factories for configuration tests."""
 
         @staticmethod
-        def basic_config_cases() -> list[
+        def basic_config_cases() -> Sequence[
             TestFlextSettingsSingletonIntegration._ConfigTestCase
         ]:
             """Generate basic configuration test cases."""
@@ -137,7 +138,7 @@ class TestFlextSettingsSingletonIntegration:
             ]
 
         @staticmethod
-        def thread_safety_cases() -> list[
+        def thread_safety_cases() -> Sequence[
             TestFlextSettingsSingletonIntegration._ThreadSafetyTest
         ]:
             """Generate thread safety test cases."""
@@ -230,7 +231,7 @@ class TestFlextSettingsSingletonIntegration:
         saved_app = os.environ.pop("FLEXT_APP_NAME", None)
         saved_level = os.environ.pop("FLEXT_LOG_LEVEL", None)
         try:
-            config_data: dict[str, str | int | bool] = {
+            config_data: Mapping[str, str | int | bool] = {
                 "app_name": "test-app-from-json",
                 "environment": "test",
                 "log_level": "WARNING",
@@ -265,7 +266,7 @@ class TestFlextSettingsSingletonIntegration:
         saved_debug = os.environ.pop("FLEXT_DEBUG", None)
         try:
             config_file = temp_directory / "config.yaml"
-            config_data: dict[str, str | int | bool] = {
+            config_data: Mapping[str, str | int | bool] = {
                 "app_name": "test-app-from-yaml",
                 "environment": "production",
                 "debug": False,
@@ -299,7 +300,10 @@ class TestFlextSettingsSingletonIntegration:
         """
         FlextSettings.reset_for_testing()
         try:
-            json_config: dict[str, str | int] = {"app_name": "from-json", "port": 3000}
+            json_config: Mapping[str, str | int] = {
+                "app_name": "from-json",
+                "port": 3000,
+            }
             json_file = temp_directory / "config.json"
             with json_file.open("w", encoding="utf-8") as f:
                 json.dump(json_config, f)
@@ -324,13 +328,13 @@ class TestFlextSettingsSingletonIntegration:
 
     def test_config_singleton_thread_safety(self) -> None:
         """Test that singleton is thread-safe."""
-        configs: list[FlextSettings] = []
+        configs: Sequence[FlextSettings] = []
 
         def get_config() -> None:
             config = FlextSettings.get_global()
             configs.append(config)
 
-        threads: list[threading.Thread] = []
+        threads: Sequence[threading.Thread] = []
         for _ in range(10):
             t = threading.Thread(target=get_config)
             threads.append(t)
@@ -355,7 +359,7 @@ class TestFlextSettingsSingletonIntegration:
         This is critical for CLI integration and automatic configuration.
         """
         FlextSettings.reset_for_testing()
-        saved_env_vars: dict[str, str | None] = {
+        saved_env_vars: Mapping[str, str | None] = {
             "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
             "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
             "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),

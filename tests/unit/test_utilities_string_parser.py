@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import cast
 
 import pytest
@@ -32,41 +32,41 @@ from flext_core import r
 from tests import c, m, t, u
 
 
-def _parse_delimited_cases() -> list[m.Core.ParseDelimitedCase]:
+def _parse_delimited_cases() -> Sequence[m.Core.ParseDelimitedCase]:
     builder = cast(
-        "Callable[[], list[m.Core.ParseDelimitedCase]]",
+        "Callable[[], Sequence[m.Core.ParseDelimitedCase]]",
         globals()["StringParserTestFactory"].parse_delimited_cases,
     )
     return builder()
 
 
-def _split_escape_cases() -> list[m.Core.SplitEscapeCase]:
+def _split_escape_cases() -> Sequence[m.Core.SplitEscapeCase]:
     builder = cast(
-        "Callable[[], list[m.Core.SplitEscapeCase]]",
+        "Callable[[], Sequence[m.Core.SplitEscapeCase]]",
         globals()["StringParserTestFactory"].split_escape_cases,
     )
     return builder()
 
 
-def _normalize_whitespace_cases() -> list[m.Core.NormalizeWhitespaceCase]:
+def _normalize_whitespace_cases() -> Sequence[m.Core.NormalizeWhitespaceCase]:
     builder = cast(
-        "Callable[[], list[m.Core.NormalizeWhitespaceCase]]",
+        "Callable[[], Sequence[m.Core.NormalizeWhitespaceCase]]",
         globals()["StringParserTestFactory"].normalize_whitespace_cases,
     )
     return builder()
 
 
-def _regex_pipeline_cases() -> list[m.Core.RegexPipelineCase]:
+def _regex_pipeline_cases() -> Sequence[m.Core.RegexPipelineCase]:
     builder = cast(
-        "Callable[[], list[m.Core.RegexPipelineCase]]",
+        "Callable[[], Sequence[m.Core.RegexPipelineCase]]",
         globals()["StringParserTestFactory"].regex_pipeline_cases,
     )
     return builder()
 
 
-def normalized_value_key_cases() -> list[m.Core.ObjectKeyCase]:
+def normalized_value_key_cases() -> Sequence[m.Core.ObjectKeyCase]:
     builder = cast(
-        "Callable[[], list[m.Core.ObjectKeyCase]]",
+        "Callable[[], Sequence[m.Core.ObjectKeyCase]]",
         globals()["StringParserTestFactory"].object_key_cases,
     )
     return builder()
@@ -79,7 +79,7 @@ class TestuStringParser:
         """Factory for generating test cases with edge cases."""
 
         @staticmethod
-        def parse_delimited_cases() -> list[m.Core.ParseDelimitedCase]:
+        def parse_delimited_cases() -> Sequence[m.Core.ParseDelimitedCase]:
             """Generate comprehensive parse_delimited test cases."""
             return [
                 m.Core.ParseDelimitedCase(
@@ -208,7 +208,7 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def split_escape_cases() -> list[m.Core.SplitEscapeCase]:
+        def split_escape_cases() -> Sequence[m.Core.SplitEscapeCase]:
             """Generate comprehensive split_on_char_with_escape test cases."""
             return [
                 m.Core.SplitEscapeCase(
@@ -283,7 +283,7 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def normalize_whitespace_cases() -> list[m.Core.NormalizeWhitespaceCase]:
+        def normalize_whitespace_cases() -> Sequence[m.Core.NormalizeWhitespaceCase]:
             """Generate comprehensive normalize_whitespace test cases."""
             return [
                 m.Core.NormalizeWhitespaceCase(
@@ -332,7 +332,7 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def regex_pipeline_cases() -> list[m.Core.RegexPipelineCase]:
+        def regex_pipeline_cases() -> Sequence[m.Core.RegexPipelineCase]:
             """Generate comprehensive apply_regex_pipeline test cases."""
             return [
                 m.Core.RegexPipelineCase(
@@ -392,7 +392,7 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def object_key_cases() -> list[m.Core.ObjectKeyCase]:
+        def object_key_cases() -> Sequence[m.Core.ObjectKeyCase]:
             """Generate comprehensive getNormalizedValue_key test cases (t.NormalizedValue only)."""
             return [
                 m.Core.ObjectKeyCase(
@@ -438,7 +438,7 @@ class TestuStringParser:
         ) -> None:
             """Test parse_delimited with parametrized cases."""
 
-            def operation() -> r[list[str]]:
+            def operation() -> r[Sequence[str]]:
                 """Execute parse_delimited based on case configuration."""
                 if case.use_legacy:
                     options = m.ParseOptions(
@@ -570,14 +570,16 @@ class TestuStringParser:
         def test_exception_handling(self, parser: u) -> None:
             """Test pipeline exception handling."""
             invalid_pattern = cast("tuple[str, str]", (None, "replacement"))
-            patterns: list[tuple[str, str] | tuple[str, str, int]] = [invalid_pattern]
+            patterns: Sequence[tuple[str, str] | tuple[str, str, int]] = [
+                invalid_pattern
+            ]
             result = parser.apply_regex_pipeline("test", patterns)
             assert result.is_failure
             assert c.TestErrors.FAILED_PIPELINE in (result.error or "")
 
         def test_invalid_pattern(self, parser: u) -> None:
             """Test pipeline with invalid regex pattern."""
-            patterns: list[tuple[str, str] | tuple[str, str, int]] = [
+            patterns: Sequence[tuple[str, str] | tuple[str, str, int]] = [
                 ("[invalid", "replacement"),
             ]
             result = parser.apply_regex_pipeline("test", patterns)
@@ -626,7 +628,7 @@ class TestuStringParser:
 
         def test_empty_patterns(self, parser: u) -> None:
             """Test pipeline with empty patterns list."""
-            patterns: list[tuple[str, str] | tuple[str, str, int]] = []
+            patterns: Sequence[tuple[str, str] | tuple[str, str, int]] = []
             result = parser.apply_regex_pipeline("test", patterns)
             u.Tests.Result.assert_success_with_value(result, "test")
 

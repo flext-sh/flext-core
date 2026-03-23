@@ -147,7 +147,7 @@ def fail(
     cls,
     error: str,
     error_code: str | None = None,
-    error_data: dict[str, t.NormalizedValue] | None = None,
+    error_data: Mapping[str, t.NormalizedValue] | None = None,
 ) -> r[Never]:
     """Create failed result with error message and optional code/data."""
     return cls._failure(error, error_code, error_data)

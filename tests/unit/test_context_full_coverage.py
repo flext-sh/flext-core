@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 from flext_tests import t, tm
 from pydantic import BaseModel
@@ -12,7 +14,7 @@ from tests import c, m
 
 class _ContainerStub:
     def __init__(self) -> None:
-        self.services: dict[str, t.Container | BaseModel] = {}
+        self.services: Mapping[str, t.Container | BaseModel] = {}
 
     def get(self, name: str) -> r[t.Container | BaseModel]:
         if name in self.services:
@@ -81,7 +83,7 @@ def test_set_set_all_get_validation_and_error_paths(
     tm.ok(ctx.set(t.ConfigMap(root={})))
 
     class _BadVar:
-        def get(self) -> dict[str, t.NormalizedValue]:
+        def get(self) -> Mapping[str, t.NormalizedValue]:
             return {}
 
         def set(self, _v: t.NormalizedValue) -> None:
@@ -106,7 +108,7 @@ def test_inactive_and_none_value_paths() -> None:
     tm.that(ctx.has("k") is False, eq=True)
     ctx.remove("k")
     ctx.clear()
-    merge_data: dict[str, t.NormalizedValue] = {"k": "v"}
+    merge_data: Mapping[str, t.NormalizedValue] = {"k": "v"}
     tm.that(ctx.merge(merge_data) is ctx, eq=True)
     tm.fail(ctx.validate_context())
     tm.that(ctx.keys(), eq=[])

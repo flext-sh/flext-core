@@ -230,7 +230,9 @@ from typing import TypeVar, Generic
 T = TypeVar("T")
 
 
-def process_data(data: dict[str, t.NormalizedValue]) -> dict[str, t.NormalizedValue]:
+def process_data(
+    data: Mapping[str, t.NormalizedValue],
+) -> Mapping[str, t.NormalizedValue]:
     """Specific types - type checker validates."""
     return data  # IDE knows dict methods
 
@@ -281,7 +283,7 @@ if result.is_success:
 
 ```python
 # ❌ ANTI-PATTERN - Suppresses type safety
-def calculate_total(items: list[Item]) -> Decimal:
+def calculate_total(items: Sequence[Item]) -> Decimal:
     total = 0
     for item in items:
         total += item.price
@@ -295,7 +297,7 @@ def calculate_total(items: list[Item]) -> Decimal:
 from decimal import Decimal
 
 
-def calculate_total(items: list[Item]) -> Decimal:
+def calculate_total(items: Sequence[Item]) -> Decimal:
     total = Decimal("0")  # Correct type from start
     for item in items:
         total += item.price

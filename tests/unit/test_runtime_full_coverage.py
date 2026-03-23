@@ -7,7 +7,7 @@ import io
 import logging
 import queue
 import types
-from collections.abc import Callable, Generator, Iterator, Mapping
+from collections.abc import Callable, Generator, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
@@ -92,7 +92,7 @@ def test_async_log_writer_paths() -> None:
     class Stream(io.StringIO):
         def __init__(self) -> None:
             super().__init__()
-            self.messages: list[str] = []
+            self.messages: Sequence[str] = []
             self.flushed = 0
 
         @override
@@ -132,7 +132,7 @@ def test_async_log_writer_paths() -> None:
         def __init__(self) -> None:
             super().__init__()
             self.first: bool = True
-            self.messages: list[str] = []
+            self.messages: Sequence[str] = []
 
         @override
         def write(self, message: str) -> int:
@@ -355,16 +355,16 @@ def test_dependency_registration_duplicate_guards() -> None:
 
 
 def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[dict[str, t.Scalar]] = []
+    calls: Sequence[Mapping[str, t.Scalar]] = []
 
     class StatefulModule:
         def __init__(self) -> None:
             self._print_access: int = 0
 
-            def _merge_contextvars(*_args: t.Scalar) -> dict[str, t.Scalar]:
+            def _merge_contextvars(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
                 return {}
 
-            def _add_log_level(*_args: t.Scalar) -> dict[str, t.Scalar]:
+            def _add_log_level(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
                 return {}
 
             def _time_stamper(**_kwargs: t.Scalar) -> t.Scalar:
@@ -426,7 +426,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class Config:
         log_level: int = logging.DEBUG
         console_renderer: bool = True
-        additional_processors: ClassVar[list[Callable[..., dict[str, t.Scalar]]]] = [
+        additional_processors: ClassVar[
+            Sequence[Callable[..., Mapping[str, t.Scalar]]]
+        ] = [
             lambda *_args: {},
         ]
         wrapper_class_factory: Callable[..., t.Scalar] | None = None
@@ -452,7 +454,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class ConfigNoAsync:
         log_level: int = logging.INFO
         console_renderer: bool = True
-        additional_processors: list[Callable[..., dict[str, t.Scalar]]] | None = None
+        additional_processors: (
+            Sequence[Callable[..., Mapping[str, t.Scalar]]] | None
+        ) = None
         wrapper_class_factory: Callable[..., t.Scalar] | None = None
         logger_factory: Callable[..., t.Scalar] | None = None
         cache_logger_on_first_use: bool = True
@@ -468,7 +472,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class ConfigAsyncFallback:
         log_level: int = logging.INFO
         console_renderer: bool = True
-        additional_processors: list[Callable[..., dict[str, t.Scalar]]] | None = None
+        additional_processors: (
+            Sequence[Callable[..., Mapping[str, t.Scalar]]] | None
+        ) = None
         wrapper_class_factory: Callable[..., t.Scalar] | None = None
         logger_factory: Callable[..., t.Scalar] | None = None
         cache_logger_on_first_use: bool = True
@@ -544,10 +550,10 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(success.flat_map(_ok_plus_two).value, eq=3)
     tm.that(success.fold(_error_to_int, _plus_one), eq=2)
     tm.that(failure.fold(_error_to_int, _plus_one), eq=1)
-    tapped: list[int] = []
+    tapped: Sequence[int] = []
     success.tap(lambda x: tapped.append(x))
     tm.that(tapped, eq=[1])
-    errors: list[str] = []
+    errors: Sequence[str] = []
     failure.tap_error(lambda err: errors.append(err))
     tm.that(errors, eq=["e"])
     tm.that(failure.map_error(lambda err: err.upper()).error, eq="E")
@@ -726,7 +732,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     tm.that(trace_from_mapping, has="trace_id")
     trace_from_other = FlextRuntime.ensure_trace_context("path")
     tm.that(trace_from_other, has="trace_id")
-    ok_statuses: list[int | str] = [200, "201"]
+    ok_statuses: Sequence[int | str] = [200, "201"]
     ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
     tm.that(ok_result.is_success and ok_result.value == [200, 201], eq=True)
     bad_range = FlextRuntime.validate_http_status_codes([99])
@@ -734,7 +740,9 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
         bad_range.is_failure and "Invalid HTTP status code" in (bad_range.error or ""),
         eq=True,
     )
-    invalid_statuses: list[int | str] = cast("list[int | str]", [t.NormalizedValue()])
+    invalid_statuses: Sequence[int | str] = cast(
+        "Sequence[int | str]", [t.NormalizedValue()]
+    )
     bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
     tm.that(
         bad_type.is_failure and "Cannot convert to integer" in (bad_type.error or ""),
@@ -805,10 +813,10 @@ def test_configure_structlog_print_logger_factory_fallback(
             self.print_calls: int = 0
             self.print_calls = 0
 
-            def _merge_contextvars(*_args: t.Scalar) -> dict[str, t.Scalar]:
+            def _merge_contextvars(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
                 return {}
 
-            def _add_log_level(*_args: t.Scalar) -> dict[str, t.Scalar]:
+            def _add_log_level(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
                 return {}
 
             def _time_stamper(**_kwargs: t.Scalar) -> t.Scalar:
@@ -854,7 +862,9 @@ def test_configure_structlog_print_logger_factory_fallback(
                 return _print_logger_factory
             return object.__getattribute__(self, name)
 
-        def make_filtering_bound_logger(self, level: int) -> type[dict[str, t.Scalar]]:
+        def make_filtering_bound_logger(
+            self, level: int
+        ) -> type[Mapping[str, t.Scalar]]:
             _ = level
             return dict
 
@@ -952,7 +962,7 @@ def test_runtime_result_remaining_paths() -> None:
 
 
 def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    events: list[tuple[str, dict[str, t.NormalizedValue]]] = []
+    events: Sequence[tuple[str, Mapping[str, t.NormalizedValue]]] = []
 
     class Logger:
         def info(self, message: str, **kwargs: t.Scalar) -> None:
@@ -966,7 +976,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     class CtxVars:
         @staticmethod
-        def get_contextvars() -> dict[str, str]:
+        def get_contextvars() -> Mapping[str, str]:
             return {"correlation_id": "corr-1"}
 
         @staticmethod
@@ -1030,9 +1040,14 @@ def test_model_helpers_remaining_paths() -> None:
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:
-    payload: dict[
+    payload: Mapping[
         str,
-        t.Container | list[int] | dict[str, int] | Callable[[], int] | type | None,
+        t.Container
+        | Sequence[int]
+        | Mapping[str, int]
+        | Callable[[], int]
+        | type
+        | None,
     ] = {
         "none": None,
         "str": "x",

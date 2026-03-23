@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from typing import ClassVar, override
 
 from pydantic import PrivateAttr
@@ -207,13 +208,15 @@ class Ex11FlextService(Examples):
 
         self.check(
             "traverse.success",
-            r[list[int]]
+            r[Sequence[int]]
             .traverse([even_a, even_b], _to_even, fail_fast=True)
             .unwrap_or([]),
         )
         self.check(
             "traverse.fail_fast",
-            r[list[int]].traverse([even_a, odd_value], _to_even, fail_fast=True).error,
+            r[Sequence[int]]
+            .traverse([even_a, odd_value], _to_even, fail_fast=True)
+            .error,
         )
         self.check(
             "accumulate_errors.ok",
@@ -524,7 +527,7 @@ class Ex11FlextService(Examples):
         self.check("ensure_trace_context.has_trace_id", "trace_id" in trace)
         self.check("ensure_trace_context.has_span_id", "span_id" in trace)
         self.check("ensure_trace_context.has_correlation_id", "correlation_id" in trace)
-        http_mixed: list[int | str] = [200, "201"]
+        http_mixed: Sequence[int | str] = [200, "201"]
         self.check(
             "validate_http_status_codes.ok",
             s.validate_http_status_codes(http_mixed).unwrap_or([]),

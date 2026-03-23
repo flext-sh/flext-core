@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping, Sequence
 
 import pytest
 from flext_tests import t
@@ -31,19 +32,19 @@ class TestArchitecturalPatterns:
             """Factory for creating different types of services."""
 
             @staticmethod
-            def create_service(service_type: str) -> r[dict[str, str]]:
+            def create_service(service_type: str) -> r[Mapping[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return r[dict[str, str]].ok({
+                    return r[Mapping[str, str]].ok({
                         "type": "email",
                         "provider": "smtp",
                     })
                 if service_type == "sms":
-                    return r[dict[str, str]].ok({
+                    return r[Mapping[str, str]].ok({
                         "type": "sms",
                         "provider": "twilio",
                     })
-                return r[dict[str, str]].fail(
+                return r[Mapping[str, str]].fail(
                     f"Unknown service type: {service_type}",
                 )
 
@@ -68,7 +69,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, t.NormalizedValue] = {}
+                self._config: Mapping[str, t.NormalizedValue] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -85,13 +86,13 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> r[dict[str, t.NormalizedValue]]:
+            def build(self) -> r[Mapping[str, t.NormalizedValue]]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[dict[str, t.NormalizedValue]].fail(
+                    return r[Mapping[str, t.NormalizedValue]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[dict[str, t.NormalizedValue]].ok(self._config.copy())
+                return r[Mapping[str, t.NormalizedValue]].ok(self._config.copy())
 
         config_result = (
             ConfigurationBuilder()
@@ -124,7 +125,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: dict[str, t.Container | BaseModel] = {}
+                self._data: Mapping[str, t.Container | BaseModel] = {}
                 self._query_count = 0
 
             def save(self, entity_id: str, data: t.Container | BaseModel) -> r[bool]:
@@ -213,7 +214,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: list[m.DomainEvent] = []
+                self.processed_events: Sequence[m.DomainEvent] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> r[bool]:
                 """Handle user created event."""
@@ -252,14 +253,14 @@ class TestArchitecturalPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: list[dict[str, t.NormalizedValue]] = []
+        observers: Sequence[Mapping[str, t.NormalizedValue]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: dict[str, t.NormalizedValue] = {"name": "Observer1", "state": None}
-        obs2: dict[str, t.NormalizedValue] = {"name": "Observer2", "state": None}
+        obs1: Mapping[str, t.NormalizedValue] = {"name": "Observer1", "state": None}
+        obs2: Mapping[str, t.NormalizedValue] = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
         notify_all("new_state")
         assert obs1["state"] == "new_state"

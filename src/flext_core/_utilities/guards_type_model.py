@@ -20,7 +20,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def is_object_list(
         value: t.NormalizedValue,
-    ) -> TypeIs[list[t.NormalizedValue]]:
+    ) -> TypeIs[Sequence[t.NormalizedValue]]:
         """Check if value is a list of normalized values.
 
         Args:

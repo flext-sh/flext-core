@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from decimal import Decimal
 
 from pydantic import EmailStr, Field, computed_field, field_validator
@@ -57,7 +58,7 @@ class Ex03OrderItem(m.Value):
     quantity: int = Field(ge=1)
 
 
-def _new_order_items() -> list[t.ConfigMap]:
+def _new_order_items() -> Sequence[t.ConfigMap]:
     """Create empty order-item list with explicit type."""
     return []
 
@@ -66,7 +67,7 @@ class Ex03Order(m.AggregateRoot):
     """Domain order aggregate."""
 
     customer_id: str
-    items: list[t.ConfigMap] = Field(default_factory=_new_order_items)
+    items: Sequence[t.ConfigMap] = Field(default_factory=_new_order_items)
     status: c.Status = c.Status.ACTIVE
 
     def add_item(self, item: Ex03OrderItem) -> r[Ex03Order]:

@@ -8,6 +8,8 @@ Tests the strict FlextDispatcher API:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_core import FlextDispatcher, r, t
 from tests import c, m
 
@@ -61,7 +63,7 @@ class TestDispatcherMinimal:
 
         def __init__(self) -> None:
             """Initialize received events list."""
-            self.received: list[m.Event] = []
+            self.received: Sequence[m.Event] = []
 
         def handle(self, event: m.Event) -> None:
             self.received.append(event)

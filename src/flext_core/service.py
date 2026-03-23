@@ -78,7 +78,7 @@ class FlextService[
     )
     # --- Service Bootstrap Configuration ---
     config_type: type[FlextSettings] | None = None
-    config_overrides: dict[str, t.NormalizedValue] | None = Field(
+    config_overrides: Mapping[str, t.NormalizedValue] | None = Field(
         default=None,
         exclude=True,
     )
@@ -108,7 +108,7 @@ class FlextService[
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
-    def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
+    def model_post_init(self, __context: Mapping[str, t.Scalar] | None, /) -> None:
         """Post-initialization hook.
 
         Sets up the service instance with runtime configuration after Pydantic
@@ -153,8 +153,8 @@ class FlextService[
     _config: p.Settings | None = PrivateAttr(default=None)
     _container: p.Container | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _discovered_handlers: list[tuple[str, m.DecoratorConfig]] = PrivateAttr(
-        default_factory=lambda: list[tuple[str, m.DecoratorConfig]](),
+    _discovered_handlers: Sequence[tuple[str, m.DecoratorConfig]] = PrivateAttr(
+        default_factory=lambda: Sequence[tuple[str, m.DecoratorConfig]](),
     )
 
     @property
@@ -242,7 +242,7 @@ class FlextService[
         )
         config_overrides_scalar: Mapping[str, t.Scalar] | None = None
         if config_overrides is not None:
-            normalized_overrides: dict[str, t.Scalar] = {
+            normalized_overrides: Mapping[str, t.Scalar] = {
                 key: value
                 for key, value in config_overrides.items()
                 if u.is_scalar(value)
@@ -301,7 +301,7 @@ class FlextService[
         )
         if runtime_kwargs:
             override_options = m.RuntimeBootstrapOptions.model_validate(runtime_kwargs)
-            overrides: dict[str, t.ValueOrModel] = {
+            overrides: Mapping[str, t.ValueOrModel] = {
                 field: getattr(override_options, field)
                 for field in m.RuntimeBootstrapOptions.model_fields
                 if getattr(override_options, field) is not None
@@ -379,7 +379,7 @@ class FlextService[
         """Normalize and validate scoped services using Pydantic model."""
         if services is None:
             return None
-        normalized: dict[str, t.RegisterableService] = {}
+        normalized: Mapping[str, t.RegisterableService] = {}
         for name, service in services.items():
             try:
                 m.ServiceRegistration(name=str(name), service=service)

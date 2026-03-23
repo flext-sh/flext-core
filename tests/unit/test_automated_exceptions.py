@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 
 import pytest
 from flext_tests import tm
@@ -152,7 +152,7 @@ class TestAutomatedExceptions:
         self,
         benchmark: Callable[..., t.NormalizedValue],
     ) -> None:
-        def create_and_dump() -> dict[str, str | float | None]:
+        def create_and_dump() -> Mapping[str, str | float | None]:
             err = FlextExceptions.OperationError(
                 "bench",
                 operation="publish",

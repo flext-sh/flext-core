@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import ClassVar, Unpack, override
 
@@ -119,11 +119,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
         )
-        self._accepted_message_types: list[type] = []
+        self._accepted_message_types: Sequence[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._metrics: dict[str, t.MetadataAttributeValue] = {}
-        self._stack: list[m.ExecutionContext | t.ConfigMap] = []
+        self._metrics: Mapping[str, t.MetadataAttributeValue] = {}
+        self._stack: Sequence[m.ExecutionContext | t.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless dispatcher integration."""
@@ -285,7 +285,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         *,
         priority: int = c.DEFAULT_PRIORITY,
         timeout: float | None = c.DEFAULT_TIMEOUT,
-        middleware: list[type[p.Middleware]] | None = None,
+        middleware: Sequence[type[p.Middleware]] | None = None,
     ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
         """Decorator to mark methods as handlers for commands.
 
@@ -667,7 +667,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> list[tuple[str, m.DecoratorConfig]]:
+        ) -> Sequence[tuple[str, m.DecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -685,7 +685,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     print(f"{method_name}: {config.command.__name__}")
 
             """
-            handlers: list[tuple[str, m.DecoratorConfig]] = []
+            handlers: Sequence[tuple[str, m.DecoratorConfig]] = []
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
                 if hasattr(method, c.HANDLER_ATTR):
@@ -699,7 +699,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, Callable[..., t.Scalar | None], m.DecoratorConfig]]:
+        ) -> Sequence[tuple[str, Callable[..., t.Scalar | None], m.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -717,7 +717,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     print(f"{func_name}: {config.command.__name__}")
 
             """
-            handlers: list[
+            handlers: Sequence[
                 tuple[
                     str,
                     Callable[..., t.Scalar | None],

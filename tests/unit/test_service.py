@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
@@ -163,7 +163,7 @@ class TestsCore:
             error_msg = f"Unknown scenario type: {scenario.scenario_type}"
             raise ValueError(error_msg)
 
-    def _service_scenarios(self) -> list[TestsCore.ServiceScenario]:
+    def _service_scenarios(self) -> Sequence[TestsCore.ServiceScenario]:
         return [
             self.ServiceScenario(
                 name="basic_user_service",

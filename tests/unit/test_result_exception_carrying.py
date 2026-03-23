@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sized
+from collections.abc import Mapping, Sequence, Sized
 from typing import cast
 
 from flext_tests import tm
@@ -55,12 +55,12 @@ class TestResultExceptionCarrying:
 
     def test_fail_with_exception_and_error_data(self) -> None:
         error_msg = "Validation failed"
-        error_data: dict[str, str] = {
+        error_data: Mapping[str, str] = {
             "field": "email",
             "reason": "invalid format",
         }
         exc = ValueError("invalid email")
-        result: r[dict[str, str]] = r[dict[str, str]].fail(
+        result: r[Mapping[str, str]] = r[Mapping[str, str]].fail(
             error_msg,
             error_data=error_data,
             exception=exc,
@@ -400,7 +400,7 @@ class TestResultExceptionCarrying:
         tm.that(isinstance(retrieved_exc, ValueError), eq=True)
 
     def test_exception_property_multiple_exception_types(self) -> None:
-        exceptions: list[BaseException] = [
+        exceptions: Sequence[BaseException] = [
             ValueError("value error"),
             TypeError("type error"),
             RuntimeError("runtime error"),

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import contextvars
 import time
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Final, Self, overload, override
@@ -49,7 +49,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if isinstance(value, BaseModel):
             raw = value.model_dump()
-            result: dict[str, t.NormalizedValue] = {}
+            result: Mapping[str, t.NormalizedValue] = {}
             for k, v in raw.items():
                 container_val = u.normalize_to_container(v)
                 if isinstance(container_val, BaseModel):
@@ -60,7 +60,9 @@ class FlextContext(m.ArbitraryTypesModel, u):
         return value
 
     @staticmethod
-    def _empty_hooks() -> dict[str, list[Callable[[t.Scalar], t.ValueOrModel | None]]]:
+    def _empty_hooks() -> Mapping[
+        str, Sequence[Callable[[t.Scalar], t.ValueOrModel | None]]
+    ]:
         return {}
 
     initial_data: Annotated[
@@ -77,7 +79,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return {}
 
         payload: (
-            dict[str, t.NormalizedValue | BaseModel] | Mapping[str, t.NormalizedValue]
+            Mapping[str, t.NormalizedValue | BaseModel]
+            | Mapping[str, t.NormalizedValue]
         )
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
             payload = ctx_value.root
@@ -89,7 +92,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return {}
 
         try:
-            normalized: dict[str, t.NormalizedValue] = {}
+            normalized: Mapping[str, t.NormalizedValue] = {}
             mapping_value: Mapping[str, t.NormalizedValue | BaseModel] = dict(
                 payload.items(),
             )
@@ -119,13 +122,17 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return {}
 
     _metadata: m.Metadata = PrivateAttr()
-    _hooks: dict[str, list[Callable[[t.Scalar], t.ValueOrModel | None]]] = PrivateAttr(
-        default_factory=_empty_hooks,
+    _hooks: Mapping[str, Sequence[Callable[[t.Scalar], t.ValueOrModel | None]]] = (
+        PrivateAttr(
+            default_factory=_empty_hooks,
+        )
     )
     _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
-    _scope_vars: dict[str, contextvars.ContextVar[t.ConfigMap | None]] = PrivateAttr()
+    _scope_vars: Mapping[str, contextvars.ContextVar[t.ConfigMap | None]] = (
+        PrivateAttr()
+    )
 
     def __init__(self, **data: t.ValueOrModel) -> None:
         """Initialize FlextContext with optional initial data.
@@ -390,7 +397,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             metadata_dict_export = self._get_all_metadata()
         metadata_for_model: t.ConfigMap | None = None
         if metadata_dict_export:
-            normalized_metadata_map: dict[str, t.ValueOrModel] = {}
+            normalized_metadata_map: Mapping[str, t.ValueOrModel] = {}
             for k, v in metadata_dict_export.items():
                 metadata_value: t.ValueOrModel = v
                 if isinstance(v, Mapping):
@@ -405,9 +412,9 @@ class FlextContext(m.ArbitraryTypesModel, u):
             root=dict((stats_dict_export or t.ConfigMap(root={})).items()),
         )
         if as_dict:
-            result_dict: dict[str, t.NormalizedValue] = dict(all_scopes.items())
+            result_dict: Mapping[str, t.NormalizedValue] = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
-                stats_items: dict[str, t.NormalizedValue] = {
+                stats_items: Mapping[str, t.NormalizedValue] = {
                     sk: FlextContext._to_normalized(sv)
                     for sk, sv in stats_dict_export.items()
                 }
@@ -416,7 +423,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 metadata_container: t.ConfigMap = t.ConfigMap(
                     root=dict(metadata_dict_export.items()),
                 )
-                meta_items: dict[str, t.NormalizedValue] = {
+                meta_items: Mapping[str, t.NormalizedValue] = {
                     mk: FlextContext._to_normalized(mv)
                     for mk, mv in metadata_container.items()
                 }
@@ -556,7 +563,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         return key in scope_data
 
     @override
-    def items(self) -> list[tuple[str, t.NormalizedValue]]:
+    def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
         """Get all items (key-value pairs) in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -567,7 +574,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return []
-        all_items: list[tuple[str, t.NormalizedValue]] = []
+        all_items: Sequence[tuple[str, t.NormalizedValue]] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_items.extend(scope_dict.items())
@@ -588,7 +595,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         return self._scope_vars
 
     @override
-    def keys(self) -> list[str]:
+    def keys(self) -> Sequence[str]:
         """Get all keys in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -629,7 +636,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             exported_result = other.export(as_dict=True)
             if not isinstance(exported_result, BaseModel):
                 try:
-                    exported_items: dict[str, t.ValueOrModel] = dict(
+                    exported_items: Mapping[str, t.ValueOrModel] = dict(
                         exported_result.items(),
                     )
                     exported_map = t.ConfigMap(root=exported_items)
@@ -642,7 +649,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             exported_map = other
         else:
             try:
-                mapping_root: dict[str, t.ValueOrModel] = dict(other.items())
+                mapping_root: Mapping[str, t.ValueOrModel] = dict(other.items())
                 exported_map = t.ConfigMap(root=mapping_root)
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
@@ -787,7 +794,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         return r[bool].ok(value=True)
 
     @override
-    def values(self) -> list[t.NormalizedValue]:
+    def values(self) -> Sequence[t.NormalizedValue]:
         """Get all values in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -798,7 +805,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return []
-        all_values: list[t.NormalizedValue] = []
+        all_values: Sequence[t.NormalizedValue] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
@@ -842,7 +849,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         data = dict(self._metadata.model_dump().items())
         custom_fields_raw = data.pop("custom_fields", {})
-        custom_fields_dict: dict[str, t.NormalizedValue] = {}
+        custom_fields_dict: Mapping[str, t.NormalizedValue] = {}
         try:
             cf_map = t.ConfigMap(root=dict(custom_fields_raw.items()))
             for ck, cv in cf_map.items():
@@ -853,7 +860,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 exc_info=exc,
             )
             custom_fields_dict = {}
-        result: dict[str, t.NormalizedValue] = {}
+        result: Mapping[str, t.NormalizedValue] = {}
         for k, v in data.items():
             if v is None or v == {}:
                 continue
@@ -879,7 +886,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return {}
-        scopes: dict[str, dict[str, t.NormalizedValue]] = {}
+        scopes: Mapping[str, Mapping[str, t.NormalizedValue]] = {}
         for scope_name, ctx_var in self._scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
@@ -952,7 +959,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         updated.update(data.root)
         _ = ctx_var.set(updated)
         if scope == c.SCOPE_GLOBAL:
-            normalized_context: dict[str, t.RuntimeAtomic] = {
+            normalized_context: Mapping[str, t.RuntimeAtomic] = {
                 key: u.normalize_to_container(value)
                 for key, value in data.items()
                 if value is not None
@@ -1000,7 +1007,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
         """
         counter_attr: str = f"{operation}s"
-        update_fields: dict[str, t.ValueOrModel] = {}
+        update_fields: Mapping[str, t.ValueOrModel] = {}
         if counter_attr in m.ContextStatistics.model_fields:
             current_value = getattr(self._statistics, counter_attr, 0)
             if isinstance(current_value, int):
@@ -1332,7 +1339,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                         u.normalize_to_metadata(operation_metadata_raw),
                     ),
                 )
-            raw_ctx: dict[str, t.ValueOrModel | None] = {
+            raw_ctx: Mapping[str, t.ValueOrModel | None] = {
                 c.KEY_CORRELATION_ID: context_vars.Correlation.CORRELATION_ID.get(),
                 c.KEY_PARENT_CORRELATION_ID: context_vars.Correlation.PARENT_CORRELATION_ID.get(),
                 c.KEY_SERVICE_NAME: context_vars.Service.SERVICE_NAME.get(),
@@ -1389,4 +1396,4 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return new_correlation_id
 
 
-__all__: list[str] = ["FlextContext"]
+__all__: Sequence[str] = ["FlextContext"]

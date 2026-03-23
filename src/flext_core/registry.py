@@ -50,16 +50,16 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: list[m.RegistrationDetails] = Field(
-            default_factory=lambda: list[m.RegistrationDetails](),
+        registered: Sequence[m.RegistrationDetails] = Field(
+            default_factory=lambda: Sequence[m.RegistrationDetails](),
             description="Successfully registered handlers with registration details.",
         )
-        skipped: list[str] = Field(
+        skipped: Sequence[str] = Field(
             default_factory=list,
             description="Handler identifiers that were skipped (already registered)",
             examples=[["CreateUserCommand", "UpdateUserCommand"]],
         )
-        errors: list[str] = Field(
+        errors: Sequence[str] = Field(
             default_factory=list,
             description="Error messages for failed registrations",
             examples=[["Handler validation failed", "Duplicate registration"]],
@@ -87,13 +87,13 @@ class FlextRegistry(s[bool]):
 
     _dispatcher: p.Dispatcher | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
-    _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
+    _class_plugin_storage: ClassVar[Mapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
     dispatcher: Annotated[p.Dispatcher | None, Field(default=None, exclude=True)] = None
 
     @override
-    def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
+    def model_post_init(self, __context: Mapping[str, t.Scalar] | None, /) -> None:
         """Post-initialization hook for registry.
 
         Calls parent model_post_init for runtime setup, then resolves
@@ -251,21 +251,23 @@ class FlextRegistry(s[bool]):
             self._narrow_value(cls._class_plugin_storage[key]),
         )
 
-    def list_plugins(self, category: str, *, scope: str = "instance") -> r[list[str]]:
+    def list_plugins(
+        self, category: str, *, scope: str = "instance"
+    ) -> r[Sequence[str]]:
         """List all plugins in a category.
 
         Args:
             category: Plugin category to list
 
         Returns:
-            r[list[str]]: Success with list of plugin names.
+            r[Sequence[str]]: Success with list of plugin names.
 
         """
         keys = self._registered_keys
         if scope == "class":
             keys = self._class_registered_keys
         plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
-        return r[list[str]].ok(plugins)
+        return r[Sequence[str]].ok(plugins)
 
     def register(
         self,
@@ -294,7 +296,7 @@ class FlextRegistry(s[bool]):
                 raw_metadata = metadata.attributes
             else:
                 raw_metadata = metadata.root
-            normalized_root: dict[str, t.ValueOrModel] = {}
+            normalized_root: Mapping[str, t.ValueOrModel] = {}
             for k, v in raw_metadata.items():
                 if isinstance(v, (*t.CONTAINER_TYPES, BaseModel)):
                     normalized_root[k] = v

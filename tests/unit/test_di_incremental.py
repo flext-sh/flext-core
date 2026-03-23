@@ -100,7 +100,7 @@ class TestDIIncremental:
         di_container = FlextRuntime.DependencyIntegration.create_container()
         call_count = {"count": 0}
 
-        def factory() -> dict[str, int]:
+        def factory() -> Mapping[str, int]:
             call_count["count"] += 1
             return {"calls": call_count["count"]}
 
@@ -121,7 +121,7 @@ class TestDIIncremental:
         di_container = FlextRuntime.DependencyIntegration.create_container()
         call_count = {"count": 0}
 
-        def factory() -> dict[str, int]:
+        def factory() -> Mapping[str, int]:
             call_count["count"] += 1
             return {"calls": call_count["count"]}
 
@@ -142,7 +142,7 @@ class TestDIIncremental:
         di_container = FlextRuntime.DependencyIntegration.create_container()
         lifecycle = {"created": False, "closed": False}
 
-        def resource_factory() -> dict[str, bool]:
+        def resource_factory() -> Mapping[str, bool]:
             lifecycle["created"] = True
             return {"connected": True}
 
@@ -175,13 +175,13 @@ class TestDIIncremental:
         def api_call(
             key: str = FlextRuntime.DependencyIntegration.Provide["api_key"],
             timeout_sec: int = FlextRuntime.DependencyIntegration.Provide["timeout"],
-        ) -> dict[str, str | int]:
+        ) -> Mapping[str, str | int]:
             return {"key": key, "timeout": timeout_sec}
 
         setattr(module, "api_call", api_call)
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
         try:
-            api_call_func: Callable[[], dict[str, str | int]] = getattr(
+            api_call_func: Callable[[], Mapping[str, str | int]] = getattr(
                 module,
                 "api_call",
             )
@@ -201,13 +201,13 @@ class TestDIIncremental:
         def log_message(
             name: str = Provide["logger_name"],
             level: str = Provide["log_level"],
-        ) -> dict[str, str]:
+        ) -> Mapping[str, str]:
             return {"logger": name, "level": level}
 
         setattr(module, "log_message", log_message)
         container.wire_modules(modules=[module])
         try:
-            log_func: Callable[[], dict[str, str]] = module.log_message
+            log_func: Callable[[], Mapping[str, str]] = module.log_message
             result = log_func()
             tm.that(result, eq={"logger": "test_logger", "level": "INFO"})
         finally:
@@ -219,7 +219,7 @@ class TestDIIncremental:
         container = FlextContainer(_context=FlextContext())
         lifecycle = {"created": False, "closed": False}
 
-        def resource_factory() -> dict[str, bool]:
+        def resource_factory() -> Mapping[str, bool]:
             lifecycle["created"] = True
             return {"connected": True}
 
@@ -256,7 +256,7 @@ class TestDIIncremental:
         """Test create_service_runtime with resources."""
         lifecycle = {"created": False}
 
-        def db_factory() -> dict[str, bool]:
+        def db_factory() -> Mapping[str, bool]:
             lifecycle["created"] = True
             return {"connected": True}
 
@@ -314,13 +314,13 @@ class TestDIIncremental:
         def process_request(
             logger_name: str = Provide["custom_logger"],
             pool: Mapping[str, int] = Provide["db_pool"],
-        ) -> dict[str, str | int]:
+        ) -> Mapping[str, str | int]:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
         setattr(handler_module, "process_request", process_request)
         container.wire_modules(modules=[handler_module])
         try:
-            process_func: Callable[[], dict[str, str | int]] = (
+            process_func: Callable[[], Mapping[str, str | int]] = (
                 handler_module.process_request
             )
             result = process_func()
@@ -373,7 +373,7 @@ class TestDIIncremental:
         def api_call(
             url: str = Provide["built_url"],
             base: str = Provide["base_url"],
-        ) -> dict[str, str]:
+        ) -> Mapping[str, str]:
             return {"url": url, "base": base}
 
         setattr(module, "build_url", build_url)
@@ -382,7 +382,7 @@ class TestDIIncremental:
         _ = container.register("built_url", url_result)
         container.wire_modules(modules=[module])
         try:
-            api_call_func: Callable[[], dict[str, str]] = getattr(module, "api_call")
+            api_call_func: Callable[[], Mapping[str, str]] = getattr(module, "api_call")
             result = api_call_func()
             tm.that(result, has="url")
             tm.that(result, has="base")
@@ -424,10 +424,10 @@ class TestDIIncremental:
     def test_create_service_runtime_full_integration(self) -> None:
         """Test create_service_runtime with full DI integration."""
 
-        def factory() -> dict[str, str]:
+        def factory() -> Mapping[str, str]:
             return {"token": "generated_token"}
 
-        def resource_factory() -> dict[str, bool]:
+        def resource_factory() -> Mapping[str, bool]:
             return {"connected": True}
 
         runtime = s._create_runtime(
@@ -490,7 +490,7 @@ class TestDIIncremental:
         container = FlextContainer(_context=FlextContext())
         lifecycle = {"created": False, "destroyed": False}
 
-        def resource_factory() -> dict[str, bool]:
+        def resource_factory() -> Mapping[str, bool]:
             lifecycle["created"] = True
             return {"resource": True}
 

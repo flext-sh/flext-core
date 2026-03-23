@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, Any, ClassVar, cast
 
@@ -116,14 +117,14 @@ class TestEnumUtilitiesCoverage:
             Field(default=None, description="Expected error message fragment"),
         ] = None
 
-    IS_MEMBER: ClassVar[list[IsMemberScenario]] = [
+    IS_MEMBER: ClassVar[Sequence[IsMemberScenario]] = [
         IsMemberScenario(name="valid_enum", value=Status.ACTIVE, expected=True),
         IsMemberScenario(name="valid_string", value="active", expected=True),
         IsMemberScenario(name="invalid_string", value="invalid", expected=False),
         IsMemberScenario(name="invalid_type", value=123, expected=False),
         IsMemberScenario(name="none", value=None, expected=False),
     ]
-    IS_SUBSET: ClassVar[list[IsSubsetScenario]] = [
+    IS_SUBSET: ClassVar[Sequence[IsSubsetScenario]] = [
         IsSubsetScenario(
             name="valid_enum_in_subset",
             valid_members=frozenset({Status.ACTIVE, Status.PENDING}),
@@ -155,7 +156,7 @@ class TestEnumUtilitiesCoverage:
             expected=False,
         ),
     ]
-    PARSE: ClassVar[list[ParseScenario]] = [
+    PARSE: ClassVar[Sequence[ParseScenario]] = [
         ParseScenario(
             name="valid_string",
             value="active",
@@ -178,7 +179,7 @@ class TestEnumUtilitiesCoverage:
             expected_error="Cannot parse",
         ),
     ]
-    PARSE_OR_DEFAULT: ClassVar[list[ParseOrDefaultScenario]] = [
+    PARSE_OR_DEFAULT: ClassVar[Sequence[ParseOrDefaultScenario]] = [
         ParseOrDefaultScenario(
             name="valid_string",
             value="active",
@@ -204,7 +205,7 @@ class TestEnumUtilitiesCoverage:
             expected=Status.PENDING,
         ),
     ]
-    COERCE_VALIDATOR: ClassVar[list[CoerceValidatorScenario]] = [
+    COERCE_VALIDATOR: ClassVar[Sequence[CoerceValidatorScenario]] = [
         CoerceValidatorScenario(
             name="valid_string",
             value="active",
@@ -253,10 +254,9 @@ class TestEnumUtilitiesCoverage:
             value_typed: bool | float | int | str | self.Status = scenario.value
         else:
             value_typed = str(scenario.value)
-        valid_members = scenario.valid_members
         result = u.is_subset(
             self.Status,
-            valid_members,
+            cast("frozenset[TestEnumUtilitiesCoverage.Status]", scenario.valid_members),
             value_typed,
         )
         tm.that(result, eq=scenario.expected)

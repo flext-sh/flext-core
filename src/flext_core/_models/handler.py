@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import (
@@ -44,7 +45,7 @@ class FlextModelsHandler:
             Field(description="Handler callable function or method"),
         ]
         event_types: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 default_factory=list,
                 description="Event types this handler processes",
@@ -433,7 +434,7 @@ class FlextModelsHandler:
             ),
         ] = c.DEFAULT_TIMEOUT
         middleware: Annotated[
-            list[type[p.Middleware]],
+            Sequence[type[p.Middleware]],
             Field(
                 default_factory=list,
                 description="Middleware types to apply to this handler",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from types import SimpleNamespace
 from typing import Annotated, cast
 
@@ -19,9 +19,9 @@ from tests import c, m, t
 class TestDecoratorsFullCoverage:
     class _FakeLogger:
         def __init__(self) -> None:
-            self.warning_calls: list[tuple[str, dict[str, t.Scalar]]] = []
-            self.error_calls: list[tuple[str, dict[str, t.Scalar]]] = []
-            self.exception_calls: list[tuple[str, dict[str, t.Scalar]]] = []
+            self.warning_calls: Sequence[tuple[str, Mapping[str, t.Scalar]]] = []
+            self.error_calls: Sequence[tuple[str, Mapping[str, t.Scalar]]] = []
+            self.exception_calls: Sequence[tuple[str, Mapping[str, t.Scalar]]] = []
             self.logger = self
 
         def warning(self, message: str, **kwargs: t.Scalar) -> None:
@@ -371,7 +371,7 @@ class TestDecoratorsFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _ = self
-        ensure_calls: list[int] = []
+        ensure_calls: Sequence[int] = []
         fake_logger = self._FakeLogger()
 
         def _ensure_correlation_id() -> str:

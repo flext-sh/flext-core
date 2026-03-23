@@ -121,7 +121,7 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
 )
 def test_context_data_validate_dict_serializable_real_dicts(
     input_value: t.Dict,
-    expected_result: dict[str, t.NormalizedValue],
+    expected_result: Mapping[str, t.NormalizedValue],
 ) -> None:
     """Test validate_dict_serializable with real dict inputs."""
     result = FlextModelsContext.ContextData.validate_dict_serializable(input_value)
@@ -157,8 +157,8 @@ def test_context_export_serializable_and_validators() -> None:
     ids=["dict-input", "none-input"],
 )
 def test_context_export_validate_dict_serializable_valid(
-    input_value: dict[str, t.Scalar] | None,
-    expected_result: dict[str, t.Scalar],
+    input_value: Mapping[str, t.Scalar] | None,
+    expected_result: Mapping[str, t.Scalar],
 ) -> None:
     """Test ContextExport.validate_dict_serializable with valid inputs."""
     result = FlextModelsContext.ContextExport.validate_dict_serializable(input_value)
@@ -208,9 +208,9 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     with pytest.raises(ValueError, match="Cannot normalize"):
         _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
-    total_items: int = exported.total_data_items  # pyrefly: @computed_field
+    total_items = cast("int", exported.total_data_items)
     tm.that(total_items, eq=1)
-    has_stats: bool = exported.has_statistics  # pyrefly: @computed_field
+    has_stats = cast("bool", exported.has_statistics)
     tm.that(has_stats is True, eq=True)
 
 

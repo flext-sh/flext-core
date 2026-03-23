@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
 import pytest
@@ -76,7 +77,7 @@ def test_models_settings_context_validator_and_non_standard_status_input() -> No
         code_str,
     ])
     assert converted == [503]
-    status_codes: list[t.Scalar] = ["503"]
+    status_codes: Sequence[t.Scalar] = ["503"]
     converted_str = FlextModelsConfig.RetryConfiguration.validate_backoff_strategy(
         status_codes,
     )

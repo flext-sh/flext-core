@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
@@ -60,10 +60,11 @@ class TestModels:
             TestModels.ModelType, Field(description="Model type under creation test")
         ]
         field_data: Annotated[
-            dict[str, test_t.NormalizedValue], Field(description="Model input payload")
+            Mapping[str, test_t.NormalizedValue],
+            Field(description="Model input payload"),
         ]
         expected_checks: Annotated[
-            list[str], Field(description="Expected validation check labels")
+            Sequence[str], Field(description="Expected validation check labels")
         ]
         description: Annotated[
             str, Field(default="", description="Scenario description")
@@ -422,7 +423,7 @@ class TestModels:
             eq=True,
             msg="Entities with different unique_id must have different hash",
         )
-        entity_list: list[TestEntity] = [entity1, entity2, entity3]
+        entity_list: Sequence[TestEntity] = [entity1, entity2, entity3]
         entity_set = set(entity_list)
         tm.that(len(entity_set), eq=2, msg="Set must contain 2 unique entities")
 
@@ -570,7 +571,7 @@ class TestModels:
         class TestAggregate(m.AggregateRoot):
             name: str
             value: int
-            _invariants: ClassVar[list[Callable[[], bool]]] = [passing_invariant]
+            _invariants: ClassVar[Sequence[Callable[[], bool]]] = [passing_invariant]
 
         aggregate = TestAggregate(name="test", value=10, domain_events=[])
         aggregate.check_invariants()
@@ -580,7 +581,7 @@ class TestModels:
 
         class FailingAggregate(m.AggregateRoot):
             name: str
-            _invariants: ClassVar[list[Callable[[], bool]]] = [failing_invariant]
+            _invariants: ClassVar[Sequence[Callable[[], bool]]] = [failing_invariant]
 
         with pytest.raises(ValidationError, match="Invariant violated"):
             _ = FailingAggregate(name="test", domain_events=[])
@@ -597,7 +598,7 @@ class TestModels:
         value3 = TestValue(name="other", value=42)
         assert value1 == value2
         assert value1 != value3
-        value_list: list[TestValue] = [value1, value2, value3]
+        value_list: Sequence[TestValue] = [value1, value2, value3]
         value_set = set(value_list)
         assert len(value_set) == 2
         with pytest.raises(ValidationError):
@@ -729,11 +730,11 @@ class TestModels:
             name: str
             handler_called: bool = False
             handler_data: Annotated[
-                dict[str, test_t.NormalizedValue], Field(default_factory=dict)
+                Mapping[str, test_t.NormalizedValue], Field(default_factory=dict)
             ]
 
             def _apply_test_event(
-                self, data: dict[str, test_t.NormalizedValue]
+                self, data: Mapping[str, test_t.NormalizedValue]
             ) -> None:
                 self.handler_called = True
                 self.handler_data = data
@@ -754,7 +755,7 @@ class TestModels:
             name: str
 
             def _apply_failing_event(
-                self, _data: dict[str, test_t.NormalizedValue]
+                self, _data: Mapping[str, test_t.NormalizedValue]
             ) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
@@ -1037,7 +1038,7 @@ class TestModels:
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
-        stats: dict[str, t.NormalizedValue] = {"sets": 10, "gets": 20}
+        stats: Mapping[str, t.NormalizedValue] = {"sets": 10, "gets": 20}
         export = m.ContextExport(
             data=t.Dict(root={"key": "value"}).root,
             metadata=m.Metadata(attributes={"version": "1.0"}),

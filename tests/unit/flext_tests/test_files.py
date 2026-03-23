@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -147,7 +147,7 @@ class TestFlextTestsFiles:
 
     def test_create_file_set(self, tmp_path: Path) -> None:
         """Test creating multiple files from dictionary."""
-        files: dict[
+        files: Mapping[
             str,
             str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1", "file2": "content2", "file3.txt": "content3"}
@@ -162,7 +162,7 @@ class TestFlextTestsFiles:
 
     def test_create_file_set_custom_extension(self, tmp_path: Path) -> None:
         """Test creating file set with custom extension."""
-        files: dict[
+        files: Mapping[
             str,
             str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
@@ -281,7 +281,7 @@ class TestFlextTestsFiles:
 
     def test_temporary_files_classmethod(self) -> None:
         """Test files classmethod context manager."""
-        files: dict[
+        files: Mapping[
             str,
             str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1", "file2": "content2"}
@@ -296,7 +296,7 @@ class TestFlextTestsFiles:
 
     def test_temporary_files_custom_extension(self) -> None:
         """Test files with custom extension."""
-        files: dict[
+        files: Mapping[
             str,
             str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
@@ -306,7 +306,7 @@ class TestFlextTestsFiles:
     def test_create_file_set_nested_directory(self, tmp_path: Path) -> None:
         """Test creating files in nested directory."""
         nested_dir = tmp_path / "nested" / "subdir"
-        files: dict[
+        files: Mapping[
             str,
             str | bytes | t.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
@@ -364,7 +364,7 @@ class TestFlextTestsFiles:
         assert data == content.root
 
     def test_create_csv_auto_detect_from_list(self, tmp_path: Path) -> None:
-        """Test create() auto-detects CSV from list[list] content."""
+        """Test create() auto-detects CSV from Sequence[list] content."""
         manager = tf(base_dir=tmp_path)
         content = [["a", "b"], ["1", "2"]]
         path = manager.create(content, "data.csv")
@@ -448,7 +448,7 @@ class TestFlextTestsFiles:
         assert result.value == content
 
     def test_read_csv_file(self, tmp_path: Path) -> None:
-        """Test read() returns list[list] content for .csv files."""
+        """Test read() returns Sequence[list] content for .csv files."""
         manager = tf(base_dir=tmp_path)
         content = [["a", "b"], ["1", "2"]]
         path = manager.create(content, "data.csv")

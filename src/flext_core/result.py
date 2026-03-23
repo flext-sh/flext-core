@@ -162,18 +162,18 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             )
 
     @classmethod
-    def accumulate_errors(cls, *results: FlextResult[U]) -> FlextResult[list[U]]:
+    def accumulate_errors(cls, *results: FlextResult[U]) -> FlextResult[Sequence[U]]:
         """Collect all successes, fail if any failure with all errors combined."""
-        successes: list[U] = []
-        errors: list[str] = []
+        successes: Sequence[U] = []
+        errors: Sequence[str] = []
         for result in results:
             if result.is_success:
                 successes.append(result.value)
             else:
                 errors.append(result.error or "Unknown error")
         if errors:
-            return FlextResult[list[U]].fail("; ".join(errors))
-        return FlextResult[list[U]](value=successes, is_success=True)
+            return FlextResult[Sequence[U]].fail("; ".join(errors))
+        return FlextResult[Sequence[U]](value=successes, is_success=True)
 
     @classmethod
     def create_from_callable[V](
@@ -284,7 +284,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         func: Callable[[V], FlextResult[U]],
         *,
         fail_fast: bool = True,
-    ) -> FlextResult[list[U]]:
+    ) -> FlextResult[Sequence[U]]:
         """Map over sequence with configurable failure handling.
 
         Args:
@@ -299,18 +299,18 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
         """
         if fail_fast:
-            results: list[U] = []
+            results: Sequence[U] = []
             for item in items:
                 result = func(item)
                 if result.is_failure:
-                    return FlextResult[list[U]].fail(
+                    return FlextResult[Sequence[U]].fail(
                         result.error or "Unknown error",
                         error_code=result.error_code,
                         error_data=result.error_data,
                         exception=result.exception,
                     )
                 results.append(result.value)
-            return FlextResult[list[U]](value=results, is_success=True)
+            return FlextResult[Sequence[U]](value=results, is_success=True)
         all_results = [func(item) for item in items]
         return cls.accumulate_errors(*all_results)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import override
 
 from examples import Examples
@@ -26,15 +27,15 @@ class Ex01r(Examples):
 
         self.check(
             "traverse.success",
-            r[list[int]].traverse([2, 4, 6], to_even, fail_fast=True).unwrap_or([]),
+            r[Sequence[int]].traverse([2, 4, 6], to_even, fail_fast=True).unwrap_or([]),
         )
         self.check(
             "traverse.fail_fast",
-            r[list[int]].traverse([2, 3, 4], to_even, fail_fast=True).error,
+            r[Sequence[int]].traverse([2, 3, 4], to_even, fail_fast=True).error,
         )
         self.check(
             "traverse.collect",
-            r[list[int]].traverse([1, 3, 5], to_even, fail_fast=False).error,
+            r[Sequence[int]].traverse([1, 3, 5], to_even, fail_fast=False).error,
         )
         acc_ok = r.accumulate_errors(r[int].ok(1), r[int].ok(2))
         acc_fail = r.accumulate_errors(
@@ -90,8 +91,8 @@ class Ex01r(Examples):
             "lash.failure",
             fail_value.lash(lambda err: r[int].ok(len(err))).unwrap_or(-1),
         )
-        valid_data: dict[str, t.Scalar] = {"name": "Ada", "age": 30}
-        invalid_data: dict[str, t.Scalar] = {"name": "Ada", "age": "bad"}
+        valid_data: Mapping[str, t.Scalar] = {"name": "Ada", "age": 30}
+        invalid_data: Mapping[str, t.Scalar] = {"name": "Ada", "age": "bad"}
         person_model = Examples.Person
         from_validation_ok = r[Examples.Person].from_validation(
             valid_data, person_model
@@ -103,15 +104,18 @@ class Ex01r(Examples):
         self.check("from_validation.failure", from_validation_fail.is_failure)
         self.check(
             "to_model.success",
-            r[dict[str, t.Container]].ok(valid_data).to_model(self.Person).value.age,
+            r[Mapping[str, t.Container]].ok(valid_data).to_model(self.Person).value.age,
         )
         self.check(
             "to_model.from_failure",
-            r[dict[str, t.Container]].fail("missing").to_model(self.Person).error,
+            r[Mapping[str, t.Container]].fail("missing").to_model(self.Person).error,
         )
         self.check(
             "to_model.validation_failure",
-            r[dict[str, t.Container]].ok(invalid_data).to_model(self.Person).is_failure,
+            r[Mapping[str, t.Container]]
+            .ok(invalid_data)
+            .to_model(self.Person)
+            .is_failure,
         )
 
     def factories_and_guards(self) -> None:

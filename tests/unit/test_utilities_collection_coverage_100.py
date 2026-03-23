@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
@@ -55,7 +55,7 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, Field(description="Parse sequence scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
         values: Annotated[
-            list[str | StrEnum], Field(description="Input values to parse")
+            Sequence[str | StrEnum], Field(description="Input values to parse")
         ]
         expected_success: Annotated[
             bool, Field(description="Whether parsing should succeed")
@@ -100,13 +100,14 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, Field(description="Parse mapping scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
         mapping: Annotated[
-            dict[str, str | StrEnum], Field(description="Input mapping values")
+            Mapping[str, str | StrEnum], Field(description="Input mapping values")
         ]
         expected_success: Annotated[
             bool, Field(description="Whether parsing should succeed")
         ]
         expected_keys: Annotated[
-            list[str] | None, Field(default=None, description="Expected output keys")
+            Sequence[str] | None,
+            Field(default=None, description="Expected output keys"),
         ] = None
         error_contains: Annotated[
             str | None,
@@ -127,7 +128,8 @@ class TestUtilitiesCollectionCoverage:
             bool, Field(description="Whether coercion should succeed")
         ]
         expected_keys: Annotated[
-            list[str] | None, Field(default=None, description="Expected output keys")
+            Sequence[str] | None,
+            Field(default=None, description="Expected output keys"),
         ] = None
         error_type: Annotated[
             type[Exception] | None,
@@ -144,9 +146,9 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Map scenario name")]
         items: Annotated[
-            list[t.NormalizedValue]
+            Sequence[t.NormalizedValue]
             | tuple[t.NormalizedValue, ...]
-            | dict[str, t.NormalizedValue]
+            | Mapping[str, t.NormalizedValue]
             | set[t.NormalizedValue]
             | frozenset[t.NormalizedValue],
             (
@@ -161,9 +163,9 @@ class TestUtilitiesCollectionCoverage:
         ]
         expected_result: Annotated[
             (
-                list[t.NormalizedValue]
+                Sequence[t.NormalizedValue]
                 | tuple[t.NormalizedValue, ...]
-                | dict[str, t.NormalizedValue]
+                | Mapping[str, t.NormalizedValue]
                 | set[t.NormalizedValue]
                 | frozenset[t.NormalizedValue]
             ),
@@ -186,9 +188,9 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Find scenario name")]
         items: Annotated[
-            list[t.NormalizedValue]
+            Sequence[t.NormalizedValue]
             | tuple[t.NormalizedValue, ...]
-            | dict[str, t.NormalizedValue],
+            | Mapping[str, t.NormalizedValue],
             Field(description="Input items for find"),
         ]
         predicate: Annotated[
@@ -208,9 +210,9 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Filter scenario name")]
         items: Annotated[
-            list[t.NormalizedValue]
+            Sequence[t.NormalizedValue]
             | tuple[t.NormalizedValue, ...]
-            | dict[str, t.NormalizedValue],
+            | Mapping[str, t.NormalizedValue],
             Field(description="Input items for filter"),
         ]
         predicate: Annotated[
@@ -218,9 +220,9 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            list[t.NormalizedValue]
+            Sequence[t.NormalizedValue]
             | tuple[t.NormalizedValue, ...]
-            | dict[str, t.NormalizedValue],
+            | Mapping[str, t.NormalizedValue],
             Field(
                 description="Expected filtered output",
             ),
@@ -288,13 +290,14 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Group scenario name")]
         items: Annotated[
-            list[str] | tuple[str, ...], Field(description="Input items for group")
+            Sequence[str] | tuple[str, ...], Field(description="Input items for group")
         ]
         key: Annotated[
             Callable[[str], int | str], Field(description="Grouping key callable")
         ]
         expected_result: Annotated[
-            dict[int | str, list[str]], Field(description="Expected grouped output")
+            Mapping[int | str, Sequence[str]],
+            Field(description="Expected grouped output"),
         ]
 
     class ChunkScenario(BaseModel):
@@ -303,14 +306,14 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Chunk scenario name")]
         items: Annotated[
-            list[int],
+            Sequence[int],
             Field(
                 description="Input items for chunking",
             ),
         ]
         size: Annotated[int, Field(description="Chunk size")]
         expected_result: Annotated[
-            list[list[int]], Field(description="Expected chunked output")
+            Sequence[Sequence[int]], Field(description="Expected chunked output")
         ]
 
     class BatchScenario(BaseModel):
@@ -318,7 +321,7 @@ class TestUtilitiesCollectionCoverage:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Batch scenario name")]
-        items: Annotated[list[int], Field(description="Input items for batch")]
+        items: Annotated[Sequence[int], Field(description="Input items for batch")]
         operation: Annotated[
             Callable[..., t.NormalizedValue],
             Field(description="Batch operation callable"),
@@ -404,7 +407,7 @@ class TestUtilitiesCollectionCoverage:
             return len(value)
 
         @staticmethod
-        def parse_sequence_cases() -> list[
+        def parse_sequence_cases() -> Sequence[
             TestUtilitiesCollectionCoverage.ParseSequenceScenario
         ]:
             return [
@@ -467,7 +470,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def coerce_list_cases() -> list[
+        def coerce_list_cases() -> Sequence[
             TestUtilitiesCollectionCoverage.CoerceListScenario
         ]:
             return [
@@ -548,7 +551,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def parse_mapping_cases() -> list[
+        def parse_mapping_cases() -> Sequence[
             TestUtilitiesCollectionCoverage.ParseMappingScenario
         ]:
             return [
@@ -614,7 +617,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def coerce_dict_cases() -> list[
+        def coerce_dict_cases() -> Sequence[
             TestUtilitiesCollectionCoverage.CoerceDictScenario
         ]:
             return [
@@ -677,7 +680,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def map_cases() -> list[TestUtilitiesCollectionCoverage.MapScenario]:
+        def map_cases() -> Sequence[TestUtilitiesCollectionCoverage.MapScenario]:
             return [
                 MapScenario(
                     name="list_ints",
@@ -718,7 +721,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def find_cases() -> list[TestUtilitiesCollectionCoverage.FindScenario]:
+        def find_cases() -> Sequence[TestUtilitiesCollectionCoverage.FindScenario]:
             return [
                 FindScenario(
                     name="list_find",
@@ -747,7 +750,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def filter_cases() -> list[TestUtilitiesCollectionCoverage.FilterScenario]:
+        def filter_cases() -> Sequence[TestUtilitiesCollectionCoverage.FilterScenario]:
             return [
                 FilterScenario(
                     name="list_filter",
@@ -790,7 +793,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def count_cases() -> list[TestUtilitiesCollectionCoverage.CountScenario]:
+        def count_cases() -> Sequence[TestUtilitiesCollectionCoverage.CountScenario]:
             return [
                 CountScenario(name="count_list", items=[1, 2, 3, 4], expected_count=4),
                 CountScenario(
@@ -802,7 +805,9 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def process_cases() -> list[TestUtilitiesCollectionCoverage.ProcessScenario]:
+        def process_cases() -> Sequence[
+            TestUtilitiesCollectionCoverage.ProcessScenario
+        ]:
             return [
                 ProcessScenario(
                     name="process_list",
@@ -832,7 +837,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def group_cases() -> list[TestUtilitiesCollectionCoverage.GroupScenario]:
+        def group_cases() -> Sequence[TestUtilitiesCollectionCoverage.GroupScenario]:
             return [
                 GroupScenario(
                     name="group_by_len",
@@ -843,7 +848,7 @@ class TestUtilitiesCollectionCoverage:
             ]
 
         @staticmethod
-        def chunk_cases() -> list[TestUtilitiesCollectionCoverage.ChunkScenario]:
+        def chunk_cases() -> Sequence[TestUtilitiesCollectionCoverage.ChunkScenario]:
             return [
                 ChunkScenario(
                     name="chunk_list",
@@ -1009,7 +1014,7 @@ class TestUtilitiesCollectionCoverage:
 
         class TestModel(BaseModel):
             user_statuses: Annotated[
-                dict[str, FixtureStatus], Field(default_factory=dict)
+                Mapping[str, FixtureStatus], Field(default_factory=dict)
             ]
 
         model1 = TestModel.model_validate({
@@ -1155,7 +1160,7 @@ class TestUtilitiesCollectionCoverage:
         """Test batch with flattening."""
         items = [[1, 2], [3, 4], 5]
 
-        def flatten_op(value: list[int] | int) -> t.Serializable:
+        def flatten_op(value: Sequence[int] | int) -> t.Serializable:
             return cast("t.Serializable", value)
 
         result = u.batch(
@@ -1169,8 +1174,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base_data: dict[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
-        other_data: dict[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
+        base_data: Mapping[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
+        other_data: Mapping[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge(base_data, other_data)
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)
@@ -1179,8 +1184,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base_data: dict[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
-        other_data: dict[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
+        base_data: Mapping[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
+        other_data: Mapping[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge(base_data, other_data, strategy="override")
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)

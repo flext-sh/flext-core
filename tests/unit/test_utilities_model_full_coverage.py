@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import cast
 
 from pydantic import BaseModel
@@ -43,7 +44,7 @@ def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u.normalize_to_pydantic_dict(None) == {}
     data = t.ConfigMap(
         root=cast(
-            "dict[str, t.NormalizedValue | BaseModel]",
+            "Mapping[str, t.NormalizedValue | BaseModel]",
             {"a": 1, "b": TestUnitModels._Cfg(x=1), "c": [1, TestUnitModels._Cfg(x=2)]},
         )
     )

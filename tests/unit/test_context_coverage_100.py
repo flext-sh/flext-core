@@ -53,7 +53,10 @@ class TestContext100Coverage:
         """Test merge with dictionary."""
         context1 = FlextContext()
         context1.set("key1", "value1").value
-        merge_data: dict[str, t.NormalizedValue] = {"key2": "value2", "key3": "value3"}
+        merge_data: Mapping[str, t.NormalizedValue] = {
+            "key2": "value2",
+            "key3": "value3",
+        }
         merged = context1.merge(merge_data)
         tm.that(merged, is_=FlextContext)
         result2 = merged.get("key2")

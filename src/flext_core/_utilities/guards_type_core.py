@@ -93,7 +93,7 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def is_dict_non_empty(value: t.NormalizedValue) -> bool:
+    def is_dict_non_empty(value: object) -> bool:
         """Check if value is a non-empty mapping.
 
         Args:
@@ -103,10 +103,10 @@ class FlextUtilitiesGuardsTypeCore:
             True if value is a Mapping with at least one entry.
 
         """
-        return isinstance(value, Mapping) and bool(value)
+        return isinstance(value, Mapping) and len(value) > 0
 
     @staticmethod
-    def is_flexible_value(value: t.NormalizedValue) -> TypeIs[t.NormalizedValue]:
+    def is_flexible_value(value: object) -> TypeIs[t.NormalizedValue]:
         """Check if value is a flexible value (scalar or containers of scalars).
 
         Flexible values are None, scalars, or collections containing only
@@ -123,13 +123,12 @@ class FlextUtilitiesGuardsTypeCore:
             return True
         if isinstance(value, (list, tuple)):
             return all(
-                item is None or FlextUtilitiesGuardsTypeCore.is_scalar(item)
-                for item in value
+                elem is None or isinstance(elem, t.SCALAR_TYPES) for elem in value
             )
         if isinstance(value, Mapping):
             return all(
-                item is None or FlextUtilitiesGuardsTypeCore.is_scalar(item)
-                for item in value.values()
+                elem is None or isinstance(elem, t.SCALAR_TYPES)
+                for elem in value.values()
             )
         return False
 
@@ -181,20 +180,20 @@ class FlextUtilitiesGuardsTypeCore:
         return callable(value) or FlextUtilitiesGuardsTypeCore.is_container(value)
 
     @staticmethod
-    def is_list(value: t.NormalizedValue) -> TypeIs[list[t.NormalizedValue]]:
+    def is_list(value: t.NormalizedValue) -> TypeIs[Sequence[t.NormalizedValue]]:
         """Check if value is a list.
 
         Args:
             value: Value to check.
 
         Returns:
-            True if value is a list, narrowed to list[NormalizedValue].
+            True if value is a list, narrowed to Sequence[NormalizedValue].
 
         """
         return isinstance(value, list)
 
     @staticmethod
-    def is_list_non_empty(value: t.NormalizedValue) -> bool:
+    def is_list_non_empty(value: object) -> bool:
         """Check if value is a non-empty sequence (excluding strings/bytes).
 
         Args:

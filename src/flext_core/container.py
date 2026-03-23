@@ -14,7 +14,7 @@ from __future__ import annotations
 import inspect
 import sys
 import threading
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from types import ModuleType
@@ -62,9 +62,9 @@ class FlextContainer(p.Container):
     _config_provider: di_providers.Configuration
     _base_config_provider: di_providers.Configuration
     _user_config_provider: di_providers.Configuration
-    _services: dict[str, m.ServiceRegistration]
-    _factories: dict[str, m.FactoryRegistration]
-    _resources: dict[str, m.ResourceRegistration]
+    _services: MutableMapping[str, m.ServiceRegistration]
+    _factories: MutableMapping[str, m.FactoryRegistration]
+    _resources: MutableMapping[str, m.ResourceRegistration]
     _global_config: m.ContainerConfig
 
     @staticmethod
@@ -80,7 +80,7 @@ class FlextContainer(p.Container):
         copies validated field values directly, and preserves the exact field
         types declared on the model (no ``LaxStr`` / ``Any`` widening).
         """
-        override_updates: dict[
+        override_updates: Mapping[
             str,
             t.RuntimeData
             | p.Settings
@@ -734,7 +734,7 @@ class FlextContainer(p.Container):
         self._factories = dict(factories.items()) if factories is not None else {}
         self._resources = dict(resources.items()) if resources is not None else {}
         self._global_config = global_config or self._create_container_config()
-        overrides_root: dict[str, t.ValueOrModel] = {}
+        overrides_root: Mapping[str, t.ValueOrModel] = {}
         if user_overrides is not None:
             if isinstance(user_overrides, t.ConfigMap):
                 overrides_root = dict(user_overrides.root)
@@ -1018,15 +1018,15 @@ class FlextContainer(p.Container):
             scoped_context = context
         if subproject:
             _ = scoped_context.set("subproject", subproject)
-        cloned_services: dict[str, m.ServiceRegistration] = {
+        cloned_services: Mapping[str, m.ServiceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._services.items()
         }
-        cloned_factories: dict[str, m.FactoryRegistration] = {
+        cloned_factories: Mapping[str, m.FactoryRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._factories.items()
         }
-        cloned_resources: dict[str, m.ResourceRegistration] = {
+        cloned_resources: Mapping[str, m.ResourceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._resources.items()
         }
@@ -1097,7 +1097,7 @@ class FlextContainer(p.Container):
         if not namespace_registry_raw or not u.is_mapping(namespace_registry_raw):
             return
         namespace_registry = namespace_registry_raw
-        namespaces: list[str] = list(namespace_registry.keys())
+        namespaces: Sequence[str] = list(namespace_registry.keys())
         if not namespaces:
             return
         for namespace in namespaces:

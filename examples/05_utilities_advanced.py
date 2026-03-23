@@ -46,7 +46,7 @@ class UserModel(m.ArbitraryTypesModel):
     age: int = Field(ge=0, le=150)
 
 
-TEST_DATA: Mapping[str, str | int | dict[str, str]] = {
+TEST_DATA: Mapping[str, str | int | Mapping[str, str]] = {
     "name": "John Doe",
     "status": "active",
     "age": 30,
@@ -105,15 +105,15 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         print("\n=== Data Mapping ===")
         source_dict = {"old_key": "value", "foo": "bar"}
         mapped_dict = u.transform_values(source_dict, str)
-        key_mapping_dict: dict[str, str] = {"old_key": "new_key", "foo": "bar"}
+        key_mapping_dict: Mapping[str, str] = {"old_key": "new_key", "foo": "bar"}
         map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
         if map_result.is_success:
             mapped = map_result.value
             print(f"✅ Key mapping: {list(mapped.keys())}")
         int_result = u.parse("123", int, default=0)
         print(f"✅ Safe int conversion: '123' → {int_result.map_or(0)}")
-        flags: list[str] = ["read", "write"]
-        flag_mapping: dict[str, str] = {"read": "can_read", "write": "can_write"}
+        flags: Sequence[str] = ["read", "write"]
+        flag_mapping: Mapping[str, str] = {"read": "can_read", "write": "can_write"}
         flags_result = u.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
             flags_dict = flags_result.value
@@ -149,7 +149,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
     def _demonstrate_model_utilities() -> None:
         """Show Model utilities."""
         print("\n=== Model Utilities ===")
-        user_data: dict[str, str | int] = {
+        user_data: Mapping[str, str | int] = {
             "name": "Alice",
             "status": "active",
             "age": 25,
@@ -184,7 +184,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
     def _demonstrate_pagination() -> None:
         """Show Pagination utilities."""
         print("\n=== Pagination ===")
-        query_params: dict[str, str] = {"page": "2", "page_size": "10"}
+        query_params: Mapping[str, str] = {"page": "2", "page_size": "10"}
         page_result = u.extract_page_params(
             query_params,
             default_page=1,
@@ -229,7 +229,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         test_dict: t.ConfigMap = t.ConfigMap(root={"key": "value"})
         if u.is_type(test_dict, "dict_non_empty"):
             print("✅ Dict non-empty guard: dict is valid")
-        test_list: list[int] = [1, 2, 3]
+        test_list: Sequence[int] = [1, 2, 3]
         if u.is_type(test_list, "list_non_empty"):
             print("✅ List non-empty guard: list is valid")
 

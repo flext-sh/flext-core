@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import math
 import warnings
+from collections.abc import Sequence
 from typing import cast
 
 import pytest
@@ -32,7 +33,7 @@ pytestmark = [pytest.mark.unit]
 
 class TestDeprecationWarnings:
     def test_normalize_to_container_functional_equivalence(self) -> None:
-        test_cases: list[test_t.NormalizedValue] = [
+        test_cases: Sequence[test_t.NormalizedValue] = [
             "str",
             42,
             math.pi,

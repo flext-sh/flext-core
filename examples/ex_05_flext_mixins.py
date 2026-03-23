@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
 from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
@@ -104,9 +104,9 @@ class Ex05FlextMixins(Examples):
                 return r[int].ok(value)
             return r[int].fail(f"odd:{value}")
 
-        traverse_ok = r[list[int]].traverse([2, 4], _to_even, fail_fast=True)
-        traverse_fail = r[list[int]].traverse([2, 3], _to_even, fail_fast=True)
-        traverse_collect = r[list[int]].traverse([1, 3], _to_even, fail_fast=False)
+        traverse_ok = r[Sequence[int]].traverse([2, 4], _to_even, fail_fast=True)
+        traverse_fail = r[Sequence[int]].traverse([2, 3], _to_even, fail_fast=True)
+        traverse_collect = r[Sequence[int]].traverse([1, 3], _to_even, fail_fast=False)
         self.check("traverse.ok", str(traverse_ok.unwrap_or([])))
         self.check("traverse.fail_fast", traverse_fail.error)
         self.check("traverse.collect", traverse_collect.error)
@@ -169,8 +169,8 @@ class Ex05FlextMixins(Examples):
         def _validator_fail(_value: str) -> r[bool]:
             return r[bool].fail("bad-input")
 
-        validators_ok: list[Callable[..., r[bool]]] = [_validator_ok]
-        validators_fail: list[Callable[..., r[bool]]] = [_validator_fail]
+        validators_ok: Sequence[Callable[..., r[bool]]] = [_validator_ok]
+        validators_fail: Sequence[Callable[..., r[bool]]] = [_validator_fail]
         validation_ok = x.Validation.validate_with_result("abc", validators_ok)
         validation_fail = x.Validation.validate_with_result("abc", validators_fail)
         self.check("validation.ok", validation_ok.is_success)

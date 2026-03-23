@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Mapping, Sequence
 
 import pytest
 from flext_tests import t
@@ -30,7 +31,7 @@ class TestPatternsLogging:
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: dict[str, t.NormalizedValue] = {}
+        context: Mapping[str, t.NormalizedValue] = {}
         assert isinstance(context, dict)
         if len(context) != 0:
             msg = f"Expected {0}, got {len(context)}"
@@ -38,7 +39,7 @@ class TestPatternsLogging:
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
-        context: dict[str, t.NormalizedValue] = {
+        context: Mapping[str, t.NormalizedValue] = {
             "user_id": "123",
             "request_id": "req-456",
             "operation": "login",
@@ -58,14 +59,14 @@ class TestPatternsLogging:
 
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
-        context: dict[str, t.NormalizedValue] = {"user_id": "123"}
+        context: Mapping[str, t.NormalizedValue] = {"user_id": "123"}
         if context["user_id"] != "123":
             msg = f"Expected {'123'}, got {context['user_id']}"
             raise AssertionError(msg)
 
     def test_context_enterprise_fields(self) -> None:
         """Test enterprise-specific context fields."""
-        context: dict[str, t.NormalizedValue] = {
+        context: Mapping[str, t.NormalizedValue] = {
             "tenant_id": "tenant-123",
             "session_id": "session-456",
             "transaction_id": "tx-789",
@@ -86,7 +87,7 @@ class TestPatternsLogging:
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
-        context: dict[str, t.NormalizedValue] = {
+        context: Mapping[str, t.NormalizedValue] = {
             "duration_ms": 250.0,
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
@@ -110,7 +111,7 @@ class TestPatternsLogging:
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
-        context: dict[str, t.NormalizedValue] = {
+        context: Mapping[str, t.NormalizedValue] = {
             "error_code": "E001",
             "error_type": "ValidationError",
             "stack_trace": "Traceback...",
@@ -355,7 +356,7 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("context_mgr_test")
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
-        results: list[r[bool] | None] = [
+        results: Sequence[r[bool] | None] = [
             bound_logger.info("Starting batch process"),
             bound_logger.info("Processing item 1"),
             bound_logger.info("Processing item 2"),

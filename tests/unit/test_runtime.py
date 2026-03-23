@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum, unique
 from types import ModuleType
 from typing import Annotated, ClassVar, cast
@@ -124,7 +124,7 @@ class TestFlextRuntime:
         @classmethod
         def dict_like_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -175,7 +175,7 @@ class TestFlextRuntime:
         @classmethod
         def list_like_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -226,7 +226,7 @@ class TestFlextRuntime:
         @classmethod
         def json_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -301,7 +301,7 @@ class TestFlextRuntime:
         @classmethod
         def identifier_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -370,20 +370,20 @@ class TestFlextRuntime:
         @classmethod
         def generic_args_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
                 runtime_test_case(
                     name="extract_generic_list",
                     operation=runtime_op_type.EXTRACT_GENERIC_GENERIC_TYPE,
-                    test_input=list[str],
+                    test_input=Sequence[str],
                     expected_result=(str,),
                 ),
                 runtime_test_case(
                     name="extract_generic_dict",
                     operation=runtime_op_type.EXTRACT_GENERIC_GENERIC_TYPE,
-                    test_input=dict[str, int],
+                    test_input=Mapping[str, int],
                     expected_result=(str, int),
                 ),
                 runtime_test_case(
@@ -415,14 +415,14 @@ class TestFlextRuntime:
         @classmethod
         def sequence_type_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
                 runtime_test_case(
                     name="sequence_type_list_of_str",
                     operation=runtime_op_type.SEQUENCE_TYPE_VALID,
-                    test_input=list[str],
+                    test_input=Sequence[str],
                     expected_result=True,
                 ),
                 runtime_test_case(
@@ -440,7 +440,7 @@ class TestFlextRuntime:
                 runtime_test_case(
                     name="sequence_type_invalid_dict",
                     operation=runtime_op_type.SEQUENCE_TYPE_INVALID,
-                    test_input=dict[str, int],
+                    test_input=Mapping[str, int],
                     expected_result=False,
                 ),
                 runtime_test_case(
@@ -466,7 +466,7 @@ class TestFlextRuntime:
         @classmethod
         def serialization_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -493,7 +493,7 @@ class TestFlextRuntime:
         @classmethod
         def library_access_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -540,7 +540,7 @@ class TestFlextRuntime:
         @classmethod
         def structlog_config_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -584,7 +584,7 @@ class TestFlextRuntime:
         @classmethod
         def integration_scenarios(
             cls,
-        ) -> list[TestFlextRuntime.RuntimeTestCase]:
+        ) -> Sequence[TestFlextRuntime.RuntimeTestCase]:
             runtime_test_case = cls._runtime_test_case()
             runtime_op_type = cls._runtime_operation_type()
             return [
@@ -845,20 +845,20 @@ class TestFlextRuntime:
 
             @FlextRuntime.DependencyIntegration.inject
             def consume(
-                token: dict[str, str] = FlextRuntime.DependencyIntegration.Provide[
+                token: Mapping[str, str] = FlextRuntime.DependencyIntegration.Provide[
                     "token_factory"
                 ],
                 static: int = FlextRuntime.DependencyIntegration.Provide[
                     "static_value"
                 ],
-            ) -> tuple[dict[str, str], int]:
+            ) -> tuple[Mapping[str, str], int]:
                 return (token, static)
 
             setattr(module, "consume", consume)
             di_container.wire(modules=[module])
             try:
                 consume_factory_func = cast(
-                    "Callable[[], tuple[dict[str, str], int]]",
+                    "Callable[[], tuple[Mapping[str, str], int]]",
                     getattr(module, "consume"),
                 )
                 tm.that(callable(consume_factory_func), eq=True)
@@ -873,7 +873,7 @@ class TestFlextRuntime:
         ):
             counter = {"calls": 0}
 
-            def token_factory() -> dict[str, int]:
+            def token_factory() -> Mapping[str, int]:
                 counter["calls"] += 1
                 return {"token": counter["calls"]}
 
@@ -884,16 +884,16 @@ class TestFlextRuntime:
                 static_value: int = FlextRuntime.DependencyIntegration.Provide[
                     "static_value"
                 ],
-                token: dict[str, int] = FlextRuntime.DependencyIntegration.Provide[
+                token: Mapping[str, int] = FlextRuntime.DependencyIntegration.Provide[
                     "token_factory"
                 ],
                 config_flag: bool = FlextRuntime.DependencyIntegration.Provide[
                     "config.flags.enabled"
                 ],
-                resource: dict[str, bool] = FlextRuntime.DependencyIntegration.Provide[
-                    "api_client"
-                ],
-            ) -> tuple[int, dict[str, int], bool, dict[str, bool]]:
+                resource: Mapping[
+                    str, bool
+                ] = FlextRuntime.DependencyIntegration.Provide["api_client"],
+            ) -> tuple[int, Mapping[str, int], bool, Mapping[str, bool]]:
                 return (static_value, token, config_flag, resource)
 
             setattr(module, "consume", consume_automation)
@@ -907,7 +907,7 @@ class TestFlextRuntime:
             )
             try:
                 consume_automation_func = cast(
-                    "Callable[[], tuple[int, dict[str, int], bool, dict[str, bool]]]",
+                    "Callable[[], tuple[int, Mapping[str, int], bool, Mapping[str, bool]]]",
                     getattr(module, "consume"),
                 )
                 tm.that(callable(consume_automation_func), eq=True)
@@ -927,7 +927,7 @@ class TestFlextRuntime:
         ):
             counter = {"calls": 0}
 
-            def token_factory() -> dict[str, int]:
+            def token_factory() -> Mapping[str, int]:
                 counter["calls"] += 1
                 return {"count": counter["calls"]}
 
@@ -936,13 +936,13 @@ class TestFlextRuntime:
             @FlextRuntime.DependencyIntegration.inject
             def consume_service(
                 flag: bool = FlextRuntime.DependencyIntegration.Provide["feature_flag"],
-                token: dict[str, int] = FlextRuntime.DependencyIntegration.Provide[
+                token: Mapping[str, int] = FlextRuntime.DependencyIntegration.Provide[
                     "token_factory"
                 ],
-                resource: dict[str, bool] = FlextRuntime.DependencyIntegration.Provide[
-                    "api_client"
-                ],
-            ) -> tuple[bool, dict[str, int], dict[str, bool]]:
+                resource: Mapping[
+                    str, bool
+                ] = FlextRuntime.DependencyIntegration.Provide["api_client"],
+            ) -> tuple[bool, Mapping[str, int], Mapping[str, bool]]:
                 return (flag, token, resource)
 
             setattr(module, "consume", consume_service)
@@ -956,7 +956,7 @@ class TestFlextRuntime:
             runtime = runtime_raw
             try:
                 consume_service_func = cast(
-                    "Callable[[], tuple[bool, dict[str, int], dict[str, bool]]]",
+                    "Callable[[], tuple[bool, Mapping[str, int], Mapping[str, bool]]]",
                     getattr(module, "consume"),
                 )
                 tm.that(callable(consume_service_func), eq=True)
@@ -976,7 +976,7 @@ class TestFlextRuntime:
                 @classmethod
                 def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
 
-                    def counter_factory() -> dict[str, int]:
+                    def counter_factory() -> Mapping[str, int]:
                         return {"count": 1}
 
                     return m.RuntimeBootstrapOptions(
@@ -1037,8 +1037,8 @@ class TestFlextRuntime:
             def custom_processor(
                 _logger: p.Logger,
                 _method_name: str,
-                event_dict: dict[str, t.NormalizedValue],
-            ) -> dict[str, t.NormalizedValue]:
+                event_dict: Mapping[str, t.NormalizedValue],
+            ) -> Mapping[str, t.NormalizedValue]:
                 event_dict["custom"] = True
                 return event_dict
 

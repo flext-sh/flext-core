@@ -69,11 +69,11 @@ class FlextMixins(m.ArbitraryTypesModel, u):
     """
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _operation_stats: dict[str, t.ConfigMap] = PrivateAttr(
-        default_factory=dict[str, t.ConfigMap],
+    _operation_stats: Mapping[str, t.ConfigMap] = PrivateAttr(
+        default_factory=Mapping[str, t.ConfigMap],
     )
 
-    _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
+    _logger_cache: ClassVar[Mapping[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
@@ -126,7 +126,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         ),
     ] = None
     config_overrides: Annotated[
-        dict[str, t.NormalizedValue] | None,
+        Mapping[str, t.NormalizedValue] | None,
         Field(
             default=None,
             description="Configuration overrides applied at instantiation.",
@@ -182,13 +182,13 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                metadata_context: dict[str, t.RuntimeAtomic] = {
+                metadata_context: Mapping[str, t.RuntimeAtomic] = {
                     key: u.normalize_to_container(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
-                normal_metadata_context: dict[str, t.RuntimeAtomic] = {
+                normal_metadata_context: Mapping[str, t.RuntimeAtomic] = {
                     key: u.normalize_to_container(value)
                     for key, value in normal_data.root.items()
                 }
@@ -200,8 +200,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
     @staticmethod
     def _normalize_log_payload(
         payload: Mapping[str, t.ValueOrModel],
-    ) -> dict[str, t.Container]:
-        normalized: dict[str, t.Container] = {}
+    ) -> Mapping[str, t.Container]:
+        normalized: Mapping[str, t.Container] = {}
         for key, value in payload.items():
             atomic = u.normalize_to_container(value)
             if isinstance(atomic, BaseModel):
@@ -225,7 +225,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         ) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: dict[str, t.ValueOrModel] = (
+                metrics_map: Mapping[str, t.ValueOrModel] = (
                     {str(k): u.normalize_to_container(v) for k, v in metrics.items()}
                     if hasattr(metrics, "items")
                     else {}
@@ -351,7 +351,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 if options.context is not None:
                     initial_ctx = options.context
                 if options.services is not None:
-                    services_typed: dict[str, t.RegisterableService] = {}
+                    services_typed: Mapping[str, t.RegisterableService] = {}
                     for key, value in options.services.items():
                         if u.is_registerable_service(value):
                             services_typed[str(key)] = value
@@ -359,8 +359,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 bootstrap_factories = options.factories
                 bootstrap_resources = options.resources
                 if options.wire_modules is not None:
-                    modules_list: list[ModuleType] = []
-                    packages_list: list[str] = []
+                    modules_list: Sequence[ModuleType] = []
+                    packages_list: Sequence[str] = []
                     for item in options.wire_modules:
                         if isinstance(item, str):
                             packages_list.append(item)
@@ -507,7 +507,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         class MetricsTracker:
             """Tracks handler execution metrics."""
 
-            _metrics: dict[str, t.Scalar]
+            _metrics: Mapping[str, t.Scalar]
 
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize metrics tracker with empty metrics store."""
@@ -530,7 +530,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         class ContextStack:
             """Manages execution context stack."""
 
-            _stack: list[m.ExecutionContext | t.ConfigMap | dict[str, t.Scalar]]
+            _stack: Sequence[m.ExecutionContext | t.ConfigMap | Mapping[str, t.Scalar]]
 
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize context stack with empty stack list."""
@@ -550,25 +550,25 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                             return None
                 return None
 
-            def pop_context(self) -> r[dict[str, t.Scalar]]:
+            def pop_context(self) -> r[Mapping[str, t.Scalar]]:
                 """Pop and return the top context from the stack as a scalar dict."""
                 if not hasattr(self, "_stack"):
                     self._stack = []
                 if self._stack:
                     popped = self._stack.pop()
                     if isinstance(popped, m.ExecutionContext):
-                        return r[dict[str, t.Scalar]].ok({
+                        return r[Mapping[str, t.Scalar]].ok({
                             "handler_name": popped.handler_name,
                             c.FIELD_HANDLER_MODE: popped.handler_mode,
                         })
                     if isinstance(popped, t.ConfigMap):
-                        return r[dict[str, t.Scalar]].ok({
+                        return r[Mapping[str, t.Scalar]].ok({
                             str(ck): cv
                             for ck, cv in popped.root.items()
                             if u.is_scalar(cv)
                         })
-                    return r[dict[str, t.Scalar]].ok(popped)
-                return r[dict[str, t.Scalar]].ok({})
+                    return r[Mapping[str, t.Scalar]].ok(popped)
+                return r[Mapping[str, t.Scalar]].ok({})
 
             def push_context(
                 self,
@@ -580,7 +580,9 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 if isinstance(ctx, m.ExecutionContext):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)
-                ctx_mapping: dict[str, t.Scalar] = {str(k): v for k, v in ctx.items()}
+                ctx_mapping: Mapping[str, t.Scalar] = {
+                    str(k): v for k, v in ctx.items()
+                }
                 handler_name_raw: t.Scalar | None = ctx_mapping.get(
                     "handler_name",
                     c.IDENTIFIER_UNKNOWN,
@@ -632,7 +634,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                         )
                         fail_error_data: Mapping[str, t.Container] | None = {}
                         if validation_result.error_data is not None:
-                            normalized_error_data: dict[str, t.Container] = {}
+                            normalized_error_data: Mapping[str, t.Container] = {}
                             for key, value in validation_result.error_data.root.items():
                                 normalized = u.normalize_to_container(value)
                                 if isinstance(normalized, BaseModel):

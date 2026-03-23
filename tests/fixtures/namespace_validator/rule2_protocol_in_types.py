@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Protocol
 
 
@@ -11,7 +12,7 @@ class FlextTestTypes:
     class ProtocolInsideTypes(Protocol):
         """Protocol inside Types — VIOLATION."""
 
-        def to_dict(self) -> dict[str, str]:
+        def to_dict(self) -> Mapping[str, str]:
             """Convert to dict."""
             ...
 

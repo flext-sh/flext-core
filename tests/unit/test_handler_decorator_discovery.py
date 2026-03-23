@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import types
+from collections.abc import Sequence
 from typing import override
 
 from flext_tests import tm
@@ -42,7 +43,7 @@ class TestHandlerDecoratorDiscovery:
         class CreateCommand:
             pass
 
-        middleware_types: list[type[p.Middleware]] = []
+        middleware_types: Sequence[type[p.Middleware]] = []
 
         class Service:
             @h.handler(

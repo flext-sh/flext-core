@@ -34,15 +34,15 @@ class FlextProtocolsContext:
             """Check if a key exists in the given scope."""
             ...
 
-        def keys(self) -> list[str]:
+        def keys(self) -> Sequence[str]:
             """Return all keys across all scopes."""
             ...
 
-        def values(self) -> list[t.NormalizedValue]:
+        def values(self) -> Sequence[t.NormalizedValue]:
             """Return all values across all scopes."""
             ...
 
-        def items(self) -> list[tuple[str, t.NormalizedValue]]:
+        def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
             """Return all key-value pairs across all scopes."""
             ...
 

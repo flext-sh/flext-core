@@ -462,7 +462,7 @@ class FlextDecorators:
                 )
                 start_time = time.perf_counter() if track_perf else 0.0
                 try:
-                    start_extra: dict[str, t.Scalar] = {
+                    start_extra: Mapping[str, t.Scalar] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -484,7 +484,7 @@ class FlextDecorators:
                             func_module=func.__module__,
                         )
                     result = func(*args, **kwargs)
-                    completion_extra: dict[str, t.Scalar] = {
+                    completion_extra: Mapping[str, t.Scalar] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -505,7 +505,7 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: dict[str, t.NormalizedValue] = {
+                    failure_extra: Mapping[str, t.NormalizedValue] = {
                         "function": func.__name__,
                         "success": False,
                         c.WarningLevel.ERROR: str(exc),
@@ -737,7 +737,7 @@ class FlextDecorators:
                         else ""
                         for a in args
                     )
-                    retry_kwargs: dict[str, t.ValueOrModel] = {}
+                    retry_kwargs: Mapping[str, t.ValueOrModel] = {}
                     for key, value in kwargs.items():
                         if isinstance(
                             value,
@@ -935,7 +935,7 @@ class FlextDecorators:
             if fallback_logger is None:
                 return
             fallback_kwargs = t.ConfigMap(root=kwargs.root)
-            warning_context: dict[str, t.Container | Exception] = {}
+            warning_context: Mapping[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
                 if key == "extra" and u.is_dict_like(value):
                     extra_items: Mapping[str, t.ValueOrModel]
@@ -1374,7 +1374,7 @@ class FlextDecorators:
                 logger = FlextDecorators._resolve_logger(args, func)
                 try:
                     if context_vars:
-                        filtered_vars: dict[str, t.Container] = {
+                        filtered_vars: Mapping[str, t.Container] = {
                             k: v
                             for k, v in context_vars.items()
                             if v is not None and u.is_container(v)

@@ -12,7 +12,7 @@ from __future__ import annotations
 import concurrent.futures
 import secrets
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
@@ -62,7 +62,7 @@ class FlextModelsDispatcher:
             )
 
         @override
-        def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
+        def model_post_init(self, __context: Mapping[str, t.Scalar] | None, /) -> None:
             self.executor_workers = max(
                 self.executor_workers,
                 c.RETRY_COUNT_MIN,
@@ -148,23 +148,25 @@ class FlextModelsDispatcher:
                 description="Successes needed to close from half-open",
             ),
         ]
-        _failures: dict[str, int] = PrivateAttr(
+        _failures: MutableMapping[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
-        _states: dict[str, str] = PrivateAttr(default_factory=lambda: dict[str, str]())
-        _opened_at: dict[str, float] = PrivateAttr(
+        _states: MutableMapping[str, str] = PrivateAttr(
+            default_factory=lambda: dict[str, str](),
+        )
+        _opened_at: MutableMapping[str, float] = PrivateAttr(
             default_factory=lambda: dict[str, float](),
         )
-        _success_counts: dict[str, int] = PrivateAttr(
+        _success_counts: MutableMapping[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
-        _recovery_successes: dict[str, int] = PrivateAttr(
+        _recovery_successes: MutableMapping[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
-        _recovery_failures: dict[str, int] = PrivateAttr(
+        _recovery_failures: MutableMapping[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
-        _total_successes: dict[str, int] = PrivateAttr(
+        _total_successes: MutableMapping[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
 
@@ -394,7 +396,7 @@ class FlextModelsDispatcher:
             default=0.1,
             description="Jitter variance as fraction between 0.0 and 1.0",
         )
-        _windows: dict[str, tuple[float, int]] = PrivateAttr(
+        _windows: MutableMapping[str, tuple[float, int]] = PrivateAttr(
             default_factory=lambda: dict[str, tuple[float, int]](),
         )
 
@@ -419,7 +421,7 @@ class FlextModelsDispatcher:
             )
 
         @override
-        def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
+        def model_post_init(self, __context: Mapping[str, t.Scalar] | None, /) -> None:
             self.jitter_factor = max(0.0, min(self.jitter_factor, 1.0))
 
         def check_rate_limit(self, message_type: str) -> r[bool]:
@@ -490,7 +492,7 @@ class FlextModelsDispatcher:
         retry_delay: t.PositiveFloat = Field(
             description="Base delay in seconds between retry attempts",
         )
-        _attempts: dict[str, int] = PrivateAttr(
+        _attempts: MutableMapping[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
         _exponential_factor: float = PrivateAttr(default=2.0)
@@ -507,7 +509,7 @@ class FlextModelsDispatcher:
             super().__init__(max_attempts=max_attempts, retry_delay=retry_delay)
 
         @override
-        def model_post_init(self, __context: dict[str, t.Scalar] | None, /) -> None:
+        def model_post_init(self, __context: Mapping[str, t.Scalar] | None, /) -> None:
             self.max_attempts = max(self.max_attempts, c.RETRY_COUNT_MIN)
             self.retry_delay = max(self.retry_delay, c.INITIAL_TIME)
 

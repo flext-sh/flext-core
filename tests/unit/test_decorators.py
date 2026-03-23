@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -62,7 +63,7 @@ class TestFlextDecorators:
                 raise RuntimeError(error_msg)
             return "success"
 
-    INJECT_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
+    INJECT_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
             name="inject_basic_dependency",
             operation=DecoratorOperationType.INJECT_BASIC,
@@ -76,7 +77,7 @@ class TestFlextDecorators:
             operation=DecoratorOperationType.INJECT_PROVIDED,
         ),
     ]
-    LOG_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
+    LOG_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
             name="log_operation_basic",
             operation=DecoratorOperationType.LOG_OPERATION_BASIC,
@@ -86,7 +87,7 @@ class TestFlextDecorators:
             operation=DecoratorOperationType.LOG_OPERATION_EXCEPTION,
         ),
     ]
-    TRACK_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
+    TRACK_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
             name="track_performance_basic",
             operation=DecoratorOperationType.TRACK_PERFORMANCE_BASIC,
@@ -96,7 +97,7 @@ class TestFlextDecorators:
             operation=DecoratorOperationType.TRACK_PERFORMANCE_EXCEPTION,
         ),
     ]
-    RAILWAY_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
+    RAILWAY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
             name="railway_success",
             operation=DecoratorOperationType.RAILWAY_SUCCESS,
@@ -106,7 +107,7 @@ class TestFlextDecorators:
             operation=DecoratorOperationType.RAILWAY_EXCEPTION,
         ),
     ]
-    RETRY_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
+    RETRY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
             name="retry_success_first_attempt",
             operation=DecoratorOperationType.RETRY_SUCCESS_FIRST,
@@ -120,7 +121,7 @@ class TestFlextDecorators:
             operation=DecoratorOperationType.RETRY_EXHAUSTED,
         ),
     ]
-    TIMEOUT_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
+    TIMEOUT_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
             name="timeout_success",
             operation=DecoratorOperationType.TIMEOUT_SUCCESS,
@@ -130,7 +131,7 @@ class TestFlextDecorators:
             operation=DecoratorOperationType.TIMEOUT_EXCEEDED,
         ),
     ]
-    COMBINED_SCENARIOS: ClassVar[list[DecoratorTestCase]] = [
+    COMBINED_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
             name="combined_basic",
             operation=DecoratorOperationType.COMBINED_BASIC,

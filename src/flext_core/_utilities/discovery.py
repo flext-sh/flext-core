@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from collections.abc import Sequence
 from types import ModuleType
 
 from flext_core import c, m
@@ -42,7 +43,9 @@ class FlextUtilitiesDiscovery:
         return False
 
     @staticmethod
-    def scan_module(module: ModuleType) -> list[tuple[str, m.FactoryDecoratorConfig]]:
+    def scan_module(
+        module: ModuleType,
+    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
         """Scan module for functions decorated with @factory().
 
         Introspects the module to find all functions with factory configuration
@@ -61,7 +64,7 @@ class FlextUtilitiesDiscovery:
             ...     print(f"{func_name}: singleton={config.singleton}")
 
         """
-        factories: list[tuple[str, m.FactoryDecoratorConfig]] = []
+        factories: Sequence[tuple[str, m.FactoryDecoratorConfig]] = []
         for name in dir(module):
             if name.startswith("_"):
                 continue

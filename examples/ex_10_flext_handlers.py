@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import ClassVar, cast, override
 
@@ -271,7 +272,7 @@ class Ex10FlextHandlers(Examples):
             "record_metric.ok",
             handler.record_metric(metric_key, metric_value).is_success,
         )
-        context_payload_query: dict[str, str] = {
+        context_payload_query: Mapping[str, str] = {
             "handler_name": context_name_1,
             "handler_mode": "query",
         }
@@ -279,7 +280,7 @@ class Ex10FlextHandlers(Examples):
             "push_context.mapping",
             handler.push_context(context_payload_query).is_success,
         )
-        context_payload_event: dict[str, str] = {
+        context_payload_event: Mapping[str, str] = {
             "handler_name": context_name_2,
             "handler_mode": "event",
         }
@@ -602,7 +603,7 @@ class Ex10FlextHandlers(Examples):
             ],
         )
         self.check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
-        http_mixed: list[int | str] = [200, "404"]
+        http_mixed: Sequence[int | str] = [200, "404"]
         self.check(
             "runtime.validate_http.success",
             h.validate_http_status_codes(http_mixed).unwrap_or([]),
@@ -610,7 +611,7 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "runtime.validate_http.range_fail", h.validate_http_status_codes([99]).error
         )
-        http_bad_type: list[int | str] = ["x"]
+        http_bad_type: Sequence[int | str] = ["x"]
         self.check(
             "runtime.validate_http.type_fail",
             h.validate_http_status_codes(http_bad_type).error,
@@ -637,10 +638,12 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "runtime.extract_generic_args",
-            len(h.extract_generic_args(dict[str, int])) >= 1,
+            len(h.extract_generic_args(Mapping[str, int])) >= 1,
         )
-        self.check("runtime.is_sequence_type.true", h.is_sequence_type(list[int]))
-        self.check("runtime.is_sequence_type.false", h.is_sequence_type(dict[str, int]))
+        self.check("runtime.is_sequence_type.true", h.is_sequence_type(Sequence[int]))
+        self.check(
+            "runtime.is_sequence_type.false", h.is_sequence_type(Mapping[str, int])
+        )
         self.check(
             "runtime.normalize_general",
             h.normalize_to_container({dict_key: dict_value}),

@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -112,7 +113,7 @@ class ReliabilityScenario(BaseModel):
 class ValidationScenarios:
     """Centralized validation scenarios - single source of truth."""
 
-    URI_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    URI_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="uri_valid_http",
             validator_type="network",
@@ -211,7 +212,7 @@ class ValidationScenarios:
             description="Custom scheme with allowlist",
         ),
     ]
-    PORT_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    PORT_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="port_valid_80",
             validator_type="network",
@@ -285,7 +286,7 @@ class ValidationScenarios:
             description="Port above maximum",
         ),
     ]
-    HOSTNAME_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    HOSTNAME_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="hostname_simple",
             validator_type="network",
@@ -319,7 +320,7 @@ class ValidationScenarios:
             description="Hostname with hyphen",
         ),
     ]
-    REQUIRED_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    REQUIRED_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="required_valid",
             validator_type="string",
@@ -377,7 +378,7 @@ class ValidationScenarios:
             description="Single character string",
         ),
     ]
-    CHOICE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    CHOICE_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="choice_valid_single",
             validator_type="string",
@@ -430,7 +431,7 @@ class ValidationScenarios:
             description="Case-insensitive choice",
         ),
     ]
-    LENGTH_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    LENGTH_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="length_exact",
             validator_type="string",
@@ -477,7 +478,7 @@ class ValidationScenarios:
             description="Zero-length string allowed",
         ),
     ]
-    PATTERN_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    PATTERN_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="pattern_email_valid",
             validator_type="string",
@@ -515,7 +516,7 @@ class ValidationScenarios:
             description="Pattern mismatch",
         ),
     ]
-    NON_NEGATIVE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    NON_NEGATIVE_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="non_negative_zero",
             validator_type="numeric",
@@ -557,7 +558,7 @@ class ValidationScenarios:
             description="None rejection",
         ),
     ]
-    POSITIVE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    POSITIVE_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="positive_one",
             validator_type="numeric",
@@ -607,7 +608,7 @@ class ValidationScenarios:
             description="None rejection",
         ),
     ]
-    RANGE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
+    RANGE_SCENARIOS: ClassVar[Sequence[ValidationScenario]] = [
         ValidationScenario(
             name="range_within_bounds",
             validator_type="numeric",
@@ -686,7 +687,7 @@ class ValidationScenarios:
 class ParserScenarios:
     """Centralized parser scenarios - single source of truth."""
 
-    LDIF_PARSE_SCENARIOS: ClassVar[list[ParserScenario]] = [
+    LDIF_PARSE_SCENARIOS: ClassVar[Sequence[ParserScenario]] = [
         ParserScenario(
             name="parse_simple_dn",
             parser_method="parse",
@@ -715,7 +716,7 @@ class ParserScenarios:
 class ReliabilityScenarios:
     """Centralized reliability scenarios - single source of truth."""
 
-    RETRY_SCENARIOS: ClassVar[list[ReliabilityScenario]] = [
+    RETRY_SCENARIOS: ClassVar[Sequence[ReliabilityScenario]] = [
         ReliabilityScenario(
             name="retry_immediate_success",
             strategy="retry",
@@ -750,7 +751,7 @@ class ReliabilityScenarios:
             description="All retries exhausted",
         ),
     ]
-    CIRCUIT_BREAKER_SCENARIOS: ClassVar[list[ReliabilityScenario]] = [
+    CIRCUIT_BREAKER_SCENARIOS: ClassVar[Sequence[ReliabilityScenario]] = [
         ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",

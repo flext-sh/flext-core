@@ -137,7 +137,7 @@ except ImportError as e:
 
 ```python
 # Error
-error: Argument 1 to "process" has incompatible type "str"; expected "dict[str, t.NormalizedValue]"
+error: Argument 1 to "process" has incompatible type "str"; expected "Mapping[str, t.NormalizedValue]"
 ```
 
 #### Solutions
@@ -151,7 +151,7 @@ def process(data):
 
 
 # ✅ CORRECT
-def process(data: dict[str, t.NormalizedValue]) -> r[ProcessedData]:
+def process(data: Mapping[str, t.NormalizedValue]) -> r[ProcessedData]:
     return r.ok(ProcessedData(**data))
 ```
 
@@ -809,7 +809,7 @@ def process(data: dict) -> ProcessedData:
 
    ```python
    # ✅ GOOD
-   def process(items: list[Item]) -> r[list[ProcessedItem]]:
+   def process(items: Sequence[Item]) -> r[Sequence[ProcessedItem]]:
        pass
 
    # ❌ BAD

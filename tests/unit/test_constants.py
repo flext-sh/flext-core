@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -43,13 +44,13 @@ class TestConstants:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
         valid_cases: Annotated[
-            list[str], Field(description="Inputs expected to match the pattern")
+            Sequence[str], Field(description="Inputs expected to match the pattern")
         ]
         invalid_cases: Annotated[
-            list[str], Field(description="Inputs expected to fail the pattern")
+            Sequence[str], Field(description="Inputs expected to fail the pattern")
         ]
 
-    CORE_CONSTANT_PATHS: ClassVar[list[ConstantPathScenario]] = [
+    CORE_CONSTANT_PATHS: ClassVar[Sequence[ConstantPathScenario]] = [
         ConstantPathScenario(path="NAME", expected="FLEXT"),
         ConstantPathScenario(path="MIN_PORT", expected=1),
         ConstantPathScenario(path="MAX_PORT", expected=65535),
@@ -72,7 +73,7 @@ class TestConstants:
         ConstantPathScenario(path="FIELD_CREATED_AT", expected="created_at"),
         ConstantPathScenario(path="TYPE_MISMATCH", expected="Type mismatch"),
     ]
-    PATTERN_VALIDATION_SCENARIOS: ClassVar[list[PatternValidationScenario]] = [
+    PATTERN_VALIDATION_SCENARIOS: ClassVar[Sequence[PatternValidationScenario]] = [
         PatternValidationScenario(
             pattern_attr="PATTERN_EMAIL",
             valid_cases=[
@@ -132,7 +133,7 @@ class TestConstants:
             ],
         ),
     ]
-    TYPE_CHECKS: ClassVar[list[tuple[str | int, type]]] = [
+    TYPE_CHECKS: ClassVar[Sequence[tuple[str | int, type]]] = [
         (c.NAME, str),
         (c.MIN_PORT, int),
         (c.MAX_PORT, int),
@@ -140,7 +141,7 @@ class TestConstants:
         (c.DEFAULT_LEVEL, str),
         (c.FLEXT_API_PORT, int),
     ]
-    TYPE_CHECK_IDS: ClassVar[list[str]] = [
+    TYPE_CHECK_IDS: ClassVar[Sequence[str]] = [
         "name_str",
         "network_min_port_int",
         "network_max_port_int",
@@ -148,7 +149,7 @@ class TestConstants:
         "logging_default_level_str",
         "platform_flext_api_port_int",
     ]
-    REQUIRED_ATTRIBUTES: ClassVar[list[str]] = [
+    REQUIRED_ATTRIBUTES: ClassVar[Sequence[str]] = [
         "MIN_PORT",
         "MAX_PORT",
         "MIN_NAME_LENGTH",
@@ -169,7 +170,13 @@ class TestConstants:
         "DEFAULT_PAGE_SIZE",
         "ErrorType",
     ]
-    LOG_LEVELS: ClassVar[list[str]] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    LOG_LEVELS: ClassVar[Sequence[str]] = [
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
+    ]
 
     @pytest.mark.parametrize(
         "scenario",

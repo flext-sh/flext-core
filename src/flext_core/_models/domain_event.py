@@ -68,7 +68,7 @@ class FlextModelsDomainEvent:
         if isinstance(item, datetime):
             return item
         if isinstance(item, Mapping):
-            normalized_map: dict[str, t.NormalizedValue] = {}
+            normalized_map: Mapping[str, t.NormalizedValue] = {}
             for key, value in item.items():
                 normalized_map[str(key)] = (
                     FlextModelsDomainEvent.metadata_to_normalized(

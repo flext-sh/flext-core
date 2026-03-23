@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_core import FlextRuntime, c, p, t
 
 
@@ -126,7 +128,7 @@ class FlextUtilitiesDomain:
         """
         try:
             obj_dict = obj.__dict__
-            hashable_items: list[tuple[str, t.NormalizedValue]] = []
+            hashable_items: Sequence[tuple[str, t.NormalizedValue]] = []
             for key, value in sorted(obj_dict.items()):
                 key_str = str(key)
                 if isinstance(value, (str, int, float, bool, type(None))):

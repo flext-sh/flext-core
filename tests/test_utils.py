@@ -46,7 +46,7 @@ class TestUtils:
             unique_id: str,
             name: str,
             **kwargs: t.Scalar,
-        ) -> dict[str, bool | datetime | float | int | str]:
+        ) -> Mapping[str, bool | datetime | float | int | str]:
             """Create standardized entity test data."""
             return {"unique_id": unique_id, "name": name, **kwargs}
 
@@ -54,7 +54,7 @@ class TestUtils:
         def create_value_object_data(
             value: t.Scalar,
             **kwargs: t.Scalar,
-        ) -> dict[str, bool | datetime | float | int | str]:
+        ) -> Mapping[str, bool | datetime | float | int | str]:
             """Create standardized value t.NormalizedValue test data."""
             return {"value": value, **kwargs}
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -24,15 +24,15 @@ class TestCoverageExceptions:
         ]
         message: Annotated[str, Field(description="Exception message")]
         kwargs: Annotated[
-            dict[str, t.MetadataAttributeValue | type],
+            Mapping[str, t.MetadataAttributeValue | type],
             Field(description="Keyword arguments for exception creation"),
         ]
         expected_attrs: Annotated[
-            dict[str, t.MetadataAttributeValue | type],
+            Mapping[str, t.MetadataAttributeValue | type],
             Field(description="Expected attributes to validate"),
         ]
 
-    EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
+    EXCEPTION_CREATION: ClassVar[Sequence[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
             name="validation_basic",
             exception_type=FlextExceptions.ValidationError,
@@ -159,7 +159,9 @@ class TestCoverageExceptions:
     ]
 
     FACTORY_CREATION: ClassVar[
-        list[tuple[str, dict[str, t.NormalizedValue], type[FlextExceptions.BaseError]]]
+        Sequence[
+            tuple[str, Mapping[str, t.NormalizedValue], type[FlextExceptions.BaseError]]
+        ]
     ] = [
         (
             "ValidationError",
@@ -186,8 +188,8 @@ class TestCoverageExceptions:
     @pytest.mark.parametrize("scenario", EXCEPTION_CREATION, ids=lambda s: s.name)
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         if scenario.kwargs:
-            type_kwargs: dict[str, type] = {}
-            metadata_kwargs: dict[str, t.NormalizedValue] = {}
+            type_kwargs: Mapping[str, type] = {}
+            metadata_kwargs: Mapping[str, t.NormalizedValue] = {}
             for key, value in scenario.kwargs.items():
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
@@ -225,11 +227,11 @@ class TestCoverageExceptions:
 
     def test_exception_in_railway_pattern(self) -> None:
         def validate_and_process(
-            data: dict[str, t.NormalizedValue],
-        ) -> r[dict[str, t.NormalizedValue]]:
+            data: Mapping[str, t.NormalizedValue],
+        ) -> r[Mapping[str, t.NormalizedValue]]:
             if not data.get("id"):
-                return r[dict[str, t.NormalizedValue]].fail("Missing id")
-            return r[dict[str, t.NormalizedValue]].ok(data)
+                return r[Mapping[str, t.NormalizedValue]].fail("Missing id")
+            return r[Mapping[str, t.NormalizedValue]].ok(data)
 
         tm.fail(validate_and_process({}))
         tm.ok(validate_and_process({"id": "123"}))
@@ -269,7 +271,7 @@ class TestCoverageExceptions:
             tm.that(message in str(error) or len(str(error)) > 9000, eq=expected_in_str)
 
     def test_multiple_exceptions_in_sequence(self) -> None:
-        errors: list[str] = []
+        errors: Sequence[str] = []
         for i in range(5):
             try:
                 if i % 2 == 0:
@@ -358,10 +360,10 @@ class TestCoverageExceptions:
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: dict[str, t.NormalizedValue],
+        kwargs: Mapping[str, t.NormalizedValue],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
-        converted_kwargs: dict[str, t.NormalizedValue] = {
+        converted_kwargs: Mapping[str, t.NormalizedValue] = {
             key: cast("t.MetadataAttributeValue", value)
             for key, value in kwargs.items()
         }
@@ -380,7 +382,7 @@ class TestCoverageExceptions:
         metrics = FlextExceptions.get_metrics()
         tm.that(metrics["total_exceptions"], eq=3)
         raw_counts = metrics.root.get("exception_counts")
-        exception_counts = cast("dict[str, int]", raw_counts)
+        exception_counts = cast("Mapping[str, int]", raw_counts)
         tm.that(exception_counts.get("FlextExceptions.ValidationError"), eq=2)
         tm.that(exception_counts.get("FlextExceptions.ConfigurationError"), eq=1)
         tm.that(metrics["unique_exception_types"], eq=2)

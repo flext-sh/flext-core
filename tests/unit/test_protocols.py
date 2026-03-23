@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -60,11 +61,11 @@ class TestFlextProtocols:
         name: Annotated[str, Field(description="Protocol availability scenario name")]
         category: Annotated[StrEnum, Field(description="Protocol category")]
         protocol_names: Annotated[
-            list[str], Field(description="Expected protocol names")
+            Sequence[str], Field(description="Expected protocol names")
         ]
 
     _DEFINITION_SCENARIOS: ClassVar[
-        list[TestFlextProtocols.ProtocolDefinitionScenario]
+        Sequence[TestFlextProtocols.ProtocolDefinitionScenario]
     ] = [
         ProtocolDefinitionScenario(
             name="result_protocol",
@@ -103,7 +104,7 @@ class TestFlextProtocols:
         ),
     ]
     _AVAILABILITY_SCENARIOS: ClassVar[
-        list[TestFlextProtocols.ProtocolAvailabilityScenario]
+        Sequence[TestFlextProtocols.ProtocolAvailabilityScenario]
     ] = [
         ProtocolAvailabilityScenario(
             name="all_foundation_protocols_available",

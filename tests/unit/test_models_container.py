@@ -14,7 +14,7 @@ Uses real implementations, u, and advanced pytest patterns.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import ClassVar
 
@@ -36,7 +36,7 @@ class TestFlextModelsContainer:
     class _ContainerModelsScenarios:
         """Test scenarios for container models."""
 
-        METADATA_VALUES: ClassVar[list[tuple[t.NormalizedValue, bool]]] = [
+        METADATA_VALUES: ClassVar[Sequence[tuple[t.NormalizedValue, bool]]] = [
             (None, True),
             ({}, True),
             ({"key": "value"}, True),
@@ -49,7 +49,7 @@ class TestFlextModelsContainer:
             ([1, 2, 3], False),
         ]
         CONTAINER_CONFIG_VALUES: ClassVar[
-            list[dict[str, t.NormalizedValue | BaseModel]]
+            Sequence[Mapping[str, t.NormalizedValue | BaseModel]]
         ] = [
             {},
             {"enable_singleton": False},
@@ -89,7 +89,7 @@ class TestFlextModelsContainer:
         })
 
     @staticmethod
-    def _normalize_metadata_obj(value: list[int]) -> m.Metadata:
+    def _normalize_metadata_obj(value: Sequence[int]) -> m.Metadata:
         """Call ensure_metadata with arbitrary t.NormalizedValue for error-path testing."""
         fn: Callable[..., m.Metadata] = getattr(u, "ensure_metadata")
         return fn(value)
@@ -234,7 +234,7 @@ class TestFlextModelsContainer:
     )
     def test_container_config_creation(
         self,
-        config_dict: dict[str, t.NormalizedValue | BaseModel],
+        config_dict: Mapping[str, t.NormalizedValue | BaseModel],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         config = m.ContainerConfig.model_validate(config_dict)

@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict as BaseUserDict
+from collections.abc import Mapping
 from typing import TypeVar, cast, get_origin, override
 
 import pytest
@@ -44,7 +45,7 @@ class TestuTypeChecker:
 
     @staticmethod
     def _message_type(
-        value: type[dict[str, t.NormalizedValue] | int | str],
+        value: type[Mapping[str, t.NormalizedValue] | int | str],
     ) -> t.MessageTypeSpecifier:
         return cast("t.MessageTypeSpecifier", value)
 
@@ -62,15 +63,17 @@ class TestuTypeChecker:
         def handle(self, message: int) -> r[int]:
             return r[int].ok(message * 2)
 
-    class DictHandler(h[dict[str, t.NormalizedValue], dict[str, t.NormalizedValue]]):
+    class DictHandler(
+        h[Mapping[str, t.NormalizedValue], Mapping[str, t.NormalizedValue]]
+    ):
         """Handler for dictionary messages."""
 
         @override
         def handle(
             self,
-            message: dict[str, t.NormalizedValue],
-        ) -> r[dict[str, t.NormalizedValue]]:
-            return r[dict[str, t.NormalizedValue]].ok({
+            message: Mapping[str, t.NormalizedValue],
+        ) -> r[Mapping[str, t.NormalizedValue]]:
+            return r[Mapping[str, t.NormalizedValue]].ok({
                 "processed": True,
                 **message,
             })
@@ -142,7 +145,7 @@ class TestuTypeChecker:
         origin = get_origin(types[0])
         if origin is None:
             type_str = str(types[0])
-            assert type_str.startswith("dict[") or types[0] is dict
+            assert type_str.startswith("Mapping[") or types[0] is dict
         else:
             tm.that(origin, eq=dict)
 
@@ -172,7 +175,7 @@ class TestuTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (self._message_type(dict),)
         tm.that(u.can_handle_message_type(accepted, str), eq=False)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
-        dict_type: type[dict[str, t.NormalizedValue]] = dict
+        dict_type: type[Mapping[str, t.NormalizedValue]] = dict
         tm.that(u.can_handle_message_type(accepted, dict_type), eq=True)
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -209,7 +212,7 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         tm.that(u._evaluate_type_compatibility(self._type_origin(dict), dict), eq=True)
-        dict_type: type[dict[str, t.NormalizedValue]] = dict
+        dict_type: type[Mapping[str, t.NormalizedValue]] = dict
         tm.that(
             u._evaluate_type_compatibility(self._type_origin(dict), dict_type), eq=True
         )
@@ -362,7 +365,7 @@ class TestuTypeChecker:
 
     def test_handle_type_or_origin_check_with_origin(self) -> None:
         """Test _handle_type_or_origin_check with __origin__ attribute."""
-        dict_type: type[dict[str, str]] = dict[str, str]
+        dict_type: type[Mapping[str, str]] = Mapping[str, str]
         origin = get_origin(dict_type) or dict_type
         result = u._handle_type_or_origin_check(
             self._type_origin(dict),

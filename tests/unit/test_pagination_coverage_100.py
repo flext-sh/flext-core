@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, TypeGuard
 
 import pytest
@@ -44,13 +44,13 @@ def _is_prepare_scenario(
 def _case_factories(
     getter_name: str,
     count: int,
-) -> list[Callable[[], BaseModel]]:
-    results: list[Callable[[], BaseModel]] = []
+) -> Sequence[Callable[[], BaseModel]]:
+    results: Sequence[Callable[[], BaseModel]] = []
     for index in range(count):
 
         def _factory(idx: int = index) -> BaseModel:
             getter = getattr(TestPaginationCoverage100, getter_name)
-            scenarios: list[BaseModel] = getter()
+            scenarios: Sequence[BaseModel] = getter()
             return scenarios[idx]
 
         results.append(_factory)
@@ -65,7 +65,7 @@ class TestPaginationCoverage100:
 
         name: Annotated[str, Field(description="Extract page params scenario name")]
         query_params: Annotated[
-            dict[str, str], Field(description="Input query parameters")
+            Mapping[str, str], Field(description="Input query parameters")
         ]
         default_page: Annotated[int, Field(description="Default page value")]
         default_page_size: Annotated[int, Field(description="Default page size value")]
@@ -108,7 +108,7 @@ class TestPaginationCoverage100:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         name: Annotated[str, Field(description="Prepare pagination data scenario name")]
-        data: Annotated[list[str] | None, Field(description="Input page data")]
+        data: Annotated[Sequence[str] | None, Field(description="Input page data")]
         total: Annotated[int | None, Field(description="Input total count")]
         page: Annotated[int, Field(description="Requested page")]
         page_size: Annotated[int, Field(description="Requested page size")]
@@ -126,7 +126,7 @@ class TestPaginationCoverage100:
         ]
 
     @staticmethod
-    def _extract_page_params_scenarios() -> list[
+    def _extract_page_params_scenarios() -> Sequence[
         TestPaginationCoverage100.ExtractPageParamsScenario
     ]:
         return [
@@ -232,7 +232,7 @@ class TestPaginationCoverage100:
         ]
 
     @staticmethod
-    def _validate_pagination_params_scenarios() -> list[
+    def _validate_pagination_params_scenarios() -> Sequence[
         TestPaginationCoverage100.ValidatePaginationParamsScenario
     ]:
         return [
@@ -293,7 +293,7 @@ class TestPaginationCoverage100:
         ]
 
     @staticmethod
-    def _prepare_pagination_data_scenarios() -> list[
+    def _prepare_pagination_data_scenarios() -> Sequence[
         TestPaginationCoverage100.PreparePaginationDataScenario
     ]:
         return [
@@ -497,7 +497,7 @@ class TestPaginationCoverage100:
 
     def test_build_pagination_response_success(self) -> None:
         """Test build_pagination_response with valid data."""
-        pagination_data: dict[str, list[str] | dict[str, int | bool]] = {
+        pagination_data: Mapping[str, Sequence[str] | Mapping[str, int | bool]] = {
             "data": ["item1", "item2"],
             "pagination": {
                 "page": 1,
@@ -520,7 +520,7 @@ class TestPaginationCoverage100:
 
     def test_build_pagination_response_no_message(self) -> None:
         """Test build_pagination_response without message."""
-        pagination_data: dict[str, list[str] | dict[str, int | bool]] = {
+        pagination_data: Mapping[str, Sequence[str] | Mapping[str, int | bool]] = {
             "data": ["item1"],
             "pagination": {
                 "page": 1,
@@ -540,7 +540,7 @@ class TestPaginationCoverage100:
 
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
-        pagination_data: dict[str, dict[str, int | bool]] = {"pagination": {}}
+        pagination_data: Mapping[str, Mapping[str, int | bool]] = {"pagination": {}}
         result = u.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
             result,
@@ -549,7 +549,7 @@ class TestPaginationCoverage100:
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
-        pagination_data: dict[str, list[str]] = {"data": []}
+        pagination_data: Mapping[str, Sequence[str]] = {"data": []}
         result = u.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
             result,
@@ -558,7 +558,7 @@ class TestPaginationCoverage100:
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""
-        pagination_data: dict[str, dict[str, str] | dict[str, int | bool]] = {
+        pagination_data: Mapping[str, Mapping[str, str] | Mapping[str, int | bool]] = {
             "data": {"key": "value"},
             "pagination": {
                 "page": 1,

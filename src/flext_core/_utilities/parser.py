@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import warnings
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from typing import overload
 
@@ -161,7 +161,7 @@ class FlextUtilitiesParser:
 
         """
         for attr in ("name", "id"):
-            obj_vars: dict[str, t.NormalizedValue] = (
+            obj_vars: Mapping[str, t.NormalizedValue] = (
                 vars(obj) if hasattr(obj, "__dict__") else {}
             )
             if attr not in obj_vars:
@@ -263,7 +263,9 @@ class FlextUtilitiesParser:
         return r[T].fail(f"Cannot parse '{value}' as {target_name}")
 
     @staticmethod
-    def _parse_find_first[T](items: list[T], predicate: Callable[[T], bool]) -> r[T]:
+    def _parse_find_first[T](
+        items: Sequence[T], predicate: Callable[[T], bool]
+    ) -> r[T]:
         """Find first item matching predicate (avoids circular import)."""
         for item in items:
             item_typed: T = item
@@ -278,7 +280,7 @@ class FlextUtilitiesParser:
         default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
         """Get attribute safely (avoids circular import with u.get)."""
-        obj_vars: dict[str, t.NormalizedValue] = (
+        obj_vars: Mapping[str, t.NormalizedValue] = (
             vars(obj) if hasattr(obj, "__dict__") else {}
         )
         if attr not in obj_vars:
@@ -303,7 +305,7 @@ class FlextUtilitiesParser:
             return r[TModel].fail(
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
             )
-        value_dict_data: dict[str, t.NormalizedValue] = {
+        value_dict_data: Mapping[str, t.NormalizedValue] = {
             str(k): v for k, v in value.items()
         }
         try:
@@ -380,7 +382,7 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Target is not a StrEnum",
                 error_code="TARGET_NOT_ENUM",
             )
-        members = TypeAdapter(dict[str, T]).validate_python(target.__members__)
+        members = TypeAdapter(Mapping[str, T]).validate_python(target.__members__)
         value_str = str(value)
         if case_insensitive:
             value_lower = value_str.lower()
@@ -599,22 +601,22 @@ class FlextUtilitiesParser:
     def conv_str_list(
         value: t.NormalizedValue,
         *,
-        default: list[str] | None = None,
-    ) -> list[str]:
+        default: Sequence[str] | None = None,
+    ) -> Sequence[str]:
         """Convert to str_list (builder: conv().str_list()).
 
-        Mnemonic: conv = convert, str_list = list[str]
+        Mnemonic: conv = convert, str_list = Sequence[str]
 
         Args:
             value: Value to convert
             default: Default if None
 
         Returns:
-            list[str]: Converted list
+            Sequence[str]: Converted list
 
         """
         if default is None:
-            default = list[str]()
+            default = Sequence[str]()
         if value is None:
             return default
         if isinstance(value, list):
@@ -626,7 +628,7 @@ class FlextUtilitiesParser:
         return [str(value)]
 
     @staticmethod
-    def conv_str_list_safe(value: t.NormalizedValue | None) -> list[str]:
+    def conv_str_list_safe(value: t.NormalizedValue | None) -> Sequence[str]:
         """Safe str_list conversion.
 
         Mnemonic: conv_str_list_safe = convert + safe mode
@@ -635,7 +637,7 @@ class FlextUtilitiesParser:
             value: Value to convert (can be None)
 
         Returns:
-            list[str]: Converted list or []
+            Sequence[str]: Converted list or []
 
         """
         if value is None:
@@ -646,8 +648,8 @@ class FlextUtilitiesParser:
     def conv_str_list_truthy(
         value: t.NormalizedValue | None,
         *,
-        default: list[str] | None = None,
-    ) -> list[str]:
+        default: Sequence[str] | None = None,
+    ) -> Sequence[str]:
         """Convert to str_list and filter truthy.
 
         Mnemonic: conv_str_list_truthy = convert + filter truthy
@@ -657,7 +659,7 @@ class FlextUtilitiesParser:
             default: Default if None
 
         Returns:
-            list[str]: Converted and filtered list
+            Sequence[str]: Converted and filtered list
 
         """
         if value is None:
@@ -759,7 +761,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: p.HasModelDump | list[str] | t.ConfigMap | Mapping[str, t.Container],
+        items: p.HasModelDump | Sequence[str] | t.ConfigMap | Mapping[str, t.Container],
         *,
         case: str | None = None,
     ) -> bool:
@@ -768,7 +770,7 @@ class FlextUtilitiesParser:
         Mnemonic: norm = normalize, in_ = membership check
 
         Canonical path: pass t.ConfigMap or any Pydantic BaseModel (p.HasModelDump).
-        Legacy path: raw Mapping or list[str] — emits DeprecationWarning.
+        Legacy path: raw Mapping or Sequence[str] — emits DeprecationWarning.
 
         Args:
             value: Value to check
@@ -779,7 +781,7 @@ class FlextUtilitiesParser:
             bool: True if normalized value in normalized items
 
         """
-        items_to_check: list[str]
+        items_to_check: Sequence[str]
         if isinstance(items, t.ConfigMap):
             items_to_check = [str(k) for k in items.root]
         elif isinstance(items, p.HasModelDump):
@@ -803,7 +805,9 @@ class FlextUtilitiesParser:
         return normalized_value in normalized_result
 
     @staticmethod
-    def norm_join(items: list[str], *, case: str | None = None, sep: str = " ") -> str:
+    def norm_join(
+        items: Sequence[str], *, case: str | None = None, sep: str = " "
+    ) -> str:
         """Normalize and join (builder: norm().join()).
 
         Mnemonic: norm = normalize, join = string join
@@ -825,12 +829,12 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: t.ConfigModelInput | list[str] | Mapping[str, t.NormalizedValue],
+        items: t.ConfigModelInput | Sequence[str] | Mapping[str, t.NormalizedValue],
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
-    ) -> list[str] | set[str] | dict[str, str]:
+    ) -> Sequence[str] | set[str] | Mapping[str, str]:
         """Normalize list/dict (builder: norm().list())."""
         if isinstance(items, t.ConfigMap):
             dict_items: Mapping[str, t.ValueOrModel] = items.root
@@ -844,7 +848,7 @@ class FlextUtilitiesParser:
                 for k, v in dict_items.items()
             }
         if isinstance(items, BaseModel):
-            dumped: dict[str, t.RuntimeAtomic] = {
+            dumped: Mapping[str, t.RuntimeAtomic] = {
                 str(k): FlextRuntime.normalize_to_container(v)
                 for k, v in items.model_dump().items()
             }
@@ -865,7 +869,7 @@ class FlextUtilitiesParser:
                 DeprecationWarning,
                 stacklevel=2,
             )
-            dict_items_raw: dict[str, t.RuntimeAtomic] = {
+            dict_items_raw: Mapping[str, t.RuntimeAtomic] = {
                 str(k): FlextRuntime.normalize_to_container(v) for k, v in items.items()
             }
             if filter_truthy:
@@ -877,7 +881,7 @@ class FlextUtilitiesParser:
                 )
                 for k, v in dict_items_raw.items()
             }
-        list_items: list[str] = items
+        list_items: Sequence[str] = items
         if filter_truthy:
             list_items = [item for item in list_items if item]
         normalized = [
@@ -1003,7 +1007,7 @@ class FlextUtilitiesParser:
     def apply_regex_pipeline(
         self,
         text: str | None,
-        patterns: list[tuple[str, str] | tuple[str, str, int]],
+        patterns: Sequence[tuple[str, str] | tuple[str, str, int]],
     ) -> r[str]:
         r"""Apply sequence of regex substitutions to text.
 
@@ -1138,7 +1142,7 @@ class FlextUtilitiesParser:
             key = dunder_name if isinstance(dunder_name, str) else obj_type_name
         elif not callable(obj) and isinstance(obj, Mapping):
             narrowed_map: Mapping[str, t.NormalizedValue] = obj
-            str_keyed: dict[str, t.NormalizedValue] = {
+            str_keyed: Mapping[str, t.NormalizedValue] = {
                 str(mk): mv for mk, mv in narrowed_map.items()
             }
             mapping_key = self._extract_key_from_mapping(str_keyed)
@@ -1244,7 +1248,7 @@ class FlextUtilitiesParser:
         delimiter: str,
         *,
         options: m.ParseOptions | None = None,
-    ) -> r[list[str]]:
+    ) -> r[Sequence[str]]:
         """Parse delimited string into list of components.
 
         **Generic replacement for**: DN.split(), CSV parsing, config parsing
@@ -1290,13 +1294,13 @@ class FlextUtilitiesParser:
                 "Empty text provided, returning empty list",
                 operation="parse_delimited",
             )
-            return r[list[str]].ok([])
+            return r[Sequence[str]].ok([])
         if not delimiter or len(delimiter) != 1:
-            return r[list[str]].fail(
+            return r[Sequence[str]].fail(
                 f"Delimiter must be exactly one character, got '{delimiter}'",
             )
         if delimiter.isspace() or not delimiter.isprintable():
-            return r[list[str]].fail(
+            return r[Sequence[str]].fail(
                 f"Delimiter cannot be a whitespace or control character: '{delimiter}'",
             )
         try:
@@ -1326,7 +1330,7 @@ class FlextUtilitiesParser:
                 operation="parse_delimited",
                 final_components_count=len(components),
             )
-            return r[list[str]].ok(components)
+            return r[Sequence[str]].ok(components)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             text_len = self._get_safe_text_length(text)
             self._parser_log.exception(
@@ -1338,14 +1342,14 @@ class FlextUtilitiesParser:
                 delimiter=delimiter,
                 consequence="Cannot parse delimited string - invalid input or internal error",
             )
-            return r[list[str]].fail(f"Failed to parse delimited string: {e}")
+            return r[Sequence[str]].fail(f"Failed to parse delimited string: {e}")
 
     def split_on_char_with_escape(
         self,
         text: str,
         split_char: str,
         escape_char: str = "\\",
-    ) -> r[list[str]]:
+    ) -> r[Sequence[str]]:
         r"""Split string on character, respecting escape sequences.
 
         **Generic replacement for**: DN parsing with escapes, CSV with quotes
@@ -1370,14 +1374,14 @@ class FlextUtilitiesParser:
         """
         validation_result = self._validate_split_inputs(split_char, escape_char)
         if validation_result.is_failure:
-            return r[list[str]].fail(validation_result.error or "Validation failed")
+            return r[Sequence[str]].fail(validation_result.error or "Validation failed")
         text_is_empty_result = r[bool].create_from_callable(lambda: not text)
         if text_is_empty_result.is_success and text_is_empty_result.value:
             self._parser_log.debug(
                 "Empty text provided, returning list with empty string",
                 operation="split_on_char_with_escape",
             )
-            return r[list[str]].ok([""])
+            return r[Sequence[str]].ok([""])
         return self._execute_escape_splitting(text, split_char, escape_char)
 
     def _apply_single_pattern(self, params: m.PatternApplicationParams) -> r[str]:
@@ -1416,7 +1420,7 @@ class FlextUtilitiesParser:
         text: str,
         split_char: str,
         escape_char: str,
-    ) -> r[list[str]]:
+    ) -> r[Sequence[str]]:
         """Execute escape-aware splitting with logging and error handling.
 
         Args:
@@ -1444,7 +1448,7 @@ class FlextUtilitiesParser:
             )
             split_result = self._process_escape_splitting(text, split_char, escape_char)
             if split_result.is_failure:
-                return r[list[str]].fail(
+                return r[Sequence[str]].fail(
                     split_result.error or "Unknown error in escape splitting",
                 )
             split_val = split_result.value
@@ -1455,7 +1459,7 @@ class FlextUtilitiesParser:
                 components_count=len(components),
                 escape_sequences_found=escape_count,
             )
-            return r[list[str]].ok(components)
+            return r[Sequence[str]].ok(components)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             text_len = self._get_safe_text_length(text)
             self._parser_log.exception(
@@ -1468,7 +1472,7 @@ class FlextUtilitiesParser:
                 escape_char=escape_char,
                 consequence="Cannot split string with escape handling - invalid input or internal error",
             )
-            return r[list[str]].fail(f"Failed to split with escape: {e}")
+            return r[Sequence[str]].fail(f"Failed to split with escape: {e}")
 
     @overload
     def _extract_pattern_components(
@@ -1538,7 +1542,7 @@ class FlextUtilitiesParser:
     def _handle_pipeline_edge_cases(
         self,
         text: str | None,
-        patterns: list[tuple[str, str] | tuple[str, str, int]],
+        patterns: Sequence[tuple[str, str] | tuple[str, str, int]],
     ) -> r[str]:
         """Handle edge cases for regex pipeline application.
 
@@ -1570,7 +1574,7 @@ class FlextUtilitiesParser:
     def _process_all_patterns(
         self,
         text: str,
-        patterns: list[tuple[str, str] | tuple[str, str, int]],
+        patterns: Sequence[tuple[str, str] | tuple[str, str, int]],
     ) -> r[tuple[str, int]]:
         """Process all regex patterns and return final text and count."""
         result_text = text
@@ -1615,12 +1619,12 @@ class FlextUtilitiesParser:
 
     def _process_components(
         self,
-        components: list[str],
+        components: Sequence[str],
         *,
         strip: bool,
         remove_empty: bool,
         validator: Callable[[str], bool] | None,
-    ) -> r[list[str]]:
+    ) -> r[Sequence[str]]:
         """Process components with strip, remove_empty, and validator."""
         if strip:
             self._parser_log.debug(
@@ -1639,7 +1643,7 @@ class FlextUtilitiesParser:
                 "Validating components with custom validator",
                 operation="parse_delimited",
             )
-            valid_components: list[str] = []
+            valid_components: Sequence[str] = []
             for comp in components:
                 if validator(comp):
                     valid_components.append(comp)
@@ -1651,17 +1655,17 @@ class FlextUtilitiesParser:
                         validator_type=validator.__class__.__name__,
                     )
             components = valid_components
-        return r[list[str]].ok(components)
+        return r[Sequence[str]].ok(components)
 
     def _process_escape_splitting(
         self,
         text: str,
         split_char: str,
         escape_char: str,
-    ) -> r[tuple[list[str], int]]:
+    ) -> r[tuple[Sequence[str], int]]:
         """Process text with escape character handling and return components."""
-        components: list[str] = []
-        current: list[str] = []
+        components: Sequence[str] = []
+        current: Sequence[str] = []
         i = 0
         escape_count = 0
         while i < len(text):
@@ -1694,7 +1698,7 @@ class FlextUtilitiesParser:
             final_component_length=len(current),
         )
         components.append("".join(current))
-        return r[tuple[list[str], int]].ok((components, escape_count))
+        return r[tuple[Sequence[str], int]].ok((components, escape_count))
 
 
 __all__ = ["FlextUtilitiesParser"]

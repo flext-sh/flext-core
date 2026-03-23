@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from typing import Never, override
 
 from flext_tests import FlextTestsUtilities, t, tm
@@ -86,7 +86,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
                     self,
                     *_args: str,
                     **_kwargs: t.Scalar,
-                ) -> list[str]:
+                ) -> Sequence[str]:
                     """Raise error on split attempt."""
                     msg = "Bad split"
                     raise RuntimeError(msg)
@@ -161,8 +161,10 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                model_dump: Callable[[], dict[str, t.Tests.Testobject]] = staticmethod(
-                    lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+                model_dump: Callable[[], Mapping[str, t.Tests.Testobject]] = (
+                    staticmethod(
+                        lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+                    )
                 )
 
             class BadConfig:

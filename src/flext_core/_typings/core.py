@@ -28,20 +28,20 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
 
     type Serializable = (
         FlextTypingBase.Container
-        | list[FlextTypesCore.Serializable]
+        | Sequence[FlextTypesCore.Serializable]
         | Mapping[str, FlextTypesCore.Serializable]
         | None
     )
     type ContainerValue = (
         FlextTypingBase.Scalar
-        | list[FlextTypesCore.ContainerValue]
-        | dict[str, FlextTypesCore.ContainerValue]
+        | Sequence[FlextTypesCore.ContainerValue]
+        | Mapping[str, FlextTypesCore.ContainerValue]
     )
     type GeneralValueType = (
         FlextTypingBase.Scalar
         | Path
-        | list[FlextTypesCore.GeneralValueType]
-        | dict[str, FlextTypesCore.GeneralValueType]
+        | Sequence[FlextTypesCore.GeneralValueType]
+        | Mapping[str, FlextTypesCore.GeneralValueType]
     )
 
     type ConstantValue = (
@@ -61,8 +61,8 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         | int
         | float
         | bool
-        | list[FlextTypesCore.JsonValue]
-        | dict[str, FlextTypesCore.JsonValue]
+        | Sequence[FlextTypesCore.JsonValue]
+        | Mapping[str, FlextTypesCore.JsonValue]
         | None
     )
     type FileContent = str | bytes | Sequence[Sequence[str]]

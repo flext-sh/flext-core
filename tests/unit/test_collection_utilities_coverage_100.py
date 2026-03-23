@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
@@ -48,7 +49,7 @@ class TestCollectionUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse sequence scenario name")]
         values: Annotated[
-            list[str | TestCollectionUtilitiesCoverage.Status],
+            Sequence[str | TestCollectionUtilitiesCoverage.Status],
             Field(description="Input sequence values"),
         ]
         expected_success: Annotated[
@@ -84,7 +85,7 @@ class TestCollectionUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse mapping scenario name")]
         mapping: Annotated[
-            dict[str, str | TestCollectionUtilitiesCoverage.Status],
+            Mapping[str, str | TestCollectionUtilitiesCoverage.Status],
             Field(description="Input mapping values"),
         ]
         expected_success: Annotated[
@@ -100,7 +101,7 @@ class TestCollectionUtilitiesCoverage:
 
     def _parse_sequence_scenarios(
         self,
-    ) -> list[TestCollectionUtilitiesCoverage.ParseSequenceScenario]:
+    ) -> Sequence[TestCollectionUtilitiesCoverage.ParseSequenceScenario]:
         return [
             self.ParseSequenceScenario(
                 name="valid_strings",
@@ -142,7 +143,7 @@ class TestCollectionUtilitiesCoverage:
 
     def _coerce_list_validator_scenarios(
         self,
-    ) -> list[TestCollectionUtilitiesCoverage.CoerceListValidatorScenario]:
+    ) -> Sequence[TestCollectionUtilitiesCoverage.CoerceListValidatorScenario]:
         return [
             self.CoerceListValidatorScenario(
                 name="valid_list_strings",
@@ -191,7 +192,7 @@ class TestCollectionUtilitiesCoverage:
 
     def _parse_mapping_scenarios(
         self,
-    ) -> list[TestCollectionUtilitiesCoverage.ParseMappingScenario]:
+    ) -> Sequence[TestCollectionUtilitiesCoverage.ParseMappingScenario]:
         return [
             self.ParseMappingScenario(
                 name="valid_strings",

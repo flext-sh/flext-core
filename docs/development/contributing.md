@@ -44,7 +44,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 - Root project governance lives in `AGENTS.md` at the workspace root.
 - For `flext-core` changes, follow `rules-flext-core`, `flext-import-rules`, and `flext-strict-typing`.
-- Keep examples and snippets aligned with Python 3.13 typing style (`X | None`, `list[T]`, `dict[K, V]`).
+- Keep examples and snippets aligned with Python 3.13 typing style (`X | None`, `Sequence[T]`, `Mapping[K, V]`).
 
 ## Quick Start
 

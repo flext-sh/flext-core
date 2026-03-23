@@ -144,7 +144,7 @@ class Order(FlextModels.Entity):
 
     order_id: str  # Unique identifier
     customer_id: str
-    items: list[dict]
+    items: Sequence[dict]
     total: Decimal
     status: str  # "pending", "shipped", "delivered"
     created_at: datetime
@@ -271,7 +271,7 @@ class Order(FlextModels.AggregateRoot):
 
     order_id: str  # Aggregate identity
     customer_id: str
-    items: list[OrderItem]
+    items: Sequence[OrderItem]
     total: Decimal
     status: str  # "pending", "confirmed", "shipped", "delivered"
     shipping_info: ShippingInfo
@@ -477,7 +477,7 @@ class Order(FlextModels.AggregateRoot):
 
     order_id: str
     customer_id: str
-    lines: list[OrderLine]
+    lines: Sequence[OrderLine]
     shipping_address: Address
     billing_address: Address
     status: OrderStatus
@@ -1000,7 +1000,7 @@ if result.is_success:
 ```python
 # ✅ CORRECT - Validate in constructor
 class Order(FlextModels.AggregateRoot):
-    items: list[OrderItem]
+    items: Sequence[OrderItem]
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -1010,7 +1010,7 @@ class Order(FlextModels.AggregateRoot):
 
 # ❌ WRONG - No invariant protection
 class Order(FlextModels.AggregateRoot):
-    items: list[OrderItem]
+    items: Sequence[OrderItem]
     # No validation - could have empty items
 ```
 
@@ -1038,7 +1038,7 @@ class Order:
 ```python
 # ✅ CORRECT - Business logic in entity methods
 class ShoppingCart(FlextModels.Entity):
-    items: list[CartItem]
+    items: Sequence[CartItem]
 
     def add_item(self, item: CartItem) -> r[bool]:
         if len(self.items) >= 100:

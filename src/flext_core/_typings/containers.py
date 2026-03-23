@@ -3,8 +3,8 @@
 **Purpose:** Strongly-typed container models with Pydantic v2 validation + dict/list protocols.
 
 **What It Declares:**
-- RootDictModel[T]: Base class implementing dict protocol over RootModel[dict[str, T]]
-- ObjectList: RootModel[list[Container]] for batch operations
+- RootDictModel[T]: Base class implementing dict protocol over RootModel[Mapping[str, T]]
+- ObjectList: RootModel[Sequence[Container]] for batch operations
 - Dict: Validated dict for request/response payloads
 - ConfigMap: Validated dict for configuration entries
 
@@ -27,7 +27,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import ItemsView, KeysView, Mapping, ValuesView
+from collections.abc import (
+    ItemsView,
+    KeysView,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    ValuesView,
+)
 from typing import Annotated, override
 
 from pydantic import BaseModel, Field, RootModel
@@ -38,7 +45,7 @@ from flext_core import FlextTypingBase
 class FlextTypingContainers:
     """Container type system for FLEXT."""
 
-    class RootDictModel[DictValueT](RootModel[dict[str, DictValueT]]):
+    class RootDictModel[DictValueT](RootModel[MutableMapping[str, DictValueT]]):
         """Dict-backed RootModel with full dict protocol.
 
         Wraps typed dict in Pydantic v2 validation, exposes all dict methods
@@ -91,11 +98,11 @@ class FlextTypingContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    class ObjectList(RootModel[list[FlextTypingBase.Container]]):
+    class ObjectList(RootModel[Sequence[FlextTypingBase.Container]]):
         """Ordered list of strongly-typed container values for batch operations."""
 
         root: Annotated[
-            list[FlextTypingBase.Container],
+            Sequence[FlextTypingBase.Container],
             Field(
                 default_factory=list,
                 title="Object List",
@@ -110,11 +117,11 @@ class FlextTypingContainers:
     class Dict(RootDictModel[FlextTypingBase.NormalizedValue | BaseModel]):
         """Validated dict payload for requests, responses, and data transfer.
 
-        Type-safe dict[str, NormalizedValue | BaseModel] with full dict protocol.
+        Type-safe MutableMapping[str, NormalizedValue | BaseModel] with full dict protocol.
         """
 
         root: Annotated[
-            dict[str, FlextTypingBase.NormalizedValue | BaseModel],
+            MutableMapping[str, FlextTypingBase.NormalizedValue | BaseModel],
             Field(
                 default_factory=dict,
                 title="Dictionary Payload",
@@ -144,7 +151,7 @@ class FlextTypingContainers:
         """
 
         root: Annotated[
-            dict[str, FlextTypingBase.NormalizedValue | BaseModel],
+            MutableMapping[str, FlextTypingBase.NormalizedValue | BaseModel],
             Field(
                 default_factory=dict,
                 title="Configuration Map",

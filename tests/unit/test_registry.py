@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
@@ -70,7 +70,7 @@ class TestFlextRegistry:
         def __call__(self, message: t.NormalizedValue) -> r[t.NormalizedValue]:
             return self.handle(message)
 
-    _HANDLER_REGISTRATION: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [
+    _HANDLER_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
         RegistryTestCase(
             name="single_handler_success",
             operation=RegistryOperationType.REGISTER_HANDLER,
@@ -96,7 +96,7 @@ class TestFlextRegistry:
             error_pattern="Handler must be callable",
         ),
     ]
-    _BATCH_REGISTRATION: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [
+    _BATCH_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
         RegistryTestCase(
             name="multiple_handlers_success",
             operation=RegistryOperationType.REGISTER_HANDLERS,
@@ -121,7 +121,7 @@ class TestFlextRegistry:
             duplicate_registration=True,
         ),
     ]
-    _BINDING_REGISTRATION: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [
+    _BINDING_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
         RegistryTestCase(
             name="single_binding_success",
             operation=RegistryOperationType.REGISTER_BINDINGS,
@@ -150,7 +150,7 @@ class TestFlextRegistry:
             duplicate_registration=True,
         ),
     ]
-    _FUNCTION_MAP_SCENARIOS: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [
+    _FUNCTION_MAP_SCENARIOS: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
         RegistryTestCase(
             name="function_map_with_handler",
             operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
@@ -181,7 +181,7 @@ class TestFlextRegistry:
             duplicate_registration=True,
         ),
     ]
-    _SUMMARY_SCENARIOS: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [
+    _SUMMARY_SCENARIOS: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
         RegistryTestCase(
             name="empty_summary",
             operation=RegistryOperationType.SUMMARY_MANAGEMENT,
@@ -213,7 +213,7 @@ class TestFlextRegistry:
             with_summary=True,
         ),
     ]
-    _ERROR_SCENARIOS: ClassVar[list[TestFlextRegistry.RegistryTestCase]] = [
+    _ERROR_SCENARIOS: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
         RegistryTestCase(
             name="register_none_handler",
             operation=RegistryOperationType.ERROR_HANDLING,
@@ -230,20 +230,20 @@ class TestFlextRegistry:
     ]
 
     @staticmethod
-    def _create_handlers(count: int) -> list[t.HandlerLike]:
+    def _create_handlers(count: int) -> Sequence[t.HandlerLike]:
         return [TestFlextRegistry.ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def _create_bindings(
         handlers: Sequence[t.HandlerLike],
-    ) -> list[tuple[type, t.HandlerLike]]:
+    ) -> Sequence[tuple[type, t.HandlerLike]]:
         return [(str, handler) for handler in handlers]
 
     @staticmethod
     def _create_function_map(
         handlers: Sequence[t.HandlerLike],
-    ) -> dict[type, t.HandlerLike]:
-        result: dict[type, t.HandlerLike] = {}
+    ) -> Mapping[type, t.HandlerLike]:
+        result: Mapping[type, t.HandlerLike] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
         return result

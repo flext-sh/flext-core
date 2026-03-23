@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, Never, override
 
 from flext_tests import t
@@ -12,13 +12,13 @@ from pydantic import BaseModel, ConfigDict, Field
 class _ValidationLikeError(Exception):
     """Validation-like error for tests."""
 
-    def errors(self) -> list[dict[str, t.NormalizedValue]]:
+    def errors(self) -> Sequence[Mapping[str, t.NormalizedValue]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
 type TestCaseMap = Mapping[str, t.NormalizedValue]
 
-type InputPayloadMap = dict[str, t.NormalizedValue]
+type InputPayloadMap = Mapping[str, t.NormalizedValue]
 
 __all__ = [
     "BadConfigForTest",
@@ -98,7 +98,7 @@ class _ErrorsModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, t.NormalizedValue] | None = None,
+        context: Mapping[str, t.NormalizedValue] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -119,7 +119,7 @@ class _PlainErrorModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, t.NormalizedValue] | None = None,
+        context: Mapping[str, t.NormalizedValue] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -138,8 +138,8 @@ class CacheTestModel(BaseModel):
 
     name: str
     value: int
-    tags: list[str] = []
-    meta: dict[str, str] = {}
+    tags: Sequence[str] = []
+    meta: Mapping[str, str] = {}
 
 
 class NestedModel(BaseModel):
@@ -218,7 +218,7 @@ class _FakeConfig(BaseModel):
     timeout: int = 10
 
     @property
-    def data(self) -> dict[str, t.NormalizedValue]:
+    def data(self) -> Mapping[str, t.NormalizedValue]:
         return {"timeout": self.timeout}
 
 
@@ -251,8 +251,8 @@ class ComplexModel(BaseModel):
     """Complex test model."""
 
     id: int
-    data: dict[str, t.NormalizedValue]
-    items: list[str]
+    data: Mapping[str, t.NormalizedValue]
+    items: Sequence[str]
 
 
 class _Cfg(BaseModel):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
@@ -69,26 +69,26 @@ class TestUtilitiesCollectionFullCoverage:
         not_found = u.find({"a": 1}, lambda value: value == 2)
         tm.fail(not_found)
         nested = u._merge_deep_single_key(
-            cast("dict[str, t.NormalizedValue]", {"x": self._BadCopyDict({"a": 1})}),
+            cast("Mapping[str, t.NormalizedValue]", {"x": self._BadCopyDict({"a": 1})}),
             "x",
             cast("t.NormalizedValue", {"b": 2}),
         )
         tm.ok(nested)
         deep = u.merge(
-            cast("dict[str, t.NormalizedValue]", {"x": self._BadCopyDict({"a": 1})}),
-            cast("dict[str, t.NormalizedValue]", {"x": {"b": 2}}),
+            cast("Mapping[str, t.NormalizedValue]", {"x": self._BadCopyDict({"a": 1})}),
+            cast("Mapping[str, t.NormalizedValue]", {"x": {"b": 2}}),
             strategy="deep",
         )
         tm.ok(deep)
         with pytest.raises(AttributeError, match="copy"):
             _ = u.merge(
-                cast("dict[str, t.NormalizedValue]", None),
+                cast("Mapping[str, t.NormalizedValue]", None),
                 {"x": 1},
                 strategy="deep",
             )
 
     def test_batch_fail_collect_flatten_and_progress(self) -> None:
-        def _success_list(_item: int) -> list[int]:
+        def _success_list(_item: int) -> Sequence[int]:
             return [1, 2]
 
         def _failure_result(_item: int) -> NoReturn:
@@ -130,7 +130,7 @@ class TestUtilitiesCollectionFullCoverage:
             _raise_value_error,
         )
         tm.fail(failed_exc)
-        progress_calls: list[tuple[int, int]] = []
+        progress_calls: Sequence[tuple[int, int]] = []
         ok = u.batch(
             [1, 2],
             _identity,
@@ -142,7 +142,7 @@ class TestUtilitiesCollectionFullCoverage:
     def test_process_outer_exception_and_coercion_branches(self) -> None:
         with pytest.raises(TypeError, match="iter failed"):
             _ = u.process(
-                cast("list[str]", self._BadSequence()),
+                cast("Sequence[str]", self._BadSequence()),
                 lambda x: x,
             )
         value = u._coerce_value_to_float(1.5)
@@ -159,7 +159,7 @@ class TestUtilitiesCollectionFullCoverage:
         result = u.parse_mapping(
             self._Color,
             cast(
-                "dict[str, str | TestUtilitiesCollectionFullCoverage._Color]",
+                "Mapping[str, str | TestUtilitiesCollectionFullCoverage._Color]",
                 self._BadMapping(),
             ),
         )

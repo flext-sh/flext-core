@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
 import pytest
@@ -34,9 +35,9 @@ from flext_core import FlextContainer, FlextContext, p, t
 
 
 class TestFlextContext:
-    type SetGetInputValue = t.Primitives | list[int] | dict[str, str]
+    type SetGetInputValue = t.Primitives | Sequence[int] | Mapping[str, str]
     type SetGetExpectedValue = t.Primitives
-    type NestedDictValue = dict[str, dict[str, dict[str, dict[str, str]]]]
+    type NestedDictValue = Mapping[str, Mapping[str, Mapping[str, Mapping[str, str]]]]
 
     class ContextOperationScenario(BaseModel):
         """Test scenario for context operations."""
@@ -55,7 +56,7 @@ class TestFlextContext:
         """Centralized context test scenarios using FlextConstants."""
 
         SET_GET_CASES: ClassVar[
-            list[
+            Sequence[
                 tuple[
                     str,
                     TestFlextContext.SetGetInputValue,
@@ -74,12 +75,12 @@ class TestFlextContext:
             ("zero", 0, 0),
             ("false_val", False, False),
         ]
-        EDGE_CASE_KEYS: ClassVar[list[tuple[str, str]]] = [
+        EDGE_CASE_KEYS: ClassVar[Sequence[tuple[str, str]]] = [
             ("special_chars", "key!@#$%^&*()"),
             ("long_key", "k" * 1000),
         ]
         EDGE_CASE_VALUES: ClassVar[
-            list[tuple[str, str | TestFlextContext.NestedDictValue]]
+            Sequence[tuple[str, str | TestFlextContext.NestedDictValue]]
         ] = [
             ("long_value", "v" * 10000),
             (
@@ -87,7 +88,7 @@ class TestFlextContext:
                 {"level1": {"level2": {"level3": {"value": "deeply_nested"}}}},
             ),
         ]
-        SCOPE_CASES: ClassVar[list[tuple[str, str]]] = [
+        SCOPE_CASES: ClassVar[Sequence[tuple[str, str]]] = [
             ("user", "user_value"),
             ("session", "session_value"),
             ("request", "request_value"),
@@ -177,7 +178,7 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        nested_data: dict[str, dict[str, str | dict[str, str]]] = {
+        nested_data: Mapping[str, Mapping[str, str | Mapping[str, str]]] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -239,7 +240,7 @@ class TestFlextContext:
     def test_context_thread_safety(self, test_context: FlextContext) -> None:
         """Test context thread safety."""
         context = test_context
-        results: list[str] = []
+        results: Sequence[str] = []
 
         def set_value(thread_id: int) -> None:
             context.set(f"thread_{thread_id}", f"value_{thread_id}")
@@ -378,7 +379,7 @@ class TestFlextContext:
         """Test context with concurrent read operations."""
         context = test_context
         context.set("shared_key", "shared_value").value
-        error_count: list[int] = []
+        error_count: Sequence[int] = []
 
         def read_value() -> None:
             try:
@@ -396,7 +397,7 @@ class TestFlextContext:
     def test_context_concurrent_writes(self, test_context: FlextContext) -> None:
         """Test context with concurrent write operations."""
         context = test_context
-        error_count: list[int] = []
+        error_count: Sequence[int] = []
 
         def write_value(key: str, value: str) -> None:
             try:

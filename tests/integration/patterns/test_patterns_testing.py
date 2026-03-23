@@ -19,10 +19,10 @@ from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, P, R, t
 
-type FixtureCaseDict = dict[str, t.NormalizedValue]
-type FixtureDataDict = dict[str, t.NormalizedValue]
-type FixtureFixturesDict = dict[str, t.NormalizedValue]
-type FixtureSuiteDict = dict[str, t.NormalizedValue]
+type FixtureCaseDict = Mapping[str, t.NormalizedValue]
+type FixtureDataDict = Mapping[str, t.NormalizedValue]
+type FixtureFixturesDict = Mapping[str, t.NormalizedValue]
+type FixtureSuiteDict = Mapping[str, t.NormalizedValue]
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
@@ -37,13 +37,13 @@ class TestPatternsTesting:
         @staticmethod
         def to_general_mapping(
             value: Mapping[str, t.Container] | None,
-        ) -> dict[str, t.Container]:
+        ) -> Mapping[str, t.Container]:
             if value is None:
                 return {}
             return dict(value.items())
 
         @staticmethod
-        def to_string_list(value: Sequence[t.Container] | None) -> list[str]:
+        def to_string_list(value: Sequence[t.Container] | None) -> Sequence[str]:
             if value is None:
                 return []
             return [str(item) for item in value]
@@ -57,10 +57,10 @@ class TestPatternsTesting:
             return str(value)
 
         @staticmethod
-        def as_object_dict(value: t.NormalizedValue) -> dict[str, t.NormalizedValue]:
+        def as_object_dict(value: t.NormalizedValue) -> Mapping[str, t.NormalizedValue]:
             if not TestPatternsTesting.Helpers.is_object_mapping(value):
                 return {}
-            output: dict[str, t.NormalizedValue] = {}
+            output: Mapping[str, t.NormalizedValue] = {}
             for key, item in value.items():
                 output[str(key)] = item
             return output
@@ -68,7 +68,7 @@ class TestPatternsTesting:
         @staticmethod
         def as_object_list(
             value: t.NormalizedValue,
-        ) -> list[t.NormalizedValue] | None:
+        ) -> Sequence[t.NormalizedValue] | None:
             if not TestPatternsTesting.Helpers.is_object_list(value):
                 return None
             return list(value)
@@ -82,7 +82,7 @@ class TestPatternsTesting:
         @staticmethod
         def is_object_list(
             value: t.NormalizedValue,
-        ) -> TypeIs[list[t.NormalizedValue]]:
+        ) -> TypeIs[Sequence[t.NormalizedValue]]:
             return isinstance(value, list)
 
         @staticmethod
@@ -92,11 +92,11 @@ class TestPatternsTesting:
             return isinstance(value, (list, tuple, set))
 
         @staticmethod
-        def as_int_list(value: t.NormalizedValue) -> list[int] | None:
+        def as_int_list(value: t.NormalizedValue) -> Sequence[int] | None:
             object_list = TestPatternsTesting.Helpers.as_object_list(value)
             if object_list is None:
                 return None
-            int_values: list[int] = []
+            int_values: Sequence[int] = []
             for item in object_list:
                 if not isinstance(item, int):
                     return None
@@ -177,10 +177,10 @@ class TestPatternsTesting:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._given: dict[str, FlextTypes.Container] = {}
-            self._when: dict[str, FlextTypes.Container] = {}
-            self._then: dict[str, FlextTypes.Container] = {}
-            self._tags: list[str] = []
+            self._given: Mapping[str, FlextTypes.Container] = {}
+            self._when: Mapping[str, FlextTypes.Container] = {}
+            self._then: Mapping[str, FlextTypes.Container] = {}
+            self._tags: Sequence[str] = []
             self._priority = "normal"
 
         def given(
@@ -218,7 +218,7 @@ class TestPatternsTesting:
             return self
 
         def build(self) -> TestPatternsTesting.MockScenario:
-            data: dict[
+            data: Mapping[
                 str,
                 FlextTypes.Container
                 | Mapping[str, FlextTypes.Container]
@@ -279,9 +279,9 @@ class TestPatternsTesting:
         def __init__(self, test_name: str) -> None:
             super().__init__()
             self.test_name = test_name
-            self._cases: list[FixtureCaseDict] = []
-            self._success_cases: list[FixtureCaseDict] = []
-            self._failure_cases: list[FixtureCaseDict] = []
+            self._cases: Sequence[FixtureCaseDict] = []
+            self._success_cases: Sequence[FixtureCaseDict] = []
+            self._failure_cases: Sequence[FixtureCaseDict] = []
 
         def add_case(
             self,
@@ -298,22 +298,22 @@ class TestPatternsTesting:
 
         def add_success_cases(
             self,
-            cases: list[FixtureCaseDict],
+            cases: Sequence[FixtureCaseDict],
         ) -> TestPatternsTesting.ParameterizedTestBuilder:
             self._success_cases.extend(cases)
             return self
 
         def add_failure_cases(
             self,
-            cases: list[FixtureCaseDict],
+            cases: Sequence[FixtureCaseDict],
         ) -> TestPatternsTesting.ParameterizedTestBuilder:
             self._failure_cases.extend(cases)
             return self
 
-        def build(self) -> list[FixtureCaseDict]:
+        def build(self) -> Sequence[FixtureCaseDict]:
             return self._cases.copy()
 
-        def build_pytest_params(self) -> list[tuple[str, str, bool]]:
+        def build_pytest_params(self) -> Sequence[tuple[str, str, bool]]:
             success_params = [
                 (str(c.get("email", "")), str(c.get("input", "")), True)
                 for c in self._success_cases
@@ -324,7 +324,7 @@ class TestPatternsTesting:
             ]
             return success_params + failure_params
 
-        def build_test_ids(self) -> list[str]:
+        def build_test_ids(self) -> Sequence[str]:
             return [
                 str(c.get("input", ""))
                 for c in (*self._success_cases, *self._failure_cases)
@@ -336,7 +336,7 @@ class TestPatternsTesting:
         def __init__(self, data: t.NormalizedValue) -> None:
             super().__init__()
             self._data = data
-            self._checks: list[tuple[str, t.NormalizedValue]] = []
+            self._checks: Sequence[tuple[str, t.NormalizedValue]] = []
 
         def is_not_none(self) -> TestPatternsTesting.AssertionBuilder:
             assert self._data is not None
@@ -387,9 +387,9 @@ class TestPatternsTesting:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._scenarios: list[TestPatternsTesting.MockScenario] = []
-            self._setup_data: dict[str, t.NormalizedValue] = {}
-            self._tags: list[str] = []
+            self._scenarios: Sequence[TestPatternsTesting.MockScenario] = []
+            self._setup_data: Mapping[str, t.NormalizedValue] = {}
+            self._tags: Sequence[str] = []
 
         def add_scenarios(
             self,
@@ -409,7 +409,7 @@ class TestPatternsTesting:
             return self
 
         def build(self) -> FixtureSuiteDict:
-            tags: list[t.NormalizedValue] = list(self._tags)
+            tags: Sequence[t.NormalizedValue] = list(self._tags)
             return {
                 "suite_name": self.name,
                 "scenario_count": len(self._scenarios),
@@ -423,8 +423,8 @@ class TestPatternsTesting:
         def __init__(self) -> None:
             super().__init__()
             self._fixtures: FixtureFixturesDict = {}
-            self._setups: list[Callable[[], None]] = []
-            self._teardowns: list[Callable[[], None]] = []
+            self._setups: Sequence[Callable[[], None]] = []
+            self._teardowns: Sequence[Callable[[], None]] = []
 
         def with_user(
             self, **kwargs: FlextTypes.Container
@@ -497,7 +497,7 @@ class TestPatternsTesting:
             "email": st.emails(),
         }),
     )
-    def test_user_profile_property_based(self, profile: dict[str, str]) -> None:
+    def test_user_profile_property_based(self, profile: Mapping[str, str]) -> None:
         assert "id" in profile
         assert "name" in profile
         assert "email" in profile
@@ -545,7 +545,7 @@ class TestPatternsTesting:
         assert operations_per_second > 0
 
     def test_endurance_testing(self) -> None:
-        def memory_operation() -> list[int]:
+        def memory_operation() -> Sequence[int]:
             return list(range(100))
 
         duration_target = 0.5
@@ -626,7 +626,7 @@ class TestPatternsTesting:
         assert all(len(param) == 3 for param in params)
 
     def test_assertion_builder(self) -> None:
-        test_data: list[str] = ["apple", "banana", "cherry"]
+        test_data: Sequence[str] = ["apple", "banana", "cherry"]
 
         def check_all_strings(x: t.NormalizedValue) -> bool:
             values = self.Helpers.as_object_dict({"items": x}).get("items")
@@ -642,7 +642,7 @@ class TestPatternsTesting:
     @Helpers.mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
         def arrange_data() -> t.NormalizedValue:
-            numbers: list[t.NormalizedValue] = [1, 2, 3, 4, 5]
+            numbers: Sequence[t.NormalizedValue] = [1, 2, 3, 4, 5]
             return {"numbers": numbers}
 
         def act_on_data(data: t.NormalizedValue) -> t.NormalizedValue:
@@ -650,7 +650,7 @@ class TestPatternsTesting:
             if "numbers" in payload:
                 numbers = self.Helpers.as_int_list(payload["numbers"])
                 if numbers is not None:
-                    typed_numbers: list[int] = numbers
+                    typed_numbers: Sequence[int] = numbers
                     return sum(typed_numbers)
             return 0
 
@@ -672,7 +672,7 @@ class TestPatternsTesting:
         assert result == 15
 
     def test_complete_test_suite_builder(self) -> None:
-        scenarios: list[TestPatternsTesting.MockScenario] = []
+        scenarios: Sequence[TestPatternsTesting.MockScenario] = []
         scenario1 = (
             self
             .GivenWhenThenBuilder("successful_operation")
@@ -708,7 +708,7 @@ class TestPatternsTesting:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
-        empty_setup: dict[str, t.NormalizedValue] = {}
+        empty_setup: Mapping[str, t.NormalizedValue] = {}
         typed_setup_data = (
             {str(key): item for key, item in setup_data.items()}
             if isinstance(setup_data, dict)
@@ -732,7 +732,7 @@ class TestPatternsTesting:
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
         with fixture_builder.setup_context()():
-            test_request: dict[str, t.NormalizedValue] = {
+            test_request: Mapping[str, t.NormalizedValue] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -741,8 +741,8 @@ class TestPatternsTesting:
             }
 
             def process_api_request(
-                request: dict[str, t.NormalizedValue],
-            ) -> dict[str, t.NormalizedValue]:
+                request: Mapping[str, t.NormalizedValue],
+            ) -> Mapping[str, t.NormalizedValue]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -794,7 +794,7 @@ class TestPatternsTesting:
         timeout_seconds: int,
         environment: str,
     ) -> None:
-        config: dict[str, FlextTypes.Container] = {
+        config: Mapping[str, FlextTypes.Container] = {
             "database_url": database_url,
             "debug": debug,
             "timeout_seconds": timeout_seconds,

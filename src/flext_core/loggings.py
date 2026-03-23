@@ -17,7 +17,7 @@ import time
 import traceback
 import types
 import warnings
-from collections.abc import Generator, Mapping
+from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
@@ -37,8 +37,8 @@ class FlextLogger(u, p.Logger):
     bespoke wrappers.
     """
 
-    _scoped_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
-    _level_contexts: ClassVar[dict[str, dict[str, t.Container]]] = {}
+    _scoped_contexts: ClassVar[Mapping[str, Mapping[str, t.Container]]] = {}
+    _level_contexts: ClassVar[Mapping[str, Mapping[str, t.Container]]] = {}
     _structlog_instance: p.Logger | None = None
     type _LogArg = t.RuntimeData | Exception
 
@@ -111,7 +111,7 @@ class FlextLogger(u, p.Logger):
         """Get current global context (internal use only)."""
         try:
             context_vars = u.structlog().contextvars.get_contextvars()
-            context_map: dict[str, t.Container] = (
+            context_map: Mapping[str, t.Container] = (
                 {
                     str(k): cls._to_container_value(v)
                     for k, v in dict(context_vars).items()
@@ -119,7 +119,7 @@ class FlextLogger(u, p.Logger):
                 if context_vars
                 else {}
             )
-            context_obj: dict[str, t.ValueOrModel] = dict(context_map.items())
+            context_obj: Mapping[str, t.ValueOrModel] = dict(context_map.items())
             return t.ConfigMap(root=context_obj)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return t.ConfigMap(root={})
@@ -179,17 +179,17 @@ class FlextLogger(u, p.Logger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: dict[str, t.Container] = {
+            current_context: Mapping[str, t.Container] = {
                 key: cls._to_container_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: dict[str, t.Container] = {
+            incoming_context: Mapping[str, t.Container] = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: dict[str, t.NormalizedValue] = dict(
+            current_context_obj: Mapping[str, t.NormalizedValue] = dict(
                 current_context.items(),
             )
-            incoming_context_obj: dict[str, t.NormalizedValue] = dict(
+            incoming_context_obj: Mapping[str, t.NormalizedValue] = dict(
                 incoming_context.items(),
             )
             merge_result = u.merge(
@@ -198,7 +198,7 @@ class FlextLogger(u, p.Logger):
                 strategy="deep",
             )
             merged_value = merge_result.unwrap_or(current_context_obj)
-            merged_context: dict[str, t.Container] = {}
+            merged_context: Mapping[str, t.Container] = {}
             for key, value in merged_value.items():
                 merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
@@ -506,7 +506,7 @@ class FlextLogger(u, p.Logger):
                 c.WarningLevel.ERROR: c.WarningLevel.ERROR,
                 "critical": "critical",
             }.get(level_lower, level_lower)
-            prefixed_keys: list[str] = []
+            prefixed_keys: Sequence[str] = []
             for key in keys:
                 prefixed_key = f"_level_{level_normalized}_{key}"
                 prefixed_keys.append(prefixed_key)
@@ -541,7 +541,7 @@ class FlextLogger(u, p.Logger):
 
         """
         try:
-            unbind_keys: list[str] = [str(key) for key in keys]
+            unbind_keys: Sequence[str] = [str(key) for key in keys]
             u.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
@@ -683,7 +683,7 @@ class FlextLogger(u, p.Logger):
     @staticmethod
     def _to_container_context(
         context: Mapping[str, _LogArg | t.Container | t.ValueOrModel],
-    ) -> dict[str, t.Container]:
+    ) -> Mapping[str, t.Container]:
         """Convert mapping to container context using normalization."""
         return {
             key: FlextLogger._to_container_value(value)
@@ -694,7 +694,7 @@ class FlextLogger(u, p.Logger):
     def _to_scalar_context(
         cls,
         context: Mapping[str, _LogArg | t.Container | t.ValueOrModel | None],
-    ) -> dict[str, t.Scalar]:
+    ) -> Mapping[str, t.Scalar]:
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
     @staticmethod
@@ -783,7 +783,7 @@ class FlextLogger(u, p.Logger):
                     "exception_message": str(exception),
                 },
             )
-            merged_root: dict[str, t.ValueOrModel] = dict(context_dict.root)
+            merged_root: Mapping[str, t.ValueOrModel] = dict(context_dict.root)
             merged_root.update(dict(exception_data.root))
             context_dict = t.ConfigMap(root=merged_root)
             if include_stack_trace:
@@ -881,7 +881,7 @@ class FlextLogger(u, p.Logger):
             )
             raw_exception = kw.get("exception")
             exc_info_value = kw.get("exc_info", True)
-            context_input: dict[str, t.Scalar | Exception] = {}
+            context_input: Mapping[str, t.Scalar | Exception] = {}
             for key, value in kw.items():
                 if key in {"exception", "exc_info"}:
                     continue
@@ -1099,4 +1099,4 @@ class FlextLogger(u, p.Logger):
                 )
 
 
-__all__: list[str] = ["FlextLogger"]
+__all__: Sequence[str] = ["FlextLogger"]

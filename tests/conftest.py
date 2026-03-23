@@ -9,7 +9,7 @@ from __future__ import annotations
 import builtins
 import math
 import tempfile
-from collections.abc import Generator
+from collections.abc import Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -34,7 +34,7 @@ class FunctionalExternalService:
 
     def __init__(self) -> None:
         """Initialize external service with empty state."""
-        self.processed_items: list[str] = []
+        self.processed_items: Sequence[str] = []
         self.call_count = 0
 
     def process(self, input_data: str) -> r[str]:
@@ -98,7 +98,7 @@ def mock_external_service() -> FunctionalExternalService:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, t.NormalizedValue]:
+def sample_data() -> Mapping[str, t.NormalizedValue]:
     """Provide sample test data for integration tests."""
     return {
         "string": "test_value",
@@ -131,9 +131,9 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> r[dict[str, t.NormalizedValue]]:
+def flext_result_success() -> r[Mapping[str, t.NormalizedValue]]:
     """Successful r fixture available to all FLEXT projects."""
-    return r[dict[str, t.NormalizedValue]].ok({"success": True})
+    return r[Mapping[str, t.NormalizedValue]].ok({"success": True})
 
 
 @pytest.fixture
@@ -161,19 +161,19 @@ def reliability_scenarios() -> type:
 
 
 @pytest.fixture
-def valid_port_numbers() -> list[int]:
+def valid_port_numbers() -> Sequence[int]:
     """Valid port numbers for PortNumber validation (1-65535)."""
     return [1, 80, 443, 8080, 3306, 5432, 27017, 65535]
 
 
 @pytest.fixture
-def invalid_port_numbers() -> list[int]:
+def invalid_port_numbers() -> Sequence[int]:
     """Invalid port numbers for PortNumber validation."""
     return [0, -1, -8080, 65536, 100000]
 
 
 @pytest.fixture
-def valid_uris() -> list[str]:
+def valid_uris() -> Sequence[str]:
     """Valid URIs for UriString validation."""
     return [
         "http://localhost",
@@ -190,7 +190,7 @@ def valid_uris() -> list[str]:
 
 
 @pytest.fixture
-def invalid_uris() -> list[str]:
+def invalid_uris() -> Sequence[str]:
     """Invalid URIs for UriString validation."""
     return [
         "",
@@ -204,7 +204,7 @@ def invalid_uris() -> list[str]:
 
 
 @pytest.fixture
-def valid_hostnames() -> list[str]:
+def valid_hostnames() -> Sequence[str]:
     """Valid hostnames for HostnameStr validation."""
     return [
         "localhost",
@@ -220,7 +220,7 @@ def valid_hostnames() -> list[str]:
 
 
 @pytest.fixture
-def invalid_hostnames() -> list[str]:
+def invalid_hostnames() -> Sequence[str]:
     """Invalid hostnames for HostnameStr validation."""
     return [
         "",
@@ -235,7 +235,7 @@ def invalid_hostnames() -> list[str]:
 
 
 @pytest.fixture
-def valid_strings() -> list[str]:
+def valid_strings() -> Sequence[str]:
     """Valid non-empty strings for string validation."""
     return [
         "a",
@@ -252,19 +252,19 @@ def valid_strings() -> list[str]:
 
 
 @pytest.fixture
-def empty_strings() -> list[str]:
+def empty_strings() -> Sequence[str]:
     """Empty strings for validation."""
     return [""]
 
 
 @pytest.fixture
-def whitespace_strings() -> list[str]:
+def whitespace_strings() -> Sequence[str]:
     """Whitespace-only strings for validation."""
     return [" ", "   ", "\t", "\n", "  \t  \n  "]
 
 
 @pytest.fixture
-def valid_ranges() -> list[tuple[int, int, int]]:
+def valid_ranges() -> Sequence[tuple[int, int, int]]:
     """Valid numeric ranges (value, min, max) for range validation."""
     return [
         (0, 0, 10),
@@ -277,7 +277,7 @@ def valid_ranges() -> list[tuple[int, int, int]]:
 
 
 @pytest.fixture
-def out_of_range() -> list[tuple[int, int, int]]:
+def out_of_range() -> Sequence[tuple[int, int, int]]:
     """Out-of-range numeric values (value, min, max) for range validation."""
     return [(-1, 0, 10), (11, 0, 10), (100, 0, 50), (-100, 0, 10)]
 

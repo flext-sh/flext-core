@@ -140,8 +140,8 @@ The current implementation uses manual state management:
 
 ```python
 # Internal state (handlers.py lines 177-178)
-self._context_stack: list[dict[str, t.NormalizedValue]] = []
-self._metrics: dict[str, t.NormalizedValue] = {}
+self._context_stack: Sequence[Mapping[str, t.NormalizedValue]] = []
+self._metrics: Mapping[str, t.NormalizedValue] = {}
 
 # Methods for state management
 handler.push_context({"operation": "create_user"})
@@ -271,7 +271,7 @@ class FlextMixins:
         class MetricsTracker:
             def record(self, key: str, value: float) -> None: ...
             def get(self, key: str) -> float: ...
-            def all(self) -> dict[str, float]: ...
+            def all(self) -> Mapping[str, float]: ...
 
         class ContextStack:
             def push(self, ctx: dict) -> None: ...

@@ -40,7 +40,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return default if default is not None else {}
         if isinstance(value, Mapping):
             mapping_value: Mapping[str, t.NormalizedValue] = value
-            normalized: dict[str, t.NormalizedValue] = {}
+            normalized: Mapping[str, t.NormalizedValue] = {}
             for key, item_value in mapping_value.items():
                 normalized[str(key)] = item_value
             return normalized
@@ -49,14 +49,14 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _ensure_to_list(
-        value: t.NormalizedValue | list[t.NormalizedValue] | None,
-        default: list[t.NormalizedValue] | None,
-    ) -> list[t.NormalizedValue]:
+        value: t.NormalizedValue | Sequence[t.NormalizedValue] | None,
+        default: Sequence[t.NormalizedValue] | None,
+    ) -> Sequence[t.NormalizedValue]:
         if value is None:
             return default if default is not None else []
         if isinstance(value, list):
             return list(value)
-        single_item_list: list[t.NormalizedValue] = [value]
+        single_item_list: Sequence[t.NormalizedValue] = [value]
         return single_item_list
 
     @staticmethod
@@ -376,10 +376,10 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         value: t.NormalizedValue,
         *,
         target_type: str = "auto",
-        default: str | list[t.NormalizedValue] | t.NormalizedValue | None = None,
+        default: str | Sequence[t.NormalizedValue] | t.NormalizedValue | None = None,
     ) -> (
         str
-        | list[t.NormalizedValue]
+        | Sequence[t.NormalizedValue]
         | t.NormalizedValue
         | Mapping[str, t.NormalizedValue]
     ):
@@ -393,15 +393,15 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 else str_default
             )
         if target_type == "str_list":
-            str_list_default: list[str] | None = None
+            str_list_default: Sequence[str] | None = None
             if isinstance(default, list):
-                default_values: list[t.NormalizedValue] = default
+                default_values: Sequence[t.NormalizedValue] = default
                 str_list_default = [str(item) for item in default_values]
             if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
                 seq_value: Sequence[t.NormalizedValue] = value
                 return list(seq_value)
             if value is None:
-                result_str_list: list[t.NormalizedValue] = (
+                result_str_list: Sequence[t.NormalizedValue] = (
                     list(str_list_default) if str_list_default else []
                 )
                 return result_str_list
@@ -413,11 +413,11 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return FlextUtilitiesGuardsEnsure._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
             mapping_value: Mapping[str, t.NormalizedValue] = value
-            normalized_auto: dict[str, t.NormalizedValue] = {}
+            normalized_auto: Mapping[str, t.NormalizedValue] = {}
             for key, item_value in mapping_value.items():
                 normalized_auto[str(key)] = item_value
             return normalized_auto
-        list_default: list[t.NormalizedValue] | None = None
+        list_default: Sequence[t.NormalizedValue] | None = None
         if FlextUtilitiesGuardsEnsure.is_object_list(default):
             list_default = default
         return FlextUtilitiesGuardsEnsure._ensure_to_list(value, list_default)

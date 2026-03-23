@@ -45,8 +45,8 @@ class FlextModelFoundation:
     class Validators:
         """Pydantic v2 validators - single namespace for all field validators."""
 
-        _tags_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
-        _list_adapter: ClassVar[TypeAdapter[list[t.Container]] | None] = None
+        _tags_adapter: ClassVar[TypeAdapter[Sequence[str]] | None] = None
+        _list_adapter: ClassVar[TypeAdapter[Sequence[t.Container]] | None] = None
         _strict_string_adapter: ClassVar[
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
@@ -55,18 +55,20 @@ class FlextModelFoundation:
         ] = None
         _config_adapter: ClassVar[TypeAdapter[Mapping[str, t.Container]] | None] = None
         _dict_container_adapter: ClassVar[
-            TypeAdapter[dict[str, t.Container]] | None
+            TypeAdapter[Mapping[str, t.Container]] | None
         ] = None
-        _list_container_adapter: ClassVar[TypeAdapter[list[t.Container]] | None] = None
+        _list_container_adapter: ClassVar[TypeAdapter[Sequence[t.Container]] | None] = (
+            None
+        )
         _tuple_container_adapter: ClassVar[
             TypeAdapter[tuple[t.Container, ...]] | None
         ] = None
         _primitives_adapter: ClassVar[TypeAdapter[t.Primitives] | None] = None
         _dict_str_metadata_adapter: ClassVar[
-            TypeAdapter[dict[str, t.NormalizedValue]] | None
+            TypeAdapter[Mapping[str, t.NormalizedValue]] | None
         ] = None
         _list_serializable_adapter: ClassVar[
-            TypeAdapter[list[t.Serializable]] | None
+            TypeAdapter[Sequence[t.Serializable]] | None
         ] = None
         _tuple_serializable_adapter: ClassVar[
             TypeAdapter[tuple[t.Serializable, ...]] | None
@@ -75,24 +77,24 @@ class FlextModelFoundation:
         _set_str_adapter: ClassVar[TypeAdapter[set[str]] | None] = None
         _set_scalar_adapter: ClassVar[TypeAdapter[set[t.Scalar]] | None] = None
         _sortable_dict_adapter: ClassVar[
-            TypeAdapter[dict[t.SortableObjectType, t.Serializable | None]] | None
+            TypeAdapter[Mapping[t.SortableObjectType, t.Serializable | None]] | None
         ] = None
-        _strict_json_list_adapter: ClassVar[TypeAdapter[list[t.StrictValue]] | None] = (
-            None
-        )
+        _strict_json_list_adapter: ClassVar[
+            TypeAdapter[Sequence[t.StrictValue]] | None
+        ] = None
         _strict_json_scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
         _scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
         _float_adapter: ClassVar[TypeAdapter[float] | None] = None
         _str_adapter: ClassVar[TypeAdapter[str] | None] = None
-        _str_list_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
+        _str_list_adapter: ClassVar[TypeAdapter[Sequence[str]] | None] = None
         _str_or_bytes_adapter: ClassVar[TypeAdapter[str | bytes] | None] = None
         _enum_type_adapter: ClassVar[TypeAdapter[type[StrEnum]] | None] = None
         _serializable_adapter: ClassVar[TypeAdapter[t.Serializable] | None] = None
         _metadata_json_dict_adapter: ClassVar[
-            TypeAdapter[dict[str, t.Primitives]] | None
+            TypeAdapter[Mapping[str, t.Primitives]] | None
         ] = None
         _flat_metadata_dict_adapter: ClassVar[
-            TypeAdapter[dict[str, t.Primitives]] | None
+            TypeAdapter[Mapping[str, t.Primitives]] | None
         ] = None
         _structlog_processor_adapter: ClassVar[
             TypeAdapter[Callable[..., t.Container]] | None
@@ -106,10 +108,10 @@ class FlextModelFoundation:
             return cls._config_adapter
 
         @classmethod
-        def list_adapter(cls) -> TypeAdapter[list[t.Container]]:
+        def list_adapter(cls) -> TypeAdapter[Sequence[t.Container]]:
             """Lazy-load list TypeAdapter on first access."""
             if cls._list_adapter is None:
-                cls._list_adapter = TypeAdapter(list[t.Container])
+                cls._list_adapter = TypeAdapter(Sequence[t.Container])
             return cls._list_adapter
 
         @classmethod
@@ -133,24 +135,24 @@ class FlextModelFoundation:
             return cls._strict_string_adapter
 
         @classmethod
-        def tags_adapter(cls) -> TypeAdapter[list[str]]:
+        def tags_adapter(cls) -> TypeAdapter[Sequence[str]]:
             """Lazy-load tags TypeAdapter on first access."""
             if cls._tags_adapter is None:
-                cls._tags_adapter = TypeAdapter(list[str])
+                cls._tags_adapter = TypeAdapter(Sequence[str])
             return cls._tags_adapter
 
         @classmethod
-        def dict_container_adapter(cls) -> TypeAdapter[dict[str, t.Container]]:
-            """Lazy-load dict[str, Container] TypeAdapter on first access."""
+        def dict_container_adapter(cls) -> TypeAdapter[Mapping[str, t.Container]]:
+            """Lazy-load Mapping[str, Container] TypeAdapter on first access."""
             if cls._dict_container_adapter is None:
-                cls._dict_container_adapter = TypeAdapter(dict[str, t.Container])
+                cls._dict_container_adapter = TypeAdapter(Mapping[str, t.Container])
             return cls._dict_container_adapter
 
         @classmethod
-        def list_container_adapter(cls) -> TypeAdapter[list[t.Container]]:
-            """Lazy-load list[Container] TypeAdapter on first access."""
+        def list_container_adapter(cls) -> TypeAdapter[Sequence[t.Container]]:
+            """Lazy-load Sequence[Container] TypeAdapter on first access."""
             if cls._list_container_adapter is None:
-                cls._list_container_adapter = TypeAdapter(list[t.Container])
+                cls._list_container_adapter = TypeAdapter(Sequence[t.Container])
             return cls._list_container_adapter
 
         @classmethod
@@ -170,17 +172,17 @@ class FlextModelFoundation:
         @classmethod
         def dict_str_metadata_adapter(
             cls,
-        ) -> TypeAdapter[dict[str, t.NormalizedValue]]:
+        ) -> TypeAdapter[Mapping[str, t.NormalizedValue]]:
             if cls._dict_str_metadata_adapter is None:
                 cls._dict_str_metadata_adapter = TypeAdapter(
-                    dict[str, t.NormalizedValue],
+                    Mapping[str, t.NormalizedValue],
                 )
             return cls._dict_str_metadata_adapter
 
         @classmethod
-        def list_serializable_adapter(cls) -> TypeAdapter[list[t.Serializable]]:
+        def list_serializable_adapter(cls) -> TypeAdapter[Sequence[t.Serializable]]:
             if cls._list_serializable_adapter is None:
-                cls._list_serializable_adapter = TypeAdapter(list[t.Serializable])
+                cls._list_serializable_adapter = TypeAdapter(Sequence[t.Serializable])
             return cls._list_serializable_adapter
 
         @classmethod
@@ -212,19 +214,19 @@ class FlextModelFoundation:
         @classmethod
         def sortable_dict_adapter(
             cls,
-        ) -> TypeAdapter[dict[t.SortableObjectType, t.Serializable | None]]:
+        ) -> TypeAdapter[Mapping[t.SortableObjectType, t.Serializable | None]]:
             if cls._sortable_dict_adapter is None:
                 cls._sortable_dict_adapter = TypeAdapter(
-                    dict[t.SortableObjectType, t.Serializable | None],
+                    Mapping[t.SortableObjectType, t.Serializable | None],
                 )
             return cls._sortable_dict_adapter
 
         @classmethod
         def strict_json_list_adapter(
             cls,
-        ) -> TypeAdapter[list[t.StrictValue]]:
+        ) -> TypeAdapter[Sequence[t.StrictValue]]:
             if cls._strict_json_list_adapter is None:
-                cls._strict_json_list_adapter = TypeAdapter(list[t.StrictValue])
+                cls._strict_json_list_adapter = TypeAdapter(Sequence[t.StrictValue])
             return cls._strict_json_list_adapter
 
         @classmethod
@@ -252,9 +254,9 @@ class FlextModelFoundation:
             return cls._str_adapter
 
         @classmethod
-        def str_list_adapter(cls) -> TypeAdapter[list[str]]:
+        def str_list_adapter(cls) -> TypeAdapter[Sequence[str]]:
             if cls._str_list_adapter is None:
-                cls._str_list_adapter = TypeAdapter(list[str])
+                cls._str_list_adapter = TypeAdapter(Sequence[str])
             return cls._str_list_adapter
 
         @classmethod
@@ -278,17 +280,21 @@ class FlextModelFoundation:
         @classmethod
         def metadata_json_dict_adapter(
             cls,
-        ) -> TypeAdapter[dict[str, t.Primitives]]:
+        ) -> TypeAdapter[Mapping[str, t.Primitives]]:
             if cls._metadata_json_dict_adapter is None:
-                cls._metadata_json_dict_adapter = TypeAdapter(dict[str, t.Primitives])
+                cls._metadata_json_dict_adapter = TypeAdapter(
+                    Mapping[str, t.Primitives]
+                )
             return cls._metadata_json_dict_adapter
 
         @classmethod
         def flat_metadata_dict_adapter(
             cls,
-        ) -> TypeAdapter[dict[str, t.Primitives]]:
+        ) -> TypeAdapter[Mapping[str, t.Primitives]]:
             if cls._flat_metadata_dict_adapter is None:
-                cls._flat_metadata_dict_adapter = TypeAdapter(dict[str, t.Primitives])
+                cls._flat_metadata_dict_adapter = TypeAdapter(
+                    Mapping[str, t.Primitives]
+                )
             return cls._flat_metadata_dict_adapter
 
         @classmethod
@@ -307,7 +313,7 @@ class FlextModelFoundation:
             return FlextModelFoundation._ensure_utc_datetime(v)
 
         @staticmethod
-        def normalize_to_list(v: t.ValueOrModel) -> list[t.Container]:
+        def normalize_to_list(v: t.ValueOrModel) -> Sequence[t.Container]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -333,7 +339,7 @@ class FlextModelFoundation:
             except (TypeError, ValueError) as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out: dict[str, t.Container] = {}
+            out: Mapping[str, t.Container] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -342,7 +348,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: t.ValueOrModel) -> list[str]:
+        def validate_tags_list(v: t.ValueOrModel) -> Sequence[str]:
             """Validate and normalize tags list."""
             try:
                 raw_tags: Sequence[t.Container] = (
@@ -351,7 +357,7 @@ class FlextModelFoundation:
             except (TypeError, ValueError) as exc:
                 msg = "Tags must be a list"
                 raise TypeError(msg) from exc
-            normalized: list[str] = []
+            normalized: Sequence[str] = []
             seen: set[str] = set()
             for tag in raw_tags:
                 try:
@@ -483,7 +489,7 @@ class FlextModelFoundation:
             ),
         ] = None
         tags: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 default_factory=list,
                 description="Normalized labels used to classify and filter this metadata.",
@@ -614,7 +620,7 @@ class FlextModelFoundation:
         result_type: Literal["partial"] = "partial"
         value: t.Container
         warnings: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 default_factory=list,
                 description="Non-fatal warning messages generated during partial processing.",
@@ -638,9 +644,9 @@ class FlextModelFoundation:
         """Invalid validation outcome."""
 
         outcome_type: Literal["invalid"] = "invalid"
-        errors: list[str]
+        errors: Sequence[str]
         error_codes: Annotated[
-            list[str],
+            Sequence[str],
             Field(
                 default_factory=list,
                 description="Machine-readable error codes that classify validation failures.",
@@ -652,7 +658,7 @@ class FlextModelFoundation:
 
         outcome_type: Literal["warning"] = "warning"
         validated_data: t.Container
-        warnings: list[str]
+        warnings: Sequence[str]
         validation_time_ms: float
 
     ValidationOutcome = Annotated[

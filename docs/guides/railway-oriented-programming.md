@@ -731,7 +731,7 @@ from typing import Sequence
 
 
 # Scenario: Process multiple items, fail on first error
-def validate_all_items(items: list[str]) -> r[list[str]]:
+def validate_all_items(items: Sequence[str]) -> r[Sequence[str]]:
     """Validate each item, short-circuit on first failure."""
     return r.traverse(
         items,
@@ -850,7 +850,7 @@ from flext_core import r, d
 
 @d.timeout(timeout_seconds=30.0)
 @d.railway(error_code="TIMEOUT_ERROR")
-def expensive_computation(data: list[float]) -> float:
+def expensive_computation(data: Sequence[float]) -> float:
     """Compute result with timeout protection."""
     # If computation exceeds 30 seconds, @timeout raises TimeoutError
     # @railway converts it to r.fail("Operation timed out")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import types
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, cast, override
 
@@ -25,8 +26,8 @@ from flext_core import (
 class TestModule:
     class _FakeBindable:
         def __init__(self) -> None:
-            self.calls: list[
-                tuple[str, tuple[t.NormalizedValue, ...], dict[str, t.Scalar]]
+            self.calls: Sequence[
+                tuple[str, tuple[t.NormalizedValue, ...], Mapping[str, t.Scalar]]
             ] = []
 
         def bind(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
@@ -58,7 +59,7 @@ class TestModule:
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: dict[str, t.NormalizedValue] = {}
+            self.store: Mapping[str, t.NormalizedValue] = {}
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)
@@ -70,7 +71,7 @@ class TestModule:
         def clear_contextvars(self) -> None:
             self.store.clear()
 
-        def get_contextvars(self) -> dict[str, t.NormalizedValue]:
+        def get_contextvars(self) -> Mapping[str, t.NormalizedValue]:
             return dict(self.store)
 
     class _StructlogShim:
@@ -117,7 +118,7 @@ class TestModule:
         class _Cfg:
             log_level = "DEBUG"
 
-            def model_dump(self) -> dict[str, t.Scalar]:
+            def model_dump(self) -> Mapping[str, t.Scalar]:
                 return {"log_level": self.log_level}
 
         class _Container:
@@ -210,7 +211,7 @@ class TestModule:
             correlation_id = "cid"
             force_new = True
 
-            def model_dump(self) -> dict[str, t.Scalar]:
+            def model_dump(self) -> Mapping[str, t.Scalar]:
                 return {
                     "log_level": self.level,
                     "service_name": self.service_name,
@@ -237,7 +238,7 @@ class TestModule:
             co_qualname = "MyType.run"
 
         class _Frame:
-            f_locals: ClassVar[dict[str, t.NormalizedValue]] = {}
+            f_locals: ClassVar[Mapping[str, t.NormalizedValue]] = {}
             f_code = _Code()
 
         tm.that(
@@ -363,7 +364,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: dict[str, t.NormalizedValue] = {}
+        captured: Mapping[str, t.NormalizedValue] = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None
@@ -418,7 +419,7 @@ class TestModule:
             co_qualname = "MyClass.run"
 
         class _UpperFrame:
-            f_locals: ClassVar[dict[str, t.NormalizedValue]] = {}
+            f_locals: ClassVar[Mapping[str, t.NormalizedValue]] = {}
             f_code = _CodeUpper()
 
         monkeypatch.setattr(c, "LEVEL_PREFIX_PARTS_COUNT", 2)
@@ -437,7 +438,7 @@ class TestModule:
         class _CallerFrame:
             f_code = _CodeMethod()
             f_lineno = 40
-            f_locals: ClassVar[dict[str, t.NormalizedValue]] = {}
+            f_locals: ClassVar[Mapping[str, t.NormalizedValue]] = {}
 
         def _calling_frame() -> types.FrameType:
             return cast("types.FrameType", cast("t.NormalizedValue", _CallerFrame()))
@@ -506,7 +507,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: dict[str, t.NormalizedValue] = {}
+        captured: Mapping[str, t.NormalizedValue] = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None
