@@ -176,7 +176,7 @@ class FlextUtilitiesEnum:
         # StrEnum() functional API always returns a type[StrEnum] at runtime
         # (via EnumType metaclass), but pyright types the result as StrEnum instance.
         # Prepare the enum class namespace via EnumType._prepare_
-        enum_namespace = EnumType.__prepare__(name, (StrEnum,))
+        enum_namespace = EnumType.__prepare__(name, (StrEnum,))  # noqa: PLC2801 — metaclass __prepare__ has no operator equivalent
         for member_name, member_value in members:
             enum_namespace[member_name] = member_value
         result = EnumType.__new__(EnumType, name, (StrEnum,), enum_namespace)
