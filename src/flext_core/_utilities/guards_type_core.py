@@ -13,7 +13,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import TypeGuard, TypeIs
+from typing import TypeIs
 
 from flext_core import t
 
@@ -155,7 +155,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_instance_of[T](value: t.GuardInput, type_cls: type[T]) -> TypeGuard[T]:
+    def is_instance_of[T](value: t.GuardInput, type_cls: type[T]) -> TypeIs[T]:
         """Check if value is instance of type class (handles generics)."""
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
@@ -173,7 +173,7 @@ class FlextUtilitiesGuardsTypeCore:
         return value
 
     @staticmethod
-    def has(obj: t.GuardInput, key: str) -> bool:
+    def has_type(obj: t.GuardInput, key: str) -> bool:
         """Check if value has key or attribute."""
         return key in obj if isinstance(obj, dict) else hasattr(obj, key)
 

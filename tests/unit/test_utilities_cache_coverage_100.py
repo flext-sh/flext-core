@@ -299,11 +299,7 @@ class UtilitiesCacheCoverage100Namespace:
                 {"nested": "dict"},
                 [1, 2, 3],
             ]
-            component: Sequence[t.NormalizedValue] = cast(
-                "Sequence[t.NormalizedValue]",
-                component_raw,
-            )
-            result = u.normalize_component(cast("t.NormalizedValue", component))
+            result = u.normalize_component(cast("t.NormalizedValue", component_raw))
             tm.that(result, is_=list, none=False, msg="Result must be list")
             result_list = cast("Sequence[t.NormalizedValue]", result)
             tm.that(len(result_list), eq=4, msg="Result list must have 4 items")

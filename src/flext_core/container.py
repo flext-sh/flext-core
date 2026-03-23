@@ -1117,7 +1117,6 @@ class FlextContainer(p.Container):
             if not self.has_service(factory_name):
                 self.register(factory_name, _create_namespace_config, kind="factory")
 
-    @override
     def unregister(self, name: str) -> r[bool]:
         """Remove a service or factory registration by name."""
         removed = False

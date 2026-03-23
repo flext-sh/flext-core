@@ -56,8 +56,8 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        domain_events: MutableSequence[FlextModelsDomainEvent.Entry] = Field(
-            default_factory=list,
+        domain_events: list[FlextModelsDomainEvent.Entry] = Field(
+            default_factory=lambda: list[FlextModelsDomainEvent.Entry](),
             description="List of uncommitted domain events for event sourcing",
         )
 

@@ -260,7 +260,11 @@ class TestDIIncremental:
             lifecycle["created"] = True
             return {"connected": True}
 
-        runtime = s._create_runtime(resources={"database": db_factory})
+        runtime = s._create_runtime(
+            runtime_options=m.RuntimeBootstrapOptions(
+                resources={"database": db_factory},
+            ),
+        )
         db_result = runtime.container.get("database")
         tm.ok(db_result)
         tm.that(db_result.value == {"connected": True}, eq=True)
@@ -269,8 +273,10 @@ class TestDIIncremental:
     def test_create_service_runtime_with_wiring(self) -> None:
         """Test create_service_runtime with wire_modules."""
         runtime = s._create_runtime(
-            services={"api_key": "test_key"},
-            wire_modules=[sys.modules[__name__]],
+            runtime_options=m.RuntimeBootstrapOptions(
+                services={"api_key": "test_key"},
+                wire_modules=[sys.modules[__name__]],
+            ),
         )
         container_instance = runtime.container
         tm.that(isinstance(container_instance, p.Container), eq=True)
@@ -431,11 +437,13 @@ class TestDIIncremental:
             return {"connected": True}
 
         runtime = s._create_runtime(
-            config_overrides={"app_name": "test_app"},
-            services={"static_service": "static_value"},
-            factories={"token_factory": factory},
-            resources={"connection": resource_factory},
-            wire_modules=[sys.modules[__name__]],
+            runtime_options=m.RuntimeBootstrapOptions(
+                config_overrides={"app_name": "test_app"},
+                services={"static_service": "static_value"},
+                factories={"token_factory": factory},
+                resources={"connection": resource_factory},
+                wire_modules=[sys.modules[__name__]],
+            ),
         )
         tm.that(runtime.config.app_name, eq="test_app")
         static_result = runtime.container.get("static_service")

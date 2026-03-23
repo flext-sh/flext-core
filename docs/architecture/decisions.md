@@ -7,7 +7,7 @@
   - [Rationale - ADR-001](#rationale-adr-001)
   - [Alternatives Considered - ADR-001](#alternatives-considered-adr-001)
   - [Consequences - ADR-001](#consequences-adr-001)
-- [ADR-002: Railway-Oriented Programming with r](#adr-002-railway-oriented-programming-with-flextresult)
+- [ADR-002: Railway-Oriented Programming with r](#adr-002-railway-oriented-programming-with-r)
   - [Problem - ADR-002](#problem-adr-002)
   - [Decision - ADR-002](#decision-adr-002)
   - [Rationale - ADR-002](#rationale-adr-002)

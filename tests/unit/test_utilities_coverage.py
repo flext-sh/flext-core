@@ -31,12 +31,11 @@ __all__ = ["TestUtilitiesCoverage"]
 
 
 def test_utilities_get_method_coverage() -> None:
-    """Test FlextUtilities.get() method for line 401 coverage."""
-    u = FlextUtilities
+    """Test ConfigMap.get() method for line 401 coverage."""
     test_data = t.ConfigMap(root={"key": "value", "other": 456})
-    result = u.get(test_data.root, "key")
+    result = test_data.root.get("key")
     assert result == "value"
-    result = u.get(test_data.root, "missing", default="fallback")
+    result = test_data.root.get("missing", "fallback")
     assert result == "fallback"
 
 

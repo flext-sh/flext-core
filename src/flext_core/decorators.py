@@ -137,9 +137,7 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger = FlextDecorators._resolve_logger(
-                    tuple(args), func
-                )
+                logger = FlextDecorators._resolve_logger(tuple(args), func)
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -357,9 +355,7 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(
-                    tuple(args), func
-                )
+                logger = FlextDecorators._resolve_logger(tuple(args), func)
                 retry_func = func
                 retry_config = m.RetryConfiguration(
                     max_retries=attempts,
@@ -647,9 +643,7 @@ class FlextDecorators:
         return isinstance(logger_value, p.Logger)
 
     @staticmethod
-    def _resolve_logger(
-        args: tuple[object, ...], func: Callable[P, R]
-    ) -> p.Logger:
+    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> p.Logger:
         """Resolve logger from first argument or create module logger.
 
         Returns:
@@ -874,9 +868,7 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger = FlextDecorators._resolve_logger(
-                    tuple(args), func
-                )
+                logger = FlextDecorators._resolve_logger(tuple(args), func)
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -925,9 +917,7 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(
-                    tuple(args), func
-                )
+                logger = FlextDecorators._resolve_logger(tuple(args), func)
                 try:
                     if context_vars:
                         filtered_vars: Mapping[str, t.Container] = {

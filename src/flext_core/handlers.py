@@ -205,7 +205,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         if mode is not None:
             if isinstance(mode, c.HandlerType):
                 resolved_type = mode
-            elif mode not in u.values(c.HandlerType):
+            elif mode not in u.enum_values(c.HandlerType):
                 error_msg = f"Invalid handler mode: {mode}"
                 raise e.ValidationError(error_msg)
             else:

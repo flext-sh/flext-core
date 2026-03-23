@@ -14,7 +14,7 @@ import re
 import warnings
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from enum import StrEnum
-from typing import overload
+from typing import TypeAliasType, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -340,7 +340,7 @@ class FlextUtilitiesParser:
         field_prefix: str,
     ) -> r[T]:
         """Helper: Try direct type call."""
-        if target is t.NormalizedValue or str(target) == "typing.Any":
+        if type(target) is TypeAliasType or str(target) == "typing.Any":
             return FlextUtilitiesParser._parse_with_default(
                 default,
                 default_factory,

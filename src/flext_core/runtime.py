@@ -38,7 +38,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     ClassVar,
-    TypeGuard,
     TypeIs,
     override,
 )
@@ -536,8 +535,8 @@ class FlextRuntime:
 
     @staticmethod
     def _is_structlog_processor(
-        value: t.NormalizedValue,
-    ) -> TypeGuard[structlog.types.Processor]:
+        value: t.StructlogProcessor | t.NormalizedValue,
+    ) -> TypeIs[structlog.types.Processor]:
         return callable(value)
 
     @staticmethod
@@ -1394,7 +1393,7 @@ class FlextRuntime:
         context_dict = t.ConfigMap(root={})
         if isinstance(context, Mapping):
             try:
-                parsed_context: Mapping[str, t.ValueOrModel] = {
+                parsed_context: dict[str, t.NormalizedValue | BaseModel] = {
                     str(k): str(v) for k, v in context.items()
                 }
             except (TypeError, ValueError, AttributeError, RuntimeError) as exc:
@@ -1403,7 +1402,7 @@ class FlextRuntime:
                     exc_info=exc,
                 )
                 parsed_context = {}
-            context_dict = t.ConfigMap(parsed_context)
+            context_dict = t.ConfigMap(root=parsed_context)
         elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):
             context_dict = t.ConfigMap(root={})
         elif isinstance(context, BaseModel):

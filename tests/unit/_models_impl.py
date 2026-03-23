@@ -16,9 +16,9 @@ class _ValidationLikeError(Exception):
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
-type TestCaseMap = Mapping[str, t.NormalizedValue]
+type TestCaseMap = Mapping[str, t.Tests.Testobject]
 
-type InputPayloadMap = Mapping[str, t.NormalizedValue]
+type InputPayloadMap = Mapping[str, t.Tests.Testobject]
 
 __all__ = [
     "BadConfigForTest",

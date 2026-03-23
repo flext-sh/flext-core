@@ -14,7 +14,7 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
+from collections.abc import Callable, Mapping, MutableSequence
 from typing import TypeIs
 
 from pydantic import BaseModel, ValidationError
@@ -52,40 +52,24 @@ class FlextUtilitiesReliability:
         return min(current_delay, c.RETRY_BACKOFF_MAX)
 
     @staticmethod
-    def _is_match_mapper(
-        value: t.NormalizedValue | Callable[[t.NormalizedValue], t.NormalizedValue],
-    ) -> TypeIs[Callable[[t.NormalizedValue], t.NormalizedValue]]:
-        return callable(value)
-
-    @staticmethod
     def _is_match_predicate(
         value: type | t.NormalizedValue | Callable[[t.NormalizedValue], bool],
     ) -> TypeIs[Callable[[t.NormalizedValue], bool]]:
         return callable(value) and (not isinstance(value, type))
 
     @staticmethod
-    def _normalize_operation_mapping[TKey, TValue](
-        value: Mapping[TKey, TValue],
-    ) -> Mapping[str, t.NormalizedValue]:
-        normalized: MutableMapping[str, t.NormalizedValue] = {}
-        for raw_key, raw_value in value.items():
-            normalized_value = (
-                raw_value
-                if FlextUtilitiesGuards.is_container(raw_value)
-                else str(raw_value)
-            )
-            normalized[str(raw_key)] = normalized_value
-        return normalized
-
-    @staticmethod
     def _resolve_match_output(
         candidate: t.NormalizedValue | Callable[[t.NormalizedValue], t.NormalizedValue],
         value: t.NormalizedValue,
     ) -> t.Container:
-        raw = candidate(value) if callable(candidate) else candidate
-        if FlextUtilitiesGuards.is_container(raw):
-            return raw
-        return str(raw)
+        if not callable(candidate):
+            if FlextUtilitiesGuards.is_container(candidate):
+                return candidate
+            return str(candidate)
+        raw_mapped: t.NormalizedValue = candidate(value)
+        if FlextUtilitiesGuards.is_container(raw_mapped):
+            return raw_mapped
+        return str(raw_mapped)
 
     @staticmethod
     def calculate_delay(attempt: int, config: Mapping[str, t.Scalar] | None) -> float:

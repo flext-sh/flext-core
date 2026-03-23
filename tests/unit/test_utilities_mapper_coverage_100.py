@@ -169,8 +169,8 @@ class UtilitiesMapperCoverage100Namespace:
         def test_get_simple(self) -> None:
             """Test get."""
             data = {"a": 1}
-            tm.that(u.get(data, "a"), eq=1)
-            tm.that(u.get(data, "b", default=2), eq=2)
+            tm.that(data.get("a"), eq=1)
+            tm.that(data.get("b", 2), eq=2)
 
         def test_at_list(self) -> None:
             """Test at list."""
@@ -222,6 +222,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(u.as_("123", int), eq=123)
             converted = u.as_("12.3", float)
             tm.that(converted, is_=float)
+            assert isinstance(converted, float)
             assert abs(converted - 12.3) < 1e-9
             assert u.as_("true", bool) is True
             tm.that(u.as_("invalid", int, default=0), eq=0)
@@ -273,7 +274,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_convert_to_json_value(self) -> None:
             obj = SimpleObj(name="test", value=1)
-            payload: Mapping[str, t.NormalizedValue] = {"obj": obj}
+            payload: Mapping[str, t.ValueOrModel] = {"obj": obj}
             res: MutableMapping[str, t.NormalizedValue] = {}
             for key, val in payload.items():
                 if isinstance(val, BaseModel):
@@ -286,7 +287,7 @@ class UtilitiesMapperCoverage100Namespace:
         def test_convert_to_json_safe(self) -> None:
             obj = SimpleObj(name="test", value=1)
             now = datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC)
-            payload: Mapping[str, t.NormalizedValue] = {
+            payload: Mapping[str, t.ValueOrModel] = {
                 "obj": obj,
                 "path": Path("/tmp/example"),
                 "when": now,
@@ -308,7 +309,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(res["when"], eq="2026-03-12T10:30:45+00:00")
 
         def test_convert_dict_to_json(self) -> None:
-            d: Mapping[str, t.NormalizedValue] = {"a": SimpleObj(name="test", value=1)}
+            d: Mapping[str, t.ValueOrModel] = {"a": SimpleObj(name="test", value=1)}
             res: MutableMapping[str, t.NormalizedValue] = {}
             for key, val in d.items():
                 if isinstance(val, BaseModel):
@@ -318,7 +319,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(res["a"], eq={"name": "test", "value": 1})
 
         def test_convert_list_to_json(self) -> None:
-            test_list: Sequence[Mapping[str, t.NormalizedValue]] = [
+            test_list: Sequence[Mapping[str, t.ValueOrModel]] = [
                 {"a": SimpleObj(name="test", value=1)}
             ]
             res: MutableSequence[Mapping[str, t.NormalizedValue]] = []
@@ -401,7 +402,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_construct(self) -> None:
             """Test construct."""
-            source: Mapping[str, t.NormalizedValue | BaseModel] = {
+            source: MutableMapping[str, t.NormalizedValue | BaseModel] = {
                 "user_name": "john",
                 "user_age": 30,
             }
@@ -413,7 +414,7 @@ class UtilitiesMapperCoverage100Namespace:
                     "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
                 },
             )
-            res = u.construct(spec, t.ConfigMap(root=source))
+            res = u.construct_spec(spec, t.ConfigMap(root=source))
             tm.that(
                 res,
                 eq={"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"},

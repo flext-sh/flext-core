@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from types import ModuleType
 from typing import ClassVar, Self, cast
 
@@ -395,7 +395,7 @@ class TestContainerFullCoverage:
         )
         c._config = FlextSettings(app_name="base")
         c._context = FlextContext()
-        captured: MutableMapping[str, t.NormalizedValue] = {}
+        captured: MutableMapping[str, p.Settings | p.Context | None] = {}
 
         def _fake_create_scoped_instance(
             *, registration: m.ServiceRegistrationSpec, **kwargs: t.NormalizedValue
@@ -420,7 +420,7 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: _MonkeyPatch,
     ) -> None:
-        captured: MutableMapping[str, Callable[..., t.NormalizedValue]] = {}
+        captured: MutableMapping[str, t.RegisterableService] = {}
 
         def factory_fn() -> int:
             return 7
@@ -514,7 +514,7 @@ class TestContainerFullCoverage:
                 max_factories=10,
             )
             c._user_overrides = t.ConfigMap(root={})
-            registered: MutableMapping[str, Callable[..., t.NormalizedValue]] = {}
+            registered: MutableMapping[str, t.RegisterableService] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _register(
@@ -684,7 +684,7 @@ class TestContainerFullCoverage:
                 }
 
             c._config = _CfgFallback()
-            captured: MutableMapping[str, Callable[..., t.NormalizedValue]] = {}
+            captured: MutableMapping[str, t.RegisterableService] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _capture_register(
@@ -752,7 +752,8 @@ class TestContainerFullCoverage:
                 kind: str = "service",
             ) -> FlextContainer:
                 if kind == "factory" and callable(impl):
-                    executed.append(type(impl()).__name__)
+                    result_type = type(impl())
+                    executed.append(getattr(result_type, "__name__", str(result_type)))
                 return c
 
             monkeypatch.setattr(c, "register", _track_register)

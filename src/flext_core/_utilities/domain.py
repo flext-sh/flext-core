@@ -41,7 +41,7 @@ class FlextUtilitiesDomain:
             True only if both objects are the exact same concrete type.
 
         """
-        return type(obj_a) is type(obj_b)  # noqa: E721
+        return type(obj_a) is type(obj_b)
 
     @staticmethod
     def compare_entities_by_id(

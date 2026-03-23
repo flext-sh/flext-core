@@ -78,17 +78,15 @@ class TestUtilitiesCollectionFullCoverage:
             cast("t.NormalizedValue", {"b": 2}),
         )
         tm.ok(nested)
-        deep = u.merge(
+        deep = u.merge_mappings(
             cast("Mapping[str, t.NormalizedValue]", {"x": self._BadCopyDict({"a": 1})}),
             cast("Mapping[str, t.NormalizedValue]", {"x": {"b": 2}}),
             strategy="deep",
         )
         tm.ok(deep)
         with pytest.raises(TypeError, match="iterable"):
-            _ = u.merge(
-                cast("Mapping[str, t.NormalizedValue]", None),
-                {"x": 1},
-                strategy="deep",
+            _ = u.merge_mappings(
+                cast("Mapping[str, t.NormalizedValue]", None), {"x": 1}, strategy="deep"
             )
 
     def test_batch_fail_collect_flatten_and_progress(self) -> None:

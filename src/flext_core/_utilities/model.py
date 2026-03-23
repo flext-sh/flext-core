@@ -58,14 +58,12 @@ class FlextUtilitiesModel:
         if isinstance(value, (bool, int, float, str)):
             return value
         if isinstance(value, (list, tuple)):
-            sequence_items: Sequence[t.ValueOrModel] = [
+            sequence_items: Sequence[t.RuntimeAtomic] = [
                 FlextRuntime.normalize_to_container(item_value) for item_value in value
             ]
             normalized_items: MutableSequence[t.Primitives] = []
             for item in sequence_items:
-                if item is None:
-                    normalized_items.append("")
-                elif isinstance(item, (bool, int, float, str)):
+                if isinstance(item, (bool, int, float, str)):
                     normalized_items.append(item)
                 else:
                     normalized_items.append(str(item))
@@ -341,7 +339,7 @@ class FlextUtilitiesModel:
             normalized_map = FlextUtilitiesModel._normalize_str_object_mapping(
                 normalized_obj,
             )
-            return t.ConfigMap(root=normalized_map)
+            return t.ConfigMap(root=dict(normalized_map.items()))
         return t.ConfigMap(root={})
 
 

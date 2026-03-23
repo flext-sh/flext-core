@@ -19,7 +19,7 @@
 - [Quantitative Metrics](#quantitative-metrics)
   - [Pydantic v2 Pattern Adoption](#pydantic-v2-pattern-adoption)
   - [Pydantic v1 Legacy Code](#pydantic-v1-legacy-code)
-- [Integration with r Pattern ✅](#integration-with-flextresult-pattern)
+- [Integration with r Pattern ✅](#integration-with-r-pattern)
 - [Cross-Reference Verification](#cross-reference-verification)
   - [Internal Links ✅](#internal-links)
   - [External References ✅](#external-references)

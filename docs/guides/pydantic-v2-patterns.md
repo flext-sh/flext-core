@@ -16,7 +16,7 @@
 - [Pattern 8: Custom Types](#pattern-8-custom-types)
 - [Pattern 9: Discriminated Unions for Polymorphism](#pattern-9-discriminated-unions-for-polymorphism)
 - [Pattern 10: JSON Schema Generation](#pattern-10-json-schema-generation)
-- [Integration with r](#integration-with-flextresult)
+- [Integration with r](#integration-with-r)
 - [Best Practices](#best-practices)
 - [Checklists](#checklists)
   - [Model Configuration](#model-configuration)

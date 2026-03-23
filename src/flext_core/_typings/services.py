@@ -133,6 +133,8 @@ class FlextTypesServices:
         | Sequence[FlextTypingBase.NormalizedValue]
         | Mapping[str, FlextTypingBase.NormalizedValue | BaseModel]
         | tuple[FlextTypingBase.NormalizedValue, ...]
+        | tuple[type, ...]
+        | set[FlextTypingBase.NormalizedValue]
         | BaseModel
         | FlextTypingContainers.ConfigMap
         | RegisterableService

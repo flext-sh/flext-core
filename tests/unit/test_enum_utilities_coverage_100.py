@@ -250,8 +250,8 @@ class TestEnumUtilitiesCoverage:
     @pytest.mark.parametrize("scenario", IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        if isinstance(scenario.value, (str, int, float, bool, self.Status)):
-            value_typed: bool | float | int | str | self.Status = scenario.value
+        if isinstance(scenario.value, (str, int, float, bool)):
+            value_typed: bool | float | int | str = scenario.value
         else:
             value_typed = str(scenario.value)
         result = u.is_subset(
@@ -284,8 +284,8 @@ class TestEnumUtilitiesCoverage:
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
         # Narrow the type from StrEnum to Status
-        if isinstance(scenario.default, self.Status):
-            default: self.Status = scenario.default
+        if isinstance(scenario.default, TestEnumUtilitiesCoverage.Status):
+            default: TestEnumUtilitiesCoverage.Status = scenario.default
         else:
             default = self.Status.PENDING
         result = u.parse_or_default(self.Status, scenario.value, cast("Any", default))
@@ -343,7 +343,7 @@ class TestEnumUtilitiesCoverage:
 
     def test_values(self) -> None:
         """Test values method."""
-        values = u.values(self.Status)
+        values = u.enum_values(self.Status)
         tm.that(values.__class__, eq=frozenset)
         assert "active" in values
         assert "pending" in values
@@ -367,6 +367,6 @@ class TestEnumUtilitiesCoverage:
 
     def test_metadata_caching(self) -> None:
         """Test that metadata methods are cached."""
-        values1 = u.values(self.Status)
-        values2 = u.values(self.Status)
+        values1 = u.enum_values(self.Status)
+        values2 = u.enum_values(self.Status)
         tm.that(values1 is values2, eq=True)

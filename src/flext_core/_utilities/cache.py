@@ -116,13 +116,13 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component.items()
             }
-        if FlextUtilitiesGuardsTypeCore.is_primitive(component) or component is None:
-            return component
         if isinstance(component, set):
             normalized_set_items: Sequence[t.NormalizedValue] = [
                 FlextUtilitiesCache.normalize_component(item) for item in component
             ]
             return tuple(normalized_set_items)
+        if FlextUtilitiesGuardsTypeCore.is_primitive(component) or component is None:
+            return component
         if isinstance(component, (list, tuple)):
             return [FlextUtilitiesCache.normalize_component(item) for item in component]
         return str(component)

@@ -19,7 +19,7 @@ from flext_core import (
 class FlextModelsContextProxyVar:
     """Namespace for structlog proxy context variable."""
 
-    class StructlogProxyContextVar[T]:
+    class StructlogProxyContextVar[T: t.ValueOrModel]:
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
         Delegates ALL operations to structlog's contextvar storage ensuring

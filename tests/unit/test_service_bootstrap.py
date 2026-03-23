@@ -86,7 +86,9 @@ class TestServiceBootstrap:
             return "factory_value"
 
         test_factories = {"test_factory": factory}
-        runtime = self.ConcreteTestService._create_runtime(factories=test_factories)
+        runtime = self.ConcreteTestService._create_runtime(
+            runtime_options=m.RuntimeBootstrapOptions(factories=test_factories),
+        )
         factory_result = runtime.container.get("test_factory")
         _ = u.Tests.Result.assert_success(factory_result)
         assert hasattr(runtime, "container")
@@ -98,7 +100,9 @@ class TestServiceBootstrap:
             return "resource_value"
 
         test_resources = {"test_resource": resource}
-        runtime = self.ConcreteTestService._create_runtime(resources=test_resources)
+        runtime = self.ConcreteTestService._create_runtime(
+            runtime_options=m.RuntimeBootstrapOptions(resources=test_resources),
+        )
         resource_result = runtime.container.get("test_resource")
         _ = u.Tests.Result.assert_success(resource_result)
         assert hasattr(runtime, "container")

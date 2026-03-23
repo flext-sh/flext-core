@@ -244,12 +244,12 @@ class TestCollectionUtilitiesCoverage:
         validator = u.coerce_list_validator(self.Status)
         for scenario in self._coerce_list_validator_scenarios():
             if scenario.expected_success:
-                result = validator(cast("t.NormalizedValue", scenario.value))
+                result = validator(scenario.value)
                 tm.that(result, is_=list)
                 tm.that(all(item in self.Status for item in result), eq=True)
             else:
                 with pytest.raises(Exception) as exc_info:
-                    validator(cast("t.NormalizedValue", scenario.value))
+                    validator(scenario.value)
                 expected_error = scenario.expected_error
                 assert expected_error is not None
                 tm.that(isinstance(exc_info.value, (TypeError, ValueError)), eq=True)

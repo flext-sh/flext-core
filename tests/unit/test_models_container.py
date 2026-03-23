@@ -36,7 +36,7 @@ class TestFlextModelsContainer:
     class _ContainerModelsScenarios:
         """Test scenarios for container models."""
 
-        METADATA_VALUES: ClassVar[Sequence[tuple[t.NormalizedValue, bool]]] = [
+        METADATA_VALUES: ClassVar[Sequence[tuple[t.ValueOrModel, bool]]] = [
             (None, True),
             ({}, True),
             ({"key": "value"}, True),
@@ -240,51 +240,31 @@ class TestFlextModelsContainer:
         config = m.ContainerConfig.model_validate(config_dict)
         tm.that(
             config.enable_singleton,
-            eq=u.get(
-                config_dict,
-                "enable_singleton",
-                default=True,
-            ),
+            eq=config_dict.get("enable_singleton", True),
         )
         tm.that(
             config.enable_factory_caching,
-            eq=u.get(
-                config_dict,
-                "enable_factory_caching",
-                default=True,
-            ),
+            eq=config_dict.get("enable_factory_caching", True),
         )
         tm.that(
             config.max_services,
-            eq=u.get(config_dict, "max_services", default=1000),
+            eq=config_dict.get("max_services", 1000),
         )
         tm.that(
             config.max_factories,
-            eq=u.get(config_dict, "max_factories", default=500),
+            eq=config_dict.get("max_factories", 500),
         )
         tm.that(
             config.enable_auto_registration,
-            eq=u.get(
-                config_dict,
-                "enable_auto_registration",
-                default=False,
-            ),
+            eq=config_dict.get("enable_auto_registration", False),
         )
         tm.that(
             config.enable_lifecycle_hooks,
-            eq=u.get(
-                config_dict,
-                "enable_lifecycle_hooks",
-                default=True,
-            ),
+            eq=config_dict.get("enable_lifecycle_hooks", True),
         )
         tm.that(
             config.lazy_loading,
-            eq=u.get(
-                config_dict,
-                "lazy_loading",
-                default=True,
-            ),
+            eq=config_dict.get("lazy_loading", True),
         )
 
     def test_container_config_defaults(self) -> None:

@@ -117,10 +117,7 @@ class TestUtilitiesEnumFullCoverage:
         tm.that(inverse, eq={"1": "one", "2": "two"})
 
     def test_create_enum_executes_factory_path(self) -> None:
-        dynamic_status = cast(
-            "type[StrEnum]",
-            u.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"}),
-        )
+        dynamic_status = u.create_enum("DynamicStatus", {"OK": "ok", "ERR": "err"})
         ok_member = dynamic_status.__members__["OK"]
         err_member = dynamic_status.__members__["ERR"]
         tm.that(ok_member.value, eq="ok")

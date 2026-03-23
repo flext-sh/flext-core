@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeGuard, TypeIs
+from typing import TypeIs
 
 from pydantic import BaseModel
 
@@ -41,7 +41,11 @@ class FlextUtilitiesGuardsTypeProtocol:
                 c.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
                 c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
-                "command_bus": lambda v: isinstance(v, p.Dispatcher),
+                "command_bus": lambda v: (
+                    hasattr(v, "dispatch")
+                    and hasattr(v, "publish")
+                    and hasattr(v, "register_handler")
+                ),
                 "handler": lambda v: isinstance(v, p.Handler),
                 "logger": lambda v: isinstance(v, p.Logger),
                 "result": lambda v: FlextUtilitiesGuardsTypeProtocol.is_result_like(v),
@@ -77,7 +81,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_context(
         value: t.GuardInput,
-    ) -> TypeGuard[p.Context]:
+    ) -> TypeIs[p.Context]:
         """Check if value is a Context protocol instance.
 
         Args:
@@ -92,7 +96,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_handler_callable(
         value: t.GuardInput,
-    ) -> TypeGuard[t.HandlerCallable]:
+    ) -> TypeIs[t.HandlerCallable]:
         """Check if value is a callable handler function.
 
         Args:
@@ -135,7 +139,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_registerable(
         value: t.GuardInput,
-    ) -> TypeGuard[t.RegisterableService]:
+    ) -> TypeIs[t.RegisterableService]:
         """Check if value can be registered as a service.
 
         Args:
@@ -150,7 +154,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_factory(
         value: t.GuardInput,
-    ) -> TypeGuard[t.FactoryCallable]:
+    ) -> TypeIs[t.FactoryCallable]:
         """Check if value is a factory callable.
 
         Args:
@@ -165,7 +169,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_resource(
         value: t.GuardInput,
-    ) -> TypeGuard[t.ResourceCallable]:
+    ) -> TypeIs[t.ResourceCallable]:
         """Check if value is a resource factory callable.
 
         Args:
@@ -180,7 +184,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_result_like(
         value: t.GuardInput,
-    ) -> TypeGuard[p.ResultLike[t.RuntimeAtomic]]:
+    ) -> TypeIs[p.ResultLike[t.RuntimeAtomic]]:
         """Check if value is a ResultLike protocol instance.
 
         Args:
@@ -201,7 +205,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_registerable_service(
         value: t.GuardInput,
-    ) -> TypeGuard[t.RegisterableService]:
+    ) -> TypeIs[t.RegisterableService]:
         """Check if value can be registered as a service in the DI container.
 
         Accepts None, primitives, BaseModel, Path, Mapping, callables, sequences
@@ -281,13 +285,17 @@ class FlextUtilitiesGuardsTypeProtocol:
             case "string_non_empty":
                 return bool(isinstance(value, str) and bool(value.strip()))
             case "dict_non_empty":
-                return bool(isinstance(value, Mapping) and value)
+                if isinstance(value, dict):
+                    return bool(value)
+                if isinstance(value, t.ConfigMap):
+                    return bool(value.root)
+                return False
             case "list_non_empty":
-                return bool(
-                    isinstance(value, Sequence)
-                    and (not isinstance(value, (str, bytes)))
-                    and value
-                )
+                if isinstance(value, (list, tuple)) and not isinstance(
+                    value, (str, bytes)
+                ):
+                    return bool(value)
+                return False
             case _:
                 return False
 
@@ -313,7 +321,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def _is_type_tuple(
         value: t.GuardInput,
-    ) -> TypeGuard[tuple[type, ...]]:
+    ) -> TypeIs[tuple[type, ...]]:
         """Check if value is a tuple of types.
 
         Args:

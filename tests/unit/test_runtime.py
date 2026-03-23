@@ -916,12 +916,14 @@ class TestFlextRuntime:
 
             setattr(module, "consume", consume_automation)
             di_container = FlextRuntime.DependencyIntegration.create_container(
-                config=t.ConfigMap(root={"flags": {"enabled": True}}),
-                services={"static_value": 7},
-                factories={"token_factory": token_factory},
-                resources={"api_client": lambda: {"connected": True}},
-                wire_modules=[module],
-                factory_cache=False,
+                container_options=m.DependencyContainerCreationOptions(
+                    config=t.ConfigMap(root={"flags": {"enabled": True}}),
+                    services={"static_value": 7},
+                    factories={"token_factory": token_factory},
+                    resources={"api_client": lambda: {"connected": True}},
+                    wire_modules=[module],
+                    factory_cache=False,
+                ),
             )
             try:
                 consume_automation_func = cast(
@@ -965,11 +967,13 @@ class TestFlextRuntime:
 
             setattr(module, "consume", consume_service)
             runtime_raw = s._create_runtime(
-                config_overrides={"app_name": "runtime-service"},
-                services={"feature_flag": True},
-                factories={"token_factory": token_factory},
-                resources={"api_client": lambda: {"connected": True}},
-                wire_modules=[module],
+                runtime_options=m.RuntimeBootstrapOptions(
+                    config_overrides={"app_name": "runtime-service"},
+                    services={"feature_flag": True},
+                    factories={"token_factory": token_factory},
+                    resources={"api_client": lambda: {"connected": True}},
+                    wire_modules=[module],
+                ),
             )
             runtime = runtime_raw
             try:

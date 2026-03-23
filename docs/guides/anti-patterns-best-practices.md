@@ -18,7 +18,7 @@
   - [Anti-Pattern 10: Creating New Containers](#anti-pattern-10-creating-new-containers)
   - [Anti-Pattern 11: Not Checking Container Results](#anti-pattern-11-not-checking-container-results)
 - [Model Anti-Patterns](#model-anti-patterns)
-  - [Anti-Pattern 12: Validation in Models Without r](#anti-pattern-12-validation-in-models-without-flextresult)
+  - [Anti-Pattern 12: Validation in Models Without r](#anti-pattern-12-validation-in-models-without-r)
   - [Anti-Pattern 13: Mutable Value Objects](#anti-pattern-13-mutable-value-objects)
 - [Configuration Anti-Patterns](#configuration-anti-patterns)
   - [Anti-Pattern 14: Hardcoded Configuration](#anti-pattern-14-hardcoded-configuration)

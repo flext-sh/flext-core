@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import contextlib
+import inspect
 import io
 import logging
 import queue
+import threading
 import types
 from collections.abc import (
     Callable,
@@ -23,11 +25,13 @@ from types import MappingProxyType, ModuleType
 from typing import ClassVar, cast, override
 
 import pytest
+import structlog
+from dependency_injector import containers, providers
 from flext_tests import t, tm
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import FlextRuntime, r
+from flext_core import FlextRuntime, m, r
 from tests import c, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
@@ -132,7 +136,7 @@ def test_async_log_writer_paths() -> None:
     forced.queue = cast(
         "queue.Queue[str | None]", cast("t.NormalizedValue", EmptyQueue())
     )
-    forced.stop_event = runtime_module.threading.Event()
+    forced.stop_event = threading.Event()
     forced.stop_event.set()
     forced._worker()
 
@@ -179,7 +183,7 @@ def test_async_log_writer_paths() -> None:
     broken.queue = cast(
         "queue.Queue[str | None]", cast("t.NormalizedValue", SequenceQueue())
     )
-    broken.stop_event = runtime_module.threading.Event()
+    broken.stop_event = threading.Event()
     broken._worker()
     tm.that(failing.messages, has="Error in async log writer\n")
 
@@ -207,7 +211,7 @@ def test_async_log_writer_paths() -> None:
         "queue.Queue[str | None]",
         cast("t.NormalizedValue", EmptyThenSentinelQueue()),
     )
-    continue_writer.stop_event = runtime_module.threading.Event()
+    continue_writer.stop_event = threading.Event()
     continue_writer._worker()
 
 
@@ -248,11 +252,9 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     writer.queue = cast(
         "queue.Queue[str | None]", cast("t.NormalizedValue", FullQueue())
     )
-    writer.stop_event = runtime_module.threading.Event()
+    writer.stop_event = threading.Event()
     thread = JoinRecorderThread()
-    writer.thread = cast(
-        "runtime_module.threading.Thread", cast("t.NormalizedValue", thread)
-    )
+    writer.thread = cast("threading.Thread", cast("t.NormalizedValue", thread))
     writer.shutdown()
     tm.that(writer.stop_event.is_set(), eq=True)
     tm.that(thread.join_timeout is not None, eq=True)
@@ -326,7 +328,7 @@ def test_normalize_to_metadata_alias_removal_path() -> None:
 def test_get_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     logger_with_frame = FlextRuntime.get_logger()
     tm.that(logger_with_frame is not None, eq=True)
-    monkeypatch.setattr(runtime_module.inspect, "currentframe", lambda: None)
+    monkeypatch.setattr(inspect, "currentframe", lambda: None)
     logger_no_frame = FlextRuntime.get_logger()
     tm.that(logger_no_frame is not None, eq=True)
 
@@ -792,7 +794,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     class Frame:
         f_back: types.FrameType | None = None
 
-    monkeypatch.setattr(runtime_module.inspect, "currentframe", lambda: Frame())
+    monkeypatch.setattr(inspect, "currentframe", lambda: Frame())
     tm.that(FlextRuntime.get_logger(None) is not None, eq=True)
 
 
@@ -801,9 +803,9 @@ def test_runtime_module_accessors_and_metadata() -> None:
     tm.that(isinstance(metadata_ref, type), eq=True)
     metadata = metadata_ref()
     tm.that(metadata.version, eq="1.0.0")
-    tm.that(FlextRuntime.structlog() is runtime_module.structlog, eq=True)
-    tm.that(FlextRuntime.dependency_providers() is runtime_module.providers, eq=True)
-    tm.that(FlextRuntime.dependency_containers() is runtime_module.containers, eq=True)
+    tm.that(FlextRuntime.structlog() is structlog, eq=True)
+    tm.that(FlextRuntime.dependency_providers() is providers, eq=True)
+    tm.that(FlextRuntime.dependency_containers() is containers, eq=True)
 
 
 def test_configure_structlog_print_logger_factory_fallback(
@@ -903,19 +905,21 @@ def test_dependency_integration_and_wiring_paths() -> None:
         bridge is not None and services is not None and (resources is not None), eq=True
     )
     di = FlextRuntime.DependencyIntegration.create_container(
-        config=t.ConfigMap(root={"feature": t.Dict(root={"enabled": True})}),
-        services={"svc": 1},
-        factories={"factory": lambda: 2},
-        resources={"resource": lambda: {"ok": True}},
-        wire_modules=[],
-        wire_packages=["unused.package"],
-        wire_classes=[FlextRuntime],
+        container_options=m.DependencyContainerCreationOptions(
+            config=t.ConfigMap(root={"feature": t.Dict(root={"enabled": True})}),
+            services={"svc": 1},
+            factories={"factory": lambda: 2},
+            resources={"resource": lambda: {"ok": True}},
+            wire_modules=[],
+            wire_packages=["unused.package"],
+            wire_classes=[FlextRuntime],
+        ),
     )
     tm.that(getattr(getattr(di.config, "feature"), "enabled")(), eq=True)
     tm.that(di.svc(), eq=1)
     tm.that(di.factory(), eq=2)
     tm.that(di.resource(), eq={"ok": True})
-    provider = runtime_module.providers.Configuration()
+    provider = providers.Configuration()
     FlextRuntime.DependencyIntegration.bind_configuration_provider(
         provider,
         t.ConfigMap(root={"api": t.Dict(root={"url": "x"})}),

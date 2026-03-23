@@ -3,7 +3,7 @@
 <!-- TOC START -->
 - [Installation](#installation)
 - [Core Concepts (2 minutes)](#core-concepts-2-minutes)
-  - [1. Railway-Oriented Programming (r[T])](#1-railway-oriented-programming-flextresultt)
+  - [1. Railway-Oriented Programming (r[T])](#1-railway-oriented-programming-rt)
   - [2. Dependency Injection (FlextContainer)](#2-dependency-injection-flextcontainer)
   - [3. Domain-Driven Design (FlextModels)](#3-domain-driven-design-flextmodels)
 - [Common Use Cases (3 minutes)](#common-use-cases-3-minutes)

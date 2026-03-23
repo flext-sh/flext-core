@@ -1356,7 +1356,7 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
-    def construct(
+    def construct_spec(
         spec: Mapping[str, t.MapperInput],
         source: t.ConfigModelInput | None = None,
         *,
@@ -1381,7 +1381,7 @@ class FlextUtilitiesMapper:
             Constructed dict with target keys
 
         Example:
-            plugin_info = FlextUtilitiesMapper.construct(
+            plugin_info = FlextUtilitiesMapper.construct_spec(
                 {
                     "name": "plugin_name",
                     "type": "plugin_type",
@@ -1655,11 +1655,15 @@ class FlextUtilitiesMapper:
         """
         try:
             parts = path.split(separator)
-            current: t.NormalizedValue = None
+            current: t.ValueOrModel = None
             if isinstance(data, BaseModel):
                 current = data
             elif isinstance(data, Mapping):
                 current = FlextUtilitiesMapper.narrow_to_container(data)
+            elif isinstance(data, p.HasModelDump):
+                current = FlextUtilitiesMapper.narrow_to_container(data.model_dump())
+            elif isinstance(data, p.ValidatorSpec):
+                current = str(data)
             else:
                 current = data
             found_none_prefix = "found_none:"
@@ -1770,7 +1774,7 @@ class FlextUtilitiesMapper:
                 return None
             value: t.NormalizedValue = default if default is not None else ""
         else:
-            raw_value: t.NormalizedValue = FlextUtilitiesMapper.get(
+            raw_value: t.NormalizedValue = FlextUtilitiesMapper.map_get(
                 source,
                 name,
                 default=default,
@@ -1880,7 +1884,7 @@ class FlextUtilitiesMapper:
         """
         result: MutableMapping[str, t.NormalizedValue] = {}
         for field_name, field_default in spec.items():
-            value: t.NormalizedValue = FlextUtilitiesMapper.get(
+            value: t.NormalizedValue = FlextUtilitiesMapper.map_get(
                 source,
                 field_name,
                 default=field_default,
@@ -1979,7 +1983,7 @@ class FlextUtilitiesMapper:
         return [item for sublist in items for item in sublist]
 
     @staticmethod
-    def get(
+    def map_get(
         data: p.AccessibleData,
         key: str,
         *,
@@ -2005,13 +2009,13 @@ class FlextUtilitiesMapper:
 
         Example:
             # String (generalized from get_str)
-            name = FlextUtilitiesMapper.get(data, "name", default="")
+            name = FlextUtilitiesMapper.map_get(data, "name", default="")
 
             # List (generalized from get_list)
-            models = FlextUtilitiesMapper.get(data, "models", default=[])
+            models = FlextUtilitiesMapper.map_get(data, "models", default=[])
 
             # Generic
-            port = FlextUtilitiesMapper.get(config, "port", default=c.DEFAULT_HTTP_PORT)
+            port = FlextUtilitiesMapper.map_get(config, "port", default=c.DEFAULT_HTTP_PORT)
 
         """
         return FlextUtilitiesMapper._get_raw(data, key, default=default)
@@ -2328,8 +2332,8 @@ class FlextUtilitiesMapper:
 
         """
         if as_dict:
-            return {k: FlextUtilitiesMapper.get(data, k) for k in keys}
-        return [FlextUtilitiesMapper.get(data, k) for k in keys]
+            return {k: FlextUtilitiesMapper.map_get(data, k) for k in keys}
+        return [FlextUtilitiesMapper.map_get(data, k) for k in keys]
 
     @staticmethod
     def pluck(
@@ -2446,8 +2450,7 @@ class FlextUtilitiesMapper:
             else:
                 primary_general = FlextUtilitiesMapper.narrow_to_container(primary_data)
                 if FlextRuntime.is_dict_like(primary_general) and isinstance(
-                    primary_general,
-                    Mapping,
+                    primary_general, dict
                 ):
                     primary_source = {
                         str(key): item_value
@@ -2475,8 +2478,7 @@ class FlextUtilitiesMapper:
                     secondary_data,
                 )
                 if FlextRuntime.is_dict_like(secondary_general) and isinstance(
-                    secondary_general,
-                    Mapping,
+                    secondary_general, dict
                 ):
                     secondary_source = {
                         str(key): item_value
@@ -2540,7 +2542,7 @@ class FlextUtilitiesMapper:
 
         def accessor(obj: t.ConfigModelInput) -> t.NormalizedValue:
             """Access property from t.NormalizedValue."""
-            result = FlextUtilitiesMapper.get(obj, key)
+            result = FlextUtilitiesMapper.map_get(obj, key)
             return result if result is not None else ""
 
         return accessor
@@ -2636,7 +2638,7 @@ class FlextUtilitiesMapper:
             else:
                 return default if default is not None else ""
             key = key_or_n
-            value = FlextUtilitiesMapper.get(data, key, default=default)
+            value = FlextUtilitiesMapper.map_get(data, key, default=default)
             if value is None:
                 return default if default is not None else ""
             if as_type is not None and (not isinstance(value, as_type)):

@@ -505,7 +505,7 @@ class FlextExceptions:
             key: FlextRuntime.normalize_to_metadata(value)
             for key, value in mutable_extra.items()
         }
-        param_values: MutableMapping[str, t.NormalizedValue] = dict(
+        param_values: MutableMapping[str, t.ValueOrModel] = dict(
             e._build_param_map(context, normalized_extra_kwargs, keys=param_keys),
         )
         for key, val in named_params.items():
@@ -1431,7 +1431,9 @@ class FlextExceptions:
             "operation": e.OperationError,
             "attribute_access": e.AttributeAccessError,
         }
-        error_class = error_classes.get(error_type) if error_type else None
+        error_class: type[e.BaseError] | None = (
+            error_classes.get(error_type) if error_type else None
+        )
         correlation_id = None
         if error_context and c.KEY_CORRELATION_ID in error_context:
             correlation_id = str(error_context[c.KEY_CORRELATION_ID])
@@ -1441,12 +1443,13 @@ class FlextExceptions:
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in error_context.items()
             }
+        corr_str: str = correlation_id if correlation_id is not None else ""
         if error_class is not None:
             return error_class(
                 message,
                 error_code=error_code or c.UNKNOWN_ERROR,
                 context=context_payload,
-                correlation_id=correlation_id,
+                correlation_id=corr_str or "",
             )
         return e.BaseError(
             message,

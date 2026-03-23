@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from enum import StrEnum
+from enum import EnumType, StrEnum
 from typing import ClassVar, Literal, TypeIs, overload
 
 from pydantic import ValidationError
@@ -145,7 +145,7 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def create_discriminated_union(
-        _discriminator_field: str,
+        discriminator_field: str,
         *enum_classes: type[StrEnum],
     ) -> Mapping[str, type[StrEnum]]:
         """Create discriminated union mapping for Pydantic models.
@@ -158,6 +158,9 @@ class FlextUtilitiesEnum:
             Mapping of discriminator values to enum classes
 
         """
+        if not discriminator_field:
+            msg = "discriminator_field must be a non-empty string"
+            raise ValueError(msg)
         union_map: MutableMapping[str, type[StrEnum]] = {}
         for enum_class in enum_classes:
             for member in enum_class.__members__.values():
@@ -165,7 +168,25 @@ class FlextUtilitiesEnum:
         return union_map
 
     @staticmethod
-    def create_enum(name: str, values: Mapping[str, str]) -> type[StrEnum] | StrEnum:
+    def _build_strenum(
+        name: str,
+        members: Sequence[tuple[str, str]],
+    ) -> type[StrEnum]:
+        """Build a StrEnum dynamically (isolated to avoid pyrefly functional-enum analysis)."""
+        # StrEnum() functional API always returns a type[StrEnum] at runtime
+        # (via EnumType metaclass), but pyright types the result as StrEnum instance.
+        # Prepare the enum class namespace via EnumType._prepare_
+        enum_namespace = EnumType.__prepare__(name, (StrEnum,))
+        for member_name, member_value in members:
+            enum_namespace[member_name] = member_value
+        result = EnumType.__new__(EnumType, name, (StrEnum,), enum_namespace)
+        if not issubclass(result, StrEnum):
+            msg = f"Enum creation failed: {name} is not a StrEnum subclass"
+            raise TypeError(msg)
+        return result
+
+    @staticmethod
+    def create_enum(name: str, values: Mapping[str, str]) -> type[StrEnum]:
         """Create StrEnum dynamically from values dict.
 
         Factory method for reducing StrEnum boilerplate during constants refactoring.
@@ -180,11 +201,7 @@ class FlextUtilitiesEnum:
 
         """
         members_list = [(k, v) for k, v in values.items()]
-        created = StrEnum(name, members_list)
-        if isinstance(created, type) and issubclass(created, StrEnum):
-            return created
-        msg = f"StrEnum({name!r}) did not produce a StrEnum subclass"
-        raise TypeError(msg)
+        return FlextUtilitiesEnum._build_strenum(name, members_list)
 
     @overload
     @staticmethod
@@ -379,7 +396,7 @@ class FlextUtilitiesEnum:
             return default
 
     @staticmethod
-    def values[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
+    def enum_values[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
         """Return frozenset of values (cached for performance)."""
         if enum_cls in FlextUtilitiesEnum._values_cache:
             return FlextUtilitiesEnum._values_cache[enum_cls]

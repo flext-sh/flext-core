@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from typing import Annotated, ClassVar, TypeGuard
+from typing import Annotated, ClassVar, TypeIs
 
 import pytest
 from flext_tests import tm, u
@@ -25,19 +25,19 @@ from pydantic import BaseModel, ConfigDict, Field
 
 def _is_extract_scenario(
     obj: BaseModel,
-) -> TypeGuard[TestPaginationCoverage100.ExtractPageParamsScenario]:
+) -> TypeIs[TestPaginationCoverage100.ExtractPageParamsScenario]:
     return isinstance(obj, TestPaginationCoverage100.ExtractPageParamsScenario)
 
 
 def _is_validate_scenario(
     obj: BaseModel,
-) -> TypeGuard[TestPaginationCoverage100.ValidatePaginationParamsScenario]:
+) -> TypeIs[TestPaginationCoverage100.ValidatePaginationParamsScenario]:
     return isinstance(obj, TestPaginationCoverage100.ValidatePaginationParamsScenario)
 
 
 def _is_prepare_scenario(
     obj: BaseModel,
-) -> TypeGuard[TestPaginationCoverage100.PreparePaginationDataScenario]:
+) -> TypeIs[TestPaginationCoverage100.PreparePaginationDataScenario]:
     return isinstance(obj, TestPaginationCoverage100.PreparePaginationDataScenario)
 
 

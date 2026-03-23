@@ -50,8 +50,8 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: MutableSequence[m.RegistrationDetails] = Field(
-            default_factory=list,
+        registered: list[m.RegistrationDetails] = Field(
+            default_factory=lambda: list[m.RegistrationDetails](),
             description="Successfully registered handlers with registration details.",
         )
         skipped: Sequence[str] = Field(

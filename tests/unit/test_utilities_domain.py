@@ -35,16 +35,16 @@ from ._models import TestUnitModels
 def _build_domain_test_entity(
     *,
     name: str,
-    value: t.NormalizedValue,
-    **_kwargs: t.NormalizedValue,
+    value: t.Tests.Testobject,
+    **_kwargs: t.Tests.Testobject,
 ) -> m.Core.DomainTestEntity:
     return m.Core.DomainTestEntity(
         name=name, value=cast("int", value), domain_events=[]
     )
 
 
-def _convert_to_general_value(obj: t.NormalizedValue) -> t.NormalizedValue:
-    """Convert t.NormalizedValue to t.NormalizedValue (handles Pydantic models).
+def _convert_to_general_value(obj: t.Tests.Testobject) -> t.NormalizedValue:
+    """Convert test object to NormalizedValue (handles Pydantic models).
 
     Args:
         obj: Object to convert (Pydantic model, dict, list, or primitive)
@@ -58,27 +58,13 @@ def _convert_to_general_value(obj: t.NormalizedValue) -> t.NormalizedValue:
     if isinstance(obj, (str, int, float, bool, type(None))):
         return obj
     if isinstance(obj, dict):
-        return cast(
-            "t.Tests.NormalizedValue",
-            {
-                str(key): _convert_to_general_value(val)
-                for key, val in cast(
-                    "Mapping[str, t.Tests.NormalizedValue]", obj
-                ).items()
-            },
-        )
+        return {str(key): _convert_to_general_value(val) for key, val in obj.items()}
     if isinstance(obj, (list, tuple)):
-        return cast(
-            "t.Tests.NormalizedValue",
-            [
-                _convert_to_general_value(elem)
-                for elem in cast("Sequence[t.Tests.NormalizedValue]", obj)
-            ],
-        )
+        return [_convert_to_general_value(elem) for elem in obj]
     return str(obj)
 
 
-def _require_payload_str(value: t.NormalizedValue) -> str:
+def _require_payload_str(value: t.Tests.Testobject) -> str:
     if isinstance(value, str):
         return value
     msg = f"Expected str payload, got {type(value).__name__}"
@@ -86,8 +72,8 @@ def _require_payload_str(value: t.NormalizedValue) -> str:
 
 
 def _require_payload_mapping(
-    value: t.NormalizedValue,
-) -> Mapping[str, t.NormalizedValue]:
+    value: t.Tests.Testobject,
+) -> Mapping[str, t.Tests.Testobject]:
     if isinstance(value, Mapping):
         return value
     msg = f"Expected mapping payload, got {type(value).__name__}"
@@ -96,14 +82,14 @@ def _require_payload_mapping(
 
 def _as_test_payload(
     value: type[t.Primitives],
-) -> t.NormalizedValue:
-    return cast("t.Tests.NormalizedValue", value)
+) -> t.Tests.Testobject:
+    return value
 
 
 def _as_payload_map(
     value: TestUnitModels.InputPayloadMap,
-) -> Mapping[str, t.NormalizedValue]:
-    return cast("Mapping[str, t.Tests.NormalizedValue]", value)
+) -> Mapping[str, t.Tests.Testobject]:
+    return value
 
 
 def create_compare_entities_cases() -> Sequence[TestUnitModels.TestCaseMap]:
@@ -300,10 +286,7 @@ def create_compare_value_objects_cases() -> Sequence[TestUnitModels.TestCaseMap]
                 "model_dump_exception",
                 "no_dict",
             ],
-            input_data_list=cast(
-                "Sequence[Mapping[str, t.Tests.NormalizedValue]]",
-                input_data_list,
-            ),
+            input_data_list=input_data_list,
             expected_results=[True, False, False, True, _as_test_payload(bool), True],
         ),
     )
@@ -345,10 +328,7 @@ def create_hash_value_object_cases() -> Sequence[TestUnitModels.TestCaseMap]:
                 "non_hashable_values",
                 "no_dict",
             ],
-            input_data_list=cast(
-                "Sequence[Mapping[str, t.Tests.NormalizedValue]]",
-                input_data_list_hash,
-            ),
+            input_data_list=input_data_list_hash,
             expected_results=[
                 _as_test_payload(int),
                 _as_test_payload(int),
@@ -442,7 +422,7 @@ def create_validate_value_object_immutable_cases() -> Sequence[
                 "no_setattr",
             ],
             input_data_list=cast(
-                "Sequence[Mapping[str, t.Tests.NormalizedValue]]",
+                "Sequence[Mapping[str, t.Tests.Testobject]]",
                 [
                     {"obj": value_obj},
                     {"obj": mutable_obj},

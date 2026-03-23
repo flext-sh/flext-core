@@ -69,7 +69,7 @@ class TestFlextSettings:
     @pytest.mark.parametrize(
         "config_data",
         ConfigScenarios.INIT_CASES,
-        ids=lambda d: str(u.get(d, "app_name", default="default")),
+        ids=lambda d: str(d.get("app_name", "default")),
     )
     def test_config_initialization(self, config_data: Mapping[str, str | bool]) -> None:
         """Test config initialization with various values."""
@@ -273,9 +273,7 @@ class TestFlextSettings:
     @pytest.mark.parametrize(
         "debug_trace",
         ConfigScenarios.DEBUG_TRACE_CASES,
-        ids=lambda d: (
-            f"debug_{u.get(d, 'debug')}_trace_{u.get(d, 'trace', default=False)}"
-        ),
+        ids=lambda d: f"debug_{d.get('debug')}_trace_{d.get('trace', False)}",
     )
     def test_config_debug_enabled(self, debug_trace: Mapping[str, bool]) -> None:
         """Test debug enabled checking using direct fields."""

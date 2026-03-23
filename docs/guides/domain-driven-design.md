@@ -12,7 +12,7 @@
 - [Real-World Examples](#real-world-examples)
   - [Example 1: E-Commerce Order System](#example-1-e-commerce-order-system)
   - [Example 2: User Authentication System](#example-2-user-authentication-system)
-- [Integration with r](#integration-with-flextresult)
+- [Integration with r](#integration-with-r)
 - [CQRS: Command Query Responsibility Segregation](#cqrs-command-query-responsibility-segregation)
   - [Commands: Write Operations](#commands-write-operations)
   - [Queries: Read Operations](#queries-read-operations)

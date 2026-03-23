@@ -1176,7 +1176,7 @@ class TestUtilitiesCollectionCoverage:
         """Test deep merge."""
         base_data: Mapping[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
         other_data: Mapping[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
-        result = u.merge(base_data, other_data)
+        result = u.merge_mappings(base_data, other_data)
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
@@ -1186,7 +1186,7 @@ class TestUtilitiesCollectionCoverage:
         """Test override merge."""
         base_data: Mapping[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
         other_data: Mapping[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
-        result = u.merge(base_data, other_data, strategy="override")
+        result = u.merge_mappings(base_data, other_data, strategy="override")
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)

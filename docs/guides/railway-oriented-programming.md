@@ -2,7 +2,7 @@
 
 <!-- TOC START -->
 - [Core Concept: The Railway Metaphor](#core-concept-the-railway-metaphor)
-- [r\[T\]: The Railway Implementation](#flextresultt-the-railway-implementation)
+- [r\[T\]: The Railway Implementation](#rt-the-railway-implementation)
   - [Creating Results](#creating-results)
   - [Checking Result State](#checking-result-state)
   - [Accessing Success Values](#accessing-success-values)
@@ -32,7 +32,7 @@
   - [Railway Pattern with Decorator Error Handling](#railway-pattern-with-decorator-error-handling)
   - [See Also](#see-also)
 - [Best Practices](#best-practices)
-  - [1. Always Return r from Operations](#1-always-return-flextresult-from-operations)
+  - [1. Always Return r from Operations](#1-always-return-r-from-operations)
   - [2. Include Error Context](#2-include-error-context)
   - [3. Use Monadic Composition](#3-use-monadic-composition)
   - [4. Preserve Success Values](#4-preserve-success-values)

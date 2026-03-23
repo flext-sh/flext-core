@@ -326,8 +326,17 @@ scan: ## Run all security checks
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
 		gosec ./...; \
 		exit 0; \
-	fi
-	$(Q)$(POETRY) run bandit -r $(SRC_DIR) -q -ll
+	fi; \
+	project_key="$(PROJECT_NAME)"; \
+	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+		project_key="."; \
+	fi; \
+	FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(POETRY) run python -m flext_infra check run \
+		--workspace "$(WORKSPACE_ROOT)" \
+		--gates "security" \
+		--reports-dir "$(CURDIR)/.reports/scan" \
+		--project "$$project_key"; \
+	exit $$?
 
 fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \

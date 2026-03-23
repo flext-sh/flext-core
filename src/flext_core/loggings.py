@@ -202,7 +202,7 @@ class FlextLogger(u, p.Logger):
             incoming_context_obj: Mapping[str, t.NormalizedValue] = dict(
                 incoming_context.items(),
             )
-            merge_result = u.merge(
+            merge_result = u.merge_mappings(
                 incoming_context_obj,
                 current_context_obj,
                 strategy="deep",

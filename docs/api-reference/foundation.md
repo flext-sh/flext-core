@@ -9,7 +9,7 @@
 - [Layer 0.5: Runtime Bridge](#layer-05-runtime-bridge)
   - [FlextRuntime — External Library Integration](#flextruntime-external-library-integration)
 - [Layer 1: Foundation (Core Primitives)](#layer-1-foundation-core-primitives)
-  - [r[T] — Railway-Oriented Programming {#flextresult}](#flextresultt-railway-oriented-programming-flextresult)
+  - [r[T] — Railway-Oriented Programming {#flextresult}](#rt-railway-oriented-programming-flextresult)
   - [FlextContainer — Dependency Injection {#flextcontainer}](#flextcontainer-dependency-injection-flextcontainer)
   - [FlextExceptions — Exception Hierarchy](#flextexceptions-exception-hierarchy)
 - [Short Alias Reference](#short-alias-reference)

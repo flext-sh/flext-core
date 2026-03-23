@@ -209,7 +209,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
             ),
         )
-        op_count_raw = u.get(stats, "operation_count", default=0)
+        op_count_raw = stats.get("operation_count", 0)
         stats["operation_count"] = (
             int(op_count_raw) if isinstance(op_count_raw, (int, float, str)) else 0
         ) + 1
@@ -224,8 +224,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 try:
                     yield metrics_map
                     if "duration_ms" in metrics_map:
-                        total_dur_raw = u.get(stats, "total_duration_ms", default=0.0)
-                        dur_ms_raw = u.get(metrics_map, "duration_ms", default=0.0)
+                        total_dur_raw = stats.get("total_duration_ms", 0.0)
+                        dur_ms_raw = metrics_map.get("duration_ms", 0.0)
                         total_dur = (
                             float(total_dur_raw)
                             if isinstance(total_dur_raw, (int, float, str))
@@ -250,14 +250,14 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                             "Tracked operation raised expected exception",
                             exc_info=exc,
                         )
-                    err_raw = u.get(stats, "error_count", default=0)
+                    err_raw = stats.get("error_count", 0)
                     stats["error_count"] = (
                         int(err_raw) if isinstance(err_raw, (int, float, str)) else 0
                     ) + 1
                     raise
                 finally:
-                    op_raw = u.get(stats, "operation_count", default=1)
-                    err_raw2 = u.get(stats, "error_count", default=0)
+                    op_raw = stats.get("operation_count", 1)
+                    err_raw2 = stats.get("error_count", 0)
                     op_count = (
                         int(op_raw) if isinstance(op_raw, (int, float, str)) else 1
                     )
@@ -266,7 +266,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                     )
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
-                        total_raw = u.get(stats, "total_duration_ms", default=0.0)
+                        total_raw = stats.get("total_duration_ms", 0.0)
                         total_dur_final = (
                             float(total_raw)
                             if isinstance(total_raw, (int, float, str))

@@ -163,7 +163,9 @@ class FlextUtilitiesCollection:
             and isinstance(current_val, dict)
             and isinstance(value, dict)
         ):
-            merged = FlextUtilitiesCollection.merge(value, current_val, strategy="deep")
+            merged = FlextUtilitiesCollection.merge_mappings(
+                value, current_val, strategy="deep"
+            )
             if merged.is_success:
                 result[key] = merged.value
                 return r[bool].ok(value=True)
@@ -934,7 +936,7 @@ class FlextUtilitiesCollection:
         return frozenset(mapper(item) for item in items)
 
     @staticmethod
-    def merge(
+    def merge_mappings(
         other: Mapping[str, t.NormalizedValue],
         base: Mapping[str, t.NormalizedValue],
         *,

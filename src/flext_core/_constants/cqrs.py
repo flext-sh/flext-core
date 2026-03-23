@@ -37,8 +37,8 @@ class FlextConstantsCqrs:
     HANDLER_CONFIG_INVALID: Final[str] = "HANDLER_CONFIG_INVALID"
 
     @unique
-    class Status(StrEnum):
-        """CQRS status enumeration."""
+    class DispatcherStatus(StrEnum):
+        """CQRS dispatcher status enumeration."""
 
         STOPPED = "stopped"
 
