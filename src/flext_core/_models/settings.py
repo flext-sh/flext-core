@@ -888,7 +888,7 @@ class FlextModelsConfig:
         """Configuration for TimeoutError (Pydantic v2)."""
 
         timeout_seconds: Annotated[
-            float | None,
+            t.PositiveTimeout | None,
             Field(default=None, description="Timeout in seconds that was exceeded"),
         ] = None
         operation: Annotated[

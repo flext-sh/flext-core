@@ -31,6 +31,7 @@ import pytest
 import structlog
 from dependency_injector import containers, providers
 from flext_tests import t, tm
+from hypothesis import given, strategies as st
 
 from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, p, s, x
 
@@ -1181,6 +1182,28 @@ class TestFlextRuntime:
                 eq=True,
             )
             tm.that(FlextContext.Correlation.get_correlation_id() is None, eq=True)
+
+    @given(st.text())
+    def test_hypothesis_identifier_guard_returns_bool(self, value: str) -> None:
+        """Property: is_valid_identifier always returns bool."""
+        result = FlextRuntime.is_valid_identifier(value)
+        tm.that(result, is_=bool)
+
+    @given(
+        st.one_of(
+            st.integers(),
+            st.text(),
+            st.floats(allow_nan=False, allow_infinity=False),
+            st.booleans(),
+        )
+    )
+    def test_hypothesis_type_guards_return_bool(
+        self, value: float | str | bool
+    ) -> None:
+        """Property: type guards always return bool for any input."""
+        tm.that(FlextRuntime.is_dict_like(value), is_=bool)
+        tm.that(FlextRuntime.is_list_like(value), is_=bool)
+        tm.that(FlextRuntime.is_valid_json(value), is_=bool)
 
     __all__ = ["TestFlextRuntime"]
 

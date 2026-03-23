@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeIs
+from typing import TypeGuard, TypeIs, cast
 
 from pydantic import BaseModel
 
@@ -286,7 +286,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return bool(isinstance(value, str) and bool(value.strip()))
             case "dict_non_empty":
                 if isinstance(value, dict):
-                    return len(value) > 0
+                    return len(cast("dict[str, object]", value)) > 0
                 if isinstance(value, t.ConfigMap):
                     return len(value.root) > 0
                 return False
@@ -294,7 +294,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                 if isinstance(value, (list, tuple)) and not isinstance(
                     value, (str, bytes)
                 ):
-                    return len(value) > 0
+                    return len(cast("Sequence[object]", value)) > 0
                 return False
             case _:
                 return False

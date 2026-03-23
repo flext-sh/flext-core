@@ -453,7 +453,7 @@ class UtilitiesMapperFullCoverageNamespace:
             "a",
         )
         tm.fail(res_exception)
-        tm.that(str(res_exception.error).lower(), has="not found")
+        tm.that(str(res_exception.error).lower(), has="extract failed")
         accessor = mapper.prop("name")
         tm.that(
             accessor(
@@ -753,9 +753,14 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
-        constructed_none = mapper.construct_spec({"x": {"field": "a", "default": 9}}, None)
+        constructed_none = mapper.construct_spec(
+            {"x": {"field": "a", "default": 9}}, None
+        )
         tm.that(constructed_none["x"], eq=9)
-        source: MutableMapping[str, t.NormalizedValue | BaseModel] = {"name": "alice", "n": 3}
+        source: MutableMapping[str, t.NormalizedValue | BaseModel] = {
+            "name": "alice",
+            "n": 3,
+        }
         spec = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {
@@ -1031,7 +1036,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.as_("1", int), eq=1)
         float_value = mapper.as_("1.5", float)
         tm.that(float_value, is_=float)
-        tm.that(abs(cast(float, float_value) - 1.5), lt=1e-09)
+        tm.that(abs(cast("float", float_value) - 1.5), lt=1e-09)
         tm.that(mapper.as_("true", bool), eq=True)
         tm.that(mapper.as_("maybe", bool, default=False), eq=False)
         tm.that(mapper.as_(None, int, default=3), eq=3)
@@ -1112,7 +1117,9 @@ class UtilitiesMapperFullCoverageNamespace:
             mapper.construct_spec({"x": {"value": 1}}, t.ConfigMap(root={"x": 0})),
             eq={"x": 1},
         )
-        tm.that(mapper.construct_spec({"x": "a"}, t.ConfigMap(root={"a": 2})), eq={"x": 2})
+        tm.that(
+            mapper.construct_spec({"x": "a"}, t.ConfigMap(root={"a": 2})), eq={"x": 2}
+        )
         tm.that(
             mapper.construct_spec(
                 {"x": {"field": "a", "ops": "noop"}},

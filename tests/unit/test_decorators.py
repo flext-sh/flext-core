@@ -9,6 +9,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 from flext_tests import u
+from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextDecorators, FlextExceptions, FlextLogger, r
@@ -392,6 +393,20 @@ class TestFlextDecorators:
         assert isinstance(result, r)
         _ = u.Tests.Result.assert_success(result)
         assert attempts == 2
+
+    @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
+    @settings(max_examples=50)
+    def test_hypothesis_railway_division_always_returns_result(
+        self, a: int, b: int
+    ) -> None:
+        """Property: railway-wrapped division always returns a result."""
+
+        @FlextDecorators.railway(error_code="DIV")
+        def divide(x: int, y: int) -> float:
+            return x / y
+
+        result = divide(a, b)
+        assert result.is_success or result.is_failure
 
 
 __all__ = ["TestFlextDecorators"]

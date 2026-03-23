@@ -1,4 +1,4 @@
-"""Real FlextSettings API tests using flext_tests infrastructure."""
+"""FlextSettings API tests — merged from test_automated_settings.py."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from flext_core import FlextSettings
 from tests import c, t
 
 
-class TestAutomatedFlextSettings:
+class TestFlextSettingsCoverage:
     @pytest.fixture(autouse=True)
     def _reset_settings_state(self) -> Generator[None]:
         FlextSettings.reset_for_testing()
@@ -99,7 +99,7 @@ class TestAutomatedFlextSettings:
         pair=st.one_of(
             st.tuples(st.just("debug"), st.booleans()),
             st.tuples(st.just("trace"), st.booleans()),
-            st.tuples(st.just("max_workers"), st.integers(min_value=1, max_value=100)),
+            st.tuples(st.just("max_workers"), st.integers(min_value=1, max_value=256)),
             st.tuples(
                 st.just("log_level"),
                 st.sampled_from([
@@ -117,6 +117,7 @@ class TestAutomatedFlextSettings:
         self,
         pair: tuple[str, bool | int | str | c.LogLevel],
     ) -> None:
+        """Property: apply_override always returns bool."""
         key, value = pair
         FlextSettings.reset_for_testing()
         settings_obj = FlextSettings.get_global()
@@ -138,3 +139,6 @@ class TestAutomatedFlextSettings:
             tm.that(settings_obj.apply_override(key, value), eq=True)
             _ = settings_obj.effective_log_level
         tm.that(perf_counter() - start, gte=0.0)
+
+
+__all__ = ["TestFlextSettingsCoverage"]

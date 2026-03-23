@@ -24,7 +24,8 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, 
 from typing import ClassVar, cast
 
 import pytest
-from flext_tests import t, u
+from flext_tests import t, tm, u
+from hypothesis import given, strategies as st
 
 from flext_core import FlextSettings, r
 from tests import c
@@ -411,6 +412,28 @@ class Testu(TextUtilityContract):
         value = response.value
         assert value["data"] == "fallback-data"
         assert value["pagination"] == "fallback-pagination"
+
+    @given(
+        st.one_of(
+            st.none(),
+            st.text(),
+            st.lists(st.integers()),
+            st.dictionaries(st.text(), st.integers()),
+        )
+    )
+    def test_hypothesis_empty_returns_bool(
+        self, value: t.NormalizedValue | None
+    ) -> None:
+        """Property: u.empty always returns bool."""
+        result = u.empty(value)
+        tm.that(result, is_=bool)
+
+    @given(st.text())
+    def test_hypothesis_generate_always_non_empty(self, _value: str) -> None:
+        """Property: u.generate always returns non-empty string."""
+        generated = u.generate("ulid")
+        tm.that(generated, is_=str, none=False)
+        tm.that(len(generated), gt=0)
 
 
 __all__ = ["Testu"]

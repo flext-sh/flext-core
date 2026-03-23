@@ -161,7 +161,7 @@ class TestModule:
             msg = "merge boom"
             raise RuntimeError(msg)
 
-        monkeypatch.setattr(loggings_module.u, "merge", _raise_merge)
+        monkeypatch.setattr(loggings_module.u, "merge_mappings", _raise_merge)
         failed_bind = FlextLogger.bind_context("request", x="y")
         tm.fail(failed_bind)
         FlextLogger._scoped_contexts["request"] = {"k": "v"}

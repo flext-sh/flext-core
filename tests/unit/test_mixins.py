@@ -26,10 +26,11 @@ from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
-from flext_tests import u
+from flext_tests import tm, u
+from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, p, t, x
+from flext_core import FlextContext, FlextMixins, p, r, t, x
 
 
 class TestFlextMixinsNestedClasses:
@@ -239,4 +240,57 @@ class TestFlextMixinsNestedClasses:
         service._clear_operation_context()
 
 
-__all__ = ["TestFlextMixinsNestedClasses"]
+class TestFlextMixinsCQRS:
+    """Tests for CQRS mixin components."""
+
+    def test_cqrs_metrics_tracker(self) -> None:
+        """Test MetricsTracker record and retrieval."""
+        tracker = FlextMixins.CQRS.MetricsTracker()
+        tm.ok(tracker.record_metric("latency_ms", 15), eq=True)
+        metrics = tm.ok(tracker.get_metrics())
+        tm.that(metrics.root, kv=("latency_ms", 15))
+
+    def test_cqrs_context_stack_push_pop(self) -> None:
+        """Test ContextStack push and pop operations."""
+        stack = FlextMixins.CQRS.ContextStack()
+        tm.ok(
+            stack.push_context({"handler_name": "h1", "handler_mode": "command"}),
+            eq=True,
+        )
+        popped = tm.ok(stack.pop_context())
+        tm.that(popped, kv=("handler_name", "h1"))
+
+    def test_validate_with_result(self) -> None:
+        """Test Validation.validate_with_result for success and failure."""
+
+        def not_empty(value: str) -> r[bool]:
+            if value.strip() == "":
+                return r[bool].fail("empty")
+            return r[bool].ok(value=True)
+
+        result = FlextMixins.Validation.validate_with_result("valid", [not_empty])
+        tm.ok(result, eq="valid")
+        tm.fail(
+            FlextMixins.Validation.validate_with_result("", [not_empty]), has="empty"
+        )
+
+    @given(
+        data=st.text(
+            alphabet=st.characters(min_codepoint=97, max_codepoint=122),
+            min_size=1,
+            max_size=30,
+        )
+    )
+    @settings(max_examples=40)
+    def test_hypothesis_validation_roundtrip(self, data: str) -> None:
+        """Property: non-empty text always passes has_text validation."""
+
+        def has_text(value: str) -> r[bool]:
+            if value.strip() == "":
+                return r[bool].fail("blank")
+            return r[bool].ok(value=True)
+
+        tm.ok(FlextMixins.Validation.validate_with_result(data, [has_text]), eq=data)
+
+
+__all__ = ["TestFlextMixinsCQRS", "TestFlextMixinsNestedClasses"]

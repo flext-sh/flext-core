@@ -26,6 +26,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 from flext_tests import t, tm, u
+from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
@@ -729,6 +730,50 @@ class Testr:
             on_failure=lambda e: {"status": 400, "error": e},
         )
         tm.that(response, eq={"status": 200, "data": "hello"})
+
+    @given(x=st.integers(min_value=-1000, max_value=1000))
+    @settings(max_examples=50)
+    def test_identity_law(self, x: int) -> None:
+        """Functor identity: map(id) == id."""
+        left = r[int].ok(x).map(lambda v: v)
+        right = r[int].ok(x)
+        tm.ok(left, eq=right.value)
+        tm.that(left.is_success, eq=right.is_success)
+
+    @given(x=st.integers(min_value=-1000, max_value=1000))
+    @settings(max_examples=50)
+    def test_composition_law(self, x: int) -> None:
+        """Functor composition: map(f).map(g) == map(g . f)."""
+
+        def f(v: int) -> int:
+            return v + 3
+
+        def g(v: int) -> int:
+            return v * 2
+
+        left = r[int].ok(x).map(f).map(g)
+        right = r[int].ok(x).map(lambda v: g(f(v)))
+        tm.ok(left, eq=right.value)
+
+    @given(x=st.integers(min_value=-1000, max_value=1000))
+    @settings(max_examples=50)
+    def test_left_unit_law(self, x: int) -> None:
+        """Monad left unit: ok(x).flat_map(f) == f(x)."""
+
+        def f(v: int) -> r[int]:
+            return r[int].ok(v * 4)
+
+        left = r[int].ok(x).flat_map(f)
+        right = f(x)
+        tm.ok(left, eq=right.value)
+
+    @given(err=st.text(min_size=1, max_size=50))
+    @settings(max_examples=50)
+    def test_error_propagation_property(self, err: str) -> None:
+        """Errors propagate through map unchanged."""
+        propagated = r[int].fail(err).map(lambda v: v + 1)
+        tm.fail(propagated, has=err)
+        tm.that(propagated.is_failure, eq=True)
 
     __all__ = ["Testr"]
 

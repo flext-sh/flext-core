@@ -45,9 +45,7 @@ class FlextDispatcher:
             ]
         ] = []
         self._event_subscribers: t.RegistryDict[
-            MutableSequence[
-                tuple[t.HandlerProtocolVariant, DispatcherResolvedCallable]
-            ]
+            MutableSequence[tuple[t.HandlerProtocolVariant, DispatcherResolvedCallable]]
         ] = {}
 
     def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:

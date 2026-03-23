@@ -38,6 +38,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     ClassVar,
+    TypeGuard,
     TypeIs,
     override,
 )

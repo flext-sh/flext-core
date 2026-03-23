@@ -5,7 +5,8 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import t, u
+from flext_tests import t, tm, u
+from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRegistry, h, r
@@ -419,3 +420,19 @@ class TestFlextRegistry:
     ) -> None:
         registry = u.Tests.RegistryHelpers.create_test_registry()
         assert registry._get_status(status) == expected
+
+    @given(
+        name=st.text(
+            alphabet=st.characters(min_codepoint=97, max_codepoint=122),
+            min_size=1,
+            max_size=20,
+        )
+    )
+    @settings(max_examples=40)
+    def test_hypothesis_plugin_roundtrip(self, name: str) -> None:
+        """Property: register then get plugin roundtrips."""
+        registry = FlextRegistry.create()
+        category = "validators"
+        plugin = "plugin_impl"
+        tm.ok(registry.register_plugin(category, name, plugin), eq=True)
+        tm.ok(registry.get_plugin(category, name), none=False)

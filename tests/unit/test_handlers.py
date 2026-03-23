@@ -5,10 +5,11 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import t, u
+from flext_tests import t, tm, u
+from hypothesis import given, strategies as st
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextExceptions, h, r, x
+from flext_core import FlextExceptions, FlextHandlers, h, r, x
 from tests import c, m
 
 from ..test_utils import assertion_helpers
@@ -550,6 +551,16 @@ class TestFlextHandlers:
         msg = SlotsMessage(value="test", number=42)
         result = handler.validate_message(msg)
         _ = u.Tests.Result.assert_success(result)
+
+    @given(st.text(min_size=1))
+    def test_create_from_callable_hypothesis(self, handler_name: str) -> None:
+        """Property: create_from_callable works with any non-empty name."""
+        handler = FlextHandlers.create_from_callable(
+            handler_callable=lambda value: str(value),
+            handler_name=handler_name,
+        )
+        tm.that(handler.handler_name, eq=handler_name)
+        tm.ok(handler.execute("x"), eq="x")
 
 
 __all__ = ["TestFlextHandlers"]

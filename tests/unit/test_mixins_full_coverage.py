@@ -166,7 +166,7 @@ class TestMixinsFullCoverage:
     ) -> None:
         _ = monkeypatch
         tm.that(isinstance(c.SCOPE_OPERATION, str), eq=True)
-        tm.that(hasattr(u, "merge"), eq=True)
+        tm.that(hasattr(u, "merge_mappings"), eq=True)
         tm.fail(x.fail("error"))
         conf = t.ConfigMap(root={"a": "b"})
         tm.that(x.normalize_to_container(conf) is conf, eq=True)

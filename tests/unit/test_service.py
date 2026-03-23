@@ -26,6 +26,7 @@ from typing import Annotated, ClassVar, cast, override
 
 import pytest
 from flext_tests import u
+from hypothesis import given, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
@@ -155,7 +156,9 @@ class TestsCore:
                 enabled_val = kwargs_raw.get("enabled", True)
                 return TestsCore.ComplexService(
                     name=str(name_val),
-                    amount=int(amount_val) if isinstance(amount_val, (int, float)) else 0,
+                    amount=int(amount_val)
+                    if isinstance(amount_val, (int, float))
+                    else 0,
                     enabled=bool(enabled_val),
                 )
             if scenario.scenario_type == TestsCore.ServiceScenarioType.FAILING:
@@ -293,6 +296,22 @@ class TestsCore:
         _ = u.Tests.Result.assert_success(validation_result)
         business_result = service.validate_business_rules()
         _ = u.Tests.Result.assert_failure(business_result)
+
+    @given(st.text(min_size=1))
+    def test_execute_hypothesis(self, value: str) -> None:
+        """Property: execute always returns success or failure."""
+
+        class _DynamicService(s[str]):
+            __test__ = False
+            value: str
+
+            @override
+            def execute(self) -> r[str]:
+                return r[str].ok(self.value)
+
+        service = _DynamicService(value=value)
+        result = service.execute()
+        assert result.is_success or result.is_failure
 
 
 class TestServiceInternals:

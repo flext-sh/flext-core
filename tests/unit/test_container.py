@@ -27,9 +27,10 @@ from typing import Annotated, Any, ClassVar, cast
 
 import pytest
 from flext_tests import c, t, tm, u
+from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, p, r
+from flext_core import FlextContainer, FlextContext, p, r
 
 ServiceScenario: Any = cast("Any", None)
 TypedRetrievalScenario: Any = cast("Any", None)
@@ -557,6 +558,39 @@ class TestFlextContainer:
         _ = container.register("failing", failing_factory, kind="factory")
         result: r[t.RegisterableService] = container.get("failing")
         _ = u.Tests.Result.assert_failure(result)
+
+    def test_scoped_container_with_context(
+        self, clean_container: FlextContainer
+    ) -> None:
+        """Test scoped container creation with FlextContext."""
+        scoped = clean_container.scoped(
+            context=FlextContext.create(),
+            subproject="unit",
+            services={"scoped_service": "scoped-value"},
+        )
+        tm.that(scoped.has_service("scoped_service"), eq=True)
+        tm.ok(scoped.get("scoped_service"), eq="scoped-value")
+        tm.ok(scoped.context.get("subproject"), eq="unit")
+
+    @given(
+        name=st.text(
+            min_size=1,
+            max_size=30,
+            alphabet=st.characters(min_codepoint=48, max_codepoint=122),
+        )
+    )
+    @settings(max_examples=50)
+    def test_register_get_roundtrip_property(self, name: str) -> None:
+        """Property: register then get roundtrips for any valid name."""
+        container = FlextContainer.create()
+        sanitized = "".join(ch for ch in name if ch.isalnum()) or "svc"
+
+        def dynamic_factory() -> str:
+            return sanitized
+
+        _ = container.register(sanitized, dynamic_factory, kind="factory")
+        tm.ok(container.get(sanitized), eq=sanitized)
+        FlextContainer.reset_for_testing()
 
     __all__ = ["TestFlextContainer"]
 

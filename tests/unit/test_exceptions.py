@@ -26,6 +26,7 @@ from typing import cast, override
 
 import pytest
 from flext_tests import t, tm, u
+from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextConstants, FlextRuntime, e
 from tests import m
@@ -984,4 +985,47 @@ class Teste:
         tm.that(attrs.get("source"), eq="protocol")
 
 
-__all__ = ["Teste"]
+class TestExceptionsHypothesis:
+    """Property-based tests for exception types."""
+
+    @given(message=st.text(min_size=1, max_size=100))
+    @settings(max_examples=50)
+    def test_base_error_to_dict_always_contains_message(self, message: str) -> None:
+        """Property: to_dict always contains message key."""
+        payload = e.BaseError(message).to_dict()
+        tm.that(payload, keys=["message"])
+        tm.that(payload["message"], eq=message)
+
+    @given(
+        message=st.text(min_size=1, max_size=80),
+        cid=st.text(min_size=1, max_size=24),
+    )
+    @settings(max_examples=50)
+    def test_all_exception_types_with_arbitrary_inputs(
+        self,
+        message: str,
+        cid: str,
+    ) -> None:
+        """Property: all exception types preserve message and correlation_id."""
+        errors = [
+            e.BaseError(message, correlation_id=cid),
+            e.ValidationError(message, correlation_id=cid),
+            e.ConfigurationError(message, correlation_id=cid),
+            e.ConnectionError(message, correlation_id=cid),
+            e.TimeoutError(message, correlation_id=cid),
+            e.AuthenticationError(message, correlation_id=cid),
+            e.AuthorizationError(message, correlation_id=cid),
+            e.NotFoundError(message, correlation_id=cid),
+            e.ConflictError(message, correlation_id=cid),
+            e.RateLimitError(message, correlation_id=cid),
+            e.CircuitBreakerError(message, correlation_id=cid),
+            e.TypeError(message, correlation_id=cid),
+            e.OperationError(message, correlation_id=cid),
+        ]
+        for err in errors:
+            payload = err.to_dict()
+            tm.that(payload["message"], eq=message)
+            tm.that(payload["correlation_id"], eq=cid)
+
+
+__all__ = ["TestExceptionsHypothesis", "Teste"]

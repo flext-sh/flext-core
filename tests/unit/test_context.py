@@ -29,6 +29,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 from flext_tests import tm, u
+from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, p, t
@@ -653,6 +654,31 @@ class TestFlextContext:
         context.set("key1", "value1").value
         context.clear()
         context.clear()
+
+    @given(
+        key=st.text(
+            min_size=1,
+            max_size=30,
+            alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd")),
+        ),
+        value=st.one_of(
+            st.text(
+                min_size=1,
+                max_size=30,
+                alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd")),
+            ),
+            st.integers(min_value=0, max_value=1000),
+            st.booleans(),
+        ),
+    )
+    @settings(max_examples=50)
+    def test_set_get_roundtrip_property(
+        self, key: str, value: str | int | bool
+    ) -> None:
+        """Property: set then get returns the same value."""
+        ctx = FlextContext.create()
+        tm.ok(ctx.set(key, value), eq=True)
+        tm.ok(ctx.get(key), eq=value)
 
     __all__ = ["TestFlextContext"]
 

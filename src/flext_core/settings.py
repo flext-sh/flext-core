@@ -103,35 +103,35 @@ class FlextSettings(BaseSettings, u):
         ),
     ]
     circuit_breaker_threshold: Annotated[
-        int,
+        t.PositiveInt,
         Field(
             default=c.DEFAULT_FAILURE_THRESHOLD,
             description="Circuit breaker threshold",
         ),
     ]
     rate_limit_max_requests: Annotated[
-        int,
+        t.PositiveInt,
         Field(
             default=c.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
             description="Rate limit max requests",
         ),
     ]
     rate_limit_window_seconds: Annotated[
-        int,
+        t.PositiveInt,
         Field(
             default=c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
             description="Rate limit window",
         ),
     ]
     retry_delay: Annotated[
-        int,
+        t.PositiveInt,
         Field(
             default=c.DEFAULT_RETRY_DELAY_SECONDS,
             description="Retry delay",
         ),
     ]
     max_retry_attempts: Annotated[
-        int,
+        t.RetryCount,
         Field(
             default=c.MAX_RETRY_ATTEMPTS,
             description="Max retry attempts",
@@ -156,7 +156,7 @@ class FlextSettings(BaseSettings, u):
         ),
     ]
     dispatcher_timeout_seconds: Annotated[
-        float,
+        t.PositiveTimeout,
         Field(
             default=c.DEFAULT_TIMEOUT_SECONDS,
             description="Dispatcher timeout",
@@ -170,19 +170,19 @@ class FlextSettings(BaseSettings, u):
         ),
     ]
     executor_workers: Annotated[
-        int,
+        t.WorkerCount,
         Field(default=c.DEFAULT_WORKERS, description="Executor workers"),
     ]
     timeout_seconds: Annotated[
-        float,
+        t.PositiveTimeout,
         Field(default=c.DEFAULT_TIMEOUT, description="Default timeout"),
     ]
     max_workers: Annotated[
-        int,
+        t.WorkerCount,
         Field(default=c.DEFAULT_MAX_WORKERS, description="Max workers"),
     ]
     max_batch_size: Annotated[
-        int,
+        t.BatchSize,
         Field(default=c.MAX_BATCH_SIZE, description="Max batch size"),
     ]
     api_key: Annotated[str | None, Field(default=None, description="API key")]
