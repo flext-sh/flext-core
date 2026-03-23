@@ -11,9 +11,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from . import contracts as contracts, flext_tests as flext_tests
-    from .conftest_infra import (
+    from tests.unit import contracts, flext_tests
+    from tests.unit.conftest_infra import (
         infra_git,
         infra_git_repo,
         infra_io,
@@ -31,41 +30,48 @@ if TYPE_CHECKING:
         infra_workflow_linter,
         infra_workflow_syncer,
     )
-    from .contracts.text_contract import TextUtilityContract
-    from .flext_tests.test_docker import TestDocker
-    from .flext_tests.test_domains import TestFlextTestsDomains
-    from .flext_tests.test_files import TestFlextTestsFiles
-    from .flext_tests.test_matchers import TestFlextTestsMatchers
-    from .flext_tests.test_utilities import TestUtilities
-    from .protocols import FlextProtocols, p
-    from .test_args_coverage_100 import TestFlextUtilitiesArgs
-    from .test_automated_architecture import TestAutomatedArchitecture
-    from .test_automated_container import TestAutomatedFlextContainer
-    from .test_automated_context import TestAutomatedFlextContext
-    from .test_automated_decorators import TestAutomatedFlextDecorators
-    from .test_automated_dispatcher import TestAutomatedFlextDispatcher
-    from .test_automated_exceptions import EXCEPTION_CLASSES, TestAutomatedExceptions
-    from .test_automated_handlers import TestAutomatedFlextHandlers
-    from .test_automated_loggings import TestAutomatedFlextLogger
-    from .test_automated_mixins import TestAutomatedFlextMixins
-    from .test_automated_registry import TestAutomatedFlextRegistry
-    from .test_automated_result import TestAutomatedResult
-    from .test_automated_runtime import TestAutomatedFlextRuntime
-    from .test_automated_service import TestAutomatedFlextService
-    from .test_automated_settings import TestAutomatedFlextSettings
-    from .test_automated_utilities import TestAutomatedFlextUtilities
-    from .test_collection_utilities_coverage_100 import TestCollectionUtilitiesCoverage
-    from .test_collections_coverage_100 import TestFlextModelsCollectionsCoverage100
-    from .test_config import TestFlextSettings
-    from .test_constants import TestConstants
-    from .test_constants_full_coverage import (
+    from tests.unit.contracts.text_contract import TextUtilityContract
+    from tests.unit.flext_tests.test_docker import TestDocker
+    from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
+    from tests.unit.flext_tests.test_files import TestFlextTestsFiles
+    from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
+    from tests.unit.flext_tests.test_utilities import TestUtilities
+    from tests.unit.protocols import FlextProtocols, p
+    from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
+    from tests.unit.test_automated_architecture import TestAutomatedArchitecture
+    from tests.unit.test_automated_container import TestAutomatedFlextContainer
+    from tests.unit.test_automated_context import TestAutomatedFlextContext
+    from tests.unit.test_automated_decorators import TestAutomatedFlextDecorators
+    from tests.unit.test_automated_dispatcher import TestAutomatedFlextDispatcher
+    from tests.unit.test_automated_exceptions import (
+        EXCEPTION_CLASSES,
+        TestAutomatedExceptions,
+    )
+    from tests.unit.test_automated_handlers import TestAutomatedFlextHandlers
+    from tests.unit.test_automated_loggings import TestAutomatedFlextLogger
+    from tests.unit.test_automated_mixins import TestAutomatedFlextMixins
+    from tests.unit.test_automated_registry import TestAutomatedFlextRegistry
+    from tests.unit.test_automated_result import TestAutomatedResult
+    from tests.unit.test_automated_runtime import TestAutomatedFlextRuntime
+    from tests.unit.test_automated_service import TestAutomatedFlextService
+    from tests.unit.test_automated_settings import TestAutomatedFlextSettings
+    from tests.unit.test_automated_utilities import TestAutomatedFlextUtilities
+    from tests.unit.test_collection_utilities_coverage_100 import (
+        TestCollectionUtilitiesCoverage,
+    )
+    from tests.unit.test_collections_coverage_100 import (
+        TestFlextModelsCollectionsCoverage100,
+    )
+    from tests.unit.test_config import TestFlextSettings
+    from tests.unit.test_constants import TestConstants
+    from tests.unit.test_constants_full_coverage import (
         test_constants_auto_enum_and_bimapping_paths,
     )
-    from .test_container import TestFlextContainer
-    from .test_container_full_coverage import TestContainerFullCoverage
-    from .test_context import TestFlextContext
-    from .test_context_coverage_100 import TestContext100Coverage
-    from .test_context_full_coverage import (
+    from tests.unit.test_container import TestFlextContainer
+    from tests.unit.test_container_full_coverage import TestContainerFullCoverage
+    from tests.unit.test_context import TestFlextContext
+    from tests.unit.test_context_coverage_100 import TestContext100Coverage
+    from tests.unit.test_context_full_coverage import (
         test_clear_keys_values_items_and_validate_branches,
         test_container_and_service_domain_paths,
         test_create_merges_metadata_dict_branch,
@@ -77,24 +83,24 @@ if TYPE_CHECKING:
         test_set_set_all_get_validation_and_error_paths,
         test_update_statistics_remove_hook_and_clone_false_result,
     )
-    from .test_coverage_76_lines import TestCoverage76Lines
-    from .test_coverage_context import TestCoverageContext
-    from .test_coverage_exceptions import TestCoverageExceptions
-    from .test_coverage_loggings import TestCoverageLoggings
-    from .test_coverage_models import TestCoverageModels
-    from .test_coverage_utilities import Testu
-    from .test_decorators import TestFlextDecorators
-    from .test_decorators_discovery_full_coverage import (
+    from tests.unit.test_coverage_76_lines import TestCoverage76Lines
+    from tests.unit.test_coverage_context import TestCoverageContext
+    from tests.unit.test_coverage_exceptions import TestCoverageExceptions
+    from tests.unit.test_coverage_loggings import TestCoverageLoggings
+    from tests.unit.test_coverage_models import TestCoverageModels
+    from tests.unit.test_coverage_utilities import Testu
+    from tests.unit.test_decorators import TestFlextDecorators
+    from tests.unit.test_decorators_discovery_full_coverage import (
         TestDecoratorsDiscoveryFullCoverage,
     )
-    from .test_decorators_full_coverage import TestDecoratorsFullCoverage
-    from .test_deprecation_warnings import TestDeprecationWarnings
-    from .test_di_incremental import Provide, TestDIIncremental, inject
-    from .test_di_services_access import TestDiServicesAccess
-    from .test_dispatcher_di import TestDispatcherDI
-    from .test_dispatcher_full_coverage import TestDispatcherFullCoverage
-    from .test_dispatcher_minimal import TestDispatcherMinimal
-    from .test_dispatcher_reliability import (
+    from tests.unit.test_decorators_full_coverage import TestDecoratorsFullCoverage
+    from tests.unit.test_deprecation_warnings import TestDeprecationWarnings
+    from tests.unit.test_di_incremental import Provide, TestDIIncremental, inject
+    from tests.unit.test_di_services_access import TestDiServicesAccess
+    from tests.unit.test_dispatcher_di import TestDispatcherDI
+    from tests.unit.test_dispatcher_full_coverage import TestDispatcherFullCoverage
+    from tests.unit.test_dispatcher_minimal import TestDispatcherMinimal
+    from tests.unit.test_dispatcher_reliability import (
         CircuitBreakerManager,
         RateLimiterManager,
         RetryPolicy,
@@ -103,41 +109,48 @@ if TYPE_CHECKING:
         test_rate_limiter_jitter_application,
         test_retry_policy_behavior,
     )
-    from .test_dispatcher_reliability_full_coverage import (
+    from tests.unit.test_dispatcher_reliability_full_coverage import (
         test_dispatcher_reliability_branch_paths,
     )
-    from .test_dispatcher_timeout_coverage_100 import (
+    from tests.unit.test_dispatcher_timeout_coverage_100 import (
         TestDispatcherTimeoutCoverage100,
         TimeoutEnforcer,
     )
-    from .test_entity_coverage import TestEntityCoverageEdgeCases
-    from .test_enum_utilities_coverage_100 import TestEnumUtilitiesCoverage
-    from .test_exceptions import Teste
-    from .test_exceptions_full_coverage import (
+    from tests.unit.test_entity_coverage import TestEntityCoverageEdgeCases
+    from tests.unit.test_enum_utilities_coverage_100 import TestEnumUtilitiesCoverage
+    from tests.unit.test_exceptions import Teste
+    from tests.unit.test_exceptions_full_coverage import (
         test_authentication_error_normalizes_extra_kwargs_into_context,
         test_base_error_normalize_metadata_merges_existing_metadata_model,
         test_exceptions_uncovered_metadata_paths,
         test_merge_metadata_context_paths,
         test_not_found_error_correlation_id_selection_and_extra_kwargs,
     )
-    from .test_final_75_percent_push import TestFinal75PercentPush
-    from .test_handler_decorator_discovery import TestHandlerDecoratorDiscovery
-    from .test_handlers import TestFlextHandlers
-    from .test_handlers_full_coverage import TestHandlersFullCoverage, handlers_module
-    from .test_loggings_error_paths_coverage import TestLoggingsErrorPaths
-    from .test_loggings_full_coverage import TestModule
-    from .test_loggings_strict_returns import TestLoggingsStrictReturns
-    from .test_mixins import TestFlextMixinsNestedClasses
-    from .test_mixins_full_coverage import TestMixinsFullCoverage
-    from .test_models import TestModels
-    from .test_models_79_coverage import TestModels79Coverage
-    from .test_models_base_full_coverage import TestModelsBaseFullCoverage
-    from .test_models_collections_full_coverage import TestModelsCollectionsFullCoverage
-    from .test_models_container import TestFlextModelsContainer
-    from .test_models_container_full_coverage import (
+    from tests.unit.test_final_75_percent_push import TestFinal75PercentPush
+    from tests.unit.test_handler_decorator_discovery import (
+        TestHandlerDecoratorDiscovery,
+    )
+    from tests.unit.test_handlers import TestFlextHandlers
+    from tests.unit.test_handlers_full_coverage import (
+        TestHandlersFullCoverage,
+        handlers_module,
+    )
+    from tests.unit.test_loggings_error_paths_coverage import TestLoggingsErrorPaths
+    from tests.unit.test_loggings_full_coverage import TestModule
+    from tests.unit.test_loggings_strict_returns import TestLoggingsStrictReturns
+    from tests.unit.test_mixins import TestFlextMixinsNestedClasses
+    from tests.unit.test_mixins_full_coverage import TestMixinsFullCoverage
+    from tests.unit.test_models import TestModels
+    from tests.unit.test_models_79_coverage import TestModels79Coverage
+    from tests.unit.test_models_base_full_coverage import TestModelsBaseFullCoverage
+    from tests.unit.test_models_collections_full_coverage import (
+        TestModelsCollectionsFullCoverage,
+    )
+    from tests.unit.test_models_container import TestFlextModelsContainer
+    from tests.unit.test_models_container_full_coverage import (
         test_container_resource_registration_metadata_normalized,
     )
-    from .test_models_context_full_coverage import (
+    from tests.unit.test_models_context_full_coverage import (
         test_context_data_metadata_normalizer_removed,
         test_context_data_normalize_and_json_checks,
         test_context_data_validate_dict_serializable_error_paths,
@@ -153,7 +166,7 @@ if TYPE_CHECKING:
         test_structlog_proxy_context_var_get_set_reset_paths,
         test_to_general_value_dict_removed,
     )
-    from .test_models_cqrs_full_coverage import (
+    from tests.unit.test_models_cqrs_full_coverage import (
         test_command_pagination_limit,
         test_cqrs_query_resolve_deeper_and_int_pagination,
         test_flext_message_type_alias_adapter,
@@ -161,10 +174,10 @@ if TYPE_CHECKING:
         test_query_resolve_pagination_wrapper_and_fallback,
         test_query_validate_pagination_dict_and_default,
     )
-    from .test_models_entity_full_coverage import (
+    from tests.unit.test_models_entity_full_coverage import (
         test_entity_comparable_map_and_bulk_validation_paths,
     )
-    from .test_models_generic_full_coverage import (
+    from tests.unit.test_models_generic_full_coverage import (
         test_canonical_aliases_are_available,
         test_conversion_add_converted_and_error_metadata_append_paths,
         test_conversion_add_skipped_skip_reason_upsert_paths,
@@ -172,19 +185,19 @@ if TYPE_CHECKING:
         test_conversion_start_and_complete_methods,
         test_operation_progress_start_operation_sets_runtime_fields,
     )
-    from .test_models_handler_full_coverage import (
+    from tests.unit.test_models_handler_full_coverage import (
         test_models_handler_branches,
         test_models_handler_uncovered_mode_and_reset_paths,
     )
-    from .test_models_service_full_coverage import (
+    from tests.unit.test_models_service_full_coverage import (
         test_service_request_timeout_post_validator_messages,
         test_service_request_timeout_validator_branches,
     )
-    from .test_models_settings_full_coverage import (
+    from tests.unit.test_models_settings_full_coverage import (
         test_models_settings_branch_paths,
         test_models_settings_context_validator_and_non_standard_status_input,
     )
-    from .test_models_validation_full_coverage import (
+    from tests.unit.test_models_validation_full_coverage import (
         test_basic_imports_work,
         test_ensure_utc_datetime_adds_tzinfo_when_naive,
         test_ensure_utc_datetime_preserves_aware,
@@ -200,16 +213,16 @@ if TYPE_CHECKING:
         test_validate_tags_list_from_string,
         test_validate_tags_list_normalizes,
     )
-    from .test_namespace_validator import TestFlextInfraNamespaceValidator
-    from .test_pagination_coverage_100 import TestPaginationCoverage100
-    from .test_phase2_coverage_final import TestPhase2CoverageFinal
-    from .test_protocols import TestFlextProtocols
-    from .test_refactor_cli_models_workflow import (
+    from tests.unit.test_namespace_validator import TestFlextInfraNamespaceValidator
+    from tests.unit.test_pagination_coverage_100 import TestPaginationCoverage100
+    from tests.unit.test_phase2_coverage_final import TestPhase2CoverageFinal
+    from tests.unit.test_protocols import TestFlextProtocols
+    from tests.unit.test_refactor_cli_models_workflow import (
         test_centralize_pydantic_cli_outputs_extended_metrics,
         test_namespace_enforce_cli_fails_on_manual_protocol_violation,
         test_ultrawork_models_cli_runs_dry_run_copy,
     )
-    from .test_refactor_migrate_to_class_mro import (
+    from tests.unit.test_refactor_migrate_to_class_mro import (
         test_discover_project_roots_without_nested_git_dirs,
         test_migrate_protocols_rewrites_references_with_p_alias,
         test_migrate_to_mro_inlines_alias_constant_into_constants_class,
@@ -220,7 +233,7 @@ if TYPE_CHECKING:
         test_migrate_typings_rewrites_references_with_t_alias,
         test_refactor_utilities_iter_python_files_includes_examples_and_scripts,
     )
-    from .test_refactor_namespace_enforcer import (
+    from tests.unit.test_refactor_namespace_enforcer import (
         test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring,
         test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future,
         test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file,
@@ -233,7 +246,7 @@ if TYPE_CHECKING:
         test_namespace_enforcer_does_not_rewrite_indented_import_aliases,
         test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks,
     )
-    from .test_refactor_policy_family_rules import (
+    from tests.unit.test_refactor_policy_family_rules import (
         test_decorators_family_blocks_dispatcher_target,
         test_dispatcher_family_blocks_models_target,
         test_helper_consolidation_is_prechecked,
@@ -241,25 +254,25 @@ if TYPE_CHECKING:
         test_runtime_family_blocks_non_runtime_target,
         test_utilities_family_allows_utilities_target,
     )
-    from .test_registry import TestFlextRegistry
-    from .test_registry_full_coverage import (
+    from tests.unit.test_registry import TestFlextRegistry
+    from tests.unit.test_registry_full_coverage import (
         test_create_auto_discover_and_mode_mapping,
         test_execute_and_register_handler_failure_paths,
         test_get_plugin_and_register_metadata_and_list_items_exception,
         test_summary_error_paths_and_bindings_failures,
         test_summary_properties_and_subclass_storage_reset,
     )
-    from .test_result import Testr
-    from .test_result_additional import (
+    from tests.unit.test_result import Testr
+    from tests.unit.test_result_additional import (
         test_create_from_callable_and_repr,
         test_flow_through_short_circuits_on_failure,
         test_map_error_identity_and_transform,
         test_ok_accepts_none,
         test_with_resource_cleanup_runs,
     )
-    from .test_result_coverage_100 import TestrCoverage
-    from .test_result_exception_carrying import TestResultExceptionCarrying
-    from .test_result_full_coverage import (
+    from tests.unit.test_result_coverage_100 import TestrCoverage
+    from tests.unit.test_result_exception_carrying import TestResultExceptionCarrying
+    from tests.unit.test_result_full_coverage import (
         test_from_validation_and_to_model_paths,
         test_init_fallback_and_lazy_returns_result_property,
         test_lash_runtime_result_paths,
@@ -268,9 +281,9 @@ if TYPE_CHECKING:
         test_type_guards_result,
         test_validation_like_error_structure,
     )
-    from .test_runtime import TestFlextRuntime
-    from .test_runtime_coverage_100 import TestRuntimeCoverage100
-    from .test_runtime_full_coverage import (
+    from tests.unit.test_runtime import TestFlextRuntime
+    from tests.unit.test_runtime_coverage_100 import TestRuntimeCoverage100
+    from tests.unit.test_runtime_full_coverage import (
         reset_runtime_state,
         runtime_cov_tests,
         runtime_tests,
@@ -299,40 +312,40 @@ if TYPE_CHECKING:
         test_runtime_result_all_missed_branches,
         test_runtime_result_remaining_paths,
     )
-    from .test_service import TestsCore
-    from .test_service_additional import (
+    from tests.unit.test_service import TestsCore
+    from tests.unit.test_service_additional import (
         RuntimeCloneService,
         test_get_service_info,
         test_is_valid_handles_validation_exception,
         test_result_property_raises_on_failure,
     )
-    from .test_service_bootstrap import TestServiceBootstrap
-    from .test_service_coverage_100 import TestService100Coverage
-    from .test_service_full_coverage import TestServiceFullCoverage
-    from .test_settings_full_coverage import (
+    from tests.unit.test_service_bootstrap import TestServiceBootstrap
+    from tests.unit.test_service_coverage_100 import TestService100Coverage
+    from tests.unit.test_service_full_coverage import TestServiceFullCoverage
+    from tests.unit.test_settings_full_coverage import (
         test_settings_materialize_and_context_overrides,
     )
-    from .test_transformer_class_nesting import (
+    from tests.unit.test_transformer_class_nesting import (
         test_class_nesting_appends_to_existing_namespace_and_removes_pass,
         test_class_nesting_keeps_unmapped_top_level_classes,
         test_class_nesting_moves_top_level_class_into_new_namespace,
     )
-    from .test_transformer_helper_consolidation import (
+    from tests.unit.test_transformer_helper_consolidation import (
         TestHelperConsolidationTransformer,
     )
-    from .test_transformer_nested_class_propagation import (
+    from tests.unit.test_transformer_nested_class_propagation import (
         NestedClassPropagationTransformer,
         test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage,
         test_nested_class_propagation_updates_import_annotations_and_calls,
     )
-    from .test_typings import TestTypings
-    from .test_typings_full_coverage import TestTypingsFullCoverage
-    from .test_utilities_args_full_coverage import (
+    from tests.unit.test_typings import TestTypings
+    from tests.unit.test_typings_full_coverage import TestTypingsFullCoverage
+    from tests.unit.test_utilities_args_full_coverage import (
         UnknownHint,
         test_args_get_enum_params_annotated_unwrap_branch,
         test_args_get_enum_params_branches,
     )
-    from .test_utilities_cache_coverage_100 import (
+    from tests.unit.test_utilities_cache_coverage_100 import (
         NORMALIZE_COMPONENT_SCENARIOS,
         SORT_KEY_SCENARIOS,
         ClearCacheScenario,
@@ -347,27 +360,33 @@ if TYPE_CHECKING:
         TestuCacheSortKey,
         UtilitiesCacheCoverage100Namespace,
     )
-    from .test_utilities_checker_full_coverage import TestUtilitiesCheckerFullCoverage
-    from .test_utilities_collection_coverage_100 import TestUtilitiesCollectionCoverage
-    from .test_utilities_collection_full_coverage import (
+    from tests.unit.test_utilities_checker_full_coverage import (
+        TestUtilitiesCheckerFullCoverage,
+    )
+    from tests.unit.test_utilities_collection_coverage_100 import (
+        TestUtilitiesCollectionCoverage,
+    )
+    from tests.unit.test_utilities_collection_full_coverage import (
         TestUtilitiesCollectionFullCoverage,
     )
-    from .test_utilities_configuration_coverage_100 import (
+    from tests.unit.test_utilities_configuration_coverage_100 import (
         TestFlextUtilitiesConfiguration,
     )
-    from .test_utilities_configuration_full_coverage import (
+    from tests.unit.test_utilities_configuration_full_coverage import (
         TestUtilitiesConfigurationFullCoverage,
     )
-    from .test_utilities_context_full_coverage import TestUtilitiesContextFullCoverage
-    from .test_utilities_conversion_full_coverage import (
+    from tests.unit.test_utilities_context_full_coverage import (
+        TestUtilitiesContextFullCoverage,
+    )
+    from tests.unit.test_utilities_conversion_full_coverage import (
         test_conversion_string_and_join_paths,
     )
-    from .test_utilities_coverage import TestUtilitiesCoverage
-    from .test_utilities_data_mapper import TestUtilitiesDataMapper
-    from .test_utilities_deprecation_full_coverage import (
+    from tests.unit.test_utilities_coverage import TestUtilitiesCoverage
+    from tests.unit.test_utilities_data_mapper import TestUtilitiesDataMapper
+    from tests.unit.test_utilities_deprecation_full_coverage import (
         test_deprecated_class_noop_init_branch,
     )
-    from .test_utilities_domain import (
+    from tests.unit.test_utilities_domain import (
         TestuDomain,
         create_compare_entities_cases,
         create_compare_value_objects_cases,
@@ -376,14 +395,18 @@ if TYPE_CHECKING:
         create_validate_entity_has_id_cases,
         create_validate_value_object_immutable_cases,
     )
-    from .test_utilities_domain_full_coverage import TestUtilitiesDomainFullCoverage
-    from .test_utilities_enum_full_coverage import TestUtilitiesEnumFullCoverage
-    from .test_utilities_generators_full_coverage import (
+    from tests.unit.test_utilities_domain_full_coverage import (
+        TestUtilitiesDomainFullCoverage,
+    )
+    from tests.unit.test_utilities_enum_full_coverage import (
+        TestUtilitiesEnumFullCoverage,
+    )
+    from tests.unit.test_utilities_generators_full_coverage import (
         TestUtilitiesGeneratorsFullCoverage,
         generators_module,
         runtime_module,
     )
-    from .test_utilities_guards_full_coverage import (
+    from tests.unit.test_utilities_guards_full_coverage import (
         test_aliases_are_available,
         test_chk_exercises_missed_branches,
         test_configuration_mapping_and_dict_negative_branches,
@@ -403,7 +426,7 @@ if TYPE_CHECKING:
         test_non_empty_and_normalize_branches,
         test_protocol_and_simple_guard_helpers,
     )
-    from .test_utilities_mapper_coverage_100 import (
+    from tests.unit.test_utilities_mapper_coverage_100 import (
         SimpleObj,
         TestuMapperAccessors,
         TestuMapperAdvanced,
@@ -413,7 +436,7 @@ if TYPE_CHECKING:
         TestuMapperUtils,
         UtilitiesMapperCoverage100Namespace,
     )
-    from .test_utilities_mapper_full_coverage import (
+    from tests.unit.test_utilities_mapper_full_coverage import (
         AttrObject,
         BadBool,
         BadMapping,
@@ -446,37 +469,41 @@ if TYPE_CHECKING:
         test_transform_option_extract_and_step_helpers,
         test_type_guards_and_narrowing_failures,
     )
-    from .test_utilities_model_full_coverage import (
+    from tests.unit.test_utilities_model_full_coverage import (
         test_merge_defaults_and_dump_paths,
         test_normalize_to_pydantic_dict_and_value_branches,
         test_update_exception_path,
         test_update_success_path_returns_ok_result,
     )
-    from .test_utilities_pagination_full_coverage import (
+    from tests.unit.test_utilities_pagination_full_coverage import (
         test_pagination_response_string_fallbacks,
     )
-    from .test_utilities_parser_full_coverage import TestUtilitiesParserFullCoverage
-    from .test_utilities_reliability import TestFlextUtilitiesReliability
-    from .test_utilities_reliability_full_coverage import (
+    from tests.unit.test_utilities_parser_full_coverage import (
+        TestUtilitiesParserFullCoverage,
+    )
+    from tests.unit.test_utilities_reliability import TestFlextUtilitiesReliability
+    from tests.unit.test_utilities_reliability_full_coverage import (
         test_utilities_reliability_branches,
         test_utilities_reliability_compose_returns_non_result_directly,
         test_utilities_reliability_uncovered_retry_compose_and_sequence_paths,
     )
-    from .test_utilities_string_parser import (
+    from tests.unit.test_utilities_string_parser import (
         TestuStringParser,
         normalized_value_key_cases,
     )
-    from .test_utilities_text_full_coverage import TestUtilitiesTextFullCoverage
-    from .test_utilities_type_checker_coverage_100 import (
+    from tests.unit.test_utilities_text_full_coverage import (
+        TestUtilitiesTextFullCoverage,
+    )
+    from tests.unit.test_utilities_type_checker_coverage_100 import (
         T,
         TestuTypeChecker,
         TMessage,
         pytestmark,
     )
-    from .test_utilities_type_guards_coverage_100 import (
+    from tests.unit.test_utilities_type_guards_coverage_100 import (
         TestUtilitiesTypeGuardsCoverage100,
     )
-    from .test_version import TestFlextVersion
+    from tests.unit.test_version import TestFlextVersion
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AttrObject": ("tests.unit.test_utilities_mapper_full_coverage", "AttrObject"),

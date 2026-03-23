@@ -4,8 +4,6 @@ from pathlib import Path
 
 import pytest
 from flext_infra import (
-    FlextInfraPrManager,
-    FlextInfraPrWorkspaceManager,
     FlextInfraUtilitiesGit,
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
@@ -15,8 +13,6 @@ from flext_infra import (
     FlextInfraUtilitiesSubprocess,
     FlextInfraUtilitiesTemplates,
     FlextInfraUtilitiesToml,
-    FlextInfraWorkflowLinter,
-    FlextInfraWorkflowSyncer,
 )
 
 
@@ -110,44 +106,3 @@ def infra_git_repo(
         cwd=repo,
     ).is_success
     return repo
-
-
-@pytest.fixture
-def infra_workflow_linter(
-    infra_subprocess: FlextInfraUtilitiesSubprocess,
-    infra_io: FlextInfraUtilitiesIo,
-) -> FlextInfraWorkflowLinter:
-    return FlextInfraWorkflowLinter(runner=infra_subprocess, json_io=infra_io)
-
-
-@pytest.fixture
-def infra_pr_manager(
-    infra_subprocess: FlextInfraUtilitiesSubprocess,
-) -> FlextInfraPrManager:
-    return FlextInfraPrManager(runner=infra_subprocess)
-
-
-@pytest.fixture
-def infra_pr_workspace_manager(
-    infra_subprocess: FlextInfraUtilitiesSubprocess,
-    infra_selection: FlextInfraUtilitiesSelection,
-    infra_reporting: FlextInfraUtilitiesReporting,
-) -> FlextInfraPrWorkspaceManager:
-    return FlextInfraPrWorkspaceManager(
-        runner=infra_subprocess,
-        selector=infra_selection,
-        reporting=infra_reporting,
-    )
-
-
-@pytest.fixture
-def infra_workflow_syncer(
-    infra_selection: FlextInfraUtilitiesSelection,
-    infra_io: FlextInfraUtilitiesIo,
-    infra_templates: FlextInfraUtilitiesTemplates,
-) -> FlextInfraWorkflowSyncer:
-    return FlextInfraWorkflowSyncer(
-        selector=infra_selection,
-        json_io=infra_io,
-        templates=infra_templates,
-    )

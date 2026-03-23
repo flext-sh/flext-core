@@ -30,9 +30,9 @@ class TestPatternsCommands:
         username: str
         email: str
 
-        def get_payload(self) -> m.UserPayloadDict:
+        def get_payload(self) -> m.Core.UserPayloadDict:
             """Get command payload."""
-            return m.UserPayloadDict.model_validate(
+            return m.Core.UserPayloadDict.model_validate(
                 obj={
                     "username": self.username,
                     "email": self.email,
@@ -55,10 +55,10 @@ class TestPatternsCommands:
         target_user_id: str
         updates: dict[str, t.NormalizedValue]
 
-        def get_payload(self) -> m.UpdatePayloadDict:
+        def get_payload(self) -> m.Core.UpdatePayloadDict:
             """Get command payload."""
-            typed_updates: dict[str, m.UpdateFieldDict] = {
-                key: m.UpdateFieldDict.model_validate(
+            typed_updates: dict[str, m.Core.UpdateFieldDict] = {
+                key: m.Core.UpdateFieldDict.model_validate(
                     obj={
                         "field_name": key,
                         "new_value": value
@@ -68,7 +68,7 @@ class TestPatternsCommands:
                 )
                 for key, value in self.updates.items()
             }
-            return m.UpdatePayloadDict.model_validate(
+            return m.Core.UpdatePayloadDict.model_validate(
                 obj={
                     "target_user_id": self.target_user_id,
                     "updates": typed_updates,
@@ -86,9 +86,9 @@ class TestPatternsCommands:
     class FailingCommand(FlextModels.Command):
         """Test command that always fails validation."""
 
-        def get_payload(self) -> m.CommandPayloadDict:
+        def get_payload(self) -> m.Core.CommandPayloadDict:
             """Get command payload."""
-            return m.CommandPayloadDict.model_validate(obj={})
+            return m.Core.CommandPayloadDict.model_validate(obj={})
 
         def validate_command(self) -> r[bool]:
             """Fail validation intentionally."""

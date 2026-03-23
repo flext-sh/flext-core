@@ -10,19 +10,37 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
+    from tests.fixtures.namespace_validator.rule0_loose_items import (
+        Rule0LooseItemsFixture,
+    )
+    from tests.fixtures.namespace_validator.rule0_multiple_classes import (
+        FlextTestConstants,
+        Rule0MultipleClassesFixture,
+    )
+    from tests.fixtures.namespace_validator.rule0_no_class import MAX_VALUE, helper
+    from tests.fixtures.namespace_validator.rule0_wrong_prefix import RandomConstants
+    from tests.fixtures.namespace_validator.rule1_loose_constant import (
+        DEFAULT_TIMEOUT,
+        MAX_RETRIES,
+    )
+    from tests.fixtures.namespace_validator.rule1_loose_enum import (
+        FlextTestModels,
+        Rule1LooseEnumFixture,
+        Status,
+    )
+    from tests.fixtures.namespace_validator.rule1_magic_number import (
+        FlextTestUtilities,
+        u,
+    )
+    from tests.fixtures.namespace_validator.rule1_method_in_constants import c
+    from tests.fixtures.namespace_validator.rule2_composite_type_loose import m
+    from tests.fixtures.namespace_validator.rule2_protocol_in_types import (
+        FlextTestTypes,
+        t,
+    )
+    from tests.fixtures.namespace_validator.typings import LooseTypeAlias
 
-    from .rule0_loose_items import Rule0LooseItemsFixture
-    from .rule0_multiple_classes import FlextTestConstants, Rule0MultipleClassesFixture
-    from .rule0_no_class import MAX_VALUE, helper
-    from .rule0_wrong_prefix import RandomConstants
-    from .rule1_loose_constant import DEFAULT_TIMEOUT, MAX_RETRIES
-    from .rule1_loose_enum import FlextTestModels, Rule1LooseEnumFixture, Status
-    from .rule1_magic_number import FlextTestUtilities, u
-    from .rule1_method_in_constants import c
-    from .rule2_composite_type_loose import m
-    from .rule2_protocol_in_types import FlextTestTypes, t
-    from .typings import LooseTypeAlias
+    from flext_core import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DEFAULT_TIMEOUT": (

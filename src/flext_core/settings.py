@@ -55,7 +55,7 @@ class FlextSettings(BaseSettings, u):
     _instances: ClassVar[dict[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
-    model_config = SettingsConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix=c.ENV_PREFIX,
         env_nested_delimiter=c.ENV_NESTED_DELIMITER,
         env_file=u.resolve_env_file(),

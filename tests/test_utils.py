@@ -34,7 +34,7 @@ from tests import m, t, u
 
 FlextTestResult = r[T]
 FlextTestResultCo = r[T_co]
-type StandardTestCase = m.StandardTestCaseModel
+type StandardTestCase = m.Core.StandardTestCaseModel
 
 
 class TestUtils:
@@ -67,9 +67,9 @@ class TestUtils:
             *,
             expected_success: bool = True,
             error_contains: str | None = None,
-        ) -> m.StandardTestCaseModel:
+        ) -> m.Core.StandardTestCaseModel:
             """Create standardized operation test case."""
-            return m.StandardTestCaseModel(
+            return m.Core.StandardTestCaseModel(
                 description=description,
                 input_data={"operation": operation, **input_data},
                 expected_result=expected_result,
@@ -133,7 +133,7 @@ class TestUtils:
         @staticmethod
         def assert_operation_result(
             operation_func: Callable[[], r[t.Container]],
-            test_case: m.StandardTestCaseModel,
+            test_case: m.Core.StandardTestCaseModel,
             context: str = "",
         ) -> Path | bool | datetime | float | int | str:
             """Execute operation and assert result matches test case."""
@@ -167,9 +167,9 @@ class TestUtils:
         def create_test_entity(
             unique_id: str = "test-123",
             name: str = "Test Entity",
-        ) -> m.UtilityEntityModel:
+        ) -> m.Core.UtilityEntityModel:
             """Create test entity fixture."""
-            return m.UtilityEntityModel(
+            return m.Core.UtilityEntityModel(
                 unique_id=unique_id,
                 name=name,
                 value=name,
@@ -178,9 +178,9 @@ class TestUtils:
         @staticmethod
         def create_test_value_object(
             value: t.ContainerValue = "test_value",
-        ) -> m.UtilityValueModel:
+        ) -> m.Core.UtilityValueModel:
             """Create test value t.NormalizedValue fixture."""
-            return m.UtilityValueModel(value=value)
+            return m.Core.UtilityValueModel(value=value)
 
         @staticmethod
         def create_test_container_instance() -> FlextContainer:

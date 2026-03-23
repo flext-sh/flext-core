@@ -199,7 +199,7 @@ class TestMixinsFullCoverage:
                 return cast(
                     "p.RuntimeBootstrapOptions",
                     cast(
-                        "t.Tests.t.NormalizedValue",
+                        "t.NormalizedValue",
                         SimpleNamespace(
                             config_type=None,
                             config_overrides=None,
@@ -221,7 +221,7 @@ class TestMixinsFullCoverage:
         tm.that(runtime, none=False)
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
-            cast("dict[str, t.Tests.t.NormalizedValue]", metrics)["duration_ms"] = 2.0
+            cast("dict[str, t.NormalizedValue]", metrics)["duration_ms"] = 2.0
         tm.that(hasattr(service, "_operation_stats"), eq=True)
         tm.that(service._operation_stats, has="op")
         try:
@@ -365,7 +365,7 @@ class TestMixinsFullCoverage:
         tm.fail(fail_result)
         tm.that(
             x.ProtocolValidation.is_handler(
-                cast("t.Tests.t.NormalizedValue", SimpleNamespace(handle=self._noop)),
+                cast("t.NormalizedValue", SimpleNamespace(handle=self._noop)),
             ),
             eq=False,
         )
@@ -373,7 +373,7 @@ class TestMixinsFullCoverage:
             x.ProtocolValidation.is_service(
                 cast(
                     "p.Service[bool]",
-                    cast("t.Tests.t.NormalizedValue", SimpleNamespace()),
+                    cast("t.NormalizedValue", SimpleNamespace()),
                 ),
             ),
             eq=False,
@@ -451,7 +451,7 @@ class TestMixinsFullCoverage:
             def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
                 return cast(
                     "p.RuntimeBootstrapOptions",
-                    cast("t.Tests.t.NormalizedValue", {"wire_packages": ["pkg", 1]}),
+                    cast("t.NormalizedValue", {"wire_packages": ["pkg", 1]}),
                 )
 
         _ = _WireService(

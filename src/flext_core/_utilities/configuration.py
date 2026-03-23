@@ -166,7 +166,7 @@ class FlextUtilitiesConfiguration:
 
         Example:
             # In namespace config classes (e.g., FlextLdapSettings)
-            model_config = SettingsConfigDict(
+            model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
                 env_prefix="FLEXT_LDAP_",
                 env_file=u.resolve_env_file(),
                 ...

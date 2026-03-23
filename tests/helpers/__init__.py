@@ -18,9 +18,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from .factories import TestHelperFactories
-    from .factories_impl import (
+    from tests.helpers.factories import TestHelperFactories
+    from tests.helpers.factories_impl import (
         FailingService,
         FailingServiceAuto,
         FailingServiceAutoFactory,
@@ -43,7 +42,7 @@ if TYPE_CHECKING:
         ValidatingServiceFactory,
         reset_all_factories,
     )
-    from .scenarios import TestHelperScenarios
+    from tests.helpers.scenarios import TestHelperScenarios
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FailingService": ("tests.helpers.factories_impl", "FailingService"),

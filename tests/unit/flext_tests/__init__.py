@@ -11,12 +11,11 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from .test_docker import TestDocker
-    from .test_domains import TestFlextTestsDomains
-    from .test_files import TestFlextTestsFiles
-    from .test_matchers import TestFlextTestsMatchers
-    from .test_utilities import TestUtilities
+    from tests.unit.flext_tests.test_docker import TestDocker
+    from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
+    from tests.unit.flext_tests.test_files import TestFlextTestsFiles
+    from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
+    from tests.unit.flext_tests.test_utilities import TestUtilities
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),

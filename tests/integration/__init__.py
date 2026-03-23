@@ -11,27 +11,38 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from . import patterns as patterns
-    from .patterns.test_advanced_patterns import TestAdvancedPatterns, TestFunction
-    from .patterns.test_architectural_patterns import TestArchitecturalPatterns
-    from .patterns.test_patterns_commands import TestPatternsCommands
-    from .patterns.test_patterns_logging import EXPECTED_BULK_SIZE, TestPatternsLogging
-    from .patterns.test_patterns_testing import TestPatternsTesting
-    from .test_config_integration import TestFlextSettingsSingletonIntegration
-    from .test_infra_integration import TestInfraIntegration
-    from .test_integration import TestLibraryIntegration
-    from .test_migration_validation import TestMigrationValidation
-    from .test_refactor_nesting_file import (
+    from tests.integration import patterns
+    from tests.integration.patterns.test_advanced_patterns import (
+        TestAdvancedPatterns,
+        TestFunction,
+    )
+    from tests.integration.patterns.test_architectural_patterns import (
+        TestArchitecturalPatterns,
+    )
+    from tests.integration.patterns.test_patterns_commands import TestPatternsCommands
+    from tests.integration.patterns.test_patterns_logging import (
+        EXPECTED_BULK_SIZE,
+        TestPatternsLogging,
+    )
+    from tests.integration.patterns.test_patterns_testing import TestPatternsTesting
+    from tests.integration.test_config_integration import (
+        TestFlextSettingsSingletonIntegration,
+    )
+    from tests.integration.test_infra_integration import TestInfraIntegration
+    from tests.integration.test_integration import TestLibraryIntegration
+    from tests.integration.test_migration_validation import TestMigrationValidation
+    from tests.integration.test_refactor_nesting_file import (
         pytestmark,
         test_class_nesting_refactor_single_file_end_to_end,
     )
-    from .test_refactor_nesting_idempotency import TestIdempotency
-    from .test_refactor_nesting_project import TestProjectLevelRefactor
-    from .test_refactor_nesting_workspace import TestWorkspaceLevelRefactor
-    from .test_refactor_policy_mro import TestRefactorPolicyMRO
-    from .test_service import TestService
-    from .test_system import TestCompleteFlextSystemIntegration
+    from tests.integration.test_refactor_nesting_idempotency import TestIdempotency
+    from tests.integration.test_refactor_nesting_project import TestProjectLevelRefactor
+    from tests.integration.test_refactor_nesting_workspace import (
+        TestWorkspaceLevelRefactor,
+    )
+    from tests.integration.test_refactor_policy_mro import TestRefactorPolicyMRO
+    from tests.integration.test_service import TestService
+    from tests.integration.test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EXPECTED_BULK_SIZE": (

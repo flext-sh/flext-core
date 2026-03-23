@@ -11,10 +11,14 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from .test_container_memory import TestContainerMemory, get_memory_usage
-    from .test_container_performance import TestContainerPerformance
-    from .test_refactor_nesting_performance import TestPerformanceBenchmarks
+    from tests.benchmark.test_container_memory import (
+        TestContainerMemory,
+        get_memory_usage,
+    )
+    from tests.benchmark.test_container_performance import TestContainerPerformance
+    from tests.benchmark.test_refactor_nesting_performance import (
+        TestPerformanceBenchmarks,
+    )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestContainerMemory": (

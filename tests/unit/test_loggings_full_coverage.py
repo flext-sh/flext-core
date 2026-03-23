@@ -124,7 +124,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextLogger,
             "create_module_logger",
-            cast("t.Tests.t.NormalizedValue", classmethod(_create_module_logger)),
+            cast("t.NormalizedValue", classmethod(_create_module_logger)),
         )
         created = FlextLogger.for_container(
             cast("p.Container", cast("t.NormalizedValue", _Container())), extra="v"
@@ -320,7 +320,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextSettings,
             "get_global",
-            cast("t.Tests.t.NormalizedValue", classmethod(_raise_cfg)),
+            cast("t.NormalizedValue", classmethod(_raise_cfg)),
         )
         tm.that(logger._should_include_stack_trace() is True, eq=True)
         with_exception = logger.build_exception_context(
@@ -369,7 +369,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextLogger,
             "for_container",
-            cast("t.Tests.t.NormalizedValue", classmethod(_for_container)),
+            cast("t.NormalizedValue", classmethod(_for_container)),
         )
         with FlextLogger.with_container_context(
             cast("p.Container", cast("t.NormalizedValue", _Container())), trace_id="t1"
@@ -512,7 +512,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextLogger,
             "for_container",
-            cast("t.Tests.t.NormalizedValue", classmethod(_for_container)),
+            cast("t.NormalizedValue", classmethod(_for_container)),
         )
         with FlextLogger.with_container_context(
             cast("p.Container", cast("t.NormalizedValue", _Container())), level="DEBUG"

@@ -99,7 +99,7 @@ class TestModels:
         """Test models initialization with real validation."""
         models = m()
         tm.that(
-            cast("test_t.Tests.t.NormalizedValue", models),
+            cast("test_t.NormalizedValue", models),
             none=False,
             msg="m instance must not be None",
         )
@@ -870,7 +870,7 @@ class TestModels:
         )
         tm.that(retry.backoff_multiplier, eq=2.0, msg="backoff_multiplier must be 2.0")
         tm.that(
-            cast("test_t.Tests.t.NormalizedValue", retry.retry_on_exceptions),
+            cast("test_t.NormalizedValue", retry.retry_on_exceptions),
             is_=list,
             none=False,
             empty=True,

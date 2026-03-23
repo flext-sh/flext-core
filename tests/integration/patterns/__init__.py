@@ -23,12 +23,22 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-
-    from .test_advanced_patterns import TestAdvancedPatterns, TestFunction
-    from .test_architectural_patterns import TestArchitecturalPatterns
-    from .test_patterns_commands import TestPatternsCommands
-    from .test_patterns_logging import EXPECTED_BULK_SIZE, TestPatternsLogging
-    from .test_patterns_testing import TestPatternsTesting, pytestmark
+    from tests.integration.patterns.test_advanced_patterns import (
+        TestAdvancedPatterns,
+        TestFunction,
+    )
+    from tests.integration.patterns.test_architectural_patterns import (
+        TestArchitecturalPatterns,
+    )
+    from tests.integration.patterns.test_patterns_commands import TestPatternsCommands
+    from tests.integration.patterns.test_patterns_logging import (
+        EXPECTED_BULK_SIZE,
+        TestPatternsLogging,
+    )
+    from tests.integration.patterns.test_patterns_testing import (
+        TestPatternsTesting,
+        pytestmark,
+    )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EXPECTED_BULK_SIZE": (

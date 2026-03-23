@@ -283,7 +283,7 @@ class UtilitiesCacheCoverage100Namespace:
                 none=False,
                 msg="Result must be tuple or list",
             )
-            result_tuple = cast("tuple[t.Tests.t.NormalizedValue, ...]", result)
+            result_tuple = cast("tuple[t.NormalizedValue, ...]", result)
             tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
             result_set = set(result_tuple)
             tm.that(1 in result_set, eq=True, msg="1 must be in result")
@@ -305,7 +305,7 @@ class UtilitiesCacheCoverage100Namespace:
             )
             result = u.normalize_component(cast("t.NormalizedValue", component))
             tm.that(result, is_=list, none=False, msg="Result must be list")
-            result_list = cast("list[t.Tests.t.NormalizedValue]", result)
+            result_list = cast("list[t.NormalizedValue]", result)
             tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
             tm.that(result_list[0], eq=1, msg="First item must be 1")
             tm.that(result_list[1], eq="test", msg="Second item must be 'test'")

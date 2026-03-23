@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from enum import StrEnum, unique
-from typing import Annotated, override
+from typing import Annotated, ClassVar, override
 
 from flext_tests import FlextTestsModels
 from pydantic import BaseModel, ConfigDict, Field

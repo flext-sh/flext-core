@@ -32,41 +32,41 @@ from flext_core import r
 from tests import c, m, t, u
 
 
-def _parse_delimited_cases() -> list[m.ParseDelimitedCase]:
+def _parse_delimited_cases() -> list[m.Core.ParseDelimitedCase]:
     builder = cast(
-        "Callable[[], list[m.ParseDelimitedCase]]",
+        "Callable[[], list[m.Core.ParseDelimitedCase]]",
         globals()["StringParserTestFactory"].parse_delimited_cases,
     )
     return builder()
 
 
-def _split_escape_cases() -> list[m.SplitEscapeCase]:
+def _split_escape_cases() -> list[m.Core.SplitEscapeCase]:
     builder = cast(
-        "Callable[[], list[m.SplitEscapeCase]]",
+        "Callable[[], list[m.Core.SplitEscapeCase]]",
         globals()["StringParserTestFactory"].split_escape_cases,
     )
     return builder()
 
 
-def _normalize_whitespace_cases() -> list[m.NormalizeWhitespaceCase]:
+def _normalize_whitespace_cases() -> list[m.Core.NormalizeWhitespaceCase]:
     builder = cast(
-        "Callable[[], list[m.NormalizeWhitespaceCase]]",
+        "Callable[[], list[m.Core.NormalizeWhitespaceCase]]",
         globals()["StringParserTestFactory"].normalize_whitespace_cases,
     )
     return builder()
 
 
-def _regex_pipeline_cases() -> list[m.RegexPipelineCase]:
+def _regex_pipeline_cases() -> list[m.Core.RegexPipelineCase]:
     builder = cast(
-        "Callable[[], list[m.RegexPipelineCase]]",
+        "Callable[[], list[m.Core.RegexPipelineCase]]",
         globals()["StringParserTestFactory"].regex_pipeline_cases,
     )
     return builder()
 
 
-def normalized_value_key_cases() -> list[m.ObjectKeyCase]:
+def normalized_value_key_cases() -> list[m.Core.ObjectKeyCase]:
     builder = cast(
-        "Callable[[], list[m.ObjectKeyCase]]",
+        "Callable[[], list[m.Core.ObjectKeyCase]]",
         globals()["StringParserTestFactory"].object_key_cases,
     )
     return builder()
@@ -79,49 +79,49 @@ class TestuStringParser:
         """Factory for generating test cases with edge cases."""
 
         @staticmethod
-        def parse_delimited_cases() -> list[m.ParseDelimitedCase]:
+        def parse_delimited_cases() -> list[m.Core.ParseDelimitedCase]:
             """Generate comprehensive parse_delimited test cases."""
             return [
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.BASIC_LIST,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="basic",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.WITH_SPACES,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="with spaces",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.EMPTY,
                     delimiter=c.Delimiters.COMMA,
                     expected=[],
                     description="empty string",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.WITH_SPACES,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     options=m.ParseOptions(strip=True, remove_empty=True),
                     description="with options",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.WITH_SPACES,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", " b", " c"],
                     options=m.ParseOptions(strip=False, remove_empty=True),
                     description="options no strip",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.WITH_EMPTY,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "", "c"],
                     options=m.ParseOptions(strip=True, remove_empty=False),
                     description="options no remove empty",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.BASIC_LIST,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
@@ -132,7 +132,7 @@ class TestuStringParser:
                     ),
                     description="validator success",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text="a,b",
                     delimiter=c.Delimiters.COMMA,
                     expected=[],
@@ -143,7 +143,7 @@ class TestuStringParser:
                     ),
                     description="validator filters components",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.WITH_SPACES,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
@@ -152,7 +152,7 @@ class TestuStringParser:
                     use_legacy=True,
                     description="legacy params",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.BASIC_LIST,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
@@ -160,45 +160,45 @@ class TestuStringParser:
                     use_legacy=True,
                     description="legacy validator",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.BASIC_LIST,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="no spaces",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.EXCESSIVE_SPACES,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="excessive spaces",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.LEADING_TRAILING,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="leading/trailing delimiters",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.SINGLE_CHAR,
                     delimiter=c.Delimiters.COMMA,
                     expected=["a"],
                     description="single component",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.BASIC_LIST,
                     delimiter="",
                     expected=None,
                     expected_error=c.TestErrors.DELIMITER_EMPTY,
                     description="empty delimiter",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.BASIC_LIST,
                     delimiter=",,",
                     expected=None,
                     expected_error=c.TestErrors.DELIMITER_MULTI,
                     description="multi-char delimiter",
                 ),
-                m.ParseDelimitedCase(
+                m.Core.ParseDelimitedCase(
                     text=c.Strings.BASIC_LIST,
                     delimiter=" ",
                     expected=None,
@@ -208,72 +208,72 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def split_escape_cases() -> list[m.SplitEscapeCase]:
+        def split_escape_cases() -> list[m.Core.SplitEscapeCase]:
             """Generate comprehensive split_on_char_with_escape test cases."""
             return [
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text=c.Strings.BASIC_LIST,
                     split_char=c.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="basic",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a\\,b,c",
                     split_char=c.Delimiters.COMMA,
                     expected=["a,b", "c"],
                     description="escaped delimiter",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text=c.Strings.EMPTY,
                     split_char=c.Delimiters.COMMA,
                     expected=[""],
                     description="empty string",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a#b,c",
                     split_char=c.Delimiters.COMMA,
                     escape_char=c.EscapeChars.HASH,
                     expected=["ab", "c"],
                     description="custom escape char",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a,b\\",
                     split_char=c.Delimiters.COMMA,
                     expected=["a", "b\\"],
                     description="escape at end",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a\\\\,b",
                     split_char=c.Delimiters.COMMA,
                     expected=["a\\", "b"],
                     description="escaped escape char",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a,b,c,d",
                     split_char=c.Delimiters.COMMA,
                     expected=["a", "b", "c", "d"],
                     description="multiple components",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="\\,a,b",
                     split_char=c.Delimiters.COMMA,
                     expected=[",a", "b"],
                     description="escaped at start",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a,b",
                     split_char="",
                     expected_error=c.TestErrors.SPLIT_EMPTY,
                     description="empty split char",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a,b",
                     split_char=c.Delimiters.COMMA,
                     escape_char="",
                     expected_error=c.TestErrors.ESCAPE_EMPTY,
                     description="empty escape char",
                 ),
-                m.SplitEscapeCase(
+                m.Core.SplitEscapeCase(
                     text="a,b",
                     split_char=c.Delimiters.COMMA,
                     escape_char=c.Delimiters.COMMA,
@@ -283,48 +283,48 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def normalize_whitespace_cases() -> list[m.NormalizeWhitespaceCase]:
+        def normalize_whitespace_cases() -> list[m.Core.NormalizeWhitespaceCase]:
             """Generate comprehensive normalize_whitespace test cases."""
             return [
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text="  hello   world  ",
                     expected="hello world",
                     description="basic",
                 ),
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text=c.Strings.EMPTY,
                     expected=c.Strings.EMPTY,
                     description="empty string",
                 ),
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text="hello---world",
                     pattern=c.Patterns.DASH,
                     replacement=c.Replacements.DASH,
                     expected="hello-world",
                     description="custom pattern",
                 ),
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text="hello   world",
                     replacement=c.Replacements.UNDERSCORE,
                     expected="hello_world",
                     description="custom replacement",
                 ),
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text="hello\t\n\rworld",
                     expected="hello world",
                     description="various whitespace",
                 ),
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text="   ",
                     expected="",
                     description="only whitespace",
                 ),
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text=c.Strings.SINGLE_CHAR,
                     expected=c.Strings.SINGLE_CHAR,
                     description="single char",
                 ),
-                m.NormalizeWhitespaceCase(
+                m.Core.NormalizeWhitespaceCase(
                     text="hello\n\n\nworld",
                     expected="hello world",
                     description="multiple newlines",
@@ -332,10 +332,10 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def regex_pipeline_cases() -> list[m.RegexPipelineCase]:
+        def regex_pipeline_cases() -> list[m.Core.RegexPipelineCase]:
             """Generate comprehensive apply_regex_pipeline test cases."""
             return [
-                m.RegexPipelineCase(
+                m.Core.RegexPipelineCase(
                     text="hello   world",
                     patterns=[
                         (
@@ -347,7 +347,7 @@ class TestuStringParser:
                     expected="hello world",
                     description="basic",
                 ),
-                m.RegexPipelineCase(
+                m.Core.RegexPipelineCase(
                     text=c.Strings.EMPTY,
                     patterns=[
                         (
@@ -358,7 +358,7 @@ class TestuStringParser:
                     expected=c.Strings.EMPTY,
                     description="empty string",
                 ),
-                m.RegexPipelineCase(
+                m.Core.RegexPipelineCase(
                     text="cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
                     patterns=[
                         (
@@ -377,13 +377,13 @@ class TestuStringParser:
                     expected="cn= REDACTED_LDAP_BIND_PASSWORD ,ou= users",
                     description="multiple patterns",
                 ),
-                m.RegexPipelineCase(
+                m.Core.RegexPipelineCase(
                     text="test",
                     patterns=[],
                     expected="test",
                     description="empty patterns",
                 ),
-                m.RegexPipelineCase(
+                m.Core.RegexPipelineCase(
                     text="a=b=c",
                     patterns=[("=", ":"), (":", "=")],
                     expected="a=b=c",
@@ -392,25 +392,25 @@ class TestuStringParser:
             ]
 
         @staticmethod
-        def object_key_cases() -> list[m.ObjectKeyCase]:
+        def object_key_cases() -> list[m.Core.ObjectKeyCase]:
             """Generate comprehensive getNormalizedValue_key test cases (t.NormalizedValue only)."""
             return [
-                m.ObjectKeyCase(
+                m.Core.ObjectKeyCase(
                     obj={},
                     expected_exact="dict",
                     description="instance",
                 ),
-                m.ObjectKeyCase(
+                m.Core.ObjectKeyCase(
                     obj="test",
                     expected_exact="test",
                     description="string",
                 ),
-                m.ObjectKeyCase(
+                m.Core.ObjectKeyCase(
                     obj={"name": "DictName"},
                     expected_exact="DictName",
                     description="dict with name",
                 ),
-                m.ObjectKeyCase(
+                m.Core.ObjectKeyCase(
                     obj={"id": "DictId"},
                     expected_exact="DictId",
                     description="dict with id",
@@ -434,7 +434,7 @@ class TestuStringParser:
         def test_parse_delimited(
             self,
             parser: u,
-            case: m.ParseDelimitedCase,
+            case: m.Core.ParseDelimitedCase,
         ) -> None:
             """Test parse_delimited with parametrized cases."""
 
@@ -484,12 +484,12 @@ class TestuStringParser:
         def test_split_with_escape(
             self,
             parser: u,
-            case: m.SplitEscapeCase,
+            case: m.Core.SplitEscapeCase,
         ) -> None:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
+                    "Callable[[], r[t.Tests.NormalizedValue]]",
                     lambda: parser.split_on_char_with_escape(
                         case.text,
                         case.split_char,
@@ -522,12 +522,12 @@ class TestuStringParser:
         def test_normalize_whitespace(
             self,
             parser: u,
-            case: m.NormalizeWhitespaceCase,
+            case: m.Core.NormalizeWhitespaceCase,
         ) -> None:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
+                    "Callable[[], r[t.Tests.NormalizedValue]]",
                     lambda: parser.normalize_whitespace(
                         case.text,
                         pattern=case.pattern,
@@ -554,12 +554,12 @@ class TestuStringParser:
         def test_apply_regex_pipeline(
             self,
             parser: u,
-            case: m.RegexPipelineCase,
+            case: m.Core.RegexPipelineCase,
         ) -> None:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
+                    "Callable[[], r[t.Tests.NormalizedValue]]",
                     lambda: parser.apply_regex_pipeline(case.text, case.patterns),
                 ),
                 expected_value=case.expected,
@@ -589,7 +589,7 @@ class TestuStringParser:
             text = cast("str", cast("t.NormalizedValue", None))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
+                    "Callable[[], r[t.Tests.NormalizedValue]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [
@@ -609,7 +609,7 @@ class TestuStringParser:
             text = cast("str", cast("t.NormalizedValue", 123))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[t.Tests.t.NormalizedValue]]",
+                    "Callable[[], r[t.Tests.NormalizedValue]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [
@@ -637,7 +637,7 @@ class TestuStringParser:
         def test_get_normalized_value_key(
             self,
             parser: u,
-            case: m.ObjectKeyCase,
+            case: m.Core.ObjectKeyCase,
         ) -> None:
             """Test getNormalizedValue_key with parametrized cases."""
             key = parser.getNormalizedValue_key(

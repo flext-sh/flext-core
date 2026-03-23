@@ -22,7 +22,7 @@ from .. import c, m
 User = m.Tests.User
 """Type alias for backward-compatible import: ``from .helpers.factories import User``."""
 
-ServiceTestCase = m.ServiceTestCase
+ServiceTestCase = m.Core.ServiceTestCase
 """Type alias for backward-compatible import: ``from .helpers.factories import ServiceTestCase``."""
 
 
@@ -300,19 +300,19 @@ class FailingServiceAutoFactory:
 
 
 class ServiceTestCaseFactory:
-    """Factory for m.ServiceTestCase."""
+    """Factory for m.Core.ServiceTestCase."""
 
-    _service_types: ClassVar[list[m.ServiceTestType]] = [
-        m.ServiceTestType.GET_USER,
-        m.ServiceTestType.VALIDATE,
-        m.ServiceTestType.FAIL,
+    _service_types: ClassVar[list[m.Core.ServiceTestType]] = [
+        m.Core.ServiceTestType.GET_USER,
+        m.Core.ServiceTestType.VALIDATE,
+        m.Core.ServiceTestType.FAIL,
     ]
     _type_index: ClassVar[int] = 0
     _words: ClassVar[list[str]] = ["test", "sample", "example", "demo", "data"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
-    def _next_type(cls) -> m.ServiceTestType:
+    def _next_type(cls) -> m.Core.ServiceTestType:
         """Get next service type from rotation."""
         service_type = cls._service_types[cls._type_index % len(cls._service_types)]
         cls._type_index += 1
@@ -329,14 +329,14 @@ class ServiceTestCaseFactory:
     def build(
         cls,
         *,
-        service_type: m.ServiceTestType | None = None,
+        service_type: m.Core.ServiceTestType | None = None,
         input_value: str | None = None,
         expected_success: bool = True,
         expected_error: str | None = None,
         extra_param: int = c.TestValidation.MIN_LENGTH_DEFAULT,
         description: str | None = None,
-    ) -> m.ServiceTestCase:
-        """Build a m.ServiceTestCase instance."""
+    ) -> m.Core.ServiceTestCase:
+        """Build a m.Core.ServiceTestCase instance."""
         actual_type = service_type if service_type is not None else cls._next_type()
         actual_input = input_value if input_value is not None else cls._next_word()
         actual_description = (
@@ -344,7 +344,7 @@ class ServiceTestCaseFactory:
             if description is not None
             else f"Test case for {actual_type} with {actual_input}"
         )
-        return m.ServiceTestCase(
+        return m.Core.ServiceTestCase(
             service_type=actual_type,
             input_value=actual_input,
             expected_success=expected_success,
@@ -354,8 +354,8 @@ class ServiceTestCaseFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[m.ServiceTestCase]:
-        """Build multiple m.ServiceTestCase instances with auto-generated values."""
+    def build_batch(cls, size: int) -> list[m.Core.ServiceTestCase]:
+        """Build multiple m.Core.ServiceTestCase instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
     @classmethod
@@ -370,33 +370,33 @@ class ServiceFactoryRegistry:
 
     _factories: ClassVar[
         dict[
-            m.ServiceTestType,
+            m.Core.ServiceTestType,
             type[
                 GetUserServiceFactory | ValidatingServiceFactory | FailingServiceFactory
             ],
         ]
     ] = {
-        m.ServiceTestType.GET_USER: GetUserServiceFactory,
-        m.ServiceTestType.VALIDATE: ValidatingServiceFactory,
-        m.ServiceTestType.FAIL: FailingServiceFactory,
+        m.Core.ServiceTestType.GET_USER: GetUserServiceFactory,
+        m.Core.ServiceTestType.VALIDATE: ValidatingServiceFactory,
+        m.Core.ServiceTestType.FAIL: FailingServiceFactory,
     }
 
     @classmethod
     def create_service(
         cls,
-        case: m.ServiceTestCase,
+        case: m.Core.ServiceTestCase,
     ) -> s[m.Tests.User] | s[str]:
         """Create appropriate service based on case type using pattern matching."""
         service: s[m.Tests.User] | s[str]
         match case.service_type:
-            case m.ServiceTestType.GET_USER:
+            case m.Core.ServiceTestType.GET_USER:
                 service = GetUserServiceFactory.build(user_id=case.input_value)
-            case m.ServiceTestType.VALIDATE:
+            case m.Core.ServiceTestType.VALIDATE:
                 service = ValidatingServiceFactory.build(
                     value_input=case.input_value,
                     min_length=case.extra_param,
                 )
-            case m.ServiceTestType.FAIL:
+            case m.Core.ServiceTestType.FAIL:
                 service = FailingServiceFactory.build(error_message=case.input_value)
             case _:
                 msg = f"Unsupported service type: {case.service_type}"
@@ -410,11 +410,11 @@ class TestDataGenerators:
     @staticmethod
     def generate_user_success_cases(
         num_cases: int = 3,
-    ) -> list[m.ServiceTestCase]:
+    ) -> list[m.Core.ServiceTestCase]:
         """Generate successful user service test cases."""
         return [
-            m.ServiceTestCase(
-                service_type=m.ServiceTestType.GET_USER,
+            m.Core.ServiceTestCase(
+                service_type=m.Core.ServiceTestType.GET_USER,
                 input_value=str(i * 100 + 1),
                 description=f"Valid user ID {i}",
             )
@@ -424,18 +424,18 @@ class TestDataGenerators:
     @staticmethod
     def generate_validation_success_cases(
         num_cases: int = 2,
-    ) -> list[m.ServiceTestCase]:
+    ) -> list[m.Core.ServiceTestCase]:
         """Generate successful validation test cases."""
         return [
-            m.ServiceTestCase(
-                service_type=m.ServiceTestType.VALIDATE,
+            m.Core.ServiceTestCase(
+                service_type=m.Core.ServiceTestType.VALIDATE,
                 input_value=f"value_{i}",
                 description=f"Valid input {i}",
             )
             for i in range(1, num_cases + 1)
         ] + [
-            m.ServiceTestCase(
-                service_type=m.ServiceTestType.VALIDATE,
+            m.Core.ServiceTestCase(
+                service_type=m.Core.ServiceTestType.VALIDATE,
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
@@ -443,18 +443,18 @@ class TestDataGenerators:
         ]
 
     @staticmethod
-    def generate_validation_failure_cases() -> list[m.ServiceTestCase]:
+    def generate_validation_failure_cases() -> list[m.Core.ServiceTestCase]:
         """Generate validation failure test cases."""
         return [
-            m.ServiceTestCase(
-                service_type=m.ServiceTestType.VALIDATE,
+            m.Core.ServiceTestCase(
+                service_type=m.Core.ServiceTestType.VALIDATE,
                 input_value="ab",
                 expected_success=False,
                 expected_error="must be at least 3 characters",
                 description="Too short input",
             ),
-            m.ServiceTestCase(
-                service_type=m.ServiceTestType.VALIDATE,
+            m.Core.ServiceTestCase(
+                service_type=m.Core.ServiceTestType.VALIDATE,
                 input_value="x",
                 expected_success=False,
                 expected_error="must be at least 5 characters",
@@ -467,19 +467,19 @@ class TestDataGenerators:
 class ServiceTestCases:
     """Unified factory for all test cases using advanced patterns."""
 
-    USER_SUCCESS: ClassVar[list[m.ServiceTestCase]] = (
+    USER_SUCCESS: ClassVar[list[m.Core.ServiceTestCase]] = (
         TestDataGenerators.generate_user_success_cases()
     )
-    VALIDATE_SUCCESS: ClassVar[list[m.ServiceTestCase]] = (
+    VALIDATE_SUCCESS: ClassVar[list[m.Core.ServiceTestCase]] = (
         TestDataGenerators.generate_validation_success_cases()
     )
-    VALIDATE_FAILURE: ClassVar[list[m.ServiceTestCase]] = (
+    VALIDATE_FAILURE: ClassVar[list[m.Core.ServiceTestCase]] = (
         TestDataGenerators.generate_validation_failure_cases()
     )
 
     @staticmethod
     def create_service(
-        case: m.ServiceTestCase,
+        case: m.Core.ServiceTestCase,
     ) -> s[m.Tests.User] | s[str]:
         """Create appropriate service based on case type."""
         return ServiceFactoryRegistry.create_service(case)
