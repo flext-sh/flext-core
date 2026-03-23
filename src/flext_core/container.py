@@ -80,7 +80,7 @@ class FlextContainer(p.Container):
         copies validated field values directly, and preserves the exact field
         types declared on the model (no ``LaxStr`` / ``Any`` widening).
         """
-        override_updates: Mapping[
+        override_updates: MutableMapping[
             str,
             t.RuntimeData
             | p.Settings
@@ -734,7 +734,7 @@ class FlextContainer(p.Container):
         self._factories = dict(factories.items()) if factories is not None else {}
         self._resources = dict(resources.items()) if resources is not None else {}
         self._global_config = global_config or self._create_container_config()
-        overrides_root: Mapping[str, t.ValueOrModel] = {}
+        overrides_root: MutableMapping[str, t.ValueOrModel] = {}
         if user_overrides is not None:
             if isinstance(user_overrides, t.ConfigMap):
                 overrides_root = dict(user_overrides.root)
@@ -1018,15 +1018,15 @@ class FlextContainer(p.Container):
             scoped_context = context
         if subproject:
             _ = scoped_context.set("subproject", subproject)
-        cloned_services: Mapping[str, m.ServiceRegistration] = {
+        cloned_services: MutableMapping[str, m.ServiceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._services.items()
         }
-        cloned_factories: Mapping[str, m.FactoryRegistration] = {
+        cloned_factories: MutableMapping[str, m.FactoryRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._factories.items()
         }
-        cloned_resources: Mapping[str, m.ResourceRegistration] = {
+        cloned_resources: MutableMapping[str, m.ResourceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._resources.items()
         }

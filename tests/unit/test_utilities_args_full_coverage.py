@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence
 from typing import Annotated, cast
 
 import pytest
@@ -43,7 +43,7 @@ def test_args_get_enum_params_branches() -> None:
 def test_args_get_enum_params_annotated_unwrap_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen_candidates: Sequence[type[t.NormalizedValue] | str] = []
+    seen_candidates: MutableSequence[type[t.NormalizedValue] | str] = []
 
     def _mock_get_type_hints(
         _func: t.TypeHintSpecifier,

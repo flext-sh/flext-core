@@ -17,7 +17,13 @@ import time
 import traceback
 import types
 import warnings
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import (
+    Generator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
@@ -37,8 +43,12 @@ class FlextLogger(u, p.Logger):
     bespoke wrappers.
     """
 
-    _scoped_contexts: ClassVar[Mapping[str, Mapping[str, t.Container]]] = {}
-    _level_contexts: ClassVar[Mapping[str, Mapping[str, t.Container]]] = {}
+    _scoped_contexts: ClassVar[
+        MutableMapping[str, MutableMapping[str, t.Container]]
+    ] = {}
+    _level_contexts: ClassVar[
+        MutableMapping[str, MutableMapping[str, t.Container]]
+    ] = {}
     _structlog_instance: p.Logger | None = None
     type _LogArg = t.RuntimeData | Exception
 
@@ -198,7 +208,7 @@ class FlextLogger(u, p.Logger):
                 strategy="deep",
             )
             merged_value = merge_result.unwrap_or(current_context_obj)
-            merged_context: Mapping[str, t.Container] = {}
+            merged_context: MutableMapping[str, t.Container] = {}
             for key, value in merged_value.items():
                 merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
@@ -506,7 +516,7 @@ class FlextLogger(u, p.Logger):
                 c.WarningLevel.ERROR: c.WarningLevel.ERROR,
                 "critical": "critical",
             }.get(level_lower, level_lower)
-            prefixed_keys: Sequence[str] = []
+            prefixed_keys: MutableSequence[str] = []
             for key in keys:
                 prefixed_key = f"_level_{level_normalized}_{key}"
                 prefixed_keys.append(prefixed_key)
@@ -783,7 +793,7 @@ class FlextLogger(u, p.Logger):
                     "exception_message": str(exception),
                 },
             )
-            merged_root: Mapping[str, t.ValueOrModel] = dict(context_dict.root)
+            merged_root: MutableMapping[str, t.ValueOrModel] = dict(context_dict.root)
             merged_root.update(dict(exception_data.root))
             context_dict = t.ConfigMap(root=merged_root)
             if include_stack_trace:
@@ -881,7 +891,7 @@ class FlextLogger(u, p.Logger):
             )
             raw_exception = kw.get("exception")
             exc_info_value = kw.get("exc_info", True)
-            context_input: Mapping[str, t.Scalar | Exception] = {}
+            context_input: MutableMapping[str, t.Scalar | Exception] = {}
             for key, value in kw.items():
                 if key in {"exception", "exc_info"}:
                     continue

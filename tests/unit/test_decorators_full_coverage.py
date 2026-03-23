@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence
 from types import SimpleNamespace
-from typing import Annotated, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from flext_tests import t as test_t, tm
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, p, r, u
 from tests import c, m, t
@@ -19,9 +19,11 @@ from tests import c, m, t
 class TestDecoratorsFullCoverage:
     class _FakeLogger:
         def __init__(self) -> None:
-            self.warning_calls: Sequence[tuple[str, Mapping[str, t.Scalar]]] = []
-            self.error_calls: Sequence[tuple[str, Mapping[str, t.Scalar]]] = []
-            self.exception_calls: Sequence[tuple[str, Mapping[str, t.Scalar]]] = []
+            self.warning_calls: MutableSequence[tuple[str, Mapping[str, t.Scalar]]] = []
+            self.error_calls: MutableSequence[tuple[str, Mapping[str, t.Scalar]]] = []
+            self.exception_calls: MutableSequence[
+                tuple[str, Mapping[str, t.Scalar]]
+            ] = []
             self.logger = self
 
         def warning(self, message: str, **kwargs: t.Scalar) -> None:
@@ -40,9 +42,8 @@ class TestDecoratorsFullCoverage:
             self.exception_calls.append((message, kwargs))
 
     class _ObjWithLogger(BaseModel):
-        logger: Annotated[
-            t.NormalizedValue, Field(description="Logger instance holder")
-        ]
+        model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+        logger: Annotated[FlextLogger, Field(description="Logger instance holder")]
 
     def test_deprecated_wrapper_emits_warning_and_returns_value(self) -> None:
         @d.deprecated("old API")
@@ -371,7 +372,7 @@ class TestDecoratorsFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _ = self
-        ensure_calls: Sequence[int] = []
+        ensure_calls: MutableSequence[int] = []
         fake_logger = self._FakeLogger()
 
         def _ensure_correlation_id() -> str:

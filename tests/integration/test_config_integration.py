@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import os
 import threading
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
@@ -328,13 +328,13 @@ class TestFlextSettingsSingletonIntegration:
 
     def test_config_singleton_thread_safety(self) -> None:
         """Test that singleton is thread-safe."""
-        configs: Sequence[FlextSettings] = []
+        configs: MutableSequence[FlextSettings] = []
 
         def get_config() -> None:
             config = FlextSettings.get_global()
             configs.append(config)
 
-        threads: Sequence[threading.Thread] = []
+        threads: MutableSequence[threading.Thread] = []
         for _ in range(10):
             t = threading.Thread(target=get_config)
             threads.append(t)

@@ -20,11 +20,7 @@ from flext_core import FlextTypingBase, FlextTypingContainers
 class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
     """Type aliases for core scalar/container foundations."""
 
-    # --- NON-RECURSIVE TYPES (TypeAlias - isinstance-safe) ---
-
     type RegistryBindingKey = str | type
-
-    # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
 
     type Serializable = (
         FlextTypingBase.Container

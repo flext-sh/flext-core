@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Annotated, override
 
 import pytest
@@ -46,7 +46,7 @@ class TestService:
         - This pattern separates status from data retrieval
         """
 
-        _users: Mapping[str, TestService.UserServiceEntity] = PrivateAttr(
+        _users: MutableMapping[str, TestService.UserServiceEntity] = PrivateAttr(
             default_factory=dict
         )
         _should_fail: bool = PrivateAttr(default=False)
@@ -122,7 +122,7 @@ class TestService:
     class NotificationService(FlextService[str]):
         """Real notification service using FlextService."""
 
-        _sent_notifications: Sequence[str] = PrivateAttr(default_factory=list)
+        _sent_notifications: MutableSequence[str] = PrivateAttr(default_factory=list)
         _call_count: int = PrivateAttr(default_factory=lambda: 0)
         _should_fail: bool = PrivateAttr(default=False)
 
@@ -165,7 +165,7 @@ class TestService:
         @property
         def sent_notifications(self) -> Sequence[str]:
             """Get sent notifications."""
-            return self._sent_notifications.copy()
+            return list(self._sent_notifications)
 
         @property
         def call_count(self) -> int:

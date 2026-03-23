@@ -9,7 +9,12 @@ from __future__ import annotations
 import builtins
 import math
 import tempfile
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import (
+    Generator,
+    Mapping,
+    MutableSequence,
+    Sequence,
+)
 from pathlib import Path
 
 import pytest
@@ -34,7 +39,7 @@ class FunctionalExternalService:
 
     def __init__(self) -> None:
         """Initialize external service with empty state."""
-        self.processed_items: Sequence[str] = []
+        self.processed_items: MutableSequence[str] = []
         self.call_count = 0
 
     def process(self, input_data: str) -> r[str]:

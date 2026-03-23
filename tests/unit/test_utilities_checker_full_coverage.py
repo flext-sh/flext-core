@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import inspect
 from collections import UserDict
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 from typing import cast, override
 
 from flext_core import r
@@ -90,10 +90,12 @@ class TestUtilitiesCheckerFullCoverage:
         assert str_hint.is_success and str_hint.value == "abc"
         generic_hint = u._extract_message_type_from_parameter(
             param,
-            {"message": str(Sequence[int])},
+            {"message": str(MutableSequence[int])},
             "message",
         )
-        assert generic_hint.is_success and generic_hint.value == str(Sequence[int])
+        assert generic_hint.is_success and generic_hint.value == str(
+            MutableSequence[int]
+        )
 
     def test_extract_message_type_from_handle_with_only_self(self) -> None:
         assert u._extract_message_type_from_handle(self._OnlySelfHandler).is_failure
@@ -125,7 +127,7 @@ class TestUtilitiesCheckerFullCoverage:
         )
         assert (
             u._handle_instance_check(
-                cast("t.TypeOriginSpecifier", t.NormalizedValue()),
+                cast("t.TypeOriginSpecifier", "normalized"),
                 cast("t.TypeOriginSpecifier", self._ExplodingOrigin),
             )
             is True
@@ -135,14 +137,14 @@ class TestUtilitiesCheckerFullCoverage:
         param_typed = inspect.Parameter(
             "message",
             inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            annotation=Sequence[int],
+            annotation=MutableSequence[int],
         )
         typed_hint = u._extract_message_type_from_parameter(
             param_typed,
             {},
             "message",
         )
-        assert typed_hint.is_success and typed_hint.value == str(Sequence[int])
+        assert typed_hint.is_success and typed_hint.value == str(MutableSequence[int])
         param_empty = inspect.Parameter(
             "message",
             inspect.Parameter.POSITIONAL_OR_KEYWORD,

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from enum import StrEnum
 from typing import overload
 
@@ -36,15 +36,6 @@ class FlextUtilitiesParser:
     The parser consolidates delimiter handling, escape-aware splits, and
     normalization routines behind ``r`` so callers can compose
     parsing logic in dispatcher pipelines without manual error handling.
-
-    Examples:
-        >>> parser = FlextUtilitiesParser()
-        >>> parser.parse_delimited("a, b, c", ",").value
-        ['a', 'b', 'c']
-        >>> parser.split_on_char_with_escape(
-        ...     "cn=REDACTED_LDAP_BIND_PASSWORD\\\\,dc=com", ",", "\\\\"
-        ... ).value
-        ['cn=REDACTED_LDAP_BIND_PASSWORD', 'dc=com']
 
     """
 
@@ -616,7 +607,7 @@ class FlextUtilitiesParser:
 
         """
         if default is None:
-            default = Sequence[str]()
+            default = []
         if value is None:
             return default
         if isinstance(value, list):
@@ -1643,7 +1634,7 @@ class FlextUtilitiesParser:
                 "Validating components with custom validator",
                 operation="parse_delimited",
             )
-            valid_components: Sequence[str] = []
+            valid_components: MutableSequence[str] = []
             for comp in components:
                 if validator(comp):
                     valid_components.append(comp)
@@ -1664,8 +1655,8 @@ class FlextUtilitiesParser:
         escape_char: str,
     ) -> r[tuple[Sequence[str], int]]:
         """Process text with escape character handling and return components."""
-        components: Sequence[str] = []
-        current: Sequence[str] = []
+        components: MutableSequence[str] = []
+        current: MutableSequence[str] = []
         i = 0
         escape_count = 0
         while i < len(text):

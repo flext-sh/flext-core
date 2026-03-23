@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
@@ -56,8 +56,8 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        domain_events: Sequence[FlextModelsDomainEvent.Entry] = Field(
-            default_factory=lambda: Sequence[FlextModelsDomainEvent.Entry](),
+        domain_events: MutableSequence[FlextModelsDomainEvent.Entry] = Field(
+            default_factory=list,
             description="List of uncommitted domain events for event sourcing",
         )
 
@@ -160,7 +160,7 @@ class FlextModelsEntity:
                     return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
                         "Event name must be non-empty string",
                     )
-            created_events: Sequence[FlextModelsDomainEvent.Entry] = []
+            created_events: MutableSequence[FlextModelsDomainEvent.Entry] = []
             for event_type, data in event_items:
                 event = FlextModelsDomainEvent.Entry(
                     event_type=event_type,

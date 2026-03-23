@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 import types
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from pathlib import Path
 from typing import ClassVar, cast, override
 
@@ -26,7 +26,7 @@ from flext_core import (
 class TestModule:
     class _FakeBindable:
         def __init__(self) -> None:
-            self.calls: Sequence[
+            self.calls: MutableSequence[
                 tuple[str, tuple[t.NormalizedValue, ...], Mapping[str, t.Scalar]]
             ] = []
 
@@ -59,7 +59,7 @@ class TestModule:
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: Mapping[str, t.NormalizedValue] = {}
+            self.store: MutableMapping[str, t.NormalizedValue] = {}
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)
@@ -228,7 +228,7 @@ class TestModule:
         tm.that(logger.unbind("a").name, eq="x")
         tm.that(logger.unbind("a", safe=True).name, eq="x")
         logger.trace("%s %s", "a")
-        monkeypatch.setattr(logger, "_structlog_instance", t.NormalizedValue())
+        monkeypatch.setattr(logger, "_structlog_instance", "normalized")
         logger.trace("x")
         tm.that(FlextLogger._format_log_message("%s %s", "a") != "", eq=True)
         monkeypatch.setattr(inspect, "currentframe", lambda: None)
@@ -364,7 +364,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: Mapping[str, t.NormalizedValue] = {}
+        captured: MutableMapping[str, t.NormalizedValue] = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None
@@ -384,7 +384,7 @@ class TestModule:
         ):
             pass
         tm.that(captured["level"] is None, eq=True)
-        sentinel = t.NormalizedValue()
+        sentinel = "normalized"
 
         def _get_logger(_name: str | None = None) -> t.NormalizedValue:
             return sentinel
@@ -507,7 +507,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: Mapping[str, t.NormalizedValue] = {}
+        captured: MutableMapping[str, t.NormalizedValue] = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None

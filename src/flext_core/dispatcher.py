@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 
 from pydantic import BaseModel
 
@@ -34,23 +34,23 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: Mapping[
+        self._handlers: MutableMapping[
             str,
             tuple[
                 t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
                 DispatcherResolvedCallable,
             ],
         ] = {}
-        self._auto_handlers: Sequence[
+        self._auto_handlers: MutableSequence[
             tuple[
                 t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
                 DispatcherResolvedCallable,
                 tuple[t.MessageTypeSpecifier, ...],
             ]
         ] = []
-        self._event_subscribers: Mapping[
+        self._event_subscribers: MutableMapping[
             str,
-            Sequence[
+            MutableSequence[
                 tuple[
                     t.DispatchableHandler | p.DispatchMessage | p.Handle | p.Execute,
                     DispatcherResolvedCallable,
@@ -125,7 +125,7 @@ class FlextDispatcher:
             Result indicating if publication started successfully.
 
         """
-        if isinstance(event, list):
+        if isinstance(event, Sequence):
             for e in event:
                 _ = self.publish(e)
             return r[bool].ok(value=True)

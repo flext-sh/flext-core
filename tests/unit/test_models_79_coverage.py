@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 from decimal import Decimal
 from typing import Annotated
 
@@ -100,7 +100,7 @@ class TestModels79Coverage:
         class Order(m.Entity):
             total: Decimal
 
-        events: Sequence[m.DomainEvent] = []
+        events: MutableSequence[m.DomainEvent] = []
         order = Order(unique_id="order-1", total=Decimal("99.99"), domain_events=events)
         initial_version = order.version
         tm.that(initial_version >= 1, eq=True)
@@ -300,7 +300,7 @@ class TestModels79Coverage:
         class User(m.Entity):
             name: str
 
-        events: Sequence[m.DomainEvent] = []
+        events: MutableSequence[m.DomainEvent] = []
         cmd = type(self).CreateUserCmd(user_id="user-1", name="Alice")
         tm.that(cmd.user_id, eq="user-1")
         user = User(unique_id="user-1", name="Alice", domain_events=events)

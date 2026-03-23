@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
@@ -163,9 +163,9 @@ class TestUtilitiesCollectionCoverage:
         ]
         expected_result: Annotated[
             (
-                Sequence[t.NormalizedValue]
+                MutableSequence[t.NormalizedValue]
                 | tuple[t.NormalizedValue, ...]
-                | Mapping[str, t.NormalizedValue]
+                | MutableMapping[str, t.NormalizedValue]
                 | set[t.NormalizedValue]
                 | frozenset[t.NormalizedValue]
             ),

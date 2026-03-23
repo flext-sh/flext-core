@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import (
@@ -199,7 +199,7 @@ class FlextModelsConfig:
             cls, v: Sequence[int] | Sequence[t.Scalar]
         ) -> Sequence[int]:
             """Validate status codes are valid HTTP codes."""
-            codes_for_validation: Sequence[int] = []
+            codes_for_validation: MutableSequence[int] = []
             for item in v:
                 if isinstance(item, bool):
                     msg = "retry_on_status_codes item must be int or str, got bool"

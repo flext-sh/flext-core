@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Annotated, Any, ClassVar, cast
 
 import pytest
@@ -342,12 +342,14 @@ class TestFlextContainer:
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result = clean_container.get("string_service", type_cls=Mapping[str, str])
+        result = clean_container.get(
+            "string_service", type_cls=MutableMapping[str, str]
+        )
         _ = u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = clean_container.get("nonexistent", type_cls=Mapping[str, str])
+        result = clean_container.get("nonexistent", type_cls=MutableMapping[str, str])
         u.Tests.Result.assert_result_failure_with_error(
             result, expected_error="not found"
         )

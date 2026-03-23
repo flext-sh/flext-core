@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 
 import pytest
 from flext_tests import tm
@@ -390,7 +390,7 @@ class TestrCoverage:
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
-        resources_created: Sequence[t.ConfigMap] = []
+        resources_created: MutableSequence[t.ConfigMap] = []
 
         def factory() -> t.ConfigMap:
             resource: t.ConfigMap = t.ConfigMap(root={"id": 1})
@@ -406,7 +406,7 @@ class TestrCoverage:
 
     def test_with_resource_with_cleanup(self) -> None:
         """Test with_resource executes cleanup even on success."""
-        cleanups_called: Sequence[bool] = []
+        cleanups_called: MutableSequence[bool] = []
 
         def factory() -> t.ConfigMap:
             return t.ConfigMap(root={"id": 1})

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import FlextUtilitiesGuardsTypeCore, p, t
+from flext_core import FlextUtilitiesGuardsTypeCore, t
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -77,7 +77,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_configuration_dict(
-        value: t.NormalizedValue,
+        value: t.ValueOrModel,
     ) -> TypeIs[t.Dict]:
         """Check if value is a valid configuration dictionary.
 
@@ -92,11 +92,13 @@ class FlextUtilitiesGuardsTypeModel:
         """
         if isinstance(value, t.Dict):
             for item_value in value.root.values():
-                if not FlextUtilitiesGuardsTypeCore.is_container(item_value):
+                if isinstance(
+                    item_value, BaseModel
+                ) or not FlextUtilitiesGuardsTypeCore.is_container(item_value):
                     return False
             return True
-        return FlextUtilitiesGuardsTypeCore.is_mapping(
-            value,
+        return isinstance(
+            value, Mapping
         ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
 
     @staticmethod
@@ -114,16 +116,18 @@ class FlextUtilitiesGuardsTypeModel:
             True if value is a valid configuration mapping, False otherwise.
 
         """
-        candidate: Mapping[str, t.ValueOrModel] = (
+        candidate: Mapping[str, t.NormalizedValue | BaseModel] = (
             value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
         )
         for item_value in candidate.values():
-            if not FlextUtilitiesGuardsTypeCore.is_container(item_value):
+            if isinstance(
+                item_value, BaseModel
+            ) or not FlextUtilitiesGuardsTypeCore.is_container(item_value):
                 return False
         return True
 
     @staticmethod
-    def is_pydantic_model(value: t.NormalizedValue) -> TypeIs[p.HasModelDump]:
+    def is_pydantic_model(value: t.ValueOrModel) -> TypeIs[BaseModel]:
         """Check if value is a Pydantic BaseModel with model_dump method.
 
         Args:

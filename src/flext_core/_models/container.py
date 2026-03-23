@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, TypeIs
@@ -130,7 +130,7 @@ class FlextModelsContainer:
             if callable(v):
                 return v
             if isinstance(v, Mapping):
-                normalized_mapping: Mapping[str, t.ValueOrModel] = {}
+                normalized_mapping: MutableMapping[str, t.ValueOrModel] = {}
                 for key, item in v.items():
                     if isinstance(item, datetime):
                         normalized_mapping[str(key)] = (
@@ -158,7 +158,7 @@ class FlextModelsContainer:
                         raise TypeError(msg)
                 return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
-                normalized_sequence: Sequence[t.Container] = []
+                normalized_sequence: MutableSequence[t.Container] = []
                 for item in v:
                     if isinstance(item, datetime):
                         item = item.replace(tzinfo=UTC) if item.tzinfo is None else item

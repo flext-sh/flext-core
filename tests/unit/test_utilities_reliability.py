@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import Final
 
@@ -117,7 +117,7 @@ class TestFlextUtilitiesReliability:
             success_value: int = 42,
         ) -> tuple[Callable[[], r[int]], Sequence[int]]:
             """Create retry operation that succeeds after N attempts."""
-            attempts: Sequence[int] = []
+            attempts: MutableSequence[int] = []
 
             def op() -> r[int]:
                 attempts.append(len(attempts))
@@ -159,12 +159,12 @@ class TestFlextUtilitiesReliability:
         ) -> tuple[
             Callable[[], r[str]],
             Callable[[int, str | None], bool],
-            Sequence[int],
-            Sequence[str],
+            MutableSequence[int],
+            MutableSequence[str],
         ]:
             """Create controlled retry operation with should_retry and cleanup."""
-            attempts: Sequence[int] = []
-            cleanups: Sequence[str] = []
+            attempts: MutableSequence[int] = []
+            cleanups: MutableSequence[str] = []
 
             def op() -> r[str]:
                 attempts.append(len(attempts))

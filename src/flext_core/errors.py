@@ -23,15 +23,6 @@ class ErrorDomain(StrEnum):
     Enables consistent error handling across FLEXT projects by categorizing
     errors into domains. Each domain has standard error codes that can be
     routed to specific handlers.
-
-    Usage:
-        result = r[User].fail(
-            "Validation failed: email is invalid",
-            error_code="INVALID_EMAIL",
-            error_data={"field": "email", "domain": ErrorDomain.VALIDATION.value},
-        )
-        if result.error_code == "INVALID_EMAIL":
-            return 400  # Bad request
     """
 
     #: Validation errors (input validation, schema validation, constraints)
@@ -73,19 +64,6 @@ class FlextError(BaseModel):
         message: Human-readable error message
         details: Additional error metadata (field errors, nested errors, etc.)
         source: Original exception or error source (if applicable)
-
-    Example:
-        error = FlextError(
-            domain=ErrorDomain.VALIDATION,
-            code="INVALID_EMAIL",
-            message="Email address is invalid",
-            details={"field": "email", "value": "not-an-email"},
-        )
-        result = r[User].fail(
-            error.message,
-            error_code=error.code,
-            error_data={"domain": error.domain.value, **error.details},
-        )
 
     """
 

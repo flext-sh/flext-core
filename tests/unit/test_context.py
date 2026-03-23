@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar
 
 import pytest
@@ -35,7 +35,9 @@ from flext_core import FlextContainer, FlextContext, p, t
 
 
 class TestFlextContext:
-    type SetGetInputValue = t.Primitives | Sequence[int] | Mapping[str, str]
+    type SetGetInputValue = (
+        t.Primitives | MutableSequence[int] | MutableMapping[str, str]
+    )
     type SetGetExpectedValue = t.Primitives
     type NestedDictValue = Mapping[str, Mapping[str, Mapping[str, Mapping[str, str]]]]
 
@@ -120,10 +122,12 @@ class TestFlextContext:
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
-        if isinstance(value, (dict, list)):
+        if isinstance(value, (dict, list, tuple, set)):
             set_result = context.set(t.ConfigMap.model_validate({key: value}))
-        else:
+        elif isinstance(value, (str, int, float, bool)):
             set_result = context.set(key, value)
+        else:
+            pytest.fail(f"Unexpected SetGetInputValue type: {type(value)!r}")
         _ = u.Tests.Result.assert_success(set_result)
         expected_value = expected
         u.Tests.ContextHelpers.assert_context_get_success(context, key, expected_value)
@@ -178,7 +182,7 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        nested_data: Mapping[str, Mapping[str, str | Mapping[str, str]]] = {
+        nested_data: Mapping[str, Mapping[str, str | MutableMapping[str, str]]] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -240,7 +244,7 @@ class TestFlextContext:
     def test_context_thread_safety(self, test_context: FlextContext) -> None:
         """Test context thread safety."""
         context = test_context
-        results: Sequence[str] = []
+        results: MutableSequence[str] = []
 
         def set_value(thread_id: int) -> None:
             context.set(f"thread_{thread_id}", f"value_{thread_id}")
@@ -348,7 +352,7 @@ class TestFlextContext:
             )
         else:
             converted_value = str(special_value)
-            expected_value = special_value
+            expected_value = str(special_value)
         if isinstance(converted_value, t.ConfigMap):
             context.set(converted_value).value
         else:
@@ -379,7 +383,7 @@ class TestFlextContext:
         """Test context with concurrent read operations."""
         context = test_context
         context.set("shared_key", "shared_value").value
-        error_count: Sequence[int] = []
+        error_count: MutableSequence[int] = []
 
         def read_value() -> None:
             try:
@@ -397,7 +401,7 @@ class TestFlextContext:
     def test_context_concurrent_writes(self, test_context: FlextContext) -> None:
         """Test context with concurrent write operations."""
         context = test_context
-        error_count: Sequence[int] = []
+        error_count: MutableSequence[int] = []
 
         def write_value(key: str, value: str) -> None:
             try:

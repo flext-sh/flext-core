@@ -1,38 +1,5 @@
 """Cache utilities for deterministic normalization and key management.
 
-Business Rules & Architecture:
-=============================
-
-1. **Deterministic Cache Key Generation**:
-   - Components normalized to canonical form before hashing
-   - Dict keys sorted alphabetically for consistent representation
-   - Sets converted to tuples for hashability
-   - SHA-256 for collision-resistant cache keys
-
-2. **Normalization Rules** (normalize_component method):
-   - BaseModel → dict (via model_dump())
-   - Mapping/dict-like → dict with normalized values
-   - Sequences (non-str) → list with normalized items
-   - Sets → sorted tuple (for hashability)
-   - Primitives (str, int, float, bool, None) → unchanged
-   - Unknown types → str representation (fallback)
-
-3. **Sort Key Strategy** (sort_key method):
-   - Type-aware sorting: strings first, numbers second, others last
-   - Case-insensitive string comparison
-   - Deterministic ordering across Python runs
-
-4. **Cache Clearing Strategy** (clear_object_cache method):
-   - Clears common cache attribute names (_cache, _cached, cache, etc.)
-   - Supports dict.clear() for mapping caches
-   - Falls back to None assignment for simple cached values
-   - Returns r for graceful error handling
-
-Validation Context:
-- Python 3.13+: Uses collections.abc.Sequence/Mapping
-- Pydantic v2: Uses model_dump() for BaseModel serialization
-- r: Cache operations return r for error handling
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -40,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 
 from pydantic import BaseModel
 
@@ -48,27 +15,7 @@ from flext_core import FlextRuntime, FlextUtilitiesGuardsTypeCore, c, m, p, r, t
 
 
 class FlextUtilitiesCache:
-    """Cache utilities for deterministic normalization and key management.
-
-    Business Rules:
-    ==============
-    This class provides cache-related utilities that ensure:
-
-    1. **Deterministic Behavior**:
-       - Same input always produces same cache key
-       - No dependency on dict iteration order (Python 3.7+ guarantee)
-       - Type-aware sorting for cross-type comparisons
-
-    2. **Type Safety**:
-       - Handles all t.NormalizedValue variants
-       - BaseModel special handling with model_dump()
-       - Graceful fallback to string representation
-
-    3. **Error Handling**:
-       - clear_object_cache returns r (railway pattern)
-       - Other methods are pure functions (no side effects)
-       - No exceptions propagated to callers
-    """
+    """Cache utilities for deterministic normalization and key management."""
 
     @property
     def logger(self) -> p.Logger:
@@ -80,30 +27,6 @@ class FlextUtilitiesCache:
         obj: BaseModel | p.HasModelDump | t.NormalizedValue,
     ) -> r[bool]:
         """Clear cache-like attributes on an t.NormalizedValue.
-
-        Business Rule: Safe Cache Invalidation
-        =====================================
-        This method provides safe cache clearing for objects that may
-        have cached data that needs invalidation.
-
-        Attribute Detection:
-        - Checks FlextConstants.CACHE_ATTRIBUTE_NAMES
-        - Common names: _cache, _cached, cache, cached_data, etc.
-        - Configurable via constants module
-
-        Clearing Strategy:
-        1. Dict-like caches (has .clear() method) → call clear()
-        2. Simple cached values → set to None
-        3. Missing attributes → skip silently
-
-        Error Handling:
-        - Returns r (railway pattern)
-        - ok(True) on success (even if no caches found)
-        - fail(error_msg) on any exception
-
-        Thread Safety:
-        - NOT thread-safe (cache clearing is a mutation)
-        - Caller responsible for synchronization if needed
 
         Args:
             obj: Object with potential cache attributes
@@ -132,26 +55,6 @@ class FlextUtilitiesCache:
     @staticmethod
     def generate_cache_key(*args: t.NormalizedValue, **kwargs: t.Scalar) -> str:
         """Generate a deterministic cache key from arguments.
-
-        Business Rule: SHA-256 Cache Key Generation
-        ==========================================
-        Generates a unique, deterministic cache key from function arguments.
-
-        Algorithm:
-        1. Convert args to string representation
-        2. Sort kwargs items (deterministic order)
-        3. Concatenate both representations
-        4. SHA-256 hash for fixed-length, collision-resistant key
-
-        Properties:
-        - Deterministic: Same args/kwargs → same key
-        - Fixed length: 64 hex characters (256 bits)
-        - Collision-resistant: SHA-256 provides cryptographic security
-        - URL-safe: Hexadecimal characters only
-
-        Limitations:
-        - Objects with non-deterministic __str__ may produce different keys
-        - For complex objects, consider normalizing first
 
         Args:
             *args: Positional arguments to include in key
@@ -188,11 +91,6 @@ class FlextUtilitiesCache:
     ) -> bool:
         """Check if an t.NormalizedValue exposes any known cache-related attributes.
 
-        Business Rule: Cache Detection
-        ==============================
-        Quick check to determine if an t.NormalizedValue might have cached data.
-        Useful for deciding whether to attempt cache clearing.
-
         Args:
             obj: target instance
 
@@ -207,31 +105,7 @@ class FlextUtilitiesCache:
     def normalize_component(
         component: t.ValueOrModel | set[t.NormalizedValue],
     ) -> t.NormalizedValue:
-        """Normalize a component recursively for consistent representation.
-
-        Business Rule: Recursive Component Normalization
-        ================================================
-        Components are normalized to ensure deterministic cache keys
-        and consistent comparison across different representation formats.
-
-        Type Handling Priority (order matters for correct behavior):
-        1. BaseModel → dict (via model_dump(), includes computed fields)
-        2. Mapping/dict-like → dict with normalized values
-        3. Primitives (str, int, float, bool, None) → unchanged
-           Note: str is Sequence, so check primitives BEFORE sequences
-        4. Sets → tuple (for hashability, order may vary)
-        5. Sequences (list, tuple) → list with normalized items
-        6. Other types → str representation (fallback)
-
-        Why Recursion?
-        - Nested structures (dict in dict, list in dict, etc.)
-        - Pydantic models with nested models
-        - Ensures deep normalization for cache key consistency
-
-        Thread Safety:
-        - Pure function (no shared state)
-        - Safe for concurrent calls
-        """
+        """Normalize a component recursively for consistent representation."""
         if isinstance(component, BaseModel):
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
@@ -259,26 +133,6 @@ class FlextUtilitiesCache:
     ) -> t.NormalizedValue:
         """Sort dictionary keys recursively for consistent representations.
 
-        Business Rule: Recursive Key Sorting for Cache Consistency
-        =========================================================
-        Dict keys are sorted to ensure the same data always produces
-        the same cache key, regardless of insertion order.
-
-        None Value Handling:
-        - None values converted to empty dict {} for consistency
-        - This ensures JSON serialization produces predictable output
-        - Empty dict is semantically "no value" in many contexts
-
-        Recursion:
-        - Nested dicts are sorted at all levels
-        - Non-dict values returned unchanged
-        - List items NOT reordered (order may be meaningful)
-
-        Type Safety:
-        - Uses FlextRuntime.is_dict_like for Mapping detection
-        - Returns input unchanged if not dict-like
-        - Preserves t.NormalizedValue contract
-
         Args:
             data: input value
 
@@ -290,7 +144,7 @@ class FlextUtilitiesCache:
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
             data_map = m.Validators.sortable_dict_adapter().validate_python(data)
-            result: Mapping[str, t.NormalizedValue] = {}
+            result: MutableMapping[str, t.NormalizedValue] = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]
                 if value is None:
@@ -308,25 +162,6 @@ class FlextUtilitiesCache:
     @staticmethod
     def sort_key(key: t.SortableObjectType) -> tuple[int, str]:
         """Generate a sort key for deterministic ordering across types.
-
-        Business Rule: Type-Aware Deterministic Sorting
-        ===============================================
-        Python's default sorting fails when mixing types (str vs int).
-        This method provides a deterministic sort key that:
-
-        1. Groups by type (strings first, numbers second, others last)
-        2. Sorts within each group using string representation
-        3. Case-insensitive for strings (prevents 'Z' < 'a' issues)
-
-        Sort Priority:
-        - (0, lower_str) → strings (most common dict keys)
-        - (1, str_num) → numbers (int, float)
-        - (2, str_repr) → other types (fallback)
-
-        Why tuple[int, str]?
-        - First element groups by type (Python compares tuples element-wise)
-        - Second element provides within-group ordering
-        - Deterministic across Python runs
 
         Args:
             key: Sortable t.NormalizedValue (str, int, tuple, etc. - usually dict key)

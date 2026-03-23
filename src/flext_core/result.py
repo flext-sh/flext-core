@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Self, TypeIs, overload, override
 
 from pydantic import BaseModel, PrivateAttr, ValidationError
@@ -164,8 +164,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
     @classmethod
     def accumulate_errors(cls, *results: FlextResult[U]) -> FlextResult[Sequence[U]]:
         """Collect all successes, fail if any failure with all errors combined."""
-        successes: Sequence[U] = []
-        errors: Sequence[str] = []
+        successes: MutableSequence[U] = []
+        errors: MutableSequence[str] = []
         for result in results:
             if result.is_success:
                 successes.append(result.value)
@@ -299,7 +299,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
         """
         if fail_fast:
-            results: Sequence[U] = []
+            results: MutableSequence[U] = []
             for item in items:
                 result = func(item)
                 if result.is_failure:

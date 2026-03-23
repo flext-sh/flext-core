@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, cast
@@ -274,7 +274,7 @@ class UtilitiesMapperCoverage100Namespace:
         def test_convert_to_json_value(self) -> None:
             obj = SimpleObj(name="test", value=1)
             payload: Mapping[str, t.NormalizedValue] = {"obj": obj}
-            res: Mapping[str, t.NormalizedValue] = {}
+            res: MutableMapping[str, t.NormalizedValue] = {}
             for key, val in payload.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -292,7 +292,7 @@ class UtilitiesMapperCoverage100Namespace:
                 "when": now,
             }
 
-            res: Mapping[str, t.NormalizedValue] = {}
+            res: MutableMapping[str, t.NormalizedValue] = {}
             for key, val in payload.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -309,7 +309,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_convert_dict_to_json(self) -> None:
             d: Mapping[str, t.NormalizedValue] = {"a": SimpleObj(name="test", value=1)}
-            res: Mapping[str, t.NormalizedValue] = {}
+            res: MutableMapping[str, t.NormalizedValue] = {}
             for key, val in d.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -321,9 +321,9 @@ class UtilitiesMapperCoverage100Namespace:
             test_list: Sequence[Mapping[str, t.NormalizedValue]] = [
                 {"a": SimpleObj(name="test", value=1)}
             ]
-            res: Sequence[Mapping[str, t.NormalizedValue]] = []
+            res: MutableSequence[Mapping[str, t.NormalizedValue]] = []
             for item in test_list:
-                item_dict: Mapping[str, t.NormalizedValue] = {}
+                item_dict: MutableMapping[str, t.NormalizedValue] = {}
                 for key, val in item.items():
                     if isinstance(val, BaseModel):
                         item_dict[key] = val.model_dump(mode="json")

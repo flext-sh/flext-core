@@ -11,7 +11,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Generator, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from contextlib import contextmanager
 from types import ModuleType
 from typing import (
@@ -38,6 +45,10 @@ from flext_core import (
 )
 
 
+def _new_operation_stats_map() -> MutableMapping[str, t.ConfigMap]:
+    return {}
+
+
 class FlextMixins(m.ArbitraryTypesModel, u):
     """Composable behaviors for dispatcher-driven services and handlers.
 
@@ -45,35 +56,14 @@ class FlextMixins(m.ArbitraryTypesModel, u):
     context management so dispatcher-executed services can stay focused on
     domain work while still emitting `r` outcomes and metrics.
 
-    Properties:
-    - ``container``: Lazy ``FlextContainer`` singleton lookups for DI wiring.
-    - ``logger``: Cached ``FlextLogger`` resolution for structured logs.
-    - ``context``: Per-operation ``FlextContext`` for correlation metadata.
-    - ``config``: Thread-safe ``FlextSettings`` access for runtime settings.
-
-    Key methods:
-    - ``track``: Context manager that records timing/err counts per operation.
-    - ``_with_operation_context`` / ``_clear_operation_context``: Scoped
-      context bindings used by dispatcher pipelines.
-    - Delegated ``u``/``r`` helpers for railway flows.
-
-    Example:
-        class MyService(x):
-            def process(
-                self, data: t.ConfigMap
-            ) -> r[t.ConfigMap]:
-                with self.track("process"):
-                    self.logger.info("Processing", size=len(data))
-                    return u.ok({"status": "processed"})
-
     """
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _operation_stats: Mapping[str, t.ConfigMap] = PrivateAttr(
-        default_factory=Mapping[str, t.ConfigMap],
+    _operation_stats: MutableMapping[str, t.ConfigMap] = PrivateAttr(
+        default_factory=_new_operation_stats_map,
     )
 
-    _logger_cache: ClassVar[Mapping[str, FlextLogger]] = {}
+    _logger_cache: ClassVar[MutableMapping[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
@@ -201,7 +191,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
     def _normalize_log_payload(
         payload: Mapping[str, t.ValueOrModel],
     ) -> Mapping[str, t.Container]:
-        normalized: Mapping[str, t.Container] = {}
+        normalized: MutableMapping[str, t.Container] = {}
         for key, value in payload.items():
             atomic = u.normalize_to_container(value)
             if isinstance(atomic, BaseModel):
@@ -225,7 +215,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         ) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: Mapping[str, t.ValueOrModel] = (
+                metrics_map: MutableMapping[str, t.ValueOrModel] = (
                     {str(k): u.normalize_to_container(v) for k, v in metrics.items()}
                     if hasattr(metrics, "items")
                     else {}
@@ -351,7 +341,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 if options.context is not None:
                     initial_ctx = options.context
                 if options.services is not None:
-                    services_typed: Mapping[str, t.RegisterableService] = {}
+                    services_typed: MutableMapping[str, t.RegisterableService] = {}
                     for key, value in options.services.items():
                         if u.is_registerable_service(value):
                             services_typed[str(key)] = value
@@ -359,8 +349,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 bootstrap_factories = options.factories
                 bootstrap_resources = options.resources
                 if options.wire_modules is not None:
-                    modules_list: Sequence[ModuleType] = []
-                    packages_list: Sequence[str] = []
+                    modules_list: MutableSequence[ModuleType] = []
+                    packages_list: MutableSequence[str] = []
                     for item in options.wire_modules:
                         if isinstance(item, str):
                             packages_list.append(item)
@@ -507,7 +497,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         class MetricsTracker:
             """Tracks handler execution metrics."""
 
-            _metrics: Mapping[str, t.Scalar]
+            _metrics: MutableMapping[str, t.Scalar]
 
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize metrics tracker with empty metrics store."""
@@ -530,7 +520,9 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         class ContextStack:
             """Manages execution context stack."""
 
-            _stack: Sequence[m.ExecutionContext | t.ConfigMap | Mapping[str, t.Scalar]]
+            _stack: MutableSequence[
+                m.ExecutionContext | t.ConfigMap | Mapping[str, t.Scalar]
+            ]
 
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize context stack with empty stack list."""
@@ -634,7 +626,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                         )
                         fail_error_data: Mapping[str, t.Container] | None = {}
                         if validation_result.error_data is not None:
-                            normalized_error_data: Mapping[str, t.Container] = {}
+                            normalized_error_data: MutableMapping[str, t.Container] = {}
                             for key, value in validation_result.error_data.root.items():
                                 normalized = u.normalize_to_container(value)
                                 if isinstance(normalized, BaseModel):

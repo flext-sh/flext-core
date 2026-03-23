@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import cast
 
 import pytest
@@ -51,10 +51,10 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: Mapping[str, t.NormalizedValue] = {}
-            self._when: Mapping[str, t.NormalizedValue] = {}
-            self._then: Mapping[str, t.NormalizedValue] = {}
-            self._tags: Sequence[str] = []
+            self._given: MutableMapping[str, t.NormalizedValue] = {}
+            self._when: MutableMapping[str, t.NormalizedValue] = {}
+            self._then: MutableMapping[str, t.NormalizedValue] = {}
+            self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
         def given(
@@ -188,8 +188,8 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: Mapping[str, t.NormalizedValue] = {}
-            self._validation_rules: Mapping[str, t.NormalizedValue] = {}
+            self._data: MutableMapping[str, t.NormalizedValue] = {}
+            self._validation_rules: MutableMapping[str, t.NormalizedValue] = {}
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_id method.
@@ -282,13 +282,13 @@ class TestAdvancedPatterns:
             """Initialize parameterizedtestbuilder:."""
             super().__init__()
             self.test_name = test_name
-            self._cases: Sequence[m.Core.FixtureCaseDict] = []
-            self._success_cases: Sequence[m.Core.FixtureCaseDict] = []
-            self._failure_cases: Sequence[m.Core.FixtureCaseDict] = []
+            self._cases: MutableSequence[m.Core.FixtureCaseDict] = []
+            self._success_cases: MutableSequence[m.Core.FixtureCaseDict] = []
+            self._failure_cases: MutableSequence[m.Core.FixtureCaseDict] = []
 
         def add_case(
             self,
-            **kwargs: str | int | bool | Sequence[str],
+            **kwargs: str | int | bool | MutableSequence[str],
         ) -> TestAdvancedPatterns.ParameterizedTestBuilder:
             """add_case method.
 
@@ -376,7 +376,7 @@ class TestAdvancedPatterns:
                 | str
                 | tuple[t.NormalizedValue, ...]
             ) = data
-            self._assertions: Sequence[Callable[[], None]] = []
+            self._assertions: MutableSequence[Callable[[], None]] = []
 
         def assert_equals(
             self,
@@ -641,7 +641,7 @@ class TestAdvancedPatterns:
 
     def test_complex_test_data_generation(self) -> None:
         """Test complex test data generation."""
-        scenarios: Sequence[TestAdvancedPatterns.MockScenario] = []
+        scenarios: MutableSequence[TestAdvancedPatterns.MockScenario] = []
         for i in range(3):
             scenario = (
                 self

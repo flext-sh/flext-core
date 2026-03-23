@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 
 import pytest
 from flext_tests import t
@@ -31,7 +31,7 @@ class TestPatternsLogging:
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: Mapping[str, t.NormalizedValue] = {}
+        context: MutableMapping[str, t.NormalizedValue] = {}
         assert isinstance(context, dict)
         if len(context) != 0:
             msg = f"Expected {0}, got {len(context)}"

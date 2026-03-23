@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, Self, override
@@ -339,7 +339,7 @@ class FlextModelFoundation:
             except (TypeError, ValueError) as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out: Mapping[str, t.Container] = {}
+            out: MutableMapping[str, t.Container] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -357,7 +357,7 @@ class FlextModelFoundation:
             except (TypeError, ValueError) as exc:
                 msg = "Tags must be a list"
                 raise TypeError(msg) from exc
-            normalized: Sequence[str] = []
+            normalized: MutableSequence[str] = []
             seen: set[str] = set()
             for tag in raw_tags:
                 try:

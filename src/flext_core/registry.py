@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
@@ -50,8 +50,8 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: Sequence[m.RegistrationDetails] = Field(
-            default_factory=lambda: Sequence[m.RegistrationDetails](),
+        registered: MutableSequence[m.RegistrationDetails] = Field(
+            default_factory=list,
             description="Successfully registered handlers with registration details.",
         )
         skipped: Sequence[str] = Field(
@@ -59,7 +59,7 @@ class FlextRegistry(s[bool]):
             description="Handler identifiers that were skipped (already registered)",
             examples=[["CreateUserCommand", "UpdateUserCommand"]],
         )
-        errors: Sequence[str] = Field(
+        errors: MutableSequence[str] = Field(
             default_factory=list,
             description="Error messages for failed registrations",
             examples=[["Handler validation failed", "Duplicate registration"]],
@@ -87,7 +87,7 @@ class FlextRegistry(s[bool]):
 
     _dispatcher: p.Dispatcher | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
-    _class_plugin_storage: ClassVar[Mapping[str, t.RegistrablePlugin]] = {}
+    _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
     dispatcher: Annotated[p.Dispatcher | None, Field(default=None, exclude=True)] = None
@@ -296,7 +296,7 @@ class FlextRegistry(s[bool]):
                 raw_metadata = metadata.attributes
             else:
                 raw_metadata = metadata.root
-            normalized_root: Mapping[str, t.ValueOrModel] = {}
+            normalized_root: MutableMapping[str, t.ValueOrModel] = {}
             for k, v in raw_metadata.items():
                 if isinstance(v, (*t.CONTAINER_TYPES, BaseModel)):
                     normalized_root[k] = v

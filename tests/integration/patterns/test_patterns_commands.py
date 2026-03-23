@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import Annotated, cast, override
 
 from flext_tests import t
@@ -98,13 +98,14 @@ class TestPatternsCommands:
     class CreateUserCommandHandler(
         FlextHandlers[
             "TestPatternsCommands.CreateUserCommand",
-            Mapping[str, t.NormalizedValue],
+            MutableMapping[str, t.NormalizedValue],
         ]
     ):
         """Test handler for CreateUserCommand."""
 
         created_users: Annotated[
-            Sequence[Mapping[str, t.NormalizedValue]], Field(default_factory=list)
+            MutableSequence[Mapping[str, t.NormalizedValue]],
+            Field(default_factory=list),
         ]
 
         def __init__(self) -> None:
@@ -143,27 +144,27 @@ class TestPatternsCommands:
         def handle(
             self,
             message: TestPatternsCommands.CreateUserCommand,
-        ) -> r[Mapping[str, t.NormalizedValue]]:
+        ) -> r[MutableMapping[str, t.NormalizedValue]]:
             """Handle the create user command."""
-            user_data: Mapping[str, t.NormalizedValue] = {
+            user_data: MutableMapping[str, t.NormalizedValue] = {
                 "id": f"user_{len(self.created_users) + 1}",
                 "username": message.username,
                 "email": message.email,
             }
-            self.created_users.append(user_data)
-            return r[Mapping[str, t.NormalizedValue]].ok(user_data)
+            self.created_users.append(dict(user_data))
+            return r[MutableMapping[str, t.NormalizedValue]].ok(user_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.CreateUserCommand,
-        ) -> r[Mapping[str, t.NormalizedValue]]:
+        ) -> r[MutableMapping[str, t.NormalizedValue]]:
             """Handle the create user command (alias for handle)."""
             return self.handle(command)
 
     class UpdateUserCommandHandler(
         FlextHandlers[
             "TestPatternsCommands.UpdateUserCommand",
-            Mapping[str, t.NormalizedValue],
+            MutableMapping[str, t.NormalizedValue],
         ]
     ):
         """Test handler for UpdateUserCommand."""
@@ -177,7 +178,7 @@ class TestPatternsCommands:
                 handler_mode=FlextConstants.HandlerType.COMMAND,
             )
             super().__init__(config=config)
-            self.updated_users: Mapping[str, t.NormalizedValue] = {}
+            self.updated_users: MutableMapping[str, t.NormalizedValue] = {}
 
         def get_command_type(self) -> str:
             """Get command type this handler processes."""
@@ -205,23 +206,23 @@ class TestPatternsCommands:
         def handle(
             self,
             message: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[Mapping[str, t.NormalizedValue]]:
+        ) -> r[MutableMapping[str, t.NormalizedValue]]:
             """Handle the update user command."""
             if message.target_user_id not in self.updated_users:
                 self.updated_users[message.target_user_id] = {}
             user_updates = self.updated_users[message.target_user_id]
             if isinstance(user_updates, dict):
                 user_updates.update(message.updates)
-            result_data: Mapping[str, t.NormalizedValue] = {
+            result_data: MutableMapping[str, t.NormalizedValue] = {
                 "target_user_id": message.target_user_id,
                 "updated_fields": list(message.updates.keys()),
             }
-            return r[Mapping[str, t.NormalizedValue]].ok(result_data)
+            return r[MutableMapping[str, t.NormalizedValue]].ok(result_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[Mapping[str, t.NormalizedValue]]:
+        ) -> r[MutableMapping[str, t.NormalizedValue]]:
             """Handle the update user command (alias for handle)."""
             return self.handle(command)
 
@@ -409,7 +410,7 @@ class TestPatternsCommands:
         """Test can_handle with wrong command type."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            Mapping[str, t.NormalizedValue],
+            MutableMapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         if handler.can_handle(self.UpdateUserCommand):
             msg = f"Expected False, got {handler.can_handle(self.UpdateUserCommand)}"
@@ -419,7 +420,7 @@ class TestPatternsCommands:
         """Test can_handle with non-command t.NormalizedValue."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            Mapping[str, t.NormalizedValue],
+            MutableMapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         if handler.can_handle(str):
             msg = f"Expected False, got {handler.can_handle(str)}"
@@ -429,7 +430,7 @@ class TestPatternsCommands:
         """Test successful command handling."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            Mapping[str, t.NormalizedValue],
+            MutableMapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         command = self._create_user_command(
             username="john",
@@ -467,7 +468,7 @@ class TestPatternsCommands:
         """Test processing with command validation failure."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            Mapping[str, t.NormalizedValue],
+            MutableMapping[str, t.NormalizedValue],
         ] = self.CreateUserCommandHandler()
         command = self._create_user_command(username="", email="invalid")
         result = handler.execute(command)

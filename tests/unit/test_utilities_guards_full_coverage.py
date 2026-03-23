@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import builtins
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence
 from datetime import UTC, datetime
 from typing import cast
 
@@ -112,12 +112,10 @@ def test_non_empty_and_normalize_branches() -> None:
     dict_scalar_out = u.normalize_to_metadata({"k": 1})
     tm.that(dict_scalar_out == {"k": 1}, eq=True)
     dict_complex_out = u.normalize_to_metadata(
-        cast("t.NormalizedValue", {"k": t.NormalizedValue()})
+        cast("t.NormalizedValue", {"k": "normalized"})
     )
     tm.that(isinstance(dict_complex_out, dict) and "k" in dict_complex_out, eq=True)
-    list_out = u.normalize_to_metadata(
-        cast("t.NormalizedValue", [1, t.NormalizedValue()])
-    )
+    list_out = u.normalize_to_metadata(cast("t.NormalizedValue", [1, "normalized"]))
     tm.that(isinstance(list_out, list), eq=True)
     assert isinstance(list_out, list)
     tm.that(list_out[0] == 1, eq=True)
@@ -153,7 +151,7 @@ def test_is_flexible_value_covers_all_branches() -> None:
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
-    plain_obj: t.NormalizedValue = cast("t.NormalizedValue", t.NormalizedValue())
+    plain_obj: t.NormalizedValue = cast("t.NormalizedValue", "normalized")
     tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "container"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "command_bus"), eq=True)
@@ -212,7 +210,7 @@ def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
 
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
-    plain_obj: t.NormalizedValue = cast("t.NormalizedValue", t.NormalizedValue())
+    plain_obj: t.NormalizedValue = cast("t.NormalizedValue", "normalized")
     tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "context"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "handler"), eq=True)
@@ -275,9 +273,9 @@ def test_chk_exercises_missed_branches() -> None:
     tm.that(not u.chk(None, **core_m.GuardCheckSpec(none=False).model_dump()), eq=True)
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(is_=int).model_dump()), eq=True)
     with pytest.raises(ValidationError):
-        u.chk("a", is_=cast("t.NormalizedValue", Sequence[int]))
+        u.chk("a", is_=cast("t.NormalizedValue", MutableSequence[int]))
     with pytest.raises(ValidationError):
-        u.chk("a", not_=cast("t.NormalizedValue", Sequence[int]))
+        u.chk("a", not_=cast("t.NormalizedValue", MutableSequence[int]))
     tm.that(not u.chk("a", **core_m.GuardCheckSpec(not_=str).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(eq=2).model_dump()), eq=True)
     tm.that(not u.chk(1, **core_m.GuardCheckSpec(ne=1).model_dump()), eq=True)

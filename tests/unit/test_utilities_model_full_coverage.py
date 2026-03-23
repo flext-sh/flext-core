@@ -28,7 +28,7 @@ def test_merge_defaults_and_dump_paths() -> None:
 
 def test_update_exception_path() -> None:
     result = u.update(
-        cast("TestUnitModels._BadCopyModel", cast("BaseModel", t.NormalizedValue())),
+        cast("TestUnitModels._BadCopyModel", cast("BaseModel", "normalized")),
         x=5,
     )
     assert result.is_failure

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from types import ModuleType
 from typing import ClassVar, Self, cast
 
@@ -75,7 +75,7 @@ class TestContainerFullCoverage:
 
         def merge(
             self,
-            other: p.Context | t.ConfigMap | Mapping[str, t.NormalizedValue],
+            other: p.Context | t.ConfigMap | MutableMapping[str, t.NormalizedValue],
         ) -> _ContextNoClone:
             return self
 
@@ -88,7 +88,7 @@ class TestContainerFullCoverage:
             include_statistics: bool = False,
             include_metadata: bool = False,
             as_dict: bool = True,
-        ) -> BaseModel | Mapping[str, t.NormalizedValue]:
+        ) -> BaseModel | MutableMapping[str, t.NormalizedValue]:
             _ = include_statistics
             _ = include_metadata
             _ = as_dict
@@ -169,7 +169,7 @@ class TestContainerFullCoverage:
         self, monkeypatch: _MonkeyPatch
     ) -> None:
         container = FlextContainer.create()
-        called: Sequence[str] = []
+        called: MutableSequence[str] = []
 
         def factory() -> int:
             return 1
@@ -292,9 +292,9 @@ class TestContainerFullCoverage:
         }
         c._factories = {"fac": m.FactoryRegistration(name="fac", factory=lambda: "v")}
         c._resources = {"res": m.ResourceRegistration(name="res", factory=lambda: "v")}
-        setattr(c._di_services, "svc", t.NormalizedValue())
-        setattr(c._di_services, "fac", t.NormalizedValue())
-        setattr(c._di_resources, "res", t.NormalizedValue())
+        setattr(c._di_services, "svc", "normalized")
+        setattr(c._di_services, "fac", "normalized")
+        setattr(c._di_resources, "res", "normalized")
         c.register_existing_providers()
         c._config = _FalseConfig()
         c._context = None
@@ -327,7 +327,7 @@ class TestContainerFullCoverage:
             _raise_register_factory,
         )
         c.register("x2", lambda: "v", kind="factory")
-        setattr(c._di_resources, "dup", t.NormalizedValue())
+        setattr(c._di_resources, "dup", "normalized")
         c.register("dup", lambda: "v", kind="resource")
         del c._di_resources.dup
         monkeypatch.setattr(
@@ -395,7 +395,7 @@ class TestContainerFullCoverage:
         )
         c._config = FlextSettings(app_name="base")
         c._context = FlextContext()
-        captured: Mapping[str, t.NormalizedValue] = {}
+        captured: MutableMapping[str, t.NormalizedValue] = {}
 
         def _fake_create_scoped_instance(
             *, registration: m.ServiceRegistrationSpec, **kwargs: t.NormalizedValue
@@ -420,7 +420,7 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: _MonkeyPatch,
     ) -> None:
-        captured: Mapping[str, Callable[..., t.NormalizedValue]] = {}
+        captured: MutableMapping[str, Callable[..., t.NormalizedValue]] = {}
 
         def factory_fn() -> int:
             return 7
@@ -514,7 +514,7 @@ class TestContainerFullCoverage:
                 max_factories=10,
             )
             c._user_overrides = t.ConfigMap(root={})
-            registered: Mapping[str, Callable[..., t.NormalizedValue]] = {}
+            registered: MutableMapping[str, Callable[..., t.NormalizedValue]] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _register(
@@ -684,7 +684,7 @@ class TestContainerFullCoverage:
                 }
 
             c._config = _CfgFallback()
-            captured: Mapping[str, Callable[..., t.NormalizedValue]] = {}
+            captured: MutableMapping[str, Callable[..., t.NormalizedValue]] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _capture_register(
@@ -742,7 +742,7 @@ class TestContainerFullCoverage:
                 ),
             }
             tm.fail(c2.get("svc-int", type_cls=int))
-            executed: Sequence[str] = []
+            executed: MutableSequence[str] = []
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _track_register(

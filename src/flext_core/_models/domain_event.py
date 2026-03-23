@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from datetime import datetime
 from typing import Annotated, override
 
@@ -68,7 +68,7 @@ class FlextModelsDomainEvent:
         if isinstance(item, datetime):
             return item
         if isinstance(item, Mapping):
-            normalized_map: Mapping[str, t.NormalizedValue] = {}
+            normalized_map: MutableMapping[str, t.NormalizedValue] = {}
             for key, value in item.items():
                 normalized_map[str(key)] = (
                     FlextModelsDomainEvent.metadata_to_normalized(

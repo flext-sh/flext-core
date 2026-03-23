@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import cast
 
 from flext_tests import t, tm
@@ -74,10 +74,10 @@ def test_recover_tap_and_tap_error_paths() -> None:
     recovered: r[int] = failed_for_recover.recover(lambda _e: 42)
     tm.ok(recovered)
     tm.that(recovered.value, eq=42)
-    seen: Sequence[int] = []
+    seen: MutableSequence[int] = []
     _ = r[int].ok(7).tap(lambda v: seen.append(v))
     tm.that(seen, eq=[7])
-    err_seen: Sequence[str] = []
+    err_seen: MutableSequence[str] = []
     _ = r[int].fail("boom").tap_error(lambda e: err_seen.append(e))
     tm.that(err_seen, eq=["boom"])
 

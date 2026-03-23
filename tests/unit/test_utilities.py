@@ -77,13 +77,12 @@ class Testu(TextUtilityContract):
             (20, 20),
             (None, c.SHORT_UUID_LENGTH),
         ]
-        TEXT_CLEAN_CASES: ClassVar[Sequence[tuple[str, str]]] = (
+        TEXT_CLEAN_CASES: ClassVar[Sequence[tuple[str, str]]] = list(
             TextUtilityContract.CLEAN_TEXT_CASES
-            + [
-                ("a    b    c", "a b c"),
-                ("  Test  Text  ", "Test Text"),
-            ]
-        )
+        ) + [
+            ("a    b    c", "a b c"),
+            ("  Test  Text  ", "Test Text"),
+        ]
         TEXT_TRUNCATE_CASES: ClassVar[Sequence[tuple[str, int, bool]]] = [
             ("VeryLongText", 5, True),
             ("Hi", 10, False),

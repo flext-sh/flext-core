@@ -18,17 +18,7 @@ from flext_core import m, r, t
 
 
 class FlextUtilitiesConversion:
-    """Utilities for value conversion operations.
-
-    PHILOSOPHY:
-    ──────────
-    - Type-safe conversion with multiple modes
-    - String conversion with defaults
-    - List conversion with filtering
-    - String normalization with case handling
-    - String joining with separators
-    - Reuses base types from flext_core and constants from flext_core.constants
-    """
+    """Utilities for value conversion operations."""
 
     _V = m.Validators
 

@@ -13,7 +13,14 @@ from __future__ import annotations
 
 import contextvars
 import time
-from collections.abc import Callable, Generator, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Final, Self, overload, override
@@ -49,7 +56,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if isinstance(value, BaseModel):
             raw = value.model_dump()
-            result: Mapping[str, t.NormalizedValue] = {}
+            result: MutableMapping[str, t.NormalizedValue] = {}
             for k, v in raw.items():
                 container_val = u.normalize_to_container(v)
                 if isinstance(container_val, BaseModel):
@@ -92,7 +99,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return {}
 
         try:
-            normalized: Mapping[str, t.NormalizedValue] = {}
+            normalized: MutableMapping[str, t.NormalizedValue] = {}
             mapping_value: Mapping[str, t.NormalizedValue | BaseModel] = dict(
                 payload.items(),
             )
@@ -130,7 +137,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
     _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
-    _scope_vars: Mapping[str, contextvars.ContextVar[t.ConfigMap | None]] = (
+    _scope_vars: MutableMapping[str, contextvars.ContextVar[t.ConfigMap | None]] = (
         PrivateAttr()
     )
 
@@ -397,7 +404,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             metadata_dict_export = self._get_all_metadata()
         metadata_for_model: t.ConfigMap | None = None
         if metadata_dict_export:
-            normalized_metadata_map: Mapping[str, t.ValueOrModel] = {}
+            normalized_metadata_map: MutableMapping[str, t.ValueOrModel] = {}
             for k, v in metadata_dict_export.items():
                 metadata_value: t.ValueOrModel = v
                 if isinstance(v, Mapping):
@@ -412,7 +419,9 @@ class FlextContext(m.ArbitraryTypesModel, u):
             root=dict((stats_dict_export or t.ConfigMap(root={})).items()),
         )
         if as_dict:
-            result_dict: Mapping[str, t.NormalizedValue] = dict(all_scopes.items())
+            result_dict: MutableMapping[str, t.NormalizedValue] = dict(
+                all_scopes.items()
+            )
             if include_statistics and stats_dict_export:
                 stats_items: Mapping[str, t.NormalizedValue] = {
                     sk: FlextContext._to_normalized(sv)
@@ -574,7 +583,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return []
-        all_items: Sequence[tuple[str, t.NormalizedValue]] = []
+        all_items: MutableSequence[tuple[str, t.NormalizedValue]] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_items.extend(scope_dict.items())
@@ -805,7 +814,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return []
-        all_values: Sequence[t.NormalizedValue] = []
+        all_values: MutableSequence[t.NormalizedValue] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
@@ -849,7 +858,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         data = dict(self._metadata.model_dump().items())
         custom_fields_raw = data.pop("custom_fields", {})
-        custom_fields_dict: Mapping[str, t.NormalizedValue] = {}
+        custom_fields_dict: MutableMapping[str, t.NormalizedValue] = {}
         try:
             cf_map = t.ConfigMap(root=dict(custom_fields_raw.items()))
             for ck, cv in cf_map.items():
@@ -860,7 +869,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 exc_info=exc,
             )
             custom_fields_dict = {}
-        result: Mapping[str, t.NormalizedValue] = {}
+        result: MutableMapping[str, t.NormalizedValue] = {}
         for k, v in data.items():
             if v is None or v == {}:
                 continue
@@ -886,7 +895,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return {}
-        scopes: Mapping[str, Mapping[str, t.NormalizedValue]] = {}
+        scopes: MutableMapping[str, Mapping[str, t.NormalizedValue]] = {}
         for scope_name, ctx_var in self._scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
@@ -1007,7 +1016,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
         """
         counter_attr: str = f"{operation}s"
-        update_fields: Mapping[str, t.ValueOrModel] = {}
+        update_fields: MutableMapping[str, t.ValueOrModel] = {}
         if counter_attr in m.ContextStatistics.model_fields:
             current_value = getattr(self._statistics, counter_attr, 0)
             if isinstance(current_value, int):

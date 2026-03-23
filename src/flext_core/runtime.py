@@ -7,33 +7,6 @@ expose external library APIs to higher-level modules, maintaining proper depende
 hierarchy while eliminating code duplication. Implements structural typing via
 p (duck typing - no inheritance required).
 
-**Protocol Compliance** (Structural Typing):
-FlextRuntime provides utility methods without requiring protocol compliance.
-It serves as a bridge to external libraries (structlog, dependency-injector)
-and provides type guards and serialization utilities.
-
-**Core Components** (8 functional categories):
-1. **Type Guard Utilities** - Pattern-based type validation (email, URL, phone, UUID, path, JSON)
-2. **Serialization Utilities** - Safe t.NormalizedValue-to-dict conversion without circular imports
-3. **Type Introspection** - Optional type checking, generic arg extraction
-4. **Sequence Type Checking** - Sequence type validation via typing module
-5. **External Library Access** - Direct access to structlog, dependency-injector
-6. **Structured Logging Configuration** - FLEXT-configured structlog setup
-7. **Application Integration** - Optional integration helpers for service layer
-8. **Context Correlation** - Service resolution and domain event tracking
-
-**External Library Integration** (Zero Circular Dependency Risk):
-- structlog: Advanced structured logging configuration
-- dependency-injector: Containers and providers for DI integration
-- NO imports from higher layers (result.py, container.py, etc.)
-- Pure Layer 0.5 implementation - safe from circular imports
-
-**Usage** (simple runtime aliases only; no alias registry):
-- Package __init__: c = c, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases.
-- Facades (e.g. FlextUtilities) expose staticmethod aliases from external subclasses so call sites get one flat namespace (u.foo, u.bar), no subdivision (no u.foo).
-- At call sites use project namespace only: c, m, r, t, u, p, d, e, h, s, x from project __init__. Subprojects: access only via that project's namespace; no cross-project alias subdivision. MRO protocol only; direct methods.
-- Runtime helpers via x (e.g. x.create_instance, x.is_dict_like).
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -56,6 +29,8 @@ import uuid
 from collections.abc import (
     Callable,
     Mapping,
+    MutableMapping,
+    MutableSequence,
     Sequence,
 )
 from datetime import UTC, datetime
@@ -98,71 +73,6 @@ class FlextRuntime:
     external library APIs to higher-level modules, maintaining proper dependency
     hierarchy while eliminating code duplication. Implements structural typing via
     p (duck typing through method signatures, no inheritance required).
-
-    **Architecture** (Layer 0.5 - Integration Bridge):
-    FlextRuntime provides utility methods without requiring protocol compliance.
-    It serves as a bridge to external libraries (structlog, dependency-injector)
-    and provides type guards and serialization utilities following stdlib patterns.
-
-    **Type Guard Utilities** (5+ pattern-based validators):
-    1. **is_valid_phone()** - International phone number validation
-    2. **is_valid_json()** - JSON string validation via TypeAdapter
-    3. **is_valid_identifier()** - Python identifier validation
-    4. **is_dict_like()** / **is_list_like()** - Collection type checking
-
-    **Serialization Utilities** (Safe multi-strategy conversion):
-       - Strategy 1: Pydantic v2 model_dump()
-       - Strategy 2: Legacy Pydantic dict()
-       - Strategy 3: Object __dict__ attribute
-       - Strategy 4: Direct dict detection
-    2. **safe_get_attribute()** - Safe attribute access without AttributeError
-    3. All strategies fail gracefully with logging, never raise exceptions
-
-    **Type Introspection** (Typing module utilities):
-    2. **extract_generic_args()** - Extract type arguments from generics
-    3. **is_sequence_type()** - Detect sequence types via collections.abc
-
-    **External Library Access** (Direct module access):
-    1. **structlog()** - Return imported structlog module
-    2. **dependency_providers()** - Return dependency-injector providers
-    3. **dependency_containers()** - Return dependency-injector containers
-
-    **Structured Logging Configuration**:
-    - **configure_structlog()** - One-time configuration with FLEXT defaults
-    - **level_based_context_filter()** - Processor for log-level-specific context
-    - Supports console and JSON rendering modes
-    - Custom processor chain support
-
-    **Application Integration** (Nested class):
-    FlextRuntime.Integration provides optional helpers for service layer:
-    1. **track_service_resolution()** - Service resolution tracking
-    2. **track_domain_event()** - Domain event emission with correlation
-
-    **Core Features** (10 runtime capabilities):
-    1. **Type Safety** - TypeIs utilities for pattern validation
-    2. **Serialization** - Multi-strategy safe t.NormalizedValue conversion
-    3. **Type Introspection** - Generic type analysis
-    4. **External Libraries** - structlog and dependency-injector adapters
-    5. **Structured Logging** - Production-ready logging configuration
-    6. **Context Correlation** - UUID4-based correlation ID generation
-    7. **Level-Based Filtering** - Log-level-specific context management
-    8. **Service Integration** - Optional application-layer helpers
-    9. **Domain Events** - Event tracking with correlation
-    10. **Zero Circular Imports** - Foundation + bridge layers only
-
-
-    **Usage** (simple runtime aliases only; no alias registry):
-    - Package __init__: c = c, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases or any registry.
-    - Facades use staticmethod aliases from external subclasses so one flat namespace (no u.foo); subprojects use project namespace only (from flext_cli import m, x; m.Foo, m.Bar).
-    - At call sites use runtime aliases from project __init__: c, m, r, t, u, p, d, e, h, s, x. Access via project runtime alias only; no subdivision. MRO only; direct methods. Examples: x.create_instance(MyClass), r[T].ok(value).
-
-    **Design Principles**:
-    - Circular import prevention through foundation + bridge layers only
-    - No imports from higher layers (result.py, container.py, context.py, loggings.py)
-    - Direct structlog usage as single source of truth for context
-    - Safe strategies for all risky operations (serialization)
-    - Opt-in integration helpers (not forced on all modules)
-    - Pattern-based validation using c (single source of truth)
     """
 
     _structlog_configured: ClassVar[bool] = False
@@ -668,7 +578,7 @@ class FlextRuntime:
             return str(value)
 
         if FlextRuntime.is_dict_like(val):
-            normalized_dict: Mapping[str, t.ValueOrModel] = {}
+            normalized_dict: MutableMapping[str, t.ValueOrModel] = {}
             if isinstance(val, t.ConfigMap):
                 for key, item in val.root.items():
                     normalized_item = FlextRuntime.normalize_to_container(item)
@@ -680,7 +590,7 @@ class FlextRuntime:
                     normalized_dict[str(key)] = _to_plain_container(normalized_item)
             return t.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            normalized_list: Sequence[t.Container] = []
+            normalized_list: MutableSequence[t.Container] = []
             for v in val:
                 normalized_item = FlextRuntime.normalize_to_container(v)
                 if isinstance(normalized_item, (str, int, float, bool, datetime, Path)):
@@ -718,7 +628,7 @@ class FlextRuntime:
         if isinstance(val, BaseModel):
             return val.model_dump_json()
         if FlextRuntime.is_dict_like(val):
-            normalized: Mapping[str, t.Scalar | Sequence[t.Scalar]] = {}
+            normalized: MutableMapping[str, t.Scalar | Sequence[t.Scalar]] = {}
             for k, v in val.items():
                 str_k = str(k)
                 if v is None:
@@ -734,7 +644,7 @@ class FlextRuntime:
                         FlextRuntime._normalize_to_metadata_scalar(item) for item in v
                     ]
                 elif FlextRuntime.is_dict_like(v):
-                    inner: Mapping[str, t.Primitives] = {}
+                    inner: MutableMapping[str, t.Primitives] = {}
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
                     normalized[str_k] = (
@@ -1065,7 +975,7 @@ class FlextRuntime:
             For now, we pass None for packages when it's a Sequence[str] to avoid type errors.
             The actual wiring will be handled by modules parameter.
             """
-            modules_to_wire: Sequence[ModuleType] = list(modules or [])
+            modules_to_wire: MutableSequence[ModuleType] = list(modules or [])
             if classes:
                 for target_class in classes:
                     module = inspect.getmodule(target_class)
@@ -1143,7 +1053,7 @@ class FlextRuntime:
             return
         level_to_use = log_level if log_level is not None else logging.INFO
         module = structlog
-        processors: Sequence[structlog.types.Processor] = [
+        processors: MutableSequence[structlog.types.Processor] = [
             module.contextvars.merge_contextvars,
             add_log_level,
             cls.level_based_context_filter,
@@ -1313,7 +1223,7 @@ class FlextRuntime:
             "critical": 50,
         }
         current_level = level_hierarchy.get(method_name.lower(), 20)
-        filtered_dict: Mapping[str, t.Scalar] = {}
+        filtered_dict: MutableMapping[str, t.Scalar] = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
                 parts = key.split("_", c.LEVEL_PREFIX_PARTS_COUNT)
@@ -1500,7 +1410,7 @@ class FlextRuntime:
             context_dict.update(context.model_dump())
         else:
             context_dict = t.ConfigMap(root={})
-        result: Mapping[str, str] = {}
+        result: MutableMapping[str, str] = {}
         for key, value in context_dict.items():
             result[key] = str(value)
         if "trace_id" not in result:
@@ -1640,7 +1550,7 @@ class FlextRuntime:
         """
         min_val = min_code if min_code is not None else c.HTTP_STATUS_MIN
         max_val = max_code if max_code is not None else c.HTTP_STATUS_MAX
-        validated_codes: Sequence[int] = []
+        validated_codes: MutableSequence[int] = []
         for code in codes:
             try:
                 code_int = int(str(code))

@@ -5,17 +5,13 @@ queries, and domain events. It favors structural typing over inheritance,
 ensures validation and execution steps return ``r`` rather than
 raising, and keeps handler metadata ready for registry/dispatcher discovery.
 
-# CQRS utilities: FlextMixins.CQRS provides MetricsTracker and ContextStack for
-# optional use in subclasses. FlextHandlers implements metrics and context tracking
-# directly as the canonical pattern for handler base class.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from types import ModuleType
 from typing import ClassVar, Unpack, override
 
@@ -32,47 +28,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     through duck typing (no inheritance required). This class serves as the foundation
     for implementing command, query, and event handlers with comprehensive validation,
     execution pipelines, metrics collection, and configuration management.
-
-    Core Features:
-    - Abstract base class for command/query/event handlers using generics
-    - Railway-oriented programming with r for error handling
-    - Message validation pipeline with extensible validation methods
-    - Type checking for message compatibility using duck typing
-    - Execution context management with tracing and correlation IDs
-    - Callable interface for seamless integration with dispatchers
-    - Configuration-driven behavior through FlextConstants
-
-    Architecture:
-    - Single class with nested type definitions and validation logic
-    - DRY principle applied through shared validation methods
-    - SOLID principles: Open/Closed for extensibility, Single Responsibility for focused methods
-    - Railway pattern for error handling without exceptions
-    - Structural typing for protocol compliance without inheritance
-
-    Type Parameters:
-    - MessageT_contra: Contravariant message type (commands, queries, events)
-    - ResultT: Covariant result type returned by handler execution
-
-    Example Usage:
-        >>> from flext_core import h
-        >>> from flext_core import r
-        >>>
-        >>> class UserCommand:
-        ...     user_id: str
-        ...     action: str
-        >>>
-        >>> class UserHandler(FlextHandlers[UserCommand, bool]):
-        ...     def handle(self, message: UserCommand) -> r[bool]:
-        ...         # Implement command handling logic
-        ...         return r[bool].ok(True)
-        ...
-        ...     def validate(
-        ...         self, data: t.Scalar | BaseModel | Sequence[t.Scalar]
-        ...     ) -> r[bool]:
-        ...         # Custom validation logic
-        ...         if not isinstance(data, UserCommand):
-        ...             return r[bool].fail("Invalid message type")
-        ...         return r[bool].ok(True)
     """
 
     _expected_message_type: ClassVar[type | None] = None
@@ -122,8 +77,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         self._accepted_message_types: Sequence[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._metrics: Mapping[str, t.MetadataAttributeValue] = {}
-        self._stack: Sequence[m.ExecutionContext | t.ConfigMap] = []
+        self._metrics: MutableMapping[str, t.MetadataAttributeValue] = {}
+        self._stack: MutableSequence[m.ExecutionContext | t.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless dispatcher integration."""
@@ -685,7 +640,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     print(f"{method_name}: {config.command.__name__}")
 
             """
-            handlers: Sequence[tuple[str, m.DecoratorConfig]] = []
+            handlers: MutableSequence[tuple[str, m.DecoratorConfig]] = []
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
                 if hasattr(method, c.HANDLER_ATTR):
@@ -717,7 +672,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     print(f"{func_name}: {config.command.__name__}")
 
             """
-            handlers: Sequence[
+            handlers: MutableSequence[
                 tuple[
                     str,
                     Callable[..., t.Scalar | None],

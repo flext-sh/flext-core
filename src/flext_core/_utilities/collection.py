@@ -10,7 +10,14 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import Callable, Hashable, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Hashable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from datetime import datetime
 from enum import StrEnum
 from itertools import batched, chain
@@ -33,7 +40,7 @@ class FlextUtilitiesCollection:
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
-            normalized_list: Sequence[t.NormalizedValue] = []
+            normalized_list: MutableSequence[t.NormalizedValue] = []
             for item in validated:
                 if FlextUtilitiesGuardsTypeCore.is_scalar(item):
                     normalized_list.append(item)
@@ -41,7 +48,7 @@ class FlextUtilitiesCollection:
                     normalized_list.append(str(item))
             return normalized_list
         if isinstance(validated, dict):
-            normalized_dict: Mapping[str, t.NormalizedValue] = {}
+            normalized_dict: MutableMapping[str, t.NormalizedValue] = {}
             for dict_key, dict_val in validated.items():
                 if FlextUtilitiesGuardsTypeCore.is_scalar(dict_val):
                     normalized_dict[dict_key] = dict_val
@@ -109,7 +116,7 @@ class FlextUtilitiesCollection:
             ]
             return normalized_items
         if isinstance(validated, dict):
-            normalized_dict: Mapping[str, t.NormalizedValue] = {}
+            normalized_dict: MutableMapping[str, t.NormalizedValue] = {}
             for dict_key, dict_value in validated.items():
                 normalized_dict[str(dict_key)] = (
                     FlextUtilitiesCollection._normalize_unknown_value(dict_value)
@@ -241,8 +248,8 @@ class FlextUtilitiesCollection:
         pre_validate = resolved_spec.pre_validate
         do_flatten = resolved_spec.flatten
         error_mode = resolved_spec.on_error or "fail"
-        results: Sequence[t.NormalizedValue] = []
-        errors: Sequence[tuple[int, str]] = []
+        results: MutableSequence[t.NormalizedValue] = []
+        errors: MutableSequence[tuple[int, str]] = []
         total = len(items)
         for processed, item in enumerate(items, 1):
             item_typed: T = item
@@ -439,11 +446,11 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[Mapping[str, t.NormalizedValue]], Mapping[str, E]]:
+    ) -> Callable[[MutableMapping[str, t.NormalizedValue]], Mapping[str, E]]:
         """Create validator that coerces dict values to a StrEnum type."""
 
         def validator(data: Mapping[str, t.NormalizedValue]) -> Mapping[str, E]:
-            result: Mapping[str, E] = {}
+            result: MutableMapping[str, E] = {}
             for k, v in data.items():
                 if isinstance(v, enum_type):
                     result[k] = v
@@ -478,7 +485,7 @@ class FlextUtilitiesCollection:
                 msg = f"Expected dict, got {data.__class__.__name__}"
                 raise TypeError(msg)
             normalized_map = normalized_map_result.value
-            result: Mapping[str, E] = {}
+            result: MutableMapping[str, E] = {}
             for k, v_raw in normalized_map.items():
                 if isinstance(v_raw, enum_cls):
                     result[k] = v_raw
@@ -523,7 +530,7 @@ class FlextUtilitiesCollection:
         """Create validator that coerces sequence values to a StrEnum type."""
 
         def validator(data: Sequence[t.NormalizedValue]) -> Sequence[E]:
-            result: Sequence[E] = []
+            result: MutableSequence[E] = []
             for v in data:
                 if isinstance(v, enum_type):
                     result.append(v)
@@ -584,7 +591,7 @@ class FlextUtilitiesCollection:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
             normalized_items = normalized_items_result.value
-            result: Sequence[E] = []
+            result: MutableSequence[E] = []
             for v_raw in normalized_items:
                 if isinstance(v_raw, enum_cls):
                     result.append(v_raw)
@@ -637,7 +644,7 @@ class FlextUtilitiesCollection:
             Dict mapping string keys to callable functions
 
         """
-        result: Mapping[str, Callable[[], t.NormalizedValue]] = {}
+        result: MutableMapping[str, Callable[[], t.NormalizedValue]] = {}
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
@@ -662,7 +669,7 @@ class FlextUtilitiesCollection:
             List of (key, value) tuples with proper typing
 
         """
-        result: Sequence[tuple[str, t.NormalizedValue]] = []
+        result: MutableSequence[tuple[str, t.NormalizedValue]] = []
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
@@ -755,10 +762,14 @@ class FlextUtilitiesCollection:
                 return (*mapped_items,)
             filtered_items = [item for item in items if predicate(item)]
             return (*filtered_items,)
-        filtered: Mapping[str, T] = {k: v for k, v in items.items() if predicate(v)}
-        if mapper is not None:
-            return {k: mapper(v) for k, v in filtered.items()}
-        return filtered
+        if isinstance(items, Mapping):
+            filtered: MutableMapping[str, T] = {
+                k: v for k, v in items.items() if predicate(v)
+            }
+            if mapper is not None:
+                return {k: mapper(v) for k, v in filtered.items()}
+            return filtered
+        return [item for item in items if predicate(item)]
 
     @staticmethod
     def find(
@@ -775,10 +786,11 @@ class FlextUtilitiesCollection:
                 if result:
                     return r[T].ok(item)
             return r[T].fail("No matching item found")
-        for v in items.values():
-            matched: bool = predicate(v)
-            if matched:
-                return r[T].ok(v)
+        if isinstance(items, Mapping):
+            for v in items.values():
+                matched: bool = predicate(v)
+                if matched:
+                    return r[T].ok(v)
         return r[T].fail("No matching item found")
 
     @staticmethod
@@ -846,7 +858,7 @@ class FlextUtilitiesCollection:
             # {"active": [User1, User2], "inactive": [User3]}
 
         """
-        result: defaultdict[U, Sequence[T]] = defaultdict(list)
+        result: defaultdict[U, MutableSequence[T]] = defaultdict(list)
         for item in items:
             result[key_func(item)].append(item)
         return dict(result)
@@ -915,7 +927,7 @@ class FlextUtilitiesCollection:
             return [mapper(item) for item in items]
         if isinstance(items, tuple):
             return tuple(mapper(item) for item in items)
-        if isinstance(items, dict):
+        if isinstance(items, Mapping):
             return {k: mapper(v) for k, v in items.items()}
         if isinstance(items, set):
             return {mapper(item) for item in items}
@@ -940,7 +952,7 @@ class FlextUtilitiesCollection:
         - "filter_both": Same as filter_empty (alias)
         """
         if strategy in {"replace", "override"}:
-            result: Mapping[str, t.NormalizedValue] = dict(other)
+            result: MutableMapping[str, t.NormalizedValue] = dict(other)
             result.update(base)
             return r[Mapping[str, t.NormalizedValue]].ok(result)
         if strategy == "filter_none":
@@ -969,7 +981,7 @@ class FlextUtilitiesCollection:
                     result[key] = value
             return r[Mapping[str, t.NormalizedValue]].ok(result)
         if strategy == "deep":
-            result = other.copy()
+            result = dict(other)
             for key, value in base.items():
                 merge_result = FlextUtilitiesCollection._merge_deep_single_key(
                     result,
@@ -1020,8 +1032,8 @@ class FlextUtilitiesCollection:
             # result.value == {"key": Status.ACTIVE}
 
         """
-        result: Mapping[str, E] = {}
-        errors: Sequence[str] = []
+        result: MutableMapping[str, E] = {}
+        errors: MutableSequence[str] = []
         mapping_items_result = (
             r[Sequence[tuple[str, str | E]]].ok([]).map(lambda _: list(mapping.items()))
         )
@@ -1048,8 +1060,8 @@ class FlextUtilitiesCollection:
         values: Sequence[str | StrEnum],
     ) -> r[tuple[StrEnum, ...]]:
         """Parse sequence of strings to tuple of StrEnum."""
-        parsed: Sequence[StrEnum] = []
-        errors: Sequence[str] = []
+        parsed: MutableSequence[StrEnum] = []
+        errors: MutableSequence[str] = []
         enumerate_result = (
             r[Sequence[tuple[int, str | StrEnum]]]
             .ok([])
@@ -1093,8 +1105,8 @@ class FlextUtilitiesCollection:
             active, inactive = u.partition(users, lambda u: u.is_active)
 
         """
-        matches: Sequence[T] = []
-        non_matches: Sequence[T] = []
+        matches: MutableSequence[T] = []
+        non_matches: MutableSequence[T] = []
         for item in items:
             result: bool = predicate(item)
             if result:
@@ -1131,7 +1143,7 @@ class FlextUtilitiesCollection:
         """
         _ = filter_keys
         _ = exclude_keys
-        results: Sequence[U] = []
+        results: MutableSequence[U] = []
         for item in items:
             item_typed: T = item
             if predicate is not None and (not predicate(item_typed)):
@@ -1165,7 +1177,7 @@ class FlextUtilitiesCollection:
         if key_func is None:
             return list(dict.fromkeys(items))
         seen: set[Hashable] = set()
-        result: Sequence[T] = []
+        result: MutableSequence[T] = []
         for item in items:
             key = key_func(item)
             if key not in seen:

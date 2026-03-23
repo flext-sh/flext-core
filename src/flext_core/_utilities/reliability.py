@@ -14,7 +14,7 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 from typing import TypeIs
 
 from pydantic import BaseModel, ValidationError
@@ -67,7 +67,7 @@ class FlextUtilitiesReliability:
     def _normalize_operation_mapping[TKey, TValue](
         value: Mapping[TKey, TValue],
     ) -> Mapping[str, t.NormalizedValue]:
-        normalized: Mapping[str, t.NormalizedValue] = {}
+        normalized: MutableMapping[str, t.NormalizedValue] = {}
         for raw_key, raw_value in value.items():
             normalized_value = (
                 raw_value
@@ -707,8 +707,8 @@ class FlextUtilitiesReliability:
         """Execute an operation with a hard timeout using railway patterns."""
         if timeout_seconds <= c.INITIAL_TIME:
             return r[TTimeout].fail("Timeout must be positive")
-        result_container: Sequence[r[TTimeout] | None] = [None]
-        exception_container: Sequence[Exception | None] = [None]
+        result_container: MutableSequence[r[TTimeout] | None] = [None]
+        exception_container: MutableSequence[Exception | None] = [None]
 
         def run_operation() -> None:
             try:

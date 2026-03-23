@@ -181,8 +181,8 @@ class TestUtilitiesParserFullCoverage:
 
         monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
         tm.that(
-            parser3.get_object_key(cast("t.NormalizedValue", t.NormalizedValue())),
-            has="<t.NormalizedValue t.NormalizedValue",
+            parser3.get_object_key(cast("t.NormalizedValue", object())),
+            has="<object object",
         )
         tm.that(
             parser3.get_object_key(cast("t.NormalizedValue", _OddNoStr())),
@@ -313,7 +313,7 @@ class TestUtilitiesParserFullCoverage:
         tm.that(parser._convert_to_bool(True, default=False), eq=True)
         tm.that(
             parser._convert_to_bool(
-                cast("t.NormalizedValue", t.NormalizedValue()), default=True
+                cast("t.NormalizedValue", _BadConv()), default=True
             ),
             eq=True,
         )
@@ -348,9 +348,7 @@ class TestUtilitiesParserFullCoverage:
             case="lower",
         )
         with pytest.raises(TypeError):
-            parser.norm_in(
-                "a", cast("Sequence[str]", t.NormalizedValue()), case="lower"
-            )
+            parser.norm_in("a", cast("Sequence[str]", object()), case="lower")
         tm.that(mapping_result, eq=True)
         tm.that(config_map_result, eq=True)
         original_norm_list = u.norm_list
@@ -455,14 +453,14 @@ class TestUtilitiesParserFullCoverage:
         tm.that(parser._convert_to_int(5, default=7), eq=5)
         tm.that(
             parser._convert_to_float(
-                cast("t.NormalizedValue", t.NormalizedValue()), default=1.5
+                cast("t.NormalizedValue", "normalized"), default=1.5
             ),
             eq=1.5,
         )
         tm.that(
             abs(
                 parser._convert_to_float(
-                    cast("t.NormalizedValue", t.NormalizedValue()),
+                    cast("t.NormalizedValue", "normalized"),
                     default=1.5,
                 )
                 - 1.5,

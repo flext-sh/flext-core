@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 
 import pytest
 from flext_tests import t, tm
@@ -14,7 +14,7 @@ from tests import c, m
 
 class _ContainerStub:
     def __init__(self) -> None:
-        self.services: Mapping[str, t.Container | BaseModel] = {}
+        self.services: MutableMapping[str, t.Container | BaseModel] = {}
 
     def get(self, name: str) -> r[t.Container | BaseModel]:
         if name in self.services:

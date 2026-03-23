@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
-from typing import Annotated, ClassVar, override
+from collections.abc import Mapping, MutableMapping, Sequence
+from typing import Annotated, ClassVar, cast, override
 
 import pytest
 from flext_tests import t, u
@@ -216,7 +216,7 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[Mapping[str, t.NormalizedValue], str]):
+        class DictHandler(h[MutableMapping[str, t.NormalizedValue], str]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
@@ -232,10 +232,13 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = DictHandler(config=config)
-        dict_message: Mapping[str, t.NormalizedValue] = {
-            "command_id": "cmd_123",
-            "data": "test_data",
-        }
+        dict_message = cast(
+            "MutableMapping[str, t.NormalizedValue]",
+            {
+                "command_id": "cmd_123",
+                "data": "test_data",
+            },
+        )
         result = handler._run_pipeline(dict_message, operation="command")
         _ = u.Tests.Result.assert_success(result)
 

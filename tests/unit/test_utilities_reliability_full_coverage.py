@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 from typing import Never
 
 import pytest
@@ -41,7 +41,7 @@ def test_utilities_reliability_branches() -> None:
 def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    sleep_calls: Sequence[float] = []
+    sleep_calls: MutableSequence[float] = []
 
     def _record_sleep(seconds: float) -> None:
         sleep_calls.append(seconds)

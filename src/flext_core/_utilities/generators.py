@@ -14,7 +14,7 @@ import secrets
 import string
 import time
 import uuid
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from datetime import UTC, datetime
 from typing import TypeIs
 
@@ -73,7 +73,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: Mapping[str, str],
+        context_dict: MutableMapping[str, str],
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -121,12 +121,6 @@ class FlextUtilitiesGenerators:
 
         Returns:
             Formatted ID string: {prefix}_{parts}_{uuid[:length]}
-
-        Example:
-            >>> generate_prefixed_id("corr")
-            'corr_a1b2c3d4'
-            >>> generate_prefixed_id("batch", 100)
-            'batch_100_a1b2c3d4'
 
         """
         uuid_part = str(uuid.uuid4())[:length]
@@ -223,33 +217,12 @@ class FlextUtilitiesGenerators:
         across multiple Pydantic validators (context.py) and dispatcher metadata
         handling. Supports Pydantic models and dict-like objects.
 
-        Conversion Strategy:
-            1. None + default provided → return default
-            2. None (no default) → return {}
-            3. Pydantic model-like value → model_dump() then validate as ConfigMap
-            4. Mapping-like value → validate as ConfigMap
-            5. Scalar/other value → wrap as {"value": value}
-
         Args:
             value: Value to normalize (dict, BaseModel, or dict-like)
             default: Default value to return if value is None (optional)
 
         Returns:
             Mapping[str, t.NormalizedValue]: Normalized dict or default
-
-        Example:
-            >>> from flext_core import FlextUtilitiesGuards
-            >>> u.ensure_dict({"a": 1})
-            {'a': 1}
-            >>> u.ensure_dict(None, default={})
-            {}
-            >>> # Pydantic model
-            >>> from pydantic import BaseModel
-            >>> class MyModel(BaseModel):
-            ...     field: str = "value"
-            >>> model = MyModel()
-            >>> u.ensure_dict(model)
-            {'field': 'value'}
 
         """
         if value is None:
@@ -288,40 +261,17 @@ class FlextUtilitiesGenerators:
         This generic helper consolidates duplicate context enrichment logic
         across multiple Pydantic models (service.py, config.py).
 
-        If context is not dict-like, creates new empty dict. Generates UUIDs
-        for missing trace_id and span_id fields. Optionally adds correlation_id
-        and ISO timestamp.
-
         Args:
             context: Context dictionary or t.NormalizedValue to enrich (can be any type)
             include_correlation_id: If True, ensure correlation_id exists
             include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
         Returns:
-            Mapping[str, str]: Enriched context with requested fields (all string values)
-
-        Example:
-            >>> from flext_core import FlextUtilitiesGuards
-            >>> # Basic: trace_id + span_id
-            >>> ctx = u.ensure_trace_context({})
-            >>> "trace_id" in ctx and "span_id" in ctx
-            True
-            >>> # With correlation_id
-            >>> ctx = u.ensure_trace_context({}, include_correlation_id=True)
-            >>> "correlation_id" in ctx
-            True
-            >>> # With timestamp
-            >>> ctx = u.ensure_trace_context({}, include_timestamp=True)
-            >>> "timestamp" in ctx
-            True
-            >>> # Existing values preserved
-            >>> ctx = u.ensure_trace_context({"trace_id": "abc"})
-            >>> ctx["trace_id"]
-            'abc'
+            Mapping[str, str]: Enriched context with request
 
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
-        context_dict: Mapping[str, str] = {
+        context_dict: MutableMapping[str, str] = {
             k: str(v) for k, v in normalized_dict.items()
         }
         FlextUtilitiesGenerators._enrich_context_fields(
@@ -372,7 +322,7 @@ class FlextUtilitiesGenerators:
         if kind == "id" and actual_prefix is None:
             return FlextUtilitiesGenerators._generate_id()
         if actual_prefix is not None:
-            all_parts: Sequence[t.NormalizedValue] = []
+            all_parts: MutableSequence[t.NormalizedValue] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)
@@ -405,13 +355,7 @@ class FlextUtilitiesGenerators:
         Unlike generate_iso_timestamp(), this preserves microseconds for accurate timing.
 
         Returns:
-            datetime: Current UTC datetime with full microsecond precision
-
-        Example:
-            >>> start = FlextUtilitiesGenerators.generate_datetime_utc()
-            >>> # ... operation ...
-            >>> end = FlextUtilitiesGenerators.generate_datetime_utc()
-            >>> duration = (end - start).total_seconds()  # Precise duration
+            datetime: Current UTC datetime with full microsecond precisionon
 
         """
         return FlextRuntime.generate_datetime_utc()
@@ -422,6 +366,7 @@ class FlextUtilitiesGenerators:
 
         Note: For precise duration calculations, use generate_datetime_utc() instead
         as this method removes microseconds which affects timing precision.
+
         """
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 

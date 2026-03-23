@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
@@ -44,7 +44,7 @@ class FlextModelsCollections:
             cls,
             non_none: Sequence[t.MetadataValue],
         ) -> Sequence[t.Scalar]:
-            combined: Sequence[t.Scalar] = []
+            combined: MutableSequence[t.Scalar] = []
             for v in non_none:
                 if isinstance(v, list):
                     combined.extend(v)
@@ -55,7 +55,7 @@ class FlextModelsCollections:
             cls,
             non_none: Sequence[t.MetadataValue],
         ) -> Mapping[str, t.Scalar | Sequence[t.Scalar]]:
-            merged: Mapping[str, t.Scalar | Sequence[t.Scalar]] = {}
+            merged: MutableMapping[str, t.Scalar | Sequence[t.Scalar]] = {}
             for v in non_none:
                 if isinstance(v, Mapping):
                     for key, val in v.items():
@@ -101,7 +101,7 @@ class FlextModelsCollections:
         ) -> Mapping[str, t.MetadataValue]:
             if not items:
                 return {}
-            aggregated: Mapping[str, t.MetadataValue | None] = {}
+            aggregated: MutableMapping[str, t.MetadataValue | None] = {}
             for item in items:
                 for key, value in item.model_dump().items():
                     aggregated[key] = cls._resolve_conflict(aggregated.get(key), value)
@@ -132,7 +132,7 @@ class FlextModelsCollections:
             validate_default=True,
             validate_assignment=True,
         )
-        categories: Mapping[str, Sequence[t.MetadataValue]] = Field(
+        categories: MutableMapping[str, MutableSequence[t.MetadataValue]] = Field(
             default_factory=dict,
             description="Map of category name to list of items",
         )
@@ -251,7 +251,7 @@ class FlextModelsCollections:
         def merge_options(cls, *options: Self) -> Self:
             if not options:
                 return cls()
-            result: Mapping[str, t.MetadataValue | None] = {}
+            result: MutableMapping[str, t.MetadataValue | None] = {}
             for opt in options:
                 for key, value in opt.model_dump().items():
                     result[key] = cls._resolve_conflict(

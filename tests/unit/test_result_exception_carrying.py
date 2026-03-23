@@ -61,9 +61,7 @@ class TestResultExceptionCarrying:
         }
         exc = ValueError("invalid email")
         result: r[Mapping[str, str]] = r[Mapping[str, str]].fail(
-            error_msg,
-            error_data=error_data,
-            exception=exc,
+            error_msg, error_data=error_data, exception=exc
         )
         tm.that(result.is_failure, eq=True)
         tm.that(result.error == error_msg, eq=True)

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 
 from flext_core import FlextUtilities, r, t
 
@@ -49,6 +49,6 @@ def test_utilities_vals_result_contract() -> None:
     assert values_from_failed_result.is_success and values_from_failed_result.value == [
         0,
     ]
-    empty_mapping: Mapping[str, int] = {}
+    empty_mapping: MutableMapping[str, int] = {}
     empty_without_default = u.vals(empty_mapping)
     assert empty_without_default.is_failure

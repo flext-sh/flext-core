@@ -160,7 +160,7 @@ class TestUtilitiesGeneratorsFullCoverage:
         assert isinstance(fallback, str)
         dynamic = u.create_dynamic_type_subclass(
             "DynCls",
-            t.NormalizedValue,
+            object,
             t.ConfigMap(root={"value": 10}),
         )
         instance = dynamic()

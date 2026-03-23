@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 from enum import Enum, StrEnum
 from functools import wraps
 from types import UnionType
@@ -26,22 +26,7 @@ from flext_core import P, R, m, r, t
 
 
 class FlextUtilitiesArgs:
-    """Utilities for automatic args/kwargs parsing.
-
-    PHILOSOPHY:
-    ──────────
-    - Parse once, use everywhere
-    - Decorators that eliminate manual validation
-    - Integration with inspect.signature for introspection
-    - ParamSpec (PEP 612) for correct decorator typing
-
-    References:
-    ────────────
-    - PEP 612: https://peps.python.org/pep-0612/
-    - inspect.signature: https://docs.python.org/3/library/inspect.html
-    - validate_call: https://docs.pydantic.dev/latest/concepts/validation_decorator/
-
-    """
+    """Utilities for automatic args/kwargs parsing."""
 
     _V = m.Validators
 
@@ -57,15 +42,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def get_enum_params(func: Callable[..., R]) -> Mapping[str, type[StrEnum]]:
-        """Extract parameters that are StrEnum from function signature.
-
-        Example:
-             def process(self, status: Status, name: str) -> bool: ...
-
-             params = FlextUtilitiesArgs.get_enum_params(process)
-             # params = {"status": Status}
-
-        """
+        """Extract parameters that are StrEnum from function signature."""
         hints: Mapping[str, t.TypeHintSpecifier]
         try:
             resolved_hints = get_type_hints(func, include_extras=True)
@@ -83,7 +60,7 @@ class FlextUtilitiesArgs:
                     return {}
             else:
                 return {}
-        enum_params: Mapping[str, type[StrEnum]] = {}
+        enum_params: MutableMapping[str, type[StrEnum]] = {}
         for name, hint in hints.items():
             if name == "return":
                 continue
@@ -141,7 +118,7 @@ class FlextUtilitiesArgs:
 
         """
         parsed = dict(kwargs)
-        errors: Sequence[str] = []
+        errors: MutableSequence[str] = []
         for field, enum_cls in enum_fields.items():
             if field in parsed:
                 value = parsed[field]
@@ -161,32 +138,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def validated(func: Callable[P, R]) -> Callable[P, R]:
-        """Decorator that uses @validate_call from Pydantic internally.
-
-        ADVANTAGE:
-        - Zero validation code in method
-        - Pydantic handles ALL conversion and validation
-        - Automatic friendly errors
-        - Works with StrEnum, Pydantic models, etc.
-
-        BEFORE:
-             def process(self, status: str) -> bool:
-                 if status not in Status._value2member_map_:
-                     raise ValueError(...)
-                 status = Status(status)
-                 ...
-
-        AFTER:
-             @FlextUtilitiesArgs.validated
-             def process(self, status: Status) -> bool:
-                 # status is already Status, validated automatically!
-                 ...
-
-        HOW IT WORKS:
-        - Annotate parameters with StrEnum → accepts string OR enum
-        - Pydantic converts automatically
-        - Validation error → ValidationError (can be caught)
-        """
+        """Decorator that uses @validate_call from Pydantic internally."""
         return validate_call(
             config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
             validate_return=False,
@@ -194,21 +146,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def validated_with_result[V, **P](func: Callable[P, r[V]]) -> Callable[P, r[V]]:
-        """Decorator that converts ValidationError to r.fail().
-
-        USE WHEN:
-        - Method returns r
-        - Want validation errors to become r.fail()
-        - Don't want exceptions leaking
-
-        Example:
-             @FlextUtilitiesArgs.validated_with_result
-             def process(self, status: Status) -> "r[bool]":
-                 # If status invalid → returns r.fail()
-                 # If status valid → executes normally
-                 return r[bool].ok(True)
-
-        """
+        """Decorator that converts ValidationError to r.fail()."""
         validated_func: Callable[P, r[V]] = validate_call(
             config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
             validate_return=False,

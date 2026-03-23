@@ -8,7 +8,15 @@ from __future__ import annotations
 
 import gc
 import time
-from collections.abc import Callable, Generator, Mapping, Sequence, Sized
+from collections.abc import (
+    Callable,
+    Generator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+    Sized,
+)
 from contextlib import AbstractContextManager as ContextManager, contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -60,7 +68,7 @@ class TestPatternsTesting:
         def as_object_dict(value: t.NormalizedValue) -> Mapping[str, t.NormalizedValue]:
             if not TestPatternsTesting.Helpers.is_object_mapping(value):
                 return {}
-            output: Mapping[str, t.NormalizedValue] = {}
+            output: MutableMapping[str, t.NormalizedValue] = {}
             for key, item in value.items():
                 output[str(key)] = item
             return output
@@ -96,7 +104,7 @@ class TestPatternsTesting:
             object_list = TestPatternsTesting.Helpers.as_object_list(value)
             if object_list is None:
                 return None
-            int_values: Sequence[int] = []
+            int_values: MutableSequence[int] = []
             for item in object_list:
                 if not isinstance(item, int):
                     return None
@@ -140,7 +148,10 @@ class TestPatternsTesting:
         def __init__(
             self,
             name: str,
-            data: Mapping[str, t.Container | Mapping[str, t.Container] | Sequence[str]],
+            data: Mapping[
+                str,
+                t.Container | MutableMapping[str, t.Container] | MutableSequence[str],
+            ],
         ) -> None:
             super().__init__()
             self.name = name
@@ -177,10 +188,10 @@ class TestPatternsTesting:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._given: Mapping[str, FlextTypes.Container] = {}
-            self._when: Mapping[str, FlextTypes.Container] = {}
-            self._then: Mapping[str, FlextTypes.Container] = {}
-            self._tags: Sequence[str] = []
+            self._given: MutableMapping[str, FlextTypes.Container] = {}
+            self._when: MutableMapping[str, FlextTypes.Container] = {}
+            self._then: MutableMapping[str, FlextTypes.Container] = {}
+            self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
         def given(
@@ -221,8 +232,8 @@ class TestPatternsTesting:
             data: Mapping[
                 str,
                 FlextTypes.Container
-                | Mapping[str, FlextTypes.Container]
-                | Sequence[str],
+                | MutableMapping[str, FlextTypes.Container]
+                | MutableSequence[str],
             ] = {
                 "given": self._given,
                 "when": self._when,
@@ -237,7 +248,7 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._data: FixtureDataDict = {}
+            self._data: MutableMapping[str, t.NormalizedValue] = {}
 
         def with_id(self, id_: str) -> TestPatternsTesting.FlextTestBuilder:
             self._data["id"] = id_
@@ -279,16 +290,16 @@ class TestPatternsTesting:
         def __init__(self, test_name: str) -> None:
             super().__init__()
             self.test_name = test_name
-            self._cases: Sequence[FixtureCaseDict] = []
-            self._success_cases: Sequence[FixtureCaseDict] = []
-            self._failure_cases: Sequence[FixtureCaseDict] = []
+            self._cases: MutableSequence[FixtureCaseDict] = []
+            self._success_cases: MutableSequence[FixtureCaseDict] = []
+            self._failure_cases: MutableSequence[FixtureCaseDict] = []
 
         def add_case(
             self,
             email: str | None = None,
             input_value: str | None = None,
         ) -> TestPatternsTesting.ParameterizedTestBuilder:
-            case: FixtureCaseDict = {}
+            case: MutableMapping[str, t.NormalizedValue] = {}
             if email is not None:
                 case["email"] = email
             if input_value is not None:
@@ -311,7 +322,7 @@ class TestPatternsTesting:
             return self
 
         def build(self) -> Sequence[FixtureCaseDict]:
-            return self._cases.copy()
+            return list(self._cases)
 
         def build_pytest_params(self) -> Sequence[tuple[str, str, bool]]:
             success_params = [
@@ -336,7 +347,7 @@ class TestPatternsTesting:
         def __init__(self, data: t.NormalizedValue) -> None:
             super().__init__()
             self._data = data
-            self._checks: Sequence[tuple[str, t.NormalizedValue]] = []
+            self._checks: MutableSequence[tuple[str, t.NormalizedValue]] = []
 
         def is_not_none(self) -> TestPatternsTesting.AssertionBuilder:
             assert self._data is not None
@@ -387,9 +398,9 @@ class TestPatternsTesting:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._scenarios: Sequence[TestPatternsTesting.MockScenario] = []
-            self._setup_data: Mapping[str, t.NormalizedValue] = {}
-            self._tags: Sequence[str] = []
+            self._scenarios: MutableSequence[TestPatternsTesting.MockScenario] = []
+            self._setup_data: MutableMapping[str, t.NormalizedValue] = {}
+            self._tags: MutableSequence[str] = []
 
         def add_scenarios(
             self,
@@ -422,9 +433,9 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._fixtures: FixtureFixturesDict = {}
-            self._setups: Sequence[Callable[[], None]] = []
-            self._teardowns: Sequence[Callable[[], None]] = []
+            self._fixtures: MutableMapping[str, t.NormalizedValue] = {}
+            self._setups: MutableSequence[Callable[[], None]] = []
+            self._teardowns: MutableSequence[Callable[[], None]] = []
 
         def with_user(
             self, **kwargs: FlextTypes.Container
@@ -672,7 +683,7 @@ class TestPatternsTesting:
         assert result == 15
 
     def test_complete_test_suite_builder(self) -> None:
-        scenarios: Sequence[TestPatternsTesting.MockScenario] = []
+        scenarios: MutableSequence[TestPatternsTesting.MockScenario] = []
         scenario1 = (
             self
             .GivenWhenThenBuilder("successful_operation")
@@ -708,7 +719,7 @@ class TestPatternsTesting:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
-        empty_setup: Mapping[str, t.NormalizedValue] = {}
+        empty_setup: MutableMapping[str, t.NormalizedValue] = {}
         typed_setup_data = (
             {str(key): item for key, item in setup_data.items()}
             if isinstance(setup_data, dict)

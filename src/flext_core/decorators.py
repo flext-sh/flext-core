@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, MutableMapping
 from contextlib import suppress
 from datetime import datetime
 from functools import wraps
@@ -42,272 +42,10 @@ from flext_core import (
 class FlextDecorators:
     """Automation decorators for infrastructure concerns.
 
-    Architecture: Layer 3 (Application Layer - Cross-Cutting Concerns)
-    ==================================================================
     Provides decorators that automatically handle common infrastructure
     concerns to reduce boilerplate code in services, handlers, and other
     components. All decorators are designed to integrate seamlessly with
     r, FlextContext, FlextLogger, and FlextContainer.
-
-    **Architecture and Integration**:
-    This class provides decorator utilities that integrate seamlessly with
-    r, FlextContext, FlextLogger, and FlextContainer through
-    structural typing. All decorators follow consistent patterns:
-    - 8 static methods providing cross-cutting concern automation
-    - Automatic context propagation and cleanup (defensive programming)
-    - Integration with Foundation layer (r, FlextContext)
-    - Integration with Infrastructure layer (FlextLogger, FlextContainer)
-    - Composable decorator patterns with correct wrapper ordering
-
-    **Core Decorators** (8 patterns):
-    1. **@inject**: Automatic dependency injection from FlextContainer
-       - Eliminates manual container.resolve() calls
-       - Keyword-only parameter injection
-       - Thread-safe via global container singleton
-
-    2. **@log_operation**: Automatic operation logging with structured context
-        return func(*args, **kwargs)
-       - Structured logging with operation context binding
-       - Defensive cleanup via context.suppress() to ensure unbinding
-       - Integration with FlextLogger for context propagation
-
-    3. **@railway**: Automatic exception-to-r wrapping
-       - Converts exceptions to r.fail() automatically
-       - Preserves type safety via generic return type
-       - Integration with r for monadic error handling
-
-    4. **@railway**: Automatic railway pattern wrapping with r
-       - Converts exceptions to r.fail()
-       - Converts successful returns to r.ok()
-       - Idempotent for functions already returning r
-       - Enables functional error handling without try/except
-
-    5. **@retry**: Automatic retry logic with exponential/linear backoff
-       - Uses FlextConstants for defaults
-       - Supports exponential and linear backoff strategies
-       - Logs retry attempts and exhaustion
-       - Integration with FlextLogger for retry tracking
-
-    6. **@timeout**: Automatic operation timeout enforcement
-       - Uses FlextConstants.DEFAULT_TIMEOUT_SECONDS
-       - Checks timeout after operation completion
-       - Raises e.TimeoutError on violation
-       - Tracks duration even on exceptions for accurate timeout detection
-
-    7. **@with_correlation**: Correlation ID management for distributed tracing
-       - Ensures correlation ID exists in FlextContext
-       - Uses FlextContext.Utilities.ensure_correlation_id()
-       - Essential for request tracing across services
-       - No-op if correlation ID already set
-
-        return func(*args, **kwargs)
-       - Combines @inject, @log_operation, @railway
-       - Single-line configuration for maximum automation
-       - Correct wrapper ordering for proper exception propagation
-       - Balances automation with code clarity
-
-    **Additional Decorators**:
-    - **@with_context**: Context variable binding for operation duration
-    - **@track_operation**: Combined correlation ID + logging tracking
-
-    **Integration Points**:
-    - **FlextContainer** (Layer 1): Service resolution for @inject
-    - **r** (Layer 1): Result wrapping for @railway
-    - **FlextContext** (Layer 4): Correlation ID and context management
-    - **FlextLogger** (Layer 4): Structured logging and context binding
-    - **e** (Layer 1): TimeoutError for @timeout
-    - **FlextConstants** (Layer 0): Default values for retry/timeout
-
-    **Defensive Programming Patterns**:
-    1. Context cleanup uses `with suppress(Exception)` to ensure unbinding
-    2. Retry decorator handles both success and exception cases
-    3. Timeout checks both normal and exceptional code paths
-    4. Dependency injection gracefully falls back on resolution failure
-    5. Logger resolution tries self.logger before creating new logger
-
-    **Decorator Composition Ordering** (Correct for Exception Propagation):
-    ```
-    @railway (outermost - converts exceptions to r)
-    @inject (provides dependencies)
-    @log_operation (logs operations)
-    @log_operation (logs operations)
-    (function)
-    ```
-
-        return func(*args, **kwargs)
-    - All decorators use thread-safe FlextContainer.get_global()
-    - Context binding is thread-safe via FlextContext.contextvars
-    - FlextLogger context binding is thread-safe
-    - No decorator maintains mutable state across calls
-
-    **Performance Characteristics**:
-    - O(1) decorator wrapping at function definition time
-    - O(1) context binding/unbinding at runtime
-    - O(n) for dependency injection where n = dependency count (typically 1-3)
-    - O(1) timing via time.perf_counter()
-    - No reflection or introspection at runtime
-
-    **Usage Patterns**:
-
-    1. Simple dependency injection:
-        >>> from flext_core import FlextDecorators, r
-        >>>
-        >>> class UserService:
-        ...     @FlextDecorators.inject(repo=UserRepository)
-        ...     def get_user(self, user_id: str, *, repo) -> r[User]:
-        ...         return repo.find_by_id(user_id)
-
-    2. Automatic operation logging:
-        >>> class OrderService:
-        ...     @FlextDecorators.log_operation("create_order")
-        ...     def create_order(self, order_data: dict) -> r[Order]:
-        ...         # Start/completion/failure automatically logged
-        ...         return self._process_order(order_data)
-
-    3. Railway pattern wrapping:
-        >>> from pydantic import EmailStr
-        >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
-        ... def process_user_email(email: EmailStr) -> str:
-        ...     # Pydantic v2 EmailStr validates email format natively
-        ...     return email.lower()
-
-    4. Context management:
-        >>> from pydantic import EmailStr
-        >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
-        ... def process_user_email(email: EmailStr) -> str:
-        ...     # Pydantic v2 EmailStr validates email format natively
-        ...     return email.lower()
-        >>>
-        >>> result = process_user_email("user@example.com")
-        >>> assert result.is_success
-        return func(*args, **kwargs)
-    5. Automatic retry logic:
-        >>> class ApiClient:
-        ...     @FlextDecorators.retry(
-        ...         max_attempts=5,
-        ...         delay_seconds=1.0,
-        ...         backoff_strategy="exponential",
-        ...     )
-        ...     def call_external_api(
-        ...         self, endpoint: str
-         ...     ) -> t.ConfigMap:
-        ...         # Automatically retries on failure with backoff
-        ...         return requests.get(endpoint).json()
-
-    6. Operation timeout enforcement:
-        >>> class LongRunningService:
-        ...     @FlextDecorators.timeout(timeout_seconds=30.0)
-        ...     def expensive_operation(self, data: list) -> r[float]:
-        ...         # Raises TimeoutError if exceeds 30 seconds
-        ...         return self._expensive_computation(data)
-
-    7. Correlation ID management:
-        >>> class PaymentService:
-        ...     @FlextDecorators.with_correlation()
-        ...     def process_payment(self, payment_id: str) -> r[str]:
-        ...         # Correlation ID automatically ensured
-        ...         # All logs include correlation_id
-        ...         return self._charge(payment_id)
-
-    8. Maximum automation with @combined:
-        >>> class OrderService:
-        ...     @FlextDecorators.combined(
-        ...         inject_deps={"repo": OrderRepository, "validator": OrderValidator},
-        ...         operation_name="create_order",
-        ...         track_perf=True,
-        ...         use_railway=True,
-        ...     )
-        ...     def create_order(
-        ...         self, order_data: dict, *, repo, validator
-        ...     ) -> r[Order]:
-        ...         # All infrastructure automatic:
-        ...         # - DI injection
-        return func(*args, **kwargs)
-        ...         # - Performance tracking
-        ...         # - Railway pattern
-        ...         return validator.validate(order_data).flat_map(repo.create)
-
-    9. Context variable binding:
-        >>> class MultiTenantService:
-        ...     @FlextDecorators.with_context(
-        ...         tenant_id="tenant-123", user_id="user-456"
-        ...     )
-        ...     def process_tenant_data(self) -> r[dict]:
-        ...         # tenant_id and user_id bound to context
-        ...         # All logs include these values
-        ...         return self._process()
-
-    10. Comprehensive operation tracking:
-        >>> class CriticalService:
-        ...     @FlextDecorators.track_operation(
-        ...         operation_name="critical_process", track_correlation=True
-        ...     )
-        ...     def critical_process(self) -> r[str]:
-        ...         # Automatic correlation ID + logging + performance
-        ...         return self._critical_work()
-
-    **Error Handling Patterns**:
-
-    1. Retry with exponential backoff:
-        >>> @FlextDecorators.retry(max_attempts=3, backoff_strategy="exponential")
-        ... def unreliable_operation() -> str:
-        ...     # Fails, retries with delays: 1s, 2s, 4s
-        ...     return api_call()
-
-    2. Timeout protection:
-        >>> @FlextDecorators.timeout(timeout_seconds=30)
-        ... def long_operation() -> str:
-        ...     # Raises TimeoutError if exceeds 30 seconds
-        ...     return expensive_computation()
-
-    3. Railway pattern error handling:
-        >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-         ... def business_operation() -> t.ConfigMap:
-        ...     # All exceptions become r.fail()
-        ...     return process_business_logic()
-        >>>
-        >>> result = business_operation()
-        >>> if result.is_failure:
-        ...     handle_error(result.error)
-
-    **Complete Integration Example**:
-        >>> from flext_core import (
-        ...     FlextDecorators,
-        ...     r,
-        ...     FlextLogger,
-        ...     FlextContainer,
-        return func(*args, **kwargs)
-        >>>
-        >>> class ProductService:
-        ...     def __init__(self):
-        ...         self.logger = FlextLogger(__name__)
-        ...
-        ...     @FlextDecorators.combined(
-        ...         inject_deps={"repo": ProductRepository},
-        ...         operation_name="create_product",
-        ...         track_perf=True,
-        ...         use_railway=True,
-        ...     )
-        ...     def create_product(self, product_data: dict, *, repo) -> r[Product]:
-        ...         # Automatic infrastructure:
-        ...         # - Dependency injection
-        ...         # - Structured logging
-        ...         # - Performance tracking
-        ...         # - Railway pattern
-        ...         # - Exception handling
-        ...         # - Context propagation
-        ...
-        ...         return (
-        ...             r[dict]
-        ...             .ok(product_data)
-        ...             .flat_map(self._validate)
-        ...             .flat_map(repo.save)
-        ...         )
-        ...
-        ...     def _validate(self, data: dict) -> r[dict]:
-        ...         if "name" not in data:
-        ...             return r[dict].fail("Name required")
-        ...         return r[dict].ok(data)
     """
 
     @staticmethod
@@ -317,26 +55,11 @@ class FlextDecorators:
         Emits DeprecationWarning when decorated function is called.
         Used during v0.10 → v0.11 refactoring for constants migration.
 
-        Architecture: Cross-Cutting Concern (Tier 3)
-        ============================================
-        Provides simple deprecation warnings for functions, methods, and constants
-        being replaced during the constants refactoring phase. Warnings guide users
-        to use new APIs before deprecated code is removed.
-
         Args:
             message: Deprecation message explaining what to use instead
 
         Returns:
             Decorator function that wraps the target callable
-
-        Example:
-            >>> @FlextDecorators.deprecated("Use new_constant instead")
-            ... def old_function():
-            ...     return "old"
-
-        Note:
-            This decorator is intended for v0.10 → v0.11 transition period.
-            After deprecation cycle completes, remove decorator and aliases.
 
         """
 
@@ -367,23 +90,6 @@ class FlextDecorators:
 
         Returns:
             Decorated function with automatic dependency injection
-
-        Example:
-            ```python
-            from flext_core import FlextDecorators, r
-
-
-            class MyService:
-                @FlextDecorators.inject(repo=MyRepository, logger=FlextLogger)
-                def process_data(self, data: dict, *, repo, logger) -> r[dict]:
-                    # repo and logger are automatically injected!
-                    logger.info("processing_data", data_keys=list(data.keys()))
-                    return repo.save(data)
-            ```
-
-        Note:
-            Injected parameters must be keyword-only (after * in signature)
-            to avoid conflicts with positional arguments.
 
         """
 
@@ -422,28 +128,6 @@ class FlextDecorators:
         Returns:
             Decorated function with automatic operation logging
 
-        Example:
-            ```python
-            from flext_core import FlextDecorators, r
-
-
-            class MyService:
-                @FlextDecorators.log_operation("process_user_data")
-                def process(self, user_id: str) -> r[dict]:
-                    # Automatic logging of start/complete/failure
-                    # Automatic context propagation
-                    return self._do_processing(user_id)
-
-                @FlextDecorators.log_operation("heavy_task", track_perf=True)
-                def heavy(self) -> r[dict]:
-                    # Also includes duration_ms and duration_seconds
-                    return self._compute()
-            ```
-
-        Note:
-            Works best with classes that have logger attribute. Falls back to
-            FlextLogger.get_logger() otherwise.
-
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -462,7 +146,7 @@ class FlextDecorators:
                 )
                 start_time = time.perf_counter() if track_perf else 0.0
                 try:
-                    start_extra: Mapping[str, t.Scalar] = {
+                    start_extra: MutableMapping[str, t.Scalar] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -484,7 +168,7 @@ class FlextDecorators:
                             func_module=func.__module__,
                         )
                     result = func(*args, **kwargs)
-                    completion_extra: Mapping[str, t.Scalar] = {
+                    completion_extra: MutableMapping[str, t.Scalar] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -505,7 +189,7 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: Mapping[str, t.NormalizedValue] = {
+                    failure_extra: MutableMapping[str, t.NormalizedValue] = {
                         "function": func.__name__,
                         "success": False,
                         c.WarningLevel.ERROR: str(exc),
@@ -602,31 +286,6 @@ class FlextDecorators:
         Returns:
             Decorated function that returns r[T]
 
-        Example:
-            ```python
-            from flext_core import FlextDecorators, r
-
-
-            from pydantic import EmailStr
-
-
-            @FlextDecorators.railway(error_code="VALIDATION_ERROR")
-            def process_user_email(email: EmailStr) -> str:
-                # Pydantic v2 EmailStr validates format natively
-                # Exception automatically becomes r.fail()
-                # Success automatically becomes r.ok()
-                return email.lower()
-
-
-            # Returns r[str] automatically
-            result = process_user_email("user@example.com")
-            assert result.is_success
-            ```
-
-        Note:
-            If the function already returns a r, it's returned as-is.
-            Only bare values or exceptions are wrapped.
-
         """
 
         def decorator(func: Callable[P, T]) -> Callable[P, r[T]]:
@@ -677,26 +336,6 @@ class FlextDecorators:
         Returns:
             Decorated function with automatic retry logic
 
-        Example:
-            ```python
-            from flext_core import FlextDecorators
-
-
-            class MyService:
-                @FlextDecorators.retry(
-                    max_attempts=5,
-                    delay_seconds=2.0,
-                    backoff_strategy=c.BACKOFF_STRATEGY_EXPONENTIAL,
-                )
-                def unreliable_operation(self) -> t.ConfigMap:
-                    # Automatically retries on failure with exponential backoff
-                    return self._make_api_call()
-            ```
-
-        Note:
-            Uses FlextConstants for defaults, ensuring consistency
-            across the entire ecosystem. Logs retry attempts automatically.
-
         """
         attempts: int = (
             max_attempts if max_attempts is not None else c.DEFAULT_MAX_RETRIES
@@ -737,7 +376,7 @@ class FlextDecorators:
                         else ""
                         for a in args
                     )
-                    retry_kwargs: Mapping[str, t.ValueOrModel] = {}
+                    retry_kwargs: MutableMapping[str, t.ValueOrModel] = {}
                     for key, value in kwargs.items():
                         if isinstance(
                             value,
@@ -935,7 +574,7 @@ class FlextDecorators:
             if fallback_logger is None:
                 return
             fallback_kwargs = t.ConfigMap(root=kwargs.root)
-            warning_context: Mapping[str, t.Container | Exception] = {}
+            warning_context: MutableMapping[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
                 if key == "extra" and u.is_dict_like(value):
                     extra_items: Mapping[str, t.ValueOrModel]
@@ -1072,36 +711,6 @@ class FlextDecorators:
             When use_railway=True, returns Callable[..., r[R]].
             When use_railway=False, returns Callable[..., R].
 
-        Example:
-            ```python
-            from flext_core import FlextDecorators, r
-
-
-            class OrderService:
-                @FlextDecorators.combined(
-                    inject_deps={
-                        "repo": OrderRepository,
-                        "validator": OrderValidator,
-                    },
-                    operation_name="create_order",
-                    track_perf=True,
-                    use_railway=True,
-                )
-                def create_order(
-                    self, order_data: dict, *, repo, validator
-                ) -> r[Order]:
-                    # All infrastructure automatic:
-                    # - DI injection
-                    # - Logging
-                    # - Performance tracking
-                    # - Railway pattern
-                    return validator.validate(order_data).flat_map(repo.create)
-            ```
-
-        Note:
-            This decorator provides maximum automation but use judiciously to
-            maintain code clarity.
-
         """
         if use_railway:
 
@@ -1147,11 +756,6 @@ class FlextDecorators:
         Returns:
             Decorator function for marking factory functions
 
-        Example:
-            >>> @FlextDecorators.factory(name="user_service", singleton=True)
-            ... def create_user_service(config: FlextSettings) -> UserService:
-            ...     return UserService(config)
-
         """
 
         def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
@@ -1180,22 +784,6 @@ class FlextDecorators:
 
         Returns:
             Decorated function with timeout enforcement
-
-        Example:
-            ```python
-            from flext_core import FlextDecorators
-
-
-            class MyService:
-                @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> t.ConfigMap:
-                    # Automatically raises TimeoutError if exceeds 30 seconds
-                    return self._process_data()
-            ```
-
-        Note:
-            This is a simple timeout based on elapsed time checking. For true
-            thread-based timeouts, use threading.Timer or asyncio.
 
         """
         max_duration = (
@@ -1273,27 +861,6 @@ class FlextDecorators:
         Returns:
             Decorated function with comprehensive operation tracking
 
-        Example:
-            ```python
-            from flext_core import FlextDecorators, r
-
-
-            class UserService:
-                @FlextDecorators.track_operation("create_user")
-                def create_user(self, user_data: dict) -> r[User]:
-                    # Automatic tracking:
-                    # - Correlation ID ensured
-                    # - Operation name bound to context
-                    # - Performance metrics via u.Integration
-                    # - All via structlog directly (no circular imports)
-                    return self._create(user_data)
-            ```
-
-        Note:
-            This decorator uses u.Integration which accesses
-            structlog directly (Layer 0.5), avoiding circular imports between
-            Foundation and Infrastructure layers.
-
         """
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -1345,25 +912,6 @@ class FlextDecorators:
 
         Returns:
             Decorated function with automatic context management
-
-        Example:
-            ```python
-            from flext_core import FlextDecorators, r
-
-
-            class PaymentService:
-                @FlextDecorators.with_context(
-                    service_name="payment_service", service_version="1.0.0"
-                )
-                def process_payment(self, amount: float) -> r[str]:
-                    # service_name and service_version automatically in context
-                    # All logs will include these values
-                    return self._charge(amount)
-            ```
-
-        Note:
-            Context is automatically cleaned up after operation completes,
-            even if exception occurs.
 
         """
 
@@ -1417,23 +965,6 @@ class FlextDecorators:
 
         Returns:
             Decorated function with correlation ID management
-
-        Example:
-            ```python
-            from flext_core import FlextDecorators, r
-
-
-            class OrderService:
-                @FlextDecorators.with_correlation()
-                def process_order(self, order_id: str) -> r[dict]:
-                    # Correlation ID automatically ensured in context
-                    # All logs will include correlation_id
-                    return self._process(order_id)
-            ```
-
-        Note:
-            Uses u.Integration for context management via
-            structlog.contextvars (single source of truth).
 
         """
 

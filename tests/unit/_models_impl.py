@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Never, override
 
 from flext_tests import t
@@ -138,8 +138,8 @@ class CacheTestModel(BaseModel):
 
     name: str
     value: int
-    tags: Sequence[str] = []
-    meta: Mapping[str, str] = {}
+    tags: MutableSequence[str] = []
+    meta: MutableMapping[str, str] = {}
 
 
 class NestedModel(BaseModel):

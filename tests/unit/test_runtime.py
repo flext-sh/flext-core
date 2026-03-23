@@ -21,21 +21,34 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from dataclasses import dataclass
 from enum import StrEnum, unique
-from types import ModuleType
-from typing import Annotated, ClassVar, cast
+from types import GenericAlias, ModuleType
+from typing import cast
 
 import pytest
 import structlog
 from dependency_injector import containers, providers
 from flext_tests import t, tm
-from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, p, s, x
 
 
 class TestFlextRuntime:
+    type RuntimeScenarioValue = (
+        t.NormalizedValue
+        | type[t.NormalizedValue]
+        | tuple[type[t.NormalizedValue], ...]
+        | ModuleType
+        | GenericAlias
+    )
+    type RuntimeScenarioInput = (
+        RuntimeScenarioValue
+        | Mapping[str, Callable[[], t.NormalizedValue]]
+        | Sequence[ModuleType]
+    )
+
     @unique
     class RuntimeOperationType(StrEnum):
         """Runtime operation types for parametrized testing."""
@@ -84,28 +97,33 @@ class TestFlextRuntime:
         SETUP_SERVICE_INFRASTRUCTURE_MINIMAL = "setup_service_infrastructure_minimal"
         SETUP_SERVICE_WITHOUT_CORRELATION = "setup_service_without_correlation"
 
-    class RuntimeTestCase(BaseModel):
+    @dataclass(frozen=True)
+    class RuntimeTestCase:
         """Runtime test case definition with parametrization data."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
-        )
-        name: Annotated[str, Field(description="Runtime test case name")]
-        operation: Annotated[StrEnum, Field(description="Runtime operation type")]
-        test_input: Annotated[
-            t.NormalizedValue, Field(default=None, description="Optional test input")
-        ] = None
-        expected_result: Annotated[
-            t.NormalizedValue,
-            Field(default=None, description="Expected operation result"),
-        ] = None
-        should_reset_config: Annotated[
-            bool,
-            Field(
-                default=False,
-                description="Whether structlog config should be reset before test",
-            ),
-        ] = False
+        name: str
+        operation: StrEnum
+        test_input: (
+            t.NormalizedValue
+            | type[t.NormalizedValue]
+            | tuple[type[t.NormalizedValue], ...]
+            | ModuleType
+            | GenericAlias
+            | Mapping[str, Callable[[], t.NormalizedValue]]
+            | Sequence[ModuleType]
+            | None
+        ) = None
+        expected_result: (
+            t.NormalizedValue
+            | type[t.NormalizedValue]
+            | tuple[type[t.NormalizedValue], ...]
+            | ModuleType
+            | GenericAlias
+            | Mapping[str, Callable[[], t.NormalizedValue]]
+            | Sequence[ModuleType]
+            | None
+        ) = None
+        should_reset_config: bool = False
 
     class RuntimeScenarios:
         """Centralized runtime test scenarios using runtime-built cases."""
@@ -377,13 +395,13 @@ class TestFlextRuntime:
                 runtime_test_case(
                     name="extract_generic_list",
                     operation=runtime_op_type.EXTRACT_GENERIC_GENERIC_TYPE,
-                    test_input=Sequence[str],
+                    test_input=list[str],
                     expected_result=(str,),
                 ),
                 runtime_test_case(
                     name="extract_generic_dict",
                     operation=runtime_op_type.EXTRACT_GENERIC_GENERIC_TYPE,
-                    test_input=Mapping[str, int],
+                    test_input=dict[str, int],
                     expected_result=(str, int),
                 ),
                 runtime_test_case(
@@ -422,7 +440,7 @@ class TestFlextRuntime:
                 runtime_test_case(
                     name="sequence_type_list_of_str",
                     operation=runtime_op_type.SEQUENCE_TYPE_VALID,
-                    test_input=Sequence[str],
+                    test_input=list[str],
                     expected_result=True,
                 ),
                 runtime_test_case(
@@ -440,7 +458,7 @@ class TestFlextRuntime:
                 runtime_test_case(
                     name="sequence_type_invalid_dict",
                     operation=runtime_op_type.SEQUENCE_TYPE_INVALID,
-                    test_input=Mapping[str, int],
+                    test_input=dict[str, int],
                     expected_result=False,
                 ),
                 runtime_test_case(
@@ -1037,8 +1055,8 @@ class TestFlextRuntime:
             def custom_processor(
                 _logger: p.Logger,
                 _method_name: str,
-                event_dict: Mapping[str, t.NormalizedValue],
-            ) -> Mapping[str, t.NormalizedValue]:
+                event_dict: MutableMapping[str, t.NormalizedValue],
+            ) -> MutableMapping[str, t.NormalizedValue]:
                 event_dict["custom"] = True
                 return event_dict
 

@@ -68,9 +68,9 @@ def test_context_data_normalize_and_json_checks() -> None:
     tm.that(check_result is None, eq=True)
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.NormalizedValue | BaseModel", {t.NormalizedValue()})
+            cast("t.NormalizedValue | BaseModel", {"normalized"})
         )
-    obj = cast("t.NormalizedValue | BaseModel", t.NormalizedValue())
+    obj = cast("t.NormalizedValue | BaseModel", _ModelWithNoCallableDump())
     with pytest.raises(TypeError):
         m.ContextData.normalize_to_container(obj)
 
@@ -135,7 +135,7 @@ def test_context_export_serializable_and_validators() -> None:
     tm.that(check_result is None, eq=True)
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.NormalizedValue | BaseModel", {t.NormalizedValue()})
+            cast("t.NormalizedValue | BaseModel", {"normalized"})
         )
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(

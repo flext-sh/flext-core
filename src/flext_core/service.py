@@ -4,9 +4,6 @@ FlextService[T] supplies validation, dependency injection, and railway-style
 result handling for domain services. It relies on structural typing to satisfy
 ``p.Service`` and provides a clean service lifecycle.
 
-Note: CQRS components (FlextDispatcher, FlextRegistry) should be used directly,
-not through FlextService. This keeps FlextService focused on service concerns.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -14,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
 from typing import ClassVar, override
 
@@ -55,18 +52,6 @@ class FlextService[
     :class:`u`) so services can reuse runtime automation for creating
     scoped config/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
-
-    Example:
-        class UserService(FlextService[User]):
-            def execute(self) -> r[User]:
-                return r.ok(User(id="123", name="Alice"))
-
-        # Usage
-        service = UserService()
-        result = service.execute()
-        if result.is_success:
-            user = result.value
-
     """
 
     model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -154,7 +139,7 @@ class FlextService[
     _container: p.Container | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: Sequence[tuple[str, m.DecoratorConfig]] = PrivateAttr(
-        default_factory=lambda: Sequence[tuple[str, m.DecoratorConfig]](),
+        default_factory=lambda: (),
     )
 
     @property
@@ -379,7 +364,7 @@ class FlextService[
         """Normalize and validate scoped services using Pydantic model."""
         if services is None:
             return None
-        normalized: Mapping[str, t.RegisterableService] = {}
+        normalized: MutableMapping[str, t.RegisterableService] = {}
         for name, service in services.items():
             try:
                 m.ServiceRegistration(name=str(name), service=service)

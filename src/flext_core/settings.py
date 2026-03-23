@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import (
@@ -52,7 +52,7 @@ class FlextSettings(BaseSettings, u):
     - Protocol compliance via inheritance (p.Settings)
     """
 
-    _instances: ClassVar[Mapping[type[Self], Self]] = {}
+    _instances: ClassVar[MutableMapping[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
@@ -338,8 +338,10 @@ class FlextSettings(BaseSettings, u):
 
     AutoConfig: ClassVar[type[m.AutoConfig]] = m.AutoConfig
 
-    _namespace_registry: ClassVar[Mapping[str, type[BaseSettings]]] = {}
-    _context_overrides: ClassVar[Mapping[str, Mapping[str, t.Scalar]]] = {}
+    _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
+    _context_overrides: ClassVar[
+        MutableMapping[str, MutableMapping[str, t.Scalar]]
+    ] = {}
 
     def __getattr__(self, name: str) -> BaseSettings:
         """Resolve namespace-style attribute access to registered settings."""

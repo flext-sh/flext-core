@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 
 import pytest
 from flext_tests import t
@@ -69,7 +69,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: Mapping[str, t.NormalizedValue] = {}
+                self._config: MutableMapping[str, t.NormalizedValue] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -92,7 +92,7 @@ class TestArchitecturalPatterns:
                     return r[Mapping[str, t.NormalizedValue]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[Mapping[str, t.NormalizedValue]].ok(self._config.copy())
+                return r[Mapping[str, t.NormalizedValue]].ok(dict(self._config))
 
         config_result = (
             ConfigurationBuilder()
@@ -125,7 +125,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: Mapping[str, t.Container | BaseModel] = {}
+                self._data: MutableMapping[str, t.Container | BaseModel] = {}
                 self._query_count = 0
 
             def save(self, entity_id: str, data: t.Container | BaseModel) -> r[bool]:
@@ -214,7 +214,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: Sequence[m.DomainEvent] = []
+                self.processed_events: MutableSequence[m.DomainEvent] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> r[bool]:
                 """Handle user created event."""
@@ -253,14 +253,20 @@ class TestArchitecturalPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: Sequence[Mapping[str, t.NormalizedValue]] = []
+        observers: MutableSequence[MutableMapping[str, t.NormalizedValue]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: Mapping[str, t.NormalizedValue] = {"name": "Observer1", "state": None}
-        obs2: Mapping[str, t.NormalizedValue] = {"name": "Observer2", "state": None}
+        obs1: MutableMapping[str, t.NormalizedValue] = {
+            "name": "Observer1",
+            "state": None,
+        }
+        obs2: MutableMapping[str, t.NormalizedValue] = {
+            "name": "Observer2",
+            "state": None,
+        }
         observers.extend([obs1, obs2])
         notify_all("new_state")
         assert obs1["state"] == "new_state"

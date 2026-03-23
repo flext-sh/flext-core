@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, TypeGuard
 
 import pytest
@@ -45,7 +45,7 @@ def _case_factories(
     getter_name: str,
     count: int,
 ) -> Sequence[Callable[[], BaseModel]]:
-    results: Sequence[Callable[[], BaseModel]] = []
+    results: MutableSequence[Callable[[], BaseModel]] = []
     for index in range(count):
 
         def _factory(idx: int = index) -> BaseModel:

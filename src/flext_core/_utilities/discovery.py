@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from types import ModuleType
 
 from flext_core import c, m
@@ -57,14 +57,8 @@ class FlextUtilitiesDiscovery:
         Returns:
             List of tuples (function_name, FactoryDecoratorConfig) sorted by name
 
-        Example:
-            >>> from flext_core import FlextUtilitiesDiscovery
-            >>> factories = FlextUtilitiesDiscovery.scan_module(my_module)
-            >>> for func_name, config in factories:
-            ...     print(f"{func_name}: singleton={config.singleton}")
-
         """
-        factories: Sequence[tuple[str, m.FactoryDecoratorConfig]] = []
+        factories: MutableSequence[tuple[str, m.FactoryDecoratorConfig]] = []
         for name in dir(module):
             if name.startswith("_"):
                 continue

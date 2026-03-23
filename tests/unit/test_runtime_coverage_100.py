@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Never, cast, overload, override
 
 import structlog
@@ -201,9 +201,9 @@ class TestRuntimeCoverage100:
 
     def test_extract_generic_args_with_typing_get_args(self) -> None:
         """Test extract_generic_args when typing.get_args returns values."""
-        args = FlextRuntime.extract_generic_args(Sequence[str])
+        args = FlextRuntime.extract_generic_args(MutableSequence[str])
         tm.that(args, eq=(str,))
-        args = FlextRuntime.extract_generic_args(Mapping[str, int])
+        args = FlextRuntime.extract_generic_args(MutableMapping[str, int])
         tm.that(args, eq=(str, int))
 
     def test_extract_generic_args_exception_path(self) -> None:
@@ -222,8 +222,8 @@ class TestRuntimeCoverage100:
 
     def test_is_sequence_type_with_origin(self) -> None:
         """Test is_sequence_type with typing.get_origin returning Sequence."""
-        tm.that(FlextRuntime.is_sequence_type(Sequence[str]), eq=True)
-        tm.that(FlextRuntime.is_sequence_type(Sequence[int]), eq=True)
+        tm.that(FlextRuntime.is_sequence_type(MutableSequence[str]), eq=True)
+        tm.that(FlextRuntime.is_sequence_type(MutableSequence[int]), eq=True)
 
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
@@ -282,8 +282,8 @@ class TestRuntimeCoverage100:
         def custom_processor(
             logger: p.Logger | None,
             method_name: str,
-            event_dict: Mapping[str, t.NormalizedValue],
-        ) -> Mapping[str, t.NormalizedValue]:
+            event_dict: MutableMapping[str, t.NormalizedValue],
+        ) -> MutableMapping[str, t.NormalizedValue]:
             event_dict["custom"] = True
             return event_dict
 

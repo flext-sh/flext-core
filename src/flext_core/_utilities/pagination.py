@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 
 from pydantic import BaseModel
 
@@ -53,7 +53,7 @@ class FlextUtilitiesPagination:
         pagination_val: str = (
             pagination if isinstance(pagination, str) else str(pagination)
         )
-        response: Mapping[str, str] = {
+        response: MutableMapping[str, str] = {
             c.FIELD_DATA: data_val,
             "pagination": pagination_val,
         }
@@ -169,7 +169,7 @@ class FlextUtilitiesPagination:
             )
         has_next: bool = page < total_pages
         has_prev: bool = page > 1
-        data_list: Sequence[t.RuntimeAtomic] = []
+        data_list: MutableSequence[t.RuntimeAtomic] = []
         for item in data:
             normalized = FlextRuntime.normalize_to_container(item)
             data_list.append(normalized)

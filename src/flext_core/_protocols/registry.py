@@ -22,12 +22,7 @@ class FlextProtocolsRegistry:
 
     @runtime_checkable
     class Registry(FlextProtocolsBase.Base, Protocol):
-        """Registry protocol for CQRS handler and plugin management.
-
-        Structural typing interface for FlextRegistry. Consumers depend on
-        this protocol instead of the concrete FlextRegistry class, enabling
-        DIP compliance across the workspace.
-        """
+        """Registry protocol for CQRS handler and plugin management."""
 
         def execute(self) -> r[bool]:
             """Validate registry is properly initialized."""

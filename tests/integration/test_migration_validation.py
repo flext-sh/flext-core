@@ -126,9 +126,7 @@ class TestMigrationValidation:
             ) -> r[Mapping[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
-                    return r[Mapping[str, str]].fail(
-                        "Username and email required",
-                    )
+                    return r[Mapping[str, str]].fail("Username and email required")
                 self._logger.info("Creating user", username=username)
                 user_data = {"username": username, "email": email}
                 return r[Mapping[str, str]].ok(user_data)
@@ -210,9 +208,7 @@ class TestMigrationValidation:
             ) -> r[Mapping[str, t.NormalizedValue]]:
                 """Typical data processing method."""
                 if not data:
-                    return r[Mapping[str, t.NormalizedValue]].fail(
-                        "Data required",
-                    )
+                    return r[Mapping[str, t.NormalizedValue]].fail("Data required")
                 self.logger.info("Processing data", size=len(data))
                 processed: Mapping[str, t.NormalizedValue] = {
                     "original": str(data),

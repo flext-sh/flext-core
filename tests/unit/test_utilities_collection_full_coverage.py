@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterator, Mapping, MutableMapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
@@ -22,17 +22,18 @@ class TestUtilitiesCollectionFullCoverage:
 
     class _BadMapping(Mapping[str, str]):
         @override
+        def __getitem__(self, _key: str) -> str:
+            msg = "mapping get failed"
+            raise TypeError(msg)
+
+        @override
         def __iter__(self) -> Iterator[str]:
-            msg = "boom"
-            raise RuntimeError(msg)
+            msg = "mapping iter failed"
+            raise TypeError(msg)
 
         @override
         def __len__(self) -> int:
-            return 0
-
-        @override
-        def __getitem__(self, key: str) -> str:
-            raise KeyError(key)
+            return 1
 
     class _BadSequence:
         def __iter__(self) -> Iterator[str]:
@@ -69,7 +70,10 @@ class TestUtilitiesCollectionFullCoverage:
         not_found = u.find({"a": 1}, lambda value: value == 2)
         tm.fail(not_found)
         nested = u._merge_deep_single_key(
-            cast("Mapping[str, t.NormalizedValue]", {"x": self._BadCopyDict({"a": 1})}),
+            cast(
+                "MutableMapping[str, t.NormalizedValue]",
+                {"x": self._BadCopyDict({"a": 1})},
+            ),
             "x",
             cast("t.NormalizedValue", {"b": 2}),
         )
@@ -80,7 +84,7 @@ class TestUtilitiesCollectionFullCoverage:
             strategy="deep",
         )
         tm.ok(deep)
-        with pytest.raises(AttributeError, match="copy"):
+        with pytest.raises(TypeError, match="iterable"):
             _ = u.merge(
                 cast("Mapping[str, t.NormalizedValue]", None),
                 {"x": 1},
@@ -130,7 +134,7 @@ class TestUtilitiesCollectionFullCoverage:
             _raise_value_error,
         )
         tm.fail(failed_exc)
-        progress_calls: Sequence[tuple[int, int]] = []
+        progress_calls: MutableSequence[tuple[int, int]] = []
         ok = u.batch(
             [1, 2],
             _identity,
@@ -177,10 +181,7 @@ class TestUtilitiesCollectionFullCoverage:
         tm.ok(collected)
         collected_value = collected.value
         assert collected_value.errors == []
-        tm.that(
-            "_FailureResult t.NormalizedValue" in str(collected_value.results[0]),
-            eq=True,
-        )
+        tm.that("_FailureResult" in str(collected_value.results[0]), eq=True)
         failed = u.batch([1], lambda _item: self._FailureResult(), on_error="fail")
         tm.ok(failed)
         parsed = u.parse_sequence(

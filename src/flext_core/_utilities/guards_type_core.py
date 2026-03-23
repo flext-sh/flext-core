@@ -13,9 +13,9 @@ from __future__ import annotations
 import warnings
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import TypeIs
+from typing import TypeGuard, TypeIs
 
-from flext_core import FlextTypingBase
+from flext_core import FlextTypesServices, FlextTypingBase
 
 # Alias para uso em runtime e type hints
 # FlextTypingBase fornece os types e constantes necessários
@@ -93,7 +93,7 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def is_dict_non_empty(value: object) -> bool:
+    def is_dict_non_empty(value: FlextTypesServices.ValueOrModel) -> bool:
         """Check if value is a non-empty mapping.
 
         Args:
@@ -106,7 +106,9 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, Mapping) and len(value) > 0
 
     @staticmethod
-    def is_flexible_value(value: object) -> TypeIs[t.NormalizedValue]:
+    def is_flexible_value(
+        value: FlextTypesServices.GuardInput,
+    ) -> TypeIs[t.NormalizedValue]:
         """Check if value is a flexible value (scalar or containers of scalars).
 
         Flexible values are None, scalars, or collections containing only
@@ -119,7 +121,7 @@ class FlextUtilitiesGuardsTypeCore:
             True if value is a flexible value, narrowed to NormalizedValue.
 
         """
-        if value is None or FlextUtilitiesGuardsTypeCore.is_scalar(value):
+        if value is None or isinstance(value, t.SCALAR_TYPES):
             return True
         if isinstance(value, (list, tuple)):
             return all(
@@ -193,7 +195,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, list)
 
     @staticmethod
-    def is_list_non_empty(value: object) -> bool:
+    def is_list_non_empty(value: FlextTypesServices.ValueOrModel) -> bool:
         """Check if value is a non-empty sequence (excluding strings/bytes).
 
         Args:
@@ -268,7 +270,9 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_instance_of[T](value: t.NormalizedValue, type_cls: type[T]) -> TypeIs[T]:
+    def is_instance_of[T](
+        value: FlextTypesServices.GuardInput, type_cls: type[T]
+    ) -> TypeGuard[T]:
         """Check if value is instance of type class (handles generics).
 
         Args:

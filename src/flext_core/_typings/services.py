@@ -24,7 +24,7 @@ class FlextTypesServices:
 
     type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
-    type RuntimeData = ValueOrModel | MetadataValue
+    type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
     type RuntimeAtomic = FlextTypingBase.Container | BaseModel
 
     type BootstrapInput = (
@@ -87,7 +87,6 @@ class FlextTypesServices:
         ..., Mapping[str, FlextTypingBase.NormalizedValue]
     ]
 
-    # Other Types
     type SortableObjectType = str | int | float
     type TypeHintSpecifier = (
         type
@@ -112,7 +111,6 @@ class FlextTypesServices:
         | Callable[..., FlextTypingBase.Container]
     )
 
-    # --- MAPPER / CACHE / CONVERSION CONSOLIDATED TYPES ---
     type ValidatorCallable = Callable[[ScalarOrModel | None], ScalarOrModel | None]
 
     type MapperCallable = Callable[
@@ -128,8 +126,6 @@ class FlextTypesServices:
     )
     type PaginationMeta = Mapping[str, int | bool]
 
-    # GuardInput uses forward references to avoid circular imports
-    # These are resolved at runtime via the protocol facade
     type GuardInput = (
         FlextTypingBase.Scalar
         | Path

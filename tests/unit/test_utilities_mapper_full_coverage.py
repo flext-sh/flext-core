@@ -3,7 +3,15 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    ItemsView,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Never, Protocol, cast, override
@@ -258,23 +266,18 @@ class UtilitiesMapperFullCoverageNamespace:
             raise TypeError(msg)
 
     class BadMapping(Mapping[str, t.NormalizedValue]):
-        """BadMapping class."""
-
         @override
-        def __getitem__(self, key: str) -> Never:
-            """__getitem__ method."""
-            msg = f"missing {key}"
-            raise KeyError(msg)
+        def __getitem__(self, _key: str) -> t.NormalizedValue:
+            msg = "get exploded"
+            raise TypeError(msg)
 
         @override
         def __iter__(self) -> Iterator[str]:
-            """__iter__ method."""
             msg = "iter exploded"
-            raise RuntimeError(msg)
+            raise TypeError(msg)
 
         @override
         def __len__(self) -> int:
-            """__len__ method."""
             return 1
 
     @pytest.fixture
@@ -337,7 +340,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(model.model_dump(mode="json"), eq={"x": 1})
         path_val = Path("/tmp")
         tm.that(path_val.as_posix(), eq="/tmp")
-        as_json: Mapping[str, test_t.NormalizedValue] = {}
+        as_json: MutableMapping[str, test_t.NormalizedValue] = {}
         for key, val in {"x": Path("/tmp")}.items():
             if isinstance(val, Path):
                 as_json[str(key)] = val.as_posix()
@@ -356,7 +359,7 @@ class UtilitiesMapperFullCoverageNamespace:
             "path": Path("/tmp"),
             "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
         }
-        safe_json: Mapping[str, test_t.NormalizedValue] = {}
+        safe_json: MutableMapping[str, test_t.NormalizedValue] = {}
         for key, val in payload.items():
             if isinstance(val, BaseModel):
                 safe_json[key] = val.model_dump(mode="json")
@@ -542,15 +545,15 @@ class UtilitiesMapperFullCoverageNamespace:
         convert_spec: type[
             int
             | float
-            | Sequence[t.Scalar]
-            | Mapping[str, t.Scalar]
+            | MutableSequence[t.Scalar]
+            | MutableMapping[str, t.Scalar]
             | tuple[t.Scalar, ...]
             | set[t.Scalar]
         ]
         | Callable[..., t.NormalizedValue],
         expected: float
-        | Sequence[t.Scalar]
-        | Mapping[str, t.Scalar]
+        | MutableSequence[t.Scalar]
+        | MutableMapping[str, t.Scalar]
         | tuple[t.Scalar, ...],
     ) -> None:
         operations = cast(
@@ -701,7 +704,7 @@ class UtilitiesMapperFullCoverageNamespace:
     def test_field_and_fields_multi_branches(mapper: type[u]) -> None:
         tm.that(
             mapper.field(
-                cast("p.AccessibleData", t.NormalizedValue()), "missing", required=True
+                cast("p.AccessibleData", "normalized"), "missing", required=True
             ),
             none=True,
         )
@@ -732,21 +735,19 @@ class UtilitiesMapperFullCoverageNamespace:
 
         class ExplodeOnGet(Mapping[str, t.NormalizedValue]):
             @override
+            def __getitem__(self, _key: str) -> t.NormalizedValue:
+                msg = "get exploded"
+                raise TypeError(msg)
+
+            @override
             def __iter__(self) -> Iterator[str]:
-                return iter(("field",))
+                return iter(["x"])
 
             @override
             def __len__(self) -> int:
                 return 1
 
-            @override
-            def __getitem__(self, key: str) -> str:
-                if key == "field":
-                    msg = "boom"
-                    raise RuntimeError(msg)
-                return ""
-
-        tm.that(
+        with pytest.raises(ValueError, match="get exploded"):
             mapper.construct(
                 cast(
                     "Mapping[str, t.NormalizedValue | t.MapperCallable]",
@@ -754,9 +755,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 ),
                 t.ConfigMap(root={"x": 1}),
                 on_error="stop",
-            ),
-            eq={"x": ""},
-        )
+            )
         tm.that(
             mapper.construct(
                 cast(
@@ -766,7 +765,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 t.ConfigMap(root={"x": 1}),
                 on_error="skip",
             ),
-            eq={"x": ""},
+            eq={},
         )
         tm.ok(mapper.transform({"a": 1}, map_keys={"a": "A"}))
         bad_result = _transform_obj(BadMapping())
@@ -892,16 +891,14 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(active.value, eq=["R"])
 
         class _BadGetMapping(Mapping[str, bool]):
-            """Mapping that explodes on get() for error-path testing."""
-
             @override
-            def __getitem__(self, key: str) -> bool:
-                msg = "bad get"
-                raise RuntimeError(msg)
+            def __getitem__(self, _key: str) -> bool:
+                msg = "get exploded"
+                raise TypeError(msg)
 
             @override
             def __iter__(self) -> Iterator[str]:
-                return iter(("x",))
+                return iter(["x"])
 
             @override
             def __len__(self) -> int:
@@ -926,7 +923,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(str(Plain()), eq="plain")
         plain_dict: Mapping[str, test_t.NormalizedValue] = {"1": str(Plain())}
         tm.that(plain_dict, eq={"1": "plain"})
-        plain_list: Sequence[int | Mapping[str, str]] = [1, {"k": str(Plain())}]
+        plain_list: Sequence[int | MutableMapping[str, str]] = [1, {"k": str(Plain())}]
         tm.that(plain_list, eq=[1, {"k": "plain"}])
         tm.that(mapper.ensure_str(None, "d"), eq="d")
         tm.that(mapper.ensure_str("x"), eq="x")
@@ -1098,7 +1095,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(context, eq={"x": 1, "y": 1})
         fields_obj = mapper.fields(
-            cast("p.AccessibleData", t.NormalizedValue()),
+            cast("p.AccessibleData", "normalized"),
             {"x": {"default": 1}},
         )
         tm.that(fields_obj, eq={"x": 1})

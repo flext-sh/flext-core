@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
@@ -243,7 +243,7 @@ class TestFlextRegistry:
     def _create_function_map(
         handlers: Sequence[t.HandlerLike],
     ) -> Mapping[type, t.HandlerLike]:
-        result: Mapping[type, t.HandlerLike] = {}
+        result: MutableMapping[type, t.HandlerLike] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
         return result

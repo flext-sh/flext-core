@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -332,7 +332,7 @@ class Testr:
 
         Tests actual chain operations and validates using generic helpers.
         """
-        results: Sequence[r[int]] = []
+        results: MutableSequence[r[int]] = []
         initial_value = 5
         res1 = u.Tests.GenericHelpers.create_result_from_value(
             initial_value, error_on_none="Initial value cannot be None"
@@ -352,7 +352,7 @@ class Testr:
 
     def test_result_chain_failure_behavior(self) -> None:
         """Test result chain with failure - real behavior and limits."""
-        results: Sequence[r[int]] = []
+        results: MutableSequence[r[int]] = []
         res1 = r[int].ok(10)
         results.append(res1)
         res2 = res1.map(lambda x: x * 2)
@@ -533,18 +533,18 @@ class Testr:
 
     def test_with_resource(self) -> None:
         """Test with_resource manages resource lifecycle."""
-        resource_created: Sequence[str] = []
-        resource_cleaned: Sequence[str] = []
+        resource_created: MutableSequence[str] = []
+        resource_cleaned: MutableSequence[str] = []
 
-        def factory() -> Sequence[str]:
+        def factory() -> MutableSequence[str]:
             resource_created.append("created")
             return ["resource"]
 
-        def op(resource: Sequence[str]) -> r[str]:
+        def op(resource: MutableSequence[str]) -> r[str]:
             resource.append("used")
             return r[str].ok("success")
 
-        def cleanup(resource: Sequence[str]) -> None:
+        def cleanup(resource: MutableSequence[str]) -> None:
             resource_cleaned.append("cleaned")
             resource.clear()
 

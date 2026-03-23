@@ -14,17 +14,7 @@ if TYPE_CHECKING:
 
 
 class FlextProtocolsBase:
-    """Hierarchical protocol namespace organized by Interface Segregation Principle.
-
-    Hierarchy follows architectural layers:
-    - Base: Fundamental interfaces
-    - Core: Result handling and model protocols
-    - Configuration: Config and context management
-    - Infrastructure: DI and container protocols
-    - Domain: Business domain protocols
-    - Application: CQRS and application layer protocols
-    - Utility: Supporting utility protocols
-    """
+    """Hierarchical protocol namespace organized by Interface Segregation Principle."""
 
     @runtime_checkable
     class Base(Protocol):
@@ -36,11 +26,6 @@ class FlextProtocolsBase:
 
         Ensures types have Pydantic signatures without importing BaseModel directly
         in typings.py, preventing circular dependencies.
-
-        Only declares what is guaranteed by every Pydantic v2 BaseModel subclass:
-        model_dump and model_validate. model_config/model_fields are excluded because
-        ConfigDict and FieldInfo do not match narrower Container/type|str constraints
-        at the static type-checker level.
         """
 
         def model_dump(self, **kwargs: t.Container) -> Mapping[str, t.ValueOrModel]:

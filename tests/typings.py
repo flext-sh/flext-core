@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence
 
 from flext_tests import FlextTestsTypes
 
@@ -39,9 +39,13 @@ class FlextCoreTestTypes(FlextTestsTypes, FlextTypes):
         Only defines types that are truly flext-core-specific.
         """
 
-        type ServiceConfigMapping = Mapping[str, ft.NormalizedValue | Sequence[str]]
+        type ServiceConfigMapping = Mapping[
+            str, ft.NormalizedValue | MutableSequence[str]
+        ]
         "Service configuration mapping specific to flext-core services."
-        type HandlerConfigMapping = Mapping[str, ft.NormalizedValue | Sequence[str]]
+        type HandlerConfigMapping = Mapping[
+            str, ft.NormalizedValue | MutableSequence[str]
+        ]
         "Handler configuration mapping specific to flext-core handlers."
 
 

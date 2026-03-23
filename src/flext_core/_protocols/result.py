@@ -18,28 +18,12 @@ class FlextProtocolsResult:
 
     @runtime_checkable
     class Result[T](FlextProtocolsBase.Base, Protocol):
-        """Result type interface for railway-oriented programming.
-
-        Used extensively for all operations that can fail. Provides
-        structural typing interface for r without circular imports.
-        Fully compatible with r and FlextRuntime usage patterns.
-
-        Defined at root level to allow self-referencing in method signatures
-        (e.g., `def map[U](...) -> FlextProtocolsResult.Result[U]`).
-
-        All methods enforce strict typing with explicit return types and
-        comprehensive error handling via structured error support.
-        """
+        """Result type interface for railway-oriented programming."""
 
         @classmethod
         @override
         def __subclasshook__(cls, cls_: type) -> bool:
-            """Enable isinstance() for Pydantic-backed implementations.
-
-            Python 3.12+ Protocol isinstance checks use class __dict__ lookup,
-            which misses Pydantic v2 model fields (stored in __pydantic_fields__,
-            not __dict__). This hook uses class-level attrs that ARE in __dict__.
-            """
+            """Enable isinstance() for Pydantic-backed implementations."""
             if cls is FlextProtocolsResult.Result:
                 required = frozenset({"is_failure", "value", "flat_map", "lash"})
                 if all(any(a in B.__dict__ for B in cls_.__mro__) for a in required):
@@ -296,21 +280,7 @@ class FlextProtocolsResult:
 
     @runtime_checkable
     class StructuredError(Protocol):
-        """Protocol for structured error handling in Results.
-
-        Enables categorized error handling with error domains instead of
-        free-form error strings. Supports error routing and categorization
-        across the FLEXT ecosystem.
-
-        Usage:
-            result = r[User].fail(
-                "User not found",
-                error_code="NOT_FOUND",
-                error_data={"user_id": "123"},
-            )
-            if result.error_code == "NOT_FOUND":
-                return 404
-        """
+        """Protocol for structured error handling in Results."""
 
         @property
         def error_domain(self) -> str | None:

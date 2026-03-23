@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 
 import orjson
 from pydantic import BaseModel
@@ -17,21 +17,7 @@ from flext_core import FlextRuntime, FlextUtilitiesGuardsTypeCore, c, m, r, t
 
 
 class FlextUtilitiesModel:
-    """Utilities for Pydantic model initialization.
-
-    PHILOSOPHY:
-    ──────────
-    - model_validate() to create from dicts
-    - Automatic StrEnum coercion
-    - Merge defaults with overrides
-    - No initialization code bloat
-
-    References:
-    ────────────
-    - model_validate: https://docs.pydantic.dev/latest/api/base_model/
-    - ConfigDict: https://docs.pydantic.dev/latest/api/config/
-
-    """
+    """Utilities for Pydantic model initialization."""
 
     _V = m.Validators
 
@@ -75,7 +61,7 @@ class FlextUtilitiesModel:
             sequence_items: Sequence[t.ValueOrModel] = [
                 FlextRuntime.normalize_to_container(item_value) for item_value in value
             ]
-            normalized_items: Sequence[t.Primitives] = []
+            normalized_items: MutableSequence[t.Primitives] = []
             for item in sequence_items:
                 if item is None:
                     normalized_items.append("")
@@ -101,12 +87,6 @@ class FlextUtilitiesModel:
 
         Generic replacement for: model.model_dump() with consistent return type.
 
-        Common usage patterns from codebase:
-        - dump(model) - no arguments
-        - dump(model, exclude_none=True) - bool flag
-        - dump(model, exclude={"key"}) - set[str] for exclude/include
-        - dump(model, exclude_unset=True) - bool flag
-
         Args:
             model: Pydantic model instance to serialize.
             by_alias: Whether to use field aliases.
@@ -118,11 +98,6 @@ class FlextUtilitiesModel:
 
         Returns:
             Dictionary representation of the model.
-
-        Example:
-            >>> user = UserModel(status=Status.ACTIVE, name="John")
-            >>> data = u.dump(user, exclude_none=True)
-            >>> # {"status": "active", "name": "John"}
 
         """
         return model.model_dump(
@@ -142,17 +117,6 @@ class FlextUtilitiesModel:
         type conversions automatically (e.g., str → Path, dict → BaseModel, etc.).
         All parameter validation and conversion happens via Pydantic 2 Field constraints
         and field_validators defined in the model.
-
-        Example:
-             result = u.from_kwargs(
-                 CreateParams,
-                 content={"key": "value"},
-                 name="file.json",
-                 directory=Path("/tmp"),  # Pydantic field_validator converts str → Path
-                 indent=2,                # Pydantic Field(ge=0) validates
-             )
-             if result.is_success:
-                 params: CreateParams = result.value
 
         """
         instance_result = r[M].create_from_callable(lambda: model_cls(**kwargs))
@@ -184,11 +148,6 @@ class FlextUtilitiesModel:
         Returns:
             r containing model instance or error message.
 
-        Example:
-            >>> result = u.load(UserModel, {"status": "active", "name": "John"})
-            >>> if result.is_success:
-            ...     user: UserModel = result.value
-
         """
         instance_result = r[T_Model].create_from_callable(
             lambda: model_cls.model_validate(data, strict=strict),
@@ -208,20 +167,7 @@ class FlextUtilitiesModel:
         defaults: Mapping[str, t.NormalizedValue],
         overrides: Mapping[str, t.NormalizedValue],
     ) -> r[M]:
-        """Merge defaults with overrides and create model.
-
-        Example:
-             DEFAULTS = {"status": Status.PENDING, "retries": 3}
-
-             result = u.merge_defaults(
-                 ConfigModel,
-                 defaults=DEFAULTS,
-                 overrides={"status": "active"},  # Overrides
-             )
-             # result.value.status = Status.ACTIVE
-             # result.value.retries = 3
-
-        """
+        """Merge defaults with overrides and create model."""
         merged = {**defaults, **overrides}
         instance_result = r[M].create_from_callable(
             lambda: model_cls.model_validate(merged),
@@ -256,21 +202,13 @@ class FlextUtilitiesModel:
         Raises:
             TypeError: If value is not None, dict-like, or Metadata instance
 
-        Example:
-            >>> u.ensure_metadata(None)
-            Metadata(attributes={})
-            >>> u.ensure_metadata({"key": "value"})
-            Metadata(attributes={"key": "value"})
-            >>> u.ensure_metadata(Metadata(attributes={"a": 1}))
-            Metadata(attributes={"a": 1})
-
         """
         if value is None:
             return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: {}})
         if isinstance(value, m.Metadata):
             return value
         if FlextRuntime.is_dict_like(value):
-            safe_attrs: Mapping[str, t.MetadataValue] = {}
+            safe_attrs: MutableMapping[str, t.MetadataValue] = {}
             for k, v in value.items():
                 str_k = str(k)
                 if v is None:
@@ -281,7 +219,7 @@ class FlextUtilitiesModel:
                     nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(
                         v,
                     )
-                    plain_mapping: Mapping[str, t.NormalizedValue] = {}
+                    plain_mapping: MutableMapping[str, t.NormalizedValue] = {}
                     for nested_key, nested_value in nested_mapping.items():
                         if isinstance(nested_value, BaseModel):
                             dumped_nested = nested_value.model_dump()
@@ -311,19 +249,11 @@ class FlextUtilitiesModel:
         Returns:
             Mapping[str, Any]: Mapping with Pydantic-safe values
 
-        Example:
-            >>> u.normalize_to_pydantic_dict(None)
-            {}
-            >>> u.normalize_to_pydantic_dict({"key": "value"})
-            {"key": "value"}
-            >>> u.normalize_to_pydantic_dict({"obj": SomeModel()})
-            {"obj": "SomeModel(...)"}  # Complex types converted to string
-
         """
         if not data:
             empty_result: Mapping[str, t.Scalar | Sequence[t.Primitives]] = {}
             return empty_result
-        result: Mapping[str, t.Scalar | Sequence[t.Primitives]] = {}
+        result: MutableMapping[str, t.Scalar | Sequence[t.Primitives]] = {}
         for key, value in data.root.items():
             result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
         return result
@@ -361,7 +291,7 @@ class FlextUtilitiesModel:
             return obj
         if isinstance(obj, BaseModel):
             model_dump_result = obj.model_dump()
-            normalized_model_dump: Mapping[str, t.ValueOrModel] = {}
+            normalized_model_dump: MutableMapping[str, t.ValueOrModel] = {}
             for key, value in model_dump_result.items():
                 normalized_value: t.ValueOrModel
                 if value is None:
@@ -389,7 +319,7 @@ class FlextUtilitiesModel:
             )
             if obj_mapping_result.is_failure:
                 return t.ConfigMap(root={})
-            normalized_mapping: Mapping[str, t.ValueOrModel] = {}
+            normalized_mapping: MutableMapping[str, t.ValueOrModel] = {}
             for key, value in obj_mapping_result.value.items():
                 normalized_mapping_value: t.ValueOrModel = (
                     FlextRuntime.normalize_to_container(value)

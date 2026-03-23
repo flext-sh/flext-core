@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict as BaseUserDict
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from typing import TypeVar, cast, get_origin, override
 
 import pytest
@@ -64,7 +64,10 @@ class TestuTypeChecker:
             return r[int].ok(message * 2)
 
     class DictHandler(
-        h[Mapping[str, t.NormalizedValue], Mapping[str, t.NormalizedValue]]
+        h[
+            MutableMapping[str, t.NormalizedValue],
+            MutableMapping[str, t.NormalizedValue],
+        ]
     ):
         """Handler for dictionary messages."""
 
@@ -147,7 +150,7 @@ class TestuTypeChecker:
             type_str = str(types[0])
             assert type_str.startswith("Mapping[") or types[0] is dict
         else:
-            tm.that(origin, eq=dict)
+            tm.that(origin in {dict, MutableMapping}, eq=True)
 
     def test_compute_accepted_message_types_object_handler(self) -> None:
         """Test compute_accepted_message_types with t.NormalizedValue handler (universal)."""
@@ -365,7 +368,7 @@ class TestuTypeChecker:
 
     def test_handle_type_or_origin_check_with_origin(self) -> None:
         """Test _handle_type_or_origin_check with __origin__ attribute."""
-        dict_type: type[Mapping[str, str]] = Mapping[str, str]
+        dict_type: type[Mapping[str, str]] = MutableMapping[str, str]
         origin = get_origin(dict_type) or dict_type
         result = u._handle_type_or_origin_check(
             self._type_origin(dict),

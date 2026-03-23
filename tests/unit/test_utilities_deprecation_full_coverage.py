@@ -13,9 +13,7 @@ def test_deprecated_class_noop_init_branch() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
-    legacy_base = type(
-        "LegacyBase", (t.NormalizedValue,), {"__init__": lambda self: None}
-    )
+    legacy_base = type("LegacyBase", (object,), {"__init__": lambda self: None})
     legacy = u.deprecated_class("NewClass", "2.0.0")(
         legacy_base,
     )

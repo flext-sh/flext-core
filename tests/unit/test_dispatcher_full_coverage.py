@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, MutableMapping
 from typing import cast
 
 import pytest
@@ -87,7 +87,7 @@ class TestDispatcherFullCoverage:
 
     @staticmethod
     def _force_handler(
-        obj: Callable[[m.Command], str] | str | Mapping[str, str],
+        obj: Callable[[m.Command], str] | str | MutableMapping[str, str],
     ) -> t.DispatchableHandler:
         _ = obj
 

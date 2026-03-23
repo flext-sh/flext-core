@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import overload
 
@@ -32,13 +32,6 @@ class FlextUtilitiesMapper:
 
     Provides generic methods for mapping between data structures, building
     objects from flags/mappings, and transforming dict/list structures.
-
-    **Usage** (flat namespace via runtime alias u; no subdivision):
-        >>> from flext_core import u
-        >>> result = u.get(data, "key", default="")
-        >>> new_dict = u.map_dict_keys({"old_key": "value", "foo": "baz"}, mapping)
-        >>> perms = u.build_flags_dict(flags, mapping)
-    Subprojects use their project u. Aliases follow MRO registration only.
     """
 
     @property
@@ -54,7 +47,7 @@ class FlextUtilitiesMapper:
     ) -> Mapping[str, t.NormalizedValue]:
         """Apply exclude keys step."""
         if exclude_keys:
-            filtered_result: Mapping[str, t.NormalizedValue] = dict(result)
+            filtered_result: MutableMapping[str, t.NormalizedValue] = dict(result)
             for key in exclude_keys:
                 _ = filtered_result.pop(key, None)
             return filtered_result
@@ -68,7 +61,7 @@ class FlextUtilitiesMapper:
     ) -> Mapping[str, t.NormalizedValue]:
         """Apply filter keys step."""
         if filter_keys:
-            filtered_dict: Mapping[str, t.NormalizedValue] = {}
+            filtered_dict: MutableMapping[str, t.NormalizedValue] = {}
             for key in filter_keys:
                 if key in result:
                     filtered_dict[key] = result[key]
@@ -109,7 +102,7 @@ class FlextUtilitiesMapper:
                 result,
             )
             if isinstance(normalized, Mapping):
-                normalized_result: Mapping[str, t.NormalizedValue] = {}
+                normalized_result: MutableMapping[str, t.NormalizedValue] = {}
                 for key, value in normalized.items():
                     normalized_result[str(key)] = (
                         FlextUtilitiesMapper.narrow_to_container(value)
@@ -184,7 +177,7 @@ class FlextUtilitiesMapper:
         current_list: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
-        chunked: Sequence[t.NormalizedValue] = []
+        chunked: MutableSequence[t.NormalizedValue] = []
         for i in range(0, len(current_list), chunk_size):
             chunk: t.ContainerList = current_list[i : i + chunk_size]
             chunked.append(chunk)
@@ -361,7 +354,7 @@ class FlextUtilitiesMapper:
         ]
         if isinstance(group_spec_raw, str):
             group_spec = group_spec_raw
-            grouped: Mapping[str, t.ContainerList] = {}
+            grouped: MutableMapping[str, t.MutableContainerList] = {}
             for orig_item, item in zip(current_items, current_list, strict=False):
                 if isinstance(orig_item, BaseModel):
                     if not hasattr(orig_item, group_spec):
@@ -384,7 +377,7 @@ class FlextUtilitiesMapper:
             if group_callable_result.is_failure:
                 return current
             group_callable = group_callable_result.value
-            grouped_callable: Mapping[str, t.ContainerList] = {}
+            grouped_callable: MutableMapping[str, t.MutableContainerList] = {}
             for item in current_list:
                 key_result = r[t.NormalizedValue].create_from_callable(
                     partial(group_callable, item),
@@ -443,7 +436,7 @@ class FlextUtilitiesMapper:
             return current.lower() if normalize_case == "lower" else current.upper()
         if isinstance(current, (list, tuple)):
             seq_current: Sequence[t.NormalizedValue] = current
-            result: t.ContainerList = []
+            result: t.MutableContainerList = []
             for x in seq_current:
                 x_general = FlextUtilitiesMapper.narrow_to_container(x)
                 if isinstance(x_general, str):
@@ -678,7 +671,7 @@ class FlextUtilitiesMapper:
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
         seen: set[t.NormalizedValue | str] = set()
-        unique_list: t.ContainerList = []
+        unique_list: t.MutableContainerList = []
         for item in current_list_unique:
             item_hashable: t.NormalizedValue | str = (
                 item
@@ -704,7 +697,7 @@ class FlextUtilitiesMapper:
         Helper method to improve type inference for pyrefly.
         """
         if isinstance(item, Mapping):
-            dict_item: Mapping[str, t.NormalizedValue] = {}
+            dict_item: MutableMapping[str, t.NormalizedValue] = {}
             for key, value in item.items():
                 coerced_value: t.NormalizedValue = (
                     value if FlextUtilitiesGuards.is_container(value) else str(value)
@@ -901,7 +894,7 @@ class FlextUtilitiesMapper:
     ) -> Mapping[str, t.NormalizedValue]:
         """Safely narrow t.NormalizedValue to ConfigurationDict with runtime validation."""
         if FlextUtilitiesGuards.is_configuration_dict(value):
-            normalized_dict: Mapping[str, t.NormalizedValue] = {}
+            normalized_dict: MutableMapping[str, t.NormalizedValue] = {}
             for key, item in value.items():
                 normalized_dict[str(key)] = FlextUtilitiesMapper.narrow_to_container(
                     item,
@@ -918,7 +911,7 @@ class FlextUtilitiesMapper:
         if isinstance(value, t.ConfigMap):
             return value
         if isinstance(value, Mapping):
-            narrowed_dict: Mapping[str, t.ValueOrModel] = dict(
+            narrowed_dict: MutableMapping[str, t.ValueOrModel] = dict(
                 FlextUtilitiesMapper._narrow_to_configuration_dict(value),
             )
             coerced_result = r[t.ConfigMap].create_from_callable(
@@ -938,7 +931,7 @@ class FlextUtilitiesMapper:
     ) -> Sequence[t.NormalizedValue]:
         """Safely narrow t.NormalizedValue to Sequence[t.NormalizedValue]."""
         if isinstance(value, (list, tuple)):
-            narrowed_items: t.ContainerList = []
+            narrowed_items: t.MutableContainerList = []
             for item_raw in value:
                 item = FlextUtilitiesMapper.narrow_to_container(item_raw)
                 narrowed_item = FlextUtilitiesMapper.narrow_to_container(item)
@@ -957,7 +950,7 @@ class FlextUtilitiesMapper:
         Uses TypeGuard pattern for proper type narrowing.
         """
         if isinstance(value, Mapping):
-            result: Mapping[str, t.NormalizedValue] = {}
+            result: MutableMapping[str, t.NormalizedValue] = {}
             key: str
             val: t.NormalizedValue
             for key, val in value.items():
@@ -1015,7 +1008,7 @@ class FlextUtilitiesMapper:
 
         """
         items_list: Sequence[T] = list(items)
-        numeric_values: Sequence[t.Numeric] = []
+        numeric_values: MutableSequence[t.Numeric] = []
         if callable(field):
             for item in items_list:
                 val = field(item)
@@ -1276,7 +1269,7 @@ class FlextUtilitiesMapper:
         """
 
         def _build_flags() -> Mapping[str, bool]:
-            result: Mapping[str, bool] = {}
+            result: MutableMapping[str, bool] = {}
             for output_key in flag_mapping.values():
                 result[output_key] = default_value
             for flag in active_flags:
@@ -1348,7 +1341,7 @@ class FlextUtilitiesMapper:
         """
 
         def _collect_keys() -> Sequence[str]:
-            active_keys: Sequence[str] = []
+            active_keys: MutableSequence[str] = []
             for source_key, output_key in key_mapping.items():
                 if source.get(source_key):
                     active_keys.append(output_key)
@@ -1397,7 +1390,7 @@ class FlextUtilitiesMapper:
             )
 
         """
-        constructed: Mapping[str, t.NormalizedValue] = {}
+        constructed: MutableMapping[str, t.NormalizedValue] = {}
         for target_key, target_spec in spec.items():
             try:
                 target_spec_mapping: Mapping[str, t.NormalizedValue] | None = None
@@ -1821,7 +1814,7 @@ class FlextUtilitiesMapper:
             })
 
         """
-        result: Mapping[str, t.NormalizedValue] = {}
+        result: MutableMapping[str, t.NormalizedValue] = {}
         spec_item: str | t.NormalizedValue
         for spec_item in field_names:
             if isinstance(spec_item, Mapping):
@@ -1885,7 +1878,7 @@ class FlextUtilitiesMapper:
             )
 
         """
-        result: Mapping[str, t.NormalizedValue] = {}
+        result: MutableMapping[str, t.NormalizedValue] = {}
         for field_name, field_default in spec.items():
             value: t.NormalizedValue = FlextUtilitiesMapper.get(
                 source,
@@ -2051,7 +2044,7 @@ class FlextUtilitiesMapper:
 
         """
         if handle_collisions == "first":
-            result: Mapping[str, str] = {}
+            result: MutableMapping[str, str] = {}
             for k, v in source.items():
                 if v not in result:
                     result[v] = k
@@ -2110,7 +2103,7 @@ class FlextUtilitiesMapper:
         """
 
         def _map_keys() -> Mapping[str, t.NormalizedValue]:
-            result: Mapping[str, t.NormalizedValue] = {}
+            result: MutableMapping[str, t.NormalizedValue] = {}
             for key, value in source.items():
                 new_key = key_mapping.get(key)
                 if new_key:
@@ -2138,7 +2131,7 @@ class FlextUtilitiesMapper:
         Accepts any dict narrowed from isinstance(value, dict).
         Each value is individually narrowed via isinstance.
         """
-        result: Mapping[str, t.NormalizedValue] = {}
+        result: MutableMapping[str, t.NormalizedValue] = {}
         for k in list(raw.keys()):
             v = raw[k]
             if v is None:
@@ -2158,7 +2151,7 @@ class FlextUtilitiesMapper:
         Accepts any list narrowed from isinstance(value, list).
         Each item is individually narrowed via isinstance.
         """
-        result: Sequence[t.NormalizedValue] = []
+        result: MutableSequence[t.NormalizedValue] = []
         for item in raw:
             if isinstance(item, (BaseModel, *t.CONTAINER_TYPES, list, dict, tuple)):
                 result.append(FlextUtilitiesMapper.narrow_to_container(item))
@@ -2261,7 +2254,7 @@ class FlextUtilitiesMapper:
                 merge_strategy="merge",
             )
         )
-        result: Mapping[str, t.MetadataValue] = {}
+        result: MutableMapping[str, t.MetadataValue] = {}
         for k, v in raw_result.items():
             result[k] = FlextRuntime.normalize_to_metadata(v)
         return result
@@ -2364,7 +2357,7 @@ class FlextUtilitiesMapper:
             # [25, 30, 0]
 
         """
-        values: t.ContainerList = []
+        values: t.MutableContainerList = []
         for item in items:
             raw_value = item.get(key, default)
             if raw_value is None:
@@ -2442,7 +2435,7 @@ class FlextUtilitiesMapper:
                 return x
 
             transformer = identity_transformer
-        result: Mapping[str, t.NormalizedValue] = {}
+        result: MutableMapping[str, t.NormalizedValue] = {}
         if primary_data is not None:
             primary_source: Mapping[str, t.NormalizedValue] | None = None
             if isinstance(primary_data, t.ConfigMap):

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -27,6 +27,8 @@ class FlextTypingBase:
     )
     type ContainerMapping = Mapping[str, NormalizedValue]
     type ContainerList = Sequence[NormalizedValue]
+    type MutableContainerMapping = MutableMapping[str, NormalizedValue]
+    type MutableContainerList = MutableSequence[NormalizedValue]
 
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,

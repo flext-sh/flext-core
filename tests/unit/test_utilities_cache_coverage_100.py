@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import math
 from collections import UserDict
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, cast, override
 
 from flext_tests import tm
@@ -164,7 +164,7 @@ class UtilitiesCacheCoverage100Namespace:
         ),
         NormalizeComponentScenario(
             name="custom_object",
-            component=str(t.NormalizedValue()),
+            component="custom_object",
             expected_type=str,
         ),
     ]
@@ -187,8 +187,8 @@ class UtilitiesCacheCoverage100Namespace:
         SortKeyScenario(name="zero", key=0, expected_tuple=(1, "0")),
         SortKeyScenario(
             name="custom_object",
-            key=str(t.NormalizedValue()),
-            expected_tuple=(0, str(t.NormalizedValue()).lower()),
+            key="custom_object",
+            expected_tuple=(0, "custom_object"),
         ),
         SortKeyScenario(
             name="list_key",
@@ -412,7 +412,7 @@ class UtilitiesCacheCoverage100Namespace:
             class TestObject:
                 """Test t.NormalizedValue with dict cache."""
 
-                _cache: Mapping[str, str] = {}  # Test double; per-test isolation
+                _cache: MutableMapping[str, str] = {}  # Test double; per-test isolation
 
                 def __init__(self) -> None:
                     self._cache = {"key1": "value1", "key2": "value2"}
@@ -458,9 +458,9 @@ class UtilitiesCacheCoverage100Namespace:
             class TestObject:
                 """Test t.NormalizedValue with multiple cache attributes."""
 
-                _cache: Mapping[str, int] = {}  # Test double
+                _cache: MutableMapping[str, int] = {}  # Test double
                 _cached_value: str | None = "value"
-                _cached_at: Mapping[str, int] = {}  # Test double
+                _cached_at: MutableMapping[str, int] = {}  # Test double
 
                 def __init__(self) -> None:
                     self._cache = {"a": 1}
@@ -522,7 +522,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             class BadObject:
                 def __init__(self) -> None:
-                    self._cache = t.NormalizedValue()
+                    self._cache = "cached"
 
                 @override
                 def __setattr__(
@@ -543,7 +543,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             class BadObject:
                 def __init__(self) -> None:
-                    self._cache: Mapping[str, str] = {}
+                    self._cache: MutableMapping[str, str] = {}
 
                 @override
                 def __getattribute__(self, name: str) -> t.NormalizedValue:
@@ -580,7 +580,7 @@ class UtilitiesCacheCoverage100Namespace:
             class ModelWithCache:
                 model_config: ClassVar[Mapping[str, str]] = {"extra": "allow"}
                 name: str
-                _cache: Mapping[
+                _cache: MutableMapping[
                     str, str
                 ] = {}  # Test double; cleared by clear_object_cache
 
@@ -606,7 +606,9 @@ class UtilitiesCacheCoverage100Namespace:
 
             class TestObject:
                 def __init__(self) -> None:
-                    self._cache: Mapping[str, t.NormalizedValue] = {}  # Test double
+                    self._cache: MutableMapping[
+                        str, t.NormalizedValue
+                    ] = {}  # Test double
 
             obj = TestObject()
             assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True
@@ -626,8 +628,8 @@ class UtilitiesCacheCoverage100Namespace:
 
             class TestObject:
                 def __init__(self) -> None:
-                    self._cache: Mapping[str, t.NormalizedValue] = {}
-                    self.cache: Mapping[str, t.NormalizedValue] = {}
+                    self._cache: MutableMapping[str, t.NormalizedValue] = {}
+                    self.cache: MutableMapping[str, t.NormalizedValue] = {}
 
             obj = TestObject()
             assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True

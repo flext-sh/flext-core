@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from types import SimpleNamespace
 from typing import cast, override
 
@@ -113,8 +120,8 @@ class TestMixinsFullCoverage:
             super().__init__()
             self.success: bool = success
             self.logger: t.Container | BaseModel | None = logger
-            self.factories: Mapping[str, t.NormalizedValue] = {}
-            self.register_calls: Sequence[tuple[str, str]] = []
+            self.factories: MutableMapping[str, t.NormalizedValue] = {}
+            self.register_calls: MutableSequence[tuple[str, str]] = []
 
         def get_typed(
             self, _key: str, _tp: type[t.Container | BaseModel]
@@ -221,7 +228,7 @@ class TestMixinsFullCoverage:
         tm.that(runtime, none=False)
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
-            cast("Mapping[str, t.NormalizedValue]", metrics)["duration_ms"] = 2.0
+            cast("MutableMapping[str, t.NormalizedValue]", metrics)["duration_ms"] = 2.0
         tm.that(hasattr(service, "_operation_stats"), eq=True)
         tm.that(service._operation_stats, has="op")
         try:
@@ -474,12 +481,12 @@ class TestMixinsFullCoverage:
             config_overrides=None,
             initial_context=None,
         )
-        captured: Mapping[str, t.NormalizedValue] = {}
+        captured: MutableMapping[str, t.NormalizedValue] = {}
 
         class _RegContainer:
             def __init__(self) -> None:
                 super().__init__()
-                self._services: Mapping[str, t.NormalizedValue] = {}
+                self._services: MutableMapping[str, t.NormalizedValue] = {}
 
             def has_service(self, name: str) -> bool:
                 return name in self._services

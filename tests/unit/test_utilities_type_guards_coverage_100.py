@@ -134,7 +134,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         if scenario.value == "has_items":
             value: NormalizedValue = [1, 2, 3]
         elif scenario.value == "empty":
-            value = Sequence[int]()
+            value = cast("NormalizedValue", [])
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         else:

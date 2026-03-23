@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
+from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence, Sized
 
 from pydantic import BaseModel, ValidationError
 
@@ -40,7 +40,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return default if default is not None else {}
         if isinstance(value, Mapping):
             mapping_value: Mapping[str, t.NormalizedValue] = value
-            normalized: Mapping[str, t.NormalizedValue] = {}
+            normalized: MutableMapping[str, t.NormalizedValue] = {}
             for key, item_value in mapping_value.items():
                 normalized[str(key)] = item_value
             return normalized
@@ -413,7 +413,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return FlextUtilitiesGuardsEnsure._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
             mapping_value: Mapping[str, t.NormalizedValue] = value
-            normalized_auto: Mapping[str, t.NormalizedValue] = {}
+            normalized_auto: MutableMapping[str, t.NormalizedValue] = {}
             for key, item_value in mapping_value.items():
                 normalized_auto[str(key)] = item_value
             return normalized_auto

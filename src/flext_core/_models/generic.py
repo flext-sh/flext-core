@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
@@ -373,19 +373,19 @@ class FlextGenericModels:
         """
 
         converted: Annotated[
-            Sequence[t.ValueOrModel],
+            MutableSequence[t.ValueOrModel],
             Field(default_factory=list, description="Converted items"),
         ]
         errors: Annotated[
-            Sequence[str],
+            MutableSequence[str],
             Field(default_factory=list, description="Error messages"),
         ]
         warnings: Annotated[
-            Sequence[str],
+            MutableSequence[str],
             Field(default_factory=list, description="Warning messages"),
         ]
         skipped: Annotated[
-            Sequence[t.ValueOrModel],
+            MutableSequence[t.ValueOrModel],
             Field(default_factory=list, description="Skipped items"),
         ]
         start_time: Annotated[
@@ -460,7 +460,7 @@ class FlextGenericModels:
             item: t.ValueOrModel,
         ) -> None:
             raw_items = self.metadata.root.get(key)
-            result_list: Sequence[t.NormalizedValue] = []
+            result_list: MutableSequence[t.NormalizedValue] = []
             if isinstance(raw_items, list):
                 for raw_item in raw_items:
                     if isinstance(
@@ -481,7 +481,7 @@ class FlextGenericModels:
 
         def _upsert_skip_reason(self, item: t.ValueOrModel, reason: str) -> None:
             raw_reasons = self.metadata.root.get("skip_reasons", {})
-            reasons: Mapping[str, str] = {}
+            reasons: MutableMapping[str, str] = {}
             if isinstance(raw_reasons, Mapping):
                 reasons = {str(k): str(v) for k, v in raw_reasons.items()}
             reasons[str(item)] = reason

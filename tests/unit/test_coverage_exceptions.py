@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -188,8 +188,8 @@ class TestCoverageExceptions:
     @pytest.mark.parametrize("scenario", EXCEPTION_CREATION, ids=lambda s: s.name)
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         if scenario.kwargs:
-            type_kwargs: Mapping[str, type] = {}
-            metadata_kwargs: Mapping[str, t.NormalizedValue] = {}
+            type_kwargs: MutableMapping[str, type] = {}
+            metadata_kwargs: MutableMapping[str, t.NormalizedValue] = {}
             for key, value in scenario.kwargs.items():
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
@@ -271,7 +271,7 @@ class TestCoverageExceptions:
             tm.that(message in str(error) or len(str(error)) > 9000, eq=expected_in_str)
 
     def test_multiple_exceptions_in_sequence(self) -> None:
-        errors: Sequence[str] = []
+        errors: MutableSequence[str] = []
         for i in range(5):
             try:
                 if i % 2 == 0:

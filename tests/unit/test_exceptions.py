@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from typing import cast, override
 
 import pytest
@@ -295,7 +295,7 @@ class Teste:
         """Test TypeError._normalize_type."""
         type_map: Mapping[str, type] = {"str": str, "int": int}
         extra_kwargs_raw = {"expected_type": "str"}
-        extra_kwargs: Mapping[str, t.Container] = dict(extra_kwargs_raw)
+        extra_kwargs: MutableMapping[str, t.Container] = dict(extra_kwargs_raw)
         result = e.TypeError._normalize_type(
             None,
             type_map,
@@ -305,7 +305,9 @@ class Teste:
         tm.that(result is str, eq=True)
         tm.that(extra_kwargs, lacks="expected_type")
         extra_kwargs_type_raw = {"expected_type": "int"}
-        extra_kwargs_type: Mapping[str, t.Container] = dict(extra_kwargs_type_raw)
+        extra_kwargs_type: MutableMapping[str, t.Container] = dict(
+            extra_kwargs_type_raw
+        )
         result = e.TypeError._normalize_type(
             None,
             type_map,
@@ -627,7 +629,7 @@ class Teste:
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
-        kwargs: Mapping[str, t.MetadataValue] = {}
+        kwargs: MutableMapping[str, t.MetadataValue] = {}
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
         tm.that(extra, has="field")
@@ -823,7 +825,7 @@ class Teste:
             error_code="TEST_ERROR",
             field="test_field",
             value=123,
-            custom_obj=cast("t.MetadataAttributeValue", str(t.NormalizedValue())),
+            custom_obj=cast("t.MetadataAttributeValue", "custom_obj"),
         )
         tm.that(isinstance(error, e.ValidationError), eq=True)
         tm.that(error.metadata, none=False)
@@ -855,7 +857,7 @@ class Teste:
         error_factory = e()
         error = error_factory.create(
             "Test message",
-            obj=str(t.NormalizedValue()),
+            obj="custom_obj",
             lst=[1, 2, 3],
             dct={"key": "value"},
         )
@@ -947,7 +949,7 @@ class Teste:
             "metadata": dict_like_obj,
             "field": "test_field",
         }
-        kwargs_dict_like: Mapping[str, t.MetadataValue] = {}
+        kwargs_dict_like: MutableMapping[str, t.MetadataValue] = {}
         for k, v in kwargs_dict_like_raw.items():
             if k == "metadata" and isinstance(v, DictLike):
                 dict_like_dict: Mapping[str, t.MetadataValue] = {

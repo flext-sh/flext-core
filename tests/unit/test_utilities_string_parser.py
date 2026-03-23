@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import cast
 
 import pytest
@@ -628,7 +628,7 @@ class TestuStringParser:
 
         def test_empty_patterns(self, parser: u) -> None:
             """Test pipeline with empty patterns list."""
-            patterns: Sequence[tuple[str, str] | tuple[str, str, int]] = []
+            patterns: MutableSequence[tuple[str, str] | tuple[str, str, int]] = []
             result = parser.apply_regex_pipeline("test", patterns)
             u.Tests.Result.assert_success_with_value(result, "test")
 

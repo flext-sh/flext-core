@@ -23,7 +23,7 @@ from __future__ import annotations
 import os
 import threading
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -200,7 +200,7 @@ class TestFlextSettings:
     def test_config_thread_safety(self) -> None:
         """Test config thread safety."""
         config = u.Tests.ConfigHelpers.create_test_config()
-        results: Sequence[str] = []
+        results: MutableSequence[str] = []
 
         def set_value(thread_id: int) -> None:
             config.app_name = f"thread_{thread_id}"

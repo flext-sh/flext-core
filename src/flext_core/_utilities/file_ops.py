@@ -4,12 +4,6 @@ Wraps stdlib Path.write_text / write_bytes / sys.stdout.write with signatures
 that discard the byte-count return value, eliminating reportUnusedCallResult
 warnings across the entire workspace without resorting to ``_ =`` suppression.
 
-Usage (via facade):
-    from flext_core import u
-    u.write_file(path, content, encoding=c.Infra.Encoding.DEFAULT)
-    u.write_file(path, raw_bytes)
-    u.write_stdout("message\\\\n")
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
