@@ -536,7 +536,7 @@ class FlextRuntime:
     @staticmethod
     def _is_structlog_processor(
         value: t.StructlogProcessor | t.NormalizedValue,
-    ) -> TypeIs[structlog.types.Processor]:
+    ) -> TypeGuard[structlog.types.Processor]:
         return callable(value)
 
     @staticmethod

@@ -182,7 +182,7 @@ class FlextDispatcher:
             with contextlib.suppress(TypeError, ValueError):
                 route_name = u.get_message_route(accepted_message_types[0])
         if route_name is None:
-            if callable(getattr(handler, "can_handle", None)):
+            if isinstance(handler, p.AutoDiscoverableHandler):
                 self._auto_handlers.append((
                     handler,
                     resolved_handler,

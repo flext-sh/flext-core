@@ -74,6 +74,7 @@ class FlextTypesServices:
         | p.DispatchMessage
         | p.Handle
         | p.Execute
+        | p.AutoDiscoverableHandler
     )
     type ResolvedHandlerCallable = Callable[
         ..., BaseModel | FlextTypesServices.RuntimeAtomic | None

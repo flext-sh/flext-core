@@ -88,7 +88,7 @@ class FlextSettings(BaseSettings, u):
         Field(default=c.DEFAULT_ENABLE_CACHING, description="Enable caching"),
     ]
     cache_ttl: Annotated[
-        int,
+        t.PositiveInt,
         Field(default=c.CACHE_TTL, description="Cache TTL"),
     ]
     database_url: Annotated[
@@ -96,7 +96,7 @@ class FlextSettings(BaseSettings, u):
         Field(default=c.DATABASE_URL, description="Database URL"),
     ]
     database_pool_size: Annotated[
-        int,
+        t.PositiveInt,
         Field(
             default=c.DEFAULT_DB_POOL_SIZE,
             description="Database pool size",

@@ -96,7 +96,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_handler_callable(
         value: t.GuardInput,
-    ) -> TypeIs[t.HandlerCallable]:
+    ) -> TypeGuard[t.HandlerCallable]:
         """Check if value is a callable handler function.
 
         Args:
@@ -286,15 +286,15 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return bool(isinstance(value, str) and bool(value.strip()))
             case "dict_non_empty":
                 if isinstance(value, dict):
-                    return bool(value)
+                    return len(value) > 0
                 if isinstance(value, t.ConfigMap):
-                    return bool(value.root)
+                    return len(value.root) > 0
                 return False
             case "list_non_empty":
                 if isinstance(value, (list, tuple)) and not isinstance(
                     value, (str, bytes)
                 ):
-                    return bool(value)
+                    return len(value) > 0
                 return False
             case _:
                 return False
