@@ -8,7 +8,7 @@ import pytest
 from flext_tests import tm
 from hypothesis import given, strategies as st
 
-from flext_core import FlextUtilities as u_cls
+from flext_core import u
 from tests import m, t
 
 
@@ -27,11 +27,11 @@ class TestAutomatedFlextUtilities:
         ],
     )
     def test_empty(self, value: t.NormalizedValue | None, expected: bool) -> None:
-        tm.that(u_cls.empty(value), eq=expected)
+        tm.that(u.empty(value), eq=expected)
 
     def test_generate_ulid_and_uuid(self) -> None:
-        generated_ulid = u_cls.generate("ulid")
-        generated_uuid = u_cls.generate()
+        generated_ulid = u.generate("ulid")
+        generated_uuid = u.generate()
         tm.that(generated_ulid, is_=str, none=False)
         tm.that(generated_uuid, is_=str, none=False)
         tm.that(len(generated_ulid), gt=0)
@@ -40,13 +40,13 @@ class TestAutomatedFlextUtilities:
     def test_type_guards_and_collection_helpers(self) -> None:
         model = m.Tests.User(id="1", name="Test", email="test@test.com")
         numbers = [1, 2, 3]
-        tm.that(u_cls.is_base_model(model), eq=True)
-        tm.that(u_cls.is_scalar(42), eq=True)
-        tm.that(u_cls.is_config_value({"alpha": 1}), eq=True)
+        tm.that(u.is_base_model(model), eq=True)
+        tm.that(u.is_scalar(42), eq=True)
+        tm.that(u.is_config_value({"alpha": 1}), eq=True)
 
-        mapped = u_cls.map(numbers, lambda v: v * 2)
-        chunks = u_cls.chunk(numbers, 2)
-        unique = u_cls.unique([1, 1, 2, 3, 3])
+        mapped = u.map(numbers, lambda v: v * 2)
+        chunks = u.chunk(numbers, 2)
+        unique = u.unique([1, 1, 2, 3, 3])
         tm.that(mapped, eq=[2, 4, 6])
         tm.that(chunks, eq=[[1, 2], [3]])
         tm.that(unique, eq=[1, 2, 3])
@@ -62,12 +62,12 @@ class TestAutomatedFlextUtilities:
     def test_hypothesis_empty_returns_bool(
         self, value: t.NormalizedValue | None
     ) -> None:
-        result = u_cls.empty(value)
+        result = u.empty(value)
         tm.that(result, is_=bool)
 
     @given(st.text())
     def test_hypothesis_generate_always_non_empty(self, _value: str) -> None:
-        generated = u_cls.generate("ulid")
+        generated = u.generate("ulid")
         tm.that(generated, is_=str, none=False)
         tm.that(len(generated), gt=0)
 
@@ -78,7 +78,7 @@ class TestAutomatedFlextUtilities:
         tm.that(len(users), gt=0)
         start = perf_counter()
         for _ in range(2000):
-            generated = u_cls.generate("ulid")
+            generated = u.generate("ulid")
             tm.that(len(generated), gt=0)
         elapsed = perf_counter() - start
         tm.that(elapsed, gt=0.0)

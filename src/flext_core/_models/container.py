@@ -20,10 +20,10 @@ from typing import Annotated, ClassVar, TypeIs
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
 from flext_core import (
-    FlextConstants as c,
     FlextModelFoundation,
-    FlextProtocols as p,
-    FlextTypes as t,
+    c,
+    p,
+    t,
 )
 
 

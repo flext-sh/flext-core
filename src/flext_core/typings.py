@@ -10,10 +10,12 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from flext_core import FlextTypesCore, FlextTypesServices, FlextTypesValidation
-from flext_core._typings.generics import (
+from flext_core import (
     TV,
     EnumT,
+    FlextTypesCore,
+    FlextTypesServices,
+    FlextTypesValidation,
     MessageT_contra,
     P,
     R,

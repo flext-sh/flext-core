@@ -15,7 +15,7 @@ from typing import Annotated
 from flext_tests import tm
 from pydantic import BaseModel, Field
 
-from flext_core._models.domain_event import _ComparableConfigMap
+from flext_core import _ComparableConfigMap
 from tests import m, t
 
 

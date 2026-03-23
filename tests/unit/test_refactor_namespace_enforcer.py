@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra.refactor.namespace_enforcer import (
+from flext_infra import (
     FlextInfraNamespaceEnforcer,
 )
 from flext_tests import tm
@@ -24,7 +24,7 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (pkg / "service.py").write_text(
-        "from flext_core.constants import c, m, r, t, u, p\nfrom flext_infra.constants import c, m, t, u, p\n\nVALUE = 1",
+        "from flext_core import c, m, r, t, u, p\nfrom flext_infra import c, m, t, u, p\n\nVALUE = 1",
         encoding="utf-8",
     )
 
@@ -41,8 +41,8 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     tm.that((pkg / "utilities.py").exists(), eq=True)
 
     service_source = (pkg / "service.py").read_text(encoding="utf-8")
-    tm.that(service_source, has="from flext_core.constants import c, m, r, t, u, p")
-    tm.that(service_source, has="from flext_infra.constants import c, m, t, u, p")
+    tm.that(service_source, has="from flext_core import c, m, r, t, u, p")
+    tm.that(service_source, has="from flext_infra import c, m, t, u, p")
 
 
 def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(
@@ -115,7 +115,7 @@ def test_namespace_enforcer_detects_internal_private_imports(tmp_path: Path) -> 
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (pkg / "service.py").write_text(
-        "from __future__ import annotations\nfrom flext_core._utilities.guards import FlextUtilitiesGuards\nfrom sample_pkg.protocols import _InternalContract\n\n_ = FlextUtilitiesGuards\n_ = _InternalContract",
+        "from __future__ import annotations\nfrom flext_core import FlextUtilitiesGuards\nfrom sample_pkg.protocols import _InternalContract\n\n_ = FlextUtilitiesGuards\n_ = _InternalContract",
         encoding="utf-8",
     )
 
@@ -305,7 +305,7 @@ def test_namespace_enforcer_does_not_rewrite_indented_import_aliases(
     _ = service_file.write_text(
         "from __future__ import annotations\n\n"
         "def runner() -> None:\n"
-        "    from flext_core.constants import System\n"
+        "    from flext_core import System\n"
         "    _ = System\n",
         encoding="utf-8",
     )
@@ -315,7 +315,7 @@ def test_namespace_enforcer_does_not_rewrite_indented_import_aliases(
     )
 
     service_source = service_file.read_text(encoding="utf-8")
-    tm.that(service_source, has="    from flext_core.constants import System")
+    tm.that(service_source, has="    from flext_core import System")
 
 
 def test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks(
@@ -334,7 +334,7 @@ def test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks(
     module_file = pkg / "constants.py"
     _ = module_file.write_text(
         "from __future__ import annotations\n"
-        "from flext_infra._constants import (\n"
+        "from flext_infra import (\n"
         "    FlextInfraCoreConstants,\n"
         "    FlextInfraSharedInfraConstants,\n"
         ")\n"
@@ -349,5 +349,5 @@ def test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks(
     )
 
     module_source = module_file.read_text(encoding="utf-8")
-    tm.that(module_source, has="from flext_infra._constants import (")
+    tm.that(module_source, has="from flext_infra import (")
     tm.that(module_source, has="FlextInfraCoreConstants")

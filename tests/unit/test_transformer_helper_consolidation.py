@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import libcst as cst
-from flext_infra.transformers.helper_consolidation import (
+from flext_infra import (
     HelperConsolidationTransformer,
 )
 

@@ -468,7 +468,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test parsing exception handling with bad t.NormalizedValue."""
-            bad_obj = u.Tests.CoreBadObjects.create_for_split()
+            bad_obj = u.Core.CoreBadObjects.create_for_split()
             bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.parse_delimited(
                 bad_str,
@@ -503,7 +503,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test split exception handling with bad t.NormalizedValue."""
-            bad_obj = u.Tests.create_for_index()
+            bad_obj = u.Core.CoreBadObjects.create_for_index()
             bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.split_on_char_with_escape(
                 bad_str,
@@ -541,7 +541,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test normalization exception handling with bad t.NormalizedValue."""
-            bad_obj = u.Tests.create_for_str()
+            bad_obj = u.Core.CoreBadObjects.create_for_str()
             bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.normalize_whitespace(bad_str)
             assert result.is_failure
@@ -633,14 +633,14 @@ class TestuStringParser:
     class TestGetObjectKey:
         """Test getNormalizedValue_key method."""
 
-        @pytest.mark.parametrize("case", t.normalized_value_key_cases())
+        @pytest.mark.parametrize("case", normalized_value_key_cases())
         def test_get_normalized_value_key(
             self,
             parser: u,
             case: m.Core.ObjectKeyCase,
         ) -> None:
             """Test getNormalizedValue_key with parametrized cases."""
-            key = parser.getNormalizedValue_key(
+            key = parser.get_object_key(
                 cast("t.TypeHintSpecifier | t.NormalizedValue", case.obj)
             )
             assert isinstance(key, str), f"Key must be string for: {case.description}"

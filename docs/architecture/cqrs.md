@@ -123,7 +123,7 @@ execute(message)
 Handlers accept optional configuration via `FlextModelsCqrs.Handler`:
 
 ```python
-from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core import FlextModelsCqrs
 
 config = FlextModelsCqrs.Handler(
     handler_id="user_handler_001",

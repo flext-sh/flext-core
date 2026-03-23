@@ -27,6 +27,7 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextLogger,
+    FlextModelsService,
     FlextRuntime,
     FlextSettings,
     p,
@@ -34,7 +35,6 @@ from flext_core import (
     s,
     t,
 )
-from flext_core._models.service import FlextModelsService
 
 from ..test_utils import assertion_helpers
 

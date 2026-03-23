@@ -18,8 +18,6 @@ if TYPE_CHECKING:
         infra_io,
         infra_path,
         infra_patterns,
-        infra_pr_manager,
-        infra_pr_workspace_manager,
         infra_reporting,
         infra_safe_command_output,
         infra_selection,
@@ -27,8 +25,6 @@ if TYPE_CHECKING:
         infra_templates,
         infra_test_workspace,
         infra_toml,
-        infra_workflow_linter,
-        infra_workflow_syncer,
     )
     from tests.unit.contracts.text_contract import TextUtilityContract
     from tests.unit.flext_tests.test_docker import TestDocker
@@ -974,11 +970,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "infra_io": ("tests.unit.conftest_infra", "infra_io"),
     "infra_path": ("tests.unit.conftest_infra", "infra_path"),
     "infra_patterns": ("tests.unit.conftest_infra", "infra_patterns"),
-    "infra_pr_manager": ("tests.unit.conftest_infra", "infra_pr_manager"),
-    "infra_pr_workspace_manager": (
-        "tests.unit.conftest_infra",
-        "infra_pr_workspace_manager",
-    ),
     "infra_reporting": ("tests.unit.conftest_infra", "infra_reporting"),
     "infra_safe_command_output": (
         "tests.unit.conftest_infra",
@@ -989,8 +980,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "infra_templates": ("tests.unit.conftest_infra", "infra_templates"),
     "infra_test_workspace": ("tests.unit.conftest_infra", "infra_test_workspace"),
     "infra_toml": ("tests.unit.conftest_infra", "infra_toml"),
-    "infra_workflow_linter": ("tests.unit.conftest_infra", "infra_workflow_linter"),
-    "infra_workflow_syncer": ("tests.unit.conftest_infra", "infra_workflow_syncer"),
     "inject": ("tests.unit.test_di_incremental", "inject"),
     "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
     "normalized_value_key_cases": (
@@ -1973,8 +1962,6 @@ __all__ = [
     "infra_io",
     "infra_path",
     "infra_patterns",
-    "infra_pr_manager",
-    "infra_pr_workspace_manager",
     "infra_reporting",
     "infra_safe_command_output",
     "infra_selection",
@@ -1982,8 +1969,6 @@ __all__ = [
     "infra_templates",
     "infra_test_workspace",
     "infra_toml",
-    "infra_workflow_linter",
-    "infra_workflow_syncer",
     "inject",
     "mapper",
     "normalized_value_key_cases",

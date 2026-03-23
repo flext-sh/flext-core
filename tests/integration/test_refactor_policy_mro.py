@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from flext_infra import c
-from flext_infra.refactor.mro_resolver import FlextInfraRefactorMROResolver
+from flext_infra import FlextInfraRefactorMROResolver, c
 
 
 class TestRefactorPolicyMRO:

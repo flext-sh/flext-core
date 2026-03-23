@@ -10,8 +10,7 @@ import structlog.contextvars
 from flext_tests import t, tm
 from pydantic import BaseModel
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.context import FlextModelsContext
+from flext_core import FlextModelFoundation, FlextModelsContext
 from tests import m
 
 _normalize_to_mapping = FlextModelsContext.normalize_to_mapping

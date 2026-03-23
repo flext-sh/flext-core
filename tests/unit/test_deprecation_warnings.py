@@ -19,9 +19,12 @@ from typing import cast
 import pytest
 from flext_tests import t as test_t, tm
 
-from flext_core import FlextRuntime, FlextUtilities
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.mapper import FlextUtilitiesMapper
+from flext_core import (
+    FlextRuntime,
+    FlextUtilities,
+    FlextUtilitiesGuards,
+    FlextUtilitiesMapper,
+)
 from tests import t
 
 pytestmark = [pytest.mark.unit]

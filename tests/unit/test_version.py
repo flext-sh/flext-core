@@ -13,8 +13,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from flext_core import __version__, __version_info__
-from flext_core.__version__ import FlextVersion
+from flext_core import FlextVersion, __version__, __version_info__
 
 
 class TestFlextVersion:

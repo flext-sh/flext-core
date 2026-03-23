@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, ClassVar, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsResult, FlextTypes as t
+    from flext_core import t
 
 
 class FlextProtocolsBase:
@@ -36,10 +36,12 @@ class FlextProtocolsBase:
 
         Ensures types have Pydantic signatures without importing BaseModel directly
         in typings.py, preventing circular dependencies.
-        """
 
-        model_config: ClassVar[Mapping[str, t.Container]]
-        model_fields: ClassVar[Mapping[str, type | str]]
+        Only declares what is guaranteed by every Pydantic v2 BaseModel subclass:
+        model_dump and model_validate. model_config/model_fields are excluded because
+        ConfigDict and FieldInfo do not match narrower Container/type|str constraints
+        at the static type-checker level.
+        """
 
         def model_dump(self, **kwargs: t.Container) -> Mapping[str, t.ValueOrModel]:
             """Dump model to dictionary."""
@@ -52,10 +54,6 @@ class FlextProtocolsBase:
             **kwargs: t.Container,
         ) -> Self:
             """Validate t.NormalizedValue against model."""
-            ...
-
-        def validate(self) -> FlextProtocolsResult.Result[bool]:
-            """Validate model."""
             ...
 
     @runtime_checkable

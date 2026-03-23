@@ -317,7 +317,7 @@ def create_hash_value_object_cases() -> list[TestUnitModels.TestCaseMap]:
     simple_obj = m.Core.SimpleValue(c.TestDomain.VALUE_DATA_TEST)
     bad_obj = u.Tests.BadObjects.BadModelDump()
     complex_items_list: list[str] = list(c.TestDomain.COMPLEX_ITEMS)
-    complex_obj = m.ComplexValue(
+    complex_obj = m.Core.ComplexValue(
         c.TestDomain.VALUE_DATA_TEST,
         complex_items_list,
     )
@@ -421,7 +421,7 @@ def create_validate_value_object_immutable_cases() -> list[TestUnitModels.TestCa
         value_class=m.Core.DomainTestValue,
     )
     mutable_obj = m.Core.MutableObj(c.TestDomain.VALUE_COUNT_5)
-    immutable_obj = m.ImmutableObj(c.TestDomain.VALUE_COUNT_5)
+    immutable_obj = m.Core.ImmutableObj(c.TestDomain.VALUE_COUNT_5)
     bad_config_obj = u.Tests.BadObjects.BadConfig()
     no_config_obj = m.Core.NoConfigNoSetattr()
     no_setattr_obj = m.Core.NoSetattr()

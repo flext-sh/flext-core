@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_infra import FlextInfraUtilitiesIteration
-from flext_infra.refactor.migrate_to_class_mro import (
+from flext_infra import (
     FlextInfraRefactorMigrateToClassMRO,
+    FlextInfraUtilitiesIteration,
 )
 from flext_tests import tm
 

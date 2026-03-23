@@ -22,8 +22,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import r
-from flext_core._models.base import FlextModelFoundation
+from flext_core import FlextModelFoundation, r
 from tests import c, m, t, u
 
 

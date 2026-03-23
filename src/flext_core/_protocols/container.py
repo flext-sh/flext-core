@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 from flext_core import FlextProtocolsConfig, FlextProtocolsContext
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes as t, r
+    from flext_core import r, t
 
 
 class FlextProtocolsContainer:

@@ -16,12 +16,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_infra import u
-from flext_infra._utilities.output import output
-from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
-from flext_infra.workspace import (
+from flext_infra import (
+    FlextInfraBaseMkGenerator,
+    FlextInfraBaseMkTemplateEngine,
     FlextInfraOrchestratorService,
     FlextInfraWorkspaceDetector,
+    output,
+    u,
 )
 
 from flext_core import r
@@ -222,7 +223,7 @@ class TestInfraIntegration:
     @pytest.mark.integration
     def test_path_utilities_via_mro(self, tmp_path: Path) -> None:
         """Test u.Infra path utility methods are available via MRO."""
-        assert callable(u.Infra.workspace_root_from_file)
+        assert callable(u.Infra.discover_workspace_root_from_file)
 
     @pytest.mark.integration
     def test_git_service_current_branch_in_real_repo(self, tmp_path: Path) -> None:

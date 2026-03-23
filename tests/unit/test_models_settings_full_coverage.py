@@ -10,8 +10,7 @@ from typing import override
 
 import pytest
 
-from flext_core import r
-from flext_core._models.settings import FlextModelsConfig
+from flext_core import FlextModelsConfig, r
 from tests import c, m, t, u
 
 

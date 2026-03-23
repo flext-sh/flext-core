@@ -1099,7 +1099,7 @@ class FlextUtilitiesParser:
             String key for t.NormalizedValue (comparable, hashable)
 
         Example:
-            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
+            >>> from flext_core import FlextUtilitiesGuards
         from flext_core import p
             >>> parser = u()
             >>> # Class/Type
@@ -1258,7 +1258,7 @@ class FlextUtilitiesParser:
             r with list of parsed components or error
 
         Example:
-            >>> from flext_core._models.collections import m
+            >>> from flext_core import m
             >>> opts = m.ParseOptions(strip=True, remove_empty=True)
             >>> parser = FlextUtilitiesParser()
             >>> result = parser.parse_delimited(

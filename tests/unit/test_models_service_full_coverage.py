@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import r
-from flext_core._models.service import FlextModelsService
+from flext_core import FlextModelsService, r
 from tests import c, m, t, u
 
 

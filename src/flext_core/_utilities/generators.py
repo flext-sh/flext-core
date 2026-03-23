@@ -238,7 +238,7 @@ class FlextUtilitiesGenerators:
             Mapping[str, t.NormalizedValue]: Normalized dict or default
 
         Example:
-            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
+            >>> from flext_core import FlextUtilitiesGuards
             >>> u.ensure_dict({"a": 1})
             {'a': 1}
             >>> u.ensure_dict(None, default={})
@@ -301,7 +301,7 @@ class FlextUtilitiesGenerators:
             Mapping[str, str]: Enriched context with requested fields (all string values)
 
         Example:
-            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
+            >>> from flext_core import FlextUtilitiesGuards
             >>> # Basic: trace_id + span_id
             >>> ctx = u.ensure_trace_context({})
             >>> "trace_id" in ctx and "span_id" in ctx
