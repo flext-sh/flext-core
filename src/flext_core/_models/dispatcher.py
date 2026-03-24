@@ -59,7 +59,7 @@ class FlextModelsDispatcher:
             )
 
         @override
-        def model_post_init(self, __context: t.ConfigurationMapping | None, /) -> None:
+        def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.executor_workers = max(
                 self.executor_workers,
                 c.RETRY_COUNT_MIN,
@@ -85,7 +85,7 @@ class FlextModelsDispatcher:
                 )
             return self._executor
 
-        def get_executor_status(self) -> t.ConfigurationMapping:
+        def get_executor_status(self) -> t.ScalarMapping:
             """Return executor status metadata for diagnostics and metrics.
 
             Returns:
@@ -235,7 +235,7 @@ class FlextModelsDispatcher:
             """
             return self._get_record(message_type).failures
 
-        def get_metrics(self) -> t.ConfigurationMapping:
+        def get_metrics(self) -> t.ScalarMapping:
             """Collect circuit breaker metrics, including recovery statistics.
 
             Returns:
@@ -411,7 +411,7 @@ class FlextModelsDispatcher:
             )
 
         @override
-        def model_post_init(self, __context: t.ConfigurationMapping | None, /) -> None:
+        def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.jitter_factor = max(0.0, min(self.jitter_factor, 1.0))
 
         def check_rate_limit(self, message_type: str) -> r[bool]:
@@ -511,7 +511,7 @@ class FlextModelsDispatcher:
             super().__init__(max_attempts=max_attempts, retry_delay=retry_delay)
 
         @override
-        def model_post_init(self, __context: t.ConfigurationMapping | None, /) -> None:
+        def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.max_attempts = max(self.max_attempts, c.RETRY_COUNT_MIN)
             self.retry_delay = max(self.retry_delay, c.INITIAL_TIME)
 

@@ -258,7 +258,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str = c.ENV_FILE_DEFAULT,
         env_nested_delimiter: str = "__",
-    ) -> t.ConfigurationMapping:
+    ) -> t.ScalarMapping:
         """Create a SettingsConfigDict for environment binding.
 
         Args:

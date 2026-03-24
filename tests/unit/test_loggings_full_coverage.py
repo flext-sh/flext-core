@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 import types
-from collections.abc import Mapping, MutableSequence
+from collections.abc import MutableSequence
 from pathlib import Path
 from typing import ClassVar, cast, override
 
@@ -27,7 +27,7 @@ class TestModule:
     class _FakeBindable:
         def __init__(self) -> None:
             self.calls: MutableSequence[
-                tuple[str, tuple[t.NormalizedValue, ...], Mapping[str, t.Scalar]]
+                tuple[str, tuple[t.NormalizedValue, ...], t.ScalarMapping]
             ] = []
 
         def bind(self, **kwargs: t.Scalar) -> TestModule._FakeBindable:
@@ -118,7 +118,7 @@ class TestModule:
         class _Cfg:
             log_level = "DEBUG"
 
-            def model_dump(self) -> Mapping[str, t.Scalar]:
+            def model_dump(self) -> t.ScalarMapping:
                 return {"log_level": self.log_level}
 
         class _Container:
@@ -211,7 +211,7 @@ class TestModule:
             correlation_id = "cid"
             force_new = True
 
-            def model_dump(self) -> Mapping[str, t.Scalar]:
+            def model_dump(self) -> t.ScalarMapping:
                 return {
                     "log_level": self.level,
                     "service_name": self.service_name,

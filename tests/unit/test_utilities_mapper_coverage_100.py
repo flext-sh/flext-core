@@ -185,7 +185,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_take_extraction(self) -> None:
             """Test take value extraction."""
-            data: Mapping[str, t.Scalar] = {"a": 1, "b": "str"}
+            data: t.ConfigurationMapping = {"a": 1, "b": "str"}
             tm.that(u.take(data, "a", as_type=int), eq=1)
             tm.that(u.take(data, "b", as_type=int, default=0), eq=0)
 

@@ -130,11 +130,11 @@ class TestFlextUtilitiesReliability:
         @staticmethod
         def create_delay_config(
             config_type: TestFlextUtilitiesReliability.DelayConfig,
-        ) -> Mapping[str, t.Scalar]:
+        ) -> t.ScalarMapping:
             """Create delay configuration for given type."""
             configs: Mapping[
                 TestFlextUtilitiesReliability.DelayConfig,
-                Mapping[str, t.Scalar],
+                t.ScalarMapping,
             ] = {
                 TestFlextUtilitiesReliability.DelayConfig.EXPONENTIAL: {
                     "initial_delay_seconds": 0.1,

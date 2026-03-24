@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Never, cast, overload, override
 
 import structlog
@@ -169,7 +169,7 @@ class TestRuntimeCoverage100:
         """Test level_based_context_filter with malformed prefix."""
         FlextRuntime.configure_structlog()
         malformed_key = "_level_"
-        event_dict: t.ConfigurationMapping = {
+        event_dict: t.ScalarMapping = {
             malformed_key: "value1",
             "normal_key": "value2",
         }
@@ -262,7 +262,7 @@ class TestRuntimeCoverage100:
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
         """Test level_based_context_filter with properly formatted level prefix."""
         FlextRuntime.configure_structlog()
-        event_dict: Mapping[str, t.Scalar] = {
+        event_dict: t.ScalarMapping = {
             "_level_debug_config": "dbg",
             "_level_info_status": "ok",
             "_level_error_stack": "trace",

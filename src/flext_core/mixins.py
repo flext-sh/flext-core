@@ -379,7 +379,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         if overrides is None:
             overrides = getattr(self, "config_overrides", None)
 
-        overrides_typed: t.ConfigurationMapping | None = None
+        overrides_typed: t.ScalarMapping | None = None
         if overrides is not None:
             overrides_typed = {
                 key: value for key, value in overrides.items() if u.is_scalar(value)
@@ -520,9 +520,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         class ContextStack:
             """Manages execution context stack."""
 
-            _stack: MutableSequence[
-                m.ExecutionContext | t.ConfigMap | t.ConfigurationMapping
-            ]
+            _stack: MutableSequence[m.ExecutionContext | t.ConfigMap | t.ScalarMapping]
 
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize context stack with empty stack list."""
@@ -542,29 +540,29 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                             return None
                 return None
 
-            def pop_context(self) -> r[t.ConfigurationMapping]:
+            def pop_context(self) -> r[t.ScalarMapping]:
                 """Pop and return the top context from the stack as a scalar dict."""
                 if not hasattr(self, "_stack"):
                     self._stack = []
                 if self._stack:
                     popped = self._stack.pop()
                     if isinstance(popped, m.ExecutionContext):
-                        return r[t.ConfigurationMapping].ok({
+                        return r[t.ScalarMapping].ok({
                             "handler_name": popped.handler_name,
                             c.FIELD_HANDLER_MODE: popped.handler_mode,
                         })
                     if isinstance(popped, t.ConfigMap):
-                        return r[t.ConfigurationMapping].ok({
+                        return r[t.ScalarMapping].ok({
                             str(ck): cv
                             for ck, cv in popped.root.items()
                             if u.is_scalar(cv)
                         })
-                    return r[t.ConfigurationMapping].ok(popped)
-                return r[t.ConfigurationMapping].ok({})
+                    return r[t.ScalarMapping].ok(popped)
+                return r[t.ScalarMapping].ok({})
 
             def push_context(
                 self,
-                ctx: m.ExecutionContext | t.ConfigurationMapping,
+                ctx: m.ExecutionContext | t.ScalarMapping,
             ) -> r[bool]:
                 """Push an execution context or mapping onto the context stack."""
                 if not hasattr(self, "_stack"):
@@ -572,9 +570,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 if isinstance(ctx, m.ExecutionContext):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)
-                ctx_mapping: t.ConfigurationMapping = {
-                    str(k): v for k, v in ctx.items()
-                }
+                ctx_mapping: t.ScalarMapping = {str(k): v for k, v in ctx.items()}
                 handler_name_raw: t.Scalar | None = ctx_mapping.get(
                     "handler_name",
                     c.IDENTIFIER_UNKNOWN,

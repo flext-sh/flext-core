@@ -191,7 +191,7 @@ class FlextModelsEntity:
             return r[Sequence[FlextModelsDomainEvent.Entry]].ok(events)
 
         @override
-        def model_post_init(self, __context: t.ConfigurationMapping | None, /) -> None:
+        def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             self.updated_at = FlextRuntime.generate_datetime_utc()
 

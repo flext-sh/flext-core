@@ -136,7 +136,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
     @classmethod
     def _validate_model[UModel: BaseModel](
         cls,
-        data: t.ConfigurationMapping | BaseModel,
+        data: t.ScalarMapping | BaseModel,
         model: type[UModel],
         *,
         failure_prefix: str,
@@ -242,7 +242,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
     @classmethod
     def from_validation(
         cls: type[FlextResult[T_Model]],
-        data: t.ConfigurationMapping | BaseModel,
+        data: t.ScalarMapping | BaseModel,
         model: type[T_Model],
     ) -> FlextResult[T_Model]:
         """Create result from Pydantic validation.

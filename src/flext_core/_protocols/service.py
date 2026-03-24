@@ -24,7 +24,7 @@ class FlextProtocolsService:
             """Execute domain service logic."""
             ...
 
-        def get_service_info(self) -> t.ConfigurationMapping:
+        def get_service_info(self) -> t.ScalarMapping:
             """Get service metadata and configuration information."""
             ...
 

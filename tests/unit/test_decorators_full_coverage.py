@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, Mapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 from types import SimpleNamespace
 from typing import Annotated, ClassVar, cast
 
@@ -20,10 +20,10 @@ from tests import c, m, t
 class TestDecoratorsFullCoverage:
     class _FakeLogger:
         def __init__(self) -> None:
-            self.warning_calls: MutableSequence[tuple[str, Mapping[str, t.Scalar]]] = []
-            self.error_calls: MutableSequence[tuple[str, Mapping[str, t.Scalar]]] = []
+            self.warning_calls: MutableSequence[tuple[str, t.ConfigurationMapping]] = []
+            self.error_calls: MutableSequence[tuple[str, t.ConfigurationMapping]] = []
             self.exception_calls: MutableSequence[
-                tuple[str, Mapping[str, t.Scalar]]
+                tuple[str, t.ConfigurationMapping]
             ] = []
             self.logger = self
 

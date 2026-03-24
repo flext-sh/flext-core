@@ -137,7 +137,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_context(
             cls,
-            v: BaseModel | t.ConfigurationMapping | t.Scalar | None,
+            v: BaseModel | t.ScalarMapping | t.Scalar | None,
         ) -> Mapping[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 

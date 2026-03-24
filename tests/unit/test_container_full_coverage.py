@@ -36,7 +36,7 @@ class TestContainerFullCoverage:
         ) -> Self:
             return self
 
-        def model_dump(self) -> Mapping[str, t.Scalar]:
+        def model_dump(self) -> t.ScalarMapping:
             return {}
 
     class _ContextNoClone:

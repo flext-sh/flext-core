@@ -70,7 +70,7 @@ class FlextModelsContextData:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.Dict | t.ConfigurationMapping | BaseModel | None,
+            v: t.Dict | t.ScalarMapping | BaseModel | None,
         ) -> t.ContainerMapping:
             """Validate that data values are JSON-serializable."""
             working_value: t.ContainerMapping

@@ -123,7 +123,7 @@ class FlextModelsCqrs:
         )
         tag: ClassVar[Literal["query"]] = "query"
         _pagination_input_adapter: ClassVar[
-            TypeAdapter[BaseModel | t.Dict | t.ConfigurationMapping | None] | None
+            TypeAdapter[BaseModel | t.Dict | t.ScalarMapping | None] | None
         ] = None
         message_type: Literal["query"] = Field(
             default="query",
@@ -202,10 +202,10 @@ class FlextModelsCqrs:
         @classmethod
         def _pagination_adapter(
             cls,
-        ) -> TypeAdapter[BaseModel | t.Dict | t.ConfigurationMapping | None]:
+        ) -> TypeAdapter[BaseModel | t.Dict | t.ScalarMapping | None]:
             if cls._pagination_input_adapter is None:
                 cls._pagination_input_adapter = TypeAdapter(
-                    FlextModelsCqrs.Pagination | t.Dict | t.ConfigurationMapping | None,
+                    FlextModelsCqrs.Pagination | t.Dict | t.ScalarMapping | None,
                 )
             return cls._pagination_input_adapter
 
@@ -213,7 +213,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | t.Dict | t.ConfigurationMapping | None,
+            v: BaseModel | t.Dict | t.ScalarMapping | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()

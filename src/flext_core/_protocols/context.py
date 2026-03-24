@@ -155,13 +155,13 @@ class FlextProtocolsContext:
         """Runtime bootstrap options for service initialization."""
 
         config_type: type[BaseSettings] | None
-        config_overrides: t.ConfigurationMapping | None
+        config_overrides: t.ScalarMapping | None
         context: FlextProtocolsContext.Context | None
         subproject: str | None
         services: Mapping[str, t.RegisterableService] | None
         factories: Mapping[str, t.FactoryCallable] | None
         resources: Mapping[str, t.ResourceCallable] | None
-        container_overrides: t.ConfigurationMapping | None
+        container_overrides: t.ScalarMapping | None
         wire_modules: Sequence[ModuleType | str] | None
         wire_packages: Sequence[str] | None
         wire_classes: Sequence[type] | None

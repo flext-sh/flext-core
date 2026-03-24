@@ -81,7 +81,7 @@ class FlextService[
         default=None,
         exclude=True,
     )
-    container_overrides: t.ConfigurationMapping | None = Field(
+    container_overrides: t.ScalarMapping | None = Field(
         default=None,
         exclude=True,
     )
@@ -93,7 +93,7 @@ class FlextService[
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
-    def model_post_init(self, __context: t.ConfigurationMapping | None, /) -> None:
+    def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
         """Post-initialization hook.
 
         Sets up the service instance with runtime configuration after Pydantic
@@ -225,9 +225,9 @@ class FlextService[
         config_type_for_options: type[FlextSettings] | None = (
             config_type_val if issubclass(config_type_val, FlextSettings) else None
         )
-        config_overrides_scalar: t.ConfigurationMapping | None = None
+        config_overrides_scalar: t.ScalarMapping | None = None
         if config_overrides is not None:
-            normalized_overrides: t.ConfigurationMapping = {
+            normalized_overrides: t.ScalarMapping = {
                 key: value
                 for key, value in config_overrides.items()
                 if u.is_scalar(value)
@@ -416,7 +416,7 @@ class FlextService[
         """
         ...
 
-    def get_service_info(self) -> t.ConfigurationMapping:
+    def get_service_info(self) -> t.ScalarMapping:
         """Get service metadata and configuration information."""
         return {"service_type": self.__class__.__name__}
 

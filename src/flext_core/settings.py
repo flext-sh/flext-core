@@ -262,7 +262,7 @@ class FlextSettings(BaseSettings, u):
                 del cls._instances[instance_cls]
 
     @classmethod
-    def get_global(cls, *, overrides: t.ConfigurationMapping | None = None) -> Self:
+    def get_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
         u.normalize_env_log_level()
         if overrides is None:
@@ -280,7 +280,7 @@ class FlextSettings(BaseSettings, u):
     def apply_override(
         self,
         key: str,
-        value: t.Scalar | Sequence[t.Scalar] | t.ConfigurationMapping,
+        value: t.Scalar | Sequence[t.Scalar] | t.ScalarMapping,
     ) -> bool:
         """Validate and apply a configuration override.
 

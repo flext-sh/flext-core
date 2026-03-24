@@ -390,7 +390,7 @@ class FlextRuntime:
 
     @staticmethod
     def _has_dict_protocol(obj: t.RuntimeData) -> bool:
-        if not (hasattr(obj, "keys") and hasattr(obj, "items") and hasattr(obj, "get")):
+        if not isinstance(obj, Mapping):
             return False
         try:
             items_fn = getattr(obj, "items", None)
@@ -1181,8 +1181,8 @@ class FlextRuntime:
     def level_based_context_filter(
         _logger: p.Logger | None,
         method_name: str,
-        event_dict: t.GeneralValueTypeMapping,
-    ) -> t.GeneralValueTypeMapping:
+        event_dict: t.ScalarMapping,
+    ) -> t.ScalarMapping:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -1375,7 +1375,7 @@ class FlextRuntime:
     @classmethod
     def ensure_trace_context(
         cls,
-        context: t.ConfigurationMapping | t.ScalarOrModel,
+        context: t.ScalarMapping | t.ScalarOrModel,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,

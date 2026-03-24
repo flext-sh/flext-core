@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, MutableMapping, Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -106,7 +106,7 @@ class _ContainerScenarios:
             description="Integer service for typed retrieval",
         ),
     ]
-    CONFIG_SCENARIOS: ClassVar[Sequence[Mapping[str, t.Scalar]]] = [
+    CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
         {"max_workers": 8, "timeout_seconds": 60.0},
         {"invalid_key": "value", "another_invalid": 42},
         {},
@@ -409,7 +409,7 @@ class TestFlextContainer:
             tm.that(key in services, eq=True, msg=f"Services list must contain {key}")
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
-    def test_configure_container(self, config: Mapping[str, t.Scalar]) -> None:
+    def test_configure_container(self, config: t.ScalarMapping) -> None:
         """Test container configuration."""
         container = FlextContainer()
         container.configure(config)
@@ -429,7 +429,7 @@ class TestFlextContainer:
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: Mapping[str, t.Scalar] = {"max_workers": c.DEFAULT_WORKERS}
+        config: t.ScalarMapping = {"max_workers": c.DEFAULT_WORKERS}
         result = container.configure(config)
         tm.that(
             result is container,

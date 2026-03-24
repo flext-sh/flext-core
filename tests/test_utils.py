@@ -44,7 +44,7 @@ class TestUtils:
             unique_id: str,
             name: str,
             **kwargs: t.Scalar,
-        ) -> Mapping[str, t.Scalar]:
+        ) -> t.ConfigurationMapping:
             """Create standardized entity test data."""
             return {"unique_id": unique_id, "name": name, **kwargs}
 
@@ -52,7 +52,7 @@ class TestUtils:
         def create_value_object_data(
             value: t.Scalar,
             **kwargs: t.Scalar,
-        ) -> Mapping[str, t.Scalar]:
+        ) -> t.ConfigurationMapping:
             """Create standardized value t.NormalizedValue test data."""
             return {"value": value, **kwargs}
 

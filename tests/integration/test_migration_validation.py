@@ -109,9 +109,7 @@ class TestMigrationValidation:
             )
 
             @override
-            def model_post_init(
-                self, __context: t.ConfigurationMapping | None, /
-            ) -> None:
+            def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
                 super().model_post_init(__context)
 
             @override

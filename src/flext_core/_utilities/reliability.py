@@ -72,7 +72,7 @@ class FlextUtilitiesReliability:
         return str(raw_mapped)
 
     @staticmethod
-    def calculate_delay(attempt: int, config: t.ConfigurationMapping | None) -> float:
+    def calculate_delay(attempt: int, config: t.ScalarMapping | None) -> float:
         """Calculate delay for retry attempt using configuration.
 
         Args:

@@ -359,16 +359,16 @@ def test_dependency_registration_duplicate_guards() -> None:
 
 
 def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: MutableSequence[Mapping[str, t.Scalar]] = []
+    calls: MutableSequence[t.ConfigurationMapping] = []
 
     class StatefulModule:
         def __init__(self) -> None:
             self._print_access: int = 0
 
-            def _merge_contextvars(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
+            def _merge_contextvars(*_args: t.Scalar) -> t.ConfigurationMapping:
                 return {}
 
-            def _add_log_level(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
+            def _add_log_level(*_args: t.Scalar) -> t.ConfigurationMapping:
                 return {}
 
             def _time_stamper(**_kwargs: t.Scalar) -> t.Scalar:
@@ -431,7 +431,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         log_level: int = logging.DEBUG
         console_renderer: bool = True
         additional_processors: ClassVar[
-            Sequence[Callable[..., Mapping[str, t.Scalar]]]
+            Sequence[Callable[..., t.ConfigurationMapping]]
         ] = [
             lambda *_args: {},
         ]
@@ -459,7 +459,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         log_level: int = logging.INFO
         console_renderer: bool = True
         additional_processors: (
-            MutableSequence[Callable[..., MutableMapping[str, t.Scalar]]] | None
+            MutableSequence[Callable[..., t.MutableConfigurationMapping]] | None
         ) = None
         wrapper_class_factory: Callable[..., t.Scalar] | None = None
         logger_factory: Callable[..., t.Scalar] | None = None
@@ -477,7 +477,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         log_level: int = logging.INFO
         console_renderer: bool = True
         additional_processors: (
-            MutableSequence[Callable[..., MutableMapping[str, t.Scalar]]] | None
+            MutableSequence[Callable[..., t.MutableConfigurationMapping]] | None
         ) = None
         wrapper_class_factory: Callable[..., t.Scalar] | None = None
         logger_factory: Callable[..., t.Scalar] | None = None
@@ -811,10 +811,10 @@ def test_configure_structlog_print_logger_factory_fallback(
             self.print_calls: int = 0
             self.print_calls = 0
 
-            def _merge_contextvars(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
+            def _merge_contextvars(*_args: t.Scalar) -> t.ConfigurationMapping:
                 return {}
 
-            def _add_log_level(*_args: t.Scalar) -> Mapping[str, t.Scalar]:
+            def _add_log_level(*_args: t.Scalar) -> t.ConfigurationMapping:
                 return {}
 
             def _time_stamper(**_kwargs: t.Scalar) -> t.Scalar:
@@ -862,7 +862,7 @@ def test_configure_structlog_print_logger_factory_fallback(
 
         def make_filtering_bound_logger(
             self, level: int
-        ) -> type[Mapping[str, t.Scalar]]:
+        ) -> type[t.ConfigurationMapping]:
             _ = level
             return dict
 
