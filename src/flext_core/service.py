@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
 from typing import ClassVar, override
