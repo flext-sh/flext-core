@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     Iterator,
-    Mapping,
     MutableSequence,
     Sequence,
 )
@@ -14,7 +13,6 @@ from typing import cast, override
 
 import pytest
 from flext_tests import t, tm
-from pydantic import BaseModel
 
 from flext_core import FlextLogger, FlextMixins, r, x
 from tests import c, p, u
@@ -114,31 +112,31 @@ class TestMixinsFullCoverage:
         def __init__(
             self,
             success: bool,
-            logger: t.Container | BaseModel | None = None,
+            logger: t.RuntimeAtomic | None = None,
         ) -> None:
             super().__init__()
             self.success: bool = success
-            self.logger: t.Container | BaseModel | None = logger
+            self.logger: t.RuntimeAtomic | None = logger
             self.factories: t.MutableContainerMapping = {}
             self.register_calls: MutableSequence[tuple[str, str]] = []
 
         def get_typed(
-            self, _key: str, _tp: type[t.Container | BaseModel]
-        ) -> r[t.Container | BaseModel]:
+            self, _key: str, _tp: type[t.RuntimeAtomic]
+        ) -> r[t.RuntimeAtomic]:
             if self.success:
-                return r[t.Container | BaseModel].ok(self.logger or "logger")
-            return r[t.Container | BaseModel].fail("missing")
+                return r[t.RuntimeAtomic].ok(self.logger or "logger")
+            return r[t.RuntimeAtomic].fail("missing")
 
         def get(
             self,
             _key: str,
             *,
-            type_cls: type[t.Container | BaseModel] | None = None,
-        ) -> r[t.Container | BaseModel]:
+            type_cls: type[t.RuntimeAtomic] | None = None,
+        ) -> r[t.RuntimeAtomic]:
             _ = type_cls
             if self.success:
-                return r[t.Container | BaseModel].ok(self.logger or "logger")
-            return r[t.Container | BaseModel].fail("missing")
+                return r[t.RuntimeAtomic].ok(self.logger or "logger")
+            return r[t.RuntimeAtomic].fail("missing")
 
         def register_factory(self, key: str, factory: t.FactoryCallable) -> r[bool]:
             _ = key
@@ -172,7 +170,7 @@ class TestMixinsFullCoverage:
         model = TestUnitModels._SvcModel(value="ok")
         tm.that(x.normalize_to_container(model) is model, eq=True)
 
-        class _BadMap(Mapping[str, t.NormalizedValue]):
+        class _BadMap(t.ContainerMappingBase):
             @override
             def __iter__(self) -> Iterator[str]:
                 return iter(["k"])
@@ -560,8 +558,8 @@ class TestMixinsFullCoverage:
 
         class _BrokenContainer:
             def get_typed(
-                self, _key: str, _tp: type[t.Container | BaseModel]
-            ) -> r[t.Container | BaseModel]:
+                self, _key: str, _tp: type[t.RuntimeAtomic]
+            ) -> r[t.RuntimeAtomic]:
                 msg = "boom"
                 raise RuntimeError(msg)
 

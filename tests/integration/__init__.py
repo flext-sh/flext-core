@@ -26,6 +26,7 @@ if TYPE_CHECKING:
         TestPatternsLogging,
     )
     from tests.integration.patterns.test_patterns_testing import TestPatternsTesting
+    from tests.integration.test_architecture import TestAutomatedArchitecture
     from tests.integration.test_config_integration import (
         TestFlextSettingsSingletonIntegration,
     )
@@ -57,6 +58,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "TestArchitecturalPatterns": (
         "tests.integration.patterns.test_architectural_patterns",
         "TestArchitecturalPatterns",
+    ),
+    "TestAutomatedArchitecture": (
+        "tests.integration.test_architecture",
+        "TestAutomatedArchitecture",
     ),
     "TestCompleteFlextSystemIntegration": (
         "tests.integration.test_system",
@@ -123,6 +128,7 @@ __all__ = [
     "EXPECTED_BULK_SIZE",
     "TestAdvancedPatterns",
     "TestArchitecturalPatterns",
+    "TestAutomatedArchitecture",
     "TestCompleteFlextSystemIntegration",
     "TestFlextSettingsSingletonIntegration",
     "TestFunction",

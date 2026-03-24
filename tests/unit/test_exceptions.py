@@ -480,7 +480,7 @@ class Teste:
     def test_create_with_dict_like_metadata_basic(self) -> None:
         """Test create with dict-like metadata - tests lines 1376-1379."""
 
-        class DictLike(Mapping[str, t.NormalizedValue]):
+        class DictLike(t.ContainerMappingBase):
             @override
             def __getitem__(self, key: str) -> str:
                 if key == "key1":
@@ -681,7 +681,7 @@ class Teste:
     def test_create_with_dict_like_metadata_normalization(self) -> None:
         """Test create normalizes dict-like metadata values - tests lines 1376-1379."""
 
-        class DictLike(Mapping[str, t.NormalizedValue]):
+        class DictLike(t.ContainerMappingBase):
             _obj: t.NormalizedValue
 
             @override
@@ -726,7 +726,7 @@ class Teste:
     def test_create_with_dict_like_metadata_items_iteration(self) -> None:
         """Test create iterates dict-like metadata items - tests lines 1378-1379."""
 
-        class DictLike(Mapping[str, t.NormalizedValue]):
+        class DictLike(t.ContainerMappingBase):
             @override
             def __getitem__(self, key: str) -> t.NormalizedValue:
                 mapping: t.ContainerMapping = {
@@ -767,7 +767,7 @@ class Teste:
     def test_create_with_dict_like_metadata_normalize_values(self) -> None:
         """Test create normalizes dict-like metadata values - tests line 1379."""
 
-        class DictLike(Mapping[str, t.NormalizedValue]):
+        class DictLike(t.ContainerMappingBase):
             _obj: t.NormalizedValue
 
             @override
@@ -930,7 +930,7 @@ class Teste:
         tm.that(corr_id_dict, eq="test-id")
         tm.that(metadata_dict, is_=dict)
 
-        class DictLike(Mapping[str, t.NormalizedValue]):
+        class DictLike(t.ContainerMappingBase):
             @override
             def __getitem__(self, key: str) -> str:
                 if key == "key":

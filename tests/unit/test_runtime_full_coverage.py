@@ -281,7 +281,7 @@ def test_normalization_edge_branches() -> None:
     tm.that(normalized_cfg, is_=(t.ConfigMap, t.Dict))
     tm.that(getattr(normalized_cfg, "root", None), eq={"a": 1})
 
-    class DictLike(Mapping[str, t.NormalizedValue]):
+    class DictLike(t.ContainerMappingBase):
         @override
         def __getitem__(self, key: str) -> int:
             if key == "x":

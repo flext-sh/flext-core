@@ -118,7 +118,7 @@ class FlextUtilitiesGuardsTypeModel:
             True if value is a valid configuration mapping, False otherwise.
 
         """
-        candidate: Mapping[str, t.NormalizedValue | BaseModel] = (
+        candidate: Mapping[str, t.ValueOrModel] = (
             value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
         )
         for item_value in candidate.values():

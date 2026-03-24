@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-from collections.abc import ItemsView, Iterator, Mapping
+from collections.abc import ItemsView, Iterator
 from datetime import UTC, datetime, tzinfo
 from typing import NoReturn, cast, override
 
@@ -23,7 +23,7 @@ runtime_module = importlib.import_module("flext_core.runtime")
 
 
 class TestUtilitiesGeneratorsFullCoverage:
-    class _BrokenMapping(Mapping[str, t.NormalizedValue]):
+    class _BrokenMapping(t.ContainerMappingBase):
         @override
         def __getitem__(self, key: str) -> NoReturn:
             raise KeyError(key)
@@ -106,7 +106,7 @@ class TestUtilitiesGeneratorsFullCoverage:
     def test_ensure_dict_branches(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _ = monkeypatch
 
-        class _IterFailMapping(Mapping[str, t.NormalizedValue]):
+        class _IterFailMapping(t.ContainerMappingBase):
             @override
             def __getitem__(self, key: str) -> t.NormalizedValue:
                 raise KeyError(key)
@@ -176,7 +176,7 @@ class TestUtilitiesGeneratorsFullCoverage:
         assert generated.startswith("evt-")
 
     def test_generators_mapping_non_dict_normalization_path(self) -> None:
-        class _SimpleMapping(Mapping[str, t.NormalizedValue]):
+        class _SimpleMapping(t.ContainerMappingBase):
             @override
             def __getitem__(self, key: str) -> int:
                 if key == "a":

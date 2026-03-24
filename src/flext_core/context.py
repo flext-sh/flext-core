@@ -86,7 +86,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         if ctx_value is None:
             return {}
 
-        payload: Mapping[str, t.NormalizedValue | BaseModel] | t.ContainerMapping
+        payload: Mapping[str, t.ValueOrModel] | t.ContainerMapping
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
             payload = ctx_value.root
         elif isinstance(ctx_value, BaseModel):
@@ -98,7 +98,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
         try:
             normalized: t.MutableContainerMapping = {}
-            mapping_value: Mapping[str, t.NormalizedValue | BaseModel] = dict(
+            mapping_value: Mapping[str, t.ValueOrModel] = dict(
                 payload.items(),
             )
             for key, value in mapping_value.items():

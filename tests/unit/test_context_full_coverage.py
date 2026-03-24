@@ -6,7 +6,6 @@ from collections.abc import MutableMapping
 
 import pytest
 from flext_tests import t, tm
-from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextContext, p, r
 from tests import c, m
@@ -14,23 +13,21 @@ from tests import c, m
 
 class _ContainerStub:
     def __init__(self) -> None:
-        self.services: MutableMapping[str, t.Container | BaseModel] = {}
+        self.services: MutableMapping[str, t.RuntimeAtomic] = {}
 
-    def get(self, name: str) -> r[t.Container | BaseModel]:
+    def get(self, name: str) -> r[t.RuntimeAtomic]:
         if name in self.services:
-            return r[t.Container | BaseModel].ok(self.services[name])
-        return r[t.Container | BaseModel].fail("missing")
+            return r[t.RuntimeAtomic].ok(self.services[name])
+        return r[t.RuntimeAtomic].fail("missing")
 
-    def with_service(
-        self, name: str, service: t.Container | BaseModel
-    ) -> _ContainerStub:
+    def with_service(self, name: str, service: t.RuntimeAtomic) -> _ContainerStub:
         if name == "bad":
             msg = "bad service"
             raise ValueError(msg)
         self.services[name] = service
         return self
 
-    def register(self, name: str, service: t.Container | BaseModel) -> _ContainerStub:
+    def register(self, name: str, service: t.RuntimeAtomic) -> _ContainerStub:
         return self.with_service(name, service)
 
 

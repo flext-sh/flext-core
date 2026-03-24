@@ -32,7 +32,7 @@ class UtilitiesMapperCoverage100Namespace:
         value: Annotated[int, Field(description="Simple t.NormalizedValue value")]
 
     class _DoubleOp(BaseModel):
-        def __call__(self, value: float | str) -> int | float | str:
+        def __call__(self, value: float | str) -> t.Numeric | str:
             if isinstance(value, (int, float)):
                 return value * 2
             return value
@@ -44,13 +44,13 @@ class UtilitiesMapperCoverage100Namespace:
             return False
 
     class _TimesTenOp(BaseModel):
-        def __call__(self, value: float | str) -> int | float | str:
+        def __call__(self, value: float | str) -> t.Numeric | str:
             if isinstance(value, (int, float)):
                 return value * 10
             return value
 
     class _PlusFiveOp(BaseModel):
-        def __call__(self, value: float | str) -> int | float | str:
+        def __call__(self, value: float | str) -> t.Numeric | str:
             if isinstance(value, (int, float)):
                 return value + 5
             return value
@@ -400,7 +400,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_construct(self) -> None:
             """Test construct."""
-            source: MutableMapping[str, t.NormalizedValue | BaseModel] = {
+            source: MutableMapping[str, t.ValueOrModel] = {
                 "user_name": "john",
                 "user_age": 30,
             }

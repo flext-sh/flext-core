@@ -14,8 +14,6 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from itertools import count
 from typing import ClassVar, cast, override
 
-from pydantic import BaseModel
-
 from flext_core import r, s, t
 
 from .. import c, m
@@ -516,7 +514,7 @@ class GenericModelFactory:
     ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
         config_root = cast(
-            "MutableMapping[str, t.NormalizedValue | BaseModel]",
+            "MutableMapping[str, t.ValueOrModel]",
             dict(config) if config else {},
         )
         return m.Configuration.model_validate({

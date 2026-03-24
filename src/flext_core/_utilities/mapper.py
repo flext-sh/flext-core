@@ -2115,7 +2115,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_dict(
-        raw: Mapping[str, t.MetadataOrValue | t.NormalizedValue | BaseModel],
+        raw: Mapping[str, t.MetadataOrValue | BaseModel],
     ) -> t.ContainerMapping:
         """Convert a dict with heterogeneous values to NormalizedValue dict.
 
@@ -2135,7 +2135,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_list(
-        raw: Sequence[t.MetadataOrValue | t.NormalizedValue | BaseModel],
+        raw: Sequence[t.MetadataOrValue | BaseModel],
     ) -> t.ContainerList:
         """Convert a list with heterogeneous values to NormalizedValue list.
 

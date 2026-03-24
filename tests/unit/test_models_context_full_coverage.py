@@ -63,14 +63,14 @@ def test_context_data_normalize_and_json_checks() -> None:
     normalized = m.ContextData.normalize_to_container(nested)
     tm.that(hasattr(normalized, "root"), eq=True)
     check_result = FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.NormalizedValue | BaseModel", {"k": [1, "x"]})
+        cast("t.ValueOrModel", {"k": [1, "x"]})
     )
     tm.that(check_result, none=True)
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.NormalizedValue | BaseModel", {"normalized"})
+            cast("t.ValueOrModel", {"normalized"})
         )
-    obj = cast("t.NormalizedValue | BaseModel", _ModelWithNoCallableDump())
+    obj = cast("t.ValueOrModel", _ModelWithNoCallableDump())
     with pytest.raises(TypeError):
         m.ContextData.normalize_to_container(obj)
 
@@ -130,12 +130,12 @@ def test_context_data_validate_dict_serializable_real_dicts(
 
 def test_context_export_serializable_and_validators() -> None:
     check_result = FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.NormalizedValue | BaseModel", {"k": [1, True]})
+        cast("t.ValueOrModel", {"k": [1, True]})
     )
     tm.that(check_result, none=True)
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.NormalizedValue | BaseModel", {"normalized"})
+            cast("t.ValueOrModel", {"normalized"})
         )
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
@@ -206,7 +206,7 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     stats_model = _normalize_to_mapping(StatsModel())
     tm.that(stats_model, eq={"a": 1})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "x"))
+        _ = _normalize_to_mapping(cast("t.ValueOrModel", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
     total_items = cast("int", exported.total_data_items)
     tm.that(total_items, eq=1)
@@ -226,7 +226,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope = _normalize_to_mapping(ScopeModel())
     tm.that(result_scope, eq={"a": 1})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", 123))
+        _ = _normalize_to_mapping(cast("t.ValueOrModel", 123))
     result_none2 = _normalize_to_mapping(None)
     tm.that(result_none2, eq={})
     result_dict2 = _normalize_to_mapping({"a": 1})
@@ -234,7 +234,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope2 = _normalize_to_mapping(ScopeModel())
     tm.that(result_scope2, eq={"a": 1})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", 123))
+        _ = _normalize_to_mapping(cast("t.ValueOrModel", 123))
 
 
 def test_statistics_and_custom_fields_validators() -> None:
@@ -249,7 +249,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none1 = _normalize_to_mapping(None)
     tm.that(result_none1, eq={})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "bad"))
+        _ = _normalize_to_mapping(cast("t.ValueOrModel", "bad"))
     result_x2 = _normalize_to_mapping({"x": 1})
     tm.that(result_x2, eq={"x": 1})
     result_payload2 = _normalize_to_mapping(Payload())
@@ -257,7 +257,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none2 = _normalize_to_mapping(None)
     tm.that(result_none2, eq={})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "bad"))
+        _ = _normalize_to_mapping(cast("t.ValueOrModel", "bad"))
 
 
 def test_context_data_metadata_normalizer_removed() -> None:

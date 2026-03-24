@@ -15,7 +15,6 @@ from collections.abc import Mapping, MutableMapping, MutableSequence
 
 import pytest
 from flext_tests import t
-from pydantic import BaseModel
 
 from flext_core import FlextConstants, m, r
 from tests import assertion_helpers
@@ -125,20 +124,20 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: MutableMapping[str, t.Container | BaseModel] = {}
+                self._data: MutableMapping[str, t.RuntimeAtomic] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: t.Container | BaseModel) -> r[bool]:
+            def save(self, entity_id: str, data: t.RuntimeAtomic) -> r[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return r[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> r[t.Container | BaseModel]:
+            def find_by_id(self, entity_id: str) -> r[t.RuntimeAtomic]:
                 """Find entity by ID."""
                 self._query_count += 1
                 if entity_id in self._data:
-                    return r[t.Container | BaseModel].ok(self._data[entity_id])
-                return r[t.Container | BaseModel].fail(
+                    return r[t.RuntimeAtomic].ok(self._data[entity_id])
+                return r[t.RuntimeAtomic].fail(
                     f"Entity not found: {entity_id}",
                 )
 
@@ -165,7 +164,7 @@ class TestArchitecturalPatterns:
         assert len(repo._data) == 1000, f"Expected 1000 entities, got {len(repo._data)}"
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: r[t.Container | BaseModel] = repo.find_by_id(f"entity_{i}")
+            query_result: r[t.RuntimeAtomic] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
             assert isinstance(entity_data, t.ConfigMap), (

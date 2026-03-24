@@ -39,7 +39,7 @@ class UtilitiesCacheCoverage100Namespace:
 
         name: Annotated[str, Field(description="Normalize scenario name")]
         component: Annotated[
-            t.NormalizedValue | BaseModel | set[t.Primitives | None] | None,
+            t.ValueOrModel | set[t.Primitives | None] | None,
             Field(default=None, description="Input component to normalize"),
         ] = None
         expected_type: Annotated[
@@ -197,7 +197,7 @@ class UtilitiesCacheCoverage100Namespace:
         ),
         SortKeyScenario(
             name="dict_key",
-            key=cast("str | int | float", str({"a": 1})),
+            key=cast("t.Numeric | str", str({"a": 1})),
             expected_tuple=(0, str({"a": 1}).lower()),
         ),
     ]
@@ -222,7 +222,7 @@ class UtilitiesCacheCoverage100Namespace:
             for scenario in NORMALIZE_COMPONENT_SCENARIOS:
                 result = u.normalize_component(
                     cast(
-                        "t.NormalizedValue | BaseModel | set[t.NormalizedValue]",
+                        "t.ValueOrModel | set[t.NormalizedValue]",
                         scenario.component,
                     )
                 )
@@ -259,7 +259,7 @@ class UtilitiesCacheCoverage100Namespace:
             component = {3, 1, 2}
             result = u.normalize_component(
                 cast(
-                    "t.NormalizedValue | BaseModel | set[t.NormalizedValue]",
+                    "t.ValueOrModel | set[t.NormalizedValue]",
                     component,
                 ),
             )
@@ -273,7 +273,7 @@ class UtilitiesCacheCoverage100Namespace:
             component = {1, "test", math.pi, None}
             result = u.normalize_component(
                 cast(
-                    "t.NormalizedValue | BaseModel | set[t.NormalizedValue]",
+                    "t.ValueOrModel | set[t.NormalizedValue]",
                     component,
                 ),
             )
@@ -322,7 +322,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             obj = CustomObject()
             result = u.normalize_component(
-                cast("t.NormalizedValue | BaseModel | set[t.NormalizedValue]", obj)
+                cast("t.ValueOrModel | set[t.NormalizedValue]", obj)
             )
             assert isinstance(result, str)
             assert result == "custom_object"

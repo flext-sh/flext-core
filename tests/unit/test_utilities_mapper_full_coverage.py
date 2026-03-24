@@ -244,7 +244,7 @@ class UtilitiesMapperFullCoverageNamespace:
             raise ValueError(msg)
 
     @staticmethod
-    def _parse_int(value: t.NormalizedValue | BaseModel) -> int:
+    def _parse_int(value: t.ValueOrModel) -> int:
         return int(cast("str", value))
 
     @staticmethod
@@ -284,7 +284,7 @@ class UtilitiesMapperFullCoverageNamespace:
             msg = "len exploded"
             raise TypeError(msg)
 
-    class BadMapping(Mapping[str, t.NormalizedValue]):
+    class BadMapping(t.ContainerMappingBase):
         @override
         def __getitem__(self, _key: str) -> t.NormalizedValue:
             msg = "get exploded"
@@ -757,7 +757,7 @@ class UtilitiesMapperFullCoverageNamespace:
             {"x": {"field": "a", "default": 9}}, None
         )
         tm.that(constructed_none["x"], eq=9)
-        source: MutableMapping[str, t.NormalizedValue | BaseModel] = {
+        source: MutableMapping[str, t.ValueOrModel] = {
             "name": "alice",
             "n": 3,
         }
@@ -774,7 +774,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(constructed["n"], eq=4)
         tm.that(constructed["literal"], eq=5)
 
-        class ExplodeOnGet(Mapping[str, t.NormalizedValue]):
+        class ExplodeOnGet(t.ContainerMappingBase):
             @override
             def __getitem__(self, _key: str) -> t.NormalizedValue:
                 msg = "get exploded"
@@ -984,7 +984,7 @@ class UtilitiesMapperFullCoverageNamespace:
 
         get_result = mapper._extract_get_value(
             cast(
-                "t.NormalizedValue | BaseModel | t.ContainerMapping",
+                "t.ValueOrModel | t.ContainerMapping",
                 cast("t.NormalizedValue", DumpOnly()),
             ),
             "a",
@@ -993,7 +993,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(get_result.value, eq=1)
         get_missing = mapper._extract_get_value(
             cast(
-                "t.NormalizedValue | BaseModel | t.ContainerMapping",
+                "t.ValueOrModel | t.ContainerMapping",
                 cast("t.NormalizedValue", DumpOnly()),
             ),
             "missing",

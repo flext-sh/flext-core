@@ -125,7 +125,7 @@ class Testu(TextUtilityContract):
         @staticmethod
         def create_mock_config(**kwargs: t.Scalar) -> t.ConfigMap:
             """Create mock config t.NormalizedValue."""
-            result: MutableMapping[str, t.NormalizedValue | BaseModel] = {}
+            result: MutableMapping[str, t.ValueOrModel] = {}
             for key, value in kwargs.items():
                 result[str(key)] = value
             return t.ConfigMap(root=result)
@@ -334,7 +334,7 @@ class Testu(TextUtilityContract):
         if isinstance(obj, BaseModel):
             result = u.clear_object_cache(obj)
         else:
-            obj_dict: MutableMapping[str, t.NormalizedValue | BaseModel] = {}
+            obj_dict: MutableMapping[str, t.ValueOrModel] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (

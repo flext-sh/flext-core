@@ -124,6 +124,7 @@ if TYPE_CHECKING:
         TestPatternsLogging,
     )
     from tests.integration.patterns.test_patterns_testing import TestPatternsTesting
+    from tests.integration.test_architecture import TestAutomatedArchitecture
     from tests.integration.test_config_integration import (
         TestFlextSettingsSingletonIntegration,
     )
@@ -212,7 +213,6 @@ if TYPE_CHECKING:
     from tests.unit.flext_tests.test_utilities import TestUtilities
     from tests.unit.protocols import FlextProtocols
     from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
-    from tests.unit.test_automated_architecture import TestAutomatedArchitecture
     from tests.unit.test_collection_utilities_coverage_100 import (
         TestCollectionUtilitiesCoverage,
     )
@@ -737,7 +737,7 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "TestArchitecturalPatterns",
     ),
     "TestAutomatedArchitecture": (
-        "tests.unit.test_automated_architecture",
+        "tests.integration.test_architecture",
         "TestAutomatedArchitecture",
     ),
     "TestCaseMap": ("tests.unit._models_impl", "TestCaseMap"),

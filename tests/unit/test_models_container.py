@@ -19,7 +19,7 @@ from typing import ClassVar
 
 import pytest
 from flext_tests import t, tm
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from tests import m, u
 
@@ -47,9 +47,7 @@ class TestFlextModelsContainer:
             (123, False),
             ([1, 2, 3], False),
         ]
-        CONTAINER_CONFIG_VALUES: ClassVar[
-            Sequence[Mapping[str, t.NormalizedValue | BaseModel]]
-        ] = [
+        CONTAINER_CONFIG_VALUES: ClassVar[Sequence[Mapping[str, t.ValueOrModel]]] = [
             {},
             {"enable_singleton": False},
             {"enable_factory_caching": False},
@@ -237,7 +235,7 @@ class TestFlextModelsContainer:
     )
     def test_container_config_creation(
         self,
-        config_dict: Mapping[str, t.NormalizedValue | BaseModel],
+        config_dict: Mapping[str, t.ValueOrModel],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         config = m.ContainerConfig.model_validate(config_dict)

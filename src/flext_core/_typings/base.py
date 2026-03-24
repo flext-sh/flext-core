@@ -30,6 +30,24 @@ class FlextTypingBase:
     type MutableContainerMapping = MutableMapping[str, NormalizedValue]
     type MutableContainerList = MutableSequence[NormalizedValue]
 
+    class ContainerMappingBase(Mapping[str, "FlextTypingBase.NormalizedValue"]):
+        """Concrete base for Mapping[str, NormalizedValue] inheritance.
+
+        PEP 695 ``type X = ...`` aliases cannot be subclassed (CPython limitation).
+        Use ``t.*Base`` classes when inheriting, ``t.*`` aliases for annotations.
+        """
+
+    class ContainerListBase(Sequence["FlextTypingBase.NormalizedValue"]):
+        """Concrete base for Sequence[NormalizedValue] inheritance."""
+
+    class MutableContainerMappingBase(
+        MutableMapping[str, "FlextTypingBase.NormalizedValue"]
+    ):
+        """Concrete base for MutableMapping[str, NormalizedValue] inheritance."""
+
+    class MutableContainerListBase(MutableSequence["FlextTypingBase.NormalizedValue"]):
+        """Concrete base for MutableSequence[NormalizedValue] inheritance."""
+
     PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
         str,
         int,

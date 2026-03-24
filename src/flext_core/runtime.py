@@ -1394,7 +1394,7 @@ class FlextRuntime:
         context_dict = t.ConfigMap(root={})
         if isinstance(context, Mapping):
             try:
-                parsed_context: dict[str, t.NormalizedValue | BaseModel] = {
+                parsed_context: dict[str, t.ValueOrModel] = {
                     str(k): str(v) for k, v in context.items()
                 }
             except (TypeError, ValueError, AttributeError, RuntimeError) as exc:

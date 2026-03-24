@@ -35,7 +35,6 @@ if TYPE_CHECKING:
     from tests.unit.flext_tests.test_utilities import TestUtilities
     from tests.unit.protocols import FlextProtocols, p
     from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
-    from tests.unit.test_automated_architecture import TestAutomatedArchitecture
     from tests.unit.test_collection_utilities_coverage_100 import (
         TestCollectionUtilitiesCoverage,
     )
@@ -455,10 +454,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     ),
     "T": ("tests.unit.test_utilities_type_checker_coverage_100", "T"),
     "TMessage": ("tests.unit.test_utilities_type_checker_coverage_100", "TMessage"),
-    "TestAutomatedArchitecture": (
-        "tests.unit.test_automated_architecture",
-        "TestAutomatedArchitecture",
-    ),
     "TestCollectionUtilitiesCoverage": (
         "tests.unit.test_collection_utilities_coverage_100",
         "TestCollectionUtilitiesCoverage",
@@ -1502,7 +1497,6 @@ __all__ = [
     "SortKeyScenario",
     "T",
     "TMessage",
-    "TestAutomatedArchitecture",
     "TestCollectionUtilitiesCoverage",
     "TestConstants",
     "TestContainerFullCoverage",

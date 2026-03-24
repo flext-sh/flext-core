@@ -84,8 +84,8 @@ class FlextConstantsPlatform:
     HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 1073741824
     MAX_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.MAX_TIMEOUT_SECONDS_PERFORMANCE
     MAX_BATCH_OPERATIONS: Final[int] = 1000
-    MAX_OPERATION_NAME_LENGTH: Final[int] = 100
-    EXPECTED_TUPLE_LENGTH: Final[int] = 2
+    MAX_OPERATION_NAME_LENGTH: Final[int] = FlextConstantsBase.MAX_OPERATION_NAME_LENGTH
+    EXPECTED_TUPLE_LENGTH: Final[int] = FlextConstantsBase.EXPECTED_TUPLE_LENGTH
     DEFAULT_EMPTY_STRING: Final[str] = ""
 
     DEFAULT_SIZE: Final[int] = 1000
