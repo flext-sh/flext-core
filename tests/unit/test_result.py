@@ -60,7 +60,9 @@ class Testr:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Result scenario name")]
-        operation_type: Annotated[ResultOperationType, Field(description="Result operation type")]
+        operation_type: Annotated[
+            ResultOperationType, Field(description="Result operation type")
+        ]
         value: Annotated[
             t.NormalizedValue, Field(description="Input value for result operation")
         ]

@@ -117,7 +117,6 @@ ContainerScenarios = _ContainerScenarios
 
 
 class TestFlextContainer:
-
     def test_container_initialization(self, clean_container: p.Container) -> None:
         """Test container initialization creates valid instance using fixtures."""
         tm.that(

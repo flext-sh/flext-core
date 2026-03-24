@@ -102,7 +102,9 @@ class TestFlextContext:
     def test_context_initialization(self, test_context: FlextContext) -> None:
         """Test context initialization."""
         tm.that(test_context, none=False)
-        tm.that(test_context, none=False, msg="context must be a valid Context instance")
+        tm.that(
+            test_context, none=False, msg="context must be a valid Context instance"
+        )
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""

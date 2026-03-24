@@ -213,23 +213,6 @@ if TYPE_CHECKING:
     from tests.unit.protocols import FlextProtocols
     from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
     from tests.unit.test_automated_architecture import TestAutomatedArchitecture
-    from tests.unit.test_automated_container import TestAutomatedFlextContainer
-    from tests.unit.test_automated_context import TestAutomatedFlextContext
-    from tests.unit.test_automated_decorators import TestAutomatedFlextDecorators
-    from tests.unit.test_automated_dispatcher import TestAutomatedFlextDispatcher
-    from tests.unit.test_automated_exceptions import (
-        EXCEPTION_CLASSES,
-        TestAutomatedExceptions,
-    )
-    from tests.unit.test_automated_handlers import TestAutomatedFlextHandlers
-    from tests.unit.test_automated_loggings import TestAutomatedFlextLogger
-    from tests.unit.test_automated_mixins import TestAutomatedFlextMixins
-    from tests.unit.test_automated_registry import TestAutomatedFlextRegistry
-    from tests.unit.test_automated_result import TestAutomatedResult
-    from tests.unit.test_automated_runtime import TestAutomatedFlextRuntime
-    from tests.unit.test_automated_service import TestAutomatedFlextService
-    from tests.unit.test_automated_settings import TestAutomatedFlextSettings
-    from tests.unit.test_automated_utilities import TestAutomatedFlextUtilities
     from tests.unit.test_collection_utilities_coverage_100 import (
         TestCollectionUtilitiesCoverage,
     )
@@ -238,9 +221,6 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_config import TestFlextSettings
     from tests.unit.test_constants import TestConstants
-    from tests.unit.test_constants_full_coverage import (
-        test_constants_auto_enum_and_bimapping_paths,
-    )
     from tests.unit.test_container import TestFlextContainer
     from tests.unit.test_container_full_coverage import TestContainerFullCoverage
     from tests.unit.test_context import TestFlextContext
@@ -257,7 +237,6 @@ if TYPE_CHECKING:
         test_set_set_all_get_validation_and_error_paths,
         test_update_statistics_remove_hook_and_clone_false_result,
     )
-    from tests.unit.test_coverage_76_lines import TestCoverage76Lines
     from tests.unit.test_coverage_context import TestCoverageContext
     from tests.unit.test_coverage_exceptions import TestCoverageExceptions
     from tests.unit.test_coverage_loggings import TestCoverageLoggings
@@ -278,13 +257,11 @@ if TYPE_CHECKING:
         CircuitBreakerManager,
         RateLimiterManager,
         RetryPolicy,
+        test_circuit_breaker_half_open_and_rate_limiter_accessors,
         test_circuit_breaker_transitions_and_metrics,
         test_rate_limiter_blocks_then_recovers,
         test_rate_limiter_jitter_application,
         test_retry_policy_behavior,
-    )
-    from tests.unit.test_dispatcher_reliability_full_coverage import (
-        test_dispatcher_reliability_branch_paths,
     )
     from tests.unit.test_dispatcher_timeout_coverage_100 import (
         TestDispatcherTimeoutCoverage100,
@@ -292,15 +269,7 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_entity_coverage import TestEntityCoverageEdgeCases
     from tests.unit.test_enum_utilities_coverage_100 import TestEnumUtilitiesCoverage
-    from tests.unit.test_exceptions import Teste
-    from tests.unit.test_exceptions_full_coverage import (
-        test_authentication_error_normalizes_extra_kwargs_into_context,
-        test_base_error_normalize_metadata_merges_existing_metadata_model,
-        test_exceptions_uncovered_metadata_paths,
-        test_merge_metadata_context_paths,
-        test_not_found_error_correlation_id_selection_and_extra_kwargs,
-    )
-    from tests.unit.test_final_75_percent_push import TestFinal75PercentPush
+    from tests.unit.test_exceptions import Teste, TestExceptionsHypothesis
     from tests.unit.test_handler_decorator_discovery import (
         TestHandlerDecoratorDiscovery,
     )
@@ -312,18 +281,11 @@ if TYPE_CHECKING:
     from tests.unit.test_loggings_error_paths_coverage import TestLoggingsErrorPaths
     from tests.unit.test_loggings_full_coverage import TestModule
     from tests.unit.test_loggings_strict_returns import TestLoggingsStrictReturns
-    from tests.unit.test_mixins import TestFlextMixinsNestedClasses
+    from tests.unit.test_mixins import TestFlextMixinsCQRS, TestFlextMixinsNestedClasses
     from tests.unit.test_mixins_full_coverage import TestMixinsFullCoverage
     from tests.unit.test_models import TestModels
-    from tests.unit.test_models_79_coverage import TestModels79Coverage
     from tests.unit.test_models_base_full_coverage import TestModelsBaseFullCoverage
-    from tests.unit.test_models_collections_full_coverage import (
-        TestModelsCollectionsFullCoverage,
-    )
     from tests.unit.test_models_container import TestFlextModelsContainer
-    from tests.unit.test_models_container_full_coverage import (
-        test_container_resource_registration_metadata_normalized,
-    )
     from tests.unit.test_models_context_full_coverage import (
         test_context_data_metadata_normalizer_removed,
         test_context_data_normalize_and_json_checks,
@@ -359,37 +321,8 @@ if TYPE_CHECKING:
         test_conversion_start_and_complete_methods,
         test_operation_progress_start_operation_sets_runtime_fields,
     )
-    from tests.unit.test_models_handler_full_coverage import (
-        test_models_handler_branches,
-        test_models_handler_uncovered_mode_and_reset_paths,
-    )
-    from tests.unit.test_models_service_full_coverage import (
-        test_service_request_timeout_post_validator_messages,
-        test_service_request_timeout_validator_branches,
-    )
-    from tests.unit.test_models_settings_full_coverage import (
-        test_models_settings_branch_paths,
-        test_models_settings_context_validator_and_non_standard_status_input,
-    )
-    from tests.unit.test_models_validation_full_coverage import (
-        test_basic_imports_work,
-        test_ensure_utc_datetime_adds_tzinfo_when_naive,
-        test_ensure_utc_datetime_preserves_aware,
-        test_ensure_utc_datetime_returns_none_on_none,
-        test_facade_binding_is_correct,
-        test_normalize_to_list_passes_list_through,
-        test_normalize_to_list_wraps_int,
-        test_normalize_to_list_wraps_scalar,
-        test_strip_whitespace_preserves_clean,
-        test_strip_whitespace_returns_empty_on_spaces,
-        test_strip_whitespace_trims_leading_trailing,
-        test_validate_config_dict_normalizes_dict,
-        test_validate_tags_list_from_string,
-        test_validate_tags_list_normalizes,
-    )
     from tests.unit.test_namespace_validator import TestFlextInfraNamespaceValidator
     from tests.unit.test_pagination_coverage_100 import TestPaginationCoverage100
-    from tests.unit.test_phase2_coverage_final import TestPhase2CoverageFinal
     from tests.unit.test_protocols import TestFlextProtocols
     from tests.unit.test_refactor_cli_models_workflow import (
         test_centralize_pydantic_cli_outputs_extended_metrics,
@@ -486,7 +419,7 @@ if TYPE_CHECKING:
         test_runtime_result_all_missed_branches,
         test_runtime_result_remaining_paths,
     )
-    from tests.unit.test_service import TestsCore
+    from tests.unit.test_service import TestsCore, TestServiceInternals
     from tests.unit.test_service_additional import (
         RuntimeCloneService,
         test_get_service_info,
@@ -495,10 +428,7 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_service_bootstrap import TestServiceBootstrap
     from tests.unit.test_service_coverage_100 import TestService100Coverage
-    from tests.unit.test_service_full_coverage import TestServiceFullCoverage
-    from tests.unit.test_settings_full_coverage import (
-        test_settings_materialize_and_context_overrides,
-    )
+    from tests.unit.test_settings_coverage import TestFlextSettingsCoverage
     from tests.unit.test_transformer_class_nesting import (
         test_class_nesting_appends_to_existing_namespace_and_removes_pass,
         test_class_nesting_keeps_unmapped_top_level_classes,
@@ -514,11 +444,6 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_typings import TestTypings
     from tests.unit.test_typings_full_coverage import TestTypingsFullCoverage
-    from tests.unit.test_utilities_args_full_coverage import (
-        UnknownHint,
-        test_args_get_enum_params_annotated_unwrap_branch,
-        test_args_get_enum_params_branches,
-    )
     from tests.unit.test_utilities_cache_coverage_100 import (
         NORMALIZE_COMPONENT_SCENARIOS,
         SORT_KEY_SCENARIOS,
@@ -533,9 +458,6 @@ if TYPE_CHECKING:
         TestuCacheSortDictKeys,
         TestuCacheSortKey,
         UtilitiesCacheCoverage100Namespace,
-    )
-    from tests.unit.test_utilities_checker_full_coverage import (
-        TestUtilitiesCheckerFullCoverage,
     )
     from tests.unit.test_utilities_collection_coverage_100 import (
         TestUtilitiesCollectionCoverage,
@@ -552,14 +474,8 @@ if TYPE_CHECKING:
     from tests.unit.test_utilities_context_full_coverage import (
         TestUtilitiesContextFullCoverage,
     )
-    from tests.unit.test_utilities_conversion_full_coverage import (
-        test_conversion_string_and_join_paths,
-    )
     from tests.unit.test_utilities_coverage import TestUtilitiesCoverage
     from tests.unit.test_utilities_data_mapper import TestUtilitiesDataMapper
-    from tests.unit.test_utilities_deprecation_full_coverage import (
-        test_deprecated_class_noop_init_branch,
-    )
     from tests.unit.test_utilities_domain import (
         TestuDomain,
         create_compare_entities_cases,
@@ -643,24 +559,10 @@ if TYPE_CHECKING:
         test_transform_option_extract_and_step_helpers,
         test_type_guards_and_narrowing_failures,
     )
-    from tests.unit.test_utilities_model_full_coverage import (
-        test_merge_defaults_and_dump_paths,
-        test_normalize_to_pydantic_dict_and_value_branches,
-        test_update_exception_path,
-        test_update_success_path_returns_ok_result,
-    )
-    from tests.unit.test_utilities_pagination_full_coverage import (
-        test_pagination_response_string_fallbacks,
-    )
     from tests.unit.test_utilities_parser_full_coverage import (
         TestUtilitiesParserFullCoverage,
     )
     from tests.unit.test_utilities_reliability import TestFlextUtilitiesReliability
-    from tests.unit.test_utilities_reliability_full_coverage import (
-        test_utilities_reliability_branches,
-        test_utilities_reliability_compose_returns_non_result_directly,
-        test_utilities_reliability_uncovered_retry_compose_and_sequence_paths,
-    )
     from tests.unit.test_utilities_string_parser import (
         TestuStringParser,
         normalized_value_key_cases,
@@ -701,7 +603,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.fixtures.namespace_validator.rule1_loose_constant",
         "DEFAULT_TIMEOUT",
     ),
-    "EXCEPTION_CLASSES": ("tests.unit.test_automated_exceptions", "EXCEPTION_CLASSES"),
     "EXPECTED_BULK_SIZE": (
         "tests.integration.patterns.test_patterns_logging",
         "EXPECTED_BULK_SIZE",
@@ -839,59 +740,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_automated_architecture",
         "TestAutomatedArchitecture",
     ),
-    "TestAutomatedExceptions": (
-        "tests.unit.test_automated_exceptions",
-        "TestAutomatedExceptions",
-    ),
-    "TestAutomatedFlextContainer": (
-        "tests.unit.test_automated_container",
-        "TestAutomatedFlextContainer",
-    ),
-    "TestAutomatedFlextContext": (
-        "tests.unit.test_automated_context",
-        "TestAutomatedFlextContext",
-    ),
-    "TestAutomatedFlextDecorators": (
-        "tests.unit.test_automated_decorators",
-        "TestAutomatedFlextDecorators",
-    ),
-    "TestAutomatedFlextDispatcher": (
-        "tests.unit.test_automated_dispatcher",
-        "TestAutomatedFlextDispatcher",
-    ),
-    "TestAutomatedFlextHandlers": (
-        "tests.unit.test_automated_handlers",
-        "TestAutomatedFlextHandlers",
-    ),
-    "TestAutomatedFlextLogger": (
-        "tests.unit.test_automated_loggings",
-        "TestAutomatedFlextLogger",
-    ),
-    "TestAutomatedFlextMixins": (
-        "tests.unit.test_automated_mixins",
-        "TestAutomatedFlextMixins",
-    ),
-    "TestAutomatedFlextRegistry": (
-        "tests.unit.test_automated_registry",
-        "TestAutomatedFlextRegistry",
-    ),
-    "TestAutomatedFlextRuntime": (
-        "tests.unit.test_automated_runtime",
-        "TestAutomatedFlextRuntime",
-    ),
-    "TestAutomatedFlextService": (
-        "tests.unit.test_automated_service",
-        "TestAutomatedFlextService",
-    ),
-    "TestAutomatedFlextSettings": (
-        "tests.unit.test_automated_settings",
-        "TestAutomatedFlextSettings",
-    ),
-    "TestAutomatedFlextUtilities": (
-        "tests.unit.test_automated_utilities",
-        "TestAutomatedFlextUtilities",
-    ),
-    "TestAutomatedResult": ("tests.unit.test_automated_result", "TestAutomatedResult"),
     "TestCaseMap": ("tests.unit._models_impl", "TestCaseMap"),
     "TestCollectionUtilitiesCoverage": (
         "tests.unit.test_collection_utilities_coverage_100",
@@ -918,7 +766,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_context_coverage_100",
         "TestContext100Coverage",
     ),
-    "TestCoverage76Lines": ("tests.unit.test_coverage_76_lines", "TestCoverage76Lines"),
     "TestCoverageContext": ("tests.unit.test_coverage_context", "TestCoverageContext"),
     "TestCoverageExceptions": (
         "tests.unit.test_coverage_exceptions",
@@ -973,9 +820,9 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_enum_utilities_coverage_100",
         "TestEnumUtilitiesCoverage",
     ),
-    "TestFinal75PercentPush": (
-        "tests.unit.test_final_75_percent_push",
-        "TestFinal75PercentPush",
+    "TestExceptionsHypothesis": (
+        "tests.unit.test_exceptions",
+        "TestExceptionsHypothesis",
     ),
     "TestFlextContainer": ("tests.unit.test_container", "TestFlextContainer"),
     "TestFlextContext": ("tests.unit.test_context", "TestFlextContext"),
@@ -985,6 +832,7 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_namespace_validator",
         "TestFlextInfraNamespaceValidator",
     ),
+    "TestFlextMixinsCQRS": ("tests.unit.test_mixins", "TestFlextMixinsCQRS"),
     "TestFlextMixinsNestedClasses": (
         "tests.unit.test_mixins",
         "TestFlextMixinsNestedClasses",
@@ -1001,6 +849,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "TestFlextRegistry": ("tests.unit.test_registry", "TestFlextRegistry"),
     "TestFlextRuntime": ("tests.unit.test_runtime", "TestFlextRuntime"),
     "TestFlextSettings": ("tests.unit.test_config", "TestFlextSettings"),
+    "TestFlextSettingsCoverage": (
+        "tests.unit.test_settings_coverage",
+        "TestFlextSettingsCoverage",
+    ),
     "TestFlextSettingsSingletonIntegration": (
         "tests.integration.test_config_integration",
         "TestFlextSettingsSingletonIntegration",
@@ -1074,17 +926,9 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "TestMixinsFullCoverage",
     ),
     "TestModels": ("tests.unit.test_models", "TestModels"),
-    "TestModels79Coverage": (
-        "tests.unit.test_models_79_coverage",
-        "TestModels79Coverage",
-    ),
     "TestModelsBaseFullCoverage": (
         "tests.unit.test_models_base_full_coverage",
         "TestModelsBaseFullCoverage",
-    ),
-    "TestModelsCollectionsFullCoverage": (
-        "tests.unit.test_models_collections_full_coverage",
-        "TestModelsCollectionsFullCoverage",
     ),
     "TestModule": ("tests.unit.test_loggings_full_coverage", "TestModule"),
     "TestPaginationCoverage100": (
@@ -1106,10 +950,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "TestPerformanceBenchmarks": (
         "tests.benchmark.test_refactor_nesting_performance",
         "TestPerformanceBenchmarks",
-    ),
-    "TestPhase2CoverageFinal": (
-        "tests.unit.test_phase2_coverage_final",
-        "TestPhase2CoverageFinal",
     ),
     "TestProjectLevelRefactor": (
         "tests.integration.test_refactor_nesting_project",
@@ -1136,10 +976,7 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_service_bootstrap",
         "TestServiceBootstrap",
     ),
-    "TestServiceFullCoverage": (
-        "tests.unit.test_service_full_coverage",
-        "TestServiceFullCoverage",
-    ),
+    "TestServiceInternals": ("tests.unit.test_service", "TestServiceInternals"),
     "TestServiceResultProperty": (
         "tests.test_service_result_property",
         "TestServiceResultProperty",
@@ -1151,10 +988,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     ),
     "TestUnitModels": ("tests.unit._models", "TestUnitModels"),
     "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
-    "TestUtilitiesCheckerFullCoverage": (
-        "tests.unit.test_utilities_checker_full_coverage",
-        "TestUtilitiesCheckerFullCoverage",
-    ),
     "TestUtilitiesCollectionCoverage": (
         "tests.unit.test_utilities_collection_coverage_100",
         "TestUtilitiesCollectionCoverage",
@@ -1283,7 +1116,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_dispatcher_timeout_coverage_100",
         "TimeoutEnforcer",
     ),
-    "UnknownHint": ("tests.unit.test_utilities_args_full_coverage", "UnknownHint"),
     "User": ("tests.helpers.factories_impl", "User"),
     "UserFactory": ("tests.helpers.factories_impl", "UserFactory"),
     "UtilitiesCacheCoverage100Namespace": (
@@ -1434,14 +1266,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_utilities_guards_full_coverage",
         "test_aliases_are_available",
     ),
-    "test_args_get_enum_params_annotated_unwrap_branch": (
-        "tests.unit.test_utilities_args_full_coverage",
-        "test_args_get_enum_params_annotated_unwrap_branch",
-    ),
-    "test_args_get_enum_params_branches": (
-        "tests.unit.test_utilities_args_full_coverage",
-        "test_args_get_enum_params_branches",
-    ),
     "test_async_log_writer_paths": (
         "tests.unit.test_runtime_full_coverage",
         "test_async_log_writer_paths",
@@ -1454,21 +1278,9 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_at_take_and_as_branches",
     ),
-    "test_authentication_error_normalizes_extra_kwargs_into_context": (
-        "tests.unit.test_exceptions_full_coverage",
-        "test_authentication_error_normalizes_extra_kwargs_into_context",
-    ),
     "test_bad_string_and_bad_bool_raise_value_error": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_bad_string_and_bad_bool_raise_value_error",
-    ),
-    "test_base_error_normalize_metadata_merges_existing_metadata_model": (
-        "tests.unit.test_exceptions_full_coverage",
-        "test_base_error_normalize_metadata_merges_existing_metadata_model",
-    ),
-    "test_basic_imports_work": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_basic_imports_work",
     ),
     "test_build_apply_transform_and_process_error_paths": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -1485,6 +1297,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "test_chk_exercises_missed_branches": (
         "tests.unit.test_utilities_guards_full_coverage",
         "test_chk_exercises_missed_branches",
+    ),
+    "test_circuit_breaker_half_open_and_rate_limiter_accessors": (
+        "tests.unit.test_dispatcher_reliability",
+        "test_circuit_breaker_half_open_and_rate_limiter_accessors",
     ),
     "test_circuit_breaker_transitions_and_metrics": (
         "tests.unit.test_dispatcher_reliability",
@@ -1530,10 +1346,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_runtime_full_coverage",
         "test_configure_structlog_print_logger_factory_fallback",
     ),
-    "test_constants_auto_enum_and_bimapping_paths": (
-        "tests.unit.test_constants_full_coverage",
-        "test_constants_auto_enum_and_bimapping_paths",
-    ),
     "test_construct_transform_and_deep_eq_branches": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_construct_transform_and_deep_eq_branches",
@@ -1541,10 +1353,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "test_container_and_service_domain_paths": (
         "tests.unit.test_context_full_coverage",
         "test_container_and_service_domain_paths",
-    ),
-    "test_container_resource_registration_metadata_normalized": (
-        "tests.unit.test_models_container_full_coverage",
-        "test_container_resource_registration_metadata_normalized",
     ),
     "test_context": ("tests.conftest", "test_context"),
     "test_context_data_metadata_normalizer_removed": (
@@ -1603,10 +1411,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_models_generic_full_coverage",
         "test_conversion_start_and_complete_methods",
     ),
-    "test_conversion_string_and_join_paths": (
-        "tests.unit.test_utilities_conversion_full_coverage",
-        "test_conversion_string_and_join_paths",
-    ),
     "test_convert_default_fallback_matrix": (
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_convert_default_fallback_matrix",
@@ -1648,10 +1452,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_runtime_full_coverage",
         "test_dependency_registration_duplicate_guards",
     ),
-    "test_deprecated_class_noop_init_branch": (
-        "tests.unit.test_utilities_deprecation_full_coverage",
-        "test_deprecated_class_noop_init_branch",
-    ),
     "test_discover_project_roots_without_nested_git_dirs": (
         "tests.unit.test_refactor_migrate_to_class_mro",
         "test_discover_project_roots_without_nested_git_dirs",
@@ -1659,10 +1459,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "test_dispatcher_family_blocks_models_target": (
         "tests.unit.test_refactor_policy_family_rules",
         "test_dispatcher_family_blocks_models_target",
-    ),
-    "test_dispatcher_reliability_branch_paths": (
-        "tests.unit.test_dispatcher_reliability_full_coverage",
-        "test_dispatcher_reliability_branch_paths",
     ),
     "test_ensure_and_extract_array_index_helpers": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -1672,25 +1468,9 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_runtime_full_coverage",
         "test_ensure_trace_context_dict_conversion_paths",
     ),
-    "test_ensure_utc_datetime_adds_tzinfo_when_naive": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_ensure_utc_datetime_adds_tzinfo_when_naive",
-    ),
-    "test_ensure_utc_datetime_preserves_aware": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_ensure_utc_datetime_preserves_aware",
-    ),
-    "test_ensure_utc_datetime_returns_none_on_none": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_ensure_utc_datetime_returns_none_on_none",
-    ),
     "test_entity_comparable_map_and_bulk_validation_paths": (
         "tests.unit.test_models_entity_full_coverage",
         "test_entity_comparable_map_and_bulk_validation_paths",
-    ),
-    "test_exceptions_uncovered_metadata_paths": (
-        "tests.unit.test_exceptions_full_coverage",
-        "test_exceptions_uncovered_metadata_paths",
     ),
     "test_execute_and_register_handler_failure_paths": (
         "tests.unit.test_registry_full_coverage",
@@ -1711,10 +1491,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "test_extract_mapping_or_none_branches": (
         "tests.unit.test_utilities_guards_full_coverage",
         "test_extract_mapping_or_none_branches",
-    ),
-    "test_facade_binding_is_correct": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_facade_binding_is_correct",
     ),
     "test_field_and_fields_multi_branches": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -1844,14 +1620,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_result_full_coverage",
         "test_map_flat_map_and_then_paths",
     ),
-    "test_merge_defaults_and_dump_paths": (
-        "tests.unit.test_utilities_model_full_coverage",
-        "test_merge_defaults_and_dump_paths",
-    ),
-    "test_merge_metadata_context_paths": (
-        "tests.unit.test_exceptions_full_coverage",
-        "test_merge_metadata_context_paths",
-    ),
     "test_migrate_protocols_rewrites_references_with_p_alias": (
         "tests.unit.test_refactor_migrate_to_class_mro",
         "test_migrate_protocols_rewrites_references_with_p_alias",
@@ -1891,22 +1659,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "test_models_family_blocks_utilities_target": (
         "tests.unit.test_refactor_policy_family_rules",
         "test_models_family_blocks_utilities_target",
-    ),
-    "test_models_handler_branches": (
-        "tests.unit.test_models_handler_full_coverage",
-        "test_models_handler_branches",
-    ),
-    "test_models_handler_uncovered_mode_and_reset_paths": (
-        "tests.unit.test_models_handler_full_coverage",
-        "test_models_handler_uncovered_mode_and_reset_paths",
-    ),
-    "test_models_settings_branch_paths": (
-        "tests.unit.test_models_settings_full_coverage",
-        "test_models_settings_branch_paths",
-    ),
-    "test_models_settings_context_validator_and_non_standard_status_input": (
-        "tests.unit.test_models_settings_full_coverage",
-        "test_models_settings_context_validator_and_non_standard_status_input",
     ),
     "test_namespace_enforce_cli_fails_on_manual_protocol_violation": (
         "tests.unit.test_refactor_cli_models_workflow",
@@ -1988,29 +1740,9 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_runtime_full_coverage",
         "test_normalize_to_container_alias_removal_path",
     ),
-    "test_normalize_to_list_passes_list_through": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_normalize_to_list_passes_list_through",
-    ),
-    "test_normalize_to_list_wraps_int": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_normalize_to_list_wraps_int",
-    ),
-    "test_normalize_to_list_wraps_scalar": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_normalize_to_list_wraps_scalar",
-    ),
     "test_normalize_to_metadata_alias_removal_path": (
         "tests.unit.test_runtime_full_coverage",
         "test_normalize_to_metadata_alias_removal_path",
-    ),
-    "test_normalize_to_pydantic_dict_and_value_branches": (
-        "tests.unit.test_utilities_model_full_coverage",
-        "test_normalize_to_pydantic_dict_and_value_branches",
-    ),
-    "test_not_found_error_correlation_id_selection_and_extra_kwargs": (
-        "tests.unit.test_exceptions_full_coverage",
-        "test_not_found_error_correlation_id_selection_and_extra_kwargs",
     ),
     "test_ok_accepts_none": (
         "tests.unit.test_result_additional",
@@ -2019,10 +1751,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "test_operation_progress_start_operation_sets_runtime_fields": (
         "tests.unit.test_models_generic_full_coverage",
         "test_operation_progress_start_operation_sets_runtime_fields",
-    ),
-    "test_pagination_response_string_fallbacks": (
-        "tests.unit.test_utilities_pagination_full_coverage",
-        "test_pagination_response_string_fallbacks",
     ),
     "test_process_context_data_and_related_convenience": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -2120,21 +1848,9 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_models_context_full_coverage",
         "test_scope_data_validators_and_errors",
     ),
-    "test_service_request_timeout_post_validator_messages": (
-        "tests.unit.test_models_service_full_coverage",
-        "test_service_request_timeout_post_validator_messages",
-    ),
-    "test_service_request_timeout_validator_branches": (
-        "tests.unit.test_models_service_full_coverage",
-        "test_service_request_timeout_validator_branches",
-    ),
     "test_set_set_all_get_validation_and_error_paths": (
         "tests.unit.test_context_full_coverage",
         "test_set_set_all_get_validation_and_error_paths",
-    ),
-    "test_settings_materialize_and_context_overrides": (
-        "tests.unit.test_settings_full_coverage",
-        "test_settings_materialize_and_context_overrides",
     ),
     "test_small_mapper_convenience_methods": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -2143,18 +1859,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "test_statistics_and_custom_fields_validators": (
         "tests.unit.test_models_context_full_coverage",
         "test_statistics_and_custom_fields_validators",
-    ),
-    "test_strip_whitespace_preserves_clean": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_strip_whitespace_preserves_clean",
-    ),
-    "test_strip_whitespace_returns_empty_on_spaces": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_strip_whitespace_returns_empty_on_spaces",
-    ),
-    "test_strip_whitespace_trims_leading_trailing": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_strip_whitespace_trims_leading_trailing",
     ),
     "test_structlog_proxy_context_var_default_when_key_missing": (
         "tests.unit.test_models_context_full_coverage",
@@ -2192,45 +1896,13 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
         "tests.unit.test_refactor_cli_models_workflow",
         "test_ultrawork_models_cli_runs_dry_run_copy",
     ),
-    "test_update_exception_path": (
-        "tests.unit.test_utilities_model_full_coverage",
-        "test_update_exception_path",
-    ),
     "test_update_statistics_remove_hook_and_clone_false_result": (
         "tests.unit.test_context_full_coverage",
         "test_update_statistics_remove_hook_and_clone_false_result",
     ),
-    "test_update_success_path_returns_ok_result": (
-        "tests.unit.test_utilities_model_full_coverage",
-        "test_update_success_path_returns_ok_result",
-    ),
     "test_utilities_family_allows_utilities_target": (
         "tests.unit.test_refactor_policy_family_rules",
         "test_utilities_family_allows_utilities_target",
-    ),
-    "test_utilities_reliability_branches": (
-        "tests.unit.test_utilities_reliability_full_coverage",
-        "test_utilities_reliability_branches",
-    ),
-    "test_utilities_reliability_compose_returns_non_result_directly": (
-        "tests.unit.test_utilities_reliability_full_coverage",
-        "test_utilities_reliability_compose_returns_non_result_directly",
-    ),
-    "test_utilities_reliability_uncovered_retry_compose_and_sequence_paths": (
-        "tests.unit.test_utilities_reliability_full_coverage",
-        "test_utilities_reliability_uncovered_retry_compose_and_sequence_paths",
-    ),
-    "test_validate_config_dict_normalizes_dict": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_validate_config_dict_normalizes_dict",
-    ),
-    "test_validate_tags_list_from_string": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_validate_tags_list_from_string",
-    ),
-    "test_validate_tags_list_normalizes": (
-        "tests.unit.test_models_validation_full_coverage",
-        "test_validate_tags_list_normalizes",
     ),
     "test_validation_like_error_structure": (
         "tests.unit.test_result_full_coverage",
@@ -2254,7 +1926,6 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
 
 __all__ = [
     "DEFAULT_TIMEOUT",
-    "EXCEPTION_CLASSES",
     "EXPECTED_BULK_SIZE",
     "MAX_RETRIES",
     "MAX_VALUE",
@@ -2327,20 +1998,6 @@ __all__ = [
     "TestAdvancedPatterns",
     "TestArchitecturalPatterns",
     "TestAutomatedArchitecture",
-    "TestAutomatedExceptions",
-    "TestAutomatedFlextContainer",
-    "TestAutomatedFlextContext",
-    "TestAutomatedFlextDecorators",
-    "TestAutomatedFlextDispatcher",
-    "TestAutomatedFlextHandlers",
-    "TestAutomatedFlextLogger",
-    "TestAutomatedFlextMixins",
-    "TestAutomatedFlextRegistry",
-    "TestAutomatedFlextRuntime",
-    "TestAutomatedFlextService",
-    "TestAutomatedFlextSettings",
-    "TestAutomatedFlextUtilities",
-    "TestAutomatedResult",
     "TestCaseMap",
     "TestCollectionUtilitiesCoverage",
     "TestCompleteFlextSystemIntegration",
@@ -2349,7 +2006,6 @@ __all__ = [
     "TestContainerMemory",
     "TestContainerPerformance",
     "TestContext100Coverage",
-    "TestCoverage76Lines",
     "TestCoverageContext",
     "TestCoverageExceptions",
     "TestCoverageLoggings",
@@ -2368,12 +2024,13 @@ __all__ = [
     "TestDocumentedPatterns",
     "TestEntityCoverageEdgeCases",
     "TestEnumUtilitiesCoverage",
-    "TestFinal75PercentPush",
+    "TestExceptionsHypothesis",
     "TestFlextContainer",
     "TestFlextContext",
     "TestFlextDecorators",
     "TestFlextHandlers",
     "TestFlextInfraNamespaceValidator",
+    "TestFlextMixinsCQRS",
     "TestFlextMixinsNestedClasses",
     "TestFlextModelsCollectionsCoverage100",
     "TestFlextModelsContainer",
@@ -2381,6 +2038,7 @@ __all__ = [
     "TestFlextRegistry",
     "TestFlextRuntime",
     "TestFlextSettings",
+    "TestFlextSettingsCoverage",
     "TestFlextSettingsSingletonIntegration",
     "TestFlextTestsDomains",
     "TestFlextTestsFiles",
@@ -2403,16 +2061,13 @@ __all__ = [
     "TestMigrationValidation",
     "TestMixinsFullCoverage",
     "TestModels",
-    "TestModels79Coverage",
     "TestModelsBaseFullCoverage",
-    "TestModelsCollectionsFullCoverage",
     "TestModule",
     "TestPaginationCoverage100",
     "TestPatternsCommands",
     "TestPatternsLogging",
     "TestPatternsTesting",
     "TestPerformanceBenchmarks",
-    "TestPhase2CoverageFinal",
     "TestProjectLevelRefactor",
     "TestRefactorPolicyMRO",
     "TestResultExceptionCarrying",
@@ -2420,13 +2075,12 @@ __all__ = [
     "TestService",
     "TestService100Coverage",
     "TestServiceBootstrap",
-    "TestServiceFullCoverage",
+    "TestServiceInternals",
     "TestServiceResultProperty",
     "TestTypings",
     "TestTypingsFullCoverage",
     "TestUnitModels",
     "TestUtilities",
-    "TestUtilitiesCheckerFullCoverage",
     "TestUtilitiesCollectionCoverage",
     "TestUtilitiesCollectionFullCoverage",
     "TestUtilitiesConfigurationFullCoverage",
@@ -2465,7 +2119,6 @@ __all__ = [
     "TestuTypeChecker",
     "TextUtilityContract",
     "TimeoutEnforcer",
-    "UnknownHint",
     "User",
     "UserFactory",
     "UtilitiesCacheCoverage100Namespace",
@@ -2562,19 +2215,15 @@ __all__ = [
     "temp_file",
     "test_accessor_take_pick_as_or_flat_and_agg_branches",
     "test_aliases_are_available",
-    "test_args_get_enum_params_annotated_unwrap_branch",
-    "test_args_get_enum_params_branches",
     "test_async_log_writer_paths",
     "test_async_log_writer_shutdown_with_full_queue",
     "test_at_take_and_as_branches",
-    "test_authentication_error_normalizes_extra_kwargs_into_context",
     "test_bad_string_and_bad_bool_raise_value_error",
-    "test_base_error_normalize_metadata_merges_existing_metadata_model",
-    "test_basic_imports_work",
     "test_build_apply_transform_and_process_error_paths",
     "test_canonical_aliases_are_available",
     "test_centralize_pydantic_cli_outputs_extended_metrics",
     "test_chk_exercises_missed_branches",
+    "test_circuit_breaker_half_open_and_rate_limiter_accessors",
     "test_circuit_breaker_transitions_and_metrics",
     "test_class_nesting_appends_to_existing_namespace_and_removes_pass",
     "test_class_nesting_keeps_unmapped_top_level_classes",
@@ -2586,10 +2235,8 @@ __all__ = [
     "test_configuration_mapping_and_dict_negative_branches",
     "test_configure_structlog_edge_paths",
     "test_configure_structlog_print_logger_factory_fallback",
-    "test_constants_auto_enum_and_bimapping_paths",
     "test_construct_transform_and_deep_eq_branches",
     "test_container_and_service_domain_paths",
-    "test_container_resource_registration_metadata_normalized",
     "test_context",
     "test_context_data_metadata_normalizer_removed",
     "test_context_data_normalize_and_json_checks",
@@ -2605,7 +2252,6 @@ __all__ = [
     "test_conversion_add_warning_metadata_append_paths",
     "test_conversion_and_extract_success_branches",
     "test_conversion_start_and_complete_methods",
-    "test_conversion_string_and_join_paths",
     "test_convert_default_fallback_matrix",
     "test_convert_sequence_branch_returns_tuple",
     "test_cqrs_query_resolve_deeper_and_int_pagination",
@@ -2617,23 +2263,16 @@ __all__ = [
     "test_decorators_family_blocks_dispatcher_target",
     "test_dependency_integration_and_wiring_paths",
     "test_dependency_registration_duplicate_guards",
-    "test_deprecated_class_noop_init_branch",
     "test_discover_project_roots_without_nested_git_dirs",
     "test_dispatcher_family_blocks_models_target",
-    "test_dispatcher_reliability_branch_paths",
     "test_ensure_and_extract_array_index_helpers",
     "test_ensure_trace_context_dict_conversion_paths",
-    "test_ensure_utc_datetime_adds_tzinfo_when_naive",
-    "test_ensure_utc_datetime_preserves_aware",
-    "test_ensure_utc_datetime_returns_none_on_none",
     "test_entity_comparable_map_and_bulk_validation_paths",
-    "test_exceptions_uncovered_metadata_paths",
     "test_execute_and_register_handler_failure_paths",
     "test_export_paths_with_metadata_and_statistics",
     "test_extract_error_paths_and_prop_accessor",
     "test_extract_field_value_and_ensure_variants",
     "test_extract_mapping_or_none_branches",
-    "test_facade_binding_is_correct",
     "test_field_and_fields_multi_branches",
     "test_filter_map_normalize_convert_helpers",
     "test_flext_message_type_alias_adapter",
@@ -2666,8 +2305,6 @@ __all__ = [
     "test_map_error_identity_and_transform",
     "test_map_flags_collect_and_invert_branches",
     "test_map_flat_map_and_then_paths",
-    "test_merge_defaults_and_dump_paths",
-    "test_merge_metadata_context_paths",
     "test_migrate_protocols_rewrites_references_with_p_alias",
     "test_migrate_to_mro_inlines_alias_constant_into_constants_class",
     "test_migrate_to_mro_moves_constant_and_rewrites_reference",
@@ -2678,10 +2315,6 @@ __all__ = [
     "test_model_helpers_remaining_paths",
     "test_model_support_and_hash_compare_paths",
     "test_models_family_blocks_utilities_target",
-    "test_models_handler_branches",
-    "test_models_handler_uncovered_mode_and_reset_paths",
-    "test_models_settings_branch_paths",
-    "test_models_settings_context_validator_and_non_standard_status_input",
     "test_namespace_enforce_cli_fails_on_manual_protocol_violation",
     "test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring",
     "test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future",
@@ -2702,15 +2335,9 @@ __all__ = [
     "test_non_empty_and_normalize_branches",
     "test_normalization_edge_branches",
     "test_normalize_to_container_alias_removal_path",
-    "test_normalize_to_list_passes_list_through",
-    "test_normalize_to_list_wraps_int",
-    "test_normalize_to_list_wraps_scalar",
     "test_normalize_to_metadata_alias_removal_path",
-    "test_normalize_to_pydantic_dict_and_value_branches",
-    "test_not_found_error_correlation_id_selection_and_extra_kwargs",
     "test_ok_accepts_none",
     "test_operation_progress_start_operation_sets_runtime_fields",
-    "test_pagination_response_string_fallbacks",
     "test_process_context_data_and_related_convenience",
     "test_protocol_and_simple_guard_helpers",
     "test_query_resolve_pagination_wrapper_and_fallback",
@@ -2735,15 +2362,9 @@ __all__ = [
     "test_runtime_result_all_missed_branches",
     "test_runtime_result_remaining_paths",
     "test_scope_data_validators_and_errors",
-    "test_service_request_timeout_post_validator_messages",
-    "test_service_request_timeout_validator_branches",
     "test_set_set_all_get_validation_and_error_paths",
-    "test_settings_materialize_and_context_overrides",
     "test_small_mapper_convenience_methods",
     "test_statistics_and_custom_fields_validators",
-    "test_strip_whitespace_preserves_clean",
-    "test_strip_whitespace_returns_empty_on_spaces",
-    "test_strip_whitespace_trims_leading_trailing",
     "test_structlog_proxy_context_var_default_when_key_missing",
     "test_structlog_proxy_context_var_get_set_reset_paths",
     "test_summary_error_paths_and_bindings_failures",
@@ -2753,16 +2374,8 @@ __all__ = [
     "test_type_guards_and_narrowing_failures",
     "test_type_guards_result",
     "test_ultrawork_models_cli_runs_dry_run_copy",
-    "test_update_exception_path",
     "test_update_statistics_remove_hook_and_clone_false_result",
-    "test_update_success_path_returns_ok_result",
     "test_utilities_family_allows_utilities_target",
-    "test_utilities_reliability_branches",
-    "test_utilities_reliability_compose_returns_non_result_directly",
-    "test_utilities_reliability_uncovered_retry_compose_and_sequence_paths",
-    "test_validate_config_dict_normalizes_dict",
-    "test_validate_tags_list_from_string",
-    "test_validate_tags_list_normalizes",
     "test_validation_like_error_structure",
     "test_with_resource_cleanup_runs",
     "u",
