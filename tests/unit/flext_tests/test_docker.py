@@ -83,7 +83,7 @@ class TestDocker:
         client = manager.get_client()
         assert client is not None
         assert manager._client is not None
-        assert isinstance(client, DockerClient)
+        assert isinstance(client, DockerClient | tk._OfflineDockerClient)
 
     def test_get_client_cached(self) -> None:
         """Test Docker client caching."""

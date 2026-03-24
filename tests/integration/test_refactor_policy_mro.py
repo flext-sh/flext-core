@@ -56,18 +56,18 @@ class TestRefactorPolicyMRO:
     def test_mro_resolver_accepts_expected_order(self) -> None:
         resolutions = FlextInfraRefactorMROResolver.resolve(
             family_classes={
-                c.FacadeFamily.C: self.AlgarOudMigConstants,
-                c.FacadeFamily.T: self.AlgarOudMigTypes,
-                c.FacadeFamily.P: self.AlgarOudMigProtocols,
-                c.FacadeFamily.M: self.AlgarOudMigModels,
-                c.FacadeFamily.U: self.AlgarOudMigUtilities,
+                c.Infra.FacadeFamily.C: self.AlgarOudMigConstants,
+                c.Infra.FacadeFamily.T: self.AlgarOudMigTypes,
+                c.Infra.FacadeFamily.P: self.AlgarOudMigProtocols,
+                c.Infra.FacadeFamily.M: self.AlgarOudMigModels,
+                c.Infra.FacadeFamily.U: self.AlgarOudMigUtilities,
             },
             expected_base_chains={
-                c.FacadeFamily.C: ["FlextLdapConstants", "FlextCliConstants"],
-                c.FacadeFamily.T: ["FlextLdapTypes", "FlextCliTypes"],
-                c.FacadeFamily.P: ["FlextLdapProtocols", "FlextCliProtocols"],
-                c.FacadeFamily.M: ["FlextLdapModels", "FlextCliModels"],
-                c.FacadeFamily.U: ["FlextLdapUtilities", "FlextCliUtilities"],
+                c.Infra.FacadeFamily.C: ["FlextLdapConstants", "FlextCliConstants"],
+                c.Infra.FacadeFamily.T: ["FlextLdapTypes", "FlextCliTypes"],
+                c.Infra.FacadeFamily.P: ["FlextLdapProtocols", "FlextCliProtocols"],
+                c.Infra.FacadeFamily.M: ["FlextLdapModels", "FlextCliModels"],
+                c.Infra.FacadeFamily.U: ["FlextLdapUtilities", "FlextCliUtilities"],
             },
         )
         assert len(resolutions) == 5
@@ -79,18 +79,18 @@ class TestRefactorPolicyMRO:
         try:
             FlextInfraRefactorMROResolver.resolve(
                 family_classes={
-                    c.FacadeFamily.C: self.AlgarOudMigConstants,
-                    c.FacadeFamily.T: self.AlgarOudMigTypes,
-                    c.FacadeFamily.P: self.AlgarOudMigProtocols,
-                    c.FacadeFamily.M: self.AlgarOudMigModels,
-                    c.FacadeFamily.U: self.AlgarOudMigUtilities,
+                    c.Infra.FacadeFamily.C: self.AlgarOudMigConstants,
+                    c.Infra.FacadeFamily.T: self.AlgarOudMigTypes,
+                    c.Infra.FacadeFamily.P: self.AlgarOudMigProtocols,
+                    c.Infra.FacadeFamily.M: self.AlgarOudMigModels,
+                    c.Infra.FacadeFamily.U: self.AlgarOudMigUtilities,
                 },
                 expected_base_chains={
-                    c.FacadeFamily.C: ["FlextLdapConstants", "FlextCliConstants"],
-                    c.FacadeFamily.T: ["FlextLdapTypes", "FlextCliTypes"],
-                    c.FacadeFamily.P: ["FlextLdapProtocols", "FlextCliProtocols"],
-                    c.FacadeFamily.M: ["FlextCliModels", "FlextLdapModels"],
-                    c.FacadeFamily.U: ["FlextLdapUtilities", "FlextCliUtilities"],
+                    c.Infra.FacadeFamily.C: ["FlextLdapConstants", "FlextCliConstants"],
+                    c.Infra.FacadeFamily.T: ["FlextLdapTypes", "FlextCliTypes"],
+                    c.Infra.FacadeFamily.P: ["FlextLdapProtocols", "FlextCliProtocols"],
+                    c.Infra.FacadeFamily.M: ["FlextCliModels", "FlextLdapModels"],
+                    c.Infra.FacadeFamily.U: ["FlextLdapUtilities", "FlextCliUtilities"],
                 },
             )
         except ValueError:

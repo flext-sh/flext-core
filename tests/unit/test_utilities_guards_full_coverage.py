@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import builtins
-from collections.abc import Callable, Mapping, MutableSequence, Set
+from collections.abc import Callable, Mapping, MutableSequence, Set as AbstractSet
 from datetime import UTC, datetime
 from typing import cast
 
@@ -27,7 +27,7 @@ def _is_type_obj(
     return fn(value, type_spec)
 
 
-def _is_flexible_value_obj(value: Mapping[int, str] | Set[int]) -> bool:
+def _is_flexible_value_obj(value: Mapping[int, str] | AbstractSet[int]) -> bool:
     """Call is_flexible_value with arbitrary t.NormalizedValue for negative-case testing."""
     fn: Callable[..., bool] = getattr(u, "is_flexible_value")
     return fn(value)

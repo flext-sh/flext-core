@@ -26,7 +26,7 @@ from flext_core import (
     FlextUtilitiesGuards,
     FlextUtilitiesMapper,
 )
-from tests import m, t, u
+from tests import m, t
 
 pytestmark = [pytest.mark.unit]
 
@@ -133,9 +133,9 @@ class TestDeprecationWarnings:
         tm.that(dict_meta, is_=dict)
 
     def test_deprecated_class_warning(self) -> None:
-        """deprecated_class decorator emits DeprecationWarning on instantiation."""
+        """warnings.deprecated emits DeprecationWarning on instantiation."""
         legacy_base = type("LegacyBase", (m.Categories,), {})
-        legacy = u.deprecated_class("NewClass", "2.0.0")(legacy_base)
+        legacy = warnings.deprecated("Use NewClass instead")(legacy_base)
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             legacy()

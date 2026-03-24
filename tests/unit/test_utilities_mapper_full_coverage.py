@@ -11,7 +11,7 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
     Sequence,
-    Set,
+    Set as AbstractSet,
 )
 from datetime import UTC, datetime
 from pathlib import Path
@@ -682,8 +682,8 @@ class UtilitiesMapperFullCoverageNamespace:
             *,
             _normalize: bool,
             _map_keys: t.StrMapping | None,
-            _filter_keys: Set[str] | None,
-            _exclude_keys: Set[str] | None,
+            _filter_keys: AbstractSet[str] | None,
+            _exclude_keys: AbstractSet[str] | None,
             _strip_none: bool,
             _strip_empty: bool,
             _to_json: bool,
