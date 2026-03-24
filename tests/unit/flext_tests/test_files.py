@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, MutableSequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -149,7 +149,7 @@ class TestFlextTestsFiles:
         """Test creating multiple files from dictionary."""
         files: Mapping[
             str,
-            str | bytes | t.ConfigMap | MutableSequence[t.StrSequence] | BaseModel,
+            str | bytes | t.ConfigMap | MutableSequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1", "file2": "content2", "file3.txt": "content3"}
         with tf.files(files, directory=tmp_path, ext=".txt") as created:
             assert len(created) == 3
@@ -164,7 +164,7 @@ class TestFlextTestsFiles:
         """Test creating file set with custom extension."""
         files: Mapping[
             str,
-            str | bytes | t.ConfigMap | MutableSequence[t.StrSequence] | BaseModel,
+            str | bytes | t.ConfigMap | MutableSequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         extension = ".md"
         with tf.files(files, directory=tmp_path, ext=extension) as created:
@@ -283,7 +283,7 @@ class TestFlextTestsFiles:
         """Test files classmethod context manager."""
         files: Mapping[
             str,
-            str | bytes | t.ConfigMap | MutableSequence[t.StrSequence] | BaseModel,
+            str | bytes | t.ConfigMap | MutableSequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1", "file2": "content2"}
         with tf.files(files) as created:
             assert len(created) == 2
@@ -298,7 +298,7 @@ class TestFlextTestsFiles:
         """Test files with custom extension."""
         files: Mapping[
             str,
-            str | bytes | t.ConfigMap | MutableSequence[t.StrSequence] | BaseModel,
+            str | bytes | t.ConfigMap | MutableSequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         with tf.files(files, ext=".md") as created:
             assert created["file1"].name == "file1.md"
@@ -308,7 +308,7 @@ class TestFlextTestsFiles:
         nested_dir = tmp_path / "nested" / "subdir"
         files: Mapping[
             str,
-            str | bytes | t.ConfigMap | MutableSequence[t.StrSequence] | BaseModel,
+            str | bytes | t.ConfigMap | MutableSequence[Sequence[str]] | BaseModel,
         ] = {"file1": "content1"}
         with tf.files(files, directory=nested_dir) as created:
             assert created["file1"].parent == nested_dir

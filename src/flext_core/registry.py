@@ -54,7 +54,7 @@ class FlextRegistry(s[bool]):
             default_factory=lambda: list[m.RegistrationDetails](),
             description="Successfully registered handlers with registration details.",
         )
-        skipped: t.StrSequence = Field(
+        skipped: Sequence[str] = Field(
             default_factory=list,
             description="Handler identifiers that were skipped (already registered)",
             examples=[["CreateUserCommand", "UpdateUserCommand"]],
@@ -256,21 +256,21 @@ class FlextRegistry(s[bool]):
         category: str,
         *,
         scope: str = "instance",
-    ) -> r[t.StrSequence]:
+    ) -> r[Sequence[str]]:
         """List all plugins in a category.
 
         Args:
             category: Plugin category to list
 
         Returns:
-            r[t.StrSequence]: Success with list of plugin names.
+            r[Sequence[str]]: Success with list of plugin names.
 
         """
         keys = self._registered_keys
         if scope == "class":
             keys = self._class_registered_keys
         plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
-        return r[t.StrSequence].ok(plugins)
+        return r[Sequence[str]].ok(plugins)
 
     def register(
         self,

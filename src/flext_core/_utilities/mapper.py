@@ -72,7 +72,7 @@ class FlextUtilitiesMapper:
     def _apply_map_keys(
         result: t.ContainerMapping,
         *,
-        map_keys: t.StrMapping | None,
+        map_keys: Mapping[str, str] | None,
     ) -> t.ContainerMapping:
         """Apply map keys step."""
         if map_keys:
@@ -138,7 +138,7 @@ class FlextUtilitiesMapper:
         result: t.ContainerMapping,
         *,
         normalize: bool,
-        map_keys: t.StrMapping | None,
+        map_keys: Mapping[str, str] | None,
         filter_keys: set[str] | None,
         exclude_keys: set[str] | None,
         strip_none: bool,
@@ -796,7 +796,7 @@ class FlextUtilitiesMapper:
         bool,
         bool,
         bool,
-        t.StrMapping | None,
+        Mapping[str, str] | None,
         set[str] | None,
         set[str] | None,
     ]:
@@ -810,7 +810,7 @@ class FlextUtilitiesMapper:
             strip_empty_val if isinstance(strip_empty_val, bool) else False
         )
         map_keys_val = transform_opts.get("map_keys")
-        map_keys_dict: t.StrMapping | None = None
+        map_keys_dict: Mapping[str, str] | None = None
         if isinstance(map_keys_val, Mapping) and all(
             isinstance(v, str) for v in map_keys_val.values()
         ):
@@ -1040,7 +1040,7 @@ class FlextUtilitiesMapper:
         result: t.ContainerMapping,
         *,
         normalize: bool,
-        map_keys: t.StrMapping | None,
+        map_keys: Mapping[str, str] | None,
         filter_keys: set[str] | None,
         exclude_keys: set[str] | None,
         strip_none: bool,
@@ -1229,8 +1229,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def build_flags_dict(
-        active_flags: t.StrSequence,
-        flag_mapping: t.StrMapping,
+        active_flags: Sequence[str],
+        flag_mapping: Mapping[str, str],
         *,
         default_value: bool = False,
     ) -> r[Mapping[str, bool]]:
@@ -1310,8 +1310,8 @@ class FlextUtilitiesMapper:
     @staticmethod
     def collect_active_keys(
         source: Mapping[str, bool],
-        key_mapping: t.StrMapping,
-    ) -> r[t.StrSequence]:
+        key_mapping: Mapping[str, str],
+    ) -> r[Sequence[str]]:
         """Collect list of output keys where source value is True.
 
         **Generic replacement for**: Collecting active permissions/flags
@@ -1331,16 +1331,16 @@ class FlextUtilitiesMapper:
 
         """
 
-        def _collect_keys() -> t.StrSequence:
+        def _collect_keys() -> Sequence[str]:
             active_keys: MutableSequence[str] = []
             for source_key, output_key in key_mapping.items():
                 if source.get(source_key):
                     active_keys.append(output_key)
             return active_keys
 
-        active_keys_result = r[t.StrSequence].create_from_callable(_collect_keys)
+        active_keys_result = r[Sequence[str]].create_from_callable(_collect_keys)
         return active_keys_result.fold(
-            on_failure=lambda e: r[t.StrSequence].fail(
+            on_failure=lambda e: r[Sequence[str]].fail(
                 f"Failed to collect active keys: {e}",
             ),
             on_success=lambda _: active_keys_result,
@@ -1522,8 +1522,8 @@ class FlextUtilitiesMapper:
     @staticmethod
     def ensure_str_list(
         value: t.NormalizedValue,
-        default: t.StrSequence | None = None,
-    ) -> t.StrSequence:
+        default: Sequence[str] | None = None,
+    ) -> Sequence[str]:
         """Ensure value is a list of strings, converting if needed.
 
         **Generic replacement for**: [str(item) for item in list] patterns
@@ -2011,10 +2011,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def invert_dict(
-        source: t.StrMapping,
+        source: Mapping[str, str],
         *,
         handle_collisions: str = "last",
-    ) -> t.StrMapping:
+    ) -> Mapping[str, str]:
         """Invert dict mapping (values become keys, keys become values).
 
         **Generic replacement for**: Manual dict inversion
@@ -2069,7 +2069,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def map_dict_keys(
         source: t.ContainerMapping,
-        key_mapping: t.StrMapping,
+        key_mapping: Mapping[str, str],
         *,
         keep_unmapped: bool = True,
     ) -> r[t.ContainerMapping]:
@@ -2650,7 +2650,7 @@ class FlextUtilitiesMapper:
         normalize: bool = False,
         strip_none: bool = False,
         strip_empty: bool = False,
-        map_keys: t.StrMapping | None = None,
+        map_keys: Mapping[str, str] | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
     ) -> r[t.ContainerMapping]:

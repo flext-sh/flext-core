@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 
 import pytest
 from flext_tests import t
@@ -31,19 +31,19 @@ class TestArchitecturalPatterns:
             """Factory for creating different types of services."""
 
             @staticmethod
-            def create_service(service_type: str) -> r[t.StrMapping]:
+            def create_service(service_type: str) -> r[Mapping[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return r[t.StrMapping].ok({
+                    return r[Mapping[str, str]].ok({
                         "type": "email",
                         "provider": "smtp",
                     })
                 if service_type == "sms":
-                    return r[t.StrMapping].ok({
+                    return r[Mapping[str, str]].ok({
                         "type": "sms",
                         "provider": "twilio",
                     })
-                return r[t.StrMapping].fail(
+                return r[Mapping[str, str]].fail(
                     f"Unknown service type: {service_type}",
                 )
 

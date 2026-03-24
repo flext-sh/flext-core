@@ -976,7 +976,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     class CtxVars:
         @staticmethod
-        def get_contextvars() -> t.StrMapping:
+        def get_contextvars() -> Mapping[str, str]:
             return {"correlation_id": "corr-1"}
 
         @staticmethod

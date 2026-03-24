@@ -86,7 +86,7 @@ class FlextService[
         exclude=True,
     )
     wire_modules: Sequence[ModuleType] | None = Field(default=None, exclude=True)
-    wire_packages: t.StrSequence | None = Field(default=None, exclude=True)
+    wire_packages: Sequence[str] | None = Field(default=None, exclude=True)
     wire_classes: Sequence[type] | None = Field(default=None, exclude=True)
 
     # --- Internal State ---

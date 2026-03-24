@@ -95,7 +95,7 @@ class FlextProtocolsContainer:
             """Check if a service is registered."""
             ...
 
-        def list_services(self) -> t.StrSequence:
+        def list_services(self) -> Sequence[str]:
             """List all registered services."""
             ...
 
@@ -126,7 +126,7 @@ class FlextProtocolsContainer:
             self,
             *,
             modules: Sequence[ModuleType] | None = None,
-            packages: t.StrSequence | None = None,
+            packages: Sequence[str] | None = None,
             classes: Sequence[type] | None = None,
         ) -> None:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""

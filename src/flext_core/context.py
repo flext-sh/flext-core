@@ -595,7 +595,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         return self._scope_vars
 
-    def keys(self) -> t.StrSequence:
+    def keys(self) -> Sequence[str]:
         """Get all keys in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -1394,4 +1394,4 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return new_correlation_id
 
 
-__all__: t.StrSequence = ["FlextContext"]
+__all__: Sequence[str] = ["FlextContext"]

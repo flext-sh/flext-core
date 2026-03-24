@@ -45,7 +45,7 @@ class FlextModelsHandler:
             Field(description="Handler callable function or method"),
         ]
         event_types: Annotated[
-            t.StrSequence,
+            Sequence[str],
             Field(
                 default_factory=list,
                 description="Event types this handler processes",

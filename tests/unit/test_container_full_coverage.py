@@ -58,7 +58,7 @@ class TestContainerFullCoverage:
         def has(self, key: str, scope: str = "") -> bool:
             return False
 
-        def keys(self) -> t.StrSequence:
+        def keys(self) -> Sequence[str]:
             return []
 
         def values(self) -> t.ContainerList:

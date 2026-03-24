@@ -91,7 +91,7 @@ class UserFactory:
     """Factory for m.Tests.User entities using native Python patterns."""
 
     _counter: ClassVar[count[int]] = count(1)
-    _names: ClassVar[t.StrSequence] = [
+    _names: ClassVar[Sequence[str]] = [
         "Alice Johnson",
         "Bob Smith",
         "Carol Williams",
@@ -207,7 +207,7 @@ class GetUserServiceAutoFactory:
 class ValidatingServiceAutoFactory:
     """Factory for ValidatingServiceAuto."""
 
-    _words: ClassVar[t.StrSequence] = ["alpha", "bravo", "charlie", "delta", "echo"]
+    _words: ClassVar[Sequence[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
@@ -245,7 +245,7 @@ class ValidatingServiceAutoFactory:
 class ValidatingServiceFactory:
     """Factory for ValidatingService."""
 
-    _words: ClassVar[t.StrSequence] = ["alpha", "bravo", "charlie", "delta", "echo"]
+    _words: ClassVar[Sequence[str]] = ["alpha", "bravo", "charlie", "delta", "echo"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
@@ -307,7 +307,7 @@ class ServiceTestCaseFactory:
         m.Core.ServiceTestType.FAIL,
     ]
     _type_index: ClassVar[int] = 0
-    _words: ClassVar[t.StrSequence] = ["test", "sample", "example", "demo", "data"]
+    _words: ClassVar[Sequence[str]] = ["test", "sample", "example", "demo", "data"]
     _word_index: ClassVar[int] = 0
 
     @classmethod

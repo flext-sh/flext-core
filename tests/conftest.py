@@ -177,7 +177,7 @@ def invalid_port_numbers() -> Sequence[int]:
 
 
 @pytest.fixture
-def valid_uris() -> t.StrSequence:
+def valid_uris() -> Sequence[str]:
     """Valid URIs for UriString validation."""
     return [
         "http://localhost",
@@ -194,7 +194,7 @@ def valid_uris() -> t.StrSequence:
 
 
 @pytest.fixture
-def invalid_uris() -> t.StrSequence:
+def invalid_uris() -> Sequence[str]:
     """Invalid URIs for UriString validation."""
     return [
         "",
@@ -208,7 +208,7 @@ def invalid_uris() -> t.StrSequence:
 
 
 @pytest.fixture
-def valid_hostnames() -> t.StrSequence:
+def valid_hostnames() -> Sequence[str]:
     """Valid hostnames for HostnameStr validation."""
     return [
         "localhost",
@@ -224,7 +224,7 @@ def valid_hostnames() -> t.StrSequence:
 
 
 @pytest.fixture
-def invalid_hostnames() -> t.StrSequence:
+def invalid_hostnames() -> Sequence[str]:
     """Invalid hostnames for HostnameStr validation."""
     return [
         "",
@@ -239,7 +239,7 @@ def invalid_hostnames() -> t.StrSequence:
 
 
 @pytest.fixture
-def valid_strings() -> t.StrSequence:
+def valid_strings() -> Sequence[str]:
     """Valid non-empty strings for string validation."""
     return [
         "a",
@@ -256,13 +256,13 @@ def valid_strings() -> t.StrSequence:
 
 
 @pytest.fixture
-def empty_strings() -> t.StrSequence:
+def empty_strings() -> Sequence[str]:
     """Empty strings for validation."""
     return [""]
 
 
 @pytest.fixture
-def whitespace_strings() -> t.StrSequence:
+def whitespace_strings() -> Sequence[str]:
     """Whitespace-only strings for validation."""
     return [" ", "   ", "\t", "\n", "  \t  \n  "]
 

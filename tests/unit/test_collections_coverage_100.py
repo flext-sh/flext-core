@@ -25,7 +25,7 @@ class TestFlextModelsCollectionsCoverage100:
         name: Annotated[str, Field(description="Category operation scenario name")]
         category: Annotated[str, Field(description="Category key")]
         entries: Annotated[
-            t.StrSequence, Field(description="Entries associated with operation")
+            Sequence[str], Field(description="Entries associated with operation")
         ]
         operation: Annotated[str, Field(description="Category operation name")]
 
@@ -37,13 +37,13 @@ class TestFlextModelsCollectionsCoverage100:
     class StatisticsItems(m.Statistics):
         """Statistics with items list."""
 
-        items: Annotated[t.StrSequence, Field(default_factory=list)]
+        items: Annotated[Sequence[str], Field(default_factory=list)]
 
     class StatisticsMixed(m.Statistics):
         """Statistics with count, items, and name."""
 
         count: int = 0
-        items: Annotated[t.StrSequence, Field(default_factory=list)]
+        items: Annotated[Sequence[str], Field(default_factory=list)]
         name: str = ""
 
     class StatisticsOptional(m.Statistics):
@@ -60,18 +60,18 @@ class TestFlextModelsCollectionsCoverage100:
     class ResultsErrors(m.Results):
         """Results with errors list."""
 
-        errors: Annotated[t.StrSequence, Field(default_factory=list)]
+        errors: Annotated[Sequence[str], Field(default_factory=list)]
 
     class ResultsMetadata(m.Results):
         """Results with metadata dictionary."""
 
-        metadata: Annotated[t.StrMapping, Field(default_factory=dict)]
+        metadata: Annotated[Mapping[str, str], Field(default_factory=dict)]
 
     class ResultsMixed(m.Results):
         """Results with processed, errors, and status."""
 
         processed: int = 0
-        errors: Annotated[t.StrSequence, Field(default_factory=list)]
+        errors: Annotated[Sequence[str], Field(default_factory=list)]
         status: str = ""
 
     class ResultsOptional(m.Results):

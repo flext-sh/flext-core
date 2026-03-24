@@ -64,7 +64,7 @@ class TestModels:
             Field(description="Model input payload"),
         ]
         expected_checks: Annotated[
-            t.StrSequence, Field(description="Expected validation check labels")
+            Sequence[str], Field(description="Expected validation check labels")
         ]
         description: Annotated[
             str, Field(default="", description="Scenario description")

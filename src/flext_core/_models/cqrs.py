@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from types import ModuleType
 from typing import Annotated, ClassVar, Literal, Self
 
@@ -469,7 +470,7 @@ class FlextModelsCqrs:
 
         status: str
         count: int
-        handlers: t.StrSequence
+        handlers: Sequence[str]
 
 
 __all__ = ["FlextModelsCqrs"]

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from datetime import UTC, datetime
 from typing import Annotated, cast, override
 
@@ -44,7 +44,7 @@ class TestUtilitiesDomainFullCoverage:
 
         class EntityWithList(BaseModel):
             unique_id: str = "test"
-            tags: Annotated[t.StrSequence, Field(default_factory=lambda: ["a", "b"])]
+            tags: Annotated[Sequence[str], Field(default_factory=lambda: ["a", "b"])]
 
         entity = EntityWithList(tags=["a", "b"])
         result = u.hash_value_object_by_value(entity)

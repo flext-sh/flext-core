@@ -106,7 +106,7 @@ class TestUtilitiesCollectionCoverage:
             bool, Field(description="Whether parsing should succeed")
         ]
         expected_keys: Annotated[
-            t.StrSequence | None,
+            Sequence[str] | None,
             Field(default=None, description="Expected output keys"),
         ] = None
         error_contains: Annotated[
@@ -128,7 +128,7 @@ class TestUtilitiesCollectionCoverage:
             bool, Field(description="Whether coercion should succeed")
         ]
         expected_keys: Annotated[
-            t.StrSequence | None,
+            Sequence[str] | None,
             Field(default=None, description="Expected output keys"),
         ] = None
         error_type: Annotated[
@@ -280,13 +280,13 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Group scenario name")]
         items: Annotated[
-            t.StrSequence | tuple[str, ...], Field(description="Input items for group")
+            Sequence[str] | tuple[str, ...], Field(description="Input items for group")
         ]
         key: Annotated[
             Callable[[str], int | str], Field(description="Grouping key callable")
         ]
         expected_result: Annotated[
-            Mapping[int | str, t.StrSequence],
+            Mapping[int | str, Sequence[str]],
             Field(description="Expected grouped output"),
         ]
 

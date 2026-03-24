@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import ModuleType
 from typing import override
 
@@ -218,7 +219,7 @@ class TestDiServicesAccess:
             app_name: str = FlextRuntime.DependencyIntegration.Provide[
                 "config.app_name"
             ],
-        ) -> t.StrMapping:
+        ) -> Mapping[str, str]:
             return {"app": app_name}
 
         setattr(module, "process", process)

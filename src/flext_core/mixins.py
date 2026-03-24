@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import (, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
     Callable,
     Generator,
     Mapping,
@@ -310,7 +310,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         bootstrap_factories: Mapping[str, t.FactoryCallable] | None = None
         bootstrap_resources: Mapping[str, t.ResourceCallable] | None = None
         bootstrap_wire_modules: Sequence[ModuleType] | None = None
-        bootstrap_wire_packages: t.StrSequence | None = None
+        bootstrap_wire_packages: Sequence[str] | None = None
         bootstrap_wire_classes: Sequence[type] | None = None
 
         options: m.RuntimeBootstrapOptions | None = None
@@ -688,7 +688,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
             protocol_name: str,
         ) -> r[bool]:
             """Validate *obj* compliance with named protocol via duck-typing."""
-            protocol_required_attrs: Mapping[str, t.StrSequence] = {
+            protocol_required_attrs: Mapping[str, Sequence[str]] = {
                 "Handler": [c.METHOD_HANDLE, "can_handle"],
                 "Service": ["execute", "get_service_info", "is_valid"],
                 "CommandBus": ["dispatch", "publish", "register_handler"],

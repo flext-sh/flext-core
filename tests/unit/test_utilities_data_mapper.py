@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import ItemsView, Iterator, Mapping
+from collections.abc import ItemsView, Iterator, Mapping, Sequence
 from typing import cast, override
 
 from flext_tests import tm
@@ -109,7 +109,7 @@ class TestUtilitiesDataMapper:
 
     def test_build_flags_dict_exception_handling(self) -> None:
         bad_list_instance = self._BadList()
-        bad_list_typed: t.StrSequence = cast("t.StrSequence", bad_list_instance)
+        bad_list_typed: Sequence[str] = cast("Sequence[str]", bad_list_instance)
         result = FlextUtilities.build_flags_dict(bad_list_typed, {})
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed to build flags dict" in str(result.error)

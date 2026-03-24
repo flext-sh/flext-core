@@ -186,7 +186,7 @@ class FlextUtilitiesEnum:
         return result
 
     @staticmethod
-    def create_enum(name: str, values: t.StrMapping) -> type[StrEnum]:
+    def create_enum(name: str, values: Mapping[str, str]) -> type[StrEnum]:
         """Create StrEnum dynamically from values dict.
 
         Factory method for reducing StrEnum boilerplate during constants refactoring.
@@ -303,7 +303,7 @@ class FlextUtilitiesEnum:
         raise ValueError(error_msg)
 
     @staticmethod
-    def get_enum_values(enum_class: type[StrEnum]) -> t.StrSequence:
+    def get_enum_values(enum_class: type[StrEnum]) -> Sequence[str]:
         """Get all values from StrEnum class.
 
         Returns immutable sequence for safe iteration.

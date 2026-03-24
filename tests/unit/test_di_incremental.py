@@ -201,13 +201,13 @@ class TestDIIncremental:
         def log_message(
             name: str = Provide["logger_name"],
             level: str = Provide["log_level"],
-        ) -> t.StrMapping:
+        ) -> Mapping[str, str]:
             return {"logger": name, "level": level}
 
         setattr(module, "log_message", log_message)
         container.wire_modules(modules=[module])
         try:
-            log_func: Callable[[], t.StrMapping] = module.log_message
+            log_func: Callable[[], Mapping[str, str]] = module.log_message
             result = log_func()
             tm.that(result, eq={"logger": "test_logger", "level": "INFO"})
         finally:
@@ -342,11 +342,11 @@ class TestDIIncremental:
         module = ModuleType("multi_function_module")
 
         @inject
-        def func1(config: t.StrMapping = Provide["shared_config"]) -> str:
+        def func1(config: Mapping[str, str] = Provide["shared_config"]) -> str:
             return config["env"]
 
         @inject
-        def func2(config: t.StrMapping = Provide["shared_config"]) -> bool:
+        def func2(config: Mapping[str, str] = Provide["shared_config"]) -> bool:
             return config["env"] == "test"
 
         setattr(module, "func1", func1)
@@ -379,7 +379,7 @@ class TestDIIncremental:
         def api_call(
             url: str = Provide["built_url"],
             base: str = Provide["base_url"],
-        ) -> t.StrMapping:
+        ) -> Mapping[str, str]:
             return {"url": url, "base": base}
 
         setattr(module, "build_url", build_url)
@@ -388,7 +388,7 @@ class TestDIIncremental:
         _ = container.register("built_url", url_result)
         container.wire_modules(modules=[module])
         try:
-            api_call_func: Callable[[], t.StrMapping] = getattr(module, "api_call")
+            api_call_func: Callable[[], Mapping[str, str]] = getattr(module, "api_call")
             result = api_call_func()
             tm.that(result, has="url")
             tm.that(result, has="base")
@@ -430,7 +430,7 @@ class TestDIIncremental:
     def test_create_service_runtime_full_integration(self) -> None:
         """Test create_service_runtime with full DI integration."""
 
-        def factory() -> t.StrMapping:
+        def factory() -> Mapping[str, str]:
             return {"token": "generated_token"}
 
         def resource_factory() -> Mapping[str, bool]:

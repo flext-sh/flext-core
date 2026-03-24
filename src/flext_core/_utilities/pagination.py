@@ -34,7 +34,7 @@ class FlextUtilitiesPagination:
             Sequence[t.RuntimeAtomic] | t.FlatContainerMapping | str,
         ],
         message: str | None = None,
-    ) -> r[t.StrMapping]:
+    ) -> r[Mapping[str, str]]:
         """Build paginated response dictionary.
 
         Args:
@@ -48,7 +48,7 @@ class FlextUtilitiesPagination:
         data = pagination_data.get(c.FIELD_DATA)
         pagination = pagination_data.get("pagination")
         if data is None or pagination is None:
-            return r[t.StrMapping].fail("Invalid pagination data structure")
+            return r[Mapping[str, str]].fail("Invalid pagination data structure")
         data_val: str = data if isinstance(data, str) else str(data)
         pagination_val: str = (
             pagination if isinstance(pagination, str) else str(pagination)
@@ -59,11 +59,11 @@ class FlextUtilitiesPagination:
         }
         if message is not None:
             response["message"] = message
-        return r[t.StrMapping].ok(response)
+        return r[Mapping[str, str]].ok(response)
 
     @staticmethod
     def extract_page_params(
-        query_params: t.StrMapping,
+        query_params: Mapping[str, str],
         *,
         default_page: int = 1,
         default_page_size: int = c.DEFAULT_PAGE_SIZE_EXAMPLE,

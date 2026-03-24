@@ -252,7 +252,7 @@ class ComplexModel(BaseModel):
 
     id: int
     data: t.ContainerMapping
-    items: t.StrSequence
+    items: Sequence[str]
 
 
 class _Cfg(BaseModel):

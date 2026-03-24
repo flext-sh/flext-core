@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import cast
 
 import pytest
@@ -208,31 +208,31 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_has_parameter(self) -> None:
         """Test tm.ok() with has parameter."""
-        result = r[t.StrSequence].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, has="a")
         assert value == ["a", "b", "c"]
 
     def test_ok_with_has_sequence_parameter(self) -> None:
         """Test tm.ok() with has sequence parameter."""
-        result = r[t.StrSequence].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, has=["a", "b"])
         assert value == ["a", "b", "c"]
 
     def test_ok_with_lacks_parameter(self) -> None:
         """Test tm.ok() with lacks parameter."""
-        result = r[t.StrSequence].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, lacks="d")
         assert value == ["a", "b", "c"]
 
     def test_ok_with_len_exact_parameter(self) -> None:
         """Test tm.ok() with len exact parameter."""
-        result = r[t.StrSequence].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, len=3)
         assert value == ["a", "b", "c"]
 
     def test_ok_with_len_range_parameter(self) -> None:
         """Test tm.ok() with len range parameter."""
-        result = r[t.StrSequence].ok(["a", "b", "c"])
+        result = r[Sequence[str]].ok(["a", "b", "c"])
         value = tm.ok(result, len=(2, 4))
         assert value == ["a", "b", "c"]
 
@@ -319,7 +319,7 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_empty_parameter(self) -> None:
         """Test tm.ok() with empty parameter."""
-        result = r[t.StrSequence].ok(["a"])
+        result = r[Sequence[str]].ok(["a"])
         value = tm.ok(result, empty=False)
         assert value == ["a"]
 

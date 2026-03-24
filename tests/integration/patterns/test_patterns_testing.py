@@ -51,7 +51,7 @@ class TestPatternsTesting:
             return dict(value.items())
 
         @staticmethod
-        def to_string_list(value: Sequence[t.Container] | None) -> t.StrSequence:
+        def to_string_list(value: Sequence[t.Container] | None) -> Sequence[str]:
             if value is None:
                 return []
             return [str(item) for item in value]
@@ -335,7 +335,7 @@ class TestPatternsTesting:
             ]
             return success_params + failure_params
 
-        def build_test_ids(self) -> t.StrSequence:
+        def build_test_ids(self) -> Sequence[str]:
             return [
                 str(c.get("input", ""))
                 for c in (*self._success_cases, *self._failure_cases)
@@ -508,7 +508,7 @@ class TestPatternsTesting:
             "email": st.emails(),
         }),
     )
-    def test_user_profile_property_based(self, profile: t.StrMapping) -> None:
+    def test_user_profile_property_based(self, profile: Mapping[str, str]) -> None:
         assert "id" in profile
         assert "name" in profile
         assert "email" in profile
@@ -637,7 +637,7 @@ class TestPatternsTesting:
         assert all(len(param) == 3 for param in params)
 
     def test_assertion_builder(self) -> None:
-        test_data: t.StrSequence = ["apple", "banana", "cherry"]
+        test_data: Sequence[str] = ["apple", "banana", "cherry"]
 
         def check_all_strings(x: t.NormalizedValue) -> bool:
             values = self.Helpers.as_object_dict({"items": x}).get("items")

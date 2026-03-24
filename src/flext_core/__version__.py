@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
 
 
@@ -20,7 +21,7 @@ class FlextVersion:
     """
 
     try:
-        _metadata: PackageMetadata | t.StrMapping = metadata("flext-core")
+        _metadata: PackageMetadata | Mapping[str, str] = metadata("flext-core")
     except PackageNotFoundError:
         _metadata = {
             "Version": "0.12.0-dev",
@@ -43,11 +44,11 @@ class FlextVersion:
     __url__ = _metadata.get("Home-Page", "")
 
     @classmethod
-    def get_package_info(cls) -> t.StrMapping:
+    def get_package_info(cls) -> Mapping[str, str]:
         """Get comprehensive package information dictionary.
 
         Returns:
-            t.StrMapping: Metadata including name, version, author, license, and url.
+            Mapping[str, str]: Metadata including name, version, author, license, and url.
 
         """
         return {

@@ -107,7 +107,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class ComplexValue:
             """FlextModels.Value t.NormalizedValue with non-hashable attributes."""
 
-            def __init__(self, data: str, items: t.StrSequence) -> None:
+            def __init__(self, data: str, items: Sequence[str]) -> None:
                 """Initialize complex value with non-hashable items."""
                 self.data = data
                 self.items = items  # list is not hashable
@@ -168,7 +168,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
 
             text: str
             delimiter: str
-            expected: t.StrSequence | None = None
+            expected: Sequence[str] | None = None
             expected_error: str | None = None
             options: FlextModels.ParseOptions | None = None
             strip: bool = True
@@ -185,7 +185,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             text: str
             split_char: str
             escape_char: str = "\\"
-            expected: t.StrSequence | None = None
+            expected: Sequence[str] | None = None
             expected_error: str | None = None
             description: Annotated[str, Field(default="", exclude=True)] = ""
 
@@ -220,7 +220,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             )
 
             obj: t.ContainerValue
-            expected_contains: t.StrSequence | None = None
+            expected_contains: Sequence[str] | None = None
             expected_exact: str | None = None
             description: Annotated[str, Field(default="", exclude=True)] = ""
 
@@ -270,8 +270,8 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             description: str
-            assertions: t.StrSequence
-            setup_steps: t.StrSequence
+            assertions: Sequence[str]
+            setup_steps: Sequence[str]
 
         class MockScenarioData(BaseModel):
             """Mock scenario test data."""
@@ -281,7 +281,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             given: Mapping[str, t.Primitives]
             when: Mapping[str, t.Primitives]
             then: Mapping[str, t.Primitives]
-            tags: t.StrSequence
+            tags: Sequence[str]
             priority: str
 
         class NestedDataDict(BaseModel):
@@ -349,7 +349,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
 
             suite_name: str
             scenario_count: int
-            tags: t.StrSequence
+            tags: Sequence[str]
             setup_data: Mapping[str, FlextCoreTestModels.Core.SetupDataDict]
 
         class UserDataFixtureDict(BaseModel):
@@ -368,7 +368,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
 
             method: str
             path: str
-            headers: t.StrMapping
+            headers: Mapping[str, str]
 
         class FixtureFixturesDict(BaseModel):
             """Test fixtures configuration."""
@@ -474,7 +474,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             user_id: str
-            updated_fields: t.StrSequence
+            updated_fields: Sequence[str]
             update_count: int
 
         class CommandPayloadDict(BaseModel):

@@ -123,7 +123,7 @@ class TestUtilitiesTypeGuardsCoverage100:
     @pytest.mark.parametrize("scenario", IS_DICT_NON_EMPTY, ids=lambda s: s.name)
     def test_is_dict_non_empty(self, scenario: TypeGuardScenario) -> None:
         if scenario.value == "has_items":
-            test_value: t.StrMapping = {"key": "value"}
+            test_value: Mapping[str, str] = {"key": "value"}
         else:
             test_value = {}
         result = FlextUtilitiesGuards.is_dict_non_empty(test_value)

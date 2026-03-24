@@ -864,20 +864,20 @@ class TestFlextRuntime:
 
             @FlextRuntime.DependencyIntegration.inject
             def consume(
-                token: t.StrMapping = FlextRuntime.DependencyIntegration.Provide[
+                token: Mapping[str, str] = FlextRuntime.DependencyIntegration.Provide[
                     "token_factory"
                 ],
                 static: int = FlextRuntime.DependencyIntegration.Provide[
                     "static_value"
                 ],
-            ) -> tuple[t.StrMapping, int]:
+            ) -> tuple[Mapping[str, str], int]:
                 return (token, static)
 
             setattr(module, "consume", consume)
             di_container.wire(modules=[module])
             try:
                 consume_factory_func = cast(
-                    "Callable[[], tuple[t.StrMapping, int]]",
+                    "Callable[[], tuple[Mapping[str, str], int]]",
                     getattr(module, "consume"),
                 )
                 tm.that(callable(consume_factory_func), eq=True)

@@ -34,7 +34,7 @@ class FlextProtocolsContext:
             """Check if a key exists in the given scope."""
             ...
 
-        def keys(self) -> t.StrSequence:
+        def keys(self) -> Sequence[str]:
             """Return all keys across all scopes."""
             ...
 
@@ -163,7 +163,7 @@ class FlextProtocolsContext:
         resources: Mapping[str, t.ResourceCallable] | None
         container_overrides: t.ScalarMapping | None
         wire_modules: Sequence[ModuleType | str] | None
-        wire_packages: t.StrSequence | None
+        wire_packages: Sequence[str] | None
         wire_classes: Sequence[type] | None
 
 

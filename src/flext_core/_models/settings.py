@@ -138,10 +138,10 @@ class FlextModelsConfig:
         def validate_context(
             cls,
             v: BaseModel | t.ScalarMapping | t.Scalar | None,
-        ) -> t.StrMapping:
+        ) -> Mapping[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 
-            Returns t.StrMapping because ensure_trace_context generates
+            Returns Mapping[str, str] because ensure_trace_context generates
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
@@ -165,7 +165,7 @@ class FlextProtocolsLogging:
         """Entry protocol (read-only)."""
 
         @property
-        def attributes(self) -> Mapping[str, t.StrSequence]:
+        def attributes(self) -> Mapping[str, Sequence[str]]:
             """Entry attributes as immutable mapping."""
             ...
 
@@ -174,7 +174,7 @@ class FlextProtocolsLogging:
             """Distinguished name."""
             ...
 
-        def add_attribute(self, name: str, values: t.StrSequence) -> Self:
+        def add_attribute(self, name: str, values: Sequence[str]) -> Self:
             """Add attribute values, returning self for chaining."""
             ...
 
@@ -182,7 +182,7 @@ class FlextProtocolsLogging:
             """Remove attribute, returning self for chaining."""
             ...
 
-        def set_attribute(self, name: str, values: t.StrSequence) -> Self:
+        def set_attribute(self, name: str, values: Sequence[str]) -> Self:
             """Set attribute values, returning self for chaining."""
             ...
 

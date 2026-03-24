@@ -665,7 +665,7 @@ class FlextDecorators:
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StrMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: Literal[False] = False,
@@ -676,7 +676,7 @@ class FlextDecorators:
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StrMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: Literal[True],
@@ -686,7 +686,7 @@ class FlextDecorators:
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StrMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: bool = False,

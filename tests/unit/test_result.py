@@ -382,7 +382,7 @@ class Testr:
         Replaces 10+ lines of manual test case creation.
         """
         success_values: t.ContainerList = ["value1", "value2", "value3"]
-        failure_errors: t.StrSequence = ["error1", "error2"]
+        failure_errors: Sequence[str] = ["error1", "error2"]
         error_codes: Sequence[str | None] = ["CODE1", None]
         cases = u.Tests.GenericHelpers.create_parametrized_cases(
             success_values, failure_errors, error_codes=error_codes

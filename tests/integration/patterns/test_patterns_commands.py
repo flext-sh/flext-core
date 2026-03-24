@@ -526,7 +526,7 @@ class TestPatternsCommands:
     def test_result_metadata(self) -> None:
         """Test result metadata properties."""
         result_data = {"id": "123"}
-        command_result = r[t.StrMapping].ok(result_data)
+        command_result = r[Mapping[str, str]].ok(result_data)
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)

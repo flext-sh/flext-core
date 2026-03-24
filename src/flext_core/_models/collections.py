@@ -151,7 +151,7 @@ class FlextModelsCollections:
 
         @computed_field
         @property
-        def category_names(self) -> t.StrSequence:
+        def category_names(self) -> Sequence[str]:
             return list(self.categories.keys())
 
         @computed_field

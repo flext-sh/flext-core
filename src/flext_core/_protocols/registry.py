@@ -96,7 +96,7 @@ class FlextProtocolsRegistry:
             category: str,
             *,
             scope: str = "instance",
-        ) -> r[t.StrSequence]:
+        ) -> r[Sequence[str]]:
             """List all plugins in a category."""
             ...
 

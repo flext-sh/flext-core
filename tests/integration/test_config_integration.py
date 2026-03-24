@@ -51,7 +51,7 @@ class TestFlextSettingsSingletonIntegration:
         file_format: str = Field(
             default="json", description="Configuration file format"
         )
-        env_vars: t.StrMapping = Field(
+        env_vars: Mapping[str, str] = Field(
             default_factory=dict,
             description="Environment variable overrides",
         )
