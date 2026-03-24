@@ -9,7 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence, Sequence
+from flext_core import FlextTypes as t
+
+from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, override
 
 import pytest
@@ -165,7 +167,7 @@ class TestService:
             self._should_fail = should_fail
 
         @property
-        def sent_notifications(self) -> Sequence[str]:
+        def sent_notifications(self) -> t.StrSequence:
             """Get sent notifications."""
             return list(self._sent_notifications)
 

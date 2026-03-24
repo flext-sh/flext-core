@@ -20,8 +20,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import FlextTypes as t
+
 from collections import UserDict as BaseUserDict
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 from typing import TypeVar, cast, get_origin, override
 
 import pytest
@@ -372,7 +374,7 @@ class TestuTypeChecker:
 
     def test_handle_type_or_origin_check_with_origin(self) -> None:
         """Test _handle_type_or_origin_check with __origin__ attribute."""
-        dict_type: type[Mapping[str, str]] = MutableMapping[str, str]
+        dict_type: type[t.StrMapping] = MutableMapping[str, str]
         origin = get_origin(dict_type) or dict_type
         result = u._handle_type_or_origin_check(
             self._type_origin(dict),

@@ -33,6 +33,7 @@ class FlextTypingBase:
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
     type StrMapping = Mapping[str, str]
     type StrSequence = Sequence[str]
+
     type ScalarMapping = Mapping[str, Scalar]
     type ScalarList = Sequence[Scalar]
     type FlatContainerList = Sequence[Container]

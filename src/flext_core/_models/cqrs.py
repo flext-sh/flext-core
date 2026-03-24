@@ -9,8 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 import sys
-from collections.abc import Sequence
 from types import ModuleType
 from typing import Annotated, ClassVar, Literal, Self
 

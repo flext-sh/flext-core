@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import ItemsView, Iterator, Mapping, Sequence
+from collections.abc import Sequence, ItemsView, Iterator, Mapping
 from typing import cast, override
 
 from flext_tests import tm
