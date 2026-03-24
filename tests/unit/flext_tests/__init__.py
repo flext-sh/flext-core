@@ -18,18 +18,18 @@ if TYPE_CHECKING:
     from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
     from tests.unit.flext_tests.test_utilities import TestUtilities
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
-    "TestFlextTestsDomains": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestDocker": ["tests.unit.flext_tests.test_docker", "TestDocker"],
+    "TestFlextTestsDomains": [
         "tests.unit.flext_tests.test_domains",
         "TestFlextTestsDomains",
-    ),
-    "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
-    "TestFlextTestsMatchers": (
+    ],
+    "TestFlextTestsFiles": ["tests.unit.flext_tests.test_files", "TestFlextTestsFiles"],
+    "TestFlextTestsMatchers": [
         "tests.unit.flext_tests.test_matchers",
         "TestFlextTestsMatchers",
-    ),
-    "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
+    ],
+    "TestUtilities": ["tests.unit.flext_tests.test_utilities", "TestUtilities"],
 }
 
 __all__ = [

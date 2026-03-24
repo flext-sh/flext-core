@@ -43,55 +43,55 @@ if TYPE_CHECKING:
 
     from flext_core import FlextTypes
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "DEFAULT_TIMEOUT": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "DEFAULT_TIMEOUT": [
         "tests.fixtures.namespace_validator.rule1_loose_constant",
         "DEFAULT_TIMEOUT",
-    ),
-    "FlextTestConstants": (
+    ],
+    "FlextTestConstants": [
         "tests.fixtures.namespace_validator.rule0_multiple_classes",
         "FlextTestConstants",
-    ),
-    "FlextTestModels": (
+    ],
+    "FlextTestModels": [
         "tests.fixtures.namespace_validator.rule1_loose_enum",
         "FlextTestModels",
-    ),
-    "FlextTestTypes": (
+    ],
+    "FlextTestTypes": [
         "tests.fixtures.namespace_validator.rule2_protocol_in_types",
         "FlextTestTypes",
-    ),
-    "FlextTestUtilities": (
+    ],
+    "FlextTestUtilities": [
         "tests.fixtures.namespace_validator.rule1_magic_number",
         "FlextTestUtilities",
-    ),
-    "LooseTypeAlias": ("tests.fixtures.namespace_validator.typings", "LooseTypeAlias"),
-    "MAX_RETRIES": (
+    ],
+    "LooseTypeAlias": ["tests.fixtures.namespace_validator.typings", "LooseTypeAlias"],
+    "MAX_RETRIES": [
         "tests.fixtures.namespace_validator.rule1_loose_constant",
         "MAX_RETRIES",
-    ),
-    "MAX_VALUE": ("tests.fixtures.namespace_validator.rule0_no_class", "MAX_VALUE"),
-    "RandomConstants": (
+    ],
+    "MAX_VALUE": ["tests.fixtures.namespace_validator.rule0_no_class", "MAX_VALUE"],
+    "RandomConstants": [
         "tests.fixtures.namespace_validator.rule0_wrong_prefix",
         "RandomConstants",
-    ),
-    "Rule0LooseItemsFixture": (
+    ],
+    "Rule0LooseItemsFixture": [
         "tests.fixtures.namespace_validator.rule0_loose_items",
         "Rule0LooseItemsFixture",
-    ),
-    "Rule0MultipleClassesFixture": (
+    ],
+    "Rule0MultipleClassesFixture": [
         "tests.fixtures.namespace_validator.rule0_multiple_classes",
         "Rule0MultipleClassesFixture",
-    ),
-    "Rule1LooseEnumFixture": (
+    ],
+    "Rule1LooseEnumFixture": [
         "tests.fixtures.namespace_validator.rule1_loose_enum",
         "Rule1LooseEnumFixture",
-    ),
-    "Status": ("tests.fixtures.namespace_validator.rule1_loose_enum", "Status"),
-    "c": ("tests.fixtures.namespace_validator.rule1_method_in_constants", "c"),
-    "helper": ("tests.fixtures.namespace_validator.rule0_no_class", "helper"),
-    "m": ("tests.fixtures.namespace_validator.rule2_composite_type_loose", "m"),
-    "t": ("tests.fixtures.namespace_validator.rule2_protocol_in_types", "t"),
-    "u": ("tests.fixtures.namespace_validator.rule1_magic_number", "u"),
+    ],
+    "Status": ["tests.fixtures.namespace_validator.rule1_loose_enum", "Status"],
+    "c": ["tests.fixtures.namespace_validator.rule1_method_in_constants", "c"],
+    "helper": ["tests.fixtures.namespace_validator.rule0_no_class", "helper"],
+    "m": ["tests.fixtures.namespace_validator.rule2_composite_type_loose", "m"],
+    "t": ["tests.fixtures.namespace_validator.rule2_protocol_in_types", "t"],
+    "u": ["tests.fixtures.namespace_validator.rule1_magic_number", "u"],
 }
 
 __all__ = [

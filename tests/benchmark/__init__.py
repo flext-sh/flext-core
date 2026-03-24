@@ -21,20 +21,20 @@ if TYPE_CHECKING:
         TestPerformanceBenchmarks,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TestContainerMemory": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TestContainerMemory": [
         "tests.benchmark.test_container_memory",
         "TestContainerMemory",
-    ),
-    "TestContainerPerformance": (
+    ],
+    "TestContainerPerformance": [
         "tests.benchmark.test_container_performance",
         "TestContainerPerformance",
-    ),
-    "TestPerformanceBenchmarks": (
+    ],
+    "TestPerformanceBenchmarks": [
         "tests.benchmark.test_refactor_nesting_performance",
         "TestPerformanceBenchmarks",
-    ),
-    "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
+    ],
+    "get_memory_usage": ["tests.benchmark.test_container_memory", "get_memory_usage"],
 }
 
 __all__ = [

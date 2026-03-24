@@ -41,36 +41,36 @@ if TYPE_CHECKING:
         pytestmark,
     )
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "EXPECTED_BULK_SIZE": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "EXPECTED_BULK_SIZE": [
         "tests.integration.patterns.test_patterns_logging",
         "EXPECTED_BULK_SIZE",
-    ),
-    "TestAdvancedPatterns": (
+    ],
+    "TestAdvancedPatterns": [
         "tests.integration.patterns.test_advanced_patterns",
         "TestAdvancedPatterns",
-    ),
-    "TestArchitecturalPatterns": (
+    ],
+    "TestArchitecturalPatterns": [
         "tests.integration.patterns.test_architectural_patterns",
         "TestArchitecturalPatterns",
-    ),
-    "TestFunction": (
+    ],
+    "TestFunction": [
         "tests.integration.patterns.test_advanced_patterns",
         "TestFunction",
-    ),
-    "TestPatternsCommands": (
+    ],
+    "TestPatternsCommands": [
         "tests.integration.patterns.test_patterns_commands",
         "TestPatternsCommands",
-    ),
-    "TestPatternsLogging": (
+    ],
+    "TestPatternsLogging": [
         "tests.integration.patterns.test_patterns_logging",
         "TestPatternsLogging",
-    ),
-    "TestPatternsTesting": (
+    ],
+    "TestPatternsTesting": [
         "tests.integration.patterns.test_patterns_testing",
         "TestPatternsTesting",
-    ),
-    "pytestmark": ("tests.integration.patterns.test_patterns_testing", "pytestmark"),
+    ],
+    "pytestmark": ["tests.integration.patterns.test_patterns_testing", "pytestmark"],
 }
 
 __all__ = [

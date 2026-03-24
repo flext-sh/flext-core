@@ -45,52 +45,52 @@ if TYPE_CHECKING:
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextGenericModels": ("flext_core._models.generic", "FlextGenericModels"),
-    "FlextModelFoundation": ("flext_core._models.base", "FlextModelFoundation"),
-    "FlextModelsCollections": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextGenericModels": ["flext_core._models.generic", "FlextGenericModels"],
+    "FlextModelFoundation": ["flext_core._models.base", "FlextModelFoundation"],
+    "FlextModelsCollections": [
         "flext_core._models.collections",
         "FlextModelsCollections",
-    ),
-    "FlextModelsConfig": ("flext_core._models.settings", "FlextModelsConfig"),
-    "FlextModelsContainer": ("flext_core._models.container", "FlextModelsContainer"),
-    "FlextModelsContainers": ("flext_core._models.containers", "FlextModelsContainers"),
-    "FlextModelsContext": ("flext_core._models.context", "FlextModelsContext"),
-    "FlextModelsContextData": (
+    ],
+    "FlextModelsConfig": ["flext_core._models.settings", "FlextModelsConfig"],
+    "FlextModelsContainer": ["flext_core._models.container", "FlextModelsContainer"],
+    "FlextModelsContainers": ["flext_core._models.containers", "FlextModelsContainers"],
+    "FlextModelsContext": ["flext_core._models.context", "FlextModelsContext"],
+    "FlextModelsContextData": [
         "flext_core._models._context._data",
         "FlextModelsContextData",
-    ),
-    "FlextModelsContextExport": (
+    ],
+    "FlextModelsContextExport": [
         "flext_core._models._context._export",
         "FlextModelsContextExport",
-    ),
-    "FlextModelsContextMetadata": (
+    ],
+    "FlextModelsContextMetadata": [
         "flext_core._models._context._metadata",
         "FlextModelsContextMetadata",
-    ),
-    "FlextModelsContextProxyVar": (
+    ],
+    "FlextModelsContextProxyVar": [
         "flext_core._models._context._proxy_var",
         "FlextModelsContextProxyVar",
-    ),
-    "FlextModelsContextScope": (
+    ],
+    "FlextModelsContextScope": [
         "flext_core._models._context._scope",
         "FlextModelsContextScope",
-    ),
-    "FlextModelsContextTokens": (
+    ],
+    "FlextModelsContextTokens": [
         "flext_core._models._context._tokens",
         "FlextModelsContextTokens",
-    ),
-    "FlextModelsCqrs": ("flext_core._models.cqrs", "FlextModelsCqrs"),
-    "FlextModelsDecorators": ("flext_core._models.decorators", "FlextModelsDecorators"),
-    "FlextModelsDispatcher": ("flext_core._models.dispatcher", "FlextModelsDispatcher"),
-    "FlextModelsDomainEvent": (
+    ],
+    "FlextModelsCqrs": ["flext_core._models.cqrs", "FlextModelsCqrs"],
+    "FlextModelsDecorators": ["flext_core._models.decorators", "FlextModelsDecorators"],
+    "FlextModelsDispatcher": ["flext_core._models.dispatcher", "FlextModelsDispatcher"],
+    "FlextModelsDomainEvent": [
         "flext_core._models.domain_event",
         "FlextModelsDomainEvent",
-    ),
-    "FlextModelsEntity": ("flext_core._models.entity", "FlextModelsEntity"),
-    "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
-    "FlextModelsResult": ("flext_core._models.result", "FlextModelsResult"),
-    "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
+    ],
+    "FlextModelsEntity": ["flext_core._models.entity", "FlextModelsEntity"],
+    "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
+    "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
+    "FlextModelsService": ["flext_core._models.service", "FlextModelsService"],
 }
 
 __all__ = [

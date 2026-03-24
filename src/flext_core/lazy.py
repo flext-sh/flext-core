@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 def lazy_getattr(
     name: str,
-    lazy_imports: Mapping[str, tuple[str, str]],
+    lazy_imports: Mapping[str, Sequence[str]],
     module_globals: MutableMapping[str, FlextTypesServices.ModuleExport],
     module_name: str,
 ) -> FlextTypesServices.ModuleExport:
@@ -57,7 +57,7 @@ def lazy_getattr(
 
 def cleanup_submodule_namespace(
     module_name: str,
-    lazy_imports: Mapping[str, tuple[str, str]],
+    lazy_imports: Mapping[str, Sequence[str]],
 ) -> None:
     """Remove submodules from namespace to force __getattr__ usage.
 

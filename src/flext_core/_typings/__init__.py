@@ -42,30 +42,30 @@ if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.validation import FlextTypesValidation
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "EnumT": ("flext_core._typings.generics", "EnumT"),
-    "FlextTypesCore": ("flext_core._typings.core", "FlextTypesCore"),
-    "FlextTypesServices": ("flext_core._typings.services", "FlextTypesServices"),
-    "FlextTypesValidation": ("flext_core._typings.validation", "FlextTypesValidation"),
-    "FlextTypingBase": ("flext_core._typings.base", "FlextTypingBase"),
-    "FlextTypingContainers": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "EnumT": ["flext_core._typings.generics", "EnumT"],
+    "FlextTypesCore": ["flext_core._typings.core", "FlextTypesCore"],
+    "FlextTypesServices": ["flext_core._typings.services", "FlextTypesServices"],
+    "FlextTypesValidation": ["flext_core._typings.validation", "FlextTypesValidation"],
+    "FlextTypingBase": ["flext_core._typings.base", "FlextTypingBase"],
+    "FlextTypingContainers": [
         "flext_core._typings.containers",
         "FlextTypingContainers",
-    ),
-    "MessageT_contra": ("flext_core._typings.generics", "MessageT_contra"),
-    "P": ("flext_core._typings.generics", "P"),
-    "R": ("flext_core._typings.generics", "R"),
-    "ResultT": ("flext_core._typings.generics", "ResultT"),
-    "T": ("flext_core._typings.generics", "T"),
-    "TRuntime": ("flext_core._typings.generics", "TRuntime"),
-    "TV": ("flext_core._typings.generics", "TV"),
-    "TV_co": ("flext_core._typings.generics", "TV_co"),
-    "T_Model": ("flext_core._typings.generics", "T_Model"),
-    "T_Namespace": ("flext_core._typings.generics", "T_Namespace"),
-    "T_Settings": ("flext_core._typings.generics", "T_Settings"),
-    "T_co": ("flext_core._typings.generics", "T_co"),
-    "T_contra": ("flext_core._typings.generics", "T_contra"),
-    "U": ("flext_core._typings.generics", "U"),
+    ],
+    "MessageT_contra": ["flext_core._typings.generics", "MessageT_contra"],
+    "P": ["flext_core._typings.generics", "P"],
+    "R": ["flext_core._typings.generics", "R"],
+    "ResultT": ["flext_core._typings.generics", "ResultT"],
+    "T": ["flext_core._typings.generics", "T"],
+    "TRuntime": ["flext_core._typings.generics", "TRuntime"],
+    "TV": ["flext_core._typings.generics", "TV"],
+    "TV_co": ["flext_core._typings.generics", "TV_co"],
+    "T_Model": ["flext_core._typings.generics", "T_Model"],
+    "T_Namespace": ["flext_core._typings.generics", "T_Namespace"],
+    "T_Settings": ["flext_core._typings.generics", "T_Settings"],
+    "T_co": ["flext_core._typings.generics", "T_co"],
+    "T_contra": ["flext_core._typings.generics", "T_contra"],
+    "U": ["flext_core._typings.generics", "U"],
 }
 
 __all__ = [

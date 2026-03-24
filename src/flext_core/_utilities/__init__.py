@@ -49,78 +49,78 @@ if TYPE_CHECKING:
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),
-    "FlextUtilitiesCache": ("flext_core._utilities.cache", "FlextUtilitiesCache"),
-    "FlextUtilitiesChecker": ("flext_core._utilities.checker", "FlextUtilitiesChecker"),
-    "FlextUtilitiesCollection": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextUtilitiesArgs": ["flext_core._utilities.args", "FlextUtilitiesArgs"],
+    "FlextUtilitiesCache": ["flext_core._utilities.cache", "FlextUtilitiesCache"],
+    "FlextUtilitiesChecker": ["flext_core._utilities.checker", "FlextUtilitiesChecker"],
+    "FlextUtilitiesCollection": [
         "flext_core._utilities.collection",
         "FlextUtilitiesCollection",
-    ),
-    "FlextUtilitiesConfiguration": (
+    ],
+    "FlextUtilitiesConfiguration": [
         "flext_core._utilities.configuration",
         "FlextUtilitiesConfiguration",
-    ),
-    "FlextUtilitiesContext": ("flext_core._utilities.context", "FlextUtilitiesContext"),
-    "FlextUtilitiesConversion": (
+    ],
+    "FlextUtilitiesContext": ["flext_core._utilities.context", "FlextUtilitiesContext"],
+    "FlextUtilitiesConversion": [
         "flext_core._utilities.conversion",
         "FlextUtilitiesConversion",
-    ),
-    "FlextUtilitiesDeprecation": (
+    ],
+    "FlextUtilitiesDeprecation": [
         "flext_core._utilities.deprecation",
         "FlextUtilitiesDeprecation",
-    ),
-    "FlextUtilitiesDiscovery": (
+    ],
+    "FlextUtilitiesDiscovery": [
         "flext_core._utilities.discovery",
         "FlextUtilitiesDiscovery",
-    ),
-    "FlextUtilitiesDomain": ("flext_core._utilities.domain", "FlextUtilitiesDomain"),
-    "FlextUtilitiesEnum": ("flext_core._utilities.enum", "FlextUtilitiesEnum"),
-    "FlextUtilitiesFileOps": (
+    ],
+    "FlextUtilitiesDomain": ["flext_core._utilities.domain", "FlextUtilitiesDomain"],
+    "FlextUtilitiesEnum": ["flext_core._utilities.enum", "FlextUtilitiesEnum"],
+    "FlextUtilitiesFileOps": [
         "flext_core._utilities.file_ops",
         "FlextUtilitiesFileOps",
-    ),
-    "FlextUtilitiesGenerators": (
+    ],
+    "FlextUtilitiesGenerators": [
         "flext_core._utilities.generators",
         "FlextUtilitiesGenerators",
-    ),
-    "FlextUtilitiesGuards": ("flext_core._utilities.guards", "FlextUtilitiesGuards"),
-    "FlextUtilitiesGuardsEnsure": (
+    ],
+    "FlextUtilitiesGuards": ["flext_core._utilities.guards", "FlextUtilitiesGuards"],
+    "FlextUtilitiesGuardsEnsure": [
         "flext_core._utilities.guards_ensure",
         "FlextUtilitiesGuardsEnsure",
-    ),
-    "FlextUtilitiesGuardsType": (
+    ],
+    "FlextUtilitiesGuardsType": [
         "flext_core._utilities.guards_type",
         "FlextUtilitiesGuardsType",
-    ),
-    "FlextUtilitiesGuardsTypeCore": (
+    ],
+    "FlextUtilitiesGuardsTypeCore": [
         "flext_core._utilities.guards_type_core",
         "FlextUtilitiesGuardsTypeCore",
-    ),
-    "FlextUtilitiesGuardsTypeModel": (
+    ],
+    "FlextUtilitiesGuardsTypeModel": [
         "flext_core._utilities.guards_type_model",
         "FlextUtilitiesGuardsTypeModel",
-    ),
-    "FlextUtilitiesGuardsTypeProtocol": (
+    ],
+    "FlextUtilitiesGuardsTypeProtocol": [
         "flext_core._utilities.guards_type_protocol",
         "FlextUtilitiesGuardsTypeProtocol",
-    ),
-    "FlextUtilitiesMapper": ("flext_core._utilities.mapper", "FlextUtilitiesMapper"),
-    "FlextUtilitiesModel": ("flext_core._utilities.model", "FlextUtilitiesModel"),
-    "FlextUtilitiesPagination": (
+    ],
+    "FlextUtilitiesMapper": ["flext_core._utilities.mapper", "FlextUtilitiesMapper"],
+    "FlextUtilitiesModel": ["flext_core._utilities.model", "FlextUtilitiesModel"],
+    "FlextUtilitiesPagination": [
         "flext_core._utilities.pagination",
         "FlextUtilitiesPagination",
-    ),
-    "FlextUtilitiesParser": ("flext_core._utilities.parser", "FlextUtilitiesParser"),
-    "FlextUtilitiesReliability": (
+    ],
+    "FlextUtilitiesParser": ["flext_core._utilities.parser", "FlextUtilitiesParser"],
+    "FlextUtilitiesReliability": [
         "flext_core._utilities.reliability",
         "FlextUtilitiesReliability",
-    ),
-    "FlextUtilitiesResultHelpers": (
+    ],
+    "FlextUtilitiesResultHelpers": [
         "flext_core._utilities.result_helpers",
         "FlextUtilitiesResultHelpers",
-    ),
-    "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
+    ],
+    "FlextUtilitiesText": ["flext_core._utilities.text", "FlextUtilitiesText"],
 }
 
 __all__ = [

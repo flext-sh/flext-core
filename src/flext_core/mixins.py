@@ -525,12 +525,16 @@ class FlextMixins(m.ArbitraryTypesModel, u):
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize context stack with empty stack list."""
                 super().__init__(*args, **kwargs)
-                self._stack: MutableSequence[m.ExecutionContext | t.ConfigMap | t.ScalarMapping] = []
+                self._stack: MutableSequence[
+                    m.ExecutionContext | t.ConfigMap | t.ScalarMapping
+                ] = []
 
             def current_context(self) -> m.ExecutionContext | None:
                 """Return the current top-of-stack execution context, or None."""
                 if not hasattr(self, "_stack"):
-                    self._stack: MutableSequence[m.ExecutionContext | t.ConfigMap | t.ScalarMapping] = []
+                    self._stack: MutableSequence[
+                        m.ExecutionContext | t.ConfigMap | t.ScalarMapping
+                    ] = []
                 if self._stack:
                     top_item = self._stack[-1]
                     match top_item:
@@ -543,7 +547,9 @@ class FlextMixins(m.ArbitraryTypesModel, u):
             def pop_context(self) -> r[t.ScalarMapping]:
                 """Pop and return the top context from the stack as a scalar dict."""
                 if not hasattr(self, "_stack"):
-                    self._stack: MutableSequence[m.ExecutionContext | t.ConfigMap | t.ScalarMapping] = []
+                    self._stack: MutableSequence[
+                        m.ExecutionContext | t.ConfigMap | t.ScalarMapping
+                    ] = []
                 if self._stack:
                     popped = self._stack.pop()
                     if isinstance(popped, m.ExecutionContext):
@@ -566,7 +572,9 @@ class FlextMixins(m.ArbitraryTypesModel, u):
             ) -> r[bool]:
                 """Push an execution context or mapping onto the context stack."""
                 if not hasattr(self, "_stack"):
-                    self._stack: MutableSequence[m.ExecutionContext | t.ConfigMap | t.ScalarMapping] = []
+                    self._stack: MutableSequence[
+                        m.ExecutionContext | t.ConfigMap | t.ScalarMapping
+                    ] = []
                 if isinstance(ctx, m.ExecutionContext):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)

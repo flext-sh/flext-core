@@ -14,11 +14,11 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes
     from tests.unit.contracts.text_contract import TextUtilityContract
 
-_LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
-    "TextUtilityContract": (
+_LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "TextUtilityContract": [
         "tests.unit.contracts.text_contract",
         "TextUtilityContract",
-    ),
+    ],
 }
 
 __all__ = [
