@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, MutableSequence, Sequence
-from typing import ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
@@ -56,10 +56,13 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        domain_events: list[FlextModelsDomainEvent.Entry] = Field(
-            default_factory=lambda: list[FlextModelsDomainEvent.Entry](),
-            description="List of uncommitted domain events for event sourcing",
-        )
+        domain_events: Annotated[
+            list[FlextModelsDomainEvent.Entry],
+            Field(
+                default_factory=lambda: list[FlextModelsDomainEvent.Entry](),
+                description="List of uncommitted domain events for event sourcing",
+            ),
+        ]
 
         @override
         def __eq__(self, other: object) -> bool:

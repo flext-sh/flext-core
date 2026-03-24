@@ -124,23 +124,32 @@ class FlextModelsCqrs:
         _pagination_input_adapter: ClassVar[
             TypeAdapter[BaseModel | t.Dict | t.ScalarMapping | None] | None
         ] = None
-        message_type: Literal["query"] = Field(
-            default="query",
-            frozen=True,
-            description="Message type discriminator",
-        )
-        filters: t.Dict = Field(
-            default_factory=t.Dict,
-            description="Filter values that restrict which records are returned by the query.",
-            title="Query Filters",
-            examples=[{"status": "active", "tenant": "acme"}],
-        )
-        pagination: BaseModel | t.Dict = Field(
-            default_factory=t.Dict,
-            description="Pagination settings controlling page number and page size for query results.",
-            title="Pagination",
-            examples=[{"page": 1, "size": 50}],
-        )
+        message_type: Annotated[
+            Literal["query"],
+            Field(
+                default="query",
+                frozen=True,
+                description="Message type discriminator",
+            ),
+        ] = "query"
+        filters: Annotated[
+            t.Dict,
+            Field(
+                default_factory=t.Dict,
+                description="Filter values that restrict which records are returned by the query.",
+                title="Query Filters",
+                examples=[{"status": "active", "tenant": "acme"}],
+            ),
+        ]
+        pagination: Annotated[
+            BaseModel | t.Dict,
+            Field(
+                default_factory=t.Dict,
+                description="Pagination settings controlling page number and page size for query results.",
+                title="Pagination",
+                examples=[{"page": 1, "size": 50}],
+            ),
+        ]
         query_id: Annotated[
             t.NonEmptyStr,
             Field(

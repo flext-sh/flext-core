@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 from pydantic import (
     BaseModel,
@@ -62,31 +62,37 @@ class FlextService[
     )
     # --- Service Bootstrap Configuration ---
     config_type: type[p.Settings] | None = None
-    config_overrides: t.ContainerMapping | None = Field(
-        default=None,
-        exclude=True,
-    )
+    config_overrides: Annotated[
+        t.ContainerMapping | None,
+        Field(default=None, exclude=True),
+    ] = None
     initial_context: p.Context | None = None
-    subproject: str | None = Field(default=None, exclude=True)
-    services: Mapping[str, t.RegisterableService] | None = Field(
-        default=None,
-        exclude=True,
-    )
-    factories: Mapping[str, t.FactoryCallable] | None = Field(
-        default=None,
-        exclude=True,
-    )
-    resources: Mapping[str, t.ResourceCallable] | None = Field(
-        default=None,
-        exclude=True,
-    )
-    container_overrides: t.ScalarMapping | None = Field(
-        default=None,
-        exclude=True,
-    )
-    wire_modules: Sequence[ModuleType] | None = Field(default=None, exclude=True)
-    wire_packages: t.StrSequence | None = Field(default=None, exclude=True)
-    wire_classes: Sequence[type] | None = Field(default=None, exclude=True)
+    subproject: Annotated[str | None, Field(default=None, exclude=True)] = None
+    services: Annotated[
+        Mapping[str, t.RegisterableService] | None,
+        Field(default=None, exclude=True),
+    ] = None
+    factories: Annotated[
+        Mapping[str, t.FactoryCallable] | None,
+        Field(default=None, exclude=True),
+    ] = None
+    resources: Annotated[
+        Mapping[str, t.ResourceCallable] | None,
+        Field(default=None, exclude=True),
+    ] = None
+    container_overrides: Annotated[
+        t.ScalarMapping | None,
+        Field(default=None, exclude=True),
+    ] = None
+    wire_modules: Annotated[
+        Sequence[ModuleType] | None, Field(default=None, exclude=True)
+    ] = None
+    wire_packages: Annotated[
+        t.StrSequence | None, Field(default=None, exclude=True)
+    ] = None
+    wire_classes: Annotated[
+        Sequence[type] | None, Field(default=None, exclude=True)
+    ] = None
 
     # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)

@@ -25,9 +25,10 @@ class FlextModelsDispatcher:
     class TimeoutEnforcer(FlextModelFoundation.ArbitraryTypesModel):
         """Manage timeout enforcement and dispatcher thread-pool execution."""
 
-        use_timeout_executor: bool = Field(
-            description="Whether timeout executor is enabled",
-        )
+        use_timeout_executor: Annotated[
+            bool,
+            Field(description="Whether timeout executor is enabled"),
+        ]
         executor_workers: Annotated[
             t.PositiveInt,
             Field(
@@ -379,16 +380,21 @@ class FlextModelsDispatcher:
     class RateLimiterManager(FlextModelFoundation.ArbitraryTypesModel):
         """Enforce per-message rate limits with a sliding window algorithm."""
 
-        max_requests: t.PositiveInt = Field(
-            description="Maximum requests allowed per window",
-        )
-        window_seconds: t.PositiveFloat = Field(
-            description="Time window in seconds for rate limiting",
-        )
-        jitter_factor: t.DecimalFraction = Field(
-            default=0.1,
-            description="Jitter variance as fraction between 0.0 and 1.0",
-        )
+        max_requests: Annotated[
+            t.PositiveInt,
+            Field(description="Maximum requests allowed per window"),
+        ]
+        window_seconds: Annotated[
+            t.PositiveFloat,
+            Field(description="Time window in seconds for rate limiting"),
+        ]
+        jitter_factor: Annotated[
+            t.DecimalFraction,
+            Field(
+                default=0.1,
+                description="Jitter variance as fraction between 0.0 and 1.0",
+            ),
+        ] = 0.1
         _windows: dict[str, FlextModelsDispatcher.RateWindow] = PrivateAttr(
             default_factory=lambda: dict[str, FlextModelsDispatcher.RateWindow](),
         )
@@ -481,20 +487,28 @@ class FlextModelsDispatcher:
     class RetryPolicy(FlextModelFoundation.ArbitraryTypesModel):
         """Coordinate retry attempts with configurable backoff for dispatcher steps."""
 
-        max_attempts: t.PositiveInt = Field(
-            description="Maximum retry attempts allowed",
-        )
-        retry_delay: t.PositiveFloat = Field(
-            description="Base delay in seconds between retry attempts",
-        )
-        exponential_factor: t.BackoffMultiplier = Field(
-            default=2.0,
-            description="Multiplier for exponential backoff between retries",
-        )
-        max_delay: t.PositiveFloat = Field(
-            default=c.DEFAULT_MAX_DELAY_SECONDS,
-            description="Maximum delay cap in seconds",
-        )
+        max_attempts: Annotated[
+            t.PositiveInt,
+            Field(description="Maximum retry attempts allowed"),
+        ]
+        retry_delay: Annotated[
+            t.PositiveFloat,
+            Field(description="Base delay in seconds between retry attempts"),
+        ]
+        exponential_factor: Annotated[
+            t.BackoffMultiplier,
+            Field(
+                default=2.0,
+                description="Multiplier for exponential backoff between retries",
+            ),
+        ] = 2.0
+        max_delay: Annotated[
+            t.PositiveFloat,
+            Field(
+                default=c.DEFAULT_MAX_DELAY_SECONDS,
+                description="Maximum delay cap in seconds",
+            ),
+        ] = c.DEFAULT_MAX_DELAY_SECONDS
         _attempts: dict[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )

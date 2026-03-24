@@ -62,7 +62,7 @@ class FlextModelsContextExport:
                 default_factory=dict,
                 description="Usage statistics (operation counts, timing info)",
             ),
-        ] = Field(default_factory=dict)
+        ]
 
         @computed_field
         def has_statistics(self) -> bool:

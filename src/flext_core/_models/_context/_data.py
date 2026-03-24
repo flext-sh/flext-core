@@ -112,7 +112,7 @@ class FlextModelsContextData:
                 default_factory=t.Dict,
                 description="Initial context data as key-value pairs",
             ),
-        ] = Field(default_factory=t.Dict)
+        ]
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.Dict | None,
             BeforeValidator(

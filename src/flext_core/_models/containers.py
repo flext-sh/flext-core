@@ -63,11 +63,14 @@ class FlextModelsContainers:
     class ValidatorCallable(RootModel[t.ValidatorCallable]):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
-        root: t.ValidatorCallable = Field(
-            title="Validator Callable",
-            description="Callable that validates or transforms one scalar/model input value.",
-            examples=["identity_validator"],
-        )
+        root: Annotated[
+            t.ValidatorCallable,
+            Field(
+                title="Validator Callable",
+                description="Callable that validates or transforms one scalar/model input value.",
+                examples=["identity_validator"],
+            ),
+        ]
 
         def __call__(self, value: t.ScalarOrModel | None) -> t.ScalarOrModel | None:
             """Execute validator."""

@@ -50,20 +50,29 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: list[m.RegistrationDetails] = Field(
-            default_factory=lambda: list[m.RegistrationDetails](),
-            description="Successfully registered handlers with registration details.",
-        )
-        skipped: t.StrSequence = Field(
-            default_factory=list,
-            description="Handler identifiers that were skipped (already registered)",
-            examples=[["CreateUserCommand", "UpdateUserCommand"]],
-        )
-        errors: MutableSequence[str] = Field(
-            default_factory=list,
-            description="Error messages for failed registrations",
-            examples=[["Handler validation failed", "Duplicate registration"]],
-        )
+        registered: Annotated[
+            list[m.RegistrationDetails],
+            Field(
+                default_factory=lambda: list[m.RegistrationDetails](),
+                description="Successfully registered handlers with registration details.",
+            ),
+        ]
+        skipped: Annotated[
+            t.StrSequence,
+            Field(
+                default_factory=list,
+                description="Handler identifiers that were skipped (already registered)",
+                examples=[["CreateUserCommand", "UpdateUserCommand"]],
+            ),
+        ]
+        errors: Annotated[
+            MutableSequence[str],
+            Field(
+                default_factory=list,
+                description="Error messages for failed registrations",
+                examples=[["Handler validation failed", "Duplicate registration"]],
+            ),
+        ]
 
         @computed_field
         def is_failure(self) -> bool:

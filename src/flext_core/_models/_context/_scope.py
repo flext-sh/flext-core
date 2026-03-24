@@ -71,7 +71,7 @@ class FlextModelsContextScope:
                 default_factory=dict,
                 description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ] = Field(default_factory=dict)
+        ]
 
 
 __all__ = ["FlextModelsContextScope"]

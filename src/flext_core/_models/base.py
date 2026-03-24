@@ -451,7 +451,7 @@ class FlextModelFoundation:
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ] = Field(default_factory=lambda: datetime.now(UTC))
+        ]
         updated_at: Annotated[
             datetime,
             Field(
@@ -460,7 +460,7 @@ class FlextModelFoundation:
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ] = Field(default_factory=lambda: datetime.now(UTC))
+        ]
         version: Annotated[
             str,
             Field(
@@ -496,7 +496,7 @@ class FlextModelFoundation:
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ] = Field(default_factory=list)
+        ]
         attributes: Annotated[
             Mapping[str, t.MetadataValue],
             Field(
@@ -505,7 +505,7 @@ class FlextModelFoundation:
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = Field(default_factory=dict)
+        ]
         metadata_value: Annotated[
             t.Scalar | None,
             Field(default=None, description="Scalar metadata value."),
@@ -712,7 +712,7 @@ class FlextModelFoundation:
                 description="Unique identifier",
                 frozen=False,
             ),
-        ] = Field(default_factory=lambda: str(uuid.uuid4()))
+        ]
 
         def regenerate_id(self) -> None:
             """Regenerate the unique_id with a new UUID."""
@@ -733,7 +733,7 @@ class FlextModelFoundation:
                 description="Creation timestamp (UTC)",
                 frozen=True,
             ),
-        ] = Field(default_factory=lambda: datetime.now(UTC))
+        ]
         updated_at: Annotated[
             datetime | None,
             AfterValidator(lambda v: FlextModelFoundation._ensure_utc_datetime(v)),

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import override
+from typing import Annotated, override
 
 from pydantic import Field
 
@@ -67,28 +67,43 @@ class FlextError(m.ArbitraryTypesModel):
 
     """
 
-    domain: FlextErrorDomain = Field(
-        default=FlextErrorDomain.UNKNOWN,
-        description="Error domain category for routing",
-    )
+    domain: Annotated[
+        FlextErrorDomain,
+        Field(
+            default=FlextErrorDomain.UNKNOWN,
+            description="Error domain category for routing",
+        ),
+    ]
 
-    code: str = Field(
-        description="Specific error code (e.g., INVALID_EMAIL, NO_CONNECTION)",
-    )
+    code: Annotated[
+        str,
+        Field(
+            description="Specific error code (e.g., INVALID_EMAIL, NO_CONNECTION)",
+        ),
+    ]
 
-    message: str = Field(
-        description="Human-readable error message",
-    )
+    message: Annotated[
+        str,
+        Field(
+            description="Human-readable error message",
+        ),
+    ]
 
-    details: t.ConfigMap = Field(
-        default_factory=lambda: t.ConfigMap(root={}),
-        description="Additional error metadata and context",
-    )
+    details: Annotated[
+        t.ConfigMap,
+        Field(
+            default_factory=lambda: t.ConfigMap(root={}),
+            description="Additional error metadata and context",
+        ),
+    ]
 
-    source: BaseException | None = Field(
-        default=None,
-        description="Original exception if error was caught from an exception",
-    )
+    source: Annotated[
+        BaseException | None,
+        Field(
+            default=None,
+            description="Original exception if error was caught from an exception",
+        ),
+    ]
 
     @classmethod
     def from_exception(

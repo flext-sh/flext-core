@@ -69,7 +69,7 @@ class FlextModelsContextMetadata:
                 default_factory=dict,
                 description="Custom metadata attributes for caller-specific tracing and context.",
             ),
-        ] = Field(default_factory=dict)
+        ]
 
         @model_validator(mode="after")
         def validate_context_protocol(self) -> Self:
