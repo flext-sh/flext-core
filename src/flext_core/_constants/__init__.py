@@ -25,11 +25,23 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
     "FlextConstantsCqrs": ("flext_core._constants.cqrs", "FlextConstantsCqrs"),
     "FlextConstantsDomain": ("flext_core._constants.domain", "FlextConstantsDomain"),
-    "FlextConstantsInfrastructure": ("flext_core._constants.infrastructure", "FlextConstantsInfrastructure"),
+    "FlextConstantsInfrastructure": (
+        "flext_core._constants.infrastructure",
+        "FlextConstantsInfrastructure",
+    ),
     "FlextConstantsMixins": ("flext_core._constants.mixins", "FlextConstantsMixins"),
-    "FlextConstantsPlatform": ("flext_core._constants.platform", "FlextConstantsPlatform"),
-    "FlextConstantsSettings": ("flext_core._constants.settings", "FlextConstantsSettings"),
-    "FlextConstantsValidation": ("flext_core._constants.validation", "FlextConstantsValidation"),
+    "FlextConstantsPlatform": (
+        "flext_core._constants.platform",
+        "FlextConstantsPlatform",
+    ),
+    "FlextConstantsSettings": (
+        "flext_core._constants.settings",
+        "FlextConstantsSettings",
+    ),
+    "FlextConstantsValidation": (
+        "flext_core._constants.validation",
+        "FlextConstantsValidation",
+    ),
 }
 
 __all__ = [
