@@ -76,7 +76,8 @@ class FlextModelsContextData:
             working_value: t.ContainerMapping
             normalized_mapping: Mapping[str, t.ValueOrModel]
             if v is None:
-                return {}
+                empty: t.ContainerMapping = {}
+                return empty
             if isinstance(v, FlextModelFoundation.Metadata):
                 normalized_metadata: Mapping[str, t.ValueOrModel] = {
                     key: FlextRuntime.normalize_to_container(value)

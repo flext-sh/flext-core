@@ -34,7 +34,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from tests import c, m, t, u
 
 
-
 class TestModels:
     """Test suite for m using u and c."""
 
@@ -733,9 +732,7 @@ class TestModels:
                 Mapping[str, t.NormalizedValue], Field(default_factory=dict)
             ]
 
-            def _apply_test_event(
-                self, data: Mapping[str, t.NormalizedValue]
-            ) -> None:
+            def _apply_test_event(self, data: Mapping[str, t.NormalizedValue]) -> None:
                 self.handler_called = True
                 self.handler_data = data
 

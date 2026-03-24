@@ -37,7 +37,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         default: t.ContainerMapping | None,
     ) -> t.ContainerMapping:
         if value is None:
-            return default if default is not None else {}
+            empty_dict: t.ContainerMapping = {}
+            return default if default is not None else empty_dict
         if isinstance(value, Mapping):
             mapping_value: t.ContainerMapping = value
             normalized: t.MutableContainerMapping = {}
@@ -53,7 +54,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         default: t.ContainerList | None,
     ) -> t.ContainerList:
         if value is None:
-            return default if default is not None else []
+            empty_list: t.ContainerList = []
+            return default if default is not None else empty_list
         if isinstance(value, list):
             return list(value)
         single_item_list: t.ContainerList = [value]

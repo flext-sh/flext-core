@@ -84,7 +84,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
     ) -> t.ContainerMapping:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
-            return {}
+            empty: t.ContainerMapping = {}
+            return empty
 
         payload: Mapping[str, t.ValueOrModel] | t.ContainerMapping
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
@@ -94,7 +95,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
         elif u.is_mapping(ctx_value):
             payload = ctx_value
         else:
-            return {}
+            empty_fallback: t.ContainerMapping = {}
+            return empty_fallback
 
         try:
             normalized: t.MutableContainerMapping = {}
@@ -103,7 +105,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
             )
             for key, value in mapping_value.items():
                 if str(key) != key:
-                    return {}
+                    empty_key: t.ContainerMapping = {}
+                    return empty_key
                 if value is None:
                     normalized[key] = None
                     continue
@@ -124,7 +127,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 "Failed to normalize contextvar payload to configuration dict",
                 exc_info=exc,
             )
-            return {}
+            empty_err: t.ContainerMapping = {}
+            return empty_err
 
     _metadata: m.Metadata = PrivateAttr()
     _hooks: Mapping[str, Sequence[Callable[[t.Scalar], t.ValueOrModel | None]]] = (
@@ -802,7 +806,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
         """
         if not self._active:
-            return []
+            empty_values: t.ContainerList = []
+            return empty_values
         all_values: t.MutableContainerList = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
