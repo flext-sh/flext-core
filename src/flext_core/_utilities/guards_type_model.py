@@ -93,12 +93,14 @@ class FlextUtilitiesGuardsTypeModel:
         if isinstance(value, t.Dict):
             for item_value in value.root.values():
                 if isinstance(
-                    item_value, BaseModel
+                    item_value,
+                    BaseModel,
                 ) or not FlextUtilitiesGuardsTypeCore.is_container(item_value):
                     return False
             return True
         return isinstance(
-            value, Mapping
+            value,
+            Mapping,
         ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
 
     @staticmethod
@@ -121,7 +123,8 @@ class FlextUtilitiesGuardsTypeModel:
         )
         for item_value in candidate.values():
             if isinstance(
-                item_value, BaseModel
+                item_value,
+                BaseModel,
             ) or not FlextUtilitiesGuardsTypeCore.is_container(item_value):
                 return False
         return True

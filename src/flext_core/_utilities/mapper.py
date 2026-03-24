@@ -2431,7 +2431,8 @@ class FlextUtilitiesMapper:
             else:
                 primary_general = FlextUtilitiesMapper.narrow_to_container(primary_data)
                 if FlextRuntime.is_dict_like(primary_general) and isinstance(
-                    primary_general, dict
+                    primary_general,
+                    dict,
                 ):
                     primary_source = {
                         str(key): item_value
@@ -2459,7 +2460,8 @@ class FlextUtilitiesMapper:
                     secondary_data,
                 )
                 if FlextRuntime.is_dict_like(secondary_general) and isinstance(
-                    secondary_general, dict
+                    secondary_general,
+                    dict,
                 ):
                     secondary_source = {
                         str(key): item_value
@@ -2485,7 +2487,8 @@ class FlextUtilitiesMapper:
         if filter_keys:
             result = dict(
                 FlextUtilitiesMapper.filter_dict(
-                    result, lambda k, _v: k in filter_keys
+                    result,
+                    lambda k, _v: k in filter_keys,
                 ),
             )
         if exclude_keys:

@@ -550,7 +550,9 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             "^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\\.[a-zA-Z0-9-]{1,63}(?<!-))*$"
         )
         return FlextUtilitiesGuardsEnsure.validate_pattern(
-            hostname, hostname_pattern, field_name
+            hostname,
+            hostname_pattern,
+            field_name,
         )
 
     @staticmethod
@@ -567,11 +569,11 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return r[T].fail(f"{field_name} length is invalid")
         if min_length is not None and length < min_length:
             return r[T].fail(
-                f"{field_name} must have at least {min_length} characters/items"
+                f"{field_name} must have at least {min_length} characters/items",
             )
         if max_length is not None and length > max_length:
             return r[T].fail(
-                f"{field_name} must have at most {max_length} characters/items"
+                f"{field_name} must have at most {max_length} characters/items",
             )
         return r[T].ok(value)
 

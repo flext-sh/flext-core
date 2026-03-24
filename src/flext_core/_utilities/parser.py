@@ -253,7 +253,8 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_find_first[T](
-        items: Sequence[T], predicate: Callable[[T], bool]
+        items: Sequence[T],
+        predicate: Callable[[T], bool],
     ) -> r[T]:
         """Find first item matching predicate (avoids circular import)."""
         for item in items:
@@ -746,7 +747,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: p.HasModelDump | Sequence[str] | t.ConfigMap | Mapping[str, t.Container],
+        items: p.HasModelDump | Sequence[str] | t.ConfigMap | t.FlatContainerMapping,
         *,
         case: str | None = None,
     ) -> bool:
@@ -791,7 +792,10 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_join(
-        items: Sequence[str], *, case: str | None = None, sep: str = " "
+        items: Sequence[str],
+        *,
+        case: str | None = None,
+        sep: str = " ",
     ) -> str:
         """Normalize and join (builder: norm().join()).
 

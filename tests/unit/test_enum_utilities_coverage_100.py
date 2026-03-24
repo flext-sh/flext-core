@@ -239,7 +239,7 @@ class TestEnumUtilitiesCoverage:
     @pytest.mark.parametrize("scenario", IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        value_typed: bool | float | int | str | StrEnum = (
+        value_typed: t.Primitives | StrEnum = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, StrEnum))
             else str(scenario.value)
@@ -251,7 +251,7 @@ class TestEnumUtilitiesCoverage:
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
         if isinstance(scenario.value, (str, int, float, bool)):
-            value_typed: bool | float | int | str = scenario.value
+            value_typed: t.Primitives = scenario.value
         else:
             value_typed = str(scenario.value)
         result = u.is_subset(
@@ -299,7 +299,7 @@ class TestEnumUtilitiesCoverage:
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""
         validator = u.coerce_validator(self.Status)
-        value: bool | float | int | str | StrEnum = (
+        value: t.Primitives | StrEnum = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, StrEnum))
             else str(scenario.value)

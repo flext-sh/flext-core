@@ -673,9 +673,7 @@ class TestFlextContext:
         ),
     )
     @settings(max_examples=50)
-    def test_set_get_roundtrip_property(
-        self, key: str, value: t.Primitives
-    ) -> None:
+    def test_set_get_roundtrip_property(self, key: str, value: t.Primitives) -> None:
         """Property: set then get returns the same value."""
         ctx = FlextContext.create()
         tm.ok(ctx.set(key, value), eq=True)

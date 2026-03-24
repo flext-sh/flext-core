@@ -31,7 +31,7 @@ class FlextUtilitiesPagination:
     def build_pagination_response(
         pagination_data: Mapping[
             str,
-            Sequence[t.RuntimeAtomic] | Mapping[str, t.Container] | str,
+            Sequence[t.RuntimeAtomic] | t.FlatContainerMapping | str,
         ],
         message: str | None = None,
     ) -> r[Mapping[str, str]]:

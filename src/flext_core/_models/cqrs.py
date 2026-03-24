@@ -287,10 +287,12 @@ class FlextModelsCqrs:
             },
         )
         handler_id: Annotated[
-            t.NonEmptyStr, Field(description="Unique handler identifier")
+            t.NonEmptyStr,
+            Field(description="Unique handler identifier"),
         ]
         handler_name: Annotated[
-            t.NonEmptyStr, Field(description="Human-readable handler name")
+            t.NonEmptyStr,
+            Field(description="Human-readable handler name"),
         ]
         handler_type: Annotated[
             c.HandlerType,

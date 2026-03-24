@@ -409,7 +409,8 @@ class FlextModelsHandler:
         """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
         command: Annotated[
             type,

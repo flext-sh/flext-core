@@ -190,8 +190,8 @@ class FlextMixins(m.ArbitraryTypesModel, u):
     @staticmethod
     def _normalize_log_payload(
         payload: Mapping[str, t.ValueOrModel],
-    ) -> Mapping[str, t.Container]:
-        normalized: MutableMapping[str, t.Container] = {}
+    ) -> t.FlatContainerMapping:
+        normalized: t.MutableFlatContainerMapping = {}
         for key, value in payload.items():
             atomic = u.normalize_to_container(value)
             if isinstance(atomic, BaseModel):
@@ -497,7 +497,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         class MetricsTracker:
             """Tracks handler execution metrics."""
 
-            _metrics: MutableMapping[str, t.Scalar]
+            _metrics: t.MutableConfigurationMapping
 
             def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
                 """Initialize metrics tracker with empty metrics store."""
@@ -624,9 +624,9 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        fail_error_data: Mapping[str, t.Container] | None = {}
+                        fail_error_data: t.FlatContainerMapping | None = {}
                         if validation_result.error_data is not None:
-                            normalized_error_data: MutableMapping[str, t.Container] = {}
+                            normalized_error_data: t.MutableFlatContainerMapping = {}
                             for key, value in validation_result.error_data.root.items():
                                 normalized = u.normalize_to_container(value)
                                 if isinstance(normalized, BaseModel):

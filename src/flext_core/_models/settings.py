@@ -56,7 +56,8 @@ class FlextModelsConfig:
         """Automatic settings wrapper for BaseSettings classes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
 
         config_class: Annotated[
@@ -196,7 +197,8 @@ class FlextModelsConfig:
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
         def validate_backoff_strategy(
-            cls, v: Sequence[int] | Sequence[t.Scalar]
+            cls,
+            v: Sequence[int] | Sequence[t.Scalar],
         ) -> Sequence[int]:
             """Validate status codes are valid HTTP codes."""
             codes_for_validation: MutableSequence[int] = []
@@ -1084,10 +1086,12 @@ class FlextModelsConfig:
         """
 
         func_name: Annotated[
-            t.NonEmptyStr, Field(description="Function name for logging")
+            t.NonEmptyStr,
+            Field(description="Function name for logging"),
         ]
         func_module: Annotated[
-            t.NonEmptyStr, Field(description="Function module for logging")
+            t.NonEmptyStr,
+            Field(description="Function module for logging"),
         ]
         correlation_id: Annotated[
             str | None,

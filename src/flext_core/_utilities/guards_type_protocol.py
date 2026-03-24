@@ -120,9 +120,8 @@ class FlextUtilitiesGuardsTypeProtocol:
             True if value is a valid handler-like type, False otherwise.
 
         """
-        return (
-            callable(value)
-            or isinstance(value, (Mapping, p.HasModelDump, p.Handle, p.AutoDiscoverableHandler))
+        return callable(value) or isinstance(
+            value, (Mapping, p.HasModelDump, p.Handle, p.AutoDiscoverableHandler)
         )
 
     @staticmethod
@@ -275,7 +274,8 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return False
             case "list_non_empty":
                 if isinstance(value, (list, tuple)) and not isinstance(
-                    value, (str, bytes)
+                    value,
+                    (str, bytes),
                 ):
                     return bool(value)
                 return False

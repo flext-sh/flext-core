@@ -60,3 +60,14 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
     )
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, FlextTypingBase.Scalar]
+
+    # Short aliases for high-frequency inline patterns (annotation-only, not base classes)
+    type ContainerValueMapping = Mapping[str, FlextTypesCore.ContainerValue]
+    type ContainerValueList = Sequence[FlextTypesCore.ContainerValue]
+    type JsonMapping = Mapping[str, FlextTypesCore.JsonValue]
+    type JsonList = Sequence[FlextTypesCore.JsonValue]
+    type GeneralValueMapping = Mapping[str, FlextTypesCore.GeneralValueType]
+
+    # Runtime tuples for isinstance checks (mirrors base.py CONTAINER_TYPES pattern)
+    CONTAINER_VALUE_SCALAR_TYPES: tuple[type, ...] = FlextTypingBase.SCALAR_TYPES
+    """Runtime tuple for ContainerValue leaf isinstance checks."""

@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, Self, override
@@ -53,9 +53,9 @@ class FlextModelFoundation:
         _metadata_map_adapter: ClassVar[
             TypeAdapter[Mapping[str, t.MetadataValue]] | None
         ] = None
-        _config_adapter: ClassVar[TypeAdapter[Mapping[str, t.Container]] | None] = None
+        _config_adapter: ClassVar[TypeAdapter[t.FlatContainerMapping] | None] = None
         _dict_container_adapter: ClassVar[
-            TypeAdapter[Mapping[str, t.Container]] | None
+            TypeAdapter[t.FlatContainerMapping] | None
         ] = None
         _list_container_adapter: ClassVar[TypeAdapter[Sequence[t.Container]] | None] = (
             None
@@ -101,10 +101,10 @@ class FlextModelFoundation:
         ] = None
 
         @classmethod
-        def config_adapter(cls) -> TypeAdapter[Mapping[str, t.Container]]:
+        def config_adapter(cls) -> TypeAdapter[t.FlatContainerMapping]:
             """Lazy-load config TypeAdapter on first access."""
             if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(Mapping[str, t.Container])
+                cls._config_adapter = TypeAdapter(t.FlatContainerMapping)
             return cls._config_adapter
 
         @classmethod
@@ -142,10 +142,10 @@ class FlextModelFoundation:
             return cls._tags_adapter
 
         @classmethod
-        def dict_container_adapter(cls) -> TypeAdapter[Mapping[str, t.Container]]:
+        def dict_container_adapter(cls) -> TypeAdapter[t.FlatContainerMapping]:
             """Lazy-load Mapping[str, Container] TypeAdapter on first access."""
             if cls._dict_container_adapter is None:
-                cls._dict_container_adapter = TypeAdapter(Mapping[str, t.Container])
+                cls._dict_container_adapter = TypeAdapter(t.FlatContainerMapping)
             return cls._dict_container_adapter
 
         @classmethod
@@ -283,7 +283,7 @@ class FlextModelFoundation:
         ) -> TypeAdapter[Mapping[str, t.Primitives]]:
             if cls._metadata_json_dict_adapter is None:
                 cls._metadata_json_dict_adapter = TypeAdapter(
-                    Mapping[str, t.Primitives]
+                    Mapping[str, t.Primitives],
                 )
             return cls._metadata_json_dict_adapter
 
@@ -293,7 +293,7 @@ class FlextModelFoundation:
         ) -> TypeAdapter[Mapping[str, t.Primitives]]:
             if cls._flat_metadata_dict_adapter is None:
                 cls._flat_metadata_dict_adapter = TypeAdapter(
-                    Mapping[str, t.Primitives]
+                    Mapping[str, t.Primitives],
                 )
             return cls._flat_metadata_dict_adapter
 
@@ -330,7 +330,7 @@ class FlextModelFoundation:
         @staticmethod
         def validate_config_dict(
             v: t.ValueOrModel,
-        ) -> Mapping[str, t.Container]:
+        ) -> t.FlatContainerMapping:
             """Validate configuration dictionary structure."""
             try:
                 normalized = (
@@ -339,7 +339,7 @@ class FlextModelFoundation:
             except (TypeError, ValueError) as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out: MutableMapping[str, t.Container] = {}
+            out: t.MutableFlatContainerMapping = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"

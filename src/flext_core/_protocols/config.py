@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import Protocol, Self, runtime_checkable
 
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
@@ -19,7 +18,7 @@ class FlextProtocolsConfig:
     class Configurable(FlextProtocolsBase.Base, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: Mapping[str, t.Container] | None = None) -> Self:
+        def configure(self, config: t.FlatContainerMapping | None = None) -> Self:
             """Configure component with settings."""
             ...
 
@@ -53,7 +52,7 @@ class FlextProtocolsConfig:
         def model_copy(
             self,
             *,
-            update: Mapping[str, t.Container] | None = None,
+            update: t.FlatContainerMapping | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.

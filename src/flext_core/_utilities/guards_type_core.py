@@ -125,7 +125,7 @@ class FlextUtilitiesGuardsTypeCore:
         return bool(
             isinstance(value, Sequence)
             and (not isinstance(value, (str, bytes)))
-            and value
+            and value,
         )
 
     @staticmethod

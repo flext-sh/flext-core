@@ -32,7 +32,9 @@ class FlextModelsDecorators:
         """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, extra="forbid", validate_assignment=True
+            frozen=True,
+            extra="forbid",
+            validate_assignment=True,
         )
         timeout_seconds: Annotated[
             t.PositiveFloat,

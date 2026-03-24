@@ -44,8 +44,6 @@ class FlextTypes(
     ``None`` is **never** baked into definitions.
     """
 
-    pass
-
 
 t = FlextTypes
 

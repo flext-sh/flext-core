@@ -34,8 +34,6 @@ class FlextConstants(
     All constants are accessible via inheritance—do not duplicate parent attributes.
     """
 
-    pass
-
 
 c = FlextConstants
 __all__ = [

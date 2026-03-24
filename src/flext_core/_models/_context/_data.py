@@ -93,7 +93,7 @@ class FlextModelsContextData:
                 normalized_mapping = dict(v)
             working_value = {
                 str(
-                    k
+                    k,
                 ): FlextModelsContextData.ContextData.normalize_to_serializable_value(
                     val,
                 )
@@ -115,7 +115,7 @@ class FlextModelsContextData:
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.Dict | None,
             BeforeValidator(
-                lambda v: FlextModelsContextData.normalize_metadata_before(v)
+                lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),
             Field(
                 default=None,

@@ -1223,7 +1223,7 @@ class FlextRuntime:
             "critical": 50,
         }
         current_level = level_hierarchy.get(method_name.lower(), 20)
-        filtered_dict: MutableMapping[str, t.Scalar] = {}
+        filtered_dict: t.MutableConfigurationMapping = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
                 parts = key.split("_", c.LEVEL_PREFIX_PARTS_COUNT)

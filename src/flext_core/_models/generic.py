@@ -69,7 +69,8 @@ class FlextGenericModels:
             Field(default=None, description="Source system"),
         ] = None
         user_id: Annotated[
-            t.NonEmptyStr | None, Field(default=None, description="User ID")
+            t.NonEmptyStr | None,
+            Field(default=None, description="User ID"),
         ] = None
         tenant_id: Annotated[
             t.NonEmptyStr | None,
@@ -136,13 +137,16 @@ class FlextGenericModels:
             Field(default="unknown", description="Health status"),
         ] = "unknown"
         port: Annotated[
-            t.PortNumber | None, Field(default=None, description="Port")
+            t.PortNumber | None,
+            Field(default=None, description="Port"),
         ] = None
         host: Annotated[
-            t.HostnameStr | None, Field(default=None, description="Host")
+            t.HostnameStr | None,
+            Field(default=None, description="Host"),
         ] = None
         pid: Annotated[
-            t.PositiveInt | None, Field(default=None, description="Process ID")
+            t.PositiveInt | None,
+            Field(default=None, description="Process ID"),
         ] = None
         memory_usage_mb: Annotated[
             t.NonNegativeFloat | None,
@@ -284,19 +288,24 @@ class FlextGenericModels:
         """
 
         success_count: Annotated[
-            t.NonNegativeInt, Field(default=0, description="Successes")
+            t.NonNegativeInt,
+            Field(default=0, description="Successes"),
         ] = 0
         failure_count: Annotated[
-            t.NonNegativeInt, Field(default=0, description="Failures")
+            t.NonNegativeInt,
+            Field(default=0, description="Failures"),
         ] = 0
         skipped_count: Annotated[
-            t.NonNegativeInt, Field(default=0, description="Skipped")
+            t.NonNegativeInt,
+            Field(default=0, description="Skipped"),
         ] = 0
         warning_count: Annotated[
-            t.NonNegativeInt, Field(default=0, description="Warnings")
+            t.NonNegativeInt,
+            Field(default=0, description="Warnings"),
         ] = 0
         retry_count: Annotated[
-            t.NonNegativeInt, Field(default=0, description="Retries")
+            t.NonNegativeInt,
+            Field(default=0, description="Retries"),
         ] = 0
         start_time: Annotated[
             datetime | None,

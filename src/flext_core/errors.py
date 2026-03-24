@@ -130,7 +130,7 @@ class FlextError(FlextModelFoundation.ArbitraryTypesModel):
                 "code": self.code,
                 "message": self.message,
             }
-            | dict(self.details)
+            | dict(self.details),
         )
 
     @override

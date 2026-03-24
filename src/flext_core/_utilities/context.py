@@ -69,23 +69,23 @@ class FlextUtilitiesContext:
             vars(runtime) if hasattr(runtime, "__dict__") else {}
         )
         if "_dispatcher" in runtime_vars:
-            setattr(cloned, "_dispatcher", runtime_vars["_dispatcher"])
+            cloned._dispatcher = runtime_vars["_dispatcher"]
         if "_registry" in runtime_vars:
-            setattr(cloned, "_registry", runtime_vars["_registry"])
+            cloned._registry = runtime_vars["_registry"]
         if "_context" in runtime_vars:
             cloned_context = context or runtime_vars["_context"]
-            setattr(cloned, "_context", cloned_context)
+            cloned._context = cloned_context
         if "_config" in runtime_vars:
             runtime_config = runtime_vars["_config"]
             if isinstance(config_overrides, t.ConfigMap):
                 override_values = dict(config_overrides.items())
                 if isinstance(runtime_config, BaseModel):
                     cloned_config = runtime_config.model_copy(update=override_values)
-                    setattr(cloned, "_config", cloned_config)
+                    cloned._config = cloned_config
                 else:
-                    setattr(cloned, "_config", runtime_config)
+                    cloned._config = runtime_config
             else:
-                setattr(cloned, "_config", runtime_config)
+                cloned._config = runtime_config
         return cloned
 
     @staticmethod

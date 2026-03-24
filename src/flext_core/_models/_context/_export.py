@@ -42,7 +42,7 @@ class FlextModelsContextExport:
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.Dict | None,
             BeforeValidator(
-                lambda v: FlextModelsContextData.normalize_metadata_before(v)
+                lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),
             Field(
                 default=None,

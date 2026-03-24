@@ -52,7 +52,7 @@ class FlextUtilitiesArgs:
             if isinstance(fallback_annotations, Mapping):
                 try:
                     hints = TypeAdapter(
-                        Mapping[str, t.TypeHintSpecifier]
+                        Mapping[str, t.TypeHintSpecifier],
                     ).validate_python(
                         fallback_annotations,
                     )

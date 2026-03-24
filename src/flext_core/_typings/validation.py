@@ -1,9 +1,5 @@
 """FlextTypesValidation - constrained validation aliases.
 
-Uses ``annotated-types`` constraints (Gt, Ge, Le, Len) instead of Pydantic
-``Field()`` so that the aliases are portable beyond Pydantic validators.
-Pydantic v2 natively understands these constraints.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

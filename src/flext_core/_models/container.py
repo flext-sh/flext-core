@@ -65,7 +65,8 @@ class FlextModelsContainer:
             return FlextModelsContainer._normalize_metadata(v)
 
     class ServiceRegistration(
-        _MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel
+        _MetadataValidatorMixin,
+        FlextModelFoundation.ArbitraryTypesModel,
     ):
         """Model for service registry entries.
 
@@ -189,7 +190,8 @@ class FlextModelsContainer:
             raise ValueError(msg)
 
     class FactoryRegistration(
-        _MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel
+        _MetadataValidatorMixin,
+        FlextModelFoundation.ArbitraryTypesModel,
     ):
         """Model for factory registry entries.
 
@@ -247,7 +249,8 @@ class FlextModelsContainer:
         ] = c.ZERO
 
     class ResourceRegistration(
-        _MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel
+        _MetadataValidatorMixin,
+        FlextModelFoundation.ArbitraryTypesModel,
     ):
         """Model for lifecycle-managed resource registrations.
 
@@ -349,7 +352,8 @@ class FlextModelsContainer:
         """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True, arbitrary_types_allowed=True
+            strict=True,
+            arbitrary_types_allowed=True,
         )
 
         config: Annotated[

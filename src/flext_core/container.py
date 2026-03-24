@@ -152,7 +152,7 @@ class FlextContainer(p.Container):
         if not registration_kwargs:
             return registration
         override_registration = m.ServiceRegistrationSpec.model_validate(
-            registration_kwargs
+            registration_kwargs,
         )
         return FlextContainer._merge_registration_specs(
             registration,
@@ -520,7 +520,7 @@ class FlextContainer(p.Container):
         self._resources.clear()
 
     @override
-    def configure(self, config: Mapping[str, t.Container] | None = None) -> Self:
+    def configure(self, config: t.FlatContainerMapping | None = None) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Args:
@@ -530,7 +530,7 @@ class FlextContainer(p.Container):
         """
         if config is None:
             return self
-        config_map: Mapping[str, t.Container] = config
+        config_map: t.FlatContainerMapping = config
         processed_dict = t.ConfigMap(root={})
         for key, value in config_map.items():
             processed_dict[str(key)] = u.normalize_to_container(value)
@@ -1004,7 +1004,9 @@ class FlextContainer(p.Container):
         if context is None:
             ctx_instance = self.context
             clone_method = (
-                ctx_instance.clone if isinstance(ctx_instance, p.ContextLifecycle) else None
+                ctx_instance.clone
+                if isinstance(ctx_instance, p.ContextLifecycle)
+                else None
             )
             if callable(clone_method):
                 candidate_context = clone_method()

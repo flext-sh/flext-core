@@ -1,25 +1,5 @@
 """FlextTypingContainers - Pydantic RootModel container types for payload handling.
 
-**Purpose:** Strongly-typed container models with Pydantic v2 validation + dict/list protocols.
-
-**What It Declares:**
-- RootDictModel[T]: Base class implementing dict protocol over RootModel[Mapping[str, T]]
-- ObjectList: RootModel[Sequence[Container]] for batch operations
-- Dict: Validated dict for request/response payloads
-- ConfigMap: Validated dict for configuration entries
-
-**Why It Serves:**
-- Type safety with Pydantic v2 validation
-- Backward compatible dict/list interfaces
-- Semantic clarity (Dict vs ConfigMap express intent)
-- Protocol compliance (Mapping/Sequence) for legacy code
-
-**Where It's Used:**
-- Dict: request/response payloads, event data
-- ConfigMap: settings, container configuration
-- ObjectList: bulk processing, batch operations
-- Protocol: Throughout FLEXT via t.Container, t.ConfigMap
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

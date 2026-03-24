@@ -121,7 +121,7 @@ class FlextLogger(u, p.Logger):
         """Get current global context (internal use only)."""
         try:
             context_vars = u.structlog().contextvars.get_contextvars()
-            context_map: Mapping[str, t.Container] = (
+            context_map: t.FlatContainerMapping = (
                 {
                     str(k): cls._to_container_value(v)
                     for k, v in dict(context_vars).items()
@@ -189,11 +189,11 @@ class FlextLogger(u, p.Logger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: Mapping[str, t.Container] = {
+            current_context: t.FlatContainerMapping = {
                 key: cls._to_container_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: Mapping[str, t.Container] = {
+            incoming_context: t.FlatContainerMapping = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
             current_context_obj: t.ContainerMapping = dict(
@@ -208,7 +208,7 @@ class FlextLogger(u, p.Logger):
                 strategy="deep",
             )
             merged_value = merge_result.unwrap_or(current_context_obj)
-            merged_context: MutableMapping[str, t.Container] = {}
+            merged_context: t.MutableFlatContainerMapping = {}
             for key, value in merged_value.items():
                 merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
@@ -693,7 +693,7 @@ class FlextLogger(u, p.Logger):
     @staticmethod
     def _to_container_context(
         context: Mapping[str, _LogArg | t.Container | t.ValueOrModel],
-    ) -> Mapping[str, t.Container]:
+    ) -> t.FlatContainerMapping:
         """Convert mapping to container context using normalization."""
         return {
             key: FlextLogger._to_container_value(value)

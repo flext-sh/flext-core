@@ -463,7 +463,7 @@ class FlextExceptions:
     @staticmethod
     def _init_error_params[TParams: BaseModel](
         context: Mapping[str, t.MetadataValue] | None,
-        extra_kwargs: Mapping[str, t.Container],
+        extra_kwargs: t.FlatContainerMapping,
         named_params: Mapping[str, t.MetadataValue | None],
         params_cls: type[TParams],
         existing_params: TParams | None,
@@ -488,7 +488,7 @@ class FlextExceptions:
             Tuple of (resolved_params, error_context, metadata, correlation_id)
 
         """
-        mutable_extra: MutableMapping[str, t.Container] = dict(extra_kwargs)
+        mutable_extra: t.MutableFlatContainerMapping = dict(extra_kwargs)
         preserved_metadata_raw = mutable_extra.pop(c.FIELD_METADATA, None)
         preserved_metadata = (
             FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
@@ -1253,7 +1253,7 @@ class FlextExceptions:
         def _normalize_type(
             type_value: type | str | None,
             type_map: Mapping[str, type],
-            extra_kwargs: MutableMapping[str, t.Container],
+            extra_kwargs: t.MutableFlatContainerMapping,
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
@@ -1292,7 +1292,7 @@ class FlextExceptions:
         params: TParams | None,
         named_params: Mapping[str, t.MetadataValue | None],
         param_keys: set[str] | frozenset[str],
-        extra_kwargs: Mapping[str, t.Container],
+        extra_kwargs: t.FlatContainerMapping,
     ) -> None:
         resolved, ctx, meta, corr = e._init_error_params(
             context,

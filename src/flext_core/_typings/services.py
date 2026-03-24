@@ -77,7 +77,8 @@ class FlextTypesServices:
         | p.AutoDiscoverableHandler
     )
     type ResolvedHandlerCallable = Callable[
-        ..., BaseModel | FlextTypesServices.RuntimeAtomic | None
+        ...,
+        BaseModel | FlextTypesServices.RuntimeAtomic | None,
     ]
     type RegisteredHandler = tuple[
         FlextTypesServices.HandlerProtocolVariant,
@@ -94,7 +95,8 @@ class FlextTypesServices:
     )
     type LoggerFactory = Callable[[], p.Logger] | p.Logger | None
     type StructlogProcessor = Callable[
-        ..., Mapping[str, FlextTypingBase.NormalizedValue]
+        ...,
+        Mapping[str, FlextTypingBase.NormalizedValue],
     ]
 
     type SortableObjectType = str | int | float
@@ -113,6 +115,9 @@ class FlextTypesServices:
 
     type ConfigurationMapping = Mapping[str, FlextTypingBase.Scalar]
     type ResultErrorData = Mapping[str, FlextTypingBase.Container]
+    type FlatContainerMapping = Mapping[str, FlextTypingBase.Container]
+    type MutableFlatContainerMapping = MutableMapping[str, FlextTypingBase.Container]
+    type MutableConfigurationMapping = MutableMapping[str, FlextTypingBase.Scalar]
     type ServiceMap = Mapping[str, RegisterableService]
     type ModuleExport = (
         FlextTypingBase.Container

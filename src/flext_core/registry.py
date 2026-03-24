@@ -252,7 +252,10 @@ class FlextRegistry(s[bool]):
         )
 
     def list_plugins(
-        self, category: str, *, scope: str = "instance"
+        self,
+        category: str,
+        *,
+        scope: str = "instance",
     ) -> r[Sequence[str]]:
         """List all plugins in a category.
 

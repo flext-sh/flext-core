@@ -28,7 +28,5 @@ class FlextUtilitiesGuardsType(
     a single interface for convenient access to all type narrowing utilities.
     """
 
-    pass
-
 
 __all__ = ["FlextUtilitiesGuardsType"]

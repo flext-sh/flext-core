@@ -68,8 +68,6 @@ class FlextUtilities(
     Subprojects use their project u. Aliases/namespaces: MRO registration protocol only.
     """
 
-    pass
-
 
 u = FlextUtilities
 __all__ = ["FlextUtilities", "u"]

@@ -146,7 +146,7 @@ class FlextDecorators:
                 )
                 start_time = time.perf_counter() if track_perf else 0.0
                 try:
-                    start_extra: MutableMapping[str, t.Scalar] = {
+                    start_extra: t.MutableConfigurationMapping = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -168,7 +168,7 @@ class FlextDecorators:
                             func_module=func.__module__,
                         )
                     result = func(*args, **kwargs)
-                    completion_extra: MutableMapping[str, t.Scalar] = {
+                    completion_extra: t.MutableConfigurationMapping = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -920,7 +920,7 @@ class FlextDecorators:
                 logger = FlextDecorators._resolve_logger(tuple(args), func)
                 try:
                     if context_vars:
-                        filtered_vars: Mapping[str, t.Container] = {
+                        filtered_vars: t.FlatContainerMapping = {
                             k: v
                             for k, v in context_vars.items()
                             if v is not None and u.is_container(v)

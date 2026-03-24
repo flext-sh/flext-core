@@ -537,13 +537,16 @@ class FlextModelsCollections:
         pattern: Annotated[t.NonEmptyStr, Field(description="Regex pattern")]
         replacement: Annotated[str, Field(description="Replacement string")]
         flags: Annotated[
-            t.NonNegativeInt, Field(default=0, description="Regex flags")
+            t.NonNegativeInt,
+            Field(default=0, description="Regex flags"),
         ] = 0
         pattern_index: Annotated[
-            t.NonNegativeInt, Field(description="Index of pattern in pipeline")
+            t.NonNegativeInt,
+            Field(description="Index of pattern in pipeline"),
         ]
         total_patterns: Annotated[
-            t.PositiveInt, Field(description="Total number of patterns")
+            t.PositiveInt,
+            Field(description="Total number of patterns"),
         ]
 
 

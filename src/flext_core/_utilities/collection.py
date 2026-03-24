@@ -164,7 +164,9 @@ class FlextUtilitiesCollection:
             and isinstance(value, dict)
         ):
             merged = FlextUtilitiesCollection.merge_mappings(
-                value, current_val, strategy="deep"
+                value,
+                current_val,
+                strategy="deep",
             )
             if merged.is_success:
                 result[key] = merged.value
@@ -840,7 +842,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def group_by(
-        items: Sequence[T], key_func: Callable[[T], U]
+        items: Sequence[T],
+        key_func: Callable[[T], U],
     ) -> Mapping[U, Sequence[T]]:
         """Group items by key function.
 

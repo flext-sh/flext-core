@@ -65,7 +65,7 @@ class FlextModelsContextScope:
                     FlextModelsContextData.normalize_to_mapping(v)
                     if v is not None
                     else {}
-                )
+                ),
             ),
             Field(
                 default_factory=dict,

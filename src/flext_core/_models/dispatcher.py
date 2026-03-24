@@ -377,7 +377,7 @@ class FlextModelsDispatcher:
         """Enforce per-message rate limits with a sliding window algorithm."""
 
         max_requests: t.PositiveInt = Field(
-            description="Maximum requests allowed per window"
+            description="Maximum requests allowed per window",
         )
         window_seconds: t.PositiveFloat = Field(
             description="Time window in seconds for rate limiting",
@@ -479,7 +479,7 @@ class FlextModelsDispatcher:
         """Coordinate retry attempts with configurable backoff for dispatcher steps."""
 
         max_attempts: t.PositiveInt = Field(
-            description="Maximum retry attempts allowed"
+            description="Maximum retry attempts allowed",
         )
         retry_delay: t.PositiveFloat = Field(
             description="Base delay in seconds between retry attempts",
@@ -497,7 +497,9 @@ class FlextModelsDispatcher:
         )
 
         def __init__(
-            self, max_attempts: t.PositiveInt, retry_delay: t.PositiveFloat
+            self,
+            max_attempts: t.PositiveInt,
+            retry_delay: t.PositiveFloat,
         ) -> None:
             """Initialize retry policy manager.
 
