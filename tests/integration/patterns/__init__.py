@@ -42,13 +42,34 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "EXPECTED_BULK_SIZE": ["tests.integration.patterns.test_patterns_logging", "EXPECTED_BULK_SIZE"],
-    "TestAdvancedPatterns": ["tests.integration.patterns.test_advanced_patterns", "TestAdvancedPatterns"],
-    "TestArchitecturalPatterns": ["tests.integration.patterns.test_architectural_patterns", "TestArchitecturalPatterns"],
-    "TestFunction": ["tests.integration.patterns.test_advanced_patterns", "TestFunction"],
-    "TestPatternsCommands": ["tests.integration.patterns.test_patterns_commands", "TestPatternsCommands"],
-    "TestPatternsLogging": ["tests.integration.patterns.test_patterns_logging", "TestPatternsLogging"],
-    "TestPatternsTesting": ["tests.integration.patterns.test_patterns_testing", "TestPatternsTesting"],
+    "EXPECTED_BULK_SIZE": [
+        "tests.integration.patterns.test_patterns_logging",
+        "EXPECTED_BULK_SIZE",
+    ],
+    "TestAdvancedPatterns": [
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestAdvancedPatterns",
+    ],
+    "TestArchitecturalPatterns": [
+        "tests.integration.patterns.test_architectural_patterns",
+        "TestArchitecturalPatterns",
+    ],
+    "TestFunction": [
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestFunction",
+    ],
+    "TestPatternsCommands": [
+        "tests.integration.patterns.test_patterns_commands",
+        "TestPatternsCommands",
+    ],
+    "TestPatternsLogging": [
+        "tests.integration.patterns.test_patterns_logging",
+        "TestPatternsLogging",
+    ],
+    "TestPatternsTesting": [
+        "tests.integration.patterns.test_patterns_testing",
+        "TestPatternsTesting",
+    ],
     "pytestmark": ["tests.integration.patterns.test_patterns_testing", "pytestmark"],
 }
 
