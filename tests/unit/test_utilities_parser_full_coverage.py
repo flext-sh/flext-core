@@ -338,8 +338,7 @@ class TestUtilitiesParserFullCoverage:
         tm.that(normalized_map, eq={"b": "b"})
         normalized_set = parser.norm_list(["A", "b"], case="lower", to_set=True)
         tm.that(len(normalized_set), eq=2)
-        expected_set: set[str] = set(("a", "b"))
-        tm.that(normalized_set, eq=expected_set)
+        assert normalized_set == {"a", "b"}
         tm.that(parser.norm_join(["A", "B"], sep="-"), eq="A-B")
         mapping_result = parser.norm_in(
             "a",

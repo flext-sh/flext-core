@@ -1,27 +1,5 @@
 """Integration tests for FLEXT Core foundation library.
 
-Enterprise-grade integration testing suite validating cross-component interactions,
-service integration patterns, and end-to-end functionality of the FLEXT Core
-foundation library.
-
-Architecture:
-    Integration Testing → Cross-Component Validation → Service Integration
-
-    This module validates:
-    - r integration with FlextContainer dependency injection
-    - Type system coherence across foundation patterns
-    - Service registration and retrieval workflows
-    - Mock-based external service integration patterns
-    - Performance characteristics of integrated components
-
-Integration Testing Strategy:
-    - Component Interaction: Test how core components work together
-    - Service Integration: Validate DI container with mocked services
-    - Type Safety: Ensure type system works across component boundaries
-    - Performance: Validate integrated workflows meet performance standards
-    - Error Handling: Test error propagation across component boundaries
-
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
