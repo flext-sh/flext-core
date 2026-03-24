@@ -123,8 +123,8 @@ class TestCoverageModels:
         doc = Document(title="Test Doc", domain_events=[])
         tm.that(doc.created_at, none=False)
         tm.that(doc.updated_at, none=False)
-        if doc.created_at is not None and doc.updated_at is not None:
-            tm.that(doc.created_at <= doc.updated_at, eq=True)
+        assert doc.updated_at is not None
+        tm.that(doc.created_at <= doc.updated_at, eq=True)
 
     def test_entity_validation(self) -> None:
         class User(m.Entity):

@@ -1,23 +1,25 @@
 # [MANAGED] FLEXT pyproject standardization
-# Sections with [MANAGED] are enforced by the modernizer tool.
+# Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
+# Run `make mod` to regenerate all managed pyproject sections.
 # Sections with [CUSTOM] are project-specific extension points.
-# Sections with [AUTO] are derived from workspace layout and dependencies.
+
 # [MANAGED] build system
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = [ "poetry-core>=2" ]
 
+[dependency-groups]
+dev = [
+  "types-defusedxml (>=0.7.0.20250822)",
+  "vulture (>=2.15)",
+]
+
 # [CUSTOM] project metadata
 [project]
-name = "flext-core"
-version = "0.12.0-dev"
-description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-readme = "README.md"
-keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "solid" ]
-license = "MIT"
-maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
+
+# [CUSTOM] poetry - flext-core ships only the core package
+
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
-requires-python = ">=3.13,<3.14"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Pydantic :: 2",
@@ -50,9 +52,19 @@ dependencies = [
   "tomlkit>=0.13",
   "wrapt>=1.17",
 ]
+description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "solid" ]
+license = "MIT"
+maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
+name = "flext-core"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+urls = {Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core"}
+version = "0.12.0-dev"
+
 # [MANAGED] consolidated development dependencies
-# [AUTO] merged from dev/docs/security/test/typings
-optional-dependencies.dev = [
+[project.optional-dependencies]
+dev = [
   "autoflake>=2.3.1",
   "bandit>=1.8",
   "black>=25.1",
@@ -121,22 +133,6 @@ optional-dependencies.dev = [
   "uv>=0.9.6",
   "vulture>=2.13",
 ]
-urls = {Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core"}
-
-# [CUSTOM] poetry - flext-core ships only the core package
-[tool.poetry]
-packages = [
-  {include = "flext_core", from = "src"},
-]
-
-# [MANAGED] deptry
-
-# [CUSTOM] poetry dev extensions
-[tool.deptry]
-known_first_party = [
-  "flext_core",
-]
-pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.bandit]
 exclude_dirs = [ "tests" ]
@@ -150,6 +146,20 @@ check-filenames = true
 ignore-words-list = "crate,nd"
 skip = ".git,poetry.lock,.mypy_cache,.pytest_cache,.ruff_cache"
 
+# [MANAGED] coverage
+[tool.coverage.report]
+fail_under = 45
+precision = 2
+show_missing = true
+skip_covered = false
+
+# [MANAGED] deptry
+[tool.deptry]
+known_first_party = [
+  "flext_core",
+]
+pep621_dev_dependency_groups = [ "dev" ]
+
 [tool.interrogate]
 exclude = [ "docs", "examples", "scripts", "tests" ]
 fail-under = 70
@@ -160,23 +170,50 @@ ignore-module = false
 ignore-private = true
 ignore-property-decorators = true
 
-[tool.radon]
-cc_min = "B"
-exclude = "tests/*,examples/*"
-mi_min = "B"
+# [MANAGED] mypy
+[tool.mypy]
 
+disable_error_code = [
+  "prop-decorator",
+]
+explicit_package_bases = true
+ignore_missing_imports = true
+mypy_path = [ ".", "../typings", "../typings/generated", "src" ]
+namespace_packages = true
+plugins = [
+  "pydantic.mypy",
+]
+python_version = "3.13"
+
+[tool.poetry]
+packages = [
+  {include = "flext_core", from = "src"},
+]
+
+# [MANAGED] pydantic-mypy
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# [MANAGED] pyrefly
 [tool.pyrefly]
 ignore-errors-in-generated-code = true
 project-excludes = [
   "**/*_pb2*.py",
   "**/*_pb2_grpc*.py",
+  "**/.venv/**",
+  "**/typings/**",
+  "**/vendor/**",
+  "../typings/**",
+  ".venv/**",
+  "typings/**",
+  "vendor/**",
 ]
 python-version = "3.13"
 search-path = [
   ".",
-  "examples",
   "src",
-  "tests",
 ]
 
 [tool.pyrefly.errors]
@@ -195,27 +232,100 @@ unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
 
-# [MANAGED] mypy
-[tool.mypy]
-disable_error_code = [
-  "prop-decorator",
+# [MANAGED] pyright
+[tool.pyright]
+exclude = [
+  "**/.*",
+  "**/__pycache__",
+  "**/node_modules",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".venv",
 ]
-mypy_path = [ ".", "../typings", "../typings/generated", "examples", "src", "tests" ]
-plugins = [
-  "pydantic.mypy",
+extraPaths = [
+  ".",
+  "../typings",
+  "../typings/generated",
+  "src",
 ]
-python_version = "3.13"
+ignore = [
+  "../typings",
+  "../typings/generated",
+]
+pythonPlatform = "Linux"
+pythonVersion = "3.13"
+reportCallIssue = "none"
+reportConstantRedefinition = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
+reportMissingImports = "error"
+reportMissingModuleSource = "error"
+reportMissingTypeStubs = "warning"
+reportPrivateUsage = "warning"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "warning"
+reportUnnecessaryIsInstance = "warning"
+reportUnusedClass = "error"
+reportUnusedFunction = "error"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+typeCheckingMode = "strict"
 
-# [MANAGED] pydantic-mypy
-explicit_package_bases = true
-ignore_missing_imports = true
-namespace_packages = true
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ "src" ]
+reportPrivateUsage = "error"
+root = "src"
 
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "tests"
 
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "examples"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [ ".", "src" ]
+reportPrivateUsage = "none"
+root = "scripts"
+
+# [MANAGED] pytest
+[tool.pytest.ini_options]
+addopts = [ "--strict-markers" ]
+enable_assertion_pass_hook = true
+filterwarnings = [
+  "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
+]
+markers = [
+  "advanced: advanced pattern tests",
+  "architecture: architectural pattern tests",
+  "core: core functionality tests",
+  "coverage: coverage-focused tests",
+  "ddd: domain-driven design tests",
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "resilience: resilience tests",
+  "slow: slow-running tests",
+  "stress: stress tests",
+  "unit: unit tests",
+]
+minversion = "8.0"
+python_classes = [ "Test*" ]
+python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
+
+[tool.radon]
+cc_min = "B"
+exclude = "tests/*,examples/*"
+mi_min = "B"
+
+# [MANAGED] ruff
 [tool.ruff]
 exclude = [
   ".git",
@@ -245,6 +355,12 @@ src = [
   "tests",
 ]
 target-version = "py313"
+
+[tool.ruff.format]
+docstring-code-format = true
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
 
 [tool.ruff.lint]
 ignore = [
@@ -306,16 +422,16 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
+
+combine-as-imports = true
+force-single-line = false
 known-first-party = [
   "flext_core",
 ]
-
-# [MANAGED] pyright
-combine-as-imports = true
-force-single-line = false
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
+
 "**/.vulture_whitelist.py" = [
   "ALL",
 ]
@@ -508,6 +624,9 @@ split-on-trailing-comma = true
   "ARG004",
   "FBT001",
 ]
+"**/alert_manager*.py" = [
+  "S310",
+]
 "**/config.py" = [
   "ANN401",
   "FBT001",
@@ -520,6 +639,10 @@ split-on-trailing-comma = true
   "ANN401",
   "SLF001",
 ]
+"**/external_command*.py" = [
+  "S404",
+  "S603",
+]
 "**/file_tools.py" = [
   "D102",
 ]
@@ -527,8 +650,14 @@ split-on-trailing-comma = true
   "S105",
 ]
 "**/models.py" = [
+  "PLC0415",
   "PLC2801",
   "S102",
+  "S105",
+]
+"**/orchestrator*.py" = [
+  "S404",
+  "S603",
 ]
 "**/output.py" = [
   "FBT001",
@@ -541,6 +670,9 @@ split-on-trailing-comma = true
   "S607",
   "TID252",
 ]
+"**/protocol_impls/*.py" = [
+  "SLF001",
+]
 "**/providers/*.py" = [
   "S106",
   "S107",
@@ -551,6 +683,8 @@ split-on-trailing-comma = true
 ]
 "**/settings.py" = [
   "ANN401",
+  "PLC0415",
+  "S105",
 ]
 "**/singer/*.py" = [
   "S404",
@@ -581,49 +715,14 @@ split-on-trailing-comma = true
 "**/typings.py" = [
   "RUF036",
 ]
-
-[tool.ruff.format]
-docstring-code-format = true
-indent-style = "space"
-line-ending = "lf"
-quote-style = "double"
-[tool.pyright]
-exclude = ["tests/fixtures"]
-extraPaths = [".", "../typings", "../typings/generated", "examples", "src", "tests", "../flext-tests/src", "../flext-infra/src"]
-pythonPlatform = "Linux"
-pythonVersion = "3.13"
-typeCheckingMode = "strict"
+"**/workspace/*.py" = [
+  "PLC0415",
+  "S404",
+  "S603",
+  "S607",
+]
 
 # [MANAGED] tomlsort
-reportCallIssue = "none"
-reportConstantRedefinition = "error"
-reportIncompatibleMethodOverride = "error"
-reportIncompatibleVariableOverride = "error"
-reportInconsistentConstructor = "error"
-reportMissingImports = "error"
-reportMissingModuleSource = "error"
-reportMissingTypeStubs = "warning"
-reportPrivateUsage = "warning"
-reportUnnecessaryCast = "error"
-reportUnnecessaryComparison = "warning"
-reportUnnecessaryIsInstance = "warning"
-reportUnusedClass = "error"
-reportUnusedFunction = "error"
-reportUnusedImport = "error"
-reportUnusedVariable = "error"
-
-[[tool.pyright.executionEnvironments]]
-reportPrivateUsage = "none"
-root = "examples"
-
-[[tool.pyright.executionEnvironments]]
-reportPrivateUsage = "error"
-root = "src"
-
-[[tool.pyright.executionEnvironments]]
-reportPrivateUsage = "none"
-root = "tests"
-
 [tool.tomlsort]
 all = true
 in_place = true
@@ -641,45 +740,3 @@ line_length = 88
 preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
-
-[tool.pytest.ini_options]
-addopts = [ "--strict-markers" ]
-enable_assertion_pass_hook = true
-filterwarnings = [
-  "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
-]
-markers = [
-  "advanced: advanced pattern tests",
-  "architecture: architectural pattern tests",
-  "core: core functionality tests",
-  "coverage: coverage-focused tests",
-  "ddd: domain-driven design tests",
-  "docker: tests requiring Docker",
-  "e2e: end-to-end integration tests",
-  "edge_cases: edge case tests",
-  "integration: integration tests",
-  "performance: performance and benchmark tests",
-  "resilience: resilience tests",
-  "slow: slow-running tests",
-  "stress: stress tests",
-  "unit: unit tests",
-]
-minversion = "8.0"
-python_classes = [ "Test*" ]
-python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
-
-# [MANAGED] ruff
-
-# [MANAGED] pyrefly
-
-[tool.coverage.report]
-fail_under = 45
-precision = 2
-show_missing = true
-skip_covered = false
-
-[dependency-groups]
-dev = [
-  "types-defusedxml (>=0.7.0.20250822)",
-  "vulture (>=2.15)",
-]
