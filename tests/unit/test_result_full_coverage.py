@@ -39,10 +39,10 @@ def test_init_fallback_and_lazy_returns_result_property() -> None:
     tm.ok(fallback)
     tm.that(fallback.value, eq=9)
     lazy_ok = r[int](value=5, is_success=True)
-    tm.that(lazy_ok._result, none=True)
+    assert lazy_ok._result is None
     _ = lazy_ok._returns_result
     lazy_fail = r[int](error="nope", is_success=False)
-    tm.that(lazy_fail._result, none=True)
+    assert lazy_fail._result is None
     _ = lazy_fail._returns_result
 
 

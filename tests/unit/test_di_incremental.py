@@ -36,8 +36,6 @@ from flext_core import (
     t,
 )
 
-from ..test_utils import assertion_helpers
-
 Provide = FlextRuntime.DependencyIntegration.Provide
 inject = FlextRuntime.DependencyIntegration.inject
 
@@ -225,8 +223,8 @@ class TestDIIncremental:
 
         scoped = container.scoped(resources={"db": resource_factory})
         result = scoped.get("db")
-        resource_value = u.Tests.Result.assert_success(result)
-        tm.that(resource_value, eq={"connected": True})
+        assert result.is_success
+        assert result.value == {"connected": True}
         tm.that(lifecycle["created"], eq=True)
         tm.that(scoped is not container, eq=True)
 
@@ -237,12 +235,12 @@ class TestDIIncremental:
             services={"api_key": "secret_key"},
             factories={"token_gen": lambda: {"token": "abc123"}},
         )
-        service_result = scoped.get("api_key")
+        service_result = scoped.get("api_key", type_cls=str)
         tm.ok(service_result)
         tm.that(service_result.value, eq="secret_key")
         factory_result = scoped.get("token_gen")
-        factory_value = assertion_helpers.assert_flext_result_success(factory_result)
-        tm.that(factory_value, eq={"token": "abc123"})
+        assert factory_result.is_success
+        assert factory_result.value == {"token": "abc123"}
 
     def test_scoped_with_config_override(self) -> None:
         """Test scoped container with config override."""
@@ -266,8 +264,8 @@ class TestDIIncremental:
             ),
         )
         db_result = runtime.container.get("database")
-        tm.ok(db_result)
-        tm.that(db_result.value, eq={"connected": True})
+        assert db_result.is_success
+        assert db_result.value == {"connected": True}
         tm.that(lifecycle["created"], eq=True)
 
     def test_create_service_runtime_with_wiring(self) -> None:
@@ -302,12 +300,12 @@ class TestDIIncremental:
 
         service = TestService()
         tm.that(hasattr(service, "runtime"), eq=True)
-        custom_result = service.container.get("custom_service")
+        custom_result = service.container.get("custom_service", type_cls=str)
         tm.ok(custom_result)
         tm.that(custom_result.value, eq="custom_value")
         factory_result = service.container.get("custom_factory")
-        tm.ok(factory_result)
-        tm.that(factory_result.value, eq={"custom": "data"})
+        assert factory_result.is_success
+        assert factory_result.value == {"custom": "data"}
 
     def test_handler_wiring_with_inject(self) -> None:
         """Test handler wiring with @inject decorator."""
@@ -421,9 +419,9 @@ class TestDIIncremental:
         container = FlextContainer(_context=FlextContext())
         _ = container.register("global_service", "global_value")
         scoped = container.scoped(services={"scoped_service": "scoped_value"})
-        global_result = scoped.get("global_service")
+        global_result = scoped.get("global_service", type_cls=str)
         tm.ok(global_result)
-        scoped_result = scoped.get("scoped_service")
+        scoped_result = scoped.get("scoped_service", type_cls=str)
         tm.ok(scoped_result)
         tm.that(scoped_result.value, eq="scoped_value")
 
@@ -446,15 +444,15 @@ class TestDIIncremental:
             ),
         )
         tm.that(runtime.config.app_name, eq="test_app")
-        static_result = runtime.container.get("static_service")
+        static_result = runtime.container.get("static_service", type_cls=str)
         tm.ok(static_result)
         tm.that(static_result.value, eq="static_value")
         factory_result = runtime.container.get("token_factory")
-        tm.ok(factory_result)
-        tm.that(factory_result.value, eq={"token": "generated_token"})
+        assert factory_result.is_success
+        assert factory_result.value == {"token": "generated_token"}
         resource_result = runtime.container.get("connection")
-        tm.ok(resource_result)
-        tm.that(resource_result.value, eq={"connected": True})
+        assert resource_result.is_success
+        assert resource_result.value == {"connected": True}
 
     def test_container_wire_modules_with_classes(self) -> None:
         """Test container.wire_modules with classes parameter."""
@@ -504,8 +502,8 @@ class TestDIIncremental:
 
         scoped = container.scoped(resources={"test_resource": resource_factory})
         result = scoped.get("test_resource")
-        resource_value = assertion_helpers.assert_flext_result_success(result)
-        tm.that(resource_value, eq={"resource": True})
+        assert result.is_success
+        assert result.value == {"resource": True}
         tm.that(lifecycle["created"], eq=True)
 
     def test_multiple_scoped_containers_isolation(self) -> None:
@@ -513,8 +511,8 @@ class TestDIIncremental:
         container = FlextContainer(_context=FlextContext())
         scoped1 = container.scoped(services={"service": "value1"})
         scoped2 = container.scoped(services={"service": "value2"})
-        result1 = scoped1.get("service")
-        result2 = scoped2.get("service")
+        result1 = scoped1.get("service", type_cls=str)
+        result2 = scoped2.get("service", type_cls=str)
         value1 = u.Tests.Result.assert_success(result1)
         value2 = u.Tests.Result.assert_success(result2)
         tm.that(value1, is_=str)

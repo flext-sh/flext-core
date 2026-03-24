@@ -19,12 +19,7 @@ if TYPE_CHECKING:
     from flext_core import FlextDispatcher, p
 
     class _ServiceInstance(Protocol):
-        """Protocol for arbitrary service instances (adapters, services, etc.).
-
-        Satisfied by any class instance that has ``__dict__`` — this matches
-        the runtime validator in ``FlextContainer`` (``hasattr(v, '__dict__')``).
-        Only used during type-checking; never instantiated at runtime.
-        """
+        """Protocol for arbitrary service instances with __dict__."""
 
 
 class FlextTypesServices:

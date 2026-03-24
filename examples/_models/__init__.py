@@ -93,7 +93,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),
     "Ex01DemonstrationResult": ("examples._models.ex01", "Ex01DemonstrationResult"),
     "Ex01InvalidPersonPayload": ("examples._models.ex01", "Ex01InvalidPersonPayload"),
-    "Ex01RunDemonstrationCommand": ("examples._models.ex01", "Ex01RunDemonstrationCommand"),
+    "Ex01RunDemonstrationCommand": (
+        "examples._models.ex01",
+        "Ex01RunDemonstrationCommand",
+    ),
     "Ex01User": ("examples._models.ex01", "Ex01User"),
     "Ex01ValidPersonPayload": ("examples._models.ex01", "Ex01ValidPersonPayload"),
     "Ex02CacheService": ("examples._models.ex02", "Ex02CacheService"),

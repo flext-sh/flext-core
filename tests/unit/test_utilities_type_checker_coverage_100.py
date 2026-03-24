@@ -334,7 +334,7 @@ class TestuTypeChecker:
             return str(x)
 
         signature = u._get_method_signature(test_func)
-        tm.ok(signature)
+        assert signature.is_success
         signature_value = signature.value
         tm.that(len(signature_value.parameters), eq=1)
         assert "x" in signature_value.parameters

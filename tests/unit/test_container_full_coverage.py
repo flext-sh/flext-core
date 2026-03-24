@@ -540,11 +540,15 @@ class TestContainerFullCoverage:
 
             monkeypatch.setattr(c, "register", _register)
             c.sync_config_to_di()
-            tm.that(registered, is_=dict)
+            assert isinstance(registered, dict)
             if "config.alpha" in registered:
-                tm.that(registered["config.alpha"](), is_=BaseModel)
+                alpha_factory = registered["config.alpha"]
+                assert callable(alpha_factory) and isinstance(
+                    alpha_factory(), BaseModel
+                )
             if "config.beta" in registered:
-                tm.that(registered["config.beta"](), is_=BaseModel)
+                beta_factory = registered["config.beta"]
+                assert callable(beta_factory) and isinstance(beta_factory(), BaseModel)
         finally:
             FlextSettings._namespace_registry.clear()
             FlextSettings._namespace_registry.update(original_registry)
@@ -568,7 +572,7 @@ class TestContainerFullCoverage:
         c.register_core_services()
         tm.that(c.has_service("context"), is_=bool)
         c.wire_modules(modules=[])
-        tm.ok(c.get("r1"))
+        assert c.get("r1").is_success
         tm.ok(c.get("f1", type_cls=str))
         tm.ok(c.get("r1", type_cls=str))
 
@@ -618,7 +622,7 @@ class TestContainerFullCoverage:
         c.register("fac-x", lambda: "v", kind="factory")
         tm.that(c.get_config().root, ne=None)
         c.register("", "x")
-        tm.ok(c.get("svc-x"))
+        assert c.get("svc-x").is_success
         tm.fail(c.get("missing-service"))
         tm.ok(c.get("svc-x", type_cls=str))
         tm.fail(c.get("missing-service", type_cls=str))
@@ -714,9 +718,9 @@ class TestContainerFullCoverage:
             c.sync_config_to_di()
             c._config = _CfgGoodNamespace()
             c.sync_config_to_di()
-            tm.that(captured["config.n2"](), is_=BaseModel)
-            tm.that(captured["config.n3"](), is_=BaseModel)
-            tm.that(captured["config.n4"](), is_=BaseModel)
+            assert isinstance(captured["config.n2"](), BaseModel)
+            assert isinstance(captured["config.n3"](), BaseModel)
+            assert isinstance(captured["config.n4"](), BaseModel)
             c2 = FlextContainer.create()
             c2._global_config = m.ContainerConfig(
                 enable_singleton=True,
@@ -730,7 +734,7 @@ class TestContainerFullCoverage:
                     factory=lambda: "value",
                 ),
             }
-            fac_call = c2.get("fac-call")
+            fac_call = c2.get("fac-call", type_cls=str)
             tm.ok(fac_call)
             assert fac_call.value == "value"
             c2._factories = {
@@ -746,7 +750,7 @@ class TestContainerFullCoverage:
                     factory=lambda: "ok",
                 ),
             }
-            tm.ok(c2.get("ok-factory"))
+            assert c2.get("ok-factory").is_success
             c2._services = {
                 "svc-int": m.ServiceRegistration(
                     name="svc-int",

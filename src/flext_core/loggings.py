@@ -1104,4 +1104,4 @@ class FlextLogger(u, p.Logger):
                 )
 
 
-__all__: t.StrSequence = ["FlextLogger"]
+__all__: t.StrSequence = ["FlextLogger", "u"]

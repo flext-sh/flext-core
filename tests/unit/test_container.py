@@ -604,8 +604,10 @@ class TestFlextContainer:
             services={"scoped_service": "scoped-value"},
         )
         tm.that(scoped.has_service("scoped_service"), eq=True)
-        tm.ok(scoped.get("scoped_service"), eq="scoped-value")
-        tm.ok(scoped.context.get("subproject"), eq="unit")
+        tm.ok(scoped.get("scoped_service", type_cls=str), eq="scoped-value")
+        ctx_result = scoped.context.get("subproject")
+        assert ctx_result.is_success
+        assert ctx_result.value == "unit"
 
     @given(
         name=st.text(
@@ -624,7 +626,7 @@ class TestFlextContainer:
             return sanitized
 
         _ = container.register(sanitized, dynamic_factory, kind="factory")
-        tm.ok(container.get(sanitized), eq=sanitized)
+        tm.ok(container.get(sanitized, type_cls=str), eq=sanitized)
         FlextContainer.reset_for_testing()
 
     __all__ = ["TestFlextContainer"]

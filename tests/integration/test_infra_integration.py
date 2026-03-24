@@ -88,7 +88,7 @@ class TestInfraIntegration:
         """Test BaseMk generator validates rendered output using real make."""
         _ = tmp_path
         generator = FlextInfraBaseMkGenerator()
-        generated = generator.generate()
+        generated = generator.execute()
         assert generated.is_success
         assert isinstance(generated.value, str)
         assert "check" in generated.value

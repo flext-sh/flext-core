@@ -889,7 +889,7 @@ class TestFlextRuntime:
                 "static_value",
                 42,
             )
-            tm.that(factory_provider, is_=providers.Singleton)
+            assert isinstance(factory_provider, providers.Singleton)
             tm.that(factory_provider(), eq={"token": "abc123"})
             tm.that(object_provider(), eq=42)
             module = ModuleType("di_factory_module")
@@ -1052,12 +1052,12 @@ class TestFlextRuntime:
             tm.that(runtime_first is runtime_second, eq=True)
             tm.that(component.config.app_name, eq="runtime-aware")
             tm.that(component.context is runtime_first.context, eq=True)
-            service_result = component.container.get("preseed")
+            service_result = component.container.get("preseed", type_cls=t.ConfigMap)
             tm.that(service_result.is_success, eq=True)
             tm.that(service_result.value, eq=t.ConfigMap(root={"enabled": True}))
             factory_result = component.container.get("counter")
-            tm.that(factory_result.is_success, eq=True)
-            tm.that(factory_result.value, eq={"count": 1})
+            assert factory_result.is_success
+            assert factory_result.value == {"count": 1}
 
     @pytest.mark.parametrize(
         "test_case",

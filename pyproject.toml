@@ -588,6 +588,7 @@ indent-style = "space"
 line-ending = "lf"
 quote-style = "double"
 [tool.pyright]
+exclude = ["tests/fixtures"]
 extraPaths = [".", "../typings", "../typings/generated", "examples", "src", "tests", "../flext-tests/src", "../flext-infra/src"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"

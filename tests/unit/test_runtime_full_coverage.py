@@ -275,7 +275,7 @@ def test_runtime_create_instance_failure_branch(
         pass
 
     instance = FlextRuntime.create_instance(Marker)
-    tm.that(instance, is_=Marker)
+    assert isinstance(instance, Marker)
 
 
 def test_normalization_edge_branches() -> None:
@@ -715,7 +715,7 @@ def test_model_support_and_hash_compare_paths() -> None:
     class Empty:
         pass
 
-    tm.that(FlextRuntime.Bootstrap.create_instance(Empty), is_=Empty)
+    assert isinstance(FlextRuntime.Bootstrap.create_instance(Empty), Empty)
 
 
 def test_config_bridge_and_trace_context_and_http_validation() -> None:
