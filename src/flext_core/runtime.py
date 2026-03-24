@@ -1393,7 +1393,7 @@ class FlextRuntime:
         context_dict = t.ConfigMap(root={})
         if isinstance(context, Mapping):
             try:
-                parsed_context: dict[str, t.ValueOrModel] = {
+                parsed_context: MutableMapping[str, t.ValueOrModel] = {
                     str(k): str(v) for k, v in context.items()
                 }
             except (TypeError, ValueError, AttributeError, RuntimeError) as exc:
@@ -1401,7 +1401,7 @@ class FlextRuntime:
                     "Failed to convert mapping context to string dict",
                     exc_info=exc,
                 )
-                parsed_context: dict[str, t.ValueOrModel] = {}
+                parsed_context: MutableMapping[str, t.ValueOrModel] = {}
             context_dict = t.ConfigMap(root=parsed_context)
         elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):
             context_dict = t.ConfigMap(root={})

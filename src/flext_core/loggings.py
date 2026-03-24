@@ -79,7 +79,7 @@ class FlextLogger(u, p.Logger):
                 _correlation_id,
             )
             _force_new = getattr(config, "force_new", _force_new)
-        context: dict[str, str] = {}
+        context: MutableMapping[str, str] = {}
         if _service_name:
             context[c.KEY_SERVICE_NAME] = _service_name
         if _service_version:
