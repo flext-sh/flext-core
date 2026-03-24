@@ -1058,7 +1058,7 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         "callable": lambda: 1,
         "other": type("Sentinel", (), {}),
     }
-    result = FlextRuntime.ensure_trace_context(cast("Mapping[str, t.Scalar]", payload))
+    result = FlextRuntime.ensure_trace_context(cast("t.ConfigurationMapping", payload))
     tm.that(result["str"], eq="x")
     tm.that(result["int"], eq="1")
     tm.that("trace_id" in result and "span_id" in result, eq=True)

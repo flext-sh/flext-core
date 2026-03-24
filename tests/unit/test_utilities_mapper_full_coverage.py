@@ -576,14 +576,14 @@ class UtilitiesMapperFullCoverageNamespace:
             int
             | float
             | MutableSequence[t.Scalar]
-            | MutableMapping[str, t.Scalar]
+            | t.MutableConfigurationMapping
             | tuple[t.Scalar, ...]
             | set[t.Scalar]
         ]
         | Callable[..., t.NormalizedValue],
         expected: float
         | MutableSequence[t.Scalar]
-        | MutableMapping[str, t.Scalar]
+        | t.MutableConfigurationMapping
         | tuple[t.Scalar, ...],
     ) -> None:
         operations = cast(
