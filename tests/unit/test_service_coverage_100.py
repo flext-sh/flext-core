@@ -49,13 +49,13 @@ class TestService100Coverage:
         """Test is_valid property."""
         service = self._ServiceStub()
         is_valid = service.is_valid()
-        tm.that(isinstance(is_valid, bool), eq=True)
+        tm.that(is_valid, is_=bool)
 
     def test_get_service_info(self) -> None:
         """Test get_service_info."""
         service = self._ServiceStub()
         info = service.get_service_info()
-        tm.that(isinstance(info, dict), eq=True)
+        tm.that(info, is_=dict)
         tm.that(len(info), gt=0)
         assert "service_type" in info or "service_name" in info or "class_name" in info
 
@@ -64,7 +64,7 @@ class TestService100Coverage:
         service = self._ServiceStub()
         result = service.execute()
         tm.ok(result)
-        tm.that(isinstance(result.value, str), eq=True)
+        tm.that(result.value, is_=str)
 
     def test_ok_method(self) -> None:
         """Test r.ok factory method (strict mode — no self.ok)."""
@@ -76,7 +76,7 @@ class TestService100Coverage:
         """Test result property."""
         service = self._ServiceStub()
         result = service.result
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
 
     def test_auto_execute_false(self) -> None:
         """Test auto_execute when False."""

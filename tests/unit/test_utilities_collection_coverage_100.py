@@ -872,7 +872,7 @@ class TestUtilitiesCollectionCoverage:
             if scenario.expected_count is not None:
                 tm.that(len(result.value), eq=scenario.expected_count)
             for val in result.value:
-                tm.that(isinstance(val, scenario.enum_cls), eq=True)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             _ = assertion_helpers.assert_flext_result_failure(result)
             tm.that(result.error, none=False)
@@ -913,7 +913,7 @@ class TestUtilitiesCollectionCoverage:
             if scenario.expected_count is not None:
                 tm.that(len(result), eq=scenario.expected_count)
             for val in result:
-                tm.that(isinstance(val, scenario.enum_cls), eq=True)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             with pytest.raises(
                 scenario.error_type or Exception,
@@ -953,7 +953,7 @@ class TestUtilitiesCollectionCoverage:
             if scenario.expected_keys is not None:
                 assert set(result.value.keys()) == set(scenario.expected_keys)
             for val in result.value.values():
-                tm.that(isinstance(val, scenario.enum_cls), eq=True)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             _ = assertion_helpers.assert_flext_result_failure(result)
             tm.that(result.error, none=False)
@@ -1000,7 +1000,7 @@ class TestUtilitiesCollectionCoverage:
             if scenario.expected_keys is not None:
                 assert set(result.keys()) == set(scenario.expected_keys)
             for val in result.values():
-                tm.that(isinstance(val, scenario.enum_cls), eq=True)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             with pytest.raises(
                 scenario.error_type or Exception,
@@ -1180,7 +1180,7 @@ class TestUtilitiesCollectionCoverage:
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
-        tm.that(isinstance(result.value["b"], dict), eq=True)
+        tm.that(result.value["b"], is_=dict)
 
     def test_merge_override(self) -> None:
         """Test override merge."""
@@ -1190,7 +1190,7 @@ class TestUtilitiesCollectionCoverage:
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
-        tm.that(isinstance(result.value["b"], dict), eq=True)
+        tm.that(result.value["b"], is_=dict)
 
 
 FixtureStatus = TestUtilitiesCollectionCoverage.FixtureStatus

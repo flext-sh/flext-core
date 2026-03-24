@@ -296,7 +296,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(isinstance(result.value, m.Infra.ValidationReport), eq=True)
+        tm.that(result.value, is_=m.Infra.ValidationReport)
         tm.that(result.value.summary, has="files checked")
 
     def test_violation_message_format(self, tmp_path: Path) -> None:

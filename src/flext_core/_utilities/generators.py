@@ -132,20 +132,20 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _is_config_mapping(
         value: t.NormalizedValue,
-    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerMapping]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: Mapping[str, t.NormalizedValue] | BaseModel | None,
-    ) -> Mapping[str, t.NormalizedValue]:
+        context: t.ContainerMapping | BaseModel | None,
+    ) -> t.ContainerMapping:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            Mapping[str, t.NormalizedValue]: Normalized context dict
+            t.ContainerMapping: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -162,7 +162,7 @@ class FlextUtilitiesGenerators:
                 raise TypeError(msg) from e
         try:
             model_data = context.model_dump()
-            model_data_typed: Mapping[str, t.NormalizedValue] = model_data
+            model_data_typed: t.ContainerMapping = model_data
             return model_data_typed
         except (AttributeError, TypeError, ValueError) as e:
             msg = f"Failed to dump BaseModel {type(context).__name__}: {type(e).__name__}: {e}"
@@ -208,9 +208,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: t.ValueOrModel | Mapping[str, t.NormalizedValue] | None,
-        default: Mapping[str, t.NormalizedValue] | None = None,
-    ) -> Mapping[str, t.NormalizedValue]:
+        value: t.ValueOrModel | t.ContainerMapping | None,
+        default: t.ContainerMapping | None = None,
+    ) -> t.ContainerMapping:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -222,7 +222,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            Mapping[str, t.NormalizedValue]: Normalized dict or default
+            t.ContainerMapping: Normalized dict or default
 
         """
         if value is None:
@@ -241,7 +241,7 @@ class FlextUtilitiesGenerators:
         if isinstance(value, BaseModel):
             try:
                 dumped = value.model_dump()
-                dumped_typed: Mapping[str, t.NormalizedValue] = dumped
+                dumped_typed: t.ContainerMapping = dumped
                 return dumped_typed
             except (AttributeError, TypeError, ValueError) as e:
                 msg = f"Failed to convert BaseModel {type(value).__name__} to dict: {e}"
@@ -251,7 +251,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context_dict(
-        context: Mapping[str, t.NormalizedValue] | BaseModel | None,
+        context: t.ContainerMapping | BaseModel | None,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,

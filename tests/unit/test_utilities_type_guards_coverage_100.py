@@ -147,63 +147,63 @@ class TestUtilitiesTypeGuardsCoverage100:
         value = scenario.value
         assert FlextUtilitiesGuards.is_container(value)
         result = FlextRuntime.normalize_to_metadata(value)
-        tm.that(isinstance(result, scenario.expected_type), eq=True)
+        tm.that(result, is_=scenario.expected_type)
         if scenario.expected_value is not None:
             tm.that(result, eq=scenario.expected_value)
 
     def test_normalize_none_to_empty_string(self) -> None:
         result = FlextRuntime.normalize_to_metadata(None)
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
         tm.that(result, eq="")
 
     def test_normalize_dict_to_pydantic_model(self) -> None:
         test_dict = {"key": "value", "num": 42}
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_dict))
-        tm.that(isinstance(result, dict), eq=True)
+        tm.that(result, is_=dict)
 
     def test_normalize_list_to_pydantic_model(self) -> None:
         test_list = [1, 2, 3]
         result = FlextRuntime.normalize_to_metadata(test_list)
-        tm.that(isinstance(result, list), eq=True)
+        tm.that(result, is_=list)
 
     def test_normalize_dict_with_primitives(self) -> None:
         test_dict = {"a": 1, "b": "test", "c": True}
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_dict))
-        tm.that(isinstance(result, dict), eq=True)
+        tm.that(result, is_=dict)
 
     def test_normalize_dict_with_nested_dict(self) -> None:
         outer = {"key": {"nested": "value"}}
         result = FlextRuntime.normalize_to_metadata(outer)
-        tm.that(isinstance(result, dict), eq=True)
+        tm.that(result, is_=dict)
 
     def test_normalize_dict_with_list_value(self) -> None:
         test_dict = {"key": [1, 2, 3]}
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_dict))
-        tm.that(isinstance(result, dict), eq=True)
+        tm.that(result, is_=dict)
         assert isinstance(result, dict)
-        tm.that(isinstance(result["key"], list), eq=True)
+        tm.that(result["key"], is_=list)
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         test_dict = {"123": "value", "key": "test"}
         result = FlextRuntime.normalize_to_metadata(test_dict)
-        tm.that(isinstance(result, dict), eq=True)
+        tm.that(result, is_=dict)
         assert isinstance(result, dict)
         tm.that(result, has="123")
 
     def test_normalize_list_with_primitives(self) -> None:
         test_list = ["a", 1, True]
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_list))
-        tm.that(isinstance(result, list), eq=True)
+        tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
         test_list: Sequence[NormalizedValue] = [[1, 2], [3, 4]]
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_list))
-        tm.that(isinstance(result, list), eq=True)
+        tm.that(result, is_=list)
 
     def test_normalize_list_with_dict(self) -> None:
         test_list = [{"key": "value"}]
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_list))
-        tm.that(isinstance(result, list), eq=True)
+        tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
         test_list: Sequence[NormalizedValue] = [
@@ -214,12 +214,12 @@ class TestUtilitiesTypeGuardsCoverage100:
             [1, 2, 3],
         ]
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_list))
-        tm.that(isinstance(result, list), eq=True)
+        tm.that(result, is_=list)
 
     def test_normalize_tuple_to_pydantic_model(self) -> None:
         test_tuple = (1, 2, 3)
         result = FlextRuntime.normalize_to_metadata(test_tuple)
-        tm.that(isinstance(result, list), eq=True)
+        tm.that(result, is_=list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
         test_dict: Mapping[str, NormalizedValue] = {
@@ -230,7 +230,7 @@ class TestUtilitiesTypeGuardsCoverage100:
             "complex": {"a": [1, 2]},
         }
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", test_dict))
-        tm.that(isinstance(result, dict), eq=True)
+        tm.that(result, is_=dict)
 
     def test_normalize_custom_object(self) -> None:
         class CustomObject:
@@ -240,12 +240,12 @@ class TestUtilitiesTypeGuardsCoverage100:
 
         obj = CustomObject()
         result = FlextRuntime.normalize_to_metadata(cast("t.RuntimeData", obj))
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
         tm.that(result, eq="custom_object")
 
     def test_normalize_float_pi(self) -> None:
         result = FlextRuntime.normalize_to_metadata(math.pi)
-        tm.that(isinstance(result, float), eq=True)
+        tm.that(result, is_=float)
         tm.that(result, eq=math.pi)
 
     def test_normalize_basemodel_passthrough(self) -> None:
@@ -254,7 +254,7 @@ class TestUtilitiesTypeGuardsCoverage100:
 
         model = SampleModel()
         result = FlextRuntime.normalize_to_metadata(model)
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
         tm.that(result, has="test")
 
 

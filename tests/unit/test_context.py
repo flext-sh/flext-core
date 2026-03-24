@@ -101,7 +101,9 @@ class TestFlextContext:
 
     def test_context_initialization(self, test_context: FlextContext) -> None:
         """Test context initialization."""
-        tm.that(test_context, none=False, msg="context must be a valid Context instance")
+        tm.that(
+            test_context, none=False, msg="context must be a valid Context instance"
+        )
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
@@ -192,7 +194,7 @@ class TestFlextContext:
         result = context.get("nested")
         _ = u.Tests.Result.assert_success(result)
         retrieved = result.value
-        tm.that(isinstance(retrieved, str), eq=True)
+        tm.that(retrieved, is_=str)
         tm.that(
             retrieved,
             eq='{"user":{"id":"123","profile":{"name":"John Doe","email":"john@example.com"}}}',
@@ -468,7 +470,7 @@ class TestFlextContext:
         """Test getting all metadata when empty."""
         context = test_context
         metadata = context._get_all_metadata()
-        tm.that(isinstance(metadata, dict), eq=True)
+        tm.that(metadata, is_=dict)
 
     def test_service_register_and_get_service(self) -> None:
         """Test Service.register_service and get_service."""
@@ -516,7 +518,7 @@ class TestFlextContext:
         context.set("key1", "value1").value
         context.clear()
         exported = context.export()
-        tm.that(isinstance(exported, dict), eq=True)
+        tm.that(exported, is_=dict)
 
     def test_context_merge_with_dict(self, test_context: FlextContext) -> None:
         """Test merging context with dictionary."""
@@ -564,7 +566,7 @@ class TestFlextContext:
         context.set("key2", "value2").value
         scopes = context._get_all_scopes()
         tm.that(scopes, none=False)
-        tm.that(isinstance(scopes, dict), eq=True)
+        tm.that(scopes, is_=dict)
 
     def test_context_performance_timing(self, test_context: FlextContext) -> None:
         """Test context performance tracking."""
@@ -609,7 +611,7 @@ class TestFlextContext:
         """Test exporting empty context."""
         context = test_context
         exported = context.export()
-        tm.that(isinstance(exported, dict), eq=True)
+        tm.that(exported, is_=dict)
 
     def test_context_export_with_data(self, test_context: FlextContext) -> None:
         """Test exporting context with data."""
@@ -618,7 +620,7 @@ class TestFlextContext:
         context.set("key2", 42).value
         exported = context.export()
         tm.that(exported, none=False)
-        tm.that(isinstance(exported, dict), eq=True)
+        tm.that(exported, is_=dict)
 
     def test_context_clear_already_empty(self, test_context: FlextContext) -> None:
         """Test clearing an already empty context."""
@@ -630,21 +632,21 @@ class TestFlextContext:
         """Test context.values() on empty context."""
         context = test_context
         values = context.values()
-        tm.that(isinstance(values, list), eq=True)
+        tm.that(values, is_=list)
         tm.that(len(values), eq=0)
 
     def test_context_keys_method_empty(self, test_context: FlextContext) -> None:
         """Test context.keys() on empty context."""
         context = test_context
         keys = context.keys()
-        tm.that(isinstance(keys, list), eq=True)
+        tm.that(keys, is_=list)
         tm.that(len(keys), eq=0)
 
     def test_context_items_method_empty(self, test_context: FlextContext) -> None:
         """Test context.items() on empty context."""
         context = test_context
         items = context.items()
-        tm.that(isinstance(items, list), eq=True)
+        tm.that(items, is_=list)
         tm.that(len(items), eq=0)
 
     def test_context_cleanup_twice(self, test_context: FlextContext) -> None:

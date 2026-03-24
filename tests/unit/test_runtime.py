@@ -857,7 +857,7 @@ class TestFlextRuntime:
             object_provider = FlextRuntime.DependencyIntegration.register_object(
                 di_container, "static_value", 42
             )
-            tm.that(isinstance(factory_provider, providers.Singleton), eq=True)
+            tm.that(factory_provider, is_=providers.Singleton)
             tm.that(factory_provider(), eq={"token": "abc123"})
             tm.that(object_provider(), eq=42)
             module = ModuleType("di_factory_module")
@@ -1165,14 +1165,16 @@ class TestFlextRuntime:
                 service_version="2.0.0",
                 enable_context_correlation=False,
             )
-            tm.that(FlextContext.Variables.ServiceName.get(), eq="no-correlation-service")
+            tm.that(
+                FlextContext.Variables.ServiceName.get(), eq="no-correlation-service"
+            )
             tm.that(FlextContext.Correlation.get_correlation_id(), none=True)
 
     @given(st.text())
     def test_hypothesis_identifier_guard_returns_bool(self, value: str) -> None:
         """Property: is_valid_identifier always returns bool."""
         result = FlextRuntime.is_valid_identifier(value)
-        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, is_=bool)
 
     @given(
         st.one_of(
@@ -1186,9 +1188,9 @@ class TestFlextRuntime:
         self, value: float | str | bool
     ) -> None:
         """Property: type guards always return bool for any input."""
-        tm.that(isinstance(FlextRuntime.is_dict_like(value), bool), eq=True)
-        tm.that(isinstance(FlextRuntime.is_list_like(value), bool), eq=True)
-        tm.that(isinstance(FlextRuntime.is_valid_json(value), bool), eq=True)
+        tm.that(FlextRuntime.is_dict_like(value), is_=bool)
+        tm.that(FlextRuntime.is_list_like(value), is_=bool)
+        tm.that(FlextRuntime.is_valid_json(value), is_=bool)
 
     __all__ = ["TestFlextRuntime"]
 

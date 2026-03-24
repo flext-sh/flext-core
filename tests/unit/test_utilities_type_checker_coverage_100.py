@@ -230,7 +230,7 @@ class TestuTypeChecker:
         result_same = u._evaluate_type_compatibility("str", "str")
         tm.that(result_same, eq=True)
         result_different = u._evaluate_type_compatibility("str", "int")
-        tm.that(isinstance(result_different, bool), eq=True)
+        tm.that(result_different, is_=bool)
 
     def test_check_object_type_compatibility_object_type(self) -> None:
         """Test _check_object_type_compatibility with t.NormalizedValue type."""
@@ -376,7 +376,7 @@ class TestuTypeChecker:
             self._type_origin(dict),
             self._type_origin(origin),
         )
-        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, is_=bool)
 
     def test_handle_type_or_origin_check_subclass(self) -> None:
         """Test _handle_type_or_origin_check with subclass relationship."""
@@ -400,7 +400,7 @@ class TestuTypeChecker:
     def test_handle_type_or_origin_check_type_error(self) -> None:
         """Test _handle_type_or_origin_check handles TypeError gracefully."""
         result = u._handle_type_or_origin_check("str", "int", "str", "int")
-        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, is_=bool)
 
     def test_handle_instance_check_with_type(self) -> None:
         """Test _handle_instance_check with type origin."""
@@ -420,7 +420,7 @@ class TestuTypeChecker:
             custom_type,
         )
         result = u._handle_instance_check(custom_type_spec, custom_type_spec)
-        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, is_=bool)
 
     def test_boundary_empty_tuple_accepted_types(self) -> None:
         """Test boundary case: empty tuple for accepted types."""
@@ -434,10 +434,10 @@ class TestuTypeChecker:
             accepted,
             cast("str | type", None),
         )
-        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, is_=bool)
 
     def test_boundary_string_type_specifier(self) -> None:
         """Test boundary case: string type specifier."""
         accepted = ("str",)
         result = u.can_handle_message_type(accepted, "str")
-        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, is_=bool)

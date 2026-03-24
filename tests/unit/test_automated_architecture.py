@@ -17,32 +17,32 @@ class TestAutomatedArchitecture:
     def test_imports_no_violations(self) -> None:
         result = tv.imports(_SRC)
         tm.ok(result)
-        tm.that(isinstance(result.value.passed, bool), eq=True)
-        tm.that(isinstance(result.value.violations, list), eq=True)
+        tm.that(result.value.passed, is_=bool)
+        tm.that(result.value.violations, is_=list)
 
     def test_types_no_violations(self) -> None:
         result = tv.types(_SRC)
         tm.ok(result)
-        tm.that(isinstance(result.value.passed, bool), eq=True)
-        tm.that(isinstance(result.value.violations, list), eq=True)
+        tm.that(result.value.passed, is_=bool)
+        tm.that(result.value.violations, is_=list)
 
     def test_bypass_no_violations(self) -> None:
         result = tv.bypass(_SRC)
         tm.ok(result)
-        tm.that(isinstance(result.value.passed, bool), eq=True)
-        tm.that(isinstance(result.value.violations, list), eq=True)
+        tm.that(result.value.passed, is_=bool)
+        tm.that(result.value.violations, is_=list)
 
     def test_layer_no_cross_layer_imports(self) -> None:
         result = tv.layer(_SRC)
         tm.ok(result)
-        tm.that(isinstance(result.value.passed, bool), eq=True)
-        tm.that(isinstance(result.value.violations, list), eq=True)
+        tm.that(result.value.passed, is_=bool)
+        tm.that(result.value.violations, is_=list)
 
     def test_config_valid(self) -> None:
         result = tv.validate_config(_PYPROJECT)
         tm.ok(result)
-        tm.that(isinstance(result.value.passed, bool), eq=True)
-        tm.that(isinstance(result.value.violations, list), eq=True)
+        tm.that(result.value.passed, is_=bool)
+        tm.that(result.value.violations, is_=list)
 
     @pytest.mark.parametrize("validator", ["imports", "types", "bypass", "layer"])
     def test_all_validators_return_scan_result(self, validator: str) -> None:
@@ -57,5 +57,5 @@ class TestAutomatedArchitecture:
     def test_full_validation(self) -> None:
         result = tv.all(_SRC, pyproject_path=_PYPROJECT)
         tm.ok(result)
-        tm.that(isinstance(result.value.passed, bool), eq=True)
-        tm.that(isinstance(result.value.violations, list), eq=True)
+        tm.that(result.value.passed, is_=bool)
+        tm.that(result.value.violations, is_=list)

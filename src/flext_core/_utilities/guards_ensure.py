@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence, Sized
+from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 
 from pydantic import BaseModel, ValidationError
 
@@ -34,17 +34,17 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def _ensure_to_dict(
         value: t.NormalizedValue | None,
-        default: Mapping[str, t.NormalizedValue] | None,
-    ) -> Mapping[str, t.NormalizedValue]:
+        default: t.ContainerMapping | None,
+    ) -> t.ContainerMapping:
         if value is None:
             return default if default is not None else {}
         if isinstance(value, Mapping):
-            mapping_value: Mapping[str, t.NormalizedValue] = value
-            normalized: MutableMapping[str, t.NormalizedValue] = {}
+            mapping_value: t.ContainerMapping = value
+            normalized: Mutablet.ContainerMapping = {}
             for key, item_value in mapping_value.items():
                 normalized[str(key)] = item_value
             return normalized
-        wrapped_dict: Mapping[str, t.NormalizedValue] = {"value": value}
+        wrapped_dict: t.ContainerMapping = {"value": value}
         return wrapped_dict
 
     @staticmethod
@@ -377,12 +377,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         *,
         target_type: str = "auto",
         default: str | Sequence[t.NormalizedValue] | t.NormalizedValue | None = None,
-    ) -> (
-        str
-        | Sequence[t.NormalizedValue]
-        | t.NormalizedValue
-        | Mapping[str, t.NormalizedValue]
-    ):
+    ) -> str | Sequence[t.NormalizedValue] | t.NormalizedValue | t.ContainerMapping:
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""
             return (
@@ -407,13 +402,13 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return result_str_list
             return [value]
         if target_type == "dict":
-            dict_default: Mapping[str, t.NormalizedValue] | None = None
+            dict_default: t.ContainerMapping | None = None
             if isinstance(default, Mapping):
                 dict_default = default
             return FlextUtilitiesGuardsEnsure._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
-            mapping_value: Mapping[str, t.NormalizedValue] = value
-            normalized_auto: MutableMapping[str, t.NormalizedValue] = {}
+            mapping_value: t.ContainerMapping = value
+            normalized_auto: Mutablet.ContainerMapping = {}
             for key, item_value in mapping_value.items():
                 normalized_auto[str(key)] = item_value
             return normalized_auto
@@ -609,7 +604,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def validate_pydantic_model[T: BaseModel](
         model_class: type[T],
-        data: Mapping[str, t.NormalizedValue],
+        data: t.ContainerMapping,
     ) -> r[T]:
         try:
             validated = model_class.model_validate(data)

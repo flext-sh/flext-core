@@ -84,7 +84,8 @@ class Teste:
         ]
         for exc in exceptions_to_test:
             repr_str = repr(exc)
-            tm.that(repr_str is not None and repr_str, eq=True)
+            tm.that(repr_str, is_=str)
+            tm.that(len(repr_str), gt=0)
 
     def test_exception_serialization(self) -> None:
         """Test exception serialization to dict."""
@@ -100,7 +101,7 @@ class Teste:
         )
         if hasattr(exc, "to_dict"):
             result = exc.to_dict()
-            tm.that(isinstance(result, dict), eq=True)
+            tm.that(result, is_=dict)
             tm.that("error_code" in result or "message" in result, eq=True)
 
     def test_base_error_str_without_code(self) -> None:
@@ -398,59 +399,59 @@ class Teste:
     def test_create_with_invalid_type(self) -> None:
         """Test create with invalid error type - tests line 1346."""
         error = e.create("message", invalid_key="value")
-        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error, is_=e.BaseError)
         tm.that(error.message, eq="message")
 
     def test_create_error_factory_methods(self) -> None:
         """Test create_error factory methods - tests lines 1014-1033."""
         error = e.create("ValidationError", "Test message")
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.message, eq="Test message")
         error = e.create("ConfigurationError", "Config error")
-        tm.that(isinstance(error, e.ConfigurationError), eq=True)
+        tm.that(error, is_=e.ConfigurationError)
         error = e.create("ConnectionError", "Conn error")
-        tm.that(isinstance(error, e.ConnectionError), eq=True)
+        tm.that(error, is_=e.ConnectionError)
         error = e.create("TimeoutError", "Timeout error")
-        tm.that(isinstance(error, e.TimeoutError), eq=True)
+        tm.that(error, is_=e.TimeoutError)
         error = e.create("AuthenticationError", "Auth error")
-        tm.that(isinstance(error, e.AuthenticationError), eq=True)
+        tm.that(error, is_=e.AuthenticationError)
         error = e.create("AuthorizationError", "Authz error")
-        tm.that(isinstance(error, e.AuthorizationError), eq=True)
+        tm.that(error, is_=e.AuthorizationError)
         error = e.create("NotFoundError", "Not found error")
-        tm.that(isinstance(error, e.NotFoundError), eq=True)
+        tm.that(error, is_=e.NotFoundError)
         error = e.create("ConflictError", "Conflict error")
-        tm.that(isinstance(error, e.ConflictError), eq=True)
+        tm.that(error, is_=e.ConflictError)
         error = e.create("RateLimitError", "Rate limit error")
-        tm.that(isinstance(error, e.RateLimitError), eq=True)
+        tm.that(error, is_=e.RateLimitError)
         error = e.create("CircuitBreakerError", "Circuit error")
-        tm.that(isinstance(error, e.CircuitBreakerError), eq=True)
+        tm.that(error, is_=e.CircuitBreakerError)
         error = e.create("TypeError", "Type error")
-        tm.that(isinstance(error, e.TypeError), eq=True)
+        tm.that(error, is_=e.TypeError)
         error = e.create("OperationError", "Operation error")
-        tm.that(isinstance(error, e.OperationError), eq=True)
+        tm.that(error, is_=e.OperationError)
         error = e.create("AttributeError", "Attribute error")
-        tm.that(isinstance(error, e.AttributeAccessError), eq=True)
+        tm.that(error, is_=e.AttributeAccessError)
 
     def test_create_factory_methods(self) -> None:
         """Test create factory methods - tests lines 1368-1379."""
         error = e.create("Test message", field="test_field")
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         error = e.create("Config error", config_key="test_key")
-        tm.that(isinstance(error, e.ConfigurationError), eq=True)
+        tm.that(error, is_=e.ConfigurationError)
         error = e.create("Conn error", host=FlextConstants.LOCALHOST)
-        tm.that(isinstance(error, e.ConnectionError), eq=True)
+        tm.that(error, is_=e.ConnectionError)
         error = e.create("Timeout error", timeout_seconds=30.0)
-        tm.that(isinstance(error, e.TimeoutError), eq=True)
+        tm.that(error, is_=e.TimeoutError)
         error = e.create("Auth error", user_id="user1", auth_method="password")
-        tm.that(isinstance(error, e.AuthenticationError), eq=True)
+        tm.that(error, is_=e.AuthenticationError)
         error = e.create("Authz error", user_id="user1", permission="read")
-        tm.that(isinstance(error, e.AuthorizationError), eq=True)
+        tm.that(error, is_=e.AuthorizationError)
         error = e.create("Not found error", resource_type="User", resource_id="123")
-        tm.that(isinstance(error, e.NotFoundError), eq=True)
+        tm.that(error, is_=e.NotFoundError)
         error = e.create("Operation error", operation="test_op")
-        tm.that(isinstance(error, e.OperationError), eq=True)
+        tm.that(error, is_=e.OperationError)
         error = e.create("Attribute error", attribute_name="test_attr")
-        tm.that(isinstance(error, e.AttributeAccessError), eq=True)
+        tm.that(error, is_=e.AttributeAccessError)
 
     def test_create_with_metadata_dict(self) -> None:
         """Test create with metadata as dict - tests lines 1372-1375."""
@@ -459,7 +460,7 @@ class Teste:
             field="test_field",
             metadata={"key1": "value1"},
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="key1")
 
@@ -473,7 +474,7 @@ class Teste:
                 "t.MetadataAttributeValue", cast("t.NormalizedValue", metadata_obj)
             ),
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
 
     def test_create_with_dict_like_metadata_basic(self) -> None:
@@ -508,7 +509,7 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="key1")
 
@@ -519,7 +520,7 @@ class Teste:
             field="test_field",
             correlation_id="test-correlation-id",
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.correlation_id, eq="test-correlation-id")
 
     def test_create_error_by_type_with_error_code(self) -> None:
@@ -530,7 +531,7 @@ class Teste:
             error_code="CUSTOM_ERROR",
             context=None,
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.error_code, eq="CUSTOM_ERROR")
 
     def test_create_error_by_type_with_context(self) -> None:
@@ -542,7 +543,7 @@ class Teste:
             error_code=None,
             context=context,
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="key1")
 
@@ -554,7 +555,7 @@ class Teste:
             error_code=None,
             context=None,
         )
-        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error, is_=e.BaseError)
         tm.that(error.message, eq="Test message")
 
     def test_create_error_by_type_invalid_type(self) -> None:
@@ -565,7 +566,7 @@ class Teste:
             error_code=None,
             context=None,
         )
-        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error, is_=e.BaseError)
         tm.that(error.message, eq="Test message")
 
     def test_attribute_access_error_with_extra_kwargs(self) -> None:
@@ -668,14 +669,14 @@ class Teste:
         corr_id, metadata, auto_log, auto_corr, _metadata_val, extra = result
         tm.that(corr_id is None or isinstance(corr_id, str), eq=True)
         tm.that(metadata is None or isinstance(metadata, (m.Metadata, dict)), eq=True)
-        tm.that(isinstance(auto_log, bool), eq=True)
-        tm.that(isinstance(auto_corr, bool), eq=True)
-        tm.that(isinstance(extra, dict), eq=True)
+        tm.that(auto_log, is_=bool)
+        tm.that(auto_corr, is_=bool)
+        tm.that(extra, is_=dict)
 
     def test_create_error_with_context(self) -> None:
         """Test create_error with context parameter - tests lines 1086-1087."""
         error = e.create("ValidationError", "Test message")
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
 
     def test_create_with_dict_like_metadata_normalization(self) -> None:
         """Test create normalizes dict-like metadata values - tests lines 1376-1379."""
@@ -717,7 +718,7 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="key1")
         tm.that(error.metadata.attributes, has="key2")
@@ -758,7 +759,7 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="key1")
         tm.that(error.metadata.attributes, has="key2")
@@ -801,7 +802,7 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="key1")
 
@@ -813,7 +814,7 @@ class Teste:
             error_code="TEST_ERROR",
             field="test_field",
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.error_code, eq="TEST_ERROR")
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="field")
@@ -828,7 +829,7 @@ class Teste:
             value=123,
             custom_obj=cast("t.MetadataAttributeValue", "custom_obj"),
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="field")
         tm.that(error.metadata.attributes, has="value")
@@ -845,7 +846,7 @@ class Teste:
             value3=True,
             value4="none",
         )
-        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error, is_=e.ValidationError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="field")
         tm.that(error.metadata.attributes, has="value1")
@@ -862,7 +863,7 @@ class Teste:
             lst=[1, 2, 3],
             dct={"key": "value"},
         )
-        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error, is_=e.BaseError)
         tm.that(error.metadata, none=False)
         tm.that(error.metadata.attributes, has="obj")
         tm.that(error.metadata.attributes, has="lst")
@@ -910,7 +911,7 @@ class Teste:
         kwargs_cast = cast("Mapping[str, t.MetadataAttributeValue]", kwargs)
         corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
         tm.that(corr_id, eq="test-id")
-        tm.that(isinstance(metadata, m.Metadata), eq=True)
+        tm.that(metadata, is_=m.Metadata)
         kwargs_dict_raw = {
             "correlation_id": "test-id",
             "metadata": {"key": "value"},
@@ -927,7 +928,7 @@ class Teste:
         }
         corr_id_dict, metadata_dict = e.extract_common_kwargs(kwargs_dict)
         tm.that(corr_id_dict, eq="test-id")
-        tm.that(isinstance(metadata_dict, dict), eq=True)
+        tm.that(metadata_dict, is_=dict)
 
         class DictLike(Mapping[str, t.NormalizedValue]):
             @override
@@ -964,7 +965,7 @@ class Teste:
                 kwargs_dict_like[k] = cast("t.MetadataAttributeValue", v)
         corr_id_dl, metadata_dl = e.extract_common_kwargs(kwargs_dict_like)
         tm.that(corr_id_dl, eq="test-id")
-        tm.that(isinstance(metadata_dl, dict), eq=True)
+        tm.that(metadata_dl, is_=dict)
         tm.that(metadata_dl, has="key")
 
     def test_extract_common_kwargs_metadata_protocol_like(self) -> None:

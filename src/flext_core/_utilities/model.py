@@ -25,7 +25,7 @@ class FlextUtilitiesModel:
     def _normalize_str_object_mapping(
         value: t.ValueOrModel | Mapping[str, t.ValueOrModel],
     ) -> Mapping[str, t.ValueOrModel]:
-        normalized_result = r[Mapping[str, t.NormalizedValue]].create_from_callable(
+        normalized_result = r[t.ContainerMapping].create_from_callable(
             lambda: FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
                 value,
             ),
@@ -162,8 +162,8 @@ class FlextUtilitiesModel:
     @staticmethod
     def merge_defaults[M: BaseModel](
         model_cls: type[M],
-        defaults: Mapping[str, t.NormalizedValue],
-        overrides: Mapping[str, t.NormalizedValue],
+        defaults: t.ContainerMapping,
+        overrides: t.ContainerMapping,
     ) -> r[M]:
         """Merge defaults with overrides and create model."""
         merged = {**defaults, **overrides}
@@ -217,7 +217,7 @@ class FlextUtilitiesModel:
                     nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(
                         v,
                     )
-                    plain_mapping: MutableMapping[str, t.NormalizedValue] = {}
+                    plain_mapping: Mutablet.ContainerMapping = {}
                     for nested_key, nested_value in nested_mapping.items():
                         if isinstance(nested_value, BaseModel):
                             dumped_nested = nested_value.model_dump()
@@ -280,7 +280,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def to_config_map(
-        obj: BaseModel | Mapping[str, t.NormalizedValue] | t.NormalizedValue | None,
+        obj: BaseModel | t.ContainerMapping | t.NormalizedValue | None,
     ) -> t.ConfigMap:
         """Convert BaseModel/dict to ConfigMap (None → empty ConfigMap)."""
         if obj is None:
@@ -306,9 +306,7 @@ class FlextUtilitiesModel:
                 return t.ConfigMap(root={"value": str(model_dump_result)})
             return config_map_result.value
         if isinstance(obj, Mapping):
-            obj_mapping_result = r[
-                Mapping[str, t.NormalizedValue]
-            ].create_from_callable(
+            obj_mapping_result = r[t.ContainerMapping].create_from_callable(
                 lambda: (
                     FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
                         obj,

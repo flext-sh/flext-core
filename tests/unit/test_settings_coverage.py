@@ -25,7 +25,7 @@ class TestFlextSettingsCoverage:
     def test_get_global_and_apply_override(self) -> None:
         with tm.scope(config={"debug": False}):
             settings_obj = FlextSettings.get_global()
-        tm.that(isinstance(settings_obj, FlextSettings), eq=True)
+        tm.that(settings_obj, is_=FlextSettings)
         tm.that(settings_obj.apply_override("debug", True), eq=True)
         tm.that(settings_obj.debug, eq=True)
         tm.that(settings_obj.apply_override("invalid_key", "x"), eq=False)
@@ -65,7 +65,7 @@ class TestFlextSettingsCoverage:
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt="yaml")
         tm.ok(read_result)
-        tm.that(isinstance(read_result.value, t.ConfigMap), eq=True)
+        tm.that(read_result.value, is_=t.ConfigMap)
         if isinstance(read_result.value, t.ConfigMap):
             tm.that(str(read_result.value.root.get("app_name")), eq="flext")
 
@@ -79,10 +79,10 @@ class TestFlextSettingsCoverage:
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt="json")
         tm.ok(read_result)
-        tm.that(isinstance(read_result.value, t.ConfigMap), eq=True)
+        tm.that(read_result.value, is_=t.ConfigMap)
         if isinstance(read_result.value, t.ConfigMap):
             workers = read_result.value.root.get("workers")
-            tm.that(isinstance(workers, int), eq=True)
+            tm.that(workers, is_=int)
             if isinstance(workers, int):
                 tm.that(workers, eq=4)
 
@@ -124,7 +124,7 @@ class TestFlextSettingsCoverage:
         if key == "trace" and value is True:
             tm.that(settings_obj.apply_override("debug", True), eq=True)
         outcome = settings_obj.apply_override(key, value)
-        tm.that(isinstance(outcome, bool), eq=True)
+        tm.that(outcome, is_=bool)
 
     @pytest.mark.performance
     def test_apply_override_benchmark(self) -> None:

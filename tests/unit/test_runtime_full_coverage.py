@@ -272,13 +272,13 @@ def test_runtime_create_instance_failure_branch(
         pass
 
     instance = FlextRuntime.create_instance(Marker)
-    tm.that(isinstance(instance, Marker), eq=True)
+    tm.that(instance, is_=Marker)
 
 
 def test_normalization_edge_branches() -> None:
     cfg = t.ConfigMap(root={"a": 1})
     normalized_cfg = FlextRuntime.normalize_to_container(cfg)
-    tm.that(isinstance(normalized_cfg, (t.ConfigMap, t.Dict)), eq=True)
+    tm.that(normalized_cfg, is_=(t.ConfigMap, t.Dict))
     tm.that(getattr(normalized_cfg, "root", None), eq={"a": 1})
 
     class DictLike(Mapping[str, t.NormalizedValue]):
@@ -299,10 +299,10 @@ def test_normalization_edge_branches() -> None:
     normalized_dict_like = FlextRuntime.normalize_to_container(
         cast("t.RuntimeData", DictLike()),
     )
-    tm.that(isinstance(normalized_dict_like, t.Dict), eq=True)
+    tm.that(normalized_dict_like, is_=t.Dict)
     tm.that(getattr(normalized_dict_like, "root", None), eq={"x": 1})
     metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
-    tm.that(isinstance(metadata_cfg, str), eq=True)
+    tm.that(metadata_cfg, is_=str)
     metadata_dict_like = FlextRuntime.normalize_to_metadata(
         cast("t.RuntimeData", DictLike()),
     )
@@ -312,7 +312,7 @@ def test_normalization_edge_branches() -> None:
     metadata_list = FlextRuntime.normalize_to_metadata(
         cast("t.RuntimeData", ["a", "normalized"]),
     )
-    tm.that(isinstance(metadata_list, list), eq=True)
+    tm.that(metadata_list, is_=list)
 
 
 def test_normalize_to_container_alias_removal_path() -> None:
@@ -688,22 +688,24 @@ def test_model_support_and_hash_compare_paths() -> None:
         ),
         eq=True,
     )
-    tm.that(isinstance(FlextRuntime.hash_value_object_by_value("x"), int), eq=True)
-    tm.that(isinstance(FlextRuntime.hash_value_object_by_value({"a": 1}), int), eq=True)
-    tm.that(isinstance(FlextRuntime.hash_value_object_by_value([1, 2]), int), eq=True)
-    tm.that(isinstance(FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})), int), eq=True)
-    tm.that(isinstance(FlextRuntime.hash_value_object_by_value((1, 2)), int), eq=True)
-    tm.that(isinstance(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), int), eq=True)
+    tm.that(FlextRuntime.hash_value_object_by_value("x"), is_=int)
+    tm.that(FlextRuntime.hash_value_object_by_value({"a": 1}), is_=int)
+    tm.that(FlextRuntime.hash_value_object_by_value([1, 2]), is_=int)
+    tm.that(
+        FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})), is_=int
+    )
+    tm.that(FlextRuntime.hash_value_object_by_value((1, 2)), is_=int)
+    tm.that(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), is_=int)
 
     class Empty:
         pass
 
-    tm.that(isinstance(FlextRuntime.Bootstrap.create_instance(Empty), Empty), eq=True)
+    tm.that(FlextRuntime.Bootstrap.create_instance(Empty), is_=Empty)
 
 
 def test_config_bridge_and_trace_context_and_http_validation() -> None:
     level = FlextRuntime.get_log_level_from_config()
-    tm.that(isinstance(level, int), eq=True)
+    tm.that(level, is_=int)
     trace_from_scalar = FlextRuntime.ensure_trace_context(
         1,
         include_correlation_id=True,
@@ -754,7 +756,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
 def test_runtime_result_alias_compatibility() -> None:
     rr: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(10)
     wrapped: r[int] = r[int].ok(rr.value)
-    tm.that(isinstance(wrapped, r), eq=True)
+    tm.that(wrapped, is_=r)
 
 
 def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -769,10 +771,10 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     normalized_mapping = FlextRuntime.normalize_to_container(
         MappingProxyType({"k": "v"}),
     )
-    tm.that(isinstance(normalized_mapping, t.Dict), eq=True)
+    tm.that(normalized_mapping, is_=t.Dict)
     tm.that(getattr(normalized_mapping, "root", None), eq={"k": "v"})
     norm_list = FlextRuntime.normalize_to_container([1, "x"])
-    tm.that(isinstance(norm_list, t.ObjectList), eq=True)
+    tm.that(norm_list, is_=t.ObjectList)
     tm.that(list(getattr(norm_list, "root", [])), eq=[1, "x"])
     # Path is Container, returned as-is
     tm.that(FlextRuntime.normalize_to_container(Path("/tmp")), eq=Path("/tmp"))
@@ -792,7 +794,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_runtime_module_accessors_and_metadata() -> None:
     metadata_ref = FlextRuntime.Metadata
-    tm.that(isinstance(metadata_ref, type), eq=True)
+    tm.that(metadata_ref, is_=type)
     metadata = metadata_ref()
     tm.that(metadata.version, eq="1.0.0")
     tm.that(FlextRuntime.structlog() is structlog, eq=True)
@@ -1027,11 +1029,11 @@ def test_model_helpers_remaining_paths() -> None:
         ),
         eq=True,
     )
-    tm.that(isinstance(FlextRuntime.hash_entity_by_id(cast("t.RuntimeData", left)), int), eq=True)
+    tm.that(FlextRuntime.hash_entity_by_id(cast("t.RuntimeData", left)), is_=int)
     vm_a = ValueModel(a=1)
     vm_b = ValueModel(a=1)
     tm.that(FlextRuntime.compare_value_objects_by_value(vm_a, vm_b), eq=True)
-    tm.that(isinstance(FlextRuntime.hash_value_object_by_value(vm_a), int), eq=True)
+    tm.that(FlextRuntime.hash_value_object_by_value(vm_a), is_=int)
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:

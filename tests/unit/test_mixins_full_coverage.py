@@ -165,7 +165,7 @@ class TestMixinsFullCoverage:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _ = monkeypatch
-        tm.that(isinstance(c.SCOPE_OPERATION, str), eq=True)
+        tm.that(c.SCOPE_OPERATION, is_=str)
         tm.that(hasattr(u, "merge_mappings"), eq=True)
         tm.fail(x.fail("error"))
         conf = t.ConfigMap(root={"a": "b"})
@@ -506,7 +506,7 @@ class TestMixinsFullCoverage:
             property(_container_getter),
         )
         tm.ok(model_service._register_in_container("svc_model"))
-        tm.that(isinstance(captured["value"], _ModelMarker), eq=True)
+        tm.that(captured["value"], is_=_ModelMarker)
 
         class _WarnLogger:
             def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
@@ -557,7 +557,7 @@ class TestMixinsFullCoverage:
         tm.ok(valid)
         FlextMixins._logger_cache.clear()
         logger_obj = _LoggerService._get_or_create_logger()
-        tm.that(isinstance(logger_obj, p.Logger), eq=True)
+        tm.that(logger_obj, is_=p.Logger)
 
         class _BrokenContainer:
             def get_typed(

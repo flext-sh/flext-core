@@ -293,7 +293,7 @@ class TestCoverageExceptions:
     def test_exception_repr(self) -> None:
         error = FlextExceptions.ValidationError("Test")
         repr_str = repr(error)
-        tm.that(repr_str or "Test" in repr_str, has="ValidationError")
+        tm.that(repr_str, has="ValidationError")
 
     def test_exception_type_checking(self) -> None:
         error = FlextExceptions.ValidationError("Test")
@@ -353,7 +353,7 @@ class TestCoverageExceptions:
 
     def test_create_error_by_type(self) -> None:
         error = FlextExceptions.create("ValidationError", "Test validation error")
-        tm.that(isinstance(error, FlextExceptions.ValidationError), eq=True)
+        tm.that(error, is_=FlextExceptions.ValidationError)
         tm.that(str(error), has="Test validation error")
 
     @pytest.mark.parametrize(("message", "kwargs", "expected_type"), FACTORY_CREATION)
@@ -372,7 +372,7 @@ class TestCoverageExceptions:
             FlextExceptions.create,
         )
         error = create_error(message, **converted_kwargs)
-        tm.that(isinstance(error, expected_type), eq=True)
+        tm.that(error, is_=expected_type)
 
     def test_record_exception(self) -> None:
         FlextExceptions.clear_metrics()

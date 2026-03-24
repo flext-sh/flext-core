@@ -100,7 +100,7 @@ class TestCoverageLoggings:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123", user_id="usr-456")
         context = FlextLogger._get_global_context()
-        tm.that(isinstance(context, t.ConfigMap), eq=True)
+        tm.that(context, is_=t.ConfigMap)
 
     def test_unbind_global_context_specific_key(self) -> None:
         """Test unbind_global_context with valid keys."""
@@ -113,7 +113,7 @@ class TestCoverageLoggings:
         """Test _get_global_context with empty context."""
         FlextLogger.clear_global_context()
         result = FlextLogger._get_global_context()
-        tm.that(isinstance(result, t.ConfigMap), eq=True)
+        tm.that(result, is_=t.ConfigMap)
         tm.that(result.root, eq={})
 
     def test_get_global_context_with_values(self) -> None:
@@ -121,7 +121,7 @@ class TestCoverageLoggings:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(test_key="test_value")
         result = FlextLogger._get_global_context()
-        tm.that(isinstance(result, t.ConfigMap), eq=True)
+        tm.that(result, is_=t.ConfigMap)
         tm.that(result.root, has="test_key")
         tm.that(result.root["test_key"], eq="test_value")
 
@@ -186,14 +186,14 @@ class TestCoverageLoggings:
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("request", correlation_id="flext-123"):
             context = FlextLogger._get_global_context()
-            tm.that(isinstance(context, t.ConfigMap), eq=True)
+            tm.that(context, is_=t.ConfigMap)
 
     def test_scoped_context_manager_operation(self) -> None:
         """Test scoped_context manager for operation scope."""
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("operation", operation="test"):
             context = FlextLogger._get_global_context()
-            tm.that(isinstance(context, t.ConfigMap), eq=True)
+            tm.that(context, is_=t.ConfigMap)
 
     def test_scoped_context_manager_cleanup(self) -> None:
         """Test scoped_context clears context after exit."""
@@ -238,35 +238,35 @@ class TestCoverageLoggings:
     def test_create_service_logger(self) -> None:
         """Test creating service logger using FlextLogger constructor."""
         logger = FlextLogger("user-service")
-        tm.that(isinstance(logger, p.Logger), eq=True)
+        tm.that(logger, is_=p.Logger)
         tm.that(logger.name, eq="user-service")
 
     def test_create_service_logger_with_version(self) -> None:
         """Test creating service logger with version via bind."""
         logger = FlextLogger("auth-service").bind(version="2.0.0")
-        tm.that(isinstance(logger, p.Logger), eq=True)
+        tm.that(logger, is_=p.Logger)
 
     def test_create_service_logger_with_correlation_id(self) -> None:
         """Test creating service logger with correlation ID via bind."""
         logger = FlextLogger("payment-service").bind(correlation_id="flext-abc123")
-        tm.that(isinstance(logger, p.Logger), eq=True)
+        tm.that(logger, is_=p.Logger)
 
     def test_create_module_logger(self) -> None:
         """Test creating module logger."""
         logger = FlextLogger.create_module_logger("myapp.services")
-        tm.that(isinstance(logger, p.Logger), eq=True)
+        tm.that(logger, is_=p.Logger)
         tm.that(logger.name, eq="myapp.services")
 
     def test_create_module_logger_dunder_name(self) -> None:
         """Test creating module logger with __name__."""
         module_name = __name__
         logger = FlextLogger.create_module_logger(module_name)
-        tm.that(isinstance(logger, p.Logger), eq=True)
+        tm.that(logger, is_=p.Logger)
 
     def test_get_logger(self) -> None:
         """Test creating logger via constructor (get_logger pattern)."""
         logger = FlextLogger("default_logger")
-        tm.that(isinstance(logger, p.Logger), eq=True)
+        tm.that(logger, is_=p.Logger)
         tm.that(logger.name, eq="default_logger")
 
     def test_logger_init_with_name(self) -> None:
@@ -292,12 +292,12 @@ class TestCoverageLoggings:
         """Test bind creates new logger instance."""
         logger1 = FlextLogger("test")
         logger2 = logger1.bind(request_id="123")
-        tm.that(isinstance(logger2, p.Logger), eq=True)
+        tm.that(logger2, is_=p.Logger)
 
     def test_bind_chaining(self) -> None:
         """Test chaining multiple bind calls."""
         logger = FlextLogger("test").bind(a="1").bind(b="2").bind(c="3")
-        tm.that(isinstance(logger, p.Logger), eq=True)
+        tm.that(logger, is_=p.Logger)
 
     def test_trace_logging(self) -> None:
         """Test trace level logging.
@@ -503,7 +503,7 @@ class TestCoverageLoggings:
                 logger.exception("An error occurred", exception=e)
             )
         tm.that(exception_obj, none=False)
-        tm.that(isinstance(exception_obj, ValueError), eq=True)
+        tm.that(exception_obj, is_=ValueError)
         tm.that(str(exception_obj), eq=msg)
 
     def test_exception_logging_with_exc_info(self) -> None:
@@ -524,7 +524,7 @@ class TestCoverageLoggings:
             exception_obj = e
             assert_log_result_success(logger.exception("Operation failed"))
         tm.that(exception_obj, none=False)
-        tm.that(isinstance(exception_obj, RuntimeError), eq=True)
+        tm.that(exception_obj, is_=RuntimeError)
         tm.that(str(exception_obj), eq=msg)
 
     def test_exception_logging_without_current_exception(self) -> None:
@@ -564,7 +564,7 @@ class TestCoverageLoggings:
                 )
             )
         tm.that(exception_obj, none=False)
-        tm.that(isinstance(exception_obj, OSError), eq=True)
+        tm.that(exception_obj, is_=OSError)
         tm.that(str(exception_obj), eq=msg)
 
     def test_logger_with_global_context(self) -> None:

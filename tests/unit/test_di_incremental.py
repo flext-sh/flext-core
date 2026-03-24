@@ -279,7 +279,7 @@ class TestDIIncremental:
             ),
         )
         container_instance = runtime.container
-        tm.that(isinstance(container_instance, p.Container), eq=True)
+        tm.that(container_instance, is_=p.Container)
         tm.that(hasattr(container_instance, "_di_container"), eq=True)
 
     def test_service_with_runtime_bootstrap_options(self) -> None:
@@ -517,8 +517,8 @@ class TestDIIncremental:
         result2 = scoped2.get("service")
         value1 = u.Tests.Result.assert_success(result1)
         value2 = u.Tests.Result.assert_success(result2)
-        tm.that(isinstance(value1, str), eq=True)
-        tm.that(isinstance(value2, str), eq=True)
+        tm.that(value1, is_=str)
+        tm.that(value2, is_=str)
         tm.that(value1, eq="value1")
         tm.that(value2, eq="value2")
         tm.that(value1, ne=value2)

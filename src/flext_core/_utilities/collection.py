@@ -60,8 +60,8 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _validate_dict_str_metadata(
         data: t.NormalizedValue,
-    ) -> r[Mapping[str, t.NormalizedValue]]:
-        return r[Mapping[str, t.NormalizedValue]].create_from_callable(
+    ) -> r[t.ContainerMapping]:
+        return r[t.ContainerMapping].create_from_callable(
             lambda: m.Validators.dict_str_metadata_adapter().validate_python(data),
         )
 
@@ -451,7 +451,7 @@ class FlextUtilitiesCollection:
     ) -> Callable[[MutableMapping[str, t.NormalizedValue]], Mapping[str, E]]:
         """Create validator that coerces dict values to a StrEnum type."""
 
-        def validator(data: Mapping[str, t.NormalizedValue]) -> Mapping[str, E]:
+        def validator(data: t.ContainerMapping) -> Mapping[str, E]:
             result: MutableMapping[str, E] = {}
             for k, v in data.items():
                 if isinstance(v, enum_type):
@@ -937,11 +937,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge_mappings(
-        other: Mapping[str, t.NormalizedValue],
-        base: Mapping[str, t.NormalizedValue],
+        other: t.ContainerMapping,
+        base: t.ContainerMapping,
         *,
         strategy: str = "deep",
-    ) -> r[Mapping[str, t.NormalizedValue]]:
+    ) -> r[t.ContainerMapping]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -956,19 +956,19 @@ class FlextUtilitiesCollection:
         if strategy in {"replace", "override"}:
             result: MutableMapping[str, t.NormalizedValue] = dict(other)
             result.update(base)
-            return r[Mapping[str, t.NormalizedValue]].ok(result)
+            return r[t.ContainerMapping].ok(result)
         if strategy == "filter_none":
             result = dict(other)
             for key, value in base.items():
                 if value is not None:
                     result[key] = value
-            return r[Mapping[str, t.NormalizedValue]].ok(result)
+            return r[t.ContainerMapping].ok(result)
         if strategy in {"filter_empty", "filter_both"}:
             result = dict(other)
             for key, value in base.items():
                 if not FlextUtilitiesCollection._is_empty_value(value):
                     result[key] = value
-            return r[Mapping[str, t.NormalizedValue]].ok(result)
+            return r[t.ContainerMapping].ok(result)
         if strategy == "append":
             result = dict(other)
             for key, value in base.items():
@@ -981,7 +981,7 @@ class FlextUtilitiesCollection:
                     result[key] = current_val + value
                 else:
                     result[key] = value
-            return r[Mapping[str, t.NormalizedValue]].ok(result)
+            return r[t.ContainerMapping].ok(result)
         if strategy == "deep":
             result = dict(other)
             for key, value in base.items():
@@ -991,11 +991,11 @@ class FlextUtilitiesCollection:
                     value,
                 )
                 if merge_result.is_failure:
-                    return r[Mapping[str, t.NormalizedValue]].fail(
+                    return r[t.ContainerMapping].fail(
                         merge_result.error or "Unknown error",
                     )
-            return r[Mapping[str, t.NormalizedValue]].ok(result)
-        return r[Mapping[str, t.NormalizedValue]].fail(
+            return r[t.ContainerMapping].ok(result)
+        return r[t.ContainerMapping].fail(
             f"Unknown merge strategy: {strategy}",
         )
 

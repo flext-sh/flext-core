@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel
 
@@ -69,7 +69,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def generate_cache_key_for_command(
-        command: BaseModel | Mapping[str, t.NormalizedValue] | t.NormalizedValue,
+        command: BaseModel | t.ContainerMapping | t.NormalizedValue,
         command_type: type,
     ) -> str:
         if isinstance(command, Mapping):
@@ -144,7 +144,7 @@ class FlextUtilitiesCache:
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
             data_map = m.Validators.sortable_dict_adapter().validate_python(data)
-            result: MutableMapping[str, t.NormalizedValue] = {}
+            result: Mutablet.ContainerMapping = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]
                 if value is None:

@@ -41,7 +41,7 @@ class TestResultExceptionCarrying:
         tm.that(result.is_failure, eq=True)
         tm.that(result.error, eq=error_msg)
         tm.that(result.exception is exc, eq=True)
-        tm.that(isinstance(result.exception, ZeroDivisionError), eq=True)
+        tm.that(result.exception, is_=ZeroDivisionError)
 
     def test_fail_with_exception_and_error_code(self) -> None:
         error_msg = "Invalid input"
@@ -91,7 +91,7 @@ class TestResultExceptionCarrying:
             eq=True,
         )
         tm.that(result.exception, none=False)
-        tm.that(isinstance(result.exception, ZeroDivisionError), eq=True)
+        tm.that(result.exception, is_=ZeroDivisionError)
 
     def test_safe_no_exception_on_success(self) -> None:
         @r.safe
@@ -113,7 +113,7 @@ class TestResultExceptionCarrying:
         result: r[int] = parse_int("abc")
         tm.that(result.is_failure, eq=True)
         tm.that(result.exception, none=False)
-        tm.that(isinstance(result.exception, ValueError), eq=True)
+        tm.that(result.exception, is_=ValueError)
 
     def test_safe_captures_type_error(self) -> None:
         @r.safe
@@ -123,7 +123,7 @@ class TestResultExceptionCarrying:
         result: r[int] = get_length(self.BrokenSized())
         tm.that(result.is_failure, eq=True)
         tm.that(result.exception, none=False)
-        tm.that(isinstance(result.exception, TypeError), eq=True)
+        tm.that(result.exception, is_=TypeError)
 
     def test_create_from_callable_carries_exception(self) -> None:
         def risky_operation() -> int:
@@ -136,7 +136,7 @@ class TestResultExceptionCarrying:
             result.error is not None and "operation failed" in result.error, eq=True
         )
         tm.that(result.exception, none=False)
-        tm.that(isinstance(result.exception, RuntimeError), eq=True)
+        tm.that(result.exception, is_=RuntimeError)
 
     def test_create_from_callable_success_no_exception(self) -> None:
         def safe_operation() -> str:
@@ -281,7 +281,7 @@ class TestResultExceptionCarrying:
         )
         tm.that(result.is_failure, eq=True)
         tm.that(result.exception, none=False)
-        tm.that(isinstance(result.exception, ValidationError), eq=True)
+        tm.that(result.exception, is_=ValidationError)
 
     def test_error_or_pattern_unchanged(self) -> None:
         result_success = r[int].ok(42)
@@ -388,14 +388,14 @@ class TestResultExceptionCarrying:
         result: r[int] = r[int].fail("error", exception=exc)
         retrieved_exc = result.exception
         tm.that(retrieved_exc is exc, eq=True)
-        tm.that(isinstance(retrieved_exc, RuntimeError), eq=True)
+        tm.that(retrieved_exc, is_=RuntimeError)
 
     def test_exception_property_type_check(self) -> None:
         exc = ValueError("value error")
         result: r[int] = r[int].fail("error", exception=exc)
         retrieved_exc = result.exception
-        tm.that(isinstance(retrieved_exc, BaseException), eq=True)
-        tm.that(isinstance(retrieved_exc, ValueError), eq=True)
+        tm.that(retrieved_exc, is_=BaseException)
+        tm.that(retrieved_exc, is_=ValueError)
 
     def test_exception_property_multiple_exception_types(self) -> None:
         exceptions: Sequence[BaseException] = [
@@ -408,7 +408,7 @@ class TestResultExceptionCarrying:
         for exc in exceptions:
             result: r[int] = r[int].fail("error", exception=exc)
             tm.that(result.exception is exc, eq=True)
-            tm.that(isinstance(result.exception, type(exc)), eq=True)
+            tm.that(result.exception, is_=type(exc))
 
 
 __all__ = ["TestResultExceptionCarrying"]

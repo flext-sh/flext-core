@@ -66,7 +66,7 @@ def test_create_overloads_and_auto_correlation(
 
     monkeypatch.setattr("flext_core.context.u.generate", _generate_id)
     ctx = FlextContext.create(user_id="u1", metadata=t.ConfigMap(root={"x": 1}))
-    tm.that(isinstance(ctx, p.Context), eq=True)
+    tm.that(ctx, is_=p.Context)
     tm.that(ctx.get(c.KEY_USER_ID).value, eq="u1")
     ctx2 = FlextContext.create(initial_data=t.ConfigMap(root={}))
     tm.ok(ctx2.get(c.KEY_OPERATION_ID))
@@ -167,7 +167,7 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     monkeypatch.setattr(FlextContext, "set", _fail_set)
     cloned = clone_source.clone()
     monkeypatch.setattr(FlextContext, "set", original_set)
-    tm.that(isinstance(cloned, p.Context), eq=True)
+    tm.that(cloned, is_=p.Context)
 
 
 def test_export_paths_with_metadata_and_statistics() -> None:
@@ -179,7 +179,7 @@ def test_export_paths_with_metadata_and_statistics() -> None:
         include_metadata=True,
         as_dict=True,
     )
-    tm.that(isinstance(exported_dict, dict), eq=True)
+    tm.that(exported_dict, is_=dict)
     if isinstance(exported_dict, dict):
         tm.that(exported_dict, has="statistics")
         tm.that(exported_dict, has="metadata")
@@ -188,7 +188,7 @@ def test_export_paths_with_metadata_and_statistics() -> None:
         include_metadata=True,
         as_dict=False,
     )
-    tm.that(isinstance(exported_model, m.ContextExport), eq=True)
+    tm.that(exported_model, is_=m.ContextExport)
 
 
 def test_container_and_service_domain_paths(monkeypatch: pytest.MonkeyPatch) -> None:

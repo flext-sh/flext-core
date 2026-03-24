@@ -18,7 +18,7 @@ class TestCoverageContext:
     def test_new_correlation_context(self) -> None:
         u.Tests.ContextHelpers.clear_context()
         with FlextContext.Correlation.new_correlation() as correlation_id:
-            tm.that(isinstance(correlation_id, str), eq=True)
+            tm.that(correlation_id, is_=str)
             tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
 
     def test_new_correlation_with_explicit_id(self) -> None:
@@ -61,11 +61,11 @@ class TestCoverageContext:
             time.sleep(0.01)
             start_time = metadata.get("start_time")
             tm.that(start_time, none=False)
-            tm.that(isinstance(start_time, str), eq=True)
+            tm.that(start_time, is_=str)
         tm.that(metadata, has="end_time")
         tm.that(metadata, has="duration_seconds")
         duration_value = metadata["duration_seconds"]
-        tm.that(isinstance(duration_value, float), eq=True)
+        tm.that(duration_value, is_=float)
         duration_float: float = (
             float(duration_value) if isinstance(duration_value, (int, float)) else 0.0
         )
@@ -80,7 +80,7 @@ class TestCoverageContext:
             tm.that(start_time, none=False)
             time.sleep(expected_sleep)
         duration_value = metadata.get("duration_seconds", 0)
-        tm.that(isinstance(duration_value, float), eq=True)
+        tm.that(duration_value, is_=float)
         if isinstance(duration_value, (int, float)):
             duration_float: float = float(duration_value)
         else:
@@ -95,7 +95,7 @@ class TestCoverageContext:
     def test_ensure_correlation_id_creates_if_missing(self) -> None:
         u.Tests.ContextHelpers.clear_context()
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
-        tm.that(isinstance(correlation_id, str), eq=True)
+        tm.that(correlation_id, is_=str)
 
     def test_ensure_correlation_id_uses_existing(self) -> None:
         u.Tests.ContextHelpers.clear_context()

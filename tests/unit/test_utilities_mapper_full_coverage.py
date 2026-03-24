@@ -317,11 +317,11 @@ class UtilitiesMapperFullCoverageNamespace:
             cast("t.NormalizedValue", {1: "x", "b": "y"}),
         )
         tm.that(converted, has="1")
-        tm.that(isinstance(converted["b"], str), eq=True)
+        tm.that(converted["b"], is_=str)
         with pytest.raises(TypeError, match="Cannot narrow"):
             mapper._narrow_to_string_keyed_dict(123)
         mapped = mapper._narrow_to_configuration_mapping({"x": 1})
-        tm.that(isinstance(mapped, t.ConfigMap), eq=True)
+        tm.that(mapped, is_=t.ConfigMap)
         tm.that(mapped.root["x"], eq=1)
         with pytest.raises(TypeError, match="Cannot narrow"):
             _ = mapper._narrow_to_configuration_mapping(
@@ -375,7 +375,7 @@ class UtilitiesMapperFullCoverageNamespace:
             {"a": 1},
             {"b": "opaque"},
         ]
-        tm.that(isinstance(list_json, list), eq=True)
+        tm.that(list_json, is_=list)
         tm.that(list_json[0]["a"], eq=1)
 
         payload = {
@@ -393,7 +393,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 safe_json[key] = val.isoformat()
             else:
                 safe_json[key] = val
-        tm.that(isinstance(safe_json, Mapping), eq=True)
+        tm.that(safe_json, is_=Mapping)
         tm.that(safe_json["model"], eq={"x": 1})
         tm.that(safe_json["path"], eq="/tmp")
         tm.that(safe_json["when"], eq="2026-03-12T10:30:45+00:00")
@@ -718,7 +718,7 @@ class UtilitiesMapperFullCoverageNamespace:
             [{"name": "b"}, 3, {"name": "a"}],
             {"sort": "name"},
         )
-        tm.that(isinstance(sorted_with_scalar, list), eq=True)
+        tm.that(sorted_with_scalar, is_=list)
         bad_sort_ops = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {"sort": _raise_value_error},
@@ -1035,7 +1035,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.as_("1", int, strict=True, default=0), eq=0)
         tm.that(mapper.as_("1", int), eq=1)
         float_value = mapper.as_("1.5", float)
-        tm.that(isinstance(float_value, float), eq=True)
+        tm.that(float_value, is_=float)
         tm.that(abs(cast("float", float_value) - 1.5), lt=1e-09)
         tm.that(mapper.as_("true", bool), eq=True)
         tm.that(mapper.as_("maybe", bool, default=False), eq=False)

@@ -58,7 +58,7 @@ class TestContext100Coverage:
             "key3": "value3",
         }
         merged = context1.merge(merge_data)
-        tm.that(isinstance(merged, FlextContext), eq=True)
+        tm.that(merged, is_=FlextContext)
         result2 = merged.get("key2")
         result3 = merged.get("key3")
         _ = u.Tests.Result.assert_success(result2)
@@ -71,7 +71,7 @@ class TestContext100Coverage:
         context2 = FlextContext()
         context2.set("key2", "value2").value
         merged = context1.merge(context2)
-        tm.that(isinstance(merged, FlextContext), eq=True)
+        tm.that(merged, is_=FlextContext)
         result1 = merged.get("key1")
         result2 = merged.get("key2")
         _ = u.Tests.Result.assert_success(result1)
@@ -82,7 +82,7 @@ class TestContext100Coverage:
         context1 = FlextContext()
         context1.set("key1", "value1").value
         cloned = context1.clone()
-        tm.that(isinstance(cloned, FlextContext), eq=True)
+        tm.that(cloned, is_=FlextContext)
         result = cloned.get("key1")
         _ = u.Tests.Result.assert_success(result)
         tm.that(str(result.value), eq="value1")
@@ -206,7 +206,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         context.set("key2", "value2", scope="user").value
         all_scopes = context._get_all_scopes()
-        tm.that(isinstance(all_scopes, dict), eq=True)
+        tm.that(all_scopes, is_=dict)
         tm.that(all_scopes, contains=FlextConstants.SCOPE_GLOBAL)
         tm.that(all_scopes, contains="user")
 
@@ -216,14 +216,14 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         context.clear()
         exported = context.export()
-        tm.that(isinstance(exported, dict), eq=True)
+        tm.that(exported, is_=dict)
 
     def test_merge_empty_dicts(self) -> None:
         """Test merge with empty dictionaries."""
         context1 = FlextContext()
         context2 = FlextContext()
         merged = context1.merge(context2)
-        tm.that(isinstance(merged, p.Context), eq=True)
+        tm.that(merged, is_=p.Context)
 
     def test_remove_from_specific_scope_direct(self) -> None:
         """Test remove from specific scope using remove method."""
@@ -278,7 +278,7 @@ class TestContext100Coverage:
         """
         bad_dict = {"key": {1, 2, 3}}
         result = m.ContextData.model_validate({"data": bad_dict})
-        tm.that(isinstance(result.data["key"], str), eq=True)
+        tm.that(result.data["key"], is_=str)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
@@ -288,7 +288,7 @@ class TestContext100Coverage:
 
         model = TestModel()
         export = m.ContextExport.model_validate({"data": model})
-        tm.that(isinstance(export.data, dict), eq=True)
+        tm.that(export.data, is_=dict)
         tm.that(export.data, contains="field")
 
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
@@ -317,7 +317,7 @@ class TestContext100Coverage:
         """
         data = {"key": {1, 2, 3}}
         result = m.ContextExport.model_validate({"data": data})
-        tm.that(isinstance(result.data["key"], str), eq=True)
+        tm.that(result.data["key"], is_=str)
 
     def test_context_export_total_data_items(self) -> None:
         """Test ContextExport.total_data_items computed field."""
@@ -351,7 +351,7 @@ class TestContext100Coverage:
 
         model = TestModel()
         scope_data = m.ContextScopeData.model_validate({"data": model})
-        tm.that(isinstance(scope_data.data, dict), eq=True)
+        tm.that(scope_data.data, is_=dict)
         tm.that(scope_data.data, contains="field")
 
     def test_context_scope_data_validate_data_with_none(self) -> None:
@@ -361,7 +361,7 @@ class TestContext100Coverage:
             data={},
             metadata={},
         )
-        tm.that(isinstance(scope_data.data, dict), eq=True)
+        tm.that(scope_data.data, is_=dict)
         tm.that(scope_data.data, eq={})
 
     def test_context_scope_data_validate_metadata_with_basemodel(self) -> None:
@@ -375,7 +375,7 @@ class TestContext100Coverage:
             "scope_name": "global",
             "metadata": model,
         })
-        tm.that(isinstance(scope_data.metadata, dict), eq=True)
+        tm.that(scope_data.metadata, is_=dict)
         tm.that(scope_data.metadata, contains="field")
 
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
@@ -385,7 +385,7 @@ class TestContext100Coverage:
             data={},
             metadata={},
         )
-        tm.that(isinstance(scope_data.metadata, dict), eq=True)
+        tm.that(scope_data.metadata, is_=dict)
         tm.that(scope_data.metadata, eq={})
 
     def test_context_statistics_validate_operations_with_basemodel(self) -> None:
@@ -398,7 +398,7 @@ class TestContext100Coverage:
         stats = m.ContextStatistics.model_validate({
             "operations": model,
         })
-        tm.that(isinstance(stats.operations, dict), eq=True)
+        tm.that(stats.operations, is_=dict)
         tm.that(stats.operations, contains="field")
 
     def test_context_statistics_validate_operations_with_none(self) -> None:
@@ -407,7 +407,7 @@ class TestContext100Coverage:
         stats = m.ContextStatistics.model_validate({
             "operations": none_operations,
         })
-        tm.that(isinstance(stats.operations, dict), eq=True)
+        tm.that(stats.operations, is_=dict)
         tm.that(stats.operations, eq={})
 
     def test_context_metadata_validate_custom_fields_with_basemodel(self) -> None:
@@ -420,7 +420,7 @@ class TestContext100Coverage:
         metadata = m.ContextMetadata.model_validate({
             "custom_fields": model,
         })
-        tm.that(isinstance(metadata.custom_fields, dict), eq=True)
+        tm.that(metadata.custom_fields, is_=dict)
         tm.that(metadata.custom_fields, contains="field")
 
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
@@ -429,5 +429,5 @@ class TestContext100Coverage:
         metadata = m.ContextMetadata.model_validate({
             "custom_fields": none_custom_fields,
         })
-        tm.that(isinstance(metadata.custom_fields, dict), eq=True)
+        tm.that(metadata.custom_fields, is_=dict)
         tm.that(metadata.custom_fields, eq={})

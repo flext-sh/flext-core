@@ -163,7 +163,7 @@ class TestContainerFullCoverage:
         return None
 
     def test_builder(self) -> None:
-        tm.that(isinstance(FlextContainer.Builder.create(), p.Container), eq=True)
+        tm.that(FlextContainer.Builder.create(), is_=p.Container)
 
     def test_create_auto_register_factories_path(
         self, monkeypatch: _MonkeyPatch
@@ -205,7 +205,7 @@ class TestContainerFullCoverage:
             raising=False,
         )
         created = FlextContainer.create(auto_register_factories=True)
-        tm.that(isinstance(created, p.Container), eq=True)
+        tm.that(created, is_=p.Container)
         tm.that(called, has="x")
 
     def test_provide_property_paths(self, monkeypatch: _MonkeyPatch) -> None:
@@ -235,7 +235,7 @@ class TestContainerFullCoverage:
             "flext_core.container.FlextSettings.get_global",
             lambda: FlextSettings(),
         )
-        tm.that(isinstance(c._get_default_config(), p.Settings), eq=True)
+        tm.that(c._get_default_config(), is_=p.Settings)
 
     def test_initialize_di_components_error_paths(
         self,
@@ -379,7 +379,7 @@ class TestContainerFullCoverage:
         c.clear_all()
         FlextContainer.reset_for_testing()
         instance = FlextContainer.create()
-        tm.that(isinstance(instance._global_instance, type(instance)), eq=True)
+        tm.that(instance._global_instance, is_=type(instance))
 
     def test_scoped_config_context_branches(self, monkeypatch: _MonkeyPatch) -> None:
         c = FlextContainer.create()
@@ -409,12 +409,12 @@ class TestContainerFullCoverage:
             _fake_create_scoped_instance,
         )
         _ = c.scoped(subproject="sub")
-        tm.that(isinstance(captured["config"], p.Settings), eq=True)
+        tm.that(captured["config"], is_=p.Settings)
         _ = c.scoped(
             config=_FalseConfig(),
             context=FlextContext(),
         )
-        tm.that(isinstance(captured["context"], p.Context), eq=True)
+        tm.that(captured["context"], is_=p.Context)
 
     def test_create_auto_register_factory_wrapper_callable_and_non_callable(
         self,
@@ -529,11 +529,11 @@ class TestContainerFullCoverage:
 
             monkeypatch.setattr(c, "register", _register)
             c.sync_config_to_di()
-            tm.that(isinstance(registered, dict), eq=True)
+            tm.that(registered, is_=dict)
             if "config.alpha" in registered:
-                tm.that(isinstance(registered["config.alpha"](), BaseModel), eq=True)
+                tm.that(registered["config.alpha"](), is_=BaseModel)
             if "config.beta" in registered:
-                tm.that(isinstance(registered["config.beta"](), BaseModel), eq=True)
+                tm.that(registered["config.beta"](), is_=BaseModel)
         finally:
             FlextSettings._namespace_registry.clear()
             FlextSettings._namespace_registry.update(original_registry)
@@ -555,7 +555,7 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(c, "_context", FlextContext())
         monkeypatch.setattr(c, "has_service", _has_service_false)
         c.register_core_services()
-        tm.that(isinstance(c.has_service("context"), bool), eq=True)
+        tm.that(c.has_service("context"), is_=bool)
         c.wire_modules(modules=[])
         tm.ok(c.get("r1"))
         tm.ok(c.get("f1", type_cls=str))
@@ -579,7 +579,7 @@ class TestContainerFullCoverage:
                 ),
             ),
         )
-        tm.that(isinstance(scoped, p.Container), eq=True)
+        tm.that(scoped, is_=p.Container)
         base._config = _FalseConfig()
         base._context = FlextContext()
         _ = base.scoped(
@@ -601,7 +601,7 @@ class TestContainerFullCoverage:
             max_factories=10,
         )
         global_instance = FlextContainer.get_global()
-        tm.that(isinstance(global_instance, p.Container), eq=True)
+        tm.that(global_instance, is_=p.Container)
         tm.that(c.configure({"enable_factory_caching": True}), eq=c)
         c.register("svc-x", "value")
         c.register("fac-x", lambda: "v", kind="factory")
@@ -703,9 +703,9 @@ class TestContainerFullCoverage:
             c.sync_config_to_di()
             c._config = _CfgGoodNamespace()
             c.sync_config_to_di()
-            tm.that(isinstance(captured["config.n2"](), BaseModel), eq=True)
-            tm.that(isinstance(captured["config.n3"](), BaseModel), eq=True)
-            tm.that(isinstance(captured["config.n4"](), BaseModel), eq=True)
+            tm.that(captured["config.n2"](), is_=BaseModel)
+            tm.that(captured["config.n3"](), is_=BaseModel)
+            tm.that(captured["config.n4"](), is_=BaseModel)
             c2 = FlextContainer.create()
             c2._global_config = m.ContainerConfig(
                 enable_singleton=True,

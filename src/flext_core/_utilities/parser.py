@@ -152,9 +152,7 @@ class FlextUtilitiesParser:
 
         """
         for attr in ("name", "id"):
-            obj_vars: Mapping[str, t.NormalizedValue] = (
-                vars(obj) if hasattr(obj, "__dict__") else {}
-            )
+            obj_vars: t.ContainerMapping = vars(obj) if hasattr(obj, "__dict__") else {}
             if attr not in obj_vars:
                 continue
             attr_value = obj_vars[attr]
@@ -164,7 +162,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _extract_key_from_mapping(
-        obj: Mapping[str, t.NormalizedValue] | t.NormalizedValue,
+        obj: t.ContainerMapping | t.NormalizedValue,
     ) -> r[str]:
         """Extract key from mapping t.NormalizedValue (Strategy 2).
 
@@ -271,9 +269,7 @@ class FlextUtilitiesParser:
         default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
         """Get attribute safely (avoids circular import with u.get)."""
-        obj_vars: Mapping[str, t.NormalizedValue] = (
-            vars(obj) if hasattr(obj, "__dict__") else {}
-        )
+        obj_vars: t.ContainerMapping = vars(obj) if hasattr(obj, "__dict__") else {}
         if attr not in obj_vars:
             return default
         attr_value = obj_vars[attr]
@@ -296,9 +292,7 @@ class FlextUtilitiesParser:
             return r[TModel].fail(
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
             )
-        value_dict_data: Mapping[str, t.NormalizedValue] = {
-            str(k): v for k, v in value.items()
-        }
+        value_dict_data: t.ContainerMapping = {str(k): v for k, v in value.items()}
         try:
             return r[TModel].ok(target.model_validate(value_dict_data, strict=strict))
         except (ValidationError, TypeError, ValueError) as exc:
@@ -820,7 +814,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: t.ConfigModelInput | Sequence[str] | Mapping[str, t.NormalizedValue],
+        items: t.ConfigModelInput | Sequence[str] | t.ContainerMapping,
         *,
         case: str | None = None,
         filter_truthy: bool = False,
@@ -1132,8 +1126,8 @@ class FlextUtilitiesParser:
             dunder_name = getattr(obj, "__name__", None)
             key = dunder_name if isinstance(dunder_name, str) else obj_type_name
         elif not callable(obj) and isinstance(obj, Mapping):
-            narrowed_map: Mapping[str, t.NormalizedValue] = obj
-            str_keyed: Mapping[str, t.NormalizedValue] = {
+            narrowed_map: t.ContainerMapping = obj
+            str_keyed: t.ContainerMapping = {
                 str(mk): mv for mk, mv in narrowed_map.items()
             }
             mapping_key = self._extract_key_from_mapping(str_keyed)

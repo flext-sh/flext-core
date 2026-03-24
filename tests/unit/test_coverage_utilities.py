@@ -251,7 +251,7 @@ class Testu(TextUtilityContract):
             if method is None:
                 pytest.skip(f"Method {method_name} not available")
             result = method()
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
         tm.that(len(result), gt=0)
         if prefix:
             tm.that(result.startswith(prefix), eq=True)
@@ -305,13 +305,13 @@ class Testu(TextUtilityContract):
     ) -> None:
         """Test cache component normalization."""
         result = u.normalize_component(input_data)
-        tm.that(isinstance(result, (dict, str, type(None), expected_type)), eq=True)
+        tm.that(result, is_=(dict, str, type(None), expected_type))
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
         data = {"z": 1, "a": 2, "m": 3}
         result = u.sort_dict_keys(data)
-        tm.that(isinstance(result, dict), eq=True)
+        tm.that(result, is_=dict)
         if not isinstance(result, dict):
             pytest.fail("Expected sorted dictionary")
         keys = list(result.keys())

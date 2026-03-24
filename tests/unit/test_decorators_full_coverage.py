@@ -155,7 +155,7 @@ class TestDecoratorsFullCoverage:
             return "ok"
 
         result = fn()
-        tm.that(isinstance(result, Exception), eq=True)
+        tm.that(result, is_=Exception)
         tm.that(str(result), has="failed")
 
     def test_resolve_logger_prefers_logger_attribute(self) -> None:
@@ -198,7 +198,7 @@ class TestDecoratorsFullCoverage:
             cast("FlextLogger", fake_logger),
             retry_config=cfg,
         )
-        tm.that(isinstance(result_exc, Exception), eq=True)
+        tm.that(result_exc, is_=Exception)
         tm.that(calls["n"], eq=2)
 
         def _fake_retry_config(**_kw: test_t.NormalizedValue) -> SimpleNamespace:
@@ -219,7 +219,7 @@ class TestDecoratorsFullCoverage:
             cast("FlextLogger", fake_logger),
             retry_config=None,
         )
-        tm.that(isinstance(result_none, RuntimeError), eq=True)
+        tm.that(result_none, is_=RuntimeError)
 
     def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error(
         self,
@@ -568,7 +568,7 @@ class TestDecoratorsFullCoverage:
             cast("FlextLogger", fake_logger),
             retry_config=cfg,
         )
-        tm.that(isinstance(result, Exception), eq=True)
+        tm.that(result, is_=Exception)
         tm.that(calls["n"], eq=2)
 
         def fn(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:

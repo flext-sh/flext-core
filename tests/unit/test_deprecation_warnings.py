@@ -109,28 +109,28 @@ class TestDeprecationWarnings:
     def test_normalize_to_container_dict_wraps_in_model(self) -> None:
         """Nested dicts are wrapped in t.Dict RootModel."""
         result = FlextRuntime.normalize_to_container({"key": "value"})
-        tm.that(isinstance(result, t.Dict), eq=True)
+        tm.that(result, is_=t.Dict)
 
     def test_normalize_to_container_list_wraps_in_model(self) -> None:
         """Nested lists are wrapped in t.ObjectList RootModel."""
         result = FlextRuntime.normalize_to_container([1, 2, 3])
-        tm.that(isinstance(result, t.ObjectList), eq=True)
+        tm.that(result, is_=t.ObjectList)
 
     def test_normalize_to_container_unknown_becomes_str(self) -> None:
         """Unknown objects are converted to string representation."""
         result = FlextRuntime.normalize_to_container(
             cast("t.RuntimeData", "normalized"),
         )
-        tm.that(isinstance(result, str), eq=True)
+        tm.that(result, is_=str)
 
     def test_normalize_to_metadata_returns_metadata_value(self) -> None:
         for val in ["str", 42, None]:
             metadata = FlextRuntime.normalize_to_metadata(val)
-            tm.that(isinstance(metadata, (str, int, float, bool, list, dict)), eq=True)
+            tm.that(metadata, is_=(str, int, float, bool, list, dict))
         list_meta = FlextRuntime.normalize_to_metadata([1])
-        tm.that(isinstance(list_meta, list), eq=True)
+        tm.that(list_meta, is_=list)
         dict_meta = FlextRuntime.normalize_to_metadata({"k": "v"})
-        tm.that(isinstance(dict_meta, dict), eq=True)
+        tm.that(dict_meta, is_=dict)
 
     def test_deprecated_class_warning(self) -> None:
         """deprecated_class decorator emits DeprecationWarning on instantiation."""

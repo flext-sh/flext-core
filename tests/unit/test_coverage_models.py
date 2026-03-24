@@ -154,7 +154,7 @@ class TestCoverageModels:
 
         product = Product(name="Widget", price=19.99, domain_events=[])
         product_dict = product.model_dump()
-        tm.that(isinstance(product_dict, dict), eq=True)
+        tm.that(product_dict, is_=dict)
         tm.that(product_dict["name"], eq="Widget")
         tm.that(math.isclose(product_dict["price"], 19.99), eq=True)
         tm.that(
@@ -315,7 +315,7 @@ class TestCoverageModels:
             data=_ComparableConfigMap(root={"field": "balance"}),
         )
         tm.that(event.created_at, none=False)
-        tm.that(isinstance(event.created_at, datetime), eq=True)
+        tm.that(event.created_at, is_=datetime)
 
     def test_domain_event_causality(self) -> None:
         class PaymentProcessedEvent(m.DomainEvent):
