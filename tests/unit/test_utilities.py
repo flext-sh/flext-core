@@ -103,7 +103,7 @@ class Testu(TextUtilityContract):
             (
                 "abc123",
                 [
-                    lambda d: r[bool].ok(True) if len(d) > 0 else r[bool].fail("Empty"),
+                    lambda d: r[bool].ok(True) if d else r[bool].fail("Empty"),
                     lambda d: (
                         r[bool].ok(True) if d.isalnum() else r[bool].fail("Non-alnum")
                     ),
@@ -174,7 +174,7 @@ class Testu(TextUtilityContract):
             result = u.generate_iso_timestamp()
         else:
             result = u.generate(kind) if kind else u.generate()
-        assert isinstance(result, str) and len(result) > 0
+        assert isinstance(result, str) and result
 
     @pytest.mark.parametrize(
         ("length", "expected_length"),
@@ -199,7 +199,7 @@ class Testu(TextUtilityContract):
             "batch",
             parts=(c.DEFAULT_SIZE,),
         )
-        assert isinstance(batch_id, str) and len(batch_id) > 0
+        assert isinstance(batch_id, str) and batch_id
 
     def test_generators_correlation_id_with_context(self) -> None:
         """Test correlation ID with context."""
@@ -293,7 +293,7 @@ class Testu(TextUtilityContract):
     def test_cache_generate_key_with_kwargs(self) -> None:
         """Test cache key generation with kwargs."""
         key = u.generate_cache_key("test", foo="bar", num=42)
-        assert isinstance(key, str) and len(key) > 0
+        assert isinstance(key, str) and key
 
     def test_cache_clear_object_cache(self) -> None:
         """Test clearing t.NormalizedValue cache."""

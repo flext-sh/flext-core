@@ -51,7 +51,7 @@ class TestTypingsFullCoverage:
         """clear() empties the dict (line 359)."""
         d = t.Dict(root={"a": "1"})
         d.clear()
-        assert len(d) == 0
+        assert not d
 
     def test_pop(self) -> None:
         """pop() removes and returns item (line 363)."""

@@ -262,7 +262,7 @@ class TestDecoratorsFullCoverage:
             ensure_correlation=False,
         )
         tm.that(cid, eq="cid-existing")
-        tm.that(len(fake_logger.warning_calls) > 0, eq=True)
+        tm.that(len(fake_logger.warning_calls), gt=0)
 
     def test_clear_operation_scope_and_handle_log_result_paths(
         self,

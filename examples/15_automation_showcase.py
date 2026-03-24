@@ -329,7 +329,7 @@ class AutomationService(s[t.ConfigMap]):
         config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
         cached_config = load_config()
-        if len(cached_config.root) == 0:
+        if not cached_config.root:
             msg = "Cached config should not be empty"
             raise RuntimeError(msg)
         print("✅ Second config access used cached version (no file loading)")

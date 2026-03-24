@@ -656,7 +656,7 @@ class TestModels:
         assert len(aggregate.domain_events) == 2
         result = aggregate.mark_events_as_committed()
         _ = u.Tests.Result.assert_success(result)
-        assert len(aggregate.domain_events) == 0
+        assert not aggregate.domain_events
         committed_events = result.value
         assert len(committed_events) == 2
 
@@ -670,7 +670,7 @@ class TestModels:
         result = aggregate.mark_events_as_committed()
         _ = u.Tests.Result.assert_success(result)
         committed_events = result.value
-        assert len(committed_events) == 0
+        assert not committed_events
 
     def test_aggregate_root_bulk_domain_events(self) -> None:
         """Test add_domain_events_bulk method."""

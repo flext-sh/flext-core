@@ -230,7 +230,7 @@ class TestFlextTestsFiles:
         manager.cleanup()
         assert not file1.exists()
         assert not file2.exists()
-        assert len(manager.created_files) == 0
+        assert not manager.created_files
 
     def test_cleanup_directories(self) -> None:
         """Test cleaning up created directories."""
@@ -241,7 +241,7 @@ class TestFlextTestsFiles:
         assert temp_dir in manager.created_dirs
         manager.cleanup()
         assert not temp_dir.exists()
-        assert len(manager.created_dirs) == 0
+        assert not manager.created_dirs
 
     def test_cleanup_nonexistent_files(self, tmp_path: Path) -> None:
         """Test cleanup handles non-existent files gracefully."""
@@ -249,7 +249,7 @@ class TestFlextTestsFiles:
         file_path = manager.create("content", "test.txt")
         file_path.unlink()
         manager.cleanup()
-        assert len(manager.created_files) == 0
+        assert not manager.created_files
 
     def test_context_manager(self, tmp_path: Path) -> None:
         """Test context manager usage."""
@@ -328,7 +328,7 @@ class TestFlextTestsFiles:
         _ = manager.create("content", "test.txt")
         manager.cleanup()
         manager.cleanup()
-        assert len(manager.created_files) == 0
+        assert not manager.created_files
 
     def test_create_text_auto_detect(self, tmp_path: Path) -> None:
         """Test create() auto-detects text from str content."""

@@ -137,7 +137,7 @@ class TestUtilitiesGeneratorsFullCoverage:
     ) -> None:
         generated = u.generate(kind="id")
         assert isinstance(generated, str)
-        assert len(generated) > 0
+        assert generated
         fixed_ts = datetime(2026, 1, 2, tzinfo=UTC)
 
         class _FixedDatetime:

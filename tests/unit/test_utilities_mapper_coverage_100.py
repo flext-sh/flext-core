@@ -478,7 +478,7 @@ class UtilitiesMapperCoverage100Namespace:
                 {"sort": "a"},
             )
             res = u.build(data, ops=ops_sort)
-            assert isinstance(res, list) and len(res) > 0
+            assert isinstance(res, list) and res
             assert isinstance(res[0], dict) and res[0].get("a") == 1
             ops_getter = cast(
                 "Mapping[str, t.NormalizedValue | t.MapperCallable]",
@@ -487,7 +487,7 @@ class UtilitiesMapperCoverage100Namespace:
                 },
             )
             res = u.build(data, ops=ops_getter)
-            assert isinstance(res, list) and len(res) > 0
+            assert isinstance(res, list) and res
             assert isinstance(res[0], dict) and res[0].get("a") == 1
 
         def test_build_unique(self) -> None:

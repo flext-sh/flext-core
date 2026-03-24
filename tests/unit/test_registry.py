@@ -349,7 +349,7 @@ class TestFlextRegistry:
         if not test_case.should_succeed:
             summary.errors.append("test_error")
         assert len(summary.registered) == test_case.handler_count
-        assert (len(summary.errors) > 0) == (not test_case.should_succeed)
+        assert bool(summary.errors) == (not test_case.should_succeed)
         assert summary.is_failure == (not test_case.should_succeed)
 
     @pytest.mark.parametrize("test_case", _ERROR_SCENARIOS, ids=lambda c: c.name)

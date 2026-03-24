@@ -43,7 +43,7 @@ class TestEntityCoverageEdgeCases:
         entity = TestEntity(unique_id="test-id", name="test")
         events = entity.uncommitted_events
         assert isinstance(events, list)
-        assert len(events) == 0
+        assert not events
         event_result = entity.add_domain_event(
             "test_event",
             t.ConfigMap(root={"key": "value"}),

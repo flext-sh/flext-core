@@ -161,9 +161,9 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         if shortcut_lower == "non_empty":
             if isinstance(value, str) and bool(value):
                 return ""
-            if isinstance(value, list) and len(value) > 0:
+            if isinstance(value, list) and value:
                 return ""
-            if isinstance(value, dict) and len(value) > 0:
+            if isinstance(value, dict) and value:
                 return ""
             return error_msg or f"{context_name} must be non-empty"
         if shortcut_lower == "positive":
@@ -368,7 +368,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         if items is None:
             return True
         if isinstance(items, Sized):
-            return len(items) == 0
+            return not items
         return not bool(items)
 
     @staticmethod
@@ -523,7 +523,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         return_value: bool = False,
     ) -> r[T] | T:
         context_name = context or "Value"
-        if len(conditions) == 0:
+        if not conditions:
             if bool(value):
                 return value if return_value else r[T].ok(value)
             failure_message = error_message or f"{context_name} guard failed"

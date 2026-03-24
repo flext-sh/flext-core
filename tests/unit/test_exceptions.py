@@ -84,7 +84,7 @@ class Teste:
         ]
         for exc in exceptions_to_test:
             repr_str = repr(exc)
-            tm.that(repr_str is not None and len(repr_str) > 0, eq=True)
+            tm.that(repr_str is not None and repr_str, eq=True)
 
     def test_exception_serialization(self) -> None:
         """Test exception serialization to dict."""

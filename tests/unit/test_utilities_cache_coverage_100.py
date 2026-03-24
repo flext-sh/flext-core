@@ -418,7 +418,7 @@ class UtilitiesCacheCoverage100Namespace:
             result = u.clear_object_cache(cast("t.NormalizedValue", obj))
             _ = assertion_helpers.assert_flext_result_success(result)
             assert result.value is True
-            assert len(obj._cache) == 0
+            assert not obj._cache
 
         def test_clear_object_cache_with_simple_cache(self) -> None:
             """Test clear_object_cache with simple cached value."""
@@ -469,9 +469,9 @@ class UtilitiesCacheCoverage100Namespace:
             assert len(obj._cached_at) == 1
             result = u.clear_object_cache(cast("t.NormalizedValue", obj))
             _ = assertion_helpers.assert_flext_result_success(result)
-            assert len(obj._cache) == 0
+            assert not obj._cache
             assert getattr(obj, "_cached_value", None) is None
-            assert len(obj._cached_at) == 0
+            assert not obj._cached_at
 
         def test_clear_object_cache_no_cache_attributes(self) -> None:
             """Test clear_object_cache with t.NormalizedValue without cache attributes."""

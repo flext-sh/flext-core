@@ -207,7 +207,7 @@ class Ex06FlextContext(Examples):
             cleared_context.get(c.KEY_CORRELATION_ID) or "",
         )
         ensured = FlextContext.Utilities.ensure_correlation_id()
-        self.check("utilities.ensure_correlation_id.non_empty", len(ensured) > 0)
+        self.check("utilities.ensure_correlation_id.non_empty", ensured)
 
 
 if __name__ == "__main__":

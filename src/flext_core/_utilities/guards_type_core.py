@@ -59,7 +59,7 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def is_dict_non_empty(value: t.ValueOrModel) -> bool:
         """Check if value is a non-empty mapping."""
-        return isinstance(value, Mapping) and len(value) > 0
+        return bool(isinstance(value, Mapping) and value)
 
     @staticmethod
     def is_flexible_value(
@@ -122,10 +122,10 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def is_list_non_empty(value: t.ValueOrModel) -> bool:
         """Check if value is a non-empty sequence (excluding strings/bytes)."""
-        return (
+        return bool(
             isinstance(value, Sequence)
             and (not isinstance(value, (str, bytes)))
-            and len(value) > 0
+            and value
         )
 
     @staticmethod

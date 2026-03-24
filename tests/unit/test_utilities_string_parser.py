@@ -128,7 +128,7 @@ class TestuStringParser:
                     options=m.ParseOptions(
                         strip=True,
                         remove_empty=True,
-                        validator=lambda s: len(s) > 0,
+                        validator=lambda s: s,
                     ),
                     description="validator success",
                 ),

@@ -72,7 +72,7 @@ class TestLibraryIntegration:
         assert result.value == test_value
         entity_id = u.generate()
         assert isinstance(entity_id, str)
-        assert len(entity_id) > 0
+        assert entity_id
         register_result = clean_container.register("test_service", test_value)
         assert register_result is clean_container
         service_result = clean_container.get("test_service")
@@ -131,4 +131,4 @@ class TestLibraryIntegration:
     def test_version_info_available(self) -> None:
         """Test that version info is available."""
         assert isinstance(__version__, str)
-        assert len(__version__) > 0
+        assert __version__

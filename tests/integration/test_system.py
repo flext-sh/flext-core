@@ -137,7 +137,7 @@ class TestCompleteFlextSystemIntegration:
         assert str(uuid_obj) == generated_id
         timestamp = u.generate_iso_timestamp()
         assert isinstance(timestamp, str)
-        assert len(timestamp) > 0
+        assert timestamp
         try:
             safe_int_success = int("42")
             assert safe_int_success == 42

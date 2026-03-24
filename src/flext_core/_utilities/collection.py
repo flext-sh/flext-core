@@ -145,9 +145,9 @@ class FlextUtilitiesCollection:
         if isinstance(value, str):
             return not value
         if isinstance(value, list):
-            return len(value) == 0
+            return not value
         if isinstance(value, dict):
-            return len(value) == 0
+            return not value
         return False
 
     @staticmethod
