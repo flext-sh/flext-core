@@ -43,7 +43,7 @@ class FlextService[
     TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel] = t.NormalizedValue
     | BaseModel
     | Sequence[t.ValueOrModel],
-](x, ABC):
+](x):
     """Base class for domain services in FLEXT applications.
 
     Subclasses implement ``execute`` to run business logic and return
@@ -372,7 +372,6 @@ class FlextService[
                 continue
         return normalized or None
 
-    @abstractmethod
     def execute(self) -> r[TDomainResult]:
         """Execute domain service logic.
 
@@ -410,10 +409,10 @@ class FlextService[
             concerns like validation and error handling are handled by the base class.
 
         Raises:
-            None: Uses r for error handling instead of exceptions.
+            NotImplementedError: Subclasses must implement this method.
 
         """
-        ...
+        raise NotImplementedError
 
     def get_service_info(self) -> t.ScalarMapping:
         """Get service metadata and configuration information."""
