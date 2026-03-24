@@ -524,7 +524,9 @@ class FlextUtilitiesParser:
                 return text_length_result.value
             return c.IDENTIFIER_UNKNOWN
         try:
-            text_value: str | bytes = FlextUtilitiesParser._str_or_bytes_adapter.validate_python(text)
+            text_value: str | bytes = (
+                FlextUtilitiesParser._str_or_bytes_adapter.validate_python(text)
+            )
         except ValidationError:
             return c.IDENTIFIER_UNKNOWN
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
@@ -1490,10 +1492,14 @@ class FlextUtilitiesParser:
         tuple_len = len(pattern_tuple)
         try:
             if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
-                pattern_val, replacement_val = self._tuple_str_str_adapter.validate_python(pattern_tuple)
+                pattern_val, replacement_val = (
+                    self._tuple_str_str_adapter.validate_python(pattern_tuple)
+                )
                 return r[tuple[str, str, int]].ok((pattern_val, replacement_val, 0))
             if tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-                pattern_val, replacement_val, flags_val = self._tuple_str_str_int_adapter.validate_python(pattern_tuple)
+                pattern_val, replacement_val, flags_val = (
+                    self._tuple_str_str_int_adapter.validate_python(pattern_tuple)
+                )
                 return r[tuple[str, str, int]].ok((
                     pattern_val,
                     replacement_val,
