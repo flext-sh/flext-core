@@ -136,7 +136,9 @@ class FlextContext(m.ArbitraryTypesModel, u):
             default_factory=_empty_hooks,
         )
     )
-    _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
+    _statistics: m.ContextStatistics = PrivateAttr(
+        default_factory=lambda: m.ContextStatistics()
+    )
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
     _scope_vars: MutableMapping[str, contextvars.ContextVar[t.ConfigMap | None]] = (

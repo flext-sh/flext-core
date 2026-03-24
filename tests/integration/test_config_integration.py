@@ -44,18 +44,27 @@ class TestFlextSettingsSingletonIntegration:
                 description="Input configuration payload",
             ),
         ]
-        expected_values: t.ContainerMapping = Field(
-            default_factory=dict,
-            description="Expected effective values",
-        )
-        file_format: str = Field(
-            default="json",
-            description="Configuration file format",
-        )
-        env_vars: t.StrMapping = Field(
-            default_factory=dict,
-            description="Environment variable overrides",
-        )
+        expected_values: Annotated[
+            t.ContainerMapping,
+            Field(
+                default_factory=dict,
+                description="Expected effective values",
+            ),
+        ]
+        file_format: Annotated[
+            str,
+            Field(
+                default="json",
+                description="Configuration file format",
+            ),
+        ]
+        env_vars: Annotated[
+            t.StrMapping,
+            Field(
+                default_factory=dict,
+                description="Environment variable overrides",
+            ),
+        ]
         description: Annotated[
             str,
             Field(default="", description="Human-readable test description"),
