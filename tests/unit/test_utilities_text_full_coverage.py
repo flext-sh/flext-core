@@ -14,8 +14,7 @@ import re
 import pytest
 from hypothesis import given, strategies as st
 
-from tests import u
-from tests import TextUtilityContract
+from tests import TextUtilityContract, u
 
 
 class TestUtilitiesTextFullCoverage(TextUtilityContract):

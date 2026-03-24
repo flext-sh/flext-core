@@ -20,8 +20,7 @@ from collections.abc import Callable
 import pytest
 
 from flext_core import FlextContainer
-from tests import p
-from tests import t
+from tests import p, t
 
 
 class TestContainerPerformance:

@@ -6,8 +6,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 from __future__ import annotations
 
 from flext_core import r
-from tests import t
-from tests import c, m
+from tests import c, m, t
 
 
 def test_operation_progress_start_operation_sets_runtime_fields() -> None:

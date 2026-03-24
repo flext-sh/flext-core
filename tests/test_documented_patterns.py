@@ -14,8 +14,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, FlextService, r
-from tests import p
-from tests import t
+from tests import p, t
 
 from ._models import EmailResponse
 from .test_utils import assertion_helpers

@@ -13,9 +13,8 @@ from flext_tests import t as test_t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, r
-from tests import p, u
 from flext_core.decorators import FlextDecorators as _Dec
-from tests import c, m, t
+from tests import c, m, p, t, u
 
 
 class TestDecoratorsFullCoverage:

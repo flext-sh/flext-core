@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import t
-from tests import c, m
+from tests import c, m, t
 
 
 class TestEntityCoverageEdgeCases:

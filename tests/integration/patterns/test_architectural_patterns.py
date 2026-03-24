@@ -16,8 +16,7 @@ from collections.abc import MutableMapping, MutableSequence
 import pytest
 
 from flext_core import FlextConstants, FlextTypes as t, r
-from tests import m
-from tests import assertion_helpers
+from tests import assertion_helpers, m
 
 
 class TestArchitecturalPatterns:
