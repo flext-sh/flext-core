@@ -278,9 +278,9 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-            given: Mapping[str, str | int | bool]
-            when: Mapping[str, str | int | bool]
-            then: Mapping[str, str | int | bool]
+            given: Mapping[str, t.Primitives]
+            when: Mapping[str, t.Primitives]
+            then: Mapping[str, t.Primitives]
             tags: Sequence[str]
             priority: str
 
@@ -290,7 +290,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             key: str
-            value: str | int | bool
+            value: t.Primitives
             metadata: str
 
         class FixtureDataDict(BaseModel):
@@ -448,7 +448,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             field_name: str
-            new_value: str | int | bool
+            new_value: t.Primitives
 
         class UpdatePayloadDict(BaseModel):
             """Update command payload."""

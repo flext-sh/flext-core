@@ -1095,7 +1095,7 @@ class FlextUtilitiesMapper:
         try:
             if target is int and isinstance(value, str | float | bool):
                 return int(value)
-            if target is float and isinstance(value, str | int | bool):
+            if target is float and isinstance(value, str | int | float | bool):
                 return float(value)
             if target is str:
                 return str(value)

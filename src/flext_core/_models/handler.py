@@ -66,13 +66,10 @@ class FlextModelsHandler:
         @model_validator(mode="after")
         def validate_handler_interface(self) -> Self:
             """Validate handler has handle() or execute() method or is callable."""
-            handler = self.handler
-            if callable(handler):
-                return self
-            if hasattr(handler, "handle") or hasattr(handler, "execute"):
-                return self
-            msg = "Handler must be callable or have handle()/execute() method"
-            raise ValueError(msg)
+            if not callable(self.handler):
+                msg = "Handler must be callable or have handle()/execute() method"
+                raise ValueError(msg)
+            return self
 
     class RegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
         """Result of a handler registration operation.

@@ -14,8 +14,8 @@ from pathlib import Path
 class FlextTypingBase:
     """Base type alias namespace for Flext core type-safe contracts."""
 
-    type Primitives = str | int | float | bool
     type Numeric = int | float
+    type Primitives = str | Numeric | bool
     type Scalar = Primitives | datetime
     type Container = Scalar | Path
     type NormalizedValue = (
@@ -26,7 +26,6 @@ class FlextTypingBase:
         | None
     )
     type ContainerMapping = Mapping[str, NormalizedValue]
-    type ContainerMutableMapping = MutableMapping[str, NormalizedValue]
     type ContainerList = Sequence[NormalizedValue]
     type MutableContainerMapping = MutableMapping[str, NormalizedValue]
     type MutableContainerList = MutableSequence[NormalizedValue]

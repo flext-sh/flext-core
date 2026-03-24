@@ -330,13 +330,13 @@ class FlextModelsService:
         """Options for runtime bootstrapping."""
 
         config_type: type[BaseSettings] | None = None
-        config_overrides: Mapping[str, t.Scalar] | None = None
+        config_overrides: t.ConfigurationMapping | None = None
         context: p.Context | None = None
         subproject: str | None = None
         services: Mapping[str, t.RegisterableService] | None = None
         factories: Mapping[str, t.FactoryCallable] | None = None
         resources: Mapping[str, t.ResourceCallable] | None = None
-        container_overrides: Mapping[str, t.Scalar] | None = None
+        container_overrides: t.ConfigurationMapping | None = None
         wire_modules: Sequence[ModuleType | str] | None = None
         wire_packages: Sequence[str] | None = None
         wire_classes: Sequence[type] | None = None

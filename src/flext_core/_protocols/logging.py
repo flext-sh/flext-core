@@ -186,7 +186,7 @@ class FlextProtocolsLogging:
             """Set attribute values, returning self for chaining."""
             ...
 
-        def to_dict(self) -> Mapping[str, t.Scalar]:
+        def to_dict(self) -> t.ConfigurationMapping:
             """Convert to dictionary representation."""
             ...
 

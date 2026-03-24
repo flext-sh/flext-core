@@ -401,7 +401,7 @@ class FlextModelsContainer:
             t.ConfigMap
             | Mapping[
                 str,
-                t.ConfigMap | Sequence[t.Scalar] | bool | datetime | float | int | str,
+                t.ConfigMap | Sequence[t.Scalar] | t.Scalar,
             ]
             | None,
             SkipValidation,

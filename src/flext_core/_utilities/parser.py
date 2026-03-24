@@ -427,7 +427,7 @@ class FlextUtilitiesParser:
     def _parse_try_primitive(
         value: t.NormalizedValue,
         target: type,
-        default: float | str | bool | None,
+        default: t.Primitives | None,
         default_factory: Callable[[], t.Numeric | str | bool] | None,
         field_prefix: str,
     ) -> r[t.Primitives]:

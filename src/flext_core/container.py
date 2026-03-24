@@ -1004,7 +1004,7 @@ class FlextContainer(p.Container):
         if context is None:
             ctx_instance = self.context
             clone_method = (
-                ctx_instance.clone if hasattr(ctx_instance, "clone") else None
+                ctx_instance.clone if isinstance(ctx_instance, p.ContextLifecycle) else None
             )
             if callable(clone_method):
                 candidate_context = clone_method()

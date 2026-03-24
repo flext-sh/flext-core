@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
@@ -25,7 +24,7 @@ class FlextProtocolsService:
             """Execute domain service logic."""
             ...
 
-        def get_service_info(self) -> Mapping[str, t.Scalar]:
+        def get_service_info(self) -> t.ConfigurationMapping:
             """Get service metadata and configuration information."""
             ...
 

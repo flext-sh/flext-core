@@ -704,7 +704,7 @@ class FlextLogger(u, p.Logger):
     def _to_scalar_context(
         cls,
         context: Mapping[str, _LogArg | t.Container | t.ValueOrModel | None],
-    ) -> Mapping[str, t.Scalar]:
+    ) -> t.ConfigurationMapping:
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
     @staticmethod

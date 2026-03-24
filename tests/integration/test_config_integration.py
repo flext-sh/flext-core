@@ -231,7 +231,7 @@ class TestFlextSettingsSingletonIntegration:
         saved_app = os.environ.pop("FLEXT_APP_NAME", None)
         saved_level = os.environ.pop("FLEXT_LOG_LEVEL", None)
         try:
-            config_data: Mapping[str, str | int | bool] = {
+            config_data: Mapping[str, t.Primitives] = {
                 "app_name": "test-app-from-json",
                 "environment": "test",
                 "log_level": "WARNING",
@@ -266,7 +266,7 @@ class TestFlextSettingsSingletonIntegration:
         saved_debug = os.environ.pop("FLEXT_DEBUG", None)
         try:
             config_file = temp_directory / "config.yaml"
-            config_data: Mapping[str, str | int | bool] = {
+            config_data: Mapping[str, t.Primitives] = {
                 "app_name": "test-app-from-yaml",
                 "environment": "production",
                 "debug": False,

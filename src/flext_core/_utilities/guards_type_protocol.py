@@ -41,11 +41,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                 c.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
                 c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
-                "command_bus": lambda v: (
-                    hasattr(v, "dispatch")
-                    and hasattr(v, "publish")
-                    and hasattr(v, "register_handler")
-                ),
+                "command_bus": lambda v: isinstance(v, p.CommandBus),
                 "handler": lambda v: isinstance(v, p.Handler),
                 "logger": lambda v: isinstance(v, p.Logger),
                 "result": lambda v: FlextUtilitiesGuardsTypeProtocol.is_result_like(v),
@@ -126,14 +122,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         """
         return (
             callable(value)
-            or isinstance(value, Mapping)
-            or (
-                isinstance(value, BaseModel)
-                and hasattr(value, "model_dump")
-                and callable(value.model_dump)
-            )
-            or hasattr(value, "handle")
-            or hasattr(value, "can_handle")
+            or isinstance(value, (Mapping, p.HasModelDump, p.Handle, p.AutoDiscoverableHandler))
         )
 
     @staticmethod
@@ -194,13 +183,7 @@ class FlextUtilitiesGuardsTypeProtocol:
             True if value implements ResultLike protocol, False otherwise.
 
         """
-        return bool(
-            hasattr(value, "is_success")
-            and hasattr(value, "is_failure")
-            and hasattr(value, "map")
-            and hasattr(value, "lash")
-            and (hasattr(value, "value_or") or hasattr(value, "unwrap_or"))
-        )
+        return isinstance(value, p.ResultLike)
 
     @staticmethod
     def is_registerable_service(

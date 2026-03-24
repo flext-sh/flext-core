@@ -1375,7 +1375,7 @@ class FlextRuntime:
     @classmethod
     def ensure_trace_context(
         cls,
-        context: Mapping[str, t.Scalar] | t.ScalarOrModel,
+        context: t.ConfigurationMapping | t.ScalarOrModel,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,

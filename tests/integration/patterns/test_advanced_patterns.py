@@ -130,8 +130,8 @@ class TestAdvancedPatterns:
 
             """
 
-            def convert_dict_value(value: t.NormalizedValue) -> str | int | bool:
-                """Convert t.NormalizedValue to str | int | bool."""
+            def convert_dict_value(value: t.NormalizedValue) -> t.Scalar:
+                """Convert t.NormalizedValue to t.Scalar."""
                 if isinstance(value, (str, int, bool)):
                     return value
                 if isinstance(value, float):
@@ -146,7 +146,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            given_converted: Mapping[str, str | int | bool] = {
+            given_converted: Mapping[str, t.Scalar] = {
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
             when_mapped = u.transform_values(
@@ -157,7 +157,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            when_converted: Mapping[str, str | int | bool] = {
+            when_converted: Mapping[str, t.Scalar] = {
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
             then_mapped = u.transform_values(
@@ -168,7 +168,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            then_converted: Mapping[str, str | int | bool] = {
+            then_converted: Mapping[str, t.Scalar] = {
                 key: convert_dict_value(value) for key, value in then_mapped.items()
             }
             scenario_data = m.Core.MockScenarioData.model_validate(
@@ -288,7 +288,7 @@ class TestAdvancedPatterns:
 
         def add_case(
             self,
-            **kwargs: str | int | bool | MutableSequence[str],
+            **kwargs: t.Scalar | MutableSequence[str],
         ) -> TestAdvancedPatterns.ParameterizedTestBuilder:
             """add_case method.
 

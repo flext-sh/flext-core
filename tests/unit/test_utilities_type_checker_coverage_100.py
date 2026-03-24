@@ -148,7 +148,11 @@ class TestuTypeChecker:
         origin = get_origin(types[0])
         if origin is None:
             type_str = str(types[0])
-            assert type_str.startswith("Mapping[") or types[0] is dict or "Mapping" in type_str
+            assert (
+                type_str.startswith("Mapping[")
+                or types[0] is dict
+                or "Mapping" in type_str
+            )
         else:
             assert origin in {dict, MutableMapping}
 

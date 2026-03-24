@@ -13,6 +13,7 @@ from flext_tests import t as test_t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, p, r, u
+from flext_core.decorators import FlextDecorators as _Dec
 from tests import c, m, t
 
 
@@ -95,18 +96,9 @@ class TestDecoratorsFullCoverage:
         def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
             return None
 
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._resolve_logger",
-            _resolve_logger,
-        )
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._bind_operation_context",
-            _bind_operation_context,
-        )
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._clear_operation_scope",
-            _clear_operation_scope,
-        )
+        monkeypatch.setattr(_Dec, "_resolve_logger", _resolve_logger)
+        monkeypatch.setattr(_Dec, "_bind_operation_context", _bind_operation_context)
+        monkeypatch.setattr(_Dec, "_clear_operation_scope", _clear_operation_scope)
 
         @d.log_operation("boom", track_perf=True)
         def fn() -> None:
@@ -115,9 +107,13 @@ class TestDecoratorsFullCoverage:
 
         with pytest.raises(ValueError):
             fn()
+        assert fake_logger.exception_calls, "No exception calls captured"
         _message, kwargs = fake_logger.exception_calls[-1]
-        tm.that(kwargs, has="duration_ms")
-        tm.that(kwargs, has="duration_seconds")
+        assert "duration_ms" in kwargs, (
+            f"Missing duration_ms in kwargs. "
+            f"All calls: {[(m, list(k.keys())) for m, k in fake_logger.exception_calls]}"
+        )
+        assert "duration_seconds" in kwargs
 
     def test_retry_unreachable_timeouterror_path(
         self,

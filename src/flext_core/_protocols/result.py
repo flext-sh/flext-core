@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from types import TracebackType
 from typing import Protocol, override, runtime_checkable
 
@@ -274,7 +274,7 @@ class FlextProtocolsResult:
         Used for Pydantic model compatibility and serialization.
         """
 
-        def model_dump(self) -> Mapping[str, t.Scalar]:
+        def model_dump(self) -> t.ConfigurationMapping:
             """Dump model data to dictionary."""
             ...
 

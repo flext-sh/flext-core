@@ -7,8 +7,6 @@ type-system-architecture.md rules with zero duplication.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from datetime import datetime
-from pathlib import Path
 from typing import override
 
 from pydantic import BaseModel
@@ -46,7 +44,7 @@ class TestUtils:
             unique_id: str,
             name: str,
             **kwargs: t.Scalar,
-        ) -> Mapping[str, bool | datetime | float | int | str]:
+        ) -> Mapping[str, t.Scalar]:
             """Create standardized entity test data."""
             return {"unique_id": unique_id, "name": name, **kwargs}
 
@@ -54,7 +52,7 @@ class TestUtils:
         def create_value_object_data(
             value: t.Scalar,
             **kwargs: t.Scalar,
-        ) -> Mapping[str, bool | datetime | float | int | str]:
+        ) -> Mapping[str, t.Scalar]:
             """Create standardized value t.NormalizedValue test data."""
             return {"value": value, **kwargs}
 
@@ -135,7 +133,7 @@ class TestUtils:
             operation_func: Callable[[], r[t.Container]],
             test_case: m.Core.StandardTestCaseModel,
             context: str = "",
-        ) -> Path | bool | datetime | float | int | str:
+        ) -> t.Container:
             """Execute operation and assert result matches test case."""
             try:
                 result = operation_func()

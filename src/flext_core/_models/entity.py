@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
@@ -191,7 +191,7 @@ class FlextModelsEntity:
             return r[Sequence[FlextModelsDomainEvent.Entry]].ok(events)
 
         @override
-        def model_post_init(self, __context: Mapping[str, t.Scalar] | None, /) -> None:
+        def model_post_init(self, __context: t.ConfigurationMapping | None, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             self.updated_at = FlextRuntime.generate_datetime_utc()
 

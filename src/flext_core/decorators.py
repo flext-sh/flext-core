@@ -897,7 +897,7 @@ class FlextDecorators:
 
     @staticmethod
     def with_context(
-        **context_vars: str | int | bool | None,
+        **context_vars: t.Primitives | None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to manage context lifecycle for an operation.
 
