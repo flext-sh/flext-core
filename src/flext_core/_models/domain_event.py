@@ -162,7 +162,7 @@ class FlextModelsDomainEvent:
             BeforeValidator(lambda v: FlextModelsDomainEvent._normalize_event_data(v)),
             Field(
                 default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(
-                    root={}
+                    root={},
                 ),
                 validate_default=True,
                 description="Event data container",

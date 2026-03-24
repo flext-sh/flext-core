@@ -1,3 +1,5 @@
+# DEAD CODE: no callers found 2026-03-24 — all methods unused in production src/
+# Module retained because _utilities/* is FROZEN per AGENTS.md §10.2
 """Deprecation utilities for flext-core."""
 
 from __future__ import annotations

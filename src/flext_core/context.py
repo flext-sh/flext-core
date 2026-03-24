@@ -137,7 +137,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         )
     )
     _statistics: m.ContextStatistics = PrivateAttr(
-        default_factory=lambda: m.ContextStatistics()
+        default_factory=lambda: m.ContextStatistics(),
     )
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
