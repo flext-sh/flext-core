@@ -10,11 +10,56 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core import (
+    FlextProtocolsBase,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsRegistry,
+    FlextProtocolsResult,
+    t,
+)
 
 
 class FlextProtocolsService:
     """Protocols for service execution and repository access."""
+
+    @runtime_checkable
+    class CloneableRuntime(Protocol):
+        """Structural protocol for runtime instances that support cloning.
+
+        Exposes dispatcher, registry, context, and config as read/write
+        properties for type-safe cloning without private member access.
+        """
+
+        @property
+        def runtime_dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None: ...
+
+        @runtime_dispatcher.setter
+        def runtime_dispatcher(
+            self, value: FlextProtocolsHandler.Dispatcher | None, /
+        ) -> None: ...
+
+        @property
+        def runtime_registry(self) -> FlextProtocolsRegistry.Registry | None: ...
+
+        @runtime_registry.setter
+        def runtime_registry(
+            self, value: FlextProtocolsRegistry.Registry | None, /
+        ) -> None: ...
+
+        @property
+        def runtime_context(self) -> FlextProtocolsContext.Context | None: ...
+
+        @runtime_context.setter
+        def runtime_context(
+            self, value: FlextProtocolsContext.Context | None, /
+        ) -> None: ...
+
+        @property
+        def runtime_config(self) -> BaseModel | None: ...
+
+        @runtime_config.setter
+        def runtime_config(self, value: BaseModel | None, /) -> None: ...
 
     @runtime_checkable
     class Service[T](FlextProtocolsBase.Base, Protocol):

@@ -12,7 +12,9 @@ from typing import cast
 import pytest
 
 from flext_core import r
-from flext_core._models.domain_event import _ComparableConfigMap as ComparableConfigMap
+from flext_core._models.domain_event import FlextModelsDomainEvent
+
+ComparableConfigMap = FlextModelsDomainEvent.ComparableConfigMap
 from flext_core._models.entity import FlextModelsEntity
 from tests import c, m, t, u
 

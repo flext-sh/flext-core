@@ -155,7 +155,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_instance_of[T](value: t.GuardInput, type_cls: type[T]) -> TypeGuard[T]:
+    def is_instance_of[T](value: T | t.GuardInput, type_cls: type[T]) -> TypeGuard[T]:
         """Check if value is instance of type class (handles generics)."""
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 

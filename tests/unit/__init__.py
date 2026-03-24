@@ -133,6 +133,7 @@ if TYPE_CHECKING:
         test_query_validate_pagination_dict_and_default,
     )
     from tests.unit.test_models_entity_full_coverage import (
+        ComparableConfigMap,
         test_entity_comparable_map_and_bulk_validation_paths,
     )
     from tests.unit.test_models_generic_full_coverage import (
@@ -415,6 +416,10 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "ClearCacheScenario": (
         "tests.unit.test_utilities_cache_coverage_100",
         "ClearCacheScenario",
+    ),
+    "ComparableConfigMap": (
+        "tests.unit.test_models_entity_full_coverage",
+        "ComparableConfigMap",
     ),
     "ExplodingLenList": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -1485,6 +1490,7 @@ __all__ = [
     "BadString",
     "CircuitBreakerManager",
     "ClearCacheScenario",
+    "ComparableConfigMap",
     "ExplodingLenList",
     "FlextProtocols",
     "NestedClassPropagationTransformer",

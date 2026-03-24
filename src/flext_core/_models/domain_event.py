@@ -19,29 +19,6 @@ from pydantic import BeforeValidator, Field
 from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, t
 
 
-class _ComparableConfigMap(t.ConfigMap):
-    """ConfigMap with equality support for domain event data."""
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, dict):
-            return self.root == other
-        if isinstance(other, Mapping):
-            typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                other,
-            )
-            other_mapping = t.ConfigMap(
-                root={
-                    key: FlextModelsDomainEvent.metadata_to_normalized(value)
-                    for key, value in typed_other.items()
-                },
-            ).root
-            return self.root == other_mapping
-        return super().__eq__(other)
-
-    __hash__ = t.ConfigMap.__hash__
-
-
 class FlextModelsDomainEvent:
     """Namespace for domain event models.
 
@@ -49,7 +26,27 @@ class FlextModelsDomainEvent:
     Split into its own module so Entity can import without forward references.
     """
 
-    ComparableConfigMap = _ComparableConfigMap
+    class ComparableConfigMap(t.ConfigMap):
+        """ConfigMap with equality support for domain event data."""
+
+        @override
+        def __eq__(self, other: object) -> bool:
+            if isinstance(other, dict):
+                return self.root == other
+            if isinstance(other, Mapping):
+                typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                    other,
+                )
+                other_mapping = t.ConfigMap(
+                    root={
+                        key: FlextModelsDomainEvent.metadata_to_normalized(value)
+                        for key, value in typed_other.items()
+                    },
+                ).root
+                return self.root == other_mapping
+            return super().__eq__(other)
+
+        __hash__ = t.ConfigMap.__hash__
 
     @staticmethod
     def metadata_to_normalized(
@@ -92,12 +89,12 @@ class FlextModelsDomainEvent:
     @staticmethod
     def _normalize_event_data(
         value: t.ValueOrModel,
-    ) -> _ComparableConfigMap:
-        """BeforeValidator: normalize event data to _ComparableConfigMap."""
-        if isinstance(value, _ComparableConfigMap):
+    ) -> FlextModelsDomainEvent.ComparableConfigMap:
+        """BeforeValidator: normalize event data to FlextModelsDomainEvent.ComparableConfigMap."""
+        if isinstance(value, FlextModelsDomainEvent.ComparableConfigMap):
             return value
         if isinstance(value, t.ConfigMap):
-            return _ComparableConfigMap(root=dict(value.items()))
+            return FlextModelsDomainEvent.ComparableConfigMap(root=dict(value.items()))
         if isinstance(value, dict):
             typed_value = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 value,
@@ -108,7 +105,7 @@ class FlextModelsDomainEvent:
                     for key, item in typed_value.items()
                 },
             )
-            return _ComparableConfigMap(root=intermediate.root)
+            return FlextModelsDomainEvent.ComparableConfigMap(root=intermediate.root)
         if isinstance(value, Mapping):
             typed_mapping = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 value,
@@ -119,20 +116,20 @@ class FlextModelsDomainEvent:
                     for key, item in typed_mapping.items()
                 },
             )
-            return _ComparableConfigMap(root=intermediate.root)
+            return FlextModelsDomainEvent.ComparableConfigMap(root=intermediate.root)
         if value is None:
-            return _ComparableConfigMap(root={})
+            return FlextModelsDomainEvent.ComparableConfigMap(root={})
         msg = "Domain event data must be a dictionary or None"
         raise TypeError(msg)
 
     @staticmethod
     def to_config_map(
         data: t.ConfigMap | None,
-    ) -> _ComparableConfigMap:
+    ) -> FlextModelsDomainEvent.ComparableConfigMap:
         """Convert optional ConfigMap to a comparable variant."""
         if not data:
-            return _ComparableConfigMap(root={})
-        return _ComparableConfigMap(
+            return FlextModelsDomainEvent.ComparableConfigMap(root={})
+        return FlextModelsDomainEvent.ComparableConfigMap(
             root={
                 str(key): (
                     value
@@ -161,10 +158,11 @@ class FlextModelsDomainEvent:
         event_type: t.NonEmptyStr
         aggregate_id: t.NonEmptyStr
         data: Annotated[
-            _ComparableConfigMap,
+            FlextModelsDomainEvent.ComparableConfigMap,
             BeforeValidator(lambda v: FlextModelsDomainEvent._normalize_event_data(v)),
         ] = Field(
-            default_factory=_ComparableConfigMap,
+            default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(root={}),
+            validate_default=True,
             description="Event data container",
         )
 

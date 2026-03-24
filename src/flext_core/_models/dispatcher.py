@@ -154,9 +154,11 @@ class FlextModelsDispatcher:
                 description="Successes needed to close from half-open",
             ),
         ]
-        _breakers: t.RegistryDict[FlextModelsDispatcher.CircuitBreakerStateRecord] = (
+        _breakers: dict[str, FlextModelsDispatcher.CircuitBreakerStateRecord] = (
             PrivateAttr(
-                default_factory=dict,
+                default_factory=lambda: dict[
+                    str, FlextModelsDispatcher.CircuitBreakerStateRecord
+                ](),
             )
         )
 
@@ -386,8 +388,8 @@ class FlextModelsDispatcher:
             default=0.1,
             description="Jitter variance as fraction between 0.0 and 1.0",
         )
-        _windows: t.RegistryDict[FlextModelsDispatcher.RateWindow] = PrivateAttr(
-            default_factory=dict,
+        _windows: dict[str, FlextModelsDispatcher.RateWindow] = PrivateAttr(
+            default_factory=lambda: dict[str, FlextModelsDispatcher.RateWindow](),
         )
 
         def __init__(
@@ -492,8 +494,8 @@ class FlextModelsDispatcher:
             default=c.DEFAULT_MAX_DELAY_SECONDS,
             description="Maximum delay cap in seconds",
         )
-        _attempts: t.RegistryDict[int] = PrivateAttr(
-            default_factory=dict,
+        _attempts: dict[str, int] = PrivateAttr(
+            default_factory=lambda: dict[str, int](),
         )
 
         def __init__(

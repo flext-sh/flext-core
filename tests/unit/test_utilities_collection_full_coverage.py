@@ -20,7 +20,7 @@ class TestUtilitiesCollectionFullCoverage:
         RED = "red"
         BLUE = "blue"
 
-    class _BadMapping(t.StrMapping):
+    class _BadMapping(Mapping[str, str]):
         @override
         def __getitem__(self, _key: str) -> str:
             msg = "mapping get failed"

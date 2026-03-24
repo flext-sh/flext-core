@@ -228,7 +228,7 @@ class TestRuntimeCoverage100:
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
 
-        class MySequence(t.StrSequence):
+        class MySequence(Sequence[str]):
             @overload
             def __getitem__(self, index: int) -> str: ...
 

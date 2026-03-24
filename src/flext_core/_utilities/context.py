@@ -44,7 +44,7 @@ class FlextUtilitiesContext:
         return container.scoped(subproject=scope_id, services=overrides)
 
     @staticmethod
-    def clone_runtime[T](
+    def clone_runtime[T: p.CloneableRuntime](
         runtime: T,
         *,
         context: p.Context | None = None,
@@ -65,27 +65,20 @@ class FlextUtilitiesContext:
 
         """
         cloned: T = runtime.__class__.__new__(runtime.__class__)
-        runtime_vars: t.ContainerMapping = (
-            vars(runtime) if hasattr(runtime, "__dict__") else {}
+        cloned.runtime_dispatcher = runtime.runtime_dispatcher
+        cloned.runtime_registry = runtime.runtime_registry
+        cloned.runtime_context = (
+            context if context is not None else runtime.runtime_context
         )
-        if "_dispatcher" in runtime_vars:
-            cloned._dispatcher = runtime_vars["_dispatcher"]
-        if "_registry" in runtime_vars:
-            cloned._registry = runtime_vars["_registry"]
-        if "_context" in runtime_vars:
-            cloned_context = context or runtime_vars["_context"]
-            cloned._context = cloned_context
-        if "_config" in runtime_vars:
-            runtime_config = runtime_vars["_config"]
-            if isinstance(config_overrides, t.ConfigMap):
-                override_values = dict(config_overrides.items())
-                if isinstance(runtime_config, BaseModel):
-                    cloned_config = runtime_config.model_copy(update=override_values)
-                    cloned._config = cloned_config
-                else:
-                    cloned._config = runtime_config
-            else:
-                cloned._config = runtime_config
+        runtime_config: BaseModel | None = runtime.runtime_config
+        if isinstance(config_overrides, t.ConfigMap) and isinstance(
+            runtime_config, BaseModel
+        ):
+            cloned.runtime_config = runtime_config.model_copy(
+                update=dict(config_overrides.items()),
+            )
+        else:
+            cloned.runtime_config = runtime_config
         return cloned
 
     @staticmethod

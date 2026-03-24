@@ -27,12 +27,12 @@ from flext_core import (
 )
 
 
-def _generate_datetime_utc() -> datetime:
-    return datetime.now(UTC)
-
-
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
+
+    @staticmethod
+    def _generate_datetime_utc() -> datetime:
+        return datetime.now(UTC)
 
     @staticmethod
     def _is_metadata_instance(
@@ -89,10 +89,10 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             Field(
-                default_factory=_generate_datetime_utc,
+                default_factory=lambda: FlextModelsContainer._generate_datetime_utc(),
                 description="UTC timestamp when service was registered",
             ),
-        ] = Field(default_factory=_generate_datetime_utc)
+        ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.ConfigMap | None,
             Field(
@@ -214,10 +214,10 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             Field(
-                default_factory=_generate_datetime_utc,
+                default_factory=lambda: FlextModelsContainer._generate_datetime_utc(),
                 description="UTC timestamp when factory was registered",
             ),
-        ] = Field(default_factory=_generate_datetime_utc)
+        ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
         is_singleton: Annotated[
             bool,
             Field(
@@ -273,10 +273,10 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             Field(
-                default_factory=_generate_datetime_utc,
+                default_factory=lambda: FlextModelsContainer._generate_datetime_utc(),
                 description="UTC timestamp when resource was registered",
             ),
-        ] = Field(default_factory=_generate_datetime_utc)
+        ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.ConfigMap | None,
             Field(

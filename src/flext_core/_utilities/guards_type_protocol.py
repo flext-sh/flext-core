@@ -41,7 +41,11 @@ class FlextUtilitiesGuardsTypeProtocol:
                 c.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
                 c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
-                "command_bus": lambda v: isinstance(v, p.CommandBus),
+                "command_bus": lambda v: (
+                    hasattr(v, "dispatch")
+                    and hasattr(v, "publish")
+                    and hasattr(v, "register_handler")
+                ),
                 "handler": lambda v: isinstance(v, p.Handler),
                 "logger": lambda v: isinstance(v, p.Logger),
                 "result": lambda v: FlextUtilitiesGuardsTypeProtocol.is_result_like(v),
@@ -268,16 +272,16 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return bool(isinstance(value, str) and bool(value.strip()))
             case "dict_non_empty":
                 if isinstance(value, dict):
-                    return bool(value)
+                    return len(value) > 0
                 if isinstance(value, t.ConfigMap):
-                    return bool(value.root)
+                    return len(value.root) > 0
                 return False
             case "list_non_empty":
                 if isinstance(value, (list, tuple)) and not isinstance(
                     value,
                     (str, bytes),
                 ):
-                    return bool(value)
+                    return len(value) > 0
                 return False
             case _:
                 return False
