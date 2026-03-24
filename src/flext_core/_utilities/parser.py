@@ -14,7 +14,7 @@ import re
 import warnings
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from enum import StrEnum
-from typing import TypeAliasType, overload
+from typing import ClassVar, TypeAliasType, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -43,6 +43,14 @@ class FlextUtilitiesParser:
     PATTERN_TUPLE_MAX_LENGTH: int = c.PATTERN_TUPLE_MAX_LENGTH
     TUPLE_LENGTH_2: int = 2
     TUPLE_LENGTH_3: int = 3
+
+    _str_or_bytes_adapter: ClassVar[TypeAdapter[str | bytes]] = TypeAdapter(str | bytes)
+    _tuple_str_str_adapter: ClassVar[TypeAdapter[tuple[str, str]]] = TypeAdapter(
+        tuple[str, str],
+    )
+    _tuple_str_str_int_adapter: ClassVar[TypeAdapter[tuple[str, str, int]]] = (
+        TypeAdapter(tuple[str, str, int])
+    )
 
     def __init__(self) -> None:
         """Initialize string parser with logging."""
@@ -515,9 +523,8 @@ class FlextUtilitiesParser:
             if text_length_result.is_success:
                 return text_length_result.value
             return c.IDENTIFIER_UNKNOWN
-        text_adapter: TypeAdapter[str | bytes] = TypeAdapter(str | bytes)
         try:
-            text_value: str | bytes = text_adapter.validate_python(text)
+            text_value: str | bytes = FlextUtilitiesParser._str_or_bytes_adapter.validate_python(text)
         except ValidationError:
             return c.IDENTIFIER_UNKNOWN
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
@@ -1483,14 +1490,10 @@ class FlextUtilitiesParser:
         tuple_len = len(pattern_tuple)
         try:
             if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
-                pattern_val, replacement_val = TypeAdapter(
-                    tuple[str, str],
-                ).validate_python(pattern_tuple)
+                pattern_val, replacement_val = self._tuple_str_str_adapter.validate_python(pattern_tuple)
                 return r[tuple[str, str, int]].ok((pattern_val, replacement_val, 0))
             if tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-                pattern_val, replacement_val, flags_val = TypeAdapter(
-                    tuple[str, str, int],
-                ).validate_python(pattern_tuple)
+                pattern_val, replacement_val, flags_val = self._tuple_str_str_int_adapter.validate_python(pattern_tuple)
                 return r[tuple[str, str, int]].ok((
                     pattern_val,
                     replacement_val,
