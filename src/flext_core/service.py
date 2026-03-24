@@ -61,7 +61,7 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type[FlextSettings] | None = None
+    config_type: type[p.Settings] | None = None
     config_overrides: t.ContainerMapping | None = Field(
         default=None,
         exclude=True,
