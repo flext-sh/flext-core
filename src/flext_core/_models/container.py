@@ -64,7 +64,9 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return FlextModelsContainer._normalize_metadata(v)
 
-    class ServiceRegistration(_MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel):
+    class ServiceRegistration(
+        _MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel
+    ):
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
@@ -186,7 +188,9 @@ class FlextModelsContainer:
             msg = f"Service must be a RegisterableService type, got {type(v).__name__}"
             raise ValueError(msg)
 
-    class FactoryRegistration(_MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel):
+    class FactoryRegistration(
+        _MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel
+    ):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
@@ -242,7 +246,9 @@ class FlextModelsContainer:
             ),
         ] = c.ZERO
 
-    class ResourceRegistration(_MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel):
+    class ResourceRegistration(
+        _MetadataValidatorMixin, FlextModelFoundation.ArbitraryTypesModel
+    ):
         """Model for lifecycle-managed resource registrations.
 
         Captures resource factories that dependency-injector should wrap via
