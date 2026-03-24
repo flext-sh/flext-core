@@ -169,5 +169,8 @@ class FlextModelsDomainEvent:
             ),
         ]
 
+    # Canonical alias: tests use m.DomainEvent, which resolves to Entry
+    DomainEvent = Entry
+
 
 __all__ = ["FlextModelsDomainEvent"]

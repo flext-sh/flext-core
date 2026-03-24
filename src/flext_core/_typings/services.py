@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import TYPE_CHECKING, TypeAliasType
+from typing import TYPE_CHECKING, Protocol, TypeAliasType
 
 from pydantic import BaseModel
 
@@ -17,6 +17,14 @@ from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import FlextDispatcher, p
+
+    class _ServiceInstance(Protocol):
+        """Protocol for arbitrary service instances (adapters, services, etc.).
+
+        Satisfied by any class instance that has ``__dict__`` — this matches
+        the runtime validator in ``FlextContainer`` (``hasattr(v, '__dict__')``).
+        Only used during type-checking; never instantiated at runtime.
+        """
 
 
 class FlextTypesServices:
@@ -33,17 +41,31 @@ class FlextTypesServices:
         BaseModel | Mapping[str, FlextTypingBase.NormalizedValue] | None
     )
 
-    type RegisterableService = (
-        FlextTypingBase.Container
-        | BaseModel
-        | Mapping[
-            str,
-            FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
-        ]
-        | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
-        | Callable[..., FlextTypingBase.Container | BaseModel]
-        | Callable[..., FlextTypesServices.RegisterableService]
-    )
+    if TYPE_CHECKING:
+        type RegisterableService = (
+            FlextTypingBase.Container
+            | BaseModel
+            | _ServiceInstance
+            | Mapping[
+                str,
+                FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
+            ]
+            | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
+            | Callable[..., FlextTypingBase.Container | BaseModel]
+            | Callable[..., FlextTypesServices.RegisterableService]
+        )
+    else:
+        type RegisterableService = (
+            FlextTypingBase.Container
+            | BaseModel
+            | Mapping[
+                str,
+                FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
+            ]
+            | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
+            | Callable[..., FlextTypingBase.Container | BaseModel]
+            | Callable[..., FlextTypesServices.RegisterableService]
+        )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
     type MetadataValue = (

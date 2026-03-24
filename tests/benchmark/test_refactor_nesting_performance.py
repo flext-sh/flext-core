@@ -7,7 +7,10 @@ import time
 import tracemalloc
 from pathlib import Path
 
-from flext_infra import ClassNestingRefactorRule, FlextInfraRefactorLooseClassScanner
+from flext_infra import (
+    FlextInfraClassNestingRefactorRule as ClassNestingRefactorRule,
+    FlextInfraRefactorLooseClassScanner,
+)
 
 
 class TestPerformanceBenchmarks:
