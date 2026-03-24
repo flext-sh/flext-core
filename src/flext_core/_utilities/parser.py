@@ -1685,7 +1685,7 @@ class FlextUtilitiesParser:
                     current_component_length=len(current),
                 )
                 components.append("".join(current))
-                current: list[str] = []
+                current: MutableSequence[str] = []
                 i += 1
             else:
                 current.append(text[i])
