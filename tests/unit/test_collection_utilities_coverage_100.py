@@ -23,7 +23,7 @@ import pytest
 from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import t
+from tests import t
 
 
 class TestCollectionUtilitiesCoverage:

@@ -31,7 +31,8 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import FlextRuntime, m, r
+from flext_core import FlextRuntime, r
+from tests import m
 from tests import c, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")

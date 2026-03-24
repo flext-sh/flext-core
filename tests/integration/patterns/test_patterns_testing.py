@@ -25,7 +25,8 @@ from typing import TypeIs
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from flext_core import FlextTypes, FlextUtilities, P, R, t
+from flext_core import FlextTypes, FlextUtilities, P, R
+from tests import t
 
 type FixtureCaseDict = t.ContainerMapping
 type FixtureDataDict = t.ContainerMapping

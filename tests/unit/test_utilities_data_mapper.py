@@ -16,7 +16,8 @@ from typing import cast, override
 
 from flext_tests import tm
 
-from flext_core import FlextTypes, FlextUtilities, t
+from flext_core import FlextTypes, FlextUtilities
+from tests import t
 from tests import (
     assertion_helpers,
     c,

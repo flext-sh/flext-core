@@ -19,7 +19,8 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextContainer, p
+from flext_core import FlextContainer
+from tests import p
 from tests import t
 
 

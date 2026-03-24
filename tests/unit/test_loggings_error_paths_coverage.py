@@ -12,7 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, t
+from flext_core import FlextLogger
+from tests import t
 
 
 class TestLoggingsErrorPaths:

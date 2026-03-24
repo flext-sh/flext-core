@@ -26,7 +26,8 @@ import yaml
 from flext_tests import t
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings, p
+from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings
+from tests import p
 
 
 class TestFlextSettingsSingletonIntegration:

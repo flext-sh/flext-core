@@ -10,7 +10,8 @@ from __future__ import annotations
 import pytest
 from flext_tests import t
 
-from flext_core import FlextContainer, __version__, p, r, u
+from flext_core import FlextContainer, __version__, r
+from tests import p, u
 from tests import assertion_helpers
 
 from ..conftest import FunctionalExternalService

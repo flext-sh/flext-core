@@ -13,7 +13,8 @@ from typing import override
 
 from flext_tests import tm
 
-from flext_core import r, s, t
+from flext_core import r, s
+from tests import t
 
 
 class TestService100Coverage:

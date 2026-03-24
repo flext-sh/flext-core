@@ -9,7 +9,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import p, r, t, u
+from tests import p, r, t, u
 
 from ._models import TestUnitModels
 

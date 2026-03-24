@@ -21,7 +21,8 @@ from typing import override
 
 from flext_tests import u
 
-from flext_core import FlextContext, m, p, r, s
+from flext_core import FlextContext, r, s
+from tests import m, p
 
 
 class TestServiceBootstrap:

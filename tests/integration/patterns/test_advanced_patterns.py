@@ -19,7 +19,8 @@ from typing import cast
 import pytest
 from flext_tests import t
 
-from flext_core import r, t as core_t, u
+from flext_core import r, t as core_t
+from tests import u
 
 from ...models import m
 

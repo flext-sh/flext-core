@@ -7,7 +7,8 @@ from collections.abc import MutableMapping
 import pytest
 from flext_tests import t, tm
 
-from flext_core import FlextContainer, FlextContext, p, r
+from flext_core import FlextContainer, FlextContext, r
+from tests import p
 from tests import c, m
 
 

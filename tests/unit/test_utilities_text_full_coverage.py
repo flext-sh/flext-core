@@ -14,7 +14,7 @@ import re
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_core import u
+from tests import u
 from tests import TextUtilityContract
 
 

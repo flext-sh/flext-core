@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import m, t
+from tests import m, t
 
 
 class TestTypingsFullCoverage:

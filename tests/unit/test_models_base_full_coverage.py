@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from flext_core import c, m, r, t, u
+from tests import c, m, r, t, u
 
 from ._models import TestUnitModels
 

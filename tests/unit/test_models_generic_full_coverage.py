@@ -5,7 +5,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 
 from __future__ import annotations
 
-from flext_core import r, t
+from flext_core import r
+from tests import t
 from tests import c, m
 
 

@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_core import FlextDispatcher, r, t
+from flext_core import FlextDispatcher, r
+from tests import t
 from tests import c, m
 
 

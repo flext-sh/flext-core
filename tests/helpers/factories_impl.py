@@ -14,7 +14,8 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from itertools import count
 from typing import ClassVar, cast, override
 
-from flext_core import r, s, t
+from flext_core import r, s
+from tests import t
 
 from .. import c, m
 

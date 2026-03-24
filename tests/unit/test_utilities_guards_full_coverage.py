@@ -12,8 +12,7 @@ from flext_tests import tm
 from pydantic import BaseModel
 from pydantic_core import ValidationError
 
-from flext_core import m as core_m, r
-from tests import TestUnitModels, c, m, t, u
+from tests import TestUnitModels, c, m, r, t, u
 
 
 def _is_type_obj(
@@ -265,17 +264,17 @@ def test_guard_in_has_empty_none_helpers() -> None:
 
 
 def test_chk_exercises_missed_branches() -> None:
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(none=True).model_dump()), eq=True)
-    tm.that(not u.chk(None, **core_m.GuardCheckSpec(none=False).model_dump()), eq=True)
-    tm.that(not u.chk("a", **core_m.GuardCheckSpec(is_=int).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(none=True).model_dump()), eq=True)
+    tm.that(not u.chk(None, **m.GuardCheckSpec(none=False).model_dump()), eq=True)
+    tm.that(not u.chk("a", **m.GuardCheckSpec(is_=int).model_dump()), eq=True)
     with pytest.raises(ValidationError):
         u.chk("a", is_=cast("t.NormalizedValue", MutableSequence[int]))
     with pytest.raises(ValidationError):
         u.chk("a", not_=cast("t.NormalizedValue", MutableSequence[int]))
-    tm.that(not u.chk("a", **core_m.GuardCheckSpec(not_=str).model_dump()), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(eq=2).model_dump()), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(ne=1).model_dump()), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(in_=[2, 3]).model_dump()), eq=True)
+    tm.that(not u.chk("a", **m.GuardCheckSpec(not_=str).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(eq=2).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(ne=1).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(in_=[2, 3]).model_dump()), eq=True)
 
 
 def test_guards_bool_shortcut_and_issubclass_typeerror(
@@ -299,38 +298,38 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
     tm.that(not _is_type_obj(cast("t.NormalizedValue", _SomeType), "handler"), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(not_in=[1, 2]).model_dump()), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(gt=1).model_dump()), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(gte=2).model_dump()), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(lt=1).model_dump()), eq=True)
-    tm.that(not u.chk(2, **core_m.GuardCheckSpec(lte=1).model_dump()), eq=True)
-    tm.that(not u.chk(1, **core_m.GuardCheckSpec(empty=True).model_dump()), eq=True)
-    tm.that(not u.chk("", **core_m.GuardCheckSpec(empty=False).model_dump()), eq=True)
-    tm.that(not u.chk("abc", **core_m.GuardCheckSpec(starts="z").model_dump()), eq=True)
-    tm.that(not u.chk("abc", **core_m.GuardCheckSpec(ends="z").model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(not_in=[1, 2]).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(gt=1).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(gte=2).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(lt=1).model_dump()), eq=True)
+    tm.that(not u.chk(2, **m.GuardCheckSpec(lte=1).model_dump()), eq=True)
+    tm.that(not u.chk(1, **m.GuardCheckSpec(empty=True).model_dump()), eq=True)
+    tm.that(not u.chk("", **m.GuardCheckSpec(empty=False).model_dump()), eq=True)
+    tm.that(not u.chk("abc", **m.GuardCheckSpec(starts="z").model_dump()), eq=True)
+    tm.that(not u.chk("abc", **m.GuardCheckSpec(ends="z").model_dump()), eq=True)
     tm.that(
-        not u.chk("abc", **core_m.GuardCheckSpec(match="\\d+").model_dump()),
+        not u.chk("abc", **m.GuardCheckSpec(match="\\d+").model_dump()),
         eq=True,
     )
     tm.that(
-        not u.chk("abc", **core_m.GuardCheckSpec(contains="z").model_dump()),
+        not u.chk("abc", **m.GuardCheckSpec(contains="z").model_dump()),
         eq=True,
     )
     tm.that(
-        not u.chk({"k": "v"}, **core_m.GuardCheckSpec(contains="x").model_dump()),
+        not u.chk({"k": "v"}, **m.GuardCheckSpec(contains="x").model_dump()),
         eq=True,
     )
     tm.that(
-        not u.chk(["k"], **core_m.GuardCheckSpec(contains="x").model_dump()),
+        not u.chk(["k"], **m.GuardCheckSpec(contains="x").model_dump()),
         eq=True,
     )
     tm.that(
-        not u.chk("abc", **core_m.GuardCheckSpec(contains="x").model_dump()),
+        not u.chk("abc", **m.GuardCheckSpec(contains="x").model_dump()),
         eq=True,
     )
-    tm.that(u.chk("abc", **core_m.GuardCheckSpec(contains=1).model_dump()), eq=True)
-    tm.that(u.chk("abc", **core_m.GuardCheckSpec(gte=3, lte=3).model_dump()), eq=True)
-    tm.that(u.chk("", **core_m.GuardCheckSpec(empty=True).model_dump()), eq=True)
+    tm.that(u.chk("abc", **m.GuardCheckSpec(contains=1).model_dump()), eq=True)
+    tm.that(u.chk("abc", **m.GuardCheckSpec(gte=3, lte=3).model_dump()), eq=True)
+    tm.that(u.chk("", **m.GuardCheckSpec(empty=True).model_dump()), eq=True)
 
 
 def test_guard_instance_attribute_access_warnings() -> None:

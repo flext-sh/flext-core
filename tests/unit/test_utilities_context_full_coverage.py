@@ -15,7 +15,8 @@ from unittest.mock import MagicMock
 from flext_tests import t
 from pydantic import BaseModel
 
-from flext_core import FlextContext, p
+from flext_core import FlextContext
+from tests import p
 from tests import u
 
 from ._models import TestUnitModels

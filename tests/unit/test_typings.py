@@ -10,7 +10,8 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e, t
+from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U
+from tests import e, t
 
 
 class TestTypings:

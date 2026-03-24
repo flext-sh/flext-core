@@ -13,7 +13,8 @@ from typing import Annotated, ClassVar, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, FlextService, p, r
+from flext_core import FlextExceptions, FlextService, r
+from tests import p
 from tests import t
 
 from ._models import EmailResponse

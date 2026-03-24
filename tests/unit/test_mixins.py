@@ -30,7 +30,8 @@ from flext_tests import tm, u
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, FlextMixins, p, r, t, x
+from flext_core import FlextContext, FlextMixins, r, x
+from tests import p, t
 
 
 class TestFlextMixinsNestedClasses:

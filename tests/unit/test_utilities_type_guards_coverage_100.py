@@ -8,7 +8,8 @@ import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRuntime, FlextUtilitiesGuards, t
+from flext_core import FlextRuntime, FlextUtilitiesGuards
+from tests import t
 
 type ScalarValue = t.Scalar
 type NormalizedValue = t.NormalizedValue

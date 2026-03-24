@@ -29,7 +29,8 @@ import pytest
 from flext_tests import t, tm
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, r, u
+from flext_core import FlextExceptions, r
+from tests import u
 
 from ..test_utils import assertion_helpers
 from .contracts.text_contract import TextUtilityContract

@@ -30,7 +30,8 @@ from flext_tests import c, t, tm, u
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextContext, p, r
+from flext_core import FlextContainer, FlextContext, r
+from tests import p
 
 
 class _ServiceScenario(BaseModel):

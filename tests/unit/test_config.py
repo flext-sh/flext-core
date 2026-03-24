@@ -32,7 +32,8 @@ from flext_tests import c, tm, u
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextSettings, p, t
+from flext_core import FlextSettings
+from tests import p, t
 
 
 class TestFlextSettings:

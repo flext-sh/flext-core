@@ -19,7 +19,7 @@ from typing import Annotated, ClassVar, Final, Literal
 from flext_tests import FlextTestsConstants
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import t
+from tests import t
 
 
 class FlextCoreTestConstants(FlextTestsConstants):

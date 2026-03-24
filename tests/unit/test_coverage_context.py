@@ -6,7 +6,8 @@ import time
 
 from flext_tests import tm, u
 
-from flext_core import FlextContainer, FlextContext, t
+from flext_core import FlextContainer, FlextContext
+from tests import t
 from tests import m
 
 from ..test_utils import assertion_helpers
