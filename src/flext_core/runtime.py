@@ -74,6 +74,8 @@ class FlextRuntime:
     p (duck typing through method signatures, no inheritance required).
     """
 
+    RuntimeResult = FlextModelsResult.RuntimeResult
+
     _structlog_configured: ClassVar[bool] = False
     _runtime_logger: ClassVar[p.Logger | None] = None
 
@@ -1241,8 +1243,6 @@ class FlextRuntime:
                 filtered_dict[key] = value
         return filtered_dict
 
-    RuntimeResult = FlextModelsResult.RuntimeResult
-
     class Integration:
         """Application-layer integration helpers using structlog directly (Layer 0.5).
 
@@ -1535,7 +1535,7 @@ class FlextRuntime:
         codes: Sequence[int] | t.StrSequence | Sequence[int | str],
         min_code: int | None = None,
         max_code: int | None = None,
-    ) -> RuntimeResult[Sequence[int]]:
+    ) -> FlextModelsResult.RuntimeResult[Sequence[int]]:
         """Validate and normalize HTTP status codes (bridge for _models).
 
         Args:

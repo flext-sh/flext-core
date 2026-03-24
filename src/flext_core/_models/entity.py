@@ -39,8 +39,6 @@ class FlextModelsEntity:
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
-    DomainEvent = FlextModelsDomainEvent.Entry
-
     class Entity(
         FlextModelFoundation.TimestampedModel,
         FlextModelFoundation.IdentifiableMixin,

@@ -24,7 +24,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from flext_core import FlextModelFoundation, FlextModelsContainers, c, t
+from flext_core import FlextModelFoundation, c, t
 
 
 class FlextGenericModels:
@@ -495,8 +495,6 @@ class FlextGenericModels:
                 reasons = {str(k): str(v) for k, v in raw_reasons.items()}
             reasons[str(item)] = reason
             self.metadata.root["skip_reasons"] = reasons
-
-    BatchResultDict = FlextModelsContainers.BatchResultDict
 
 
 __all__ = ["FlextGenericModels"]
