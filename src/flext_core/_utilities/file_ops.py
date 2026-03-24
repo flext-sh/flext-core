@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 from typing import overload
 
+from flext_core.constants import FlextConstants as c
+
 
 class FlextUtilitiesFileOps:
     """Side-effect file/IO write operations that return None."""
@@ -31,7 +33,7 @@ class FlextUtilitiesFileOps:
         path: Path,
         content: str | bytes,
         *,
-        encoding: str = "utf-8",
+        encoding: str = c.DEFAULT_ENCODING,
     ) -> None:
         """Write content to *path*, discarding the byte-count return value.
 

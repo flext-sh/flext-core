@@ -68,7 +68,7 @@ class FlextModelsHandler:
             """Validate handler has handle() or execute() method or is callable."""
             if not callable(self.handler):
                 msg = "Handler must be callable or have handle()/execute() method"
-                raise ValueError(msg)
+                raise TypeError(msg)
             return self
 
     class RegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
