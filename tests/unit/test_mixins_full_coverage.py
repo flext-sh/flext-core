@@ -69,7 +69,8 @@ class TestMixinsFullCoverage:
             self.wired: t.ContainerMapping | None = None
 
         def scoped(
-            self, **_kwargs: t.Scalar
+            self,
+            **_kwargs: t.Scalar,
         ) -> TestMixinsFullCoverage._RuntimeContainer:
             return self
 
@@ -86,7 +87,11 @@ class TestMixinsFullCoverage:
             return False
 
         def register(
-            self, _name: str, _value: t.NormalizedValue, *, kind: str = "service"
+            self,
+            _name: str,
+            _value: t.NormalizedValue,
+            *,
+            kind: str = "service",
         ) -> TestMixinsFullCoverage._RuntimeContainer:
             _ = kind
             return self
@@ -121,7 +126,9 @@ class TestMixinsFullCoverage:
             self.register_calls: MutableSequence[tuple[str, str]] = []
 
         def get_typed(
-            self, _key: str, _tp: type[t.RuntimeAtomic]
+            self,
+            _key: str,
+            _tp: type[t.RuntimeAtomic],
         ) -> r[t.RuntimeAtomic]:
             if self.success:
                 return r[t.RuntimeAtomic].ok(self.logger or "logger")
@@ -255,7 +262,9 @@ class TestMixinsFullCoverage:
                 return True
 
             def register(
-                self, _name: str, _value: t.NormalizedValue
+                self,
+                _name: str,
+                _value: t.NormalizedValue,
             ) -> _AlreadyContainer:
                 return self
 
@@ -558,7 +567,9 @@ class TestMixinsFullCoverage:
 
         class _BrokenContainer:
             def get_typed(
-                self, _key: str, _tp: type[t.RuntimeAtomic]
+                self,
+                _key: str,
+                _tp: type[t.RuntimeAtomic],
             ) -> r[t.RuntimeAtomic]:
                 msg = "boom"
                 raise RuntimeError(msg)

@@ -36,7 +36,9 @@ class FlextProtocolsService:
 
         @runtime_dispatcher.setter
         def runtime_dispatcher(
-            self, value: FlextProtocolsHandler.Dispatcher | None, /
+            self,
+            value: FlextProtocolsHandler.Dispatcher | None,
+            /,
         ) -> None: ...
 
         @property
@@ -44,7 +46,9 @@ class FlextProtocolsService:
 
         @runtime_registry.setter
         def runtime_registry(
-            self, value: FlextProtocolsRegistry.Registry | None, /
+            self,
+            value: FlextProtocolsRegistry.Registry | None,
+            /,
         ) -> None: ...
 
         @property
@@ -52,7 +56,9 @@ class FlextProtocolsService:
 
         @runtime_context.setter
         def runtime_context(
-            self, value: FlextProtocolsContext.Context | None, /
+            self,
+            value: FlextProtocolsContext.Context | None,
+            /,
         ) -> None: ...
 
         @property

@@ -53,10 +53,12 @@ class TestCollectionUtilitiesCoverage:
             Field(description="Input sequence values"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether parsing should succeed")
+            bool,
+            Field(description="Whether parsing should succeed"),
         ]
         expected_count: Annotated[
-            int | None, Field(default=None, description="Expected parsed item count")
+            int | None,
+            Field(default=None, description="Expected parsed item count"),
         ] = None
         expected_error: Annotated[
             str | None,
@@ -69,10 +71,12 @@ class TestCollectionUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Coerce list scenario name")]
         value: Annotated[
-            t.NormalizedValue, Field(description="Input value for list coercion")
+            t.NormalizedValue,
+            Field(description="Input value for list coercion"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether coercion should succeed")
+            bool,
+            Field(description="Whether coercion should succeed"),
         ]
         expected_error: Annotated[
             str | None,
@@ -89,10 +93,12 @@ class TestCollectionUtilitiesCoverage:
             Field(description="Input mapping values"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether parsing should succeed")
+            bool,
+            Field(description="Whether parsing should succeed"),
         ]
         expected_count: Annotated[
-            int | None, Field(default=None, description="Expected parsed entry count")
+            int | None,
+            Field(default=None, description="Expected parsed entry count"),
         ] = None
         expected_error: Annotated[
             str | None,

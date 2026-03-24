@@ -18,8 +18,6 @@ class TestCoverageModels:
     class GetUserQuery(m.Query):
         """Query to get user."""
 
-        pass
-
     class ListAccountsQuery(m.Query):
         """Query to list accounts."""
 
@@ -208,7 +206,9 @@ class TestCoverageModels:
             bio: str
 
         cmd = UpdateProfileCommand(
-            name="Alice", bio="Developer", command_id="cmd-test-2"
+            name="Alice",
+            bio="Developer",
+            command_id="cmd-test-2",
         )
         original_name = cmd.name
         cmd.name = "Bob"
@@ -229,7 +229,9 @@ class TestCoverageModels:
                 return value
 
         cmd = DepositCommand(
-            account_id="ACC-001", amount=100.0, command_id="cmd-test-3"
+            account_id="ACC-001",
+            amount=100.0,
+            command_id="cmd-test-3",
         )
         tm.that(math.isclose(cmd.amount, 100.0), eq=True)
         with pytest.raises(ValidationError):
@@ -279,7 +281,7 @@ class TestCoverageModels:
             event_type="UserCreated",
             aggregate_id="USER-001",
             data=m.ComparableConfigMap(
-                root={"user_id": "USER-001", "email": "user@example.com"}
+                root={"user_id": "USER-001", "email": "user@example.com"},
             ),
         )
         tm.that(event.event_type, eq="UserCreated")

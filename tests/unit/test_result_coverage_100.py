@@ -92,7 +92,8 @@ class TestrCoverage:
         """Test creating failure results."""
         result: r[str] = r[str].fail("Test error")
         self._ResultAssertions.assert_failure_with_error(
-            result, expected_error="Test error"
+            result,
+            expected_error="Test error",
         )
 
     def test_fail_with_error_code(self) -> None:
@@ -128,7 +129,8 @@ class TestrCoverage:
         """Test accessing error on failure result."""
         result: r[str] = r[str].fail("test_error")
         self._ResultAssertions.assert_failure_with_error(
-            result, expected_error="test_error"
+            result,
+            expected_error="test_error",
         )
 
     def test_error_property_on_success_returns_none(self) -> None:
@@ -250,7 +252,8 @@ class TestrCoverage:
         failed: r[str] = r[str].fail("error")
         result: r[str] = failed.lash(recovery)
         self._ResultAssertions.assert_success_with_value(
-            result, "Recovered from: error"
+            result,
+            "Recovered from: error",
         )
 
     def test_lash_skips_on_success(self) -> None:

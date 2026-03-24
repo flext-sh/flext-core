@@ -81,7 +81,7 @@ class TestWorkspaceLevelRefactor:
                         all_violations.append(v_item)
                     elif isinstance(v_item, Mapping):
                         all_violations.append(
-                            m.Infra.LooseClassViolation.model_validate(v_item)
+                            m.Infra.LooseClassViolation.model_validate(v_item),
                         )
         assert len(all_violations) >= 3
         for v in all_violations:

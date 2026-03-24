@@ -43,7 +43,8 @@ class TestDispatcherTimeoutCoverage100:
             Field(description="Configured executor worker count"),
         ]
         expected_workers: Annotated[
-            int, Field(description="Expected resolved worker count")
+            int,
+            Field(description="Expected resolved worker count"),
         ]
         should_use_executor: Annotated[
             bool,
@@ -100,7 +101,8 @@ class TestDispatcherTimeoutCoverage100:
         ids=["zero_workers", "negative_workers"],
     )
     def test_initialization_rejects_non_positive_workers(
-        self, invalid_workers: int
+        self,
+        invalid_workers: int,
     ) -> None:
         """Pydantic PositiveInt rejects zero and negative executor_workers."""
         with pytest.raises(ValidationError):

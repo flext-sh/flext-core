@@ -47,7 +47,8 @@ class Ex03FlextLogger(Examples):
         self.check(
             "bind_global_context.ok",
             FlextLogger.bind_global_context(
-                app_name="flext-core", correlation_id="g-001"
+                app_name="flext-core",
+                correlation_id="g-001",
             ).is_success,
         )
         self.check("global.info.ok", self._logged(logger.info("global bound")))
@@ -56,7 +57,8 @@ class Ex03FlextLogger(Examples):
             FlextLogger.unbind_global_context("correlation_id").is_success,
         )
         self.check(
-            "clear_global_context.ok", FlextLogger.clear_global_context().is_success
+            "clear_global_context.ok",
+            FlextLogger.clear_global_context().is_success,
         )
 
     def _exercise_scoped_context(self) -> None:
@@ -88,7 +90,8 @@ class Ex03FlextLogger(Examples):
             FlextLogger.clear_scope(application_scope).is_success,
         )
         self.check(
-            "clear_scope.request.ok", FlextLogger.clear_scope(request_scope).is_success
+            "clear_scope.request.ok",
+            FlextLogger.clear_scope(request_scope).is_success,
         )
         self.check(
             "clear_scope.operation.ok",
@@ -104,7 +107,8 @@ class Ex03FlextLogger(Examples):
             FlextLogger.bind_context_for_level("INFO", level_tag="l1").is_success,
         )
         self.check(
-            "level.info.ok", self._logged(logger.info("info with level context"))
+            "level.info.ok",
+            self._logged(logger.info("info with level context")),
         )
         self.check(
             "unbind_context_for_level.ok",
@@ -122,7 +126,9 @@ class Ex03FlextLogger(Examples):
             self._logged(logger.debug("for_container debug")),
         )
         with FlextLogger.with_container_context(
-            container, level="INFO", feature="demo"
+            container,
+            level="INFO",
+            feature="demo",
         ):
             self.check(
                 "with_container_context.info.ok",
@@ -146,11 +152,13 @@ class Ex03FlextLogger(Examples):
         self.check("debug.ok", self._logged(safe.debug("debug value=%s", 2, key="d")))
         self.check("info.ok", self._logged(safe.info("info value=%s", 3, key="i")))
         self.check(
-            "warning.ok", self._logged(safe.warning("warn value=%s", 4, key="w"))
+            "warning.ok",
+            self._logged(safe.warning("warn value=%s", 4, key="w")),
         )
         self.check("error.ok", self._logged(safe.error("error value=%s", 6, key="e")))
         self.check(
-            "critical.ok", self._logged(safe.error("critical value=%s", 7, key="c"))
+            "critical.ok",
+            self._logged(safe.error("critical value=%s", 7, key="c")),
         )
         self.check("log.ok", self._logged(safe.info("log value=%s", 8, key="l")))
         try:
@@ -174,7 +182,7 @@ class Ex03FlextLogger(Examples):
                         exception=err,
                         exc_info=True,
                         source="demo_instance_methods",
-                    )
+                    ),
                 ),
             )
 
@@ -199,11 +207,13 @@ class Ex03FlextLogger(Examples):
         self.check("adapter.debug.ok", self._logged(logger.debug("adapter debug")))
         self.check("adapter.info.ok", self._logged(logger.info("adapter info")))
         self.check(
-            "adapter.warning.ok", self._logged(logger.warning("adapter warning"))
+            "adapter.warning.ok",
+            self._logged(logger.warning("adapter warning")),
         )
         self.check("adapter.error.ok", self._logged(logger.error("adapter error")))
         self.check(
-            "adapter.critical.ok", self._logged(logger.error("adapter critical"))
+            "adapter.critical.ok",
+            self._logged(logger.error("adapter critical")),
         )
         try:
             adapter_msg = "adapter boom"

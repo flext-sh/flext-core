@@ -321,7 +321,9 @@ class TestFlextDecorators:
                 slow_operation()
 
     @pytest.mark.parametrize(
-        "test_case", COMBINED_SCENARIOS, ids=lambda case: case.name
+        "test_case",
+        COMBINED_SCENARIOS,
+        ids=lambda case: case.name,
     )
     def test_combined_decorator(
         self,
@@ -397,7 +399,9 @@ class TestFlextDecorators:
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
     @settings(max_examples=50)
     def test_hypothesis_railway_division_always_returns_result(
-        self, a: int, b: int
+        self,
+        a: int,
+        b: int,
     ) -> None:
         """Property: railway-wrapped division always returns a result."""
 

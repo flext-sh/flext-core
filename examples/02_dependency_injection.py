@@ -63,7 +63,7 @@ class DatabaseService(m.ArbitraryTypesModel):
                 "id": u.generate("ulid"),
                 "name": "Alice",
                 "email": "alice@example.com",
-            }
+            },
         )
         return r[t.ConfigMap].ok(result)
 
@@ -84,7 +84,7 @@ class CacheService(m.ArbitraryTypesModel):
                 r[str | int].fail(c.NOT_FOUND_ERROR)
                 if key == "missing"
                 else r[str | int].ok("cached_value")
-            )
+            ),
         )
 
     def set(self, key: str, value: str | int) -> r[bool]:
@@ -95,7 +95,7 @@ class CacheService(m.ArbitraryTypesModel):
             u
             .validate_length(key, max_length=c.MAX_NAME_LENGTH)
             .flat_map(
-                lambda _: u.validate_length(str(value), max_length=c.MAX_NAME_LENGTH)
+                lambda _: u.validate_length(str(value), max_length=c.MAX_NAME_LENGTH),
             )
             .map(lambda _: True)
         )
@@ -141,12 +141,12 @@ class DependencyInjectionService(s[t.ConfigMap]):
         original_count = len(container.list_services())
         container.clear_all()
         print(
-            f"✅ Container cleared: {original_count} → {len(container.list_services())}"
+            f"✅ Container cleared: {original_count} → {len(container.list_services())}",
         )
         missing_result = container.get("non_existent")
         invalid_query = db_service.query("INVALID QUERY")
         print(
-            f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}"
+            f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
         )
 
     @staticmethod
@@ -166,7 +166,10 @@ class DependencyInjectionService(s[t.ConfigMap]):
 
     @staticmethod
     def _setup_container() -> tuple[
-        FlextContainer, DatabaseService, CacheService, EmailService
+        FlextContainer,
+        DatabaseService,
+        CacheService,
+        EmailService,
     ]:
         """Setup container with services."""
         container = FlextContainer()
@@ -175,17 +178,17 @@ class DependencyInjectionService(s[t.ConfigMap]):
                 "driver": "sqlite",
                 "url": "sqlite:///:memory:",
                 "timeout": c.DEFAULT_TIMEOUT,
-            }
+            },
         )
         db_service = DatabaseService(config=db_config)
         db_service.status = c.CommonStatus.ACTIVE
         cache_config: t.ConfigMap = t.ConfigMap(
-            root={"backend": "memory", "ttl": c.DEFAULT_CACHE_TTL}
+            root={"backend": "memory", "ttl": c.DEFAULT_CACHE_TTL},
         )
         cache_service = CacheService(config=cache_config)
         cache_service.status = c.CommonStatus.ACTIVE
         email_config: t.ConfigMap = t.ConfigMap(
-            root={"host": "smtp.example.com", "port": 587}
+            root={"host": "smtp.example.com", "port": 587},
         )
         email_service = EmailService(config=email_config)
         email_service.status = c.CommonStatus.ACTIVE
@@ -214,7 +217,7 @@ class DependencyInjectionService(s[t.ConfigMap]):
                     "error_handling",
                 ],
                 "completed_at": datetime.now(UTC).isoformat(),
-            }
+            },
         )
         self.logger.info("Dependency injection demonstration completed")
         return r[t.ConfigMap].ok(result_data)

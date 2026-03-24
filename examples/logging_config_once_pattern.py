@@ -34,7 +34,9 @@ class DatabaseService(s[t.ConfigMap]):
 
         """
         self._with_operation_context(
-            "database_query", operation_type="select", table="users"
+            "database_query",
+            operation_type="select",
+            table="users",
         )
         self.logger.info("Executing database query")
         results = t.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
@@ -75,7 +77,7 @@ class MigrationService(s[t.ConfigMap]):
                 "sync": self.sync,
                 "batch_size": 100,
                 "max_workers": 4,
-            }
+            },
         )
         self._log_config_once(config, message="Migration configuration loaded")
 
@@ -88,7 +90,9 @@ class MigrationService(s[t.ConfigMap]):
 
         """
         self._with_operation_context(
-            "migration_process", total_entries=1000, batch_count=10
+            "migration_process",
+            total_entries=1000,
+            batch_count=10,
         )
         self.logger.info("Starting migration process")
         self.logger.info("Processing batch 1 of 10")
@@ -105,16 +109,18 @@ def main() -> None:
             "port": 5432,
             "database": "mydb",
             "pool_size": 10,
-        }
+        },
     )
     db_service = DatabaseService.model_construct()
-    setattr(db_service, "db_config", db_config)
+    db_service.db_config = db_config
     result = db_service.execute()
     if result.is_success:
         print(f"✅ Database query successful: {result.value}")
     print("\n=== Example 2: Migration Service ===")
     migration_service = MigrationService(
-        input_dir="/data/input", output_dir="/data/output", sync=True
+        input_dir="/data/input",
+        output_dir="/data/output",
+        sync=True,
     )
     result = migration_service.execute()
     if result.is_success:

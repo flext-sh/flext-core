@@ -255,7 +255,8 @@ class FlextUtilitiesReliability:
                 except ValidationError:
                     op_dict = dict[str, t.Container]()
                 if isinstance(
-                    current, (*t.CONTAINER_TYPES,)
+                    current,
+                    (*t.CONTAINER_TYPES,),
                 ) and FlextUtilitiesGuards.is_container(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
             elif callable(op):

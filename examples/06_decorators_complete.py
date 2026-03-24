@@ -114,7 +114,9 @@ class DecoratorsService(s[t.ConfigMap]):
         print("\n=== Retry and Timeout Decorators ===")
 
         @FlextDecorators.retry(
-            max_attempts=3, delay_seconds=0.1, backoff_strategy="exponential"
+            max_attempts=3,
+            delay_seconds=0.1,
+            backoff_strategy="exponential",
         )
         @FlextDecorators.railway(error_code=c.CONNECTION_ERROR)
         def unreliable_operation(attempt_count: MutableSequence[int]) -> r[str]:
@@ -199,8 +201,8 @@ class DecoratorsService(s[t.ConfigMap]):
                             "timeout_enforcement",
                             "composition",
                         ],
-                    }
-                )
+                    },
+                ),
             )
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"
@@ -230,10 +232,10 @@ def main() -> None:
         print(f"\n❌ Failed: {result.error}")
     print("\n" + "=" * 60)
     print(
-        "🎯 Decorator Patterns: Inject, Log, Railway, Context, Retry, Timeout, Combined"
+        "🎯 Decorator Patterns: Inject, Log, Railway, Context, Retry, Timeout, Combined",
     )
     print(
-        "🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context, Reliability"
+        "🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context, Reliability",
     )
     print("🎯 Composition: Retry + Timeout + Railway working together")
     print("🎯 Python 3.13+: PEP 695 type aliases, collections.abc")

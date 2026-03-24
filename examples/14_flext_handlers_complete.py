@@ -78,7 +78,9 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
         if message.user_id == "not-found":
             return r[UserDTO].fail(c.NOT_FOUND_ERROR, error_code=c.NOT_FOUND_ERROR)
         user = UserDTO(
-            id=message.user_id, name="Example User", email="user@example.com"
+            id=message.user_id,
+            name="Example User",
+            email="user@example.com",
         )
         return r[UserDTO].ok(user)
 
@@ -92,13 +94,17 @@ class HandlersService(s[t.ConfigMap]):
         print("\n=== Command Handlers ===")
         handler = CommandHandler()
         command = CreateUserCommand(
-            user_id="user-123", name="Alice", email="alice@example.com"
+            user_id="user-123",
+            name="Alice",
+            email="alice@example.com",
         )
         result = handler.handle(command)
         if result.is_success:
             print(f"✅ Command executed: {result.value}")
         invalid_command = CreateUserCommand(
-            user_id="user-456", name="", email="bob@example.com"
+            user_id="user-456",
+            name="",
+            email="bob@example.com",
         )
         invalid_result = handler.handle(invalid_command)
         if invalid_result.is_failure:
@@ -167,8 +173,8 @@ class HandlersService(s[t.ConfigMap]):
                         "result_patterns",
                     ],
                     "handler_types": 2,
-                }
-            )
+                },
+            ),
         )
 
 

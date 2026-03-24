@@ -63,7 +63,8 @@ class TestHandlersFullCoverage:
             metadata=None,
         )
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Invalid handler mode"
+            FlextExceptions.ValidationError,
+            match="Invalid handler mode",
         ):
             self._Handler(config=invalid_config)
 

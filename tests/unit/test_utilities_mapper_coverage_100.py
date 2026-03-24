@@ -109,7 +109,9 @@ class UtilitiesMapperCoverage100Namespace:
         def test_extract_model(self) -> None:
             """Test Pydantic model extraction."""
             model = TestUnitModels.ComplexModel(
-                id=1, data={"key": "val"}, items=["a", "b"]
+                id=1,
+                data={"key": "val"},
+                items=["a", "b"],
             )
             result = u.extract(model, "data.key")
             _ = assertion_helpers.assert_flext_result_success(result)
@@ -318,7 +320,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_convert_list_to_json(self) -> None:
             test_list: Sequence[Mapping[str, t.ValueOrModel]] = [
-                {"a": SimpleObj(name="test", value=1)}
+                {"a": SimpleObj(name="test", value=1)},
             ]
             res: MutableSequence[t.ContainerMapping] = []
             for item in test_list:

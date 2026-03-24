@@ -176,7 +176,8 @@ class TestCompleteFlextSystemIntegration:
             """
             if not dados:
                 return r[t.StrMapping].fail(
-                    "Dados não fornecidos", error_code=FlextConstants.VALIDATION_ERROR
+                    "Dados não fornecidos",
+                    error_code=FlextConstants.VALIDATION_ERROR,
                 )
             dados_processados: MutableMapping[str, str] = {}
             for key, value in dados.items():

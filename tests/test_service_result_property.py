@@ -83,7 +83,7 @@ class TestServiceResultProperty:
     def test_result_property_raises_on_failure(self) -> None:
         """V2: Failures raise exceptions immediately."""
         service = TestHelperFactories.FailingService.model_construct(
-            error_message="Test error"
+            error_message="Test error",
         )
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
             _ = service.result

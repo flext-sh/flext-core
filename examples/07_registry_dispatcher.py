@@ -47,8 +47,10 @@ class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
         user_id = u.generate("entity")
         return r[UserCreatedEvent].ok(
             UserCreatedEvent(
-                event_type="user_created", aggregate_id=user_id, name=message.name
-            )
+                event_type="user_created",
+                aggregate_id=user_id,
+                name=message.name,
+            ),
         )
 
 
@@ -70,8 +72,8 @@ class GetUserHandler(h[GetUserQuery, t.ConfigMap]):
                     "user_id": message.user_id,
                     "name": "Demo User",
                     "email": "demo@example.com",
-                }
-            )
+                },
+            ),
         )
 
 
@@ -116,7 +118,8 @@ class RegistryDispatcherService(s[t.ConfigMap]):
         dispatcher.register_handler(create_handler)
         dispatcher.register_handler(get_handler)
         command: CreateUserCommand = CreateUserCommand(
-            name="Bob", email="bob@example.com"
+            name="Bob",
+            email="bob@example.com",
         )
         command_result = dispatcher.dispatch(command)
         if command_result.is_success:
@@ -136,7 +139,9 @@ class RegistryDispatcherService(s[t.ConfigMap]):
             return _DemoPlugin(name="create_user")
 
         register_result = registry.register_plugin(
-            "handlers", "create_user", create_plugin
+            "handlers",
+            "create_user",
+            create_plugin,
         )
         if register_result.is_success:
             print("✅ Plugin registered successfully")
@@ -177,8 +182,8 @@ class RegistryDispatcherService(s[t.ConfigMap]):
                             "dispatcher_integration",
                             "cqrs_patterns",
                         ],
-                    }
-                )
+                    },
+                ),
             )
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"

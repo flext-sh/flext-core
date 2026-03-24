@@ -72,8 +72,8 @@ def validate_transform_user(data: t.ConfigMap) -> r[UserProfile]:
                 name=name.upper(),
                 email=email.lower(),
                 status=c.Status.ACTIVE,
-            )
-        )
+            ),
+        ),
     )
 
 
@@ -82,7 +82,7 @@ def process_user_data(*, user_data: t.ConfigMap, operation: c.Action) -> r[str]:
     return validate_transform_user(user_data).map(
         lambda profile: (
             f"{operation.value.upper()}D: {profile.name} ({profile.status.value})"
-        )
+        ),
     )
 
 
@@ -136,7 +136,8 @@ class UserService:
             )
 
     def _log_final_result(
-        self, correlation_id: str
+        self,
+        correlation_id: str,
     ) -> Callable[[UserProfile], UserProfile]:
         """Create logging function for final result - advanced functional pattern."""
 
@@ -157,7 +158,9 @@ class UserService:
         return user
 
     def _validate_and_transform(
-        self, user_data: t.ConfigMap, _: bool
+        self,
+        user_data: t.ConfigMap,
+        _: bool,
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)
@@ -167,7 +170,7 @@ def demonstrate_utilities() -> None:
     """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
     correlation_id = u.generate("correlation")
     test_obj: t.ConfigMap = t.ConfigMap(
-        root={"unique_id": correlation_id, "test": True}
+        root={"unique_id": correlation_id, "test": True},
     )
     cache_result = u.clear_object_cache(test_obj)
     validation_results = [
@@ -183,7 +186,7 @@ def demonstrate_utilities() -> None:
                 f"Cache cleared: {cache_cleared}",
                 f"Generated ID: {correlation_id[:12]}",
                 f"All validations passed: {len(validation_results)} checks",
-            ])
+            ]),
         )
     )
     _ = result.map(print)
@@ -200,7 +203,10 @@ def demonstrate_exceptions() -> None:
     def create_error_result(msg: str, field: str, value: str) -> r[str]:
         return r[str].fail(
             e.ValidationError(
-                msg, field=field, value=value, error_code=c.VALIDATION_ERROR
+                msg,
+                field=field,
+                value=value,
+                error_code=c.VALIDATION_ERROR,
             ).message,
             error_code=c.VALIDATION_ERROR,
         )
@@ -217,7 +223,7 @@ def demonstrate_exceptions() -> None:
         value_str = str(value)
 
         return create_error_result(msg_str, field_str, value_str).map(
-            lambda _val: format_error_message(field_str, value_str)
+            lambda _val: format_error_message(field_str, value_str),
         )
 
     def process_exception(error: str) -> r[str]:
@@ -253,13 +259,14 @@ def execute_validation_chain(user_data: t.ConfigMap) -> None:
         .map(
             lambda user: (
                 f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
-            )
+            ),
         )
         .flat_map(r.ok)
         .flat_map(
             lambda output: process_user_data(
-                user_data=user_data, operation=c.Action.CREATE
-            ).map(lambda result: f"{output}\nProcess: {result}")
+                user_data=user_data,
+                operation=c.Action.CREATE,
+            ).map(lambda result: f"{output}\nProcess: {result}"),
         )
         .map(print)
         .lash(lambda error: r[None].ok(print(f"Validation failed: {error}") or None))
@@ -290,7 +297,7 @@ def main() -> None:
         correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
         logger.info("Starting demonstration", correlation_id=str(correlation_id or ""))
         user_data: t.ConfigMap = t.ConfigMap(
-            root={"name": "Demo", "email": "demo@example.com"}
+            root={"name": "Demo", "email": "demo@example.com"},
         )
         service = UserService()
         execute_validation_chain(user_data)

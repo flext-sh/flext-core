@@ -26,7 +26,8 @@ class ValidationScenario(BaseModel):
     name: Annotated[str, Field(description="Unique scenario name")]
     validator_type: Annotated[str, Field(description="Validator category under test")]
     input_value: Annotated[
-        t.NormalizedValue, Field(description="Input value passed to validator")
+        t.NormalizedValue,
+        Field(description="Input value passed to validator"),
     ]
     input_params: Annotated[
         t.NormalizedValue | None,
@@ -49,7 +50,8 @@ class ValidationScenario(BaseModel):
     expected_error_contains: Annotated[
         str | None,
         Field(
-            default=None, description="Expected error substring when validation fails"
+            default=None,
+            description="Expected error substring when validation fails",
         ),
     ] = None
     description: Annotated[
@@ -69,14 +71,17 @@ class ParserScenario(BaseModel):
     expected_output: Annotated[
         t.NormalizedValue | None,
         Field(
-            default=None, description="Expected parsed output for successful scenarios"
+            default=None,
+            description="Expected parsed output for successful scenarios",
         ),
     ] = None
     should_succeed: Annotated[
-        bool, Field(default=True, description="Whether parser scenario expects success")
+        bool,
+        Field(default=True, description="Whether parser scenario expects success"),
     ] = True
     error_contains: Annotated[
-        str | None, Field(default=None, description="Expected parser error substring")
+        str | None,
+        Field(default=None, description="Expected parser error substring"),
     ] = None
     description: Annotated[
         str | None,
@@ -92,13 +97,16 @@ class ReliabilityScenario(BaseModel):
     name: Annotated[str, Field(description="Unique reliability scenario name")]
     strategy: Annotated[str, Field(description="Reliability strategy under test")]
     config: Annotated[
-        t.ConfigMap, Field(description="Reliability configuration payload")
+        t.ConfigMap,
+        Field(description="Reliability configuration payload"),
     ]
     simulate_failures: Annotated[
-        int, Field(description="Number of failures to simulate")
+        int,
+        Field(description="Number of failures to simulate"),
     ]
     expected_state: Annotated[
-        str, Field(description="Expected strategy terminal state")
+        str,
+        Field(description="Expected strategy terminal state"),
     ]
     should_succeed: Annotated[
         bool,

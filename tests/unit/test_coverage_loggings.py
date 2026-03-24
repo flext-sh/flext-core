@@ -338,7 +338,7 @@ class TestCoverageLoggings:
         logger = make_result_logger("test")
         tm.that(logger, none=False)
         assert_log_result_success(
-            logger.debug("Debug with context", user_id="123", action="login")
+            logger.debug("Debug with context", user_id="123", action="login"),
         )
 
     def test_info_logging(self) -> None:
@@ -367,7 +367,7 @@ class TestCoverageLoggings:
         logger = make_result_logger("test")
         tm.that(logger, none=False)
         assert_log_result_success(
-            logger.info("Info with context", status="completed", duration="0.5s")
+            logger.info("Info with context", status="completed", duration="0.5s"),
         )
 
     def test_warning_logging(self) -> None:
@@ -395,7 +395,7 @@ class TestCoverageLoggings:
         logger = make_result_logger("test")
         tm.that(logger, none=False)
         assert_log_result_success(
-            logger.warning("Warning with context", retry_count=3, delay="1s")
+            logger.warning("Warning with context", retry_count=3, delay="1s"),
         )
 
     def test_error_logging(self) -> None:
@@ -423,7 +423,7 @@ class TestCoverageLoggings:
         logger = make_result_logger("test")
         tm.that(logger, none=False)
         assert_log_result_success(
-            logger.error("Error with context", error_code="ERR_001", user_id="456")
+            logger.error("Error with context", error_code="ERR_001", user_id="456"),
         )
 
     def test_critical_logging(self) -> None:
@@ -455,7 +455,7 @@ class TestCoverageLoggings:
                 "Critical with context",
                 alert_level="high",
                 system="payment",
-            )
+            ),
         )
 
     def test_logging_with_formatting(self) -> None:
@@ -500,7 +500,7 @@ class TestCoverageLoggings:
         except ValueError as e:
             exception_obj = e
             assert_log_result_success(
-                logger.exception("An error occurred", exception=e)
+                logger.exception("An error occurred", exception=e),
             )
         tm.that(exception_obj, none=False)
         tm.that(exception_obj, is_=ValueError)
@@ -561,7 +561,7 @@ class TestCoverageLoggings:
                     exception=e,
                     operation="file_read",
                     file="data.txt",
-                )
+                ),
             )
         tm.that(exception_obj, none=False)
         tm.that(exception_obj, is_=OSError)
@@ -630,7 +630,7 @@ class TestCoverageLoggings:
         logger = make_result_logger("test")
         large_context = {f"key_{i}": f"value_{i}" for i in range(100)}
         assert_log_result_success(
-            logger.info("Message with large context", **large_context)
+            logger.info("Message with large context", **large_context),
         )
 
     def test_multiple_context_managers_nested(self) -> None:

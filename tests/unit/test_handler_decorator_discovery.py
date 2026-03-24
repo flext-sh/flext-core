@@ -217,7 +217,8 @@ class TestHandlerDecoratorDiscovery:
         setattr(module_with_handlers, "handler", handler)
         tm.that(h.Discovery.has_handlers_module(module_with_handlers) is True, eq=True)
         tm.that(
-            h.Discovery.has_handlers_module(module_without_handlers) is False, eq=True
+            h.Discovery.has_handlers_module(module_without_handlers) is False,
+            eq=True,
         )
 
     def test_scan_class_with_inherited_handlers(self) -> None:

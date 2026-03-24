@@ -55,13 +55,16 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, Field(description="Parse sequence scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
         values: Annotated[
-            Sequence[str | StrEnum], Field(description="Input values to parse")
+            Sequence[str | StrEnum],
+            Field(description="Input values to parse"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether parsing should succeed")
+            bool,
+            Field(description="Whether parsing should succeed"),
         ]
         expected_count: Annotated[
-            int | None, Field(default=None, description="Expected parsed values count")
+            int | None,
+            Field(default=None, description="Expected parsed values count"),
         ] = None
         error_contains: Annotated[
             str | None,
@@ -79,10 +82,12 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Input value to coerce"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether coercion should succeed")
+            bool,
+            Field(description="Whether coercion should succeed"),
         ]
         expected_count: Annotated[
-            int | None, Field(default=None, description="Expected result count")
+            int | None,
+            Field(default=None, description="Expected result count"),
         ] = None
         error_type: Annotated[
             type[Exception] | None,
@@ -100,10 +105,12 @@ class TestUtilitiesCollectionCoverage:
         name: Annotated[str, Field(description="Parse mapping scenario name")]
         enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
         mapping: Annotated[
-            Mapping[str, str | StrEnum], Field(description="Input mapping values")
+            Mapping[str, str | StrEnum],
+            Field(description="Input mapping values"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether parsing should succeed")
+            bool,
+            Field(description="Whether parsing should succeed"),
         ]
         expected_keys: Annotated[
             t.StrSequence | None,
@@ -125,7 +132,8 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Input value to coerce"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether coercion should succeed")
+            bool,
+            Field(description="Whether coercion should succeed"),
         ]
         expected_keys: Annotated[
             t.StrSequence | None,
@@ -172,10 +180,12 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Expected mapped output"),
         ]
         default_error: Annotated[
-            str, Field(default="Operation failed", description="Default error message")
+            str,
+            Field(default="Operation failed", description="Default error message"),
         ] = "Operation failed"
         expected_failure: Annotated[
-            bool, Field(default=False, description="Whether map should fail")
+            bool,
+            Field(default=False, description="Whether map should fail"),
         ] = False
         error_contains: Annotated[
             str | None,
@@ -196,10 +206,12 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            t.NormalizedValue | None, Field(description="Expected found value")
+            t.NormalizedValue | None,
+            Field(description="Expected found value"),
         ]
         return_key: Annotated[
-            bool, Field(default=False, description="Whether to return dictionary key")
+            bool,
+            Field(default=False, description="Whether to return dictionary key"),
         ] = False
 
     class FilterScenario(BaseModel):
@@ -249,10 +261,12 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Processor callable under test"),
         ]
         expected_result: Annotated[
-            t.NormalizedValue, Field(description="Expected processing result")
+            t.NormalizedValue,
+            Field(description="Expected processing result"),
         ]
         on_error: Annotated[
-            str, Field(default="collect", description="Error handling mode")
+            str,
+            Field(default="collect", description="Error handling mode"),
         ] = "collect"
         predicate: Annotated[
             Callable[[t.NormalizedValue], bool] | None,
@@ -267,7 +281,8 @@ class TestUtilitiesCollectionCoverage:
             Field(default=None, description="Keys to exclude when processing mappings"),
         ] = None
         expected_failure: Annotated[
-            bool, Field(default=False, description="Whether processing should fail")
+            bool,
+            Field(default=False, description="Whether processing should fail"),
         ] = False
         error_contains: Annotated[
             str | None,
@@ -280,10 +295,12 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Group scenario name")]
         items: Annotated[
-            t.StrSequence | tuple[str, ...], Field(description="Input items for group")
+            t.StrSequence | tuple[str, ...],
+            Field(description="Input items for group"),
         ]
         key: Annotated[
-            Callable[[str], int | str], Field(description="Grouping key callable")
+            Callable[[str], int | str],
+            Field(description="Grouping key callable"),
         ]
         expected_result: Annotated[
             Mapping[int | str, t.StrSequence],
@@ -303,7 +320,8 @@ class TestUtilitiesCollectionCoverage:
         ]
         size: Annotated[int, Field(description="Chunk size")]
         expected_result: Annotated[
-            Sequence[Sequence[int]], Field(description="Expected chunked output")
+            Sequence[Sequence[int]],
+            Field(description="Expected chunked output"),
         ]
 
     class BatchScenario(BaseModel):
@@ -317,21 +335,25 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Batch operation callable"),
         ]
         expected_result: Annotated[
-            t.NormalizedValue, Field(description="Expected batch result")
+            t.NormalizedValue,
+            Field(description="Expected batch result"),
         ]
         size: Annotated[int, Field(default=100, description="Batch size")] = 100
         on_error: Annotated[
-            str, Field(default="collect", description="Error handling mode")
+            str,
+            Field(default="collect", description="Error handling mode"),
         ] = "collect"
         pre_validate: Annotated[
             Callable[..., bool] | None,
             Field(default=None, description="Optional pre-validation callable"),
         ] = None
         flatten: Annotated[
-            bool, Field(default=False, description="Whether to flatten nested results")
+            bool,
+            Field(default=False, description="Whether to flatten nested results"),
         ] = False
         expected_failure: Annotated[
-            bool, Field(default=False, description="Whether batch should fail")
+            bool,
+            Field(default=False, description="Whether batch should fail"),
         ] = False
         error_contains: Annotated[
             str | None,
@@ -919,7 +941,7 @@ class TestUtilitiesCollectionCoverage:
             statuses: Annotated[tuple[FixtureStatus, ...], Field(default_factory=tuple)]
 
         model1: TestModel = TestModel.model_validate({
-            "statuses": ["active", "pending"]
+            "statuses": ["active", "pending"],
         })
         dumped1 = model1.model_dump()
         tm.that(len(dumped1["statuses"]), eq=2)
@@ -1004,7 +1026,8 @@ class TestUtilitiesCollectionCoverage:
 
         class TestModel(BaseModel):
             user_statuses: Annotated[
-                Mapping[str, FixtureStatus], Field(default_factory=dict)
+                Mapping[str, FixtureStatus],
+                Field(default_factory=dict),
             ]
 
         model1 = TestModel.model_validate({

@@ -47,7 +47,7 @@ class TestDeprecationWarnings:
                 cast("t.RuntimeData", val),
             )
             strict_result = FlextRuntime.normalize_to_container(
-                cast("t.RuntimeData", val)
+                cast("t.RuntimeData", val),
             )
             tm.that(type(normalized_result), eq=type(strict_result))
 

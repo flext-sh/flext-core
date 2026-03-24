@@ -63,7 +63,9 @@ def test_execute_and_register_handler_failure_paths(
 
     class _FailDispatcher:
         def register_handler(
-            self, *_args: t.HandlerLike, is_event: bool = False
+            self,
+            *_args: t.HandlerLike,
+            is_event: bool = False,
         ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].fail("dispatcher-fail")
 
@@ -78,7 +80,9 @@ def test_execute_and_register_handler_failure_paths(
 
     class _OkDispatcher:
         def register_handler(
-            self, *_args: t.HandlerLike, is_event: bool = False
+            self,
+            *_args: t.HandlerLike,
+            is_event: bool = False,
         ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].ok(
                 m.RegistrationResult(
@@ -131,7 +135,7 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
                 "x",
                 cast("Callable[..., t.Scalar | None]", discovered_handler.handle),
                 cfg,
-            )
+            ),
         ]
 
     monkeypatch.setattr(h.Discovery, "scan_module", staticmethod(fake_scan))
@@ -178,13 +182,17 @@ def test_summary_error_paths_and_bindings_failures(
 
     class _FailBindingDispatcher:
         def register_handler(
-            self, *_args: t.HandlerLike, is_event: bool = False
+            self,
+            *_args: t.HandlerLike,
+            is_event: bool = False,
         ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].fail("bind-fail")
 
     class _RaiseBindingDispatcher:
         def register_handler(
-            self, *_args: t.HandlerLike, is_event: bool = False
+            self,
+            *_args: t.HandlerLike,
+            is_event: bool = False,
         ) -> r[m.RegistrationResult]:
             msg = "bind-ex"
             raise RuntimeError(msg)

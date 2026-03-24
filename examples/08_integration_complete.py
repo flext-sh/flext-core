@@ -119,7 +119,9 @@ class IntegrationService(s[t.ConfigMap]):
         )
         print(f"✅ Entity created: {user.name}")
         order = Order(
-            unique_id=u.generate("entity"), customer_id=user.unique_id, domain_events=[]
+            unique_id=u.generate("entity"),
+            customer_id=user.unique_id,
+            domain_events=[],
         )
         print(f"✅ Aggregate created: {order.status.value}")
 
@@ -198,8 +200,8 @@ class IntegrationService(s[t.ConfigMap]):
                             "utility_functions",
                         ],
                         "total_components": 10,
-                    }
-                )
+                    },
+                ),
             )
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"

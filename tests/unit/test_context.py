@@ -49,10 +49,12 @@ class TestFlextContext:
         name: Annotated[str, Field(description="Context operation scenario name")]
         key: Annotated[str, Field(description="Context key under test")]
         value: Annotated[
-            t.NormalizedValue, Field(description="Context value under test")
+            t.NormalizedValue,
+            Field(description="Context value under test"),
         ]
         expected_success: Annotated[
-            bool, Field(default=True, description="Whether operation should succeed")
+            bool,
+            Field(default=True, description="Whether operation should succeed"),
         ] = True
 
     class ContextScenarios:
@@ -102,7 +104,9 @@ class TestFlextContext:
     def test_context_initialization(self, test_context: FlextContext) -> None:
         """Test context initialization."""
         tm.that(
-            test_context, none=False, msg="context must be a valid Context instance"
+            test_context,
+            none=False,
+            msg="context must be a valid Context instance",
         )
 
     def test_context_with_initial_data(self) -> None:
@@ -113,7 +117,8 @@ class TestFlextContext:
         u.Tests.ContextHelpers.assert_context_get_success(context, "session_id", "abc")
 
     @pytest.mark.parametrize(
-        ("key", "value", "expected"), ContextScenarios.SET_GET_CASES
+        ("key", "value", "expected"),
+        ContextScenarios.SET_GET_CASES,
     )
     def test_context_set_get_value(
         self,
@@ -178,7 +183,8 @@ class TestFlextContext:
         tm.that(all(k in keys for k in ["key1", "key2"]), eq=True)
         tm.that(all(v in values for v in ["value1", "value2"]), eq=True)
         tm.that(
-            all(i in items for i in [("key1", "value1"), ("key2", "value2")]), eq=True
+            all(i in items for i in [("key1", "value1"), ("key2", "value2")]),
+            eq=True,
         )
 
     def test_context_nested_data(self, test_context: FlextContext) -> None:
@@ -188,7 +194,7 @@ class TestFlextContext:
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
-            }
+            },
         }
         context.set(t.ConfigMap.model_validate({"nested": nested_data})).value
         result = context.get("nested")
@@ -285,14 +291,19 @@ class TestFlextContext:
 
     @pytest.mark.parametrize(("scope", "value"), ContextScenarios.SCOPE_CASES)
     def test_context_scoped_access(
-        self, test_context: FlextContext, scope: str, value: str
+        self,
+        test_context: FlextContext,
+        scope: str,
+        value: str,
     ) -> None:
         """Test context scoped access."""
         context = test_context
         context.set("global_key", "global_value").value
         context.set(f"{scope}_key", value, scope=scope).value
         u.Tests.ContextHelpers.assert_context_get_success(
-            context, "global_key", "global_value"
+            context,
+            "global_key",
+            "global_value",
         )
         scoped_result = context.get(f"{scope}_key", scope=scope)
         _ = u.Tests.Result.assert_success(scoped_result)
@@ -319,21 +330,28 @@ class TestFlextContext:
         tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
 
     @pytest.mark.parametrize(
-        ("key_name", "special_key"), ContextScenarios.EDGE_CASE_KEYS
+        ("key_name", "special_key"),
+        ContextScenarios.EDGE_CASE_KEYS,
     )
     def test_context_edge_case_special_characters(
-        self, test_context: FlextContext, key_name: str, special_key: str
+        self,
+        test_context: FlextContext,
+        key_name: str,
+        special_key: str,
     ) -> None:
         """Test context keys with special characters."""
         context = test_context
         _ = key_name
         context.set(special_key, "special_value").value
         u.Tests.ContextHelpers.assert_context_get_success(
-            context, special_key, "special_value"
+            context,
+            special_key,
+            "special_value",
         )
 
     @pytest.mark.parametrize(
-        ("value_name", "special_value"), ContextScenarios.EDGE_CASE_VALUES
+        ("value_name", "special_value"),
+        ContextScenarios.EDGE_CASE_VALUES,
     )
     def test_context_edge_case_special_values(
         self,
@@ -347,7 +365,7 @@ class TestFlextContext:
         expected_value: str
         if isinstance(special_value, dict):
             converted_value = t.ConfigMap.model_validate({
-                f"{value_name}_key": special_value
+                f"{value_name}_key": special_value,
             })
             expected_value = (
                 '{"level1":{"level2":{"level3":{"value":"deeply_nested"}}}}'
@@ -368,7 +386,8 @@ class TestFlextContext:
         )
 
     def test_context_edge_case_duplicate_keys_overwrite(
-        self, test_context: FlextContext
+        self,
+        test_context: FlextContext,
     ) -> None:
         """Test context behavior when overwriting existing keys."""
         context = test_context
@@ -422,7 +441,8 @@ class TestFlextContext:
         tm.that(len(error_count), eq=0)
 
     def test_context_multiple_sequential_operations(
-        self, test_context: FlextContext
+        self,
+        test_context: FlextContext,
     ) -> None:
         """Test multiple sequential set/get/remove operations."""
         context = test_context
@@ -430,7 +450,9 @@ class TestFlextContext:
             context.set(f"key_{i}", f"value_{i}").value
         for i in range(100):
             u.Tests.ContextHelpers.assert_context_get_success(
-                context, f"key_{i}", f"value_{i}"
+                context,
+                f"key_{i}",
+                f"value_{i}",
             )
         for i in range(50):
             context.remove(f"key_{i}")
@@ -438,7 +460,9 @@ class TestFlextContext:
             tm.that(not context.has(f"key_{i}"), eq=True)
         for i in range(50, 100):
             u.Tests.ContextHelpers.assert_context_get_success(
-                context, f"key_{i}", f"value_{i}"
+                context,
+                f"key_{i}",
+                f"value_{i}",
             )
 
     def test_context_get_metadata_nonexistent(self, test_context: FlextContext) -> None:
@@ -449,7 +473,8 @@ class TestFlextContext:
         tm.that(result.error, none=False)
 
     def test_context_get_metadata_with_default(
-        self, test_context: FlextContext
+        self,
+        test_context: FlextContext,
     ) -> None:
         """Test getting metadata with default value."""
         context = test_context
@@ -501,7 +526,8 @@ class TestFlextContext:
         u.Tests.ContextHelpers.assert_context_get_success(merged, "key1", "value1")
 
     def test_context_clone_then_clear_original(
-        self, test_context: FlextContext
+        self,
+        test_context: FlextContext,
     ) -> None:
         """Test cloning, then clearing original."""
         context1 = test_context
@@ -579,17 +605,22 @@ class TestFlextContext:
         tm.that(context.has("key1"), eq=True)
 
     def test_context_multiple_scopes_isolation(
-        self, test_context: FlextContext
+        self,
+        test_context: FlextContext,
     ) -> None:
         """Test that values in different scopes are isolated."""
         context = test_context
         context.set("key1", "global_value").value
         context.set("key2", "request_value").value
         u.Tests.ContextHelpers.assert_context_get_success(
-            context, "key1", "global_value"
+            context,
+            "key1",
+            "global_value",
         )
         u.Tests.ContextHelpers.assert_context_get_success(
-            context, "key2", "request_value"
+            context,
+            "key2",
+            "request_value",
         )
 
     def test_context_variables_correlation(self) -> None:

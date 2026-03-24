@@ -157,7 +157,8 @@ class FlextModelsDispatcher:
         _breakers: dict[str, FlextModelsDispatcher.CircuitBreakerStateRecord] = (
             PrivateAttr(
                 default_factory=lambda: dict[
-                    str, FlextModelsDispatcher.CircuitBreakerStateRecord
+                    str,
+                    FlextModelsDispatcher.CircuitBreakerStateRecord,
                 ](),
             )
         )

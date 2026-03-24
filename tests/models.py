@@ -163,7 +163,8 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             """Test case for parse_delimited method."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(
-                frozen=True, arbitrary_types_allowed=True
+                frozen=True,
+                arbitrary_types_allowed=True,
             )
 
             text: str
@@ -216,7 +217,8 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             """Test case for get_object_key method."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(
-                frozen=True, arbitrary_types_allowed=True
+                frozen=True,
+                arbitrary_types_allowed=True,
             )
 
             obj: t.ContainerValue

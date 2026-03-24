@@ -56,17 +56,20 @@ class TestModels:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         model_type: Annotated[
-            TestModels.ModelType, Field(description="Model type under creation test")
+            TestModels.ModelType,
+            Field(description="Model type under creation test"),
         ]
         field_data: Annotated[
             Mapping[str, t.NormalizedValue],
             Field(description="Model input payload"),
         ]
         expected_checks: Annotated[
-            t.StrSequence, Field(description="Expected validation check labels")
+            t.StrSequence,
+            Field(description="Expected validation check labels"),
         ]
         description: Annotated[
-            str, Field(default="", description="Scenario description")
+            str,
+            Field(default="", description="Scenario description"),
         ] = ""
 
     class SampleAggregate(m.AggregateRoot):
@@ -124,7 +127,9 @@ class TestModels:
                 return v
 
         entity = TestEntity(
-            name="Test User", email="test@example.com", domain_events=[]
+            name="Test User",
+            email="test@example.com",
+            domain_events=[],
         )
         tm.that(entity.name, eq="Test User", msg="Entity name must match input")
         tm.that(
@@ -322,7 +327,9 @@ class TestModels:
                 return v
 
         entity = ValidatedEntity(
-            name="Test", email="test@example.com", domain_events=[]
+            name="Test",
+            email="test@example.com",
+            domain_events=[],
         )
         tm.that(entity.name, eq="Test", msg="Validated entity name must match input")
         tm.that(
@@ -729,7 +736,8 @@ class TestModels:
             name: str
             handler_called: bool = False
             handler_data: Annotated[
-                Mapping[str, t.NormalizedValue], Field(default_factory=dict)
+                Mapping[str, t.NormalizedValue],
+                Field(default_factory=dict),
             ]
 
             def _apply_test_event(self, data: Mapping[str, t.NormalizedValue]) -> None:
@@ -752,7 +760,8 @@ class TestModels:
             name: str
 
             def _apply_failing_event(
-                self, _data: Mapping[str, t.NormalizedValue]
+                self,
+                _data: Mapping[str, t.NormalizedValue],
             ) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
@@ -783,7 +792,9 @@ class TestModels:
     def test_command_model_creation(self) -> None:
         """Test Command model creation with correct fields."""
         command = m.Command(
-            command_type="CreateOrder", issuer_id="issuer-123", command_id="cmd-test-1"
+            command_type="CreateOrder",
+            issuer_id="issuer-123",
+            command_id="cmd-test-1",
         )
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"

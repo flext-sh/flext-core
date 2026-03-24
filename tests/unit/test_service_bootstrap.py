@@ -117,6 +117,6 @@ class TestServiceBootstrap:
         """Test _create_runtime applies config overrides."""
         config_overrides = {"app_name": "override_app"}
         runtime = self.ConcreteTestService._create_runtime(
-            config_overrides=config_overrides
+            config_overrides=config_overrides,
         )
         assert runtime.config.app_name == "override_app"

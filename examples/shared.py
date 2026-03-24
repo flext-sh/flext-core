@@ -87,7 +87,7 @@ class Examples:
     def rand_dict(self, n: int = 3) -> t.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys → int values."""
         return t.ConfigMap(
-            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
+            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)},
         )
 
     def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
@@ -124,7 +124,8 @@ class Examples:
         self._results.append(f"[{name}]")
 
     def ser(
-        self, v: t.NormalizedValue | Path | datetime | Mapping[str, bool | str]
+        self,
+        v: t.NormalizedValue | Path | datetime | Mapping[str, bool | str],
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
@@ -169,7 +170,7 @@ class Examples:
             actual_path = self._caller.with_suffix(".actual")
             _ = actual_path.write_text(actual, encoding="utf-8")
             _ = sys.stdout.write(
-                f"FAIL: {self._caller.stem} — diff {expected_path.name} {actual_path.name}\n"
+                f"FAIL: {self._caller.stem} — diff {expected_path.name} {actual_path.name}\n",
             )
             sys.exit(1)
         _ = expected_path.write_text(actual, encoding="utf-8")
@@ -208,7 +209,7 @@ class Examples:
                         "is_success": result.is_success,
                         "error": result.error,
                         "unwrap_or": result.unwrap_or(-1),
-                    }
+                    },
                 )
             case _:
                 return value

@@ -57,7 +57,10 @@ class TestTypings:
 
     @pytest.mark.parametrize(("name", "category", "token"), TYPEVAR_CASES)
     def test_typevars_exported(
-        self, name: str, category: TypeVarCategory, token: str
+        self,
+        name: str,
+        category: TypeVarCategory,
+        token: str,
     ) -> None:
         tm.that(category, none=False)
         tm.that(name, none=False, empty=False)

@@ -35,23 +35,28 @@ class TestFlextRegistry:
         name: Annotated[str, Field(description="Registry test case name")]
         operation: Annotated[StrEnum, Field(description="Registry operation type")]
         handler_count: Annotated[
-            int, Field(default=1, description="Number of handlers to generate")
+            int,
+            Field(default=1, description="Number of handlers to generate"),
         ] = 1
         should_succeed: Annotated[
-            bool, Field(default=True, description="Expected operation success")
+            bool,
+            Field(default=True, description="Expected operation success"),
         ] = True
         error_pattern: Annotated[
             str | None,
             Field(default=None, description="Expected error message pattern"),
         ] = None
         with_bindings: Annotated[
-            bool, Field(default=False, description="Whether bindings are included")
+            bool,
+            Field(default=False, description="Whether bindings are included"),
         ] = False
         with_function_map: Annotated[
-            bool, Field(default=False, description="Whether function map is included")
+            bool,
+            Field(default=False, description="Whether function map is included"),
         ] = False
         with_summary: Annotated[
-            bool, Field(default=False, description="Whether summary is included")
+            bool,
+            Field(default=False, description="Whether summary is included"),
         ] = False
         duplicate_registration: Annotated[
             bool,
@@ -270,7 +275,8 @@ class TestFlextRegistry:
             _ = u.Tests.Result.assert_failure(result)
             if test_case.error_pattern:
                 u.Tests.Result.assert_failure_with_error(
-                    result, test_case.error_pattern
+                    result,
+                    test_case.error_pattern,
                 )
 
     @pytest.mark.parametrize("test_case", _BATCH_REGISTRATION, ids=lambda c: c.name)
@@ -426,7 +432,7 @@ class TestFlextRegistry:
             alphabet=st.characters(min_codepoint=97, max_codepoint=122),
             min_size=1,
             max_size=20,
-        )
+        ),
     )
     @settings(max_examples=40)
     def test_hypothesis_plugin_roundtrip(self, name: str) -> None:

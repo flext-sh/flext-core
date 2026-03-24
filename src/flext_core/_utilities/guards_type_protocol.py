@@ -125,7 +125,8 @@ class FlextUtilitiesGuardsTypeProtocol:
 
         """
         return callable(value) or isinstance(
-            value, (Mapping, p.HasModelDump, p.Handle, p.AutoDiscoverableHandler)
+            value,
+            (Mapping, p.HasModelDump, p.Handle, p.AutoDiscoverableHandler),
         )
 
     @staticmethod

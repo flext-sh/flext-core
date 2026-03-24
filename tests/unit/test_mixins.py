@@ -96,7 +96,8 @@ class TestFlextMixinsNestedClasses:
             Field(description="Model conversion scenario type"),
         ]
         input_value: Annotated[
-            t.NormalizedValue, Field(description="Input value for conversion")
+            t.NormalizedValue,
+            Field(description="Input value for conversion"),
         ]
         expected_output: Annotated[
             t.ConfigMap,
@@ -271,7 +272,8 @@ class TestFlextMixinsCQRS:
         result = FlextMixins.Validation.validate_with_result("valid", [not_empty])
         tm.ok(result, eq="valid")
         tm.fail(
-            FlextMixins.Validation.validate_with_result("", [not_empty]), has="empty"
+            FlextMixins.Validation.validate_with_result("", [not_empty]),
+            has="empty",
         )
 
     @given(
@@ -279,7 +281,7 @@ class TestFlextMixinsCQRS:
             alphabet=st.characters(min_codepoint=97, max_codepoint=122),
             min_size=1,
             max_size=30,
-        )
+        ),
     )
     @settings(max_examples=40)
     def test_hypothesis_validation_roundtrip(self, data: str) -> None:

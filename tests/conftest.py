@@ -287,7 +287,9 @@ def out_of_range() -> Sequence[tuple[int, int, int]]:
 
 
 def assert_validates(
-    model_class: type, field_name: str, value: t.NormalizedValue
+    model_class: type,
+    field_name: str,
+    value: t.NormalizedValue,
 ) -> t.NormalizedValue:
     """Validate a value against a model field and return the validated value.
 

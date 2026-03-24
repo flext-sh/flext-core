@@ -34,7 +34,7 @@ class _ContainerStub:
 def test_narrow_contextvar_invalid_inputs() -> None:
     tm.that(FlextContext._narrow_contextvar_to_configuration_dict(None), eq={})
     data = FlextContext._narrow_contextvar_to_configuration_dict(
-        t.ConfigMap(root={"a": "v"})
+        t.ConfigMap(root={"a": "v"}),
     )
     tm.that(data, has="a")
 

@@ -37,7 +37,7 @@ class Ex03Money(m.Value):
         if self.currency != other.currency:
             return r[Ex03Money].fail("currency mismatch")
         return r[Ex03Money].ok(
-            Ex03Money(amount=self.amount + other.amount, currency=self.currency)
+            Ex03Money(amount=self.amount + other.amount, currency=self.currency),
         )
 
 
@@ -74,7 +74,7 @@ class Ex03Order(m.AggregateRoot):
         """Append item to order."""
         item_payload = t.ConfigMap(root=item.model_dump())
         return r[Ex03Order].ok(
-            self.model_copy(update={"items": [*self.items, item_payload]})
+            self.model_copy(update={"items": [*self.items, item_payload]}),
         )
 
     def confirm(self) -> r[Ex03Order]:

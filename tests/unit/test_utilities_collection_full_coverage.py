@@ -86,7 +86,9 @@ class TestUtilitiesCollectionFullCoverage:
         tm.ok(deep)
         with pytest.raises(TypeError, match="iterable"):
             _ = u.merge_mappings(
-                cast("t.ContainerMapping", None), {"x": 1}, strategy="deep"
+                cast("t.ContainerMapping", None),
+                {"x": 1},
+                strategy="deep",
             )
 
     def test_batch_fail_collect_flatten_and_progress(self) -> None:
@@ -184,7 +186,8 @@ class TestUtilitiesCollectionFullCoverage:
         tm.ok(failed)
         parsed = u.parse_sequence(
             cast(
-                "type[TestUtilitiesCollectionFullCoverage._Color]", self._ExplodingEnum
+                "type[TestUtilitiesCollectionFullCoverage._Color]",
+                self._ExplodingEnum,
             ),
             ["x"],
         )

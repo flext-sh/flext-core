@@ -39,7 +39,9 @@ def _build_domain_test_entity(
     **_kwargs: t.Tests.Testobject,
 ) -> m.Core.DomainTestEntity:
     return m.Core.DomainTestEntity(
-        name=name, value=cast("int", value), domain_events=[]
+        name=name,
+        value=cast("int", value),
+        domain_events=[],
     )
 
 
@@ -446,7 +448,8 @@ class TestuDomain:
         ids=lambda case: f"compare_entities_{case['description']}",
     )
     def test_compare_entities_by_id(
-        self, test_case: TestUnitModels.TestCaseMap
+        self,
+        test_case: TestUnitModels.TestCaseMap,
     ) -> None:
         """Test compare_entities_by_id using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
@@ -485,7 +488,8 @@ class TestuDomain:
         ids=lambda case: f"compare_value_objects_{case['description']}",
     )
     def test_compare_value_objects_by_value(
-        self, test_case: TestUnitModels.TestCaseMap
+        self,
+        test_case: TestUnitModels.TestCaseMap,
     ) -> None:
         """Test compare_value_objects_by_value using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
@@ -508,7 +512,8 @@ class TestuDomain:
         ids=lambda case: f"hash_value_object_{case['description']}",
     )
     def test_hash_value_object_by_value(
-        self, test_case: TestUnitModels.TestCaseMap
+        self,
+        test_case: TestUnitModels.TestCaseMap,
     ) -> None:
         """Test hash_value_object_by_value using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
@@ -525,7 +530,8 @@ class TestuDomain:
         ids=lambda case: f"validate_entity_has_id_{case['description']}",
     )
     def test_validate_entity_has_id(
-        self, test_case: TestUnitModels.TestCaseMap
+        self,
+        test_case: TestUnitModels.TestCaseMap,
     ) -> None:
         """Test validate_entity_has_id using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(
@@ -544,7 +550,8 @@ class TestuDomain:
         ids=lambda case: f"validate_value_object_immutable_{case['description']}",
     )
     def test_validate_value_object_immutable(
-        self, test_case: TestUnitModels.TestCaseMap
+        self,
+        test_case: TestUnitModels.TestCaseMap,
     ) -> None:
         """Test validate_value_object_immutable using u."""
         operation_result = u.Tests.DomainHelpers.execute_domain_operation(

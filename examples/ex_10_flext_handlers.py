@@ -93,12 +93,13 @@ class Ex10FlextHandlers(Examples):
         cfg_handler_id = self.rand_str(8)
         cfg_handler_name = self.rand_str(10)
         default_h = FlextHandlers.create_from_callable(
-            lambda message: f"default:{message}"
+            lambda message: f"default:{message}",
         )
         default_value = default_h.handle(probe_default).unwrap_or("-")
         self.check("callable.default", default_value)
         self.check(
-            "callable.default.matches", default_value == f"default:{probe_default}"
+            "callable.default.matches",
+            default_value == f"default:{probe_default}",
         )
         named_h = FlextHandlers.create_from_callable(
             lambda message: f"named:{message}",
@@ -107,7 +108,8 @@ class Ex10FlextHandlers(Examples):
         )
         self.check("callable.named.handler_name", named_h.handler_name)
         self.check(
-            "callable.named.name_matches", named_h.handler_name == named_handler_name
+            "callable.named.name_matches",
+            named_h.handler_name == named_handler_name,
         )
         self.check("callable.named.mode", named_h.mode.value)
         self.check(
@@ -115,7 +117,8 @@ class Ex10FlextHandlers(Examples):
             named_h.handle(probe_named).unwrap_or("-") == f"named:{probe_named}",
         )
         mode_enum_h = FlextHandlers.create_from_callable(
-            lambda message: f"enum:{message}", mode=c.HandlerType.EVENT
+            lambda message: f"enum:{message}",
+            mode=c.HandlerType.EVENT,
         )
         self.check("callable.mode_enum", mode_enum_h.mode.value)
         self.check(
@@ -123,7 +126,8 @@ class Ex10FlextHandlers(Examples):
             mode_enum_h.handle(probe_enum).unwrap_or("-") == f"enum:{probe_enum}",
         )
         mode_str_h = FlextHandlers.create_from_callable(
-            lambda message: f"str:{message}", mode="query"
+            lambda message: f"str:{message}",
+            mode="query",
         )
         self.check("callable.mode_str", mode_str_h.mode.value)
         self.check(
@@ -188,8 +192,8 @@ class Ex10FlextHandlers(Examples):
         def plain_function(_message: BaseModel) -> BaseModel:
             return _PayloadModel(text="plain")
 
-        setattr(module, "mod_handler", mod_handler)
-        setattr(module, "plain_function", plain_function)
+        module.mod_handler = mod_handler
+        module.plain_function = plain_function
         module_scan = h.Discovery.scan_module(module)
         self.check("scan_module.count", len(module_scan))
         self.check("scan_module.name", module_scan[0][0] if module_scan else "none")
@@ -230,7 +234,8 @@ class Ex10FlextHandlers(Examples):
             handler.validate_message(cast("_Message | str", None)).is_failure,
         )
         self.check(
-            "validate.ok.success", handler.validate_message(message_ok).is_success
+            "validate.ok.success",
+            handler.validate_message(message_ok).is_success,
         )
         self.check("validate.blocked_cmd", handler.validate_message("bad").error)
         self.check("validate.blocked_qry", handler.validate_message("bad").error)
@@ -245,14 +250,15 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.other", handler.can_handle(str))
         msg_type = _Message | str
         execute_value = handler.execute(
-            cast("msg_type", _Message(text=payload_text))
+            cast("msg_type", _Message(text=payload_text)),
         ).unwrap_or("-")
         self.check("execute.success.value", payload_text in str(execute_value))
         self.check(
-            "execute.validation_failure", handler.execute(cast("msg_type", "bad")).error
+            "execute.validation_failure",
+            handler.execute(cast("msg_type", "bad")).error,
         )
         dispatch_value = handler.dispatch_message(
-            cast("msg_type", _Message(text=dispatch_text))
+            cast("msg_type", _Message(text=dispatch_text)),
         ).unwrap_or("-")
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
@@ -265,7 +271,8 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                cast("msg_type", "explode"), operation=c.HANDLER_MODE_COMMAND
+                cast("msg_type", "explode"),
+                operation=c.HANDLER_MODE_COMMAND,
             ).error,
         )
         self.check(
@@ -329,7 +336,8 @@ class Ex10FlextHandlers(Examples):
         self.check("bootstrap.create_instance", created.__class__.__name__)
         tracker = h.CQRS.MetricsTracker()
         self.check(
-            "cqrs.record_metric", tracker.record_metric(hit_key, hit_value).is_success
+            "cqrs.record_metric",
+            tracker.record_metric(hit_key, hit_value).is_success,
         )
         metrics_map = tracker.get_metrics().unwrap_or(t.ConfigMap(root={}))
         metrics_val = (
@@ -346,12 +354,14 @@ class Ex10FlextHandlers(Examples):
         )
         current_context = stack.current_context()
         self.check(
-            "cqrs.current_context", getattr(current_context, "handler_name", "-")
+            "cqrs.current_context",
+            getattr(current_context, "handler_name", "-"),
         )
         self.check(
             "cqrs.pop_context",
             cast(
-                "t.ConfigMap", stack.pop_context().unwrap_or(t.ConfigMap(root={}))
+                "t.ConfigMap",
+                stack.pop_context().unwrap_or(t.ConfigMap(root={})),
             ).get("handler_name", "-"),
         )
         di = h.DependencyIntegration
@@ -364,7 +374,10 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "di.register_factory.cached",
             di.register_factory(
-                di_container, factory_key, lambda: factory_value, cache=True
+                di_container,
+                factory_key,
+                lambda: factory_value,
+                cache=True,
             )()
             == factory_value,
         )
@@ -384,7 +397,7 @@ class Ex10FlextHandlers(Examples):
             duplicate_error = f"{type(exc).__name__}:{exc}"
         self.check("di.duplicate_error", duplicate_error)
         bridge, services_mod, resources_mod = di.create_layered_bridge(
-            t.ConfigMap(root={self.rand_str(2): self.rand_str(2)})
+            t.ConfigMap(root={self.rand_str(2): self.rand_str(2)}),
         )
         self.check("di.layered.bridge", bridge.__class__.__name__)
         self.check("di.layered.services", services_mod.__class__.__name__)
@@ -393,7 +406,9 @@ class Ex10FlextHandlers(Examples):
         self.check("di.wire.noop", True)
         h.Integration.track_service_resolution(service_name, resolved=True)
         h.Integration.track_service_resolution(
-            service_name, resolved=False, error_message=error_message
+            service_name,
+            resolved=False,
+            error_message=error_message,
         )
         h.Integration.track_domain_event(
             event_name,
@@ -419,7 +434,8 @@ class Ex10FlextHandlers(Examples):
             h.ProtocolValidation.is_handler(t.ConfigMap(root={})),
         )
         self.check(
-            "protocol.is_service", h.ProtocolValidation.is_service(Ex10ServiceStub())
+            "protocol.is_service",
+            h.ProtocolValidation.is_service(Ex10ServiceStub()),
         )
         self.check(
             "protocol.is_command_bus",
@@ -428,19 +444,21 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "protocol.validate_known",
             h.ProtocolValidation.validate_protocol_compliance(
-                protocol_handler, "Handler"
+                protocol_handler,
+                "Handler",
             ).is_success,
         )
         self.check(
             "protocol.validate_unknown",
             h.ProtocolValidation.validate_protocol_compliance(
-                protocol_handler, "Unknown"
+                protocol_handler,
+                "Unknown",
             ).error,
         )
         self.check(
             "protocol.validate_processor.good",
             h.ProtocolValidation.validate_processor_protocol(
-                _ProcessorGood()
+                _ProcessorGood(),
             ).is_success,
         )
         self.check(
@@ -460,13 +478,15 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "validation.chain.ok",
             h.Validation.validate_with_result(
-                positive_token, [positive_validator, strict_validator]
+                positive_token,
+                [positive_validator, strict_validator],
             ).is_success,
         )
         self.check(
             "validation.chain.fail",
             h.Validation.validate_with_result(
-                "x", [positive_validator, fail_validator]
+                "x",
+                [positive_validator, fail_validator],
             ).error,
         )
 
@@ -505,19 +525,20 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "rr.flat_map",
             rr_ok.flat_map(
-                lambda n: h.RuntimeResult[int].ok(n * rr_multiplier)
+                lambda n: h.RuntimeResult[int].ok(n * rr_multiplier),
             ).unwrap_or(-1)
             == rr_value * rr_multiplier,
         )
         self.check(
             "rr.and_then",
             rr_ok.flat_map(lambda n: h.RuntimeResult[int].ok(n - rr_delta)).unwrap_or(
-                -1
+                -1,
             )
             == rr_value - rr_delta,
         )
         self.check(
-            "rr.alt", rr_fail.map_error(lambda err: f"x:{err}").error == f"x:{rr_error}"
+            "rr.alt",
+            rr_fail.map_error(lambda err: f"x:{err}").error == f"x:{rr_error}",
         )
         self.check(
             "rr.lash",
@@ -550,7 +571,8 @@ class Ex10FlextHandlers(Examples):
         generated_a = h.generate_id()
         generated_b = h.generate_id()
         self.check(
-            "runtime.generate_id.length", len(generated_a) == len(generated_b) == 36
+            "runtime.generate_id.length",
+            len(generated_a) == len(generated_b) == 36,
         )
         self.check("runtime.generate_id.unique", generated_a != generated_b)
         self.check(
@@ -578,7 +600,8 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "runtime.compare_value_objects.model",
             h.compare_value_objects_by_value(
-                _Message(text=model_text), _Message(text=model_text)
+                _Message(text=model_text),
+                _Message(text=model_text),
             ),
         )
         self.check(
@@ -591,7 +614,8 @@ class Ex10FlextHandlers(Examples):
             include_timestamp=True,
         )
         self.check(
-            "runtime.ensure_trace_context.source", trace_context.get("source", "-")
+            "runtime.ensure_trace_context.source",
+            trace_context.get("source", "-"),
         )
         self.check(
             "runtime.ensure_trace_context.keys",
@@ -609,7 +633,8 @@ class Ex10FlextHandlers(Examples):
             h.validate_http_status_codes(http_mixed).unwrap_or([]),
         )
         self.check(
-            "runtime.validate_http.range_fail", h.validate_http_status_codes([99]).error
+            "runtime.validate_http.range_fail",
+            h.validate_http_status_codes([99]).error,
         )
         http_bad_type: Sequence[int | str] = ["x"]
         self.check(
@@ -626,7 +651,8 @@ class Ex10FlextHandlers(Examples):
         )
         self.check("runtime.is_valid_json.false", h.is_valid_json("{bad"))
         self.check(
-            "runtime.is_valid_identifier.true", h.is_valid_identifier(valid_identifier)
+            "runtime.is_valid_identifier.true",
+            h.is_valid_identifier(valid_identifier),
         )
         self.check(
             "runtime.is_valid_identifier.false",
@@ -642,7 +668,8 @@ class Ex10FlextHandlers(Examples):
         )
         self.check("runtime.is_sequence_type.true", h.is_sequence_type(Sequence[int]))
         self.check(
-            "runtime.is_sequence_type.false", h.is_sequence_type(Mapping[str, int])
+            "runtime.is_sequence_type.false",
+            h.is_sequence_type(Mapping[str, int]),
         )
         self.check(
             "runtime.normalize_general",

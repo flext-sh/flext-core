@@ -19,7 +19,8 @@ class TestUtilitiesTypeGuardsCoverage100:
         """Scenario for type guard testing."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
         name: str
         value: Annotated[ScalarValue, Field(default="")]
@@ -29,7 +30,8 @@ class TestUtilitiesTypeGuardsCoverage100:
         """Scenario for normalization testing."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
         name: str
         value: Annotated[ScalarValue, Field(default="")]
@@ -42,7 +44,9 @@ class TestUtilitiesTypeGuardsCoverage100:
         TypeGuardScenario(name="whitespace_string", value="   ", expected_result=False),
         TypeGuardScenario(name="numeric_string", value="123", expected_result=True),
         TypeGuardScenario(
-            name="special_chars", value="!@#$%^&*()", expected_result=True
+            name="special_chars",
+            value="!@#$%^&*()",
+            expected_result=True,
         ),
         TypeGuardScenario(name="unicode_string", value="日本語", expected_result=True),
         TypeGuardScenario(name="newline_string", value="\n", expected_result=False),
@@ -51,21 +55,29 @@ class TestUtilitiesTypeGuardsCoverage100:
 
     IS_DICT_NON_EMPTY: ClassVar[Sequence[TypeGuardScenario]] = [
         TypeGuardScenario(
-            name="non_empty_dict", value="has_items", expected_result=True
+            name="non_empty_dict",
+            value="has_items",
+            expected_result=True,
         ),
         TypeGuardScenario(name="empty_dict", value="empty", expected_result=False),
     ]
 
     IS_LIST_NON_EMPTY: ClassVar[Sequence[TypeGuardScenario]] = [
         TypeGuardScenario(
-            name="non_empty_list", value="has_items", expected_result=True
+            name="non_empty_list",
+            value="has_items",
+            expected_result=True,
         ),
         TypeGuardScenario(name="empty_list", value="empty", expected_result=False),
         TypeGuardScenario(
-            name="list_with_empty_string", value="has_empty", expected_result=True
+            name="list_with_empty_string",
+            value="has_empty",
+            expected_result=True,
         ),
         TypeGuardScenario(
-            name="list_with_none", value="has_none", expected_result=True
+            name="list_with_none",
+            value="has_none",
+            expected_result=True,
         ),
         TypeGuardScenario(name="string_value", value="string", expected_result=False),
         TypeGuardScenario(name="int_value", value=123, expected_result=False),

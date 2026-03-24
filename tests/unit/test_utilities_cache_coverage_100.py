@@ -34,7 +34,8 @@ class UtilitiesCacheCoverage100Namespace:
         """Normalize component test scenario."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
 
         name: Annotated[str, Field(description="Normalize scenario name")]
@@ -43,7 +44,8 @@ class UtilitiesCacheCoverage100Namespace:
             Field(default=None, description="Input component to normalize"),
         ] = None
         expected_type: Annotated[
-            type, Field(description="Expected normalized value type")
+            type,
+            Field(description="Expected normalized value type"),
         ]
         expected_value: Annotated[
             t.NormalizedValue | None,
@@ -57,10 +59,12 @@ class UtilitiesCacheCoverage100Namespace:
 
         name: Annotated[str, Field(description="Sort key scenario name")]
         key: Annotated[
-            t.SortableObjectType, Field(description="Input key for sort normalization")
+            t.SortableObjectType,
+            Field(description="Input key for sort normalization"),
         ]
         expected_tuple: Annotated[
-            tuple[int, str], Field(description="Expected sort tuple")
+            tuple[int, str],
+            Field(description="Expected sort tuple"),
         ]
 
     class ClearCacheScenario(BaseModel):
@@ -70,16 +74,20 @@ class UtilitiesCacheCoverage100Namespace:
 
         name: Annotated[str, Field(description="Cache clear scenario name")]
         obj: Annotated[
-            t.NormalizedValue, Field(description="Object under cache clear test")
+            t.NormalizedValue,
+            Field(description="Object under cache clear test"),
         ]
         has_cache_attr: Annotated[
-            bool, Field(description="Whether t.NormalizedValue exposes cache attribute")
+            bool,
+            Field(description="Whether t.NormalizedValue exposes cache attribute"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Expected clear operation success flag")
+            bool,
+            Field(description="Expected clear operation success flag"),
         ]
         cache_attr_name: Annotated[
-            str | None, Field(default=None, description="Optional cache attribute name")
+            str | None,
+            Field(default=None, description="Optional cache attribute name"),
         ] = None
 
     NORMALIZE_COMPONENT_SCENARIOS: ClassVar[Sequence[NormalizeComponentScenario]] = [
@@ -224,7 +232,7 @@ class UtilitiesCacheCoverage100Namespace:
                     cast(
                         "t.ValueOrModel | set[t.NormalizedValue]",
                         scenario.component,
-                    )
+                    ),
                 )
                 assert isinstance(result, scenario.expected_type)
                 if scenario.expected_value is not None:
@@ -307,7 +315,10 @@ class UtilitiesCacheCoverage100Namespace:
             tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
             tm.that(result_list[2], is_=dict, none=False, msg="Third item must be dict")
             tm.that(
-                result_list[3], is_=list, none=False, msg="Fourth item must be list"
+                result_list[3],
+                is_=list,
+                none=False,
+                msg="Fourth item must be list",
             )
 
         def test_normalize_custom_object_fallback(self) -> None:
@@ -322,7 +333,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             obj = CustomObject()
             result = u.normalize_component(
-                cast("t.ValueOrModel | set[t.NormalizedValue]", obj)
+                cast("t.ValueOrModel | set[t.NormalizedValue]", obj),
             )
             assert isinstance(result, str)
             assert result == "custom_object"
@@ -522,7 +533,9 @@ class UtilitiesCacheCoverage100Namespace:
 
                 @override
                 def __setattr__(
-                    self, name: str, value: t.NormalizedValue | None
+                    self,
+                    name: str,
+                    value: t.NormalizedValue | None,
                 ) -> None:
                     if name == "_cache" and value is None:
                         raise TypeError(error_msg)
@@ -577,7 +590,8 @@ class UtilitiesCacheCoverage100Namespace:
                 model_config: ClassVar[t.StrMapping] = {"extra": "allow"}
                 name: str
                 _cache: MutableMapping[
-                    str, str
+                    str,
+                    str,
                 ] = {}  # Test double; cleared by clear_object_cache
 
                 def __init__(self, name: str = "") -> None:
@@ -603,7 +617,8 @@ class UtilitiesCacheCoverage100Namespace:
             class TestObject:
                 def __init__(self) -> None:
                     self._cache: MutableMapping[
-                        str, t.NormalizedValue
+                        str,
+                        t.NormalizedValue,
                     ] = {}  # Test double
 
             obj = TestObject()

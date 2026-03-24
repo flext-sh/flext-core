@@ -49,7 +49,8 @@ class TestEnumUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Is member scenario name")]
         value: Annotated[
-            t.NormalizedValue, Field(description="Input value to validate")
+            t.NormalizedValue,
+            Field(description="Input value to validate"),
         ]
         expected: Annotated[bool, Field(description="Expected membership result")]
 
@@ -59,13 +60,16 @@ class TestEnumUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Is subset scenario name")]
         valid_members: Annotated[
-            frozenset[StrEnum], Field(description="Allowed enum members")
+            frozenset[StrEnum],
+            Field(description="Allowed enum members"),
         ]
         value: Annotated[
-            t.NormalizedValue, Field(description="Input value to validate")
+            t.NormalizedValue,
+            Field(description="Input value to validate"),
         ]
         expected: Annotated[
-            bool, Field(description="Expected subset membership result")
+            bool,
+            Field(description="Expected subset membership result"),
         ]
 
     class ParseScenario(BaseModel):
@@ -75,7 +79,8 @@ class TestEnumUtilitiesCoverage:
         name: Annotated[str, Field(description="Parse scenario name")]
         value: Annotated[str | StrEnum, Field(description="Input value to parse")]
         expected_success: Annotated[
-            bool, Field(description="Whether parse should succeed")
+            bool,
+            Field(description="Whether parse should succeed"),
         ]
         expected_status: Annotated[
             StrEnum | None,
@@ -92,7 +97,8 @@ class TestEnumUtilitiesCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse or default scenario name")]
         value: Annotated[
-            str | StrEnum | None, Field(description="Input value to parse")
+            str | StrEnum | None,
+            Field(description="Input value to parse"),
         ]
         default: Annotated[StrEnum, Field(description="Default enum value")]
         expected: Annotated[StrEnum, Field(description="Expected output enum value")]
@@ -107,10 +113,12 @@ class TestEnumUtilitiesCoverage:
             Field(description="Input value for coercion"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether coercion should succeed")
+            bool,
+            Field(description="Whether coercion should succeed"),
         ]
         expected_status: Annotated[
-            StrEnum | None, Field(default=None, description="Expected coerced status")
+            StrEnum | None,
+            Field(default=None, description="Expected coerced status"),
         ] = None
         expected_error: Annotated[
             str | None,

@@ -81,7 +81,8 @@ def infra_safe_command_output(
     infra_test_workspace: Path,
 ) -> str:
     echo_result = infra_subprocess.capture(
-        ["echo", "infra-ok"], cwd=infra_test_workspace
+        ["echo", "infra-ok"],
+        cwd=infra_test_workspace,
     )
     assert echo_result.is_success
     pwd_result = infra_subprocess.capture(["pwd"], cwd=infra_test_workspace)

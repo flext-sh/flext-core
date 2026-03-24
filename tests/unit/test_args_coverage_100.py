@@ -78,14 +78,16 @@ class TestFlextUtilitiesArgs:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Parse kwargs scenario name")]
         kwargs: Annotated[
-            t.ConfigMap, Field(description="Keyword arguments input payload")
+            t.ConfigMap,
+            Field(description="Keyword arguments input payload"),
         ]
         enum_fields: Annotated[
             Mapping[str, type[StrEnum]],
             Field(description="Enum fields map for conversion"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether parsing should succeed")
+            bool,
+            Field(description="Whether parsing should succeed"),
         ]
         expected_status: Annotated[
             TestFlextUtilitiesArgs.StatusEnum | None,
@@ -106,7 +108,8 @@ class TestFlextUtilitiesArgs:
             Field(description="Input status value"),
         ]
         expected_success: Annotated[
-            bool, Field(description="Whether validation should succeed")
+            bool,
+            Field(description="Whether validation should succeed"),
         ]
         expected_result: Annotated[
             str | None,

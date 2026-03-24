@@ -40,7 +40,7 @@ class TestModelsBaseFullCoverage:
 
     def test_metadata_attributes_accepts_t_dict_and_mapping(self) -> None:
         model_from_t_dict = m.Metadata.model_validate({
-            "attributes": t.Dict(root={"a": 1})
+            "attributes": t.Dict(root={"a": 1}),
         })
         model_from_mapping = m.Metadata(attributes={"b": 2})
         assert model_from_t_dict.attributes == {"a": 1}

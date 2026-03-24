@@ -224,7 +224,8 @@ class TestPatternsLogging:
         result: r[bool] | None = bound_logger.info("Test message with bound context")
         assert result is not None
         success = self.assert_result_success(
-            result, "Bound logger should work for logging"
+            result,
+            "Bound logger should work for logging",
         )
         assert success is True
 
@@ -244,7 +245,8 @@ class TestPatternsLogging:
         result: r[bool] | None = logger.info("Compatibility test message")
         assert result is not None
         success = self.assert_result_success(
-            result, "Logger should work with standard patterns"
+            result,
+            "Logger should work with standard patterns",
         )
         assert success is True
 
@@ -288,7 +290,8 @@ class TestPatternsLogging:
         assert result_debug is not None
         assert result_debug.is_success, "Debug logging should succeed"
         result_warning: r[bool] | None = logger.warning(
-            "Test warning message", test=True
+            "Test warning message",
+            test=True,
         )
         assert result_warning is not None
         assert result_warning.is_success, "Warning logging should succeed"
@@ -296,7 +299,8 @@ class TestPatternsLogging:
         assert result_error is not None
         assert result_error.is_success, "Error logging should succeed"
         result_critical: r[bool] | None = logger.critical(
-            "Test critical message", test=True
+            "Test critical message",
+            test=True,
         )
         assert result_critical is not None
         assert result_critical.is_success, "Critical logging should succeed"
@@ -312,7 +316,9 @@ class TestPatternsLogging:
         logger = self.make_result_logger("context_test")
         assert logger is not None
         result_info: r[bool] | None = logger.info(
-            "User action", user_id="123", action="login"
+            "User action",
+            user_id="123",
+            action="login",
         )
         assert result_info is not None
         assert result_info.is_success, "Info logging with context should succeed"
@@ -365,7 +371,8 @@ class TestPatternsLogging:
         for i, result in enumerate(results):
             assert result is not None
             success = self.assert_result_success(
-                result, f"Log entry {i + 1} should succeed"
+                result,
+                f"Log entry {i + 1} should succeed",
             )
             assert success is True
 
@@ -386,7 +393,8 @@ class TestPatternsLogging:
         result: r[bool] | None = perf_logger.info("Performance test message")
         assert result is not None
         success = self.assert_result_success(
-            result, "Performance logging should succeed"
+            result,
+            "Performance logging should succeed",
         )
         assert success is True
         result2: r[bool] | None = perf_logger.debug("Performance debug message")
@@ -414,7 +422,7 @@ class TestPatternsLogging:
         assert result_child is not None
         assert result_child.is_success, "Child logger should work"
         result_grandchild: r[bool] | None = grandchild_logger.info(
-            "Grandchild log message"
+            "Grandchild log message",
         )
         assert result_grandchild is not None
         assert result_grandchild.is_success, "Grandchild logger should work"
@@ -437,18 +445,18 @@ class TestPatternsLogging:
             user_email="test@example.com",
         )
         result_debug_val: r[bool] | None = validation_logger.debug(
-            "Validating user input"
+            "Validating user input",
         )
         assert result_debug_val is not None
         assert result_debug_val.is_success, "Validation debug log should succeed"
         result_info_val: r[bool] | None = validation_logger.info(
-            "User input validation passed"
+            "User input validation passed",
         )
         assert result_info_val is not None
         assert result_info_val.is_success, "Validation info log should succeed"
         database_logger = bound_logger.bind(step="database", table="users")
         result_debug_db: r[bool] | None = database_logger.debug(
-            "Saving user to database"
+            "Saving user to database",
         )
         assert result_debug_db is not None
         assert result_debug_db.is_success, "Database debug log should succeed"
@@ -459,7 +467,7 @@ class TestPatternsLogging:
         assert result_info_db is not None
         assert result_info_db.is_success, "Database info log should succeed"
         result_complete: r[bool] | None = bound_logger.info(
-            "User registration completed"
+            "User registration completed",
         )
         assert result_complete is not None
         assert result_complete.is_success, "Completion log should succeed"
@@ -488,7 +496,8 @@ class TestPatternsLogging:
             )
             assert result is not None
             success = self.assert_result_success(
-                result, "Exception logging should succeed"
+                result,
+                "Exception logging should succeed",
             )
             assert success is True
 

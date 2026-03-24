@@ -91,7 +91,7 @@ class Ex04FlextDispatcher(Examples):
             """Return deterministic user payload for GetUser."""
             typed_message = Ex04FlextDispatcher.GetUser.model_validate(message)
             return t.ConfigMap(
-                root={"state": "active", "username": typed_message.username}
+                root={"state": "active", "username": typed_message.username},
             )
 
     class DeleteExecutor:
@@ -200,7 +200,8 @@ class _Ex04Exercise(Ex04FlextDispatcher):
         reg_handle = dispatcher.register_handler(self.CreateUserHandler())
         self.check("register(Handle).is_success", reg_handle.is_success)
         reg_dispatch_msg = dispatcher.register_handler(
-            self.GetUserDispatcher(), is_event=False
+            self.GetUserDispatcher(),
+            is_event=False,
         )
         self.check("register(DispatchMessage).is_success", reg_dispatch_msg.is_success)
         reg_execute = dispatcher.register_handler(self.DeleteExecutor())

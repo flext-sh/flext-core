@@ -31,7 +31,8 @@ class Ex06FlextContext(Examples):
         _ = seed.set("k3", True)
         payload = seed.iter_scope_vars()[c.SCOPE_GLOBAL].get()
         self.check(
-            "set_all.success", ctx.set(payload or t.ConfigMap(root={})).is_success
+            "set_all.success",
+            ctx.set(payload or t.ConfigMap(root={})).is_success,
         )
         self.check("get.k1", ctx.get("k1").unwrap_or("missing"))
         self.check("has.k2", ctx.has("k2"))
@@ -48,7 +49,9 @@ class Ex06FlextContext(Examples):
         self.check("get_metadata", ctx.get_metadata("meta_key").unwrap_or("missing"))
         exported_min = ctx.export(as_dict=False)
         exported_full = ctx.export(
-            include_statistics=True, include_metadata=True, as_dict=False
+            include_statistics=True,
+            include_metadata=True,
+            as_dict=False,
         )
         self.check("export.min.type", type(exported_min).__name__)
         self.check("export.full.type", type(exported_full).__name__)
@@ -82,7 +85,8 @@ class Ex06FlextContext(Examples):
         before_service_name = FlextContext.Variables.ServiceName.get()
         with FlextContext.Service.service_context("orders", version="1.2.3"):
             self.check(
-                "service_context.name", FlextContext.Variables.ServiceName.get() or ""
+                "service_context.name",
+                FlextContext.Variables.ServiceName.get() or "",
             )
             self.check(
                 "service_context.version",
@@ -114,7 +118,8 @@ class Ex06FlextContext(Examples):
         )
         self.check("var.user_id", type(FlextContext.Variables.Request.USER_ID).__name__)
         self.check(
-            "var.request_id", type(FlextContext.Variables.Request.REQUEST_ID).__name__
+            "var.request_id",
+            type(FlextContext.Variables.Request.REQUEST_ID).__name__,
         )
         self.check(
             "var.request_timestamp",
@@ -133,14 +138,16 @@ class Ex06FlextContext(Examples):
             type(FlextContext.Variables.Performance.OPERATION_METADATA).__name__,
         )
         self.check(
-            "alias.correlation", type(FlextContext.Variables.CorrelationId).__name__
+            "alias.correlation",
+            type(FlextContext.Variables.CorrelationId).__name__,
         )
         self.check(
             "alias.parent_correlation",
             type(FlextContext.Variables.ParentCorrelationId).__name__,
         )
         self.check(
-            "alias.service_name", type(FlextContext.Variables.ServiceName).__name__
+            "alias.service_name",
+            type(FlextContext.Variables.ServiceName).__name__,
         )
         self.check(
             "alias.service_version",
@@ -153,7 +160,8 @@ class Ex06FlextContext(Examples):
             type(FlextContext.Variables.RequestTimestamp).__name__,
         )
         self.check(
-            "alias.operation_name", type(FlextContext.Variables.OperationName).__name__
+            "alias.operation_name",
+            type(FlextContext.Variables.OperationName).__name__,
         )
         self.check(
             "alias.operation_start",
@@ -165,10 +173,12 @@ class Ex06FlextContext(Examples):
         )
         FlextContext.Correlation.set_correlation_id("cid-1")
         self.check(
-            "correlation.get_set", FlextContext.Correlation.get_correlation_id() or ""
+            "correlation.get_set",
+            FlextContext.Correlation.get_correlation_id() or "",
         )
         with FlextContext.Correlation.new_correlation(
-            "cid-2", parent_id="cid-parent"
+            "cid-2",
+            parent_id="cid-parent",
         ) as corr_id:
             self.check("correlation.new.value", corr_id)
             self.check(

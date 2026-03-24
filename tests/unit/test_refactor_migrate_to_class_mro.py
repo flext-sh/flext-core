@@ -221,7 +221,8 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
     for file_path in expected_paths:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         _ = file_path.write_text(
-            "from __future__ import annotations\n", encoding="utf-8"
+            "from __future__ import annotations\n",
+            encoding="utf-8",
         )
     discovered = FlextInfraUtilitiesIteration.iter_python_files(workspace_root=tmp_path)
     tm.ok(discovered)
@@ -273,7 +274,8 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     tm.that(report.errors, eq=())
     tm.that(
-        "VALUE = 42" not in constants_source.split("class SampleConstants:")[0], eq=True
+        "VALUE = 42" not in constants_source.split("class SampleConstants:")[0],
+        eq=True,
     )
     tm.that(
         constants_source.split("class SampleConstants:", maxsplit=1)[1],

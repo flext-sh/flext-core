@@ -73,7 +73,8 @@ class TestFlextUtilitiesConfiguration:
 
         name: Annotated[str, Field(description="Config t.NormalizedValue name")]
         value: Annotated[
-            int, Field(default=42, description="Config t.NormalizedValue value")
+            int,
+            Field(default=42, description="Config t.NormalizedValue value"),
         ] = 42
 
     class SingletonWithoutGetGlobalForTest:
@@ -150,7 +151,9 @@ class TestFlextUtilitiesConfiguration:
 
     def test_get_parameter_from_pydantic_model(self) -> None:
         config = TestUnitModels.ConfigModelForTest(
-            name="test", timeout=60, enabled=False
+            name="test",
+            timeout=60,
+            enabled=False,
         )
         result = u.get_parameter(config, self.ParameterNames.TIMEOUT.value)
         self.Assertions.that(result, eq=60)

@@ -30,7 +30,8 @@ class TestDocumentedPatterns:
         name: Annotated[str, Field(description="User display name")]
         email: Annotated[str, Field(description="User email address")]
         active: Annotated[
-            bool, Field(default=True, description="Whether user is active")
+            bool,
+            Field(default=True, description="Whether user is active"),
         ] = True
 
     class ServiceTestCase(BaseModel):
@@ -42,17 +43,20 @@ class TestDocumentedPatterns:
         expected_success: Annotated[
             bool,
             Field(
-                default=True, description="Whether service call is expected to succeed"
+                default=True,
+                description="Whether service call is expected to succeed",
             ),
         ] = True
         expected_error: Annotated[
             str | None,
             Field(
-                default=None, description="Expected error substring for failure cases"
+                default=None,
+                description="Expected error substring for failure cases",
             ),
         ] = None
         description: Annotated[
-            str, Field(default="", description="Human-readable test case description")
+            str,
+            Field(default="", description="Human-readable test case description"),
         ] = ""
 
         def create_user_service(self) -> TestDocumentedPatterns.GetUserService:
@@ -67,14 +71,16 @@ class TestDocumentedPatterns:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         user_ids: Annotated[
-            t.StrSequence, Field(description="User identifiers used in pipeline")
+            t.StrSequence,
+            Field(description="User identifiers used in pipeline"),
         ]
         operations: Annotated[
             t.StrSequence,
             Field(default_factory=list, description="Pipeline operations to execute"),
         ] = Field(default_factory=list)
         expected_pipeline_length: Annotated[
-            int, Field(default=1, description="Expected number of pipeline stages")
+            int,
+            Field(default=1, description="Expected number of pipeline stages"),
         ] = 1
         should_fail_at: Annotated[
             int | None,
@@ -83,7 +89,8 @@ class TestDocumentedPatterns:
         description: Annotated[
             str,
             Field(
-                default="", description="Human-readable railway test case description"
+                default="",
+                description="Human-readable railway test case description",
             ),
         ] = ""
 
@@ -92,7 +99,7 @@ class TestDocumentedPatterns:
         ) -> r[str | TestDocumentedPatterns.User | EmailResponse]:
             if not self.user_ids:
                 return r[str | TestDocumentedPatterns.User | EmailResponse].fail(
-                    "No user IDs provided"
+                    "No user IDs provided",
                 )
             user_result: r[TestDocumentedPatterns.User] = TestDocumentedPatterns.make(
                 TestDocumentedPatterns.GetUserService,
@@ -228,7 +235,7 @@ class TestDocumentedPatterns:
             if "@" not in self.to:
                 return r[EmailResponse].fail("Invalid email address")
             return r[EmailResponse].ok(
-                EmailResponse(status="sent", message_id=f"msg-{self.to}")
+                EmailResponse(status="sent", message_id=f"msg-{self.to}"),
             )
 
     class ValidationService(FlextService[t.ConfigMap]):
@@ -243,7 +250,7 @@ class TestDocumentedPatterns:
             if self.value > 100:
                 return r[t.ConfigMap].fail("Value must be <= 100")
             return r[t.ConfigMap].ok(
-                t.ConfigMap(root={"valid": True, "value": self.value})
+                t.ConfigMap(root={"valid": True, "value": self.value}),
             )
 
     class MultiOperationService(FlextService[t.ConfigMap]):
@@ -258,19 +265,19 @@ class TestDocumentedPatterns:
                 case "double":
                     return r[t.ConfigMap].ok(
                         t.ConfigMap(
-                            root={"operation": "double", "result": self.value * 2}
+                            root={"operation": "double", "result": self.value * 2},
                         ),
                     )
                 case "square":
                     return r[t.ConfigMap].ok(
                         t.ConfigMap(
-                            root={"operation": "square", "result": self.value**2}
+                            root={"operation": "square", "result": self.value**2},
                         ),
                     )
                 case "negate":
                     return r[t.ConfigMap].ok(
                         t.ConfigMap(
-                            root={"operation": "negate", "result": -self.value}
+                            root={"operation": "negate", "result": -self.value},
                         ),
                     )
                 case _:
@@ -367,7 +374,8 @@ class TestDocumentedPatterns:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v1_railway_complex_pipeline(
-        self, case: tuple[t.StrSequence, t.StrSequence, int, str]
+        self,
+        case: tuple[t.StrSequence, t.StrSequence, int, str],
     ) -> None:
         user_ids, operations, expected_pipeline_length, description = case
         railway_case = self.RailwayTestCase(
@@ -390,7 +398,8 @@ class TestDocumentedPatterns:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_can_use_execute_for_railway(
-        self, case: tuple[t.StrSequence, t.StrSequence, int, str]
+        self,
+        case: tuple[t.StrSequence, t.StrSequence, int, str],
     ) -> None:
         _ = case
         user_result_raw = self.make(self.GetUserService, user_id="123").result
@@ -408,7 +417,8 @@ class TestDocumentedPatterns:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_railway_chaining(
-        self, case: tuple[t.StrSequence, t.StrSequence, int, str]
+        self,
+        case: tuple[t.StrSequence, t.StrSequence, int, str],
     ) -> None:
         _ = case
         pipeline = (

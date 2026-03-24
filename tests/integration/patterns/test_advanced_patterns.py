@@ -178,7 +178,7 @@ class TestAdvancedPatterns:
                     "then": then_converted,
                     "tags": self._tags,
                     "priority": self._priority,
-                }
+                },
             )
             return TestAdvancedPatterns.MockScenario(self.name, scenario_data)
 
@@ -537,13 +537,13 @@ class TestAdvancedPatterns:
                     obj={
                         "email": "valid@example.com",
                         "input": "valid@example.com",
-                    }
+                    },
                 ),
                 m.Core.FixtureCaseDict.model_validate(
                     obj={
                         "email": "user.name@domain.co.uk",
                         "input": "user.name@domain.co.uk",
-                    }
+                    },
                 ),
             ])
             .add_failure_cases([
@@ -551,13 +551,13 @@ class TestAdvancedPatterns:
                     obj={
                         "email": "invalid-email",
                         "input": "invalid-email",
-                    }
+                    },
                 ),
                 m.Core.FixtureCaseDict.model_validate(
                     obj={
                         "email": "@domain.com",
                         "input": "@domain.com",
-                    }
+                    },
                 ),
             ])
         )
@@ -596,7 +596,7 @@ class TestAdvancedPatterns:
                 "then": {"result": "success"},
                 "tags": ["api", "integration"],
                 "priority": "medium",
-            }
+            },
         )
         scenario = self.MockScenario("api_request", scenario_data)
         assert scenario.name == "api_request"

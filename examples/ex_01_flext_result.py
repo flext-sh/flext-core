@@ -39,7 +39,9 @@ class Ex01r(Examples):
         )
         acc_ok = r.accumulate_errors(r[int].ok(1), r[int].ok(2))
         acc_fail = r.accumulate_errors(
-            r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
+            r[int].ok(1),
+            r[int].fail("e1"),
+            r[int].fail("e2"),
         )
         self.check("accumulate_errors.success", acc_ok.unwrap_or([]))
         self.check("accumulate_errors.failure", acc_fail.error)
@@ -63,7 +65,8 @@ class Ex01r(Examples):
             cleanup=clean_handle,
         )
         no_cleanup_resource = r[int].with_resource(
-            make_handle, lambda handle: r[int].ok(handle.value + 1)
+            make_handle,
+            lambda handle: r[int].ok(handle.value + 1),
         )
         self.check("with_resource.success", success_resource.unwrap_or(-1))
         self.check("with_resource.failure", failure_resource.error)
@@ -95,10 +98,12 @@ class Ex01r(Examples):
         invalid_data: t.ScalarMapping = {"name": "Ada", "age": "bad"}
         person_model = Examples.Person
         from_validation_ok = r[Examples.Person].from_validation(
-            valid_data, person_model
+            valid_data,
+            person_model,
         )
         from_validation_fail = r[Examples.Person].from_validation(
-            invalid_data, person_model
+            invalid_data,
+            person_model,
         )
         self.check("from_validation.success", from_validation_ok.is_success)
         self.check("from_validation.failure", from_validation_fail.is_failure)
@@ -203,10 +208,12 @@ class Ex01r(Examples):
         ok_value = r[int].ok(7)
         fail_value = r[int].fail("oops")
         self.check(
-            "tap.success", ok_value.tap(lambda n: side_effects.append(n)).is_success
+            "tap.success",
+            ok_value.tap(lambda n: side_effects.append(n)).is_success,
         )
         self.check(
-            "tap.failure", fail_value.tap(lambda n: side_effects.append(n)).is_failure
+            "tap.failure",
+            fail_value.tap(lambda n: side_effects.append(n)).is_failure,
         )
         self.check("tap.log", side_effects)
         self.check(
@@ -225,19 +232,22 @@ class Ex01r(Examples):
         self.check(
             "fold.success",
             ok_value.fold(
-                on_failure=lambda e: f"fail:{e}", on_success=lambda n: f"ok:{n}"
+                on_failure=lambda e: f"fail:{e}",
+                on_success=lambda n: f"ok:{n}",
             ),
         )
         self.check(
             "fold.failure",
             fail_value.fold(
-                on_failure=lambda e: f"fail:{e}", on_success=lambda n: f"ok:{n}"
+                on_failure=lambda e: f"fail:{e}",
+                on_success=lambda n: f"ok:{n}",
             ),
         )
         self.check("filter.success_pass", ok_value.filter(lambda n: n > 0).is_success)
         self.check("filter.success_fail", ok_value.filter(lambda n: n < 0).is_failure)
         self.check(
-            "filter.failure_stays", fail_value.filter(lambda n: n > 0).is_failure
+            "filter.failure_stays",
+            fail_value.filter(lambda n: n > 0).is_failure,
         )
 
     def transform_chain_and_recover(self) -> None:
@@ -250,7 +260,7 @@ class Ex01r(Examples):
         self.check(
             "map.exception_to_failure",
             base_ok.map(
-                lambda _: (_ for _ in ()).throw(ValueError("map exploded"))
+                lambda _: (_ for _ in ()).throw(ValueError("map exploded")),
             ).error,
         )
         self.check(
@@ -278,7 +288,8 @@ class Ex01r(Examples):
             base_ok.map_error(lambda e: f"alt:{e}").unwrap_or(-1),
         )
         self.check(
-            "map_error.failure_changed", base_fail.map_error(lambda e: f"alt:{e}").error
+            "map_error.failure_changed",
+            base_fail.map_error(lambda e: f"alt:{e}").error,
         )
         self.check(
             "map_error.failure_changed",

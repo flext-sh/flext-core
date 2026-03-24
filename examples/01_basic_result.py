@@ -62,7 +62,8 @@ class RailwayService(s[DemonstrationResult]):
 
     @staticmethod
     def _create_data_processor() -> Callable[
-        [DemonstrationResult], DemonstrationResult
+        [DemonstrationResult],
+        DemonstrationResult,
     ]:
         """Create data processor using advanced patterns."""
 
@@ -136,7 +137,8 @@ class RailwayService(s[DemonstrationResult]):
         success = r.ok("Operation successful")
         print(f"✅ .ok(): {success.value}")
         failure: r[str] = r[str].fail(
-            "Validation failed", error_code=c.VALIDATION_ERROR
+            "Validation failed",
+            error_code=c.VALIDATION_ERROR,
         )
         print(f"❌ .fail(): {failure.error}")
 
@@ -173,7 +175,9 @@ class RailwayService(s[DemonstrationResult]):
             return r[str].ok(f"{x}!")
 
         pipeline = r.ok(input_value).flow_through(
-            validate_length, add_prefix, add_exclamation
+            validate_length,
+            add_prefix,
+            add_exclamation,
         )
         print(f".flow_through pipeline: {pipeline.value}")
 
@@ -193,7 +197,7 @@ class RailwayService(s[DemonstrationResult]):
                     email,
                     min_length=c.MIN_USERNAME_LENGTH,
                     max_length=c.MAX_NAME_LENGTH,
-                )
+                ),
             )
         )
         print(f"Validation chain with User model: {result.is_success}")
@@ -214,7 +218,7 @@ class RailwayService(s[DemonstrationResult]):
         """Demonstrate r value extraction with advanced patterns."""
         print("\n=== Value Extraction ===")
         success = r[t.ConfigMap].ok(
-            t.ConfigMap(root={"name": "John", "email": "john@example.com"})
+            t.ConfigMap(root={"name": "John", "email": "john@example.com"}),
         )
         failure: r[str] = r[str].fail("Not found")
         user_data = success.value
@@ -285,7 +289,7 @@ def main() -> None:
     match result:
         case r(is_success=True, value=demo_result):
             print(
-                f"\n✅ Completed {demo_result.demonstrations_completed} demonstrations"
+                f"\n✅ Completed {demo_result.demonstrations_completed} demonstrations",
             )
             print(f"Patterns: {', '.join(demo_result.patterns_covered)}")
         case r(is_success=False, error=error):

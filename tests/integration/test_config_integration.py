@@ -49,7 +49,8 @@ class TestFlextSettingsSingletonIntegration:
             description="Expected effective values",
         )
         file_format: str = Field(
-            default="json", description="Configuration file format"
+            default="json",
+            description="Configuration file format",
         )
         env_vars: t.StrMapping = Field(
             default_factory=dict,

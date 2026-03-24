@@ -44,10 +44,12 @@ class TestConstants:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
         valid_cases: Annotated[
-            t.StrSequence, Field(description="Inputs expected to match the pattern")
+            t.StrSequence,
+            Field(description="Inputs expected to match the pattern"),
         ]
         invalid_cases: Annotated[
-            t.StrSequence, Field(description="Inputs expected to fail the pattern")
+            t.StrSequence,
+            Field(description="Inputs expected to fail the pattern"),
         ]
 
     CORE_CONSTANT_PATHS: ClassVar[Sequence[ConstantPathScenario]] = [

@@ -40,11 +40,13 @@ class FlextCoreTestTypes(FlextTestsTypes, FlextTypes):
         """
 
         type ServiceConfigMapping = Mapping[
-            str, ft.NormalizedValue | MutableSequence[str]
+            str,
+            ft.NormalizedValue | MutableSequence[str],
         ]
         "Service configuration mapping specific to flext-core services."
         type HandlerConfigMapping = Mapping[
-            str, ft.NormalizedValue | MutableSequence[str]
+            str,
+            ft.NormalizedValue | MutableSequence[str],
         ]
         "Handler configuration mapping specific to flext-core handlers."
 

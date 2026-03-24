@@ -116,7 +116,8 @@ class TestUtilitiesContextFullCoverage:
         """When config_overrides provided, model_copy is called with them."""
         runtime = self._FakeRuntime()
         cloned = u.clone_runtime(
-            runtime, config_overrides=t.ConfigMap(root={"timeout": 30})
+            runtime,
+            config_overrides=t.ConfigMap(root={"timeout": 30}),
         )
         assert isinstance(cloned.runtime_config, TestUnitModels._FakeConfig)
         assert cloned.runtime_config.data["timeout"] == 30
@@ -141,7 +142,9 @@ class TestUtilitiesContextFullCoverage:
         expected = MagicMock()
         container.scoped.return_value = expected
         result = u.clone_container(
-            container, scope_id="test-scope", overrides={"service": "mock"}
+            container,
+            scope_id="test-scope",
+            overrides={"service": "mock"},
         )
         container.scoped.assert_called_once_with(
             subproject="test-scope",

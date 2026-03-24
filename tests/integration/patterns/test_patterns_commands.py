@@ -37,7 +37,7 @@ class TestPatternsCommands:
                 obj={
                     "username": self.username,
                     "email": self.email,
-                }
+                },
             )
 
         def validate_command(self) -> r[bool]:
@@ -65,7 +65,7 @@ class TestPatternsCommands:
                         "new_value": value
                         if isinstance(value, (str, int, bool))
                         else str(value),
-                    }
+                    },
                 )
                 for key, value in self.updates.items()
             }
@@ -73,7 +73,7 @@ class TestPatternsCommands:
                 obj={
                     "target_user_id": self.target_user_id,
                     "updates": typed_updates,
-                }
+                },
             )
 
         def validate_command(self) -> r[bool]:
@@ -99,7 +99,7 @@ class TestPatternsCommands:
         FlextHandlers[
             "TestPatternsCommands.CreateUserCommand",
             t.MutableContainerMapping,
-        ]
+        ],
     ):
         """Test handler for CreateUserCommand."""
 
@@ -165,7 +165,7 @@ class TestPatternsCommands:
         FlextHandlers[
             "TestPatternsCommands.UpdateUserCommand",
             t.MutableContainerMapping,
-        ]
+        ],
     ):
         """Test handler for UpdateUserCommand."""
 
@@ -230,7 +230,7 @@ class TestPatternsCommands:
         FlextHandlers[
             "TestPatternsCommands.FailingCommand",
             bool,
-        ]
+        ],
     ):
         """Test handler that always fails."""
 
@@ -278,7 +278,7 @@ class TestPatternsCommands:
         email: str,
     ) -> CreateUserCommand:
         return TestPatternsCommands.CreateUserCommand.model_validate(
-            obj={"username": username, "email": email}
+            obj={"username": username, "email": email},
         )
 
     @staticmethod
@@ -291,7 +291,7 @@ class TestPatternsCommands:
             obj={
                 "target_user_id": target_user_id,
                 "updates": updates,
-            }
+            },
         )
 
     def test_command_creation_with_auto_id(self) -> None:
@@ -319,7 +319,8 @@ class TestPatternsCommands:
     def test_get_payload(self) -> None:
         """Test getting command payload."""
         command = self._create_user_command(
-            username="test_user", email="test@example.com"
+            username="test_user",
+            email="test@example.com",
         )
         payload = command.get_payload()
         username = payload.username
@@ -331,7 +332,8 @@ class TestPatternsCommands:
     def test_validate_command_success(self) -> None:
         """Test successful command validation."""
         command = self._create_user_command(
-            username="valid_user", email="valid@example.com"
+            username="valid_user",
+            email="valid@example.com",
         )
         result = command.validate_command()
         if not result.is_success:
@@ -380,7 +382,8 @@ class TestPatternsCommands:
     def test_get_command_metadata(self) -> None:
         """Test command basic properties."""
         command = self._create_user_command(
-            username="test_user", email="test@example.com"
+            username="test_user",
+            email="test@example.com",
         )
         assert command.username == "test_user"
         assert command.email == "test@example.com"
@@ -488,7 +491,7 @@ class TestPatternsCommands:
             updates={"name": "test"},
         )
         result = self.CreateUserCommandHandler().validate_message(
-            cast("TestPatternsCommands.CreateUserCommand", wrong_command)
+            cast("TestPatternsCommands.CreateUserCommand", wrong_command),
         )
         if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"

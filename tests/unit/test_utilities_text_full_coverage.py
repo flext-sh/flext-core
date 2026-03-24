@@ -30,7 +30,9 @@ class TestUtilitiesTextFullCoverage(TextUtilityContract):
         TextUtilityContract.SAFE_STRING_INVALID_CASES,
     )
     def test_safe_string_invalid_values_raise(
-        self, value: str | None, message: str
+        self,
+        value: str | None,
+        message: str,
     ) -> None:
         """Invalid values raise ValueError with actionable message."""
         with pytest.raises(ValueError, match=message):
@@ -41,7 +43,9 @@ class TestUtilitiesTextFullCoverage(TextUtilityContract):
         TextUtilityContract.SAFE_STRING_VALID_CASES,
     )
     def test_safe_string_valid_values_are_stripped(
-        self, value: str, expected: str
+        self,
+        value: str,
+        expected: str,
     ) -> None:
         """Valid strings are stripped and preserved."""
         self.assert_safe_string_valid(value, expected)
@@ -51,7 +55,7 @@ class TestUtilitiesTextFullCoverage(TextUtilityContract):
         [
             pytest.param(name, expected, id=f"format-{index}")
             for index, (name, expected) in enumerate(
-                TextUtilityContract.FORMAT_APP_ID_CASES
+                TextUtilityContract.FORMAT_APP_ID_CASES,
             )
         ],
     )

@@ -125,7 +125,9 @@ class TestUtilitiesParserFullCoverage:
         monkeypatch.setattr(parser, "_safe_text_length", self._safe_length_abc)
         tm.that(parser._get_safe_text_length("abc"), eq=-1)
         monkeypatch.setattr(
-            parser, "_process_escape_splitting", self._fail_escape_split
+            parser,
+            "_process_escape_splitting",
+            self._fail_escape_split,
         )
         split_result = parser._execute_escape_splitting("a,b", ",", "\\")
         tm.fail(split_result)
@@ -203,7 +205,8 @@ class TestUtilitiesParserFullCoverage:
         tm.fail(invalid_flag)
         tm.fail(invalid_len)
         bad_tuple = parser3._process_all_patterns(
-            "x", [cast("tuple[str, str]", ("x",))]
+            "x",
+            [cast("tuple[str, str]", ("x",))],
         )
         tm.fail(bad_tuple)
 
@@ -283,7 +286,8 @@ class TestUtilitiesParserFullCoverage:
         tm.ok(parsed)
 
     def test_parser_convert_and_norm_branches(
-        self, monkeypatch: pytest.MonkeyPatch
+        self,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         parser = u()
 
@@ -315,7 +319,8 @@ class TestUtilitiesParserFullCoverage:
         tm.that(parser._convert_to_bool(True, default=False), eq=True)
         tm.that(
             parser._convert_to_bool(
-                cast("t.NormalizedValue", _BadConv()), default=True
+                cast("t.NormalizedValue", _BadConv()),
+                default=True,
             ),
             eq=True,
         )
@@ -414,13 +419,16 @@ class TestUtilitiesParserFullCoverage:
         tm.that(parser._parse_with_default(None, None, "err").is_failure, eq=True)
         enum_exact = parser._parse_enum("ACTIVE", self._Status, case_insensitive=False)
         enum_by_value = parser._parse_enum(
-            "inactive", self._Status, case_insensitive=False
+            "inactive",
+            self._Status,
+            case_insensitive=False,
         )
         tm.ok(enum_exact)
         tm.ok(enum_by_value)
 
     def test_parser_remaining_branch_paths(
-        self, monkeypatch: pytest.MonkeyPatch
+        self,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         parser = u()
         tm.fail(parser._coerce_to_float([]))
@@ -459,7 +467,8 @@ class TestUtilitiesParserFullCoverage:
         tm.that(parser._convert_to_int(5, default=7), eq=5)
         tm.that(
             parser._convert_to_float(
-                cast("t.NormalizedValue", "normalized"), default=1.5
+                cast("t.NormalizedValue", "normalized"),
+                default=1.5,
             ),
             eq=1.5,
         )

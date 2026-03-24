@@ -52,7 +52,8 @@ class TestsFlextServiceBase(s[T]):
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         handler_id: Annotated[
-            str, Field(description="Unique handler identifier for test case")
+            str,
+            Field(description="Unique handler identifier for test case"),
         ]
         handler_name: Annotated[
             str | None,
@@ -73,14 +74,16 @@ class TestsFlextServiceBase(s[T]):
             ),
         ] = None
         should_fail: Annotated[
-            bool, Field(default=False, description="Whether test case expects failure")
+            bool,
+            Field(default=False, description="Whether test case expects failure"),
         ] = False
         error_message: Annotated[
             str | None,
             Field(default=None, description="Expected error message for failures"),
         ] = None
         description: Annotated[
-            str, Field(default="", description="Human-readable test case description")
+            str,
+            Field(default="", description="Human-readable test case description"),
         ] = ""
 
         def create_handler(
@@ -113,7 +116,8 @@ class TestsFlextServiceBase(s[T]):
 
         @staticmethod
         def _build_cases(
-            *, should_fail: bool
+            *,
+            should_fail: bool,
         ) -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
             cases: MutableSequence[TestsFlextServiceBase.HandlerTestCase] = []
             for spec in td.default_handler_case_specs():
@@ -122,7 +126,7 @@ class TestsFlextServiceBase(s[T]):
                     continue
                 handler_type_name = str(spec["handler_type"])
                 expected_result = TestsFlextServiceBase.HandlerFactories._to_container(
-                    spec.get("expected_result")
+                    spec.get("expected_result"),
                 )
                 cases.append(
                     TestsFlextServiceBase.HandlerTestCase(
@@ -136,7 +140,7 @@ class TestsFlextServiceBase(s[T]):
                             else None
                         ),
                         description=str(spec["description"]),
-                    )
+                    ),
                 )
             return cases
 
@@ -144,7 +148,7 @@ class TestsFlextServiceBase(s[T]):
         def success_cases() -> Sequence[TestsFlextServiceBase.HandlerTestCase]:
             """Generate success handler test cases."""
             return TestsFlextServiceBase.HandlerFactories._build_cases(
-                should_fail=False
+                should_fail=False,
             )
 
         @staticmethod

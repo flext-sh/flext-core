@@ -33,9 +33,9 @@ class _ProtocolHandler(FlextHandlers[BaseModel, t.NormalizedValue]):
     def handle(self, message: BaseModel) -> r[str]:
         value = ""
         if hasattr(message, "value"):
-            value = str(getattr(message, "value"))
+            value = str(message.value)
         if hasattr(message, "amount"):
-            value = str(getattr(message, "amount"))
+            value = str(message.amount)
         return r[str].ok(f"{self._label}:{value}")
 
 
@@ -53,7 +53,8 @@ class Ex12FlextRegistry(Examples):
         registry, dispatcher = self._exercise_create_and_service_methods()
         self._exercise_summary_and_mixins(registry)
         handler_a, handler_b = self._exercise_registration_and_dispatch(
-            registry, dispatcher
+            registry,
+            dispatcher,
         )
         self._exercise_bindings_and_plugin_apis(registry, handler_a, handler_b)
         self._exercise_register_method_and_tracking(registry)
@@ -123,7 +124,8 @@ class Ex12FlextRegistry(Examples):
         plugin_list = registry.list_plugins(plugin_ns)
         plugin_unreg_ok = registry.unregister_plugin(plugin_ns, plugin_name_a)
         plugin_unreg_missing = registry.unregister_plugin(
-            plugin_ns, plugin_unreg_missing_name
+            plugin_ns,
+            plugin_unreg_missing_name,
         )
         self.check("get_plugin.ok", plugin_get_ok.unwrap_or("") == plugin_value_a)
         self.check("get_plugin.missing", plugin_get_missing.is_failure)
@@ -131,30 +133,46 @@ class Ex12FlextRegistry(Examples):
         self.check("unregister_plugin.ok", plugin_unreg_ok.is_success)
         self.check("unregister_plugin.missing", plugin_unreg_missing.is_failure)
         class_ok = registry.register_plugin(
-            class_ns, class_plugin_name, class_plugin_value, scope="class"
+            class_ns,
+            class_plugin_name,
+            class_plugin_value,
+            scope="class",
         )
         class_dup = registry.register_plugin(
-            class_ns, class_plugin_name, class_plugin_value, scope="class"
+            class_ns,
+            class_plugin_name,
+            class_plugin_value,
+            scope="class",
         )
         class_empty = registry.register_plugin(
-            class_ns, "", class_plugin_value, scope="class"
+            class_ns,
+            "",
+            class_plugin_value,
+            scope="class",
         )
         class_get_ok = registry.get_plugin(class_ns, class_plugin_name, scope="class")
         class_get_missing = registry.get_plugin(
-            class_ns, class_missing_name, scope="class"
+            class_ns,
+            class_missing_name,
+            scope="class",
         )
         class_list = registry.list_plugins(class_ns, scope="class")
         class_unreg_ok = registry.unregister_plugin(
-            class_ns, class_plugin_name, scope="class"
+            class_ns,
+            class_plugin_name,
+            scope="class",
         )
         class_unreg_missing = registry.unregister_plugin(
-            class_ns, class_unreg_missing_name, scope="class"
+            class_ns,
+            class_unreg_missing_name,
+            scope="class",
         )
         self.check("register_class_plugin.ok", class_ok.is_success)
         self.check("register_class_plugin.dup", class_dup.is_success)
         self.check("register_class_plugin.empty_name", class_empty.is_failure)
         self.check(
-            "get_class_plugin.ok", class_get_ok.unwrap_or("") == class_plugin_value
+            "get_class_plugin.ok",
+            class_get_ok.unwrap_or("") == class_plugin_value,
         )
         self.check("get_class_plugin.missing", class_get_missing.is_failure)
         self.check("list_class_plugins.auth", class_list.unwrap_or([]))
@@ -210,10 +228,14 @@ class Ex12FlextRegistry(Examples):
         meta_model = m.Metadata(attributes={"owner": owner_value, "enabled": True})
         reg_plain = registry.register(svc_plain_name, svc_plain_value)
         reg_meta_dict = registry.register(
-            svc_dict_name, svc_dict_value, metadata=meta_dict
+            svc_dict_name,
+            svc_dict_value,
+            metadata=meta_dict,
         )
         reg_meta_model = registry.register(
-            svc_meta_name, lambda: callable_value, metadata=meta_model
+            svc_meta_name,
+            lambda: callable_value,
+            metadata=meta_model,
         )
         reg_bad = registry.register("", bad_value)
         self.check("register.service.plain", reg_plain.is_success)
@@ -225,7 +247,9 @@ class Ex12FlextRegistry(Examples):
             self.check("track.operation_count", metrics.get("operation_count", -1))
 
     def _exercise_registration_and_dispatch(
-        self, registry: FlextRegistry, dispatcher: FlextDispatcher
+        self,
+        registry: FlextRegistry,
+        dispatcher: FlextDispatcher,
     ) -> tuple[_ProtocolHandler, _ProtocolHandler]:
         self.section("registration_and_dispatch")
         label_a = self.rand_str(3)
@@ -268,13 +292,15 @@ class Ex12FlextRegistry(Examples):
         dispatch_a = dispatcher.dispatch(cmd_a)
         self.check("dispatch.a.success", dispatch_a.is_success)
         self.check(
-            "dispatch.a.value", dispatch_a.unwrap_or("") == f"{label_a}:{cmd_a_value}"
+            "dispatch.a.value",
+            dispatch_a.unwrap_or("") == f"{label_a}:{cmd_a_value}",
         )
         cmd_b = _CommandB(amount=cmd_b_value)
         dispatch_b = dispatcher.dispatch(cmd_b)
         self.check("dispatch.b.success", dispatch_b.is_success)
         self.check(
-            "dispatch.b.value", dispatch_b.unwrap_or("") == f"{label_b}:{cmd_b_value}"
+            "dispatch.b.value",
+            dispatch_b.unwrap_or("") == f"{label_b}:{cmd_b_value}",
         )
         return (handler_a, handler_b)
 

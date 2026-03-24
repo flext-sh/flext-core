@@ -134,7 +134,8 @@ def test_async_log_writer_paths() -> None:
     )
     forced.stream = stream
     forced.queue = cast(
-        "queue.Queue[str | None]", cast("t.NormalizedValue", EmptyQueue())
+        "queue.Queue[str | None]",
+        cast("t.NormalizedValue", EmptyQueue()),
     )
     forced.stop_event = threading.Event()
     forced.stop_event.set()
@@ -181,7 +182,8 @@ def test_async_log_writer_paths() -> None:
     )
     broken.stream = failing
     broken.queue = cast(
-        "queue.Queue[str | None]", cast("t.NormalizedValue", SequenceQueue())
+        "queue.Queue[str | None]",
+        cast("t.NormalizedValue", SequenceQueue()),
     )
     broken.stop_event = threading.Event()
     broken._worker()
@@ -250,7 +252,8 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     )
     writer.stream = stream
     writer.queue = cast(
-        "queue.Queue[str | None]", cast("t.NormalizedValue", FullQueue())
+        "queue.Queue[str | None]",
+        cast("t.NormalizedValue", FullQueue()),
     )
     writer.stop_event = threading.Event()
     thread = JoinRecorderThread()
@@ -307,7 +310,8 @@ def test_normalization_edge_branches() -> None:
         cast("t.RuntimeData", DictLike()),
     )
     tm.that(
-        isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1}, eq=True
+        isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1},
+        eq=True,
     )
     metadata_list = FlextRuntime.normalize_to_metadata(
         cast("t.RuntimeData", ["a", "normalized"]),
@@ -409,7 +413,8 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             calls.append(dict(kwargs.items()))
 
         def __getattr__(
-            self, name: str
+            self,
+            name: str,
         ) -> t.Scalar | type | Callable[..., t.Scalar] | types.SimpleNamespace:
             if name == "types":
                 return types.SimpleNamespace(Processor=type)
@@ -567,7 +572,8 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(filtered.error, eq="Filter predicate failed")
     tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
     tm.that(
-        failure.lash(lambda _err: FlextRuntime.RuntimeResult[int].ok(5)).value, eq=5
+        failure.lash(lambda _err: FlextRuntime.RuntimeResult[int].ok(5)).value,
+        eq=5,
     )
     tm.that(failure.recover(lambda _err: 7).value, eq=7)
 
@@ -578,7 +584,10 @@ def test_runtime_result_all_missed_branches() -> None:
             return None
 
     none_success: FlextRuntime.RuntimeResult[int | None] = NoneValueResult(
-        is_success=True, error=None, error_code=None, error_data=None
+        is_success=True,
+        error=None,
+        error_code=None,
+        error_data=None,
     )
     flowed = none_success.flow_through(_ok_plus_one)
     tm.that(flowed is none_success, eq=True)
@@ -591,7 +600,10 @@ def test_runtime_result_all_missed_branches() -> None:
     )
     tm.that(none_error.error, eq="")
     broken = FlextRuntime.RuntimeResult[int](
-        is_success=True, error=None, error_code=None, error_data=None
+        is_success=True,
+        error=None,
+        error_code=None,
+        error_data=None,
     )
     tm.that(broken.value, none=True)
 
@@ -599,12 +611,14 @@ def test_runtime_result_all_missed_branches() -> None:
 def test_model_support_and_hash_compare_paths() -> None:
     prefixed = FlextRuntime.generate_prefixed_id("item", length=8)
     tm.that(
-        prefixed.startswith("item_") and len(prefixed.split("_", 1)[1]) == 8, eq=True
+        prefixed.startswith("item_") and len(prefixed.split("_", 1)[1]) == 8,
+        eq=True,
     )
     tm.that(
         (
             FlextRuntime.compare_entities_by_id(
-                "a", cast("t.RuntimeData", "normalized")
+                "a",
+                cast("t.RuntimeData", "normalized"),
             )
             is False
         ),
@@ -692,7 +706,8 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(FlextRuntime.hash_value_object_by_value({"a": 1}), is_=int)
     tm.that(FlextRuntime.hash_value_object_by_value([1, 2]), is_=int)
     tm.that(
-        FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})), is_=int
+        FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})),
+        is_=int,
     )
     tm.that(FlextRuntime.hash_value_object_by_value((1, 2)), is_=int)
     tm.that(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), is_=int)
@@ -781,7 +796,8 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     tm.that(FlextRuntime.normalize_to_metadata(1), eq=1)
     metadata_mapping = FlextRuntime.normalize_to_metadata(MappingProxyType({"a": 1}))
     tm.that(
-        isinstance(metadata_mapping, dict) and metadata_mapping == {"a": 1}, eq=True
+        isinstance(metadata_mapping, dict) and metadata_mapping == {"a": 1},
+        eq=True,
     )
     tm.that(FlextRuntime.normalize_to_metadata(Path("/tmp")), eq=str(Path("/tmp")))
 
@@ -846,7 +862,8 @@ def test_configure_structlog_print_logger_factory_fallback(
 
         @override
         def __getattribute__(
-            self, name: str
+            self,
+            name: str,
         ) -> t.Scalar | type | Callable[..., t.Scalar] | None:
             if name == "PrintLoggerFactory":
                 calls = object.__getattribute__(self, "print_calls") + 1
@@ -861,7 +878,8 @@ def test_configure_structlog_print_logger_factory_fallback(
             return object.__getattribute__(self, name)
 
         def make_filtering_bound_logger(
-            self, level: int
+            self,
+            level: int,
         ) -> type[t.ConfigurationMapping]:
             _ = level
             return dict
@@ -896,7 +914,8 @@ def test_dependency_integration_and_wiring_paths() -> None:
         )
     )
     tm.that(
-        bridge is not None and services is not None and (resources is not None), eq=True
+        bridge is not None and services is not None and (resources is not None),
+        eq=True,
     )
     di = FlextRuntime.DependencyIntegration.create_container(
         container_options=m.DependencyContainerCreationOptions(

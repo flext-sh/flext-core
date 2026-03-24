@@ -47,10 +47,12 @@ class Ex07FlextExceptions(Examples):
         self.check("base.auto_log", base.auto_log)
         self.check("base.meta.scope", str(base.metadata.attributes.get("scope") or ""))
         self.check(
-            "base.meta.channel", str(base.metadata.attributes.get("channel") or "")
+            "base.meta.channel",
+            str(base.metadata.attributes.get("channel") or ""),
         )
         self.check(
-            "base.meta.operation", str(base.metadata.attributes.get("operation") or "")
+            "base.meta.operation",
+            str(base.metadata.attributes.get("operation") or ""),
         )
         payload = base.to_dict()
         self.check("base.to_dict.type", str(payload.get("error_type") or ""))
@@ -58,10 +60,14 @@ class Ex07FlextExceptions(Examples):
         self.check("base.to_dict.error_code", str(payload.get("error_code") or ""))
         self.check("base.to_dict.has_timestamp", "timestamp" in payload)
         auto_corr = e.BaseError(
-            "auto corr", error_code="E_AUTO", auto_correlation=True, auto_log=False
+            "auto corr",
+            error_code="E_AUTO",
+            auto_correlation=True,
+            auto_log=False,
         )
         self.check(
-            "base.auto_corr.prefix", (auto_corr.correlation_id or "").startswith("exc_")
+            "base.auto_corr.prefix",
+            (auto_corr.correlation_id or "").startswith("exc_"),
         )
 
     def _exercise_specific_exceptions(self) -> None:
@@ -100,7 +106,10 @@ class Ex07FlextExceptions(Examples):
         try:
             msg = "nope"
             raise e.AuthorizationError(
-                msg, user_id="u-2", resource="invoice:7", permission="read"
+                msg,
+                user_id="u-2",
+                resource="invoice:7",
+                permission="read",
             )
         except e.AuthorizationError as exc:
             self.check("AuthorizationError.user_id", exc.user_id or "")
@@ -115,7 +124,10 @@ class Ex07FlextExceptions(Examples):
         try:
             msg = "conflict"
             raise e.ConflictError(
-                msg, resource_type="User", resource_id="13", conflict_reason="duplicate"
+                msg,
+                resource_type="User",
+                resource_id="13",
+                conflict_reason="duplicate",
             )
         except e.ConflictError as exc:
             self.check("ConflictError.resource_type", exc.resource_type or "")
@@ -131,7 +143,10 @@ class Ex07FlextExceptions(Examples):
         try:
             msg = "open"
             raise e.CircuitBreakerError(
-                msg, service_name="billing", failure_count=5, reset_timeout=30.0
+                msg,
+                service_name="billing",
+                failure_count=5,
+                reset_timeout=30.0,
             )
         except e.CircuitBreakerError as exc:
             self.check("CircuitBreakerError.service_name", exc.service_name or "")
@@ -158,7 +173,9 @@ class Ex07FlextExceptions(Examples):
         try:
             msg = "bad attr"
             raise e.AttributeAccessError(
-                msg, attribute_name="secret", attribute_context="UserModel"
+                msg,
+                attribute_name="secret",
+                attribute_context="UserModel",
             )
         except e.AttributeAccessError as exc:
             self.check("AttributeAccessError.attribute_name", exc.attribute_name or "")
@@ -192,7 +209,10 @@ class Ex07FlextExceptions(Examples):
         )
         self.check("create.correlation_id", created_dynamic.correlation_id or "")
         instance_created = FlextExceptions()(
-            "from __call__", error_code="E_CALL", field="title", value=""
+            "from __call__",
+            error_code="E_CALL",
+            field="title",
+            value="",
         )
         self.check("__call__.type", type(instance_created).__name__)
         self.check("__call__.error_code", instance_created.error_code)
@@ -207,12 +227,14 @@ class Ex07FlextExceptions(Examples):
         self.check("metrics.total_exceptions", metric_map.get("total_exceptions", 0))
         self.check("metrics.has_exception_counts", "exception_counts" in metric_map)
         self.check(
-            "metrics.summary_nonempty", bool(metric_map.get("exception_counts_summary"))
+            "metrics.summary_nonempty",
+            bool(metric_map.get("exception_counts_summary")),
         )
         self.check("metrics.unique_types", metric_map.get("unique_exception_types", 0))
         e.clear_metrics()
         self.check(
-            "metrics.cleared_total", e.get_metrics().root.get("total_exceptions", 0)
+            "metrics.cleared_total",
+            e.get_metrics().root.get("total_exceptions", 0),
         )
 
 

@@ -103,8 +103,8 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
                         "strenum_validation",
                         "after_validator",
                     ],
-                }
-            )
+                },
+            ),
         )
 
     @staticmethod
@@ -125,7 +125,7 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
                 debug=False,
                 max_workers=4,
                 log_level=FlextConstants.LogLevel.INFO,
-            )
+            ),
         )
         print_config(result.value)
         return r[bool].ok(value=True)
@@ -209,7 +209,7 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
                 config = AppConfig.model_validate(invalid_data)
                 if config.api_timeout < 0:
                     print(
-                        "⚠️  Note: Validation constraints may not apply to singleton instances"
+                        "⚠️  Note: Validation constraints may not apply to singleton instances",
                     )
                     print("✅ Config created (validation handled by type system)")
                 else:
@@ -248,7 +248,8 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
         return r[t.ConfigMap].fail(
-            error_msg, error_code=FlextConstants.VALIDATION_ERROR
+            error_msg,
+            error_code=FlextConstants.VALIDATION_ERROR,
         )
 
     @override
@@ -277,7 +278,7 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
         ]
         results = [demo_func() for _, demo_func in demonstrations]
         return r.traverse(results, lambda r: r).map(
-            lambda _: tuple((name for name, _ in demonstrations))
+            lambda _: tuple((name for name, _ in demonstrations)),
         )
 
 

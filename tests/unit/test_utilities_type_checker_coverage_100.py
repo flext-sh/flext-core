@@ -67,7 +67,7 @@ class TestuTypeChecker:
         h[
             t.MutableContainerMapping,
             t.MutableContainerMapping,
-        ]
+        ],
     ):
         """Handler for dictionary messages."""
 
@@ -210,7 +210,8 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_object_accepts_all(self) -> None:
         """Test _evaluate_type_compatibility with t.NormalizedValue type."""
         object_type: t.TypeHintSpecifier = cast(
-            "t.TypeOriginSpecifier", t.NormalizedValue
+            "t.TypeOriginSpecifier",
+            t.NormalizedValue,
         )
         tm.that(u._evaluate_type_compatibility(object_type, str), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, int), eq=True)
@@ -221,7 +222,8 @@ class TestuTypeChecker:
         tm.that(u._evaluate_type_compatibility(self._type_origin(dict), dict), eq=True)
         dict_type: type[t.ContainerMapping] = dict
         tm.that(
-            u._evaluate_type_compatibility(self._type_origin(dict), dict_type), eq=True
+            u._evaluate_type_compatibility(self._type_origin(dict), dict_type),
+            eq=True,
         )
 
     def test_evaluate_type_compatibility_subclass(self) -> None:
@@ -239,7 +241,8 @@ class TestuTypeChecker:
     def test_check_object_type_compatibility_object_type(self) -> None:
         """Test _check_object_type_compatibility with t.NormalizedValue type."""
         object_type: t.TypeHintSpecifier = cast(
-            "t.TypeOriginSpecifier", t.NormalizedValue
+            "t.TypeOriginSpecifier",
+            t.NormalizedValue,
         )
         result = u._check_object_type_compatibility(object_type)
         tm.that(result, eq=True)

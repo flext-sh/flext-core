@@ -93,7 +93,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                     c.SCOPE_REQUEST,
                     c.SCOPE_SESSION,
                 ),
-            }
+            },
         )
 
     @staticmethod
@@ -115,7 +115,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                     c.FIELD_NAME: "context_demo",
                     "correlation_id": correlation_id,
                     "scope": c.SCOPE_REQUEST,
-                }
+                },
             )
             print(f"✅ Context data: {context_data}")
             print("✅ Thread-local storage for isolation")
@@ -129,7 +129,8 @@ class ContextManagementService(FlextService[t.ConfigMap]):
         print("\n=== Correlation Tracking ===")
         correlation_id = u.generate("correlation")
         with _request_scope(
-            operation_name="correlation_demo", request_id=correlation_id
+            operation_name="correlation_demo",
+            request_id=correlation_id,
         ):
             context_correlation = (
                 FlextContext.Variables.Correlation.CORRELATION_ID.get()
@@ -140,7 +141,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                     "correlation_id": context_correlation,
                     "prefix": c.CORRELATION_ID_PREFIX,
                     "length": c.CORRELATION_ID_LENGTH,
-                }
+                },
             )
             print(f"✅ Correlation ID: {context_correlation}")
             print("✅ Cross-service tracing support")
@@ -154,7 +155,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
         print("\n=== Performance Tracking ===")
         operation_name = "performance_demo"
         with FlextContext.Performance.timed_operation(
-            operation_name=operation_name
+            operation_name=operation_name,
         ) as timing_metadata:
             start_time = FlextContext.Variables.OperationStartTime.get()
             operation_metadata_raw = FlextContext.Variables.OperationMetadata.get()
@@ -171,7 +172,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                     else "unknown",
                     "metadata": operation_metadata.root,
                     "timing": timing_metadata,
-                }
+                },
             )
             print(f"✅ Operation: {operation_name}")
             print(f"✅ Start time: {performance_data['start_time']}")
@@ -192,7 +193,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                 metadata=t.ConfigMap(root={"endpoint": "/api/demo", "method": "GET"}),
             ),
             FlextContext.Performance.timed_operation(
-                operation_name=operation_name
+                operation_name=operation_name,
             ) as timing_metadata,
         ):
             user_id = FlextContext.Variables.UserId.get() or "anonymous"
@@ -203,7 +204,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                     "request_id": request_id,
                     "operation": operation,
                     "timing": timing_metadata,
-                }
+                },
             )
             print(f"✅ Request data: {request_data}")
             print("✅ Request lifecycle management")
@@ -223,7 +224,8 @@ class ContextManagementService(FlextService[t.ConfigMap]):
         def thread_operation(thread_id: int) -> r[t.ConfigMap]:
             """Thread operation with isolated context."""
             with _request_scope(
-                operation_name=f"thread_{thread_id}", request_id=f"req-{thread_id}"
+                operation_name=f"thread_{thread_id}",
+                request_id=f"req-{thread_id}",
             ):
                 correlation_id = (
                     FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
@@ -234,8 +236,8 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                             "thread_id": thread_id,
                             "correlation_id": correlation_id,
                             "thread_name": threading.current_thread().name,
-                        }
-                    )
+                        },
+                    ),
                 )
 
         results = [thread_operation(i) for i in range(min(3, thread_count))]
@@ -245,7 +247,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                 "active_threads": thread_count,
                 "thread_names": list(active_threads),
                 "isolated_contexts": len(results),
-            }
+            },
         )
         print(f"✅ Thread safety: {thread_count} active threads")
         print("✅ Context isolation per thread")

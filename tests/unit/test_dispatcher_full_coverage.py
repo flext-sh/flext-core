@@ -115,7 +115,8 @@ class TestDispatcherFullCoverage:
         return FlextDispatcher()
 
     def test_strict_registration_and_dispatch(
-        self, dispatcher: FlextDispatcher
+        self,
+        dispatcher: FlextDispatcher,
     ) -> None:
         handler = self._SampleHandler()
         res = dispatcher.register_handler(handler)
@@ -133,10 +134,10 @@ class TestDispatcherFullCoverage:
 
     def test_invalid_registration_attempts(self, dispatcher: FlextDispatcher) -> None:
         assert dispatcher.register_handler(
-            self._force_handler("not-a-handler")
+            self._force_handler("not-a-handler"),
         ).is_failure
         assert dispatcher.register_handler(
-            self._force_handler({"some": "dict"})
+            self._force_handler({"some": "dict"}),
         ).is_failure
 
         def nameless_handler(msg: m.Command) -> str:
@@ -144,7 +145,7 @@ class TestDispatcherFullCoverage:
             return "ok"
 
         assert dispatcher.register_handler(
-            self._force_handler(nameless_handler)
+            self._force_handler(nameless_handler),
         ).is_failure
 
     def test_event_publishing_strict(self, dispatcher: FlextDispatcher) -> None:
@@ -167,11 +168,12 @@ class TestDispatcherFullCoverage:
         res = dispatcher.register_handler(self._PredicateHandler())
         assert res.is_success
         assert dispatcher.dispatch(
-            self._SampleCommand(payload="p", command_id="cmd-p")
+            self._SampleCommand(payload="p", command_id="cmd-p"),
         ).is_success
 
     def test_callable_registration_with_attribute(
-        self, dispatcher: FlextDispatcher
+        self,
+        dispatcher: FlextDispatcher,
     ) -> None:
         def func_handler(msg: TestDispatcherFullCoverage._SampleCommand) -> str:
             _ = msg
@@ -182,7 +184,7 @@ class TestDispatcherFullCoverage:
         assert res.is_success
         assert (
             dispatcher.dispatch(
-                self._SampleCommand(payload="x", command_id="cmd-x")
+                self._SampleCommand(payload="x", command_id="cmd-x"),
             ).value
             == "func:ok"
         )
@@ -200,7 +202,7 @@ class TestDispatcherFullCoverage:
         setattr(breaking_handler, "message_type", self._SampleCommand)
         dispatcher.register_handler(breaking_handler)
         res = dispatcher.dispatch(
-            self._SampleCommand(payload="x", command_id="cmd-break")
+            self._SampleCommand(payload="x", command_id="cmd-break"),
         )
         assert res.is_failure
         assert isinstance(res.error, str)

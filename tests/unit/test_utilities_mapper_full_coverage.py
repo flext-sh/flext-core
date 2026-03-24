@@ -30,7 +30,8 @@ class UtilitiesMapperFullCoverageNamespace:
 
         port: int = 0
         nested: Annotated[
-            Mapping[str, test_t.NormalizedValue], Field(default_factory=dict)
+            Mapping[str, test_t.NormalizedValue],
+            Field(default_factory=dict),
         ]
 
     class _MaybeModel(BaseModel):
@@ -91,7 +92,8 @@ class UtilitiesMapperFullCoverageNamespace:
 
     class _ExtractTransformOptionsCallable(Protocol):
         def __call__(
-            self, transform_opts: Mapping[str, t.NormalizedValue | t.MapperCallable]
+            self,
+            transform_opts: Mapping[str, t.NormalizedValue | t.MapperCallable],
         ) -> tuple[t.NormalizedValue, ...]: ...
 
     class _BuildApplyOpCallable(Protocol):
@@ -103,7 +105,9 @@ class UtilitiesMapperFullCoverageNamespace:
 
     class _TransformCallable(Protocol):
         def __call__(
-            self, source: BadMapping, **kwargs: t.StrMapping
+            self,
+            source: BadMapping,
+            **kwargs: t.StrMapping,
         ) -> r[t.ContainerMapping]: ...
 
     class _MapDictKeysCallable(Protocol):
@@ -124,7 +128,10 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     def _at_obj(
-        items: ExplodingLenList, index: int | str, *, default: int | None = None
+        items: ExplodingLenList,
+        index: int | str,
+        *,
+        default: int | None = None,
     ) -> None:
         """Call Mapper.at with arbitrary t.NormalizedValue for error-path testing."""
         fn: _AtCallable = getattr(u, "at")
@@ -163,21 +170,24 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     def _build_apply_sort_obj(
-        current: tuple[str, str], operations: t.ContainerMapping
+        current: tuple[str, str],
+        operations: t.ContainerMapping,
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
         return fn(current, operations)
 
     @staticmethod
     def _build_apply_unique_obj(
-        current: tuple[int, int, int], operations: t.ContainerMapping
+        current: tuple[int, int, int],
+        operations: t.ContainerMapping,
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
         return fn(current, operations)
 
     @staticmethod
     def _build_apply_slice_obj(
-        current: tuple[int, int, int], operations: t.ContainerMapping
+        current: tuple[int, int, int],
+        operations: t.ContainerMapping,
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
         return fn(current, operations)
@@ -192,7 +202,8 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     def _transform_obj(
-        source: BadMapping, **kwargs: t.StrMapping
+        source: BadMapping,
+        **kwargs: t.StrMapping,
     ) -> r[t.ContainerMapping]:
         fn: _TransformCallable = getattr(u, "transform")
         return fn(source, **kwargs)
@@ -220,10 +231,12 @@ class UtilitiesMapperFullCoverageNamespace:
         """AttrObject class."""
 
         name: Annotated[
-            str, Field(default="name", description="Attribute t.NormalizedValue name")
+            str,
+            Field(default="name", description="Attribute t.NormalizedValue name"),
         ] = "name"
         value: Annotated[
-            int, Field(default=1, description="Attribute t.NormalizedValue value")
+            int,
+            Field(default=1, description="Attribute t.NormalizedValue value"),
         ] = 1
 
     class BadString:
@@ -339,7 +352,8 @@ class UtilitiesMapperFullCoverageNamespace:
                 return "stable"
 
         tm.that(
-            mapper.narrow_to_container(cast("t.NormalizedValue", Stable())), eq="stable"
+            mapper.narrow_to_container(cast("t.NormalizedValue", Stable())),
+            eq="stable",
         )
         tm.that(mapper._get_str_from_dict({"k": 2}, "k", default=""), eq="2")
         tm.that(mapper._get_str_from_dict({"k": None}, "k", default="d"), eq="d")
@@ -475,7 +489,8 @@ class UtilitiesMapperFullCoverageNamespace:
     def test_at_take_and_as_branches(mapper: type[u]) -> None:
         tm.that(mapper.at({"a": 1}, 0, default=5).value, eq=5)
         tm.that(
-            cast("r[int]", _at_obj(ExplodingLenList([1]), 0, default=7)).value, eq=7
+            cast("r[int]", _at_obj(ExplodingLenList([1]), 0, default=7)).value,
+            eq=7,
         )
         model = _PortModel(port=8081, nested={})
         tm.that(_take_obj(model, "port"), eq=8081)
@@ -492,7 +507,8 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._build_apply_ensure(5, {"ensure": "str"}), eq="5")
         tm.that(mapper._build_apply_ensure(5, {"ensure": "list"}), eq=[5])
         tm.that(
-            mapper._build_apply_ensure([1, "a"], {"ensure": "str_list"}), eq=["1", "a"]
+            mapper._build_apply_ensure([1, "a"], {"ensure": "str_list"}),
+            eq=["1", "a"],
         )
         tm.that(mapper._build_apply_ensure(5, {"ensure": "dict"}), eq={})
         tm.that(mapper._build_apply_ensure(5, {"ensure": "unknown"}), eq=5)
@@ -597,7 +613,8 @@ class UtilitiesMapperFullCoverageNamespace:
         converted = _build_apply_convert_obj(
             ("bad",),
             cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]", {"convert": int}
+                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+                {"convert": int},
             ),
         )
         tm.that(converted, eq=(0,))
@@ -617,7 +634,7 @@ class UtilitiesMapperFullCoverageNamespace:
             "to_json": True,
         }
         extracted = _extract_transform_options_obj(
-            cast("Mapping[str, t.NormalizedValue | t.MapperCallable]", opts)
+            cast("Mapping[str, t.NormalizedValue | t.MapperCallable]", opts),
         )
         extracted_dict = extracted[3]
         if isinstance(extracted_dict, Mapping):
@@ -630,7 +647,8 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._apply_normalize({"a": 1}, normalize=True), eq={"a": 1})
         tm.that(mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}), eq={"A": 1})
         tm.that(
-            mapper._apply_filter_keys({"a": 1, "b": 2}, filter_keys={"b"}), eq={"b": 2}
+            mapper._apply_filter_keys({"a": 1, "b": 2}, filter_keys={"b"}),
+            eq={"b": 2},
         )
         tm.that(
             mapper._apply_exclude_keys({"a": 1, "b": 2}, exclude_keys={"a"}),
@@ -691,7 +709,8 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(mapper._build_apply_process(1, {"process": 1}, 0, "stop"), eq=1)
         process_map_ops = cast(
-            "Mapping[str, t.NormalizedValue | t.MapperCallable]", {"process": _plus_one}
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+            {"process": _plus_one},
         )
         tm.that(
             mapper._build_apply_process({"a": 1}, process_map_ops, 0, "stop"),
@@ -739,7 +758,9 @@ class UtilitiesMapperFullCoverageNamespace:
     def test_field_and_fields_multi_branches(mapper: type[u]) -> None:
         tm.that(
             mapper.field(
-                cast("p.AccessibleData", "normalized"), "missing", required=True
+                cast("p.AccessibleData", "normalized"),
+                "missing",
+                required=True,
             ),
             none=True,
         )
@@ -754,7 +775,8 @@ class UtilitiesMapperFullCoverageNamespace:
     @staticmethod
     def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
         constructed_none = mapper.construct_spec(
-            {"x": {"field": "a", "default": 9}}, None
+            {"x": {"field": "a", "default": 9}},
+            None,
         )
         tm.that(constructed_none["x"], eq=9)
         source: MutableMapping[str, t.ValueOrModel] = {
@@ -825,7 +847,8 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "merge_strategy", ["merge", "secondary_only", "primary_only"]
+        "merge_strategy",
+        ["merge", "secondary_only", "primary_only"],
     )
     def test_process_context_data_and_related_convenience(
         mapper: type[u],
@@ -900,11 +923,13 @@ class UtilitiesMapperFullCoverageNamespace:
             "yes": EqualOnePredicate(),
         }
         found_callable = mapper.find_callable(
-            cast("Mapping[str, Callable[[int], bool]]", predicates), 1
+            cast("Mapping[str, Callable[[int], bool]]", predicates),
+            1,
         )
         tm.that(found_callable.is_success and found_callable.value == "yes", eq=True)
         not_found_callable = mapper.find_callable(
-            cast("Mapping[str, Callable[[int], bool]]", {"no": _negative}), 1
+            cast("Mapping[str, Callable[[int], bool]]", {"no": _negative}),
+            1,
         )
         tm.fail(not_found_callable)
 
@@ -921,7 +946,8 @@ class UtilitiesMapperFullCoverageNamespace:
         fail_map = _map_dict_keys_obj(_BadItems(), {})
         tm.fail(fail_map)
         flags = mapper.build_flags_dict(
-            ["read"], {"read": "can_read", "w": "can_write"}
+            ["read"],
+            {"read": "can_read", "w": "can_write"},
         )
         tm.ok(flags)
         tm.that(flags.value, eq={"can_read": True, "can_write": False})
@@ -929,7 +955,8 @@ class UtilitiesMapperFullCoverageNamespace:
         fail_flags = _build_flags_obj(_BadIter(), {})
         tm.fail(fail_flags)
         active = mapper.collect_active_keys(
-            {"r": True, "w": False}, {"r": "R", "w": "W"}
+            {"r": True, "w": False},
+            {"r": "R", "w": "W"},
         )
         tm.ok(active)
         tm.that(active.value, eq=["R"])
@@ -1080,16 +1107,20 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(mapper._apply_map_keys({"a": 1}, map_keys={"b": "B"}), eq={"a": 1})
         tm.that(
-            mapper._apply_strip_none({"a": None, "b": 1}, strip_none=True), eq={"b": 1}
+            mapper._apply_strip_none({"a": None, "b": 1}, strip_none=True),
+            eq={"b": 1},
         )
         tm.that(
-            mapper._apply_strip_empty({"a": "", "b": 1}, strip_empty=True), eq={"b": 1}
+            mapper._apply_strip_empty({"a": "", "b": 1}, strip_empty=True),
+            eq={"b": 1},
         )
         process_list_ops = cast(
-            "Mapping[str, t.NormalizedValue | t.MapperCallable]", {"process": _plus_one}
+            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+            {"process": _plus_one},
         )
         tm.that(
-            mapper._build_apply_process([1, 2], process_list_ops, 0, "stop"), eq=[2, 3]
+            mapper._build_apply_process([1, 2], process_list_ops, 0, "stop"),
+            eq=[2, 3],
         )
         grouped_call = mapper._build_apply_group(
             ["aa", "b"],
@@ -1110,7 +1141,8 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._build_apply_chunk([1, 2, 3], {"chunk": 2}), eq=[[1, 2], [3]])
         tm.that(mapper.field({"a": 1}, "a"), eq=1)
         tm.that(
-            mapper.fields_multi({"a": 1, "b": 2}, {"a": 0, "b": 0}), eq={"a": 1, "b": 2}
+            mapper.fields_multi({"a": 1, "b": 2}, {"a": 0, "b": 0}),
+            eq={"a": 1, "b": 2},
         )
         tm.that(mapper.fields_multi(t.ConfigMap(root={"a": 1}), {"a": 0}), eq={"a": 1})
         tm.that(
@@ -1118,7 +1150,8 @@ class UtilitiesMapperFullCoverageNamespace:
             eq={"x": 1},
         )
         tm.that(
-            mapper.construct_spec({"x": "a"}, t.ConfigMap(root={"a": 2})), eq={"x": 2}
+            mapper.construct_spec({"x": "a"}, t.ConfigMap(root={"a": 2})),
+            eq={"x": 2},
         )
         tm.that(
             mapper.construct_spec(

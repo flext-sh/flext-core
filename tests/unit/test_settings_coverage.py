@@ -47,7 +47,7 @@ class TestFlextSettingsCoverage:
 
     def test_effective_log_level_property(self) -> None:
         settings_obj = FlextSettings.get_global(
-            overrides={"debug": True, "trace": False}
+            overrides={"debug": True, "trace": False},
         )
         tm.that(settings_obj.effective_log_level, eq=c.LogLevel.INFO)
 
@@ -73,7 +73,7 @@ class TestFlextSettingsCoverage:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         payload = t.ConfigMap(
-            root={"name": "flext-core", "workers": 4, "enabled": True}
+            root={"name": "flext-core", "workers": 4, "enabled": True},
         )
         config_path = files.create(payload, "config.json", fmt="json")
         tm.that(config_path.exists(), eq=True)
@@ -110,7 +110,7 @@ class TestFlextSettingsCoverage:
                 ]),
             ),
             st.tuples(st.just("invalid_key"), st.text(min_size=1, max_size=10)),
-        )
+        ),
     )
     @settings(max_examples=50)
     def test_apply_override_returns_bool_property(

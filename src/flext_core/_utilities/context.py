@@ -72,7 +72,8 @@ class FlextUtilitiesContext:
         )
         runtime_config: BaseModel | None = runtime.runtime_config
         if isinstance(config_overrides, t.ConfigMap) and isinstance(
-            runtime_config, BaseModel
+            runtime_config,
+            BaseModel,
         ):
             cloned.runtime_config = runtime_config.model_copy(
                 update=dict(config_overrides.items()),

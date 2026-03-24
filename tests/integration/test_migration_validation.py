@@ -105,7 +105,7 @@ class TestMigrationValidation:
             """User service extending FlextService."""
 
             _logger: p.Logger = PrivateAttr(
-                default_factory=lambda: FlextLogger(__name__)
+                default_factory=lambda: FlextLogger(__name__),
             )
 
             @override

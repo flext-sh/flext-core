@@ -21,5 +21,3 @@ class Status(StrEnum):
 
 class Rule0LooseItemsFixture:
     """Fixture demonstrating loose items violation."""
-
-    pass

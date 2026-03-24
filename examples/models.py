@@ -103,17 +103,11 @@ class FlextCoreExampleModels:
         class DatabaseService(Ex02DatabaseService):
             """Database service export."""
 
-            pass
-
         class CacheService(Ex02CacheService):
             """Cache service export."""
 
-            pass
-
         class EmailService(Ex02EmailService):
             """Email service export."""
-
-            pass
 
     class Ex03:
         """Example 03 facade."""

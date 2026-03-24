@@ -35,7 +35,7 @@ class UserService(s[t.ConfigMap]):
         if self.logger:
             self.logger.info("Creating user", username=username, email=email)
         user_data: t.ConfigMap = t.ConfigMap(
-            root={"id": "usr_123", "username": username, "email": email}
+            root={"id": "usr_123", "username": username, "email": email},
         )
         return r[t.ConfigMap].ok(user_data)
 
@@ -54,7 +54,10 @@ class PaymentService(s[t.ConfigMap]):
         return r[t.ConfigMap].ok(t.ConfigMap(root={"status": "initialized"}))
 
     def process_payment(
-        self, payment_id: str, amount: float, user_id: str
+        self,
+        payment_id: str,
+        amount: float,
+        user_id: str,
     ) -> r[t.ConfigMap]:
         """Process payment with correlation tracking.
 
@@ -69,7 +72,9 @@ class PaymentService(s[t.ConfigMap]):
         )
         FlextContext.Correlation.set_correlation_id(correlation_id)
         self._enrich_context(
-            user_id=user_id, payment_id=payment_id, operation="process_payment"
+            user_id=user_id,
+            payment_id=payment_id,
+            operation="process_payment",
         )
         self._with_operation_context("process_payment", amount=amount)
         if self.logger:
@@ -85,7 +90,7 @@ class PaymentService(s[t.ConfigMap]):
                 "amount": amount,
                 "status": "completed",
                 "correlation_id": correlation_id,
-            }
+            },
         )
         self._clear_operation_context()
         return r[t.ConfigMap].ok(payment_data)
@@ -102,21 +107,26 @@ class OrderService(s[t.ConfigMap]):
         order_id_raw = self._order_data.get("order_id", "ord_123")
         order_id = str(order_id_raw) if order_id_raw else "ord_123"
         result_data = t.ConfigMap(
-            root={"order_id": order_id, "status": c.CommonStatus.PENDING.value}
+            root={"order_id": order_id, "status": c.CommonStatus.PENDING.value},
         )
         return r[t.ConfigMap].ok(result_data)
 
     def process_order(
-        self, order_id: str, customer_id: str, correlation_id: str | None = None
+        self,
+        order_id: str,
+        customer_id: str,
+        correlation_id: str | None = None,
     ) -> r[t.ConfigMap]:
         """Process order with automatic context enrichment."""
         self._order_data = t.ConfigMap(
-            root={"order_id": order_id, "customer_id": customer_id}
+            root={"order_id": order_id, "customer_id": customer_id},
         )
         correlation = correlation_id or f"order_{order_id}_{customer_id}"
         FlextContext.Correlation.set_correlation_id(correlation)
         self._enrich_context(
-            user_id=customer_id, order_id=order_id, operation=c.Action.CREATE.value
+            user_id=customer_id,
+            order_id=order_id,
+            operation=c.Action.CREATE.value,
         )
         with self.track("process_order"):
             return self.execute()
@@ -158,8 +168,8 @@ class AutomationService(s[t.ConfigMap]):
                     root={
                         "automation_mode": c.ProcessingMode.SEQUENTIAL.value,
                         "batch_size": c.DEFAULT_SIZE,
-                    }
-                )
+                    },
+                ),
             )
 
         cached = get_cached()
@@ -193,7 +203,7 @@ class AutomationService(s[t.ConfigMap]):
                         **item.root,
                         "processed": True,
                         "timestamp": "2025-01-01T12:00:00Z",
-                    }
+                    },
                 )
                 for item in data
             ]
@@ -241,12 +251,12 @@ class AutomationService(s[t.ConfigMap]):
                     "automation_timestamp": "2025-01-01T12:00:00Z",
                     "duration_ms": 250,
                     "result_id": "RESULT-001",
-                }
+                },
             )
             return r[t.ConfigMap].ok(enriched)
 
         automation_input: t.ConfigMap = t.ConfigMap(
-            root={"task_type": c.ProcessingMode.BATCH.value, "source": "database"}
+            root={"task_type": c.ProcessingMode.BATCH.value, "source": "database"},
         )
         validate_result = validate(automation_input)
         if validate_result.is_failure:
@@ -274,7 +284,7 @@ class AutomationService(s[t.ConfigMap]):
                     "task_type": "data_sync",
                     "records_processed": 1000,
                     "status": "success",
-                }
+                },
             )
             records_text = str(u.get(task_data, "records_processed", default=0) or 0)
             records = int(records_text) if records_text.isdigit() else 0
@@ -367,7 +377,7 @@ class AutomationService(s[t.ConfigMap]):
                     "engine_id": "AUTO-ENGINE-001",
                     "engine_type": c.ProcessingMode.PARALLEL.value,
                     "worker_count": c.DEFAULT_DB_POOL_SIZE,
-                }
+                },
             )
 
         fail_result: r[t.ConfigMap] = r[t.ConfigMap].fail("No existing engine")
@@ -383,7 +393,7 @@ class AutomationService(s[t.ConfigMap]):
             root={
                 "engine_id": "CACHED-ENGINE-001",
                 "worker_count": c.DEFAULT_WORKERS,
-            }
+            },
         )
         success_result = r[t.ConfigMap].ok(existing)
         cached = success_result.map_or(create_engine())
@@ -428,14 +438,18 @@ def main() -> None:
     print("-" * 80)
     payment_service = PaymentService()
     result2 = payment_service.process_payment(
-        payment_id="pay_123", amount=99.99, user_id="usr_456"
+        payment_id="pay_123",
+        amount=99.99,
+        user_id="usr_456",
     )
     print(f"Result: {(result2.value if result2.is_success else result2.error)}")
     print("\n3. SERVICE USING CONTEXT ENRICHMENT HELPER")
     print("-" * 80)
     order_service = OrderService()
     result3 = order_service.process_order(
-        order_id="ord_123", customer_id="cust_456", correlation_id="corr_abc123"
+        order_id="ord_123",
+        customer_id="cust_456",
+        correlation_id="corr_abc123",
     )
     print(f"Result: {(result3.value if result3.is_success else result3.error)}")
     print("\n4. NEW r METHODS (v0.9.9+)")
@@ -453,7 +467,7 @@ def main() -> None:
     print("✅ Structured logging with full context")
     print("✅ NEW r methods: from_callable, flow_through, lash, alt, unwrap_or")
     print(
-        "✅ Advanced automation scenarios: ETL pipelines, service orchestration, lazy loading"
+        "✅ Advanced automation scenarios: ETL pipelines, service orchestration, lazy loading",
     )
     print("✅ Zero boilerplate infrastructure code")
     print("=" * 80)

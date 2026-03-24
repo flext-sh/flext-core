@@ -36,12 +36,13 @@ def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
     tm.that(token_none.key, eq="proxy_key")
     tm.that(proxy.get(), eq="def")
     FlextModelsContext.StructlogProxyContextVar.reset(
-        FlextModelsContext.StructlogProxyToken(key="proxy_key", previous_value=None)
+        FlextModelsContext.StructlogProxyToken(key="proxy_key", previous_value=None),
     )
     FlextModelsContext.StructlogProxyContextVar.reset(
         FlextModelsContext.StructlogProxyToken(
-            key="proxy_key", previous_value="restored"
-        )
+            key="proxy_key",
+            previous_value="restored",
+        ),
     )
     tm.that(proxy.get(), eq="restored")
 
@@ -62,12 +63,12 @@ def test_context_data_normalize_and_json_checks() -> None:
     normalized = m.ContextData.normalize_to_container(nested)
     tm.that(hasattr(normalized, "root"), eq=True)
     check_result = FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.ValueOrModel", {"k": [1, "x"]})
+        cast("t.ValueOrModel", {"k": [1, "x"]}),
     )
     tm.that(check_result, none=True)
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.ValueOrModel", {"normalized"})
+            cast("t.ValueOrModel", {"normalized"}),
         )
     obj = cast("t.ValueOrModel", _ModelWithNoCallableDump())
     with pytest.raises(TypeError):
@@ -77,7 +78,7 @@ def test_context_data_normalize_and_json_checks() -> None:
 def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(ValueError) as exc_info:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
-            cast("t.Dict | t.ConfigurationMapping | BaseModel | None", "123")
+            cast("t.Dict | t.ConfigurationMapping | BaseModel | None", "123"),
         )
     tm.that(exc_info.value, none=False)
     with pytest.raises(TypeError) as exc_info2:
@@ -85,7 +86,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
                 cast("t.NormalizedValue", _ModelWithNoCallableDump()),
-            )
+            ),
         )
     tm.that(exc_info2.value, none=False)
     metadata_input = FlextModelFoundation.Metadata(attributes={"a": 1})
@@ -104,7 +105,7 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
     tm.that(result_none, eq={})
     as_mapping: t.ConfigurationMapping = {"k": "v"}
     result_mapping = FlextModelsContext.ContextData.validate_dict_serializable(
-        as_mapping
+        as_mapping,
     )
     tm.that(result_mapping, eq={"k": "v"})
 
@@ -129,19 +130,19 @@ def test_context_data_validate_dict_serializable_real_dicts(
 
 def test_context_export_serializable_and_validators() -> None:
     check_result = FlextModelsContext.ContextData.check_json_serializable(
-        cast("t.ValueOrModel", {"k": [1, True]})
+        cast("t.ValueOrModel", {"k": [1, True]}),
     )
     tm.that(check_result, none=True)
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextData.check_json_serializable(
-            cast("t.ValueOrModel", {"normalized"})
+            cast("t.ValueOrModel", {"normalized"}),
         )
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
                 cast("t.NormalizedValue", _ModelWithNoCallableDump()),
-            )
+            ),
         )
     result = FlextModelsContext.ContextExport.validate_dict_serializable(None)
     tm.that(result, eq={})
@@ -168,7 +169,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     """Test ContextExport.validate_dict_serializable with Mapping and model inputs."""
     as_mapping: t.ConfigurationMapping = {"k": "v"}
     result_mapping = FlextModelsContext.ContextExport.validate_dict_serializable(
-        as_mapping
+        as_mapping,
     )
     tm.that(result_mapping, eq={"k": "v"})
     with pytest.raises(ValueError):
@@ -176,11 +177,11 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
                 "123",
-            )
+            ),
         )
     metadata_input = FlextModelFoundation.Metadata(attributes={"m": 3})
     result_meta = FlextModelsContext.ContextExport.validate_dict_serializable(
-        metadata_input
+        metadata_input,
     )
     tm.that(result_meta, eq={"m": 3})
 
@@ -188,7 +189,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
         c: int = 4
 
     result_export = FlextModelsContext.ContextExport.validate_dict_serializable(
-        _GoodExportModel()
+        _GoodExportModel(),
     )
     tm.that(result_export, eq={"c": 4})
 

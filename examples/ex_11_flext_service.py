@@ -242,7 +242,8 @@ class Ex11FlextService(Examples):
         tiny = s.Bootstrap.create_instance(_TinyType)
         self.check("Bootstrap.create_instance.type", type(tiny).__name__)
         self.check(
-            "Bootstrap.create_instance.init_called", hasattr(tiny, "initialized")
+            "Bootstrap.create_instance.init_called",
+            hasattr(tiny, "initialized"),
         )
 
         metrics = s.CQRS.MetricsTracker()
@@ -275,12 +276,10 @@ class Ex11FlextService(Examples):
 
         proto_handler = s.ProtocolValidation.is_handler(_HandlerLike())
         service_like = _ServiceLike()
-        is_service_fn = getattr(s.ProtocolValidation, "is_service")
+        is_service_fn = s.ProtocolValidation.is_service
         proto_service = bool(is_service_fn(service_like))
         proto_bus = s.ProtocolValidation.is_command_bus(_CommandBusStub())
-        validate_protocol_fn = getattr(
-            s.ProtocolValidation, "validate_protocol_compliance"
-        )
+        validate_protocol_fn = s.ProtocolValidation.validate_protocol_compliance
         proto_ok = validate_protocol_fn(service_like, "Service")
         proto_unknown = validate_protocol_fn(service_like, "UnknownProto")
         processor_ok = s.ProtocolValidation.validate_processor_protocol(
@@ -309,10 +308,12 @@ class Ex11FlextService(Examples):
             return r[bool].fail("not-upper")
 
         valid = s.Validation.validate_with_result(
-            valid_upper, [_validator_len, _validator_upper]
+            valid_upper,
+            [_validator_len, _validator_upper],
         )
         invalid = s.Validation.validate_with_result(
-            invalid_lower, [_validator_len, _validator_upper]
+            invalid_lower,
+            [_validator_len, _validator_upper],
         )
         self.check("Validation.validate_with_result.ok", valid.unwrap_or(""))
         self.check("Validation.validate_with_result.fail", invalid.error)
@@ -357,7 +358,8 @@ class Ex11FlextService(Examples):
 
         # Integration namespace methods (return None)
         s.Integration.setup_service_infrastructure(
-            service_name=service_name, service_version=service_version
+            service_name=service_name,
+            service_version=service_version,
         )
         s.Integration.track_service_resolution(resolved_name, resolved=True)
         s.Integration.track_service_resolution(
@@ -378,7 +380,7 @@ class Ex11FlextService(Examples):
             services={"object_item": service_object},
             factories={"factory_item": lambda: factory_object},
             resources={
-                "resource_item": lambda: t.ConfigMap(root={"value": resource_number})
+                "resource_item": lambda: t.ConfigMap(root={"value": resource_number}),
             },
             wire_modules=[sys.modules[__name__]],
             wire_packages=["flext_core"],
@@ -388,7 +390,8 @@ class Ex11FlextService(Examples):
         self.check("DependencyIntegration.service", di.object_item() == service_object)
         self.check("DependencyIntegration.factory", di.factory_item() == factory_object)
         self.check(
-            "DependencyIntegration.resource.type", type(di.resource_item()).__name__
+            "DependencyIntegration.resource.type",
+            type(di.resource_item()).__name__,
         )
 
         bridge, service_mod, resource_mod = (
@@ -398,10 +401,12 @@ class Ex11FlextService(Examples):
         )
         self.check("DependencyIntegration.bridge.type", type(bridge).__name__)
         self.check(
-            "DependencyIntegration.service_module.type", type(service_mod).__name__
+            "DependencyIntegration.service_module.type",
+            type(service_mod).__name__,
         )
         self.check(
-            "DependencyIntegration.resource_module.type", type(resource_mod).__name__
+            "DependencyIntegration.resource_module.type",
+            type(resource_mod).__name__,
         )
 
         # RuntimeResult namespace methods
@@ -414,7 +419,8 @@ class Ex11FlextService(Examples):
         self.check("RuntimeResult.error", rr_fail.error)
         self.check("RuntimeResult.error_code", rr_fail.error_code)
         self.check(
-            "RuntimeResult.unwrap_or", rr_fail.unwrap_or(rr_fallback) == rr_fallback
+            "RuntimeResult.unwrap_or",
+            rr_fail.unwrap_or(rr_fallback) == rr_fallback,
         )
         self.check(
             "RuntimeResult.unwrap_or_else",
@@ -427,14 +433,14 @@ class Ex11FlextService(Examples):
         self.check(
             "RuntimeResult.flat_map",
             rr_ok.flat_map(lambda num: s.RuntimeResult[int].ok(num * rr_mul)).unwrap_or(
-                0
+                0,
             )
             == rr_value * rr_mul,
         )
         self.check(
             "RuntimeResult.and_then",
             rr_ok.flat_map(lambda num: s.RuntimeResult[int].ok(num + rr_add)).unwrap_or(
-                0
+                0,
             )
             == rr_value + rr_add,
         )
@@ -449,20 +455,23 @@ class Ex11FlextService(Examples):
         self.check(
             "RuntimeResult.fold.success",
             rr_ok.fold(
-                on_failure=lambda err: f"f:{err}", on_success=lambda num: f"s:{num}"
+                on_failure=lambda err: f"f:{err}",
+                on_success=lambda num: f"s:{num}",
             ),
         )
         self.check(
             "RuntimeResult.fold.failure",
             rr_fail.fold(
-                on_failure=lambda err: f"f:{err}", on_success=lambda num: f"s:{num}"
+                on_failure=lambda err: f"f:{err}",
+                on_success=lambda num: f"s:{num}",
             ),
         )
 
         taps: MutableSequence[int] = []
         tap_errors: MutableSequence[str] = []
         self.check(
-            "RuntimeResult.tap", rr_ok.tap(lambda num: taps.append(num)).is_success
+            "RuntimeResult.tap",
+            rr_ok.tap(lambda num: taps.append(num)).is_success,
         )
         self.check(
             "RuntimeResult.tap_error",
@@ -472,21 +481,25 @@ class Ex11FlextService(Examples):
         self.check("RuntimeResult.tap_error.values", tap_errors)
 
         self.check(
-            "RuntimeResult.map_error", rr_fail.map_error(lambda err: f"x:{err}").error
+            "RuntimeResult.map_error",
+            rr_fail.map_error(lambda err: f"x:{err}").error,
         )
         self.check(
-            "RuntimeResult.filter.pass", rr_ok.filter(lambda num: num > 0).is_success
+            "RuntimeResult.filter.pass",
+            rr_ok.filter(lambda num: num > 0).is_success,
         )
         self.check("RuntimeResult.filter.fail", rr_ok.filter(lambda num: num < 0).error)
         self.check(
-            "RuntimeResult.alt", rr_fail.map_error(lambda err: f"alt:{err}").error
+            "RuntimeResult.alt",
+            rr_fail.map_error(lambda err: f"alt:{err}").error,
         )
         self.check(
             "RuntimeResult.lash",
             rr_fail.lash(lambda err: s.RuntimeResult[int].ok(len(err))).unwrap_or(0),
         )
         self.check(
-            "RuntimeResult.recover", rr_fail.recover(lambda err: len(err)).unwrap_or(0)
+            "RuntimeResult.recover",
+            rr_fail.recover(lambda err: len(err)).unwrap_or(0),
         )
         self.check("RuntimeResult.operator_or", rr_fail | rr_or)
         self.check("RuntimeResult.bool.success", bool(rr_ok))
@@ -512,7 +525,8 @@ class Ex11FlextService(Examples):
         self.check("compare_entities_by_id.false", s.compare_entities_by_id(e1, e3))
         self.check("hash_entity_by_id.type", type(s.hash_entity_by_id(e1)).__name__)
         self.check(
-            "compare_value_objects_by_value", s.compare_value_objects_by_value(e1, e2)
+            "compare_value_objects_by_value",
+            s.compare_value_objects_by_value(e1, e2),
         )
         self.check(
             "hash_value_object_by_value.type",
@@ -533,7 +547,8 @@ class Ex11FlextService(Examples):
             s.validate_http_status_codes(http_mixed).unwrap_or([]),
         )
         self.check(
-            "validate_http_status_codes.fail", s.validate_http_status_codes([99]).error
+            "validate_http_status_codes.fail",
+            s.validate_http_status_codes([99]).error,
         )
 
     def demo_runtime_creation_and_serialization(self) -> None:
@@ -551,12 +566,14 @@ class Ex11FlextService(Examples):
 
         runtime_default = _RuntimeFactoryService.create_runtime_default()
         self.check(
-            "create_runtime.default.context", type(runtime_default.context).__name__
+            "create_runtime.default.context",
+            type(runtime_default.context).__name__,
         )
 
         runtime_full = _RuntimeFactoryService.create_runtime_full()
         self.check(
-            "create_runtime.full.container", type(runtime_full.container).__name__
+            "create_runtime.full.container",
+            type(runtime_full.container).__name__,
         )
         self.check("create_runtime.full.config", type(runtime_full.config).__name__)
 
@@ -621,7 +638,7 @@ class Ex11FlextService(Examples):
         failing = _FailingService()
         try:
             self.check("result.failure.raises", False)
-            failing_result = getattr(failing, "result")
+            failing_result = failing.result
             self.check("result.failure.value", failing_result)
         except FlextExceptions.BaseError as exc:
             self.check("result.failure.raises", True)
@@ -633,7 +650,8 @@ class Ex11FlextService(Examples):
         auto_result = str(declarative.result)
         self.check("auto_execute.result", auto_result)
         self.check(
-            "auto_execute.execute_count_after_result", declarative.execution_count
+            "auto_execute.execute_count_after_result",
+            declarative.execution_count,
         )
 
     @override

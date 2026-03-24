@@ -60,7 +60,8 @@ class TestsCore:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Service scenario name")]
         scenario_type: Annotated[
-            TestsCore.ServiceScenarioType, Field(description="Service scenario type")
+            TestsCore.ServiceScenarioType,
+            Field(description="Service scenario type"),
         ]
         is_valid_expected: Annotated[
             bool,
@@ -83,7 +84,7 @@ class TestsCore:
         @override
         def execute(self) -> r[TestsCore.UserData]:
             return r[TestsCore.UserData].ok(
-                TestsCore.UserData(user_id=1, name="test_user")
+                TestsCore.UserData(user_id=1, name="test_user"),
             )
 
     class ComplexService(s[str]):

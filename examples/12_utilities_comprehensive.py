@@ -35,7 +35,7 @@ TEST_DATA: t.ConfigMap = t.ConfigMap(
         "uri": "https://example.com/api",
         "port": 8080,
         "hostname": "api.example.com",
-    }
+    },
 )
 
 
@@ -59,11 +59,12 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         """Show collection operation utilities."""
         print("\n=== Collection Operations ===")
         parse_result = u.parse_sequence(
-            c.HandlerType, ["validation", "id_generation"]
+            c.HandlerType,
+            ["validation", "id_generation"],
         ).map(
             lambda parsed_enums: print(
-                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}"
-            )
+                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}",
+            ),
         )
         if not parse_result.is_success:
             msg = "Collection operations parsing failed"
@@ -77,7 +78,7 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         float_str = str(TEST_DATA["float_str"])
         parser = u()
         delimited_result = parser.parse_delimited("a,b,c", ",").map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}")
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
         )
         if not delimited_result.is_success:
             msg = "Delimited conversion demonstration failed"
@@ -123,13 +124,15 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         parser = u()
         options = m.ParseOptions(strip=True, remove_empty=True)
         delimited_result = parser.parse_delimited("a, b, c", ",", options=options).map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}")
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
         )
         if not delimited_result.is_success:
             msg = "String parsing demonstration failed"
             raise RuntimeError(msg)
         split_result = parser.split_on_char_with_escape(
-            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\"
+            "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com",
+            ",",
+            "\\",
         ).map(lambda split: print(f"✅ Escaped split: {split}"))
         if not split_result.is_success:
             msg = "Escaped split demonstration failed"
@@ -158,7 +161,9 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         print(f"✅ String validation: {name} -> {name_result.is_success}")
         uri = str(TEST_DATA["uri"])
         uri_result = u.validate_pattern(
-            uri, "^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\s]+$", "uri"
+            uri,
+            "^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\s]+$",
+            "uri",
         )
         print(f"✅ URI validation: {uri} -> {uri_result.is_success}")
         port_value = TEST_DATA["port"]
@@ -210,8 +215,8 @@ class UtilitiesService(FlextService[t.ConfigMap]):
                             "performance",
                             "reliability",
                         ],
-                    }
-                )
+                    },
+                ),
             )
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"
@@ -232,7 +237,7 @@ def main() -> None:
     print("=" * 60)
     print("FLEXT UTILITIES - COMPREHENSIVE DEMONSTRATION")
     print(
-        "Validation, generation, conversion, caching, reliability, parsing, collections, type checking"
+        "Validation, generation, conversion, caching, reliability, parsing, collections, type checking",
     )
     print("=" * 60)
     demonstrate_utility_composition()

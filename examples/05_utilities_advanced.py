@@ -158,15 +158,18 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         user_from_dict = UserModel.model_validate(user_data)
         print(
             f"✅ Model from dict: {user_from_dict.name} ({user_from_dict.status.value})"
-            f" [r={'ok' if model_result.is_success else 'fail'}]"
+            f" [r={'ok' if model_result.is_success else 'fail'}]",
         )
         user_from_kwargs = UserModel(name="Bob", status=StatusEnum.PENDING, age=30)
         kwargs_result = u.from_kwargs(
-            UserModel, name="Bob", status=StatusEnum.PENDING, age=30
+            UserModel,
+            name="Bob",
+            status=StatusEnum.PENDING,
+            age=30,
         )
         print(
             f"✅ Model from kwargs: {user_from_kwargs.name} ({user_from_kwargs.status.value})"
-            f" [r={'ok' if kwargs_result.is_success else 'fail'}]"
+            f" [r={'ok' if kwargs_result.is_success else 'fail'}]",
         )
         defaults: Mapping[str, StatusEnum | int] = {
             "status": StatusEnum.PENDING,
@@ -177,7 +180,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         merged_user = UserModel(name="Charlie", status=StatusEnum.PENDING, age=0)
         print(
             f"✅ Merged defaults: {merged_user.name} ({merged_user.status.value})"
-            f" [r={'ok' if merge_result.is_success else 'fail'}]"
+            f" [r={'ok' if merge_result.is_success else 'fail'}]",
         )
 
     @staticmethod
@@ -195,10 +198,12 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         page_size: int = int(query_params.get("page_size", "10"))
         print(
             f"✅ Page params: page={page}, size={page_size}"
-            f" [r={'ok' if page_result.is_success else 'fail'}]"
+            f" [r={'ok' if page_result.is_success else 'fail'}]",
         )
         validate_result = u.validate_pagination_params(
-            page=1, page_size=20, max_page_size=c.MAX_PAGE_SIZE
+            page=1,
+            page_size=20,
+            max_page_size=c.MAX_PAGE_SIZE,
         )
         print(f"✅ Validated params: is_valid={validate_result.is_success}")
 
@@ -273,8 +278,8 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
                             "api_pagination",
                             "parameter_access",
                         ],
-                    }
-                )
+                    },
+                ),
             )
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"
@@ -304,7 +309,7 @@ def main() -> None:
                     "configuration",
                 ],
                 "utility_categories": 9,
-            }
+            },
         )
         utilities = result_data.root["utilities_demonstrated"]
         categories = result_data.root["utility_categories"]

@@ -100,7 +100,8 @@ class Ex09FlextDecorators(Examples):
         self.check("combined.railway.fail.is_failure", rail_fail.is_failure)
         self.check("combined.railway.fail.error_nonempty", bool(rail_fail.error))
         self.check(
-            "combined.railway.fail.error_code", rail_fail.error_code == "E_COMBINED"
+            "combined.railway.fail.error_code",
+            rail_fail.error_code == "E_COMBINED",
         )
 
     def _demo_deprecated(self) -> None:
@@ -235,7 +236,8 @@ class Ex09FlextDecorators(Examples):
 
         self.check("log_operation.named_matches", log_named() == named_operation)
         self.check(
-            "log_operation.default_track_perf", log_default_perf() == "log_default_perf"
+            "log_operation.default_track_perf",
+            log_default_perf() == "log_default_perf",
         )
 
     def _demo_railway(self) -> None:
@@ -372,7 +374,8 @@ class Ex09FlextDecorators(Examples):
 
         without_corr = tracked_without_correlation()
         self.check(
-            "track_operation.with_corr.operation", with_corr[0] == with_corr_operation
+            "track_operation.with_corr.operation",
+            with_corr[0] == with_corr_operation,
         )
         self.check("track_operation.with_corr.has_corr", with_corr[1] is not None)
         self.check(
@@ -400,10 +403,12 @@ class Ex09FlextDecorators(Examples):
         named_value, named_operation = perf_named(base_value)
         self.check("track_performance.named.value", named_value == base_value * 2)
         self.check(
-            "track_performance.named.operation", named_operation == perf_operation_name
+            "track_performance.named.operation",
+            named_operation == perf_operation_name,
         )
         self.check(
-            "track_performance.default.operation", perf_default() == "perf_default"
+            "track_performance.default.operation",
+            perf_default() == "perf_default",
         )
 
     def _demo_with_context(self) -> None:

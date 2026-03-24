@@ -29,7 +29,8 @@ class TestService:
         name: Annotated[str, Field(description="User display name")]
         email: Annotated[str, Field(description="User email address")]
         active: Annotated[
-            bool, Field(default=True, description="Whether user is active")
+            bool,
+            Field(default=True, description="Whether user is active"),
         ] = True
 
     class UserQueryService(FlextService[bool]):
@@ -47,7 +48,7 @@ class TestService:
         """
 
         _users: MutableMapping[str, TestService.UserServiceEntity] = PrivateAttr(
-            default_factory=lambda: dict[str, TestService.UserServiceEntity]()
+            default_factory=lambda: dict[str, TestService.UserServiceEntity](),
         )
         _should_fail: bool = PrivateAttr(default=False)
         _call_count: int = PrivateAttr(default_factory=lambda: 0)
@@ -123,7 +124,7 @@ class TestService:
         """Real notification service using FlextService."""
 
         _sent_notifications: MutableSequence[str] = PrivateAttr(
-            default_factory=lambda: list[str]()
+            default_factory=lambda: list[str](),
         )
         _call_count: int = PrivateAttr(default_factory=lambda: 0)
         _should_fail: bool = PrivateAttr(default=False)

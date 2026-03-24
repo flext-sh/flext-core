@@ -45,7 +45,7 @@ def demonstrate_enhanced_generic_models() -> None:
     )
     print(f"📊 Context: source={context.source}, env={context.environment}")
     print(
-        f"🆔 Correlation: {context.correlation_id[:8]}..., operation={context.operation_id[:8]}..."
+        f"🆔 Correlation: {context.correlation_id[:8]}..., operation={context.operation_id[:8]}...",
     )
     print(f"👤 User: {context.user_id}, Tenant: {context.tenant_id}")
     print(f"🧾 Metadata: {context.metadata.root}")
@@ -62,7 +62,7 @@ def demonstrate_enhanced_generic_models() -> None:
     print(f"⚡ Status: {service.status}, Health: {service.health_status}")
     print(f"⏰ Uptime (s): {service.uptime_seconds}")
     print(
-        f"📈 Resources: memory={service.memory_usage_mb}MB cpu={service.cpu_usage_percent}%"
+        f"📈 Resources: memory={service.memory_usage_mb}MB cpu={service.cpu_usage_percent}%",
     )
     health = gm.Health(
         healthy=True,
@@ -72,7 +72,7 @@ def demonstrate_enhanced_generic_models() -> None:
                 "cache": True,
                 "external_api": False,
                 "filesystem": True,
-            }
+            },
         ),
         service_name="user-service",
         service_version="2.1.0",
@@ -101,7 +101,8 @@ def demonstrate_enhanced_generic_models() -> None:
         operation.success_count + operation.failure_count + operation.skipped_count
     )
     operation_completion = gm.safe_percentage(
-        operation_total, operation.estimated_total
+        operation_total,
+        operation.estimated_total,
     )
     operation_success_rate = gm.safe_rate(operation.success_count, operation_total)
     print(f"📈 Operation: {operation.operation_name}")
@@ -109,10 +110,12 @@ def demonstrate_enhanced_generic_models() -> None:
     print(f"🎯 Success Rate: {operation_success_rate:.1%}")
     print(f"⚠️ Has Warnings: {operation.warning_count > 0}")
     print(
-        f"📊 Status: successes={operation.success_count}, failures={operation.failure_count}"
+        f"📊 Status: successes={operation.success_count}, failures={operation.failure_count}",
     )
     conversion = gm.Conversion(
-        source_format="csv", target_format="json", total_input_count=500
+        source_format="csv",
+        target_format="json",
+        total_input_count=500,
     )
     conversion.start_conversion()
     for i in range(480):
@@ -126,7 +129,8 @@ def demonstrate_enhanced_generic_models() -> None:
         len(conversion.converted) + len(conversion.errors) + len(conversion.skipped)
     )
     conversion_completion = gm.safe_percentage(
-        conversion_total, conversion.total_input_count
+        conversion_total,
+        conversion.total_input_count,
     )
     conversion_success_rate = gm.safe_rate(len(conversion.converted), conversion_total)
     duration_seconds = (
@@ -143,10 +147,10 @@ def demonstrate_enhanced_generic_models() -> None:
     print(f"⚡ Processing Rate: {items_per_second:.1f} items/sec")
     print(f"⏱️ Duration: {duration_seconds:.2f}s")
     print(
-        f"📋 Status: converted={len(conversion.converted)} errors={len(conversion.errors)} skipped={len(conversion.skipped)}"
+        f"📋 Status: converted={len(conversion.converted)} errors={len(conversion.errors)} skipped={len(conversion.skipped)}",
     )
     print(
-        "✨ Enhanced generic models provide rich monitoring and tracking capabilities!\n"
+        "✨ Enhanced generic models provide rich monitoring and tracking capabilities!\n",
     )
 
 
@@ -214,7 +218,7 @@ def demonstrate_advanced_pydantic_mixins() -> None:
     except ValueError as e:
         print(f"✅ Version validation: {e}")
     print(
-        "🎯 Pydantic v2 mixins provide enterprise-grade validation and functionality!\n"
+        "🎯 Pydantic v2 mixins provide enterprise-grade validation and functionality!\n",
     )
 
 
@@ -266,7 +270,8 @@ class OrderItem(m.Value):
     def total(self) -> Money:
         """Railway-aware total calculation."""
         return Money(
-            amount=self.price.amount * self.quantity, currency=self.price.currency
+            amount=self.price.amount * self.quantity,
+            currency=self.price.currency,
         )
 
 
@@ -286,7 +291,7 @@ class Order(m.AggregateRoot):
             return Money(amount=Decimal(0), currency=c.Currency.USD)
         currency = self.items[0].price.currency
         total_amount = Decimal(
-            sum(item.price.amount * item.quantity for item in self.items)
+            sum(item.price.amount * item.quantity for item in self.items),
         )
         return Money(amount=total_amount, currency=currency)
 
@@ -334,7 +339,7 @@ class DomainModelService(s[t.ConfigMap]):
             return money_result.map(make_tuple)
 
         value_objects_result: r[tuple[Email, Money]] = email_result.flat_map(
-            combine_email_money
+            combine_email_money,
         )
         user_result = r[User].ok(
             User(
@@ -342,7 +347,7 @@ class DomainModelService(s[t.ConfigMap]):
                 email=Email(address="alice@example.com"),
                 age=30,
                 domain_events=[],
-            )
+            ),
         )
 
         def add_order_item(o: Order) -> r[Order]:
@@ -352,7 +357,7 @@ class DomainModelService(s[t.ConfigMap]):
                     name="Widget",
                     price=Money(amount=Decimal("29.99")),
                     quantity=2,
-                )
+                ),
             )
 
         order_result = (
@@ -363,7 +368,9 @@ class DomainModelService(s[t.ConfigMap]):
         )
 
         def build_result(
-            vo_tuple: tuple[Email, Money], user: User, order: Order
+            vo_tuple: tuple[Email, Money],
+            user: User,
+            order: Order,
         ) -> t.ConfigMap:
             order_total = sum(item.price.amount * item.quantity for item in order.items)
             return t.ConfigMap(
@@ -373,7 +380,7 @@ class DomainModelService(s[t.ConfigMap]):
                     "user_id": user.entity_id,
                     "order_total": float(order_total),
                     "order_status": order.status,
-                }
+                },
             )
 
         def combine_with_user(vo_tuple: tuple[Email, Money]) -> r[t.ConfigMap]:
@@ -401,7 +408,7 @@ def main() -> None:
             print(f"✅ Money sum: {data['money_sum']}")
             print(f"✅ User ID: {data['user_id']}")
             print(
-                f"✅ Order total: {data['order_total']}, status: {data['order_status']}"
+                f"✅ Order total: {data['order_total']}, status: {data['order_status']}",
             )
         case r(is_success=False, error=error):
             print(f"❌ Failed: {error}")

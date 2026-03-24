@@ -61,7 +61,9 @@ class TestResultExceptionCarrying:
         }
         exc = ValueError("invalid email")
         result: r[t.StrMapping] = r[t.StrMapping].fail(
-            error_msg, error_data=error_data, exception=exc
+            error_msg,
+            error_data=error_data,
+            exception=exc,
         )
         tm.that(result.is_failure, eq=True)
         tm.that(result.error, eq=error_msg)
@@ -133,7 +135,8 @@ class TestResultExceptionCarrying:
         result: r[int] = r[int].create_from_callable(risky_operation)
         tm.that(result.is_failure, eq=True)
         tm.that(
-            result.error is not None and "operation failed" in result.error, eq=True
+            result.error is not None and "operation failed" in result.error,
+            eq=True,
         )
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=RuntimeError)
@@ -178,7 +181,7 @@ class TestResultExceptionCarrying:
         exc = RuntimeError("chain error")
         result: r[int] = r[int].fail("error", exception=exc)
         mapped: r[int] = result.map(lambda value: value + 1).map(
-            lambda value: value * 2
+            lambda value: value * 2,
         )
         tm.that(mapped.is_failure, eq=True)
         tm.that(mapped.exception is exc, eq=True)
@@ -201,7 +204,7 @@ class TestResultExceptionCarrying:
         exc = KeyError("missing key")
         result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped: r[str] = result.flat_map(
-            lambda value: r[int].ok(value + 1)
+            lambda value: r[int].ok(value + 1),
         ).flat_map(
             lambda value: r[str].ok(str(value)),
         )
@@ -236,7 +239,8 @@ class TestResultExceptionCarrying:
         recovery_exc = RuntimeError("recovery failed")
         recovered: r[int] = result.lash(
             lambda error: r[int].fail(
-                f"recovery failed: {error}", exception=recovery_exc
+                f"recovery failed: {error}",
+                exception=recovery_exc,
             ),
         )
         tm.that(recovered.is_failure, eq=True)

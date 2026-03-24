@@ -166,7 +166,8 @@ class TestContainerFullCoverage:
         tm.that(FlextContainer.Builder.create(), is_=p.Container)
 
     def test_create_auto_register_factories_path(
-        self, monkeypatch: _MonkeyPatch
+        self,
+        monkeypatch: _MonkeyPatch,
     ) -> None:
         container = FlextContainer.create()
         called: MutableSequence[str] = []
@@ -179,7 +180,9 @@ class TestContainerFullCoverage:
             f_back=types.SimpleNamespace(f_globals={"__name__": "fake_mod"}),
         )
         monkeypatch.setitem(
-            sys.modules, "fake_mod", cast("types.ModuleType", fake_module)
+            sys.modules,
+            "fake_mod",
+            cast("types.ModuleType", fake_module),
         )
         monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
@@ -188,7 +191,10 @@ class TestContainerFullCoverage:
         )
 
         def _register(
-            name: str, _impl: t.RegisterableService, *, kind: str = "service"
+            name: str,
+            _impl: t.RegisterableService,
+            *,
+            kind: str = "service",
         ) -> FlextContainer:
             if kind == "factory":
                 called.append(name)
@@ -261,7 +267,9 @@ class TestContainerFullCoverage:
             max_factories=10,
         )
         monkeypatch.setattr(
-            type(c._config), "_namespace_registry", {"x": _BaseSettings}
+            type(c._config),
+            "_namespace_registry",
+            {"x": _BaseSettings},
         )
         monkeypatch.setattr(c, "has_service", _has_service_false)
 
@@ -398,7 +406,9 @@ class TestContainerFullCoverage:
         captured: MutableMapping[str, p.Settings | p.Context | None] = {}
 
         def _fake_create_scoped_instance(
-            *, registration: m.ServiceRegistrationSpec, **kwargs: t.NormalizedValue
+            *,
+            registration: m.ServiceRegistrationSpec,
+            **kwargs: t.NormalizedValue,
         ) -> FlextContainer:
             captured["config"] = registration.config
             captured["context"] = registration.context
@@ -461,7 +471,7 @@ class TestContainerFullCoverage:
         wrapper = captured["factory.captured"]
         assert wrapper() == 7
         assert wrapper(
-            _factory_config=types.SimpleNamespace(fn=123, name="factory.captured")
+            _factory_config=types.SimpleNamespace(fn=123, name="factory.captured"),
         ) == t.ConfigMap(root={})
         monkeypatch.setattr(FlextContainer, "register", original_register)
 
@@ -476,7 +486,8 @@ class TestContainerFullCoverage:
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
         monkeypatch.setattr(
-            "flext_core.container.di_providers.Configuration", t.NormalizedValue
+            "flext_core.container.di_providers.Configuration",
+            t.NormalizedValue,
         )
         with pytest.raises(TypeError, match="cannot be None"):
             c.initialize_di_components()
@@ -649,7 +660,7 @@ class TestContainerFullCoverage:
         # and sync_config_to_di skips it (continue branch).
         class _CfgNoMethod(_FalseConfig):
             _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
-                "n1": _BaseSettings
+                "n1": _BaseSettings,
             }
 
         c._config = _CfgNoMethod()
@@ -670,17 +681,17 @@ class TestContainerFullCoverage:
 
             class _CfgFallback(_FalseConfig):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
-                    "n2": _NsModel
+                    "n2": _NsModel,
                 }
 
             class _CfgBadNamespace(_FalseConfig):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
-                    "n3": _NsModel
+                    "n3": _NsModel,
                 }
 
             class _CfgGoodNamespace(_FalseConfig):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
-                    "n4": _NsModel
+                    "n4": _NsModel,
                 }
 
             c._config = _CfgFallback()
@@ -715,8 +726,9 @@ class TestContainerFullCoverage:
             )
             c2._factories = {
                 "fac-call": m.FactoryRegistration(
-                    name="fac-call", factory=lambda: "value"
-                )
+                    name="fac-call",
+                    factory=lambda: "value",
+                ),
             }
             fac_call = c2.get("fac-call")
             tm.ok(fac_call)
@@ -730,7 +742,8 @@ class TestContainerFullCoverage:
             tm.fail(c2.get("boom"))
             c2._factories = {
                 "ok-factory": m.FactoryRegistration(
-                    name="ok-factory", factory=lambda: "ok"
+                    name="ok-factory",
+                    factory=lambda: "ok",
                 ),
             }
             tm.ok(c2.get("ok-factory"))

@@ -17,7 +17,8 @@ from tests import TestUnitModels, c, m, t, u
 
 
 def _is_type_obj(
-    value: t.NormalizedValue, type_spec: str | type | tuple[type, ...]
+    value: t.NormalizedValue,
+    type_spec: str | type | tuple[type, ...],
 ) -> bool:
     """Call is_type with arbitrary t.NormalizedValue for negative-case testing."""
     fn: Callable[[t.NormalizedValue, str | type | tuple[type, ...]], bool] = getattr(
@@ -83,8 +84,9 @@ def test_is_handler_type_branches() -> None:
     tm.that(
         u.is_handler_type(
             cast(
-                "t.NormalizedValue", TestUnitModels._Model.model_validate({"value": 1})
-            )
+                "t.NormalizedValue",
+                TestUnitModels._Model.model_validate({"value": 1}),
+            ),
         ),
         eq=True,
     )
@@ -112,7 +114,7 @@ def test_non_empty_and_normalize_branches() -> None:
     dict_scalar_out = u.normalize_to_metadata({"k": 1})
     tm.that(dict_scalar_out, eq={"k": 1})
     dict_complex_out = u.normalize_to_metadata(
-        cast("t.NormalizedValue", {"k": "normalized"})
+        cast("t.NormalizedValue", {"k": "normalized"}),
     )
     tm.that(isinstance(dict_complex_out, dict) and "k" in dict_complex_out, eq=True)
     list_out = u.normalize_to_metadata(cast("t.NormalizedValue", [1, "normalized"]))
@@ -151,7 +153,8 @@ def test_protocol_and_simple_guard_helpers() -> None:
     tm.that(not _is_type_obj(plain_obj, "command_bus"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "handler"), eq=True)
     tm.that(
-        not _is_type_obj(cast("t.NormalizedValue", _LoggerLike()), "logger"), eq=True
+        not _is_type_obj(cast("t.NormalizedValue", _LoggerLike()), "logger"),
+        eq=True,
     )
     tm.that(_is_type_obj(cast("t.NormalizedValue", r[int].ok(1)), "result"), eq=True)
     tm.that(not _is_type_obj(plain_obj, "service"), eq=True)
@@ -181,8 +184,9 @@ def test_protocol_and_simple_guard_helpers() -> None:
     tm.that(
         u.is_pydantic_model(
             cast(
-                "t.NormalizedValue", TestUnitModels._Model.model_validate({"value": 1})
-            )
+                "t.NormalizedValue",
+                TestUnitModels._Model.model_validate({"value": 1}),
+            ),
         ),
         eq=True,
     )
@@ -219,7 +223,7 @@ def test_extract_mapping_or_none_branches() -> None:
     tm.that(mapping_result.is_success, eq=True)
     tm.that(mapping_result.value, eq={"k": "v"})
     mapping_non_str_keys = u.extract_mapping_or_none(
-        cast("t.NormalizedValue", {1: "v"})
+        cast("t.NormalizedValue", {1: "v"}),
     )
     tm.that(mapping_non_str_keys.is_success, eq=True)
     tm.that(u.extract_mapping_or_none([1, 2, 3]).is_failure, eq=True)
@@ -305,20 +309,24 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
     tm.that(not u.chk("abc", **core_m.GuardCheckSpec(starts="z").model_dump()), eq=True)
     tm.that(not u.chk("abc", **core_m.GuardCheckSpec(ends="z").model_dump()), eq=True)
     tm.that(
-        not u.chk("abc", **core_m.GuardCheckSpec(match="\\d+").model_dump()), eq=True
+        not u.chk("abc", **core_m.GuardCheckSpec(match="\\d+").model_dump()),
+        eq=True,
     )
     tm.that(
-        not u.chk("abc", **core_m.GuardCheckSpec(contains="z").model_dump()), eq=True
+        not u.chk("abc", **core_m.GuardCheckSpec(contains="z").model_dump()),
+        eq=True,
     )
     tm.that(
         not u.chk({"k": "v"}, **core_m.GuardCheckSpec(contains="x").model_dump()),
         eq=True,
     )
     tm.that(
-        not u.chk(["k"], **core_m.GuardCheckSpec(contains="x").model_dump()), eq=True
+        not u.chk(["k"], **core_m.GuardCheckSpec(contains="x").model_dump()),
+        eq=True,
     )
     tm.that(
-        not u.chk("abc", **core_m.GuardCheckSpec(contains="x").model_dump()), eq=True
+        not u.chk("abc", **core_m.GuardCheckSpec(contains="x").model_dump()),
+        eq=True,
     )
     tm.that(u.chk("abc", **core_m.GuardCheckSpec(contains=1).model_dump()), eq=True)
     tm.that(u.chk("abc", **core_m.GuardCheckSpec(gte=3, lte=3).model_dump()), eq=True)
@@ -330,7 +338,8 @@ def test_guard_instance_attribute_access_warnings() -> None:
     method = guards.is_type
     tm.that(callable(method), eq=True)
     mapping_method = cast(
-        "Callable[..., t.NormalizedValue]", getattr(guards, "is_mapping")
+        "Callable[..., t.NormalizedValue]",
+        getattr(guards, "is_mapping"),
     )
     tm.that(callable(mapping_method), eq=True)
 
@@ -353,7 +362,8 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
     setattr(builtins, "issubclass", _explode)
     try:
         tm.that(
-            not _is_type_obj(cast("t.NormalizedValue", _Candidate), "handler"), eq=True
+            not _is_type_obj(cast("t.NormalizedValue", _Candidate), "handler"),
+            eq=True,
         )
     finally:
         setattr(builtins, "issubclass", original_issubclass)

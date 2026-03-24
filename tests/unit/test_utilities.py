@@ -79,7 +79,7 @@ class Testu(TextUtilityContract):
             (None, c.SHORT_UUID_LENGTH),
         ]
         TEXT_CLEAN_CASES: ClassVar[Sequence[tuple[str, str]]] = list(
-            TextUtilityContract.CLEAN_TEXT_CASES
+            TextUtilityContract.CLEAN_TEXT_CASES,
         ) + [
             ("a    b    c", "a b c"),
             ("  Test  Text  ", "Test Text"),
@@ -257,7 +257,9 @@ class Testu(TextUtilityContract):
         UtilityScenarios.FORMAT_APP_ID_CASES,
     )
     def test_text_processor_format_app_id_contract(
-        self, text: str, expected: str
+        self,
+        text: str,
+        expected: str,
     ) -> None:
         """Reuse shared contract for app-id formatting rules."""
         self.assert_format_app_id(text, expected)
@@ -419,10 +421,11 @@ class Testu(TextUtilityContract):
             st.text(),
             st.lists(st.integers()),
             st.dictionaries(st.text(), st.integers()),
-        )
+        ),
     )
     def test_hypothesis_empty_returns_bool(
-        self, value: t.NormalizedValue | None
+        self,
+        value: t.NormalizedValue | None,
     ) -> None:
         """Property: u.empty always returns bool."""
         result = u.empty(value)

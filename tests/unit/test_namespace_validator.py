@@ -70,7 +70,8 @@ class TestFlextInfraNamespaceValidator:
         tm.that(result.is_success, eq=True)
         tm.that(not result.value.passed, eq=True)
         tm.that(
-            any("No outer class found" in v for v in result.value.violations), eq=True
+            any("No outer class found" in v for v in result.value.violations),
+            eq=True,
         )
 
     def test_rule0_wrong_prefix_detected(self, tmp_path: Path) -> None:
@@ -132,7 +133,8 @@ class TestFlextInfraNamespaceValidator:
         tm.that(result.is_success, eq=True)
         tm.that(not result.value.passed, eq=True)
         tm.that(
-            any("Loose Final constant" in v for v in result.value.violations), eq=True
+            any("Loose Final constant" in v for v in result.value.violations),
+            eq=True,
         )
 
     def test_rule1_loose_enum_detected(self, tmp_path: Path) -> None:

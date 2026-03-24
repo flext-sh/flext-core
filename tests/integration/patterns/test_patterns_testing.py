@@ -127,7 +127,8 @@ class TestPatternsTesting:
             _act_func: Callable[[t.NormalizedValue], t.NormalizedValue],
             _assert_func: Callable[[t.NormalizedValue, t.NormalizedValue], None],
         ) -> Callable[
-            [Callable[[], t.NormalizedValue]], Callable[[], t.NormalizedValue]
+            [Callable[[], t.NormalizedValue]],
+            Callable[[], t.NormalizedValue],
         ]:
             def decorator(
                 _test_func: Callable[[], t.NormalizedValue],
@@ -223,7 +224,8 @@ class TestPatternsTesting:
             return self
 
         def with_priority(
-            self, priority: str
+            self,
+            priority: str,
         ) -> TestPatternsTesting.GivenWhenThenBuilder:
             self._priority = priority
             return self
@@ -255,19 +257,23 @@ class TestPatternsTesting:
             return self
 
         def with_correlation_id(
-            self, correlation_id: str
+            self,
+            correlation_id: str,
         ) -> TestPatternsTesting.FlextTestBuilder:
             self._data["correlation_id"] = correlation_id
             return self
 
         def with_metadata(
-            self, **kwargs: FlextTypes.Container
+            self,
+            **kwargs: FlextTypes.Container,
         ) -> TestPatternsTesting.FlextTestBuilder:
             self._data.update(kwargs)
             return self
 
         def with_user_data(
-            self, name: str, email: str
+            self,
+            name: str,
+            email: str,
         ) -> TestPatternsTesting.FlextTestBuilder:
             self._data["name"] = name
             self._data["email"] = email
@@ -361,7 +367,8 @@ class TestPatternsTesting:
             return self
 
         def contains(
-            self, item: t.NormalizedValue
+            self,
+            item: t.NormalizedValue,
         ) -> TestPatternsTesting.AssertionBuilder:
             data = self._data
             if TestPatternsTesting.Helpers.is_object_mapping(data):
@@ -410,7 +417,8 @@ class TestPatternsTesting:
             return self
 
         def with_setup_data(
-            self, **kwargs: t.NormalizedValue
+            self,
+            **kwargs: t.NormalizedValue,
         ) -> TestPatternsTesting.SuiteBuilder:
             self._setup_data.update(kwargs)
             return self
@@ -438,13 +446,15 @@ class TestPatternsTesting:
             self._teardowns: MutableSequence[Callable[[], None]] = []
 
         def with_user(
-            self, **kwargs: FlextTypes.Container
+            self,
+            **kwargs: FlextTypes.Container,
         ) -> TestPatternsTesting.FixtureBuilder:
             self._fixtures["user"] = kwargs
             return self
 
         def with_request(
-            self, **kwargs: FlextTypes.Container
+            self,
+            **kwargs: FlextTypes.Container,
         ) -> TestPatternsTesting.FixtureBuilder:
             self._fixtures["request"] = kwargs
             return self
@@ -453,13 +463,15 @@ class TestPatternsTesting:
             return dict(self._fixtures)
 
         def add_setup(
-            self, func: Callable[[], None]
+            self,
+            func: Callable[[], None],
         ) -> TestPatternsTesting.FixtureBuilder:
             self._setups.append(func)
             return self
 
         def add_teardown(
-            self, func: Callable[[], None]
+            self,
+            func: Callable[[], None],
         ) -> TestPatternsTesting.FixtureBuilder:
             self._teardowns.append(func)
             return self
@@ -647,7 +659,7 @@ class TestPatternsTesting:
             return all(isinstance(item, str) for item in values_list)
 
         self.AssertionBuilder(test_data).is_not_none().has_length(3).contains(
-            "banana"
+            "banana",
         ).satisfies(check_all_strings, "all items should be strings").assert_all()
 
     @Helpers.mark_test_pattern("arrange_act_assert")
@@ -666,7 +678,8 @@ class TestPatternsTesting:
             return 0
 
         def assert_result(
-            result: t.NormalizedValue, original_data: t.NormalizedValue
+            result: t.NormalizedValue,
+            original_data: t.NormalizedValue,
         ) -> None:
             assert result == 15
             payload = self.Helpers.as_object_dict(original_data)

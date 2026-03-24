@@ -61,13 +61,13 @@ class Ex02FlextSettings(Examples):
         self.check("constructor.singleton_identity", first is second)
         global_instance = FlextSettings.get_global()
         self.check("get_global.identity", global_instance is first)
-        getattr(FlextSettings, "_reset_instance")()
+        FlextSettings.reset_for_testing()
         third = FlextSettings()
-        self.check("_reset_instance.recreates_singleton", third is not first)
+        self.check("reset_for_testing.recreates_singleton", third is not first)
         FlextSettings.reset_for_testing()
         fourth = FlextSettings.get_global()
         self.check("reset_for_testing.recreates_global", fourth is not third)
-        getattr(self._TestConfig, "_reset_instance")()
+        self._TestConfig.reset_for_testing()
         test_a = self._TestConfig()
         test_b = self._TestConfig()
         self.check("subclass.singleton_identity", test_a is test_b)
@@ -123,7 +123,8 @@ class Ex02FlextSettings(Examples):
         self.check("field.dispatcher_enable_logging", config.dispatcher_enable_logging)
         self.check("field.dispatcher_auto_context", config.dispatcher_auto_context)
         self.check(
-            "field.dispatcher_timeout_seconds", config.dispatcher_timeout_seconds
+            "field.dispatcher_timeout_seconds",
+            config.dispatcher_timeout_seconds,
         )
         self.check("field.dispatcher_enable_metrics", config.dispatcher_enable_metrics)
         self.check("field.executor_workers", config.executor_workers)
@@ -134,7 +135,8 @@ class Ex02FlextSettings(Examples):
         self.check("field.exception_failure_level", config.exception_failure_level)
         validated = FlextSettings.model_validate(config.model_dump())
         self.check(
-            "validate_configuration.indirect_via_model_validate", validated.app_name
+            "validate_configuration.indirect_via_model_validate",
+            validated.app_name,
         )
 
     def _exercise_effective_log_level_and_override(self) -> None:
@@ -161,7 +163,7 @@ class Ex02FlextSettings(Examples):
         self.check("get_global.clone_same_values", cloned.app_name == base.app_name)
         self.check("get_global.clone_new_object", cloned is base)
         overridden = FlextSettings.get_global(
-            overrides={"app_name": "materialized", "timeout_seconds": 55.0}
+            overrides={"app_name": "materialized", "timeout_seconds": 55.0},
         )
         self.check("get_global.override.app_name", overridden.app_name)
         self.check("get_global.override.timeout_seconds", overridden.timeout_seconds)
@@ -213,7 +215,8 @@ class Ex02FlextSettings(Examples):
         registered_typed = base.get_namespace("registered_ns", tc)
         self.check("get_namespace.decorated.service_name", decorated_typed.service_name)
         self.check(
-            "get_namespace.registered.service_name", registered_typed.service_name
+            "get_namespace.registered.service_name",
+            registered_typed.service_name,
         )
 
     def _exercise_context_system(self) -> None:
@@ -229,14 +232,17 @@ class Ex02FlextSettings(Examples):
         from_registered = self._TestConfig.for_context("worker-a")
         from_runtime = self._TestConfig.for_context("worker-a", feature_enabled=False)
         self.check(
-            "register_context_overrides.service_name", from_registered.service_name
+            "register_context_overrides.service_name",
+            from_registered.service_name,
         )
         self.check(
-            "for_context.registered.timeout_seconds", from_registered.timeout_seconds
+            "for_context.registered.timeout_seconds",
+            from_registered.timeout_seconds,
         )
         self.check("for_context.registered.max_workers", from_registered.max_workers)
         self.check(
-            "for_context.runtime_override.feature_enabled", from_runtime.feature_enabled
+            "for_context.runtime_override.feature_enabled",
+            from_runtime.feature_enabled,
         )
 
 

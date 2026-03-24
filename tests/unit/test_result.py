@@ -61,13 +61,16 @@ class Testr:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Result scenario name")]
         operation_type: Annotated[
-            ResultOperationType, Field(description="Result operation type")
+            ResultOperationType,
+            Field(description="Result operation type"),
         ]
         value: Annotated[
-            t.NormalizedValue, Field(description="Input value for result operation")
+            t.NormalizedValue,
+            Field(description="Input value for result operation"),
         ]
         is_success_expected: Annotated[
-            bool, Field(default=True, description="Expected success state")
+            bool,
+            Field(default=True, description="Expected success state"),
         ] = True
         expected_result: Annotated[
             t.NormalizedValue | None,
@@ -216,7 +219,8 @@ class Testr:
             pytest.fail("Expected string scenario value")
         if op_type == self.ResultOperationType.CREATION_SUCCESS:
             creation_result: r[str] = u.Tests.GenericHelpers.create_result_from_value(
-                value, error_on_none="Value cannot be None"
+                value,
+                error_on_none="Value cannot be None",
             )
             u.Tests.Result.assert_success_with_value(creation_result, value)
         elif op_type == self.ResultOperationType.CREATION_FAILURE:
@@ -231,7 +235,8 @@ class Testr:
                 unwrap_result = failure_raw
             default = "default"
             tm.that(
-                unwrap_result.unwrap_or(default), eq=value if is_success else default
+                unwrap_result.unwrap_or(default),
+                eq=value if is_success else default,
             )
         elif op_type == self.ResultOperationType.MAP:
             map_result: r[str] = r[str].fail(str(value))
@@ -341,7 +346,8 @@ class Testr:
         results: MutableSequence[r[int]] = []
         initial_value = 5
         res1 = u.Tests.GenericHelpers.create_result_from_value(
-            initial_value, error_on_none="Initial value cannot be None"
+            initial_value,
+            error_on_none="Initial value cannot be None",
         )
         results.append(res1)
         res2 = res1.map(lambda x: x * 2)
@@ -364,16 +370,18 @@ class Testr:
         res2 = res1.map(lambda x: x * 2)
         results.append(res2)
         res3 = res2.flat_map(
-            lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2)
+            lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2),
         )
         results.append(res3)
         u.Tests.Result.assert_success_with_value(res3, 10)
         res4 = res3.flat_map(
-            lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x)
+            lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x),
         )
         results.append(res4)
         u.Tests.GenericHelpers.assert_result_chain(
-            results, expected_success_count=4, expected_failure_count=0
+            results,
+            expected_success_count=4,
+            expected_failure_count=0,
         )
 
     def test_result_parametrized_cases_generic_helper(self) -> None:
@@ -385,7 +393,9 @@ class Testr:
         failure_errors: t.StrSequence = ["error1", "error2"]
         error_codes: Sequence[str | None] = ["CODE1", None]
         cases = u.Tests.GenericHelpers.create_parametrized_cases(
-            success_values, failure_errors, error_codes=error_codes
+            success_values,
+            failure_errors,
+            error_codes=error_codes,
         )
         tm.that(len(cases), eq=5)
         for i, (result, is_success, _value, error) in enumerate(cases[:3]):
@@ -400,11 +410,13 @@ class Testr:
     def test_result_none_handling_limits(self) -> None:
         """Test None handling limits using generic helper."""
         result1: r[str] = u.Tests.GenericHelpers.create_result_from_value(
-            None, default_on_none="default_value"
+            None,
+            default_on_none="default_value",
         )
         u.Tests.Result.assert_success_with_value(result1, "default_value")
         result2: r[str | None] = u.Tests.GenericHelpers.create_result_from_value(
-            None, error_on_none="Value is None"
+            None,
+            error_on_none="Value is None",
         )
         u.Tests.Result.assert_failure_with_error(result2, "Value is None")
         result3 = u.Tests.GenericHelpers.create_result_from_value("actual_value")
@@ -492,7 +504,8 @@ class Testr:
         """Test traverse fails fast on first failure."""
         items = [1, 2, 3]
         result = r.traverse(
-            items, lambda x: r[int].fail("error") if x == 2 else r[int].ok(x)
+            items,
+            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         tm.that(result.error, eq="error")
@@ -715,7 +728,8 @@ class Testr:
         """Test fold applies on_success function."""
         result: r[str] = r[str].ok("hello")
         message = result.fold(
-            on_success=lambda v: f"Got: {v}", on_failure=lambda e: f"Error: {e}"
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
         )
         tm.that(message, eq="Got: hello")
 
@@ -723,7 +737,8 @@ class Testr:
         """Test fold applies on_failure function."""
         result: r[str] = r[str].fail("something broke")
         message = result.fold(
-            on_success=lambda v: f"Got: {v}", on_failure=lambda e: f"Error: {e}"
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
         )
         tm.that(message, eq="Error: something broke")
 

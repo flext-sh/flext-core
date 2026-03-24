@@ -112,13 +112,16 @@ class Ex05FlextMixins(Examples):
         self.check("traverse.collect", traverse_collect.error)
         acc_ok = r.accumulate_errors(r[int].ok(1), r[int].ok(2))
         acc_fail = r.accumulate_errors(
-            r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
+            r[int].ok(1),
+            r[int].fail("e1"),
+            r[int].fail("e2"),
         )
         self.check("accumulate_errors.ok", str(acc_ok.unwrap_or([])))
         self.check("accumulate_errors.fail", acc_fail.error)
 
     def _exercise_runtime_properties_and_tracking(
-        self, service: Ex05FlextMixins.DemoService
+        self,
+        service: Ex05FlextMixins.DemoService,
     ) -> None:
         """Exercise container, logger, context, config, and tracking."""
         self.section("runtime_properties_and_tracking")
@@ -146,8 +149,9 @@ class Ex05FlextMixins(Examples):
             "context_stack.push_context",
             stack.push_context(
                 m.ExecutionContext.create_for_handler(
-                    handler_name="Q", handler_mode=c.HandlerType.QUERY
-                )
+                    handler_name="Q",
+                    handler_mode=c.HandlerType.QUERY,
+                ),
             ).is_success,
         )
         self.check(
@@ -159,7 +163,8 @@ class Ex05FlextMixins(Examples):
         popped_str: str = popped.map(lambda value: str(value)).unwrap_or("{}")
         self.check("context_stack.pop_context.value", popped_str)
         self.check(
-            "context_stack.current_context.after_pop", stack.current_context() is None
+            "context_stack.current_context.after_pop",
+            stack.current_context() is None,
         )
 
         def _validator_ok(value: str) -> r[bool]:
@@ -184,10 +189,10 @@ class Ex05FlextMixins(Examples):
             bool(x.ProtocolValidation.is_handler(self.HandlerBad())),
         )
         processor_ok = x.ProtocolValidation.validate_processor_protocol(
-            self.GoodProcessor()
+            self.GoodProcessor(),
         )
         processor_fail = x.ProtocolValidation.validate_processor_protocol(
-            self.BadProcessor()
+            self.BadProcessor(),
         )
         self.check("protocol.validate_processor.good", processor_ok.is_success)
         self.check("protocol.validate_processor.fail", processor_fail.error)

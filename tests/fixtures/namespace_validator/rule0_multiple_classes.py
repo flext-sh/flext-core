@@ -11,5 +11,3 @@ class FlextTestModels:
 
 class Rule0MultipleClassesFixture:
     """Fixture demonstrating multiple classes violation."""
-
-    pass

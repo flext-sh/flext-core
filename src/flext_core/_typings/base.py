@@ -49,7 +49,7 @@ class FlextTypingBase:
         """Concrete base for Sequence[NormalizedValue] inheritance."""
 
     class MutableContainerMappingBase(
-        MutableMapping[str, "FlextTypingBase.NormalizedValue"]
+        MutableMapping[str, "FlextTypingBase.NormalizedValue"],
     ):
         """Concrete base for MutableMapping[str, NormalizedValue] inheritance."""
 

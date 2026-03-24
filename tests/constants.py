@@ -354,7 +354,8 @@ class FlextCoreTestConstants(FlextTestsConstants):
                 service_name: Annotated[
                     str,
                     Field(
-                        default="test_service", description="Default test service name"
+                        default="test_service",
+                        description="Default test service name",
                     ),
                 ] = "test_service"
                 operation_id: Annotated[
@@ -387,13 +388,15 @@ class FlextCoreTestConstants(FlextTestsConstants):
                 module_name: Annotated[
                     str,
                     Field(
-                        default="test_module", description="Default test module name"
+                        default="test_module",
+                        description="Default test module name",
                     ),
                 ] = "test_module"
                 handler_name: Annotated[
                     str,
                     Field(
-                        default="test_handler", description="Default test handler name"
+                        default="test_handler",
+                        description="Default test handler name",
                     ),
                 ] = "test_handler"
                 chain_name: Annotated[
@@ -403,7 +406,8 @@ class FlextCoreTestConstants(FlextTestsConstants):
                 command_type: Annotated[
                     str,
                     Field(
-                        default="test_command", description="Default test command type"
+                        default="test_command",
+                        description="Default test command type",
                     ),
                 ] = "test_command"
                 query_type: Annotated[
@@ -413,13 +417,15 @@ class FlextCoreTestConstants(FlextTestsConstants):
                 logger_name: Annotated[
                     str,
                     Field(
-                        default="test_logger", description="Default test logger name"
+                        default="test_logger",
+                        description="Default test logger name",
                     ),
                 ] = "test_logger"
                 app_name: Annotated[
                     str,
                     Field(
-                        default="test-app", description="Default test application name"
+                        default="test-app",
+                        description="Default test application name",
                     ),
                 ] = "test-app"
                 validation_app: Annotated[
@@ -445,7 +451,8 @@ class FlextCoreTestConstants(FlextTestsConstants):
                 error_code: Annotated[
                     str,
                     Field(
-                        default="TEST_ERROR_001", description="Default test error code"
+                        default="TEST_ERROR_001",
+                        description="Default test error code",
                     ),
                 ] = "TEST_ERROR_001"
                 validation_error: Annotated[
@@ -491,19 +498,22 @@ class FlextCoreTestConstants(FlextTestsConstants):
                     Field(default="test_key", description="Default test config key"),
                 ] = "test_key"
                 username: Annotated[
-                    str, Field(default="test_user", description="Default test username")
+                    str,
+                    Field(default="test_user", description="Default test username"),
                 ] = "test_user"
                 email: Annotated[
                     str,
                     Field(default="test@example.com", description="Default test email"),
                 ] = "test@example.com"
                 password: Annotated[
-                    str, Field(default="test_pass", description="Default test password")
+                    str,
+                    Field(default="test_pass", description="Default test password"),
                 ] = "test_pass"
                 string_value: Annotated[
                     str,
                     Field(
-                        default="test_value", description="Default test string value"
+                        default="test_value",
+                        description="Default test string value",
                     ),
                 ] = "test_value"
                 input_data: Annotated[
@@ -513,13 +523,15 @@ class FlextCoreTestConstants(FlextTestsConstants):
                 request_data: Annotated[
                     str,
                     Field(
-                        default="test_request", description="Default test request data"
+                        default="test_request",
+                        description="Default test request data",
                     ),
                 ] = "test_request"
                 result_data: Annotated[
                     str,
                     Field(
-                        default="test_result", description="Default test result data"
+                        default="test_result",
+                        description="Default test result data",
                     ),
                 ] = "test_result"
                 message: Annotated[
@@ -560,16 +572,20 @@ class FlextCoreTestConstants(FlextTestsConstants):
                 model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
                 port: Annotated[
-                    int, Field(default=8080, description="Default test port")
+                    int,
+                    Field(default=8080, description="Default test port"),
                 ] = 8080
                 timeout: Annotated[
-                    int, Field(default=30, description="Default timeout in seconds")
+                    int,
+                    Field(default=30, description="Default timeout in seconds"),
                 ] = 30
                 retry_count: Annotated[
-                    int, Field(default=3, description="Default retry count")
+                    int,
+                    Field(default=3, description="Default retry count"),
                 ] = 3
                 batch_size: Annotated[
-                    int, Field(default=100, description="Default test batch size")
+                    int,
+                    Field(default=100, description="Default test batch size"),
                 ] = 100
 
     Strings = Core.Strings

@@ -131,7 +131,8 @@ class Teste:
         metadata = {"key1": "value1"}
         merged_kwargs = {"key2": "value2"}
         merged_kwargs_cast = cast(
-            "Mapping[str, t.MetadataAttributeValue]", merged_kwargs
+            "Mapping[str, t.MetadataAttributeValue]",
+            merged_kwargs,
         )
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
         tm.that(hasattr(result, "attributes"), eq=True)
@@ -308,7 +309,7 @@ class Teste:
         tm.that(extra_kwargs, lacks="expected_type")
         extra_kwargs_type_raw = {"expected_type": "int"}
         extra_kwargs_type: MutableMapping[str, t.Container] = dict(
-            extra_kwargs_type_raw
+            extra_kwargs_type_raw,
         )
         result = e.TypeError._normalize_type(
             None,
@@ -471,7 +472,8 @@ class Teste:
             "Test message",
             field="test_field",
             metadata=cast(
-                "t.MetadataAttributeValue", cast("t.NormalizedValue", metadata_obj)
+                "t.MetadataAttributeValue",
+                cast("t.NormalizedValue", metadata_obj),
             ),
         )
         tm.that(error, is_=e.ValidationError)

@@ -571,7 +571,7 @@ class TestuStringParser:
             """Test pipeline exception handling."""
             invalid_pattern = cast("tuple[str, str]", (None, "replacement"))
             patterns: Sequence[tuple[str, str] | tuple[str, str, int]] = [
-                invalid_pattern
+                invalid_pattern,
             ]
             result = parser.apply_regex_pipeline("test", patterns)
             assert result.is_failure
@@ -643,7 +643,7 @@ class TestuStringParser:
         ) -> None:
             """Test getNormalizedValue_key with parametrized cases."""
             key = parser.get_object_key(
-                cast("t.TypeHintSpecifier | t.NormalizedValue", case.obj)
+                cast("t.TypeHintSpecifier | t.NormalizedValue", case.obj),
             )
             assert isinstance(key, str), f"Key must be string for: {case.description}"
             if case.expected_exact:

@@ -25,7 +25,8 @@ class TestFlextModelsCollectionsCoverage100:
         name: Annotated[str, Field(description="Category operation scenario name")]
         category: Annotated[str, Field(description="Category key")]
         entries: Annotated[
-            t.StrSequence, Field(description="Entries associated with operation")
+            t.StrSequence,
+            Field(description="Entries associated with operation"),
         ]
         operation: Annotated[str, Field(description="Category operation name")]
 

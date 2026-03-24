@@ -65,22 +65,27 @@ class TestPaginationCoverage100:
 
         name: Annotated[str, Field(description="Extract page params scenario name")]
         query_params: Annotated[
-            t.StrMapping, Field(description="Input query parameters")
+            t.StrMapping,
+            Field(description="Input query parameters"),
         ]
         default_page: Annotated[int, Field(description="Default page value")]
         default_page_size: Annotated[int, Field(description="Default page size value")]
         max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
         expected_success: Annotated[
-            bool, Field(description="Expected operation success")
+            bool,
+            Field(description="Expected operation success"),
         ]
         expected_page: Annotated[
-            int | None, Field(description="Expected resolved page")
+            int | None,
+            Field(description="Expected resolved page"),
         ]
         expected_page_size: Annotated[
-            int | None, Field(description="Expected resolved page size")
+            int | None,
+            Field(description="Expected resolved page size"),
         ]
         expected_error: Annotated[
-            str | None, Field(description="Expected error message")
+            str | None,
+            Field(description="Expected error message"),
         ]
 
     class ValidatePaginationParamsScenario(BaseModel):
@@ -93,13 +98,16 @@ class TestPaginationCoverage100:
         page_size: Annotated[int | None, Field(description="Input page size")]
         max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
         expected_success: Annotated[
-            bool, Field(description="Expected validation success")
+            bool,
+            Field(description="Expected validation success"),
         ]
         expected_page_size: Annotated[
-            int | None, Field(description="Expected validated page size")
+            int | None,
+            Field(description="Expected validated page size"),
         ]
         expected_error: Annotated[
-            str | None, Field(description="Expected validation error")
+            str | None,
+            Field(description="Expected validation error"),
         ]
 
     class PreparePaginationDataScenario(BaseModel):
@@ -113,16 +121,20 @@ class TestPaginationCoverage100:
         page: Annotated[int, Field(description="Requested page")]
         page_size: Annotated[int, Field(description="Requested page size")]
         expected_success: Annotated[
-            bool, Field(description="Expected preparation success")
+            bool,
+            Field(description="Expected preparation success"),
         ]
         expected_total: Annotated[
-            int | None, Field(description="Expected total in output")
+            int | None,
+            Field(description="Expected total in output"),
         ]
         expected_total_pages: Annotated[
-            int | None, Field(description="Expected total pages in output")
+            int | None,
+            Field(description="Expected total pages in output"),
         ]
         expected_error: Annotated[
-            str | None, Field(description="Expected preparation error")
+            str | None,
+            Field(description="Expected preparation error"),
         ]
 
     @staticmethod
