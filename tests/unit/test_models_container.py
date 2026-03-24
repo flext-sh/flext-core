@@ -86,7 +86,7 @@ class TestFlextModelsContainer:
         })
 
     @staticmethod
-    def _normalize_metadata_obj(value: list[int]) -> m.Metadata:
+    def _normalize_metadata_obj(value: Sequence[int]) -> m.Metadata:
         """Pass an invalid list to ensure_metadata to trigger the TypeError error path.
 
         Uses getattr to bypass the type checker: ensure_metadata's signature does not

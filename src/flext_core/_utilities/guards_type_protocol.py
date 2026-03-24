@@ -273,7 +273,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return bool(isinstance(value, str) and bool(value.strip()))
             case "dict_non_empty":
                 if isinstance(value, dict):
-                    dict_val: dict[str, t.NormalizedValue] = value
+                    dict_val: Mapping[str, t.NormalizedValue] = value
                     return len(dict_val) > 0
                 if isinstance(value, t.ConfigMap):
                     return len(value.root) > 0

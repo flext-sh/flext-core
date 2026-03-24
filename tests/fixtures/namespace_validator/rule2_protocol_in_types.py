@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import Protocol
 
+from flext_core import t
 
-class FlextTestTypes:
+
+class FlextTestTypes(t):
     """Types with Protocol inside — WRONG."""
 
     class ProtocolInsideTypes(Protocol):

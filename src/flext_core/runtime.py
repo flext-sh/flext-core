@@ -591,11 +591,14 @@ class FlextRuntime:
                     normalized_dict[str(key)] = _to_plain_container(normalized_item)
             return t.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            normalized_list: MutableSequence[t.Container] = []
-            for v in val:
-                normalized_item = FlextRuntime.normalize_to_container(v)
-                if isinstance(normalized_item, (str, int, float, bool, datetime, Path)):
-                    normalized_list.append(normalized_item)
+            normalized_list: Sequence[t.Container] = [
+                normalized_item
+                for v in val
+                if isinstance(
+                    normalized_item := FlextRuntime.normalize_to_container(v),
+                    (str, int, float, bool, datetime, Path),
+                )
+            ]
             return t.ObjectList(root=normalized_list)
         return str(val)
 

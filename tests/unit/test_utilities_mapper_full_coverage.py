@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import (
+    AbstractSet,
     Callable,
     ItemsView,
     Iterator,
@@ -681,8 +682,8 @@ class UtilitiesMapperFullCoverageNamespace:
             *,
             _normalize: bool,
             _map_keys: t.StrMapping | None,
-            _filter_keys: set[str] | None,
-            _exclude_keys: set[str] | None,
+            _filter_keys: AbstractSet[str] | None,
+            _exclude_keys: AbstractSet[str] | None,
             _strip_none: bool,
             _strip_empty: bool,
             _to_json: bool,

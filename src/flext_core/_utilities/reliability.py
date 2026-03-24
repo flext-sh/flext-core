@@ -253,7 +253,7 @@ class FlextUtilitiesReliability:
                         ),
                     )
                 except ValidationError:
-                    op_dict = dict[str, t.Container]()
+                    op_dict = {}
                 if isinstance(
                     current,
                     (*t.CONTAINER_TYPES,),
