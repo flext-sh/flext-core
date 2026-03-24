@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import StrEnum, unique
 from typing import Annotated, override
 
 from pydantic import Field
@@ -17,6 +17,7 @@ from pydantic import Field
 from flext_core import m, t
 
 
+@unique
 class FlextErrorDomain(StrEnum):
     """Standard error domain categories for structured error routing.
 

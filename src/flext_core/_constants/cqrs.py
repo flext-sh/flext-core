@@ -66,6 +66,7 @@ class FlextConstantsCqrs:
         OPERATION = "operation"
         SAGA = "saga"
 
+    @unique
     class MetricType(StrEnum):
         """Service metric types enumeration."""
 
