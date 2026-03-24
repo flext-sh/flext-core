@@ -89,7 +89,7 @@ class FlextContainer(p.Container):
             | Mapping[str, m.ServiceRegistration]
             | Mapping[str, m.FactoryRegistration]
             | Mapping[str, m.ResourceRegistration]
-            | Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
+            | Mapping[str, t.Scalar | t.ConfigMap | t.ScalarList]
             | t.ConfigMap,
         ] = {}
         if override.config is not None:
@@ -718,7 +718,7 @@ class FlextContainer(p.Container):
         factories: Mapping[str, m.FactoryRegistration] | None = None,
         resources: Mapping[str, m.ResourceRegistration] | None = None,
         global_config: m.ContainerConfig | None = None,
-        user_overrides: Mapping[str, t.Scalar | t.ConfigMap | Sequence[t.Scalar]]
+        user_overrides: Mapping[str, t.Scalar | t.ConfigMap | t.ScalarList]
         | t.ConfigMap
         | None = None,
         config: p.Settings | None = None,

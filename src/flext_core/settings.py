@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, MutableMapping, Sequence
+from collections.abc import Callable, MutableMapping
 from typing import Annotated, ClassVar, Self
 
 from pydantic import (
@@ -280,7 +280,7 @@ class FlextSettings(BaseSettings, u):
     def apply_override(
         self,
         key: str,
-        value: t.Scalar | Sequence[t.Scalar] | t.ScalarMapping,
+        value: t.Scalar | t.ScalarList | t.ScalarMapping,
     ) -> bool:
         """Validate and apply a configuration override.
 
@@ -339,9 +339,7 @@ class FlextSettings(BaseSettings, u):
     AutoConfig: ClassVar[type[m.AutoConfig]] = m.AutoConfig
 
     _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
-    _context_overrides: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.Scalar]]
-    ] = {}
+    _context_overrides: ClassVar[t.ScopedScalarRegistry] = {}
 
     def __getattr__(self, name: str) -> BaseSettings:
         """Resolve namespace-style attribute access to registered settings."""

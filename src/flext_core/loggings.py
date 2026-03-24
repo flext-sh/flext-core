@@ -43,12 +43,8 @@ class FlextLogger(u, p.Logger):
     bespoke wrappers.
     """
 
-    _scoped_contexts: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.Container]]
-    ] = {}
-    _level_contexts: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.Container]]
-    ] = {}
+    _scoped_contexts: ClassVar[t.ScopedContainerRegistry] = {}
+    _level_contexts: ClassVar[t.ScopedContainerRegistry] = {}
     _structlog_instance: p.Logger | None = None
     type _LogArg = t.RuntimeData | Exception
 

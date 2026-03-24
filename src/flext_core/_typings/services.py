@@ -118,6 +118,12 @@ class FlextTypesServices:
     type FlatContainerMapping = Mapping[str, FlextTypingBase.Container]
     type MutableFlatContainerMapping = MutableMapping[str, FlextTypingBase.Container]
     type MutableConfigurationMapping = MutableMapping[str, FlextTypingBase.Scalar]
+    type ScopedContainerRegistry = MutableMapping[
+        str, MutableMapping[str, FlextTypingBase.Container]
+    ]
+    type ScopedScalarRegistry = MutableMapping[
+        str, MutableMapping[str, FlextTypingBase.Scalar]
+    ]
     type ServiceMap = Mapping[str, RegisterableService]
     type ModuleExport = (
         FlextTypingBase.Container

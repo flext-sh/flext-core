@@ -112,7 +112,7 @@ class FlextRegistry(s[bool]):
 
     def __init_subclass__(
         cls,
-        **kwargs: t.Scalar | t.ConfigMap | Sequence[t.Scalar],
+        **kwargs: t.Scalar | t.ConfigMap | t.ScalarList,
     ) -> None:
         """Auto-create per-subclass class-level storage.
 

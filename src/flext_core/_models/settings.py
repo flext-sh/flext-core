@@ -138,7 +138,7 @@ class FlextModelsConfig:
         def validate_context(
             cls,
             v: BaseModel | t.ScalarMapping | t.Scalar | None,
-        ) -> Mapping[str, str]:
+        ) -> t.StrMapping:
             """Ensure context has required fields (using FlextRuntime).
 
             Returns Mapping[str, str] because ensure_trace_context generates
@@ -198,7 +198,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(
             cls,
-            v: Sequence[int] | Sequence[t.Scalar],
+            v: Sequence[int] | t.ScalarList,
         ) -> Sequence[int]:
             """Validate status codes are valid HTTP codes."""
             codes_for_validation: MutableSequence[int] = []

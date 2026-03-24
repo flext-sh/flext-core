@@ -405,7 +405,7 @@ class FlextModelsContainer:
             t.ConfigMap
             | Mapping[
                 str,
-                t.ConfigMap | Sequence[t.Scalar] | t.Scalar,
+                t.ConfigMap | t.ScalarList | t.Scalar,
             ]
             | None,
             SkipValidation,

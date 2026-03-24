@@ -1379,7 +1379,7 @@ class FlextRuntime:
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> Mapping[str, str]:
+    ) -> t.StrMapping:
         """Ensure context dict has distributed tracing fields (bridge for _models).
 
         Args:

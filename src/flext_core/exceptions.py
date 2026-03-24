@@ -1606,7 +1606,7 @@ class FlextExceptions:
         **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
-        legacy_type_map: Mapping[str, str] = {
+        legacy_type_map: t.StrMapping = {
             "ValidationError": "validation",
             "ConfigurationError": "configuration",
             "ConnectionError": "connection",

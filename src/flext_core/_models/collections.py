@@ -43,7 +43,7 @@ class FlextModelsCollections:
         def _concatenate_lists(
             cls,
             non_none: Sequence[t.MetadataValue],
-        ) -> Sequence[t.Scalar]:
+        ) -> t.ScalarList:
             combined: MutableSequence[t.Scalar] = []
             for v in non_none:
                 if isinstance(v, list):
@@ -54,8 +54,8 @@ class FlextModelsCollections:
         def _merge_dicts(
             cls,
             non_none: Sequence[t.MetadataValue],
-        ) -> Mapping[str, t.Scalar | Sequence[t.Scalar]]:
-            merged: MutableMapping[str, t.Scalar | Sequence[t.Scalar]] = {}
+        ) -> Mapping[str, t.Scalar | t.ScalarList]:
+            merged: MutableMapping[str, t.Scalar | t.ScalarList] = {}
             for v in non_none:
                 if isinstance(v, Mapping):
                     for key, val in v.items():
