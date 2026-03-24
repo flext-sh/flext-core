@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import (
-    AbstractSet,
     Callable,
     ItemsView,
     Iterator,
@@ -12,6 +11,7 @@ from collections.abc import (
     MutableMapping,
     MutableSequence,
     Sequence,
+    Set,
 )
 from datetime import UTC, datetime
 from pathlib import Path
@@ -682,8 +682,8 @@ class UtilitiesMapperFullCoverageNamespace:
             *,
             _normalize: bool,
             _map_keys: t.StrMapping | None,
-            _filter_keys: AbstractSet[str] | None,
-            _exclude_keys: AbstractSet[str] | None,
+            _filter_keys: Set[str] | None,
+            _exclude_keys: Set[str] | None,
             _strip_none: bool,
             _strip_empty: bool,
             _to_json: bool,

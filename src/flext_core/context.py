@@ -18,7 +18,6 @@ from collections.abc import (
     Generator,
     Mapping,
     MutableMapping,
-    MutableSequence,
     Sequence,
 )
 from contextlib import contextmanager
@@ -583,10 +582,13 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return []
-        all_items: MutableSequence[tuple[str, t.NormalizedValue]] = []
-        for ctx_var in self._scope_vars.values():
-            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            all_items.extend(scope_dict.items())
+        all_items: Sequence[tuple[str, t.NormalizedValue]] = [
+            item
+            for ctx_var in self._scope_vars.values()
+            for item in self._narrow_contextvar_to_configuration_dict(
+                ctx_var.get()
+            ).items()
+        ]
         return all_items
 
     def iter_scope_vars(

@@ -640,15 +640,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     print(f"{method_name}: {config.command.__name__}")
 
             """
-            handlers: MutableSequence[tuple[str, m.DecoratorConfig]] = []
-            for name in dir(target_class):
-                method = getattr(target_class, name, None)
-                if hasattr(method, c.HANDLER_ATTR):
-                    config: m.DecoratorConfig = getattr(
-                        method,
-                        c.HANDLER_ATTR,
-                    )
-                    handlers.append((name, config))
+            handlers: Sequence[tuple[str, m.DecoratorConfig]] = [
+                (name, getattr(method, c.HANDLER_ATTR))
+                for name in dir(target_class)
+                if hasattr(method := getattr(target_class, name, None), c.HANDLER_ATTR)
+            ]
             return sorted(handlers, key=lambda x: x[1].priority, reverse=True)
 
         @staticmethod

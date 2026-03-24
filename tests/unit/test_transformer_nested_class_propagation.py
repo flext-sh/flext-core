@@ -12,7 +12,7 @@ _nested_class_propagation = importlib.import_module(
 )
 NestedClassPropagationTransformer = getattr(
     _nested_class_propagation,
-    "NestedClassPropagationTransformer",
+    "FlextInfraNestedClassPropagationTransformer",
 )
 
 
