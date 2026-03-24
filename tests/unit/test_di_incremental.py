@@ -78,9 +78,9 @@ class TestDIIncremental:
                 config=t.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
-        tm.that(repr(bridge) != "", eq=True)
-        tm.that(repr(service_module) != "", eq=True)
-        tm.that(repr(resource_module) != "", eq=True)
+        tm.that(repr(bridge), ne="")
+        tm.that(repr(service_module), ne="")
+        tm.that(repr(resource_module), ne="")
         tm.that(callable(bridge.config), eq=True)
 
     def test_register_object_with_real_container(self) -> None:
@@ -226,7 +226,7 @@ class TestDIIncremental:
         scoped = container.scoped(resources={"db": resource_factory})
         result = scoped.get("db")
         resource_value = u.Tests.Result.assert_success(result)
-        tm.that(resource_value == {"connected": True}, eq=True)
+        tm.that(resource_value, eq={"connected": True})
         tm.that(lifecycle["created"], eq=True)
         tm.that(scoped is not container, eq=True)
 
@@ -239,10 +239,10 @@ class TestDIIncremental:
         )
         service_result = scoped.get("api_key")
         tm.ok(service_result)
-        tm.that(service_result.value == "secret_key", eq=True)
+        tm.that(service_result.value, eq="secret_key")
         factory_result = scoped.get("token_gen")
         factory_value = assertion_helpers.assert_flext_result_success(factory_result)
-        tm.that(factory_value == {"token": "abc123"}, eq=True)
+        tm.that(factory_value, eq={"token": "abc123"})
 
     def test_scoped_with_config_override(self) -> None:
         """Test scoped container with config override."""
@@ -267,7 +267,7 @@ class TestDIIncremental:
         )
         db_result = runtime.container.get("database")
         tm.ok(db_result)
-        tm.that(db_result.value == {"connected": True}, eq=True)
+        tm.that(db_result.value, eq={"connected": True})
         tm.that(lifecycle["created"], eq=True)
 
     def test_create_service_runtime_with_wiring(self) -> None:
@@ -304,10 +304,10 @@ class TestDIIncremental:
         tm.that(hasattr(service, "runtime"), eq=True)
         custom_result = service.container.get("custom_service")
         tm.ok(custom_result)
-        tm.that(custom_result.value == "custom_value", eq=True)
+        tm.that(custom_result.value, eq="custom_value")
         factory_result = service.container.get("custom_factory")
         tm.ok(factory_result)
-        tm.that(factory_result.value == {"custom": "data"}, eq=True)
+        tm.that(factory_result.value, eq={"custom": "data"})
 
     def test_handler_wiring_with_inject(self) -> None:
         """Test handler wiring with @inject decorator."""
@@ -425,7 +425,7 @@ class TestDIIncremental:
         tm.ok(global_result)
         scoped_result = scoped.get("scoped_service")
         tm.ok(scoped_result)
-        tm.that(scoped_result.value == "scoped_value", eq=True)
+        tm.that(scoped_result.value, eq="scoped_value")
 
     def test_create_service_runtime_full_integration(self) -> None:
         """Test create_service_runtime with full DI integration."""
@@ -448,13 +448,13 @@ class TestDIIncremental:
         tm.that(runtime.config.app_name, eq="test_app")
         static_result = runtime.container.get("static_service")
         tm.ok(static_result)
-        tm.that(static_result.value == "static_value", eq=True)
+        tm.that(static_result.value, eq="static_value")
         factory_result = runtime.container.get("token_factory")
         tm.ok(factory_result)
-        tm.that(factory_result.value == {"token": "generated_token"}, eq=True)
+        tm.that(factory_result.value, eq={"token": "generated_token"})
         resource_result = runtime.container.get("connection")
         tm.ok(resource_result)
-        tm.that(resource_result.value == {"connected": True}, eq=True)
+        tm.that(resource_result.value, eq={"connected": True})
 
     def test_container_wire_modules_with_classes(self) -> None:
         """Test container.wire_modules with classes parameter."""
@@ -505,7 +505,7 @@ class TestDIIncremental:
         scoped = container.scoped(resources={"test_resource": resource_factory})
         result = scoped.get("test_resource")
         resource_value = assertion_helpers.assert_flext_result_success(result)
-        tm.that(resource_value == {"resource": True}, eq=True)
+        tm.that(resource_value, eq={"resource": True})
         tm.that(lifecycle["created"], eq=True)
 
     def test_multiple_scoped_containers_isolation(self) -> None:
@@ -519,6 +519,6 @@ class TestDIIncremental:
         value2 = u.Tests.Result.assert_success(result2)
         tm.that(isinstance(value1, str), eq=True)
         tm.that(isinstance(value2, str), eq=True)
-        tm.that(value1 == "value1", eq=True)
-        tm.that(value2 == "value2", eq=True)
-        tm.that(value1 != value2, eq=True)
+        tm.that(value1, eq="value1")
+        tm.that(value2, eq="value2")
+        tm.that(value1, ne=value2)

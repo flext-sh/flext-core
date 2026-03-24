@@ -55,8 +55,8 @@ class Teste:
         """Test that timestamp is automatically generated."""
         before = time.time()
         error = e.BaseError("Test error")
-        after = time.time()
-        tm.that(before <= error.timestamp <= after, eq=True)
+        tm.that(before, lte=error.timestamp)
+        tm.that(error.timestamp, lte=time.time())
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
@@ -322,9 +322,9 @@ class Teste:
         result = e.TypeError._normalize_type(str, type_map, {}, "expected_type")
         tm.that(result is str, eq=True)
         result = e.TypeError._normalize_type(None, type_map, {}, "expected_type")
-        tm.that(result is None, eq=True)
+        tm.that(result, none=True)
         result = e.TypeError._normalize_type("float", type_map, {}, "expected_type")
-        tm.that(result is None, eq=True)
+        tm.that(result, none=True)
 
     def test_type_error_build_type_context(self) -> None:
         """Test TypeError._build_type_context."""
@@ -657,7 +657,7 @@ class Teste:
         kwargs_cast = cast("Mapping[str, t.MetadataAttributeValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         corr_id, _metadata, _auto_log, _auto_corr, _config, _extra = result
-        tm.that(corr_id is None, eq=True)
+        tm.that(corr_id, none=True)
 
     def test_prepare_exception_kwargs_return_tuple(self) -> None:
         """Test prepare_exception_kwargs returns correct tuple - tests lines 967-970."""
@@ -890,7 +890,7 @@ class Teste:
         error_type = e._determine_error_type({"attribute_name": "test"})
         tm.that(error_type, eq="attribute_access")
         error_type = e._determine_error_type({"unknown": "value"})
-        tm.that(error_type is None, eq=True)
+        tm.that(error_type, none=True)
 
     def test_determine_error_type_with_conflict(self) -> None:
         """Test _determine_error_type with conflict pattern - tests line 585."""

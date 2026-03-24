@@ -230,9 +230,9 @@ class TestModule:
         logger.trace("%s %s", "a")
         monkeypatch.setattr(logger, "_structlog_instance", "normalized")
         logger.trace("x")
-        tm.that(FlextLogger._format_log_message("%s %s", "a") != "", eq=True)
+        tm.that(FlextLogger._format_log_message("%s %s", "a"), ne="")
         monkeypatch.setattr(inspect, "currentframe", lambda: None)
-        tm.that(FlextLogger._get_calling_frame() is None, eq=True)
+        tm.that(FlextLogger._get_calling_frame(), none=True)
 
         class _Code:
             co_qualname = "MyType.run"
@@ -241,13 +241,9 @@ class TestModule:
             f_locals: ClassVar[Mapping[str, t.NormalizedValue]] = {}
             f_code = _Code()
 
-        tm.that(
-            FlextLogger._extract_class_name(
-                cast("types.FrameType", cast("t.NormalizedValue", _Frame()))
-            )
-            is None,
-            eq=True,
-        )
+        tm.that(FlextLogger._extract_class_name(
+            cast("types.FrameType", cast("t.NormalizedValue", _Frame()))
+        ), none=True)
 
     def test_loggings_source_and_log_error_paths(
         self, monkeypatch: pytest.MonkeyPatch
@@ -261,7 +257,7 @@ class TestModule:
             return None
 
         monkeypatch.setattr(FlextLogger, "_get_calling_frame", staticmethod(_no_frame))
-        tm.that(FlextLogger._get_caller_source_path() is None, eq=True)
+        tm.that(FlextLogger._get_caller_source_path(), none=True)
 
         def _raise_resolve(self: Path) -> Path:
             msg = "bad"
@@ -284,13 +280,9 @@ class TestModule:
             def exists(self) -> bool:
                 return False
 
-        tm.that(
-            FlextLogger._find_workspace_root(
-                cast("Path", cast("t.NormalizedValue", _NoMarkers(Path("/tmp"))))
-            )
-            is None,
-            eq=True,
-        )
+        tm.that(FlextLogger._find_workspace_root(
+            cast("Path", cast("t.NormalizedValue", _NoMarkers(Path("/tmp"))))
+        ), none=True)
         logger_boom = FlextLogger.create_bound_logger(
             "x", cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable()))
         )
@@ -304,7 +296,7 @@ class TestModule:
 
         monkeypatch.setattr(logger_boom.logger, "info", _raise_info)
         failed = logger_boom._log("INFO", "msg")
-        tm.that(failed is not None, eq=True)
+        tm.that(failed, none=False)
         tm.fail(failed)
         logger.log("INFO", "message", k="v")
         logger.warning("warn")
@@ -330,11 +322,11 @@ class TestModule:
         with_exception = logger.build_exception_context(
             exception=ValueError("x"), exc_info=False, context={"k": "v"}
         )
-        tm.that("stack_trace" in with_exception, eq=True)
+        tm.that(with_exception, has="stack_trace")
         with_exc_info = logger.build_exception_context(
             exception=None, exc_info=True, context={}
         )
-        tm.that("stack_trace" in with_exc_info, eq=True)
+        tm.that(with_exc_info, has="stack_trace")
         broken = FlextLogger.create_bound_logger(
             "x", cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable()))
         )
@@ -379,7 +371,7 @@ class TestModule:
             cast("p.Container", cast("t.NormalizedValue", _Container())), trace_id="t1"
         ):
             pass
-        tm.that(captured["level"] is None, eq=True)
+        tm.that(captured["level"], none=True)
         sentinel = "normalized"
 
         def _get_logger(_name: str | None = None) -> t.NormalizedValue:
@@ -409,7 +401,7 @@ class TestModule:
             "currentframe",
             lambda: cast("types.FrameType", cast("t.NormalizedValue", _ShortFrame())),
         )
-        tm.that(FlextLogger._get_calling_frame() is None, eq=True)
+        tm.that(FlextLogger._get_calling_frame(), none=True)
 
         class _CodeUpper:
             co_qualname = "MyClass.run"
@@ -466,7 +458,7 @@ class TestModule:
         monkeypatch.setattr(
             FlextLogger, "_get_calling_frame", staticmethod(_raise_calling_frame)
         )
-        tm.that(FlextLogger._get_caller_source_path() is None, eq=True)
+        tm.that(FlextLogger._get_caller_source_path(), none=True)
 
         def _resolve_path(self: Path) -> Path:
             return Path("/tmp/example.py")

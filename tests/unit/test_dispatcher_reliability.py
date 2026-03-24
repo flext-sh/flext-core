@@ -48,7 +48,7 @@ def test_rate_limiter_blocks_then_recovers() -> None:
     blocked = limiter.check_rate_limit(msg_type)
     tm.fail(blocked)
     tm.that(blocked.error_code, eq=c.OPERATION_ERROR)
-    tm.that(blocked.error_data is not None, eq=True)
+    tm.that(blocked.error_data, none=False)
     assert blocked.error_data is not None
     retry_after_val = blocked.error_data.get("retry_after")
     tm.that(isinstance(retry_after_val, (int, float)) and retry_after_val >= 0, eq=True)
@@ -62,13 +62,13 @@ def test_rate_limiter_jitter_application() -> None:
     """Ensure jitter calculation respects bounds and zero factor short-circuit."""
     limiter = RateLimiterManager(max_requests=1, window_seconds=1.0, jitter_factor=0.5)
     jittered = limiter._apply_jitter(2.0)
-    tm.that(jittered >= 0.0, eq=True)
+    tm.that(jittered, gte=0.0)
     limiter_zero = RateLimiterManager(
         max_requests=1,
         window_seconds=1.0,
         jitter_factor=0.0,
     )
-    tm.that(abs(limiter_zero._apply_jitter(0.5) - 0.5) < 1e-9, eq=True)
+    tm.that(abs(limiter_zero._apply_jitter(0.5) - 0.5), lt=1e-9)
 
 
 def test_retry_policy_behavior() -> None:
@@ -79,11 +79,11 @@ def test_retry_policy_behavior() -> None:
     tm.that(policy.should_retry(2), eq=False)
     tm.that(policy.is_retriable_error("Temporary failure - try again later"), eq=True)
     tm.that(policy.is_retriable_error(None), eq=False)
-    tm.that(abs(policy.get_retry_delay() - 0.1) < 1e-9, eq=True)
+    tm.that(abs(policy.get_retry_delay() - 0.1), lt=1e-9)
     tm.that(policy.get_max_attempts(), eq=3)
-    tm.that(abs(policy.get_exponential_delay(0) - 0.1) < 1e-9, eq=True)
+    tm.that(abs(policy.get_exponential_delay(0) - 0.1), lt=1e-9)
     expected_delay = min(0.1 * 2.0**2, 300.0)
-    tm.that(abs(policy.get_exponential_delay(2) - expected_delay) < 1e-9, eq=True)
+    tm.that(abs(policy.get_exponential_delay(2) - expected_delay), lt=1e-9)
     policy.record_attempt("cmd")
     policy.reset("cmd")
     policy.cleanup()

@@ -25,7 +25,7 @@ class TestFlextSettingsCoverage:
     def test_get_global_and_apply_override(self) -> None:
         with tm.scope(config={"debug": False}):
             settings_obj = FlextSettings.get_global()
-        tm.that(settings_obj, is_=FlextSettings)
+        tm.that(isinstance(settings_obj, FlextSettings), eq=True)
         tm.that(settings_obj.apply_override("debug", True), eq=True)
         tm.that(settings_obj.debug, eq=True)
         tm.that(settings_obj.apply_override("invalid_key", "x"), eq=False)
@@ -82,7 +82,7 @@ class TestFlextSettingsCoverage:
         tm.that(isinstance(read_result.value, t.ConfigMap), eq=True)
         if isinstance(read_result.value, t.ConfigMap):
             workers = read_result.value.root.get("workers")
-            tm.that(workers, is_=int)
+            tm.that(isinstance(workers, int), eq=True)
             if isinstance(workers, int):
                 tm.that(workers, eq=4)
 
@@ -124,7 +124,7 @@ class TestFlextSettingsCoverage:
         if key == "trace" and value is True:
             tm.that(settings_obj.apply_override("debug", True), eq=True)
         outcome = settings_obj.apply_override(key, value)
-        tm.that(outcome, is_=bool)
+        tm.that(isinstance(outcome, bool), eq=True)
 
     @pytest.mark.performance
     def test_apply_override_benchmark(self) -> None:

@@ -233,7 +233,7 @@ class TestCollectionUtilitiesCoverage:
                 _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
                 tm.that(len(parsed), eq=scenario.expected_count)
-                tm.that(parsed, is_=(list, tuple))
+                tm.that(isinstance(parsed, (list, tuple)), eq=True)
             else:
                 _ = u.Tests.Result.assert_failure(result)
                 error_msg = result.error
@@ -245,7 +245,7 @@ class TestCollectionUtilitiesCoverage:
         for scenario in self._coerce_list_validator_scenarios():
             if scenario.expected_success:
                 result = validator(scenario.value)
-                tm.that(result, is_=list)
+                tm.that(isinstance(result, list), eq=True)
                 tm.that(all(item in self.Status for item in result), eq=True)
             else:
                 with pytest.raises(Exception) as exc_info:
@@ -262,7 +262,7 @@ class TestCollectionUtilitiesCoverage:
                 _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
                 tm.that(len(parsed), eq=scenario.expected_count)
-                tm.that(parsed, is_=dict)
+                tm.that(isinstance(parsed, dict), eq=True)
                 tm.that(all(v in self.Status for v in parsed.values()), eq=True)
             else:
                 _ = u.Tests.Result.assert_failure(result)
@@ -273,14 +273,14 @@ class TestCollectionUtilitiesCoverage:
     def test_coerce_dict_validator_valid_strings(self) -> None:
         validator = u.coerce_dict_validator(self.Status)
         result = validator({"user1": "active", "user2": "pending"})
-        tm.that(result, is_=dict)
+        tm.that(isinstance(result, dict), eq=True)
         tm.that(result["user1"], eq=self.Status.ACTIVE)
         tm.that(result["user2"], eq=self.Status.PENDING)
 
     def test_coerce_dict_validator_valid_enums(self) -> None:
         validator = u.coerce_dict_validator(self.Status)
         result = validator({"user1": self.Status.ACTIVE, "user2": self.Status.PENDING})
-        tm.that(result, is_=dict)
+        tm.that(isinstance(result, dict), eq=True)
         tm.that(result["user1"], eq=self.Status.ACTIVE)
         tm.that(result["user2"], eq=self.Status.PENDING)
 

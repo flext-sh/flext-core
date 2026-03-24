@@ -94,7 +94,7 @@ class TestUtilitiesParserFullCoverage:
         parser = u()
         sample = "ok"
         tm.that(sample, eq="ok")
-        tm.that(c.PATTERN_TUPLE_MIN_LENGTH, is_=int)
+        tm.that(isinstance(c.PATTERN_TUPLE_MIN_LENGTH, int), eq=True)
         tm.that(
             parser._safe_text_length(cast("t.NormalizedValue", self._LenRaises("x"))),
             eq="unknown",
@@ -335,10 +335,10 @@ class TestUtilitiesParserFullCoverage:
             filter_truthy=True,
         )
         tm.that(len(normalized_map), eq=1)
-        tm.that(normalized_map == {"b": "b"}, eq=True)
+        tm.that(normalized_map, eq={"b": "b"})
         normalized_set = parser.norm_list(["A", "b"], case="lower", to_set=True)
         tm.that(len(normalized_set), eq=2)
-        tm.that(normalized_set == {"a", "b"}, eq=True)
+        tm.that(normalized_set, eq={"a", "b"})
         tm.that(parser.norm_join(["A", "B"], sep="-"), eq="A-B")
         mapping_result = parser.norm_in(
             "a",

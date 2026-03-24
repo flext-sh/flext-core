@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
+from flext_core._constants.base import FlextConstantsBase
+
 
 class FlextConstantsMixins:
     """Constants for mixins and processing support."""
@@ -108,8 +110,8 @@ class FlextConstantsMixins:
     ERROR_MISSING_TIMESTAMP_FIELDS: Final[str] = "Required timestamp fields missing"
     ERROR_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"
 
-    DEFAULT_MAX_WORKERS: Final[int] = 4
-    DEFAULT_BATCH_SIZE: Final[int] = 1000
+    DEFAULT_MAX_WORKERS: Final[int] = FlextConstantsBase.DEFAULT_WORKERS
+    DEFAULT_BATCH_SIZE: Final[int] = FlextConstantsBase.DEFAULT_BATCH_SIZE
     PATTERN_TUPLE_MIN_LENGTH: Final[int] = 2
     "Minimum length for tuple patterns in parsing operations."
     PATTERN_TUPLE_MAX_LENGTH: Final[int] = 3

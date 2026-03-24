@@ -39,7 +39,7 @@ def test_narrow_contextvar_invalid_inputs() -> None:
     data = FlextContext._narrow_contextvar_to_configuration_dict(
         t.ConfigMap(root={"a": "v"})
     )
-    tm.that("a" in data, eq=True)
+    tm.that(data, has="a")
 
 
 def test_narrow_contextvar_exception_branch(
@@ -181,8 +181,8 @@ def test_export_paths_with_metadata_and_statistics() -> None:
     )
     tm.that(isinstance(exported_dict, dict), eq=True)
     if isinstance(exported_dict, dict):
-        tm.that("statistics" in exported_dict, eq=True)
-        tm.that("metadata" in exported_dict, eq=True)
+        tm.that(exported_dict, has="statistics")
+        tm.that(exported_dict, has="metadata")
     exported_model = ctx.export(
         include_statistics=True,
         include_metadata=True,

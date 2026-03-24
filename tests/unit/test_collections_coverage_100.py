@@ -184,13 +184,13 @@ class TestFlextModelsCollectionsCoverage100:
     def test_categories_dict_like_operations(self) -> None:
         categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
-        tm.that(("users", ["user1"]) in categories.categories.items(), eq=True)
-        tm.that("users" in categories.categories, eq=True)
-        tm.that(["user1"] in categories.categories.values(), eq=True)
+        tm.that(categories.categories.items(), has=("users", ["user1"]))
+        tm.that(categories.categories, has="users")
+        tm.that(categories.categories.values(), has=["user1"])
         tm.that(categories.categories["users"], eq=["user1"])
         categories.categories["groups"] = ["group1"]
         tm.that(categories.get("groups"), eq=["group1"])
-        tm.that("users" in categories.categories, eq=True)
+        tm.that(categories.categories, has="users")
         tm.that("nonexistent" in categories.categories, eq=False)
         tm.that(len(categories.categories), eq=2)
 
@@ -271,7 +271,7 @@ class TestFlextModelsCollectionsCoverage100:
         config1 = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})
         config2 = self.ConfigFixture.model_validate({"timeout": 60, "retries": 3})
         diff = config1.diff(config2)
-        tm.that("timeout" in diff, eq=True)
+        tm.that(diff, has="timeout")
         tm.that(diff["timeout"], eq=(30, 60))
         tm.that("retries" in diff, eq=False)
 
@@ -287,9 +287,9 @@ class TestFlextModelsCollectionsCoverage100:
         config1 = self.ConfigFixture.model_validate({"timeout": 30})
         config2 = self.ConfigFixture.model_validate({"timeout": 30})
         config3 = self.ConfigFixture.model_validate({"timeout": 60})
-        tm.that(config1 == config2, eq=True)
-        tm.that(config1 != config3, eq=True)
-        tm.that(config1 != "not a config", eq=True)
+        tm.that(config1, eq=config2)
+        tm.that(config1, ne=config3)
+        tm.that(config1, ne="not a config")
 
     def test_results_aggregate_empty(self) -> None:
         tm.that(self.ResultsProcessed.aggregate([]), eq={})

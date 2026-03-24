@@ -127,7 +127,7 @@ class TestCoverageModels:
         tm.that(doc.created_at, none=False)
         tm.that(doc.updated_at, none=False)
         if doc.created_at is not None and doc.updated_at is not None:
-            tm.that(doc.created_at <= doc.updated_at, eq=True)
+            tm.that(doc.created_at, lte=doc.updated_at)
 
     def test_entity_validation(self) -> None:
         class User(m.Entity):
@@ -179,7 +179,7 @@ class TestCoverageModels:
             currency: str
 
         account = Account(balance=1000.0, currency="USD", domain_events=[])
-        tm.that(account.balance >= 0.0, eq=True)
+        tm.that(account.balance, gte=0.0)
 
     def test_aggregate_root_lifecycle(self) -> None:
         class Project(m.AggregateRoot):

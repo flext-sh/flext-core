@@ -257,7 +257,7 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     writer.thread = cast("threading.Thread", cast("t.NormalizedValue", thread))
     writer.shutdown()
     tm.that(writer.stop_event.is_set(), eq=True)
-    tm.that(thread.join_timeout is not None, eq=True)
+    tm.that(thread.join_timeout, none=False)
     if thread.join_timeout is not None:
         tm.that(abs(thread.join_timeout - 2.0), lt=1e-09)
     tm.that(stream.flush_calls, eq=1)
@@ -322,15 +322,15 @@ def test_normalize_to_container_alias_removal_path() -> None:
 
 def test_normalize_to_metadata_alias_removal_path() -> None:
     result = FlextRuntime.normalize_to_metadata(42)
-    tm.that(result is not None, eq=True)
+    tm.that(result, none=False)
 
 
 def test_get_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     logger_with_frame = FlextRuntime.get_logger()
-    tm.that(logger_with_frame is not None, eq=True)
+    tm.that(logger_with_frame, none=False)
     monkeypatch.setattr(inspect, "currentframe", lambda: None)
     logger_no_frame = FlextRuntime.get_logger()
-    tm.that(logger_no_frame is not None, eq=True)
+    tm.that(logger_no_frame, none=False)
 
 
 def test_dependency_registration_duplicate_guards() -> None:
@@ -691,17 +691,9 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(isinstance(FlextRuntime.hash_value_object_by_value("x"), int), eq=True)
     tm.that(isinstance(FlextRuntime.hash_value_object_by_value({"a": 1}), int), eq=True)
     tm.that(isinstance(FlextRuntime.hash_value_object_by_value([1, 2]), int), eq=True)
-    tm.that(
-        isinstance(
-            FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})), int
-        ),
-        eq=True,
-    )
+    tm.that(isinstance(FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})), int), eq=True)
     tm.that(isinstance(FlextRuntime.hash_value_object_by_value((1, 2)), int), eq=True)
-    tm.that(
-        isinstance(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), int),
-        eq=True,
-    )
+    tm.that(isinstance(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), int), eq=True)
 
     class Empty:
         pass
@@ -795,7 +787,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         f_back: types.FrameType | None = None
 
     monkeypatch.setattr(inspect, "currentframe", lambda: Frame())
-    tm.that(FlextRuntime.get_logger(None) is not None, eq=True)
+    tm.that(FlextRuntime.get_logger(None), none=False)
 
 
 def test_runtime_module_accessors_and_metadata() -> None:
@@ -892,7 +884,7 @@ def test_configure_structlog_print_logger_factory_fallback(
         },
     )()
     FlextRuntime.configure_structlog(config=cast("BaseModel", cfg))
-    tm.that(module.print_calls >= 2, eq=True)
+    tm.that(module.print_calls, gte=2)
 
 
 def test_dependency_integration_and_wiring_paths() -> None:
@@ -1035,10 +1027,7 @@ def test_model_helpers_remaining_paths() -> None:
         ),
         eq=True,
     )
-    tm.that(
-        isinstance(FlextRuntime.hash_entity_by_id(cast("t.RuntimeData", left)), int),
-        eq=True,
-    )
+    tm.that(isinstance(FlextRuntime.hash_entity_by_id(cast("t.RuntimeData", left)), int), eq=True)
     vm_a = ValueModel(a=1)
     vm_b = ValueModel(a=1)
     tm.that(FlextRuntime.compare_value_objects_by_value(vm_a, vm_b), eq=True)

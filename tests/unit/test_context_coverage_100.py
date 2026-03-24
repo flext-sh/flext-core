@@ -58,7 +58,7 @@ class TestContext100Coverage:
             "key3": "value3",
         }
         merged = context1.merge(merge_data)
-        tm.that(merged, is_=FlextContext)
+        tm.that(isinstance(merged, FlextContext), eq=True)
         result2 = merged.get("key2")
         result3 = merged.get("key3")
         _ = u.Tests.Result.assert_success(result2)
@@ -71,7 +71,7 @@ class TestContext100Coverage:
         context2 = FlextContext()
         context2.set("key2", "value2").value
         merged = context1.merge(context2)
-        tm.that(merged, is_=FlextContext)
+        tm.that(isinstance(merged, FlextContext), eq=True)
         result1 = merged.get("key1")
         result2 = merged.get("key2")
         _ = u.Tests.Result.assert_success(result1)
@@ -82,7 +82,7 @@ class TestContext100Coverage:
         context1 = FlextContext()
         context1.set("key1", "value1").value
         cloned = context1.clone()
-        tm.that(cloned, is_=FlextContext)
+        tm.that(isinstance(cloned, FlextContext), eq=True)
         result = cloned.get("key1")
         _ = u.Tests.Result.assert_success(result)
         tm.that(str(result.value), eq="value1")

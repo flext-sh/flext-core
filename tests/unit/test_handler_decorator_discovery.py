@@ -57,10 +57,10 @@ class TestHandlerDecoratorDiscovery:
                 return r[str].ok("handled")
 
         config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.priority == 42, eq=True)
+        tm.that(config.priority, eq=42)
         if config.timeout is not None:
-            tm.that(abs(config.timeout - 5.0) < 1e-9, eq=True)
-        tm.that(config.middleware == middleware_types, eq=True)
+            tm.that(abs(config.timeout - 5.0), lt=1e-9)
+        tm.that(config.middleware, eq=middleware_types)
 
     def test_decorator_defaults(self) -> None:
         class CreateCommand:
@@ -73,9 +73,9 @@ class TestHandlerDecoratorDiscovery:
                 return r[str].ok("handled")
 
         config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.priority == c.DEFAULT_PRIORITY, eq=True)
-        tm.that(config.timeout == c.DEFAULT_TIMEOUT, eq=True)
-        tm.that(config.middleware == [], eq=True)
+        tm.that(config.priority, eq=c.DEFAULT_PRIORITY)
+        tm.that(config.timeout, eq=c.DEFAULT_TIMEOUT)
+        tm.that(config.middleware, eq=[])
 
     def test_decorator_preserves_function_identity(self) -> None:
         class CreateCommand:
@@ -119,10 +119,10 @@ class TestHandlerDecoratorDiscovery:
                 return "non_handler"
 
         handlers = h.Discovery.scan_class(Service)
-        tm.that(len(handlers) == 3, eq=True)
-        tm.that(handlers[0][0] == "handle_create", eq=True)
-        tm.that(handlers[1][0] == "handle_delete", eq=True)
-        tm.that(handlers[2][0] == "handle_query", eq=True)
+        tm.that(len(handlers), eq=3)
+        tm.that(handlers[0][0], eq="handle_create")
+        tm.that(handlers[1][0], eq="handle_delete")
+        tm.that(handlers[2][0], eq="handle_query")
 
     def test_scan_class_empty_and_has_handlers(self) -> None:
         class ServiceWithoutHandlers:
@@ -134,7 +134,7 @@ class TestHandlerDecoratorDiscovery:
             def handle(self, cmd: str) -> r[str]:
                 return r[str].ok(cmd)
 
-        tm.that(not h.Discovery.scan_class(ServiceWithoutHandlers), eq=True)
+        tm.that(h.Discovery.scan_class(ServiceWithoutHandlers), eq=False)
         tm.that(h.Discovery.has_handlers(ServiceWithoutHandlers) is False, eq=True)
         tm.that(h.Discovery.has_handlers(ServiceWithHandler) is True, eq=True)
 
@@ -149,11 +149,11 @@ class TestHandlerDecoratorDiscovery:
                 return r[str].ok(f"processed_{event.event_id}")
 
         handlers = h.Discovery.scan_class(OrderService)
-        tm.that(len(handlers) == 1, eq=True)
+        tm.that(len(handlers), eq=1)
         name, config = handlers[0]
-        tm.that(name == "handle_event", eq=True)
+        tm.that(name, eq="handle_event")
         tm.that(config.command is EventPublished, eq=True)
-        tm.that(config.priority == 25, eq=True)
+        tm.that(config.priority, eq=25)
 
     def test_scan_module_finds_decorated_functions(self) -> None:
         class CreateCommand:
@@ -179,9 +179,9 @@ class TestHandlerDecoratorDiscovery:
         setattr(module, "non_callable", 123)
 
         handlers = h.Discovery.scan_module(module)
-        tm.that(len(handlers) == 2, eq=True)
-        tm.that(handlers[0][0] == "handle_user_create_globally", eq=True)
-        tm.that(handlers[1][0] == "handle_user_delete_globally", eq=True)
+        tm.that(len(handlers), eq=2)
+        tm.that(handlers[0][0], eq="handle_user_create_globally")
+        tm.that(handlers[1][0], eq="handle_user_delete_globally")
 
     def test_scan_module_ignores_private_functions(self) -> None:
         class CreateCommand:
@@ -204,7 +204,7 @@ class TestHandlerDecoratorDiscovery:
         handlers = h.Discovery.scan_module(module)
         names = [name for name, _, _ in handlers]
         tm.that("_private_handler" not in names, eq=True)
-        tm.that("public_handler" in names, eq=True)
+        tm.that(names, has="public_handler")
 
     def test_has_handlers_module(self) -> None:
         module_with_handlers = types.ModuleType("module_with_handlers")
@@ -241,8 +241,8 @@ class TestHandlerDecoratorDiscovery:
 
         handlers = h.Discovery.scan_class(DerivedService)
         names = [name for name, _ in handlers]
-        tm.that("handle_create" in names, eq=True)
-        tm.that("handle_delete" in names, eq=True)
+        tm.that(names, has="handle_create")
+        tm.that(names, has="handle_delete")
 
     def test_handler_decorator_with_none_timeout(self) -> None:
         class CreateCommand:
@@ -255,7 +255,7 @@ class TestHandlerDecoratorDiscovery:
                 return r[str].ok("ok")
 
         config: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
-        tm.that(config.timeout is None, eq=True)
+        tm.that(config.timeout, none=True)
 
     def test_multiple_decorations_overwrites_previous(self) -> None:
         class CreateCommand:
@@ -273,7 +273,7 @@ class TestHandlerDecoratorDiscovery:
 
         config: m.DecoratorConfig = getattr(Service.handle, c.HANDLER_ATTR)
         tm.that(config.command is DeleteCommand, eq=True)
-        tm.that(config.priority == 20, eq=True)
+        tm.that(config.priority, eq=20)
 
     def test_service_integration_with_flext_service(self) -> None:
         class CreateCommand:
@@ -290,11 +290,11 @@ class TestHandlerDecoratorDiscovery:
                 return r[str].ok("executed")
 
         handlers = h.Discovery.scan_class(Service)
-        tm.that(len(handlers) >= 1, eq=True)
+        tm.that(len(handlers), gte=1)
         method_name, config = handlers[0]
-        tm.that(method_name == "handle_user_create", eq=True)
+        tm.that(method_name, eq="handle_user_create")
         tm.that(config.command is CreateCommand, eq=True)
-        tm.that(config.priority == 10, eq=True)
+        tm.that(config.priority, eq=10)
 
 
 __all__ = ["TestHandlerDecoratorDiscovery"]

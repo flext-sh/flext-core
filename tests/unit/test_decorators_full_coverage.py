@@ -116,8 +116,8 @@ class TestDecoratorsFullCoverage:
         with pytest.raises(ValueError):
             fn()
         _message, kwargs = fake_logger.exception_calls[-1]
-        tm.that("duration_ms" in kwargs, eq=True)
-        tm.that("duration_seconds" in kwargs, eq=True)
+        tm.that(kwargs, has="duration_ms")
+        tm.that(kwargs, has="duration_seconds")
 
     def test_retry_unreachable_timeouterror_path(
         self,

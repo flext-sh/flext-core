@@ -555,7 +555,7 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(c, "_context", FlextContext())
         monkeypatch.setattr(c, "has_service", _has_service_false)
         c.register_core_services()
-        tm.that(c.has_service("context"), is_=bool)
+        tm.that(isinstance(c.has_service("context"), bool), eq=True)
         c.wire_modules(modules=[])
         tm.ok(c.get("r1"))
         tm.ok(c.get("f1", type_cls=str))

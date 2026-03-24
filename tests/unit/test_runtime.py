@@ -665,9 +665,9 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
+        tm.that(isinstance(test_case.test_input, type), eq=False)
         result = FlextRuntime.is_dict_like(cast("t.RuntimeData", test_case.test_input))
-        tm.that(result == test_case.expected_result, eq=True)
+        tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.list_like_scenarios(), ids=lambda c: c.name
@@ -681,9 +681,9 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
+        tm.that(isinstance(test_case.test_input, type), eq=False)
         result = FlextRuntime.is_list_like(cast("t.RuntimeData", test_case.test_input))
-        tm.that(result == test_case.expected_result, eq=True)
+        tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.json_scenarios(), ids=lambda c: c.name
@@ -694,9 +694,9 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_json
         correctly returns False for None values.
         """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
+        tm.that(isinstance(test_case.test_input, type), eq=False)
         result = FlextRuntime.is_valid_json(cast("t.RuntimeData", test_case.test_input))
-        tm.that(result == test_case.expected_result, eq=True)
+        tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.identifier_scenarios(), ids=lambda c: c.name
@@ -709,11 +709,11 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_identifier
         correctly returns False for None values.
         """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
+        tm.that(isinstance(test_case.test_input, type), eq=False)
         result = FlextRuntime.is_valid_identifier(
             cast("t.RuntimeData", test_case.test_input)
         )
-        tm.that(result == test_case.expected_result, eq=True)
+        tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.serialization_scenarios(), ids=lambda c: c.name
@@ -728,7 +728,7 @@ class TestFlextRuntime:
                 attr = "value"
 
             result = FlextRuntime.safe_get_attribute(TestObj, "attr")
-            tm.that(result == "value", eq=True)
+            tm.that(result, eq="value")
         elif (
             test_case.operation
             == self.RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT
@@ -740,7 +740,7 @@ class TestFlextRuntime:
             result = FlextRuntime.safe_get_attribute(
                 TestObjDefault, "missing", "default"
             )
-            tm.that(result == "default", eq=True)
+            tm.that(result, eq="default")
         elif (
             test_case.operation
             == self.RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT
@@ -750,7 +750,7 @@ class TestFlextRuntime:
                 pass
 
             result = FlextRuntime.safe_get_attribute(TestObjNoDefault, "missing")
-            tm.that(result is None, eq=True)
+            tm.that(result, none=True)
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.generic_args_scenarios(), ids=lambda c: c.name
@@ -766,7 +766,7 @@ class TestFlextRuntime:
         """
         test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         args = FlextRuntime.extract_generic_args(test_input_typed)
-        tm.that(args == test_case.expected_result, eq=True)
+        tm.that(args, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.sequence_type_scenarios(), ids=lambda c: c.name
@@ -782,7 +782,7 @@ class TestFlextRuntime:
         """
         test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         result = FlextRuntime.is_sequence_type(test_input_typed)
-        tm.that(result == test_case.expected_result, eq=True)
+        tm.that(result, eq=test_case.expected_result)
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.library_access_scenarios(), ids=lambda c: c.name
@@ -821,13 +821,13 @@ class TestFlextRuntime:
             config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
                 di_container, t.ConfigMap(root={"database": {"dsn": "sqlite://"}})
             )
-            tm.that(repr(config_provider) != "", eq=True)
+            tm.that(repr(config_provider), ne="")
             config = di_container.config
             database_config = getattr(config, "database", None)
             if database_config is None:
                 pytest.fail("database config should be available")
             dsn_value = database_config.dsn()
-            tm.that(dsn_value == "sqlite://", eq=True)
+            tm.that(dsn_value, eq="sqlite://")
             module = ModuleType("di_config_module")
 
             @FlextRuntime.DependencyIntegration.inject
@@ -844,7 +844,7 @@ class TestFlextRuntime:
                 read_func = cast("Callable[[], str]", getattr(module, "read_config"))
                 tm.that(callable(read_func), eq=True)
                 result = read_func()
-                tm.that(result == "sqlite://", eq=True)
+                tm.that(result, eq="sqlite://")
             finally:
                 di_container.unwire()
         elif (
@@ -858,8 +858,8 @@ class TestFlextRuntime:
                 di_container, "static_value", 42
             )
             tm.that(isinstance(factory_provider, providers.Singleton), eq=True)
-            tm.that(factory_provider() == {"token": "abc123"}, eq=True)
-            tm.that(object_provider() == 42, eq=True)
+            tm.that(factory_provider(), eq={"token": "abc123"})
+            tm.that(object_provider(), eq=42)
             module = ModuleType("di_factory_module")
 
             @FlextRuntime.DependencyIntegration.inject
@@ -882,8 +882,8 @@ class TestFlextRuntime:
                 )
                 tm.that(callable(consume_factory_func), eq=True)
                 tokens, value = consume_factory_func()
-                tm.that(tokens == {"token": "abc123"}, eq=True)
-                tm.that(value == 42, eq=True)
+                tm.that(tokens, eq={"token": "abc123"})
+                tm.that(value, eq=42)
             finally:
                 di_container.unwire()
         elif (
@@ -936,11 +936,11 @@ class TestFlextRuntime:
                     consume_automation_func()
                 )
                 second_static, second_token, _, _ = consume_automation_func()
-                tm.that(first_static == second_static == 7, eq=True)
+                tm.that(first_static, eq=second_static)
                 tm.that(config_enabled is True, eq=True)
-                tm.that(resource_value == {"connected": True}, eq=True)
-                tm.that(first_token["token"] == 1, eq=True)
-                tm.that(second_token["token"] == 2, eq=True)
+                tm.that(resource_value, eq={"connected": True})
+                tm.that(first_token["token"], eq=1)
+                tm.that(second_token["token"], eq=2)
             finally:
                 di_container.unwire()
         elif (
@@ -985,11 +985,11 @@ class TestFlextRuntime:
                 tm.that(callable(consume_service_func), eq=True)
                 feature_flag, first_token, resource = consume_service_func()
                 _, second_token, _ = consume_service_func()
-                tm.that(runtime.config.app_name == "runtime-service", eq=True)
+                tm.that(runtime.config.app_name, eq="runtime-service")
                 tm.that(feature_flag is True, eq=True)
-                tm.that(resource == {"connected": True}, eq=True)
-                tm.that(first_token["count"] == 1, eq=True)
-                tm.that(second_token["count"] == 2, eq=True)
+                tm.that(resource, eq={"connected": True})
+                tm.that(first_token["count"], eq=1)
+                tm.that(second_token["count"], eq=2)
             finally:
                 container = cast("FlextContainer", runtime.container)
                 container._di_bridge.unwire()
@@ -1014,16 +1014,14 @@ class TestFlextRuntime:
             runtime_first = component._get_runtime()
             runtime_second = component._get_runtime()
             tm.that(runtime_first is runtime_second, eq=True)
-            tm.that(component.config.app_name == "runtime-aware", eq=True)
+            tm.that(component.config.app_name, eq="runtime-aware")
             tm.that(component.context is runtime_first.context, eq=True)
             service_result = component.container.get("preseed")
             tm.that(service_result.is_success, eq=True)
-            tm.that(
-                service_result.value == t.ConfigMap(root={"enabled": True}), eq=True
-            )
+            tm.that(service_result.value, eq=t.ConfigMap(root={"enabled": True}))
             factory_result = component.container.get("counter")
             tm.that(factory_result.is_success, eq=True)
-            tm.that(factory_result.value == {"count": 1}, eq=True)
+            tm.that(factory_result.value, eq={"count": 1})
 
     @pytest.mark.parametrize(
         "test_case", RuntimeScenarios.structlog_config_scenarios(), ids=lambda c: c.name
@@ -1099,9 +1097,7 @@ class TestFlextRuntime:
             FlextRuntime.configure_structlog()
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_service_resolution("database", resolved=True)
-            tm.that(
-                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
-            )
+            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
         elif (
             test_case.operation
             == self.RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE
@@ -1111,9 +1107,7 @@ class TestFlextRuntime:
             FlextRuntime.Integration.track_service_resolution(
                 "cache", resolved=False, error_message="Connection refused"
             )
-            tm.that(
-                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
-            )
+            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
         elif (
             test_case.operation
             == self.RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE
@@ -1125,9 +1119,7 @@ class TestFlextRuntime:
                 aggregate_id="user-123",
                 event_data=t.ConfigMap(root={"email": "test@example.com"}),
             )
-            tm.that(
-                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
-            )
+            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
         elif (
             test_case.operation
             == self.RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE
@@ -1138,9 +1130,7 @@ class TestFlextRuntime:
                 "SystemInitialized",
                 event_data=t.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
             )
-            tm.that(
-                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
-            )
+            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
         elif (
             test_case.operation
             == self.RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL
@@ -1151,9 +1141,9 @@ class TestFlextRuntime:
                 service_version="1.0.0",
                 enable_context_correlation=True,
             )
-            tm.that(FlextContext.Variables.ServiceName.get() == "test-service", eq=True)
-            tm.that(FlextContext.Variables.ServiceVersion.get() == "1.0.0", eq=True)
-            tm.that(FlextContext.Correlation.get_correlation_id() is not None, eq=True)
+            tm.that(FlextContext.Variables.ServiceName.get(), eq="test-service")
+            tm.that(FlextContext.Variables.ServiceVersion.get(), eq="1.0.0")
+            tm.that(FlextContext.Correlation.get_correlation_id(), none=False)
         elif (
             test_case.operation
             == self.RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL
@@ -1162,10 +1152,8 @@ class TestFlextRuntime:
             FlextRuntime.Integration.setup_service_infrastructure(
                 service_name="minimal-service", enable_context_correlation=True
             )
-            tm.that(
-                FlextContext.Variables.ServiceName.get() == "minimal-service", eq=True
-            )
-            tm.that(FlextContext.Correlation.get_correlation_id() is not None, eq=True)
+            tm.that(FlextContext.Variables.ServiceName.get(), eq="minimal-service")
+            tm.that(FlextContext.Correlation.get_correlation_id(), none=False)
         elif (
             test_case.operation
             == self.RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION
@@ -1177,17 +1165,14 @@ class TestFlextRuntime:
                 service_version="2.0.0",
                 enable_context_correlation=False,
             )
-            tm.that(
-                FlextContext.Variables.ServiceName.get() == "no-correlation-service",
-                eq=True,
-            )
-            tm.that(FlextContext.Correlation.get_correlation_id() is None, eq=True)
+            tm.that(FlextContext.Variables.ServiceName.get(), eq="no-correlation-service")
+            tm.that(FlextContext.Correlation.get_correlation_id(), none=True)
 
     @given(st.text())
     def test_hypothesis_identifier_guard_returns_bool(self, value: str) -> None:
         """Property: is_valid_identifier always returns bool."""
         result = FlextRuntime.is_valid_identifier(value)
-        tm.that(result, is_=bool)
+        tm.that(isinstance(result, bool), eq=True)
 
     @given(
         st.one_of(
@@ -1201,9 +1186,9 @@ class TestFlextRuntime:
         self, value: float | str | bool
     ) -> None:
         """Property: type guards always return bool for any input."""
-        tm.that(FlextRuntime.is_dict_like(value), is_=bool)
-        tm.that(FlextRuntime.is_list_like(value), is_=bool)
-        tm.that(FlextRuntime.is_valid_json(value), is_=bool)
+        tm.that(isinstance(FlextRuntime.is_dict_like(value), bool), eq=True)
+        tm.that(isinstance(FlextRuntime.is_list_like(value), bool), eq=True)
+        tm.that(isinstance(FlextRuntime.is_valid_json(value), bool), eq=True)
 
     __all__ = ["TestFlextRuntime"]
 

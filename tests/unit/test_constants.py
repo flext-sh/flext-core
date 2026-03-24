@@ -256,7 +256,7 @@ class TestConstants:
         """Test that constants have proper documentation."""
         tm.that(c.__doc__, none=False)
         doc_lower = c.__doc__.lower() if c.__doc__ else ""
-        tm.that("layer 0" in doc_lower, eq=True)
+        tm.that(doc_lower, has="layer 0")
 
     def test_edge_cases_pattern_edge_cases(self) -> None:
         """Test regex patterns with edge cases."""

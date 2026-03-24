@@ -124,7 +124,7 @@ class TestUtilitiesCollectionFullCoverage:
         tm.ok(collected)
         collected_value = collected.value
         tm.that(len(collected_value.errors), eq=1)
-        tm.that("err" in collected_value.errors[0][1], eq=True)
+        tm.that(collected_value.errors[0][1], has="err")
         failed = u.batch([1], _hard_failure, on_error="fail")
         tm.fail(failed)
         failed_exc = u.batch(
@@ -148,7 +148,7 @@ class TestUtilitiesCollectionFullCoverage:
                 lambda x: x,
             )
         value = u._coerce_value_to_float(1.5)
-        tm.that(abs(value - 1.5) < 1e-9, eq=True)
+        tm.that(abs(value - 1.5), lt=1e-9)
         assert u._coerce_value_to_bool(True) is True
         enum_dict = u.coerce_dict_to_enum(self._Color)({"a": self._Color.RED})
         assert enum_dict["a"] is self._Color.RED
@@ -179,7 +179,7 @@ class TestUtilitiesCollectionFullCoverage:
         tm.ok(collected)
         collected_value = collected.value
         assert collected_value.errors == []
-        tm.that("_FailureResult" in str(collected_value.results[0]), eq=True)
+        tm.that(str(collected_value.results[0]), has="_FailureResult")
         failed = u.batch([1], lambda _item: str(self._FailureResult()), on_error="fail")
         tm.ok(failed)
         parsed = u.parse_sequence(

@@ -55,29 +55,29 @@ class TestCoverageContext:
     def test_timed_operation_context(self) -> None:
         u.Tests.ContextHelpers.clear_context()
         with FlextContext.Performance.timed_operation("database_query") as metadata:
-            tm.that("start_time" in metadata, eq=True)
-            tm.that("operation_name" in metadata, eq=True)
+            tm.that(metadata, has="start_time")
+            tm.that(metadata, has="operation_name")
             tm.that(metadata["operation_name"], eq="database_query")
             time.sleep(0.01)
             start_time = metadata.get("start_time")
-            tm.that(start_time is not None, eq=True)
+            tm.that(start_time, none=False)
             tm.that(isinstance(start_time, str), eq=True)
-        tm.that("end_time" in metadata, eq=True)
-        tm.that("duration_seconds" in metadata, eq=True)
+        tm.that(metadata, has="end_time")
+        tm.that(metadata, has="duration_seconds")
         duration_value = metadata["duration_seconds"]
         tm.that(isinstance(duration_value, float), eq=True)
         duration_float: float = (
             float(duration_value) if isinstance(duration_value, (int, float)) else 0.0
         )
-        tm.that(duration_float >= 0.01, eq=True)
-        tm.that(duration_float < 0.1, eq=True)
+        tm.that(duration_float, gte=0.01)
+        tm.that(duration_float, lt=0.1)
 
     def test_timed_operation_duration_calculation(self) -> None:
         u.Tests.ContextHelpers.clear_context()
         expected_sleep = 0.05
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
             start_time = metadata.get("start_time")
-            tm.that(start_time is not None, eq=True)
+            tm.that(start_time, none=False)
             time.sleep(expected_sleep)
         duration_value = metadata.get("duration_seconds", 0)
         tm.that(isinstance(duration_value, float), eq=True)
@@ -85,11 +85,11 @@ class TestCoverageContext:
             duration_float: float = float(duration_value)
         else:
             duration_float = 0.0
-        tm.that(duration_float >= expected_sleep * 0.8, eq=True)
-        tm.that(duration_float < expected_sleep * 2, eq=True)
-        tm.that("start_time" in metadata, eq=True)
-        tm.that("end_time" in metadata, eq=True)
-        tm.that("operation_name" in metadata, eq=True)
+        tm.that(duration_float, gte=expected_sleep * 0.8)
+        tm.that(duration_float, lt=expected_sleep * 2)
+        tm.that(metadata, has="start_time")
+        tm.that(metadata, has="end_time")
+        tm.that(metadata, has="operation_name")
         tm.that(metadata["operation_name"], eq="slow_operation")
 
     def test_ensure_correlation_id_creates_if_missing(self) -> None:

@@ -65,7 +65,7 @@ def test_context_data_normalize_and_json_checks() -> None:
     check_result = FlextModelsContext.ContextData.check_json_serializable(
         cast("t.NormalizedValue | BaseModel", {"k": [1, "x"]})
     )
-    tm.that(check_result is None, eq=True)
+    tm.that(check_result, none=True)
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
             cast("t.NormalizedValue | BaseModel", {"normalized"})
@@ -80,7 +80,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast("t.Dict | Mapping[str, t.Scalar] | BaseModel | None", "123")
         )
-    tm.that(exc_info.value is not None, eq=True)
+    tm.that(exc_info.value, none=False)
     with pytest.raises(TypeError) as exc_info2:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
@@ -88,7 +88,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
                 cast("t.NormalizedValue", _ModelWithNoCallableDump()),
             )
         )
-    tm.that(exc_info2.value is not None, eq=True)
+    tm.that(exc_info2.value, none=False)
     metadata_input = FlextModelFoundation.Metadata(attributes={"a": 1})
     result = FlextModelsContext.ContextData.validate_dict_serializable(metadata_input)
     tm.that(result, eq={"a": 1})
@@ -132,7 +132,7 @@ def test_context_export_serializable_and_validators() -> None:
     check_result = FlextModelsContext.ContextData.check_json_serializable(
         cast("t.NormalizedValue | BaseModel", {"k": [1, True]})
     )
-    tm.that(check_result is None, eq=True)
+    tm.that(check_result, none=True)
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextData.check_json_serializable(
             cast("t.NormalizedValue | BaseModel", {"normalized"})

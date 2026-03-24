@@ -39,10 +39,10 @@ def test_init_fallback_and_lazy_returns_result_property() -> None:
     tm.ok(fallback)
     tm.that(fallback.value, eq=9)
     lazy_ok = r[int](value=5, is_success=True)
-    tm.that(lazy_ok._result is None, eq=True)
+    tm.that(lazy_ok._result, none=True)
     _ = lazy_ok._returns_result
     lazy_fail = r[int](error="nope", is_success=False)
-    tm.that(lazy_fail._result is None, eq=True)
+    tm.that(lazy_fail._result, none=True)
     _ = lazy_fail._returns_result
 
 
@@ -94,14 +94,14 @@ def test_from_validation_and_to_model_paths() -> None:
         TestUnitModels._ErrorsModel,
     )
     tm.fail(err_result)
-    tm.that("Validation failed" in (err_result.error or ""), eq=True)
-    tm.that("bad value" in (err_result.error or ""), eq=True)
+    tm.that((err_result.error or ""), has="Validation failed")
+    tm.that((err_result.error or ""), has="bad value")
     plain_result = r[TestUnitModels._PlainErrorModel].from_validation(
         {"value": "x"},
         TestUnitModels._PlainErrorModel,
     )
     tm.fail(plain_result)
-    tm.that("plain boom" in (plain_result.error or ""), eq=True)
+    tm.that((plain_result.error or ""), has="plain boom")
     failure_to_model = (
         r[Mapping[str, int]]
         .fail("already failed")
@@ -128,7 +128,7 @@ def test_from_validation_and_to_model_paths() -> None:
         )
     )
     tm.fail(invalid_to_model)
-    tm.that("Model conversion failed" in (invalid_to_model.error or ""), eq=True)
+    tm.that((invalid_to_model.error or ""), has="Model conversion failed")
 
 
 def test_lash_runtime_result_paths() -> None:

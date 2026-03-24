@@ -66,7 +66,6 @@ class FlextConstantsInfrastructure:
     SENTINEL_MISSING: Final[str] = "__sentinel_missing__"
     """Sentinel value to distinguish 'not provided' from None in context operations."""
 
-    DEFAULT_WORKERS: Final[int] = 4
     TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
     MIN_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.MIN_TIMEOUT_SECONDS
     MAX_TIMEOUT_SECONDS: Final[int] = 300

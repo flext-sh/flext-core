@@ -100,7 +100,7 @@ class TestCoverageLoggings:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123", user_id="usr-456")
         context = FlextLogger._get_global_context()
-        tm.that(context, is_=t.ConfigMap)
+        tm.that(isinstance(context, t.ConfigMap), eq=True)
 
     def test_unbind_global_context_specific_key(self) -> None:
         """Test unbind_global_context with valid keys."""
@@ -113,7 +113,7 @@ class TestCoverageLoggings:
         """Test _get_global_context with empty context."""
         FlextLogger.clear_global_context()
         result = FlextLogger._get_global_context()
-        tm.that(result, is_=t.ConfigMap)
+        tm.that(isinstance(result, t.ConfigMap), eq=True)
         tm.that(result.root, eq={})
 
     def test_get_global_context_with_values(self) -> None:
@@ -121,7 +121,7 @@ class TestCoverageLoggings:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(test_key="test_value")
         result = FlextLogger._get_global_context()
-        tm.that(result, is_=t.ConfigMap)
+        tm.that(isinstance(result, t.ConfigMap), eq=True)
         tm.that(result.root, has="test_key")
         tm.that(result.root["test_key"], eq="test_value")
 

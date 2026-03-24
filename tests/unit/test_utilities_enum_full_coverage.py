@@ -122,7 +122,7 @@ class TestUtilitiesEnumFullCoverage:
         err_member = dynamic_status.__members__["ERR"]
         tm.that(ok_member.value, eq="ok")
         tm.that(err_member.value, eq="err")
-        tm.that(ok_member in dynamic_status.__members__.values(), eq=True)
+        tm.that(dynamic_status.__members__.values(), has=ok_member)
 
     def test_shortcuts_delegate_to_primary_methods(self) -> None:
         tm.that(u.is_member(self.Status, "active"), eq=True)

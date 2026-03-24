@@ -163,7 +163,7 @@ class TestFlextContext:
         context.set("key2", "value2").value
         tm.that(all(context.has(k) for k in ["key1", "key2"]), eq=True)
         context.clear()
-        tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
+        tm.that(any(context.has(k) for k in ["key1", "key2"]), eq=False)
 
     def test_context_keys_values_items(self, test_context: FlextContext) -> None:
         """Test context keys, values, and items operations."""
@@ -239,7 +239,7 @@ class TestFlextContext:
         tm.that(error_message, none=False)
         if error_message is None:
             pytest.fail("Expected error message for invalid context key")
-        tm.that("must be a non-empty string" in error_message, eq=True)
+        tm.that(error_message, has="must be a non-empty string")
 
     def test_context_thread_safety(self, test_context: FlextContext) -> None:
         """Test context thread safety."""
@@ -268,7 +268,7 @@ class TestFlextContext:
             context.set(f"key_{i}", f"value_{i}")
             result = context.get(f"key_{i}")
             _ = u.Tests.Result.assert_success(result)
-        tm.that(time.time() - start_time < 30.0, eq=True)
+        tm.that(time.time() - start_time, lt=30.0)
 
     def test_context_error_handling(self, test_context: FlextContext) -> None:
         """Test context error handling with r pattern."""
@@ -279,7 +279,7 @@ class TestFlextContext:
         tm.that(error_message, none=False)
         if error_message is None:
             pytest.fail("Expected error message for invalid context key")
-        tm.that("must be a non-empty string" in error_message, eq=True)
+        tm.that(error_message, has="must be a non-empty string")
 
     @pytest.mark.parametrize(("scope", "value"), ContextScenarios.SCOPE_CASES)
     def test_context_scoped_access(
@@ -314,7 +314,7 @@ class TestFlextContext:
         context.set("key2", "value2").value
         tm.that(all(context.has(k) for k in ["key1", "key2"]), eq=True)
         context.clear()
-        tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
+        tm.that(any(context.has(k) for k in ["key1", "key2"]), eq=False)
 
     @pytest.mark.parametrize(
         ("key_name", "special_key"), ContextScenarios.EDGE_CASE_KEYS
@@ -573,7 +573,7 @@ class TestFlextContext:
         context.set("key1", "value1").value
         context.get("key1")
         context.has("key1")
-        tm.that(time.time() - start_time >= 0, eq=True)
+        tm.that(time.time() - start_time, gte=0)
         tm.that(context.has("key1"), eq=True)
 
     def test_context_multiple_scopes_isolation(

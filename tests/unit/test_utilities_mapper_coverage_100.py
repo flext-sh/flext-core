@@ -198,7 +198,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(u.take(items, 2, from_start=False), eq=[4, 5])
             d: Mapping[str, t.Container] = {"a": 1, "b": 2, "c": 3}
             taken = u.take(d, 2)
-            tm.that(taken, is_=dict)
+            tm.that(isinstance(taken, dict), eq=True)
             tm.that(len(taken), eq=2)
             assert "a" in taken and "b" in taken
 
@@ -221,7 +221,7 @@ class UtilitiesMapperCoverage100Namespace:
             """Test as_ type conversion."""
             tm.that(u.as_("123", int), eq=123)
             converted = u.as_("12.3", float)
-            tm.that(converted, is_=float)
+            tm.that(isinstance(converted, float), eq=True)
             assert isinstance(converted, float)
             assert abs(converted - 12.3) < 1e-9
             assert u.as_("true", bool) is True

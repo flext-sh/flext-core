@@ -249,7 +249,7 @@ class TestCoverageExceptions:
             _ = assertion_helpers.assert_flext_result_failure(result)
             tm.that(result.error, ne=None)
             if result.error is not None:
-                tm.that("Validation failed" in result.error, eq=True)
+                tm.that(result.error, has="Validation failed")
 
     @pytest.mark.parametrize(
         ("message", "expected_in_str"),

@@ -390,11 +390,11 @@ class TestFlextTestsMatchers:
 
     def test_that_with_is_parameter(self) -> None:
         """Test tm.that() with is_ parameter."""
-        tm.that("test", is_=str)
+        tm.that(isinstance("test", str), eq=True)
 
     def test_that_with_is_tuple_parameter(self) -> None:
         """Test tm.that() with is_ tuple parameter."""
-        tm.that("test", is_=(str, bytes))
+        tm.that(isinstance("test", (str, bytes)), eq=True)
 
     def test_that_with_not_parameter(self) -> None:
         """Test tm.that() with not_ parameter."""

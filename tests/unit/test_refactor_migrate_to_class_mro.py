@@ -41,11 +41,7 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
         "VALUE: Final[int] = 42" in constants_source.split("class SampleConstants:")[0],
         eq=False,
     )
-    tm.that(
-        "VALUE: Final[int] = 42"
-        in constants_source.split("class SampleConstants:", maxsplit=1)[1],
-        eq=True,
-    )
+    tm.that(constants_source.split("class SampleConstants:", maxsplit=1)[1], has="VALUE: Final[int] = 42")
     tm.that(consumer_source, has="from sample_pkg.constants import c")
     tm.that(consumer_source, has="result = c.VALUE")
 
@@ -155,11 +151,7 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
         in typings_source.split("class SampleTypes:", maxsplit=1)[0],
         eq=False,
     )
-    tm.that(
-        "ValueType: TypeAlias = str | int"
-        in typings_source.split("class SampleTypes:", maxsplit=1)[1],
-        eq=True,
-    )
+    tm.that(typings_source.split("class SampleTypes:", maxsplit=1)[1], has="ValueType: TypeAlias = str | int")
     tm.that(consumer_source, has="from sample_pkg.typings import t")
     tm.that(consumer_source, has="value: t.ValueType = 1")
 
@@ -194,11 +186,7 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
         in protocols_source.split("class SampleProtocols:", maxsplit=1)[0],
         eq=False,
     )
-    tm.that(
-        "class Greeter(Protocol):"
-        in protocols_source.split("class SampleProtocols:", maxsplit=1)[1],
-        eq=True,
-    )
+    tm.that(protocols_source.split("class SampleProtocols:", maxsplit=1)[1], has="class Greeter(Protocol):")
     tm.that(consumer_source, has="from sample_pkg.protocols import p")
     tm.that(consumer_source, has="def call_greet(protocol: p.Greeter) -> str:")
 
@@ -227,7 +215,7 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
         )
     discovered = FlextInfraUtilitiesIteration.iter_python_files(workspace_root=tmp_path)
     tm.ok(discovered)
-    tm.that(set(discovered.value) == set(expected_paths), eq=True)
+    tm.that(set(discovered.value), eq=set(expected_paths))
 
 
 def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
@@ -277,9 +265,6 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
     tm.that(
         "VALUE = 42" in constants_source.split("class SampleConstants:")[0], eq=False
     )
-    tm.that(
-        "VALUE = 42" in constants_source.split("class SampleConstants:", maxsplit=1)[1],
-        eq=True,
-    )
+    tm.that(constants_source.split("class SampleConstants:", maxsplit=1)[1], has="VALUE = 42")
     tm.that(consumer_source, has="from sample_pkg.constants import c")
     tm.that(consumer_source, has="result = c.VALUE")

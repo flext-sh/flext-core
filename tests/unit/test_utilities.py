@@ -426,7 +426,7 @@ class Testu(TextUtilityContract):
     ) -> None:
         """Property: u.empty always returns bool."""
         result = u.empty(value)
-        tm.that(result, is_=bool)
+        tm.that(isinstance(result, bool), eq=True)
 
     @given(st.text())
     def test_hypothesis_generate_always_non_empty(self, _value: str) -> None:

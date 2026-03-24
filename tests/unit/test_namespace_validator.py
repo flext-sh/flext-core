@@ -42,7 +42,7 @@ class TestFlextInfraNamespaceValidator:
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
         tm.that(result.value.passed, eq=True)
-        tm.that(result.value.violations == [], eq=True)
+        tm.that(result.value.violations, eq=[])
 
     def test_rule0_multiple_classes_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -53,7 +53,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any("Multiple outer classes found" in v for v in result.value.violations),
             eq=True,
@@ -68,7 +68,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any("No outer class found" in v for v in result.value.violations), eq=True
         )
@@ -82,7 +82,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any(
                 "does not start with prefix 'FlextTest'" in v
@@ -100,7 +100,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any(
                 "Disallowed top-level statement: FunctionDef" in v
@@ -130,7 +130,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any("Loose Final constant" in v for v in result.value.violations), eq=True
         )
@@ -144,7 +144,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any("Multiple outer classes found" in v for v in result.value.violations),
             eq=True,
@@ -159,7 +159,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any(
                 "Method 'create_name' found in Constants class" in v
@@ -177,7 +177,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any("Loose collection constant" in v for v in result.value.violations),
             eq=True,
@@ -204,7 +204,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any("must inherit from a Types base" in v for v in result.value.violations),
             eq=True,
@@ -219,7 +219,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any(
                 "TypeVar 'T' belongs in typings.py" in v
@@ -237,7 +237,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any(
                 "TypeAlias 'LooseTypeAlias' belongs in typings.py" in v
@@ -255,7 +255,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(not result.value.passed, eq=True)
+        tm.that(result.value.passed, eq=False)
         tm.that(
             any(
                 "Inner class 'ProtocolInsideTypes'" in v
@@ -284,8 +284,8 @@ class TestFlextInfraNamespaceValidator:
         result = validator.validate(project_root)
         tm.that(result.is_success, eq=True)
         tm.that(result.value.passed, eq=True)
-        tm.that(result.value.violations == [], eq=True)
-        tm.that("0 files checked" in result.value.summary, eq=True)
+        tm.that(result.value.violations, eq=[])
+        tm.that(result.value.summary, has="0 files checked")
 
     def test_validate_returns_report(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -297,7 +297,7 @@ class TestFlextInfraNamespaceValidator:
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
         tm.that(isinstance(result.value, m.Infra.ValidationReport), eq=True)
-        tm.that("files checked" in result.value.summary, eq=True)
+        tm.that(result.value.summary, has="files checked")
 
     def test_violation_message_format(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -310,7 +310,4 @@ class TestFlextInfraNamespaceValidator:
         tm.that(result.is_success, eq=True)
         tm.that(len(result.value.violations), gt=0)
         first = result.value.violations[0]
-        tm.that(
-            re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first) is not None,
-            eq=True,
-        )
+        tm.that(re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first), none=False)
