@@ -544,7 +544,8 @@ class TestContainerFullCoverage:
             if "config.alpha" in registered:
                 alpha_factory = registered["config.alpha"]
                 assert callable(alpha_factory) and isinstance(
-                    alpha_factory(), BaseModel,
+                    alpha_factory(),
+                    BaseModel,
                 )
             if "config.beta" in registered:
                 beta_factory = registered["config.beta"]

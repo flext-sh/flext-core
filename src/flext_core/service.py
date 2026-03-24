@@ -85,13 +85,16 @@ class FlextService[
         Field(default=None, exclude=True),
     ] = None
     wire_modules: Annotated[
-        Sequence[ModuleType] | None, Field(default=None, exclude=True),
+        Sequence[ModuleType] | None,
+        Field(default=None, exclude=True),
     ] = None
     wire_packages: Annotated[
-        t.StrSequence | None, Field(default=None, exclude=True),
+        t.StrSequence | None,
+        Field(default=None, exclude=True),
     ] = None
     wire_classes: Annotated[
-        Sequence[type] | None, Field(default=None, exclude=True),
+        Sequence[type] | None,
+        Field(default=None, exclude=True),
     ] = None
 
     # --- Internal State ---
