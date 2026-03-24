@@ -146,7 +146,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            given_converted: Mapping[str, t.Scalar] = {
+            given_converted: core_t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
             when_mapped = u.transform_values(
@@ -157,7 +157,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            when_converted: Mapping[str, t.Scalar] = {
+            when_converted: core_t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
             then_mapped = u.transform_values(
@@ -168,7 +168,7 @@ class TestAdvancedPatterns:
                 ).value,
                 convert_dict_value,
             )
-            then_converted: Mapping[str, t.Scalar] = {
+            then_converted: core_t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in then_mapped.items()
             }
             scenario_data = m.Core.MockScenarioData.model_validate(

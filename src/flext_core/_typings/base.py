@@ -30,6 +30,11 @@ class FlextTypingBase:
     type MutableContainerMapping = MutableMapping[str, NormalizedValue]
     type MutableContainerList = MutableSequence[NormalizedValue]
 
+    # Flat (non-recursive) mapping/list aliases for high-frequency patterns
+    type StrMapping = Mapping[str, str]
+    type ScalarMapping = Mapping[str, Scalar]
+    type ScalarList = Sequence[Scalar]
+
     class ContainerMappingBase(Mapping[str, "FlextTypingBase.NormalizedValue"]):
         """Concrete base for Mapping[str, NormalizedValue] inheritance.
 

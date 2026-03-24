@@ -169,7 +169,7 @@ class TestRuntimeCoverage100:
         """Test level_based_context_filter with malformed prefix."""
         FlextRuntime.configure_structlog()
         malformed_key = "_level_"
-        event_dict: Mapping[str, t.Scalar] = {
+        event_dict: t.ConfigurationMapping = {
             malformed_key: "value1",
             "normal_key": "value2",
         }
