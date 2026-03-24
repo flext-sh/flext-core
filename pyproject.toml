@@ -588,7 +588,7 @@ indent-style = "space"
 line-ending = "lf"
 quote-style = "double"
 [tool.pyright]
-extraPaths = [ ".", "../typings", "../typings/generated", "examples", "src", "tests" ]
+extraPaths = [".", "../typings", "../typings/generated", "examples", "src", "tests", "../flext-tests/src", "../flext-infra/src"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
