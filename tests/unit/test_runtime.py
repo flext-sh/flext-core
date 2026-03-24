@@ -103,7 +103,7 @@ class TestFlextRuntime:
         """Runtime test case definition with parametrization data."""
 
         name: str
-        operation: StrEnum
+        operation: TestFlextRuntime.RuntimeOperationType
         test_input: (
             t.NormalizedValue
             | type[t.NormalizedValue]

@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Annotated, Any, ClassVar, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from flext_tests import c, t, tm, u
@@ -32,92 +32,91 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, p, r
 
-ServiceScenario: Any = cast("Any", None)
-TypedRetrievalScenario: Any = cast("Any", None)
+
+class _ServiceScenario(BaseModel):
+    """Test scenario for service registration and retrieval."""
+
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        frozen=True, arbitrary_types_allowed=True
+    )
+    name: Annotated[str, Field(description="Service scenario name")]
+    service: Annotated[t.Primitives, Field(description="Service value to register")]
+    description: Annotated[
+        str, Field(default="", description="Scenario description")
+    ] = ""
+
+
+class _TypedRetrievalScenario(BaseModel):
+    """Test scenario for typed service retrieval."""
+
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        frozen=True, arbitrary_types_allowed=True
+    )
+    name: Annotated[str, Field(description="Typed retrieval scenario name")]
+    service: Annotated[t.Primitives, Field(description="Registered service value")]
+    expected_type: Annotated[type, Field(description="Expected service type")]
+    should_pass: Annotated[
+        bool, Field(description="Whether typed retrieval should succeed")
+    ]
+    description: Annotated[
+        str, Field(default="", description="Scenario description")
+    ] = ""
+
+
+class _ContainerScenarios:
+    """Centralized container test scenarios using c."""
+
+    SERVICE_SCENARIOS: ClassVar[Sequence[_ServiceScenario]] = [
+        _ServiceScenario(
+            name="test_service",
+            service="test_service_value",
+            description="Simple string service",
+        ),
+        _ServiceScenario(
+            name="service_instance",
+            service=42,
+            description="Integer service instance",
+        ),
+        _ServiceScenario(
+            name="string_service",
+            service="test_value",
+            description="String service",
+        ),
+    ]
+    TYPED_RETRIEVAL_SCENARIOS: ClassVar[Sequence[_TypedRetrievalScenario]] = [
+        _TypedRetrievalScenario(
+            name="dict_service",
+            service="test_dict_service",
+            expected_type=str,
+            should_pass=True,
+            description="String service",
+        ),
+        _TypedRetrievalScenario(
+            name="string_service",
+            service="test_string",
+            expected_type=str,
+            should_pass=True,
+            description="String service",
+        ),
+        _TypedRetrievalScenario(
+            name="list_service",
+            service=123,
+            expected_type=int,
+            should_pass=True,
+            description="Integer service for typed retrieval",
+        ),
+    ]
+    CONFIG_SCENARIOS: ClassVar[Sequence[Mapping[str, t.Scalar]]] = [
+        {"max_workers": 8, "timeout_seconds": 60.0},
+        {"invalid_key": "value", "another_invalid": 42},
+        {},
+    ]
+
+
+ContainerScenarios = _ContainerScenarios
 
 
 class TestFlextContainer:
-    class ServiceScenario(BaseModel):
-        """Test scenario for service registration and retrieval."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
-        )
-        name: Annotated[str, Field(description="Service scenario name")]
-        service: Annotated[t.Primitives, Field(description="Service value to register")]
-        description: Annotated[
-            str, Field(default="", description="Scenario description")
-        ] = ""
-
-    class TypedRetrievalScenario(BaseModel):
-        """Test scenario for typed service retrieval."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
-        )
-        name: Annotated[str, Field(description="Typed retrieval scenario name")]
-        service: Annotated[t.Primitives, Field(description="Registered service value")]
-        expected_type: Annotated[type, Field(description="Expected service type")]
-        should_pass: Annotated[
-            bool, Field(description="Whether typed retrieval should succeed")
-        ]
-        description: Annotated[
-            str, Field(default="", description="Scenario description")
-        ] = ""
-
-    globals()["ServiceScenario"] = ServiceScenario
-    globals()["TypedRetrievalScenario"] = TypedRetrievalScenario
-
-    class ContainerScenarios:
-        """Centralized container test scenarios using c."""
-
-        SERVICE_SCENARIOS: ClassVar[Sequence[TestFlextContainer.ServiceScenario]] = [
-            ServiceScenario(
-                name="test_service",
-                service="test_service_value",
-                description="Simple string service",
-            ),
-            ServiceScenario(
-                name="service_instance",
-                service=42,
-                description="Integer service instance",
-            ),
-            ServiceScenario(
-                name="string_service",
-                service="test_value",
-                description="String service",
-            ),
-        ]
-        TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            Sequence[TestFlextContainer.TypedRetrievalScenario]
-        ] = [
-            TypedRetrievalScenario(
-                name="dict_service",
-                service="test_dict_service",
-                expected_type=str,
-                should_pass=True,
-                description="String service",
-            ),
-            TypedRetrievalScenario(
-                name="string_service",
-                service="test_string",
-                expected_type=str,
-                should_pass=True,
-                description="String service",
-            ),
-            TypedRetrievalScenario(
-                name="list_service",
-                service=123,
-                expected_type=int,
-                should_pass=True,
-                description="Integer service for typed retrieval",
-            ),
-        ]
-        CONFIG_SCENARIOS: ClassVar[Sequence[Mapping[str, t.Scalar]]] = [
-            {"max_workers": 8, "timeout_seconds": 60.0},
-            {"invalid_key": "value", "another_invalid": 42},
-            {},
-        ]
 
     def test_container_initialization(self, clean_container: p.Container) -> None:
         """Test container initialization creates valid instance using fixtures."""
@@ -155,7 +154,7 @@ class TestFlextContainer:
     )
     def test_register_service(
         self,
-        scenario: TestFlextContainer.ServiceScenario,
+        scenario: _ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test service registration with various types using fixtures."""
@@ -167,7 +166,7 @@ class TestFlextContainer:
     )
     def test_with_service_fluent(
         self,
-        scenario: TestFlextContainer.ServiceScenario,
+        scenario: _ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
@@ -273,7 +272,7 @@ class TestFlextContainer:
     )
     def test_get_service(
         self,
-        scenario: TestFlextContainer.ServiceScenario,
+        scenario: _ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Test service retrieval using fixtures."""
@@ -316,7 +315,7 @@ class TestFlextContainer:
     )
     def test_get_typed_correct(
         self,
-        scenario: TestFlextContainer.TypedRetrievalScenario,
+        scenario: _TypedRetrievalScenario,
         clean_container: p.Container,
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""

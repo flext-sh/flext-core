@@ -552,14 +552,14 @@ class TestFlextHandlers:
         result = handler.validate_message(msg)
         _ = u.Tests.Result.assert_success(result)
 
-    @given(st.text(min_size=1).filter(lambda s: s.strip()))
+    @given(st.text(min_size=1))
     def test_create_from_callable_hypothesis(self, handler_name: str) -> None:
         """Property: create_from_callable works with any non-empty name."""
         handler = FlextHandlers.create_from_callable(
             handler_callable=lambda value: str(value),
             handler_name=handler_name,
         )
-        tm.that(handler.handler_name, eq=handler_name.strip())
+        tm.that(handler.handler_name, eq=handler_name)
         tm.ok(handler.execute("x"), eq="x")
 
 

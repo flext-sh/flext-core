@@ -34,30 +34,33 @@ from flext_core import r
 from ..test_utils import assertion_helpers
 
 
-class Testr:
-    @unique
-    class ResultOperationType(StrEnum):
-        """Result operation test scenario types."""
+@unique
+class ResultOperationType(StrEnum):
+    """Result operation test scenario types."""
 
-        CREATION_SUCCESS = "creation_success"
-        CREATION_FAILURE = "creation_failure"
-        UNWRAP = "unwrap"
-        UNWRAP_OR = "unwrap_or"
-        MAP = "map"
-        FLAT_MAP = "flat_map"
-        FILTER = "filter"
-        ALT = "alt"
-        LASH = "lash"
-        OR_OPERATOR = "or_operator"
-        BOOL_CONVERSION = "bool_conversion"
-        RAILWAY_COMPOSITION = "railway_composition"
+    CREATION_SUCCESS = "creation_success"
+    CREATION_FAILURE = "creation_failure"
+    UNWRAP = "unwrap"
+    UNWRAP_OR = "unwrap_or"
+    MAP = "map"
+    FLAT_MAP = "flat_map"
+    FILTER = "filter"
+    ALT = "alt"
+    LASH = "lash"
+    OR_OPERATOR = "or_operator"
+    BOOL_CONVERSION = "bool_conversion"
+    RAILWAY_COMPOSITION = "railway_composition"
+
+
+class Testr:
+    ResultOperationType = ResultOperationType
 
     class ResultScenario(BaseModel):
         """Generic result scenario for r tests."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Result scenario name")]
-        operation_type: Annotated[StrEnum, Field(description="Result operation type")]
+        operation_type: Annotated[ResultOperationType, Field(description="Result operation type")]
         value: Annotated[
             t.NormalizedValue, Field(description="Input value for result operation")
         ]
@@ -72,7 +75,7 @@ class Testr:
         def __init__(
             self,
             name: str,
-            operation_type: StrEnum,
+            operation_type: ResultOperationType,
             value: t.NormalizedValue,
             *,
             is_success_expected: bool = True,

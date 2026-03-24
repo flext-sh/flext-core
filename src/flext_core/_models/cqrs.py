@@ -35,7 +35,7 @@ class FlextModelsCqrs:
     directly via FlextModelsCqrs.*
     """
 
-    class Command(FlextModelFoundation.FlexibleInternalModel):
+    class Command(FlextModelFoundation.ArbitraryTypesModel):
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
@@ -233,7 +233,7 @@ class FlextModelsCqrs:
                 return pagination_cls()
             return validate_result.value
 
-    class Bus(FlextModelFoundation.FlexibleInternalModel):
+    class Bus(FlextModelFoundation.ArbitraryTypesModel):
         """Dispatcher configuration model for CQRS routing."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -277,7 +277,7 @@ class FlextModelsCqrs:
             ),
         ] = c.DEFAULT_DISPATCHER_PATH
 
-    class Handler(FlextModelFoundation.FlexibleInternalModel):
+    class Handler(FlextModelFoundation.ArbitraryTypesModel):
         """Handler configuration model with Builder pattern support."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -327,21 +327,6 @@ class FlextModelsCqrs:
                 description="Handler metadata (Pydantic model)",
             ),
         ] = None
-
-        class ConfigParams(FlextModelFoundation.ArbitraryTypesModel):
-            """Parameter t.NormalizedValue for handler configuration (reduces parameter count)."""
-
-            model_config: ClassVar[ConfigDict] = ConfigDict(
-                json_schema_extra={
-                    "title": "HandlerConfigParams",
-                    "description": "Parameter t.NormalizedValue for handler configuration",
-                },
-            )
-            default_name: str | None = None
-            default_id: str | None = None
-            handler_config: t.ConfigMap | None = None
-            command_timeout: int = 0
-            max_command_retries: int = 0
 
         class Builder:
             """Builder pattern for Handler (reduces 8 params to fluent API).
@@ -406,7 +391,7 @@ class FlextModelsCqrs:
                 self._data.root["command_timeout"] = timeout
                 return self
 
-    class Event(FlextModelFoundation.FlexibleInternalModel):
+    class Event(FlextModelFoundation.ArbitraryTypesModel):
         """Event model for CQRS event operations.
 
         Events represent domain events that occur as a result of command execution.
@@ -478,7 +463,7 @@ class FlextModelsCqrs:
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)
 
-    class HandlerBatchRegistrationResult(FlextModelFoundation.FlexibleInternalModel):
+    class HandlerBatchRegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
         """Result of batch handler registration."""
 
         status: str

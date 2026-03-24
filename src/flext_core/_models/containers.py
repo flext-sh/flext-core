@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
     ItemsView,
     Mapping,
     MutableMapping,
@@ -45,25 +44,6 @@ class FlextModelsContainers:
             ),
         ]
 
-    class ServiceMap(t.RootDictModel[type[BaseModel] | Callable[..., BaseModel]]):
-        """Service registry map container. Use ``m.ServiceMap``."""
-
-        # Used by: exported alias surface in `flext_core/models.py`; no direct runtime
-        # constructor usage currently found by ast-grep. Intended payload represents
-        # service classes or service factory callables, not generic container values.
-
-        root: Annotated[
-            MutableMapping[str, type[BaseModel] | Callable[..., BaseModel]],
-            Field(
-                default_factory=dict,
-                title="Service Registry Map",
-                description="Service registry entries keyed by service identifiers.",
-                examples=[
-                    {"user_service": "UserService", "session_factory": "build_session"},
-                ],
-            ),
-        ]
-
     class ErrorMap(t.RootDictModel[int | str | BaseModel]):
         """Error type mapping container.
 
@@ -77,38 +57,6 @@ class FlextModelsContainers:
                 title="Error Map",
                 description="Error catalog mapping keys to codes, messages, or nested code maps.",
                 examples=[{"user_missing": 404, "bad_input": "invalid data"}],
-            ),
-        ]
-
-    class FactoryMap(t.RootDictModel[t.FactoryCallable]):
-        """Map of factory registration callables.
-
-        Replaces: Mapping[str, FactoryRegistrationCallable]
-        """
-
-        root: Annotated[
-            MutableMapping[str, t.FactoryCallable],
-            Field(
-                default_factory=dict,
-                title="Factory Map",
-                description="Factory callables keyed by registration name.",
-                examples=[{"db_client": "create_db_client"}],
-            ),
-        ]
-
-    class ResourceMap(t.RootDictModel[t.ResourceCallable]):
-        """Map of resource callables.
-
-        Replaces: Mapping[str, ResourceCallable]
-        """
-
-        root: Annotated[
-            MutableMapping[str, t.ResourceCallable],
-            Field(
-                default_factory=dict,
-                title="Resource Map",
-                description="Lifecycle resource factories keyed by resource name.",
-                examples=[{"connection": "open_connection"}],
             ),
         ]
 
