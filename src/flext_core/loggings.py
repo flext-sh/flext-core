@@ -17,12 +17,11 @@ import time
 import traceback
 import types
 import warnings
-from collections.abc import (
+from collections.abc import (, Mapping, MutableMapping, MutableSequence
     Generator,
     Mapping,
     MutableMapping,
     MutableSequence,
-    Sequence,
 )
 from contextlib import contextmanager, suppress
 from pathlib import Path
@@ -547,7 +546,7 @@ class FlextLogger(u, p.Logger):
 
         """
         try:
-            unbind_keys: Sequence[str] = [str(key) for key in keys]
+            unbind_keys: t.StrSequence = [str(key) for key in keys]
             u.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
@@ -1105,4 +1104,4 @@ class FlextLogger(u, p.Logger):
                 )
 
 
-__all__: Sequence[str] = ["FlextLogger"]
+__all__: t.StrSequence = ["FlextLogger"]

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import override
 
@@ -134,7 +134,7 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
     def _demonstrate_environment_config() -> r[bool]:
         """Show environment variable configuration with railway pattern."""
 
-        def set_env_vars() -> r[Mapping[str, str]]:
+        def set_env_vars() -> r[t.StrMapping]:
             """Set environment variables safely."""
             env_vars = {
                 "FLEXT_DEBUG": "true",
@@ -143,9 +143,9 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
             }
             for key, value in env_vars.items():
                 os.environ[key] = value
-            return r[Mapping[str, str]].ok(env_vars)
+            return r[t.StrMapping].ok(env_vars)
 
-        def create_and_display_config(env_vars: Mapping[str, str]) -> r[bool]:
+        def create_and_display_config(env_vars: t.StrMapping) -> r[bool]:
             """Create config from env vars and display."""
             print("\n=== Environment Configuration ===")
             env_config = AppConfig()

@@ -49,7 +49,7 @@ def get_user(user_id: str) -> r[User]:
     pass
 
 
-def process_items(items: Sequence[str], multiplier: int = 1) -> Sequence[int]:
+def process_items(items: t.StrSequence, multiplier: int = 1) -> Sequence[int]:
     """Process items."""
     return [len(item) * multiplier for item in items]
 
@@ -79,7 +79,7 @@ def process_users(users: Sequence[User]) -> Mapping[str, User]:
     pass
 
 
-def get_first_or_default(items: Sequence[str], default: str) -> str:
+def get_first_or_default(items: t.StrSequence, default: str) -> str:
     pass
 
 

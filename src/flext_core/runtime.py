@@ -26,7 +26,7 @@ import sys
 import threading
 import typing
 import uuid
-from collections.abc import (
+from collections.abc import (, MutableMapping, MutableSequence, Sequence
     Callable,
     Mapping,
     MutableMapping,
@@ -961,7 +961,7 @@ class FlextRuntime:
             container: containers.DeclarativeContainer | containers.DynamicContainer,
             *,
             modules: Sequence[ModuleType] | None = None,
-            packages: Sequence[str] | None = None,
+            packages: t.StrSequence | None = None,
             classes: Sequence[type] | None = None,
         ) -> None:
             """Wire modules or packages to a DeclarativeContainer or DynamicContainer for @inject usage.
@@ -971,8 +971,8 @@ class FlextRuntime:
 
             Note: packages parameter is accepted for API compatibility but not used internally.
             wiring.wire's packages parameter expects Iterable[Module] (module objects),
-            but we accept Sequence[str] (package names). The actual wiring is handled by modules parameter.
-            For now, we pass None for packages when it's a Sequence[str] to avoid type errors.
+            but we accept t.StrSequence (package names). The actual wiring is handled by modules parameter.
+            For now, we pass None for packages when it's a t.StrSequence to avoid type errors.
             The actual wiring will be handled by modules parameter.
             """
             modules_to_wire: MutableSequence[ModuleType] = list(modules or [])
@@ -1388,7 +1388,7 @@ class FlextRuntime:
             include_timestamp: If True, ensure timestamp exists
 
         Returns:
-            Mapping[str, str]: Enriched context with trace fields
+            t.StrMapping: Enriched context with trace fields
 
         """
         context_dict = t.ConfigMap(root={})
@@ -1533,7 +1533,7 @@ class FlextRuntime:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: Sequence[int] | Sequence[str] | Sequence[int | str],
+        codes: Sequence[int] | t.StrSequence | Sequence[int | str],
         min_code: int | None = None,
         max_code: int | None = None,
     ) -> RuntimeResult[Sequence[int]]:

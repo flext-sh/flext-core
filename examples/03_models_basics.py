@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from decimal import Decimal
 from typing import Annotated, override
 
@@ -160,9 +159,9 @@ def demonstrate_advanced_pydantic_mixins() -> None:
 
         name: str
         description: str | None = None
-        tags: Sequence[str] = Field(default_factory=list)
-        categories: Sequence[str] = Field(default_factory=list)
-        labels: Mapping[str, str] = Field(default_factory=dict)
+        tags: t.StrSequence = Field(default_factory=list)
+        categories: t.StrSequence = Field(default_factory=list)
+        labels: t.StrMapping = Field(default_factory=dict)
         is_deleted: bool = False
 
         @model_validator(mode="after")

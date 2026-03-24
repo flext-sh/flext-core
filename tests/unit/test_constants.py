@@ -44,10 +44,10 @@ class TestConstants:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
         valid_cases: Annotated[
-            Sequence[str], Field(description="Inputs expected to match the pattern")
+            t.StrSequence, Field(description="Inputs expected to match the pattern")
         ]
         invalid_cases: Annotated[
-            Sequence[str], Field(description="Inputs expected to fail the pattern")
+            t.StrSequence, Field(description="Inputs expected to fail the pattern")
         ]
 
     CORE_CONSTANT_PATHS: ClassVar[Sequence[ConstantPathScenario]] = [
@@ -141,7 +141,7 @@ class TestConstants:
         (c.DEFAULT_LEVEL, str),
         (c.FLEXT_API_PORT, int),
     ]
-    TYPE_CHECK_IDS: ClassVar[Sequence[str]] = [
+    TYPE_CHECK_IDS: ClassVar[t.StrSequence] = [
         "name_str",
         "network_min_port_int",
         "network_max_port_int",
@@ -149,7 +149,7 @@ class TestConstants:
         "logging_default_level_str",
         "platform_flext_api_port_int",
     ]
-    REQUIRED_ATTRIBUTES: ClassVar[Sequence[str]] = [
+    REQUIRED_ATTRIBUTES: ClassVar[t.StrSequence] = [
         "MIN_PORT",
         "MAX_PORT",
         "MIN_NAME_LENGTH",
@@ -170,7 +170,7 @@ class TestConstants:
         "DEFAULT_PAGE_SIZE",
         "ErrorType",
     ]
-    LOG_LEVELS: ClassVar[Sequence[str]] = [
+    LOG_LEVELS: ClassVar[t.StrSequence] = [
         "DEBUG",
         "INFO",
         "WARNING",

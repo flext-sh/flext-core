@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
+from collections.abc import (, Mapping, MutableMapping, Sequence
     ItemsView,
     Mapping,
     MutableMapping,

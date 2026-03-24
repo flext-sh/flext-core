@@ -67,10 +67,10 @@ class TestDocumentedPatterns:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
         user_ids: Annotated[
-            Sequence[str], Field(description="User identifiers used in pipeline")
+            t.StrSequence, Field(description="User identifiers used in pipeline")
         ]
         operations: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(default_factory=list, description="Pipeline operations to execute"),
         ] = Field(default_factory=list)
         expected_pipeline_length: Annotated[
@@ -177,7 +177,7 @@ class TestDocumentedPatterns:
 
         @staticmethod
         def railway_success_cases() -> Sequence[
-            tuple[Sequence[str], Sequence[str], int, str]
+            tuple[t.StrSequence, t.StrSequence, int, str]
         ]:
             return [
                 (["123"], [], 1, "Simple user retrieval"),
@@ -367,7 +367,7 @@ class TestDocumentedPatterns:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v1_railway_complex_pipeline(
-        self, case: tuple[Sequence[str], Sequence[str], int, str]
+        self, case: tuple[t.StrSequence, t.StrSequence, int, str]
     ) -> None:
         user_ids, operations, expected_pipeline_length, description = case
         railway_case = self.RailwayTestCase(
@@ -390,7 +390,7 @@ class TestDocumentedPatterns:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_can_use_execute_for_railway(
-        self, case: tuple[Sequence[str], Sequence[str], int, str]
+        self, case: tuple[t.StrSequence, t.StrSequence, int, str]
     ) -> None:
         _ = case
         user_result_raw = self.make(self.GetUserService, user_id="123").result
@@ -408,7 +408,7 @@ class TestDocumentedPatterns:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_railway_chaining(
-        self, case: tuple[Sequence[str], Sequence[str], int, str]
+        self, case: tuple[t.StrSequence, t.StrSequence, int, str]
     ) -> None:
         _ = case
         pipeline = (

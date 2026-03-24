@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from collections.abc import (
+from collections.abc import (, Mapping, MutableMapping, MutableSequence, Sequence
     Callable,
     Hashable,
     Mapping,
@@ -441,7 +441,7 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def coerce_dict_to_str() -> Callable[[t.NormalizedValue], Mapping[str, str]]:
+    def coerce_dict_to_str() -> Callable[[t.NormalizedValue], t.StrMapping]:
         """Create validator that coerces dict values to str."""
         return FlextUtilitiesCollection._coerce_dict_values(
             FlextUtilitiesCollection._coerce_value_to_str,
@@ -562,7 +562,7 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def coerce_list_to_str() -> Callable[[t.ContainerList], Sequence[str]]:
+    def coerce_list_to_str() -> Callable[[t.ContainerList], t.StrSequence]:
         """Create validator that coerces sequence values to str."""
         return FlextUtilitiesCollection._coerce_list_values(
             FlextUtilitiesCollection._coerce_value_to_str,

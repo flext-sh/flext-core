@@ -56,7 +56,7 @@ class FlextUtilitiesGenerators:
             return r[str].ok(prefix)
         if kind is None:
             return r[str].fail("No kind provided for prefix resolution")
-        kind_prefix_map: Mapping[str, str] = {
+        kind_prefix_map: t.StrMapping = {
             "correlation": "corr",
             "entity": "ent",
             "batch": c.ProcessingMode.BATCH,
@@ -255,7 +255,7 @@ class FlextUtilitiesGenerators:
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> Mapping[str, str]:
+    ) -> t.StrMapping:
         """Ensure context dict has distributed tracing fields (trace_id, span_id, etc).
 
         This generic helper consolidates duplicate context enrichment logic
@@ -267,7 +267,7 @@ class FlextUtilitiesGenerators:
             include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
         Returns:
-            Mapping[str, str]: Enriched context with request
+            t.StrMapping: Enriched context with request
 
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)

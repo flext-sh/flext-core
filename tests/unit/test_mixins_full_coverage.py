@@ -79,7 +79,7 @@ class TestMixinsFullCoverage:
         def wire_modules(self, **kwargs: t.Scalar) -> None:
             self.wired = dict(kwargs)
 
-        def list_services(self) -> Sequence[str]:
+        def list_services(self) -> t.StrSequence:
             return []
 
         def has_service(self, _name: str) -> bool:

@@ -31,7 +31,8 @@ class FlextTypingBase:
     type MutableContainerList = MutableSequence[NormalizedValue]
 
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
-    type StrMapping = Mapping[str, str]
+    type StrMapping = t.StrMapping
+    type StrSequence = t.StrSequence
     type ScalarMapping = Mapping[str, Scalar]
     type ScalarList = Sequence[Scalar]
     type FlatContainerList = Sequence[Container]

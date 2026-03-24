@@ -27,7 +27,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like when items() raises AttributeError."""
 
         class BadDictLike:
-            def keys(self) -> Sequence[str]:
+            def keys(self) -> t.StrSequence:
                 return []
 
             def items(self) -> Never:
@@ -45,7 +45,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like when items() raises TypeError."""
 
         class BadDictLike:
-            def keys(self) -> Sequence[str]:
+            def keys(self) -> t.StrSequence:
                 return []
 
             def items(self) -> Never:
@@ -93,7 +93,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like with t.NormalizedValue missing items attribute."""
 
         class NotDictLike:
-            def keys(self) -> Sequence[str]:
+            def keys(self) -> t.StrSequence:
                 return []
 
             def get(self, key: str) -> None:
@@ -107,7 +107,7 @@ class TestRuntimeCoverage100:
         """Test is_dict_like with t.NormalizedValue missing get attribute."""
 
         class NotDictLike:
-            def keys(self) -> Sequence[str]:
+            def keys(self) -> t.StrSequence:
                 return []
 
             def items(self) -> Sequence[tuple[str, str]]:
@@ -228,15 +228,15 @@ class TestRuntimeCoverage100:
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
 
-        class MySequence(Sequence[str]):
+        class MySequence(t.StrSequence):
             @overload
             def __getitem__(self, index: int) -> str: ...
 
             @overload
-            def __getitem__(self, index: slice) -> Sequence[str]: ...
+            def __getitem__(self, index: slice) -> t.StrSequence: ...
 
             @override
-            def __getitem__(self, index: int | slice) -> Sequence[str] | str:
+            def __getitem__(self, index: int | slice) -> t.StrSequence | str:
                 return "" if isinstance(index, int) else MySequence()
 
             @override

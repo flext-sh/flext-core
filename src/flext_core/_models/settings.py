@@ -141,7 +141,7 @@ class FlextModelsConfig:
         ) -> t.StrMapping:
             """Ensure context has required fields (using FlextRuntime).
 
-            Returns Mapping[str, str] because ensure_trace_context generates
+            Returns t.StrMapping because ensure_trace_context generates
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """

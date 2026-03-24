@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import UserString
-from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from typing import cast, override
 
@@ -43,16 +42,16 @@ class TestUtilitiesParserFullCoverage:
         raise TypeError(msg)
 
     @staticmethod
-    def _fail_components(*_args: t.Scalar, **_kwargs: t.Scalar) -> r[Sequence[str]]:
-        return r[Sequence[str]].fail("forced")
+    def _fail_components(*_args: t.Scalar, **_kwargs: t.Scalar) -> r[t.StrSequence]:
+        return r[t.StrSequence].fail("forced")
 
     @staticmethod
     def _safe_length_abc(_value: t.Scalar) -> str:
         return "abc"
 
     @staticmethod
-    def _fail_escape_split(*_args: t.Scalar) -> r[tuple[Sequence[str], int]]:
-        return r[tuple[Sequence[str], int]].fail("split fail")
+    def _fail_escape_split(*_args: t.Scalar) -> r[tuple[t.StrSequence, int]]:
+        return r[tuple[t.StrSequence, int]].fail("split fail")
 
     @staticmethod
     def _fail_pipeline_continue(*_args: t.Scalar, **_kwargs: t.Scalar) -> r[str]:
@@ -84,7 +83,7 @@ class TestUtilitiesParserFullCoverage:
         raise TypeError(msg)
 
     @staticmethod
-    def _norm_list_dict(*_args: t.Scalar, **_kwargs: t.Scalar) -> Mapping[str, str]:
+    def _norm_list_dict(*_args: t.Scalar, **_kwargs: t.Scalar) -> t.StrMapping:
         return {"k": "v"}
 
     def test_parser_safe_length_and_parse_delimited_error_paths(
@@ -107,7 +106,7 @@ class TestUtilitiesParserFullCoverage:
         tm.fail(forced_failure)
 
         class _SplitRaises:
-            def split(self, _delimiter: str) -> Sequence[str]:
+            def split(self, _delimiter: str) -> t.StrSequence:
                 msg = "split boom"
                 raise RuntimeError(msg)
 
@@ -355,7 +354,7 @@ class TestUtilitiesParserFullCoverage:
             pass
 
         with pytest.raises(TypeError):
-            parser.norm_in("a", cast("Sequence[str]", _NotSequence()), case="lower")
+            parser.norm_in("a", cast("t.StrSequence", _NotSequence()), case="lower")
         tm.that(mapping_result, eq=True)
         tm.that(config_map_result, eq=True)
         original_norm_list = u.norm_list
@@ -402,7 +401,7 @@ class TestUtilitiesParserFullCoverage:
         tm.that(attrs.error, eq="No key attribute found")
         split = parser._process_escape_splitting("a\\,b,c", ",", "\\")
         tm.ok(split)
-        split_val: tuple[Sequence[str], int] = split.value
+        split_val: tuple[t.StrSequence, int] = split.value
         tm.that(split_val[0], eq=["a,b", "c"])
         tm.that(split_val[1], eq=1)
         handled_none = parser._handle_pipeline_edge_cases(None, [("a", "b")])

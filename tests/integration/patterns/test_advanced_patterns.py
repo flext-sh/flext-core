@@ -349,11 +349,11 @@ class TestAdvancedPatterns:
             ]
             return success_params + failure_params
 
-        def build_test_ids(self) -> Sequence[str]:
+        def build_test_ids(self) -> t.StrSequence:
             """build_test_ids method.
 
             Returns:
-                Sequence[str]: List of test IDs.
+                t.StrSequence: List of test IDs.
 
             """
             return [str(c.input) for c in (*self._success_cases, *self._failure_cases)]
@@ -618,14 +618,14 @@ class TestAdvancedPatterns:
                 self.call_count = 0
                 self.states = ["processing", "completed", "error"]
 
-            def process(self, _data: str) -> r[Mapping[str, str]]:
+            def process(self, _data: str) -> r[t.StrMapping]:
                 """Process data with state transitions."""
                 self.call_count += 1
                 if self.call_count == 1:
-                    return r[Mapping[str, str]].ok({"status": "processing"})
+                    return r[t.StrMapping].ok({"status": "processing"})
                 if self.call_count == 2:
-                    return r[Mapping[str, str]].ok({"status": "completed"})
-                return r[Mapping[str, str]].fail("Service unavailable")
+                    return r[t.StrMapping].ok({"status": "completed"})
+                return r[t.StrMapping].fail("Service unavailable")
 
         service = ProcessingService()
         result1 = service.process("data1")

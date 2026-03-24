@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping
 from typing import Never, override
 
 from flext_tests import FlextTestsUtilities, t, tm
@@ -86,7 +86,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities):
                     self,
                     *_args: str,
                     **_kwargs: t.Scalar,
-                ) -> Sequence[str]:
+                ) -> t.StrSequence:
                     """Raise error on split attempt."""
                     msg = "Bad split"
                     raise RuntimeError(msg)

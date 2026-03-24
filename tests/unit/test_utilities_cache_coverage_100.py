@@ -492,7 +492,7 @@ class UtilitiesCacheCoverage100Namespace:
             class TestObject:
                 """Test t.NormalizedValue with None cache."""
 
-                _cache: Mapping[str, str] | None = None
+                _cache: t.StrMapping | None = None
 
             obj = TestObject()
             result = u.clear_object_cache(cast("t.NormalizedValue", obj))
@@ -504,7 +504,7 @@ class UtilitiesCacheCoverage100Namespace:
 
             class BadObject:
                 @property
-                def _cache(self) -> Mapping[str, str]:
+                def _cache(self) -> t.StrMapping:
                     raise RuntimeError(error_msg)
 
             obj = BadObject()
@@ -574,7 +574,7 @@ class UtilitiesCacheCoverage100Namespace:
             """Test clear_object_cache with Pydantic model."""
 
             class ModelWithCache:
-                model_config: ClassVar[Mapping[str, str]] = {"extra": "allow"}
+                model_config: ClassVar[t.StrMapping] = {"extra": "allow"}
                 name: str
                 _cache: MutableMapping[
                     str, str

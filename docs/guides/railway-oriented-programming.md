@@ -731,7 +731,7 @@ from typing import Sequence
 
 
 # Scenario: Process multiple items, fail on first error
-def validate_all_items(items: Sequence[str]) -> r[Sequence[str]]:
+def validate_all_items(items: t.StrSequence) -> r[t.StrSequence]:
     """Validate each item, short-circuit on first failure."""
     return r.traverse(
         items,

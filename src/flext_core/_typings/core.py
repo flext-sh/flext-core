@@ -58,7 +58,7 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         | Mapping[str, FlextTypesCore.JsonValue]
         | None
     )
-    type FileContent = str | bytes | Sequence[Sequence[str]]
+    type FileContent = str | bytes | Sequence[t.StrSequence]
     type GeneralValueTypeMapping = Mapping[str, FlextTypingBase.Scalar]
 
     # Short aliases for high-frequency inline patterns (annotation-only, not base classes)

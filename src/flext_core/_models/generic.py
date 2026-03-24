@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
@@ -200,7 +200,7 @@ class FlextGenericModels:
             None
         )
         validation_errors: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(default_factory=list, description="Validation errors"),
         ]
         metadata: Annotated[

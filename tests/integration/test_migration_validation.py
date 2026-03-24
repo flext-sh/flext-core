@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import override
 
 from flext_tests import t
@@ -48,11 +47,11 @@ class TestMigrationValidation:
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 
-        def process_user(user_id: str) -> r[Mapping[str, str]]:
+        def process_user(user_id: str) -> r[t.StrMapping]:
             if not user_id:
-                return r[Mapping[str, str]].fail("User ID required")
-            user_data: Mapping[str, str] = {"id": user_id, "name": "Alice"}
-            return r[Mapping[str, str]].ok(user_data)
+                return r[t.StrMapping].fail("User ID required")
+            user_data: t.StrMapping = {"id": user_id, "name": "Alice"}
+            return r[t.StrMapping].ok(user_data)
 
         result = process_user("user_123")
         assert result.is_success
@@ -121,13 +120,13 @@ class TestMigrationValidation:
                 self,
                 username: str,
                 email: str,
-            ) -> r[Mapping[str, str]]:
+            ) -> r[t.StrMapping]:
                 """Create user with validation."""
                 if not username or not email:
-                    return r[Mapping[str, str]].fail("Username and email required")
+                    return r[t.StrMapping].fail("Username and email required")
                 self._logger.info("Creating user", username=username)
                 user_data = {"username": username, "email": email}
-                return r[Mapping[str, str]].ok(user_data)
+                return r[t.StrMapping].ok(user_data)
 
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
@@ -202,7 +201,7 @@ class TestMigrationValidation:
 
             def process_data(
                 self,
-                data: Mapping[str, str],
+                data: t.StrMapping,
             ) -> r[t.ContainerMapping]:
                 """Typical data processing method."""
                 if not data:
