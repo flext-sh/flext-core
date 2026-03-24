@@ -34,6 +34,7 @@ class FlextTypingBase:
     type StrMapping = Mapping[str, str]
     type ScalarMapping = Mapping[str, Scalar]
     type ScalarList = Sequence[Scalar]
+    type FlatContainerList = Sequence[Container]
 
     class ContainerMappingBase(Mapping[str, "FlextTypingBase.NormalizedValue"]):
         """Concrete base for Mapping[str, NormalizedValue] inheritance.

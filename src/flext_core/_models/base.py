@@ -46,7 +46,7 @@ class FlextModelFoundation:
         """Pydantic v2 validators - single namespace for all field validators."""
 
         _tags_adapter: ClassVar[TypeAdapter[Sequence[str]] | None] = None
-        _list_adapter: ClassVar[TypeAdapter[Sequence[t.Container]] | None] = None
+        _list_adapter: ClassVar[TypeAdapter[t.FlatContainerList] | None] = None
         _strict_string_adapter: ClassVar[
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
@@ -57,7 +57,7 @@ class FlextModelFoundation:
         _dict_container_adapter: ClassVar[
             TypeAdapter[t.FlatContainerMapping] | None
         ] = None
-        _list_container_adapter: ClassVar[TypeAdapter[Sequence[t.Container]] | None] = (
+        _list_container_adapter: ClassVar[TypeAdapter[t.FlatContainerList] | None] = (
             None
         )
         _tuple_container_adapter: ClassVar[
@@ -108,10 +108,10 @@ class FlextModelFoundation:
             return cls._config_adapter
 
         @classmethod
-        def list_adapter(cls) -> TypeAdapter[Sequence[t.Container]]:
+        def list_adapter(cls) -> TypeAdapter[t.FlatContainerList]:
             """Lazy-load list TypeAdapter on first access."""
             if cls._list_adapter is None:
-                cls._list_adapter = TypeAdapter(Sequence[t.Container])
+                cls._list_adapter = TypeAdapter(t.FlatContainerList)
             return cls._list_adapter
 
         @classmethod
@@ -149,10 +149,10 @@ class FlextModelFoundation:
             return cls._dict_container_adapter
 
         @classmethod
-        def list_container_adapter(cls) -> TypeAdapter[Sequence[t.Container]]:
+        def list_container_adapter(cls) -> TypeAdapter[t.FlatContainerList]:
             """Lazy-load Sequence[Container] TypeAdapter on first access."""
             if cls._list_container_adapter is None:
-                cls._list_container_adapter = TypeAdapter(Sequence[t.Container])
+                cls._list_container_adapter = TypeAdapter(t.FlatContainerList)
             return cls._list_container_adapter
 
         @classmethod
@@ -313,7 +313,7 @@ class FlextModelFoundation:
             return FlextModelFoundation._ensure_utc_datetime(v)
 
         @staticmethod
-        def normalize_to_list(v: t.ValueOrModel) -> Sequence[t.Container]:
+        def normalize_to_list(v: t.ValueOrModel) -> t.FlatContainerList:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -351,7 +351,7 @@ class FlextModelFoundation:
         def validate_tags_list(v: t.ValueOrModel) -> Sequence[str]:
             """Validate and normalize tags list."""
             try:
-                raw_tags: Sequence[t.Container] = (
+                raw_tags: t.FlatContainerList = (
                     FlextModelFoundation.Validators.list_adapter().validate_python(v)
                 )
             except (TypeError, ValueError) as exc:
