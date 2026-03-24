@@ -79,7 +79,7 @@ class FlextLogger(u, p.Logger):
                 _correlation_id,
             )
             _force_new = getattr(config, "force_new", _force_new)
-        context = {}
+        context: dict[str, str] = {}
         if _service_name:
             context[c.KEY_SERVICE_NAME] = _service_name
         if _service_version:
@@ -182,8 +182,7 @@ class FlextLogger(u, p.Logger):
 
         """
         try:
-            if scope not in cls._scoped_contexts:
-                cls._scoped_contexts[scope] = {}
+            cls._scoped_contexts.setdefault(scope, {})
             current_context: t.FlatContainerMapping = {
                 key: cls._to_container_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
@@ -251,8 +250,7 @@ class FlextLogger(u, p.Logger):
                 c.WarningLevel.ERROR: c.WarningLevel.ERROR,
                 "critical": "critical",
             }.get(level_lower, level_lower)
-            if level_normalized not in cls._level_contexts:
-                cls._level_contexts[level_normalized] = {}
+            cls._level_contexts.setdefault(level_normalized, {})
             normalized_context = cls._to_container_context(context)
             prefixed_context = {
                 f"_level_{level_normalized}_{key}": value
@@ -354,7 +352,7 @@ class FlextLogger(u, p.Logger):
                 keys = list(cls._scoped_contexts[scope].keys())
                 if keys:
                     u.structlog().contextvars.unbind_contextvars(*keys)
-                cls._scoped_contexts[scope] = {}
+                cls._scoped_contexts[scope].clear()
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")

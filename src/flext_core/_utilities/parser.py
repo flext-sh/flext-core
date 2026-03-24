@@ -611,7 +611,7 @@ class FlextUtilitiesParser:
 
         """
         if default is None:
-            default = []
+            default: t.StrSequence = []
         if value is None:
             return default
         if isinstance(value, list):
@@ -1685,7 +1685,7 @@ class FlextUtilitiesParser:
                     current_component_length=len(current),
                 )
                 components.append("".join(current))
-                current = []
+                current: list[str] = []
                 i += 1
             else:
                 current.append(text[i])

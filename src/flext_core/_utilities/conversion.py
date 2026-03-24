@@ -294,7 +294,7 @@ class FlextUtilitiesConversion:
                     value,
                 )
             except ValidationError:
-                items = []
+                items: Sequence[t.StrictValue] = []
         else:
             items = [value]
         filtered_items: Sequence[t.StrictValue]

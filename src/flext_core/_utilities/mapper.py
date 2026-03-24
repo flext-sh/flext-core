@@ -363,9 +363,7 @@ class FlextUtilitiesMapper:
                 else:
                     continue
                 key = "" if key_raw is None else str(key_raw)
-                if key not in grouped:
-                    grouped[key] = []
-                grouped[key].append(item)
+                grouped.setdefault(key, []).append(item)
             return grouped
         if callable(group_spec_raw):
             group_callable_result = FlextUtilitiesMapper._get_callable_from_dict(
@@ -383,9 +381,7 @@ class FlextUtilitiesMapper:
                 if key_result.is_failure:
                     continue
                 key = str(key_result.value)
-                if key not in grouped_callable:
-                    grouped_callable[key] = []
-                grouped_callable[key].append(item)
+                grouped_callable.setdefault(key, []).append(item)
             return grouped_callable
         return current
 
@@ -1548,7 +1544,7 @@ class FlextUtilitiesMapper:
 
         """
         if default is None:
-            default = []
+            default: t.StrSequence = []
         if value is None:
             return default
         if isinstance(value, str):

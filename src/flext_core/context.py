@@ -165,7 +165,9 @@ class FlextContext(m.ArbitraryTypesModel, u):
                     ),
                 )
         self._metadata = m.Metadata()
-        self._hooks = {}
+        self._hooks: Mapping[
+            str, Sequence[Callable[[t.Scalar], t.ValueOrModel | None]]
+        ] = {}
         self._statistics = m.ContextStatistics()
         self._active = True
         self._suspended = False
@@ -864,7 +866,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 "Custom metadata field normalization failed",
                 exc_info=exc,
             )
-            custom_fields_dict = {}
+            custom_fields_dict: t.MutableContainerMapping = {}
         result: t.MutableContainerMapping = {}
         for k, v in data.items():
             if v is None or v == {}:

@@ -160,7 +160,7 @@ class FlextUtilitiesPagination:
 
         """
         if data is None:
-            data = []
+            data: t.FlatContainerList = []
         total_count = total if total is not None else len(data)
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:

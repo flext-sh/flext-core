@@ -84,7 +84,7 @@ class FlextUtilitiesReliability:
 
         """
         if config is None:
-            config = {}
+            config: t.ScalarMapping = {}
         initial_delay_raw = config.get("initial_delay_seconds", 0.1)
         max_delay_raw = config.get("max_delay_seconds", 60.0)
         exponential_backoff_raw = config.get("exponential_backoff", False)

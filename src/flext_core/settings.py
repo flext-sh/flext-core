@@ -417,9 +417,7 @@ class FlextSettings(BaseSettings, u):
             >>> config = FlextSettings.for_context("worker_1")
 
         """
-        if context_id not in cls._context_overrides:
-            cls._context_overrides[context_id] = {}
-        cls._context_overrides[context_id].update(overrides)
+        cls._context_overrides.setdefault(context_id, {}).update(overrides)
 
     @classmethod
     def register_namespace(

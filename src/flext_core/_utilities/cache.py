@@ -148,7 +148,8 @@ class FlextUtilitiesCache:
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]
                 if value is None:
-                    result[str(k)] = {}
+                    empty_val: t.ContainerMapping = {}
+                    result[str(k)] = empty_val
                 else:
                     sorted_value = FlextUtilitiesCache.sort_dict_keys(value)
                     result[str(k)] = sorted_value

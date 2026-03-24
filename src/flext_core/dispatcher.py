@@ -195,9 +195,7 @@ class FlextDispatcher:
                 "Handler must expose message_type, event_type, or can_handle",
             )
         if is_event:
-            if route_name not in self._event_subscribers:
-                self._event_subscribers[route_name] = []
-            self._event_subscribers[route_name].append((handler, resolved_handler))
+            self._event_subscribers.setdefault(route_name, []).append((handler, resolved_handler))
             self._logger.info("Registered event subscriber", route=route_name)
         else:
             self._handlers[route_name] = (handler, resolved_handler)

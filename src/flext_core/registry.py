@@ -131,8 +131,8 @@ class FlextRegistry(s[bool]):
         subclass.
         """
         super().__init_subclass__()
-        cls._class_plugin_storage = {}
-        cls._class_registered_keys = set()
+        cls._class_plugin_storage: MutableMapping[str, t.RegistrablePlugin] = {}
+        cls._class_registered_keys: set[str] = set()
 
     @classmethod
     def create(

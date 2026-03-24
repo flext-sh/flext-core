@@ -167,9 +167,7 @@ class FlextModelsCollections:
             category: str,
             entries: Sequence[t.MetadataValue],
         ) -> None:
-            if category not in self.categories:
-                self.categories[category] = []
-            self.categories[category].extend(entries)
+            self.categories.setdefault(category, []).extend(entries)
 
         def clear(self) -> None:
             self.categories.clear()
