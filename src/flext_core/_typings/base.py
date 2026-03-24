@@ -18,10 +18,10 @@ class FlextTypingBase:
     type Primitives = str | Numeric | bool
     type Scalar = Primitives | datetime
     type Container = Scalar | Path
-    type ContainerMapping = Mapping[str, NormalizedValue]
-    type ContainerList = Sequence[NormalizedValue]
-    type MutableContainerMapping = MutableMapping[str, NormalizedValue]
-    type MutableContainerList = MutableSequence[NormalizedValue]
+    type ContainerMapping = Mapping[str, FlextTypingBase.NormalizedValue]
+    type ContainerList = Sequence[FlextTypingBase.NormalizedValue]
+    type MutableContainerMapping = MutableMapping[str, FlextTypingBase.NormalizedValue]
+    type MutableContainerList = MutableSequence[FlextTypingBase.NormalizedValue]
     type NormalizedValue = (
         Container
         | FlextTypingBase.ContainerMapping

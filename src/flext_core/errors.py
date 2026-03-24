@@ -14,7 +14,7 @@ from typing import override
 
 from pydantic import Field
 
-from flext_core import FlextModelFoundation, t
+from flext_core import m, t
 
 
 class FlextErrorDomain(StrEnum):
@@ -52,7 +52,7 @@ class FlextErrorDomain(StrEnum):
         return self.value
 
 
-class FlextError(FlextModelFoundation.ArbitraryTypesModel):
+class FlextError(m.ArbitraryTypesModel):
     """Structured error with domain, code, and metadata.
 
     Replaces free-form error strings with structured error objects for
