@@ -27,10 +27,10 @@ from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, P, R, t
 
-type FixtureCaseDict = Mapping[str, t.NormalizedValue]
-type FixtureDataDict = Mapping[str, t.NormalizedValue]
-type FixtureFixturesDict = Mapping[str, t.NormalizedValue]
-type FixtureSuiteDict = Mapping[str, t.NormalizedValue]
+type FixtureCaseDict = t.ContainerMapping
+type FixtureDataDict = t.ContainerMapping
+type FixtureFixturesDict = t.ContainerMapping
+type FixtureSuiteDict = t.ContainerMapping
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
@@ -65,10 +65,10 @@ class TestPatternsTesting:
             return str(value)
 
         @staticmethod
-        def as_object_dict(value: t.NormalizedValue) -> Mapping[str, t.NormalizedValue]:
+        def as_object_dict(value: t.NormalizedValue) -> t.ContainerMapping:
             if not TestPatternsTesting.Helpers.is_object_mapping(value):
                 return {}
-            output: MutableMapping[str, t.NormalizedValue] = {}
+            output: t.MutableContainerMapping = {}
             for key, item in value.items():
                 output[str(key)] = item
             return output
@@ -76,7 +76,7 @@ class TestPatternsTesting:
         @staticmethod
         def as_object_list(
             value: t.NormalizedValue,
-        ) -> Sequence[t.NormalizedValue] | None:
+        ) -> t.ContainerList | None:
             if not TestPatternsTesting.Helpers.is_object_list(value):
                 return None
             return list(value)
@@ -84,13 +84,13 @@ class TestPatternsTesting:
         @staticmethod
         def is_object_mapping(
             value: t.NormalizedValue,
-        ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
+        ) -> TypeIs[t.ContainerMapping]:
             return isinstance(value, Mapping)
 
         @staticmethod
         def is_object_list(
             value: t.NormalizedValue,
-        ) -> TypeIs[Sequence[t.NormalizedValue]]:
+        ) -> TypeIs[t.ContainerList]:
             return isinstance(value, list)
 
         @staticmethod
@@ -248,7 +248,7 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._data: MutableMapping[str, t.NormalizedValue] = {}
+            self._data: t.MutableContainerMapping = {}
 
         def with_id(self, id_: str) -> TestPatternsTesting.FlextTestBuilder:
             self._data["id"] = id_
@@ -299,7 +299,7 @@ class TestPatternsTesting:
             email: str | None = None,
             input_value: str | None = None,
         ) -> TestPatternsTesting.ParameterizedTestBuilder:
-            case: MutableMapping[str, t.NormalizedValue] = {}
+            case: t.MutableContainerMapping = {}
             if email is not None:
                 case["email"] = email
             if input_value is not None:
@@ -399,7 +399,7 @@ class TestPatternsTesting:
             super().__init__()
             self.name = name
             self._scenarios: MutableSequence[TestPatternsTesting.MockScenario] = []
-            self._setup_data: MutableMapping[str, t.NormalizedValue] = {}
+            self._setup_data: t.MutableContainerMapping = {}
             self._tags: MutableSequence[str] = []
 
         def add_scenarios(
@@ -420,7 +420,7 @@ class TestPatternsTesting:
             return self
 
         def build(self) -> FixtureSuiteDict:
-            tags: Sequence[t.NormalizedValue] = list(self._tags)
+            tags: t.ContainerList = list(self._tags)
             return {
                 "suite_name": self.name,
                 "scenario_count": len(self._scenarios),
@@ -433,7 +433,7 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._fixtures: MutableMapping[str, t.NormalizedValue] = {}
+            self._fixtures: t.MutableContainerMapping = {}
             self._setups: MutableSequence[Callable[[], None]] = []
             self._teardowns: MutableSequence[Callable[[], None]] = []
 
@@ -653,7 +653,7 @@ class TestPatternsTesting:
     @Helpers.mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
         def arrange_data() -> t.NormalizedValue:
-            numbers: Sequence[t.NormalizedValue] = [1, 2, 3, 4, 5]
+            numbers: t.ContainerList = [1, 2, 3, 4, 5]
             return {"numbers": numbers}
 
         def act_on_data(data: t.NormalizedValue) -> t.NormalizedValue:
@@ -719,7 +719,7 @@ class TestPatternsTesting:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
-        empty_setup: MutableMapping[str, t.NormalizedValue] = {}
+        empty_setup: t.MutableContainerMapping = {}
         typed_setup_data = (
             {str(key): item for key, item in setup_data.items()}
             if isinstance(setup_data, dict)
@@ -743,7 +743,7 @@ class TestPatternsTesting:
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
         with fixture_builder.setup_context()():
-            test_request: Mapping[str, t.NormalizedValue] = {
+            test_request: t.ContainerMapping = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -752,8 +752,8 @@ class TestPatternsTesting:
             }
 
             def process_api_request(
-                request: Mapping[str, t.NormalizedValue],
-            ) -> Mapping[str, t.NormalizedValue]:
+                request: t.ContainerMapping,
+            ) -> t.ContainerMapping:
                 return {
                     "status": "success",
                     "method": request["method"],

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Iterator, Mapping, MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
@@ -71,7 +71,7 @@ class TestUtilitiesCollectionFullCoverage:
         tm.fail(not_found)
         nested = u._merge_deep_single_key(
             cast(
-                "MutableMapping[str, t.NormalizedValue]",
+                "t.MutableContainerMapping",
                 {"x": self._BadCopyDict({"a": 1})},
             ),
             "x",
@@ -79,14 +79,14 @@ class TestUtilitiesCollectionFullCoverage:
         )
         tm.ok(nested)
         deep = u.merge_mappings(
-            cast("Mapping[str, t.NormalizedValue]", {"x": self._BadCopyDict({"a": 1})}),
-            cast("Mapping[str, t.NormalizedValue]", {"x": {"b": 2}}),
+            cast("t.ContainerMapping", {"x": self._BadCopyDict({"a": 1})}),
+            cast("t.ContainerMapping", {"x": {"b": 2}}),
             strategy="deep",
         )
         tm.ok(deep)
         with pytest.raises(TypeError, match="iterable"):
             _ = u.merge_mappings(
-                cast("Mapping[str, t.NormalizedValue]", None), {"x": 1}, strategy="deep"
+                cast("t.ContainerMapping", None), {"x": 1}, strategy="deep"
             )
 
     def test_batch_fail_collect_flatten_and_progress(self) -> None:

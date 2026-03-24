@@ -157,7 +157,7 @@ def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
 
     service_source = service_file.read_text(encoding="utf-8")
     protocols_source = protocols_file.read_text(encoding="utf-8")
-    tm.that("class ServiceContract(Protocol):" in service_source, eq=False)
+    tm.that("class ServiceContract(Protocol):" not in service_source, eq=True)
     tm.that(protocols_source, has="class ServiceContract(Protocol):")
     tm.that(protocols_source, has="from __future__ import annotations")
     tm.that(protocols_source, has="from typing import Protocol")

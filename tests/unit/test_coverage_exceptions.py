@@ -159,9 +159,7 @@ class TestCoverageExceptions:
     ]
 
     FACTORY_CREATION: ClassVar[
-        Sequence[
-            tuple[str, Mapping[str, t.NormalizedValue], type[FlextExceptions.BaseError]]
-        ]
+        Sequence[tuple[str, t.ContainerMapping, type[FlextExceptions.BaseError]]]
     ] = [
         (
             "ValidationError",
@@ -189,7 +187,7 @@ class TestCoverageExceptions:
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         if scenario.kwargs:
             type_kwargs: MutableMapping[str, type] = {}
-            metadata_kwargs: MutableMapping[str, t.NormalizedValue] = {}
+            metadata_kwargs: t.MutableContainerMapping = {}
             for key, value in scenario.kwargs.items():
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
@@ -227,11 +225,11 @@ class TestCoverageExceptions:
 
     def test_exception_in_railway_pattern(self) -> None:
         def validate_and_process(
-            data: Mapping[str, t.NormalizedValue],
-        ) -> r[Mapping[str, t.NormalizedValue]]:
+            data: t.ContainerMapping,
+        ) -> r[t.ContainerMapping]:
             if not data.get("id"):
-                return r[Mapping[str, t.NormalizedValue]].fail("Missing id")
-            return r[Mapping[str, t.NormalizedValue]].ok(data)
+                return r[t.ContainerMapping].fail("Missing id")
+            return r[t.ContainerMapping].ok(data)
 
         tm.fail(validate_and_process({}))
         tm.ok(validate_and_process({"id": "123"}))
@@ -360,10 +358,10 @@ class TestCoverageExceptions:
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: Mapping[str, t.NormalizedValue],
+        kwargs: t.ContainerMapping,
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
-        converted_kwargs: Mapping[str, t.NormalizedValue] = {
+        converted_kwargs: t.ContainerMapping = {
             key: cast("t.MetadataAttributeValue", value)
             for key, value in kwargs.items()
         }

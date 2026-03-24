@@ -47,7 +47,7 @@ class FlextUtilitiesMapper:
     ) -> t.ContainerMapping:
         """Apply exclude keys step."""
         if exclude_keys:
-            filtered_result: MutableMapping[str, t.NormalizedValue] = dict(result)
+            filtered_result: t.MutableContainerMapping = dict(result)
             for key in exclude_keys:
                 _ = filtered_result.pop(key, None)
             return filtered_result
@@ -61,7 +61,7 @@ class FlextUtilitiesMapper:
     ) -> t.ContainerMapping:
         """Apply filter keys step."""
         if filter_keys:
-            filtered_dict: MutableMapping[str, t.NormalizedValue] = {}
+            filtered_dict: t.MutableContainerMapping = {}
             for key in filter_keys:
                 if key in result:
                     filtered_dict[key] = result[key]
@@ -100,7 +100,7 @@ class FlextUtilitiesMapper:
                 result,
             )
             if isinstance(normalized, Mapping):
-                normalized_result: MutableMapping[str, t.NormalizedValue] = {}
+                normalized_result: t.MutableContainerMapping = {}
                 for key, value in normalized.items():
                     normalized_result[str(key)] = (
                         FlextUtilitiesMapper.narrow_to_container(value)
@@ -171,11 +171,11 @@ class FlextUtilitiesMapper:
         chunk_size = ops["chunk"]
         if not isinstance(chunk_size, int) or chunk_size <= 0:
             return current
-        current_items: Sequence[t.NormalizedValue] = current
+        current_items: t.ContainerList = current
         current_list: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
-        chunked: MutableSequence[t.NormalizedValue] = []
+        chunked: t.MutableContainerList = []
         for i in range(0, len(current_list), chunk_size):
             chunk: t.ContainerList = current_list[i : i + chunk_size]
             chunked.append(chunk)
@@ -233,7 +233,7 @@ class FlextUtilitiesMapper:
             return fallback
 
         if isinstance(current, (list, tuple)):
-            current_items: Sequence[t.NormalizedValue] = current
+            current_items: t.ContainerList = current
             converted = [
                 _convert(FlextUtilitiesMapper.narrow_to_container(item))
                 for item in current_items
@@ -319,7 +319,7 @@ class FlextUtilitiesMapper:
             return bool(filter_pred_callable(value))
 
         if isinstance(current, (list, tuple)):
-            seq_current: Sequence[t.NormalizedValue] = current
+            seq_current: t.ContainerList = current
             return [
                 FlextUtilitiesMapper.narrow_to_container(x)
                 for x in seq_current
@@ -346,7 +346,7 @@ class FlextUtilitiesMapper:
         if not isinstance(current, (list, tuple)):
             return current
         group_spec_raw: t.MapperInput = ops["group"]
-        current_items: Sequence[t.NormalizedValue] = current
+        current_items: t.ContainerList = current
         current_list: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
@@ -403,7 +403,7 @@ class FlextUtilitiesMapper:
         map_callable: t.MapperCallable = map_func_result.value
 
         if isinstance(current, (list, tuple)):
-            seq_current: Sequence[t.NormalizedValue] = current
+            seq_current: t.ContainerList = current
             return [
                 FlextUtilitiesMapper.narrow_to_container(
                     map_callable(FlextUtilitiesMapper.narrow_to_container(x)),
@@ -433,7 +433,7 @@ class FlextUtilitiesMapper:
         if isinstance(current, str):
             return current.lower() if normalize_case == "lower" else current.upper()
         if isinstance(current, (list, tuple)):
-            seq_current: Sequence[t.NormalizedValue] = current
+            seq_current: t.ContainerList = current
             result: t.MutableContainerList = []
             for x in seq_current:
                 x_general = FlextUtilitiesMapper.narrow_to_container(x)
@@ -468,7 +468,7 @@ class FlextUtilitiesMapper:
 
         def _process_current() -> t.NormalizedValue:
             if isinstance(current, (list, tuple)):
-                seq_current: Sequence[t.NormalizedValue] = current
+                seq_current: t.ContainerList = current
                 return [
                     FlextUtilitiesMapper.narrow_to_container(
                         process_callable(FlextUtilitiesMapper.narrow_to_container(x)),
@@ -506,7 +506,7 @@ class FlextUtilitiesMapper:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        current_items: Sequence[t.NormalizedValue] = current
+        current_items: t.ContainerList = current
         slice_spec_raw = ops["slice"]
         slice_spec: t.NormalizedValue = (
             slice_spec_raw if not callable(slice_spec_raw) else None
@@ -544,7 +544,7 @@ class FlextUtilitiesMapper:
         if not isinstance(current, (list, tuple)):
             return current
         sort_spec_raw: t.MapperInput = ops["sort"]
-        current_items: Sequence[t.NormalizedValue] = current
+        current_items: t.ContainerList = current
         current_list: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
@@ -664,7 +664,7 @@ class FlextUtilitiesMapper:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        current_items: Sequence[t.NormalizedValue] = current
+        current_items: t.ContainerList = current
         current_list_unique: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
@@ -693,7 +693,7 @@ class FlextUtilitiesMapper:
         Helper method to improve type inference for pyrefly.
         """
         if isinstance(item, Mapping):
-            dict_item: MutableMapping[str, t.NormalizedValue] = {}
+            dict_item: t.MutableContainerMapping = {}
             for key, value in item.items():
                 coerced_value: t.NormalizedValue = (
                     value if FlextUtilitiesGuards.is_container(value) else str(value)
@@ -765,9 +765,7 @@ class FlextUtilitiesMapper:
         """
         if not isinstance(current, (list, tuple)):
             return r[t.NormalizedValue].fail("Not a sequence")
-        sequence: Sequence[t.NormalizedValue] = (
-            FlextUtilitiesMapper._narrow_to_sequence(current)
-        )
+        sequence: t.ContainerList = FlextUtilitiesMapper._narrow_to_sequence(current)
         try:
             idx = int(array_match)
             if idx < 0:
@@ -887,7 +885,7 @@ class FlextUtilitiesMapper:
     ) -> t.ContainerMapping:
         """Safely narrow t.NormalizedValue to ConfigurationDict with runtime validation."""
         if FlextUtilitiesGuards.is_configuration_dict(value):
-            normalized_dict: MutableMapping[str, t.NormalizedValue] = {}
+            normalized_dict: t.MutableContainerMapping = {}
             for key, item in value.items():
                 normalized_dict[str(key)] = FlextUtilitiesMapper.narrow_to_container(
                     item,
@@ -920,9 +918,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_sequence(
-        value: t.NormalizedValue | Sequence[t.NormalizedValue],
-    ) -> Sequence[t.NormalizedValue]:
-        """Safely narrow t.NormalizedValue to Sequence[t.NormalizedValue]."""
+        value: t.NormalizedValue | t.ContainerList,
+    ) -> t.ContainerList:
+        """Safely narrow t.NormalizedValue to t.ContainerList."""
         if isinstance(value, (list, tuple)):
             narrowed_items: t.MutableContainerList = []
             for item_raw in value:
@@ -943,7 +941,7 @@ class FlextUtilitiesMapper:
         Uses TypeGuard pattern for proper type narrowing.
         """
         if isinstance(value, Mapping):
-            result: MutableMapping[str, t.NormalizedValue] = {}
+            result: t.MutableContainerMapping = {}
             key: str
             val: t.NormalizedValue
             for key, val in value.items():
@@ -1383,7 +1381,7 @@ class FlextUtilitiesMapper:
             )
 
         """
-        constructed: MutableMapping[str, t.NormalizedValue] = {}
+        constructed: t.MutableContainerMapping = {}
         for target_key, target_spec in spec.items():
             try:
                 target_spec_mapping: t.ContainerMapping | None = None
@@ -1809,7 +1807,7 @@ class FlextUtilitiesMapper:
             })
 
         """
-        result: MutableMapping[str, t.NormalizedValue] = {}
+        result: t.MutableContainerMapping = {}
         spec_item: str | t.NormalizedValue
         for spec_item in field_names:
             if isinstance(spec_item, Mapping):
@@ -1873,7 +1871,7 @@ class FlextUtilitiesMapper:
             )
 
         """
-        result: MutableMapping[str, t.NormalizedValue] = {}
+        result: t.MutableContainerMapping = {}
         for field_name, field_default in spec.items():
             value: t.NormalizedValue = FlextUtilitiesMapper.map_get(
                 source,
@@ -2098,7 +2096,7 @@ class FlextUtilitiesMapper:
         """
 
         def _map_keys() -> t.ContainerMapping:
-            result: MutableMapping[str, t.NormalizedValue] = {}
+            result: t.MutableContainerMapping = {}
             for key, value in source.items():
                 new_key = key_mapping.get(key)
                 if new_key:
@@ -2124,7 +2122,7 @@ class FlextUtilitiesMapper:
         Accepts any dict narrowed from isinstance(value, dict).
         Each value is individually narrowed via isinstance.
         """
-        result: MutableMapping[str, t.NormalizedValue] = {}
+        result: t.MutableContainerMapping = {}
         for k in list(raw.keys()):
             v = raw[k]
             if v is None:
@@ -2138,13 +2136,13 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_untyped_list(
         raw: Sequence[t.MetadataOrValue | t.NormalizedValue | BaseModel],
-    ) -> Sequence[t.NormalizedValue]:
+    ) -> t.ContainerList:
         """Convert a list with heterogeneous values to NormalizedValue list.
 
         Accepts any list narrowed from isinstance(value, list).
         Each item is individually narrowed via isinstance.
         """
-        result: MutableSequence[t.NormalizedValue] = []
+        result: t.MutableContainerList = []
         for item in raw:
             if isinstance(item, (BaseModel, *t.CONTAINER_TYPES, list, dict, tuple)):
                 result.append(FlextUtilitiesMapper.narrow_to_container(item))
@@ -2422,7 +2420,7 @@ class FlextUtilitiesMapper:
                 return x
 
             transformer = identity_transformer
-        result: MutableMapping[str, t.NormalizedValue] = {}
+        result: t.MutableContainerMapping = {}
         if primary_data is not None:
             primary_source: t.ContainerMapping | None = None
             if isinstance(primary_data, t.ConfigMap):

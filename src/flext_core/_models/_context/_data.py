@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Annotated, ClassVar
 
 from pydantic import (
@@ -33,9 +33,9 @@ class FlextModelsContextData:
     @staticmethod
     def normalize_to_mapping(
         v: t.ValueOrModel,
-    ) -> Mapping[str, t.NormalizedValue]:
+    ) -> t.ContainerMapping:
         if v is None:
-            out: Mapping[str, t.NormalizedValue] = {}
+            out: t.ContainerMapping = {}
             return out
         if isinstance(v, Mapping):
             validated = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
@@ -70,10 +70,10 @@ class FlextModelsContextData:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.Dict | Mapping[str, t.Scalar] | BaseModel | None,
-        ) -> Mapping[str, t.NormalizedValue]:
+            v: t.Dict | t.ConfigurationMapping | BaseModel | None,
+        ) -> t.ContainerMapping:
             """Validate that data values are JSON-serializable."""
-            working_value: Mapping[str, t.NormalizedValue]
+            working_value: t.ContainerMapping
             normalized_mapping: Mapping[str, t.ValueOrModel]
             if v is None:
                 return {}
@@ -134,7 +134,7 @@ class FlextModelsContextData:
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return
             if FlextRuntime.is_list_like(obj) and (not isinstance(obj, (str, bytes))):
-                seq_obj: Sequence[t.NormalizedValue] = obj
+                seq_obj: t.ContainerList = obj
                 for i, item in enumerate(seq_obj):
                     cls.check_json_serializable(item, f"{path}[{i}]")
                 return

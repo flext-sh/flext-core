@@ -460,7 +460,7 @@ class FlextGenericModels:
             item: t.ValueOrModel,
         ) -> None:
             raw_items = self.metadata.root.get(key)
-            result_list: MutableSequence[t.NormalizedValue] = []
+            result_list: t.MutableContainerList = []
             if isinstance(raw_items, list):
                 for raw_item in raw_items:
                     if isinstance(

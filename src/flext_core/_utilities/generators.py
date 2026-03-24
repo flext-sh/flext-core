@@ -14,7 +14,7 @@ import secrets
 import string
 import time
 import uuid
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 from typing import TypeIs
 
@@ -322,7 +322,7 @@ class FlextUtilitiesGenerators:
         if kind == "id" and actual_prefix is None:
             return FlextUtilitiesGenerators._generate_id()
         if actual_prefix is not None:
-            all_parts: MutableSequence[t.NormalizedValue] = []
+            all_parts: t.MutableContainerList = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)

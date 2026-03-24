@@ -127,7 +127,7 @@ class TestCoverageModels:
         tm.that(doc.created_at, none=False)
         tm.that(doc.updated_at, none=False)
         if doc.created_at is not None and doc.updated_at is not None:
-            tm.that(doc.created_at, lte=doc.updated_at)
+            tm.that(doc.created_at <= doc.updated_at, eq=True)
 
     def test_entity_validation(self) -> None:
         class User(m.Entity):
@@ -401,7 +401,7 @@ class TestCoverageModels:
         task = Task(title="Complete tests", completed=False, domain_events=[])
         dumped = task.model_dump()
         tm.that(dumped["title"], eq="Complete tests")
-        tm.that(dumped["completed"], eq=False)
+        tm.that(not dumped["completed"], eq=True)
         tm.that(dumped, has="unique_id")
 
     def test_command_serialization(self) -> None:

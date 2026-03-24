@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import cast
 
 import pytest
@@ -51,9 +51,9 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: MutableMapping[str, t.NormalizedValue] = {}
-            self._when: MutableMapping[str, t.NormalizedValue] = {}
-            self._then: MutableMapping[str, t.NormalizedValue] = {}
+            self._given: t.MutableContainerMapping = {}
+            self._when: t.MutableContainerMapping = {}
+            self._then: t.MutableContainerMapping = {}
             self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
@@ -188,8 +188,8 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: MutableMapping[str, t.NormalizedValue] = {}
-            self._validation_rules: MutableMapping[str, t.NormalizedValue] = {}
+            self._data: t.MutableContainerMapping = {}
+            self._validation_rules: t.MutableContainerMapping = {}
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_id method.
@@ -266,7 +266,7 @@ class TestAdvancedPatterns:
             self._validation_rules = kwargs
             return self
 
-        def build(self) -> Mapping[str, t.NormalizedValue]:
+        def build(self) -> t.ContainerMapping:
             """Build method.
 
             Returns:
@@ -363,16 +363,16 @@ class TestAdvancedPatterns:
 
         def __init__(
             self,
-            data: Sequence[t.NormalizedValue]
-            | Mapping[str, t.NormalizedValue]
+            data: t.ContainerList
+            | t.ContainerMapping
             | str
             | tuple[t.NormalizedValue, ...],
         ) -> None:
             """Initialize assertionbuilder:."""
             super().__init__()
             self.data: (
-                Sequence[t.NormalizedValue]
-                | Mapping[str, t.NormalizedValue]
+                t.ContainerList
+                | t.ContainerMapping
                 | str
                 | tuple[t.NormalizedValue, ...]
             ) = data
@@ -438,8 +438,8 @@ class TestAdvancedPatterns:
             self,
             condition: Callable[
                 [
-                    Sequence[t.NormalizedValue]
-                    | Mapping[str, t.NormalizedValue]
+                    t.ContainerList
+                    | t.ContainerMapping
                     | str
                     | tuple[t.NormalizedValue, ...],
                 ],
@@ -572,7 +572,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: Mapping[str, t.NormalizedValue] = {
+        test_data: t.ContainerMapping = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -676,7 +676,7 @@ class TestAdvancedPatterns:
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
-        nested_mapping: Mapping[str, t.NormalizedValue] = (
+        nested_mapping: t.ContainerMapping = (
             nested_data if isinstance(nested_data, dict) else {}
         )
         nested_dict = nested_mapping.get("id")

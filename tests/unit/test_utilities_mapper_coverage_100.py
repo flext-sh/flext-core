@@ -117,16 +117,14 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_extract_array_index(self) -> None:
             """Test array indexing."""
-            data: Mapping[str, t.NormalizedValue] = {"items": [1, 2, 3]}
+            data: t.ContainerMapping = {"items": [1, 2, 3]}
             result = u.extract(data, "items[1]")
             _ = assertion_helpers.assert_flext_result_success(result)
             tm.that(result.value, eq=2)
 
         def test_extract_array_index_nested(self) -> None:
             """Test nested array indexing."""
-            data: Mapping[str, t.NormalizedValue] = {
-                "users": [{"name": "alice"}, {"name": "bob"}]
-            }
+            data: t.ContainerMapping = {"users": [{"name": "alice"}, {"name": "bob"}]}
             result = u.extract(data, "users[1].name")
             _ = assertion_helpers.assert_flext_result_success(result)
             tm.that(result.value, eq="bob")
@@ -147,7 +145,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_extract_array_index_error(self) -> None:
             """Test invalid array index."""
-            data: Mapping[str, t.NormalizedValue] = {"items": [1]}
+            data: t.ContainerMapping = {"items": [1]}
             result = u.extract(data, "items[5]", required=True)
             _ = assertion_helpers.assert_flext_result_failure(result)
             msg = str(result.error)
@@ -275,7 +273,7 @@ class UtilitiesMapperCoverage100Namespace:
         def test_convert_to_json_value(self) -> None:
             obj = SimpleObj(name="test", value=1)
             payload: Mapping[str, t.ValueOrModel] = {"obj": obj}
-            res: MutableMapping[str, t.NormalizedValue] = {}
+            res: t.MutableContainerMapping = {}
             for key, val in payload.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -293,7 +291,7 @@ class UtilitiesMapperCoverage100Namespace:
                 "when": now,
             }
 
-            res: MutableMapping[str, t.NormalizedValue] = {}
+            res: t.MutableContainerMapping = {}
             for key, val in payload.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -310,7 +308,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_convert_dict_to_json(self) -> None:
             d: Mapping[str, t.ValueOrModel] = {"a": SimpleObj(name="test", value=1)}
-            res: MutableMapping[str, t.NormalizedValue] = {}
+            res: t.MutableContainerMapping = {}
             for key, val in d.items():
                 if isinstance(val, BaseModel):
                     res[key] = val.model_dump(mode="json")
@@ -322,9 +320,9 @@ class UtilitiesMapperCoverage100Namespace:
             test_list: Sequence[Mapping[str, t.ValueOrModel]] = [
                 {"a": SimpleObj(name="test", value=1)}
             ]
-            res: MutableSequence[Mapping[str, t.NormalizedValue]] = []
+            res: MutableSequence[t.ContainerMapping] = []
             for item in test_list:
-                item_dict: MutableMapping[str, t.NormalizedValue] = {}
+                item_dict: t.MutableContainerMapping = {}
                 for key, val in item.items():
                     if isinstance(val, BaseModel):
                         item_dict[key] = val.model_dump(mode="json")
@@ -351,7 +349,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_build_all_ops(self) -> None:
             """Test all build operations."""
-            input_data: Sequence[t.NormalizedValue] = [1, 2, 1, 3, 4]
+            input_data: t.ContainerList = [1, 2, 1, 3, 4]
             ops = cast(
                 "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                 {
@@ -395,8 +393,8 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_fields_multi(self) -> None:
             """Test fields multi extraction."""
-            data: Mapping[str, t.NormalizedValue] = {"a": 1, "b": 2}
-            spec: Mapping[str, t.NormalizedValue] = {"a": None, "b": None}
+            data: t.ContainerMapping = {"a": 1, "b": 2}
+            spec: t.ContainerMapping = {"a": None, "b": None}
             res = u.fields_multi(data, spec)
             tm.that(res, eq={"a": 1, "b": 2})
 
@@ -456,7 +454,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_transform_options(self) -> None:
             """Test build transform options."""
-            data: Mapping[str, t.NormalizedValue] = {"a": "UPPER", "b": None, "c": ""}
+            data: t.ContainerMapping = {"a": "UPPER", "b": None, "c": ""}
             ops = cast(
                 "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                 {
@@ -472,7 +470,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_build_sort_complex(self) -> None:
             """Test build sort with callable and string."""
-            data: Sequence[t.NormalizedValue] = [{"a": 2}, {"a": 1}]
+            data: t.ContainerList = [{"a": 2}, {"a": 1}]
             ops_sort = cast(
                 "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                 {"sort": "a"},
@@ -492,7 +490,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_build_unique(self) -> None:
             """Test build unique."""
-            data: Sequence[t.NormalizedValue] = [1, 2, 1, 3]
+            data: t.ContainerList = [1, 2, 1, 3]
             res = u.build(data, ops={"unique": True})
             tm.that(res, eq=[1, 2, 3])
 

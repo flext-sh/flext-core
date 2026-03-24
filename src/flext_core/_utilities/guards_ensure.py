@@ -40,7 +40,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return default if default is not None else {}
         if isinstance(value, Mapping):
             mapping_value: t.ContainerMapping = value
-            normalized: Mutablet.ContainerMapping = {}
+            normalized: t.MutableContainerMapping = {}
             for key, item_value in mapping_value.items():
                 normalized[str(key)] = item_value
             return normalized
@@ -49,14 +49,14 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _ensure_to_list(
-        value: t.NormalizedValue | Sequence[t.NormalizedValue] | None,
-        default: Sequence[t.NormalizedValue] | None,
-    ) -> Sequence[t.NormalizedValue]:
+        value: t.NormalizedValue | t.ContainerList | None,
+        default: t.ContainerList | None,
+    ) -> t.ContainerList:
         if value is None:
             return default if default is not None else []
         if isinstance(value, list):
             return list(value)
-        single_item_list: Sequence[t.NormalizedValue] = [value]
+        single_item_list: t.ContainerList = [value]
         return single_item_list
 
     @staticmethod
@@ -376,8 +376,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         value: t.NormalizedValue,
         *,
         target_type: str = "auto",
-        default: str | Sequence[t.NormalizedValue] | t.NormalizedValue | None = None,
-    ) -> str | Sequence[t.NormalizedValue] | t.NormalizedValue | t.ContainerMapping:
+        default: str | t.ContainerList | t.NormalizedValue | None = None,
+    ) -> str | t.ContainerList | t.NormalizedValue | t.ContainerMapping:
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""
             return (
@@ -390,13 +390,13 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         if target_type == "str_list":
             str_list_default: Sequence[str] | None = None
             if isinstance(default, list):
-                default_values: Sequence[t.NormalizedValue] = default
+                default_values: t.ContainerList = default
                 str_list_default = [str(item) for item in default_values]
             if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
-                seq_value: Sequence[t.NormalizedValue] = value
+                seq_value: t.ContainerList = value
                 return list(seq_value)
             if value is None:
-                result_str_list: Sequence[t.NormalizedValue] = (
+                result_str_list: t.ContainerList = (
                     list(str_list_default) if str_list_default else []
                 )
                 return result_str_list
@@ -408,11 +408,11 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return FlextUtilitiesGuardsEnsure._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
             mapping_value: t.ContainerMapping = value
-            normalized_auto: Mutablet.ContainerMapping = {}
+            normalized_auto: t.MutableContainerMapping = {}
             for key, item_value in mapping_value.items():
                 normalized_auto[str(key)] = item_value
             return normalized_auto
-        list_default: Sequence[t.NormalizedValue] | None = None
+        list_default: t.ContainerList | None = None
         if FlextUtilitiesGuardsEnsure.is_object_list(default):
             list_default = default
         return FlextUtilitiesGuardsEnsure._ensure_to_list(value, list_default)

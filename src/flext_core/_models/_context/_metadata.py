@@ -105,7 +105,7 @@ class FlextModelsContextMetadata:
             ),
         ]
         domain_metadata: Annotated[
-            Mapping[str, t.NormalizedValue],
+            t.ContainerMapping,
             Field(
                 default_factory=dict,
                 description="Domain metadata attributes describing origin and processing state.",

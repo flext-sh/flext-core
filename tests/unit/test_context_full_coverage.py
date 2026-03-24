@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import MutableMapping
 
 import pytest
 from flext_tests import t, tm
@@ -83,7 +83,7 @@ def test_set_set_all_get_validation_and_error_paths(
     tm.ok(ctx.set(t.ConfigMap(root={})))
 
     class _BadVar:
-        def get(self) -> Mapping[str, t.NormalizedValue]:
+        def get(self) -> t.ContainerMapping:
             return {}
 
         def set(self, _v: t.NormalizedValue) -> None:
@@ -108,7 +108,7 @@ def test_inactive_and_none_value_paths() -> None:
     tm.that(ctx.has("k") is False, eq=True)
     ctx.remove("k")
     ctx.clear()
-    merge_data: Mapping[str, t.NormalizedValue] = {"k": "v"}
+    merge_data: t.ContainerMapping = {"k": "v"}
     tm.that(ctx.merge(merge_data) is ctx, eq=True)
     tm.fail(ctx.validate_context())
     tm.that(ctx.keys(), eq=[])

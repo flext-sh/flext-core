@@ -67,7 +67,7 @@ class TestsCore:
             Field(description="Expected is_valid result"),
         ]
         service_kwargs: Annotated[
-            Mapping[str, t.NormalizedValue] | None,
+            t.ContainerMapping | None,
             Field(default=None, description="Optional scenario service kwargs"),
         ] = None
 
@@ -144,7 +144,7 @@ class TestsCore:
         def create_service(
             scenario: TestsCore.ServiceScenario,
         ) -> s[TestsCore.UserData] | s[str] | s[bool]:
-            kwargs_raw: Mapping[str, t.NormalizedValue] = scenario.service_kwargs or {}
+            kwargs_raw: t.ContainerMapping = scenario.service_kwargs or {}
             if scenario.scenario_type == TestsCore.ServiceScenarioType.BASIC_USER:
                 return TestsCore.UserService()
             if scenario.scenario_type in {

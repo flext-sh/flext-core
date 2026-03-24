@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
@@ -146,9 +146,9 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Map scenario name")]
         items: Annotated[
-            Sequence[t.NormalizedValue]
+            t.ContainerList
             | tuple[t.NormalizedValue, ...]
-            | Mapping[str, t.NormalizedValue]
+            | t.ContainerMapping
             | set[t.NormalizedValue]
             | frozenset[t.NormalizedValue],
             (
@@ -163,9 +163,9 @@ class TestUtilitiesCollectionCoverage:
         ]
         expected_result: Annotated[
             (
-                MutableSequence[t.NormalizedValue]
+                t.MutableContainerList
                 | tuple[t.NormalizedValue, ...]
-                | MutableMapping[str, t.NormalizedValue]
+                | t.MutableContainerMapping
                 | set[t.NormalizedValue]
                 | frozenset[t.NormalizedValue]
             ),
@@ -188,9 +188,7 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Find scenario name")]
         items: Annotated[
-            Sequence[t.NormalizedValue]
-            | tuple[t.NormalizedValue, ...]
-            | Mapping[str, t.NormalizedValue],
+            t.ContainerList | tuple[t.NormalizedValue, ...] | t.ContainerMapping,
             Field(description="Input items for find"),
         ]
         predicate: Annotated[
@@ -210,9 +208,7 @@ class TestUtilitiesCollectionCoverage:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Filter scenario name")]
         items: Annotated[
-            Sequence[t.NormalizedValue]
-            | tuple[t.NormalizedValue, ...]
-            | Mapping[str, t.NormalizedValue],
+            t.ContainerList | tuple[t.NormalizedValue, ...] | t.ContainerMapping,
             Field(description="Input items for filter"),
         ]
         predicate: Annotated[
@@ -220,9 +216,7 @@ class TestUtilitiesCollectionCoverage:
             Field(description="Predicate callable under test"),
         ]
         expected_result: Annotated[
-            Sequence[t.NormalizedValue]
-            | tuple[t.NormalizedValue, ...]
-            | Mapping[str, t.NormalizedValue],
+            t.ContainerList | tuple[t.NormalizedValue, ...] | t.ContainerMapping,
             Field(
                 description="Expected filtered output",
             ),
@@ -237,9 +231,7 @@ class TestUtilitiesCollectionCoverage:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Count scenario name")]
-        items: Annotated[
-            Sequence[t.NormalizedValue], Field(description="Input items for count")
-        ]
+        items: Annotated[t.ContainerList, Field(description="Input items for count")]
         expected_count: Annotated[int, Field(description="Expected item count")]
         predicate: Annotated[
             Callable[[t.NormalizedValue], bool] | None,
@@ -251,9 +243,7 @@ class TestUtilitiesCollectionCoverage:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
         name: Annotated[str, Field(description="Process scenario name")]
-        items: Annotated[
-            Sequence[t.NormalizedValue], Field(description="Input items for process")
-        ]
+        items: Annotated[t.ContainerList, Field(description="Input items for process")]
         processor: Annotated[
             Callable[[t.NormalizedValue], t.NormalizedValue],
             Field(description="Processor callable under test"),
@@ -1174,8 +1164,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base_data: Mapping[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
-        other_data: Mapping[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
+        base_data: t.ContainerMapping = {"a": 1, "b": {"x": 1}}
+        other_data: t.ContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data)
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)
@@ -1184,8 +1174,8 @@ class TestUtilitiesCollectionCoverage:
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base_data: Mapping[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
-        other_data: Mapping[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
+        base_data: t.ContainerMapping = {"a": 1, "b": {"x": 1}}
+        other_data: t.ContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data, strategy="override")
         _ = assertion_helpers.assert_flext_result_success(result)
         tm.that(result.value["a"], eq=1)

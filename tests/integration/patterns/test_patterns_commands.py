@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableSequence
 from typing import Annotated, cast, override
 
 from flext_tests import t
@@ -54,7 +54,7 @@ class TestPatternsCommands:
         """Test command for updating users."""
 
         target_user_id: str
-        updates: Mapping[str, t.NormalizedValue]
+        updates: t.ContainerMapping
 
         def get_payload(self) -> m.Core.UpdatePayloadDict:
             """Get command payload."""
@@ -98,13 +98,13 @@ class TestPatternsCommands:
     class CreateUserCommandHandler(
         FlextHandlers[
             "TestPatternsCommands.CreateUserCommand",
-            MutableMapping[str, t.NormalizedValue],
+            t.MutableContainerMapping,
         ]
     ):
         """Test handler for CreateUserCommand."""
 
         created_users: Annotated[
-            MutableSequence[Mapping[str, t.NormalizedValue]],
+            MutableSequence[t.ContainerMapping],
             Field(default_factory=list),
         ]
 
@@ -144,27 +144,27 @@ class TestPatternsCommands:
         def handle(
             self,
             message: TestPatternsCommands.CreateUserCommand,
-        ) -> r[MutableMapping[str, t.NormalizedValue]]:
+        ) -> r[t.MutableContainerMapping]:
             """Handle the create user command."""
-            user_data: MutableMapping[str, t.NormalizedValue] = {
+            user_data: t.MutableContainerMapping = {
                 "id": f"user_{len(self.created_users) + 1}",
                 "username": message.username,
                 "email": message.email,
             }
             self.created_users.append(dict(user_data))
-            return r[MutableMapping[str, t.NormalizedValue]].ok(user_data)
+            return r[t.MutableContainerMapping].ok(user_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.CreateUserCommand,
-        ) -> r[MutableMapping[str, t.NormalizedValue]]:
+        ) -> r[t.MutableContainerMapping]:
             """Handle the create user command (alias for handle)."""
             return self.handle(command)
 
     class UpdateUserCommandHandler(
         FlextHandlers[
             "TestPatternsCommands.UpdateUserCommand",
-            MutableMapping[str, t.NormalizedValue],
+            t.MutableContainerMapping,
         ]
     ):
         """Test handler for UpdateUserCommand."""
@@ -178,7 +178,7 @@ class TestPatternsCommands:
                 handler_mode=FlextConstants.HandlerType.COMMAND,
             )
             super().__init__(config=config)
-            self.updated_users: MutableMapping[str, t.NormalizedValue] = {}
+            self.updated_users: t.MutableContainerMapping = {}
 
         def get_command_type(self) -> str:
             """Get command type this handler processes."""
@@ -206,23 +206,23 @@ class TestPatternsCommands:
         def handle(
             self,
             message: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[MutableMapping[str, t.NormalizedValue]]:
+        ) -> r[t.MutableContainerMapping]:
             """Handle the update user command."""
             if message.target_user_id not in self.updated_users:
                 self.updated_users[message.target_user_id] = {}
             user_updates = self.updated_users[message.target_user_id]
             if isinstance(user_updates, dict):
                 user_updates.update(message.updates)
-            result_data: MutableMapping[str, t.NormalizedValue] = {
+            result_data: t.MutableContainerMapping = {
                 "target_user_id": message.target_user_id,
                 "updated_fields": list(message.updates.keys()),
             }
-            return r[MutableMapping[str, t.NormalizedValue]].ok(result_data)
+            return r[t.MutableContainerMapping].ok(result_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[MutableMapping[str, t.NormalizedValue]]:
+        ) -> r[t.MutableContainerMapping]:
             """Handle the update user command (alias for handle)."""
             return self.handle(command)
 
@@ -285,7 +285,7 @@ class TestPatternsCommands:
     def _update_user_command(
         *,
         target_user_id: str,
-        updates: Mapping[str, t.NormalizedValue],
+        updates: t.ContainerMapping,
     ) -> UpdateUserCommand:
         return TestPatternsCommands.UpdateUserCommand.model_validate(
             obj={
@@ -410,7 +410,7 @@ class TestPatternsCommands:
         """Test can_handle with wrong command type."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            MutableMapping[str, t.NormalizedValue],
+            t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()
         if handler.can_handle(self.UpdateUserCommand):
             msg = f"Expected False, got {handler.can_handle(self.UpdateUserCommand)}"
@@ -420,7 +420,7 @@ class TestPatternsCommands:
         """Test can_handle with non-command t.NormalizedValue."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            MutableMapping[str, t.NormalizedValue],
+            t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()
         if handler.can_handle(str):
             msg = f"Expected False, got {handler.can_handle(str)}"
@@ -430,7 +430,7 @@ class TestPatternsCommands:
         """Test successful command handling."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            MutableMapping[str, t.NormalizedValue],
+            t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()
         command = self._create_user_command(
             username="john",
@@ -468,7 +468,7 @@ class TestPatternsCommands:
         """Test processing with command validation failure."""
         handler: FlextHandlers[
             TestPatternsCommands.CreateUserCommand,
-            MutableMapping[str, t.NormalizedValue],
+            t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()
         command = self._create_user_command(username="", email="invalid")
         result = handler.execute(command)
@@ -501,10 +501,8 @@ class TestPatternsCommands:
 
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
-        result_data: Mapping[str, t.NormalizedValue] = {"id": "123", "username": "test"}
-        command_result: r[Mapping[str, t.NormalizedValue]] = r[
-            Mapping[str, t.NormalizedValue]
-        ].ok(result_data)
+        result_data: t.ContainerMapping = {"id": "123", "username": "test"}
+        command_result: r[t.ContainerMapping] = r[t.ContainerMapping].ok(result_data)
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)

@@ -404,7 +404,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.RuntimeData,
-    ) -> TypeIs[t.ConfigMap | Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ConfigMap | t.ContainerMapping]:
         """TypeIs to check if value is dict-like.
 
         Note:
@@ -431,7 +431,7 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: t.RuntimeData,
-    ) -> TypeIs[Sequence[t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerList]:
         """Type guard to check if value is list-like."""
         return isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes))
 

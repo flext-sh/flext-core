@@ -69,7 +69,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: MutableMapping[str, t.NormalizedValue] = {}
+                self._config: t.MutableContainerMapping = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -86,13 +86,13 @@ class TestArchitecturalPatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> r[Mapping[str, t.NormalizedValue]]:
+            def build(self) -> r[t.ContainerMapping]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[Mapping[str, t.NormalizedValue]].fail(
+                    return r[t.ContainerMapping].fail(
                         "Configuration cannot be empty",
                     )
-                return r[Mapping[str, t.NormalizedValue]].ok(dict(self._config))
+                return r[t.ContainerMapping].ok(dict(self._config))
 
         config_result = (
             ConfigurationBuilder()
@@ -253,17 +253,17 @@ class TestArchitecturalPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: MutableSequence[MutableMapping[str, t.NormalizedValue]] = []
+        observers: MutableSequence[t.MutableContainerMapping] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: MutableMapping[str, t.NormalizedValue] = {
+        obs1: t.MutableContainerMapping = {
             "name": "Observer1",
             "state": None,
         }
-        obs2: MutableMapping[str, t.NormalizedValue] = {
+        obs2: t.MutableContainerMapping = {
             "name": "Observer2",
             "state": None,
         }

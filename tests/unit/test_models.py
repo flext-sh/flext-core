@@ -1038,7 +1038,7 @@ class TestModels:
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
-        stats: Mapping[str, t.NormalizedValue] = {"sets": 10, "gets": 20}
+        stats: t.ContainerMapping = {"sets": 10, "gets": 20}
         export = m.ContextExport(
             data=t.Dict(root={"key": "value"}).root,
             metadata=m.Metadata(attributes={"version": "1.0"}),

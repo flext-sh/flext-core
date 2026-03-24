@@ -235,7 +235,7 @@ class UtilitiesCacheCoverage100Namespace:
             model = TestUnitModels.CacheTestModel(name="test", value=42)
             result = u.normalize_component(model)
             assert isinstance(result, dict)
-            result_dict: Mapping[str, t.NormalizedValue] = result
+            result_dict: t.ContainerMapping = result
             assert result_dict["name"] == "test"
             assert result_dict["value"] == 42
 
@@ -247,9 +247,9 @@ class UtilitiesCacheCoverage100Namespace:
             )
             result = u.normalize_component(model)
             assert isinstance(result, dict)
-            result_dict: Mapping[str, t.NormalizedValue] = result
+            result_dict: t.ContainerMapping = result
             assert isinstance(result_dict["inner"], dict)
-            inner_dict: Mapping[str, t.NormalizedValue] = result_dict["inner"]
+            inner_dict: t.ContainerMapping = result_dict["inner"]
             assert inner_dict["name"] == "inner"
             assert inner_dict["value"] == 10
             assert result_dict["count"] == 5
@@ -293,7 +293,7 @@ class UtilitiesCacheCoverage100Namespace:
 
         def test_normalize_sequence_with_nested_values(self) -> None:
             """Test normalize_component with Sequence containing nested values."""
-            component_raw: Sequence[t.NormalizedValue] = [
+            component_raw: t.ContainerList = [
                 1,
                 "test",
                 {"nested": "dict"},
@@ -301,7 +301,7 @@ class UtilitiesCacheCoverage100Namespace:
             ]
             result = u.normalize_component(cast("t.NormalizedValue", component_raw))
             tm.that(result, is_=list, none=False, msg="Result must be list")
-            result_list = cast("Sequence[t.NormalizedValue]", result)
+            result_list = cast("t.ContainerList", result)
             tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
             tm.that(result_list[0], eq=1, msg="First item must be 1")
             tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
@@ -364,7 +364,7 @@ class UtilitiesCacheCoverage100Namespace:
             data = {"c": 3, "a": 1, "b": 2}
             result = u.sort_dict_keys(data)
             assert isinstance(result, dict)
-            result_dict: Mapping[str, t.NormalizedValue] = result
+            result_dict: t.ContainerMapping = result
             assert list(result_dict.keys()) == ["a", "b", "c"]
 
         def test_sort_dict_keys_with_none_values(self) -> None:
@@ -376,7 +376,7 @@ class UtilitiesCacheCoverage100Namespace:
             }
             result = u.sort_dict_keys(data)
             assert isinstance(result, dict)
-            result_dict: Mapping[str, t.NormalizedValue] = result
+            result_dict: t.ContainerMapping = result
             assert result_dict["key1"] == "value"
             assert result_dict["key2"] == {}
             assert result_dict["key3"] == 42
@@ -386,11 +386,11 @@ class UtilitiesCacheCoverage100Namespace:
             data = {"z": {"c": 3, "a": 1, "b": 2}, "a": {"x": 10, "y": 20}}
             result = u.sort_dict_keys(data)
             assert isinstance(result, dict)
-            result_dict: Mapping[str, t.NormalizedValue] = result
+            result_dict: t.ContainerMapping = result
             assert list(result_dict.keys()) == ["a", "z"]
             nested = result_dict["z"]
             assert isinstance(nested, dict)
-            nested_dict: Mapping[str, t.NormalizedValue] = nested
+            nested_dict: t.ContainerMapping = nested
             assert list(nested_dict.keys()) == ["a", "b", "c"]
 
         def test_sort_dict_keys_non_dict(self) -> None:
@@ -624,8 +624,8 @@ class UtilitiesCacheCoverage100Namespace:
 
             class TestObject:
                 def __init__(self) -> None:
-                    self._cache: MutableMapping[str, t.NormalizedValue] = {}
-                    self.cache: MutableMapping[str, t.NormalizedValue] = {}
+                    self._cache: t.MutableContainerMapping = {}
+                    self.cache: t.MutableContainerMapping = {}
 
             obj = TestObject()
             assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True

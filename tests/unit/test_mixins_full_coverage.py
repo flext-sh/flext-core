@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
     Iterator,
-    Mapping,
-    MutableMapping,
     MutableSequence,
     Sequence,
 )
@@ -68,15 +66,15 @@ class TestMixinsFullCoverage:
     class _RuntimeContainer:
         def __init__(self) -> None:
             super().__init__()
-            self.configured: Mapping[str, t.NormalizedValue] | None = None
-            self.wired: Mapping[str, t.NormalizedValue] | None = None
+            self.configured: t.ContainerMapping | None = None
+            self.wired: t.ContainerMapping | None = None
 
         def scoped(
             self, **_kwargs: t.Scalar
         ) -> TestMixinsFullCoverage._RuntimeContainer:
             return self
 
-        def configure(self, overrides: Mapping[str, t.NormalizedValue]) -> None:
+        def configure(self, overrides: t.ContainerMapping) -> None:
             self.configured = overrides
 
         def wire_modules(self, **kwargs: t.Scalar) -> None:
@@ -120,7 +118,7 @@ class TestMixinsFullCoverage:
             super().__init__()
             self.success: bool = success
             self.logger: t.Container | BaseModel | None = logger
-            self.factories: MutableMapping[str, t.NormalizedValue] = {}
+            self.factories: t.MutableContainerMapping = {}
             self.register_calls: MutableSequence[tuple[str, str]] = []
 
         def get_typed(
@@ -228,7 +226,7 @@ class TestMixinsFullCoverage:
         tm.that(runtime, none=False)
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
-            cast("MutableMapping[str, t.NormalizedValue]", metrics)["duration_ms"] = 2.0
+            cast("t.MutableContainerMapping", metrics)["duration_ms"] = 2.0
         tm.that(hasattr(service, "_operation_stats"), eq=True)
         tm.that(service._operation_stats, has="op")
         try:
@@ -371,19 +369,19 @@ class TestMixinsFullCoverage:
         fail_result = x.Validation.validate_with_result("v", fail_validators)
         tm.fail(fail_result)
         tm.that(
-            x.ProtocolValidation.is_handler(
+            not x.ProtocolValidation.is_handler(
                 cast("t.NormalizedValue", SimpleNamespace(handle=self._noop)),
             ),
-            eq=False,
+            eq=True,
         )
         tm.that(
-            x.ProtocolValidation.is_service(
+            not x.ProtocolValidation.is_service(
                 cast(
                     "p.Service[bool]",
                     cast("t.NormalizedValue", SimpleNamespace()),
                 ),
             ),
-            eq=False,
+            eq=True,
         )
         cmd_bus = SimpleNamespace(
             dispatch=self._noop,
@@ -481,12 +479,12 @@ class TestMixinsFullCoverage:
             config_overrides=None,
             initial_context=None,
         )
-        captured: MutableMapping[str, t.NormalizedValue] = {}
+        captured: t.MutableContainerMapping = {}
 
         class _RegContainer:
             def __init__(self) -> None:
                 super().__init__()
-                self._services: MutableMapping[str, t.NormalizedValue] = {}
+                self._services: t.MutableContainerMapping = {}
 
             def has_service(self, name: str) -> bool:
                 return name in self._services

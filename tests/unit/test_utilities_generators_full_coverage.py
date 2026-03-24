@@ -51,7 +51,7 @@ class TestUtilitiesGeneratorsFullCoverage:
         with pytest.raises(TypeError, match="Failed to dump BaseModel"):
             u._normalize_context_to_dict(
                 cast(
-                    "Mapping[str, t.NormalizedValue] | BaseModel | None",
+                    "t.ContainerMapping | BaseModel | None",
                     cast("BaseModel", self._BrokenModel()),
                 ),
             )
@@ -60,7 +60,7 @@ class TestUtilitiesGeneratorsFullCoverage:
         with pytest.raises(TypeError, match="Failed to dump BaseModel int"):
             u._normalize_context_to_dict(
                 cast(
-                    "Mapping[str, t.NormalizedValue] | BaseModel | None",
+                    "t.ContainerMapping | BaseModel | None",
                     cast("BaseModel", 42),
                 ),
             )
@@ -167,7 +167,7 @@ class TestUtilitiesGeneratorsFullCoverage:
         assert getattr(instance, "value") == 10
 
     def test_generators_additional_missed_paths(self) -> None:
-        mapping_ctx: Mapping[str, t.NormalizedValue] = {"a": 1}
+        mapping_ctx: t.ContainerMapping = {"a": 1}
         normalized = u._normalize_context_to_dict(mapping_ctx)
         assert normalized == {"a": 1}
         ensured = u.ensure_dict(TestUnitModels._GoodModel(value=3))

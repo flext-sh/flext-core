@@ -23,7 +23,7 @@ class _ModelWithNoCallableDump:
 
 def test_to_general_value_dict_removed() -> None:
     """to_general_value_dict was removed during infra migration."""
-    tm.that(hasattr(FlextModelsContext, "to_general_value_dict"), eq=False)
+    tm.that(not hasattr(FlextModelsContext, "to_general_value_dict"), eq=True)
 
 
 def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
@@ -121,7 +121,7 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
 )
 def test_context_data_validate_dict_serializable_real_dicts(
     input_value: t.Dict,
-    expected_result: Mapping[str, t.NormalizedValue],
+    expected_result: t.ContainerMapping,
 ) -> None:
     """Test validate_dict_serializable with real dict inputs."""
     result = FlextModelsContext.ContextData.validate_dict_serializable(input_value)
@@ -262,4 +262,4 @@ def test_statistics_and_custom_fields_validators() -> None:
 
 def test_context_data_metadata_normalizer_removed() -> None:
     """normalize_metadata was removed during infra migration."""
-    tm.that(hasattr(FlextModelsContext, "normalize_metadata"), eq=False)
+    tm.that(not hasattr(FlextModelsContext, "normalize_metadata"), eq=True)

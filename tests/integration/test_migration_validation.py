@@ -205,16 +205,16 @@ class TestMigrationValidation:
             def process_data(
                 self,
                 data: Mapping[str, str],
-            ) -> r[Mapping[str, t.NormalizedValue]]:
+            ) -> r[t.ContainerMapping]:
                 """Typical data processing method."""
                 if not data:
-                    return r[Mapping[str, t.NormalizedValue]].fail("Data required")
+                    return r[t.ContainerMapping].fail("Data required")
                 self.logger.info("Processing data", size=len(data))
-                processed: Mapping[str, t.NormalizedValue] = {
+                processed: t.ContainerMapping = {
                     "original": str(data),
                     "processed": True,
                 }
-                return r[Mapping[str, t.NormalizedValue]].ok(processed)
+                return r[t.ContainerMapping].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})

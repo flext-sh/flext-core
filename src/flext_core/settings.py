@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, MutableMapping, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import (
@@ -262,7 +262,7 @@ class FlextSettings(BaseSettings, u):
                 del cls._instances[instance_cls]
 
     @classmethod
-    def get_global(cls, *, overrides: Mapping[str, t.Scalar] | None = None) -> Self:
+    def get_global(cls, *, overrides: t.ConfigurationMapping | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
         u.normalize_env_log_level()
         if overrides is None:
@@ -280,7 +280,7 @@ class FlextSettings(BaseSettings, u):
     def apply_override(
         self,
         key: str,
-        value: t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar],
+        value: t.Scalar | Sequence[t.Scalar] | t.ConfigurationMapping,
     ) -> bool:
         """Validate and apply a configuration override.
 

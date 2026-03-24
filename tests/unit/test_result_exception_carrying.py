@@ -361,7 +361,7 @@ class TestResultExceptionCarrying:
 
         tapped: r[int] = result.tap(side_effect)
         tm.that(tapped.is_failure, eq=True)
-        tm.that(side_effect_called, eq=False)
+        tm.that(not side_effect_called, eq=True)
         tm.that(tapped.exception is exc, eq=True)
 
     def test_tap_error_with_exception(self) -> None:

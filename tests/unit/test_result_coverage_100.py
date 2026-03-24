@@ -429,7 +429,7 @@ class TestrCoverage:
     def test_bool_failure_is_false(self) -> None:
         """Test that failure result is falsy."""
         result: r[str] = r[str].fail("error")
-        tm.that(bool(result), eq=False)
+        tm.that(not bool(result), eq=True)
 
     def test_or_operator(self) -> None:
         """Test | operator for default values."""

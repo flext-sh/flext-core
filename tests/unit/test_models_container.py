@@ -106,10 +106,10 @@ class TestFlextModelsContainer:
 
         tm.that(is_dict_like({"key": "value"}), eq=True)
         tm.that(is_dict_like({}), eq=True)
-        tm.that(is_dict_like("not_dict"), eq=False)
-        tm.that(is_dict_like(123), eq=False)
-        tm.that(is_dict_like([1, 2, 3]), eq=False)
-        tm.that(is_dict_like(None), eq=False)
+        tm.that(not is_dict_like("not_dict"), eq=True)
+        tm.that(not is_dict_like(123), eq=True)
+        tm.that(not is_dict_like([1, 2, 3]), eq=True)
+        tm.that(not is_dict_like(None), eq=True)
 
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
@@ -200,7 +200,7 @@ class TestFlextModelsContainer:
             return "value"
 
         registration = m.FactoryRegistration(name="test", factory=factory)
-        tm.that(registration.is_singleton, eq=False)
+        tm.that(not registration.is_singleton, eq=True)
         assert registration.cached_instance is None
         tm.that(registration.invocation_count, eq=0)
         tm.that(registration.registration_time, none=False)
@@ -277,7 +277,7 @@ class TestFlextModelsContainer:
         tm.that(config.enable_factory_caching, eq=True)
         tm.that(config.max_services, eq=1000)
         tm.that(config.max_factories, eq=500)
-        tm.that(config.enable_auto_registration, eq=False)
+        tm.that(not config.enable_auto_registration, eq=True)
         tm.that(config.enable_lifecycle_hooks, eq=True)
         tm.that(config.lazy_loading, eq=True)
 

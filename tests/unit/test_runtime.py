@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum, unique
 from types import GenericAlias, ModuleType
@@ -665,7 +665,7 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
-        tm.that(isinstance(test_case.test_input, type), eq=False)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_dict_like(cast("t.RuntimeData", test_case.test_input))
         tm.that(result, eq=test_case.expected_result)
 
@@ -681,7 +681,7 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to t.NormalizedValue
         for type compatibility while preserving runtime behavior.
         """
-        tm.that(isinstance(test_case.test_input, type), eq=False)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_list_like(cast("t.RuntimeData", test_case.test_input))
         tm.that(result, eq=test_case.expected_result)
 
@@ -694,7 +694,7 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_json
         correctly returns False for None values.
         """
-        tm.that(isinstance(test_case.test_input, type), eq=False)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_valid_json(cast("t.RuntimeData", test_case.test_input))
         tm.that(result, eq=test_case.expected_result)
 
@@ -709,7 +709,7 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_identifier
         correctly returns False for None values.
         """
-        tm.that(isinstance(test_case.test_input, type), eq=False)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_valid_identifier(
             cast("t.RuntimeData", test_case.test_input)
         )
@@ -1058,8 +1058,8 @@ class TestFlextRuntime:
             def custom_processor(
                 _logger: p.Logger,
                 _method_name: str,
-                event_dict: MutableMapping[str, t.NormalizedValue],
-            ) -> MutableMapping[str, t.NormalizedValue]:
+                event_dict: t.MutableContainerMapping,
+            ) -> t.MutableContainerMapping:
                 event_dict["custom"] = True
                 return event_dict
 

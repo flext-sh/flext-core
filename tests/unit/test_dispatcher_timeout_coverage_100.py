@@ -91,7 +91,7 @@ class TestDispatcherTimeoutCoverage100:
         tm.that(enforcer.should_use_executor(), eq=scenario.should_use_executor)
         tm.that(enforcer.resolve_workers(), eq=scenario.expected_workers)
         status = enforcer.get_executor_status()
-        tm.that(status["executor_active"], eq=False)
+        tm.that(not status["executor_active"], eq=True)
         tm.that(status["executor_workers"], eq=0)
 
     @pytest.mark.parametrize(
@@ -112,7 +112,7 @@ class TestDispatcherTimeoutCoverage100:
     def test_ensure_executor_creates_on_demand(self) -> None:
         """Test ensure_executor creates executor on demand."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
-        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
+        tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
         executor = enforcer.ensure_executor()
         assert executor is not None
         tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
@@ -132,7 +132,7 @@ class TestDispatcherTimeoutCoverage100:
         enforcer.ensure_executor()
         tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
         enforcer.reset_executor()
-        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
+        tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
         executor = enforcer.ensure_executor()
         assert executor is not None
         tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
@@ -141,7 +141,7 @@ class TestDispatcherTimeoutCoverage100:
         """Test get_executor_status before executor creation."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=5)
         status = enforcer.get_executor_status()
-        tm.that(status["executor_active"], eq=False)
+        tm.that(not status["executor_active"], eq=True)
         tm.that(status["executor_workers"], eq=0)
 
     def test_get_executor_status_after_creation(self) -> None:
@@ -157,7 +157,7 @@ class TestDispatcherTimeoutCoverage100:
         enforcer.ensure_executor()
         enforcer.reset_executor()
         status = enforcer.get_executor_status()
-        tm.that(status["executor_active"], eq=False)
+        tm.that(not status["executor_active"], eq=True)
         tm.that(status["executor_workers"], eq=0)
 
     def test_cleanup_with_executor(self) -> None:
@@ -166,7 +166,7 @@ class TestDispatcherTimeoutCoverage100:
         enforcer.ensure_executor()
         tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
         enforcer.cleanup()
-        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
+        tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
         executor = enforcer.ensure_executor()
         assert executor is not None
 
@@ -174,7 +174,7 @@ class TestDispatcherTimeoutCoverage100:
         """Test cleanup when no executor exists."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
         enforcer.cleanup()
-        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
+        tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
 
     def test_cleanup_multiple_times(self) -> None:
         """Test cleanup can be called multiple times safely."""
@@ -182,7 +182,7 @@ class TestDispatcherTimeoutCoverage100:
         enforcer.ensure_executor()
         enforcer.cleanup()
         enforcer.cleanup()
-        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
+        tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
 
     def test_cleanup_after_reset(self) -> None:
         """Test cleanup after reset."""
@@ -190,7 +190,7 @@ class TestDispatcherTimeoutCoverage100:
         enforcer.ensure_executor()
         enforcer.reset_executor()
         enforcer.cleanup()
-        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
+        tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
 
     def test_executor_thread_name_prefix(self) -> None:
         """Test executor uses correct thread name prefix."""

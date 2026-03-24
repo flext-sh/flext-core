@@ -219,8 +219,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def flow(
         value: t.NormalizedValue,
-        *ops: Mapping[str, t.NormalizedValue]
-        | Callable[[t.NormalizedValue], t.NormalizedValue],
+        *ops: t.ContainerMapping | Callable[[t.NormalizedValue], t.NormalizedValue],
     ) -> t.NormalizedValue:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
@@ -246,7 +245,7 @@ class FlextUtilitiesReliability:
         current: t.NormalizedValue = value
         for op in ops:
             if isinstance(op, Mapping):
-                op_dict: Mapping[str, t.NormalizedValue]
+                op_dict: t.ContainerMapping
                 try:
                     op_dict = dict(
                         FlextUtilitiesReliability._V.dict_str_metadata_adapter().validate_python(

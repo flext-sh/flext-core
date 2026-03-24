@@ -53,7 +53,7 @@ class TestUtilitiesEnumFullCoverage:
 
     def test_private_is_member_by_name(self) -> None:
         tm.that(u._is_member_by_name("ACTIVE", self.Status), eq=True)
-        tm.that(u._is_member_by_name("MISSING", self.Status), eq=False)
+        tm.that(not u._is_member_by_name("MISSING", self.Status), eq=True)
 
     def test_private_parse_success_and_failure(self) -> None:
         parsed_enum = u._parse(self.Status, self.Status.PENDING)
@@ -136,11 +136,11 @@ class TestUtilitiesEnumFullCoverage:
             eq=True,
         )
         tm.that(u.dispatch(self.Status.PENDING, self.Status, mode="is_member"), eq=True)
-        tm.that(u.dispatch("bad", self.Status, mode="is_member"), eq=False)
+        tm.that(not u.dispatch("bad", self.Status, mode="is_member"), eq=True)
 
     def test_dispatch_is_name_mode(self) -> None:
         tm.that(u.dispatch("ACTIVE", self.Status, mode="is_name"), eq=True)
-        tm.that(u.dispatch("missing", self.Status, mode="is_name"), eq=False)
+        tm.that(not u.dispatch("missing", self.Status, mode="is_name"), eq=True)
 
     def test_dispatch_parse_mode_with_enum_string_and_other_object(self) -> None:
         parsed_from_enum = u.dispatch(self.Status.ACTIVE, self.Status, mode="parse")

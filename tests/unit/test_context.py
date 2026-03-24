@@ -148,7 +148,7 @@ class TestFlextContext:
         context = test_context
         context.set("test_key", "test_value").value
         tm.that(context.has("test_key"), eq=True)
-        tm.that(context.has("nonexistent_key"), eq=False)
+        tm.that(not context.has("nonexistent_key"), eq=True)
 
     def test_context_remove_value(self, test_context: FlextContext) -> None:
         """Test context remove value operation."""
@@ -156,7 +156,7 @@ class TestFlextContext:
         context.set("test_key", "test_value").value
         tm.that(context.has("test_key"), eq=True)
         context.remove("test_key")
-        tm.that(context.has("test_key"), eq=False)
+        tm.that(not context.has("test_key"), eq=True)
 
     def test_context_clear(self, test_context: FlextContext) -> None:
         """Test context clear operation."""
@@ -165,7 +165,7 @@ class TestFlextContext:
         context.set("key2", "value2").value
         tm.that(all(context.has(k) for k in ["key1", "key2"]), eq=True)
         context.clear()
-        tm.that(any(context.has(k) for k in ["key1", "key2"]), eq=False)
+        tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
 
     def test_context_keys_values_items(self, test_context: FlextContext) -> None:
         """Test context keys, values, and items operations."""
@@ -316,7 +316,7 @@ class TestFlextContext:
         context.set("key2", "value2").value
         tm.that(all(context.has(k) for k in ["key1", "key2"]), eq=True)
         context.clear()
-        tm.that(any(context.has(k) for k in ["key1", "key2"]), eq=False)
+        tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
 
     @pytest.mark.parametrize(
         ("key_name", "special_key"), ContextScenarios.EDGE_CASE_KEYS
@@ -435,7 +435,7 @@ class TestFlextContext:
         for i in range(50):
             context.remove(f"key_{i}")
         for i in range(50):
-            tm.that(context.has(f"key_{i}"), eq=False)
+            tm.that(not context.has(f"key_{i}"), eq=True)
         for i in range(50, 100):
             u.Tests.ContextHelpers.assert_context_get_success(
                 context, f"key_{i}", f"value_{i}"
@@ -491,7 +491,7 @@ class TestFlextContext:
         """Test removing a nonexistent key."""
         context = test_context
         context.remove("nonexistent_key")
-        tm.that(context.has("nonexistent_key"), eq=False)
+        tm.that(not context.has("nonexistent_key"), eq=True)
 
     def test_context_merge_empty_dicts(self, test_context: FlextContext) -> None:
         """Test merging context with empty dictionary."""
@@ -509,7 +509,7 @@ class TestFlextContext:
         context2_raw = context1.clone()
         context2 = context2_raw
         context1.clear()
-        tm.that(context1.has("key1"), eq=False)
+        tm.that(not context1.has("key1"), eq=True)
         tm.that(context2.has("key1"), eq=True)
 
     def test_context_export_after_clear(self, test_context: FlextContext) -> None:
@@ -549,7 +549,7 @@ class TestFlextContext:
         context2.set("key3", "value3").value
         u.Tests.ContextHelpers.assert_context_get_success(context1, "key1", "value1")
         u.Tests.ContextHelpers.assert_context_get_success(context2, "key1", "value2")
-        tm.that(context1.has("key3"), eq=False)
+        tm.that(not context1.has("key3"), eq=True)
         tm.that(context2.has("key3"), eq=True)
 
     def test_context_edge_case_none_value(self, test_context: FlextContext) -> None:

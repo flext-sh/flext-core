@@ -40,7 +40,7 @@ class FlextUtilitiesCollection:
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
-            normalized_list: MutableSequence[t.NormalizedValue] = []
+            normalized_list: t.MutableContainerList = []
             for item in validated:
                 if FlextUtilitiesGuardsTypeCore.is_scalar(item):
                     normalized_list.append(item)
@@ -48,7 +48,7 @@ class FlextUtilitiesCollection:
                     normalized_list.append(str(item))
             return normalized_list
         if isinstance(validated, dict):
-            normalized_dict: MutableMapping[str, t.NormalizedValue] = {}
+            normalized_dict: t.MutableContainerMapping = {}
             for dict_key, dict_val in validated.items():
                 if FlextUtilitiesGuardsTypeCore.is_scalar(dict_val):
                     normalized_dict[dict_key] = dict_val
@@ -110,13 +110,13 @@ class FlextUtilitiesCollection:
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
-            normalized_items: Sequence[t.NormalizedValue] = [
+            normalized_items: t.ContainerList = [
                 FlextUtilitiesCollection._normalize_unknown_value(item)
                 for item in validated
             ]
             return normalized_items
         if isinstance(validated, dict):
-            normalized_dict: MutableMapping[str, t.NormalizedValue] = {}
+            normalized_dict: t.MutableContainerMapping = {}
             for dict_key, dict_value in validated.items():
                 normalized_dict[str(dict_key)] = (
                     FlextUtilitiesCollection._normalize_unknown_value(dict_value)
@@ -152,7 +152,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: MutableMapping[str, t.NormalizedValue],
+        result: t.MutableContainerMapping,
         key: str,
         value: t.NormalizedValue,
     ) -> r[bool]:
@@ -185,7 +185,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _to_batch_scalars(
-        values: Sequence[t.NormalizedValue],
+        values: t.ContainerList,
     ) -> Sequence[t.Scalar | None]:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
@@ -250,7 +250,7 @@ class FlextUtilitiesCollection:
         pre_validate = resolved_spec.pre_validate
         do_flatten = resolved_spec.flatten
         error_mode = resolved_spec.on_error or "fail"
-        results: MutableSequence[t.NormalizedValue] = []
+        results: t.MutableContainerList = []
         errors: MutableSequence[tuple[int, str]] = []
         total = len(items)
         for processed, item in enumerate(items, 1):
@@ -448,7 +448,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[MutableMapping[str, t.NormalizedValue]], Mapping[str, E]]:
+    ) -> Callable[[t.MutableContainerMapping], Mapping[str, E]]:
         """Create validator that coerces dict values to a StrEnum type."""
 
         def validator(data: t.ContainerMapping) -> Mapping[str, E]:
@@ -508,18 +508,16 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _coerce_list_values[V](
         coerce_fn: Callable[[t.NormalizedValue], V],
-    ) -> Callable[[Sequence[t.NormalizedValue]], Sequence[V]]:
+    ) -> Callable[[t.ContainerList], Sequence[V]]:
         """Create validator that coerces each sequence element via *coerce_fn*."""
 
-        def validator(data: Sequence[t.NormalizedValue]) -> Sequence[V]:
+        def validator(data: t.ContainerList) -> Sequence[V]:
             return [coerce_fn(v) for v in data]
 
         return validator
 
     @staticmethod
-    def coerce_list_to_bool() -> Callable[
-        [Sequence[t.NormalizedValue]], Sequence[bool]
-    ]:
+    def coerce_list_to_bool() -> Callable[[t.ContainerList], Sequence[bool]]:
         """Create validator that coerces sequence values to bool."""
         return FlextUtilitiesCollection._coerce_list_values(
             FlextUtilitiesCollection._coerce_value_to_bool,
@@ -528,10 +526,10 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[Sequence[t.NormalizedValue]], Sequence[E]]:
+    ) -> Callable[[t.ContainerList], Sequence[E]]:
         """Create validator that coerces sequence values to a StrEnum type."""
 
-        def validator(data: Sequence[t.NormalizedValue]) -> Sequence[E]:
+        def validator(data: t.ContainerList) -> Sequence[E]:
             result: MutableSequence[E] = []
             for v in data:
                 if isinstance(v, enum_type):
@@ -548,23 +546,21 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_list_to_float() -> Callable[
-        [Sequence[t.NormalizedValue]], Sequence[float]
-    ]:
+    def coerce_list_to_float() -> Callable[[t.ContainerList], Sequence[float]]:
         """Create validator that coerces sequence values to float."""
         return FlextUtilitiesCollection._coerce_list_values(
             FlextUtilitiesCollection._coerce_value_to_float,
         )
 
     @staticmethod
-    def coerce_list_to_int() -> Callable[[Sequence[t.NormalizedValue]], Sequence[int]]:
+    def coerce_list_to_int() -> Callable[[t.ContainerList], Sequence[int]]:
         """Create validator that coerces sequence values to int."""
         return FlextUtilitiesCollection._coerce_list_values(
             FlextUtilitiesCollection._coerce_value_to_int,
         )
 
     @staticmethod
-    def coerce_list_to_str() -> Callable[[Sequence[t.NormalizedValue]], Sequence[str]]:
+    def coerce_list_to_str() -> Callable[[t.ContainerList], Sequence[str]]:
         """Create validator that coerces sequence values to str."""
         return FlextUtilitiesCollection._coerce_list_values(
             FlextUtilitiesCollection._coerce_value_to_str,
@@ -954,7 +950,7 @@ class FlextUtilitiesCollection:
         - "filter_both": Same as filter_empty (alias)
         """
         if strategy in {"replace", "override"}:
-            result: MutableMapping[str, t.NormalizedValue] = dict(other)
+            result: t.MutableContainerMapping = dict(other)
             result.update(base)
             return r[t.ContainerMapping].ok(result)
         if strategy == "filter_none":

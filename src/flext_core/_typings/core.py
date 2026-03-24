@@ -53,10 +53,7 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         | type
     )
     type JsonValue = (
-        str
-        | int
-        | float
-        | bool
+        FlextTypingBase.Primitives
         | Sequence[FlextTypesCore.JsonValue]
         | Mapping[str, FlextTypesCore.JsonValue]
         | None

@@ -10,6 +10,8 @@ from enum import StrEnum, unique
 from typing import Final
 
 from flext_core._constants.base import FlextConstantsBase
+from flext_core._constants.cqrs import FlextConstantsCqrs
+from flext_core._constants.domain import FlextConstantsDomain
 
 
 class FlextConstantsMixins:
@@ -38,15 +40,15 @@ class FlextConstantsMixins:
     FIELD_EVENT_NAME: Final[str] = "event_name"
     FIELD_AGGREGATE_ID: Final[str] = "aggregate_id"
     FIELD_OCCURRED_AT: Final[str] = "occurred_at"
-    STATE_ACTIVE: Final[str] = "active"
+    STATE_ACTIVE: Final[str] = FlextConstantsDomain.Status.ACTIVE
     "State: active."
-    STATE_INACTIVE: Final[str] = "inactive"
+    STATE_INACTIVE: Final[str] = FlextConstantsDomain.Status.INACTIVE
     "State: inactive."
     STATE_SENT: Final[str] = "sent"
     STATE_IDLE: Final[str] = "idle"
-    STATE_HEALTHY: Final[str] = "healthy"
-    STATE_DEGRADED: Final[str] = "degraded"
-    STATE_UNHEALTHY: Final[str] = "unhealthy"
+    STATE_HEALTHY: Final[str] = FlextConstantsCqrs.HealthStatus.HEALTHY
+    STATE_DEGRADED: Final[str] = FlextConstantsCqrs.HealthStatus.DEGRADED
+    STATE_UNHEALTHY: Final[str] = FlextConstantsCqrs.HealthStatus.UNHEALTHY
     STATUS_PASSED: Final[str] = "PASS"
     STATUS_FAIL: Final[str] = "FAIL"
     STATUS_NO_TARGET: Final[str] = "NO_TARGET"

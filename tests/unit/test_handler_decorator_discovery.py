@@ -134,7 +134,7 @@ class TestHandlerDecoratorDiscovery:
             def handle(self, cmd: str) -> r[str]:
                 return r[str].ok(cmd)
 
-        tm.that(h.Discovery.scan_class(ServiceWithoutHandlers), eq=False)
+        tm.that(not h.Discovery.scan_class(ServiceWithoutHandlers), eq=True)
         tm.that(h.Discovery.has_handlers(ServiceWithoutHandlers) is False, eq=True)
         tm.that(h.Discovery.has_handlers(ServiceWithHandler) is True, eq=True)
 

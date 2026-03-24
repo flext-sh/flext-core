@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class _ValidationLikeError(Exception):
     """Validation-like error for tests."""
 
-    def errors(self) -> Sequence[Mapping[str, t.NormalizedValue]]:
+    def errors(self) -> Sequence[t.ContainerMapping]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
@@ -98,7 +98,7 @@ class _ErrorsModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: Mapping[str, t.NormalizedValue] | None = None,
+        context: t.ContainerMapping | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -119,7 +119,7 @@ class _PlainErrorModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: Mapping[str, t.NormalizedValue] | None = None,
+        context: t.ContainerMapping | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -218,7 +218,7 @@ class _FakeConfig(BaseModel):
     timeout: int = 10
 
     @property
-    def data(self) -> Mapping[str, t.NormalizedValue]:
+    def data(self) -> t.ContainerMapping:
         return {"timeout": self.timeout}
 
 
@@ -251,7 +251,7 @@ class ComplexModel(BaseModel):
     """Complex test model."""
 
     id: int
-    data: Mapping[str, t.NormalizedValue]
+    data: t.ContainerMapping
     items: Sequence[str]
 
 

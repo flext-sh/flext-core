@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
 from enum import StrEnum, unique
 from typing import Annotated, Any, ClassVar, cast
 
@@ -127,7 +126,7 @@ class TestFlextUtilitiesConfiguration:
         INDENT = "indent"
         SORT_KEYS = "sort_keys"
 
-    def _create_test_dict(self) -> Mapping[str, t.NormalizedValue]:
+    def _create_test_dict(self) -> t.ContainerMapping:
         return {
             self.ParameterNames.NAME.value: "test",
             self.ParameterNames.TIMEOUT.value: 60,
@@ -158,7 +157,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_get_parameter_from_attribute_access(self) -> None:
         config = self.DataclassConfigForTest(name="test", value=42)
-        config_cast: p.HasModelDump | MutableMapping[str, t.NormalizedValue] = config
+        config_cast: p.HasModelDump | t.MutableContainerMapping = config
         result = u.get_parameter(config_cast, self.ParameterNames.VALUE.value)
         tm.that(result, eq=42)
 
@@ -166,7 +165,7 @@ class TestFlextUtilitiesConfiguration:
         class _DumpOnly:
             __slots__ = ()
 
-            def model_dump(self) -> Mapping[str, t.NormalizedValue]:
+            def model_dump(self) -> t.ContainerMapping:
                 return {"timeout": 77}
 
         result = u.get_parameter(cast("p.HasModelDump", _DumpOnly()), "timeout")
@@ -189,7 +188,7 @@ class TestFlextUtilitiesConfiguration:
     def test_set_parameter_validation_error(self) -> None:
         config = TestUnitModels.ConfigModelForTest(name="test")
         result = u.set_parameter(config, self.ParameterNames.TIMEOUT.value, -1)
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_set_parameter_non_pydantic_object(self) -> None:
         config = self.DataclassConfigForTest(name="test", value=42)

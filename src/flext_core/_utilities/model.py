@@ -217,7 +217,7 @@ class FlextUtilitiesModel:
                     nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(
                         v,
                     )
-                    plain_mapping: Mutablet.ContainerMapping = {}
+                    plain_mapping: t.MutableContainerMapping = {}
                     for nested_key, nested_value in nested_mapping.items():
                         if isinstance(nested_value, BaseModel):
                             dumped_nested = nested_value.model_dump()

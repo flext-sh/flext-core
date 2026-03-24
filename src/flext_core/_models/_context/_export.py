@@ -50,7 +50,7 @@ class FlextModelsContextExport:
             ),
         ] = None
         statistics: Annotated[
-            Mapping[str, t.NormalizedValue],
+            t.ContainerMapping,
             BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)

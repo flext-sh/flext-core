@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 import types
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableSequence
 from pathlib import Path
 from typing import ClassVar, cast, override
 
@@ -59,7 +59,7 @@ class TestModule:
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: MutableMapping[str, t.NormalizedValue] = {}
+            self.store: t.MutableContainerMapping = {}
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)
@@ -71,7 +71,7 @@ class TestModule:
         def clear_contextvars(self) -> None:
             self.store.clear()
 
-        def get_contextvars(self) -> Mapping[str, t.NormalizedValue]:
+        def get_contextvars(self) -> t.ContainerMapping:
             return dict(self.store)
 
     class _StructlogShim:
@@ -112,7 +112,7 @@ class TestModule:
             shim.contextvars, "bind_contextvars", _raise_bind_contextvars
         )
         failed_ctx = FlextLogger.bind_global_context(x="y")
-        tm.that(failed_ctx, is_=r)
+        assert isinstance(failed_ctx, r)
         tm.fail(failed_ctx)
 
         class _Cfg:
@@ -238,7 +238,7 @@ class TestModule:
             co_qualname = "MyType.run"
 
         class _Frame:
-            f_locals: ClassVar[Mapping[str, t.NormalizedValue]] = {}
+            f_locals: ClassVar[t.ContainerMapping] = {}
             f_code = _Code()
 
         tm.that(
@@ -302,7 +302,7 @@ class TestModule:
 
         monkeypatch.setattr(logger_boom.logger, "info", _raise_info)
         failed = logger_boom._log("INFO", "msg")
-        tm.that(failed, none=False)
+        assert failed is not None
         tm.fail(failed)
         logger.log("INFO", "message", k="v")
         logger.warning("warn")
@@ -358,7 +358,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: MutableMapping[str, t.NormalizedValue] = {}
+        captured: t.MutableContainerMapping = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None
@@ -413,7 +413,7 @@ class TestModule:
             co_qualname = "MyClass.run"
 
         class _UpperFrame:
-            f_locals: ClassVar[Mapping[str, t.NormalizedValue]] = {}
+            f_locals: ClassVar[t.ContainerMapping] = {}
             f_code = _CodeUpper()
 
         monkeypatch.setattr(c, "LEVEL_PREFIX_PARTS_COUNT", 2)
@@ -432,7 +432,7 @@ class TestModule:
         class _CallerFrame:
             f_code = _CodeMethod()
             f_lineno = 40
-            f_locals: ClassVar[Mapping[str, t.NormalizedValue]] = {}
+            f_locals: ClassVar[t.ContainerMapping] = {}
 
         def _calling_frame() -> types.FrameType:
             return cast("types.FrameType", cast("t.NormalizedValue", _CallerFrame()))
@@ -501,7 +501,7 @@ class TestModule:
         class _Container:
             pass
 
-        captured: MutableMapping[str, t.NormalizedValue] = {}
+        captured: t.MutableContainerMapping = {}
 
         def _for_container(
             cls: type, _container: p.Container, level: str | None = None

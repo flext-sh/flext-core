@@ -63,7 +63,7 @@ class FlextService[
     )
     # --- Service Bootstrap Configuration ---
     config_type: type[FlextSettings] | None = None
-    config_overrides: Mapping[str, t.NormalizedValue] | None = Field(
+    config_overrides: t.ContainerMapping | None = Field(
         default=None,
         exclude=True,
     )

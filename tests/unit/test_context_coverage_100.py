@@ -53,7 +53,7 @@ class TestContext100Coverage:
         """Test merge with dictionary."""
         context1 = FlextContext()
         context1.set("key1", "value1").value
-        merge_data: Mapping[str, t.NormalizedValue] = {
+        merge_data: t.ContainerMapping = {
             "key2": "value2",
             "key3": "value3",
         }
@@ -170,7 +170,7 @@ class TestContext100Coverage:
         has_user = context.has("key1", scope="user")
         tm.that(has_user, eq=True)
         has_global = context.has("key1", scope=FlextConstants.SCOPE_GLOBAL)
-        tm.that(has_global, eq=False)
+        tm.that(not has_global, eq=True)
 
     def test_keys_returns_all_keys(self) -> None:
         """Test keys returns all keys."""
@@ -341,7 +341,7 @@ class TestContext100Coverage:
             metadata=m.Metadata(attributes={}),
             statistics={},
         )
-        tm.that(bool(export2.statistics), eq=False)
+        tm.that(not bool(export2.statistics), eq=True)
 
     def test_context_scope_data_validate_data_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_data with BaseModel."""

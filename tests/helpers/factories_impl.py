@@ -510,7 +510,7 @@ class GenericModelFactory:
 
     @staticmethod
     def configuration_snapshot(
-        config: Mapping[str, t.NormalizedValue] | None = None,
+        config: t.ContainerMapping | None = None,
         source: str | None = None,
         environment: str | None = None,
     ) -> m.Configuration:

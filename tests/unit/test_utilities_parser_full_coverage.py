@@ -214,7 +214,7 @@ class TestUtilitiesParserFullCoverage:
     ) -> None:
         parser = u()
         tm.fail(parser._parse_find_first([1, 2], lambda v: v > 5))
-        tm.that(parser._parse_normalize_compare("x", 1), eq=False)
+        tm.that(not parser._parse_normalize_compare("x", 1), eq=True)
         tm.that(parser._parse_normalize_str(123, case="lower"), eq="123")
         tm.that(parser._parse_normalize_str("abc", case="upper"), eq="ABC")
         tm.that(parser._parse_normalize_str("abc", case="none"), eq="abc")
@@ -338,7 +338,8 @@ class TestUtilitiesParserFullCoverage:
         tm.that(normalized_map, eq={"b": "b"})
         normalized_set = parser.norm_list(["A", "b"], case="lower", to_set=True)
         tm.that(len(normalized_set), eq=2)
-        tm.that(normalized_set, eq={"a", "b"})
+        expected_set: set[str] = set(("a", "b"))
+        tm.that(normalized_set, eq=expected_set)
         tm.that(parser.norm_join(["A", "B"], sep="-"), eq="A-B")
         mapping_result = parser.norm_in(
             "a",
@@ -365,7 +366,7 @@ class TestUtilitiesParserFullCoverage:
             staticmethod(self._norm_list_dict),
         )
         try:
-            tm.that(parser.norm_in("v", ["x"], case="lower"), eq=False)
+            tm.that(not parser.norm_in("v", ["x"], case="lower"), eq=True)
         finally:
             monkeypatch.setattr(FlextUtilitiesParser, "norm_list", original_norm_list)
 

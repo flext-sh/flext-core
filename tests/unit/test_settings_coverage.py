@@ -28,7 +28,7 @@ class TestFlextSettingsCoverage:
         tm.that(settings_obj, is_=FlextSettings)
         tm.that(settings_obj.apply_override("debug", True), eq=True)
         tm.that(settings_obj.debug, eq=True)
-        tm.that(settings_obj.apply_override("invalid_key", "x"), eq=False)
+        tm.that(not settings_obj.apply_override("invalid_key", "x"), eq=True)
 
     def test_for_context_overrides(self) -> None:
         scoped = FlextSettings.for_context("ctx-1", debug=True, max_workers=99)
@@ -55,7 +55,7 @@ class TestFlextSettingsCoverage:
         first = FlextSettings.get_global()
         FlextSettings.reset_for_testing()
         second = FlextSettings.get_global()
-        tm.that(first is second, eq=False)
+        tm.that(first is not second, eq=True)
 
     def test_create_and_read_config_file(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf

@@ -466,7 +466,7 @@ class FlextModelsCollections:
             ),
         ] = None
         in_: Annotated[
-            Sequence[t.NormalizedValue] | None,
+            t.ContainerList | None,
             Field(
                 default=None,
                 title="In Values",
@@ -474,7 +474,7 @@ class FlextModelsCollections:
             ),
         ] = None
         not_in: Annotated[
-            Sequence[t.NormalizedValue] | None,
+            t.ContainerList | None,
             Field(
                 default=None,
                 title="Not In Values",

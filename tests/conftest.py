@@ -11,7 +11,6 @@ import math
 import tempfile
 from collections.abc import (
     Generator,
-    Mapping,
     MutableSequence,
     Sequence,
 )
@@ -103,7 +102,7 @@ def mock_external_service() -> FunctionalExternalService:
 
 
 @pytest.fixture
-def sample_data() -> Mapping[str, t.NormalizedValue]:
+def sample_data() -> t.ContainerMapping:
     """Provide sample test data for integration tests."""
     return {
         "string": "test_value",
@@ -136,9 +135,9 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> r[Mapping[str, t.NormalizedValue]]:
+def flext_result_success() -> r[t.ContainerMapping]:
     """Successful r fixture available to all FLEXT projects."""
-    return r[Mapping[str, t.NormalizedValue]].ok({"success": True})
+    return r[t.ContainerMapping].ok({"success": True})
 
 
 @pytest.fixture

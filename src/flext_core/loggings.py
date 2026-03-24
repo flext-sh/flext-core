@@ -196,10 +196,10 @@ class FlextLogger(u, p.Logger):
             incoming_context: Mapping[str, t.Container] = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: Mapping[str, t.NormalizedValue] = dict(
+            current_context_obj: t.ContainerMapping = dict(
                 current_context.items(),
             )
-            incoming_context_obj: Mapping[str, t.NormalizedValue] = dict(
+            incoming_context_obj: t.ContainerMapping = dict(
                 incoming_context.items(),
             )
             merge_result = u.merge_mappings(

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import override
 
 import pytest
@@ -60,5 +59,5 @@ def test_result_property_raises_on_failure() -> None:
 def test_get_service_info() -> None:
     """Service should return basic service info."""
     service = RuntimeCloneService()
-    info: Mapping[str, t.NormalizedValue] = service.get_service_info()
+    info: t.ContainerMapping = service.get_service_info()
     assert info["service_type"] == "RuntimeCloneService"

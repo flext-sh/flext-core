@@ -411,12 +411,12 @@ class Testu(TextUtilityContract):
     def test_type_checker_specific_type_mismatch(self) -> None:
         """Test type checking with mismatched specific type."""
         accepted = (str,)
-        tm.that(u.can_handle_message_type(accepted, int), eq=False)
+        tm.that(not u.can_handle_message_type(accepted, int), eq=True)
 
     def test_type_checker_empty_accepted(self) -> None:
         """Test type checking with no accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = ()
-        tm.that(u.can_handle_message_type(accepted, str), eq=False)
+        tm.that(not u.can_handle_message_type(accepted, str), eq=True)
 
     def test_configuration_get_parameter(self) -> None:
         """Test parameter retrieval from config."""

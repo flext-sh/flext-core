@@ -38,7 +38,7 @@ class FlextProtocolsContext:
             """Return all keys across all scopes."""
             ...
 
-        def values(self) -> Sequence[t.NormalizedValue]:
+        def values(self) -> t.ContainerList:
             """Return all values across all scopes."""
             ...
 
@@ -96,7 +96,7 @@ class FlextProtocolsContext:
 
         def merge(
             self,
-            other: Self | t.ConfigMap | Mapping[str, t.NormalizedValue],
+            other: Self | t.ConfigMap | t.ContainerMapping,
         ) -> Self:
             """Merge another context or mapping into this one."""
             ...
@@ -115,7 +115,7 @@ class FlextProtocolsContext:
             include_statistics: bool = ...,
             include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> BaseModel | Mapping[str, t.NormalizedValue]:
+        ) -> BaseModel | t.ContainerMapping:
             """Export context state as serializable ConfigMap or dict."""
             ...
 

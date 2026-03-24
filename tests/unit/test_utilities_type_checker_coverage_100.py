@@ -45,7 +45,7 @@ class TestuTypeChecker:
 
     @staticmethod
     def _message_type(
-        value: type[Mapping[str, t.NormalizedValue] | int | str],
+        value: type[t.ContainerMapping | int | str],
     ) -> t.MessageTypeSpecifier:
         return cast("t.MessageTypeSpecifier", value)
 
@@ -65,8 +65,8 @@ class TestuTypeChecker:
 
     class DictHandler(
         h[
-            MutableMapping[str, t.NormalizedValue],
-            MutableMapping[str, t.NormalizedValue],
+            t.MutableContainerMapping,
+            t.MutableContainerMapping,
         ]
     ):
         """Handler for dictionary messages."""
@@ -74,9 +74,9 @@ class TestuTypeChecker:
         @override
         def handle(
             self,
-            message: MutableMapping[str, t.NormalizedValue],
-        ) -> r[MutableMapping[str, t.NormalizedValue]]:
-            return r[Mapping[str, t.NormalizedValue]].ok({
+            message: t.MutableContainerMapping,
+        ) -> r[t.MutableContainerMapping]:
+            return r[t.ContainerMapping].ok({
                 "processed": True,
                 **message,
             })
@@ -150,7 +150,7 @@ class TestuTypeChecker:
             type_str = str(types[0])
             assert type_str.startswith("Mapping[") or types[0] is dict
         else:
-            tm.that({dict, MutableMapping}, has=origin)
+            assert origin in {dict, MutableMapping}
 
     def test_compute_accepted_message_types_object_handler(self) -> None:
         """Test compute_accepted_message_types with t.NormalizedValue handler (universal)."""
@@ -162,7 +162,7 @@ class TestuTypeChecker:
         """Test can_handle_message_type with exact type match."""
         accepted = (str,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
-        tm.that(u.can_handle_message_type(accepted, int), eq=False)
+        tm.that(not u.can_handle_message_type(accepted, int), eq=True)
 
     def test_can_handle_message_type_object_accepts_all(self) -> None:
         """Test can_handle_message_type with t.NormalizedValue type (universal)."""
@@ -176,15 +176,15 @@ class TestuTypeChecker:
     def test_can_handle_message_type_dict_compatibility(self) -> None:
         """Test can_handle_message_type with dict type compatibility."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (self._message_type(dict),)
-        tm.that(u.can_handle_message_type(accepted, str), eq=False)
+        tm.that(not u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
-        dict_type: type[Mapping[str, t.NormalizedValue]] = dict
+        dict_type: type[t.ContainerMapping] = dict
         tm.that(u.can_handle_message_type(accepted, dict_type), eq=True)
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
         """Test can_handle_message_type with empty accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = ()
-        tm.that(u.can_handle_message_type(accepted, str), eq=False)
+        tm.that(not u.can_handle_message_type(accepted, str), eq=True)
 
     def test_can_handle_message_type_multiple_accepted(self) -> None:
         """Test can_handle_message_type with multiple accepted types."""
@@ -196,7 +196,7 @@ class TestuTypeChecker:
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, int), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
-        tm.that(u.can_handle_message_type(accepted, float), eq=False)
+        tm.that(not u.can_handle_message_type(accepted, float), eq=True)
 
     def test_evaluate_type_compatibility_exact_match(self) -> None:
         """Test _evaluate_type_compatibility with exact type match."""
@@ -215,15 +215,15 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         tm.that(u._evaluate_type_compatibility(self._type_origin(dict), dict), eq=True)
-        dict_type: type[Mapping[str, t.NormalizedValue]] = dict
+        dict_type: type[t.ContainerMapping] = dict
         tm.that(
             u._evaluate_type_compatibility(self._type_origin(dict), dict_type), eq=True
         )
 
     def test_evaluate_type_compatibility_subclass(self) -> None:
         """Test _evaluate_type_compatibility with subclass relationship."""
-        tm.that(u._evaluate_type_compatibility(int, str), eq=False)
-        tm.that(u._evaluate_type_compatibility(str, int), eq=False)
+        tm.that(not u._evaluate_type_compatibility(int, str), eq=True)
+        tm.that(not u._evaluate_type_compatibility(str, int), eq=True)
 
     def test_evaluate_type_compatibility_string_type(self) -> None:
         """Test _evaluate_type_compatibility with string type specifier."""
@@ -243,7 +243,7 @@ class TestuTypeChecker:
     def test_check_object_type_compatibility_non_object(self) -> None:
         """Test _check_object_type_compatibility with non-t.NormalizedValue type."""
         result = u._check_object_type_compatibility(str)
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_check_dict_compatibility_both_dict(self) -> None:
         """Test _check_dict_compatibility with both types being dict."""
@@ -272,7 +272,7 @@ class TestuTypeChecker:
     def test_check_dict_compatibility_non_dict(self) -> None:
         """Test _check_dict_compatibility with non-dict types."""
         result = u._check_dict_compatibility(str, int, str, int)
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_extract_generic_message_types_flext_handlers(self) -> None:
         """Test _extract_generic_message_types with h base."""
@@ -425,7 +425,7 @@ class TestuTypeChecker:
     def test_boundary_empty_tuple_accepted_types(self) -> None:
         """Test boundary case: empty tuple for accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = ()
-        tm.that(u.can_handle_message_type(accepted, str), eq=False)
+        tm.that(not u.can_handle_message_type(accepted, str), eq=True)
 
     def test_boundary_none_message_type(self) -> None:
         """Test boundary case: None as message type."""

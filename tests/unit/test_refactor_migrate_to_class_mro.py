@@ -38,8 +38,9 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     tm.that(report.errors, eq=())
     tm.that(
-        "VALUE: Final[int] = 42" in constants_source.split("class SampleConstants:")[0],
-        eq=False,
+        "VALUE: Final[int] = 42"
+        not in constants_source.split("class SampleConstants:")[0],
+        eq=True,
     )
     tm.that(
         constants_source.split("class SampleConstants:", maxsplit=1)[1],
@@ -78,11 +79,11 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     tm.that(report.errors, eq=())
     tm.that(
         "_TIMEOUT: Final[int] = 30"
-        in constants_source.split("class SampleConstants:", maxsplit=1)[0],
-        eq=False,
+        not in constants_source.split("class SampleConstants:", maxsplit=1)[0],
+        eq=True,
     )
     tm.that(constants_source, has="TIMEOUT: Final[int] = 30")
-    tm.that("TIMEOUT = _TIMEOUT" in constants_source, eq=False)
+    tm.that("TIMEOUT = _TIMEOUT" not in constants_source, eq=True)
     tm.that(consumer_source, has="from sample_pkg.constants import c")
     tm.that(consumer_source, has="value = c.TIMEOUT")
 
@@ -111,7 +112,7 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     )
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     tm.that(report.errors, eq=())
-    tm.that("from sample_pkg.constants import VALUE\n" in consumer_source, eq=False)
+    tm.that("from sample_pkg.constants import VALUE\n" not in consumer_source, eq=True)
     tm.that(consumer_source, has="from sample_pkg.constants import c")
     tm.that(consumer_source, has="result = c.VALUE")
 
@@ -151,8 +152,8 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
     tm.that(report.errors, eq=())
     tm.that(
         "ValueType: TypeAlias = str | int"
-        in typings_source.split("class SampleTypes:", maxsplit=1)[0],
-        eq=False,
+        not in typings_source.split("class SampleTypes:", maxsplit=1)[0],
+        eq=True,
     )
     tm.that(
         typings_source.split("class SampleTypes:", maxsplit=1)[1],
@@ -189,8 +190,8 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     tm.that(report.errors, eq=())
     tm.that(
         "class Greeter(Protocol):"
-        in protocols_source.split("class SampleProtocols:", maxsplit=1)[0],
-        eq=False,
+        not in protocols_source.split("class SampleProtocols:", maxsplit=1)[0],
+        eq=True,
     )
     tm.that(
         protocols_source.split("class SampleProtocols:", maxsplit=1)[1],
@@ -224,7 +225,7 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
         )
     discovered = FlextInfraUtilitiesIteration.iter_python_files(workspace_root=tmp_path)
     tm.ok(discovered)
-    tm.that(set(discovered.value), eq=set(expected_paths))
+    tm.that(sorted(discovered.value), eq=sorted(expected_paths))
 
 
 def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
@@ -272,7 +273,7 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     tm.that(report.errors, eq=())
     tm.that(
-        "VALUE = 42" in constants_source.split("class SampleConstants:")[0], eq=False
+        "VALUE = 42" not in constants_source.split("class SampleConstants:")[0], eq=True
     )
     tm.that(
         constants_source.split("class SampleConstants:", maxsplit=1)[1],

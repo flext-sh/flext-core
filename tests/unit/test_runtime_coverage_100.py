@@ -39,7 +39,7 @@ class TestRuntimeCoverage100:
 
         obj = BadDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
         """Test is_dict_like when items() raises TypeError."""
@@ -57,7 +57,7 @@ class TestRuntimeCoverage100:
 
         obj = BadDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_is_dict_like_with_userdict(self) -> None:
         """Test is_dict_like with UserDict (dict-like t.NormalizedValue)."""
@@ -73,7 +73,7 @@ class TestRuntimeCoverage100:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_keys(self) -> None:
         """Test is_dict_like with t.NormalizedValue missing keys attribute."""
@@ -87,7 +87,7 @@ class TestRuntimeCoverage100:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_items(self) -> None:
         """Test is_dict_like with t.NormalizedValue missing items attribute."""
@@ -101,7 +101,7 @@ class TestRuntimeCoverage100:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_is_dict_like_with_missing_get(self) -> None:
         """Test is_dict_like with t.NormalizedValue missing get attribute."""
@@ -115,7 +115,7 @@ class TestRuntimeCoverage100:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_extract_generic_args_with_type_mapping(self) -> None:
         """Test extract_generic_args with known type aliases."""
@@ -192,12 +192,12 @@ class TestRuntimeCoverage100:
         """Test is_valid_json when json.loads raises exception."""
         invalid_json = "{invalid json}"
         result = FlextRuntime.is_valid_json(invalid_json)
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_is_valid_identifier_non_string(self) -> None:
         """Test is_valid_identifier with non-string types."""
-        tm.that(FlextRuntime.is_valid_identifier(123), eq=False)
-        tm.that(FlextRuntime.is_valid_identifier(None), eq=False)
+        tm.that(not FlextRuntime.is_valid_identifier(123), eq=True)
+        tm.that(not FlextRuntime.is_valid_identifier(None), eq=True)
 
     def test_extract_generic_args_with_typing_get_args(self) -> None:
         """Test extract_generic_args when typing.get_args returns values."""
@@ -257,7 +257,7 @@ class TestRuntimeCoverage100:
                 return super().__getattribute__(name)
 
         result = FlextRuntime.is_sequence_type(BadType)
-        tm.that(result, eq=False)
+        tm.that(not result, eq=True)
 
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
         """Test level_based_context_filter with properly formatted level prefix."""
@@ -282,8 +282,8 @@ class TestRuntimeCoverage100:
         def custom_processor(
             logger: p.Logger | None,
             method_name: str,
-            event_dict: MutableMapping[str, t.NormalizedValue],
-        ) -> MutableMapping[str, t.NormalizedValue]:
+            event_dict: t.MutableContainerMapping,
+        ) -> t.MutableContainerMapping:
             event_dict["custom"] = True
             return event_dict
 

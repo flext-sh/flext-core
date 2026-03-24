@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
@@ -381,7 +381,7 @@ class Testr:
 
         Replaces 10+ lines of manual test case creation.
         """
-        success_values: Sequence[t.NormalizedValue] = ["value1", "value2", "value3"]
+        success_values: t.ContainerList = ["value1", "value2", "value3"]
         failure_errors: Sequence[str] = ["error1", "error2"]
         error_codes: Sequence[str | None] = ["CODE1", None]
         cases = u.Tests.GenericHelpers.create_parametrized_cases(
@@ -393,7 +393,7 @@ class Testr:
             u.Tests.Result.assert_success_with_value(result, success_values[i])
             tm.that(error, none=True)
         for i, (result, is_success, _value, error) in enumerate(cases[3:]):
-            tm.that(is_success, eq=False)
+            tm.that(not is_success, eq=True)
             _ = u.Tests.Result.assert_failure(result)
             tm.that(error, eq=failure_errors[i])
 
@@ -730,7 +730,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: Mapping[str, t.NormalizedValue] = result.fold(
+        response: t.ContainerMapping = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

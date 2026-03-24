@@ -98,13 +98,13 @@ class UtilitiesMapperFullCoverageNamespace:
         def __call__(
             self,
             current: tuple[str, str] | tuple[int, int, int] | Sequence[_GroupModel],
-            operations: Mapping[str, t.NormalizedValue],
+            operations: t.ContainerMapping,
         ) -> None: ...
 
     class _TransformCallable(Protocol):
         def __call__(
             self, source: BadMapping, **kwargs: Mapping[str, str]
-        ) -> r[Mapping[str, t.NormalizedValue]]: ...
+        ) -> r[t.ContainerMapping]: ...
 
     class _MapDictKeysCallable(Protocol):
         def __call__(
@@ -113,7 +113,7 @@ class UtilitiesMapperFullCoverageNamespace:
             key_map: Mapping[str, str],
             *,
             keep_unmapped: bool = True,
-        ) -> r[Mapping[str, t.NormalizedValue]]: ...
+        ) -> r[t.ContainerMapping]: ...
 
     class _BuildFlagsCallable(Protocol):
         def __call__(
@@ -163,21 +163,21 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     def _build_apply_sort_obj(
-        current: tuple[str, str], operations: Mapping[str, t.NormalizedValue]
+        current: tuple[str, str], operations: t.ContainerMapping
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
         return fn(current, operations)
 
     @staticmethod
     def _build_apply_unique_obj(
-        current: tuple[int, int, int], operations: Mapping[str, t.NormalizedValue]
+        current: tuple[int, int, int], operations: t.ContainerMapping
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
         return fn(current, operations)
 
     @staticmethod
     def _build_apply_slice_obj(
-        current: tuple[int, int, int], operations: Mapping[str, t.NormalizedValue]
+        current: tuple[int, int, int], operations: t.ContainerMapping
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
         return fn(current, operations)
@@ -185,7 +185,7 @@ class UtilitiesMapperFullCoverageNamespace:
     @staticmethod
     def _build_apply_group_obj(
         current: Sequence[_GroupModel],
-        operations: Mapping[str, t.NormalizedValue],
+        operations: t.ContainerMapping,
     ) -> None:
         fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
         return fn(current, operations)
@@ -193,7 +193,7 @@ class UtilitiesMapperFullCoverageNamespace:
     @staticmethod
     def _transform_obj(
         source: BadMapping, **kwargs: Mapping[str, str]
-    ) -> r[Mapping[str, t.NormalizedValue]]:
+    ) -> r[t.ContainerMapping]:
         fn: _TransformCallable = getattr(u, "transform")
         return fn(source, **kwargs)
 
@@ -203,7 +203,7 @@ class UtilitiesMapperFullCoverageNamespace:
         key_map: Mapping[str, str],
         *,
         keep_unmapped: bool = True,
-    ) -> r[Mapping[str, t.NormalizedValue]]:
+    ) -> r[t.ContainerMapping]:
         fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
         return fn(source, key_map, keep_unmapped=keep_unmapped)
 
@@ -483,7 +483,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.take({"port": None}, "port", default="x"), eq="x")
         tm.that(_take_obj(123, 2), eq="")
         tm.that(mapper.as_(12, str), eq="12")
-        tm.that(mapper.as_("off", bool), eq=False)
+        tm.that(not mapper.as_("off", bool), eq=True)
 
     @staticmethod
     def test_extract_field_value_and_ensure_variants(mapper: type[u]) -> None:
@@ -659,7 +659,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
 
         def explode_transform_steps(
-            _result: Mapping[str, t.NormalizedValue],
+            _result: t.ContainerMapping,
             *,
             _normalize: bool,
             _map_keys: Mapping[str, str] | None,
@@ -814,14 +814,14 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that((bad_result.error or ""), has="iter exploded")
         d = {"a": 1}
         tm.that(mapper.deep_eq(d, d), eq=True)
-        tm.that(mapper.deep_eq({"a": 1}, {"a": 1, "b": 2}), eq=False)
-        tm.that(mapper.deep_eq({"a": 1}, {"b": 1}), eq=False)
-        tm.that(mapper.deep_eq({"a": None}, {"a": 1}), eq=False)
-        tm.that(mapper.deep_eq({"a": {"x": 1}}, {"a": {"x": 2}}), eq=False)
-        tm.that(mapper.deep_eq({"a": [1, 2]}, {"a": [1]}), eq=False)
-        tm.that(mapper.deep_eq({"a": [{"x": 1}]}, {"a": [{"x": 2}]}), eq=False)
-        tm.that(mapper.deep_eq({"a": [1, 2]}, {"a": [1, 3]}), eq=False)
-        tm.that(mapper.deep_eq({"a": 1}, {"a": 2}), eq=False)
+        tm.that(not mapper.deep_eq({"a": 1}, {"a": 1, "b": 2}), eq=True)
+        tm.that(not mapper.deep_eq({"a": 1}, {"b": 1}), eq=True)
+        tm.that(not mapper.deep_eq({"a": None}, {"a": 1}), eq=True)
+        tm.that(not mapper.deep_eq({"a": {"x": 1}}, {"a": {"x": 2}}), eq=True)
+        tm.that(not mapper.deep_eq({"a": [1, 2]}, {"a": [1]}), eq=True)
+        tm.that(not mapper.deep_eq({"a": [{"x": 1}]}, {"a": [{"x": 2}]}), eq=True)
+        tm.that(not mapper.deep_eq({"a": [1, 2]}, {"a": [1, 3]}), eq=True)
+        tm.that(not mapper.deep_eq({"a": 1}, {"a": 2}), eq=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -831,8 +831,8 @@ class UtilitiesMapperFullCoverageNamespace:
         mapper: type[u],
         merge_strategy: str,
     ) -> None:
-        primary: Mapping[str, t.NormalizedValue] = {"a": 1, "drop": "x"}
-        secondary: Mapping[str, t.NormalizedValue] = {"b": 2}
+        primary: t.ContainerMapping = {"a": 1, "drop": "x"}
+        secondary: t.ContainerMapping = {"b": 2}
         result = mapper.process_context_data(
             primary_data=primary,
             secondary_data=secondary,
@@ -984,7 +984,7 @@ class UtilitiesMapperFullCoverageNamespace:
 
         get_result = mapper._extract_get_value(
             cast(
-                "t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue]",
+                "t.NormalizedValue | BaseModel | t.ContainerMapping",
                 cast("t.NormalizedValue", DumpOnly()),
             ),
             "a",
@@ -993,7 +993,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(get_result.value, eq=1)
         get_missing = mapper._extract_get_value(
             cast(
-                "t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue]",
+                "t.NormalizedValue | BaseModel | t.ContainerMapping",
                 cast("t.NormalizedValue", DumpOnly()),
             ),
             "missing",
@@ -1038,7 +1038,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(float_value, is_=float)
         tm.that(abs(cast("float", float_value) - 1.5), lt=1e-09)
         tm.that(mapper.as_("true", bool), eq=True)
-        tm.that(mapper.as_("maybe", bool, default=False), eq=False)
+        tm.that(not mapper.as_("maybe", bool, default=False), eq=True)
         tm.that(mapper.as_(None, int, default=3), eq=3)
         tm.that(mapper.or_(None, None, 1, default=2).value, eq=1)
         tm.that(mapper.or_(None, None, default=2).value, eq=2)

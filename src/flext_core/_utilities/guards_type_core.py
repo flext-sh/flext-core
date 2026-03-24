@@ -29,14 +29,14 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def _is_object_sequence(
         value: t.GuardInput,
-    ) -> TypeIs[Sequence[t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerList]:
         """Check if value is a sequence (list or tuple)."""
         return isinstance(value, (list, tuple))
 
     @staticmethod
     def _is_object_mapping(
         value: t.GuardInput,
-    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerMapping]:
         """Check if value is a mapping type."""
         return isinstance(value, Mapping)
 
@@ -115,7 +115,7 @@ class FlextUtilitiesGuardsTypeCore:
         return callable(value) or FlextUtilitiesGuardsTypeCore.is_container(value)
 
     @staticmethod
-    def is_list(value: t.GuardInput) -> TypeIs[Sequence[t.NormalizedValue]]:
+    def is_list(value: t.GuardInput) -> TypeIs[t.ContainerList]:
         """Check if value is a list."""
         return isinstance(value, list)
 
@@ -131,7 +131,7 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def is_mapping(
         value: t.GuardInput,
-    ) -> TypeIs[Mapping[str, t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerMapping]:
         """Check if value is a mapping type."""
         return isinstance(value, Mapping)
 

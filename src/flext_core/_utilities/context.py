@@ -65,7 +65,7 @@ class FlextUtilitiesContext:
 
         """
         cloned: T = runtime.__class__.__new__(runtime.__class__)
-        runtime_vars: Mapping[str, t.NormalizedValue] = (
+        runtime_vars: t.ContainerMapping = (
             vars(runtime) if hasattr(runtime, "__dict__") else {}
         )
         if "_dispatcher" in runtime_vars:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import TypeIs
 
 from pydantic import BaseModel
@@ -20,7 +20,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def is_object_list(
         value: t.NormalizedValue,
-    ) -> TypeIs[Sequence[t.NormalizedValue]]:
+    ) -> TypeIs[t.ContainerList]:
         """Check if value is a list of normalized values.
 
         Args:
@@ -103,7 +103,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_configuration_mapping(
-        value: Mapping[str, t.NormalizedValue] | t.ConfigMap | t.Dict,
+        value: t.ContainerMapping | t.ConfigMap | t.Dict,
     ) -> TypeIs[t.ConfigMap]:
         """Check if value is a valid configuration mapping.
 

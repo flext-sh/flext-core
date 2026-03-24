@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from types import ModuleType
 from typing import Annotated, ClassVar, Literal, Self
 
@@ -123,7 +123,7 @@ class FlextModelsCqrs:
         )
         tag: ClassVar[Literal["query"]] = "query"
         _pagination_input_adapter: ClassVar[
-            TypeAdapter[BaseModel | t.Dict | Mapping[str, t.Scalar] | None] | None
+            TypeAdapter[BaseModel | t.Dict | t.ConfigurationMapping | None] | None
         ] = None
         message_type: Literal["query"] = Field(
             default="query",
@@ -202,10 +202,10 @@ class FlextModelsCqrs:
         @classmethod
         def _pagination_adapter(
             cls,
-        ) -> TypeAdapter[BaseModel | t.Dict | Mapping[str, t.Scalar] | None]:
+        ) -> TypeAdapter[BaseModel | t.Dict | t.ConfigurationMapping | None]:
             if cls._pagination_input_adapter is None:
                 cls._pagination_input_adapter = TypeAdapter(
-                    FlextModelsCqrs.Pagination | t.Dict | Mapping[str, t.Scalar] | None,
+                    FlextModelsCqrs.Pagination | t.Dict | t.ConfigurationMapping | None,
                 )
             return cls._pagination_input_adapter
 
@@ -213,7 +213,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | t.Dict | Mapping[str, t.Scalar] | None,
+            v: BaseModel | t.Dict | t.ConfigurationMapping | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
@@ -456,7 +456,7 @@ class FlextModelsCqrs:
 
     @staticmethod
     def parse_message(
-        payload: p.Base | BaseModel | Mapping[str, t.NormalizedValue],
+        payload: p.Base | BaseModel | t.ContainerMapping,
     ) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
         _ = payload

@@ -231,8 +231,8 @@ T = TypeVar("T")
 
 
 def process_data(
-    data: Mapping[str, t.NormalizedValue],
-) -> Mapping[str, t.NormalizedValue]:
+    data: t.ContainerMapping,
+) -> t.ContainerMapping:
     """Specific types - type checker validates."""
     return data  # IDE knows dict methods
 

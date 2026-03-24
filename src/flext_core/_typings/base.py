@@ -26,6 +26,7 @@ class FlextTypingBase:
         | None
     )
     type ContainerMapping = Mapping[str, NormalizedValue]
+    type ContainerMutableMapping = MutableMapping[str, NormalizedValue]
     type ContainerList = Sequence[NormalizedValue]
     type MutableContainerMapping = MutableMapping[str, NormalizedValue]
     type MutableContainerList = MutableSequence[NormalizedValue]

@@ -64,9 +64,9 @@ class FlextModelFoundation:
             TypeAdapter[tuple[t.Container, ...]] | None
         ] = None
         _primitives_adapter: ClassVar[TypeAdapter[t.Primitives] | None] = None
-        _dict_str_metadata_adapter: ClassVar[
-            TypeAdapter[Mapping[str, t.NormalizedValue]] | None
-        ] = None
+        _dict_str_metadata_adapter: ClassVar[TypeAdapter[t.ContainerMapping] | None] = (
+            None
+        )
         _list_serializable_adapter: ClassVar[
             TypeAdapter[Sequence[t.Serializable]] | None
         ] = None
@@ -172,10 +172,10 @@ class FlextModelFoundation:
         @classmethod
         def dict_str_metadata_adapter(
             cls,
-        ) -> TypeAdapter[Mapping[str, t.NormalizedValue]]:
+        ) -> TypeAdapter[t.ContainerMapping]:
             if cls._dict_str_metadata_adapter is None:
                 cls._dict_str_metadata_adapter = TypeAdapter(
-                    Mapping[str, t.NormalizedValue],
+                    t.ContainerMapping,
                 )
             return cls._dict_str_metadata_adapter
 

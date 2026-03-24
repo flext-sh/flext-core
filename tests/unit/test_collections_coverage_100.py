@@ -139,7 +139,7 @@ class TestFlextModelsCollectionsCoverage100:
         elif scenario.operation == "remove":
             categories.add_entries(scenario.category, ["temp"])
             categories.remove_category(scenario.category)
-            tm.that(scenario.category in categories.categories, eq=False)
+            tm.that(scenario.category not in categories.categories, eq=True)
 
     def test_categories_add_entries_existing_category(self) -> None:
         categories = m.Categories(categories={})
@@ -149,7 +149,7 @@ class TestFlextModelsCollectionsCoverage100:
 
     def test_categories_has_category(self) -> None:
         categories = m.Categories(categories={})
-        tm.that("users" in categories.categories, eq=False)
+        tm.that("users" not in categories.categories, eq=True)
         categories.add_entries("users", ["user1"])
         tm.that(categories.has_category("users"), eq=True)
 
@@ -191,7 +191,7 @@ class TestFlextModelsCollectionsCoverage100:
         categories.categories["groups"] = ["group1"]
         tm.that(categories.get("groups"), eq=["group1"])
         tm.that(categories.categories, has="users")
-        tm.that("nonexistent" in categories.categories, eq=False)
+        tm.that("nonexistent" not in categories.categories, eq=True)
         tm.that(len(categories.categories), eq=2)
 
     def test_categories_get_with_default(self) -> None:
@@ -273,7 +273,7 @@ class TestFlextModelsCollectionsCoverage100:
         diff = config1.diff(config2)
         tm.that(diff, has="timeout")
         tm.that(diff["timeout"], eq=(30, 60))
-        tm.that("retries" in diff, eq=False)
+        tm.that("retries" not in diff, eq=True)
 
     def test_config_diff_all_different(self) -> None:
         config1 = self.ConfigFixture.model_validate({"timeout": 30, "retries": 3})

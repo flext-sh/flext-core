@@ -17,7 +17,7 @@ from ._models import TestUnitModels
 
 
 class _ValidationLikeError(ValueError):
-    def errors(self) -> Sequence[Mapping[str, t.NormalizedValue]]:
+    def errors(self) -> Sequence[t.ContainerMapping]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 

@@ -34,7 +34,7 @@ class FlextModelsContextScope:
             Field(default_factory=dict, description="Scope data"),
         ]
         metadata: Annotated[
-            Mapping[str, t.NormalizedValue],
+            t.ContainerMapping,
             BeforeValidator(lambda v: FlextModelsContextData.normalize_to_mapping(v)),
             Field(default_factory=dict, description="Scope metadata"),
         ]
@@ -59,7 +59,7 @@ class FlextModelsContextScope:
             Field(default=c.ZERO, description="Number of clear operations"),
         ] = c.ZERO
         operations: Annotated[
-            Mapping[str, t.NormalizedValue],
+            t.ContainerMapping,
             BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)

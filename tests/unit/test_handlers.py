@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
@@ -217,13 +217,13 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[MutableMapping[str, t.NormalizedValue], str]):
+        class DictHandler(h[t.MutableContainerMapping, str]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: Mapping[str, t.NormalizedValue]) -> r[str]:
+            def handle(self, message: t.ContainerMapping) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
         config = u.Tests.HandlerHelpers.create_handler_config(
@@ -234,7 +234,7 @@ class TestFlextHandlers:
         )
         handler = DictHandler(config=config)
         dict_message = cast(
-            "MutableMapping[str, t.NormalizedValue]",
+            "t.MutableContainerMapping",
             {
                 "command_id": "cmd_123",
                 "data": "test_data",
@@ -475,7 +475,7 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = self.ConcreteTestHandler(config=config)
-        context_typed: Mapping[str, t.NormalizedValue] = {
+        context_typed: t.ContainerMapping = {
             "user_id": "123",
             "operation": "test",
         }

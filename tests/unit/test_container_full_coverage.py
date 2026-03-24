@@ -61,7 +61,7 @@ class TestContainerFullCoverage:
         def keys(self) -> Sequence[str]:
             return []
 
-        def values(self) -> Sequence[t.NormalizedValue]:
+        def values(self) -> t.ContainerList:
             return []
 
         def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
@@ -75,7 +75,7 @@ class TestContainerFullCoverage:
 
         def merge(
             self,
-            other: p.Context | t.ConfigMap | MutableMapping[str, t.NormalizedValue],
+            other: p.Context | t.ConfigMap | t.MutableContainerMapping,
         ) -> _ContextNoClone:
             return self
 
@@ -88,7 +88,7 @@ class TestContainerFullCoverage:
             include_statistics: bool = False,
             include_metadata: bool = False,
             as_dict: bool = True,
-        ) -> BaseModel | MutableMapping[str, t.NormalizedValue]:
+        ) -> BaseModel | t.MutableContainerMapping:
             _ = include_statistics
             _ = include_metadata
             _ = as_dict

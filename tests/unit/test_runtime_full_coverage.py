@@ -507,7 +507,7 @@ def test_reconfigure_and_reset_state_paths() -> None:
     FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
     tm.that(dummy.called, eq=True)
     FlextRuntime.reset_structlog_state_for_testing()
-    tm.that(FlextRuntime._structlog_configured, eq=False)
+    tm.that(not FlextRuntime._structlog_configured, eq=True)
 
 
 def test_runtime_result_all_missed_branches() -> None:
@@ -756,7 +756,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
 def test_runtime_result_alias_compatibility() -> None:
     rr: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(10)
     wrapped: r[int] = r[int].ok(rr.value)
-    tm.that(wrapped, is_=r)
+    assert isinstance(wrapped, r)
 
 
 def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -962,7 +962,7 @@ def test_runtime_result_remaining_paths() -> None:
 
 
 def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    events: MutableSequence[tuple[str, Mapping[str, t.NormalizedValue]]] = []
+    events: MutableSequence[tuple[str, t.ContainerMapping]] = []
 
     class Logger:
         def info(self, message: str, **kwargs: t.Scalar) -> None:

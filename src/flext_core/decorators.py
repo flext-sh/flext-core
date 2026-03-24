@@ -189,7 +189,7 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: MutableMapping[str, t.NormalizedValue] = {
+                    failure_extra: t.MutableContainerMapping = {
                         "function": func.__name__,
                         "success": False,
                         c.WarningLevel.ERROR: str(exc),

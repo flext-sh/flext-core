@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 from pydantic import BaseModel
 
@@ -117,7 +117,7 @@ class FlextUtilitiesCache:
                 for k, v in component.items()
             }
         if isinstance(component, set):
-            normalized_set_items: Sequence[t.NormalizedValue] = [
+            normalized_set_items: t.ContainerList = [
                 FlextUtilitiesCache.normalize_component(item) for item in component
             ]
             return tuple(normalized_set_items)
@@ -144,7 +144,7 @@ class FlextUtilitiesCache:
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
             data_map = m.Validators.sortable_dict_adapter().validate_python(data)
-            result: Mutablet.ContainerMapping = {}
+            result: t.MutableContainerMapping = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]
                 if value is None:

@@ -56,7 +56,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if isinstance(value, BaseModel):
             raw = value.model_dump()
-            result: MutableMapping[str, t.NormalizedValue] = {}
+            result: t.MutableContainerMapping = {}
             for k, v in raw.items():
                 container_val = u.normalize_to_container(v)
                 if isinstance(container_val, BaseModel):
@@ -79,16 +79,13 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: t.ConfigMap | Mapping[str, t.NormalizedValue] | BaseModel | None,
-    ) -> Mapping[str, t.NormalizedValue]:
+        ctx_value: t.ConfigMap | t.ContainerMapping | BaseModel | None,
+    ) -> t.ContainerMapping:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
             return {}
 
-        payload: (
-            Mapping[str, t.NormalizedValue | BaseModel]
-            | Mapping[str, t.NormalizedValue]
-        )
+        payload: Mapping[str, t.NormalizedValue | BaseModel] | t.ContainerMapping
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
             payload = ctx_value.root
         elif isinstance(ctx_value, BaseModel):
@@ -99,7 +96,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return {}
 
         try:
-            normalized: MutableMapping[str, t.NormalizedValue] = {}
+            normalized: t.MutableContainerMapping = {}
             mapping_value: Mapping[str, t.NormalizedValue | BaseModel] = dict(
                 payload.items(),
             )
@@ -380,7 +377,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | Mapping[str, t.NormalizedValue]:
+    ) -> m.ContextExport | t.ContainerMapping:
         """Export context data for serialization or debugging.
 
         Args:
@@ -398,7 +395,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         stats_dict_export: t.ConfigMap | None = None
         if include_statistics and self._statistics:
             stats_dict_export = t.ConfigMap(root=self._statistics.model_dump())
-        metadata_dict_export: Mapping[str, t.NormalizedValue] | None = None
+        metadata_dict_export: t.ContainerMapping | None = None
         if include_metadata:
             metadata_dict_export = self._get_all_metadata()
         metadata_for_model: t.ConfigMap | None = None
@@ -418,11 +415,9 @@ class FlextContext(m.ArbitraryTypesModel, u):
             root=dict((stats_dict_export or t.ConfigMap(root={})).items()),
         )
         if as_dict:
-            result_dict: MutableMapping[str, t.NormalizedValue] = dict(
-                all_scopes.items()
-            )
+            result_dict: t.MutableContainerMapping = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
-                stats_items: Mapping[str, t.NormalizedValue] = {
+                stats_items: t.ContainerMapping = {
                     sk: FlextContext._to_normalized(sv)
                     for sk, sv in stats_dict_export.items()
                 }
@@ -431,7 +426,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 metadata_container: t.ConfigMap = t.ConfigMap(
                     root=dict(metadata_dict_export.items()),
                 )
-                meta_items: Mapping[str, t.NormalizedValue] = {
+                meta_items: t.ContainerMapping = {
                     mk: FlextContext._to_normalized(mv)
                     for mk, mv in metadata_container.items()
                 }
@@ -618,7 +613,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
     def merge(
         self,
-        other: p.Context | t.ConfigMap | Mapping[str, t.NormalizedValue],
+        other: p.Context | t.ConfigMap | t.ContainerMapping,
     ) -> Self:
         """Merge another context or dictionary into this context.
 
@@ -796,7 +791,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                     return r[bool].fail("Invalid key found in context")
         return r[bool].ok(value=True)
 
-    def values(self) -> Sequence[t.NormalizedValue]:
+    def values(self) -> t.ContainerList:
         """Get all values in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -807,7 +802,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return []
-        all_values: MutableSequence[t.NormalizedValue] = []
+        all_values: t.MutableContainerList = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
@@ -839,7 +834,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                     hook_data = str(event_data)
                 _ = hook(hook_data)
 
-    def _get_all_metadata(self) -> Mapping[str, t.NormalizedValue]:
+    def _get_all_metadata(self) -> t.ContainerMapping:
         """Get all metadata from the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -851,7 +846,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         data = dict(self._metadata.model_dump().items())
         custom_fields_raw = data.pop("custom_fields", {})
-        custom_fields_dict: MutableMapping[str, t.NormalizedValue] = {}
+        custom_fields_dict: t.MutableContainerMapping = {}
         try:
             cf_map = t.ConfigMap(root=dict(custom_fields_raw.items()))
             for ck, cv in cf_map.items():
@@ -862,7 +857,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 exc_info=exc,
             )
             custom_fields_dict = {}
-        result: MutableMapping[str, t.NormalizedValue] = {}
+        result: t.MutableContainerMapping = {}
         for k, v in data.items():
             if v is None or v == {}:
                 continue
@@ -877,7 +872,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         result.update(custom_fields_dict)
         return result
 
-    def _get_all_scopes(self) -> Mapping[str, Mapping[str, t.NormalizedValue]]:
+    def _get_all_scopes(self) -> Mapping[str, t.ContainerMapping]:
         """Get all scope registrations.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -888,7 +883,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return {}
-        scopes: MutableMapping[str, Mapping[str, t.NormalizedValue]] = {}
+        scopes: MutableMapping[str, t.ContainerMapping] = {}
         for scope_name, ctx_var in self._scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
@@ -1330,7 +1325,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """Context serialization and deserialization utilities."""
 
         @staticmethod
-        def get_full_context() -> Mapping[str, t.NormalizedValue]:
+        def get_full_context() -> t.ContainerMapping:
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             operation_metadata_raw = context_vars.Performance.OPERATION_METADATA.get()

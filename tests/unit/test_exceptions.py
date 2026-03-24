@@ -140,7 +140,7 @@ class Teste:
 
     def test_validation_error_with_context(self) -> None:
         """Test ValidationError with context - tests lines 243-244."""
-        context_raw: Mapping[str, t.NormalizedValue] = {"key1": "value1", "key2": 123}
+        context_raw: t.ContainerMapping = {"key1": "value1", "key2": 123}
         context: Mapping[str, t.MetadataValue] = {
             k: FlextRuntime.normalize_to_metadata(v) for k, v in context_raw.items()
         }
@@ -177,7 +177,7 @@ class Teste:
 
     def test_not_found_error_with_context(self) -> None:
         """Test NotFoundError with context - tests lines 518-547."""
-        context_raw: Mapping[str, t.NormalizedValue] = {
+        context_raw: t.ContainerMapping = {
             "key1": "value1",
             "correlation_id": "test-id",
             "metadata": "test",
@@ -496,7 +496,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: Mapping[str, t.NormalizedValue] = {
+        dict_like_converted: t.ContainerMapping = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -705,7 +705,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: Mapping[str, t.NormalizedValue] = {
+        dict_like_converted: t.ContainerMapping = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -729,7 +729,7 @@ class Teste:
         class DictLike(Mapping[str, t.NormalizedValue]):
             @override
             def __getitem__(self, key: str) -> t.NormalizedValue:
-                mapping: Mapping[str, t.NormalizedValue] = {
+                mapping: t.ContainerMapping = {
                     "key1": "value1",
                     "key2": 123,
                 }
@@ -746,7 +746,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: Mapping[str, t.NormalizedValue] = {
+        dict_like_converted: t.ContainerMapping = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -789,7 +789,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: Mapping[str, t.NormalizedValue] = {
+        dict_like_converted: t.ContainerMapping = {
             k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
