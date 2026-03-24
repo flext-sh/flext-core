@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes as t
-
 import json
 from collections.abc import Mapping, MutableSequence
 from datetime import UTC, datetime
@@ -16,10 +14,10 @@ from pathlib import Path
 
 import pytest
 import yaml
-from flext_tests import m, t, tf
+from flext_tests import m, tf
 from pydantic import BaseModel
 
-from flext_core import r
+from flext_core import FlextTypes as t, r
 from tests import assertion_helpers
 
 

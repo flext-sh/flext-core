@@ -103,14 +103,14 @@ class UtilitiesMapperFullCoverageNamespace:
 
     class _TransformCallable(Protocol):
         def __call__(
-            self, source: BadMapping, **kwargs: Mapping[str, str]
+            self, source: BadMapping, **kwargs: t.StrMapping
         ) -> r[t.ContainerMapping]: ...
 
     class _MapDictKeysCallable(Protocol):
         def __call__(
             self,
             source: _BadItems,
-            key_map: Mapping[str, str],
+            key_map: t.StrMapping,
             *,
             keep_unmapped: bool = True,
         ) -> r[t.ContainerMapping]: ...
@@ -119,7 +119,7 @@ class UtilitiesMapperFullCoverageNamespace:
         def __call__(
             self,
             active_flags: _BadIter,
-            flag_mapping: Mapping[str, str],
+            flag_mapping: t.StrMapping,
         ) -> r[Mapping[str, bool]]: ...
 
     @staticmethod
@@ -192,7 +192,7 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     def _transform_obj(
-        source: BadMapping, **kwargs: Mapping[str, str]
+        source: BadMapping, **kwargs: t.StrMapping
     ) -> r[t.ContainerMapping]:
         fn: _TransformCallable = getattr(u, "transform")
         return fn(source, **kwargs)
@@ -200,7 +200,7 @@ class UtilitiesMapperFullCoverageNamespace:
     @staticmethod
     def _map_dict_keys_obj(
         source: _BadItems,
-        key_map: Mapping[str, str],
+        key_map: t.StrMapping,
         *,
         keep_unmapped: bool = True,
     ) -> r[t.ContainerMapping]:
@@ -210,7 +210,7 @@ class UtilitiesMapperFullCoverageNamespace:
     @staticmethod
     def _build_flags_obj(
         active_flags: _BadIter,
-        flag_mapping: Mapping[str, str],
+        flag_mapping: t.StrMapping,
     ) -> r[Mapping[str, bool]]:
         """Call build_flags_dict with arbitrary t.NormalizedValue for error-path testing."""
         fn: _BuildFlagsCallable = getattr(u, "build_flags_dict")
@@ -662,7 +662,7 @@ class UtilitiesMapperFullCoverageNamespace:
             _result: t.ContainerMapping,
             *,
             _normalize: bool,
-            _map_keys: Mapping[str, str] | None,
+            _map_keys: t.StrMapping | None,
             _filter_keys: set[str] | None,
             _exclude_keys: set[str] | None,
             _strip_none: bool,
@@ -1183,7 +1183,7 @@ class UtilitiesMapperFullCoverageNamespace:
             def __call__(self) -> None:
                 return None
 
-            def keys(self) -> Sequence[str]:
+            def keys(self) -> t.StrSequence:
                 return ["k"]
 
             def items(self) -> Sequence[tuple[str, int]]:

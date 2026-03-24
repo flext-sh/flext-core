@@ -756,7 +756,7 @@ class FlextContainer(p.Container):
         self._context = context
 
     @override
-    def list_services(self) -> Sequence[str]:
+    def list_services(self) -> t.StrSequence:
         """List the names of registered services and factories."""
         return (
             list(self._services.keys())
@@ -1099,7 +1099,7 @@ class FlextContainer(p.Container):
         if not namespace_registry_raw or not u.is_mapping(namespace_registry_raw):
             return
         namespace_registry = namespace_registry_raw
-        namespaces: Sequence[str] = list(namespace_registry.keys())
+        namespaces: t.StrSequence = list(namespace_registry.keys())
         if not namespaces:
             return
         for namespace in namespaces:
@@ -1144,7 +1144,7 @@ class FlextContainer(p.Container):
         self,
         *,
         modules: Sequence[ModuleType] | None = None,
-        packages: Sequence[str] | None = None,
+        packages: t.StrSequence | None = None,
         classes: Sequence[type] | None = None,
     ) -> None:
         """Wire modules/packages to the DI bridge for @inject/Provide usage."""

@@ -45,7 +45,7 @@ class FlextModelFoundation:
     class Validators:
         """Pydantic v2 validators - single namespace for all field validators."""
 
-        _tags_adapter: ClassVar[TypeAdapter[Sequence[str]] | None] = None
+        _tags_adapter: ClassVar[TypeAdapter[t.StrSequence] | None] = None
         _list_adapter: ClassVar[TypeAdapter[t.FlatContainerList] | None] = None
         _strict_string_adapter: ClassVar[
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
@@ -86,7 +86,7 @@ class FlextModelFoundation:
         _scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
         _float_adapter: ClassVar[TypeAdapter[float] | None] = None
         _str_adapter: ClassVar[TypeAdapter[str] | None] = None
-        _str_list_adapter: ClassVar[TypeAdapter[Sequence[str]] | None] = None
+        _str_list_adapter: ClassVar[TypeAdapter[t.StrSequence] | None] = None
         _str_or_bytes_adapter: ClassVar[TypeAdapter[str | bytes] | None] = None
         _enum_type_adapter: ClassVar[TypeAdapter[type[StrEnum]] | None] = None
         _serializable_adapter: ClassVar[TypeAdapter[t.Serializable] | None] = None
@@ -135,10 +135,10 @@ class FlextModelFoundation:
             return cls._strict_string_adapter
 
         @classmethod
-        def tags_adapter(cls) -> TypeAdapter[Sequence[str]]:
+        def tags_adapter(cls) -> TypeAdapter[t.StrSequence]:
             """Lazy-load tags TypeAdapter on first access."""
             if cls._tags_adapter is None:
-                cls._tags_adapter = TypeAdapter(Sequence[str])
+                cls._tags_adapter = TypeAdapter(t.StrSequence)
             return cls._tags_adapter
 
         @classmethod
@@ -254,9 +254,9 @@ class FlextModelFoundation:
             return cls._str_adapter
 
         @classmethod
-        def str_list_adapter(cls) -> TypeAdapter[Sequence[str]]:
+        def str_list_adapter(cls) -> TypeAdapter[t.StrSequence]:
             if cls._str_list_adapter is None:
-                cls._str_list_adapter = TypeAdapter(Sequence[str])
+                cls._str_list_adapter = TypeAdapter(t.StrSequence)
             return cls._str_list_adapter
 
         @classmethod
@@ -348,7 +348,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: t.ValueOrModel) -> Sequence[str]:
+        def validate_tags_list(v: t.ValueOrModel) -> t.StrSequence:
             """Validate and normalize tags list."""
             try:
                 raw_tags: t.FlatContainerList = (
@@ -489,7 +489,7 @@ class FlextModelFoundation:
             ),
         ] = None
         tags: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(
                 default_factory=list,
                 description="Normalized labels used to classify and filter this metadata.",
@@ -620,7 +620,7 @@ class FlextModelFoundation:
         result_type: Literal["partial"] = "partial"
         value: t.Container
         warnings: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(
                 default_factory=list,
                 description="Non-fatal warning messages generated during partial processing.",
@@ -644,9 +644,9 @@ class FlextModelFoundation:
         """Invalid validation outcome."""
 
         outcome_type: Literal["invalid"] = "invalid"
-        errors: Sequence[str]
+        errors: t.StrSequence
         error_codes: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(
                 default_factory=list,
                 description="Machine-readable error codes that classify validation failures.",
@@ -658,7 +658,7 @@ class FlextModelFoundation:
 
         outcome_type: Literal["warning"] = "warning"
         validated_data: t.Container
-        warnings: Sequence[str]
+        warnings: t.StrSequence
         validation_time_ms: float
 
     ValidationOutcome = Annotated[

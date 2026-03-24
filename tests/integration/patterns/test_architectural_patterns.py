@@ -10,15 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes as t
-
 import time
 from collections.abc import MutableMapping, MutableSequence
 
 import pytest
-from flext_tests import t
 
-from flext_core import FlextConstants, m, r
+from flext_core import FlextConstants, FlextTypes as t, m, r
 from tests import assertion_helpers
 
 

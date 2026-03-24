@@ -200,7 +200,7 @@ class FlextModelsService:
             ),
         ] = c.Aggregation.AVG
         group_by: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(
                 default_factory=list,
                 description="Metric dimensions used to group the resulting metric series.",
@@ -270,11 +270,11 @@ class FlextModelsService:
         action: Annotated[t.NonEmptyStr, Field(description="Requested action")]
         allowed: Annotated[bool, Field(description="Whether access is allowed")]
         permissions: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(default_factory=list, description="Granted permissions"),
         ]
         denied_permissions: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(default_factory=list, description="Denied permissions"),
         ]
         context: FlextModelsService.ServiceContext | None = None
@@ -338,7 +338,7 @@ class FlextModelsService:
         resources: Mapping[str, t.ResourceCallable] | None = None
         container_overrides: t.ScalarMapping | None = None
         wire_modules: Sequence[ModuleType | str] | None = None
-        wire_packages: Sequence[str] | None = None
+        wire_packages: t.StrSequence | None = None
         wire_classes: Sequence[type] | None = None
 
     class DependencyContainerCreationOptions(FlextModelFoundation.ArbitraryTypesModel):
@@ -385,7 +385,7 @@ class FlextModelsService:
             ),
         ] = None
         wire_packages: Annotated[
-            Sequence[str] | None,
+            t.StrSequence | None,
             Field(
                 default=None,
                 title="Wire Packages",

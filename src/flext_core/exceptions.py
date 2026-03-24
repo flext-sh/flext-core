@@ -1466,7 +1466,7 @@ class FlextExceptions:
             Error type string or None if no match
 
         """
-        error_patterns: Sequence[tuple[Sequence[str], str]] = [
+        error_patterns: Sequence[tuple[t.StrSequence, str]] = [
             (["field", "value"], "validation"),
             (["config_key", "config_source"], "configuration"),
             ([c.HandlerType.OPERATION], "operation"),
@@ -1606,7 +1606,7 @@ class FlextExceptions:
         **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
-        legacy_type_map: Mapping[str, str] = {
+        legacy_type_map: t.StrMapping = {
             "ValidationError": "validation",
             "ConfigurationError": "configuration",
             "ConnectionError": "connection",

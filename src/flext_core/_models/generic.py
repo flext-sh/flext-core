@@ -200,7 +200,7 @@ class FlextGenericModels:
             None
         )
         validation_errors: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(default_factory=list, description="Validation errors"),
         ]
         metadata: Annotated[

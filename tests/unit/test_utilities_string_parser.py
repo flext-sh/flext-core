@@ -438,7 +438,7 @@ class TestuStringParser:
         ) -> None:
             """Test parse_delimited with parametrized cases."""
 
-            def operation() -> r[Sequence[str]]:
+            def operation() -> r[t.StrSequence]:
                 """Execute parse_delimited based on case configuration."""
                 if case.use_legacy:
                     options = m.ParseOptions(

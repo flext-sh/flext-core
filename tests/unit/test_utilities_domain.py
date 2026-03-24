@@ -301,7 +301,7 @@ def create_hash_value_object_cases() -> Sequence[TestUnitModels.TestCaseMap]:
     )
     simple_obj = m.Core.SimpleValue(c.TestDomain.VALUE_DATA_TEST)
     bad_obj = u.Tests.BadObjects.BadModelDump()
-    complex_items_list: Sequence[str] = list(c.TestDomain.COMPLEX_ITEMS)
+    complex_items_list: t.StrSequence = list(c.TestDomain.COMPLEX_ITEMS)
     complex_obj = m.Core.ComplexValue(
         c.TestDomain.VALUE_DATA_TEST,
         complex_items_list,

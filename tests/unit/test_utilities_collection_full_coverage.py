@@ -20,7 +20,7 @@ class TestUtilitiesCollectionFullCoverage:
         RED = "red"
         BLUE = "blue"
 
-    class _BadMapping(Mapping[str, str]):
+    class _BadMapping(t.StrMapping):
         @override
         def __getitem__(self, _key: str) -> str:
             msg = "mapping get failed"
@@ -144,7 +144,7 @@ class TestUtilitiesCollectionFullCoverage:
     def test_process_outer_exception_and_coercion_branches(self) -> None:
         with pytest.raises(TypeError, match="iter failed"):
             _ = u.process(
-                cast("Sequence[str]", self._BadSequence()),
+                cast("t.StrSequence", self._BadSequence()),
                 lambda x: x,
             )
         value = u._coerce_value_to_float(1.5)

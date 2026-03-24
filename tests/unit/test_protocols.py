@@ -61,7 +61,7 @@ class TestFlextProtocols:
         name: Annotated[str, Field(description="Protocol availability scenario name")]
         category: Annotated[StrEnum, Field(description="Protocol category")]
         protocol_names: Annotated[
-            Sequence[str], Field(description="Expected protocol names")
+            t.StrSequence, Field(description="Expected protocol names")
         ]
 
     _DEFINITION_SCENARIOS: ClassVar[

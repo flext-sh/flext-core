@@ -108,7 +108,7 @@ class FlextModelsContainer:
             ),
         ] = None
         tags: Annotated[
-            Sequence[str],
+            t.StrSequence,
             Field(
                 default_factory=list,
                 description="Service tags for categorization",

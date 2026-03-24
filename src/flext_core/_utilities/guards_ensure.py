@@ -388,7 +388,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 else str_default
             )
         if target_type == "str_list":
-            str_list_default: Sequence[str] | None = None
+            str_list_default: t.StrSequence | None = None
             if isinstance(default, list):
                 default_values: t.ContainerList = default
                 str_list_default = [str(item) for item in default_values]

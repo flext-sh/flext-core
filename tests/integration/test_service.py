@@ -9,15 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes as t
-
 from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, override
 
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import FlextService, m, p, r
+from flext_core import FlextService, FlextTypes as t, m, p, r
 
 from ..conftest import FunctionalExternalService
 from ..test_utils import assertion_helpers

@@ -40,7 +40,7 @@ class TestFlextContext:
         t.Primitives | MutableSequence[int] | MutableMapping[str, str]
     )
     type SetGetExpectedValue = t.Primitives
-    type NestedDictValue = Mapping[str, Mapping[str, Mapping[str, Mapping[str, str]]]]
+    type NestedDictValue = Mapping[str, Mapping[str, Mapping[str, t.StrMapping]]]
 
     class ContextOperationScenario(BaseModel):
         """Test scenario for context operations."""

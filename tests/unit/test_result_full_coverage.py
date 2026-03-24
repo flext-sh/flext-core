@@ -121,7 +121,7 @@ def test_from_validation_and_to_model_paths() -> None:
     tm.ok(success_to_model)
     tm.that(success_to_model.value.value, eq=9)
     invalid_to_model = (
-        r[Mapping[str, str]]
+        r[t.StrMapping]
         .ok({"value": "bad"})
         .to_model(
             TestUnitModels._TargetModel,

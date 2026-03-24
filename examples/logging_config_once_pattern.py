@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import override
 
 from flext_core import c, r, s, t
@@ -42,7 +41,7 @@ class DatabaseService(s[t.ConfigMap]):
         return r[t.ConfigMap].ok(results)
 
     @override
-    def model_post_init(self, /, __context: Mapping[str, t.Scalar] | None) -> None:
+    def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
         """Post-initialization hook.
 
         Args:
@@ -61,7 +60,7 @@ class MigrationService(s[t.ConfigMap]):
     sync: bool
 
     @override
-    def model_post_init(self, /, __context: Mapping[str, t.Scalar] | None) -> None:
+    def model_post_init(self, /, __context: t.ScalarMapping | None) -> None:
         """Post-initialization hook.
 
         Args:

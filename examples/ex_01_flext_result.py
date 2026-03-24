@@ -91,8 +91,8 @@ class Ex01r(Examples):
             "lash.failure",
             fail_value.lash(lambda err: r[int].ok(len(err))).unwrap_or(-1),
         )
-        valid_data: Mapping[str, t.Scalar] = {"name": "Ada", "age": 30}
-        invalid_data: Mapping[str, t.Scalar] = {"name": "Ada", "age": "bad"}
+        valid_data: t.ScalarMapping = {"name": "Ada", "age": 30}
+        invalid_data: t.ScalarMapping = {"name": "Ada", "age": "bad"}
         person_model = Examples.Person
         from_validation_ok = r[Examples.Person].from_validation(
             valid_data, person_model

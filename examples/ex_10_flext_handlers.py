@@ -272,7 +272,7 @@ class Ex10FlextHandlers(Examples):
             "record_metric.ok",
             handler.record_metric(metric_key, metric_value).is_success,
         )
-        context_payload_query: Mapping[str, str] = {
+        context_payload_query: t.StrMapping = {
             "handler_name": context_name_1,
             "handler_mode": "query",
         }
@@ -280,7 +280,7 @@ class Ex10FlextHandlers(Examples):
             "push_context.mapping",
             handler.push_context(context_payload_query).is_success,
         )
-        context_payload_event: Mapping[str, str] = {
+        context_payload_event: t.StrMapping = {
             "handler_name": context_name_2,
             "handler_mode": "event",
         }

@@ -66,8 +66,8 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def _validate_list_container(data: t.NormalizedValue) -> r[Sequence[t.Container]]:
-        return r[Sequence[t.Container]].create_from_callable(
+    def _validate_list_container(data: t.NormalizedValue) -> r[t.FlatContainerList]:
+        return r[t.FlatContainerList].create_from_callable(
             lambda: m.Validators.list_container_adapter().validate_python(data),
         )
 
@@ -134,7 +134,7 @@ class FlextUtilitiesCollection:
         return list(normalized_mapping.items())
 
     @staticmethod
-    def _normalize_sequence_items(data: t.NormalizedValue) -> Sequence[t.Container]:
+    def _normalize_sequence_items(data: t.NormalizedValue) -> t.FlatContainerList:
         return m.Validators.list_container_adapter().validate_python(data)
 
     @staticmethod
@@ -441,7 +441,7 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def coerce_dict_to_str() -> Callable[[t.NormalizedValue], Mapping[str, str]]:
+    def coerce_dict_to_str() -> Callable[[t.NormalizedValue], t.StrMapping]:
         """Create validator that coerces dict values to str."""
         return FlextUtilitiesCollection._coerce_dict_values(
             FlextUtilitiesCollection._coerce_value_to_str,
@@ -562,7 +562,7 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def coerce_list_to_str() -> Callable[[t.ContainerList], Sequence[str]]:
+    def coerce_list_to_str() -> Callable[[t.ContainerList], t.StrSequence]:
         """Create validator that coerces sequence values to str."""
         return FlextUtilitiesCollection._coerce_list_values(
             FlextUtilitiesCollection._coerce_value_to_str,

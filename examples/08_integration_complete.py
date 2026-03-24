@@ -19,8 +19,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from typing import override
 
 from pydantic import Field
@@ -53,7 +51,7 @@ class Order(m.AggregateRoot):
     """Order aggregate root."""
 
     customer_id: str
-    items: Sequence[str] = Field(default_factory=list)
+    items: t.StrSequence = Field(default_factory=list)
     status: c.CommonStatus = Field(default=c.CommonStatus.PENDING)
 
 
