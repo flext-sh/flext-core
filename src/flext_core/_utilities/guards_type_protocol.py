@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeGuard, TypeIs
+from typing import TypeIs
 
 from pydantic import BaseModel
 
@@ -95,8 +95,8 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def is_handler_callable(
-        value: t.GuardInput,
-    ) -> TypeGuard[t.HandlerCallable]:
+        value: object,
+    ) -> TypeIs[t.HandlerCallable]:
         """Check if value is a callable handler function.
 
         Args:
@@ -272,7 +272,8 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return bool(isinstance(value, str) and bool(value.strip()))
             case "dict_non_empty":
                 if isinstance(value, dict):
-                    return len(value) > 0
+                    dict_val: dict[str, t.NormalizedValue] = value  # type: ignore[assignment]
+                    return len(dict_val) > 0
                 if isinstance(value, t.ConfigMap):
                     return len(value.root) > 0
                 return False
@@ -281,7 +282,8 @@ class FlextUtilitiesGuardsTypeProtocol:
                     value,
                     (str, bytes),
                 ):
-                    return len(value) > 0
+                    seq_val: Sequence[t.NormalizedValue] = value  # type: ignore[assignment]
+                    return len(seq_val) > 0
                 return False
             case _:
                 return False

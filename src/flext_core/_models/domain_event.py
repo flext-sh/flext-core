@@ -158,7 +158,7 @@ class FlextModelsDomainEvent:
         event_type: t.NonEmptyStr
         aggregate_id: t.NonEmptyStr
         data: Annotated[
-            FlextModelsDomainEvent.ComparableConfigMap,
+            ComparableConfigMap,
             BeforeValidator(lambda v: FlextModelsDomainEvent._normalize_event_data(v)),
         ] = Field(
             default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(root={}),

@@ -38,7 +38,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     ClassVar,
-    TypeGuard,
     TypeIs,
     override,
 )
@@ -536,8 +535,8 @@ class FlextRuntime:
 
     @staticmethod
     def _is_structlog_processor(
-        value: t.StructlogProcessor | t.NormalizedValue,
-    ) -> TypeGuard[structlog.types.Processor]:
+        value: object,
+    ) -> TypeIs[structlog.types.Processor]:
         return callable(value)
 
     @staticmethod
