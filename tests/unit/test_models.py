@@ -28,13 +28,11 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import t as test_t, tm, u
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core._models.domain_event import FlextModelsDomainEvent
+from tests import c, m, t, u
 
-_ComparableConfigMap = FlextModelsDomainEvent.ComparableConfigMap
-from tests import c, m, t
 
 
 class TestModels:
@@ -62,7 +60,7 @@ class TestModels:
             TestModels.ModelType, Field(description="Model type under creation test")
         ]
         field_data: Annotated[
-            Mapping[str, test_t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
             Field(description="Model input payload"),
         ]
         expected_checks: Annotated[
@@ -102,7 +100,7 @@ class TestModels:
         """Test models initialization with real validation."""
         models = m()
         tm.that(
-            cast("test_t.NormalizedValue", models),
+            cast("t.NormalizedValue", models),
             none=False,
             msg="m instance must not be None",
         )
@@ -624,7 +622,7 @@ class TestModels:
         event = m.DomainEvent(
             event_type="user_created",
             aggregate_id="user-123",
-            data=_ComparableConfigMap(root={"name": "test"}),
+            data=m.ComparableConfigMap(root={"name": "test"}),
         )
         assert all(hasattr(event, attr) for attr in ["unique_id", "created_at"])
         assert event.event_type == "user_created"
@@ -732,11 +730,11 @@ class TestModels:
             name: str
             handler_called: bool = False
             handler_data: Annotated[
-                Mapping[str, test_t.NormalizedValue], Field(default_factory=dict)
+                Mapping[str, t.NormalizedValue], Field(default_factory=dict)
             ]
 
             def _apply_test_event(
-                self, data: Mapping[str, test_t.NormalizedValue]
+                self, data: Mapping[str, t.NormalizedValue]
             ) -> None:
                 self.handler_called = True
                 self.handler_data = data
@@ -757,7 +755,7 @@ class TestModels:
             name: str
 
             def _apply_failing_event(
-                self, _data: Mapping[str, test_t.NormalizedValue]
+                self, _data: Mapping[str, t.NormalizedValue]
             ) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
@@ -774,7 +772,7 @@ class TestModels:
         event = m.DomainEvent(
             event_type="test_event",
             aggregate_id="aggregate-123",
-            data=_ComparableConfigMap(root={"key": "value"}),
+            data=m.ComparableConfigMap(root={"key": "value"}),
         )
         assert event.event_type == "test_event"
         assert event.aggregate_id == "aggregate-123"
@@ -873,7 +871,7 @@ class TestModels:
         )
         tm.that(retry.backoff_multiplier, eq=2.0, msg="backoff_multiplier must be 2.0")
         tm.that(
-            cast("test_t.NormalizedValue", retry.retry_on_exceptions),
+            cast("t.NormalizedValue", retry.retry_on_exceptions),
             is_=list,
             none=False,
             empty=True,

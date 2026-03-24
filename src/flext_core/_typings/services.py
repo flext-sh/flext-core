@@ -17,7 +17,7 @@ from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import p
-    from flext_core.dispatcher import FlextDispatcher
+    from flext_core import FlextDispatcher
 
 
 class FlextTypesServices:

@@ -302,7 +302,7 @@ class FlextProtocolsResult:
             ...
 
     @runtime_checkable
-    class ErrorDomain(Protocol):
+    class ErrorDomainProtocol(Protocol):
         """Protocol for error domain enumeration.
 
         Defines standard error categories for structured error handling

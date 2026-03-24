@@ -11,9 +11,6 @@ import pytest
 from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
-from flext_core._models.domain_event import FlextModelsDomainEvent
-
-_ComparableConfigMap = FlextModelsDomainEvent.ComparableConfigMap
 from tests import m, t
 
 
@@ -281,7 +278,7 @@ class TestCoverageModels:
         event = m.DomainEvent(
             event_type="UserCreated",
             aggregate_id="USER-001",
-            data=_ComparableConfigMap(
+            data=m.ComparableConfigMap(
                 root={"user_id": "USER-001", "email": "user@example.com"}
             ),
         )
@@ -296,12 +293,12 @@ class TestCoverageModels:
         event1 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data=_ComparableConfigMap(root={"tracking_number": "TRACK-123"}),
+            data=m.ComparableConfigMap(root={"tracking_number": "TRACK-123"}),
         )
         event2 = m.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
-            data=_ComparableConfigMap(root={"tracking_number": "TRACK-123"}),
+            data=m.ComparableConfigMap(root={"tracking_number": "TRACK-123"}),
         )
         tm.that(event1.unique_id, ne=event2.unique_id)
         tm.that(event1.event_type, eq=event2.event_type)
@@ -314,7 +311,7 @@ class TestCoverageModels:
         event = AccountUpdatedEvent(
             event_type="AccountUpdated",
             aggregate_id="ACC-001",
-            data=_ComparableConfigMap(root={"field": "balance"}),
+            data=m.ComparableConfigMap(root={"field": "balance"}),
         )
         tm.that(event.created_at, none=False)
         tm.that(event.created_at, is_=datetime)
@@ -326,7 +323,7 @@ class TestCoverageModels:
         event = PaymentProcessedEvent(
             event_type="PaymentProcessed",
             aggregate_id="PAY-001",
-            data=_ComparableConfigMap(root={"amount": 99.99}),
+            data=m.ComparableConfigMap(root={"amount": 99.99}),
         )
         tm.that(event.unique_id, none=False)
         tm.that(event.created_at, none=False)

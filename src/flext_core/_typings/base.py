@@ -18,17 +18,17 @@ class FlextTypingBase:
     type Primitives = str | Numeric | bool
     type Scalar = Primitives | datetime
     type Container = Scalar | Path
-    type NormalizedValue = (
-        Container
-        | Sequence[FlextTypingBase.NormalizedValue]
-        | Mapping[str, FlextTypingBase.NormalizedValue]
-        | tuple[FlextTypingBase.NormalizedValue, ...]
-        | None
-    )
     type ContainerMapping = Mapping[str, NormalizedValue]
     type ContainerList = Sequence[NormalizedValue]
     type MutableContainerMapping = MutableMapping[str, NormalizedValue]
     type MutableContainerList = MutableSequence[NormalizedValue]
+    type NormalizedValue = (
+        Container
+        | FlextTypingBase.ContainerMapping
+        | FlextTypingBase.ContainerList
+        | tuple[FlextTypingBase.NormalizedValue, ...]
+        | None
+    )
 
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
     type StrMapping = Mapping[str, str]

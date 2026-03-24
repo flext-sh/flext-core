@@ -1,6 +1,6 @@
 """Structured error handling for Result types.
 
-Provides ErrorDomain enum and FlextError dataclass for categorized error handling
+Provides FlextErrorDomain enum and FlextError dataclass for categorized error handling
 with proper error routing and metadata support across the FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -17,7 +17,7 @@ from pydantic import Field
 from flext_core import FlextModelFoundation, t
 
 
-class ErrorDomain(StrEnum):
+class FlextErrorDomain(StrEnum):
     """Standard error domain categories for structured error routing.
 
     Enables consistent error handling across FLEXT projects by categorizing
@@ -67,8 +67,8 @@ class FlextError(FlextModelFoundation.ArbitraryTypesModel):
 
     """
 
-    domain: ErrorDomain = Field(
-        default=ErrorDomain.UNKNOWN,
+    domain: FlextErrorDomain = Field(
+        default=FlextErrorDomain.UNKNOWN,
         description="Error domain category for routing",
     )
 
@@ -94,7 +94,7 @@ class FlextError(FlextModelFoundation.ArbitraryTypesModel):
     def from_exception(
         cls,
         exc: BaseException,
-        domain: ErrorDomain = ErrorDomain.INTERNAL,
+        domain: FlextErrorDomain = FlextErrorDomain.INTERNAL,
         code: str | None = None,
     ) -> FlextError:
         """Create FlextError from caught exception.
@@ -139,4 +139,4 @@ class FlextError(FlextModelFoundation.ArbitraryTypesModel):
         return f"{self.code}: {self.message}"
 
 
-__all__ = ["ErrorDomain", "FlextError"]
+__all__ = ["FlextError", "FlextErrorDomain"]

@@ -116,7 +116,7 @@ if TYPE_CHECKING:
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, FlextDecorators as d
     from flext_core.dispatcher import FlextDispatcher
-    from flext_core.errors import ErrorDomain, FlextError
+    from flext_core.errors import FlextError, FlextErrorDomain
     from flext_core.exceptions import FlextExceptions, FlextExceptions as e
     from flext_core.handlers import FlextHandlers, FlextHandlers as h
     from flext_core.loggings import FlextLogger
@@ -134,7 +134,6 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "BaseModel": ("flext_core.typings", "BaseModel"),
     "EnumT": ("flext_core._typings.generics", "EnumT"),
-    "ErrorDomain": ("flext_core.errors", "ErrorDomain"),
     "FlextConstants": ("flext_core.constants", "FlextConstants"),
     "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
     "FlextConstantsCqrs": ("flext_core._constants.cqrs", "FlextConstantsCqrs"),
@@ -161,6 +160,7 @@ _LAZY_IMPORTS: Mapping[str, tuple[str, str]] = {
     "FlextDecorators": ("flext_core.decorators", "FlextDecorators"),
     "FlextDispatcher": ("flext_core.dispatcher", "FlextDispatcher"),
     "FlextError": ("flext_core.errors", "FlextError"),
+    "FlextErrorDomain": ("flext_core.errors", "FlextErrorDomain"),
     "FlextExceptions": ("flext_core.exceptions", "FlextExceptions"),
     "FlextGenericModels": ("flext_core._models.generic", "FlextGenericModels"),
     "FlextHandlers": ("flext_core.handlers", "FlextHandlers"),
@@ -358,7 +358,6 @@ __all__ = [
     "TV",
     "BaseModel",
     "EnumT",
-    "ErrorDomain",
     "FlextConstants",
     "FlextConstantsBase",
     "FlextConstantsCqrs",
@@ -373,6 +372,7 @@ __all__ = [
     "FlextDecorators",
     "FlextDispatcher",
     "FlextError",
+    "FlextErrorDomain",
     "FlextExceptions",
     "FlextGenericModels",
     "FlextHandlers",
