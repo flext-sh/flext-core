@@ -104,6 +104,7 @@ dev = [
   "pip-audit>=2.7.3",
   "pre-commit>=4.0.1",
   "pylint>=3.3",
+  "pyrefly>=0.58.0",
   "pytest-benchmark>=5.1",
   "pytest-clarity>=1.0.1",
   "pytest-cov>=6.2",
@@ -124,6 +125,7 @@ dev = [
   "types-click>=7.1",
   "types-defusedxml>=0.7",
   "types-docker>=7.1",
+  "types-flask>=1.1.6",
   "types-ldap3>=2.9.13.20250622",
   "types-paramiko>=4.0",
   "types-protobuf>=6.30.2.20250703",
@@ -188,6 +190,7 @@ ignore-property-decorators = true
 [tool.mypy]
 
 disable_error_code = [
+  "name-defined",
   "prop-decorator",
 ]
 explicit_package_bases = true
