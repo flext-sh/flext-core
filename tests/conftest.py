@@ -20,13 +20,13 @@ import pytest
 from flext_tests import t
 from pydantic import ValidationError
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, r, t as core_t
+from flext_core import FlextContainer, FlextContext, FlextSettings, r
 
 from .helpers.scenarios import (
     TestHelperScenarios,
 )
 
-setattr(builtins, "t", core_t)
+setattr(builtins, "t", t)
 
 
 class FunctionalExternalService:

@@ -19,7 +19,7 @@ from typing import cast
 import pytest
 from flext_tests import t
 
-from flext_core import r, t as core_t
+from flext_core import r
 from tests import u
 
 from ...models import m
@@ -141,35 +141,35 @@ class TestAdvancedPatterns:
 
             given_mapped = u.transform_values(
                 u.map_dict_keys(
-                    cast("core_t.ContainerMapping", self._given),
+                    cast("t.ContainerMapping", self._given),
                     {k: str(k) for k in self._given},
                     keep_unmapped=True,
                 ).value,
                 convert_dict_value,
             )
-            given_converted: core_t.ConfigurationMapping = {
+            given_converted: t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
             when_mapped = u.transform_values(
                 u.map_dict_keys(
-                    cast("core_t.ContainerMapping", self._when),
+                    cast("t.ContainerMapping", self._when),
                     {k: str(k) for k in self._when},
                     keep_unmapped=True,
                 ).value,
                 convert_dict_value,
             )
-            when_converted: core_t.ConfigurationMapping = {
+            when_converted: t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
             then_mapped = u.transform_values(
                 u.map_dict_keys(
-                    cast("core_t.ContainerMapping", self._then),
+                    cast("t.ContainerMapping", self._then),
                     {k: str(k) for k in self._then},
                     keep_unmapped=True,
                 ).value,
                 convert_dict_value,
             )
-            then_converted: core_t.ConfigurationMapping = {
+            then_converted: t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in then_mapped.items()
             }
             scenario_data = m.Core.MockScenarioData.model_validate(

@@ -948,13 +948,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 t.ConfigMap(root={c.FIELD_DATA: t.ConfigMap(root=data.root)}),
             )
             return r[bool].ok(value=True)
-        except (TypeError, Exception) as e:
-            error_msg = (
-                str(e)
-                if isinstance(e, TypeError)
-                else f"Failed to set context values: {e}"
-            )
-            return r[bool].fail(error_msg)
+        except TypeError as e:
+            return r[bool].fail(str(e))
 
     def _set_in_contextvar(self, scope: str, data: t.ConfigMap) -> None:
         """Set multiple values in contextvar scope."""
@@ -1000,13 +995,8 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 t.ConfigMap(root={"key": key, "value": value}),
             )
             return r[bool].ok(value=True)
-        except (TypeError, Exception) as e:
-            error_msg = (
-                str(e)
-                if isinstance(e, TypeError)
-                else f"Failed to set context value: {e}"
-            )
-            return r[bool].fail(error_msg)
+        except TypeError as e:
+            return r[bool].fail(str(e))
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper).
