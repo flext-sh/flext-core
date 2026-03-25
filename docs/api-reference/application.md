@@ -65,6 +65,7 @@ from flext_core import h
 from flext_core import r
 
 
+
 class CreateUserHandler(h[CreateUserCommand, bool]):
     def handle(self, message: CreateUserCommand) -> r[bool]:
         if "@" not in message.email:
@@ -109,6 +110,7 @@ summary = registry.register_handlers([
 ```python
 from flext_core import FlextDecorators
 from flext_core import r
+
 
 
 @FlextDecorators.retry(attempts=3)

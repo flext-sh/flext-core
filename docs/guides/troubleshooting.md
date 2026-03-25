@@ -513,7 +513,11 @@ from flext_core import t
 from flext_core import u
 
 
+<<<<<<< Updated upstream
 def safe_operation(data: dict) -> r[dict]:
+=======
+def safe_operation(data: dict) -> FlextResult[dict]:
+>>>>>>> Stashed changes
     try:
         # Your operation here
         result = process_data(data)
@@ -787,6 +791,7 @@ from flext_core import u
 def process(data: dict) -> r[ProcessedData]:
     return r.ok(ProcessedData(**data))
 
+
 # ❌ BAD
 def process(data: dict) -> ProcessedData:
     return ProcessedData(**data)
@@ -811,6 +816,7 @@ def process(data: dict) -> ProcessedData:
    # ✅ GOOD
    def process(items: Sequence[Item]) -> r[Sequence[ProcessedItem]]:
        pass
+
 
    # ❌ BAD
    def process(items):

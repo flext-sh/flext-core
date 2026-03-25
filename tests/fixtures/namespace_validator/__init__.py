@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
+    from flext_core import FlextTypes
     from tests.fixtures.namespace_validator.rule0_loose_items import (
         Rule0LooseItemsFixture,
     )
@@ -41,51 +43,19 @@ if TYPE_CHECKING:
     )
     from tests.fixtures.namespace_validator.typings import LooseTypeAlias
 
-    from flext_core import FlextTypes
-
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "DEFAULT_TIMEOUT": [
-        "tests.fixtures.namespace_validator.rule1_loose_constant",
-        "DEFAULT_TIMEOUT",
-    ],
-    "FlextTestConstants": [
-        "tests.fixtures.namespace_validator.rule0_multiple_classes",
-        "FlextTestConstants",
-    ],
-    "FlextTestModels": [
-        "tests.fixtures.namespace_validator.rule1_loose_enum",
-        "FlextTestModels",
-    ],
-    "FlextTestTypes": [
-        "tests.fixtures.namespace_validator.rule2_protocol_in_types",
-        "FlextTestTypes",
-    ],
-    "FlextTestUtilities": [
-        "tests.fixtures.namespace_validator.rule1_magic_number",
-        "FlextTestUtilities",
-    ],
+    "DEFAULT_TIMEOUT": ["tests.fixtures.namespace_validator.rule1_loose_constant", "DEFAULT_TIMEOUT"],
+    "FlextTestConstants": ["tests.fixtures.namespace_validator.rule0_multiple_classes", "FlextTestConstants"],
+    "FlextTestModels": ["tests.fixtures.namespace_validator.rule1_loose_enum", "FlextTestModels"],
+    "FlextTestTypes": ["tests.fixtures.namespace_validator.rule2_protocol_in_types", "FlextTestTypes"],
+    "FlextTestUtilities": ["tests.fixtures.namespace_validator.rule1_magic_number", "FlextTestUtilities"],
     "LooseTypeAlias": ["tests.fixtures.namespace_validator.typings", "LooseTypeAlias"],
-    "MAX_RETRIES": [
-        "tests.fixtures.namespace_validator.rule1_loose_constant",
-        "MAX_RETRIES",
-    ],
+    "MAX_RETRIES": ["tests.fixtures.namespace_validator.rule1_loose_constant", "MAX_RETRIES"],
     "MAX_VALUE": ["tests.fixtures.namespace_validator.rule0_no_class", "MAX_VALUE"],
-    "RandomConstants": [
-        "tests.fixtures.namespace_validator.rule0_wrong_prefix",
-        "RandomConstants",
-    ],
-    "Rule0LooseItemsFixture": [
-        "tests.fixtures.namespace_validator.rule0_loose_items",
-        "Rule0LooseItemsFixture",
-    ],
-    "Rule0MultipleClassesFixture": [
-        "tests.fixtures.namespace_validator.rule0_multiple_classes",
-        "Rule0MultipleClassesFixture",
-    ],
-    "Rule1LooseEnumFixture": [
-        "tests.fixtures.namespace_validator.rule1_loose_enum",
-        "Rule1LooseEnumFixture",
-    ],
+    "RandomConstants": ["tests.fixtures.namespace_validator.rule0_wrong_prefix", "RandomConstants"],
+    "Rule0LooseItemsFixture": ["tests.fixtures.namespace_validator.rule0_loose_items", "Rule0LooseItemsFixture"],
+    "Rule0MultipleClassesFixture": ["tests.fixtures.namespace_validator.rule0_multiple_classes", "Rule0MultipleClassesFixture"],
+    "Rule1LooseEnumFixture": ["tests.fixtures.namespace_validator.rule1_loose_enum", "Rule1LooseEnumFixture"],
     "Status": ["tests.fixtures.namespace_validator.rule1_loose_enum", "Status"],
     "c": ["tests.fixtures.namespace_validator.rule1_method_in_constants", "c"],
     "helper": ["tests.fixtures.namespace_validator.rule0_no_class", "helper"],
@@ -96,13 +66,13 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 
 __all__ = [
     "DEFAULT_TIMEOUT",
-    "MAX_RETRIES",
-    "MAX_VALUE",
     "FlextTestConstants",
     "FlextTestModels",
     "FlextTestTypes",
     "FlextTestUtilities",
     "LooseTypeAlias",
+    "MAX_RETRIES",
+    "MAX_VALUE",
     "RandomConstants",
     "Rule0LooseItemsFixture",
     "Rule0MultipleClassesFixture",
@@ -133,7 +103,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -148,7 +117,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

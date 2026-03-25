@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_core._protocols.base import FlextProtocolsBase
@@ -29,17 +30,11 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextProtocolsBase": ["flext_core._protocols.base", "FlextProtocolsBase"],
     "FlextProtocolsConfig": ["flext_core._protocols.config", "FlextProtocolsConfig"],
-    "FlextProtocolsContainer": [
-        "flext_core._protocols.container",
-        "FlextProtocolsContainer",
-    ],
+    "FlextProtocolsContainer": ["flext_core._protocols.container", "FlextProtocolsContainer"],
     "FlextProtocolsContext": ["flext_core._protocols.context", "FlextProtocolsContext"],
     "FlextProtocolsHandler": ["flext_core._protocols.handler", "FlextProtocolsHandler"],
     "FlextProtocolsLogging": ["flext_core._protocols.logging", "FlextProtocolsLogging"],
-    "FlextProtocolsRegistry": [
-        "flext_core._protocols.registry",
-        "FlextProtocolsRegistry",
-    ],
+    "FlextProtocolsRegistry": ["flext_core._protocols.registry", "FlextProtocolsRegistry"],
     "FlextProtocolsResult": ["flext_core._protocols.result", "FlextProtocolsResult"],
     "FlextProtocolsService": ["flext_core._protocols.service", "FlextProtocolsService"],
 }
@@ -74,7 +69,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -89,7 +83,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

@@ -53,6 +53,7 @@ Replace exception handling with `r` for predictable control flow.
 from flext_core import r
 
 
+
 def divide(a: int, b: int) -> r[float]:
     if b == 0:
         return r[float].fail("Division by zero")
@@ -99,6 +100,7 @@ Decouple your business logic using the `FlextDispatcher`.
 ```python
 from dataclasses import dataclass
 from flext_core import FlextDispatcher, r
+
 
 
 # 1. Define a Command

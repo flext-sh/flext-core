@@ -70,7 +70,11 @@ from decimal import Decimal
 
 
 class Money(FlextModels.Value):
+<<<<<<< Updated upstream
     """Money is a value t.NormalizedValue - represented by amount and currency."""
+=======
+    """Money is a value object - represented by amount and currency."""
+>>>>>>> Stashed changes
 
     amount: Decimal
     currency: str  # "USD", "EUR", "GBP", etc.
@@ -108,20 +112,32 @@ from flext_core import FlextModels
 
 
 class Email(FlextModels.Value):
+<<<<<<< Updated upstream
     """Email address - value t.NormalizedValue."""
+=======
+    """Email address - value object."""
+>>>>>>> Stashed changes
 
     address: str
 
 
 class PhoneNumber(FlextModels.Value):
+<<<<<<< Updated upstream
     """Phone number - value t.NormalizedValue."""
+=======
+    """Phone number - value object."""
+>>>>>>> Stashed changes
 
     country_code: str
     number: str
 
 
 class Address(FlextModels.Value):
+<<<<<<< Updated upstream
     """Physical address - value t.NormalizedValue."""
+=======
+    """Physical address - value object."""
+>>>>>>> Stashed changes
 
     street: str
     city: str
@@ -258,7 +274,11 @@ class OrderItem(FlextModels.Entity):
 
 
 class ShippingInfo(FlextModels.Value):
+<<<<<<< Updated upstream
     """Shipping address - value t.NormalizedValue."""
+=======
+    """Shipping address - value object."""
+>>>>>>> Stashed changes
 
     address: str
     city: str
@@ -442,14 +462,22 @@ class OrderStatus(str, Enum):
 
 
 class Money(FlextModels.Value):
+<<<<<<< Updated upstream
     """Money value t.NormalizedValue."""
+=======
+    """Money value object."""
+>>>>>>> Stashed changes
 
     amount: Decimal
     currency: str = "USD"
 
 
 class Address(FlextModels.Value):
+<<<<<<< Updated upstream
     """Address value t.NormalizedValue."""
+=======
+    """Address value object."""
+>>>>>>> Stashed changes
 
     street: str
     city: str
@@ -654,7 +682,11 @@ import re
 
 
 class Email(FlextModels.Value):
+<<<<<<< Updated upstream
     """Email value t.NormalizedValue."""
+=======
+    """Email value object."""
+>>>>>>> Stashed changes
 
     address: str
 
@@ -665,7 +697,11 @@ class Email(FlextModels.Value):
 
 
 class Password(FlextModels.Value):
+<<<<<<< Updated upstream
     """Password value t.NormalizedValue (hashed representation)."""
+=======
+    """Password value object (hashed representation)."""
+>>>>>>> Stashed changes
 
     hash: str
 
@@ -738,6 +774,7 @@ class User(FlextModels.AggregateRoot):
         return r[bool].ok(True)
 
 
+
 # Usage
 user = User(
     user_id="USER-1",
@@ -770,6 +807,7 @@ Always use `r` for operations that can fail:
 from flext_core import FlextModels, r
 
 
+
 class User(FlextModels.Entity):
     username: str
     email: str
@@ -784,6 +822,7 @@ class User(FlextModels.Entity):
 
         self.email = new_email
         return r[bool].ok(True)
+
 
 
 # Usage
@@ -845,7 +884,11 @@ class UserCommandService(FlextService):
         self.add_domain_event(UserCreatedEvent(user.entity_id, user.username))
 
         # Return result
+<<<<<<< Updated upstream
         return r[dict].ok({
+=======
+        return FlextResult[dict].ok({
+>>>>>>> Stashed changes
             "user_id": user.entity_id,
             "username": user.username,
         })
@@ -874,6 +917,7 @@ Queries represent requests to **retrieve data**. They return `r`:
 
 ```python
 from flext_core import FlextService, r
+
 
 
 # Query definitions
@@ -933,7 +977,13 @@ class UserQueryService(FlextService):
         if not users:
             return r[list].ok([])  # Empty result is still success
 
+<<<<<<< Updated upstream
         return r[list].ok([{"id": u.entity_id, "username": u.username} for u in users])
+=======
+        return FlextResult[list].ok([
+            {"id": u.entity_id, "username": u.username} for u in users
+        ])
+>>>>>>> Stashed changes
 ```
 
 ### Dispatcher: Unified Command/Query Bus
@@ -1045,6 +1095,7 @@ class ShoppingCart(FlextModels.Entity):
             return r[bool].fail("Cart is full")
         self.items.append(item)
         return r[bool].ok(True)
+
 
 
 # ❌ WRONG - Business logic in caller

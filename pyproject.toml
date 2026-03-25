@@ -5,6 +5,7 @@
 
 # [MANAGED] build system
 [build-system]
+<<<<<<< Updated upstream
 build-backend = "hatchling.build"
 requires = [ "hatchling" ]
 
@@ -20,6 +21,29 @@ dev = [
 # [CUSTOM] poetry - flext-core ships only the core package
 
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
+=======
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=2"]
+
+# [CUSTOM] project metadata
+[project]
+name = "flext-core"
+version = "0.12.0-dev"
+description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+readme = "README.md"
+keywords = [
+  "clean-architecture",
+  "ddd",
+  "enterprise",
+  "flext",
+  "modern",
+  "solid",
+]
+license = "MIT"
+maintainers = [{ email = "team@flext.sh", name = "FLEXT Team" }]
+authors = [{ email = "team@flext.sh", name = "FLEXT Team" }]
+requires-python = ">=3.13,<3.14"
+>>>>>>> Stashed changes
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Pydantic :: 2",
@@ -155,6 +179,7 @@ skip_covered = false
 
 # [MANAGED] deptry
 [tool.deptry]
+<<<<<<< Updated upstream
 known_first_party = [
   "flext_core",
 ]
@@ -447,6 +472,9 @@ ignore = [
 select = [
   "ALL",
 ]
+=======
+pep621_dev_dependency_groups = ["dev"]
+>>>>>>> Stashed changes
 
 [tool.ruff.lint.isort]
 

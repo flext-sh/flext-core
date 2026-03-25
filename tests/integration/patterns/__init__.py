@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
+
 if TYPE_CHECKING:
     from flext_core import FlextTypes
     from tests.integration.patterns.test_advanced_patterns import (
@@ -42,34 +43,13 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "EXPECTED_BULK_SIZE": [
-        "tests.integration.patterns.test_patterns_logging",
-        "EXPECTED_BULK_SIZE",
-    ],
-    "TestAdvancedPatterns": [
-        "tests.integration.patterns.test_advanced_patterns",
-        "TestAdvancedPatterns",
-    ],
-    "TestArchitecturalPatterns": [
-        "tests.integration.patterns.test_architectural_patterns",
-        "TestArchitecturalPatterns",
-    ],
-    "TestFunction": [
-        "tests.integration.patterns.test_advanced_patterns",
-        "TestFunction",
-    ],
-    "TestPatternsCommands": [
-        "tests.integration.patterns.test_patterns_commands",
-        "TestPatternsCommands",
-    ],
-    "TestPatternsLogging": [
-        "tests.integration.patterns.test_patterns_logging",
-        "TestPatternsLogging",
-    ],
-    "TestPatternsTesting": [
-        "tests.integration.patterns.test_patterns_testing",
-        "TestPatternsTesting",
-    ],
+    "EXPECTED_BULK_SIZE": ["tests.integration.patterns.test_patterns_logging", "EXPECTED_BULK_SIZE"],
+    "TestAdvancedPatterns": ["tests.integration.patterns.test_advanced_patterns", "TestAdvancedPatterns"],
+    "TestArchitecturalPatterns": ["tests.integration.patterns.test_architectural_patterns", "TestArchitecturalPatterns"],
+    "TestFunction": ["tests.integration.patterns.test_advanced_patterns", "TestFunction"],
+    "TestPatternsCommands": ["tests.integration.patterns.test_patterns_commands", "TestPatternsCommands"],
+    "TestPatternsLogging": ["tests.integration.patterns.test_patterns_logging", "TestPatternsLogging"],
+    "TestPatternsTesting": ["tests.integration.patterns.test_patterns_testing", "TestPatternsTesting"],
     "pytestmark": ["tests.integration.patterns.test_patterns_testing", "pytestmark"],
 }
 
@@ -102,7 +82,6 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
-
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -117,7 +96,6 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
-
     """
     return sorted(__all__)
 

@@ -30,16 +30,25 @@ Common architectural patterns used in FLEXT-Core and best practices for applying
 from flext_core import r
 
 
+<<<<<<< Updated upstream
 def validate_email(email: str) -> r[str]:
+=======
+def validate_email(email: str) -> FlextResult[str]:
+>>>>>>> Stashed changes
     if "@" not in email:
         return r[str].fail("Invalid email")
     return r[str].ok(email)
 
 
+<<<<<<< Updated upstream
 def check_available(email: str) -> r[str]:
+=======
+def check_available(email: str) -> FlextResult[str]:
+>>>>>>> Stashed changes
     if email in reserved_emails:
         return r[str].fail("Email taken")
     return r[str].ok(email)
+
 
 
 # Railway composition
@@ -92,6 +101,7 @@ if logger_result.is_success:
 from flext_core import FlextModels, FlextService, r
 
 
+
 # Value Object - immutable, compared by value
 class Money(FlextModels.Value):
     amount: float
@@ -127,6 +137,7 @@ class OrderService(FlextService):
 from flext_core import FlextDispatcher, r
 
 
+
 # Command - modifies state
 class CreateUserCommand:
     def __init__(self, name: str, email: str):
@@ -143,12 +154,20 @@ class GetUserQuery:
 dispatcher = FlextDispatcher()
 
 
+<<<<<<< Updated upstream
 def create_user_handler(command: CreateUserCommand) -> r[User]:
+=======
+def create_user_handler(command: CreateUserCommand) -> FlextResult[User]:
+>>>>>>> Stashed changes
     # Create and return user
     ...
 
 
+<<<<<<< Updated upstream
 def get_user_handler(query: GetUserQuery) -> r[User]:
+=======
+def get_user_handler(query: GetUserQuery) -> FlextResult[User]:
+>>>>>>> Stashed changes
     # Retrieve and return user (no modification)
     ...
 
@@ -189,6 +208,7 @@ class UserService(FlextService):
         return r[User].ok(user)
 
 
+
 # Subscribers listen to events
 class EmailNotificationSubscriber:
     def on_user_created(self, event: UserCreatedEvent):
@@ -212,7 +232,11 @@ class EmailNotificationSubscriber:
 class UserRepository:
     """Port: abstraction for user persistence."""
 
+<<<<<<< Updated upstream
     def save(self, user: User) -> r[User]:
+=======
+    def save(self, user: User) -> FlextResult[User]:
+>>>>>>> Stashed changes
         raise NotImplementedError
 
     def get_by_id(self, user_id: str) -> r[User]:
@@ -223,7 +247,11 @@ class UserRepository:
 class PostgresUserRepository(UserRepository):
     """Adapter: PostgreSQL implementation."""
 
+<<<<<<< Updated upstream
     def save(self, user: User) -> r[User]:
+=======
+    def save(self, user: User) -> FlextResult[User]:
+>>>>>>> Stashed changes
         # PostgreSQL-specific implementation
         pass
 
@@ -295,7 +323,11 @@ class UserService:
 from flext_core import r
 
 
+<<<<<<< Updated upstream
 def validate_password(password: str) -> r[str]:
+=======
+def validate_password(password: str) -> FlextResult[str]:
+>>>>>>> Stashed changes
     if len(password) < 8:
         return r[str].fail("Too short")
     if not any(c.isupper() for c in password):
@@ -305,18 +337,27 @@ def validate_password(password: str) -> r[str]:
     return r[str].ok(password)
 
 
+<<<<<<< Updated upstream
 def validate_email(email: str) -> r[str]:
+=======
+def validate_email(email: str) -> FlextResult[str]:
+>>>>>>> Stashed changes
     if "@" not in email:
         return r[str].fail("Invalid email")
     return r[str].ok(email)
 
 
+<<<<<<< Updated upstream
 def validate_username(username: str) -> r[str]:
+=======
+def validate_username(username: str) -> FlextResult[str]:
+>>>>>>> Stashed changes
     if len(username) < 3:
         return r[str].fail("Too short")
     if not username.isalnum():
         return r[str].fail("Only alphanumeric")
     return r[str].ok(username)
+
 
 
 # Pipeline
@@ -447,6 +488,7 @@ class UserFactory:
             return r[User].ok(RegularUser(**kwargs))
         else:
             return r[User].fail(f"Unknown user type: {user_type}")
+
 
 
 # Usage
