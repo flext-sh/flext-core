@@ -154,7 +154,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
             "status": "active",
             "age": 25,
         }
-        model_result = u.load(UserModel, t.ConfigMap(root=user_data))
+        model_result = u.load(UserModel, t.ConfigMap(root=dict(user_data)))
         user_from_dict = UserModel.model_validate(user_data)
         print(
             f"✅ Model from dict: {user_from_dict.name} ({user_from_dict.status.value})"

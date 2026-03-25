@@ -749,7 +749,9 @@ class Testr:
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )
-        tm.that(response, eq=cast("t.Tests.Testobject", {"status": 200, "data": "hello"}))
+        tm.that(
+            response, eq=cast("t.Tests.Testobject", {"status": 200, "data": "hello"})
+        )
 
     @given(x=st.integers(min_value=-1000, max_value=1000))
     @settings(max_examples=50)

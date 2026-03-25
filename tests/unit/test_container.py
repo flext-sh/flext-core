@@ -365,7 +365,7 @@ class TestFlextContainer:
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result = clean_container.get(
+        result: r[dict[str, t.NormalizedValue]] = clean_container.get(
             "string_service",
             type_cls=dict,
         )
@@ -373,7 +373,9 @@ class TestFlextContainer:
 
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = clean_container.get("nonexistent", type_cls=dict)
+        result: r[dict[str, t.NormalizedValue]] = clean_container.get(
+            "nonexistent", type_cls=dict
+        )
         u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",

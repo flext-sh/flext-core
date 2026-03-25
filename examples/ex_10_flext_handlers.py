@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextHandlers, c, e, h, m, r, t
 
-from ._models import Ex10CommandBusStub, Ex10ProtocolHandler, Ex10ServiceStub
+from ._models.ex10 import Ex10CommandBusStub, Ex10ProtocolHandler, Ex10ServiceStub
 from .shared import Examples
 
 
@@ -192,8 +192,8 @@ class Ex10FlextHandlers(Examples):
         def plain_function(_message: BaseModel) -> BaseModel:
             return _PayloadModel(text="plain")
 
-        module.mod_handler = mod_handler
-        module.plain_function = plain_function
+        setattr(module, "mod_handler", mod_handler)
+        setattr(module, "plain_function", plain_function)
         module_scan = h.Discovery.scan_module(module)
         self.check("scan_module.count", len(module_scan))
         self.check("scan_module.name", module_scan[0][0] if module_scan else "none")
@@ -513,8 +513,8 @@ class Ex10FlextHandlers(Examples):
         attr_fallback = self.rand_str(3)
         dict_key = self.rand_str(2)
         dict_value = self.rand_int(1, 9)
-        rr_ok = h.RuntimeResult[int].ok(rr_value)
-        rr_fail = h.RuntimeResult[int].fail(rr_error, error_code=rr_error_code)
+        rr_ok = r[int].ok(rr_value)
+        rr_fail = r[int].fail(rr_error, error_code=rr_error_code)
         self.check("rr.is_success", rr_ok.is_success)
         self.check("rr.is_failure", rr_fail.is_failure)
         self.check("rr.unwrap_or", rr_fail.unwrap_or(rr_delta) == rr_delta)
@@ -525,13 +525,13 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "rr.flat_map",
             rr_ok.flat_map(
-                lambda n: h.RuntimeResult[int].ok(n * rr_multiplier),
+                lambda n: r[int].ok(n * rr_multiplier),
             ).unwrap_or(-1)
             == rr_value * rr_multiplier,
         )
         self.check(
             "rr.and_then",
-            rr_ok.flat_map(lambda n: h.RuntimeResult[int].ok(n - rr_delta)).unwrap_or(
+            rr_ok.flat_map(lambda n: r[int].ok(n - rr_delta)).unwrap_or(
                 -1,
             )
             == rr_value - rr_delta,
@@ -542,7 +542,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "rr.lash",
-            rr_fail.lash(lambda _err: h.RuntimeResult[int].ok(rr_value)).unwrap_or(-1)
+            rr_fail.lash(lambda _err: r[int].ok(rr_value)).unwrap_or(-1)
             == rr_value,
         )
         self.check(

@@ -3,7 +3,7 @@
 import math
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Annotated, TypeAlias, override
+from typing import TypeAlias, override
 
 import pytest
 from flext_tests import tm

@@ -20,7 +20,7 @@ from flext_core import (
     t,
 )
 
-from ._models import (
+from ._models.ex11 import (
     Ex11CommandBusStub as _CommandBusStub,
     Ex11EntityStub as _EntityStub,
     Ex11HandlerLike as _HandlerLike,
@@ -101,17 +101,19 @@ class _RuntimeFactoryService(s[str]):
     @classmethod
     def create_runtime_full(cls) -> m.ServiceRuntime:
         return cls._create_runtime(
-            config_type=FlextSettings,
-            config_overrides={},
-            context=FlextContext.create(),
-            subproject="examples",
-            services={"svc_name": "service-value"},
-            factories={"factory_name": lambda: "factory-value"},
-            resources={"resource_name": lambda: "resource-value"},
-            container_overrides={"feature_flag": True},
-            wire_modules=[sys.modules[__name__]],
-            wire_packages=["flext_core"],
-            wire_classes=[_EchoService],
+            runtime_options=m.RuntimeBootstrapOptions(
+                config_type=FlextSettings,
+                config_overrides={},
+                context=FlextContext.create(),
+                subproject="examples",
+                services={"svc_name": "service-value"},
+                factories={"factory_name": lambda: "factory-value"},
+                resources={"resource_name": lambda: "resource-value"},
+                container_overrides={"feature_flag": True},
+                wire_modules=[sys.modules[__name__]],
+                wire_packages=["flext_core"],
+                wire_classes=[_EchoService],
+            ),
         )
 
     @override
@@ -142,11 +144,11 @@ class _ServiceLike:
     def context(self) -> p.Context:
         return self._inner.context
 
-    def execute(self) -> s.RuntimeResult[str]:
-        return s.RuntimeResult[str].ok("service-like")
+    def execute(self) -> r[str]:
+        return r[str].ok("service-like")
 
-    def validate_business_rules(self) -> s.RuntimeResult[bool]:
-        return s.RuntimeResult[bool].ok(True)
+    def validate_business_rules(self) -> r[bool]:
+        return r[bool].ok(True)
 
 
 class Ex11FlextService(Examples):
@@ -376,16 +378,20 @@ class Ex11FlextService(Examples):
 
         # DependencyIntegration namespace
         di = s.DependencyIntegration.create_container(
-            config=t.ConfigMap(root={"env": env_value}),
-            services={"object_item": service_object},
-            factories={"factory_item": lambda: factory_object},
-            resources={
-                "resource_item": lambda: t.ConfigMap(root={"value": resource_number}),
-            },
-            wire_modules=[sys.modules[__name__]],
-            wire_packages=["flext_core"],
-            wire_classes=[_EchoService],
-            factory_cache=False,
+            container_options=m.DependencyContainerCreationOptions(
+                config=t.ConfigMap(root={"env": env_value}),
+                services={"object_item": service_object},
+                factories={"factory_item": lambda: factory_object},
+                resources={
+                    "resource_item": lambda: t.ConfigMap(
+                        root={"value": resource_number}
+                    ),
+                },
+                wire_modules=[sys.modules[__name__]],
+                wire_packages=["flext_core"],
+                wire_classes=[_EchoService],
+                factory_cache=False,
+            ),
         )
         self.check("DependencyIntegration.service", di.object_item() == service_object)
         self.check("DependencyIntegration.factory", di.factory_item() == factory_object)
@@ -410,8 +416,8 @@ class Ex11FlextService(Examples):
         )
 
         # RuntimeResult namespace methods
-        rr_ok = s.RuntimeResult[int].ok(rr_value)
-        rr_fail = s.RuntimeResult[int].fail(rr_error, error_code=rr_error_code)
+        rr_ok = r[int].ok(rr_value)
+        rr_fail = r[int].fail(rr_error, error_code=rr_error_code)
 
         self.check("RuntimeResult.is_success", rr_ok.is_success)
         self.check("RuntimeResult.is_failure", rr_fail.is_failure)
@@ -432,14 +438,14 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "RuntimeResult.flat_map",
-            rr_ok.flat_map(lambda num: s.RuntimeResult[int].ok(num * rr_mul)).unwrap_or(
+            rr_ok.flat_map(lambda num: r[int].ok(num * rr_mul)).unwrap_or(
                 0,
             )
             == rr_value * rr_mul,
         )
         self.check(
             "RuntimeResult.and_then",
-            rr_ok.flat_map(lambda num: s.RuntimeResult[int].ok(num + rr_add)).unwrap_or(
+            rr_ok.flat_map(lambda num: r[int].ok(num + rr_add)).unwrap_or(
                 0,
             )
             == rr_value + rr_add,
@@ -447,8 +453,8 @@ class Ex11FlextService(Examples):
         self.check(
             "RuntimeResult.flow_through",
             rr_ok.flow_through(
-                lambda num: s.RuntimeResult[int].ok(num + 1),
-                lambda num: s.RuntimeResult[int].ok(num * 2),
+                lambda num: r[int].ok(num + 1),
+                lambda num: r[int].ok(num * 2),
             ).unwrap_or(0)
             == (rr_value + 1) * 2,
         )
@@ -495,7 +501,7 @@ class Ex11FlextService(Examples):
         )
         self.check(
             "RuntimeResult.lash",
-            rr_fail.lash(lambda err: s.RuntimeResult[int].ok(len(err))).unwrap_or(0),
+            rr_fail.lash(lambda err: r[int].ok(len(err))).unwrap_or(0),
         )
         self.check(
             "RuntimeResult.recover",
@@ -513,7 +519,7 @@ class Ex11FlextService(Examples):
         valid_container_value = self.rand_str(4)
         self.check(
             "RuntimeResult.ok.none_raises",
-            s.RuntimeResult.ok(valid_container_value).is_success,
+            r.ok(valid_container_value).is_success,
         )
         self.check("RuntimeResult.ok.none_type", type(valid_container_value).__name__)
 

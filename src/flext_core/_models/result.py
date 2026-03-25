@@ -187,7 +187,7 @@ class FlextModelsResult:
 
         def flat_map(
             self,
-            func: Callable[[T], p.Result[U]],
+            func: Callable[[T], FlextModelsResult.RuntimeResult[U]],
         ) -> FlextModelsResult.RuntimeResult[U]:
             """Chain operations returning RuntimeResult."""
             if self.is_success:
@@ -208,7 +208,7 @@ class FlextModelsResult:
 
         def flow_through[U](
             self,
-            *funcs: Callable[[T | U], p.Result[U]],
+            *funcs: Callable[[T | U], FlextModelsResult.RuntimeResult[U]],
         ) -> FlextModelsResult.RuntimeResult[T] | FlextModelsResult.RuntimeResult[U]:
             """Chain multiple operations in sequence.
 
@@ -256,7 +256,7 @@ class FlextModelsResult:
 
         def lash(
             self,
-            func: Callable[[str], p.Result[T]],
+            func: Callable[[str], FlextModelsResult.RuntimeResult[T]],
         ) -> FlextModelsResult.RuntimeResult[T]:
             """Apply recovery function on failure."""
             if not self.is_success:

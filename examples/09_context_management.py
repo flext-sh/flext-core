@@ -170,7 +170,7 @@ class ContextManagementService(FlextService[t.ConfigMap]):
                     "start_time": start_time.isoformat()
                     if isinstance(start_time, datetime)
                     else "unknown",
-                    "metadata": operation_metadata.root,
+                    "metadata": t.ConfigMap(root=dict(operation_metadata.root)),
                     "timing": timing_metadata,
                 },
             )

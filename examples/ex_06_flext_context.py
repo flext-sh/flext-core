@@ -41,7 +41,7 @@ class Ex06FlextContext(Examples):
         self.check("keys.count", len(ctx.keys()))
         self.check("values.count", len(ctx.values()))
         self.check("items.count", len(ctx.items()))
-        merged = ctx.clone().merge(t.ConfigMap(root={"k4": "merged"}).root)
+        merged = ctx.clone().merge(t.ConfigMap(root={"k4": "merged"}))
         self.check("merge.get", merged.get("k4").unwrap_or("missing"))
         self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
         self.check("validate.success", ctx.validate_context().is_success)

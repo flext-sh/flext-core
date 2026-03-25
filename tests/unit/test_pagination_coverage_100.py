@@ -552,7 +552,9 @@ class TestPaginationCoverage100:
 
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
-        pagination_data: Mapping[str, Mapping[str, int | bool]] = {"pagination": dict[str, int | bool]()}
+        pagination_data: Mapping[str, Mapping[str, int | bool]] = {
+            "pagination": dict[str, int | bool]()
+        }
         result = u.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
             result,

@@ -31,12 +31,12 @@ from __future__ import annotations
 import hashlib
 import string
 import sys
-from collections.abc import Mapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import m, r, t
 
@@ -70,7 +70,12 @@ class Examples:
     def check(
         self,
         label: str,
-        value: t.NormalizedValue | Path | datetime | Mapping[str, bool | str],
+        value: t.NormalizedValue
+        | Path
+        | datetime
+        | Mapping[str, bool | str]
+        | BaseModel
+        | MutableMapping[str, t.NormalizedValue | BaseModel],
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         self._results.append(f"{label}: {self.ser(value)}")
@@ -125,7 +130,7 @@ class Examples:
 
     def ser(
         self,
-        v: t.NormalizedValue | Path | datetime | Mapping[str, bool | str],
+        v: t.NormalizedValue | Path | datetime | Mapping[str, bool | str] | BaseModel | MutableMapping[str, t.NormalizedValue | BaseModel],
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 

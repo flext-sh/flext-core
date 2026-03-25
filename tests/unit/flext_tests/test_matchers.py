@@ -534,7 +534,9 @@ class TestFlextTestsMatchers:
 
     def test_that_with_deep_parameter(self) -> None:
         """Test tm.that() with deep parameter."""
-        data: Mapping[str, Mapping[str, str | int]] = {"user": {"name": "John", "age": 30}}
+        data: Mapping[str, Mapping[str, str | int]] = {
+            "user": {"name": "John", "age": 30}
+        }
         tm.that(data, deep={"user.name": "John"})
 
     def test_that_with_where_parameter(self) -> None:

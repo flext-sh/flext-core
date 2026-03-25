@@ -24,7 +24,7 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextContext, FlextRuntime, c, r, s, t, u
+from flext_core import FlextContext, c, r, s, t
 
 
 class UserService(s[t.ConfigMap]):
@@ -196,7 +196,7 @@ class AutomationService(s[t.ConfigMap]):
 
         def transform(
             data: Sequence[t.ConfigMap],
-        ) -> FlextRuntime.RuntimeResult[Sequence[t.ConfigMap]]:
+        ) -> r[Sequence[t.ConfigMap]]:
             transformed: Sequence[t.ConfigMap] = [
                 t.ConfigMap(
                     root={
@@ -211,7 +211,7 @@ class AutomationService(s[t.ConfigMap]):
 
         def load(
             data: Sequence[t.ConfigMap],
-        ) -> FlextRuntime.RuntimeResult[Sequence[t.ConfigMap]]:
+        ) -> r[Sequence[t.ConfigMap]]:
             print(f"   💾 Loaded {len(data)} records successfully")
             return r[Sequence[t.ConfigMap]].ok(data)
 
@@ -236,7 +236,7 @@ class AutomationService(s[t.ConfigMap]):
 
         def validate(
             data: t.ConfigMap,
-        ) -> FlextRuntime.RuntimeResult[t.ConfigMap]:
+        ) -> r[t.ConfigMap]:
             task_type = str(data.get("task_type", ""))
             if not task_type:
                 return r[t.ConfigMap].fail("Task type required")
@@ -244,7 +244,7 @@ class AutomationService(s[t.ConfigMap]):
 
         def enrich(
             data: t.ConfigMap,
-        ) -> FlextRuntime.RuntimeResult[t.ConfigMap]:
+        ) -> r[t.ConfigMap]:
             enriched: t.ConfigMap = t.ConfigMap(
                 root={
                     **data.root,
@@ -286,7 +286,7 @@ class AutomationService(s[t.ConfigMap]):
                     "status": "success",
                 },
             )
-            records_text = str(u.get(task_data, "records_processed", default=0) or 0)
+            records_text = str(task_data.get("records_processed", 0) or 0)
             records = int(records_text) if records_text.isdigit() else 0
             if records == 0:
                 msg = "No records to process"

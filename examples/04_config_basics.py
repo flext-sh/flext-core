@@ -26,7 +26,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import override
 
-from pydantic import Field, TypeAdapter, ValidationError
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 from flext_core import FlextConstants, FlextService, FlextSettings, c, r, t
 
@@ -344,7 +344,7 @@ def main() -> r[bool]:
         features = metadata.get("config_features", [])
         advanced_features = metadata.get("advanced_features", [])
 
-        def _sequence_len(x: t.ContainerValue) -> int:
+        def _sequence_len(x: t.NormalizedValue | BaseModel) -> int:
             try:
                 return len(_CONTAINER_LIST_ADAPTER.validate_python(x))
             except ValidationError:

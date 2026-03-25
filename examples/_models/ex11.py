@@ -7,6 +7,7 @@ from typing import ClassVar, override
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextSettings, m, r, t
+from flext_core._models.domain_event import FlextModelsDomainEvent
 
 
 class Ex11HandlerLikeService(FlextSettings):
@@ -63,7 +64,7 @@ class Ex11CommandBusStub(m.Value):
     def dispatch(self, message: m.Command) -> r[str]:
         return r[str].ok(str(message))
 
-    def publish(self, _event: m.DomainEvent) -> None:
+    def publish(self, _event: FlextModelsDomainEvent.Entry) -> None:
         return
 
     def register_handler(self, _handler: m.Value) -> r[bool]:

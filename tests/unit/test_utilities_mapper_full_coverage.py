@@ -731,7 +731,13 @@ class UtilitiesMapperFullCoverageNamespace:
             [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}],
             {"group": "kind"},
         )
-        tm.that(grouped, eq=cast("test_t.Tests.Testobject", {"a": [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}]}))
+        tm.that(
+            grouped,
+            eq=cast(
+                "test_t.Tests.Testobject",
+                {"a": [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}]},
+            ),
+        )
         tm.that(mapper._build_apply_group([1, 2], {"group": 5}), eq=[1, 2])
         tm.that(mapper._build_apply_sort(1, {"sort": True}), eq=1)
         sorted_with_scalar = mapper._build_apply_sort(

@@ -213,7 +213,9 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: MutableSequence[FlextModelsDomainEvent.Entry] = []
+                self.processed_events: MutableSequence[
+                    FlextModelsDomainEvent.Entry
+                ] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> r[bool]:
                 """Handle user created event."""

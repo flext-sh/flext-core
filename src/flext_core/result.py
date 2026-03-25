@@ -419,7 +419,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
     @override
     def flat_map(
         self,
-        func: Callable[[T], p.Result[U]],
+        func: Callable[[T], FlextModelsResult.RuntimeResult[U]],
     ) -> FlextResult[U]:
         """Chain operations returning FlextResult.
 
@@ -456,7 +456,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
     @override
     def flow_through(
         self,
-        *funcs: Callable[[T | U], p.Result[U]],
+        *funcs: Callable[[T | U], FlextModelsResult.RuntimeResult[U]],
     ) -> FlextResult[T] | FlextResult[U]:
         """Chain multiple operations in a pipeline.
 
@@ -541,7 +541,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
     @override
     def lash(
         self,
-        func: Callable[[str], p.Result[T]],
+        func: Callable[[str], FlextModelsResult.RuntimeResult[T]],
     ) -> FlextResult[T]:
         """Apply recovery function on failure.
 
@@ -738,7 +738,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
 
 # Type alias: r[T] is FlextResult[T] — used throughout the codebase as the
 # canonical short name. Declared as TypeAlias so mypy resolves r[T] generically.
-r: TypeAlias = FlextResult
+r: TypeAlias = FlextResult  # pyright: ignore[reportMissingTypeArgument]
 
 # Ensure we export all types needed for module clients
 __all__ = ["FlextResult", "r"]

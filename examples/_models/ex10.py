@@ -7,6 +7,7 @@ from typing import ClassVar
 from pydantic import ConfigDict
 
 from flext_core import m, r, t
+from flext_core._models.domain_event import FlextModelsDomainEvent
 
 
 class Ex10Message(m.Command):
@@ -83,7 +84,7 @@ class Ex10CommandBusStub(m.Value):
     def dispatch(self, message: m.Command) -> r[str]:
         return r[str].ok(str(message))
 
-    def publish(self, event: m.DomainEvent) -> None:
+    def publish(self, event: FlextModelsDomainEvent.Entry) -> None:
         del event
 
     def register_handler(self, _handler: m.Value) -> r[bool]:

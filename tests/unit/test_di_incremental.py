@@ -332,7 +332,10 @@ class TestDIIncremental:
                 handler_module.process_request
             )
             result = process_func()
-            expected2: Mapping[str, str | int] = {"logger": "test_logger", "pool_size": 10}
+            expected2: Mapping[str, str | int] = {
+                "logger": "test_logger",
+                "pool_size": 10,
+            }
             tm.that(result, eq=expected2)
         finally:
             di_container = container._di_container
