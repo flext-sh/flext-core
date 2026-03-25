@@ -170,12 +170,8 @@ class TestDIIncremental:
 
         @FlextRuntime.DependencyIntegration.inject
         def api_call(
-            key: str = FlextRuntime.DependencyIntegration.Provide[
-                "api_key"
-            ],
-            timeout_sec: int = FlextRuntime.DependencyIntegration.Provide[
-                "timeout"
-            ],
+            key: str = FlextRuntime.DependencyIntegration.Provide["api_key"],
+            timeout_sec: int = FlextRuntime.DependencyIntegration.Provide["timeout"],
         ) -> Mapping[str, str | int]:
             return {"key": key, "timeout": timeout_sec}
 

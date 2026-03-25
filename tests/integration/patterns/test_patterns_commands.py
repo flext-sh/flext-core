@@ -13,7 +13,7 @@ from typing import cast, override
 from flext_tests import t
 from pydantic import Field
 
-from flext_core import FlextConstants, FlextHandlers, FlextModels, r
+from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextTypes as ft, r
 
 from ...models import m
 
@@ -103,7 +103,9 @@ class TestPatternsCommands:
     ):
         """Test handler for CreateUserCommand."""
 
-        created_users: MutableSequence[t.ContainerMapping] = Field(default_factory=list)
+        created_users: MutableSequence[ft.ContainerMapping] = Field(
+            default_factory=list
+        )
 
         def __init__(self) -> None:
             """Initialize create user command handler."""

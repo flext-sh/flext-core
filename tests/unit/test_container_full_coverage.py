@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from types import ModuleType
 from typing import ClassVar, Self, cast
 
@@ -17,11 +17,7 @@ from flext_core import FlextContainer, FlextContext, FlextSettings, r
 from tests import m, p
 
 
-_MonkeyPatch = pytest.MonkeyPatch
-
-
 class TestContainerFullCoverage:
-
     class _FalseConfig:
         app_name: str = "app"
         version: str = "1.0.0"
@@ -169,7 +165,7 @@ class TestContainerFullCoverage:
 
     def test_create_auto_register_factories_path(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         container = FlextContainer.create()
         called: MutableSequence[str] = []
@@ -216,7 +212,7 @@ class TestContainerFullCoverage:
         tm.that(created, is_=p.Container)
         tm.that(called, has="x")
 
-    def test_provide_property_paths(self, monkeypatch: _MonkeyPatch) -> None:
+    def test_provide_property_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
         c = FlextContainer.create()
         monkeypatch.setattr(c, "_di_bridge", _BridgeGoodProvide())
         result = c.provide("x")
@@ -230,7 +226,7 @@ class TestContainerFullCoverage:
 
     def test_config_context_properties_and_defaults(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
         c._config = None
@@ -247,7 +243,7 @@ class TestContainerFullCoverage:
 
     def test_initialize_di_components_error_paths(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config="not-provider")
@@ -258,7 +254,7 @@ class TestContainerFullCoverage:
         with pytest.raises(TypeError, match="Bridge must have config provider"):
             c.initialize_di_components()
 
-    def test_sync_config_namespace_paths(self, monkeypatch: _MonkeyPatch) -> None:
+    def test_sync_config_namespace_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
         c = FlextContainer.create()
         c._config = FlextSettings()
         c._user_overrides = t.ConfigMap(root={})
@@ -294,7 +290,7 @@ class TestContainerFullCoverage:
 
     def test_register_existing_providers_skips_and_register_core_fallback(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
         c._services = {
@@ -313,7 +309,7 @@ class TestContainerFullCoverage:
 
     def test_configure_with_resource_register_and_factory_error_paths(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
         c._user_overrides = t.ConfigMap(root={})
@@ -391,7 +387,9 @@ class TestContainerFullCoverage:
         instance = FlextContainer.create()
         tm.that(instance._global_instance, is_=type(instance))
 
-    def test_scoped_config_context_branches(self, monkeypatch: _MonkeyPatch) -> None:
+    def test_scoped_config_context_branches(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         c = FlextContainer.create()
         c._services = {}
         c._factories = {}
@@ -430,7 +428,7 @@ class TestContainerFullCoverage:
 
     def test_create_auto_register_factory_wrapper_callable_and_non_callable(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         captured: MutableMapping[str, t.RegisterableService] = {}
 
@@ -470,7 +468,7 @@ class TestContainerFullCoverage:
 
         monkeypatch.setattr(FlextContainer, "register", capture_register)
         _ = FlextContainer.create(auto_register_factories=True)
-        wrapper = captured["factory.captured"]
+        wrapper = cast("Callable[..., t.NormalizedValue]", captured["factory.captured"])
         assert wrapper() == 7
         assert wrapper(
             _factory_config=types.SimpleNamespace(fn=123, name="factory.captured"),
@@ -479,7 +477,7 @@ class TestContainerFullCoverage:
 
     def test_initialize_di_components_second_type_error_branch(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config=None)
@@ -489,14 +487,14 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr(
             "flext_core.container.di_providers.Configuration",
-            cast("t.NormalizedValue", t.NormalizedValue),  # type: ignore[arg-type]
+            cast("t.NormalizedValue", t.NormalizedValue),
         )
         with pytest.raises(TypeError, match="cannot be None"):
             c.initialize_di_components()
 
     def test_sync_config_registers_namespace_factories_and_fallbacks(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
 
@@ -558,7 +556,7 @@ class TestContainerFullCoverage:
 
     def test_register_existing_providers_full_paths_and_misc_methods(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
         c._services = {
@@ -651,7 +649,7 @@ class TestContainerFullCoverage:
 
     def test_container_remaining_branch_paths_in_sync_factory_and_getters(
         self,
-        monkeypatch: _MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         c = FlextContainer.create()
         c._global_config = m.ContainerConfig(
@@ -721,9 +719,15 @@ class TestContainerFullCoverage:
             c.sync_config_to_di()
             c._config = _CfgGoodNamespace()
             c.sync_config_to_di()
-            assert isinstance(captured["config.n2"](), BaseModel)
-            assert isinstance(captured["config.n3"](), BaseModel)
-            assert isinstance(captured["config.n4"](), BaseModel)
+            assert isinstance(
+                cast("Callable[[], BaseModel]", captured["config.n2"])(), BaseModel
+            )
+            assert isinstance(
+                cast("Callable[[], BaseModel]", captured["config.n3"])(), BaseModel
+            )
+            assert isinstance(
+                cast("Callable[[], BaseModel]", captured["config.n4"])(), BaseModel
+            )
             c2 = FlextContainer.create()
             c2._global_config = m.ContainerConfig(
                 enable_singleton=True,
@@ -788,7 +792,6 @@ class TestContainerFullCoverage:
             FlextSettings._namespace_registry.update(original_registry)
 
 
-_MonkeyPatch = TestContainerFullCoverage._MonkeyPatch
 _FalseConfig = TestContainerFullCoverage._FalseConfig
 _ContextNoClone = TestContainerFullCoverage._ContextNoClone
 _BridgeNoProvide = TestContainerFullCoverage._BridgeNoProvide

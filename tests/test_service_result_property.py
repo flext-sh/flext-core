@@ -23,6 +23,7 @@ import pytest
 from flext_core import FlextExceptions, r
 
 from .helpers.factories import TestHelperFactories
+from .helpers.factories_impl import ServiceTestCase as _ServiceTestCase
 from .test_utils import assertion_helpers
 
 
@@ -40,7 +41,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_result_property_returns_unwrapped_value(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V2: .result returns unwrapped domain result directly."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -56,7 +57,7 @@ class TestServiceResultProperty:
     )
     def test_result_property_with_validation_success(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V2: Validation success returns unwrapped value."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -71,7 +72,7 @@ class TestServiceResultProperty:
     )
     def test_result_property_with_validation_failure(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V2: Validation failure raises exception."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -92,7 +93,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_result_property_type_inference(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V2: Type checkers infer correct type."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -105,7 +106,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_result_property_lazy_evaluation(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V2: Property is lazily evaluated (executes only when accessed)."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -119,7 +120,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_v1_execute_still_works(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V1: .execute() continues to work."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -144,7 +145,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_v1_railway_pattern_composition(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V1: Railway pattern composition with map."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -163,7 +164,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_v2_and_v1_return_same_result(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """V2 and V1 should return equivalent results."""
         service1 = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -184,7 +185,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_result_is_computed_field(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """Verify .result is a Pydantic computed_field."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
@@ -198,7 +199,7 @@ class TestServiceResultProperty:
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
     def test_result_property_in_model_dump(
         self,
-        case: TestHelperFactories.ServiceTestCase,
+        case: _ServiceTestCase,
     ) -> None:
         """Computed fields behavior in model_dump."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)

@@ -1070,7 +1070,9 @@ class TestFlextTestsFiles:
 
     def test_create_in_custom_format(self, tmp_path: Path) -> None:
         """Test create_in() with explicit format override."""
-        path = tf.create_in(b"binary data", "data.dat", tmp_path, fmt=c.Tests.Files.Format.BIN)
+        path = tf.create_in(
+            b"binary data", "data.dat", tmp_path, fmt=c.Tests.Files.Format.BIN
+        )
         assert path.exists()
         assert path.read_bytes() == b"binary data"
 

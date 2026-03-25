@@ -39,7 +39,9 @@ def test_circuit_breaker_transitions_and_metrics() -> None:
 
 def test_rate_limiter_blocks_then_recovers() -> None:
     """Validate sliding window rate limiting without mocks."""
-    limiter = FlextModelsDispatcher.RateLimiterManager(max_requests=2, window_seconds=0.2, jitter_factor=0.0)
+    limiter = FlextModelsDispatcher.RateLimiterManager(
+        max_requests=2, window_seconds=0.2, jitter_factor=0.0
+    )
     msg_type = "rate-limited"
     tm.ok(limiter.check_rate_limit(msg_type))
     tm.ok(limiter.check_rate_limit(msg_type))
@@ -58,7 +60,9 @@ def test_rate_limiter_blocks_then_recovers() -> None:
 
 def test_rate_limiter_jitter_application() -> None:
     """Ensure jitter calculation respects bounds and zero factor short-circuit."""
-    limiter = FlextModelsDispatcher.RateLimiterManager(max_requests=1, window_seconds=1.0, jitter_factor=0.5)
+    limiter = FlextModelsDispatcher.RateLimiterManager(
+        max_requests=1, window_seconds=1.0, jitter_factor=0.5
+    )
     jittered = limiter._apply_jitter(2.0)
     tm.that(jittered, gte=0.0)
     limiter_zero = FlextModelsDispatcher.RateLimiterManager(

@@ -419,7 +419,7 @@ class TestModule:
         monkeypatch.setattr(FlextRuntime, "get_logger", staticmethod(_get_logger))
         tm.that(FlextLogger.get_logger("x") is sentinel, eq=True)
 
-        class _TraceLogger(self._FakeBindable):
+        class _TraceLogger(TestModule._FakeBindable):
             @override
             def debug(
                 self,
@@ -529,7 +529,7 @@ class TestModule:
             eq="example.py",
         )
 
-        class _ErrorLogger(self._FakeBindable):
+        class _ErrorLogger(TestModule._FakeBindable):
             @override
             def error(
                 self,
@@ -579,7 +579,7 @@ class TestModule:
             pass
         tm.that(captured["level"], eq="DEBUG")
 
-        class _StructlogLogger(self._FakeBindable):
+        class _StructlogLogger(TestModule._FakeBindable):
             @override
             def debug(
                 self,

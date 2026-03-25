@@ -157,7 +157,7 @@ class FlextModelsService:
                     [{"operation_name": "validate"}, {"operation_name": "persist"}],
                 ],
             ),
-        ] = Field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
+        ] = Field(default_factory=list)
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: Annotated[

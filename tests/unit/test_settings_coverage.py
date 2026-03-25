@@ -61,7 +61,9 @@ class TestFlextSettingsCoverage:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         config = t.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
-        config_path = files.create(config, "config.yaml", fmt=ftc.Tests.Files.Format.YAML)
+        config_path = files.create(
+            config, "config.yaml", fmt=ftc.Tests.Files.Format.YAML
+        )
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt=ftc.Tests.Files.Format.YAML)
         tm.ok(read_result)
@@ -75,7 +77,9 @@ class TestFlextSettingsCoverage:
         payload = t.ConfigMap(
             root={"name": "flext-core", "workers": 4, "enabled": True},
         )
-        config_path = files.create(payload, "config.json", fmt=ftc.Tests.Files.Format.JSON)
+        config_path = files.create(
+            payload, "config.json", fmt=ftc.Tests.Files.Format.JSON
+        )
         tm.that(config_path.exists(), eq=True)
         read_result = files.read(config_path, fmt=ftc.Tests.Files.Format.JSON)
         tm.ok(read_result)
@@ -89,8 +93,12 @@ class TestFlextSettingsCoverage:
     def test_compare_identical_files(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        first = files.create(t.ConfigMap(root={"x": 1}), "a.json", fmt=ftc.Tests.Files.Format.JSON)
-        second = files.create(t.ConfigMap(root={"x": 1}), "b.json", fmt=ftc.Tests.Files.Format.JSON)
+        first = files.create(
+            t.ConfigMap(root={"x": 1}), "a.json", fmt=ftc.Tests.Files.Format.JSON
+        )
+        second = files.create(
+            t.ConfigMap(root={"x": 1}), "b.json", fmt=ftc.Tests.Files.Format.JSON
+        )
         result = files.compare(first, second)
         tm.ok(result)
         tm.that(result.value, eq=True)

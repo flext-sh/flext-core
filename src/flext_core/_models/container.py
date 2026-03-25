@@ -127,20 +127,20 @@ class FlextModelsContainer:
                 return v
             if isinstance(v, Mapping):
                 normalized_mapping: MutableMapping[str, t.ValueOrModel] = {}
-                for key, item in v.items():
+                for key, item in v.items():  # pyright: ignore[reportUnknownVariableType]
+                    key_s: str = str(key)  # pyright: ignore[reportUnknownArgumentType]
                     if isinstance(item, datetime):
-                        normalized_mapping[str(key)] = (
+                        normalized_mapping[key_s] = (
                             item.replace(tzinfo=UTC) if item.tzinfo is None else item
                         )
                     elif isinstance(item, Path):
-                        normalized_mapping[str(key)] = str(item)
+                        normalized_mapping[key_s] = str(item)
                     elif isinstance(
                         item,
                         (
                             str,
                             int,
                             float,
-                            bool,
                             list,
                             dict,
                             tuple,
@@ -148,7 +148,7 @@ class FlextModelsContainer:
                             BaseModel,
                         ),
                     ):
-                        normalized_mapping[str(key)] = item
+                        normalized_mapping[key_s] = item
                     else:
                         msg = f"Invalid type in Mapping: {type(item)}"
                         raise TypeError(msg)

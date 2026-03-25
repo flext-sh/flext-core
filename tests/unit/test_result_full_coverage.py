@@ -13,7 +13,7 @@ from flext_tests import t, tm
 
 from flext_core import FlextModelsResult, p, r
 
-from ._models import TestUnitModels
+from ._models_impl import _ErrorsModel, _PlainErrorModel, _TargetModel
 
 
 class _ValidationLikeError(ValueError):
@@ -63,7 +63,9 @@ def test_map_flat_map_and_then_paths() -> None:
     flat_fail = r[int].ok(1).flat_map(lambda _: runtime_fail)
     tm.fail(flat_fail)
     tm.that(flat_fail.error, eq="inner")
-    and_then_ok = r[int].ok(3).flat_map(lambda v: r[str].ok(str(v)))
+    and_then_ok: r[str] = (
+        r[int].ok(3).flat_map(lambda v: cast("p.Result[str]", r[str].ok(str(v))))
+    )
     tm.ok(and_then_ok)
     tm.that(and_then_ok.value, eq="3")
 
@@ -83,22 +85,22 @@ def test_recover_tap_and_tap_error_paths() -> None:
 
 
 def test_from_validation_and_to_model_paths() -> None:
-    success_result = r[TestUnitModels._TargetModel].from_validation(
+    success_result = r[_TargetModel].from_validation(
         {"value": 10},
-        TestUnitModels._TargetModel,
+        _TargetModel,
     )
     tm.ok(success_result)
     tm.that(success_result.value.value, eq=10)
-    err_result = r[TestUnitModels._ErrorsModel].from_validation(
+    err_result = r[_ErrorsModel].from_validation(
         {"value": "x"},
-        TestUnitModels._ErrorsModel,
+        _ErrorsModel,
     )
     tm.fail(err_result)
     tm.that((err_result.error or ""), has="Validation failed")
     tm.that((err_result.error or ""), has="bad value")
-    plain_result = r[TestUnitModels._PlainErrorModel].from_validation(
+    plain_result = r[_PlainErrorModel].from_validation(
         {"value": "x"},
-        TestUnitModels._PlainErrorModel,
+        _PlainErrorModel,
     )
     tm.fail(plain_result)
     tm.that((plain_result.error or ""), has="plain boom")
@@ -106,7 +108,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[Mapping[str, int]]
         .fail("already failed")
         .to_model(
-            TestUnitModels._TargetModel,
+            _TargetModel,
         )
     )
     tm.fail(failure_to_model)
@@ -115,7 +117,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[Mapping[str, int]]
         .ok({"value": 9})
         .to_model(
-            TestUnitModels._TargetModel,
+            _TargetModel,
         )
     )
     tm.ok(success_to_model)
@@ -124,7 +126,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[t.StrMapping]
         .ok({"value": "bad"})
         .to_model(
-            TestUnitModels._TargetModel,
+            _TargetModel,
         )
     )
     tm.fail(invalid_to_model)

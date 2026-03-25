@@ -180,14 +180,14 @@ class FlextModelsConfig:
             Field(
                 description="Exception types to retry on",
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[type[BaseException]])
         retry_on_status_codes: Annotated[
             Sequence[int],
             Field(
                 max_length=c.MAX_RETRY_STATUS_CODES,
                 description="HTTP status codes to retry on",
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[int])
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
@@ -249,7 +249,7 @@ class FlextModelsConfig:
                 max_length=c.MAX_CUSTOM_VALIDATORS,
                 description="Custom validator callables",
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[p.ValidatorSpec])
 
         @field_validator("custom_validators", mode="after")
         @classmethod
@@ -566,7 +566,7 @@ class FlextModelsConfig:
             Field(
                 description="Optional extra processors after standard FLEXT processors",
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[t.StructlogProcessor])
         wrapper_class_factory: Annotated[
             Callable[[], type] | None,
             Field(

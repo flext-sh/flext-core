@@ -876,7 +876,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             if isinstance(v, datetime):
                 result[k] = v.isoformat()
             elif isinstance(v, t.CONTAINER_AND_COLLECTION_TYPES):
-                result[k] = v  # type: ignore[assignment]  # mypy cannot narrow tuple-of-types isinstance
+                result[k] = v
             elif isinstance(v, BaseModel):
                 result[k] = FlextContext._to_normalized(v)
             else:
