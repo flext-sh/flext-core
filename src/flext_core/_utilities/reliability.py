@@ -15,7 +15,7 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping, MutableSequence
-from typing import TypeIs
+from typing import ClassVar, TypeIs
 
 from pydantic import BaseModel, ValidationError
 
@@ -35,7 +35,7 @@ from flext_core._models.result import FlextModelsResult
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    _V = m.Validators
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @property
     def logger(self) -> p.Logger:
@@ -84,12 +84,11 @@ class FlextUtilitiesReliability:
             float: Delay in seconds for next attempt
 
         """
-        if config is None:
-            config: t.ScalarMapping = {}
-        initial_delay_raw = config.get("initial_delay_seconds", 0.1)
-        max_delay_raw = config.get("max_delay_seconds", 60.0)
-        exponential_backoff_raw = config.get("exponential_backoff", False)
-        backoff_multiplier_raw = config.get("backoff_multiplier")
+        cfg: t.ScalarMapping = config if config is not None else {}
+        initial_delay_raw = cfg.get("initial_delay_seconds", 0.1)
+        max_delay_raw = cfg.get("max_delay_seconds", 60.0)
+        exponential_backoff_raw = cfg.get("exponential_backoff", False)
+        backoff_multiplier_raw = cfg.get("backoff_multiplier")
         initial_delay = (
             float(initial_delay_raw)
             if isinstance(initial_delay_raw, (int, float))

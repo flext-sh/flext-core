@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Protocol
 
-from flext_core import t
+from flext_core import t as _t
 
 
-class FlextTestTypes(t):
+class FlextTestTypes(_t):
     """Types with Protocol inside — WRONG."""
 
     class ProtocolInsideTypes(Protocol):
         """Protocol inside Types — VIOLATION."""
 
-        def to_dict(self) -> t.StrMapping:
+        def to_dict(self) -> Mapping[str, str]:
             """Convert to dict."""
             ...
 

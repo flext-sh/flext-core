@@ -146,7 +146,7 @@ class FlextModelsContainers:
                 description="Batch error tuples as (index, message).",
                 examples=[[(0, "invalid payload")]],
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[tuple[int, str]])
         total: Annotated[
             int,
             Field(

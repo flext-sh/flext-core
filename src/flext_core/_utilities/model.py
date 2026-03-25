@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
+from typing import ClassVar
 
 import orjson
 from pydantic import BaseModel
@@ -19,7 +20,7 @@ from flext_core import FlextRuntime, FlextUtilitiesGuardsTypeCore, c, m, r, t
 class FlextUtilitiesModel:
     """Utilities for Pydantic model initialization."""
 
-    _V = m.Validators
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @staticmethod
     def _normalize_str_object_mapping(

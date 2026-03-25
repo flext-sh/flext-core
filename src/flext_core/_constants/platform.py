@@ -33,7 +33,7 @@ class FlextConstantsPlatform:
     PATTERN_PHONE_NUMBER: Final[str] = "^\\+?[\\d\\s\\-\\(\\)]{10,20}$"
 
     MAX_RETRY_ATTEMPTS: Final[int] = 3
-    DEFAULT_TIMEOUT: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+    # DEFAULT_TIMEOUT inherited from FlextConstantsBase via FlextConstants MRO
     CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
     HEADER_REQUEST_ID: Final[str] = "X-Request-ID"
 
@@ -80,12 +80,14 @@ class FlextConstantsPlatform:
     DEFAULT_TTL_SECONDS: Final[int] = 3600
     DEFAULT_VERSION: Final[int] = 1
     MIN_VERSION: Final[int] = 1
-    DEFAULT_PAGE_SIZE: Final[int] = FlextConstantsBase.DEFAULT_PAGE_SIZE
+    # DEFAULT_PAGE_SIZE inherited from FlextConstantsBase via FlextConstants MRO
     HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 1073741824
-    MAX_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.MAX_TIMEOUT_SECONDS_PERFORMANCE
+    PLATFORM_MAX_TIMEOUT_SECONDS: Final[int] = (
+        FlextConstantsBase.MAX_TIMEOUT_SECONDS_PERFORMANCE
+    )
     MAX_BATCH_OPERATIONS: Final[int] = 1000
-    MAX_OPERATION_NAME_LENGTH: Final[int] = FlextConstantsBase.MAX_OPERATION_NAME_LENGTH
-    EXPECTED_TUPLE_LENGTH: Final[int] = FlextConstantsBase.EXPECTED_TUPLE_LENGTH
+    # MAX_OPERATION_NAME_LENGTH inherited from FlextConstantsBase via FlextConstants MRO
+    # EXPECTED_TUPLE_LENGTH inherited from FlextConstantsBase via FlextConstants MRO
     DEFAULT_EMPTY_STRING: Final[str] = ""
 
     DEFAULT_SIZE: Final[int] = 1000
@@ -105,7 +107,7 @@ class FlextConstantsPlatform:
     DEFAULT_RETRY_DELAY_SECONDS: Final[int] = 1
     RETRY_BACKOFF_BASE: Final[float] = 2.0
     RETRY_BACKOFF_MAX: Final[float] = 60.0
-    DEFAULT_MAX_DELAY_SECONDS: Final[float] = 300.0
+    PLATFORM_DEFAULT_MAX_DELAY_SECONDS: Final[float] = 300.0
     "Default maximum delay in seconds for retry operations."
     RETRY_COUNT_MIN: Final[int] = 1
     DEFAULT_BACKOFF_STRATEGY: Final[str] = "exponential"
@@ -113,11 +115,11 @@ class FlextConstantsPlatform:
     "Exponential backoff strategy."
     BACKOFF_STRATEGY_LINEAR: Final[str] = "linear"
     "Linear backoff strategy."
-    DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
+    PLATFORM_DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
     DEFAULT_RECOVERY_TIMEOUT: Final[int] = (
         FlextConstantsBase.DEFAULT_RECOVERY_TIMEOUT_SECONDS
     )
-    DEFAULT_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+    # DEFAULT_TIMEOUT_SECONDS inherited from FlextConstantsBase via FlextConstants MRO
     DEFAULT_RATE_LIMIT_WINDOW_SECONDS: Final[int] = 60
     DEFAULT_RATE_LIMIT_MAX_REQUESTS: Final[int] = 100
     DEFAULT_CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5

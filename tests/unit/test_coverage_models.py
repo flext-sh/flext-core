@@ -1,7 +1,5 @@
 """Comprehensive coverage tests for FlextModels DDD patterns."""
 
-from __future__ import annotations
-
 import math
 from collections.abc import Mapping, Sequence
 from datetime import datetime

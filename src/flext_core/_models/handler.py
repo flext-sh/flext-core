@@ -434,7 +434,7 @@ class FlextModelsHandler:
             Field(
                 description="Middleware types to apply to this handler",
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[type[p.Middleware]])
 
 
 __all__ = ["FlextModelsHandler"]

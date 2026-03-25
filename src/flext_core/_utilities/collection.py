@@ -492,7 +492,7 @@ class FlextUtilitiesCollection:
                 if isinstance(v_raw, enum_cls):
                     result[k] = v_raw
                 elif isinstance(v_raw, str):
-                    enum_result = r[E].ok(v_raw).map(enum_cls)
+                    enum_result = r[str].ok(v_raw).map(enum_cls)
                     if enum_result.is_failure:
                         enum_name = getattr(enum_cls, "__name__", "Enum")
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
@@ -594,7 +594,7 @@ class FlextUtilitiesCollection:
                 if isinstance(v_raw, enum_cls):
                     result.append(v_raw)
                 elif isinstance(v_raw, str):
-                    enum_result = r[E].ok(v_raw).map(enum_cls)
+                    enum_result = r[str].ok(v_raw).map(enum_cls)
                     if enum_result.is_failure:
                         enum_name = getattr(enum_cls, "__name__", "Enum")
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
@@ -1037,7 +1037,7 @@ class FlextUtilitiesCollection:
                 f"Parse mapping failed: {mapping_items_result.error}",
             )
         for key, value_raw in mapping_items_result.value:
-            enum_result = r[E].ok(value_raw).map(enum_cls)
+            enum_result = r[str].ok(value_raw).map(enum_cls)
             if enum_result.is_failure:
                 errors.append(f"'{key}': {enum_result.error}")
                 continue
@@ -1070,7 +1070,7 @@ class FlextUtilitiesCollection:
             if isinstance(val, enum_cls):
                 parsed.append(val)
                 continue
-            enum_result = r[StrEnum].ok(val).map(enum_cls)
+            enum_result = r[str].ok(val).map(enum_cls)
             if enum_result.is_failure:
                 errors.append(f"[{idx}]: '{val}'")
                 continue

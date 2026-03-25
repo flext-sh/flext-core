@@ -159,9 +159,8 @@ class FlextUtilitiesPagination:
             r with pagination data dictionary or error
 
         """
-        if data is None:
-            data: t.FlatContainerList = []
-        total_count = total if total is not None else len(data)
+        resolved_data: t.FlatContainerList = data if data is not None else []
+        total_count = total if total is not None else len(resolved_data)
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
             return r[Mapping[str, Sequence[t.RuntimeAtomic] | t.PaginationMeta]].fail(
@@ -170,7 +169,7 @@ class FlextUtilitiesPagination:
         has_next: bool = page < total_pages
         has_prev: bool = page > 1
         data_list: Sequence[t.RuntimeAtomic] = [
-            FlextRuntime.normalize_to_container(item) for item in data
+            FlextRuntime.normalize_to_container(item) for item in resolved_data
         ]
         pagination_meta: t.PaginationMeta = {
             "page": page,

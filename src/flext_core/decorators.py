@@ -557,7 +557,7 @@ class FlextDecorators:
     @staticmethod
     def _handle_log_result(
         *,
-        result: r[bool] | p.Result[bool] | u.RuntimeResult[bool],
+        result: r[bool] | p.Result[bool],
         logger: p.Logger,
         fallback_message: str,
         kwargs: t.ConfigMap,

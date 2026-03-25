@@ -9,15 +9,13 @@ from flext_tests import tm
 from flext_core import FlextModelsDispatcher
 from tests import c
 
-CircuitBreakerManager = FlextModelsDispatcher.CircuitBreakerManager
-RateLimiterManager = FlextModelsDispatcher.RateLimiterManager
-RetryPolicy = FlextModelsDispatcher.RetryPolicy
-
 
 def test_circuit_breaker_transitions_and_metrics() -> None:
     """Exercise open → half-open → closed transitions with real timing."""
     message_type = "cmd"
-    cb = CircuitBreakerManager(threshold=1, recovery_timeout=0.1, success_threshold=1)
+    cb = FlextModelsDispatcher.CircuitBreakerManager(
+        threshold=1, recovery_timeout=0.1, success_threshold=1
+    )
     tm.ok(cb.check_before_dispatch(message_type))
     cb.record_failure(message_type)
     failure = cb.check_before_dispatch(message_type)
@@ -41,7 +39,7 @@ def test_circuit_breaker_transitions_and_metrics() -> None:
 
 def test_rate_limiter_blocks_then_recovers() -> None:
     """Validate sliding window rate limiting without mocks."""
-    limiter = RateLimiterManager(max_requests=2, window_seconds=0.2, jitter_factor=0.0)
+    limiter = FlextModelsDispatcher.RateLimiterManager(max_requests=2, window_seconds=0.2, jitter_factor=0.0)
     msg_type = "rate-limited"
     tm.ok(limiter.check_rate_limit(msg_type))
     tm.ok(limiter.check_rate_limit(msg_type))
@@ -60,10 +58,10 @@ def test_rate_limiter_blocks_then_recovers() -> None:
 
 def test_rate_limiter_jitter_application() -> None:
     """Ensure jitter calculation respects bounds and zero factor short-circuit."""
-    limiter = RateLimiterManager(max_requests=1, window_seconds=1.0, jitter_factor=0.5)
+    limiter = FlextModelsDispatcher.RateLimiterManager(max_requests=1, window_seconds=1.0, jitter_factor=0.5)
     jittered = limiter._apply_jitter(2.0)
     tm.that(jittered, gte=0.0)
-    limiter_zero = RateLimiterManager(
+    limiter_zero = FlextModelsDispatcher.RateLimiterManager(
         max_requests=1,
         window_seconds=1.0,
         jitter_factor=0.0,
@@ -73,7 +71,7 @@ def test_rate_limiter_jitter_application() -> None:
 
 def test_retry_policy_behavior() -> None:
     """Cover retry policy helpers and exponential backoff."""
-    policy = RetryPolicy(max_attempts=3, retry_delay=0.1)
+    policy = FlextModelsDispatcher.RetryPolicy(max_attempts=3, retry_delay=0.1)
     tm.that(policy.should_retry(0), eq=True)
     tm.that(policy.should_retry(1), eq=True)
     tm.that(not policy.should_retry(2), eq=True)
@@ -92,7 +90,7 @@ def test_retry_policy_behavior() -> None:
 
 def test_circuit_breaker_half_open_and_rate_limiter_accessors() -> None:
     """Test transition_to_half_open, get_max_requests, get_window_seconds."""
-    cb = CircuitBreakerManager(
+    cb = FlextModelsDispatcher.CircuitBreakerManager(
         threshold=3,
         recovery_timeout=1.0,
         success_threshold=2,
@@ -100,6 +98,6 @@ def test_circuit_breaker_half_open_and_rate_limiter_accessors() -> None:
     cb.transition_to_half_open("x")
     cb.record_failure("x")
     assert cb.get_state("x") == c.CircuitBreakerState.OPEN
-    rl = RateLimiterManager(max_requests=1, window_seconds=1.5)
+    rl = FlextModelsDispatcher.RateLimiterManager(max_requests=1, window_seconds=1.5)
     assert rl.get_max_requests() == 1
     assert abs(rl.get_window_seconds() - 1.5) < 1e-9

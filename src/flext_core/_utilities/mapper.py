@@ -1544,10 +1544,9 @@ class FlextUtilitiesMapper:
             []
 
         """
-        if default is None:
-            default: t.StrSequence = []
+        resolved_default: t.StrSequence = default if default is not None else []
         if value is None:
-            return default
+            return resolved_default
         if isinstance(value, str):
             return [value]
         if isinstance(value, (list, tuple)):

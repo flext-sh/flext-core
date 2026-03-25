@@ -9,14 +9,12 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
-from flext_core._constants.base import FlextConstantsBase
-
 
 class FlextConstantsValidation:
     """Constants for validation and error handling."""
 
     MIN_NAME_LENGTH: Final[int] = 2
-    MAX_NAME_LENGTH: Final[int] = FlextConstantsBase.MAX_NAME_LENGTH
+    # MAX_NAME_LENGTH inherited from FlextConstantsBase via FlextConstants MRO
     MAX_EMAIL_LENGTH: Final[int] = 254
     EMAIL_PARTS_COUNT: Final[int] = 2
     LEVEL_PREFIX_PARTS_COUNT: Final[int] = 4
@@ -25,7 +23,7 @@ class FlextConstantsValidation:
     MIN_USERNAME_LENGTH: Final[int] = 3
     MAX_AGE: Final[int] = 150
     MIN_AGE: Final[int] = 0
-    PREVIEW_LENGTH: Final[int] = FlextConstantsBase.PREVIEW_LENGTH
+    # PREVIEW_LENGTH inherited from FlextConstantsBase via FlextConstants MRO
     VALIDATION_TIMEOUT_MS: Final[float] = 100.0
     MAX_UNCOMMITTED_EVENTS: Final[int] = 100
     DISCOUNT_THRESHOLD: Final[int] = 100

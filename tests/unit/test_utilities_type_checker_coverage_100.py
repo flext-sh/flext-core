@@ -76,10 +76,8 @@ class TestuTypeChecker:
             self,
             message: t.MutableContainerMapping,
         ) -> r[t.MutableContainerMapping]:
-            return r[t.ContainerMapping].ok({
-                "processed": True,
-                **message,
-            })
+            result: t.MutableContainerMapping = {"processed": True, **message}
+            return r[t.MutableContainerMapping].ok(result)
 
     class ObjectHandler(h[t.NormalizedValue, t.Container]):
         """Handler for t.NormalizedValue messages."""

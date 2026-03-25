@@ -17,8 +17,10 @@ from flext_core import FlextContainer, FlextContext, FlextSettings, r
 from tests import m, p
 
 
+_MonkeyPatch = pytest.MonkeyPatch
+
+
 class TestContainerFullCoverage:
-    _MonkeyPatch = pytest.MonkeyPatch
 
     class _FalseConfig:
         app_name: str = "app"
@@ -487,7 +489,7 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr(
             "flext_core.container.di_providers.Configuration",
-            t.NormalizedValue,
+            cast("t.NormalizedValue", t.NormalizedValue),  # type: ignore[arg-type]
         )
         with pytest.raises(TypeError, match="cannot be None"):
             c.initialize_di_components()

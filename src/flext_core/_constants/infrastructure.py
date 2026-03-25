@@ -66,9 +66,9 @@ class FlextConstantsInfrastructure:
     SENTINEL_MISSING: Final[str] = "__sentinel_missing__"
     """Sentinel value to distinguish 'not provided' from None in context operations."""
 
-    TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
-    MIN_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.MIN_TIMEOUT_SECONDS
-    MAX_TIMEOUT_SECONDS: Final[int] = 300
+    INFRA_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+    # MIN_TIMEOUT_SECONDS inherited from FlextConstantsBase via FlextConstants MRO
+    INFRA_MAX_TIMEOUT_SECONDS: Final[int] = 300
     MAX_CACHE_SIZE: Final[int] = 100
     DEFAULT_MAX_SERVICES: Final[int] = 1000
     "Default maximum number of services allowed in container."
@@ -89,7 +89,7 @@ class FlextConstantsInfrastructure:
     DEFAULT_AUTO_CONTEXT: Final[bool] = True
     DEFAULT_ENABLE_LOGGING: Final[bool] = True
     DEFAULT_ENABLE_METRICS: Final[bool] = True
-    DEFAULT_TIMEOUT_SECONDS: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS
+    # DEFAULT_TIMEOUT_SECONDS inherited from FlextConstantsBase via FlextConstants MRO
     MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
     DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core.dispatcher:FlextDispatcher"
     "Default dispatcher implementation path."
@@ -121,9 +121,7 @@ class FlextConstantsInfrastructure:
     )
 
     DEFAULT_PAGE_NUMBER: Final[int] = 1
-    DEFAULT_PAGE_SIZE: Final[int] = FlextConstantsBase.DEFAULT_PAGE_SIZE
-    MAX_PAGE_SIZE: Final[int] = FlextConstantsBase.MAX_PAGE_SIZE
-    MIN_PAGE_SIZE: Final[int] = FlextConstantsBase.MIN_PAGE_SIZE
+    # DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE inherited from FlextConstantsBase via FlextConstants MRO
     MIN_PAGE_NUMBER: Final[int] = 1
     MAX_PAGE_NUMBER: Final[int] = 10000
     DEFAULT_PAGE_SIZE_EXAMPLE: Final[int] = 20

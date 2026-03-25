@@ -31,7 +31,7 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import FlextModelsResult, FlextRuntime, r
+from flext_core import FlextModelsResult, FlextRuntime, p, r
 from tests import c, m, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
@@ -524,12 +524,12 @@ def test_runtime_result_all_missed_branches() -> None:
         msg = "bad"
         raise ValueError(msg)
 
-    def _ok_plus_one(value: int | None) -> FlextModelsResult.RuntimeResult[int | None]:
+    def _ok_plus_one(value: int | None) -> p.Result[int | None]:
         if value is None:
             return FlextModelsResult.RuntimeResult[int | None].fail("none")
         return FlextModelsResult.RuntimeResult[int | None].ok(value + 1)
 
-    def _ok_plus_two(value: int) -> FlextModelsResult.RuntimeResult[int]:
+    def _ok_plus_two(value: int) -> p.Result[int]:
         return FlextModelsResult.RuntimeResult[int].ok(value + 2)
 
     def _error_to_int(error: str) -> int:
@@ -950,13 +950,13 @@ def test_dependency_integration_and_wiring_paths() -> None:
 
 def test_runtime_result_remaining_paths() -> None:
 
-    def _ok_passthrough(value: int) -> FlextModelsResult.RuntimeResult[int]:
+    def _ok_passthrough(value: int) -> p.Result[int]:
         return FlextModelsResult.RuntimeResult[int].ok(value)
 
-    def _ok_inc(value: int) -> FlextModelsResult.RuntimeResult[int]:
+    def _ok_inc(value: int) -> p.Result[int]:
         return FlextModelsResult.RuntimeResult[int].ok(value + 1)
 
-    def _fail_boom(_value: int) -> FlextModelsResult.RuntimeResult[int]:
+    def _fail_boom(_value: int) -> p.Result[int]:
         return FlextModelsResult.RuntimeResult[int].fail("boom")
 
     success: FlextModelsResult.RuntimeResult[int] = FlextModelsResult.RuntimeResult[

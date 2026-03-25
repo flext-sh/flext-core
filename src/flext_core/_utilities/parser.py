@@ -376,7 +376,9 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Target is not a StrEnum",
                 error_code="TARGET_NOT_ENUM",
             )
-        members = TypeAdapter(Mapping[str, T]).validate_python(target.__members__)
+        members: Mapping[str, T] = TypeAdapter(Mapping[str, T]).validate_python(
+            target.__members__
+        )
         value_str = str(value)
         if case_insensitive:
             value_lower = value_str.lower()
@@ -610,14 +612,13 @@ class FlextUtilitiesParser:
             t.StrSequence: Converted list
 
         """
-        if default is None:
-            default: t.StrSequence = []
+        resolved_default: t.StrSequence = default if default is not None else []
         if value is None:
-            return default
+            return resolved_default
         if isinstance(value, list):
             return [str(item) for item in value]
         if isinstance(value, str):
-            return [value] if value else default
+            return [value] if value else resolved_default
         if isinstance(value, (tuple, set, frozenset)):
             return [str(item) for item in value]
         return [str(value)]
@@ -792,7 +793,11 @@ class FlextUtilitiesParser:
                 )
                 items_to_check = [str(k) for k in items]
             case _:
-                items_to_check = items
+                if isinstance(items, Sequence):
+                    items_to_check = list(items)
+                else:
+                    msg = f"norm_in() requires ConfigMap, BaseModel, Mapping, or Sequence; got {type(items).__name__}"
+                    raise TypeError(msg)
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = [
             FlextUtilitiesParser.norm_str(item, case=case or "lower")
@@ -823,7 +828,7 @@ class FlextUtilitiesParser:
         if case:
             normalized = [FlextUtilitiesParser.norm_str(v, case=case) for v in items]
         else:
-            normalized = items
+            normalized = list(items)
         return sep.join(normalized)
 
     @staticmethod
@@ -1323,7 +1328,7 @@ class FlextUtilitiesParser:
             if result.is_failure:
                 return result
             components_val = result.value
-            components = components_val
+            components = list(components_val)
             self._parser_log.debug(
                 "Delimited parsing completed successfully",
                 operation="parse_delimited",
@@ -1686,7 +1691,7 @@ class FlextUtilitiesParser:
                     current_component_length=len(current),
                 )
                 components.append("".join(current))
-                current: MutableSequence[str] = []
+                current = []
                 i += 1
             else:
                 current.append(text[i])

@@ -101,7 +101,7 @@ class FlextConstantsMixins:
     STRING_FALSE: Final[str] = "false"
     DEFAULT_USE_UTC: Final[bool] = True
     DEFAULT_AUTO_UPDATE: Final[bool] = True
-    MAX_OPERATION_NAME_LENGTH: Final[int] = 100
+    # MAX_OPERATION_NAME_LENGTH inherited from FlextConstantsBase via FlextConstants MRO
     MAX_STATE_VALUE_LENGTH: Final[int] = 50
     MAX_FIELD_NAME_LENGTH: Final[int] = 50
     MIN_FIELD_NAME_LENGTH: Final[int] = 1
@@ -113,7 +113,7 @@ class FlextConstantsMixins:
     ERROR_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"
 
     DEFAULT_MAX_WORKERS: Final[int] = FlextConstantsBase.DEFAULT_WORKERS
-    DEFAULT_BATCH_SIZE: Final[int] = FlextConstantsBase.DEFAULT_BATCH_SIZE
+    # DEFAULT_BATCH_SIZE inherited from FlextConstantsBase via FlextConstants MRO
     PATTERN_TUPLE_MIN_LENGTH: Final[int] = 2
     "Minimum length for tuple patterns in parsing operations."
     PATTERN_TUPLE_MAX_LENGTH: Final[int] = 3
@@ -125,7 +125,7 @@ class FlextConstantsMixins:
     "Attribute name for storing factory decorator configuration on functions."
     DEFAULT_PRIORITY: Final[int] = 0
     "Default priority for handlers (0 = normal priority)."
-    DEFAULT_TIMEOUT: Final[float | None] = None
+    DEFAULT_HANDLER_TIMEOUT: Final[float | None] = None
     "Default timeout for handlers (None = no timeout)."
 
     DEFAULT_TEST_CREDENTIAL: Final[str] = "test_password"

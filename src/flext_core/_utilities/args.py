@@ -14,6 +14,7 @@ from functools import wraps
 from types import UnionType
 from typing import (
     Annotated,
+    ClassVar,
     get_args,
     get_origin,
     get_type_hints,
@@ -28,7 +29,7 @@ from flext_core import P, R, m, r, t
 class FlextUtilitiesArgs:
     """Utilities for automatic args/kwargs parsing."""
 
-    _V = m.Validators
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @staticmethod
     def _validate_enum_type(candidate: t.MessageTypeSpecifier) -> r[type[StrEnum]]:

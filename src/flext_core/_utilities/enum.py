@@ -24,7 +24,7 @@ class FlextUtilitiesEnum:
     _values_cache: ClassVar[MutableMapping[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[MutableMapping[type[StrEnum], frozenset[str]]] = {}
     _members_cache: ClassVar[MutableMapping[type[StrEnum], frozenset[StrEnum]]] = {}
-    _V = m.Validators
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @staticmethod
     def _is_strenum_class(value: t.GuardInput) -> TypeIs[type[StrEnum]]:

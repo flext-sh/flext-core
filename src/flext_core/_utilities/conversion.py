@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Literal, overload
+from typing import ClassVar, Literal, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -20,7 +20,7 @@ from flext_core import m, r, t
 class FlextUtilitiesConversion:
     """Utilities for value conversion operations."""
 
-    _V = m.Validators
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @overload
     @staticmethod
@@ -294,7 +294,7 @@ class FlextUtilitiesConversion:
                     value,
                 )
             except ValidationError:
-                items: Sequence[t.StrictValue] = []
+                items = []
         else:
             items = [value]
         filtered_items: Sequence[t.StrictValue]

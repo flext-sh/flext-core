@@ -26,8 +26,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core import FlextModelsDispatcher
 
-TimeoutEnforcer = FlextModelsDispatcher.TimeoutEnforcer
-
 
 class TestDispatcherTimeoutCoverage100:
     class _TimeoutEnforcerScenario(BaseModel):
@@ -85,7 +83,7 @@ class TestDispatcherTimeoutCoverage100:
     @pytest.mark.parametrize("scenario", _INIT_SCENARIOS, ids=lambda s: s.name)
     def test_initialization(self, scenario: _TimeoutEnforcerScenario) -> None:
         """Test TimeoutEnforcer initialization with various scenarios."""
-        enforcer = TimeoutEnforcer(
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
             use_timeout_executor=scenario.use_timeout_executor,
             executor_workers=scenario.executor_workers,
         )
@@ -106,14 +104,16 @@ class TestDispatcherTimeoutCoverage100:
     ) -> None:
         """Pydantic PositiveInt rejects zero and negative executor_workers."""
         with pytest.raises(ValidationError):
-            TimeoutEnforcer(
+            FlextModelsDispatcher.TimeoutEnforcer(
                 use_timeout_executor=True,
                 executor_workers=invalid_workers,
             )
 
     def test_ensure_executor_creates_on_demand(self) -> None:
         """Test ensure_executor creates executor on demand."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=3
+        )
         tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
         executor = enforcer.ensure_executor()
         assert executor is not None
@@ -123,14 +123,18 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_ensure_executor_with_executor_disabled(self) -> None:
         """Test ensure_executor can be called even when executor is disabled."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=False, executor_workers=3)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=False, executor_workers=3
+        )
         executor = enforcer.ensure_executor()
         assert executor is not None
         tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
 
     def test_reset_executor_clears_executor(self) -> None:
         """Test reset_executor clears the executor."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=2)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=2
+        )
         enforcer.ensure_executor()
         tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
         enforcer.reset_executor()
@@ -141,21 +145,27 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_get_executor_status_before_creation(self) -> None:
         """Test get_executor_status before executor creation."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=5)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=5
+        )
         status = enforcer.get_executor_status()
         tm.that(not status["executor_active"], eq=True)
         tm.that(status["executor_workers"], eq=0)
 
     def test_get_executor_status_after_creation(self) -> None:
         """Test get_executor_status after executor creation."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=7)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=7
+        )
         enforcer.ensure_executor()
         status = enforcer.get_executor_status()
         tm.that(status["executor_active"], eq=True)
         tm.that(status["executor_workers"], eq=7)
 
     def test_get_executor_status_after_reset(self) -> None:
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=4)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=4
+        )
         enforcer.ensure_executor()
         enforcer.reset_executor()
         status = enforcer.get_executor_status()
@@ -164,7 +174,9 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_cleanup_with_executor(self) -> None:
         """Test cleanup with active executor."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=2)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=2
+        )
         enforcer.ensure_executor()
         tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
         enforcer.cleanup()
@@ -174,13 +186,17 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_cleanup_without_executor(self) -> None:
         """Test cleanup when no executor exists."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=3
+        )
         enforcer.cleanup()
         tm.that(not enforcer.get_executor_status()["executor_active"], eq=True)
 
     def test_cleanup_multiple_times(self) -> None:
         """Test cleanup can be called multiple times safely."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=2)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=2
+        )
         enforcer.ensure_executor()
         enforcer.cleanup()
         enforcer.cleanup()
@@ -188,7 +204,9 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_cleanup_after_reset(self) -> None:
         """Test cleanup after reset."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=3
+        )
         enforcer.ensure_executor()
         enforcer.reset_executor()
         enforcer.cleanup()
@@ -196,7 +214,9 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_executor_thread_name_prefix(self) -> None:
         """Test executor uses correct thread name prefix."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=1)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=1
+        )
         executor = enforcer.ensure_executor()
         assert executor is not None
         future = executor.submit(lambda: 42)
@@ -204,7 +224,9 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_executor_submit_task(self) -> None:
         """Test executor can submit and execute tasks."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=2)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=2
+        )
         executor = enforcer.ensure_executor()
 
         def double(value: int) -> int:
@@ -216,7 +238,9 @@ class TestDispatcherTimeoutCoverage100:
 
     def test_executor_concurrent_execution(self) -> None:
         """Test executor handles concurrent execution."""
-        enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
+        enforcer = FlextModelsDispatcher.TimeoutEnforcer(
+            use_timeout_executor=True, executor_workers=3
+        )
         executor = enforcer.ensure_executor()
 
         def slow_task(delay: float) -> float:

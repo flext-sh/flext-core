@@ -648,7 +648,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                     exported_items: Mapping[str, t.ValueOrModel] = dict(
                         exported_result.items(),
                     )
-                    exported_map = t.ConfigMap(root=exported_items)
+                    exported_map = t.ConfigMap(root=dict(exported_items))
                 except (TypeError, ValueError, AttributeError) as exc:
                     FlextContext._logger.debug(
                         "Context export payload validation failed",
@@ -659,7 +659,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         else:
             try:
                 mapping_root: Mapping[str, t.ValueOrModel] = dict(other.items())
-                exported_map = t.ConfigMap(root=mapping_root)
+                exported_map = t.ConfigMap(root=dict(mapping_root))
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
                     "Context export payload validation failed",
@@ -868,7 +868,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 "Custom metadata field normalization failed",
                 exc_info=exc,
             )
-            custom_fields_dict: t.MutableContainerMapping = {}
+            custom_fields_dict = {}
         result: t.MutableContainerMapping = {}
         for k, v in data.items():
             if v is None or v == {}:
@@ -876,7 +876,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             if isinstance(v, datetime):
                 result[k] = v.isoformat()
             elif isinstance(v, t.CONTAINER_AND_COLLECTION_TYPES):
-                result[k] = v
+                result[k] = v  # type: ignore[assignment]  # mypy cannot narrow tuple-of-types isinstance
             elif isinstance(v, BaseModel):
                 result[k] = FlextContext._to_normalized(v)
             else:

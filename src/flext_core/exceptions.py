@@ -31,7 +31,7 @@ class FlextExceptions:
     for consistent error handling and logging.
     """
 
-    _V = m.Validators
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     class _ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""

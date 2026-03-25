@@ -1402,7 +1402,7 @@ class FlextRuntime:
                     "Failed to convert mapping context to string dict",
                     exc_info=exc,
                 )
-                parsed_context: MutableMapping[str, t.ValueOrModel] = {}
+                parsed_context = {}
             context_dict = t.ConfigMap(root=parsed_context)
         elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):
             context_dict = t.ConfigMap(root={})

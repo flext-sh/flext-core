@@ -7,7 +7,7 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
-from flext_tests import tf, tm, u
+from flext_tests import c as ftc, tf, tm, u
 from hypothesis import given, settings, strategies as st
 from pydantic_settings import BaseSettings
 
@@ -61,9 +61,9 @@ class TestFlextSettingsCoverage:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         config = t.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
-        config_path = files.create(config, "config.yaml", fmt="yaml")
+        config_path = files.create(config, "config.yaml", fmt=ftc.Tests.Files.Format.YAML)
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt="yaml")
+        read_result = files.read(config_path, fmt=ftc.Tests.Files.Format.YAML)
         tm.ok(read_result)
         tm.that(read_result.value, is_=t.ConfigMap)
         if isinstance(read_result.value, t.ConfigMap):
@@ -75,9 +75,9 @@ class TestFlextSettingsCoverage:
         payload = t.ConfigMap(
             root={"name": "flext-core", "workers": 4, "enabled": True},
         )
-        config_path = files.create(payload, "config.json", fmt="json")
+        config_path = files.create(payload, "config.json", fmt=ftc.Tests.Files.Format.JSON)
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt="json")
+        read_result = files.read(config_path, fmt=ftc.Tests.Files.Format.JSON)
         tm.ok(read_result)
         tm.that(read_result.value, is_=t.ConfigMap)
         if isinstance(read_result.value, t.ConfigMap):
@@ -89,8 +89,8 @@ class TestFlextSettingsCoverage:
     def test_compare_identical_files(self, tmp_path: Path) -> None:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
-        first = files.create(t.ConfigMap(root={"x": 1}), "a.json", fmt="json")
-        second = files.create(t.ConfigMap(root={"x": 1}), "b.json", fmt="json")
+        first = files.create(t.ConfigMap(root={"x": 1}), "a.json", fmt=ftc.Tests.Files.Format.JSON)
+        second = files.create(t.ConfigMap(root={"x": 1}), "b.json", fmt=ftc.Tests.Files.Format.JSON)
         result = files.compare(first, second)
         tm.ok(result)
         tm.that(result.value, eq=True)

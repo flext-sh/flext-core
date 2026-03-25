@@ -12,7 +12,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import Annotated, Literal, Self
+from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
@@ -157,7 +157,7 @@ class FlextModelsService:
                     [{"operation_name": "validate"}, {"operation_name": "persist"}],
                 ],
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: Annotated[
@@ -179,12 +179,10 @@ class FlextModelsService:
         """Domain service metrics request."""
 
         service_name: t.NonEmptyStr
-        metric_types: Annotated[
-            Sequence[Literal["performance", "errors", "throughput"]],
-            Field(
-                description="Types of metrics to collect",
-            ),
-        ] = Field(default_factory=lambda: list(c.DEFAULT_METRIC_CATEGORIES))
+        metric_types: Sequence[str] = Field(
+            default_factory=lambda: [*c.DEFAULT_METRIC_CATEGORIES],
+            description="Types of metrics to collect",
+        )
         time_range_seconds: t.PositiveInt = c.DEFAULT_TIME_RANGE_SECONDS
         aggregation: Annotated[
             str,

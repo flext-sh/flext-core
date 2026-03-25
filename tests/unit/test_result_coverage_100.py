@@ -83,7 +83,7 @@ class TestrCoverage:
 
     def test_ok_accepts_none_value(self) -> None:
         """Test that ok(None) creates valid success."""
-        result = r[t.GeneralValueType].ok(None)
+        result = r[t.GeneralValueType | None].ok(None)
         assert isinstance(result, r)
         assert result.is_success
         tm.that(result.value, none=True)

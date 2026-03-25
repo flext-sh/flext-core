@@ -36,7 +36,6 @@ from flext_core import (
     t,
 )
 
-Provide = FlextRuntime.DependencyIntegration.Provide
 inject = FlextRuntime.DependencyIntegration.inject
 
 
@@ -171,8 +170,12 @@ class TestDIIncremental:
 
         @FlextRuntime.DependencyIntegration.inject
         def api_call(
-            key: str = FlextRuntime.DependencyIntegration.Provide["api_key"],
-            timeout_sec: int = FlextRuntime.DependencyIntegration.Provide["timeout"],
+            key: str = FlextRuntime.DependencyIntegration.Provide[
+                "api_key"
+            ],
+            timeout_sec: int = FlextRuntime.DependencyIntegration.Provide[
+                "timeout"
+            ],
         ) -> Mapping[str, str | int]:
             return {"key": key, "timeout": timeout_sec}
 
@@ -197,8 +200,8 @@ class TestDIIncremental:
 
         @inject
         def log_message(
-            name: str = Provide["logger_name"],
-            level: str = Provide["log_level"],
+            name: str = FlextRuntime.DependencyIntegration.Provide["logger_name"],
+            level: str = FlextRuntime.DependencyIntegration.Provide["log_level"],
         ) -> t.StrMapping:
             return {"logger": name, "level": level}
 
@@ -316,8 +319,12 @@ class TestDIIncremental:
 
         @inject
         def process_request(
-            logger_name: str = Provide["custom_logger"],
-            pool: Mapping[str, int] = Provide["db_pool"],
+            logger_name: str = FlextRuntime.DependencyIntegration.Provide[
+                "custom_logger"
+            ],
+            pool: Mapping[str, int] = FlextRuntime.DependencyIntegration.Provide[
+                "db_pool"
+            ],
         ) -> Mapping[str, str | int]:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
@@ -340,11 +347,19 @@ class TestDIIncremental:
         module = ModuleType("multi_function_module")
 
         @inject
-        def func1(config: t.StrMapping = Provide["shared_config"]) -> str:
+        def func1(
+            config: t.StrMapping = FlextRuntime.DependencyIntegration.Provide[
+                "shared_config"
+            ],
+        ) -> str:
             return config["env"]
 
         @inject
-        def func2(config: t.StrMapping = Provide["shared_config"]) -> bool:
+        def func2(
+            config: t.StrMapping = FlextRuntime.DependencyIntegration.Provide[
+                "shared_config"
+            ],
+        ) -> bool:
             return config["env"] == "test"
 
         setattr(module, "func1", func1)
@@ -368,15 +383,15 @@ class TestDIIncremental:
 
         @inject
         def build_url(
-            base: str = Provide["base_url"],
-            version: str = Provide["api_version"],
+            base: str = FlextRuntime.DependencyIntegration.Provide["base_url"],
+            version: str = FlextRuntime.DependencyIntegration.Provide["api_version"],
         ) -> str:
             return f"{base}/{version}"
 
         @inject
         def api_call(
-            url: str = Provide["built_url"],
-            base: str = Provide["base_url"],
+            url: str = FlextRuntime.DependencyIntegration.Provide["built_url"],
+            base: str = FlextRuntime.DependencyIntegration.Provide["base_url"],
         ) -> t.StrMapping:
             return {"url": url, "base": base}
 
@@ -401,7 +416,9 @@ class TestDIIncremental:
         test_module = ModuleType("test_module")
 
         @inject
-        def test_func(value: str = Provide["test_value"]) -> str:
+        def test_func(
+            value: str = FlextRuntime.DependencyIntegration.Provide["test_value"],
+        ) -> str:
             return value
 
         setattr(test_module, "test_func", test_func)
@@ -461,7 +478,12 @@ class TestDIIncremental:
 
         class TestClass:
             @inject
-            def __init__(self, value: str = Provide["injected_value"]) -> None:
+            def __init__(
+                self,
+                value: str = FlextRuntime.DependencyIntegration.Provide[
+                    "injected_value"
+                ],
+            ) -> None:
                 self.value = value
 
         container.wire_modules(classes=[TestClass])
@@ -477,7 +499,9 @@ class TestDIIncremental:
         module = ModuleType("error_module")
 
         @inject
-        def func_with_missing(missing: str = Provide["nonexistent"]) -> str:
+        def func_with_missing(
+            missing: str = FlextRuntime.DependencyIntegration.Provide["nonexistent"],
+        ) -> str:
             return missing
 
         setattr(module, "func_with_missing", func_with_missing)

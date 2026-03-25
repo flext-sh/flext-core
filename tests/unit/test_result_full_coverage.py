@@ -11,7 +11,7 @@ from typing import cast
 
 from flext_tests import t, tm
 
-from flext_core import FlextModelsResult, r
+from flext_core import FlextModelsResult, p, r
 
 from ._models import TestUnitModels
 
@@ -50,17 +50,15 @@ def test_map_flat_map_and_then_paths() -> None:
     mapped_fail = r[int].ok(2).map(lambda _: (_ for _ in ()).throw(ValueError("m")))
     tm.fail(mapped_fail)
     tm.that(mapped_fail.error, eq="m")
-    runtime_ok = FlextModelsResult.RuntimeResult[int].ok(20)
+    runtime_ok: p.Result[int] = FlextModelsResult.RuntimeResult[int].ok(20)
     flat_ok = r[int].ok(1).flat_map(lambda _: runtime_ok)
     tm.ok(flat_ok)
     tm.that(flat_ok.value, eq=20)
-    runtime_fail: FlextModelsResult.RuntimeResult[int] = (
-        FlextModelsResult.RuntimeResult[int](
-            error="inner",
-            is_success=False,
-            error_code=None,
-            error_data=None,
-        )
+    runtime_fail: p.Result[int] = FlextModelsResult.RuntimeResult[int](
+        error="inner",
+        is_success=False,
+        error_code=None,
+        error_data=None,
     )
     flat_fail = r[int].ok(1).flat_map(lambda _: runtime_fail)
     tm.fail(flat_fail)
@@ -134,20 +132,18 @@ def test_from_validation_and_to_model_paths() -> None:
 
 
 def test_lash_runtime_result_paths() -> None:
-    runtime_ok = FlextModelsResult.RuntimeResult[int].ok(99)
+    runtime_ok2: p.Result[int] = FlextModelsResult.RuntimeResult[int].ok(99)
     failed_for_lash: r[int] = cast("r[int]", r.fail("x"))
-    lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok)
+    lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok2)
     tm.ok(lash_ok)
     tm.that(lash_ok.value, eq=99)
-    runtime_fail: FlextModelsResult.RuntimeResult[int] = (
-        FlextModelsResult.RuntimeResult[int](
-            error="recovery failed",
-            is_success=False,
-            error_code=None,
-            error_data=None,
-        )
+    runtime_fail2: p.Result[int] = FlextModelsResult.RuntimeResult[int](
+        error="recovery failed",
+        is_success=False,
+        error_code=None,
+        error_data=None,
     )
     failed_for_lash_2: r[int] = cast("r[int]", r.fail("x"))
-    lash_fail: r[int] = failed_for_lash_2.lash(lambda _e: runtime_fail)
+    lash_fail: r[int] = failed_for_lash_2.lash(lambda _e: runtime_fail2)
     tm.fail(lash_fail)
     tm.that(lash_fail.error, eq="recovery failed")

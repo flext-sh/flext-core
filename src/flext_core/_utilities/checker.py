@@ -186,8 +186,8 @@ class FlextUtilitiesChecker:
                         message_types.append(args[0])
         if message_types:
             return message_types
-        for base in handler_class.__bases__:
-            meta = getattr(base, "__pydantic_generic_metadata__", None)
+        for parent_cls in handler_class.__bases__:
+            meta = getattr(parent_cls, "__pydantic_generic_metadata__", None)
             if meta is None:
                 continue
             origin = meta.get("origin")

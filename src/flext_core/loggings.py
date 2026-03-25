@@ -125,7 +125,7 @@ class FlextLogger(u, p.Logger):
                 else {}
             )
             context_obj: Mapping[str, t.ValueOrModel] = dict(context_map.items())
-            return t.ConfigMap(root=context_obj)
+            return t.ConfigMap(root=dict(context_obj))
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return t.ConfigMap(root={})
 

@@ -74,7 +74,7 @@ class FlextProtocolsResult:
             """Unwrap success value (raises RuntimeError on failure)."""
             ...
 
-        def unwrap_or[D](self, default: D) -> T_co | D:
+        def unwrap_or(self, default: T_co) -> T_co:
             """Unwrap success value or return default on failure."""
             ...
 

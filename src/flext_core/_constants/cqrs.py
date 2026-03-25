@@ -9,24 +9,21 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
-from flext_core import FlextConstantsBase
-
 
 class FlextConstantsCqrs:
     """Constants for CQRS patterns and workflows."""
 
     DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
     DEFAULT_TIMESTAMP: Final[str] = ""
-    DEFAULT_TIMEOUT: Final[int] = 30000
-    MIN_TIMEOUT: Final[int] = 1000
-    MAX_TIMEOUT: Final[int] = 300000
+    DEFAULT_COMMAND_TIMEOUT_MS: Final[int] = 30000
+    MIN_TIMEOUT_MS: Final[int] = 1000
+    MAX_TIMEOUT_MS: Final[int] = 300000
     DEFAULT_COMMAND_TIMEOUT: Final[int] = 0
     DEFAULT_RETRIES: Final[int] = 0
     MIN_RETRIES: Final[int] = 0
     MAX_RETRIES: Final[int] = 5
     DEFAULT_MAX_COMMAND_RETRIES: Final[int] = 0
-    DEFAULT_PAGE_SIZE: Final[int] = FlextConstantsBase.DEFAULT_PAGE_SIZE
-    MAX_PAGE_SIZE: Final[int] = FlextConstantsBase.MAX_PAGE_SIZE
+    # DEFAULT_PAGE_SIZE and MAX_PAGE_SIZE inherited from FlextConstantsBase via FlextConstants MRO
     DEFAULT_MAX_VALIDATION_ERRORS: Final[int] = 10
     DEFAULT_MINIMUM_THROUGHPUT: Final[int] = 10
     DEFAULT_PARALLEL_EXECUTION: Final[bool] = False

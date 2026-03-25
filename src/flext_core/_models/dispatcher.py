@@ -39,26 +39,6 @@ class FlextModelsDispatcher:
             default=None,
         )
 
-        def __init__(
-            self,
-            *,
-            use_timeout_executor: bool,
-            executor_workers: int,
-        ) -> None:
-            """Initialize the timeout coordinator.
-
-            Args:
-                use_timeout_executor: Whether to route handler execution through a
-                    dedicated timeout executor
-                executor_workers: Number of worker threads to provision when the
-                    executor is enabled
-
-            """
-            super().__init__(
-                use_timeout_executor=use_timeout_executor,
-                executor_workers=executor_workers,
-            )
-
         @override
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.executor_workers = max(
@@ -163,26 +143,6 @@ class FlextModelsDispatcher:
                 ](),
             )
         )
-
-        def __init__(
-            self,
-            threshold: t.PositiveInt,
-            recovery_timeout: t.PositiveFloat,
-            success_threshold: t.PositiveInt,
-        ) -> None:
-            """Initialize circuit breaker manager.
-
-            Args:
-                threshold: Failure count before opening circuit
-                recovery_timeout: Seconds before attempting recovery
-                success_threshold: Successes needed to close from half-open
-
-            """
-            super().__init__(
-                threshold=threshold,
-                recovery_timeout=recovery_timeout,
-                success_threshold=success_threshold,
-            )
 
         def _get_record(
             self,
@@ -399,26 +359,6 @@ class FlextModelsDispatcher:
             default_factory=lambda: dict[str, FlextModelsDispatcher.RateWindow](),
         )
 
-        def __init__(
-            self,
-            max_requests: t.PositiveInt,
-            window_seconds: t.PositiveTimeout,
-            jitter_factor: t.DecimalFraction = 0.1,
-        ) -> None:
-            """Initialize rate limiter manager.
-
-            Args:
-                max_requests: Maximum requests allowed per window
-                window_seconds: Time window in seconds for rate limiting
-                jitter_factor: Jitter variance as fraction (0.1 = +/-10%)
-
-            """
-            super().__init__(
-                max_requests=max_requests,
-                window_seconds=window_seconds,
-                jitter_factor=jitter_factor,
-            )
-
         @override
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.jitter_factor = max(0.0, min(self.jitter_factor, 1.0))
@@ -512,20 +452,6 @@ class FlextModelsDispatcher:
         _attempts: dict[str, int] = PrivateAttr(
             default_factory=lambda: dict[str, int](),
         )
-
-        def __init__(
-            self,
-            max_attempts: t.PositiveInt,
-            retry_delay: t.PositiveFloat,
-        ) -> None:
-            """Initialize retry policy manager.
-
-            Args:
-                max_attempts: Maximum retry attempts allowed
-                retry_delay: Base delay in seconds between retry attempts
-
-            """
-            super().__init__(max_attempts=max_attempts, retry_delay=retry_delay)
 
         @override
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:

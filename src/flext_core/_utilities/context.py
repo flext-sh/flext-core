@@ -106,9 +106,10 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns datetime instance
 
         """
-        proxy: m.StructlogProxyContextVar[datetime] = m.StructlogProxyContextVar[
-            datetime
-        ](key, default=default)
+        proxy: m.StructlogProxyContextVar[datetime] = m.StructlogProxyContextVar(
+            key,
+            default=default,
+        )
         return proxy
 
     @staticmethod
@@ -134,9 +135,10 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns dict
 
         """
-        proxy: m.StructlogProxyContextVar[t.ConfigMap] = m.StructlogProxyContextVar[
-            t.ConfigMap
-        ](key, default=default)
+        proxy: m.StructlogProxyContextVar[t.ConfigMap] = m.StructlogProxyContextVar(
+            key,
+            default=default,
+        )
         return proxy
 
     @staticmethod
@@ -162,7 +164,7 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns "abc-123"
 
         """
-        proxy: m.StructlogProxyContextVar[str] = m.StructlogProxyContextVar[str](
+        proxy: m.StructlogProxyContextVar[str] = m.StructlogProxyContextVar(
             key,
             default=default,
         )

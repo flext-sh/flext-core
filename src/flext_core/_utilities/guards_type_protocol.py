@@ -25,7 +25,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     """
 
     _protocol_specs_cache: Mapping[str, Callable[[t.GuardInput], bool]] | None = None
-    _protocol_type_map_cache: Mapping[type, str] | None = None
+    _protocol_type_map_cache: MappingProxyType[type, str] | None = None
 
     @staticmethod
     def _get_protocol_specs() -> Mapping[str, Callable[[t.GuardInput], bool]]:
@@ -273,18 +273,16 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return bool(isinstance(value, str) and bool(value.strip()))
             case "dict_non_empty":
                 if isinstance(value, dict):
-                    dict_val: Mapping[str, t.NormalizedValue] = value
-                    return len(dict_val) > 0
+                    return value.__len__() > 0
                 if isinstance(value, t.ConfigMap):
-                    return len(value.root) > 0
+                    return value.root.__len__() > 0
                 return False
             case "list_non_empty":
                 if isinstance(value, (list, tuple)) and not isinstance(
                     value,
                     (str, bytes),
                 ):
-                    seq_val: Sequence[t.NormalizedValue] = value
-                    return len(seq_val) > 0
+                    return value.__len__() > 0
                 return False
             case _:
                 return False

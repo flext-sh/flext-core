@@ -371,7 +371,7 @@ class FlextGenericModels:
         converted: Annotated[
             MutableSequence[t.ValueOrModel],
             Field(description="Converted items"),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[t.ValueOrModel])
         errors: Annotated[
             MutableSequence[str],
             Field(description="Error messages"),
@@ -383,7 +383,7 @@ class FlextGenericModels:
         skipped: Annotated[
             MutableSequence[t.ValueOrModel],
             Field(description="Skipped items"),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=list[t.ValueOrModel])
         start_time: Annotated[
             datetime | None,
             Field(default=None, description="Start time"),
