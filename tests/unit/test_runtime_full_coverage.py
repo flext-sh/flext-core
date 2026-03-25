@@ -31,7 +31,7 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import FlextRuntime, r
+from flext_core import FlextModelsResult, FlextRuntime, r
 from tests import c, m, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
@@ -524,19 +524,23 @@ def test_runtime_result_all_missed_branches() -> None:
         msg = "bad"
         raise ValueError(msg)
 
-    def _ok_plus_one(value: int | None) -> FlextRuntime.RuntimeResult[int | None]:
+    def _ok_plus_one(value: int | None) -> FlextModelsResult.RuntimeResult[int | None]:
         if value is None:
-            return FlextRuntime.RuntimeResult[int | None].fail("none")
-        return FlextRuntime.RuntimeResult[int | None].ok(value + 1)
+            return FlextModelsResult.RuntimeResult[int | None].fail("none")
+        return FlextModelsResult.RuntimeResult[int | None].ok(value + 1)
 
-    def _ok_plus_two(value: int) -> FlextRuntime.RuntimeResult[int]:
-        return FlextRuntime.RuntimeResult[int].ok(value + 2)
+    def _ok_plus_two(value: int) -> FlextModelsResult.RuntimeResult[int]:
+        return FlextModelsResult.RuntimeResult[int].ok(value + 2)
 
     def _error_to_int(error: str) -> int:
         return len(error)
 
-    success: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(1)
-    failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
+    success: FlextModelsResult.RuntimeResult[int] = FlextModelsResult.RuntimeResult[
+        int
+    ].ok(1)
+    failure: FlextModelsResult.RuntimeResult[int] = FlextModelsResult.RuntimeResult[
+        int
+    ].fail(
         "e",
         error_code="E1",
         error_data=t.ConfigMap(root={"x": 1}),
@@ -572,18 +576,18 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(filtered.error, eq="Filter predicate failed")
     tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
     tm.that(
-        failure.lash(lambda _err: FlextRuntime.RuntimeResult[int].ok(5)).value,
+        failure.lash(lambda _err: FlextModelsResult.RuntimeResult[int].ok(5)).value,
         eq=5,
     )
     tm.that(failure.recover(lambda _err: 7).value, eq=7)
 
-    class NoneValueResult(FlextRuntime.RuntimeResult[int | None]):
+    class NoneValueResult(FlextModelsResult.RuntimeResult[int | None]):
         @property
         @override
         def value(self) -> int | None:
             return None
 
-    none_success: FlextRuntime.RuntimeResult[int | None] = NoneValueResult(
+    none_success: FlextModelsResult.RuntimeResult[int | None] = NoneValueResult(
         is_success=True,
         error=None,
         error_code=None,
@@ -592,14 +596,16 @@ def test_runtime_result_all_missed_branches() -> None:
     flowed = none_success.flow_through(_ok_plus_one)
     tm.that(flowed is none_success, eq=True)
 
-    none_ok = FlextRuntime.RuntimeResult[int | None].ok(None)
+    none_ok = FlextModelsResult.RuntimeResult[int | None].ok(None)
     tm.that(none_ok.is_success, eq=True)
     tm.that(none_ok.value, none=True)
-    none_error: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
+    none_error: FlextModelsResult.RuntimeResult[int] = FlextModelsResult.RuntimeResult[
+        int
+    ].fail(
         None,
     )
     tm.that(none_error.error, eq="")
-    broken = FlextRuntime.RuntimeResult[int](
+    broken = FlextModelsResult.RuntimeResult[int](
         is_success=True,
         error=None,
         error_code=None,
@@ -769,7 +775,9 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
 
 
 def test_runtime_result_alias_compatibility() -> None:
-    rr: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(10)
+    rr: FlextModelsResult.RuntimeResult[int] = FlextModelsResult.RuntimeResult[int].ok(
+        10
+    )
     wrapped: r[int] = r[int].ok(rr.value)
     assert isinstance(wrapped, r)
 
@@ -942,17 +950,21 @@ def test_dependency_integration_and_wiring_paths() -> None:
 
 def test_runtime_result_remaining_paths() -> None:
 
-    def _ok_passthrough(value: int) -> FlextRuntime.RuntimeResult[int]:
-        return FlextRuntime.RuntimeResult[int].ok(value)
+    def _ok_passthrough(value: int) -> FlextModelsResult.RuntimeResult[int]:
+        return FlextModelsResult.RuntimeResult[int].ok(value)
 
-    def _ok_inc(value: int) -> FlextRuntime.RuntimeResult[int]:
-        return FlextRuntime.RuntimeResult[int].ok(value + 1)
+    def _ok_inc(value: int) -> FlextModelsResult.RuntimeResult[int]:
+        return FlextModelsResult.RuntimeResult[int].ok(value + 1)
 
-    def _fail_boom(_value: int) -> FlextRuntime.RuntimeResult[int]:
-        return FlextRuntime.RuntimeResult[int].fail("boom")
+    def _fail_boom(_value: int) -> FlextModelsResult.RuntimeResult[int]:
+        return FlextModelsResult.RuntimeResult[int].fail("boom")
 
-    success: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(3)
-    failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
+    success: FlextModelsResult.RuntimeResult[int] = FlextModelsResult.RuntimeResult[
+        int
+    ].ok(3)
+    failure: FlextModelsResult.RuntimeResult[int] = FlextModelsResult.RuntimeResult[
+        int
+    ].fail(
         "err",
         error_code="E2",
         error_data=t.ConfigMap(root={"k": "v"}),
@@ -966,7 +978,7 @@ def test_runtime_result_remaining_paths() -> None:
     tm.that(failure.flat_map(_ok_passthrough).is_failure, eq=True)
     tm.that(success.filter(lambda value: value > 0) is success, eq=True)
     tm.that(success.map_error(str) is success, eq=True)
-    tm.that(success.lash(FlextRuntime.RuntimeResult.fail) is success, eq=True)
+    tm.that(success.lash(FlextModelsResult.RuntimeResult.fail) is success, eq=True)
     tm.that(success.recover(lambda _e: 0) is success, eq=True)
     chain_success = success.flow_through(_ok_inc, _ok_inc)
     tm.that(chain_success.is_success and chain_success.value == 5, eq=True)

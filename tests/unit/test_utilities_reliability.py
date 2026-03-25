@@ -23,7 +23,7 @@ from typing import Final
 import pytest
 from flext_tests import u
 
-from flext_core import FlextRuntime, r
+from flext_core import FlextModelsResult, r
 from tests import t
 
 
@@ -285,7 +285,7 @@ class TestFlextUtilitiesReliability:
 
     def test_with_retry_blocked(self) -> None:
         """Test retry blocked by should_retry_func."""
-        blocked: FlextRuntime.RuntimeResult[str] = u.with_retry(
+        blocked: FlextModelsResult.RuntimeResult[str] = u.with_retry(
             lambda: r[str].fail("stop"),
             max_attempts=2,
             should_retry_func=lambda attempt, _error: attempt == 0,

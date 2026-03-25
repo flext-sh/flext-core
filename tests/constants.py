@@ -588,20 +588,6 @@ class FlextCoreTestConstants(FlextTestsConstants):
                     Field(default=100, description="Default test batch size"),
                 ] = 100
 
-    Strings = Core.Strings
-    Delimiters = Core.Delimiters
-    EscapeChars = Core.EscapeChars
-    Replacements = Core.Replacements
-    Patterns = Core.Patterns
-    TestErrors = Core.TestErrors
-    TestValidation = Core.TestValidation
-    Services = Core.Services
-    Railway = Core.Railway
-    HTTP = Core.HTTP
-    Mapper = Core.Mapper
-    TestDomain = Core.TestDomain
-    Result = Core.Result
-
 
 c = FlextCoreTestConstants
 

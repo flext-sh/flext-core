@@ -109,6 +109,8 @@ class FlextModelsResult:
             error: str | None,
             error_code: str | None = None,
             error_data: t.ResultErrorData | t.ConfigModelInput | None = None,
+            *,
+            exception: BaseException | None = None,
         ) -> Self:
             """Create failed result with error message.
 
@@ -120,6 +122,7 @@ class FlextModelsResult:
                 error: Error message (None will be converted to empty string)
                 error_code: Optional error code for categorization
                 error_data: Optional error metadata
+                exception: Optional exception that caused the failure
 
             Returns:
                 Failed RuntimeResult instance
@@ -137,15 +140,18 @@ class FlextModelsResult:
             else:
                 validated_error_data = t.ConfigMap(dict(error_data))
 
-            return cls(
+            instance = cls(
                 is_success=False,
                 error=error_msg,
                 error_code=error_code,
                 error_data=validated_error_data,
             )
+            if exception is not None:
+                instance._exception = exception
+            return instance
 
         @classmethod
-        def ok(cls, value: T) -> FlextModelsResult.RuntimeResult[T]:
+        def ok(cls, value: T) -> Self:
             """Create successful result wrapping data.
 
             Business Rule: Creates successful RuntimeResult wrapping value. Raises ValueError
@@ -181,11 +187,19 @@ class FlextModelsResult:
 
         def flat_map[U](
             self,
-            func: Callable[[T], FlextModelsResult.RuntimeResult[U]],
+            func: Callable[[T], p.Result[U]],
         ) -> FlextModelsResult.RuntimeResult[U]:
             """Chain operations returning RuntimeResult."""
             if self.is_success:
-                return func(self.value)
+                inner = func(self.value)
+                if inner.is_success:
+                    return FlextModelsResult.RuntimeResult[U].ok(inner.value)
+                return FlextModelsResult.RuntimeResult[U].fail(
+                    error=inner.error,
+                    error_code=inner.error_code,
+                    error_data=inner.error_data,
+                    exception=inner.exception,
+                )
             return FlextModelsResult.RuntimeResult[U].fail(
                 error=self.error,
                 error_code=self.error_code,
@@ -194,7 +208,7 @@ class FlextModelsResult:
 
         def flow_through[U](
             self,
-            *funcs: Callable[[T | U], FlextModelsResult.RuntimeResult[U]],
+            *funcs: Callable[[T | U], p.Result[U]],
         ) -> FlextModelsResult.RuntimeResult[T] | FlextModelsResult.RuntimeResult[U]:
             """Chain multiple operations in sequence.
 
@@ -212,7 +226,18 @@ class FlextModelsResult:
                 if current.is_success:
                     result_value = current.value
                     if result_value is not None:
-                        current = func(result_value)
+                        inner = func(result_value)
+                        if inner.is_success:
+                            current = FlextModelsResult.RuntimeResult[U].ok(
+                                inner.value,
+                            )
+                        else:
+                            current = FlextModelsResult.RuntimeResult[U].fail(
+                                error=inner.error,
+                                error_code=inner.error_code,
+                                error_data=inner.error_data,
+                                exception=inner.exception,
+                            )
                     else:
                         break
                 else:
@@ -231,11 +256,19 @@ class FlextModelsResult:
 
         def lash(
             self,
-            func: Callable[[str], FlextModelsResult.RuntimeResult[T]],
+            func: Callable[[str], p.Result[T]],
         ) -> FlextModelsResult.RuntimeResult[T]:
             """Apply recovery function on failure."""
             if not self.is_success:
-                return func(self.error or "")
+                inner = func(self.error or "")
+                if inner.is_success:
+                    return FlextModelsResult.RuntimeResult[T].ok(inner.value)
+                return FlextModelsResult.RuntimeResult[T].fail(
+                    error=inner.error,
+                    error_code=inner.error_code,
+                    error_data=inner.error_data,
+                    exception=inner.exception,
+                )
             return self
 
         def map[U](self, func: Callable[[T], U]) -> FlextModelsResult.RuntimeResult[U]:

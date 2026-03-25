@@ -19,7 +19,7 @@ from flext_core import FlextLogger, c, p, r, t, u
 
 type DispatcherResolvedCallable = Callable[
     [p.Routable],
-    t.RuntimeAtomic | p.ResultLike[t.RuntimeAtomic] | None,
+    t.RuntimeAtomic | p.Result[t.RuntimeAtomic] | None,
 ]
 
 

@@ -7,7 +7,7 @@ import pytest
 from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
-from flext_core import FlextExceptions, FlextRuntime
+from flext_core import FlextExceptions, FlextModelsResult
 from tests import c, m, p, u
 
 from ._models import TestUnitModels
@@ -42,18 +42,18 @@ class TestFlextUtilitiesConfiguration:
 
         @staticmethod
         def assert_success_with_value[T: t.NormalizedValue](
-            result: FlextRuntime.RuntimeResult[T],
+            result: FlextModelsResult.RuntimeResult[T],
             expected: T,
         ) -> None:
             tm.that(getattr(result, "is_success"), eq=True)
             tm.that(getattr(result, "value"), eq=expected)
 
         @staticmethod
-        def assert_success[T](result: FlextRuntime.RuntimeResult[T]) -> None:
+        def assert_success[T](result: FlextModelsResult.RuntimeResult[T]) -> None:
             tm.that(getattr(result, "is_success"), eq=True)
 
         @staticmethod
-        def assert_failure[T](result: FlextRuntime.RuntimeResult[T]) -> None:
+        def assert_failure[T](result: FlextModelsResult.RuntimeResult[T]) -> None:
             tm.that(getattr(result, "is_failure"), eq=True)
 
     class OptionsModelForTest(m.Value):

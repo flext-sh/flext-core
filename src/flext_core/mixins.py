@@ -92,12 +92,12 @@ class FlextMixins(m.ArbitraryTypesModel, u):
 
     @property
     @override
-    def logger(self) -> FlextLogger:
+    def logger(self) -> p.Logger:
         """Get or create FlextLogger for this component."""
         return self._get_or_create_logger()
 
     @classmethod
-    def _get_or_create_logger(cls) -> FlextLogger:
+    def _get_or_create_logger(cls) -> p.Logger:
         """Get or create DI-injected logger with fallback to direct creation."""
         logger_name = f"{cls.__module__}.{cls.__name__}"
         with cls._cache_lock:

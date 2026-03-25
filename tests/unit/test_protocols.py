@@ -4,7 +4,7 @@ Module: flext_core.protocols
 Scope: p - all protocol definitions and implementations
 
 Tests p functionality including:
-- Foundation protocols (Result, ResultLike, HasModelFields, HasModelDump, Model)
+- Foundation protocols (Result, Result, HasModelFields, HasModelDump, Model)
 - Domain protocols (Repository, Service)
 - Infrastructure protocols (Configurable)
 - Application protocols (Handler)
@@ -110,7 +110,7 @@ class TestFlextProtocols:
         ProtocolAvailabilityScenario(
             name="all_foundation_protocols_available",
             category=ProtocolCategoryType.FOUNDATION,
-            protocol_names=["Result", "ResultLike", "HasModelDump", "Model"],
+            protocol_names=["Result", "HasModelDump", "Model"],
         ),
         ProtocolAvailabilityScenario(
             name="all_domain_protocols_available",

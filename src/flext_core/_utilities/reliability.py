@@ -29,6 +29,7 @@ from flext_core import (
     r,
     t,
 )
+from flext_core._models.result import FlextModelsResult
 
 
 class FlextUtilitiesReliability:
@@ -645,7 +646,7 @@ class FlextUtilitiesReliability:
         max_attempts: int = c.MAX_RETRY_ATTEMPTS,
         should_retry_func: Callable[[int, str | None], bool] | None = None,
         cleanup_func: Callable[[], None] | None = None,
-    ) -> FlextRuntime.RuntimeResult[TResult]:
+    ) -> FlextModelsResult.RuntimeResult[TResult]:
         """Execute operation with retry logic using railway patterns.
 
         Args:

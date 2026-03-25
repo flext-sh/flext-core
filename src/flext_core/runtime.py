@@ -74,8 +74,6 @@ class FlextRuntime:
     p (duck typing through method signatures, no inheritance required).
     """
 
-    RuntimeResult = FlextModelsResult.RuntimeResult
-
     _structlog_configured: ClassVar[bool] = False
     _runtime_logger: ClassVar[p.Logger | None] = None
 
@@ -1558,13 +1556,13 @@ class FlextRuntime:
                 code_int = int(str(code))
                 if not min_val <= code_int <= max_val:
                     msg = f"Invalid HTTP status code: {code} (must be {min_val}-{max_val})"
-                    return FlextRuntime.RuntimeResult[Sequence[int]].fail(msg)
+                    return FlextModelsResult.RuntimeResult[Sequence[int]].fail(msg)
                 validated_codes.append(code_int)
             except ValueError:
-                return FlextRuntime.RuntimeResult[Sequence[int]].fail(
+                return FlextModelsResult.RuntimeResult[Sequence[int]].fail(
                     f"Cannot convert to integer: {code}",
                 )
-        return FlextRuntime.RuntimeResult[Sequence[int]].ok(validated_codes)
+        return FlextModelsResult.RuntimeResult[Sequence[int]].ok(validated_codes)
 
 
 __all__ = ["FlextRuntime"]

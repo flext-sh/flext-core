@@ -39,7 +39,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
         ) -> (
-            FlextProtocolsResult.ResultLike[t.RuntimeAtomic]
+            FlextProtocolsResult.Result[t.RuntimeAtomic]
             | t.Container
             | BaseModel
             | None
@@ -53,7 +53,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
         ) -> (
-            FlextProtocolsResult.ResultLike[t.RuntimeAtomic]
+            FlextProtocolsResult.Result[t.RuntimeAtomic]
             | t.Container
             | BaseModel
             | None
@@ -67,7 +67,7 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
         ) -> (
-            FlextProtocolsResult.ResultLike[t.RuntimeAtomic]
+            FlextProtocolsResult.Result[t.RuntimeAtomic]
             | t.Container
             | BaseModel
             | None

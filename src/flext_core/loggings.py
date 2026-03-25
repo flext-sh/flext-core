@@ -91,7 +91,7 @@ class FlextLogger(u, p.Logger):
             base_logger.bind(**context) if context else base_logger
         )
 
-    def __call__(self) -> FlextLogger:
+    def __call__(self) -> Self:
         """Return self to support factory-style DI registration."""
         return self
 
@@ -363,7 +363,7 @@ class FlextLogger(u, p.Logger):
         return cls(name, _bound_logger=bound_logger)
 
     @classmethod
-    def create_module_logger(cls, name: str = "flext") -> FlextLogger:
+    def create_module_logger(cls, name: str = "flext") -> Self:
         """Create a logger instance for a module.
 
         Business Rule: Creates a FlextLogger instance for a specific module, using
@@ -400,7 +400,7 @@ class FlextLogger(u, p.Logger):
         container: p.Container,
         level: str | None = None,
         **context: t.RuntimeData,
-    ) -> FlextLogger:
+    ) -> Self:
         """Create logger configured for a specific container.
 
         Creates a logger instance bound to a container's configuration and context.
@@ -557,7 +557,7 @@ class FlextLogger(u, p.Logger):
         container: p.Container,
         level: c.LogLevel | str | None = None,
         **context: t.RuntimeData,
-    ) -> Generator[FlextLogger]:
+    ) -> Generator[Self]:
         """Context manager for container-scoped logging.
 
         Creates a logger bound to container context for the duration of the context

@@ -181,6 +181,6 @@ class FlextTypesServices:
         | p.Settings
         | p.Dispatcher
         | FlextDispatcher
-        | p.ResultLike[RuntimeAtomic]
+        | p.Result[RuntimeAtomic]
         | None
     )

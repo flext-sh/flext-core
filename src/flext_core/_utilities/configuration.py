@@ -15,6 +15,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, T_Model, c, e, p, r, t
+from flext_core._models.result import FlextModelsResult
 
 
 class FlextUtilitiesConfiguration:
@@ -168,7 +169,7 @@ class FlextUtilitiesConfiguration:
         explicit_options: T_Model | None,
         default_factory: Callable[[], T_Model],
         **kwargs: t.Scalar,
-    ) -> FlextRuntime.RuntimeResult[T_Model]:
+    ) -> FlextModelsResult.RuntimeResult[T_Model]:
         """Build Pydantic options model from explicit options or kwargs.
 
         Args:
@@ -240,7 +241,7 @@ class FlextUtilitiesConfiguration:
         for name, value in registrations.items():
             try:
                 register_result = container.register(name, value)
-                if not isinstance(register_result, p.ResultLike):
+                if not isinstance(register_result, p.Result):
                     return r[int].fail(
                         f"Bulk registration failed at {name}: register returned non-result",
                     )
@@ -438,7 +439,7 @@ class FlextUtilitiesConfiguration:
         try:
             _ = _cache
             register_result = container.register(name, factory, kind="factory")
-            if not isinstance(register_result, p.ResultLike):
+            if not isinstance(register_result, p.Result):
                 return r[bool].fail("Factory registration failed")
             if register_result.is_failure:
                 return r[bool].fail(
@@ -467,7 +468,7 @@ class FlextUtilitiesConfiguration:
         """
         try:
             register_result = container.register(name, instance)
-            if not isinstance(register_result, p.ResultLike):
+            if not isinstance(register_result, p.Result):
                 return r[bool].fail("Registration failed")
             if register_result.is_failure:
                 return r[bool].fail(register_result.error or "Registration failed")
@@ -510,7 +511,7 @@ class FlextUtilitiesConfiguration:
         singleton_class: type,
         parameter: str,
         value: t.Scalar | t.ConfigMap,
-    ) -> FlextRuntime.RuntimeResult[bool]:
+    ) -> FlextModelsResult.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
         Args:

@@ -315,7 +315,7 @@ class FlextContainer(p.Container):
         | Mapping[str, m.ServiceRegistration]
         | Mapping[str, m.FactoryRegistration]
         | Mapping[str, m.ResourceRegistration],
-    ) -> FlextContainer:
+    ) -> Self:
         """Create a scoped container instance bypassing singleton pattern.
 
         This is an internal factory method to safely create non-singleton containers.
@@ -970,7 +970,7 @@ class FlextContainer(p.Container):
         services: Mapping[str, t.RegisterableService] | None = None,
         factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
-    ) -> FlextContainer:
+    ) -> Self:
         """Create an isolated container scope with optional overrides.
 
         Args:
@@ -1053,7 +1053,7 @@ class FlextContainer(p.Container):
                     factory=resource_factory,
                 )
         user_overrides_copy = t.ConfigMap(root=dict(self._user_overrides.items()))
-        return FlextContainer._create_scoped_instance(
+        return self.__class__._create_scoped_instance(
             registration=m.ServiceRegistrationSpec.model_validate({
                 "config": base_config,
                 "context": scoped_context,

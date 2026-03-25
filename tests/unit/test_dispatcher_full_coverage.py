@@ -94,7 +94,7 @@ class TestDispatcherFullCoverage:
         def _wrapper(
             *_args: t.Container,
             **_kwargs: t.Scalar,
-        ) -> p.ResultLike[t.Container] | t.Container | None:
+        ) -> p.Result[t.Container] | t.Container | None:
             return "invalid"
 
         return cast("t.DispatchableHandler", _wrapper)

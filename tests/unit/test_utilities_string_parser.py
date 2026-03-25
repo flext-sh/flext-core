@@ -83,47 +83,47 @@ class TestuStringParser:
             """Generate comprehensive parse_delimited test cases."""
             return [
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.BASIC_LIST,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.BASIC_LIST,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="basic",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.WITH_SPACES,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.WITH_SPACES,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="with spaces",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.EMPTY,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.EMPTY,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=[],
                     description="empty string",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.WITH_SPACES,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.WITH_SPACES,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     options=m.ParseOptions(strip=True, remove_empty=True),
                     description="with options",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.WITH_SPACES,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.WITH_SPACES,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", " b", " c"],
                     options=m.ParseOptions(strip=False, remove_empty=True),
                     description="options no strip",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.WITH_EMPTY,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.WITH_EMPTY,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "", "c"],
                     options=m.ParseOptions(strip=True, remove_empty=False),
                     description="options no remove empty",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.BASIC_LIST,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.BASIC_LIST,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     options=m.ParseOptions(
                         strip=True,
@@ -134,7 +134,7 @@ class TestuStringParser:
                 ),
                 m.Core.ParseDelimitedCase(
                     text="a,b",
-                    delimiter=c.Delimiters.COMMA,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=[],
                     options=m.ParseOptions(
                         strip=True,
@@ -144,8 +144,8 @@ class TestuStringParser:
                     description="validator filters components",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.WITH_SPACES,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.WITH_SPACES,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     strip=True,
                     remove_empty=True,
@@ -153,56 +153,56 @@ class TestuStringParser:
                     description="legacy params",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.BASIC_LIST,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.BASIC_LIST,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     validator=lambda s: "x" not in s,
                     use_legacy=True,
                     description="legacy validator",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.BASIC_LIST,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.BASIC_LIST,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="no spaces",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.EXCESSIVE_SPACES,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.EXCESSIVE_SPACES,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="excessive spaces",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.LEADING_TRAILING,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.LEADING_TRAILING,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="leading/trailing delimiters",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.SINGLE_CHAR,
-                    delimiter=c.Delimiters.COMMA,
+                    text=c.Core.Strings.SINGLE_CHAR,
+                    delimiter=c.Core.Delimiters.COMMA,
                     expected=["a"],
                     description="single component",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.BASIC_LIST,
+                    text=c.Core.Strings.BASIC_LIST,
                     delimiter="",
                     expected=None,
-                    expected_error=c.TestErrors.DELIMITER_EMPTY,
+                    expected_error=c.Core.TestErrors.DELIMITER_EMPTY,
                     description="empty delimiter",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.BASIC_LIST,
+                    text=c.Core.Strings.BASIC_LIST,
                     delimiter=",,",
                     expected=None,
-                    expected_error=c.TestErrors.DELIMITER_MULTI,
+                    expected_error=c.Core.TestErrors.DELIMITER_MULTI,
                     description="multi-char delimiter",
                 ),
                 m.Core.ParseDelimitedCase(
-                    text=c.Strings.BASIC_LIST,
+                    text=c.Core.Strings.BASIC_LIST,
                     delimiter=" ",
                     expected=None,
-                    expected_error=c.TestErrors.DELIMITER_WHITESPACE,
+                    expected_error=c.Core.TestErrors.DELIMITER_WHITESPACE,
                     description="whitespace delimiter",
                 ),
             ]
@@ -212,72 +212,72 @@ class TestuStringParser:
             """Generate comprehensive split_on_char_with_escape test cases."""
             return [
                 m.Core.SplitEscapeCase(
-                    text=c.Strings.BASIC_LIST,
-                    split_char=c.Delimiters.COMMA,
+                    text=c.Core.Strings.BASIC_LIST,
+                    split_char=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c"],
                     description="basic",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a\\,b,c",
-                    split_char=c.Delimiters.COMMA,
+                    split_char=c.Core.Delimiters.COMMA,
                     expected=["a,b", "c"],
                     description="escaped delimiter",
                 ),
                 m.Core.SplitEscapeCase(
-                    text=c.Strings.EMPTY,
-                    split_char=c.Delimiters.COMMA,
+                    text=c.Core.Strings.EMPTY,
+                    split_char=c.Core.Delimiters.COMMA,
                     expected=[""],
                     description="empty string",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a#b,c",
-                    split_char=c.Delimiters.COMMA,
-                    escape_char=c.EscapeChars.HASH,
+                    split_char=c.Core.Delimiters.COMMA,
+                    escape_char=c.Core.EscapeChars.HASH,
                     expected=["ab", "c"],
                     description="custom escape char",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a,b\\",
-                    split_char=c.Delimiters.COMMA,
+                    split_char=c.Core.Delimiters.COMMA,
                     expected=["a", "b\\"],
                     description="escape at end",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a\\\\,b",
-                    split_char=c.Delimiters.COMMA,
+                    split_char=c.Core.Delimiters.COMMA,
                     expected=["a\\", "b"],
                     description="escaped escape char",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a,b,c,d",
-                    split_char=c.Delimiters.COMMA,
+                    split_char=c.Core.Delimiters.COMMA,
                     expected=["a", "b", "c", "d"],
                     description="multiple components",
                 ),
                 m.Core.SplitEscapeCase(
                     text="\\,a,b",
-                    split_char=c.Delimiters.COMMA,
+                    split_char=c.Core.Delimiters.COMMA,
                     expected=[",a", "b"],
                     description="escaped at start",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a,b",
                     split_char="",
-                    expected_error=c.TestErrors.SPLIT_EMPTY,
+                    expected_error=c.Core.TestErrors.SPLIT_EMPTY,
                     description="empty split char",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a,b",
-                    split_char=c.Delimiters.COMMA,
+                    split_char=c.Core.Delimiters.COMMA,
                     escape_char="",
-                    expected_error=c.TestErrors.ESCAPE_EMPTY,
+                    expected_error=c.Core.TestErrors.ESCAPE_EMPTY,
                     description="empty escape char",
                 ),
                 m.Core.SplitEscapeCase(
                     text="a,b",
-                    split_char=c.Delimiters.COMMA,
-                    escape_char=c.Delimiters.COMMA,
-                    expected_error=c.TestErrors.SPLIT_ESCAPE_SAME,
+                    split_char=c.Core.Delimiters.COMMA,
+                    escape_char=c.Core.Delimiters.COMMA,
+                    expected_error=c.Core.TestErrors.SPLIT_ESCAPE_SAME,
                     description="same split and escape",
                 ),
             ]
@@ -292,20 +292,20 @@ class TestuStringParser:
                     description="basic",
                 ),
                 m.Core.NormalizeWhitespaceCase(
-                    text=c.Strings.EMPTY,
-                    expected=c.Strings.EMPTY,
+                    text=c.Core.Strings.EMPTY,
+                    expected=c.Core.Strings.EMPTY,
                     description="empty string",
                 ),
                 m.Core.NormalizeWhitespaceCase(
                     text="hello---world",
-                    pattern=c.Patterns.DASH,
-                    replacement=c.Replacements.DASH,
+                    pattern=c.Core.Patterns.DASH,
+                    replacement=c.Core.Replacements.DASH,
                     expected="hello-world",
                     description="custom pattern",
                 ),
                 m.Core.NormalizeWhitespaceCase(
                     text="hello   world",
-                    replacement=c.Replacements.UNDERSCORE,
+                    replacement=c.Core.Replacements.UNDERSCORE,
                     expected="hello_world",
                     description="custom replacement",
                 ),
@@ -320,8 +320,8 @@ class TestuStringParser:
                     description="only whitespace",
                 ),
                 m.Core.NormalizeWhitespaceCase(
-                    text=c.Strings.SINGLE_CHAR,
-                    expected=c.Strings.SINGLE_CHAR,
+                    text=c.Core.Strings.SINGLE_CHAR,
+                    expected=c.Core.Strings.SINGLE_CHAR,
                     description="single char",
                 ),
                 m.Core.NormalizeWhitespaceCase(
@@ -339,8 +339,8 @@ class TestuStringParser:
                     text="hello   world",
                     patterns=[
                         (
-                            c.Patterns.WHITESPACE,
-                            c.Replacements.SPACE,
+                            c.Core.Patterns.WHITESPACE,
+                            c.Core.Replacements.SPACE,
                         ),
                         ("=", "="),
                     ],
@@ -348,30 +348,30 @@ class TestuStringParser:
                     description="basic",
                 ),
                 m.Core.RegexPipelineCase(
-                    text=c.Strings.EMPTY,
+                    text=c.Core.Strings.EMPTY,
                     patterns=[
                         (
-                            c.Patterns.WHITESPACE,
-                            c.Replacements.SPACE,
+                            c.Core.Patterns.WHITESPACE,
+                            c.Core.Replacements.SPACE,
                         ),
                     ],
-                    expected=c.Strings.EMPTY,
+                    expected=c.Core.Strings.EMPTY,
                     description="empty string",
                 ),
                 m.Core.RegexPipelineCase(
                     text="cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
                     patterns=[
                         (
-                            c.Patterns.EQUALS_SPACE,
-                            c.Replacements.EQUALS,
+                            c.Core.Patterns.EQUALS_SPACE,
+                            c.Core.Replacements.EQUALS,
                         ),
                         (
-                            c.Patterns.COMMA_SPACE,
-                            c.Replacements.COMMA,
+                            c.Core.Patterns.COMMA_SPACE,
+                            c.Core.Replacements.COMMA,
                         ),
                         (
-                            c.Patterns.WHITESPACE,
-                            c.Replacements.SPACE,
+                            c.Core.Patterns.WHITESPACE,
+                            c.Core.Replacements.SPACE,
                         ),
                     ],
                     expected="cn= REDACTED_LDAP_BIND_PASSWORD ,ou= users",
@@ -472,10 +472,10 @@ class TestuStringParser:
             bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.parse_delimited(
                 bad_str,
-                c.Delimiters.COMMA,
+                c.Core.Delimiters.COMMA,
             )
             assert result.is_failure
-            assert c.TestErrors.FAILED_PARSE in (result.error or "")
+            assert c.Core.TestErrors.FAILED_PARSE in (result.error or "")
 
     class TestSplitWithEscape:
         """Test split_on_char_with_escape method."""
@@ -507,10 +507,10 @@ class TestuStringParser:
             bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.split_on_char_with_escape(
                 bad_str,
-                c.Delimiters.COMMA,
+                c.Core.Delimiters.COMMA,
             )
             assert result.is_failure
-            assert c.TestErrors.FAILED_SPLIT in (result.error or "")
+            assert c.Core.TestErrors.FAILED_SPLIT in (result.error or "")
 
     class TestNormalizeWhitespace:
         """Test normalize_whitespace method."""
@@ -545,7 +545,7 @@ class TestuStringParser:
             bad_str = cast("str", cast("t.NormalizedValue", bad_obj))
             result = parser.normalize_whitespace(bad_str)
             assert result.is_failure
-            assert c.TestErrors.FAILED_NORMALIZE in (result.error or "")
+            assert c.Core.TestErrors.FAILED_NORMALIZE in (result.error or "")
 
     class TestRegexPipeline:
         """Test apply_regex_pipeline method."""
@@ -575,7 +575,7 @@ class TestuStringParser:
             ]
             result = parser.apply_regex_pipeline("test", patterns)
             assert result.is_failure
-            assert c.TestErrors.FAILED_PIPELINE in (result.error or "")
+            assert c.Core.TestErrors.FAILED_PIPELINE in (result.error or "")
 
         def test_invalid_pattern(self, parser: u) -> None:
             """Test pipeline with invalid regex pattern."""
@@ -584,7 +584,7 @@ class TestuStringParser:
             ]
             result = parser.apply_regex_pipeline("test", patterns)
             assert result.is_failure
-            assert c.TestErrors.INVALID_REGEX in (result.error or "")
+            assert c.Core.TestErrors.INVALID_REGEX in (result.error or "")
 
         def test_none_text(self, parser: u) -> None:
             """Test pipeline with None text."""
@@ -596,8 +596,8 @@ class TestuStringParser:
                         text,
                         [
                             (
-                                c.Patterns.WHITESPACE,
-                                c.Replacements.SPACE,
+                                c.Core.Patterns.WHITESPACE,
+                                c.Core.Replacements.SPACE,
                             ),
                         ],
                     ),
@@ -616,8 +616,8 @@ class TestuStringParser:
                         text,
                         [
                             (
-                                c.Patterns.WHITESPACE,
-                                c.Replacements.SPACE,
+                                c.Core.Patterns.WHITESPACE,
+                                c.Core.Replacements.SPACE,
                             ),
                         ],
                     ),

@@ -37,8 +37,8 @@ class GetUserService(s[m.Tests.User]):
         return r[m.Tests.User].ok(
             m.Tests.User(
                 id=self.user_id,
-                name=f"{c.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
-                email=f"user{self.user_id}{c.Services.DEFAULT_EMAIL_DOMAIN}",
+                name=f"{c.Core.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
+                email=f"user{self.user_id}{c.Core.Services.DEFAULT_EMAIL_DOMAIN}",
             ),
         )
 
@@ -47,7 +47,7 @@ class ValidatingService(s[str]):
     """Service with validation."""
 
     value_input: str
-    min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT
+    min_length: int = c.Core.TestValidation.MIN_LENGTH_DEFAULT
 
     @override
     def execute(self) -> r[str]:
@@ -62,7 +62,7 @@ class ValidatingService(s[str]):
 class FailingService(s[str]):
     """Service that always fails."""
 
-    error_message: str = c.Services.DEFAULT_ERROR_MESSAGE
+    error_message: str = c.Core.Services.DEFAULT_ERROR_MESSAGE
 
     @override
     def execute(self) -> r[str]:
@@ -171,7 +171,7 @@ class FailingServiceFactory:
     def build(
         cls,
         *,
-        error_message: str = c.Services.DEFAULT_ERROR_MESSAGE,
+        error_message: str = c.Core.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingService:
         """Build a FailingService instance."""
         return FailingService.model_construct(error_message=error_message)
@@ -223,7 +223,7 @@ class ValidatingServiceAutoFactory:
         cls,
         *,
         value_input: str | None = None,
-        min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT,
+        min_length: int = c.Core.TestValidation.MIN_LENGTH_DEFAULT,
     ) -> ValidatingServiceAuto:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
@@ -261,7 +261,7 @@ class ValidatingServiceFactory:
         cls,
         *,
         value_input: str | None = None,
-        min_length: int = c.TestValidation.MIN_LENGTH_DEFAULT,
+        min_length: int = c.Core.TestValidation.MIN_LENGTH_DEFAULT,
     ) -> ValidatingService:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
@@ -288,7 +288,7 @@ class FailingServiceAutoFactory:
     def build(
         cls,
         *,
-        error_message: str = c.Services.DEFAULT_ERROR_MESSAGE,
+        error_message: str = c.Core.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingServiceAuto:
         """Build a FailingServiceAuto instance."""
         return FailingServiceAuto.model_construct(error_message=error_message)
@@ -333,7 +333,7 @@ class ServiceTestCaseFactory:
         input_value: str | None = None,
         expected_success: bool = True,
         expected_error: str | None = None,
-        extra_param: int = c.TestValidation.MIN_LENGTH_DEFAULT,
+        extra_param: int = c.Core.TestValidation.MIN_LENGTH_DEFAULT,
         description: str | None = None,
     ) -> m.Core.ServiceTestCase:
         """Build a m.Core.ServiceTestCase instance."""

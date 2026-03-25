@@ -177,17 +177,17 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_result_like(
         value: t.GuardInput,
-    ) -> TypeIs[p.ResultLike[t.RuntimeAtomic]]:
-        """Check if value is a ResultLike protocol instance.
+    ) -> TypeIs[p.Result[t.RuntimeAtomic]]:
+        """Check if value is a Result protocol instance.
 
         Args:
             value: Value to check.
 
         Returns:
-            True if value implements ResultLike protocol, False otherwise.
+            True if value implements Result protocol, False otherwise.
 
         """
-        return isinstance(value, p.ResultLike)
+        return isinstance(value, p.Result)
 
     @staticmethod
     def is_registerable_service(

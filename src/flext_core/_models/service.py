@@ -294,7 +294,7 @@ class FlextModelsService:
         operation_callable: Annotated[
             Callable[
                 [t.ValueOrModel],
-                p.ResultLike[t.ValueOrModel],
+                p.Result[t.ValueOrModel],
             ],
             Field(description="Callable operation returning result"),
         ]
