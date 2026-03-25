@@ -57,10 +57,9 @@ class FlextModelsEntity:
         domain_events: Annotated[
             list[FlextModelsDomainEvent.Entry],
             Field(
-                default_factory=lambda: list[FlextModelsDomainEvent.Entry](),
                 description="List of uncommitted domain events for event sourcing",
             ),
-        ]
+        ] = Field(default_factory=lambda: list[FlextModelsDomainEvent.Entry]())
 
         @override
         def __eq__(self, other: object) -> bool:

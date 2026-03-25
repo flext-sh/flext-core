@@ -45,21 +45,19 @@ class FlextModelsService:
         trace_id: Annotated[
             t.NonEmptyStr,
             Field(
-                default_factory=lambda: str(uuid.uuid4()),
                 description="Distributed trace identifier shared across related service calls.",
                 title="Trace Id",
                 examples=["c8f2d73e-9870-4cba-b873-5b4a3f7b95f4"],
             ),
-        ]
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
         span_id: Annotated[
             t.NonEmptyStr,
             Field(
-                default_factory=lambda: str(uuid.uuid4()),
                 description="Span identifier for the current service operation within a trace.",
                 title="Span Id",
                 examples=["9fd8d2fd-a4bc-4b15-9e8a-47f6c7dd6a11"],
             ),
-        ]
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
         parent_span_id: t.NonEmptyStr | None = None
 
     class ServiceRetryConfiguration(
@@ -151,7 +149,6 @@ class FlextModelsService:
         operations: Annotated[
             Sequence[FlextModelsService.BatchOperation],
             Field(
-                default_factory=list,
                 min_length=c.RETRY_COUNT_MIN,
                 max_length=c.MAX_BATCH_OPERATIONS,
                 description="Ordered batch operations to execute for the target service.",
@@ -160,7 +157,7 @@ class FlextModelsService:
                     [{"operation_name": "validate"}, {"operation_name": "persist"}],
                 ],
             ),
-        ]
+        ] = Field(default_factory=list)
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: Annotated[
@@ -185,10 +182,9 @@ class FlextModelsService:
         metric_types: Annotated[
             Sequence[Literal["performance", "errors", "throughput"]],
             Field(
-                default_factory=lambda: list(c.DEFAULT_METRIC_CATEGORIES),
                 description="Types of metrics to collect",
             ),
-        ]
+        ] = Field(default_factory=lambda: list(c.DEFAULT_METRIC_CATEGORIES))
         time_range_seconds: t.PositiveInt = c.DEFAULT_TIME_RANGE_SECONDS
         aggregation: Annotated[
             str,
@@ -202,12 +198,11 @@ class FlextModelsService:
         group_by: Annotated[
             t.StrSequence,
             Field(
-                default_factory=list,
                 description="Metric dimensions used to group the resulting metric series.",
                 title="Group By",
                 examples=[["service_name", "handler_mode"]],
             ),
-        ]
+        ] = Field(default_factory=list)
         filters: FlextModelsService.ServiceFilters | None = None
 
         @model_validator(mode="after")
@@ -271,12 +266,12 @@ class FlextModelsService:
         allowed: Annotated[bool, Field(description="Whether access is allowed")]
         permissions: Annotated[
             t.StrSequence,
-            Field(default_factory=list, description="Granted permissions"),
-        ]
+            Field(description="Granted permissions"),
+        ] = Field(default_factory=list)
         denied_permissions: Annotated[
             t.StrSequence,
-            Field(default_factory=list, description="Denied permissions"),
-        ]
+            Field(description="Denied permissions"),
+        ] = Field(default_factory=list)
         context: FlextModelsService.ServiceContext | None = None
 
         @model_validator(mode="after")

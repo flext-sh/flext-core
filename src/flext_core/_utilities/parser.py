@@ -777,21 +777,22 @@ class FlextUtilitiesParser:
 
         """
         items_to_check: t.StrSequence
-        if isinstance(items, t.ConfigMap):
-            items_to_check = [str(k) for k in items.root]
-        elif isinstance(items, p.HasModelDump):
-            items_to_check = list(items.model_dump().keys())
-        elif isinstance(items, Mapping):
-            warnings.warn(
-                "Passing raw Mapping to norm_in() is deprecated. "
-                "Use t.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
-                "Will be removed in v0.13.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            items_to_check = [str(k) for k in items]
-        else:
-            items_to_check = items
+        match items:
+            case t.ConfigMap():
+                items_to_check = [str(k) for k in items.root]
+            case p.HasModelDump():
+                items_to_check = list(items.model_dump().keys())
+            case Mapping():
+                warnings.warn(
+                    "Passing raw Mapping to norm_in() is deprecated. "
+                    "Use t.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
+                    "Will be removed in v0.13.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                items_to_check = [str(k) for k in items]
+            case _:
+                items_to_check = items
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = [
             FlextUtilitiesParser.norm_str(item, case=case or "lower")

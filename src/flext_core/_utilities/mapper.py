@@ -1328,10 +1328,11 @@ class FlextUtilitiesMapper:
         """
 
         def _collect_keys() -> t.StrSequence:
-            active_keys: MutableSequence[str] = []
-            for source_key, output_key in key_mapping.items():
-                if source.get(source_key):
-                    active_keys.append(output_key)
+            active_keys: Sequence[str] = [
+                output_key
+                for source_key, output_key in key_mapping.items()
+                if source.get(source_key)
+            ]
             return active_keys
 
         active_keys_result = r[t.StrSequence].create_from_callable(_collect_keys)
@@ -1641,16 +1642,19 @@ class FlextUtilitiesMapper:
         try:
             parts = path.split(separator)
             current: t.ValueOrModel = None
-            if isinstance(data, BaseModel):
-                current = data
-            elif isinstance(data, Mapping):
-                current = FlextUtilitiesMapper.narrow_to_container(data)
-            elif isinstance(data, p.HasModelDump):
-                current = FlextUtilitiesMapper.narrow_to_container(data.model_dump())
-            elif isinstance(data, p.ValidatorSpec):
-                current = str(data)
-            else:
-                current = data
+            match data:
+                case BaseModel():
+                    current = data
+                case Mapping():
+                    current = FlextUtilitiesMapper.narrow_to_container(data)
+                case p.HasModelDump():
+                    current = FlextUtilitiesMapper.narrow_to_container(
+                        data.model_dump()
+                    )
+                case p.ValidatorSpec():
+                    current = str(data)
+                case _:
+                    current = data
             found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:

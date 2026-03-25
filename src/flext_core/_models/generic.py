@@ -46,24 +46,21 @@ class FlextGenericModels:
         correlation_id: Annotated[
             str,
             Field(
-                default_factory=lambda: str(uuid.uuid4()),
                 description="Unique correlation ID for tracing",
             ),
-        ]
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
         operation_id: Annotated[
             str,
             Field(
-                default_factory=lambda: str(uuid.uuid4()),
                 description="Unique operation ID",
             ),
-        ]
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
         timestamp: Annotated[
             datetime,
             Field(
-                default_factory=lambda: datetime.now(UTC),
                 description="UTC timestamp when created",
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         source: Annotated[
             str | None,
             Field(default=None, description="Source system"),
@@ -87,10 +84,9 @@ class FlextGenericModels:
         metadata: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Additional metadata",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         message: Annotated[
             t.ValueOrModel,
             Field(default=None, description="Message payload"),
@@ -159,10 +155,9 @@ class FlextGenericModels:
         metadata: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Service metadata",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
     class Configuration(FlextModelFoundation.FrozenStrictModel):
         """Configuration snapshot.
@@ -173,17 +168,15 @@ class FlextGenericModels:
         config: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Config key-value pairs",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         captured_at: Annotated[
             datetime,
             Field(
-                default_factory=lambda: datetime.now(UTC),
                 description="Capture timestamp",
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         source: Annotated[
             str | None,
             Field(default=None, description="Config source"),
@@ -201,15 +194,14 @@ class FlextGenericModels:
         )
         validation_errors: Annotated[
             t.StrSequence,
-            Field(default_factory=list, description="Validation errors"),
-        ]
+            Field(description="Validation errors"),
+        ] = Field(default_factory=list)
         metadata: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Config metadata",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
     class Health(FlextModelFoundation.FrozenStrictModel):
         """Health check result.
@@ -223,24 +215,21 @@ class FlextGenericModels:
         checks: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Check results",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         details: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Check details",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         checked_at: Annotated[
             datetime,
             Field(
-                default_factory=lambda: datetime.now(UTC),
                 description="Check timestamp",
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         service_name: Annotated[
             str | None,
             Field(default=None, description="Service name"),
@@ -260,10 +249,9 @@ class FlextGenericModels:
         metadata: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Health metadata",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
     """Progress trackers - mutable, accumulate during operation."""
 
@@ -330,10 +318,9 @@ class FlextGenericModels:
         metadata: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Operation metadata",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
         def record_failure(self) -> None:
             """Record a failed operation."""
@@ -383,20 +370,20 @@ class FlextGenericModels:
 
         converted: Annotated[
             MutableSequence[t.ValueOrModel],
-            Field(default_factory=list, description="Converted items"),
-        ]
+            Field(description="Converted items"),
+        ] = Field(default_factory=list)
         errors: Annotated[
             MutableSequence[str],
-            Field(default_factory=list, description="Error messages"),
-        ]
+            Field(description="Error messages"),
+        ] = Field(default_factory=list)
         warnings: Annotated[
             MutableSequence[str],
-            Field(default_factory=list, description="Warning messages"),
-        ]
+            Field(description="Warning messages"),
+        ] = Field(default_factory=list)
         skipped: Annotated[
             MutableSequence[t.ValueOrModel],
-            Field(default_factory=list, description="Skipped items"),
-        ]
+            Field(description="Skipped items"),
+        ] = Field(default_factory=list)
         start_time: Annotated[
             datetime | None,
             Field(default=None, description="Start time"),
@@ -420,10 +407,9 @@ class FlextGenericModels:
         metadata: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Conversion metadata",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
         def add_converted(self, item: t.ValueOrModel) -> None:
             """Add a successfully converted item."""

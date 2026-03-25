@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Sequence
 from types import ModuleType
 
 from flext_core import c, m
@@ -58,20 +58,21 @@ class FlextUtilitiesDiscovery:
             List of tuples (function_name, FactoryDecoratorConfig) sorted by name
 
         """
-        factories: MutableSequence[tuple[str, m.FactoryDecoratorConfig]] = []
-        for name in dir(module):
-            if name.startswith("_"):
-                continue
-            func = vars(module).get(name)
-            if func is None:
-                continue
-            if callable(func) and hasattr(func, c.FACTORY_ATTR):
-                config_raw = vars(func).get(c.FACTORY_ATTR)
-                if not isinstance(config_raw, m.FactoryDecoratorConfig):
-                    continue
-                config: m.FactoryDecoratorConfig = config_raw
-                factories.append((name, config))
-        return sorted(factories, key=operator.itemgetter(0))
+        return sorted(
+            [
+                (name, config_raw)
+                for name in dir(module)
+                if not name.startswith("_")
+                and (func := vars(module).get(name)) is not None
+                and callable(func)
+                and hasattr(func, c.FACTORY_ATTR)
+                and isinstance(
+                    (config_raw := vars(func).get(c.FACTORY_ATTR)),
+                    m.FactoryDecoratorConfig,
+                )
+            ],
+            key=operator.itemgetter(0),
+        )
 
 
 __all__ = ["FlextUtilitiesDiscovery"]

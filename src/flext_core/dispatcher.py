@@ -160,16 +160,17 @@ class FlextDispatcher:
             u.compute_accepted_message_types(handler.__class__),
         )
         resolved_handler: DispatcherResolvedCallable
-        if isinstance(handler, p.DispatchMessage):
-            resolved_handler = handler.dispatch_message
-        elif isinstance(handler, p.Handle):
-            resolved_handler = handler.handle
-        elif isinstance(handler, p.Execute):
-            resolved_handler = handler.execute
-        else:
-            if not callable(handler):
-                return r[bool].fail("Handler must be callable")
-            resolved_handler = handler
+        match handler:
+            case p.DispatchMessage():
+                resolved_handler = handler.dispatch_message
+            case p.Handle():
+                resolved_handler = handler.handle
+            case p.Execute():
+                resolved_handler = handler.execute
+            case _:
+                if not callable(handler):
+                    return r[bool].fail("Handler must be callable")
+                resolved_handler = handler
         handler_message_type = getattr(handler, "message_type", None)
         if isinstance(handler_message_type, str):
             route_name = handler_message_type

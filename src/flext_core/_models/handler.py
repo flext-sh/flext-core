@@ -47,10 +47,9 @@ class FlextModelsHandler:
         event_types: Annotated[
             t.StrSequence,
             Field(
-                default_factory=list,
                 description="Event types this handler processes",
             ),
-        ]
+        ] = Field(default_factory=list)
 
         @field_validator("handler", mode="before")
         @classmethod
@@ -209,13 +208,12 @@ class FlextModelsHandler:
         timestamp: Annotated[
             str,
             Field(
-                default_factory=lambda: c.DEFAULT_TIMESTAMP,
                 description="ISO 8601 timestamp recording when the registration entry was created.",
                 title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ]
+        ] = Field(default_factory=lambda: c.DEFAULT_TIMESTAMP)
         status: Annotated[
             c.CommonStatus,
             Field(
@@ -434,10 +432,9 @@ class FlextModelsHandler:
         middleware: Annotated[
             Sequence[type[p.Middleware]],
             Field(
-                default_factory=list,
                 description="Middleware types to apply to this handler",
             ),
-        ]
+        ] = Field(default_factory=list)
 
 
 __all__ = ["FlextModelsHandler"]

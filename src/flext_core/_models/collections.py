@@ -135,10 +135,9 @@ class FlextModelsCollections:
         categories: Annotated[
             MutableMapping[str, MutableSequence[t.MetadataValue]],
             Field(
-                default_factory=dict,
                 description="Map of category name to list of items",
             ),
-        ]
+        ] = Field(default_factory=dict)
 
         def __len__(self) -> int:
             return sum(len(entries) for entries in self.categories.values())

@@ -56,12 +56,11 @@ class FlextModelsCqrs:
         command_id: Annotated[
             t.NonEmptyStr,
             Field(
-                default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"),
                 description="Unique command identifier used for tracing and idempotency checks.",
                 title="Command Id",
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"))
         issuer_id: t.NonEmptyStr | None = None
 
         @property
@@ -135,30 +134,27 @@ class FlextModelsCqrs:
         filters: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Filter values that restrict which records are returned by the query.",
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         pagination: Annotated[
             BaseModel | t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Pagination settings controlling page number and page size for query results.",
                 title="Pagination",
                 examples=[{"page": 1, "size": 50}],
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
-                default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
                 description="Unique query identifier used for tracing and cache correlation.",
                 title="Query Id",
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("query"))
         query_type: str | None = None
 
         @property
@@ -438,26 +434,23 @@ class FlextModelsCqrs:
         event_id: Annotated[
             t.NonEmptyStr,
             Field(
-                default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
                 description="Unique event identifier used for deduplication and observability.",
                 title="Event Id",
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
-        ]
+        ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"))
         data: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Event payload data",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         metadata: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Event metadata (timestamps, correlation IDs, etc.)",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
     type FlextMessage = Annotated[
         Command | Query | Event,

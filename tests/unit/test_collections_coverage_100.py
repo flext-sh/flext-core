@@ -38,13 +38,13 @@ class TestFlextModelsCollectionsCoverage100:
     class StatisticsItems(m.Statistics):
         """Statistics with items list."""
 
-        items: Annotated[t.StrSequence, Field(default_factory=list)]
+        items: t.StrSequence = Field(default_factory=list)
 
     class StatisticsMixed(m.Statistics):
         """Statistics with count, items, and name."""
 
         count: int = 0
-        items: Annotated[t.StrSequence, Field(default_factory=list)]
+        items: t.StrSequence = Field(default_factory=list)
         name: str = ""
 
     class StatisticsOptional(m.Statistics):
@@ -61,18 +61,18 @@ class TestFlextModelsCollectionsCoverage100:
     class ResultsErrors(m.Results):
         """Results with errors list."""
 
-        errors: Annotated[t.StrSequence, Field(default_factory=list)]
+        errors: t.StrSequence = Field(default_factory=list)
 
     class ResultsMetadata(m.Results):
         """Results with metadata dictionary."""
 
-        metadata: Annotated[t.StrMapping, Field(default_factory=dict)]
+        metadata: t.StrMapping = Field(default_factory=dict)
 
     class ResultsMixed(m.Results):
         """Results with processed, errors, and status."""
 
         processed: int = 0
-        errors: Annotated[t.StrSequence, Field(default_factory=list)]
+        errors: t.StrSequence = Field(default_factory=list)
         status: str = ""
 
     class ResultsOptional(m.Results):

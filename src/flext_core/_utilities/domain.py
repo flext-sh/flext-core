@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import Sequence
 
 from flext_core import FlextRuntime, c, p, t
 
@@ -131,13 +131,15 @@ class FlextUtilitiesDomain:
         """
         try:
             obj_dict = obj.__dict__
-            hashable_items: MutableSequence[tuple[str, t.NormalizedValue]] = []
-            for key, value in sorted(obj_dict.items()):
-                key_str = str(key)
-                if isinstance(value, (str, int, float, bool, type(None))):
-                    hashable_items.append((key_str, value))
-                else:
-                    hashable_items.append((key_str, value.__class__.__name__))
+            hashable_items: Sequence[tuple[str, t.NormalizedValue]] = [
+                (
+                    str(key),
+                    value
+                    if isinstance(value, (str, int, float, bool, type(None)))
+                    else value.__class__.__name__,
+                )
+                for key, value in sorted(obj_dict.items())
+            ]
             return hash(tuple(hashable_items))
         except (AttributeError, TypeError):
             return hash(repr(obj))

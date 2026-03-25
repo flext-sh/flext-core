@@ -48,10 +48,9 @@ class TestFlextSettingsSingletonIntegration:
         expected_values: Annotated[
             t.ContainerMapping,
             Field(
-                default_factory=dict,
                 description="Expected effective values",
             ),
-        ]
+        ] = Field(default_factory=dict)
         file_format: Annotated[
             str,
             Field(
@@ -62,10 +61,9 @@ class TestFlextSettingsSingletonIntegration:
         env_vars: Annotated[
             t.StrMapping,
             Field(
-                default_factory=dict,
                 description="Environment variable overrides",
             ),
-        ]
+        ] = Field(default_factory=dict)
         description: Annotated[
             str,
             Field(default="", description="Human-readable test description"),

@@ -938,7 +938,10 @@ class TestUtilitiesCollectionCoverage:
         _ = u.coerce_list_validator(FixtureStatus)
 
         class TestModel(BaseModel):
-            statuses: Annotated[tuple[FixtureStatus, ...], Field(default_factory=tuple)]
+            statuses: Annotated[
+                tuple[FixtureStatus, ...],
+                Field(default_factory=tuple),
+            ]
 
         model1: TestModel = TestModel.model_validate({
             "statuses": ["active", "pending"],

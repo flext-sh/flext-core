@@ -66,10 +66,9 @@ class FlextModelsContextMetadata:
             Mapping[str, t.ValueOrModel],
             BeforeValidator(lambda v: FlextModelsContextData.normalize_to_mapping(v)),
             Field(
-                default_factory=dict,
                 description="Custom metadata attributes for caller-specific tracing and context.",
             ),
-        ]
+        ] = Field(default_factory=dict)
 
         @model_validator(mode="after")
         def validate_context_protocol(self) -> Self:
@@ -100,17 +99,15 @@ class FlextModelsContextMetadata:
         domain_data: Annotated[
             Mapping[str, t.ValueOrModel],
             Field(
-                default_factory=dict,
                 description="Domain payload values scoped to the current business context.",
             ),
-        ]
+        ] = Field(default_factory=dict)
         domain_metadata: Annotated[
             t.ContainerMapping,
             Field(
-                default_factory=dict,
                 description="Domain metadata attributes describing origin and processing state.",
             ),
-        ]
+        ] = Field(default_factory=dict)
 
 
 __all__ = ["FlextModelsContextMetadata"]

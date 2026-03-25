@@ -76,8 +76,8 @@ class TestDocumentedPatterns:
         ]
         operations: Annotated[
             t.StrSequence,
-            Field(default_factory=list, description="Pipeline operations to execute"),
-        ]
+            Field(description="Pipeline operations to execute"),
+        ] = Field(default_factory=list)
         expected_pipeline_length: Annotated[
             int,
             Field(default=1, description="Expected number of pipeline stages"),

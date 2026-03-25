@@ -93,10 +93,9 @@ class FlextError(m.ArbitraryTypesModel):
     details: Annotated[
         t.ConfigMap,
         Field(
-            default_factory=lambda: t.ConfigMap(root={}),
             description="Additional error metadata and context",
         ),
-    ]
+    ] = Field(default_factory=lambda: t.ConfigMap(root={}))
 
     source: Annotated[
         BaseException | None,

@@ -31,13 +31,13 @@ class FlextModelsContextScope:
         data: Annotated[
             Mapping[str, t.ValueOrModel],
             BeforeValidator(lambda v: FlextModelsContextData.normalize_to_mapping(v)),
-            Field(default_factory=dict, description="Scope data"),
-        ]
+            Field(description="Scope data"),
+        ] = Field(default_factory=dict)
         metadata: Annotated[
             t.ContainerMapping,
             BeforeValidator(lambda v: FlextModelsContextData.normalize_to_mapping(v)),
-            Field(default_factory=dict, description="Scope metadata"),
-        ]
+            Field(description="Scope metadata"),
+        ] = Field(default_factory=dict)
 
     class ContextStatistics(FlextModelFoundation.ArbitraryTypesModel):
         """Statistics tracking for context operations."""
@@ -68,10 +68,9 @@ class FlextModelsContextScope:
                 ),
             ),
             Field(
-                default_factory=dict,
                 description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ]
+        ] = Field(default_factory=dict)
 
 
 __all__ = ["FlextModelsContextScope"]

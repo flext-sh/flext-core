@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from datetime import UTC, datetime
-from typing import Annotated, cast, override
+from typing import cast, override
 
 from pydantic import BaseModel, Field
 
@@ -44,7 +44,7 @@ class TestUtilitiesDomainFullCoverage:
 
         class EntityWithList(BaseModel):
             unique_id: str = "test"
-            tags: Annotated[t.StrSequence, Field(default_factory=lambda: ["a", "b"])]
+            tags: t.StrSequence = Field(default_factory=lambda: ["a", "b"])
 
         entity = EntityWithList(tags=["a", "b"])
         result = u.hash_value_object_by_value(entity)

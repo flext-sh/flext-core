@@ -37,12 +37,11 @@ class FlextModelsContainers:
         codes: Annotated[
             Mapping[str, int],
             Field(
-                default_factory=dict,
                 title="Error Codes",
                 description="Mapping from error keys to numeric error codes.",
                 examples=[{"timeout": 504, "invalid_payload": 400}],
             ),
-        ]
+        ] = Field(default_factory=dict)
 
     class ErrorMap(t.RootDictModel[int | str | BaseModel]):
         """Error type mapping container.
@@ -53,12 +52,11 @@ class FlextModelsContainers:
         root: Annotated[
             MutableMapping[str, int | str | BaseModel],
             Field(
-                default_factory=dict,
                 title="Error Map",
                 description="Error catalog mapping keys to codes, messages, or nested code maps.",
                 examples=[{"user_missing": 404, "bad_input": "invalid data"}],
             ),
-        ]
+        ] = Field(default_factory=dict)
 
     class ValidatorCallable(RootModel[t.ValidatorCallable]):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
@@ -99,12 +97,11 @@ class FlextModelsContainers:
         root: Annotated[
             Mapping[str, t.ValidatorCallable],
             Field(
-                default_factory=dict,
                 title="Field Validator Map",
                 description="Field-level validators keyed by field name.",
                 examples=[{"email": "validate_email"}],
             ),
-        ]
+        ] = Field(default_factory=dict)
 
     class ConsistencyRuleMap(_RootValidatorMapModel):
         """Map of consistency rules."""
@@ -112,12 +109,11 @@ class FlextModelsContainers:
         root: Annotated[
             Mapping[str, t.ValidatorCallable],
             Field(
-                default_factory=dict,
                 title="Consistency Rule Map",
                 description="Consistency rule callables keyed by rule identifier.",
                 examples=[{"order_total": "validate_order_total"}],
             ),
-        ]
+        ] = Field(default_factory=dict)
 
     class EventValidatorMap(_RootValidatorMapModel):
         """Map of event validators."""
@@ -125,12 +121,11 @@ class FlextModelsContainers:
         root: Annotated[
             Mapping[str, t.ValidatorCallable],
             Field(
-                default_factory=dict,
                 title="Event Validator Map",
                 description="Event validator callables keyed by event type or alias.",
                 examples=[{"user.created": "validate_user_created"}],
             ),
-        ]
+        ] = Field(default_factory=dict)
 
     class BatchResultDict(FlextModelFoundation.ArbitraryTypesModel):
         """Result payload model for batch operation outputs."""
@@ -138,22 +133,20 @@ class FlextModelsContainers:
         results: Annotated[
             Sequence[t.Scalar | None],
             Field(
-                default_factory=list,
                 title="Batch Results",
                 description="Batch result values in processing order.",
                 examples=[["ok", 1, None]],
             ),
-        ]
+        ] = Field(default_factory=list)
 
         errors: Annotated[
             Sequence[tuple[int, str]],
             Field(
-                default_factory=list,
                 title="Batch Errors",
                 description="Batch error tuples as (index, message).",
                 examples=[[(0, "invalid payload")]],
             ),
-        ]
+        ] = Field(default_factory=list)
         total: Annotated[
             int,
             Field(

@@ -446,21 +446,19 @@ class FlextModelFoundation:
         created_at: Annotated[
             datetime,
             Field(
-                default_factory=lambda: datetime.now(UTC),
                 description="Timestamp when the metadata record was first created in UTC.",
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime,
             Field(
-                default_factory=lambda: datetime.now(UTC),
                 description="Timestamp of the most recent metadata update in UTC.",
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         version: Annotated[
             str,
             Field(
@@ -491,21 +489,19 @@ class FlextModelFoundation:
         tags: Annotated[
             t.StrSequence,
             Field(
-                default_factory=list,
                 description="Normalized labels used to classify and filter this metadata.",
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ]
+        ] = Field(default_factory=list)
         attributes: Annotated[
             Mapping[str, t.MetadataValue],
             Field(
-                default_factory=dict,
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ]
+        ] = Field(default_factory=dict)
         metadata_value: Annotated[
             t.Scalar | None,
             Field(default=None, description="Scalar metadata value."),
@@ -548,10 +544,9 @@ class FlextModelFoundation:
         data: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Command payload containing input data required for execution.",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
     class QueryMessage(BaseModel):
         """Query message with discriminated union support."""
@@ -561,10 +556,9 @@ class FlextModelFoundation:
         filters: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Filter criteria used to constrain query results.",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         pagination: t.Dict | None = None
 
     class EventMessage(BaseModel):
@@ -576,10 +570,9 @@ class FlextModelFoundation:
         data: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Event payload with domain data describing what happened.",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
         metadata: Annotated[
             BaseModel | None,
             Field(
@@ -622,10 +615,9 @@ class FlextModelFoundation:
         warnings: Annotated[
             t.StrSequence,
             Field(
-                default_factory=list,
                 description="Non-fatal warning messages generated during partial processing.",
             ),
-        ]
+        ] = Field(default_factory=list)
         partial_success_rate: t.Percentage
 
     OperationResult = Annotated[
@@ -648,10 +640,9 @@ class FlextModelFoundation:
         error_codes: Annotated[
             t.StrSequence,
             Field(
-                default_factory=list,
                 description="Machine-readable error codes that classify validation failures.",
             ),
-        ]
+        ] = Field(default_factory=list)
 
     class WarningOutcome(BaseModel):
         """Warning validation outcome."""
@@ -708,11 +699,10 @@ class FlextModelFoundation:
         unique_id: Annotated[
             t.NonEmptyStr,
             Field(
-                default_factory=lambda: str(uuid.uuid4()),
                 description="Unique identifier",
                 frozen=False,
             ),
-        ]
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
 
         def regenerate_id(self) -> None:
             """Regenerate the unique_id with a new UUID."""
@@ -729,11 +719,10 @@ class FlextModelFoundation:
             datetime,
             AfterValidator(lambda v: FlextModelFoundation._ensure_utc_datetime(v)),
             Field(
-                default_factory=lambda: datetime.now(UTC),
                 description="Creation timestamp (UTC)",
                 frozen=True,
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime | None,
             AfterValidator(lambda v: FlextModelFoundation._ensure_utc_datetime(v)),

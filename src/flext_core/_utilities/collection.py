@@ -40,12 +40,10 @@ class FlextUtilitiesCollection:
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
-            normalized_list: t.MutableContainerList = []
-            for item in validated:
-                if FlextUtilitiesGuardsTypeCore.is_scalar(item):
-                    normalized_list.append(item)
-                else:
-                    normalized_list.append(str(item))
+            normalized_list: t.ContainerList = [
+                item if FlextUtilitiesGuardsTypeCore.is_scalar(item) else str(item)
+                for item in validated
+            ]
             return normalized_list
         if isinstance(validated, dict):
             normalized_dict: t.MutableContainerMapping = {}
@@ -669,13 +667,9 @@ class FlextUtilitiesCollection:
             List of (key, value) tuples with proper typing
 
         """
-        result: MutableSequence[tuple[str, t.NormalizedValue]] = []
-        items_iter = mapping.items()
-        for item_tuple in items_iter:
-            key_obj = item_tuple[0]
-            value_raw = item_tuple[1]
-            key_str: str = str(key_obj)
-            result.append((key_str, value_raw))
+        result: Sequence[tuple[str, t.NormalizedValue]] = [
+            (str(item_tuple[0]), item_tuple[1]) for item_tuple in mapping.items()
+        ]
         return result
 
     @overload

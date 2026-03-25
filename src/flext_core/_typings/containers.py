@@ -84,7 +84,6 @@ class FlextTypingContainers:
         root: Annotated[
             Sequence[FlextTypingBase.Container],
             Field(
-                default_factory=list,
                 title="Object List",
                 description=(
                     "Ordered container values for batch operations "
@@ -92,7 +91,7 @@ class FlextTypingContainers:
                 ),
                 examples=[["item-1", 2, True]],
             ),
-        ]
+        ] = Field(default_factory=list)
 
     class Dict(RootDictModel[FlextTypingBase.NormalizedValue | BaseModel]):
         """Validated dict payload for requests, responses, and data transfer.
@@ -103,7 +102,6 @@ class FlextTypingContainers:
         root: Annotated[
             MutableMapping[str, FlextTypingBase.NormalizedValue | BaseModel],
             Field(
-                default_factory=dict,
                 title="Dictionary Payload",
                 description=(
                     "Dictionary payload storing strict container values "
@@ -111,7 +109,7 @@ class FlextTypingContainers:
                 ),
                 examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
             ),
-        ]
+        ] = Field(default_factory=dict)
 
         @override
         def get(
@@ -133,11 +131,10 @@ class FlextTypingContainers:
         root: Annotated[
             MutableMapping[str, FlextTypingBase.NormalizedValue | BaseModel],
             Field(
-                default_factory=dict,
                 title="Configuration Map",
                 description="Configuration entries keyed by normalized setting names.",
                 examples=[
                     {"timeout_seconds": 30, "environment": "dev", "debug": False},
                 ],
             ),
-        ]
+        ] = Field(default_factory=dict)

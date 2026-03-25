@@ -53,26 +53,23 @@ class FlextRegistry(s[bool]):
         registered: Annotated[
             list[m.RegistrationDetails],
             Field(
-                default_factory=lambda: list[m.RegistrationDetails](),
                 description="Successfully registered handlers with registration details.",
             ),
-        ]
+        ] = Field(default_factory=lambda: list[m.RegistrationDetails]())
         skipped: Annotated[
             t.StrSequence,
             Field(
-                default_factory=list,
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ]
+        ] = Field(default_factory=list)
         errors: Annotated[
             MutableSequence[str],
             Field(
-                default_factory=list,
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ]
+        ] = Field(default_factory=list)
 
         @computed_field
         def is_failure(self) -> bool:

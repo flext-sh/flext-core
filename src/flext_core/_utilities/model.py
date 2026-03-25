@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 
 import orjson
 from pydantic import BaseModel
@@ -61,12 +61,10 @@ class FlextUtilitiesModel:
             sequence_items: Sequence[t.RuntimeAtomic] = [
                 FlextRuntime.normalize_to_container(item_value) for item_value in value
             ]
-            normalized_items: MutableSequence[t.Primitives] = []
-            for item in sequence_items:
-                if isinstance(item, (bool, int, float, str)):
-                    normalized_items.append(item)
-                else:
-                    normalized_items.append(str(item))
+            normalized_items: Sequence[t.Primitives] = [
+                item if isinstance(item, (bool, int, float, str)) else str(item)
+                for item in sequence_items
+            ]
             return normalized_items
         return str(value)
 

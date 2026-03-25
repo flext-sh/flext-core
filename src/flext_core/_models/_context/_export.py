@@ -35,10 +35,9 @@ class FlextModelsContextExport:
         data: Annotated[
             Mapping[str, t.ValueOrModel],
             Field(
-                default_factory=dict,
                 description="All context data from all scopes",
             ),
-        ]
+        ] = Field(default_factory=dict)
         metadata: Annotated[
             FlextModelFoundation.Metadata | t.Dict | None,
             BeforeValidator(
@@ -59,10 +58,9 @@ class FlextModelsContextExport:
                 ),
             ),
             Field(
-                default_factory=dict,
                 description="Usage statistics (operation counts, timing info)",
             ),
-        ]
+        ] = Field(default_factory=dict)
 
         @computed_field
         def has_statistics(self) -> bool:

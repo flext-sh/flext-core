@@ -161,13 +161,14 @@ class FlextModelsDomainEvent:
             FlextModelsDomainEvent.ComparableConfigMap,
             BeforeValidator(lambda v: FlextModelsDomainEvent._normalize_event_data(v)),
             Field(
-                default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(
-                    root={},
-                ),
                 validate_default=True,
                 description="Event data container",
             ),
-        ]
+        ] = Field(
+            default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(
+                root={},
+            )
+        )
 
     # Canonical alias: tests use m.DomainEvent, which resolves to Entry
     DomainEvent = Entry

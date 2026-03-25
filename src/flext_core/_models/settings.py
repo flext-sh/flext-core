@@ -93,28 +93,25 @@ class FlextModelsConfig:
         operation_id: Annotated[
             t.NonEmptyStr,
             Field(
-                default_factory=FlextRuntime.generate_id,
                 description="Unique operation identifier",
             ),
-        ]
+        ] = Field(default_factory=FlextRuntime.generate_id)
         data: Annotated[
             t.ConfigMap,
             Field(
-                default_factory=t.ConfigMap,
                 description="Primary request payload passed to the processing operation.",
                 title="Processing Data",
                 examples=[{"record_id": "123", "status": "pending"}],
             ),
-        ]
+        ] = Field(default_factory=t.ConfigMap)
         context: Annotated[
             t.ConfigMap,
             Field(
-                default_factory=t.ConfigMap,
                 description="Execution context metadata used for traceability and request scoping.",
                 title="Processing Context",
                 examples=[{"correlation_id": "corr-123"}],
             ),
-        ]
+        ] = Field(default_factory=t.ConfigMap)
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
@@ -181,18 +178,16 @@ class FlextModelsConfig:
         retry_on_exceptions: Annotated[
             Sequence[type[BaseException]],
             Field(
-                default_factory=list,
                 description="Exception types to retry on",
             ),
-        ]
+        ] = Field(default_factory=list)
         retry_on_status_codes: Annotated[
             Sequence[int],
             Field(
-                default_factory=list,
                 max_length=c.MAX_RETRY_STATUS_CODES,
                 description="HTTP status codes to retry on",
             ),
-        ]
+        ] = Field(default_factory=list)
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
@@ -251,11 +246,10 @@ class FlextModelsConfig:
         custom_validators: Annotated[
             Sequence[p.ValidatorSpec],
             Field(
-                default_factory=list,
                 max_length=c.MAX_CUSTOM_VALIDATORS,
                 description="Custom validator callables",
             ),
-        ]
+        ] = Field(default_factory=list)
 
         @field_validator("custom_validators", mode="after")
         @classmethod
@@ -305,13 +299,12 @@ class FlextModelsConfig:
         data_items: Annotated[
             Sequence[t.ValueOrModel],
             Field(
-                default_factory=list,
                 max_length=c.MAX_ITEMS,
                 description="Ordered list of items to process in this batch; bounded by MAX_ITEMS performance constant.",
                 title="Data Items",
                 examples=[["item-a", "item-b"]],
             ),
-        ]
+        ] = Field(default_factory=list)
 
         @classmethod
         def _batch_adapter(
@@ -364,21 +357,19 @@ class FlextModelsConfig:
         input_data: Annotated[
             t.ConfigMap,
             Field(
-                default_factory=t.ConfigMap,
                 description="Input payload supplied to the handler during execution.",
                 title="Input Data",
                 examples=[{"order_id": "ord-1001"}],
             ),
-        ]
+        ] = Field(default_factory=t.ConfigMap)
         execution_context: Annotated[
             t.ConfigMap,
             Field(
-                default_factory=t.ConfigMap,
                 description="Context values provided to the handler for tracing and runtime behavior.",
                 title="Execution Context",
                 examples=[{"correlation_id": "corr-abc"}],
             ),
-        ]
+        ] = Field(default_factory=t.ConfigMap)
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
@@ -428,10 +419,9 @@ class FlextModelsConfig:
         config: Annotated[
             t.ConfigMap,
             Field(
-                default_factory=t.ConfigMap,
                 description="Middleware-specific configuration",
             ),
-        ]
+        ] = Field(default_factory=t.ConfigMap)
 
     class DispatcherMiddlewareConfig(MiddlewareConfig):
         """Internal configuration for dispatcher middleware."""
@@ -560,11 +550,10 @@ class FlextModelsConfig:
         log_level: Annotated[
             t.NonNegativeInt,
             Field(
-                default_factory=FlextRuntime.get_log_level_from_config,
                 le=c.MAX_CUSTOM_VALIDATORS,
                 description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
             ),
-        ]
+        ] = Field(default_factory=FlextRuntime.get_log_level_from_config)
         console_renderer: Annotated[
             bool,
             Field(
@@ -575,10 +564,9 @@ class FlextModelsConfig:
         additional_processors: Annotated[
             Sequence[t.StructlogProcessor],
             Field(
-                default_factory=list,
                 description="Optional extra processors after standard FLEXT processors",
             ),
-        ]
+        ] = Field(default_factory=list)
         wrapper_class_factory: Annotated[
             Callable[[], type] | None,
             Field(
@@ -819,10 +807,9 @@ class FlextModelsConfig:
         extra_kwargs: Annotated[
             t.Dict,
             Field(
-                default_factory=t.Dict,
                 description="Additional keyword arguments for metadata",
             ),
-        ]
+        ] = Field(default_factory=t.Dict)
 
     class ResultConfig(FlextModelsCollections.Config):
         """Configuration for r failure case (Pydantic v2).
@@ -1165,17 +1152,15 @@ class FlextModelsConfig:
         args: Annotated[
             tuple[t.ValueOrModel, ...],
             Field(
-                default_factory=tuple,
                 description="Positional arguments for function",
             ),
-        ]
+        ] = Field(default_factory=tuple)
         call_kwargs: Annotated[
             t.ConfigMap,
             Field(
-                default_factory=t.ConfigMap,
                 description="Keyword arguments for function",
             ),
-        ]
+        ] = Field(default_factory=t.ConfigMap)
         retry_config: Annotated[
             FlextModelsConfig.RetryConfiguration | None,
             Field(

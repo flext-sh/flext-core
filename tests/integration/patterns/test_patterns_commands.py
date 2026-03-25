@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
-from typing import Annotated, cast, override
+from typing import cast, override
 
 from flext_tests import t
 from pydantic import Field
@@ -103,10 +103,7 @@ class TestPatternsCommands:
     ):
         """Test handler for CreateUserCommand."""
 
-        created_users: Annotated[
-            MutableSequence[t.ContainerMapping],
-            Field(default_factory=list),
-        ]
+        created_users: MutableSequence[t.ContainerMapping] = Field(default_factory=list)
 
         def __init__(self) -> None:
             """Initialize create user command handler."""
