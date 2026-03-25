@@ -606,12 +606,11 @@ class FlextContainer(p.Container):
             service_registration = self._services[name]
             service = service_registration.service
             if type_cls is not None:
-                service_for_check: t.RegisterableService = service
-                if not u.is_instance_of(service_for_check, type_cls):
-                    return r[T].fail(
-                        f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
-                    )
-                return r[T].ok(service_for_check)
+                if isinstance(service, type_cls):
+                    return r[T].ok(service)
+                return r[T].fail(
+                    f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
+                )
             narrowed_service: t.RegisterableService = service
             return r[t.RegisterableService].ok(narrowed_service)
         if name in self._factories:
@@ -622,10 +621,9 @@ class FlextContainer(p.Container):
                 )
                 resolved = factory_callable()
                 if type_cls is not None:
-                    resolved_for_check: t.RegisterableService = resolved
-                    if not u.is_instance_of(resolved_for_check, type_cls):
-                        return r[T].fail(f"Factory '{name}' returned wrong type")
-                    return r[T].ok(resolved_for_check)
+                    if isinstance(resolved, type_cls):
+                        return r[T].ok(resolved)
+                    return r[T].fail(f"Factory '{name}' returned wrong type")
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -641,10 +639,9 @@ class FlextContainer(p.Container):
                         f"Resource '{name}' returned unsupported runtime type",
                     )
                 if type_cls is not None:
-                    resource_for_check: t.RegisterableService = resolved
-                    if not u.is_instance_of(resource_for_check, type_cls):
-                        return r[T].fail(f"Resource '{name}' returned wrong type")
-                    return r[T].ok(resource_for_check)
+                    if isinstance(resolved, type_cls):
+                        return r[T].ok(resolved)
+                    return r[T].fail(f"Resource '{name}' returned wrong type")
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, MutableSequence, Sequence
-from typing import Self, TypeAlias, TypeIs, overload, override
+from typing import Self, TypeIs, overload, override
 
 from pydantic import BaseModel, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
@@ -738,7 +738,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
 
 # Type alias: r[T] is FlextResult[T] — used throughout the codebase as the
 # canonical short name. Declared as TypeAlias so mypy resolves r[T] generically.
-r: TypeAlias = FlextResult
+type r[T] = FlextResult[T]
 
 # Ensure we export all types needed for module clients
 __all__ = ["FlextResult", "r"]

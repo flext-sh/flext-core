@@ -189,7 +189,7 @@ class FlextService[
         config_type_raw = self.config_type or (
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
-        config_type_val: type[p.Settings]
+        config_type_val: type[FlextSettings] | type[p.Settings] | type[BaseSettings]
         try:
             is_settings = config_type_raw is not None and issubclass(
                 config_type_raw,
