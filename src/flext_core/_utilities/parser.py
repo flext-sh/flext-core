@@ -793,11 +793,7 @@ class FlextUtilitiesParser:
                 )
                 items_to_check = [str(k) for k in items]
             case _:
-                if isinstance(items, Sequence):
-                    items_to_check = list(items)
-                else:
-                    msg = f"norm_in() requires ConfigMap, BaseModel, Mapping, or Sequence; got {type(items).__name__}"
-                    raise TypeError(msg)
+                items_to_check = list(items)
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = [
             FlextUtilitiesParser.norm_str(item, case=case or "lower")

@@ -40,10 +40,10 @@ def _create_entities_batch(
 ) -> r[Sequence[m.Core.DomainTestEntity]]:
     return cast(
         "r[Sequence[m.Core.DomainTestEntity]]",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(  # type: ignore[reportUnknownMemberType]
+        FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
             names=names,
             values=values,
-            entity_class=entity_class,  # type: ignore[arg-type]
+            entity_class=entity_class,
             remove_ids=remove_ids,
         ),
     )
@@ -56,10 +56,10 @@ def _create_entity(
 ) -> m.Core.DomainTestEntity:
     return cast(
         "m.Core.DomainTestEntity",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_entity_instance(  # type: ignore[reportUnknownMemberType]
+        FlextTestsUtilities.Tests.DomainHelpers.create_test_entity_instance(
             name=name,
             value=value,
-            entity_class=entity_class,  # type: ignore[arg-type]
+            entity_class=entity_class,
         ),
     )
 
@@ -71,10 +71,10 @@ def _create_value_object(
 ) -> m.Core.DomainTestValue:
     return cast(
         "m.Core.DomainTestValue",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(  # type: ignore[reportUnknownMemberType]
+        FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
             data=data,
             count=count,
-            value_class=value_class,  # type: ignore[arg-type]
+            value_class=value_class,
         ),
     )
 
@@ -86,10 +86,10 @@ def _create_value_objects_batch(
 ) -> Sequence[m.Core.DomainTestValue]:
     return cast(
         "Sequence[m.Core.DomainTestValue]",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_value_objects_batch(  # type: ignore[reportUnknownMemberType]
+        FlextTestsUtilities.Tests.DomainHelpers.create_test_value_objects_batch(
             data_list=data_list,
             count_list=count_list,
-            value_class=value_class,  # type: ignore[arg-type]
+            value_class=value_class,
         ),
     )
 

@@ -222,7 +222,7 @@ class FlextUtilitiesChecker:
             return r[t.MessageTypeSpecifier].fail(
                 "Handler handle attribute is not callable",
             )
-        handle_method: Callable[..., t.ModuleExport] = handle_method_raw  # pyright: ignore[reportAssignmentType]
+        handle_method: Callable[..., t.ModuleExport] = handle_method_raw
         signature_result = cls._get_method_signature(handle_method)
         if signature_result.is_failure:
             signature_error = signature_result.error or "Invalid handle signature"

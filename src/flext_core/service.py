@@ -199,7 +199,7 @@ class FlextService[
             is_settings = False
 
         if is_settings and config_type_raw is not None:
-            config_type_val = config_type_raw  # type: ignore[assignment]
+            config_type_val = config_type_raw
         else:
             config_type_val = config_type
         ctx_raw = self.initial_context or (
@@ -243,7 +243,7 @@ class FlextService[
         except TypeError:
             is_flext_settings = False
         config_type_for_options: type[FlextSettings] | None = (
-            config_type_val if is_flext_settings else None  # type: ignore[assignment]
+            config_type_val if is_flext_settings else None
         )
         config_overrides_scalar: t.ScalarMapping | None = None
         if config_overrides is not None:
@@ -338,7 +338,7 @@ class FlextService[
         except TypeError:
             cfg_is_settings = False
         config_cls: type[FlextSettings] = (
-            config_type if cfg_is_settings else FlextSettings  # type: ignore[assignment]
+            config_type if cfg_is_settings else FlextSettings
         )
         runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (

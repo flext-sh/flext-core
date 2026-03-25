@@ -399,7 +399,7 @@ class UtilitiesMapperFullCoverageNamespace:
             "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
         }
         safe_json: MutableMapping[str, test_t.NormalizedValue] = {}
-        for key, val in payload.items():  # type: ignore[assignment]
+        for key, val in payload.items():
             if isinstance(val, BaseModel):
                 safe_json[key] = val.model_dump(mode="json")
             elif isinstance(val, Path):

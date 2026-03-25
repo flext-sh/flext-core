@@ -21,7 +21,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, s, t, u
-from flext_core._models.domain_event import FlextModelsDomainEvent  # noqa: PLC2701
+from flext_core._models.domain_event import FlextModelsDomainEvent
 
 
 class CreateUserCommand(m.Command):

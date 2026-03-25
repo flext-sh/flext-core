@@ -146,7 +146,7 @@ class FlextModelsService:
         """Domain service batch request."""
 
         service_name: t.NonEmptyStr
-        operations: Annotated[  # pyright: ignore[reportUnknownVariableType]
+        operations: Annotated[
             Sequence[FlextModelsService.BatchOperation],
             Field(
                 min_length=c.RETRY_COUNT_MIN,

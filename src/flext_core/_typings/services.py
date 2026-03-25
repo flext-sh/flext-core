@@ -28,7 +28,7 @@ class FlextTypesServices:
 
     type RegistryDict[T] = MutableMapping[str, T]
 
-    type ScalarOrModel = FlextTypingBase.Scalar | BaseModel
+    type ScalarOrModel = FlextTypingBase.Scalar | Path | BaseModel
     type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
     type RuntimeAtomic = FlextTypingBase.Container | BaseModel
