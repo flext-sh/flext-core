@@ -380,9 +380,7 @@ class TestServiceInternals:
         class _CustomSettings(FlextSettings):
             pass
 
-        svc_type = self._Svc
-
-        class _CustomSvc(svc_type):
+        class _CustomSvc(TestServiceInternals._Svc):
             @classmethod
             @override
             def _runtime_bootstrap_options(

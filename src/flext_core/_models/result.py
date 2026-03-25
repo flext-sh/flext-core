@@ -13,7 +13,7 @@ from typing import Annotated, ClassVar, Self, cast, override
 import structlog
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from flext_core import p, t
+from flext_core import U, p, t
 
 
 class FlextModelsResult:
@@ -185,7 +185,7 @@ class FlextModelsResult:
                 )
             return self
 
-        def flat_map[U](
+        def flat_map(
             self,
             func: Callable[[T], p.Result[U]],
         ) -> FlextModelsResult.RuntimeResult[U]:

@@ -460,7 +460,7 @@ class TestuStringParser:
                 return parser.parse_delimited(case.text, case.delimiter)
 
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
-                cast("Callable[[], r[t.NormalizedValue]]", operation),
+                cast("Callable[[], r[t.Tests.Testobject]]", operation),
                 expected_value=case.expected,
                 expected_error=case.expected_error,
                 description=case.description,

@@ -47,10 +47,10 @@ class TestUtilitiesContextFullCoverage:
         """Minimal runtime with None defaults for all protocol attributes."""
 
         def __init__(self) -> None:
-            self.runtime_dispatcher = None
-            self.runtime_registry = None
-            self.runtime_context = None
-            self.runtime_config = None
+            self.runtime_dispatcher: p.Dispatcher | None = None
+            self.runtime_registry: p.Registry | None = None
+            self.runtime_context: p.Context | None = None
+            self.runtime_config: BaseModel | None = None
 
     def test_create_str_proxy_basic(self) -> None:
         """Creates a StructlogProxyContextVar[str] with given key."""

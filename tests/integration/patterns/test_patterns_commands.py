@@ -104,7 +104,7 @@ class TestPatternsCommands:
         """Test handler for CreateUserCommand."""
 
         created_users: MutableSequence[ft.ContainerMapping] = Field(
-            default_factory=list
+            default_factory=lambda: []  # noqa: PIE807
         )
 
         def __init__(self) -> None:

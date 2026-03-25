@@ -393,13 +393,13 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(list_json, is_=list)
         tm.that(list_json[0]["a"], eq=1)
 
-        payload = {
+        payload: dict[str, BaseModel | Path | datetime] = {
             "model": model,
             "path": Path("/tmp"),
             "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
         }
         safe_json: MutableMapping[str, test_t.NormalizedValue] = {}
-        for key, val in payload.items():
+        for key, val in payload.items():  # type: ignore[assignment]
             if isinstance(val, BaseModel):
                 safe_json[key] = val.model_dump(mode="json")
             elif isinstance(val, Path):
@@ -731,7 +731,7 @@ class UtilitiesMapperFullCoverageNamespace:
             [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}],
             {"group": "kind"},
         )
-        tm.that(grouped, eq={"a": [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}]})
+        tm.that(grouped, eq=cast("test_t.Tests.Testobject", {"a": [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}]}))
         tm.that(mapper._build_apply_group([1, 2], {"group": 5}), eq=[1, 2])
         tm.that(mapper._build_apply_sort(1, {"sort": True}), eq=1)
         sorted_with_scalar = mapper._build_apply_sort(

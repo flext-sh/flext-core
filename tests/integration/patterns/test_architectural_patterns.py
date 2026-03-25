@@ -16,7 +16,8 @@ from collections.abc import MutableMapping, MutableSequence
 import pytest
 
 from flext_core import FlextConstants, FlextTypes as t, r
-from tests import assertion_helpers, m
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from tests.test_utils import assertion_helpers
 
 
 class TestArchitecturalPatterns:
@@ -191,14 +192,14 @@ class TestArchitecturalPatterns:
     def test_domain_event_pattern(self) -> None:
         """Test Domain Event pattern implementation."""
 
-        class UserCreatedEvent(m.DomainEvent):
+        class UserCreatedEvent(FlextModelsDomainEvent.Entry):
             """Domain event for user creation using FlextModels foundation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(m.DomainEvent):
+        class UserUpdatedEvent(FlextModelsDomainEvent.Entry):
             """Domain event for user updates."""
 
             user_id: str
@@ -212,7 +213,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: MutableSequence[m.DomainEvent] = []
+                self.processed_events: MutableSequence[FlextModelsDomainEvent.Entry] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> r[bool]:
                 """Handle user created event."""

@@ -239,21 +239,21 @@ class TestFlextTestsMatchers:
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
         data: Mapping[str, t.Tests.Testobject] = {"user": {"name": "John", "age": 30}}
-        result = r[t.NormalizedValue].ok(data)
+        result = r[t.Tests.Testobject].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
         data: Mapping[str, t.Tests.Testobject] = {"user": {"email": "test@example.com"}}
-        result = r[t.NormalizedValue].ok(data)
+        result = r[t.Tests.Testobject].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
         data: Mapping[str, t.Tests.Testobject] = {"user": {"name": "John"}}
-        result = r[t.NormalizedValue].ok(data)
+        result = r[t.Tests.Testobject].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         assert value == "John"
 
@@ -534,7 +534,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_deep_parameter(self) -> None:
         """Test tm.that() with deep parameter."""
-        data = {"user": {"name": "John", "age": 30}}
+        data: Mapping[str, Mapping[str, str | int]] = {"user": {"name": "John", "age": 30}}
         tm.that(data, deep={"user.name": "John"})
 
     def test_that_with_where_parameter(self) -> None:

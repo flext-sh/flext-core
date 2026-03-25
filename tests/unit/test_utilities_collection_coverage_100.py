@@ -1174,9 +1174,9 @@ class TestUtilitiesCollectionCoverage:
 
     def test_batch_flatten(self) -> None:
         """Test batch with flattening."""
-        items = [[1, 2], [3, 4], 5]
+        items: list[t.NormalizedValue] = [[1, 2], [3, 4], 5]
 
-        def flatten_op(value: Sequence[int] | int) -> t.Serializable:
+        def flatten_op(value: t.NormalizedValue) -> t.Serializable:
             return cast("t.Serializable", value)
 
         result = u.batch(

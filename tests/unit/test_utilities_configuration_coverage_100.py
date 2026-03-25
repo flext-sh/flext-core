@@ -166,7 +166,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_get_parameter_from_duck_model_dump_path(self) -> None:
         class _DumpOnly:
-            __slots__ = ()
+            __slots__: tuple[()] = ()
 
             def model_dump(self) -> t.ContainerMapping:
                 return {"timeout": 77}

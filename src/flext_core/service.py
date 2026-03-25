@@ -190,8 +190,14 @@ class FlextService[
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
         config_type_val: type[p.Settings]
-        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
-            config_type_val = config_type_raw
+        try:
+            is_settings = config_type_raw is not None and issubclass(
+                config_type_raw, FlextSettings,
+            )
+        except TypeError:
+            is_settings = False
+        if is_settings:
+            config_type_val = config_type_raw  # type: ignore[assignment]
         else:
             config_type_val = config_type
         ctx_raw = self.initial_context or (
@@ -230,8 +236,12 @@ class FlextService[
         wire_classes = self.wire_classes or (
             bootstrap_opts.wire_classes if bootstrap_opts is not None else None
         )
+        try:
+            _is_flext_settings = issubclass(config_type_val, FlextSettings)
+        except TypeError:
+            _is_flext_settings = False
         config_type_for_options: type[FlextSettings] | None = (
-            config_type_val if issubclass(config_type_val, FlextSettings) else None
+            config_type_val if _is_flext_settings else None  # type: ignore[assignment]
         )
         config_overrides_scalar: t.ScalarMapping | None = None
         if config_overrides is not None:
@@ -318,10 +328,14 @@ class FlextService[
         )
         wire_packages = runtime_options.wire_packages
         wire_classes = runtime_options.wire_classes
+        try:
+            _cfg_is_settings = isinstance(config_type, type) and issubclass(
+                config_type, FlextSettings,
+            )
+        except TypeError:
+            _cfg_is_settings = False
         config_cls: type[FlextSettings] = (
-            config_type
-            if isinstance(config_type, type) and issubclass(config_type, FlextSettings)
-            else FlextSettings
+            config_type if _cfg_is_settings else FlextSettings  # type: ignore[assignment]
         )
         runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (

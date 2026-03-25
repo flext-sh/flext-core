@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, Sequence
+from collections.abc import Callable, Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
@@ -367,13 +367,13 @@ class TestFlextContainer:
         clean_container.register("string_service", "test_value")
         result = clean_container.get(
             "string_service",
-            type_cls=MutableMapping[str, str],
+            type_cls=dict,
         )
         _ = u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = clean_container.get("nonexistent", type_cls=MutableMapping[str, str])
+        result = clean_container.get("nonexistent", type_cls=dict)
         u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",

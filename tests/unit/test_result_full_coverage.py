@@ -50,22 +50,23 @@ def test_map_flat_map_and_then_paths() -> None:
     mapped_fail = r[int].ok(2).map(lambda _: (_ for _ in ()).throw(ValueError("m")))
     tm.fail(mapped_fail)
     tm.that(mapped_fail.error, eq="m")
-    runtime_ok: p.Result[int] = FlextModelsResult.RuntimeResult[int].ok(20)
-    flat_ok = r[int].ok(1).flat_map(lambda _: runtime_ok)
+    runtime_ok: r[int] = cast("r[int]", FlextModelsResult.RuntimeResult[int].ok(20))
+    flat_ok: r[int] = r[int].ok(1).flat_map(lambda _: runtime_ok)
     tm.ok(flat_ok)
     tm.that(flat_ok.value, eq=20)
-    runtime_fail: p.Result[int] = FlextModelsResult.RuntimeResult[int](
-        error="inner",
-        is_success=False,
-        error_code=None,
-        error_data=None,
+    runtime_fail: r[int] = cast(
+        "r[int]",
+        FlextModelsResult.RuntimeResult[int](
+            error="inner",
+            is_success=False,
+            error_code=None,
+            error_data=None,
+        ),
     )
-    flat_fail = r[int].ok(1).flat_map(lambda _: runtime_fail)
+    flat_fail: r[int] = r[int].ok(1).flat_map(lambda _: runtime_fail)
     tm.fail(flat_fail)
     tm.that(flat_fail.error, eq="inner")
-    and_then_ok: r[str] = (
-        r[int].ok(3).flat_map(lambda v: cast("p.Result[str]", r[str].ok(str(v))))
-    )
+    and_then_ok: r[str] = r[int].ok(3).flat_map(lambda v: r[str].ok(str(v)))
     tm.ok(and_then_ok)
     tm.that(and_then_ok.value, eq="3")
 

@@ -150,12 +150,12 @@ class FlextModelsContainer:
                     ):
                         normalized_mapping[key_s] = item
                     else:
-                        msg = f"Invalid type in Mapping: {type(item)}"
+                        msg = f"Invalid type in Mapping: {type(item)}"  # pyright: ignore[reportUnknownArgumentType]
                         raise TypeError(msg)
                 return t.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
                 normalized_sequence: MutableSequence[t.Container] = []
-                for item in v:
+                for item in v:  # pyright: ignore[reportUnknownVariableType]
                     if isinstance(item, datetime):
                         item = item.replace(tzinfo=UTC) if item.tzinfo is None else item
                     elif isinstance(item, Path):
@@ -174,10 +174,10 @@ class FlextModelsContainer:
                             BaseModel,
                         ),
                     ):
-                        msg = f"Invalid type in Sequence: {type(item)}"
+                        msg = f"Invalid type in Sequence: {type(item)}"  # pyright: ignore[reportUnknownArgumentType]
                         raise TypeError(msg)
 
-                    container_item: t.Container = str(item)
+                    container_item: t.Container = str(item)  # pyright: ignore[reportUnknownArgumentType]
                     normalized_sequence.append(container_item)
                 return t.ObjectList(root=normalized_sequence)
             if hasattr(v, "__dict__"):

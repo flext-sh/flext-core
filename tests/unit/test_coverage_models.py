@@ -3,13 +3,16 @@
 import math
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import override
+from typing import Annotated, TypeAlias, override
 
 import pytest
 from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
+from flext_core._models.domain_event import FlextModelsDomainEvent
 from tests import m, t
+
+_DomainEventEntry: TypeAlias = FlextModelsDomainEvent.Entry
 
 
 class TestCoverageModels:
@@ -305,7 +308,7 @@ class TestCoverageModels:
         tm.that(event1.aggregate_id, eq=event2.aggregate_id)
 
     def test_domain_event_timestamp(self) -> None:
-        class AccountUpdatedEvent(m.DomainEvent):
+        class AccountUpdatedEvent(_DomainEventEntry):
             pass
 
         event = AccountUpdatedEvent(
@@ -317,7 +320,7 @@ class TestCoverageModels:
         tm.that(event.created_at, is_=datetime)
 
     def test_domain_event_causality(self) -> None:
-        class PaymentProcessedEvent(m.DomainEvent):
+        class PaymentProcessedEvent(_DomainEventEntry):
             pass
 
         event = PaymentProcessedEvent(

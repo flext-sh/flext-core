@@ -291,6 +291,7 @@ reportUnnecessaryIsInstance = "warning"
 reportUnusedClass = "error"
 reportUnusedFunction = "error"
 reportUnusedImport = "error"
+reportUnsupportedDunderAll = "none"
 reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 

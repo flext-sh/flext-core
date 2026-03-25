@@ -70,15 +70,12 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_decorators_full_coverage import TestDecoratorsFullCoverage
     from tests.unit.test_deprecation_warnings import TestDeprecationWarnings
-    from tests.unit.test_di_incremental import Provide, TestDIIncremental, inject
+    from tests.unit.test_di_incremental import TestDIIncremental, inject
     from tests.unit.test_di_services_access import TestDiServicesAccess
     from tests.unit.test_dispatcher_di import TestDispatcherDI
     from tests.unit.test_dispatcher_full_coverage import TestDispatcherFullCoverage
     from tests.unit.test_dispatcher_minimal import TestDispatcherMinimal
     from tests.unit.test_dispatcher_reliability import (
-        CircuitBreakerManager,
-        RateLimiterManager,
-        RetryPolicy,
         test_circuit_breaker_half_open_and_rate_limiter_accessors,
         test_circuit_breaker_transitions_and_metrics,
         test_rate_limiter_blocks_then_recovers,
@@ -87,7 +84,6 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_dispatcher_timeout_coverage_100 import (
         TestDispatcherTimeoutCoverage100,
-        TimeoutEnforcer,
     )
     from tests.unit.test_entity_coverage import TestEntityCoverageEdgeCases
     from tests.unit.test_enum_utilities_coverage_100 import TestEnumUtilitiesCoverage

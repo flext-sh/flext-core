@@ -124,7 +124,7 @@ class TestDeprecationWarnings:
         tm.that(result, is_=str)
 
     def test_normalize_to_metadata_returns_metadata_value(self) -> None:
-        for val in ["str", 42, None]:
+        for val in cast("list[t.NormalizedValue]", ["str", 42, None]):
             metadata = FlextRuntime.normalize_to_metadata(val)
             tm.that(metadata, is_=(str, int, float, bool, list, dict))
         list_meta = FlextRuntime.normalize_to_metadata([1])

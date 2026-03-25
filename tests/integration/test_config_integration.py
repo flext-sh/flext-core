@@ -142,6 +142,7 @@ class TestFlextSettingsSingletonIntegration:
                     config_data={"max_connections": 10},
                     expected_values={"max_connections": 20},
                     env_vars={"FLEXT_MAX_CONNECTIONS": "20"},
+                    file_format="yaml",
                     description="Environment variable override",
                 ),
             ]

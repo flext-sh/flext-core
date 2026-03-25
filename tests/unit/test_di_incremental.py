@@ -183,7 +183,8 @@ class TestDIIncremental:
                 "api_call",
             )
             result = api_call_func()
-            tm.that(result, eq={"key": "secret123", "timeout": 30})
+            expected: Mapping[str, str | int] = {"key": "secret123", "timeout": 30}
+            tm.that(result, eq=expected)
         finally:
             di_container.unwire()
 
@@ -331,7 +332,8 @@ class TestDIIncremental:
                 handler_module.process_request
             )
             result = process_func()
-            tm.that(result, eq={"logger": "test_logger", "pool_size": 10})
+            expected2: Mapping[str, str | int] = {"logger": "test_logger", "pool_size": 10}
+            tm.that(result, eq=expected2)
         finally:
             di_container = container._di_container
             di_container.unwire()
@@ -533,8 +535,8 @@ class TestDIIncremental:
         scoped2 = container.scoped(services={"service": "value2"})
         result1 = scoped1.get("service", type_cls=str)
         result2 = scoped2.get("service", type_cls=str)
-        value1 = u.Tests.Result.assert_success(result1)
-        value2 = u.Tests.Result.assert_success(result2)
+        value1: str = u.Tests.Result.assert_success(result1)
+        value2: str = u.Tests.Result.assert_success(result2)
         tm.that(value1, is_=str)
         tm.that(value2, is_=str)
         tm.that(value1, eq="value1")

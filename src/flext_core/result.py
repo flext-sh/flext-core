@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, MutableSequence, Sequence
-from typing import Self, TypeIs, overload, override
+from typing import Self, TypeAlias, TypeIs, overload, override
 
 from pydantic import BaseModel, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
@@ -417,7 +417,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
         return self
 
     @override
-    def flat_map[U](
+    def flat_map(
         self,
         func: Callable[[T], p.Result[U]],
     ) -> FlextResult[U]:
@@ -437,8 +437,15 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
 
         """
         if self.is_success:
-            inner_result = func(self.value)
-            return FlextResult[U]._from_result_like(inner_result)
+            inner = func(self.value)
+            if inner.is_success:
+                return FlextResult[U].ok(inner.value)
+            return FlextResult[U].fail(
+                inner.error or "",
+                error_code=inner.error_code,
+                error_data=inner.error_data,
+                exception=inner.exception,
+            )
         return FlextResult[U].fail(
             self.error or "",
             error_code=self.error_code,
@@ -447,7 +454,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
         )
 
     @override
-    def flow_through[U](
+    def flow_through(
         self,
         *funcs: Callable[[T | U], p.Result[U]],
     ) -> FlextResult[T] | FlextResult[U]:
@@ -729,8 +736,9 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
         return default
 
 
-# Runtime assignment to pass duck typing and isinstance
-r = FlextResult
+# Type alias: r[T] is FlextResult[T] — used throughout the codebase as the
+# canonical short name. Declared as TypeAlias so mypy resolves r[T] generically.
+r: TypeAlias = FlextResult
 
 # Ensure we export all types needed for module clients
 __all__ = ["FlextResult", "r"]

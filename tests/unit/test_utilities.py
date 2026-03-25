@@ -51,13 +51,13 @@ class Testu(TextUtilityContract):
                 ("string_content", " content ", True),
             ],
             "dict": [
-                ("dict_empty", {}, False),
+                ("dict_empty", dict[str, t.NormalizedValue](), False),
                 ("dict_valid", {"a": 1}, True),
                 ("dict_none", None, False),
                 ("dict_string", "not_dict", False),
             ],
             "list": [
-                ("list_empty", [], False),
+                ("list_empty", list[t.NormalizedValue](), False),
                 ("list_valid", [1, 2, 3], True),
                 ("list_none", None, False),
                 ("list_string", "not_list", False),

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import MutableSequence, Sequence
+from typing import cast
 
 import pytest
 from flext_tests import tm
@@ -107,7 +108,7 @@ class TestrCoverage:
         error_data: t.ConfigMap = t.ConfigMap(root={"status": "failed", "count": 5})
         result: r[str] = r[str].fail("Error", error_data=error_data)
         self._ResultAssertions.assert_failure(result)
-        tm.fail(result, data={"status": "failed", "count": 5})
+        tm.fail(result, data=cast("t.Tests.Testobject", {"status": "failed", "count": 5}))
 
     def test_value_property_on_success(self) -> None:
         """Test accessing value on success result."""

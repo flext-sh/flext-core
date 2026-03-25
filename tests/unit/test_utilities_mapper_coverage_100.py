@@ -282,7 +282,7 @@ class UtilitiesMapperCoverage100Namespace:
                 else:
                     res[key] = val
             assert "obj" in res
-            tm.that(res["obj"], eq={"name": "test", "value": 1})
+            tm.that(res["obj"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1}))
 
         def test_convert_to_json_safe(self) -> None:
             obj = SimpleObj(name="test", value=1)
@@ -304,7 +304,7 @@ class UtilitiesMapperCoverage100Namespace:
                 else:
                     res[key] = val
 
-            tm.that(res["obj"], eq={"name": "test", "value": 1})
+            tm.that(res["obj"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1}))
             tm.that(res["path"], eq="/tmp/example")
             tm.that(res["when"], eq="2026-03-12T10:30:45+00:00")
 
@@ -316,7 +316,7 @@ class UtilitiesMapperCoverage100Namespace:
                     res[key] = val.model_dump(mode="json")
                 else:
                     res[key] = val
-            tm.that(res["a"], eq={"name": "test", "value": 1})
+            tm.that(res["a"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1}))
 
         def test_convert_list_to_json(self) -> None:
             test_list: Sequence[Mapping[str, t.ValueOrModel]] = [
@@ -331,7 +331,7 @@ class UtilitiesMapperCoverage100Namespace:
                     else:
                         item_dict[key] = val
                 res.append(item_dict)
-            tm.that(res[0]["a"], eq={"name": "test", "value": 1})
+            tm.that(res[0]["a"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1}))
 
     class TestuMapperBuild:
         """Tests for u build/construct/fields."""
@@ -417,7 +417,7 @@ class UtilitiesMapperCoverage100Namespace:
             res = u.construct_spec(spec, t.ConfigMap(root=source))
             tm.that(
                 res,
-                eq={"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"},
+                eq=cast("t.Tests.Testobject", {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}),
             )
 
     class TestuMapperAdvanced:

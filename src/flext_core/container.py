@@ -611,7 +611,7 @@ class FlextContainer(p.Container):
                     return r[T].fail(
                         f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
                     )
-                return r[T].ok(service_for_check)
+                return r[T].ok(service_for_check)  # pyright: ignore[reportArgumentType]
             narrowed_service: t.RegisterableService = service
             return r[t.RegisterableService].ok(narrowed_service)
         if name in self._factories:
@@ -625,7 +625,7 @@ class FlextContainer(p.Container):
                     resolved_for_check: t.RegisterableService = resolved
                     if not u.is_instance_of(resolved_for_check, type_cls):
                         return r[T].fail(f"Factory '{name}' returned wrong type")
-                    return r[T].ok(resolved_for_check)
+                    return r[T].ok(resolved_for_check)  # pyright: ignore[reportArgumentType]
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -644,7 +644,7 @@ class FlextContainer(p.Container):
                     resource_for_check: t.RegisterableService = resolved
                     if not u.is_instance_of(resource_for_check, type_cls):
                         return r[T].fail(f"Resource '{name}' returned wrong type")
-                    return r[T].ok(resource_for_check)
+                    return r[T].ok(resource_for_check)  # pyright: ignore[reportArgumentType]
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))

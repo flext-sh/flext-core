@@ -146,7 +146,7 @@ class FlextModelsService:
         """Domain service batch request."""
 
         service_name: t.NonEmptyStr
-        operations: Annotated[
+        operations: Annotated[  # pyright: ignore[reportUnknownVariableType]
             Sequence[FlextModelsService.BatchOperation],
             Field(
                 min_length=c.RETRY_COUNT_MIN,
@@ -157,7 +157,7 @@ class FlextModelsService:
                     [{"operation_name": "validate"}, {"operation_name": "persist"}],
                 ],
             ),
-        ] = Field(default_factory=list)
+        ] = Field(default_factory=lambda: list[FlextModelsService.BatchOperation]())
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: Annotated[

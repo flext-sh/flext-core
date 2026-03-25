@@ -373,7 +373,7 @@ class TestuTypeChecker:
 
     def test_handle_type_or_origin_check_with_origin(self) -> None:
         """Test _handle_type_or_origin_check with __origin__ attribute."""
-        dict_type: type[t.StrMapping] = MutableMapping[str, str]
+        dict_type = MutableMapping[str, str]
         origin = get_origin(dict_type) or dict_type
         result = u._handle_type_or_origin_check(
             self._type_origin(dict),
