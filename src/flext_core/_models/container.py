@@ -127,8 +127,7 @@ class FlextModelsContainer:
                 return v
             if isinstance(v, Mapping):
                 normalized_mapping: MutableMapping[str, t.ValueOrModel] = {}
-                for key, item in v.items():
-                    key_s: str = str(key)
+                for key_s, item in v.items():
                     if isinstance(item, datetime):
                         normalized_mapping[key_s] = (
                             item.replace(tzinfo=UTC) if item.tzinfo is None else item

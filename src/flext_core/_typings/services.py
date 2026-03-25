@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import TYPE_CHECKING, Protocol, TypeAliasType
+from typing import TYPE_CHECKING, TypeAliasType
 
 from pydantic import BaseModel
 
@@ -18,9 +18,6 @@ from flext_core._typings.containers import FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import FlextDispatcher, p
-
-    class _ServiceInstance(Protocol):
-        """Protocol for arbitrary service instances with __dict__."""
 
 
 class FlextTypesServices:
@@ -41,7 +38,6 @@ class FlextTypesServices:
         type RegisterableService = (
             FlextTypingBase.Container
             | BaseModel
-            | _ServiceInstance
             | Mapping[
                 str,
                 FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
