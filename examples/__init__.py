@@ -10,10 +10,8 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
-    import examples._models as _models
+    from examples import _models
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,
@@ -114,6 +112,7 @@ if TYPE_CHECKING:
         em,
     )
     from examples.shared import Examples
+    from flext_core import FlextTypes
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "DatabaseService": ["examples.logging_config_once_pattern", "DatabaseService"],
@@ -121,7 +120,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "Ex00UserProfile": ["examples._models.ex00", "Ex00UserProfile"],
     "Ex01DemonstrationResult": ["examples._models.ex01", "Ex01DemonstrationResult"],
     "Ex01InvalidPersonPayload": ["examples._models.ex01", "Ex01InvalidPersonPayload"],
-    "Ex01RunDemonstrationCommand": ["examples._models.ex01", "Ex01RunDemonstrationCommand"],
+    "Ex01RunDemonstrationCommand": [
+        "examples._models.ex01",
+        "Ex01RunDemonstrationCommand",
+    ],
     "Ex01User": ["examples._models.ex01", "Ex01User"],
     "Ex01ValidPersonPayload": ["examples._models.ex01", "Ex01ValidPersonPayload"],
     "Ex01r": ["examples.ex_01_flext_result", "Ex01r"],
@@ -305,6 +307,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -319,6 +322,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

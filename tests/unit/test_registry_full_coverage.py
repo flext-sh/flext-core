@@ -7,9 +7,9 @@ from types import ModuleType
 from typing import cast, override
 
 import pytest
-from flext_tests import t as test_t
 
 from flext_core import FlextHandlers, FlextRegistry, h, r
+from flext_tests import t as test_t
 from tests import c, m, p, t
 
 

@@ -8,9 +8,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import t
 
 from flext_core import FlextContainer, __version__, r
+from flext_tests import t
 from tests import assertion_helpers, p, u
 
 from ..conftest import FunctionalExternalService

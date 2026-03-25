@@ -53,16 +53,11 @@ Instead of exceptions, operations return either success or failure:
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def validate_email(email: str) -> r[str]:
-=======
-def validate_email(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Returns success or failure, never raises exceptions."""
     if "@" not in email:
         return r[str].fail("Invalid email")
     return r[str].ok(email)
-
 
 
 # Safe value extraction
@@ -102,11 +97,7 @@ from flext_core import FlextModels
 
 
 class Email(m.Value):
-<<<<<<< Updated upstream
     """Immutable value t.NormalizedValue compared by value."""
-=======
-    """Immutable value object compared by value."""
->>>>>>> Stashed changes
 
     address: str
 
@@ -134,33 +125,20 @@ Chain validations together:
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def validate_password(password: str) -> r[str]:
-=======
-def validate_password(password: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     if len(password) < 8:
         return r[str].fail("Password too short")
     return r[str].ok(password)
 
 
-<<<<<<< Updated upstream
 def validate_username(username: str) -> r[str]:
-=======
-def validate_username(username: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     if len(username) < 3:
         return r[str].fail("Username too short")
     return r[str].ok(username)
 
 
-
 # Chain validations (railway pattern)
-<<<<<<< Updated upstream
 def register_user(username: str, password: str) -> r[dict]:
-=======
-def register_user(username: str, password: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     return validate_username(username).flat_map(
         lambda u: validate_password(password).map(
             lambda p: {"username": u, "password": p}
@@ -183,7 +161,6 @@ else:
 from flext_core import FlextService, r, FlextContainer
 
 
-
 class EmailService(FlextService):
     """Example service."""
 
@@ -193,7 +170,6 @@ class EmailService(FlextService):
             return r[str].fail("Email required")
         # Send email logic here
         return r[str].ok(f"Email sent to {email}")
-
 
 
 # Register and use
@@ -215,7 +191,6 @@ if service_result.is_success:
 ```python
 from pydantic import Field
 from flext_core import FlextModels, FlextService, r
-
 
 
 class OrderItem(m.Value):
@@ -252,7 +227,6 @@ class OrderService(FlextService):
         return r[Order].ok(order)
 
 
-
 # Use it
 service = OrderService()
 result = service.create_order(
@@ -276,7 +250,6 @@ Route commands through the dispatcher to keep orchestration and side effects con
 
 ```python
 from flext_core import FlextDispatcher, FlextRegistry, r, FlextService
-
 
 
 class CreateUser(FlextService.Command):
@@ -315,7 +288,6 @@ def operation() -> r[str]:
     return r[str].ok("Success value")
 
 
-
 # Check result
 if result.is_success:
     value = result.value
@@ -328,11 +300,7 @@ else:
 ```python
 # Use map() to transform success values
 result = (
-<<<<<<< Updated upstream
     r[int]
-=======
-    FlextResult[int]
->>>>>>> Stashed changes
     .ok(10)
     .map(lambda x: x * 2)  # Transform to 20
     .map(lambda x: f"Result: {x}")  # Transform to "Result: 20"
@@ -377,7 +345,6 @@ import pytest
 from flext_core import r
 
 
-
 def test_validation_success():
     """Test successful validation."""
     result = validate_email("user@example.com")
@@ -394,11 +361,7 @@ def test_validation_failure():
 
 def test_chained_operations():
     """Test railway pattern chaining."""
-<<<<<<< Updated upstream
     result = r[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5)
-=======
-    result = FlextResult[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5)
->>>>>>> Stashed changes
     assert result.is_success
     assert result.value == 25
 ```
@@ -436,7 +399,6 @@ async def get_user_async(user_id: str) -> r[User]:
         return r[User].fail("User ID required")
     user = await fetch_from_database(user_id)
     return r[User].ok(user)
-
 
 
 # Use it

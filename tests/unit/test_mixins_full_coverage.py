@@ -12,9 +12,9 @@ from types import SimpleNamespace
 from typing import cast, override
 
 import pytest
-from flext_tests import t, tm
 
 from flext_core import FlextLogger, FlextMixins, r, x
+from flext_tests import t, tm
 from tests import c, p, u
 
 from ._models import TestUnitModels

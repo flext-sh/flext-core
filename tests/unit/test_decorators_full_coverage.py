@@ -9,11 +9,11 @@ from types import SimpleNamespace
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import t as test_t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, r
 from flext_core.decorators import FlextDecorators as _Dec
+from flext_tests import t as test_t, tm
 from tests import c, m, p, t, u
 
 

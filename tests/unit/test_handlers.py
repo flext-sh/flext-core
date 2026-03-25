@@ -5,11 +5,11 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import t, tm, u
 from hypothesis import given, strategies as st
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextExceptions, FlextHandlers, h, r, x
+from flext_tests import t, tm, u
 from tests import c, m
 
 from ..test_utils import assertion_helpers

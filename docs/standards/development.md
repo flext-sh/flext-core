@@ -245,7 +245,6 @@ def process_user(user_id: str) -> r[User]:
     return r[User].ok(user)
 
 
-
 # ❌ WRONG - Missing types, poor naming
 def do_stuff(x):
     if not x:
@@ -265,7 +264,6 @@ def create_user(name: str, email: str) -> r[User]:
 
     user = User(id=f"user_{name}", name=name, email=email)
     return r[User].ok(user)
-
 
 
 # ❌ WRONG - Using exceptions for control flow

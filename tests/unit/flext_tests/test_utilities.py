@@ -10,10 +10,10 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
-from flext_tests.utilities import FlextTestsUtilities as u
 from pydantic import BaseModel, ConfigDict
 
 from flext_core import r
+from flext_tests.utilities import FlextTestsUtilities as u
 
 
 class TestUtilities:

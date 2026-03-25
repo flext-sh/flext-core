@@ -18,10 +18,10 @@ from pathlib import Path
 from typing import Annotated, Never, Protocol, cast, override
 
 import pytest
-from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import r
+from flext_tests import t as test_t, tm
 from tests import p, t, u
 
 

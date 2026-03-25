@@ -16,9 +16,9 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, Final, Literal
 
-from flext_tests import FlextTestsConstants
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_tests import FlextTestsConstants
 from tests import t
 
 

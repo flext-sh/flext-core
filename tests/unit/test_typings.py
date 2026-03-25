@@ -4,13 +4,13 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
-from flext_tests import tm
 from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
 
 from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U
+from flext_tests import tm
 from tests import e, t
 
 

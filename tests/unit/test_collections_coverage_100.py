@@ -4,10 +4,10 @@ from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
 import pytest
-from flext_tests import tm
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextRuntime
+from flext_tests import tm
 from tests import m, t
 
 

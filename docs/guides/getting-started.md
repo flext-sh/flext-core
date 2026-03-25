@@ -176,11 +176,7 @@ from flext_core import t
 from flext_core import u
 
 
-<<<<<<< Updated upstream
 def process_ldif_data(content: str) -> r[str, Exception]:
-=======
-def process_ldif_data(content: str) -> FlextResult[str, Exception]:
->>>>>>> Stashed changes
     # Parse LDIF
     parse_result = ldif.parse(content)
     if parse_result.is_failure:
@@ -194,7 +190,6 @@ def process_ldif_data(content: str) -> FlextResult[str, Exception]:
         return r.success(processed_data)
     except Exception as e:
         return r.failure(e)
-
 
 
 def process_entries(entries: list) -> str:
@@ -246,14 +241,6 @@ class CreateUserCommand:
 class GetUserQuery:
     user_id: str
 
-<<<<<<< Updated upstream
-=======
-
-class UserService:
-    def create_user(self, cmd: CreateUserCommand) -> FlextResult[str, Exception]:
-        # Create user logic
-        return FlextResult.success(f"User {cmd.username} created")
->>>>>>> Stashed changes
 
 class UserService:
     def create_user(self, cmd: CreateUserCommand) -> r[str, Exception]:
@@ -263,7 +250,6 @@ class UserService:
     def get_user(self, query: GetUserQuery) -> r[str, Exception]:
         # Get user logic
         return r.success(f"User {query.user_id} data")
-
 
 
 # Setup dispatcher

@@ -23,10 +23,10 @@ from pathlib import Path
 from typing import Annotated, ClassVar
 
 import yaml
-from flext_tests import t
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings
+from flext_tests import t
 from tests import p
 
 

@@ -49,11 +49,7 @@ def get_user(user_id: str) -> r[User]:
     pass
 
 
-<<<<<<< Updated upstream
 def process_items(items: t.StrSequence, multiplier: int = 1) -> Sequence[int]:
-=======
-def process_items(items: list[str], multiplier: int = 1) -> list[int]:
->>>>>>> Stashed changes
     """Process items."""
     return [len(item) * multiplier for item in items]
 
@@ -67,19 +63,11 @@ def get_user(user_id: str):  # Missing return type
     pass
 
 
-<<<<<<< Updated upstream
 def get_user(user_id: str) -> None:  # Wrong return type (should be r)
     pass
 
 
 def get_user(user_id: str):  # NO Any type
-=======
-def get_user(user_id: str) -> None:  # Wrong return type (should be FlextResult)
-    pass
-
-
-def get_user(user_id: str) -> Any:  # NO Any type
->>>>>>> Stashed changes
     pass
 ```
 
@@ -91,11 +79,7 @@ def process_users(users: Sequence[User]) -> Mapping[str, User]:
     pass
 
 
-<<<<<<< Updated upstream
 def get_first_or_default(items: t.StrSequence, default: str) -> str:
-=======
-def get_first_or_default(items: list[str], default: str) -> str:
->>>>>>> Stashed changes
     pass
 
 
@@ -148,11 +132,7 @@ def very_long_function_name(
 # ❌ WRONG - Exceeds 79 chars
 def very_long_function_name(
     parameter_one: str, parameter_two: int, parameter_three: bool
-<<<<<<< Updated upstream
 ) -> r[dict]:
-=======
-) -> FlextResult[dict]:
->>>>>>> Stashed changes
     pass
 ```
 
@@ -284,7 +264,6 @@ def validate_email(email: str) -> r[str]:
     if "@" not in email:
         return r[str].fail("Invalid email")
     return r[str].ok(email)
-
 
 
 # ❌ WRONG - Raising exceptions

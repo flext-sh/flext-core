@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
+    from flext_core import _constants, _models, _protocols, _typings, _utilities
     from flext_core.__version__ import (
         __all__,
         __author__,
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
-    import flext_core._constants as _constants
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
@@ -32,7 +31,6 @@ if TYPE_CHECKING:
     from flext_core._constants.platform import FlextConstantsPlatform
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
-    import flext_core._models as _models
     from flext_core._models._context._data import FlextModelsContextData
     from flext_core._models._context._export import FlextModelsContextExport
     from flext_core._models._context._metadata import FlextModelsContextMetadata
@@ -54,7 +52,6 @@ if TYPE_CHECKING:
     from flext_core._models.result import FlextModelsResult
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
-    import flext_core._protocols as _protocols
     from flext_core._protocols.base import FlextProtocolsBase
     from flext_core._protocols.config import FlextProtocolsConfig
     from flext_core._protocols.container import FlextProtocolsContainer
@@ -64,30 +61,28 @@ if TYPE_CHECKING:
     from flext_core._protocols.registry import FlextProtocolsRegistry
     from flext_core._protocols.result import FlextProtocolsResult
     from flext_core._protocols.service import FlextProtocolsService
-    import flext_core._typings as _typings
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.containers import FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
     from flext_core._typings.generics import (
+        TV,
         EnumT,
         MessageT_contra,
         P,
         R,
         ResultT,
         T,
-        TRuntime,
-        TV,
-        TV_co,
+        T_co,
+        T_contra,
         T_Model,
         T_Namespace,
         T_Settings,
-        T_co,
-        T_contra,
+        TRuntime,
+        TV_co,
         U,
     )
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.validation import FlextTypesValidation
-    import flext_core._utilities as _utilities
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.cache import FlextUtilitiesCache
     from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -142,11 +137,23 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextConstantsBase": ["flext_core._constants.base", "FlextConstantsBase"],
     "FlextConstantsCqrs": ["flext_core._constants.cqrs", "FlextConstantsCqrs"],
     "FlextConstantsDomain": ["flext_core._constants.domain", "FlextConstantsDomain"],
-    "FlextConstantsInfrastructure": ["flext_core._constants.infrastructure", "FlextConstantsInfrastructure"],
+    "FlextConstantsInfrastructure": [
+        "flext_core._constants.infrastructure",
+        "FlextConstantsInfrastructure",
+    ],
     "FlextConstantsMixins": ["flext_core._constants.mixins", "FlextConstantsMixins"],
-    "FlextConstantsPlatform": ["flext_core._constants.platform", "FlextConstantsPlatform"],
-    "FlextConstantsSettings": ["flext_core._constants.settings", "FlextConstantsSettings"],
-    "FlextConstantsValidation": ["flext_core._constants.validation", "FlextConstantsValidation"],
+    "FlextConstantsPlatform": [
+        "flext_core._constants.platform",
+        "FlextConstantsPlatform",
+    ],
+    "FlextConstantsSettings": [
+        "flext_core._constants.settings",
+        "FlextConstantsSettings",
+    ],
+    "FlextConstantsValidation": [
+        "flext_core._constants.validation",
+        "FlextConstantsValidation",
+    ],
     "FlextContainer": ["flext_core.container", "FlextContainer"],
     "FlextContext": ["flext_core.context", "FlextContext"],
     "FlextDecorators": ["flext_core.decorators", "FlextDecorators"],
@@ -160,21 +167,45 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextMixins": ["flext_core.mixins", "FlextMixins"],
     "FlextModelFoundation": ["flext_core._models.base", "FlextModelFoundation"],
     "FlextModels": ["flext_core.models", "FlextModels"],
-    "FlextModelsCollections": ["flext_core._models.collections", "FlextModelsCollections"],
+    "FlextModelsCollections": [
+        "flext_core._models.collections",
+        "FlextModelsCollections",
+    ],
     "FlextModelsConfig": ["flext_core._models.settings", "FlextModelsConfig"],
     "FlextModelsContainer": ["flext_core._models.container", "FlextModelsContainer"],
     "FlextModelsContainers": ["flext_core._models.containers", "FlextModelsContainers"],
     "FlextModelsContext": ["flext_core._models.context", "FlextModelsContext"],
-    "FlextModelsContextData": ["flext_core._models._context._data", "FlextModelsContextData"],
-    "FlextModelsContextExport": ["flext_core._models._context._export", "FlextModelsContextExport"],
-    "FlextModelsContextMetadata": ["flext_core._models._context._metadata", "FlextModelsContextMetadata"],
-    "FlextModelsContextProxyVar": ["flext_core._models._context._proxy_var", "FlextModelsContextProxyVar"],
-    "FlextModelsContextScope": ["flext_core._models._context._scope", "FlextModelsContextScope"],
-    "FlextModelsContextTokens": ["flext_core._models._context._tokens", "FlextModelsContextTokens"],
+    "FlextModelsContextData": [
+        "flext_core._models._context._data",
+        "FlextModelsContextData",
+    ],
+    "FlextModelsContextExport": [
+        "flext_core._models._context._export",
+        "FlextModelsContextExport",
+    ],
+    "FlextModelsContextMetadata": [
+        "flext_core._models._context._metadata",
+        "FlextModelsContextMetadata",
+    ],
+    "FlextModelsContextProxyVar": [
+        "flext_core._models._context._proxy_var",
+        "FlextModelsContextProxyVar",
+    ],
+    "FlextModelsContextScope": [
+        "flext_core._models._context._scope",
+        "FlextModelsContextScope",
+    ],
+    "FlextModelsContextTokens": [
+        "flext_core._models._context._tokens",
+        "FlextModelsContextTokens",
+    ],
     "FlextModelsCqrs": ["flext_core._models.cqrs", "FlextModelsCqrs"],
     "FlextModelsDecorators": ["flext_core._models.decorators", "FlextModelsDecorators"],
     "FlextModelsDispatcher": ["flext_core._models.dispatcher", "FlextModelsDispatcher"],
-    "FlextModelsDomainEvent": ["flext_core._models.domain_event", "FlextModelsDomainEvent"],
+    "FlextModelsDomainEvent": [
+        "flext_core._models.domain_event",
+        "FlextModelsDomainEvent",
+    ],
     "FlextModelsEntity": ["flext_core._models.entity", "FlextModelsEntity"],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
     "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
@@ -182,11 +213,17 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextProtocols": ["flext_core.protocols", "FlextProtocols"],
     "FlextProtocolsBase": ["flext_core._protocols.base", "FlextProtocolsBase"],
     "FlextProtocolsConfig": ["flext_core._protocols.config", "FlextProtocolsConfig"],
-    "FlextProtocolsContainer": ["flext_core._protocols.container", "FlextProtocolsContainer"],
+    "FlextProtocolsContainer": [
+        "flext_core._protocols.container",
+        "FlextProtocolsContainer",
+    ],
     "FlextProtocolsContext": ["flext_core._protocols.context", "FlextProtocolsContext"],
     "FlextProtocolsHandler": ["flext_core._protocols.handler", "FlextProtocolsHandler"],
     "FlextProtocolsLogging": ["flext_core._protocols.logging", "FlextProtocolsLogging"],
-    "FlextProtocolsRegistry": ["flext_core._protocols.registry", "FlextProtocolsRegistry"],
+    "FlextProtocolsRegistry": [
+        "flext_core._protocols.registry",
+        "FlextProtocolsRegistry",
+    ],
     "FlextProtocolsResult": ["flext_core._protocols.result", "FlextProtocolsResult"],
     "FlextProtocolsService": ["flext_core._protocols.service", "FlextProtocolsService"],
     "FlextRegistry": ["flext_core.registry", "FlextRegistry"],
@@ -199,32 +236,77 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextTypesServices": ["flext_core._typings.services", "FlextTypesServices"],
     "FlextTypesValidation": ["flext_core._typings.validation", "FlextTypesValidation"],
     "FlextTypingBase": ["flext_core._typings.base", "FlextTypingBase"],
-    "FlextTypingContainers": ["flext_core._typings.containers", "FlextTypingContainers"],
+    "FlextTypingContainers": [
+        "flext_core._typings.containers",
+        "FlextTypingContainers",
+    ],
     "FlextUtilities": ["flext_core.utilities", "FlextUtilities"],
     "FlextUtilitiesArgs": ["flext_core._utilities.args", "FlextUtilitiesArgs"],
     "FlextUtilitiesCache": ["flext_core._utilities.cache", "FlextUtilitiesCache"],
     "FlextUtilitiesChecker": ["flext_core._utilities.checker", "FlextUtilitiesChecker"],
-    "FlextUtilitiesCollection": ["flext_core._utilities.collection", "FlextUtilitiesCollection"],
-    "FlextUtilitiesConfiguration": ["flext_core._utilities.configuration", "FlextUtilitiesConfiguration"],
+    "FlextUtilitiesCollection": [
+        "flext_core._utilities.collection",
+        "FlextUtilitiesCollection",
+    ],
+    "FlextUtilitiesConfiguration": [
+        "flext_core._utilities.configuration",
+        "FlextUtilitiesConfiguration",
+    ],
     "FlextUtilitiesContext": ["flext_core._utilities.context", "FlextUtilitiesContext"],
-    "FlextUtilitiesConversion": ["flext_core._utilities.conversion", "FlextUtilitiesConversion"],
-    "FlextUtilitiesDiscovery": ["flext_core._utilities.discovery", "FlextUtilitiesDiscovery"],
+    "FlextUtilitiesConversion": [
+        "flext_core._utilities.conversion",
+        "FlextUtilitiesConversion",
+    ],
+    "FlextUtilitiesDiscovery": [
+        "flext_core._utilities.discovery",
+        "FlextUtilitiesDiscovery",
+    ],
     "FlextUtilitiesDomain": ["flext_core._utilities.domain", "FlextUtilitiesDomain"],
     "FlextUtilitiesEnum": ["flext_core._utilities.enum", "FlextUtilitiesEnum"],
-    "FlextUtilitiesFileOps": ["flext_core._utilities.file_ops", "FlextUtilitiesFileOps"],
-    "FlextUtilitiesGenerators": ["flext_core._utilities.generators", "FlextUtilitiesGenerators"],
+    "FlextUtilitiesFileOps": [
+        "flext_core._utilities.file_ops",
+        "FlextUtilitiesFileOps",
+    ],
+    "FlextUtilitiesGenerators": [
+        "flext_core._utilities.generators",
+        "FlextUtilitiesGenerators",
+    ],
     "FlextUtilitiesGuards": ["flext_core._utilities.guards", "FlextUtilitiesGuards"],
-    "FlextUtilitiesGuardsEnsure": ["flext_core._utilities.guards_ensure", "FlextUtilitiesGuardsEnsure"],
-    "FlextUtilitiesGuardsType": ["flext_core._utilities.guards_type", "FlextUtilitiesGuardsType"],
-    "FlextUtilitiesGuardsTypeCore": ["flext_core._utilities.guards_type_core", "FlextUtilitiesGuardsTypeCore"],
-    "FlextUtilitiesGuardsTypeModel": ["flext_core._utilities.guards_type_model", "FlextUtilitiesGuardsTypeModel"],
-    "FlextUtilitiesGuardsTypeProtocol": ["flext_core._utilities.guards_type_protocol", "FlextUtilitiesGuardsTypeProtocol"],
+    "FlextUtilitiesGuardsEnsure": [
+        "flext_core._utilities.guards_ensure",
+        "FlextUtilitiesGuardsEnsure",
+    ],
+    "FlextUtilitiesGuardsType": [
+        "flext_core._utilities.guards_type",
+        "FlextUtilitiesGuardsType",
+    ],
+    "FlextUtilitiesGuardsTypeCore": [
+        "flext_core._utilities.guards_type_core",
+        "FlextUtilitiesGuardsTypeCore",
+    ],
+    "FlextUtilitiesGuardsTypeModel": [
+        "flext_core._utilities.guards_type_model",
+        "FlextUtilitiesGuardsTypeModel",
+    ],
+    "FlextUtilitiesGuardsTypeProtocol": [
+        "flext_core._utilities.guards_type_protocol",
+        "FlextUtilitiesGuardsTypeProtocol",
+    ],
     "FlextUtilitiesMapper": ["flext_core._utilities.mapper", "FlextUtilitiesMapper"],
     "FlextUtilitiesModel": ["flext_core._utilities.model", "FlextUtilitiesModel"],
-    "FlextUtilitiesPagination": ["flext_core._utilities.pagination", "FlextUtilitiesPagination"],
+    "FlextUtilitiesPagination": [
+        "flext_core._utilities.pagination",
+        "FlextUtilitiesPagination",
+    ],
     "FlextUtilitiesParser": ["flext_core._utilities.parser", "FlextUtilitiesParser"],
-    "FlextUtilitiesReliability": ["flext_core._utilities.reliability", "FlextUtilitiesReliability"],
-    "FlextUtilitiesResultHelpers": ["flext_core._utilities.result_helpers", "FlextUtilitiesResultHelpers"],
+    "FlextUtilitiesReliability": [
+        "flext_core._utilities.reliability",
+        "FlextUtilitiesReliability",
+    ],
+    "FlextUtilitiesResultHelpers": [
+        "flext_core._utilities.result_helpers",
+        "FlextUtilitiesResultHelpers",
+    ],
     "FlextUtilitiesText": ["flext_core._utilities.text", "FlextUtilitiesText"],
     "MessageT_contra": ["flext_core._typings.generics", "MessageT_contra"],
     "P": ["flext_core._typings.generics", "P"],
@@ -268,6 +350,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 }
 
 __all__ = [
+    "TV",
     "BaseModel",
     "EnumT",
     "FlextConstants",
@@ -364,7 +447,6 @@ __all__ = [
     "ResultT",
     "T",
     "TRuntime",
-    "TV",
     "TV_co",
     "T_Model",
     "T_Namespace",
@@ -417,6 +499,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -431,6 +514,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

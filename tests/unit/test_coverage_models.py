@@ -6,10 +6,10 @@ from datetime import datetime
 from typing import TypeAlias, override
 
 import pytest
-from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
 from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_tests import tm
 from tests import m, t
 
 _DomainEventEntry: TypeAlias = FlextModelsDomainEvent.Entry

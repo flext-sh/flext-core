@@ -88,19 +88,13 @@ except ValueError as e:
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def validate_user(data: dict) -> r[User]:
     """Returns r wrapping success or failure."""
-=======
-def validate_user(data: dict) -> FlextResult[User]:
-    """Returns FlextResult wrapping success or failure."""
->>>>>>> Stashed changes
     if "email" not in data:
         return r[User].fail("Email is required")
     if len(data.get("password", "")) < 8:
         return r[User].fail("Password too short")
     return r[User].ok(User(**data))
-
 
 
 # Caller handles results
@@ -149,11 +143,7 @@ def load_config() -> dict:
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def load_config() -> r[dict]:
-=======
-def load_config() -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Loads config with explicit error handling."""
     try:
         with open("config.json") as f:
@@ -219,11 +209,7 @@ ______________________________________________________________________
 from typing import Any
 
 
-<<<<<<< Updated upstream
 def process_data(data):
-=======
-def process_data(data: Any) -> Any:
->>>>>>> Stashed changes
     """Returns Any - type checker can't help."""
     return data.something()  # IDE doesn't know what methods are available
 ```
@@ -244,13 +230,9 @@ from typing import TypeVar, Generic
 T = TypeVar("T")
 
 
-<<<<<<< Updated upstream
 def process_data(
     data: t.ContainerMapping,
 ) -> t.ContainerMapping:
-=======
-def process_data(data: dict[str, object]) -> dict[str, object]:
->>>>>>> Stashed changes
     """Specific types - type checker validates."""
     return data  # IDE knows dict methods
 
@@ -315,11 +297,7 @@ def calculate_total(items: Sequence[Item]) -> Decimal:
 from decimal import Decimal
 
 
-<<<<<<< Updated upstream
 def calculate_total(items: Sequence[Item]) -> Decimal:
-=======
-def calculate_total(items: list[Item]) -> Decimal:
->>>>>>> Stashed changes
     total = Decimal("0")  # Correct type from start
     for item in items:
         total += item.price
@@ -395,11 +373,7 @@ class DomainModel:  # Second export - WRONG!
     pass
 
 
-<<<<<<< Updated upstream
 class Value:  # Third export - WRONG!
-=======
-class ValueObject:  # Third export - WRONG!
->>>>>>> Stashed changes
     pass
 
 
@@ -483,44 +457,28 @@ class FlextMeltano:
 class MeltanoConfig:
     """Handles configuration only."""
 
-<<<<<<< Updated upstream
     def load(self, path: str) -> r[dict]:
-=======
-    def load(self, path: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
         pass
 
 
 class MeltanoValidator:
     """Handles validation only."""
 
-<<<<<<< Updated upstream
     def validate_config(self, config: dict) -> r[bool]:
-=======
-    def validate_config(self, config: dict) -> FlextResult[bool]:
->>>>>>> Stashed changes
         pass
 
 
 class MeltanoStreamManager:
     """Handles stream operations."""
 
-<<<<<<< Updated upstream
     def load_streams(self, config: dict) -> r[list]:
-=======
-    def load_streams(self, config: dict) -> FlextResult[list]:
->>>>>>> Stashed changes
         pass
 
 
 class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
 
-<<<<<<< Updated upstream
     def run_tap(self, config: dict) -> r[bool]:
-=======
-    def run_tap(self, config: dict) -> FlextResult[bool]:
->>>>>>> Stashed changes
         pass
 ```
 
@@ -660,13 +618,8 @@ class User(BaseModel):
     age: int
 
 
-<<<<<<< Updated upstream
 def create_user(data: dict) -> r[User]:
     """Create user with r validation."""
-=======
-def create_user(data: dict) -> FlextResult[User]:
-    """Create user with FlextResult validation."""
->>>>>>> Stashed changes
     try:
         user = User(**data)
         return r[User].ok(user)

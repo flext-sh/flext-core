@@ -18,10 +18,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, TypeVar, override
 
-from flext_tests import s, td
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import h, r
+from flext_tests import s, td
 from tests import c, m, t
 
 T = TypeVar("T", bound=t.ValueOrModel)

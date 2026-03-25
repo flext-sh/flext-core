@@ -8,9 +8,9 @@ from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
 import pytest
-from flext_tests import tm
 
 from flext_core import r
+from flext_tests import tm
 from tests import c, m, t, u
 
 

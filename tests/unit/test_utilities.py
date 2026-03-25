@@ -24,10 +24,10 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, 
 from typing import ClassVar, cast
 
 import pytest
-from flext_tests import t, tm, u
 from hypothesis import given, strategies as st
 
 from flext_core import FlextSettings, r
+from flext_tests import t, tm, u
 from tests import c
 
 from .contracts.text_contract import TextUtilityContract

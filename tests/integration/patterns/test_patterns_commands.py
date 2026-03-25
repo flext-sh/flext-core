@@ -10,10 +10,10 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence
 from typing import cast, override
 
-from flext_tests import t
 from pydantic import Field
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextTypes as ft, r
+from flext_tests import t
 
 from ...models import m
 

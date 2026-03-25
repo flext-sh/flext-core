@@ -122,7 +122,6 @@ assert logger_result.value is container.get("logger").value
 from flext_core import FlextModels
 
 
-
 class User(FlextModels.Entity):
     name: str
     email: str

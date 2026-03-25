@@ -12,10 +12,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
-from flext_tests import t
 from pydantic import BaseModel
 
 from flext_core import FlextContext
+from flext_tests import t
 from tests import p, u
 
 from ._models import TestUnitModels

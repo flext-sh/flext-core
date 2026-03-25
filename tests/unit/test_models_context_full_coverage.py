@@ -6,12 +6,12 @@ from typing import cast
 
 import pytest
 import structlog.contextvars
-from flext_tests import t, tm
 from pydantic import BaseModel
 
 from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
+from flext_tests import t, tm
 from tests import m
 
 _StructlogProxyContextVar = FlextModelsContextProxyVar.StructlogProxyContextVar

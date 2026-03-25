@@ -18,10 +18,10 @@ from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar, override
 
-from flext_tests import FlextTestsModels
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels
+from flext_tests import FlextTestsModels
 from tests import t
 
 

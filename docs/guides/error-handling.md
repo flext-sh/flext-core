@@ -128,22 +128,14 @@ Once on the failure track, you stay on it until explicitly recovered.
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def validate_email(email: str) -> r[str]:
-=======
-def validate_email(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Validate email format."""
     if "@" not in email:
         return r[str].fail("Invalid email format")
     return r[str].ok(email)
 
 
-<<<<<<< Updated upstream
 def check_email_available(email: str) -> r[str]:
-=======
-def check_email_available(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Check if email is available."""
     reserved = ["REDACTED_LDAP_BIND_PASSWORD@example.com", "test@example.com"]
     if email in reserved:
@@ -151,15 +143,10 @@ def check_email_available(email: str) -> FlextResult[str]:
     return r[str].ok(email)
 
 
-<<<<<<< Updated upstream
 def send_confirmation(email: str) -> r[str]:
-=======
-def send_confirmation(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Send confirmation email."""
     # Pretend this works
     return r[str].ok(f"Confirmation sent to {email}")
-
 
 
 # Railway: one failure anywhere stops the flow
@@ -189,11 +176,7 @@ new_result = result.map(lambda x: x * 2)  # r[int].ok(10)
 
 # Chain multiple transformations
 result = (
-<<<<<<< Updated upstream
     r[int]
-=======
-    FlextResult[int]
->>>>>>> Stashed changes
     .ok(5)
     .map(lambda x: x * 2)  # 10
     .map(lambda x: x + 3)  # 13
@@ -207,26 +190,16 @@ result = (
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def divide(a: float, b: float) -> r[float]:
-=======
-def divide(a: float, b: float) -> FlextResult[float]:
->>>>>>> Stashed changes
     if b == 0:
         return r[float].fail("Division by zero")
     return r[float].ok(a / b)
 
 
-
 # Chain operations, one failure stops the flow
 result = (
-<<<<<<< Updated upstream
     divide(10, 2)  # r[float].ok(5.0)
     .flat_map(lambda x: divide(x, 0))  # r[float].fail("Division by zero")
-=======
-    divide(10, 2)  # FlextResult[float].ok(5.0)
-    .flat_map(lambda x: divide(x, 0))  # FlextResult[float].fail("Division by zero")
->>>>>>> Stashed changes
     .flat_map(lambda x: divide(x, 2))  # Never executes (stayed on failure track)
 )
 
@@ -243,20 +216,12 @@ result = r[int].ok(15)
 # Add condition to success path
 result = result.filter(
     lambda x: x > 10, "Value must be greater than 10"
-<<<<<<< Updated upstream
 )  # r[int].ok(15)
-=======
-)  # FlextResult[int].ok(15)
->>>>>>> Stashed changes
 
 # Failing condition
 result = result.filter(
     lambda x: x < 10, "Value must be less than 10"
-<<<<<<< Updated upstream
 )  # r[int].fail("Value must be less than 10")
-=======
-)  # FlextResult[int].fail("Value must be less than 10")
->>>>>>> Stashed changes
 ```
 
 #### map_error() - Transform Error Messages
@@ -267,13 +232,6 @@ from flext_core import r
 
 def risky_operation() -> r[str]:
     return r[str].fail("Database connection failed")
-
-<<<<<<< Updated upstream
-=======
-
-def risky_operation() -> FlextResult[str]:
-    return FlextResult[str].fail("Database connection failed")
->>>>>>> Stashed changes
 
 
 result = (
@@ -293,11 +251,7 @@ print(result.error)  # "[ERROR] Operation failed: Database connection failed"
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def validate_username(username: str) -> r[str]:
-=======
-def validate_username(username: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Validate username."""
     if not username:
         return r[str].fail("Username cannot be empty")
@@ -308,22 +262,14 @@ def validate_username(username: str) -> FlextResult[str]:
     return r[str].ok(username)
 
 
-<<<<<<< Updated upstream
 def validate_email(email: str) -> r[str]:
-=======
-def validate_email(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Validate email."""
     if "@" not in email or "." not in email:
         return r[str].fail("Invalid email format")
     return r[str].ok(email)
 
 
-<<<<<<< Updated upstream
 def validate_password(password: str) -> r[str]:
-=======
-def validate_password(password: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Validate password."""
     if len(password) < 8:
         return r[str].fail("Password must be at least 8 characters")
@@ -332,7 +278,6 @@ def validate_password(password: str) -> FlextResult[str]:
     if not any(c.isdigit() for c in password):
         return r[str].fail("Password must contain digit")
     return r[str].ok(password)
-
 
 
 # Use validation pipeline
@@ -389,7 +334,6 @@ class UserRepository:
         except Exception as e:
             logger.error(f"Save failed: {e}")
             return r[dict].fail("Failed to save user")
-
 
 
 # Usage
@@ -457,7 +401,6 @@ else:
 ```python
 from flext_core import r
 
-<<<<<<< Updated upstream
 
 def risky_operation() -> r[str]:
     return r[str].fail("Primary operation failed")
@@ -465,16 +408,6 @@ def risky_operation() -> r[str]:
 
 def fallback_operation() -> r[str]:
     return r[str].ok("Fallback operation succeeded")
-
-=======
-
-def risky_operation() -> FlextResult[str]:
-    return FlextResult[str].fail("Primary operation failed")
-
-
-def fallback_operation() -> FlextResult[str]:
-    return FlextResult[str].ok("Fallback operation succeeded")
->>>>>>> Stashed changes
 
 
 # Try primary, fall back on failure
@@ -486,13 +419,8 @@ if result.is_failure:
 print(f"Result: {result.value}")  # "Fallback operation succeeded"
 
 
-<<<<<<< Updated upstream
 # Or use lash pattern (error handling with r)
 def handle_failure(error: str) -> r[str]:
-=======
-# Or use lash pattern (error handling with FlextResult)
-def handle_failure(error: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Handle failure with fallback."""
     print(f"Failed with: {error}, trying fallback...")
     return fallback_operation()
@@ -508,11 +436,7 @@ from flext_core import r
 from typing import List
 
 
-<<<<<<< Updated upstream
 def process_items(items: List[str]) -> r[List[str]]:
-=======
-def process_items(items: List[str]) -> FlextResult[List[str]]:
->>>>>>> Stashed changes
     """Process multiple items, collecting all results."""
     results = []
     errors = []
@@ -533,16 +457,11 @@ def process_items(items: List[str]) -> FlextResult[List[str]]:
     return r[List[str]].ok(results)
 
 
-<<<<<<< Updated upstream
 def process_item(item: str) -> r[str]:
-=======
-def process_item(item: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Process single item."""
     if not item:
         return r[str].fail("Empty item")
     return r[str].ok(f"Processed: {item}")
-
 
 
 # Usage
@@ -561,11 +480,7 @@ else:
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def withdraw_from_account(amount: float, balance: float) -> r[float]:
-=======
-def withdraw_from_account(amount: float, balance: float) -> FlextResult[float]:
->>>>>>> Stashed changes
     """Withdraw from account - domain error."""
     if amount > balance:
         # Domain error - user can understand this
@@ -573,7 +488,6 @@ def withdraw_from_account(amount: float, balance: float) -> FlextResult[float]:
             f"Insufficient funds. Available: {balance}, Requested: {amount}"
         )
     return r[float].ok(balance - amount)
-
 
 
 # Usage
@@ -589,19 +503,11 @@ from flext_core import r
 import os
 
 
-<<<<<<< Updated upstream
 def read_config_file(path: str) -> r[str]:
     """Read configuration - system error."""
     try:
         with open(path, "r") as f:
             return r[str].ok(f.read())
-=======
-def read_config_file(path: str) -> FlextResult[str]:
-    """Read configuration - system error."""
-    try:
-        with open(path, "r") as f:
-            return FlextResult[str].ok(f.read())
->>>>>>> Stashed changes
     except FileNotFoundError:
         return r[str].fail(f"Configuration file not found: {path}")
     except PermissionError:
@@ -620,7 +526,6 @@ def find_user(user_id: str) -> r[dict]:
     if user_id not in users_db:
         return r[dict].fail(f"User {user_id} not found")
     return r[dict].ok(users_db[user_id])
-
 
 
 # ❌ WRONG - Using exceptions
@@ -655,11 +560,7 @@ if validation.is_failure:
 
 ```python
 # ✅ CORRECT - Clear, actionable
-<<<<<<< Updated upstream
 return r[str].fail("Invalid email format. Expected format: name@domain.com")
-=======
-return FlextResult[str].fail("Invalid email format. Expected format: name@domain.com")
->>>>>>> Stashed changes
 
 # ❌ WRONG - Vague
 return r[str].fail("Invalid input")
@@ -684,13 +585,8 @@ def api_handler(request) -> dict:
         return {"status": "error", "message": result.error}
 
 
-<<<<<<< Updated upstream
 def process_request(request) -> r[dict]:
     """Business logic - returns r."""
-=======
-def process_request(request) -> FlextResult[dict]:
-    """Business logic - returns FlextResult."""
->>>>>>> Stashed changes
     # ... implementation
     pass
 ```
@@ -703,11 +599,7 @@ from flext_core import FlextLogger, r
 logger = FlextLogger(__name__)
 
 
-<<<<<<< Updated upstream
 def risky_operation() -> r[str]:
-=======
-def risky_operation() -> FlextResult[str]:
->>>>>>> Stashed changes
     """Operation that might fail."""
     try:
         result = do_something()
@@ -717,11 +609,7 @@ def risky_operation() -> FlextResult[str]:
         logger.error(
             "Operation failed", extra={"error": str(e), "error_type": type(e).__name__}
         )
-<<<<<<< Updated upstream
         return r[str].fail(f"Operation failed: {str(e)}")
-=======
-        return FlextResult[str].fail(f"Operation failed: {str(e)}")
->>>>>>> Stashed changes
 ```
 
 ## Summary

@@ -9,11 +9,11 @@ from types import ModuleType
 from typing import ClassVar, Self, cast
 
 import pytest
-from flext_tests import t, tm
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, r
+from flext_tests import t, tm
 from tests import m, p
 
 

@@ -85,11 +85,7 @@ from flext_core import c
 
 # Bind context to APPLICATION scope
 FlextLogger.Context.bind_context(
-<<<<<<< Updated upstream
     scope=c.SCOPE_APPLICATION, user_id="user-123", tenant_id="tenant-456"
-=======
-    scope=c.Context.SCOPE_APPLICATION, user_id="user-123", tenant_id="tenant-456"
->>>>>>> Stashed changes
 )
 
 # Bind context to REQUEST scope
@@ -116,17 +112,10 @@ logger.info("Processing user creation")  # Includes all scoped contexts
 
 ```python
 # Unbind specific keys from a scope
-<<<<<<< Updated upstream
 FlextLogger.Context.unbind_context(scope=c.SCOPE_REQUEST, keys=["request_id"])
 
 # Unbind all context from a scope
 FlextLogger.Context.unbind_context(scope=c.SCOPE_OPERATION)
-=======
-FlextLogger.Context.unbind_context(scope=c.Context.SCOPE_REQUEST, keys=["request_id"])
-
-# Unbind all context from a scope
-FlextLogger.Context.unbind_context(scope=c.Context.SCOPE_OPERATION)
->>>>>>> Stashed changes
 ```
 
 ### 3. Level Context
@@ -179,11 +168,7 @@ All context is automatically propagated to log messages. You don't need to manua
 
 ```python
 # Set context once
-<<<<<<< Updated upstream
 FlextLogger.Context.bind_context(scope=c.SCOPE_REQUEST, request_id="req-123")
-=======
-FlextLogger.Context.bind_context(scope=c.Context.SCOPE_REQUEST, request_id="req-123")
->>>>>>> Stashed changes
 
 # All log messages in this scope automatically include request_id
 logger = FlextLogger.create_module_logger(__name__)
@@ -207,7 +192,6 @@ from flext_core import FlextLogger
 from flext_core import c
 
 
-
 class UserHandler:
     def __init__(self):
         self.logger = FlextLogger.create_module_logger(__name__)
@@ -215,11 +199,7 @@ class UserHandler:
     def handle_request(self, request_id: str, user_id: str):
         # Bind REQUEST scope context
         FlextLogger.Context.bind_context(
-<<<<<<< Updated upstream
             scope=c.SCOPE_REQUEST, request_id=request_id, user_id=user_id
-=======
-            scope=c.Context.SCOPE_REQUEST, request_id=request_id, user_id=user_id
->>>>>>> Stashed changes
         )
 
         try:
@@ -228,11 +208,7 @@ class UserHandler:
             self.logger.info("Request completed")
         finally:
             # Clean up REQUEST scope context
-<<<<<<< Updated upstream
             FlextLogger.Context.unbind_context(scope=c.SCOPE_REQUEST)
-=======
-            FlextLogger.Context.unbind_context(scope=c.Context.SCOPE_REQUEST)
->>>>>>> Stashed changes
 ```
 
 ## Auto-Configuration

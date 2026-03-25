@@ -4,10 +4,10 @@ from enum import StrEnum, unique
 from typing import Annotated, Any, ClassVar, cast
 
 import pytest
-from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import FlextExceptions, FlextModelsResult
+from flext_tests import t, tm
 from tests import c, m, p, u
 
 from ._models import TestUnitModels

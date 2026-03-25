@@ -21,9 +21,9 @@ from enum import StrEnum, unique
 from typing import Final
 
 import pytest
-from flext_tests import u
 
 from flext_core import FlextModelsResult, r
+from flext_tests import u
 from tests import t
 
 

@@ -168,7 +168,6 @@ if result.is_success:
 from flext_core import FlextContainer, r
 
 
-
 def create_service_that_might_fail():
     """Factory that can fail."""
     if condition_not_met:
@@ -176,18 +175,13 @@ def create_service_that_might_fail():
     return ServiceInstance()
 
 
-<<<<<<< Updated upstream
 def safe_factory() -> r[t.NormalizedValue]:
-=======
-def safe_factory() -> FlextResult[object]:
->>>>>>> Stashed changes
     """Wrap potentially-failing factory."""
     try:
         service = create_service_that_might_fail()
         return r.ok(service)
     except Exception as e:
         return r.fail(str(e))
-
 
 
 container = FlextContainer.get_global()
@@ -236,20 +230,12 @@ if result.is_success:
 from flext_core import FlextContainer, r, FlextSettings, FlextLogger
 
 
-<<<<<<< Updated upstream
 def initialize_application() -> r[bool]:
-=======
-def initialize_application() -> FlextResult[bool]:
->>>>>>> Stashed changes
     """Initialize all application services."""
     container = FlextContainer.get_global()
 
     # Load configuration
-<<<<<<< Updated upstream
     config_result = r[bool].ok(True).flat_map(lambda _: FlextSettings.load())
-=======
-    config_result = FlextResult[bool].ok(True).flat_map(lambda _: FlextSettings.load())
->>>>>>> Stashed changes
 
     if config_result.is_failure:
         return config_result
@@ -279,7 +265,6 @@ def initialize_application() -> FlextResult[bool]:
     return r[bool].ok(True)
 
 
-
 # Usage
 app_init = initialize_application()
 if app_init.is_failure:
@@ -291,7 +276,6 @@ if app_init.is_failure:
 
 ```python
 from flext_core import FlextContainer, r
-
 
 
 class PaymentService:
@@ -307,11 +291,7 @@ class PaymentService:
         return r[dict].ok({"status": "complete"})
 
 
-<<<<<<< Updated upstream
 def resolve_payment_service() -> r[PaymentService]:
-=======
-def resolve_payment_service() -> FlextResult[PaymentService]:
->>>>>>> Stashed changes
     """Resolve PaymentService with all dependencies."""
     container = FlextContainer.get_global()
 
@@ -338,7 +318,6 @@ def resolve_payment_service() -> FlextResult[PaymentService]:
     )
 
     return r[PaymentService].ok(service)
-
 
 
 # Usage
@@ -397,11 +376,7 @@ assert result1.value is result2.value
 from flext_core import FlextContainer, r, FlextSettings
 
 
-<<<<<<< Updated upstream
 def setup_services_based_on_config() -> r[bool]:
-=======
-def setup_services_based_on_config() -> FlextResult[bool]:
->>>>>>> Stashed changes
     """Register services conditionally based on configuration."""
     container = FlextContainer.get_global()
 
@@ -431,7 +406,6 @@ def setup_services_based_on_config() -> FlextResult[bool]:
 from flext_core import FlextContainer, r
 
 
-
 class DatabaseConnection:
     def __init__(self, url: str):
         self.url = url
@@ -449,11 +423,7 @@ class DatabaseConnection:
         self.connected = False
 
 
-<<<<<<< Updated upstream
 def setup_database_lifecycle() -> r[bool]:
-=======
-def setup_database_lifecycle() -> FlextResult[bool]:
->>>>>>> Stashed changes
     """Setup database with lifecycle management."""
     container = FlextContainer.get_global()
     config_result = FlextSettings.load()
@@ -529,11 +499,7 @@ def resolve_with_fallback():
 
 # Or using railway pattern
 result = (
-<<<<<<< Updated upstream
     r[bool]
-=======
-    FlextResult[bool]
->>>>>>> Stashed changes
     .ok(True)
     .flat_map(lambda _: container.get("primary_service"))
     .lash(lambda _: container.get("fallback_service"))
@@ -546,11 +512,7 @@ result = (
 from flext_core import FlextContainer, r
 
 
-<<<<<<< Updated upstream
 def validate_all_services() -> r[bool]:
-=======
-def validate_all_services() -> FlextResult[bool]:
->>>>>>> Stashed changes
     """Validate that all registered services work correctly."""
     container = FlextContainer.get_global()
 
@@ -616,13 +578,7 @@ ServiceName = t.ServiceName
 ServiceType = t.ServiceType
 
 
-<<<<<<< Updated upstream
 def get_service(name: ServiceName, type_cls: type[ServiceType]) -> r[ServiceType]:
-=======
-def get_service(
-    name: ServiceName, type_cls: type[ServiceType]
-) -> FlextResult[ServiceType]:
->>>>>>> Stashed changes
     container = FlextContainer.get_global()
     return container.get_typed(name, type_cls)
 ```
@@ -633,7 +589,6 @@ def get_service(
 
 ```python
 from flext_core import FlextContainer, r
-
 
 
 class UserHandler:
@@ -657,7 +612,6 @@ class UserHandler:
         user = db.save_user(user_data)
 
         return r[dict].ok(user)
-
 
 
 # Usage
@@ -727,7 +681,6 @@ def initialize():
     container = FlextContainer.get_global()
     _ = container.register("logger", FlextLogger())
     _ = container.register("config", FlextSettings.load().value)
-
 
 
 initialize()

@@ -17,10 +17,10 @@ from collections.abc import (
 from pathlib import Path
 
 import pytest
-from flext_tests import t
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, r
+from flext_tests import t
 
 from .helpers.scenarios import (
     TestHelperScenarios,

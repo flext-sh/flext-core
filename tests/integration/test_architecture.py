@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from flext_tests import tm, tv
 
 _SRC = Path(__file__).resolve().parents[2] / "src" / "flext_core"

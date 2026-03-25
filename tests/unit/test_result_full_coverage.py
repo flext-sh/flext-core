@@ -9,9 +9,8 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence, Sequence
 from typing import cast
 
-from flext_tests import t, tm
-
 from flext_core import FlextModelsResult, r
+from flext_tests import t, tm
 
 from ._models_impl import _ErrorsModel, _PlainErrorModel, _TargetModel
 

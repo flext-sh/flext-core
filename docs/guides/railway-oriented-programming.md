@@ -106,11 +106,7 @@ result = r[float].fail(
 # Error codes from FlextConstants for consistency
 from flext_core import FlextConstants
 
-<<<<<<< Updated upstream
 result = r[dict].fail(
-=======
-result = FlextResult[dict].fail(
->>>>>>> Stashed changes
     "Configuration missing required field",
     error_code=FlextConstants.CONFIG_ERROR,
     error_data={"missing_field": "database_url"},
@@ -144,11 +140,7 @@ if result.failed:
 if result.is_failure:
     message = result.error  # str
     code = result.error_code  # str | None
-<<<<<<< Updated upstream
     data = result.error_data  # t.NormalizedValue
-=======
-    data = result.error_data  # dict[str, object]
->>>>>>> Stashed changes
 ```
 
 ### Accessing Success Values
@@ -171,11 +163,7 @@ if result.is_success:
     value = result.value  # Type-safe - we know it's success
 
 # All three throw ValidationError on failure:
-<<<<<<< Updated upstream
 failed_result = r[str].fail("Error")
-=======
-failed_result = FlextResult[str].fail("Error")
->>>>>>> Stashed changes
 value = (
     failed_result.value
 )  # Raises ValidationError: "Attempted to access value on failed result"
@@ -195,22 +183,14 @@ The power of ROP is **composability**. Chain operations without exception handli
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def validate_email(email: str) -> r[str]:
-=======
-def validate_email(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Validate email format."""
     if "@" not in email:
         return r[str].fail("Invalid email: missing @")
     return r[str].ok(email)
 
 
-<<<<<<< Updated upstream
 def check_domain(email: str) -> r[str]:
-=======
-def check_domain(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Check if domain exists."""
     domain = email.split("@")[1]
     if domain == "invalid.com":
@@ -218,24 +198,15 @@ def check_domain(email: str) -> FlextResult[str]:
     return r[str].ok(email)
 
 
-<<<<<<< Updated upstream
 def send_verification(email: str) -> r[str]:
-=======
-def send_verification(email: str) -> FlextResult[str]:
->>>>>>> Stashed changes
     """Send verification email."""
     # Pretend to send email
     return r[str].ok(f"Verification sent to {email}")
 
 
-
 # Railway composition - stops at first failure
 result = (
-<<<<<<< Updated upstream
     r[str]
-=======
-    FlextResult[str]
->>>>>>> Stashed changes
     .ok("user@example.com")
     .flat_map(validate_email)  # If success, validate
     .flat_map(check_domain)  # If success, check domain
@@ -270,11 +241,7 @@ assert transformed.value == 5
 
 # Chain multiple transformations
 final = (
-<<<<<<< Updated upstream
     r[str]
-=======
-    FlextResult[str]
->>>>>>> Stashed changes
     .ok("  spaces  ")
     .map(str.strip)  # Remove whitespace
     .map(str.upper)  # Convert to uppercase
@@ -296,41 +263,26 @@ assert result.is_failure
 from flext_core import r
 
 
-
 def is_adult(age: int) -> bool:
     return age >= 18
 
 
 # Success case
 result = (
-<<<<<<< Updated upstream
     r[int].ok(25).filter(is_adult)  # Predicate passes
-=======
-    FlextResult[int].ok(25).filter(is_adult)  # Predicate passes
->>>>>>> Stashed changes
 )
 assert result.is_success and result.value == 25
 
 # Failure case
 result = (
-<<<<<<< Updated upstream
     r[int].ok(16).filter(is_adult)  # Predicate fails
-=======
-    FlextResult[int].ok(16).filter(is_adult)  # Predicate fails
->>>>>>> Stashed changes
 )
 assert result.is_failure
 
 # With custom error message
 from flext_core import r
 
-<<<<<<< Updated upstream
 result = r[int].ok(16).filter(is_adult, failure_message="User must be 18 or older")
-=======
-result = (
-    FlextResult[int].ok(16).filter(is_adult, failure_message="User must be 18 or older")
-)
->>>>>>> Stashed changes
 assert result.is_failure
 assert "18 or older" in result.error
 ```
@@ -343,16 +295,11 @@ assert "18 or older" in result.error
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def fetch_user(user_id: str) -> r[dict]:
-=======
-def fetch_user(user_id: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Simulate database fetch that might fail."""
     if user_id == "missing":
         return r[dict].fail("User not found", error_code="NOT_FOUND")
     return r[dict].ok({"id": user_id, "name": "Alice"})
-
 
 
 # Recover with fallback data
@@ -385,16 +332,11 @@ assert result.value["id"] == "guest"
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def parse_config(config: str) -> r[dict]:
-=======
-def parse_config(config: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Parse configuration that might fail."""
     if not config.startswith("{"):
         return r[dict].fail("Invalid JSON format")
     return r[dict].ok({"parsed": True})
-
 
 
 # Transform error message
@@ -404,11 +346,7 @@ assert "Configuration error" in result.error
 
 # Chain map_error
 result = (
-<<<<<<< Updated upstream
     r[str]
-=======
-    FlextResult[str]
->>>>>>> Stashed changes
     .fail("Original error")
     .map_error(lambda e: e.upper())
     .map_error(lambda e: f"[ERROR] {e}")
@@ -438,11 +376,7 @@ assert result.is_success
 assert result.value["valid"] == "json"
 
 # With invalid input
-<<<<<<< Updated upstream
 result = r[dict].safe_call(parse_json_unsafe, "invalid json")
-=======
-result = FlextResult.safe_call(parse_json_unsafe, "invalid json")
->>>>>>> Stashed changes
 assert result.is_failure
 assert "Expecting" in result.error  # JSONDecodeError message
 
@@ -452,11 +386,7 @@ def divide(a: int, b: int) -> float:
     return a / b
 
 
-<<<<<<< Updated upstream
 result = r[float].safe_call(divide, 10, 0)
-=======
-result = FlextResult.safe_call(divide, 10, 0)
->>>>>>> Stashed changes
 assert result.is_failure  # Catches ZeroDivisionError
 
 result = r[float].safe_call(divide, 10, 2)
@@ -474,11 +404,7 @@ assert result.value == 5.0
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def risky_operation() -> r[str]:
-=======
-def risky_operation() -> FlextResult[str]:
->>>>>>> Stashed changes
     """Perform risky operation, converting exceptions to failures."""
     try:
         # Some operation that might raise
@@ -487,7 +413,6 @@ def risky_operation() -> FlextResult[str]:
     except ValueError as e:
         # Convert exception to failure
         return r[str].from_exception(e, error_code="PARSE_ERROR")
-
 
 
 result = risky_operation()
@@ -512,7 +437,6 @@ except json.JSONDecodeError as e:
 ```python
 from flext_core import r
 
-<<<<<<< Updated upstream
 
 def fetch_primary() -> r[dict]:
     return r[dict].fail("Primary unavailable")
@@ -520,16 +444,6 @@ def fetch_primary() -> r[dict]:
 
 def fetch_backup() -> r[dict]:
     return r[dict].ok({"source": "backup", "data": "value"})
-
-=======
-
-def fetch_primary() -> FlextResult[dict]:
-    return FlextResult[dict].fail("Primary unavailable")
-
-
-def fetch_backup() -> FlextResult[dict]:
-    return FlextResult[dict].ok({"source": "backup", "data": "value"})
->>>>>>> Stashed changes
 
 
 # Try primary, fallback to backup
@@ -541,7 +455,6 @@ assert result.value["source"] == "backup"
 # Success case (or_else is skipped)
 def fetch_primary_success() -> r[dict]:
     return r[dict].ok({"source": "primary"})
-
 
 
 result = fetch_primary_success().or_else(lambda _: fetch_backup())
@@ -573,13 +486,8 @@ class UserRegistration(BaseModel):
     username: str = Field(min_length=3, max_length=20)
 
 
-<<<<<<< Updated upstream
 def validate_registration(data: dict) -> r[UserRegistration]:
     """Validate user registration with r."""
-=======
-def validate_registration(data: dict) -> FlextResult[UserRegistration]:
-    """Validate user registration with FlextResult."""
->>>>>>> Stashed changes
     try:
         user = UserRegistration(**data)
         return r[UserRegistration].ok(user)
@@ -591,11 +499,7 @@ def validate_registration(data: dict) -> FlextResult[UserRegistration]:
         )
 
 
-<<<<<<< Updated upstream
 def check_username_available(user: UserRegistration) -> r[UserRegistration]:
-=======
-def check_username_available(user: UserRegistration) -> FlextResult[UserRegistration]:
->>>>>>> Stashed changes
     """Check if username is available."""
     # Pretend to check database
     if user.username.lower() == "REDACTED_LDAP_BIND_PASSWORD":
@@ -606,11 +510,7 @@ def check_username_available(user: UserRegistration) -> FlextResult[UserRegistra
     return r[UserRegistration].ok(user)
 
 
-<<<<<<< Updated upstream
 def create_user(user: UserRegistration) -> r[dict]:
-=======
-def create_user(user: UserRegistration) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Create user in database."""
     return r[dict].ok({
         "id": "user_123",
@@ -621,11 +521,7 @@ def create_user(user: UserRegistration) -> FlextResult[dict]:
 
 # Use the railway
 result = (
-<<<<<<< Updated upstream
     r[dict]
-=======
-    FlextResult
->>>>>>> Stashed changes
     .ok({"email": "user@example.com", "password": "secure123", "username": "john"})
     .flat_map(validate_registration)
     .flat_map(check_username_available)
@@ -646,11 +542,7 @@ else:
 from flext_core import r, t
 
 
-<<<<<<< Updated upstream
 def fetch_primary_data(key: str) -> r[dict]:
-=======
-def fetch_primary_data(key: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Try fetching from primary API."""
     # Simulate API call that might fail
     if key == "missing":
@@ -661,11 +553,7 @@ def fetch_primary_data(key: str) -> FlextResult[dict]:
     return r[dict].ok({"source": "primary", "value": key})
 
 
-<<<<<<< Updated upstream
 def fetch_backup_data(key: str) -> r[dict]:
-=======
-def fetch_backup_data(key: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Fallback to backup API."""
     return r[dict].ok({
         "source": "backup",
@@ -673,11 +561,7 @@ def fetch_backup_data(key: str) -> FlextResult[dict]:
     })
 
 
-<<<<<<< Updated upstream
 def fetch_data_with_fallback(key: str) -> r[dict]:
-=======
-def fetch_data_with_fallback(key: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Fetch data with fallback to backup API."""
     primary = fetch_primary_data(key)
 
@@ -704,11 +588,7 @@ from flext_core import r
 from decimal import Decimal
 
 
-<<<<<<< Updated upstream
 def validate_transaction(amount: Decimal, account_id: str) -> r[dict]:
-=======
-def validate_transaction(amount: Decimal, account_id: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Validate transaction parameters."""
     if amount <= 0:
         return r[dict].fail(
@@ -718,11 +598,7 @@ def validate_transaction(amount: Decimal, account_id: str) -> FlextResult[dict]:
     return r[dict].ok({"amount": amount, "account_id": account_id})
 
 
-<<<<<<< Updated upstream
 def check_balance(tx_data: dict) -> r[dict]:
-=======
-def check_balance(tx_data: dict) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Check if account has sufficient balance."""
     # Simulate database check
     balance = Decimal("1000")
@@ -739,11 +615,7 @@ def check_balance(tx_data: dict) -> FlextResult[dict]:
     return r[dict].ok(tx_data)
 
 
-<<<<<<< Updated upstream
 def execute_transaction(tx_data: dict) -> r[dict]:
-=======
-def execute_transaction(tx_data: dict) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Execute the transaction."""
     # Simulate database update
     return r[dict].ok({
@@ -755,11 +627,7 @@ def execute_transaction(tx_data: dict) -> FlextResult[dict]:
 
 # Railway pattern ensures validation before execution
 result = (
-<<<<<<< Updated upstream
     r[dict]
-=======
-    FlextResult
->>>>>>> Stashed changes
     .ok({"amount": Decimal("500"), "account_id": "acc_001"})
     .flat_map(validate_transaction)
     .flat_map(check_balance)
@@ -781,11 +649,7 @@ import os
 import json
 
 
-<<<<<<< Updated upstream
 def load_config_file(path: str) -> r[dict]:
-=======
-def load_config_file(path: str) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Load and parse JSON config file."""
     try:
         if not os.path.exists(path):
@@ -810,11 +674,7 @@ def load_config_file(path: str) -> FlextResult[dict]:
         )
 
 
-<<<<<<< Updated upstream
 def validate_config_schema(config: dict) -> r[dict]:
-=======
-def validate_config_schema(config: dict) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Validate required config fields."""
     required = ["database_url", "api_key", "log_level"]
     missing = [field for field in required if field not in config]
@@ -829,11 +689,7 @@ def validate_config_schema(config: dict) -> FlextResult[dict]:
     return r[dict].ok(config)
 
 
-<<<<<<< Updated upstream
 def apply_defaults(config: dict) -> r[dict]:
-=======
-def apply_defaults(config: dict) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Apply default values for optional fields."""
     defaults = {
         "debug": False,
@@ -847,14 +703,9 @@ def apply_defaults(config: dict) -> FlextResult[dict]:
     return r[dict].ok(config)
 
 
-
 # Load and validate configuration
 result = (
-<<<<<<< Updated upstream
     r[str]
-=======
-    FlextResult
->>>>>>> Stashed changes
     .ok("config.json")
     .flat_map(load_config_file)
     .flat_map(validate_config_schema)
@@ -904,11 +755,7 @@ assert result.value == ["valid", "item", "check"]
 from flext_core import r
 
 
-<<<<<<< Updated upstream
 def parse_int(value: str) -> r[int]:
-=======
-def parse_int(value: str) -> FlextResult[int]:
->>>>>>> Stashed changes
     """Parse string to int."""
     try:
         return r[int].ok(int(value))
@@ -916,14 +763,9 @@ def parse_int(value: str) -> FlextResult[int]:
         return r[int].fail(f"Cannot parse as int: {value}")
 
 
-
 # Recover from error with alternative
 result = (
-<<<<<<< Updated upstream
     r[str]
-=======
-    FlextResult
->>>>>>> Stashed changes
     .ok("not-a-number")
     .flat_map(parse_int)
     .lash(lambda error: r[int].ok(0))  # Use 0 as default
@@ -939,7 +781,6 @@ assert result.value == 0  # Recovered with default
 from flext_core import r
 
 
-
 def create_connection():
     """Factory function creating resource."""
     return {"type": "connection", "id": 123}
@@ -950,16 +791,11 @@ def close_connection(conn):
     print(f"Closing connection {conn['id']}")
 
 
-<<<<<<< Updated upstream
 def use_connection(conn) -> r[dict]:
-=======
-def use_connection(conn) -> FlextResult[dict]:
->>>>>>> Stashed changes
     """Use the connection."""
     if conn["id"] == 123:
         return r[dict].ok({"result": "success", "id": conn["id"]})
     return r[dict].fail("Connection failed")
-
 
 
 # Automatic resource cleanup
@@ -996,11 +832,7 @@ def fetch_user_data(user_id: str) -> dict:
     return response.json()
 
 
-<<<<<<< Updated upstream
 # Usage - result is automatically wrapped in r
-=======
-# Usage - result is automatically wrapped in FlextResult
->>>>>>> Stashed changes
 result = fetch_user_data("user_123")
 if result.is_success:
     user = result.value
@@ -1142,13 +974,8 @@ def create_and_process_order(order_data: dict) -> r[dict]:
     return (
         r
         .ok(order_data)
-<<<<<<< Updated upstream
         .flat_map(validate_order)  # Returns r[dict] (from @railway)
         .flat_map(process_order)  # Returns r[dict] (from @railway)
-=======
-        .flat_map(validate_order)  # Returns FlextResult[dict] (from @railway)
-        .flat_map(process_order)  # Returns FlextResult[dict] (from @railway)
->>>>>>> Stashed changes
         .map_error(lambda e: f"Order processing failed: {e}")
     )
 
@@ -1219,11 +1046,7 @@ def old_way(data):
 
 # ✅ DECLARATIVE - Railway composition
 def new_way(data):
-<<<<<<< Updated upstream
     return r.ok(data).flat_map(validate).flat_map(process).flat_map(finalize)
-=======
-    return FlextResult.ok(data).flat_map(validate).flat_map(process).flat_map(finalize)
->>>>>>> Stashed changes
 ```
 
 ### 4. Preserve Success Values
@@ -1231,23 +1054,12 @@ def new_way(data):
 ```python
 # ❌ WRONG - Forgetting to return value
 result = (
-<<<<<<< Updated upstream
     r.ok(data).flat_map(transform)  # If returns r.ok(...), value is preserved
 )
 
 
 # ✅ CORRECT - Functions return r with wrapped value
 def transform(data) -> r[dict]:
-=======
-    FlextResult.ok(data).flat_map(
-        transform
-    )  # If returns FlextResult.ok(...), value is preserved
-)
-
-
-# ✅ CORRECT - Functions return FlextResult with wrapped value
-def transform(data) -> FlextResult[dict]:
->>>>>>> Stashed changes
     result = process(data)
     return r[dict].ok(result)  # Wrap in r
 ```

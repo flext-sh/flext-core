@@ -30,10 +30,10 @@ from typing import cast
 import pytest
 import structlog
 from dependency_injector import containers, providers
-from flext_tests import t, tm
 from hypothesis import given, strategies as st
 
 from flext_core import FlextContainer, FlextContext, FlextRuntime, s, x
+from flext_tests import t, tm
 from tests import c, m, p
 
 

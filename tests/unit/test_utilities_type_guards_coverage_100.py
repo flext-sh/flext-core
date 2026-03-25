@@ -5,10 +5,10 @@ from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, FlextUtilitiesGuards
+from flext_tests import tm
 from tests import t
 
 type ScalarValue = t.Scalar

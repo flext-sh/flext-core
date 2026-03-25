@@ -25,11 +25,11 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import t, tm, u
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
+from flext_tests import t, tm, u
 
 from ..test_utils import assertion_helpers
 

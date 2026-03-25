@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
-
 if TYPE_CHECKING:
     from flext_core import FlextTypes
     from flext_core._constants.base import FlextConstantsBase
@@ -26,11 +25,23 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextConstantsBase": ["flext_core._constants.base", "FlextConstantsBase"],
     "FlextConstantsCqrs": ["flext_core._constants.cqrs", "FlextConstantsCqrs"],
     "FlextConstantsDomain": ["flext_core._constants.domain", "FlextConstantsDomain"],
-    "FlextConstantsInfrastructure": ["flext_core._constants.infrastructure", "FlextConstantsInfrastructure"],
+    "FlextConstantsInfrastructure": [
+        "flext_core._constants.infrastructure",
+        "FlextConstantsInfrastructure",
+    ],
     "FlextConstantsMixins": ["flext_core._constants.mixins", "FlextConstantsMixins"],
-    "FlextConstantsPlatform": ["flext_core._constants.platform", "FlextConstantsPlatform"],
-    "FlextConstantsSettings": ["flext_core._constants.settings", "FlextConstantsSettings"],
-    "FlextConstantsValidation": ["flext_core._constants.validation", "FlextConstantsValidation"],
+    "FlextConstantsPlatform": [
+        "flext_core._constants.platform",
+        "FlextConstantsPlatform",
+    ],
+    "FlextConstantsSettings": [
+        "flext_core._constants.settings",
+        "FlextConstantsSettings",
+    ],
+    "FlextConstantsValidation": [
+        "flext_core._constants.validation",
+        "FlextConstantsValidation",
+    ],
 }
 
 __all__ = [
@@ -62,6 +73,7 @@ def __getattr__(name: str) -> FlextTypes.ModuleExport:
 
     Raises:
         AttributeError: If attribute not registered.
+
     """
     if name in _LAZY_CACHE:
         return _LAZY_CACHE[name]
@@ -76,6 +88,7 @@ def __dir__() -> Sequence[str]:
 
     Returns:
         List of public names from module exports.
+
     """
     return sorted(__all__)
 

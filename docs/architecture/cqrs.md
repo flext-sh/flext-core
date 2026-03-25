@@ -97,7 +97,6 @@ from flext_core import FlextHandlers
 from flext_core import r
 
 
-
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
         # Business logic

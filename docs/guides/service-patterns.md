@@ -55,7 +55,6 @@ is essentially a **Pydantic model with an `execute()` method** that returns
 from flext_core import FlextService, r
 
 
-
 class CreateUserService(FlextService[User]):
     name: str
     email: str
@@ -136,7 +135,6 @@ class AutoUserService(FlextService[User]):
 
     def execute(self) -> r[User]:
         return r[User].ok(User(name=self.name, email=self.email))
-
 
 
 # Instantiation returns User directly (not service instance)
@@ -241,7 +239,6 @@ Services are called by CQRS handlers for domain operations:
 ```python
 from flext_core import FlextHandlers
 from flext_core import r
-
 
 
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):

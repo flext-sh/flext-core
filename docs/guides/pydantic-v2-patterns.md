@@ -515,12 +515,7 @@ ComponentConfig = Annotated[
 class Pipeline(BaseModel):
     """Pipeline with multiple component types."""
 
-<<<<<<< Updated upstream
     components: Sequence[ComponentConfig]
-
-=======
-    components: list[ComponentConfig]
->>>>>>> Stashed changes
 
 
 # Usage - type-safe
@@ -607,13 +602,8 @@ class UserModel(BaseModel):
     password: str
 
 
-<<<<<<< Updated upstream
 def validate_user(data: dict) -> r[UserModel]:
     """Validate user data with r."""
-=======
-def validate_user(data: dict) -> FlextResult[UserModel]:
-    """Validate user data with FlextResult."""
->>>>>>> Stashed changes
     try:
         user = UserModel(**data)
         return r[UserModel].ok(user)

@@ -28,9 +28,9 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from flext_tests import tm
 from tests import c, m, t, u
 
 

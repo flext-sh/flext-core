@@ -26,10 +26,10 @@ from enum import StrEnum, unique
 from typing import ClassVar, cast, override
 
 import pytest
-from flext_tests import t, tm
 from pydantic import BaseModel
 
 from flext_core import FlextExceptions, r
+from flext_tests import t, tm
 from tests import u
 
 from ..test_utils import assertion_helpers

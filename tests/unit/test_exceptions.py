@@ -25,10 +25,10 @@ from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from typing import cast, override
 
 import pytest
-from flext_tests import t, tm, u
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextConstants, FlextRuntime, e
+from flext_tests import t, tm, u
 from tests import m
 
 

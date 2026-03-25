@@ -19,9 +19,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import u
-
 from flext_core import FlextContext, r, s
+from flext_tests import u
 from tests import m, p
 
 

@@ -159,7 +159,6 @@ def process_data(data: t.ContainerMapping) -> r[ProcessedData]:
     return r[ProcessedData].ok(ProcessedData(**data))
 
 
-
 # ❌ WRONG - Missing type annotations
 def process_data(data):
     return data
@@ -201,7 +200,6 @@ class FlextApiModels:
 # ❌ WRONG - Scattered model definitions
 class ApiRequest(BaseModel):
     data: t.ContainerMapping
-
 
 
 class ApiResponse(BaseModel):

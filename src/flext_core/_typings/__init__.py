@@ -16,29 +16,27 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Mapping, Sequence
-
 from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.containers import FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
     from flext_core._typings.generics import (
+        TV,
         EnumT,
         MessageT_contra,
         P,
         R,
         ResultT,
         T,
-        TRuntime,
-        TV,
-        TV_co,
+        T_co,
+        T_contra,
         T_Model,
         T_Namespace,
         T_Settings,
-        T_co,
-        T_contra,
+        TRuntime,
+        TV_co,
         U,
     )
     from flext_core._typings.services import FlextTypesServices
@@ -50,7 +48,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextTypesServices": ["flext_core._typings.services", "FlextTypesServices"],
     "FlextTypesValidation": ["flext_core._typings.validation", "FlextTypesValidation"],
     "FlextTypingBase": ["flext_core._typings.base", "FlextTypingBase"],
-    "FlextTypingContainers": ["flext_core._typings.containers", "FlextTypingContainers"],
+    "FlextTypingContainers": [
+        "flext_core._typings.containers",
+        "FlextTypingContainers",
+    ],
     "MessageT_contra": ["flext_core._typings.generics", "MessageT_contra"],
     "P": ["flext_core._typings.generics", "P"],
     "R": ["flext_core._typings.generics", "R"],
@@ -68,6 +69,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
 }
 
 __all__ = [
+    "TV",
     "EnumT",
     "FlextTypesCore",
     "FlextTypesServices",
@@ -80,7 +82,6 @@ __all__ = [
     "ResultT",
     "T",
     "TRuntime",
-    "TV",
     "TV_co",
     "T_Model",
     "T_Namespace",
