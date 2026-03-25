@@ -198,7 +198,10 @@ class FlextService[
         except TypeError:
             is_settings = False
 
-        config_type_val = config_type_raw if is_settings else config_type
+        if is_settings and config_type_raw is not None:
+            config_type_val = config_type_raw  # type: ignore[assignment]
+        else:
+            config_type_val = config_type
         ctx_raw = self.initial_context or (
             bootstrap_opts.context if bootstrap_opts is not None else None
         )
