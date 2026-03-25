@@ -410,7 +410,7 @@ class TestFlextContext:
         def read_value() -> None:
             try:
                 context.get("shared_key")
-            except Exception:
+            except (KeyError, RuntimeError):
                 error_count.append(1)
 
         threads = [threading.Thread(target=read_value) for _ in range(5)]
@@ -428,7 +428,7 @@ class TestFlextContext:
         def write_value(key: str, value: str) -> None:
             try:
                 context.set(key, value)
-            except Exception:
+            except (KeyError, RuntimeError):
                 error_count.append(1)
 
         threads = [
