@@ -219,17 +219,13 @@ class FlextUtilitiesMapper:
             fallback = converter_defaults.get(converter_name, current)
 
         def _convert(value: t.NormalizedValue) -> t.NormalizedValue:
-            converted_result: r[t.NormalizedValue] = r[
-                t.NormalizedValue
-            ].create_from_callable(
-                lambda: FlextUtilitiesMapper.narrow_to_container(
+            try:
+                raw: t.NormalizedValue = FlextUtilitiesMapper.narrow_to_container(
                     convert_callable_raw(value),
-                ),
-            )
-            if converted_result.is_success:
-                result_val: t.NormalizedValue = converted_result.value
-                return result_val if result_val is not None else fallback
-            return fallback
+                )
+                return raw if raw is not None else fallback
+            except (ValueError, TypeError, KeyError, AttributeError, RuntimeError):
+                return fallback
 
         if isinstance(current, (list, tuple)):
             current_items: t.ContainerList = current
