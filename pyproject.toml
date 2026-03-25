@@ -19,7 +19,6 @@ dev = [
 
 # [CUSTOM] poetry - flext-core ships only the core package
 
-
 authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -135,21 +134,17 @@ dev = [
   "vulture>=2.13",
 ]
 
-
-
 [tool.bandit]
 exclude_dirs = [ "tests" ]
 severity = "MEDIUM"
 skips = [ "B101" ]
 targets = [ "src" ]
 
-
 # [MANAGED] codespell
 [tool.codespell]
 check-filenames = true
 ignore-words-list = "crate,nd"
 skip = ".git,poetry.lock,.mypy_cache,.pytest_cache,.ruff_cache"
-
 
 # [MANAGED] coverage
 [tool.coverage.report]
@@ -158,7 +153,6 @@ precision = 2
 show_missing = true
 skip_covered = false
 
-
 # [MANAGED] deptry
 [tool.deptry]
 known_first_party = [
@@ -166,14 +160,11 @@ known_first_party = [
 ]
 pep621_dev_dependency_groups = [ "dev" ]
 
-
 [tool.hatch.build.targets.wheel]
 packages = [ "src/flext_core" ]
 
-
 [tool.hatch.metadata]
 allow-direct-references = true
-
 
 [tool.interrogate]
 exclude = [ "docs", "examples", "scripts", "tests" ]
@@ -184,7 +175,6 @@ ignore-magic = true
 ignore-module = false
 ignore-private = true
 ignore-property-decorators = true
-
 
 # [MANAGED] mypy
 [tool.mypy]
@@ -203,13 +193,11 @@ python_version = "3.13"
 
 [tool.poetry]
 
-
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
-
 
 # [MANAGED] pyrefly
 [tool.pyrefly]
@@ -259,7 +247,6 @@ redundant-cast = true
 unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
-
 
 # [MANAGED] pyright
 [tool.pyright]
@@ -314,22 +301,22 @@ venv = ".venv"
 venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = ["src"]
+extraPaths = [ "src" ]
 reportPrivateUsage = "error"
 root = "src"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
+extraPaths = [ ".", "src" ]
 reportPrivateUsage = "none"
 root = "tests"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
+extraPaths = [ ".", "src" ]
 reportPrivateUsage = "none"
 root = "examples"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
+extraPaths = [ ".", "src" ]
 reportPrivateUsage = "none"
 root = "scripts"
 
@@ -360,12 +347,10 @@ minversion = "8.0"
 python_classes = [ "Test*" ]
 python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
 
-
 [tool.radon]
 cc_min = "B"
 exclude = "tests/*,examples/*"
 mi_min = "B"
-
 
 # [MANAGED] ruff
 [tool.ruff]
@@ -474,7 +459,9 @@ split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
 
-
+"**/.vulture_whitelist.py" = [
+  "ALL",
+]
 "**/*_pb2*.py" = [
   "ALL",
 ]
@@ -651,9 +638,6 @@ split-on-trailing-comma = true
   "S404",
   "S603",
 ]
-"**/.vulture_whitelist.py" = [
-  "ALL",
-]
 "**/__init__.py" = [
   "ANN401",
   "D107",
@@ -736,7 +720,7 @@ split-on-trailing-comma = true
   "S404",
   "S603",
 ]
-"**/tools/**/*.py" = [
+"**/tools/*.py" = [
   "FBT001",
   "FBT002",
   "N802",
@@ -745,7 +729,7 @@ split-on-trailing-comma = true
   "S607",
   "T201",
 ]
-"**/tools/*.py" = [
+"**/tools/**/*.py" = [
   "FBT001",
   "FBT002",
   "N802",
@@ -774,7 +758,6 @@ sort_first = [
   "project",
   "tool",
 ]
-
 
 # [MANAGED] yamlfix
 [tool.yamlfix]

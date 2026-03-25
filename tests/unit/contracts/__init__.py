@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
+# Regenerate with: make gen
 #
 """Shared unit-test contracts for behavior reuse across suites."""
 
@@ -15,10 +15,7 @@ if TYPE_CHECKING:
     from tests.unit.contracts.text_contract import TextUtilityContract
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
-    "TextUtilityContract": [
-        "tests.unit.contracts.text_contract",
-        "TextUtilityContract",
-    ],
+    "TextUtilityContract": ["tests.unit.contracts.text_contract", "TextUtilityContract"],
 }
 
 __all__ = [

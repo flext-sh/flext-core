@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
+# Regenerate with: make gen
 #
 """Test helpers for flext-core - service factories only.
 

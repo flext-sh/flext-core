@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make codegen
+# Regenerate with: make gen
 #
 """Flext tests package."""
 
@@ -20,15 +20,9 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestDocker": ["tests.unit.flext_tests.test_docker", "TestDocker"],
-    "TestFlextTestsDomains": [
-        "tests.unit.flext_tests.test_domains",
-        "TestFlextTestsDomains",
-    ],
+    "TestFlextTestsDomains": ["tests.unit.flext_tests.test_domains", "TestFlextTestsDomains"],
     "TestFlextTestsFiles": ["tests.unit.flext_tests.test_files", "TestFlextTestsFiles"],
-    "TestFlextTestsMatchers": [
-        "tests.unit.flext_tests.test_matchers",
-        "TestFlextTestsMatchers",
-    ],
+    "TestFlextTestsMatchers": ["tests.unit.flext_tests.test_matchers", "TestFlextTestsMatchers"],
     "TestUtilities": ["tests.unit.flext_tests.test_utilities", "TestUtilities"],
 }
 
