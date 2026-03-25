@@ -87,7 +87,21 @@ export PYTHON_KEYRING_BACKEND := keyring.backends.null.Keyring
 VENV_PYTHON := $(ACTIVE_VENV)/bin/python
 VENV_ACTIVATE := source $(ACTIVE_VENV)/bin/activate
 export VIRTUAL_ENV := $(ACTIVE_VENV)
-export PATH := $(ACTIVE_VENV)/bin:$(PATH)
+
+# Go tooling/caches (zero-config defaults for make targets).
+GO_TOOLS_BIN ?= $(WORKSPACE_ROOT)/.tools/bin
+GO_CACHE_ROOT ?= /tmp/flext-go-cache
+GO_BUILD_CACHE ?= $(GO_CACHE_ROOT)/build
+GO_MOD_CACHE ?= $(GO_CACHE_ROOT)/mod
+GO_LINT_CACHE ?= $(GO_CACHE_ROOT)/golangci-lint
+GOLANGCI_LINT_CMD ?= golangci-lint
+GOLANGCI_LINT_INSTALL ?= go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+
+export GOBIN ?= $(GO_TOOLS_BIN)
+export GOCACHE ?= $(GO_BUILD_CACHE)
+export GOMODCACHE ?= $(GO_MOD_CACHE)
+export GOLANGCI_LINT_CACHE ?= $(GO_LINT_CACHE)
+export PATH := $(GO_TOOLS_BIN):$(ACTIVE_VENV)/bin:$(PATH)
 
 # Poetry command (uses workspace venv automatically)
 POETRY := poetry
@@ -243,7 +257,22 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 		fi; \
 		gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/go/g' | tr ' ' ','); \
 		if echo "$$gates" | grep -qw lint; then \
-			golangci-lint run || { echo "FAIL: lint"; exit 1; }; \
+			mkdir -p "$(GO_TOOLS_BIN)" "$(GO_BUILD_CACHE)" "$(GO_MOD_CACHE)" "$(GO_LINT_CACHE)"; \
+			if ! command -v $(GOLANGCI_LINT_CMD) >/dev/null 2>&1; then \
+				echo "INFO: installing golangci-lint into $(GO_TOOLS_BIN)"; \
+				$(GOLANGCI_LINT_INSTALL) || { echo "FAIL: lint (golangci-lint install)"; exit 1; }; \
+			fi; \
+			lint_log=$$(mktemp); \
+			if ! $(GOLANGCI_LINT_CMD) run >"$$lint_log" 2>&1; then \
+				if grep -q "used to build golangci-lint is lower than the targeted Go version" "$$lint_log"; then \
+					echo "INFO: refreshing golangci-lint for current Go toolchain"; \
+					$(GOLANGCI_LINT_INSTALL) || { cat "$$lint_log"; rm -f "$$lint_log"; echo "FAIL: lint"; exit 1; }; \
+					if ! $(GOLANGCI_LINT_CMD) run; then rm -f "$$lint_log"; echo "FAIL: lint"; exit 1; fi; \
+				else \
+					cat "$$lint_log"; rm -f "$$lint_log"; echo "FAIL: lint"; exit 1; \
+				fi; \
+			fi; \
+			rm -f "$$lint_log"; \
 		fi; \
 		if echo "$$gates" | grep -qw format; then \
 			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*')" ]; then \
