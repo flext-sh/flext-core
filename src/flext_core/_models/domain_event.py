@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Annotated, override
+from typing import override
 
-from pydantic import BeforeValidator, Field
+from pydantic import Field, field_validator
 
 from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, t
 
@@ -147,28 +147,28 @@ class FlextModelsDomainEvent:
     ):
         """Base class for domain events."""
 
-        message_type: Annotated[
-            str,
-            Field(
-                default="event",
-                frozen=True,
-                description="Message type discriminator for union routing - always 'event'",
-            ),
-        ] = "event"
+        message_type: str = Field(
+            default="event",
+            frozen=True,
+            description="Message type discriminator for union routing - always 'event'",
+        )
         event_type: t.NonEmptyStr
         aggregate_id: t.NonEmptyStr
-        data: Annotated[
-            FlextModelsDomainEvent.ComparableConfigMap,
-            BeforeValidator(lambda v: FlextModelsDomainEvent._normalize_event_data(v)),
-            Field(
-                validate_default=True,
-                description="Event data container",
-            ),
-        ] = Field(
+        data: FlextModelsDomainEvent.ComparableConfigMap = Field(
+            validate_default=True,
+            description="Event data container",
             default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(
                 root={},
-            )
+            ),
         )
+
+        @field_validator("data", mode="before")
+        @classmethod
+        def _validate_data(
+            cls,
+            value: t.ValueOrModel,
+        ) -> FlextModelsDomainEvent.ComparableConfigMap:
+            return FlextModelsDomainEvent._normalize_event_data(value)
 
     # Canonical alias: tests use m.DomainEvent, which resolves to Entry
     DomainEvent = Entry

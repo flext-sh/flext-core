@@ -58,7 +58,7 @@ class RailwayService(s[DemonstrationResult]):
             patterns_covered=patterns,
             completed_at=datetime.now(UTC).isoformat(),
         )
-        return r.ok(result_data)
+        return r[DemonstrationResult].ok(result_data)
 
     @staticmethod
     def _create_data_processor() -> Callable[
@@ -80,7 +80,7 @@ class RailwayService(s[DemonstrationResult]):
             email_validation = u.validate_pattern(email, c.PATTERN_EMAIL, "email")
             if email_validation.is_failure:
                 return r[User].fail(email_validation.error or "Invalid email")
-            return r.ok(User(name="Demo User", email=email, domain_events=[]))
+            return r[User].ok(User(name="Demo User", email=email, domain_events=[]))
 
         return validate_user
 
@@ -109,7 +109,7 @@ class RailwayService(s[DemonstrationResult]):
         print(f".map_error() transform: {recovered.error}")
 
         def provide_fallback(_error: str) -> r[str]:
-            return r.ok("Fallback value")
+            return r[str].ok("Fallback value")
 
         fallback = failure.lash(provide_fallback)
         print(f".lash() recovery: {fallback.value}")
@@ -134,7 +134,7 @@ class RailwayService(s[DemonstrationResult]):
     def _demonstrate_factory_methods() -> None:
         """Demonstrate r factory methods with advanced patterns."""
         print("\n=== Factory Methods ===")
-        success = r.ok("Operation successful")
+        success: r[str] = r[str].ok("Operation successful")
         print(f"✅ .ok(): {success.value}")
         failure: r[str] = r[str].fail(
             "Validation failed",
@@ -158,26 +158,30 @@ class RailwayService(s[DemonstrationResult]):
             return value.upper()
 
         input_value = "hello"
-        mapped = r.ok(input_value).map(to_upper)
+        mapped = r[str].ok(input_value).map(to_upper)
         print(f".map(to_upper): {mapped.value}")
         test_value = "test"
 
         def validate_length(v: str) -> r[str]:
             return u.validate_length(v, min_length=c.MIN_USERNAME_LENGTH)
 
-        chained = r.ok(test_value).flat_map(validate_length).map(to_upper)
+        chained = r[str].ok(test_value).flat_map(validate_length).map(to_upper)
         print(f".flat_map chain: {chained.value}")
 
         def add_prefix(value: str) -> r[str]:
-            return r.ok(f"PREFIX_{value}")
+            return r[str].ok(f"PREFIX_{value}")
 
         def add_exclamation(x: str) -> r[str]:
             return r[str].ok(f"{x}!")
 
-        pipeline = r.ok(input_value).flow_through(
-            validate_length,
-            add_prefix,
-            add_exclamation,
+        pipeline: r[str] = (
+            r[str]
+            .ok(input_value)
+            .flow_through(
+                validate_length,
+                add_prefix,
+                add_exclamation,
+            )
         )
         print(f".flow_through pipeline: {pipeline.value}")
 
@@ -188,7 +192,7 @@ class RailwayService(s[DemonstrationResult]):
         user_validator = RailwayService._create_user_validator()
         test_email = "test@example.com"
         result = (
-            r
+            r[str]
             .ok(test_email)
             .flat_map(user_validator)
             .map(lambda user: user.email)
@@ -232,7 +236,7 @@ class RailwayService(s[DemonstrationResult]):
         """Execute demonstration and return success result."""
         try:
             demo()
-            return r.ok(True)
+            return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(f"Demonstration failed: {e}")
 

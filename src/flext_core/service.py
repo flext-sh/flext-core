@@ -243,9 +243,9 @@ class FlextService[
             is_flext_settings = issubclass(config_type_val, FlextSettings)
         except TypeError:
             is_flext_settings = False
-        config_type_for_options: type[FlextSettings | p.Settings | BaseSettings] | None = (
-            config_type_val if is_flext_settings else None
-        )
+        config_type_for_options: (
+            type[FlextSettings | p.Settings | BaseSettings] | None
+        ) = config_type_val if is_flext_settings else None
         config_overrides_scalar: t.ScalarMapping | None = None
         if config_overrides is not None:
             normalized_overrides: t.ScalarMapping = {
@@ -339,7 +339,11 @@ class FlextService[
         except TypeError:
             cfg_is_settings = False
         config_cls: type[FlextSettings] = (
-            config_type if cfg_is_settings and isinstance(config_type, type) and issubclass(config_type, FlextSettings) else FlextSettings
+            config_type
+            if cfg_is_settings
+            and isinstance(config_type, type)
+            and issubclass(config_type, FlextSettings)
+            else FlextSettings
         )
         runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (

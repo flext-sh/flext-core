@@ -30,13 +30,19 @@ class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
     @staticmethod
+    def _safe_validate_serializable(
+        value: t.Serializable | t.NormalizedValue,
+    ) -> t.Serializable:
+        """Validate via Pydantic adapter, falling back to str on any error."""
+        try:
+            return m.Validators.serializable_adapter().validate_python(value)
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError):
+            result: t.Serializable = str(value)
+            return result
+
+    @staticmethod
     def _coerce_guard_value(value: t.Serializable) -> t.NormalizedValue:
-        validated_result = r[t.Serializable].create_from_callable(
-            lambda: m.Validators.serializable_adapter().validate_python(value),
-        )
-        if validated_result.is_failure:
-            return str(value)
-        validated = validated_result.value
+        validated = FlextUtilitiesCollection._safe_validate_serializable(value)
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
@@ -99,12 +105,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _normalize_unknown_value(value: t.NormalizedValue) -> t.NormalizedValue:
-        validated_result = r[t.Serializable].create_from_callable(
-            lambda: m.Validators.serializable_adapter().validate_python(value),
-        )
-        if validated_result.is_failure:
-            return str(value)
-        validated = validated_result.value
+        validated = FlextUtilitiesCollection._safe_validate_serializable(value)
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):

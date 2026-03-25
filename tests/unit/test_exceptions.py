@@ -39,17 +39,17 @@ class Teste:
         """Test exception class inheritance hierarchy."""
         tm.that(
             all(
-                issubclass(cls, e.BaseError)
-                for cls in [
+                cls in e.BaseError.__subclasses__()
+                for cls in (
                     e.ValidationError,
                     e.NotFoundError,
                     e.AuthenticationError,
                     e.TimeoutError,
-                ]
+                )
             ),
             eq=True,
         )
-        tm.that(issubclass(e.BaseError, Exception), eq=True)
+        tm.that(e.BaseError in Exception.__subclasses__(), eq=True)
 
     def test_timestamp_generation(self) -> None:
         """Test that timestamp is automatically generated."""
@@ -669,7 +669,10 @@ class Teste:
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         tm.that(len(result), eq=6)
         corr_id, metadata, auto_log, auto_corr, _metadata_val, extra = result
-        tm.that(corr_id is None or isinstance(corr_id, str), eq=True)
+        if corr_id is None:
+            tm.that(True, eq=True)
+        else:
+            tm.that(corr_id, is_=str)
         tm.that(metadata is None or isinstance(metadata, (m.Metadata, dict)), eq=True)
         tm.that(auto_log, is_=bool)
         tm.that(auto_corr, is_=bool)

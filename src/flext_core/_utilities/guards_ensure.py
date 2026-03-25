@@ -451,7 +451,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                         )
                     return True
             elif FlextUtilitiesGuardsEnsure.is_object_tuple(validator):
-                tuple_types = tuple(
+                tuple_types: tuple[type, ...] = tuple(
                     item for item in validator if isinstance(item, type)
                 )
                 if len(tuple_types) == len(validator) and isinstance(

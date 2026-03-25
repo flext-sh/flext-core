@@ -740,5 +740,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
 # canonical short name. Declared as TypeAlias so mypy resolves r[T] generically.
 r = FlextResult  # Generic alias: use as r[T]
 
+
 # Ensure we export all types needed for module clients
 __all__ = ["FlextResult", "r"]

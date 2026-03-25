@@ -358,8 +358,10 @@ class TestUtilitiesParserFullCoverage:
         class _NotSequence:
             pass
 
-        with pytest.raises(TypeError):
-            parser.norm_in("a", cast("t.StrSequence", _NotSequence()), case="lower")
+        not_seq_result = parser.norm_in(
+            "a", cast("t.StrSequence", _NotSequence()), case="lower"
+        )
+        tm.that(not_seq_result, eq=False)
         tm.that(mapping_result, eq=True)
         tm.that(config_map_result, eq=True)
         original_norm_list = u.norm_list

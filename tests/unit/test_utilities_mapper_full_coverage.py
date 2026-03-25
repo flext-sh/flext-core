@@ -381,10 +381,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(path_val.as_posix(), eq="/tmp")
         as_json: MutableMapping[str, test_t.NormalizedValue] = {}
         for key, val in {"x": Path("/tmp")}.items():
-            if isinstance(val, Path):
-                as_json[str(key)] = val.as_posix()
-            else:
-                as_json[str(key)] = val
+            as_json[str(key)] = val.as_posix()
         tm.that(as_json["x"], eq="/tmp")
         list_json: Sequence[Mapping[str, test_t.NormalizedValue]] = [
             {"a": 1},
@@ -404,10 +401,8 @@ class UtilitiesMapperFullCoverageNamespace:
                 safe_json[key] = val.model_dump(mode="json")
             elif isinstance(val, Path):
                 safe_json[key] = val.as_posix()
-            elif isinstance(val, datetime):
-                safe_json[key] = val.isoformat()
             else:
-                safe_json[key] = val
+                safe_json[key] = val.isoformat()
         tm.that(safe_json, is_=Mapping)
         tm.that(safe_json["model"], eq={"x": 1})
         tm.that(safe_json["path"], eq="/tmp")
@@ -658,10 +653,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper._apply_strip_none({"a": None}, strip_none=False), eq={"a": None})
         tm.that(mapper._apply_strip_empty({"a": ""}, strip_empty=False), eq={"a": ""})
         tm.that(
-            {
-                str(key): val.as_posix() if isinstance(val, Path) else val
-                for key, val in {"a": Path("/tmp")}.items()
-            }["a"],
+            {str(key): val.as_posix() for key, val in {"a": Path("/tmp")}.items()}["a"],
             eq="/tmp",
         )
 

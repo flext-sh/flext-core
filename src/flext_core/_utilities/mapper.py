@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from functools import partial
 from typing import overload
 
 from pydantic import BaseModel
@@ -212,10 +211,10 @@ class FlextUtilitiesMapper:
                 "float": 0.0,
                 "str": "",
                 "bool": False,
-                "list": [],
-                "dict": {},
+                "list": list[t.NormalizedValue](),
+                "dict": dict[str, t.NormalizedValue](),
                 "tuple": (),
-                "set": [],
+                "set": list[t.NormalizedValue](),
             }
             fallback = converter_defaults.get(converter_name, current)
 
@@ -257,9 +256,9 @@ class FlextUtilitiesMapper:
             else None
         )
         default_map: t.ContainerMapping = {
-            "str_list": [],
-            "dict": {},
-            "list": [],
+            "str_list": list[t.NormalizedValue](),
+            "dict": dict[str, t.NormalizedValue](),
+            "list": list[t.NormalizedValue](),
             "str": "",
         }
         default_val: t.NormalizedValue = (
@@ -375,12 +374,15 @@ class FlextUtilitiesMapper:
             group_callable = group_callable_result.value
             grouped_callable: MutableMapping[str, t.MutableContainerList] = {}
             for item in current_list:
-                key_result = r[t.NormalizedValue].create_from_callable(
-                    partial(group_callable, item),
-                )
-                if key_result.is_failure:
+                try:
+                    group_key: t.NormalizedValue | None = (
+                        group_callable(item) if group_callable is not None else None
+                    )
+                except (ValueError, TypeError, KeyError, AttributeError, RuntimeError):
                     continue
-                key = str(key_result.value)
+                if group_key is None:
+                    continue
+                key = str(group_key)
                 grouped_callable.setdefault(key, []).append(item)
             return grouped_callable
         return current
@@ -1078,10 +1080,12 @@ class FlextUtilitiesMapper:
             name = FlextUtilitiesMapper.as_(value, str, default="")
 
         """
+        # Bind before isinstance: mypy narrows value→object after isinstance(value, target:type)
+        typed_value: t.NormalizedValue = value
         try:
             if isinstance(value, target):
-                if FlextUtilitiesGuards.is_container(value):
-                    return FlextUtilitiesMapper.narrow_to_container(value)
+                if FlextUtilitiesGuards.is_container(typed_value):
+                    return FlextUtilitiesMapper.narrow_to_container(typed_value)
                 return str(value)
         except TypeError:
             if strict:

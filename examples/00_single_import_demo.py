@@ -27,7 +27,6 @@ from itertools import starmap
 from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
-from twisted.python.log import msg
 
 from flext_core import FlextContext, FlextLogger, c, e, r, t, u
 
@@ -66,7 +65,7 @@ def validate_transform_user(data: t.ConfigMap) -> r[UserProfile]:
         ],
         identity,
     ).flat_map(
-        lambda _: r.ok(
+        lambda _: r[UserProfile].ok(
             UserProfile(
                 unique_id=u.generate("correlation"),
                 name=name.upper(),
@@ -217,8 +216,8 @@ def demonstrate_exceptions() -> None:
     def format_exception_message(error: str) -> str:
         return f"Converted exception to result: {error}"
 
-    def process_scenario(field: str, value: str) -> r[str]:
-        msg_str = str(msg)
+    def process_scenario(message: str, field: str, value: str) -> r[str]:
+        msg_str = str(message)
         field_str = str(field)
         value_str = str(value)
 
@@ -228,7 +227,7 @@ def demonstrate_exceptions() -> None:
 
     def process_exception(error: str) -> r[str]:
         error_str = str(error)
-        return r.ok(format_exception_message(error_str))
+        return r[str].ok(format_exception_message(error_str))
 
     _ = r.traverse(
         list(starmap(process_scenario, error_scenarios))
@@ -261,7 +260,7 @@ def execute_validation_chain(user_data: t.ConfigMap) -> None:
                 f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
             ),
         )
-        .flat_map(r.ok)
+        .flat_map(lambda output: r[str].ok(output))
         .flat_map(
             lambda output: process_user_data(
                 user_data=user_data,

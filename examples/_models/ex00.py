@@ -18,7 +18,7 @@ class Ex00UserProfile(m.Entity):
         """Activate user once."""
         if self.status == c.Status.ACTIVE:
             return r[None].fail("Already active")
-        return r.ok(None)
+        return r[None].ok(None)
 
 
 class Ex00UserInput(m.Value):
@@ -29,7 +29,7 @@ class Ex00UserInput(m.Value):
 
     @field_validator("name", "email", mode="before")
     @classmethod
-    def validate_non_empty_text(cls, value: str) -> str:
+    def validate_non_empty_text(cls, value: object) -> str:
         """Validate text input."""
         if not isinstance(value, str):
             msg = "Expected text input"

@@ -251,6 +251,16 @@ class UtilitiesMapperCoverage100Namespace:
     class TestuMapperConversions:
         """Tests for u conversions (ensure, convert)."""
 
+        @staticmethod
+        def _to_json_safe(value: t.ValueOrModel) -> t.NormalizedValue:
+            if isinstance(value, BaseModel):
+                return cast("t.NormalizedValue", value.model_dump(mode="json"))
+            if isinstance(value, Path):
+                return value.as_posix()
+            if isinstance(value, datetime):
+                return value.isoformat()
+            return cast("t.NormalizedValue", value)
+
         def test_ensure_str(self) -> None:
             """Test ensure_str."""
             tm.that(u.ensure_str("s"), eq="s")
@@ -277,10 +287,7 @@ class UtilitiesMapperCoverage100Namespace:
             payload: Mapping[str, t.ValueOrModel] = {"obj": obj}
             res: t.MutableContainerMapping = {}
             for key, val in payload.items():
-                if isinstance(val, BaseModel):
-                    res[key] = val.model_dump(mode="json")
-                else:
-                    res[key] = val
+                res[key] = self._to_json_safe(val)
             assert "obj" in res
             tm.that(
                 res["obj"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
@@ -297,14 +304,7 @@ class UtilitiesMapperCoverage100Namespace:
 
             res: t.MutableContainerMapping = {}
             for key, val in payload.items():
-                if isinstance(val, BaseModel):
-                    res[key] = val.model_dump(mode="json")
-                elif isinstance(val, Path):
-                    res[key] = val.as_posix()
-                elif isinstance(val, datetime):
-                    res[key] = val.isoformat()
-                else:
-                    res[key] = val
+                res[key] = self._to_json_safe(val)
 
             tm.that(
                 res["obj"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
@@ -316,10 +316,7 @@ class UtilitiesMapperCoverage100Namespace:
             d: Mapping[str, t.ValueOrModel] = {"a": SimpleObj(name="test", value=1)}
             res: t.MutableContainerMapping = {}
             for key, val in d.items():
-                if isinstance(val, BaseModel):
-                    res[key] = val.model_dump(mode="json")
-                else:
-                    res[key] = val
+                res[key] = self._to_json_safe(val)
             tm.that(
                 res["a"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
             )
@@ -332,10 +329,7 @@ class UtilitiesMapperCoverage100Namespace:
             for item in test_list:
                 item_dict: t.MutableContainerMapping = {}
                 for key, val in item.items():
-                    if isinstance(val, BaseModel):
-                        item_dict[key] = val.model_dump(mode="json")
-                    else:
-                        item_dict[key] = val
+                    item_dict[key] = self._to_json_safe(val)
                 res.append(item_dict)
             tm.that(
                 res[0]["a"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})

@@ -248,30 +248,29 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.expected", handler.can_handle(_Message))
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
-        msg_type = _Message | str
         execute_value = handler.execute(
-            cast("msg_type", _Message(text=payload_text)),
+            cast("_Message | str", _Message(text=payload_text)),
         ).unwrap_or("-")
         self.check("execute.success.value", payload_text in str(execute_value))
         self.check(
             "execute.validation_failure",
-            handler.execute(cast("msg_type", "bad")).error,
+            handler.execute(cast("_Message | str", "bad")).error,
         )
         dispatch_value = handler.dispatch_message(
-            cast("msg_type", _Message(text=dispatch_text)),
+            cast("_Message | str", _Message(text=dispatch_text)),
         ).unwrap_or("-")
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
             "dispatch.mode_mismatch",
             handler.dispatch_message(
-                cast("msg_type", _Message(text="go")),
+                cast("_Message | str", _Message(text="go")),
                 operation=c.HANDLER_MODE_QUERY,
             ).error,
         )
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                cast("msg_type", "explode"),
+                cast("_Message | str", "explode"),
                 operation=c.HANDLER_MODE_COMMAND,
             ).error,
         )
@@ -296,18 +295,10 @@ class Ex10FlextHandlers(Examples):
             handler.push_context(context_payload_event).is_success,
         )
         pop_ctx_1 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
-        pop_ctx_1_val = (
-            pop_ctx_1.get("handler_name", "-")
-            if isinstance(pop_ctx_1, t.ConfigMap)
-            else "-"
-        )
+        pop_ctx_1_val = pop_ctx_1.get("handler_name", "-")
         self.check("pop_context.1", pop_ctx_1_val)
         pop_ctx_2 = handler.pop_context().unwrap_or(t.ConfigMap(root={}))
-        pop_ctx_2_val = (
-            pop_ctx_2.get("handler_name", "-")
-            if isinstance(pop_ctx_2, t.ConfigMap)
-            else "-"
-        )
+        pop_ctx_2_val = pop_ctx_2.get("handler_name", "-")
         self.check("pop_context.2", pop_ctx_2_val)
 
     def demo_namespaces_and_mixins(self) -> None:
@@ -340,9 +331,7 @@ class Ex10FlextHandlers(Examples):
             tracker.record_metric(hit_key, hit_value).is_success,
         )
         metrics_map = tracker.get_metrics().unwrap_or(t.ConfigMap(root={}))
-        metrics_val = (
-            metrics_map.get(hit_key, -1) if isinstance(metrics_map, t.ConfigMap) else -1
-        )
+        metrics_val = metrics_map.get(hit_key, -1)
         self.check("cqrs.get_metrics", metrics_val)
         stack = h.CQRS.ContextStack()
         self.check(
@@ -542,8 +531,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "rr.lash",
-            rr_fail.lash(lambda _err: r[int].ok(rr_value)).unwrap_or(-1)
-            == rr_value,
+            rr_fail.lash(lambda _err: r[int].ok(rr_value)).unwrap_or(-1) == rr_value,
         )
         self.check(
             "rr.recover",

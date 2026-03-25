@@ -728,7 +728,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
     def set(
         self,
         key_or_data: str | t.ConfigMap,
-        value: t.RuntimeAtomic | None = c.SENTINEL_MISSING,
+        value: t.RuntimeAtomic | None = None,
         *,
         scope: str = c.SCOPE_GLOBAL,
     ) -> r[bool]:
@@ -977,7 +977,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         scope: str,
     ) -> r[bool]:
         """Set a single key-value pair in the context."""
-        if value is c.SENTINEL_MISSING or value is None:
+        if value is None:
             return r[bool].fail("Value is required for single-key set")
         validation_result = FlextContext._validate_set_inputs(key, value)
         if validation_result.is_failure:

@@ -792,8 +792,10 @@ class FlextUtilitiesParser:
                     stacklevel=2,
                 )
                 items_to_check = [str(k) for k in items]
+            case Sequence():
+                items_to_check = [str(i) for i in items]
             case _:
-                items_to_check = list(items)
+                items_to_check = [str(items)]
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = [
             FlextUtilitiesParser.norm_str(item, case=case or "lower")

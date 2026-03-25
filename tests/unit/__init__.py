@@ -404,10 +404,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "BadBool": ["tests.unit.test_utilities_mapper_full_coverage", "BadBool"],
     "BadMapping": ["tests.unit.test_utilities_mapper_full_coverage", "BadMapping"],
     "BadString": ["tests.unit.test_utilities_mapper_full_coverage", "BadString"],
-    "CircuitBreakerManager": [
-        "tests.unit.test_dispatcher_reliability",
-        "CircuitBreakerManager",
-    ],
     "ClearCacheScenario": [
         "tests.unit.test_utilities_cache_coverage_100",
         "ClearCacheScenario",
@@ -429,12 +425,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.test_utilities_cache_coverage_100",
         "NormalizeComponentScenario",
     ],
-    "Provide": ["tests.unit.test_di_incremental", "Provide"],
-    "RateLimiterManager": [
-        "tests.unit.test_dispatcher_reliability",
-        "RateLimiterManager",
-    ],
-    "RetryPolicy": ["tests.unit.test_dispatcher_reliability", "RetryPolicy"],
     "RuntimeCloneService": [
         "tests.unit.test_service_additional",
         "RuntimeCloneService",
@@ -741,10 +731,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TextUtilityContract": [
         "tests.unit.contracts.text_contract",
         "TextUtilityContract",
-    ],
-    "TimeoutEnforcer": [
-        "tests.unit.test_dispatcher_timeout_coverage_100",
-        "TimeoutEnforcer",
     ],
     "UtilitiesCacheCoverage100Namespace": [
         "tests.unit.test_utilities_cache_coverage_100",
@@ -1479,15 +1465,11 @@ __all__ = [
     "BadBool",
     "BadMapping",
     "BadString",
-    "CircuitBreakerManager",
     "ClearCacheScenario",
     "ExplodingLenList",
     "FlextProtocols",
     "NestedClassPropagationTransformer",
     "NormalizeComponentScenario",
-    "Provide",
-    "RateLimiterManager",
-    "RetryPolicy",
     "RuntimeCloneService",
     "SimpleObj",
     "SortKeyScenario",
@@ -1587,7 +1569,6 @@ __all__ = [
     "TestuStringParser",
     "TestuTypeChecker",
     "TextUtilityContract",
-    "TimeoutEnforcer",
     "UtilitiesCacheCoverage100Namespace",
     "UtilitiesMapperCoverage100Namespace",
     "UtilitiesMapperFullCoverageNamespace",

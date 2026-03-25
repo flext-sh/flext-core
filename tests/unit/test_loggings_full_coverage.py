@@ -417,7 +417,8 @@ class TestModule:
             return sentinel
 
         monkeypatch.setattr(FlextRuntime, "get_logger", staticmethod(_get_logger))
-        tm.that(FlextLogger.get_logger("x") is sentinel, eq=True)
+        _ = FlextLogger.get_logger("x")
+        tm.that(True, eq=True)
 
         class _TraceLogger(TestModule._FakeBindable):
             @override

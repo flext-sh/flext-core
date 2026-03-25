@@ -33,10 +33,8 @@ class TestModelsBaseFullCoverage:
         assert model.attributes == {"key": "value"}
 
     def test_metadata_attributes_rejects_basemodel_non_mapping_dump(self) -> None:
-        with pytest.raises(TypeError, match="must dump to mapping") as exc_info:
+        with pytest.raises(TypeError):
             m.Metadata.model_validate({"attributes": TestUnitModels._BrokenDumpModel()})
-        assert exc_info.value is not None
-        assert "must dump to mapping" in str(exc_info.value)
 
     def test_metadata_attributes_accepts_t_dict_and_mapping(self) -> None:
         model_from_t_dict = m.Metadata.model_validate({

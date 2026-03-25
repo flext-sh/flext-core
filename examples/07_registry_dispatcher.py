@@ -20,8 +20,18 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, s, t, u
-from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core import (
+    FlextDispatcher,
+    FlextModelsDomainEvent,
+    FlextRegistry,
+    c,
+    h,
+    m,
+    r,
+    s,
+    t,
+    u,
+)
 
 
 class CreateUserCommand(m.Command):

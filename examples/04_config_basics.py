@@ -30,7 +30,7 @@ from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 from flext_core import FlextConstants, FlextService, FlextSettings, c, r, t
 
-_CONTAINER_LIST_ADAPTER = TypeAdapter(list)
+_CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.NormalizedValue | BaseModel])
 
 
 class AppConfig(FlextSettings):

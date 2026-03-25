@@ -130,7 +130,12 @@ class Examples:
 
     def ser(
         self,
-        v: t.NormalizedValue | Path | datetime | Mapping[str, bool | str] | BaseModel | MutableMapping[str, t.NormalizedValue | BaseModel],
+        v: t.NormalizedValue
+        | Path
+        | datetime
+        | Mapping[str, bool | str]
+        | BaseModel
+        | MutableMapping[str, t.NormalizedValue | BaseModel],
     ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 

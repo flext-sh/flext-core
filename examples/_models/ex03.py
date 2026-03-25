@@ -27,10 +27,7 @@ class Ex03Money(m.Value):
     def normalize_currency(cls, value: str | c.Currency) -> c.Currency:
         if isinstance(value, c.Currency):
             return value
-        if isinstance(value, str):
-            return c.Currency(value)
-        msg = "invalid currency"
-        raise TypeError(msg)
+        return c.Currency(value)
 
     def add(self, other: Ex03Money) -> r[Ex03Money]:
         """Add money with same currency."""

@@ -29,68 +29,56 @@ from flext_tests.utilities import FlextTestsUtilities
 from pydantic import BaseModel
 
 from flext_core import r
-from tests import c, m
+from tests import c, m, p
 
 
 def _create_entities_batch(
     names: t.StrSequence,
     values: Sequence[t.Tests.Testobject],
-    entity_class: object,
+    entity_class: p.Tests.EntityFactory[m.Core.DomainTestEntity],
     remove_ids: Sequence[bool] | None = None,
 ) -> r[Sequence[m.Core.DomainTestEntity]]:
-    return cast(
-        "r[Sequence[m.Core.DomainTestEntity]]",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
-            names=names,
-            values=values,
-            entity_class=entity_class,
-            remove_ids=remove_ids,
-        ),
+    return FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+        names=names,
+        values=values,
+        entity_class=entity_class,
+        remove_ids=remove_ids,
     )
 
 
 def _create_entity(
     name: str,
     value: t.Tests.Testobject,
-    entity_class: object,
+    entity_class: p.Tests.EntityFactory[m.Core.DomainTestEntity],
 ) -> m.Core.DomainTestEntity:
-    return cast(
-        "m.Core.DomainTestEntity",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_entity_instance(
-            name=name,
-            value=value,
-            entity_class=entity_class,
-        ),
+    return FlextTestsUtilities.Tests.DomainHelpers.create_test_entity_instance(
+        name=name,
+        value=value,
+        entity_class=entity_class,
     )
 
 
 def _create_value_object(
     data: str,
     count: int,
-    value_class: object,
+    value_class: p.Tests.ValueFactory[m.Core.DomainTestValue],
 ) -> m.Core.DomainTestValue:
-    return cast(
-        "m.Core.DomainTestValue",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
-            data=data,
-            count=count,
-            value_class=value_class,
-        ),
+    return FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
+        data=data,
+        count=count,
+        value_class=value_class,
     )
 
 
 def _create_value_objects_batch(
     data_list: t.StrSequence,
     count_list: Sequence[int],
-    value_class: object,
+    value_class: p.Tests.ValueFactory[m.Core.DomainTestValue],
 ) -> Sequence[m.Core.DomainTestValue]:
-    return cast(
-        "Sequence[m.Core.DomainTestValue]",
-        FlextTestsUtilities.Tests.DomainHelpers.create_test_value_objects_batch(
-            data_list=data_list,
-            count_list=count_list,
-            value_class=value_class,
-        ),
+    return FlextTestsUtilities.Tests.DomainHelpers.create_test_value_objects_batch(
+        data_list=data_list,
+        count_list=count_list,
+        value_class=value_class,
     )
 
 

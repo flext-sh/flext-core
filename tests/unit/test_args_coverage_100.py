@@ -372,7 +372,7 @@ class TestFlextUtilitiesArgs:
             if scenario.expected_success:
                 _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
-                if scenario.expected_status and isinstance(parsed, Mapping):
+                if scenario.expected_status:
                     tm.that(parsed["status"], eq=scenario.expected_status)
             else:
                 _ = u.Tests.Result.assert_failure(result)

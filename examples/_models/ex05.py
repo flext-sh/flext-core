@@ -27,10 +27,7 @@ class Ex05UserModel(m.Value):
     def normalize_status(cls, value: str | Ex05StatusEnum) -> Ex05StatusEnum:
         if isinstance(value, Ex05StatusEnum):
             return value
-        if isinstance(value, str):
-            return Ex05StatusEnum(value)
-        msg = "invalid status"
-        raise TypeError(msg)
+        return Ex05StatusEnum(value)
 
 
 class Ex05HandlerBad(m.Value):

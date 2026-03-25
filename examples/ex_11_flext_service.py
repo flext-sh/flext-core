@@ -300,12 +300,12 @@ class Ex11FlextService(Examples):
         self.check("ProtocolValidation.processor_bad", processor_bad.error)
 
         def _validator_len(data: str) -> r[bool]:
-            if isinstance(data, str) and len(data) >= 3:
+            if len(data) >= 3:
                 return r[bool].ok(True)
             return r[bool].fail("too-short")
 
         def _validator_upper(data: str) -> r[bool]:
-            if isinstance(data, str) and data.isupper():
+            if data.isupper():
                 return r[bool].ok(True)
             return r[bool].fail("not-upper")
 
@@ -519,7 +519,7 @@ class Ex11FlextService(Examples):
         valid_container_value = self.rand_str(4)
         self.check(
             "RuntimeResult.ok.none_raises",
-            r.ok(valid_container_value).is_success,
+            r[str].ok(valid_container_value).is_success,
         )
         self.check("RuntimeResult.ok.none_type", type(valid_container_value).__name__)
 

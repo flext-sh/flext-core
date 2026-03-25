@@ -21,7 +21,7 @@ class ExConfigAppConfig(FlextSettings):
 
     @field_validator("database_url", mode="before")
     @classmethod
-    def normalize_database_url(cls, value: str) -> str:
+    def normalize_database_url(cls, value: object) -> str:
         """Normalize and validate database URL."""
         if not isinstance(value, str):
             msg = "Database URL must be text"

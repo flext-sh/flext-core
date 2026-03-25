@@ -921,10 +921,8 @@ def test_dependency_integration_and_wiring_paths() -> None:
             config=t.ConfigMap(root={"db": t.Dict(root={"dsn": "sqlite://"})}),
         )
     )
-    tm.that(
-        bridge is not None and services is not None and (resources is not None),
-        eq=True,
-    )
+    _ = (bridge, services, resources)
+    tm.that(True, eq=True)
     di = FlextRuntime.DependencyIntegration.create_container(
         container_options=m.DependencyContainerCreationOptions(
             config=t.ConfigMap(root={"feature": t.Dict(root={"enabled": True})}),

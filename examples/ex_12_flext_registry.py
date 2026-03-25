@@ -32,9 +32,9 @@ class _ProtocolHandler(FlextHandlers[BaseModel, t.NormalizedValue]):
     @override
     def handle(self, message: BaseModel) -> r[t.NormalizedValue]:
         value = ""
-        if hasattr(message, "value"):
+        if isinstance(message, _CommandA):
             value = str(message.value)
-        if hasattr(message, "amount"):
+        elif isinstance(message, _CommandB):
             value = str(message.amount)
         return r[t.NormalizedValue].ok(f"{self._label}:{value}")
 

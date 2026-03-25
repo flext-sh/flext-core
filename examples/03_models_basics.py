@@ -244,7 +244,9 @@ class Money(m.Value):
         """Railway pattern for currency-aware addition."""
         if self.currency != other.currency:
             return r[Money].fail("Currency mismatch")
-        return r.ok(Money(amount=self.amount + other.amount, currency=self.currency))
+        return r[Money].ok(
+            Money(amount=self.amount + other.amount, currency=self.currency)
+        )
 
 
 class User(m.Entity):
@@ -280,7 +282,7 @@ class Order(m.AggregateRoot):
 
     model_config = m.DOMAIN_MODEL_CONFIG
     customer_id: str = Field(min_length=1)
-    items: list[OrderItem] = Field(default_factory=list)
+    items: list[OrderItem] = Field(default_factory=lambda: list[OrderItem]())
     status: c.OrderStatus = Field(default=c.OrderStatus.PENDING)
 
     @property
@@ -302,7 +304,7 @@ class Order(m.AggregateRoot):
         if any(existing.product_id == item.product_id for existing in self.items):
             return r[Order].fail("Product already in order")
         self.items.append(item)
-        return r.ok(self)
+        return r[Order].ok(self)
 
     def confirm(self) -> r[Order]:
         """Railway pattern for order confirmation."""
@@ -311,7 +313,7 @@ class Order(m.AggregateRoot):
         if self.status != c.OrderStatus.PENDING:
             return r[Order].fail("Order already processed")
         self.status = c.OrderStatus.CONFIRMED
-        return r.ok(self)
+        return r[Order].ok(self)
 
 
 class DomainModelService(s[t.ConfigMap]):
