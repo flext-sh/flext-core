@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from types import ModuleType
-from typing import Self, overload, override
+from typing import Self, TypeIs, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -35,6 +35,11 @@ from flext_core import (
     t,
     u,
 )
+
+
+def _is_service_of_type[T](value: object, cls: type[T]) -> TypeIs[T]:
+    """TypeIs guard that narrows an object to T for pyright."""
+    return isinstance(value, cls)
 
 
 class FlextContainer(p.Container):
@@ -565,6 +570,14 @@ class FlextContainer(p.Container):
         """
         return FlextLogger.create_module_logger(module_name or "flext_core")
 
+    @staticmethod
+    def _narrow_service[T](service: object, cls: type[T]) -> r[T]:
+        """Narrow a service object to a concrete type T via TypeIs."""
+        if _is_service_of_type(service, cls):
+            return r[T].ok(service)
+        type_name = cls.__name__ if hasattr(cls, "__name__") else "Unknown"
+        return r[T].fail(f"Service is not of type {type_name}")
+
     @overload
     def get[T: t.RegisterableService](
         self,
@@ -606,11 +619,7 @@ class FlextContainer(p.Container):
             service_registration = self._services[name]
             service = service_registration.service
             if type_cls is not None:
-                if isinstance(service, type_cls):
-                    return r[T].ok(service)
-                return r[T].fail(
-                    f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}",
-                )
+                return self._narrow_service(service, type_cls)
             narrowed_service: t.RegisterableService = service
             return r[t.RegisterableService].ok(narrowed_service)
         if name in self._factories:
@@ -621,9 +630,7 @@ class FlextContainer(p.Container):
                 )
                 resolved = factory_callable()
                 if type_cls is not None:
-                    if isinstance(resolved, type_cls):
-                        return r[T].ok(resolved)
-                    return r[T].fail(f"Factory '{name}' returned wrong type")
+                    return self._narrow_service(resolved, type_cls)
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
@@ -639,9 +646,7 @@ class FlextContainer(p.Container):
                         f"Resource '{name}' returned unsupported runtime type",
                     )
                 if type_cls is not None:
-                    if isinstance(resolved, type_cls):
-                        return r[T].ok(resolved)
-                    return r[T].fail(f"Resource '{name}' returned wrong type")
+                    return self._narrow_service(resolved, type_cls)
                 return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
