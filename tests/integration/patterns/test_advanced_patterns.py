@@ -17,12 +17,9 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import cast
 
 import pytest
-from flext_tests import t
 
 from flext_core import r
-from tests import u
-
-from ...models import m
+from tests import m, t, u
 
 TestFunction = Callable[..., None]
 
