@@ -299,9 +299,8 @@ LdifParsingException: Invalid LDIF format
 **Check LDIF content:**
 
 ```python
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
-ldif = FlextLdif()
 content = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: inetOrgPerson"""
@@ -581,9 +580,7 @@ def debug_ldif_processing(content: str):
         return
 
     # Step 3: Try parsing
-    from flext_ldif import FlextLdif
-
-    ldif = FlextLdif()
+    from flext_ldif import ldif
 
     result = ldif.parse(content)
     if result.is_success:

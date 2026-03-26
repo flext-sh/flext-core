@@ -95,14 +95,13 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldif import FlextLdif
+from flext_ldif import ldif
 
 
 class TestLdifParsing:
     def test_parse_valid_ldif(self):
         """Test parsing valid LDIF content."""
-        ldif = FlextLdif()
-        content = """dn: cn=test,dc=example,dc=com
+                content = """dn: cn=test,dc=example,dc=com
 cn: test
 objectClass: inetOrgPerson"""
 
@@ -115,8 +114,7 @@ objectClass: inetOrgPerson"""
 
     def test_parse_invalid_ldif(self):
         """Test parsing invalid LDIF content."""
-        ldif = FlextLdif()
-        content = "invalid ldif content"
+                content = "invalid ldif content"
 
         result = ldif.parse(content)
 
@@ -150,7 +148,7 @@ from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
-from flext_ldif import FlextLdif, FlextLdifSettings
+from flext_ldif import ldif, FlextLdifSettings
 
 
 class TestLdifIntegration:
@@ -160,7 +158,7 @@ class TestLdifIntegration:
 
         # Register LDIF service
         config = FlextLdifSettings(batch_size=100)
-        ldif = FlextLdif(config=config)
+        ldif = ldif(config=config)
         _ = container.register("ldif", ldif)
 
         # Retrieve and use service
@@ -180,7 +178,7 @@ Test complete workflows and user scenarios:
 ```python
 import pytest
 from pathlib import Path
-from flext_ldif import FlextLdif, FlextLdifSettings
+from flext_ldif import ldif, FlextLdifSettings
 
 
 class TestLdifMigration:
@@ -206,7 +204,7 @@ objectClass: inetOrgPerson"""
             source_server="oid", target_server="oud", preserve_oid_modifiers=True
         )
 
-        ldif = FlextLdif(config=config)
+        ldif = ldif(config=config)
         result = ldif.migrate(input_dir, output_dir, "oid", "oud")
 
         # Verify migration
@@ -296,7 +294,7 @@ pytest -n 4
 ```python
 import pytest
 from pathlib import Path
-from flext_ldif import FlextLdif, FlextLdifSettings
+from flext_ldif import ldif, FlextLdifSettings
 
 
 @pytest.fixture
@@ -308,7 +306,7 @@ def ldif_config():
 @pytest.fixture
 def ldif_service(ldif_config):
     """Provide LDIF service instance."""
-    return FlextLdif(config=ldif_config)
+    return ldif(config=ldif_config)
 
 
 @pytest.fixture
@@ -451,8 +449,7 @@ from concurrent.futures import ThreadPoolExecutor
 @pytest.mark.slow
 def test_concurrent_processing():
     """Test concurrent processing performance."""
-    ldif = FlextLdif()
-    content = "dn: test\ncn: test"
+        content = "dn: test\ncn: test"
 
     def process_entry():
         return ldif.parse(content)
@@ -488,8 +485,7 @@ def test_memory_usage():
     initial_memory = process.memory_info().rss
 
     # Process large dataset
-    ldif = FlextLdif()
-    large_content = "dn: test\ncn: test\n" * 10000
+        large_content = "dn: test\ncn: test\n" * 10000
 
     result = ldif.parse(large_content)
     assert result.is_success
@@ -666,19 +662,19 @@ def test_parse_result():
 ```python
 # ✅ GOOD - Independent tests
 def test_parse_valid_ldif():
-    ldif = FlextLdif()  # Fresh instance
+    ldif = ldif()  # Fresh instance
     result = ldif.parse("dn: test")
     assert result.is_success
 
 
 def test_parse_invalid_ldif():
-    ldif = FlextLdif()  # Fresh instance
+    ldif = ldif()  # Fresh instance
     result = ldif.parse("invalid")
     assert result.is_failure
 
 
 # ❌ BAD - Dependent tests
-ldif = FlextLdif()  # Shared instance
+ldif = ldif()  # Shared instance
 
 
 def test_parse_valid_ldif():
