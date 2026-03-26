@@ -10,6 +10,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from pathlib import Path
 
+from pydantic import SecretBytes, SecretStr
+
 
 class FlextTypingBase:
     """Base type alias namespace for Flext core type-safe contracts."""
@@ -29,6 +31,8 @@ class FlextTypingBase:
         | tuple[FlextTypingBase.NormalizedValue, ...]
         | None
     )
+    type SecretValue = SecretStr | SecretBytes
+    type SettingsValue = NormalizedValue | SecretValue
 
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
     type StrMapping = Mapping[str, str]
