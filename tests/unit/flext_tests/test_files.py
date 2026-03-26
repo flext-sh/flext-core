@@ -14,10 +14,10 @@ from pathlib import Path
 
 import pytest
 import yaml
+from flext_tests import c, m, t, tf
 from pydantic import BaseModel
 
-from flext_core import FlextTypes as t, r
-from flext_tests import c, m, tf
+from flext_core import r
 from tests import assertion_helpers
 
 

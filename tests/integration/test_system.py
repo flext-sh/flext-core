@@ -14,14 +14,8 @@ from __future__ import annotations
 import uuid
 from collections.abc import MutableMapping
 
-from flext_core import (
-    FlextConstants,
-    FlextContainer,
-    FlextExceptions,
-    r,
-    t,
-    u,
-)
+from flext_core import FlextContainer, e, r
+from tests import c, t, u
 
 
 class TestCompleteFlextSystemIntegration:
@@ -57,8 +51,8 @@ class TestCompleteFlextSystemIntegration:
     def _validate_imports(self) -> None:
         """Validate that all main components are available."""
         assert r is not None, "r não está disponível"
-        assert FlextConstants is not None, "FlextConstants não está disponível"
-        assert FlextExceptions is not None, "FlextExceptions não está disponível"
+        assert c is not None, "c não está disponível"
+        assert e is not None, "e não está disponível"
         assert u is not None, "u não está disponível"
         assert t is not None, "t não está disponível"
 
@@ -101,32 +95,32 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_constants_system(self) -> None:
         """Test hierarchical constants system."""
-        timeout_default = FlextConstants.DEFAULT_TIMEOUT_SECONDS
+        timeout_default = c.DEFAULT_TIMEOUT_SECONDS
         assert isinstance(timeout_default, (int, float))
         assert timeout_default > 0
-        validation_error_code = FlextConstants.VALIDATION_ERROR
+        validation_error_code = c.VALIDATION_ERROR
         assert isinstance(validation_error_code, str)
         assert validation_error_code == "VALIDATION_ERROR"
-        config_error_code = FlextConstants.CONFIG_ERROR
+        config_error_code = c.CONFIG_ERROR
         assert isinstance(config_error_code, str)
         assert config_error_code == "CONFIG_ERROR"
-        min_name_length = FlextConstants.MIN_NAME_LENGTH
+        min_name_length = c.MIN_NAME_LENGTH
         assert isinstance(min_name_length, int)
         assert min_name_length > 0
 
     def _test_exceptions_system(self) -> None:
         """Test structured exceptions system."""
-        validation_exception = FlextExceptions.ValidationError("campo_invalido")
+        validation_exception = e.ValidationError("campo_invalido")
         assert isinstance(validation_exception, Exception)
-        assert isinstance(validation_exception, FlextExceptions.BaseError)
+        assert isinstance(validation_exception, e.BaseError)
         error_message = str(validation_exception)
         assert "[VALIDATION_ERROR]" in error_message
         assert "campo_invalido" in error_message
-        operation_exception = FlextExceptions.OperationError("operacao_falhada")
-        assert isinstance(operation_exception, FlextExceptions.BaseError)
+        operation_exception = e.OperationError("operacao_falhada")
+        assert isinstance(operation_exception, e.BaseError)
         assert "operacao_falhada" in str(operation_exception)
-        assert issubclass(FlextExceptions.ValidationError, FlextExceptions.BaseError)
-        assert issubclass(FlextExceptions.OperationError, FlextExceptions.BaseError)
+        assert issubclass(e.ValidationError, e.BaseError)
+        assert issubclass(e.OperationError, e.BaseError)
 
     def _test_utilities(self) -> None:
         """Test utilities and helper functions."""
@@ -177,14 +171,14 @@ class TestCompleteFlextSystemIntegration:
             if not dados:
                 return r[t.StrMapping].fail(
                     "Dados não fornecidos",
-                    error_code=FlextConstants.VALIDATION_ERROR,
+                    error_code=c.VALIDATION_ERROR,
                 )
             dados_processados: MutableMapping[str, str] = {}
             for key, value in dados.items():
                 if not u.is_string_non_empty(value):
                     return r[t.StrMapping].fail(
                         f"Campo '{key}' não pode estar vazio",
-                        error_code=FlextConstants.VALIDATION_ERROR,
+                        error_code=c.VALIDATION_ERROR,
                     )
                 dados_processados[key] = f"processado_{value}"
             dados_processados["processado_em"] = u.generate_iso_timestamp()
@@ -249,8 +243,8 @@ class TestCompleteFlextSystemIntegration:
     def _validate_final_system(self) -> None:
         """Validate final system state."""
         assert r is not None
-        assert FlextConstants is not None
-        assert FlextExceptions is not None
+        assert c is not None
+        assert e is not None
         assert u is not None
         assert t is not None
         container_final = FlextContainer()

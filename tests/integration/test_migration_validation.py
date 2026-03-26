@@ -38,10 +38,9 @@ from flext_core import (
     FlextSettings,
     FlextTypes,
     FlextUtilities,
-    p,
     r,
 )
-from flext_tests import t
+from tests import p, t
 
 
 class TestMigrationValidation:

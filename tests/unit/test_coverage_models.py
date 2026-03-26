@@ -1,18 +1,19 @@
 """Comprehensive coverage tests for FlextModels DDD patterns."""
 
+from __future__ import annotations
+
 import math
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TypeAlias, override
 
 import pytest
+from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
-from flext_core._models.domain_event import FlextModelsDomainEvent
-from flext_tests import tm
 from tests import m, t
 
-_DomainEventEntry: TypeAlias = FlextModelsDomainEvent.Entry
+_DomainEventEntry: TypeAlias = m.DomainEvent
 
 
 class TestCoverageModels:

@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 
-from flext_core import FlextUtilities, r
-from tests import t
+from flext_core import r
+from tests import t, u
 
 
 class TestUtilitiesCoverage:
@@ -41,7 +41,6 @@ def test_utilities_get_method_coverage() -> None:
 
 
 def test_utilities_vals_result_contract() -> None:
-    u = FlextUtilities
     values_from_mapping = u.vals({"a": 1, "b": 2})
     assert values_from_mapping.is_success and values_from_mapping.value == [1, 2]
     failed_values_result = r[Mapping[str, int]].fail("failed")

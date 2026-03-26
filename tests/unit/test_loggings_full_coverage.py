@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import ClassVar, cast, override
 
 import pytest
+from flext_tests import t, tm
 
 import flext_core.loggings as loggings_module
 from flext_core import (
@@ -16,11 +17,9 @@ from flext_core import (
     FlextProtocolsLogging,
     FlextRuntime,
     FlextSettings,
-    c,
-    p,
     r,
 )
-from flext_tests import t, tm
+from tests import c, p
 
 
 class TestModule:

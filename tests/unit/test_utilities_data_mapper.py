@@ -14,19 +14,20 @@ from collections import UserDict, UserList
 from collections.abc import ItemsView, Iterator, Mapping
 from typing import cast, override
 
-from flext_core import FlextTypes, FlextUtilities
 from flext_tests import tm
+
 from tests import (
     assertion_helpers,
     c,
     t,
+    u,
 )
 
 
 class TestUtilitiesDataMapper:
-    class _BadDict(UserDict[str, FlextTypes.Container]):
+    class _BadDict(UserDict[str, t.Container]):
         @override
-        def items(self) -> ItemsView[str, FlextTypes.Container]:
+        def items(self) -> ItemsView[str, t.Container]:
             msg = "Bad dict items"
             raise RuntimeError(msg)
 
@@ -46,7 +47,7 @@ class TestUtilitiesDataMapper:
         mc = c.Core.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
-        result = FlextUtilities.map_dict_keys(source_raw, mapping)
+        result = u.map_dict_keys(source_raw, mapping)
         mapped = assertion_helpers.assert_flext_result_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2}
 
@@ -54,7 +55,7 @@ class TestUtilitiesDataMapper:
         mc = c.Core.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
-        result = FlextUtilities.map_dict_keys(
+        result = u.map_dict_keys(
             source_raw,
             mapping,
             keep_unmapped=True,
@@ -66,7 +67,7 @@ class TestUtilitiesDataMapper:
         mc = c.Core.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
-        result = FlextUtilities.map_dict_keys(
+        result = u.map_dict_keys(
             source_raw,
             mapping,
             keep_unmapped=False,
@@ -76,7 +77,7 @@ class TestUtilitiesDataMapper:
 
     def test_map_dict_keys_exception_handling(self) -> None:
         bad_dict_instance = self._BadDict()
-        result = FlextUtilities.map_dict_keys(bad_dict_instance, {})
+        result = u.map_dict_keys(bad_dict_instance, {})
         tm.fail(result, contains="Failed to map dict keys")
 
     def test_basic_flags_building(self) -> None:
@@ -87,7 +88,7 @@ class TestUtilitiesDataMapper:
             mc.FLAGS_WRITE: mc.CAN_WRITE,
             mc.FLAGS_DELETE: mc.CAN_DELETE,
         }
-        result = FlextUtilities.build_flags_dict(flags, mapping)
+        result = u.build_flags_dict(flags, mapping)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == {
             mc.CAN_READ: True,
@@ -99,7 +100,7 @@ class TestUtilitiesDataMapper:
         mc = c.Core.Mapper
         flags = [mc.FLAGS_READ]
         mapping = {mc.FLAGS_READ: mc.CAN_READ, mc.FLAGS_WRITE: mc.CAN_WRITE}
-        result = FlextUtilities.build_flags_dict(
+        result = u.build_flags_dict(
             flags,
             mapping,
             default_value=True,
@@ -110,7 +111,7 @@ class TestUtilitiesDataMapper:
     def test_build_flags_dict_exception_handling(self) -> None:
         bad_list_instance = self._BadList()
         bad_list_typed: t.StrSequence = cast("t.StrSequence", bad_list_instance)
-        result = FlextUtilities.build_flags_dict(bad_list_typed, {})
+        result = u.build_flags_dict(bad_list_typed, {})
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed to build flags dict" in str(result.error)
 
@@ -118,7 +119,7 @@ class TestUtilitiesDataMapper:
         mc = c.Core.Mapper
         source = {mc.FLAGS_READ: True, mc.FLAGS_WRITE: True, mc.FLAGS_DELETE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w", mc.FLAGS_DELETE: "d"}
-        result = FlextUtilities.collect_active_keys(source, mapping)
+        result = u.collect_active_keys(source, mapping)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert set(result.value) == {"r", "w"}
 
@@ -126,12 +127,12 @@ class TestUtilitiesDataMapper:
         mc = c.Core.Mapper
         source = {mc.FLAGS_READ: False, mc.FLAGS_WRITE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w"}
-        result = FlextUtilities.collect_active_keys(source, mapping)
+        result = u.collect_active_keys(source, mapping)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == []
 
     def test_collect_active_keys_exception_handling(self) -> None:
-        result = FlextUtilities.collect_active_keys(
+        result = u.collect_active_keys(
             cast("Mapping[str, bool]", self._BadDictGet()),
             {"key": "output"},
         )
@@ -141,7 +142,7 @@ class TestUtilitiesDataMapper:
     def test_basic_transform(self) -> None:
         mc = c.Core.Mapper
         source_raw = {mc.A: mc.HELLO, mc.B: mc.WORLD}
-        result = FlextUtilities.transform_values(
+        result = u.transform_values(
             source_raw,
             lambda v: str(v).upper(),
         )
@@ -150,7 +151,7 @@ class TestUtilitiesDataMapper:
     def test_numeric_transform(self) -> None:
         mc = c.Core.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
-        result = FlextUtilities.transform_values(
+        result = u.transform_values(
             source_raw,
             lambda v: v * 2 if isinstance(v, int) else v,
         )
@@ -159,7 +160,7 @@ class TestUtilitiesDataMapper:
     def test_basic_filter(self) -> None:
         mc = c.Core.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
-        result = FlextUtilities.filter_dict(
+        result = u.filter_dict(
             source_raw,
             lambda k, v: isinstance(v, int) and v > mc.NUM_1,
         )
@@ -168,11 +169,11 @@ class TestUtilitiesDataMapper:
     def test_basic_invert(self) -> None:
         mc = c.Core.Mapper
         source = {mc.X: mc.Y, mc.A: mc.B}
-        result = FlextUtilities.invert_dict(source)
+        result = u.invert_dict(source)
         assert result == {mc.Y: mc.X, mc.B: mc.A}
 
     def test_collision_handling_last(self) -> None:
         mc = c.Core.Mapper
         source = {mc.A: mc.B, mc.X: mc.B}
-        result = FlextUtilities.invert_dict(source, handle_collisions="last")
+        result = u.invert_dict(source, handle_collisions="last")
         assert result == {mc.B: mc.X}

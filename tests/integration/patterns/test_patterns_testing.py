@@ -25,8 +25,8 @@ from typing import TypeIs
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from flext_core import FlextTypes, FlextUtilities, P, R
-from tests import t
+from flext_core import P, R
+from tests import t, u
 
 type FixtureCaseDict = t.ContainerMapping
 type FixtureDataDict = t.ContainerMapping
@@ -190,16 +190,16 @@ class TestPatternsTesting:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self._given: MutableMapping[str, FlextTypes.Container] = {}
-            self._when: MutableMapping[str, FlextTypes.Container] = {}
-            self._then: MutableMapping[str, FlextTypes.Container] = {}
+            self._given: MutableMapping[str, t.Container] = {}
+            self._when: MutableMapping[str, t.Container] = {}
+            self._then: MutableMapping[str, t.Container] = {}
             self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
         def given(
             self,
             _description: str,
-            **kwargs: FlextTypes.Container,
+            **kwargs: t.Container,
         ) -> TestPatternsTesting.GivenWhenThenBuilder:
             self._given.update(kwargs)
             return self
@@ -207,7 +207,7 @@ class TestPatternsTesting:
         def when(
             self,
             _description: str,
-            **kwargs: FlextTypes.Container,
+            **kwargs: t.Container,
         ) -> TestPatternsTesting.GivenWhenThenBuilder:
             self._when.update(kwargs)
             return self
@@ -215,7 +215,7 @@ class TestPatternsTesting:
         def then(
             self,
             _description: str,
-            **kwargs: FlextTypes.Container,
+            **kwargs: t.Container,
         ) -> TestPatternsTesting.GivenWhenThenBuilder:
             self._then.update(kwargs)
             return self
@@ -234,9 +234,7 @@ class TestPatternsTesting:
         def build(self) -> TestPatternsTesting.MockScenario:
             data: Mapping[
                 str,
-                FlextTypes.Container
-                | MutableMapping[str, FlextTypes.Container]
-                | MutableSequence[str],
+                t.Container | MutableMapping[str, t.Container] | MutableSequence[str],
             ] = {
                 "given": self._given,
                 "when": self._when,
@@ -266,7 +264,7 @@ class TestPatternsTesting:
 
         def with_metadata(
             self,
-            **kwargs: FlextTypes.Container,
+            **kwargs: t.Container,
         ) -> TestPatternsTesting.FlextTestBuilder:
             self._data.update(kwargs)
             return self
@@ -448,14 +446,14 @@ class TestPatternsTesting:
 
         def with_user(
             self,
-            **kwargs: FlextTypes.Container,
+            **kwargs: t.Container,
         ) -> TestPatternsTesting.FixtureBuilder:
             self._fixtures["user"] = kwargs
             return self
 
         def with_request(
             self,
-            **kwargs: FlextTypes.Container,
+            **kwargs: t.Container,
         ) -> TestPatternsTesting.FixtureBuilder:
             self._fixtures["request"] = kwargs
             return self
@@ -480,7 +478,7 @@ class TestPatternsTesting:
         def add_fixture(
             self,
             key: str,
-            value: FlextTypes.Container,
+            value: t.Container,
         ) -> TestPatternsTesting.FixtureBuilder:
             self._fixtures[key] = value
             return self
@@ -589,7 +587,7 @@ class TestPatternsTesting:
     def test_memory_profiling_advanced(self) -> None:
         _ = gc.collect()
         large_list = list(range(10000))
-        filtered_list = list(FlextUtilities.filter(large_list, lambda x: x % 2 == 0))
+        filtered_list = list(u.filter(large_list, lambda x: x % 2 == 0))
         sorted_list = sorted(filtered_list, reverse=True)
         assert len(large_list) == 10000
         assert len(filtered_list) == 5000
@@ -819,7 +817,7 @@ class TestPatternsTesting:
         timeout_seconds: int,
         environment: str,
     ) -> None:
-        config: Mapping[str, FlextTypes.Container] = {
+        config: Mapping[str, t.Container] = {
             "database_url": database_url,
             "debug": debug,
             "timeout_seconds": timeout_seconds,

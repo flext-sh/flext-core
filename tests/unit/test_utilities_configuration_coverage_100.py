@@ -4,11 +4,10 @@ from enum import StrEnum, unique
 from typing import Annotated, Any, ClassVar, cast
 
 import pytest
+from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
-from flext_core import FlextExceptions, FlextModelsResult
-from flext_tests import t, tm
-from tests import c, m, p, u
+from tests import c, e, m, p, u
 
 from ._models import TestUnitModels
 
@@ -42,18 +41,18 @@ class TestFlextUtilitiesConfiguration:
 
         @staticmethod
         def assert_success_with_value[T: t.NormalizedValue](
-            result: FlextModelsResult.RuntimeResult[T],
+            result: m.RuntimeResult[T],
             expected: T,
         ) -> None:
             tm.that(getattr(result, "is_success"), eq=True)
             tm.that(getattr(result, "value"), eq=expected)
 
         @staticmethod
-        def assert_success[T](result: FlextModelsResult.RuntimeResult[T]) -> None:
+        def assert_success[T](result: m.RuntimeResult[T]) -> None:
             tm.that(getattr(result, "is_success"), eq=True)
 
         @staticmethod
-        def assert_failure[T](result: FlextModelsResult.RuntimeResult[T]) -> None:
+        def assert_failure[T](result: m.RuntimeResult[T]) -> None:
             tm.that(getattr(result, "is_failure"), eq=True)
 
     class OptionsModelForTest(m.Value):
@@ -146,7 +145,7 @@ class TestFlextUtilitiesConfiguration:
         )
 
     def test_get_parameter_from_dict_not_found(self) -> None:
-        with pytest.raises(FlextExceptions.NotFoundError):
+        with pytest.raises(e.NotFoundError):
             u.get_parameter(self._create_test_dict(), self.ParameterNames.MISSING.value)
 
     def test_get_parameter_from_pydantic_model(self) -> None:
@@ -205,7 +204,7 @@ class TestFlextUtilitiesConfiguration:
         tm.that(result, eq="default")
 
     def test_get_singleton_no_get_global(self) -> None:
-        with pytest.raises(FlextExceptions.ValidationError):
+        with pytest.raises(e.ValidationError):
             u.get_singleton(self.SingletonWithoutGetGlobalForTest, "value")
 
     def test_set_singleton_success(self) -> None:

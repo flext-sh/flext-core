@@ -274,6 +274,7 @@ exclude = [
   "**/site-packages/**",
   "**/venv",
   "**/venv/**",
+  ".mypy_cache",
   ".pytest_cache",
   ".ruff_cache",
   ".venv",

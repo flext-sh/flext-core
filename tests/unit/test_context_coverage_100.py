@@ -13,11 +13,11 @@ from collections import UserDict
 from collections.abc import Mapping
 
 import pytest
+from flext_tests import tm, u
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextConstants, FlextContext
-from flext_tests import tm, u
-from tests import m, p, t
+from flext_core import FlextContext
+from tests import c, m, p, t
 
 
 class TestContext100Coverage:
@@ -115,7 +115,7 @@ class TestContext100Coverage:
         """Test None is rejected by context.set validation."""
         context = FlextContext()
         context.set("key1", "value1").value
-        result = context._set_single("none_key", None, FlextConstants.SCOPE_GLOBAL)
+        result = context._set_single("none_key", None, c.SCOPE_GLOBAL)
         tm.fail(result)
 
     def test_get_with_different_scope(self) -> None:
@@ -125,14 +125,14 @@ class TestContext100Coverage:
         context.set("user_key", "user_value", scope="user").value
         global_result = context.get(
             "global_key",
-            scope=FlextConstants.SCOPE_GLOBAL,
+            scope=c.SCOPE_GLOBAL,
         )
         tm.ok(global_result)
         user_result = context.get("user_key", scope="user")
         tm.ok(user_result)
         wrong_result = context.get(
             "user_key",
-            scope=FlextConstants.SCOPE_GLOBAL,
+            scope=c.SCOPE_GLOBAL,
         )
         tm.fail(wrong_result)
 
@@ -142,14 +142,14 @@ class TestContext100Coverage:
         result1 = context.set(
             "global_key",
             "global_value",
-            scope=FlextConstants.SCOPE_GLOBAL,
+            scope=c.SCOPE_GLOBAL,
         )
         tm.ok(result1)
         result2 = context.set("user_key", "user_value", scope="user")
         tm.ok(result2)
         global_result = context.get(
             "global_key",
-            scope=FlextConstants.SCOPE_GLOBAL,
+            scope=c.SCOPE_GLOBAL,
         )
         user_result = context.get("user_key", scope="user")
         tm.ok(global_result)
@@ -169,7 +169,7 @@ class TestContext100Coverage:
         context.set("key1", "value1", scope="user").value
         has_user = context.has("key1", scope="user")
         tm.that(has_user, eq=True)
-        has_global = context.has("key1", scope=FlextConstants.SCOPE_GLOBAL)
+        has_global = context.has("key1", scope=c.SCOPE_GLOBAL)
         tm.that(not has_global, eq=True)
 
     def test_keys_returns_all_keys(self) -> None:
@@ -207,7 +207,7 @@ class TestContext100Coverage:
         context.set("key2", "value2", scope="user").value
         all_scopes = context._get_all_scopes()
         tm.that(all_scopes, is_=dict)
-        tm.that(all_scopes, contains=FlextConstants.SCOPE_GLOBAL)
+        tm.that(all_scopes, contains=c.SCOPE_GLOBAL)
         tm.that(all_scopes, contains="user")
 
     def test_export_after_clear(self) -> None:

@@ -4,10 +4,9 @@ from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import tm, u
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextRuntime
-from flext_tests import tm
 from tests import m, t
 
 
@@ -218,21 +217,21 @@ class TestFlextModelsCollectionsCoverage100:
         stats1 = self.StatisticsCount(count=10)
         stats2 = self.StatisticsCount(count=20)
         result = self.StatisticsCount.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(result), eq=True)
+        tm.that(u.is_dict_like(result), eq=True)
         tm.that(result["count"], eq=30)
 
     def test_statistics_aggregate_lists(self) -> None:
         stats1 = self.StatisticsItems(items=["a", "b"])
         stats2 = self.StatisticsItems(items=["c"])
         result = self.StatisticsItems.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(result), eq=True)
+        tm.that(u.is_dict_like(result), eq=True)
         tm.that(result["items"], eq=["a", "b", "c"])
 
     def test_statistics_aggregate_mixed(self) -> None:
         stats1 = self.StatisticsMixed(count=10, items=["a"], name="first")
         stats2 = self.StatisticsMixed(count=20, items=["b"], name="second")
         result = self.StatisticsMixed.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(result), eq=True)
+        tm.that(u.is_dict_like(result), eq=True)
         tm.that(result["count"], eq=30)
         tm.that(result["items"], eq=["a", "b"])
         tm.that(result["name"], eq="second")
@@ -241,7 +240,7 @@ class TestFlextModelsCollectionsCoverage100:
         stats1 = self.StatisticsOptional(count=10, name="first")
         stats2 = self.StatisticsOptional(count=None, name=None)
         result = self.StatisticsOptional.aggregate([stats1, stats2])
-        tm.that(FlextRuntime.is_dict_like(result), eq=True)
+        tm.that(u.is_dict_like(result), eq=True)
         tm.that(result["count"], eq=10)
         tm.that(result["name"], eq="first")
 
@@ -299,28 +298,28 @@ class TestFlextModelsCollectionsCoverage100:
         result1 = self.ResultsProcessed(processed=10)
         result2 = self.ResultsProcessed(processed=20)
         aggregated = self.ResultsProcessed.aggregate([result1, result2])
-        tm.that(FlextRuntime.is_dict_like(aggregated), eq=True)
+        tm.that(u.is_dict_like(aggregated), eq=True)
         tm.that(aggregated["processed"], eq=30)
 
     def test_results_aggregate_lists(self) -> None:
         result1 = self.ResultsErrors(errors=["error1"])
         result2 = self.ResultsErrors(errors=["error2"])
         aggregated = self.ResultsErrors.aggregate([result1, result2])
-        tm.that(FlextRuntime.is_dict_like(aggregated), eq=True)
+        tm.that(u.is_dict_like(aggregated), eq=True)
         tm.that(aggregated["errors"], eq=["error1", "error2"])
 
     def test_results_aggregate_dicts(self) -> None:
         result1 = self.ResultsMetadata(metadata={"key1": "value1"})
         result2 = self.ResultsMetadata(metadata={"key2": "value2"})
         aggregated = self.ResultsMetadata.aggregate([result1, result2])
-        tm.that(FlextRuntime.is_dict_like(aggregated), eq=True)
+        tm.that(u.is_dict_like(aggregated), eq=True)
         tm.that(aggregated["metadata"], eq={"key1": "value1", "key2": "value2"})
 
     def test_results_aggregate_mixed(self) -> None:
         result1 = self.ResultsMixed(processed=10, errors=["a"], status="ok")
         result2 = self.ResultsMixed(processed=20, errors=["b"], status="done")
         aggregated = self.ResultsMixed.aggregate([result1, result2])
-        tm.that(FlextRuntime.is_dict_like(aggregated), eq=True)
+        tm.that(u.is_dict_like(aggregated), eq=True)
         tm.that(aggregated["processed"], eq=30)
         tm.that(aggregated["errors"], eq=["a", "b"])
         tm.that(aggregated["status"], eq="done")
@@ -329,7 +328,7 @@ class TestFlextModelsCollectionsCoverage100:
         result1 = self.ResultsOptional(processed=10, status="ok")
         result2 = self.ResultsOptional(processed=None, status=None)
         aggregated = self.ResultsOptional.aggregate([result1, result2])
-        tm.that(FlextRuntime.is_dict_like(aggregated), eq=True)
+        tm.that(u.is_dict_like(aggregated), eq=True)
         tm.that(aggregated["processed"], eq=10)
         tm.that(aggregated["status"], eq="ok")
 

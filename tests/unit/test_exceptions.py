@@ -25,11 +25,11 @@ from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from typing import cast, override
 
 import pytest
+from flext_tests import t, tm, u
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextConstants, FlextRuntime, e
-from flext_tests import t, tm, u
-from tests import m
+from flext_core import e
+from tests import c, m
 
 
 class Teste:
@@ -143,7 +143,7 @@ class Teste:
         """Test ValidationError with context - tests lines 243-244."""
         context_raw: t.ContainerMapping = {"key1": "value1", "key2": 123}
         context: Mapping[str, t.MetadataValue] = {
-            k: FlextRuntime.normalize_to_metadata(v) for k, v in context_raw.items()
+            k: u.normalize_to_metadata(v) for k, v in context_raw.items()
         }
         error = e.ValidationError(
             "Validation failed",
@@ -186,7 +186,7 @@ class Teste:
             "auto_correlation": True,
         }
         context: Mapping[str, t.MetadataValue] = {
-            k: FlextRuntime.normalize_to_metadata(v) for k, v in context_raw.items()
+            k: u.normalize_to_metadata(v) for k, v in context_raw.items()
         }
         error = e.NotFoundError(
             "Not found",
@@ -439,7 +439,7 @@ class Teste:
         tm.that(error, is_=e.ValidationError)
         error = e.create("Config error", config_key="test_key")
         tm.that(error, is_=e.ConfigurationError)
-        error = e.create("Conn error", host=FlextConstants.LOCALHOST)
+        error = e.create("Conn error", host=c.LOCALHOST)
         tm.that(error, is_=e.ConnectionError)
         error = e.create("Timeout error", timeout_seconds=30.0)
         tm.that(error, is_=e.TimeoutError)
@@ -499,7 +499,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: t.ContainerMapping = {
-            k: FlextRuntime.normalize_to_metadata(
+            k: u.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),
@@ -711,7 +711,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: t.ContainerMapping = {
-            k: FlextRuntime.normalize_to_metadata(
+            k: u.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),
@@ -752,7 +752,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: t.ContainerMapping = {
-            k: FlextRuntime.normalize_to_metadata(
+            k: u.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),
@@ -795,7 +795,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: t.ContainerMapping = {
-            k: FlextRuntime.normalize_to_metadata(
+            k: u.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),
@@ -880,7 +880,7 @@ class Teste:
         tm.that(error_type, eq="validation")
         error_type = e._determine_error_type({"config_key": "test"})
         tm.that(error_type, eq="configuration")
-        error_type = e._determine_error_type({"host": FlextConstants.LOCALHOST})
+        error_type = e._determine_error_type({"host": c.LOCALHOST})
         tm.that(error_type, eq="connection")
         error_type = e._determine_error_type({"timeout_seconds": 30.0})
         tm.that(error_type, eq="timeout")

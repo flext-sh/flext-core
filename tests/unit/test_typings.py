@@ -4,14 +4,14 @@ from enum import StrEnum, unique
 from typing import ClassVar
 
 import pytest
+from flext_tests import tm
 from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U
-from flext_tests import tm
-from tests import e, t
+from flext_core import P, R, ResultT, T, T_co, T_contra, U
+from tests import c, e, t
 
 
 class TestTypings:
@@ -76,10 +76,10 @@ class TestTypings:
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
             t.HostnameStr,
         )
-        localhost = hostname_adapter.validate_python(FlextConstants.LOCALHOST)
-        tm.that(localhost, eq=FlextConstants.LOCALHOST)
-        loopback = hostname_adapter.validate_python(FlextConstants.LOOPBACK_IP)
-        tm.that(loopback, eq=FlextConstants.LOOPBACK_IP)
+        localhost = hostname_adapter.validate_python(c.LOCALHOST)
+        tm.that(localhost, eq=c.LOCALHOST)
+        loopback = hostname_adapter.validate_python(c.LOOPBACK_IP)
+        tm.that(loopback, eq=c.LOOPBACK_IP)
 
     def test_hostname_validation_error(self) -> None:
         hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(

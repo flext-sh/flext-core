@@ -15,8 +15,8 @@ from collections.abc import MutableMapping, MutableSequence
 
 import pytest
 
-from flext_core import FlextConstants, FlextTypes as t, r
-from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core import r
+from tests import c, m, t
 from tests.test_utils import assertion_helpers
 
 
@@ -95,7 +95,7 @@ class TestArchitecturalPatterns:
 
         config_result = (
             ConfigurationBuilder()
-            .with_database(FlextConstants.LOCALHOST, 5432)
+            .with_database(c.LOCALHOST, 5432)
             .with_logging("INFO")
             .with_cache(enabled=True)
             .build()
@@ -105,7 +105,7 @@ class TestArchitecturalPatterns:
         assert isinstance(config, dict)
         database = config.get("database")
         assert isinstance(database, dict)
-        assert database.get("host") == FlextConstants.LOCALHOST
+        assert database.get("host") == c.LOCALHOST
         logging = config.get("logging")
         assert isinstance(logging, dict)
         assert logging.get("level") == "INFO"
@@ -192,14 +192,14 @@ class TestArchitecturalPatterns:
     def test_domain_event_pattern(self) -> None:
         """Test Domain Event pattern implementation."""
 
-        class UserCreatedEvent(FlextModelsDomainEvent.Entry):
+        class UserCreatedEvent(m.DomainEvent):
             """Domain event for user creation using FlextModels foundation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(FlextModelsDomainEvent.Entry):
+        class UserUpdatedEvent(m.DomainEvent):
             """Domain event for user updates."""
 
             user_id: str
@@ -213,9 +213,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: MutableSequence[
-                    FlextModelsDomainEvent.Entry
-                ] = []
+                self.processed_events: MutableSequence[m.DomainEvent] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> r[bool]:
                 """Handle user created event."""

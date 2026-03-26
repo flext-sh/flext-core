@@ -6,17 +6,14 @@ from typing import cast
 
 import pytest
 import structlog.contextvars
+from flext_tests import t, tm
 from pydantic import BaseModel
 
-from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.context import FlextModelsContext
-from flext_tests import t, tm
 from tests import m
 
-_StructlogProxyContextVar = FlextModelsContextProxyVar.StructlogProxyContextVar
+_StructlogProxyContextVar = m.StructlogProxyContextVar
 
-_normalize_to_mapping = FlextModelsContext.normalize_to_mapping
+_normalize_to_mapping = m.normalize_to_mapping
 
 
 class _ModelWithNoCallableDump:
@@ -25,7 +22,7 @@ class _ModelWithNoCallableDump:
 
 def test_to_general_value_dict_removed() -> None:
     """to_general_value_dict was removed during infra migration."""
-    tm.that(not hasattr(FlextModelsContext, "to_general_value_dict"), eq=True)
+    tm.that(not hasattr(m, "to_general_value_dict"), eq=True)
 
 
 def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
@@ -38,11 +35,11 @@ def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
     token_none = proxy.set(None)
     tm.that(token_none.key, eq="proxy_key")
     tm.that(proxy.get(), eq="def")
-    FlextModelsContext.StructlogProxyContextVar.reset(
-        FlextModelsContext.StructlogProxyToken(key="proxy_key", previous_value=None),
+    m.StructlogProxyContextVar.reset(
+        m.StructlogProxyToken(key="proxy_key", previous_value=None),
     )
-    FlextModelsContext.StructlogProxyContextVar.reset(
-        FlextModelsContext.StructlogProxyToken(
+    m.StructlogProxyContextVar.reset(
+        m.StructlogProxyToken(
             key="proxy_key",
             previous_value="restored",
         ),
@@ -65,12 +62,12 @@ def test_context_data_normalize_and_json_checks() -> None:
     nested: t.NormalizedValue = cast("t.NormalizedValue", {"a": [{"b": 1}]})
     normalized = m.ContextData.normalize_to_container(nested)
     tm.that(hasattr(normalized, "root"), eq=True)
-    check_result = FlextModelsContext.ContextData.check_json_serializable(
+    check_result = m.ContextData.check_json_serializable(
         cast("t.ValueOrModel", {"k": [1, "x"]}),
     )
     tm.that(check_result, none=True)
     with pytest.raises(TypeError):
-        FlextModelsContext.ContextData.check_json_serializable(
+        m.ContextData.check_json_serializable(
             cast("t.ValueOrModel", {"normalized"}),
         )
     obj = cast("t.ValueOrModel", _ModelWithNoCallableDump())
@@ -80,34 +77,34 @@ def test_context_data_normalize_and_json_checks() -> None:
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(ValueError) as exc_info:
-        _ = FlextModelsContext.ContextData.validate_dict_serializable(
+        _ = m.ContextData.validate_dict_serializable(
             cast("t.Dict | t.ConfigurationMapping | BaseModel | None", "123"),
         )
     tm.that(exc_info.value, none=False)
     with pytest.raises(TypeError) as exc_info2:
-        _ = FlextModelsContext.ContextData.validate_dict_serializable(
+        _ = m.ContextData.validate_dict_serializable(
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
                 cast("t.NormalizedValue", _ModelWithNoCallableDump()),
             ),
         )
     tm.that(exc_info2.value, none=False)
-    metadata_input = FlextModelFoundation.Metadata(attributes={"a": 1})
-    result = FlextModelsContext.ContextData.validate_dict_serializable(metadata_input)
+    metadata_input = m.Metadata(attributes={"a": 1})
+    result = m.ContextData.validate_dict_serializable(metadata_input)
     tm.that(result, eq={"a": 1})
 
     class _GoodModel(BaseModel):
         b: int = 2
 
-    result_b = FlextModelsContext.ContextData.validate_dict_serializable(_GoodModel())
+    result_b = m.ContextData.validate_dict_serializable(_GoodModel())
     tm.that(result_b, eq={"b": 2})
 
 
 def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
-    result_none = FlextModelsContext.ContextData.validate_dict_serializable(None)
+    result_none = m.ContextData.validate_dict_serializable(None)
     tm.that(result_none, eq={})
     as_mapping: t.ConfigurationMapping = {"k": "v"}
-    result_mapping = FlextModelsContext.ContextData.validate_dict_serializable(
+    result_mapping = m.ContextData.validate_dict_serializable(
         as_mapping,
     )
     tm.that(result_mapping, eq={"k": "v"})
@@ -127,27 +124,27 @@ def test_context_data_validate_dict_serializable_real_dicts(
     expected_result: t.ContainerMapping,
 ) -> None:
     """Test validate_dict_serializable with real dict inputs."""
-    result = FlextModelsContext.ContextData.validate_dict_serializable(input_value)
+    result = m.ContextData.validate_dict_serializable(input_value)
     tm.that(result, eq=expected_result)
 
 
 def test_context_export_serializable_and_validators() -> None:
-    check_result = FlextModelsContext.ContextData.check_json_serializable(
+    check_result = m.ContextData.check_json_serializable(
         cast("t.ValueOrModel", {"k": [1, True]}),
     )
     tm.that(check_result, none=True)
     with pytest.raises(TypeError):
-        _ = FlextModelsContext.ContextData.check_json_serializable(
+        _ = m.ContextData.check_json_serializable(
             cast("t.ValueOrModel", {"normalized"}),
         )
     with pytest.raises(TypeError):
-        _ = FlextModelsContext.ContextExport.validate_dict_serializable(
+        _ = m.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
                 cast("t.NormalizedValue", _ModelWithNoCallableDump()),
             ),
         )
-    result = FlextModelsContext.ContextExport.validate_dict_serializable(None)
+    result = m.ContextExport.validate_dict_serializable(None)
     tm.that(result, eq={})
 
 
@@ -164,26 +161,26 @@ def test_context_export_validate_dict_serializable_valid(
     expected_result: t.ConfigurationMapping,
 ) -> None:
     """Test ContextExport.validate_dict_serializable with valid inputs."""
-    result = FlextModelsContext.ContextExport.validate_dict_serializable(input_value)
+    result = m.ContextExport.validate_dict_serializable(input_value)
     tm.that(result, eq=expected_result)
 
 
 def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     """Test ContextExport.validate_dict_serializable with Mapping and model inputs."""
     as_mapping: t.ConfigurationMapping = {"k": "v"}
-    result_mapping = FlextModelsContext.ContextExport.validate_dict_serializable(
+    result_mapping = m.ContextExport.validate_dict_serializable(
         as_mapping,
     )
     tm.that(result_mapping, eq={"k": "v"})
     with pytest.raises(ValueError):
-        _ = FlextModelsContext.ContextExport.validate_dict_serializable(
+        _ = m.ContextExport.validate_dict_serializable(
             cast(
                 "t.Dict | t.ConfigurationMapping | BaseModel | None",
                 "123",
             ),
         )
-    metadata_input = FlextModelFoundation.Metadata(attributes={"m": 3})
-    result_meta = FlextModelsContext.ContextExport.validate_dict_serializable(
+    metadata_input = m.Metadata(attributes={"m": 3})
+    result_meta = m.ContextExport.validate_dict_serializable(
         metadata_input,
     )
     tm.that(result_meta, eq={"m": 3})
@@ -191,7 +188,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     class _GoodExportModel(BaseModel):
         c: int = 4
 
-    result_export = FlextModelsContext.ContextExport.validate_dict_serializable(
+    result_export = m.ContextExport.validate_dict_serializable(
         _GoodExportModel(),
     )
     tm.that(result_export, eq={"c": 4})
@@ -265,4 +262,4 @@ def test_statistics_and_custom_fields_validators() -> None:
 
 def test_context_data_metadata_normalizer_removed() -> None:
     """normalize_metadata was removed during infra migration."""
-    tm.that(not hasattr(FlextModelsContext, "normalize_metadata"), eq=True)
+    tm.that(not hasattr(m, "normalize_metadata"), eq=True)

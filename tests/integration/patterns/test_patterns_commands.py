@@ -12,10 +12,8 @@ from typing import cast, override
 
 from pydantic import Field
 
-from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextTypes as ft, r
-from flext_tests import t
-
-from ...models import m
+from flext_core import h, r
+from tests import c, m, t
 
 
 class TestPatternsCommands:
@@ -25,7 +23,7 @@ class TestPatternsCommands:
     FlextCommandId = str
     FlextCommandType = str
 
-    class CreateUserCommand(FlextModels.Command):
+    class CreateUserCommand(m.Command):
         """Test command for creating users."""
 
         username: str
@@ -50,7 +48,7 @@ class TestPatternsCommands:
                 return r[bool].fail("Invalid email format")
             return r[bool].ok(True)
 
-    class UpdateUserCommand(FlextModels.Command):
+    class UpdateUserCommand(m.Command):
         """Test command for updating users."""
 
         target_user_id: str
@@ -84,7 +82,7 @@ class TestPatternsCommands:
                 return r[bool].fail("Updates are required")
             return r[bool].ok(True)
 
-    class FailingCommand(FlextModels.Command):
+    class FailingCommand(m.Command):
         """Test command that always fails validation."""
 
         def get_payload(self) -> m.Core.CommandPayloadDict:
@@ -96,24 +94,24 @@ class TestPatternsCommands:
             return r[bool].fail("This command always fails")
 
     class CreateUserCommandHandler(
-        FlextHandlers[
+        h[
             "TestPatternsCommands.CreateUserCommand",
             t.MutableContainerMapping,
         ],
     ):
         """Test handler for CreateUserCommand."""
 
-        created_users: MutableSequence[ft.ContainerMapping] = Field(
-            default_factory=lambda: list[ft.ContainerMapping](),
+        created_users: MutableSequence[t.ContainerMapping] = Field(
+            default_factory=lambda: list[t.ContainerMapping](),
         )
 
         def __init__(self) -> None:
             """Initialize create user command handler."""
-            config = FlextModels.Handler(
+            config = m.Handler(
                 handler_id="create_user_handler",
                 handler_name="Create User Handler",
-                handler_type=FlextConstants.HandlerType.COMMAND,
-                handler_mode=FlextConstants.HandlerType.COMMAND,
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
             )
             super().__init__(config=config)
 
@@ -161,7 +159,7 @@ class TestPatternsCommands:
             return self.handle(command)
 
     class UpdateUserCommandHandler(
-        FlextHandlers[
+        h[
             "TestPatternsCommands.UpdateUserCommand",
             t.MutableContainerMapping,
         ],
@@ -170,11 +168,11 @@ class TestPatternsCommands:
 
         def __init__(self) -> None:
             """Initialize update user command handler."""
-            config = FlextModels.Handler(
+            config = m.Handler(
                 handler_id="update_user_handler",
                 handler_name="Update User Handler",
-                handler_type=FlextConstants.HandlerType.COMMAND,
-                handler_mode=FlextConstants.HandlerType.COMMAND,
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
             )
             super().__init__(config=config)
             self.updated_users: t.MutableContainerMapping = {}
@@ -226,7 +224,7 @@ class TestPatternsCommands:
             return self.handle(command)
 
     class FailingCommandHandler(
-        FlextHandlers[
+        h[
             "TestPatternsCommands.FailingCommand",
             bool,
         ],
@@ -410,7 +408,7 @@ class TestPatternsCommands:
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
-        handler: FlextHandlers[
+        handler: h[
             TestPatternsCommands.CreateUserCommand,
             t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()
@@ -420,7 +418,7 @@ class TestPatternsCommands:
 
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command t.NormalizedValue."""
-        handler: FlextHandlers[
+        handler: h[
             TestPatternsCommands.CreateUserCommand,
             t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()
@@ -430,7 +428,7 @@ class TestPatternsCommands:
 
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""
-        handler: FlextHandlers[
+        handler: h[
             TestPatternsCommands.CreateUserCommand,
             t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()
@@ -468,7 +466,7 @@ class TestPatternsCommands:
 
     def test_process_command_validation_failure(self) -> None:
         """Test processing with command validation failure."""
-        handler: FlextHandlers[
+        handler: h[
             TestPatternsCommands.CreateUserCommand,
             t.MutableContainerMapping,
         ] = self.CreateUserCommandHandler()

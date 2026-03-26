@@ -25,9 +25,8 @@ from typing import Annotated, ClassVar
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings
-from flext_tests import t
-from tests import p
+from flext_core import FlextContainer, FlextLogger, FlextSettings
+from tests import c, p, t
 
 
 class TestFlextSettingsSingletonIntegration:
@@ -410,7 +409,7 @@ class TestFlextSettingsSingletonIntegration:
             FlextSettings.reset_for_testing()
             config_explicit = FlextSettings(
                 app_name="from-init",
-                log_level=FlextConstants.LogLevel.ERROR,
+                log_level=c.LogLevel.ERROR,
                 debug=True,
                 timeout_seconds=90,
             )
@@ -421,7 +420,7 @@ class TestFlextSettingsSingletonIntegration:
             test_logger = FlextLogger("test_precedence")
             assert test_logger is not None
             assert config_explicit.log_level == "ERROR"
-            assert config_explicit.effective_log_level == FlextConstants.LogLevel.INFO
+            assert config_explicit.effective_log_level == c.LogLevel.INFO
             bool(
                 getattr(
                     config_explicit,
@@ -431,12 +430,10 @@ class TestFlextSettingsSingletonIntegration:
             )
             assert config_explicit.trace is False
             config_no_debug = FlextSettings(
-                log_level=FlextConstants.LogLevel.WARNING,
+                log_level=c.LogLevel.WARNING,
                 debug=False,
             )
-            assert (
-                config_no_debug.effective_log_level == FlextConstants.LogLevel.WARNING
-            )
+            assert config_no_debug.effective_log_level == c.LogLevel.WARNING
             bool(
                 getattr(
                     config_no_debug,

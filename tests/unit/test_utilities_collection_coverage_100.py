@@ -21,10 +21,11 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast
 
 import pytest
+from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
-from flext_core import FlextModelsResult, r
-from flext_tests import t, tm, u
+from flext_core import r
+from tests import m
 
 from ..test_utils import assertion_helpers
 
@@ -1054,7 +1055,7 @@ class TestUtilitiesCollectionCoverage:
     )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
-        if isinstance(scenario.items, (r, FlextModelsResult.RuntimeResult)):
+        if isinstance(scenario.items, (r, m.RuntimeResult)):
             pytest.skip("Collection.map() does not handle r items")
         result = u.map(scenario.items, scenario.mapper)
         assert result == scenario.expected_result

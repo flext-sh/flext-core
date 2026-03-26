@@ -18,10 +18,10 @@ from pathlib import Path
 from typing import Annotated, Never, Protocol, cast, override
 
 import pytest
+from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import r
-from flext_tests import t as test_t, tm
 from tests import p, t, u
 
 
@@ -396,13 +396,13 @@ class UtilitiesMapperFullCoverageNamespace:
             "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
         }
         safe_json: MutableMapping[str, test_t.NormalizedValue] = {}
-        for key, val in payload.items():
-            if isinstance(val, BaseModel):
-                safe_json[key] = val.model_dump(mode="json")
-            elif isinstance(val, Path):
-                safe_json[key] = val.as_posix()
+        for key, value in payload.items():
+            if isinstance(value, BaseModel):
+                safe_json[key] = value.model_dump(mode="json")
+            elif isinstance(value, Path):
+                safe_json[key] = value.as_posix()
             else:
-                safe_json[key] = val.isoformat()
+                safe_json[key] = value.isoformat()
         tm.that(safe_json, is_=Mapping)
         tm.that(safe_json["model"], eq={"x": 1})
         tm.that(safe_json["path"], eq="/tmp")
