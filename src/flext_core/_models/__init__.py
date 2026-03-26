@@ -48,21 +48,45 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextGenericModels": ["flext_core._models.generic", "FlextGenericModels"],
     "FlextModelFoundation": ["flext_core._models.base", "FlextModelFoundation"],
-    "FlextModelsCollections": ["flext_core._models.collections", "FlextModelsCollections"],
+    "FlextModelsCollections": [
+        "flext_core._models.collections",
+        "FlextModelsCollections",
+    ],
     "FlextModelsConfig": ["flext_core._models.settings", "FlextModelsConfig"],
     "FlextModelsContainer": ["flext_core._models.container", "FlextModelsContainer"],
     "FlextModelsContainers": ["flext_core._models.containers", "FlextModelsContainers"],
     "FlextModelsContext": ["flext_core._models.context", "FlextModelsContext"],
-    "FlextModelsContextData": ["flext_core._models._context._data", "FlextModelsContextData"],
-    "FlextModelsContextExport": ["flext_core._models._context._export", "FlextModelsContextExport"],
-    "FlextModelsContextMetadata": ["flext_core._models._context._metadata", "FlextModelsContextMetadata"],
-    "FlextModelsContextProxyVar": ["flext_core._models._context._proxy_var", "FlextModelsContextProxyVar"],
-    "FlextModelsContextScope": ["flext_core._models._context._scope", "FlextModelsContextScope"],
-    "FlextModelsContextTokens": ["flext_core._models._context._tokens", "FlextModelsContextTokens"],
+    "FlextModelsContextData": [
+        "flext_core._models._context._data",
+        "FlextModelsContextData",
+    ],
+    "FlextModelsContextExport": [
+        "flext_core._models._context._export",
+        "FlextModelsContextExport",
+    ],
+    "FlextModelsContextMetadata": [
+        "flext_core._models._context._metadata",
+        "FlextModelsContextMetadata",
+    ],
+    "FlextModelsContextProxyVar": [
+        "flext_core._models._context._proxy_var",
+        "FlextModelsContextProxyVar",
+    ],
+    "FlextModelsContextScope": [
+        "flext_core._models._context._scope",
+        "FlextModelsContextScope",
+    ],
+    "FlextModelsContextTokens": [
+        "flext_core._models._context._tokens",
+        "FlextModelsContextTokens",
+    ],
     "FlextModelsCqrs": ["flext_core._models.cqrs", "FlextModelsCqrs"],
     "FlextModelsDecorators": ["flext_core._models.decorators", "FlextModelsDecorators"],
     "FlextModelsDispatcher": ["flext_core._models.dispatcher", "FlextModelsDispatcher"],
-    "FlextModelsDomainEvent": ["flext_core._models.domain_event", "FlextModelsDomainEvent"],
+    "FlextModelsDomainEvent": [
+        "flext_core._models.domain_event",
+        "FlextModelsDomainEvent",
+    ],
     "FlextModelsEntity": ["flext_core._models.entity", "FlextModelsEntity"],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
     "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
