@@ -599,7 +599,7 @@ def test_runtime_result_all_missed_branches() -> None:
         None,
     )
     tm.that(none_error.error, eq="")
-    broken = m.RuntimeResult[int](
+    broken: m.RuntimeResult[int] = m.RuntimeResult(
         is_success=True,
         error=None,
         error_code=None,

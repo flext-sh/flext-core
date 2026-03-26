@@ -57,7 +57,7 @@ def test_map_flat_map_and_then_paths() -> None:
     tm.that(flat_ok.value, eq=20)
     runtime_fail: r[int] = cast(
         "r[int]",
-        m.RuntimeResult[int](
+        m.RuntimeResult(
             error="inner",
             is_success=False,
             error_code=None,
@@ -141,7 +141,7 @@ def test_lash_runtime_result_paths() -> None:
     lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok2)
     tm.ok(lash_ok)
     tm.that(lash_ok.value, eq=99)
-    runtime_fail2: m.RuntimeResult[int] = m.RuntimeResult[int](
+    runtime_fail2: m.RuntimeResult[int] = m.RuntimeResult(
         error="recovery failed",
         is_success=False,
         error_code=None,

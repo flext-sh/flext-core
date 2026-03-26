@@ -8,16 +8,33 @@ SPDX-License-Identifier: MIT
 
 """
 
-from __future__ import annotations
-
 import time
 from collections.abc import MutableMapping, MutableSequence
+from typing import Self
 
 import pytest
 
 from flext_core import r
-from tests import c, m, t
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from tests import c, t
 from tests.test_utils import assertion_helpers
+
+
+class _UserCreatedEvent(FlextModelsDomainEvent.Entry):
+    """Domain event for user creation using FlextModels foundation."""
+
+    user_id: str
+    user_name: str
+    timestamp: float
+
+
+class _UserUpdatedEvent(FlextModelsDomainEvent.Entry):
+    """Domain event for user updates."""
+
+    user_id: str
+    old_name: str
+    new_name: str
+    timestamp: float
 
 
 class TestArchitecturalPatterns:
@@ -70,17 +87,17 @@ class TestArchitecturalPatterns:
                 super().__init__()
                 self._config: t.MutableContainerMapping = {}
 
-            def with_database(self, host: str, port: int) -> ConfigurationBuilder:
+            def with_database(self, host: str, port: int) -> Self:
                 """Add database configuration."""
                 self._config["database"] = {"host": host, "port": port}
                 return self
 
-            def with_logging(self, level: str) -> ConfigurationBuilder:
+            def with_logging(self, level: str) -> Self:
                 """Add logging configuration."""
                 self._config["logging"] = {"level": level}
                 return self
 
-            def with_cache(self, *, enabled: bool) -> ConfigurationBuilder:
+            def with_cache(self, *, enabled: bool) -> Self:
                 """Add cache configuration."""
                 self._config["cache"] = {"enabled": enabled}
                 return self
@@ -192,62 +209,49 @@ class TestArchitecturalPatterns:
     def test_domain_event_pattern(self) -> None:
         """Test Domain Event pattern implementation."""
 
-        class UserCreatedEvent(m.DomainEvent):
-            """Domain event for user creation using FlextModels foundation."""
-
-            user_id: str
-            user_name: str
-            timestamp: float
-
-        class UserUpdatedEvent(m.DomainEvent):
-            """Domain event for user updates."""
-
-            user_id: str
-            old_name: str
-            new_name: str
-            timestamp: float
-
         class UserEventHandler:
             """Handler for user domain events."""
 
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: MutableSequence[m.DomainEvent] = []
+                self.processed_events: MutableSequence[
+                    FlextModelsDomainEvent.Entry
+                ] = []
 
-            def handle_user_created(self, event: UserCreatedEvent) -> r[bool]:
+            def handle_user_created(self, event: _UserCreatedEvent) -> r[bool]:
                 """Handle user created event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)
 
-            def handle_user_updated(self, event: UserUpdatedEvent) -> r[bool]:
+            def handle_user_updated(self, event: _UserUpdatedEvent) -> r[bool]:
                 """Handle user updated event."""
                 self.processed_events.append(event)
                 return r[bool].ok(True)
 
         handler = UserEventHandler()
-        created_event = UserCreatedEvent(
-            event_type="UserCreated",
-            aggregate_id="user_123",
-            user_id="123",
-            user_name="John Doe",
-            timestamp=time.time(),
-        )
-        updated_event = UserUpdatedEvent(
-            event_type="UserUpdated",
-            aggregate_id="user_123",
-            user_id="123",
-            old_name="John Doe",
-            new_name="Jane Doe",
-            timestamp=time.time(),
-        )
+        created_event = _UserCreatedEvent.model_validate({
+            "event_type": "UserCreated",
+            "aggregate_id": "user_123",
+            "user_id": "123",
+            "user_name": "John Doe",
+            "timestamp": time.time(),
+        })
+        updated_event = _UserUpdatedEvent.model_validate({
+            "event_type": "UserUpdated",
+            "aggregate_id": "user_123",
+            "user_id": "123",
+            "old_name": "John Doe",
+            "new_name": "Jane Doe",
+            "timestamp": time.time(),
+        })
         result1 = handler.handle_user_created(created_event)
         assert result1.is_success
         result2 = handler.handle_user_updated(updated_event)
         assert result2.is_success
         assert len(handler.processed_events) == 2
-        assert isinstance(handler.processed_events[0], UserCreatedEvent)
-        assert isinstance(handler.processed_events[1], UserUpdatedEvent)
+        assert isinstance(handler.processed_events[0], _UserCreatedEvent)
+        assert isinstance(handler.processed_events[1], _UserUpdatedEvent)
 
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:

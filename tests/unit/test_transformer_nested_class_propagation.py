@@ -40,5 +40,5 @@ def test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage() ->
         }),
     )
     code = transformed.code
-    assert "from pkg import FlextDispatcher.TimeoutEnforcer as TE" in code
-    assert "value = TE()" in code
+    assert "from pkg import FlextDispatcher as TE" in code
+    assert "value = TE.TimeoutEnforcer()" in code

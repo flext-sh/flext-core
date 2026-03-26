@@ -9,9 +9,10 @@ import structlog.contextvars
 from flext_tests import t, tm
 from pydantic import BaseModel
 
+from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
 from tests import m
 
-_StructlogProxyContextVar = m.StructlogProxyContextVar
+_StructlogProxyContextVar = FlextModelsContextProxyVar.StructlogProxyContextVar
 
 _normalize_to_mapping = m.normalize_to_mapping
 
@@ -27,7 +28,7 @@ def test_to_general_value_dict_removed() -> None:
 
 def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
     structlog.contextvars.clear_contextvars()
-    proxy = _StructlogProxyContextVar[str]("proxy_key", default="def")
+    proxy = _StructlogProxyContextVar("proxy_key", default="def")
     tm.that(proxy.get(), eq="def")
     token = proxy.set("abc")
     tm.that(proxy.get(), eq="abc")
@@ -50,7 +51,7 @@ def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
 def test_structlog_proxy_context_var_default_when_key_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    proxy = _StructlogProxyContextVar[str]("missing_key", default="d")
+    proxy = _StructlogProxyContextVar("missing_key", default="d")
     monkeypatch.setattr(
         "flext_core._models._context._proxy_var.structlog.contextvars.get_contextvars",
         lambda: {"other": "x"},

@@ -453,7 +453,7 @@ class TestModule:
             f_locals: ClassVar[t.ContainerMapping] = {}
             f_code = _CodeUpper()
 
-        monkeypatch.setattr(c, "LEVEL_PREFIX_PARTS_COUNT", 2)
+        monkeypatch.setattr(loggings_module.c, "LEVEL_PREFIX_PARTS_COUNT", 2)
         tm.that(
             FlextLogger._extract_class_name(
                 cast("types.FrameType", cast("t.NormalizedValue", _UpperFrame())),
