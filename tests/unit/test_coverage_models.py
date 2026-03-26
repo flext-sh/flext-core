@@ -5,15 +5,13 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TypeAlias, override
+from typing import override
 
 import pytest
 from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
 from tests import m, t
-
-_DomainEventEntry: TypeAlias = m.DomainEvent
 
 
 class TestCoverageModels:
@@ -309,10 +307,7 @@ class TestCoverageModels:
         tm.that(event1.aggregate_id, eq=event2.aggregate_id)
 
     def test_domain_event_timestamp(self) -> None:
-        class AccountUpdatedEvent(_DomainEventEntry):
-            pass
-
-        event = AccountUpdatedEvent(
+        event = m.DomainEvent(
             event_type="AccountUpdated",
             aggregate_id="ACC-001",
             data=m.ComparableConfigMap(root={"field": "balance"}),
@@ -321,10 +316,7 @@ class TestCoverageModels:
         tm.that(event.created_at, is_=datetime)
 
     def test_domain_event_causality(self) -> None:
-        class PaymentProcessedEvent(_DomainEventEntry):
-            pass
-
-        event = PaymentProcessedEvent(
+        event = m.DomainEvent(
             event_type="PaymentProcessed",
             aggregate_id="PAY-001",
             data=m.ComparableConfigMap(root={"amount": 99.99}),
