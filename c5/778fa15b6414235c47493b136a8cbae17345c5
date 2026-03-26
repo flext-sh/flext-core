@@ -1,0 +1,71 @@
+tests/unit/test_typings.py
+  5f829f74077b858f 14,79-82
+tests/unit/test_result_full_coverage.py
+  5f829f74077b858f 15,32-33,54,60,139
+tests/unit/test_utilities_collection_coverage_100.py
+  5f829f74077b858f 28,1058
+tests/unit/test_utilities_data_mapper.py
+  5f829f74077b858f 23,28,30,50,58,70,80,91,103,114,122,130,135,145,154,163,172,178
+tests/unit/test_utilities_reliability.py
+  5f829f74077b858f 27,288
+tests/integration/test_config_integration.py
+  5f829f74077b858f 29,412,423,433
+tests/unit/test_models_context_full_coverage.py
+  5f829f74077b858f 14,16,25,265
+tests/integration/test_migration_validation.py
+  5f829f74077b858f 43
+tests/unit/test_exceptions.py
+  5f829f74077b858f 32,146,189,442,502,714,755,798,883
+tests/unit/test_coverage_exceptions.py
+  5f829f74077b858f 10-11
+tests/unit/test_coverage_models.py
+  5f829f74077b858f 3-4,16
+tests/unit/test_utilities_type_checker_coverage_100.py
+  5f829f74077b858f 31
+tests/integration/test_system.py
+  5f829f74077b858f 17-18,54-55,98,101,104,107,113,115,119-120,122-123,174,181,246-247
+tests/unit/test_utilities_coverage.py
+  5f829f74077b858f 19-20
+tests/unit/test_utilities_configuration_coverage_100.py
+  5f829f74077b858f 10,44,51,55,148,207
+tests/unit/test_context_coverage_100.py
+  5f829f74077b858f 20
+tests/unit/test_runtime_full_coverage.py
+  5f829f74077b858f 527,529-530,532-533,538-539,575,580,586,595,598,602,772,943-944,946-947,949-950,952-953,967
+tests/unit/test_loggings_full_coverage.py
+  5f829f74077b858f 22
+tests/integration/test_service.py
+  5f829f74077b858f 18-19
+tests/integration/patterns/test_patterns_testing.py
+  5f829f74077b858f 29,193-195,202,210,218,237,267,449,456,481,590,820
+tests/unit/test_di_services_access.py
+  5f829f74077b858f 37
+tests/unit/test_utilities_type_guards_coverage_100.py
+  5f829f74077b858f 11,132,141,154,160-161,167,173,178,183,188,193,200,207,212,217,228,233,244,254,259,268
+tests/unit/flext_tests/test_files.py
+  5f829f74077b858f 20
+tests/integration/patterns/test_patterns_commands.py
+  5f829f74077b858f 15-16,26,51,85,97,104-105,110,113-114,162,171,174-175,227,411,421,431,469
+tests/integration/patterns/test_architectural_patterns.py
+  5f829f74077b858f 19,98,108,195,202,216
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "c5778fa15b6414235c47493b136a8cbae17345c5",
+  "prompts": {
+    "5f829f74077b858f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "faf9e318-24a6-4823-9f77-17c33d6829e5",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 198,
+      "total_deletions": 212,
+      "accepted_lines": 178,
+      "overriden_lines": 1
+    }
+  }
+}
