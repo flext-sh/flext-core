@@ -20,10 +20,9 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, r
-from flext_tests import t
-
-from .helpers.scenarios import (
+from tests import (
     TestHelperScenarios,
+    t,
 )
 
 setattr(builtins, "t", t)
