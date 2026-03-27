@@ -48,16 +48,28 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FailingService": ["tests.helpers.factories_impl", "FailingService"],
     "FailingServiceAuto": ["tests.helpers.factories_impl", "FailingServiceAuto"],
-    "FailingServiceAutoFactory": ["tests.helpers.factories_impl", "FailingServiceAutoFactory"],
+    "FailingServiceAutoFactory": [
+        "tests.helpers.factories_impl",
+        "FailingServiceAutoFactory",
+    ],
     "FailingServiceFactory": ["tests.helpers.factories_impl", "FailingServiceFactory"],
     "GenericModelFactory": ["tests.helpers.factories_impl", "GenericModelFactory"],
     "GetUserService": ["tests.helpers.factories_impl", "GetUserService"],
     "GetUserServiceAuto": ["tests.helpers.factories_impl", "GetUserServiceAuto"],
-    "GetUserServiceAutoFactory": ["tests.helpers.factories_impl", "GetUserServiceAutoFactory"],
+    "GetUserServiceAutoFactory": [
+        "tests.helpers.factories_impl",
+        "GetUserServiceAutoFactory",
+    ],
     "GetUserServiceFactory": ["tests.helpers.factories_impl", "GetUserServiceFactory"],
-    "ServiceFactoryRegistry": ["tests.helpers.factories_impl", "ServiceFactoryRegistry"],
+    "ServiceFactoryRegistry": [
+        "tests.helpers.factories_impl",
+        "ServiceFactoryRegistry",
+    ],
     "ServiceTestCase": ["tests.helpers.factories_impl", "ServiceTestCase"],
-    "ServiceTestCaseFactory": ["tests.helpers.factories_impl", "ServiceTestCaseFactory"],
+    "ServiceTestCaseFactory": [
+        "tests.helpers.factories_impl",
+        "ServiceTestCaseFactory",
+    ],
     "ServiceTestCases": ["tests.helpers.factories_impl", "ServiceTestCases"],
     "TestDataGenerators": ["tests.helpers.factories_impl", "TestDataGenerators"],
     "TestHelperFactories": ["tests.helpers.factories", "TestHelperFactories"],
@@ -66,8 +78,14 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "UserFactory": ["tests.helpers.factories_impl", "UserFactory"],
     "ValidatingService": ["tests.helpers.factories_impl", "ValidatingService"],
     "ValidatingServiceAuto": ["tests.helpers.factories_impl", "ValidatingServiceAuto"],
-    "ValidatingServiceAutoFactory": ["tests.helpers.factories_impl", "ValidatingServiceAutoFactory"],
-    "ValidatingServiceFactory": ["tests.helpers.factories_impl", "ValidatingServiceFactory"],
+    "ValidatingServiceAutoFactory": [
+        "tests.helpers.factories_impl",
+        "ValidatingServiceAutoFactory",
+    ],
+    "ValidatingServiceFactory": [
+        "tests.helpers.factories_impl",
+        "ValidatingServiceFactory",
+    ],
     "reset_all_factories": ["tests.helpers.factories_impl", "reset_all_factories"],
 }
 
