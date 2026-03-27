@@ -28,11 +28,11 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
+from flext_tests import c, tm, u
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings
-from flext_tests import c, tm, u
 from tests import p, t
 
 
@@ -395,21 +395,16 @@ class TestFlextSettings:
                 {},
                 ["FLEXT_APP_NAME", "FLEXT_LOG_LEVEL"],
             ):
-                try:
-                    env_file = tmp_path / ".env"
-                    env_content = (
-                        "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\n"
-                    )
-                    env_file.write_text(env_content)
-                    assert env_file.exists()
-                    assert env_file.read_text() == env_content
-                    os.environ["FLEXT_APP_NAME"] = "from-env-var"
-                    os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
-                    config = FlextSettings()
-                    assert config.app_name == "from-env-var"
-                    assert config.log_level == "ERROR"
-                finally:
-                    pass
+                env_file = tmp_path / ".env"
+                env_content = "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\n"
+                env_file.write_text(env_content)
+                assert env_file.exists()
+                assert env_file.read_text() == env_content
+                os.environ["FLEXT_APP_NAME"] = "from-env-var"
+                os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
+                config = FlextSettings()
+                assert config.app_name == "from-env-var"
+                assert config.log_level == "ERROR"
 
         def test_pydantic_complete_precedence_chain(self, tmp_path: Path) -> None:
             """Test complete Pydantic 2 Settings precedence chain.

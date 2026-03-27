@@ -7,8 +7,8 @@ from enum import StrEnum, unique
 from typing import cast, override
 
 import pytest
-
 from flext_tests import tm, u
+
 from tests import t
 
 

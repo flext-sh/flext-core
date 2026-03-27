@@ -18,6 +18,7 @@ from collections.abc import Sequence
 from typing import cast
 
 import pytest
+from flext_tests import t as test_t, tm
 
 from flext_core import (
     FlextRuntime,
@@ -25,7 +26,6 @@ from flext_core import (
     FlextUtilitiesGuards,
     FlextUtilitiesMapper,
 )
-from flext_tests import t as test_t, tm
 from tests import m, t
 
 pytestmark = [pytest.mark.unit]

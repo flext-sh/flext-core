@@ -24,9 +24,8 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_tests import c, t, t as test_t, tm, u
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TestConstants:

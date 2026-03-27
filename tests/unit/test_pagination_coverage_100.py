@@ -19,9 +19,8 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, TypeIs
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_tests import t, tm, u
+from pydantic import BaseModel, ConfigDict, Field
 
 
 def _is_extract_scenario(

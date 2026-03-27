@@ -21,10 +21,10 @@ from concurrent.futures import Future
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from flext_core import FlextModelsDispatcher
-from flext_tests import tm
 
 
 class TestDispatcherTimeoutCoverage100:

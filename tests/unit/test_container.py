@@ -26,11 +26,11 @@ from collections.abc import Callable, Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
+from flext_tests import c, t, tm, u
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, r
-from flext_tests import c, t, tm, u
 from tests import p
 
 

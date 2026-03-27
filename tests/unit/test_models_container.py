@@ -18,9 +18,9 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar
 
 import pytest
+from flext_tests import t, tm
 from pydantic import ValidationError
 
-from flext_tests import t, tm
 from tests import m, u
 
 

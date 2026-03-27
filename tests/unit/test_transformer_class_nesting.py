@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import libcst as cst
-
 from flext_infra import (
     FlextInfraRefactorClassNestingTransformer,
 )

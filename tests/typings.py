@@ -15,8 +15,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_core import FlextTypes, T, T_co, T_contra, t as ft
 from flext_tests import FlextTestsTypes
+
+from flext_core import FlextTypes, T, T_co, T_contra, t as ft
 
 
 class FlextCoreTestTypes(FlextTestsTypes, FlextTypes):

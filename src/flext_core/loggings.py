@@ -588,10 +588,7 @@ class FlextLogger(u, p.Logger):
         logger = cls.for_container(container, level=resolved_level)
         if context:
             _ = logger.bind_global_context(**context)
-        try:
-            yield logger
-        finally:
-            pass
+        yield logger
 
     @staticmethod
     def _convert_to_relative_path(filename: str) -> str:

@@ -17,8 +17,9 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator, Mapping
 from typing import Never, override
 
-from flext_core import r
 from flext_tests import FlextTestsUtilities, t, tm
+
+from flext_core import r
 
 
 class FlextCoreTestUtilities(FlextTestsUtilities):

@@ -8,11 +8,11 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import u
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextDecorators, FlextExceptions, FlextLogger, r
-from flext_tests import u
 
 
 class TestFlextDecorators:

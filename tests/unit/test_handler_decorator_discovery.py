@@ -6,8 +6,9 @@ import types
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_core import FlextService, h, r
 from flext_tests import tm
+
+from flext_core import FlextService, h, r
 from tests import c, m, p
 
 

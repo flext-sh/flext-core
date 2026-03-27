@@ -368,12 +368,10 @@ class FlextContext(m.ArbitraryTypesModel, u):
         for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
-                result = cloned.set(
+                cloned.set(
                     t.ConfigMap(root=dict(scope_dict.items())),
                     scope=scope_name,
                 )
-                if not result:
-                    pass
         cloned.set_all_metadata_for_clone(self._metadata.model_copy())
         statistics_copy: m.ContextStatistics = self._statistics.model_copy()
         cloned.set_statistics_for_clone(statistics_copy)

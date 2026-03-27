@@ -25,6 +25,7 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
+from flext_tests import u
 from hypothesis import given, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -37,7 +38,6 @@ from flext_core import (
     r,
     s,
 )
-from flext_tests import u
 from tests import t
 
 

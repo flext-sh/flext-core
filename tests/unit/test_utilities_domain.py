@@ -24,11 +24,11 @@ from collections.abc import Mapping, Sequence
 from typing import cast
 
 import pytest
+from flext_tests import t, u
+from flext_tests.utilities import FlextTestsUtilities
 from pydantic import BaseModel
 
 from flext_core import r
-from flext_tests import t, u
-from flext_tests.utilities import FlextTestsUtilities
 from tests import c, m, p
 
 
