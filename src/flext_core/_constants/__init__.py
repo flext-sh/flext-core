@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
+    from flext_core._constants.errors import FlextConstantsErrors
     from flext_core._constants.infrastructure import FlextConstantsInfrastructure
     from flext_core._constants.mixins import FlextConstantsMixins
     from flext_core._constants.platform import FlextConstantsPlatform
@@ -25,6 +26,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextConstantsBase": ["flext_core._constants.base", "FlextConstantsBase"],
     "FlextConstantsCqrs": ["flext_core._constants.cqrs", "FlextConstantsCqrs"],
     "FlextConstantsDomain": ["flext_core._constants.domain", "FlextConstantsDomain"],
+    "FlextConstantsErrors": ["flext_core._constants.errors", "FlextConstantsErrors"],
     "FlextConstantsInfrastructure": [
         "flext_core._constants.infrastructure",
         "FlextConstantsInfrastructure",
@@ -48,6 +50,7 @@ __all__ = [
     "FlextConstantsBase",
     "FlextConstantsCqrs",
     "FlextConstantsDomain",
+    "FlextConstantsErrors",
     "FlextConstantsInfrastructure",
     "FlextConstantsMixins",
     "FlextConstantsPlatform",

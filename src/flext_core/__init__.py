@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
+    from flext_core._constants.errors import FlextConstantsErrors
     from flext_core._constants.infrastructure import FlextConstantsInfrastructure
     from flext_core._constants.mixins import FlextConstantsMixins
     from flext_core._constants.platform import FlextConstantsPlatform
@@ -47,6 +48,7 @@ if TYPE_CHECKING:
     from flext_core._models.dispatcher import FlextModelsDispatcher
     from flext_core._models.domain_event import FlextModelsDomainEvent
     from flext_core._models.entity import FlextModelsEntity
+    from flext_core._models.errors import FlextModelsErrors
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.result import FlextModelsResult
@@ -137,6 +139,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextConstantsBase": ["flext_core._constants.base", "FlextConstantsBase"],
     "FlextConstantsCqrs": ["flext_core._constants.cqrs", "FlextConstantsCqrs"],
     "FlextConstantsDomain": ["flext_core._constants.domain", "FlextConstantsDomain"],
+    "FlextConstantsErrors": ["flext_core._constants.errors", "FlextConstantsErrors"],
     "FlextConstantsInfrastructure": [
         "flext_core._constants.infrastructure",
         "FlextConstantsInfrastructure",
@@ -207,6 +210,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "FlextModelsDomainEvent",
     ],
     "FlextModelsEntity": ["flext_core._models.entity", "FlextModelsEntity"],
+    "FlextModelsErrors": ["flext_core._models.errors", "FlextModelsErrors"],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
     "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
     "FlextModelsService": ["flext_core._models.service", "FlextModelsService"],
@@ -357,6 +361,7 @@ __all__ = [
     "FlextConstantsBase",
     "FlextConstantsCqrs",
     "FlextConstantsDomain",
+    "FlextConstantsErrors",
     "FlextConstantsInfrastructure",
     "FlextConstantsMixins",
     "FlextConstantsPlatform",
@@ -391,6 +396,7 @@ __all__ = [
     "FlextModelsDispatcher",
     "FlextModelsDomainEvent",
     "FlextModelsEntity",
+    "FlextModelsErrors",
     "FlextModelsHandler",
     "FlextModelsResult",
     "FlextModelsService",

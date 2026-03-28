@@ -29,6 +29,7 @@ from flext_core import (
     FlextModelsResult,
     FlextModelsService,
 )
+from flext_core._models.errors import FlextModelsErrors
 
 
 class FlextModels(
@@ -42,6 +43,7 @@ class FlextModels(
     FlextModelsDispatcher,
     FlextModelsDomainEvent,
     FlextModelsEntity,
+    FlextModelsErrors,
     FlextGenericModels,
     FlextModelsHandler,
     FlextModelsResult,

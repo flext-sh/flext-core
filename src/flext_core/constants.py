@@ -16,6 +16,7 @@ from flext_core import (
     FlextConstantsSettings,
     FlextConstantsValidation,
 )
+from flext_core._constants.errors import FlextConstantsErrors
 
 
 class FlextConstants(
@@ -25,6 +26,7 @@ class FlextConstants(
     FlextConstantsPlatform,
     FlextConstantsDomain,
     FlextConstantsCqrs,
+    FlextConstantsErrors,
     FlextConstantsInfrastructure,
     FlextConstantsMixins,
 ):
