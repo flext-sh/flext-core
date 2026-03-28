@@ -36,7 +36,8 @@ class TestDecoratorsDiscoveryFullCoverage:
         mod = types.ModuleType("private_mod")
 
         def _private_factory() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         config = m.FactoryDecoratorConfig(name="private")
         setattr(_private_factory, c.FACTORY_ATTR, config)
@@ -49,7 +50,8 @@ class TestDecoratorsDiscoveryFullCoverage:
         mod = types.ModuleType("factory_mod")
 
         def my_factory() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         config = m.FactoryDecoratorConfig(name="my_factory")
         setattr(my_factory, c.FACTORY_ATTR, config)
@@ -64,10 +66,12 @@ class TestDecoratorsDiscoveryFullCoverage:
         mod = types.ModuleType("multi_mod")
 
         def zebra_factory() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         def alpha_factory() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         config_z = m.FactoryDecoratorConfig(name="zebra")
         config_a = m.FactoryDecoratorConfig(name="alpha")
@@ -103,7 +107,8 @@ class TestDecoratorsDiscoveryFullCoverage:
         mod = types.ModuleType("factory_mod")
 
         def my_factory() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         config = m.FactoryDecoratorConfig(name="my_factory")
         setattr(my_factory, c.FACTORY_ATTR, config)
@@ -115,7 +120,8 @@ class TestDecoratorsDiscoveryFullCoverage:
         mod = types.ModuleType("private_mod")
 
         def _hidden() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         config = m.FactoryDecoratorConfig(name="hidden")
         setattr(_hidden, c.FACTORY_ATTR, config)

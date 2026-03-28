@@ -689,7 +689,8 @@ class TestPatternsTesting:
 
         @self.Helpers.arrange_act_assert(arrange_data, act_on_data, assert_result)
         def test_sum_calculation() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         result = test_sum_calculation()
         assert result == 15
@@ -745,10 +746,12 @@ class TestPatternsTesting:
         fixture_builder = self.FixtureBuilder()
 
         def setup_api_environment() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         def teardown_api_environment() -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         _ = fixture_builder.add_setup(setup_api_environment)
         _ = fixture_builder.add_teardown(teardown_api_environment)

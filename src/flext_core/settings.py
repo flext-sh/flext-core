@@ -220,20 +220,28 @@ class FlextSettings(BaseSettings, u):
 
         Kwargs are applied as field overrides after base env/config loading
         to avoid type conflicts with BaseSettings internal parameters.
+        Uses __dict__ update + single revalidation to avoid triggering
+        validate_assignment validators on each individual field set.
         """
         model_fields = self.__class__.model_fields
         if hasattr(self, "_di_provider"):
             if kwargs:
-                for key, value in kwargs.items():
-                    if key in model_fields:
-                        setattr(self, key, value)
+                valid_kwargs = {k: v for k, v in kwargs.items() if k in model_fields}
+                vars(self).update(valid_kwargs)
+                self.__pydantic_validator__.validate_python(
+                    self.__dict__,
+                    self_instance=self,
+                )
             return
 
         BaseSettings.__init__(self)
         if kwargs:
-            for key, value in kwargs.items():
-                if key in model_fields:
-                    setattr(self, key, value)
+            valid_kwargs = {k: v for k, v in kwargs.items() if k in model_fields}
+            vars(self).update(valid_kwargs)
+            self.__pydantic_validator__.validate_python(
+                self.__dict__,
+                self_instance=self,
+            )
 
     @computed_field
     @property

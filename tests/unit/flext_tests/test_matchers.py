@@ -490,10 +490,12 @@ class TestFlextTestsMatchers:
 
         class TestClass:
             def method1(self) -> None:
-                pass
+                msg = "Must use unified test helpers per Rule 3.6"
+                raise NotImplementedError(msg)
 
             def method2(self) -> None:
-                pass
+                msg = "Must use unified test helpers per Rule 3.6"
+                raise NotImplementedError(msg)
 
         obj = TestClass()
         tm.that(cast("t.NormalizedValue", obj), methods=["method1", "method2"])

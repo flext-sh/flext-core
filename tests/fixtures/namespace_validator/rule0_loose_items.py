@@ -11,7 +11,8 @@ MAX_RETRIES = 3
 
 
 def helper() -> None:
-    pass
+    msg = "Must use unified test helpers per Rule 3.6"
+    raise NotImplementedError(msg)
 
 
 @unique

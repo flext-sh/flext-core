@@ -106,7 +106,8 @@ class TestFlextUtilitiesConfiguration:
         """Config without model_config attribute."""
 
         def __init__(self) -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
     class FailingOptionsForTest(m.Value):
         """Test options that fail validation."""

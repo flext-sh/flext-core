@@ -66,10 +66,12 @@ class TestContainerFullCoverage:
             return []
 
         def remove(self, key: str, scope: str = "") -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         def clear(self) -> None:
-            pass
+            msg = "Must use unified test helpers per Rule 3.6"
+            raise NotImplementedError(msg)
 
         def merge(
             self,
