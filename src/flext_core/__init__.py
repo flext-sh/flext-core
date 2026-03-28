@@ -113,20 +113,20 @@ if TYPE_CHECKING:
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, FlextConstants as c
-    from flext_core.container import FlextContainer
-    from flext_core.context import FlextContext
-    from flext_core.decorators import FlextDecorators, FlextDecorators as d
+    from flext_core._utilities.container import FlextContainer
+    from flext_core._utilities.context_propagation import FlextContext
+    from flext_core._utilities.decorators import FlextDecorators, FlextDecorators as d
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.errors import FlextError, FlextErrorDomain
     from flext_core.exceptions import FlextExceptions, FlextExceptions as e
     from flext_core.handlers import FlextHandlers, FlextHandlers as h
-    from flext_core.loggings import FlextLogger
-    from flext_core.mixins import FlextMixins, FlextMixins as x
+    from flext_core._utilities.loggings import FlextLogger
+    from flext_core._utilities.mixins import FlextMixins, FlextMixins as x
     from flext_core.models import FlextModels, FlextModels as m
     from flext_core.protocols import FlextProtocols, FlextProtocols as p
-    from flext_core.registry import FlextRegistry
+    from flext_core._utilities.registry import FlextRegistry
     from flext_core.result import FlextResult, FlextResult as r
-    from flext_core.runtime import FlextRuntime
+    from flext_core._utilities.runtime import FlextRuntime
     from flext_core.service import FlextService, FlextService as s
     from flext_core.settings import FlextSettings
     from flext_core.typings import BaseModel, FlextTypes, FlextTypes as t
@@ -157,9 +157,9 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_core._constants.validation",
         "FlextConstantsValidation",
     ],
-    "FlextContainer": ["flext_core.container", "FlextContainer"],
-    "FlextContext": ["flext_core.context", "FlextContext"],
-    "FlextDecorators": ["flext_core.decorators", "FlextDecorators"],
+    "FlextContainer": ["flext_core._utilities.container", "FlextContainer"],
+    "FlextContext": ["flext_core._utilities.context_propagation", "FlextContext"],
+    "FlextDecorators": ["flext_core._utilities.decorators", "FlextDecorators"],
     "FlextDispatcher": ["flext_core.dispatcher", "FlextDispatcher"],
     "FlextError": ["flext_core.errors", "FlextError"],
     "FlextErrorDomain": ["flext_core.errors", "FlextErrorDomain"],
