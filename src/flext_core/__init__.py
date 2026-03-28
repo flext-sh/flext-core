@@ -92,9 +92,8 @@ if TYPE_CHECKING:
     from flext_core._utilities.configuration import FlextUtilitiesConfiguration
     from flext_core._utilities.container import FlextContainer
     from flext_core._utilities.context import FlextUtilitiesContext
-    from flext_core._utilities.context_propagation import FlextContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
-    from flext_core._utilities.decorators import FlextDecorators, FlextDecorators as d
+    from flext_core._utilities.decorators import FlextDecorators, d
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enum import FlextUtilitiesEnum
@@ -108,9 +107,8 @@ if TYPE_CHECKING:
     from flext_core._utilities.guards_type_protocol import (
         FlextUtilitiesGuardsTypeProtocol,
     )
-    from flext_core._utilities.loggings import FlextLogger
     from flext_core._utilities.mapper import FlextUtilitiesMapper
-    from flext_core._utilities.mixins import FlextMixins, FlextMixins as x
+    from flext_core._utilities.mixins import FlextMixins, x
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.pagination import FlextUtilitiesPagination
     from flext_core._utilities.parser import FlextUtilitiesParser
@@ -120,10 +118,12 @@ if TYPE_CHECKING:
     from flext_core._utilities.runtime import FlextRuntime
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, FlextConstants as c
+    from flext_core.context import FlextContext
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.errors import FlextError, FlextErrorDomain
     from flext_core.exceptions import FlextExceptions, FlextExceptions as e
     from flext_core.handlers import FlextHandlers, FlextHandlers as h
+    from flext_core.loggings import FlextLogger
     from flext_core.models import FlextModels, FlextModels as m
     from flext_core.protocols import FlextProtocols, FlextProtocols as p
     from flext_core.result import FlextResult, FlextResult as r
@@ -158,7 +158,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "FlextConstantsValidation",
     ],
     "FlextContainer": ["flext_core._utilities.container", "FlextContainer"],
-    "FlextContext": ["flext_core._utilities.context_propagation", "FlextContext"],
+    "FlextContext": ["flext_core.context", "FlextContext"],
     "FlextDecorators": ["flext_core._utilities.decorators", "FlextDecorators"],
     "FlextDispatcher": ["flext_core.dispatcher", "FlextDispatcher"],
     "FlextError": ["flext_core.errors", "FlextError"],
@@ -166,7 +166,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextExceptions": ["flext_core.exceptions", "FlextExceptions"],
     "FlextGenericModels": ["flext_core._models.generic", "FlextGenericModels"],
     "FlextHandlers": ["flext_core.handlers", "FlextHandlers"],
-    "FlextLogger": ["flext_core._utilities.loggings", "FlextLogger"],
+    "FlextLogger": ["flext_core.loggings", "FlextLogger"],
     "FlextMixins": ["flext_core._utilities.mixins", "FlextMixins"],
     "FlextModelFoundation": ["flext_core._models.base", "FlextModelFoundation"],
     "FlextModels": ["flext_core.models", "FlextModels"],
@@ -341,7 +341,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "_typings": ["flext_core._typings", ""],
     "_utilities": ["flext_core._utilities", ""],
     "c": ["flext_core.constants", "FlextConstants"],
-    "d": ["flext_core._utilities.decorators", "FlextDecorators"],
+    "d": ["flext_core._utilities.decorators", "d"],
     "e": ["flext_core.exceptions", "FlextExceptions"],
     "h": ["flext_core.handlers", "FlextHandlers"],
     "m": ["flext_core.models", "FlextModels"],
@@ -350,7 +350,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "s": ["flext_core.service", "FlextService"],
     "t": ["flext_core.typings", "FlextTypes"],
     "u": ["flext_core.utilities", "FlextUtilities"],
-    "x": ["flext_core._utilities.mixins", "FlextMixins"],
+    "x": ["flext_core._utilities.mixins", "x"],
 }
 
 __all__ = [

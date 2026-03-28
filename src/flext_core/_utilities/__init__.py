@@ -25,8 +25,11 @@ if TYPE_CHECKING:
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+    from flext_core._utilities.container import FlextContainer
     from flext_core._utilities.context import FlextUtilitiesContext
+    from flext_core._utilities.context_propagation import FlextContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
+    from flext_core._utilities.decorators import FlextDecorators, d
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enum import FlextUtilitiesEnum
@@ -40,15 +43,26 @@ if TYPE_CHECKING:
     from flext_core._utilities.guards_type_protocol import (
         FlextUtilitiesGuardsTypeProtocol,
     )
+    from flext_core._utilities.loggings import FlextLogger
     from flext_core._utilities.mapper import FlextUtilitiesMapper
+    from flext_core._utilities.mixins import FlextMixins, x
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.pagination import FlextUtilitiesPagination
     from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.registry import FlextRegistry
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
+    from flext_core._utilities.runtime import FlextRuntime
     from flext_core._utilities.text import FlextUtilitiesText
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
+    "FlextContainer": ["flext_core._utilities.container", "FlextContainer"],
+    "FlextContext": ["flext_core._utilities.context_propagation", "FlextContext"],
+    "FlextDecorators": ["flext_core._utilities.decorators", "FlextDecorators"],
+    "FlextLogger": ["flext_core._utilities.loggings", "FlextLogger"],
+    "FlextMixins": ["flext_core._utilities.mixins", "FlextMixins"],
+    "FlextRegistry": ["flext_core._utilities.registry", "FlextRegistry"],
+    "FlextRuntime": ["flext_core._utilities.runtime", "FlextRuntime"],
     "FlextUtilitiesArgs": ["flext_core._utilities.args", "FlextUtilitiesArgs"],
     "FlextUtilitiesCache": ["flext_core._utilities.cache", "FlextUtilitiesCache"],
     "FlextUtilitiesChecker": ["flext_core._utilities.checker", "FlextUtilitiesChecker"],
@@ -116,9 +130,18 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "FlextUtilitiesResultHelpers",
     ],
     "FlextUtilitiesText": ["flext_core._utilities.text", "FlextUtilitiesText"],
+    "d": ["flext_core._utilities.decorators", "d"],
+    "x": ["flext_core._utilities.mixins", "x"],
 }
 
 __all__ = [
+    "FlextContainer",
+    "FlextContext",
+    "FlextDecorators",
+    "FlextLogger",
+    "FlextMixins",
+    "FlextRegistry",
+    "FlextRuntime",
     "FlextUtilitiesArgs",
     "FlextUtilitiesCache",
     "FlextUtilitiesChecker",
@@ -144,6 +167,8 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
+    "d",
+    "x",
 ]
 
 
