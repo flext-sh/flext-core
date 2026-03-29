@@ -86,7 +86,7 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     )
     tm.that(constants_source, has="TIMEOUT: Final[int] = 30")
     tm.that("TIMEOUT = _TIMEOUT" not in constants_source, eq=True)
-    # Consumer import rewriting (_TIMEOUT → c.TIMEOUT) is not yet supported;
+    # Consumer import rewriting (_TIMEOUT → c.DEFAULT_TIMEOUT_SECONDS) is not yet supported;
     # the migration only inlines the alias into the class.
     tm.that(consumer_source, has="from sample_pkg.constants import _TIMEOUT")
     tm.that(consumer_source, has="value = _TIMEOUT")

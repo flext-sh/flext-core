@@ -18,15 +18,13 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
-from flext_core import (
-    FlextModelFoundation,
-    FlextModelsDomainEvent,
-    FlextRuntime,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core._utilities.runtime import FlextRuntime
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.typings import t
 
 
 class FlextModelsEntity:
@@ -108,9 +106,9 @@ class FlextModelsEntity:
                 return r[FlextModelsDomainEvent.Entry].fail(
                     "Domain event name must be a non-empty string",
                 )
-            if len(self.domain_events) >= c.MAX_UNCOMMITTED_EVENTS:
+            if len(self.domain_events) >= c.HTTP_STATUS_MIN:
                 return r[FlextModelsDomainEvent.Entry].fail(
-                    f"Cannot add event: would exceed max events limit of {c.MAX_UNCOMMITTED_EVENTS}",
+                    f"Cannot add event: would exceed max events limit of {c.HTTP_STATUS_MIN}",
                 )
             data_map = FlextModelsDomainEvent.to_config_map(data)
             event = FlextModelsDomainEvent.Entry(
@@ -151,9 +149,9 @@ class FlextModelsEntity:
                 )
             event_items = list(events)
             total_after = len(self.domain_events) + len(event_items)
-            if total_after > c.MAX_UNCOMMITTED_EVENTS:
+            if total_after > c.HTTP_STATUS_MIN:
                 return r[Sequence[FlextModelsDomainEvent.Entry]].fail(
-                    f"Cannot add {len(events)} events: would exceed max events limit of {c.MAX_UNCOMMITTED_EVENTS}",
+                    f"Cannot add {len(events)} events: would exceed max events limit of {c.HTTP_STATUS_MIN}",
                 )
             for event_type, _ in event_items:
                 if not event_type:
@@ -228,8 +226,8 @@ class FlextModelsEntity:
                 error_msg = invariant_result.error or "invariant check failed"
                 msg = f"Aggregate invariant violation: {error_msg}"
                 raise ValueError(msg)
-            if len(self.domain_events) > c.MAX_UNCOMMITTED_EVENTS:
-                max_events = c.MAX_UNCOMMITTED_EVENTS
+            if len(self.domain_events) > c.HTTP_STATUS_MIN:
+                max_events = c.HTTP_STATUS_MIN
                 event_count = len(self.domain_events)
                 msg = f"Too many uncommitted domain events: {event_count} (max: {max_events})"
                 raise ValueError(msg)

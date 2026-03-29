@@ -73,8 +73,8 @@ class TestHandlerDecoratorDiscovery:
                 return r[str].ok("handled")
 
         config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.priority, eq=c.DEFAULT_PRIORITY)
-        tm.that(config.timeout, eq=c.DEFAULT_TIMEOUT)
+        tm.that(config.priority, eq=c.DEFAULT_MAX_COMMAND_RETRIES)
+        tm.that(config.timeout, eq=c.DEFAULT_TIMEOUT_SECONDS)
         tm.that(config.middleware, eq=[])
 
     def test_decorator_preserves_function_identity(self) -> None:

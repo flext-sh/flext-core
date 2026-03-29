@@ -11,10 +11,14 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core.typings import t
 
 if TYPE_CHECKING:
-    from flext_core import m, r
+    from flext_core._models.base import FlextModelFoundation
+    from flext_core._models.handler import FlextModelsHandler
+    from flext_core.result import r
 
 
 class FlextProtocolsRegistry:
@@ -32,7 +36,7 @@ class FlextProtocolsRegistry:
             self,
             name: str,
             service: t.RegistrablePlugin,
-            metadata: t.ConfigMap | m.Metadata | None = None,
+            metadata: t.ConfigMap | FlextModelFoundation.Metadata | None = None,
         ) -> r[bool]:
             """Register a service component with optional metadata."""
             ...
@@ -40,8 +44,8 @@ class FlextProtocolsRegistry:
         def register_handler(
             self,
             handler: t.HandlerLike,
-            _metadata: t.ConfigMap | m.Metadata | None = None,
-        ) -> r[m.RegistrationDetails]:
+            _metadata: t.ConfigMap | FlextModelFoundation.Metadata | None = None,
+        ) -> r[FlextModelsHandler.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 

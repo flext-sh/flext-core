@@ -13,7 +13,8 @@ from typing import Annotated, ClassVar, Self, cast, override
 import structlog
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from flext_core import U, p, t
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core.typings import U, t
 
 
 class FlextModelsResult:
@@ -39,7 +40,7 @@ class FlextModelsResult:
         error_data: Annotated[t.ConfigMap | None, Field(default=None)]
 
         _exception: BaseException | None = PrivateAttr(default=None)
-        _result_logger: p.Logger | None = PrivateAttr(default=None)
+        _result_logger: FlextProtocolsLogging.Logger | None = PrivateAttr(default=None)
 
         @override
         def __repr__(self) -> str:
@@ -79,7 +80,7 @@ class FlextModelsResult:
             return not self.is_success
 
         @property
-        def result_logger(self) -> p.Logger:
+        def result_logger(self) -> FlextProtocolsLogging.Logger:
             """Logger for RuntimeResult."""
             logger = self._result_logger
             if logger is None:

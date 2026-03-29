@@ -9,8 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
+from flext_core.typings import t
+
 if TYPE_CHECKING:
-    from flext_core import r, t
+    from flext_core.result import r
 
 
 class FlextProtocolsBase:

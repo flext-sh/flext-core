@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core.typings import t
 
 
 class FlextProtocolsConfig:

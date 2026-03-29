@@ -1559,7 +1559,7 @@ class FlextExceptions:
         field_metadata = c.FIELD_METADATA
         field_auto_log = getattr(c, "FIELD_AUTO_LOG", "auto_log")
         field_auto_correlation = c.FIELD_AUTO_CORRELATION
-        field_config = c.FIELD_CONFIG
+        field_config = c.DIR_CONFIG
         extra_kwargs = {
             k: v
             for k, v in merged_kwargs.items()

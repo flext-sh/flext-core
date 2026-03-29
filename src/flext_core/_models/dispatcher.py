@@ -16,7 +16,10 @@ from typing import Annotated, override
 
 from pydantic import Field, PrivateAttr
 
-from flext_core import FlextModelFoundation, c, r, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.result import r
+from flext_core.typings import t
 
 
 class FlextModelsDispatcher:
@@ -43,7 +46,7 @@ class FlextModelsDispatcher:
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.executor_workers = max(
                 self.executor_workers,
-                c.RETRY_COUNT_MIN,
+                c.DEFAULT_RETRY_DELAY_SECONDS,
             )
 
         def cleanup(self) -> None:
@@ -214,9 +217,7 @@ class FlextModelsDispatcher:
                 rec.recovery_successes for rec in self._breakers.values()
             )
             recovery_success_rate = (
-                total_recovery_successes
-                / total_recovery_attempts
-                * c.PERCENTAGE_MULTIPLIER
+                total_recovery_successes / total_recovery_attempts * c.HTTP_STATUS_MIN
                 if total_recovery_attempts > 0
                 else 0.0
             )
@@ -226,7 +227,7 @@ class FlextModelsDispatcher:
             )
             total_operations = total_failures + total_successes
             failure_rate = (
-                total_failures / total_operations * c.PERCENTAGE_MULTIPLIER
+                total_failures / total_operations * c.HTTP_STATUS_MIN
                 if total_operations > 0
                 else 0.0
             )
@@ -455,7 +456,7 @@ class FlextModelsDispatcher:
 
         @override
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
-            self.max_attempts = max(self.max_attempts, c.RETRY_COUNT_MIN)
+            self.max_attempts = max(self.max_attempts, c.DEFAULT_RETRY_DELAY_SECONDS)
             self.retry_delay = max(self.retry_delay, c.INITIAL_TIME)
 
         @staticmethod

@@ -45,7 +45,7 @@ class FlextUtilitiesPagination:
             r with response dictionary or error
 
         """
-        data = pagination_data.get(c.FIELD_DATA)
+        data = pagination_data.get(c.DIR_DATA)
         pagination = pagination_data.get("pagination")
         if data is None or pagination is None:
             return r[t.StrMapping].fail("Invalid pagination data structure")
@@ -54,7 +54,7 @@ class FlextUtilitiesPagination:
             pagination if isinstance(pagination, str) else str(pagination)
         )
         response: MutableMapping[str, str] = {
-            c.FIELD_DATA: data_val,
+            c.DIR_DATA: data_val,
             "pagination": pagination_val,
         }
         if message is not None:
@@ -67,7 +67,7 @@ class FlextUtilitiesPagination:
         *,
         default_page: int = 1,
         default_page_size: int = c.DEFAULT_PAGE_SIZE_EXAMPLE,
-        max_page_size: int = c.MAX_PAGE_SIZE_EXAMPLE,
+        max_page_size: int = c.MAX_PAGE_SIZE,
     ) -> r[tuple[int, int]]:
         """Extract page and page_size from query parameters.
 
@@ -121,7 +121,7 @@ class FlextUtilitiesPagination:
 
         """
         default_page_size = c.DEFAULT_PAGE_SIZE_EXAMPLE
-        max_page_size = c.MAX_PAGE_SIZE_EXAMPLE
+        max_page_size = c.MAX_PAGE_SIZE
         if config is not None:
             default_page_size_attr = getattr(config, "default_page_size", None)
             if default_page_size_attr is not None:
@@ -180,7 +180,7 @@ class FlextUtilitiesPagination:
             "has_prev": has_prev,
         }
         return r[Mapping[str, Sequence[t.RuntimeAtomic] | t.PaginationMeta]].ok({
-            c.FIELD_DATA: data_list,
+            c.DIR_DATA: data_list,
             "pagination": pagination_meta,
         })
 

@@ -17,14 +17,12 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import (
-    FlextModelFoundation,
-    FlextModelsEntity,
-    FlextRuntime,
-    FlextUtilitiesGuardsTypeCore,
-    c,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.runtime import FlextRuntime
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsContextData:

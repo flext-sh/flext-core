@@ -502,7 +502,7 @@ class FlextContainer(p.Container):
         return m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
-            max_services=c.DEFAULT_MAX_SERVICES,
+            max_services=c.DEFAULT_SIZE,
             max_factories=c.DEFAULT_MAX_FACTORIES,
         )
 
@@ -686,7 +686,7 @@ class FlextContainer(p.Container):
         self._di_services = service_module
         self._di_resources = resource_module
         self._di_container = di_container
-        config_attr = c.FIELD_CONFIG
+        config_attr = c.DIR_CONFIG
         if not hasattr(bridge, config_attr):
             error_msg = "Bridge must have config provider"
             raise TypeError(error_msg)
@@ -889,11 +889,11 @@ class FlextContainer(p.Container):
         Note: Uses has_service() which checks both dicts and DI container to avoid conflicts.
         """
         if (
-            not self.has_service(c.FIELD_CONFIG)
+            not self.has_service(c.DIR_CONFIG)
             and self._config is not None
             and u.is_registerable_service(self._config)
         ):
-            _ = self.register(c.FIELD_CONFIG, self._config)
+            _ = self.register(c.DIR_CONFIG, self._config)
         if not self.has_service("logger"):
             _ = self.register(
                 "logger",

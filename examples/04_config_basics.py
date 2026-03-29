@@ -41,18 +41,18 @@ class AppConfig(FlextSettings):
     """
 
     database_url: str = Field(
-        default=f"postgresql://{c.DEFAULT_HOST}:5432/testdb",
+        default=f"postgresql://{c.LOCALHOST}:5432/testdb",
         description="Database connection URL",
     )
     db_pool_size: int = Field(
         default=10,
         ge=1,
-        le=FlextConstants.MAX_DB_POOL_SIZE,
+        le=c.HTTP_STATUS_MIN,
         description="Database connection pool size",
     )
     api_timeout: int = Field(default=30)
     api_host: str = Field(
-        default=c.DEFAULT_HOST,
+        default=c.LOCALHOST,
         min_length=1,
         max_length=FlextConstants.MAX_HOSTNAME_LENGTH,
         description="API server hostname",
@@ -120,8 +120,8 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
 
         result = r[AppConfig].ok(
             AppConfig(
-                database_url=f"postgresql://{c.DEFAULT_HOST}:5432/testdb",
-                api_timeout=c.DEFAULT_TIMEOUT,
+                database_url=f"postgresql://{c.LOCALHOST}:5432/testdb",
+                api_timeout=c.DEFAULT_TIMEOUT_SECONDS,
                 debug=False,
                 max_workers=4,
                 log_level=FlextConstants.LogLevel.INFO,
@@ -138,7 +138,7 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
             """Set environment variables safely."""
             env_vars = {
                 "FLEXT_DEBUG": "true",
-                "FLEXT_DATABASE_URL": f"postgresql://{c.DEFAULT_HOST}:5432/testdb",
+                "FLEXT_DATABASE_URL": f"postgresql://{c.LOCALHOST}:5432/testdb",
                 "FLEXT_API_TIMEOUT": "30",
             }
             for key, value in env_vars.items():
@@ -189,8 +189,8 @@ class ConfigManagementService(FlextService[t.ConfigMap]):
             print("\n=== Configuration Validation ===")
             try:
                 AppConfig(
-                    database_url=f"postgresql://{c.DEFAULT_HOST}/db",
-                    api_timeout=c.DEFAULT_TIMEOUT,
+                    database_url=f"postgresql://{c.LOCALHOST}/db",
+                    api_timeout=c.DEFAULT_TIMEOUT_SECONDS,
                 )
                 print("✅ Valid configuration accepted")
                 return r[bool].ok(value=True)
@@ -290,7 +290,7 @@ def demonstrate_file_config() -> r[bool]:
         config_file = Path("example_config.json")
         try:
             config_file.write_text(
-                f'{{"database_url": "postgresql://{c.DEFAULT_HOST}:5432/testdb", "api_timeout": {c.DEFAULT_TIMEOUT}}}',
+                f'{{"database_url": "postgresql://{c.LOCALHOST}:5432/testdb", "api_timeout": {c.DEFAULT_TIMEOUT_SECONDS}}}',
                 encoding=FlextConstants.DEFAULT_ENCODING,
             )
             return r[Path].ok(config_file)

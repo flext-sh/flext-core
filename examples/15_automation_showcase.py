@@ -329,7 +329,7 @@ class AutomationService(s[t.ConfigMap]):
             if not cache.root:
                 print("   📄 Loading configuration from file...")
                 cache.root["database_url"] = "postgresql://localhost:5432/testdb"
-                cache.root["cache_ttl"] = c.DEFAULT_CACHE_TTL
+                cache.root["cache_ttl"] = c.CACHE_TTL
             return cache
 
         fail_attempt: r[t.ConfigMap] = r[t.ConfigMap].fail("No cached config")
@@ -376,7 +376,7 @@ class AutomationService(s[t.ConfigMap]):
                 root={
                     "engine_id": "AUTO-ENGINE-001",
                     "engine_type": c.ProcessingMode.PARALLEL.value,
-                    "worker_count": c.DEFAULT_DB_POOL_SIZE,
+                    "worker_count": c.DEFAULT_PAGE_SIZE,
                 },
             )
 
@@ -392,7 +392,7 @@ class AutomationService(s[t.ConfigMap]):
         existing: t.ConfigMap = t.ConfigMap(
             root={
                 "engine_id": "CACHED-ENGINE-001",
-                "worker_count": c.DEFAULT_WORKERS,
+                "worker_count": c.DEFAULT_MAX_WORKERS,
             },
         )
         success_result = r[t.ConfigMap].ok(existing)

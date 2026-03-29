@@ -238,8 +238,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def handler(
         command: type,
         *,
-        priority: int = c.DEFAULT_PRIORITY,
-        timeout: float | None = c.DEFAULT_TIMEOUT,
+        priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
+        timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
         middleware: Sequence[type[p.Middleware]] | None = None,
     ) -> Callable[[t.HandlerCallable], t.HandlerCallable]:
         """Decorator to mark methods as handlers for commands.
@@ -317,7 +317,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def dispatch_message(
         self,
         message: MessageT_contra,
-        operation: str = c.HANDLER_MODE_COMMAND,
+        operation: str = c.DEFAULT_HANDLER_MODE,
     ) -> r[ResultT]:
         """Dispatch message through the handler execution pipeline.
 
@@ -507,7 +507,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def _run_pipeline(
         self,
         message: MessageT_contra,
-        operation: str = c.HANDLER_MODE_COMMAND,
+        operation: str = c.DEFAULT_HANDLER_MODE,
     ) -> r[ResultT]:
         """Run the handler execution pipeline (internal).
 
@@ -529,7 +529,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             self._config_model.handler_mode,
         )
         valid_operations = {
-            c.HANDLER_MODE_COMMAND,
+            c.DEFAULT_HANDLER_MODE,
             c.HANDLER_MODE_QUERY,
             c.HandlerType.EVENT.value,
         }

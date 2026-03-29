@@ -19,12 +19,10 @@ from typing import Annotated, ClassVar, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core import (
-    FlextModelFoundation,
-    c,
-    p,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextModelsContainer:
@@ -239,10 +237,10 @@ class FlextModelsContainer:
         invocation_count: Annotated[
             t.NonNegativeInt,
             Field(
-                default=c.ZERO,
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of times factory has been invoked",
             ),
-        ] = c.ZERO
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
 
     class ResourceRegistration(
         _MetadataValidatorMixin,
@@ -304,11 +302,11 @@ class FlextModelsContainer:
         max_services: Annotated[
             t.PositiveInt,
             Field(
-                default=c.DEFAULT_MAX_SERVICES,
-                le=c.MAX_BATCH_SIZE,
+                default=c.DEFAULT_SIZE,
+                le=c.MAX_ITEMS,
                 description="Maximum number of services allowed in registry",
             ),
-        ] = c.DEFAULT_MAX_SERVICES
+        ] = c.DEFAULT_SIZE
         max_factories: Annotated[
             t.PositiveInt,
             Field(

@@ -271,7 +271,7 @@ class Ex10FlextHandlers(Examples):
             "dispatch.pipeline_exception",
             handler.dispatch_message(
                 cast("_Message | str", "explode"),
-                operation=c.HANDLER_MODE_COMMAND,
+                operation=c.DEFAULT_HANDLER_MODE,
             ).error,
         )
         self.check(

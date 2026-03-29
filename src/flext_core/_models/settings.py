@@ -24,15 +24,13 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings
 
-from flext_core import (
-    FlextModelFoundation,
-    FlextModelsCollections,
-    FlextRuntime,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.runtime import FlextRuntime
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.typings import t
 
 
 class FlextModelsConfig:
@@ -115,11 +113,11 @@ class FlextModelsConfig:
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
-                default=c.TIMEOUT,
+                default=c.DEFAULT_TIMEOUT_SECONDS,
                 le=c.MAX_TIMEOUT_SECONDS,
                 description="Operation timeout from c (Constants default)",
             ),
-        ] = c.TIMEOUT
+        ] = c.DEFAULT_TIMEOUT_SECONDS
         retry_attempts: Annotated[
             t.NonNegativeInt,
             Field(
@@ -184,7 +182,7 @@ class FlextModelsConfig:
         retry_on_status_codes: Annotated[
             Sequence[int],
             Field(
-                max_length=c.MAX_RETRY_STATUS_CODES,
+                max_length=c.HTTP_STATUS_MIN,
                 description="HTTP status codes to retry on",
             ),
         ] = Field(default_factory=list[int])
@@ -236,17 +234,17 @@ class FlextModelsConfig:
         max_validation_errors: Annotated[
             t.PositiveInt,
             Field(
-                default=c.DEFAULT_MAX_VALIDATION_ERRORS,
-                le=c.MAX_RETRY_STATUS_CODES,
+                default=c.DEFAULT_PAGE_SIZE,
+                le=c.HTTP_STATUS_MIN,
                 description="Maximum validation errors",
             ),
-        ] = c.DEFAULT_MAX_VALIDATION_ERRORS
+        ] = c.DEFAULT_PAGE_SIZE
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
             Sequence[p.ValidatorSpec],
             Field(
-                max_length=c.MAX_CUSTOM_VALIDATORS,
+                max_length=c.MAX_CONTEXT_KEYS,
                 description="Custom validator callables",
             ),
         ] = Field(default_factory=list[p.ValidatorSpec])
@@ -275,26 +273,26 @@ class FlextModelsConfig:
         batch_size: Annotated[
             t.PositiveInt,
             Field(
-                default=c.MAX_BATCH_SIZE,
-                le=c.MAX_VALIDATION_SIZE,
+                default=c.MAX_ITEMS,
+                le=c.DEFAULT_SIZE,
                 description="Batch size from c (Constants default)",
             ),
-        ] = c.MAX_BATCH_SIZE
+        ] = c.MAX_ITEMS
         max_workers: Annotated[
             t.PositiveInt,
             Field(
                 default=c.DEFAULT_MAX_WORKERS,
-                le=c.MAX_WORKERS_THRESHOLD,
+                le=c.MAX_CONTEXT_KEYS,
                 description="Maximum workers (Config has priority over Constants)",
             ),
         ] = c.DEFAULT_MAX_WORKERS
         timeout_per_item: Annotated[
             t.PositiveFloat,
             Field(
-                default=c.TIMEOUT,
+                default=c.DEFAULT_TIMEOUT_SECONDS,
                 description="Timeout per item (Config has priority over Constants)",
             ),
-        ] = c.TIMEOUT
+        ] = c.DEFAULT_TIMEOUT_SECONDS
         continue_on_error: bool = True
         data_items: Annotated[
             Sequence[t.ValueOrModel],
@@ -373,11 +371,11 @@ class FlextModelsConfig:
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
-                default=c.TIMEOUT,
+                default=c.DEFAULT_TIMEOUT_SECONDS,
                 le=c.MAX_TIMEOUT_SECONDS,
                 description="Timeout in seconds (default from constants)",
             ),
-        ] = c.TIMEOUT
+        ] = c.DEFAULT_TIMEOUT_SECONDS
         retry_on_failure: bool = True
         max_retries: Annotated[
             t.NonNegativeInt,
@@ -408,10 +406,10 @@ class FlextModelsConfig:
         order: Annotated[
             int,
             Field(
-                default=c.DEFAULT_MIDDLEWARE_ORDER,
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Execution order in middleware chain",
             ),
-        ] = c.DEFAULT_MIDDLEWARE_ORDER
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         name: Annotated[
             str | None,
             Field(default=None, description="Optional middleware name"),
@@ -449,10 +447,10 @@ class FlextModelsConfig:
         count: Annotated[
             t.NonNegativeInt,
             Field(
-                default=c.ZERO,
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Current request count in window",
             ),
-        ] = c.ZERO
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         window_start: Annotated[
             float,
             Field(
@@ -464,17 +462,17 @@ class FlextModelsConfig:
         limit: Annotated[
             t.PositiveInt,
             Field(
-                default=c.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+                default=c.HTTP_STATUS_MIN,
                 description="Maximum requests allowed per window",
             ),
-        ] = c.DEFAULT_RATE_LIMIT_MAX_REQUESTS
+        ] = c.HTTP_STATUS_MIN
         window_seconds: Annotated[
             t.PositiveInt,
             Field(
-                default=c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+                default=c.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
                 description="Duration of rate limit window in seconds",
             ),
-        ] = c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
+        ] = c.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT
         block_until: Annotated[
             float,
             Field(
@@ -550,7 +548,7 @@ class FlextModelsConfig:
         log_level: Annotated[
             t.NonNegativeInt,
             Field(
-                le=c.MAX_CUSTOM_VALIDATORS,
+                le=c.MAX_CONTEXT_KEYS,
                 description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
             ),
         ] = Field(default_factory=FlextRuntime.get_log_level_from_config)

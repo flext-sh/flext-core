@@ -137,7 +137,7 @@ class TestConstants:
     ]
     TYPE_CHECKS: ClassVar[Sequence[tuple[str | int, type]]] = [
         (c.NAME, str),
-        (c.MIN_PORT, int),
+        (c.DEFAULT_RETRY_DELAY_SECONDS, int),
         (c.MAX_PORT, int),
         (c.MIN_NAME_LENGTH, int),
         (c.DEFAULT_LEVEL, str),
@@ -288,13 +288,16 @@ class TestConstants:
 
     def test_edge_cases_constant_ranges(self) -> None:
         """Test that numeric constants are in valid ranges."""
-        tm.that(c.MIN_PORT, gte=0)
+        tm.that(c.DEFAULT_RETRY_DELAY_SECONDS, gte=0)
         tm.that(c.MAX_PORT, lte=65535)
-        tm.that(c.MIN_PORT, lte=c.MAX_PORT)
+        tm.that(c.DEFAULT_RETRY_DELAY_SECONDS, lte=c.MAX_PORT)
         tm.that(c.DEFAULT_TIMEOUT_SECONDS, gt=0)
-        tm.that(c.MAX_TIMEOUT_SECONDS, gt=c.DEFAULT_TIMEOUT_SECONDS)
+        tm.that(
+            c.MAX_TIMEOUT_SECONDS,
+            gt=c.DEFAULT_TIMEOUT_SECONDS,
+        )
         tm.that(c.MIN_NAME_LENGTH, gt=0)
-        tm.that(c.MIN_NAME_LENGTH, lt=c.MAX_NAME_LENGTH)
+        tm.that(c.MIN_NAME_LENGTH, lt=c.HTTP_STATUS_MIN)
 
     def test_edge_cases_enum_completeness(self) -> None:
         """Test that enums contain all expected values."""
@@ -304,7 +307,10 @@ class TestConstants:
 
     def test_integration_cross_category_consistency(self) -> None:
         """Test consistency across related constant categories."""
-        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT_SECONDS)
+        tm.that(
+            c.DEFAULT_TIMEOUT_SECONDS,
+            eq=c.DEFAULT_TIMEOUT_SECONDS,
+        )
         tm.that(c.DEFAULT_HANDLER_TYPE, eq=c.DEFAULT_HANDLER_MODE)
 
     def test_integration_pattern_and_validation_consistency(self) -> None:

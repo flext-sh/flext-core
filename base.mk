@@ -18,6 +18,7 @@ DIAG ?= 0
 CHECK_GATES ?=
 VALIDATE_GATES ?=
 DOCS_PHASE ?= all
+FIX ?=
 AUTO_ADJUST ?= 1
 PR_ACTION ?= status
 PR_BASE ?= main
@@ -131,8 +132,8 @@ $(LINT_CACHE_DIR):
 	$(Q)mkdir -p $(LINT_CACHE_DIR)
 
 # === SIMPLE VERB SURFACE ===
-.PHONY: help setup build check security format docs docs-base docs-sync-scripts test validate clean pr _preflight daemon-start-mypy daemon-stop-mypy daemon-status-mypy daemon-start-pyright daemon-stop-pyright daemon-status-pyright daemon-start daemon-stop daemon-status daemon-restart
-STANDARD_VERBS := setup build check security format docs test validate clean pr
+.PHONY: help boot build check scan fmt docs test val clean pr _preflight daemon-start-mypy daemon-stop-mypy daemon-status-mypy daemon-start-pyright daemon-stop-pyright daemon-status-pyright daemon-start daemon-stop daemon-status daemon-restart
+STANDARD_VERBS := boot build check scan fmt docs test val clean pr
 $(STANDARD_VERBS): _preflight
 
 define ENFORCE_WORKSPACE_VENV
@@ -147,18 +148,18 @@ if [ "$(FLEXT_MODE)" = "workspace" ]; then \
 			fi; \
 		fi; \
 	elif [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
-		echo "ERROR: [preflight] Workspace venv not found. Run 'make setup' at workspace root."; \
+		echo "ERROR: [preflight] Workspace venv not found. Run 'make boot' at workspace root."; \
 		exit 1; \
-	elif [ "$(filter setup,$(MAKECMDGOALS))" != "setup" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
-		echo "ERROR: [preflight] No venv found (workspace or local). Run 'make setup' in $(PROJECT_NAME)."; \
+	elif [ "$(filter boot,$(MAKECMDGOALS))" != "boot" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
+		echo "ERROR: [preflight] No venv found (workspace or local). Run 'make boot' in $(PROJECT_NAME)."; \
 		exit 1; \
 	else \
 		echo "INFO: [preflight] Using project-local venv for $(PROJECT_NAME) (workspace venv not found)."; \
 	fi; \
 elif [ "$(FLEXT_MODE)" = "standalone" ]; then \
 	echo "INFO: [preflight] Running in standalone mode (workspace features unavailable)."; \
-elif [ "$(filter setup,$(MAKECMDGOALS))" != "setup" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
-	echo "ERROR: [preflight] No venv found at $(ACTIVE_VENV). Run 'make setup' in $(PROJECT_NAME)."; \
+elif [ "$(filter boot,$(MAKECMDGOALS))" != "boot" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
+	echo "ERROR: [preflight] No venv found at $(ACTIVE_VENV). Run 'make boot' in $(PROJECT_NAME)."; \
 	exit 1; \
 fi
 endef
@@ -203,9 +204,22 @@ help: ## Show commands
 	$(Q)printf "  %-16s %s\n" "daemon-restart" "Restart all daemons"
 	$(Q)echo "  Also: daemon-{start,stop,status}-{mypy,pyright}"
 	$(Q)echo ""
-	$(Q)echo "Other:"
-	$(Q)printf "  %-14s %s\n" "check-fast" "Parallel lint (make -j4 check-fast)"
-	$(Q)printf "  %-14s %s\n" "pr"         "Manage PRs (PR_ACTION=status)"
+	$(Q)echo "Selectors and options:"
+	$(Q)echo "  CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,go,type"
+	$(Q)echo "  VALIDATE_GATES=complexity,docstring"
+	$(Q)echo "  FILE=src/foo.py             Single file for check/fmt/test"
+	$(Q)echo "  FILES=\"a.py b.py\"          Multiple files for check/fmt/test"
+	$(Q)echo "  CHANGED_ONLY=1              Git-changed Python files for check"
+	$(Q)echo "  CHECK_ONLY=1                Dry-run format checks"
+	$(Q)echo "  RUFF_ARGS=\"--select E501\"   Extra args for ruff check"
+	$(Q)echo "  PYRIGHT_ARGS=\"--level basic\" Extra args for pyright"
+	$(Q)echo "  PYTEST_ARGS=\"-k expr\"       Extra pytest args"
+	$(Q)echo "  MATCH=test_name             Alias for pytest -k"
+	$(Q)echo "  FAIL_FAST=1                 Add -x to pytest"
+	$(Q)echo "  DIAG=1                      Emit extended pytest diagnostics"
+	$(Q)echo "  DOCS_PHASE=all|generate|fix|audit|build|validate"
+	$(Q)echo "  FIX=1                       Auto-fix supported gates"
+	$(Q)echo "  VERBOSE=1                   Show executed commands"
 	$(Q)echo ""
 	$(Q)echo "PR variables:"
 	$(Q)echo "  PR_ACTION=status|create|view|checks|merge|close"
@@ -317,7 +331,7 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	else \
 		gates="lint,format,pyrefly,mypy,pyright,security,markdown,go"; \
 	fi; \
-	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g; s/\bfmt\b/format/g; s/\bscan\b/security/g' | tr ' ' ','); \
+	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g' | tr ' ' ','); \
 	_files=""; \
 	if [ -n "$(FILES)" ]; then _files="$(FILES)"; fi; \
 	if [ -n "$(FILE)" ]; then \
@@ -328,6 +342,12 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 		_files=$$(git diff --name-only HEAD -- '*.py' 2>/dev/null | tr '\n' ' '); \
 	fi; \
 	if [ -n "$$_files" ]; then \
+		if [ -z "$(CHECK_GATES)" ]; then gates="lint,format,pyrefly,mypy,pyright"; fi; \
+		unsupported_gates=$$(printf '%s\n' "$$gates" | tr ',' '\n' | grep -E '^(security|markdown|go)$$' || true); \
+		if [ -n "$$unsupported_gates" ]; then \
+			echo "ERROR: FILE/FILES/CHANGED_ONLY fast-path only supports lint,format,pyrefly,mypy,pyright"; \
+			exit 2; \
+		fi; \
 		echo "Fast-path check: $$_files"; \
 		status=0; \
 		case ",$$gates," in \
@@ -341,6 +361,9 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 		esac; \
 		case ",$$gates," in \
 			*,pyrefly,*) $(POETRY) run pyrefly check $$_files || status=$$?;; \
+		esac; \
+		case ",$$gates," in \
+			*,mypy,*) $(POETRY) run mypy $$_files || status=$$?;; \
 		esac; \
 		exit $$status; \
 	fi; \
@@ -506,7 +529,7 @@ test: ## Run pytest only
 		echo "duration_seconds=0" >> "$$summary_file"; \
 	fi; \
 	counts_file="$$report_dir/counts.env"; \
-	$(VENV_PYTHON) -m flext_infra core pytest-diag \
+	$(VENV_PYTHON) -m flext_infra validate pytest-diag \
 		--junit "$$junit_file" --log "$$log_file" \
 		--failed "$$failed_file" --errors "$$errors_file" \
 		--warnings "$$warnings_file" --slowest "$$slowest_file" \
@@ -517,9 +540,11 @@ test: ## Run pytest only
 	echo "DIAG $$run_state | failed=$$failed_count errors=$$error_count warnings=$$warning_count skipped=$$skipped_count" >&2; \
 	echo "================================================" >&2; \
 	echo "Top test durations (from $$slowest_file):" >&2; \
-	awk 'NR<=10 {print}' "$$slowest_file" >&2; \
+	if [ -s "$$slowest_file" ]; then awk 'NR<=10 {print}' "$$slowest_file" >&2; \
+	else echo "(none)" >&2; fi; \
 	echo "Error trace excerpt (from $$errors_file):" >&2; \
-	awk 'NR<=40 {print}' "$$errors_file" >&2; \
+	if [ -s "$$errors_file" ]; then awk 'NR<=40 {print}' "$$errors_file" >&2; \
+	else echo "(none)" >&2; fi; \
 	ln -sfn "$$run_id" "$(PYTEST_REPORTS_DIR)/latest"; \
 	echo "Reports: $$report_dir (latest: $(PYTEST_REPORTS_DIR)/latest)" >&2; \
 	echo "Details: $$summary_file | $$failed_file | $$errors_file | $$warnings_file | $$slowest_file | $$skips_file | $$log_file" >&2; \

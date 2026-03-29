@@ -11,7 +11,10 @@ from typing import Annotated
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import FlextModelFoundation, FlextModelsContextData, c, t
+from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsContextScope:
@@ -44,20 +47,32 @@ class FlextModelsContextScope:
 
         sets: Annotated[
             t.NonNegativeInt,
-            Field(default=c.ZERO, description="Number of set operations"),
-        ] = c.ZERO
+            Field(
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                description="Number of set operations",
+            ),
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         gets: Annotated[
             t.NonNegativeInt,
-            Field(default=c.ZERO, description="Number of get operations"),
-        ] = c.ZERO
+            Field(
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                description="Number of get operations",
+            ),
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         removes: Annotated[
             t.NonNegativeInt,
-            Field(default=c.ZERO, description="Number of remove operations"),
-        ] = c.ZERO
+            Field(
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                description="Number of remove operations",
+            ),
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         clears: Annotated[
             t.NonNegativeInt,
-            Field(default=c.ZERO, description="Number of clear operations"),
-        ] = c.ZERO
+            Field(
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                description="Number of clear operations",
+            ),
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
             t.ContainerMapping,
             BeforeValidator(

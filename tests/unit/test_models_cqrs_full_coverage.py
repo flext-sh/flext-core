@@ -51,7 +51,7 @@ def test_query_validate_pagination_dict_and_default() -> None:
     assert parsed.pagination.size == 20
     defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
     assert isinstance(defaulted.pagination, m.Pagination)
-    assert defaulted.pagination.page == c.DEFAULT_PAGE_NUMBER
+    assert defaulted.pagination.page == c.DEFAULT_RETRY_DELAY_SECONDS
 
 
 def test_handler_builder_fluent_methods() -> None:

@@ -464,7 +464,7 @@ class TestFlextContainer:
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: t.ScalarMapping = {"max_workers": c.DEFAULT_WORKERS}
+        config: t.ScalarMapping = {"max_workers": c.DEFAULT_MAX_WORKERS}
         result = container.configure(config)
         tm.that(
             result is container,

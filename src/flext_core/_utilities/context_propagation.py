@@ -943,7 +943,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             self._update_statistics(c.OPERATION_SET)
             self._execute_hooks(
                 c.OPERATION_SET,
-                t.ConfigMap(root={c.FIELD_DATA: t.ConfigMap(root=data.root)}),
+                t.ConfigMap(root={c.DIR_DATA: t.ConfigMap(root=data.root)}),
             )
             return r[bool].ok(value=True)
         except TypeError as e:

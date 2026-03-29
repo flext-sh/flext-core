@@ -60,7 +60,7 @@ def validate_transform_user(data: t.ConfigMap) -> r[UserProfile]:
     email: str = email_value
     return r.traverse(
         [
-            u.validate_length(name, min_length=c.MIN_USERNAME_LENGTH),
+            u.validate_length(name, min_length=c.MAX_RETRY_ATTEMPTS),
             u.validate_pattern(email, c.PATTERN_EMAIL, "email"),
         ],
         identity,

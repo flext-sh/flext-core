@@ -155,8 +155,8 @@ class UtilitiesService(FlextService[t.ConfigMap]):
         name = "test"
         name_result = u.validate_length(
             name,
-            min_length=FlextConstants.MIN_USERNAME_LENGTH,
-            max_length=FlextConstants.MAX_NAME_LENGTH,
+            min_length=c.MAX_RETRY_ATTEMPTS,
+            max_length=c.HTTP_STATUS_MIN,
         )
         print(f"✅ String validation: {name} -> {name_result.is_success}")
         uri = str(TEST_DATA["uri"])

@@ -19,26 +19,26 @@ from typing import ClassVar, TypeIs
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import (
-    FlextRuntime,
-    FlextUtilitiesGuards,
-    FlextUtilitiesMapper,
-    c,
-    m,
-    p,
-    r,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
 from flext_core._models.result import FlextModelsResult
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.mapper import FlextUtilitiesMapper
+from flext_core._utilities.runtime import FlextRuntime
+from flext_core.constants import c
+from flext_core.result import r
+from flext_core.typings import t
 
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    _V: ClassVar[type[m.Validators]] = m.Validators
+    _V: ClassVar[type[FlextModelFoundation.Validators]] = (
+        FlextModelFoundation.Validators
+    )
 
     @property
-    def logger(self) -> p.Logger:
+    def logger(self) -> FlextProtocolsLogging.Logger:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 
@@ -50,7 +50,7 @@ class FlextUtilitiesReliability:
     ) -> float:
         """Calculate delay for retry attempt with exponential backoff."""
         current_delay = delay_seconds * backoff_multiplier**attempt
-        return min(current_delay, c.RETRY_BACKOFF_MAX)
+        return min(current_delay, c.DEFAULT_MAX_DELAY_SECONDS)
 
     @staticmethod
     def _is_match_predicate(
@@ -546,11 +546,11 @@ class FlextUtilitiesReliability:
         backoff_multiplier_value: float = (
             backoff_multiplier
             if backoff_multiplier is not None
-            else c.RETRY_BACKOFF_BASE
+            else c.DEFAULT_BACKOFF_MULTIPLIER
         )
-        if max_attempts_value < c.RETRY_COUNT_MIN:
+        if max_attempts_value < c.DEFAULT_RETRY_DELAY_SECONDS:
             return r[TResult].fail(
-                f"Max attempts must be at least {c.RETRY_COUNT_MIN}",
+                f"Max attempts must be at least {c.DEFAULT_RETRY_DELAY_SECONDS}",
             )
         last_error: str | None = None
         for attempt in range(max_attempts_value):

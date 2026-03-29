@@ -17,8 +17,9 @@ from pydantic import BaseModel, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import T_Model, U, p, t
 from flext_core._models.result import FlextModelsResult
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core.typings import T_Model, U, t
 
 
 class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
@@ -106,7 +107,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
     @classmethod
     def _fail_like[S](
         cls,
-        source: p.Result[S],
+        source: FlextProtocolsResult.Result[S],
         *,
         default_error: str = "",
     ) -> FlextResult[S]:
@@ -123,7 +124,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
     @classmethod
     def _from_result_like[V](
         cls,
-        source: p.Result[V],
+        source: FlextProtocolsResult.Result[V],
     ) -> FlextResult[V]:
         if source.is_success:
             return FlextResult[V].ok(source.value)

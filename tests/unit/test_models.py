@@ -720,7 +720,7 @@ class TestModels:
             name: str
 
         aggregate = TestAggregate(name="test", domain_events=[])
-        max_events = c.MAX_UNCOMMITTED_EVENTS
+        max_events = c.HTTP_STATUS_MIN
         events = [
             (f"event{i}", t.ConfigMap(root={"data": f"value{i}"}))
             for i in range(max_events + 1)

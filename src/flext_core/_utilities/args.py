@@ -23,13 +23,17 @@ from typing import (
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 from pydantic.errors import PydanticSchemaGenerationError
 
-from flext_core import P, R, m, r, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core.result import r
+from flext_core.typings import P, R, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for automatic args/kwargs parsing."""
 
-    _V: ClassVar[type[m.Validators]] = m.Validators
+    _V: ClassVar[type[FlextModelFoundation.Validators]] = (
+        FlextModelFoundation.Validators
+    )
 
     @staticmethod
     def _validate_enum_type(candidate: t.MessageTypeSpecifier) -> r[type[StrEnum]]:

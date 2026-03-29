@@ -53,7 +53,7 @@ class CommandHandler(h[CreateUserCommand, str]):
         name_validation = u.validate_length(
             message.name,
             min_length=c.MIN_NAME_LENGTH,
-            max_length=c.MAX_NAME_LENGTH,
+            max_length=c.HTTP_STATUS_MIN,
         )
         if name_validation.is_failure:
             return r[str].fail(

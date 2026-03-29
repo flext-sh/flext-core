@@ -425,7 +425,7 @@ class FlextLogger(u, p.Logger):
         if level is None:
             config = (
                 container.config
-                if hasattr(container, c.FIELD_CONFIG)
+                if hasattr(container, c.DIR_CONFIG)
                 else FlextSettings.get_global()
             )
             level = getattr(config, "log_level", "INFO")
@@ -621,7 +621,7 @@ class FlextLogger(u, p.Logger):
             qualname = frame.f_code.co_qualname
             if "." in qualname:
                 parts = qualname.rsplit(".", 1)
-                if len(parts) == c.LEVEL_PREFIX_PARTS_COUNT:
+                if len(parts) == c.DEFAULT_MAX_WORKERS:
                     potential_class = parts[0]
                     if potential_class and potential_class[0].isupper():
                         return potential_class

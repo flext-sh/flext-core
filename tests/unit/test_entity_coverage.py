@@ -59,7 +59,7 @@ class TestEntityCoverageEdgeCases:
             name: str
 
         entry = TestEntry(unique_id="test-id", name="test")
-        max_events = c.MAX_UNCOMMITTED_EVENTS
+        max_events = c.HTTP_STATUS_MIN
         for i in range(max_events):
             result = entry.add_domain_event(f"event_{i}", t.ConfigMap(root={}))
             assert result.is_success

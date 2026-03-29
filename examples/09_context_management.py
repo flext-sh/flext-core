@@ -289,7 +289,7 @@ def demonstrate_context_features() -> None:
 def main() -> None:
     """Main entry point using advanced FlextContext patterns."""
     logger = FlextLogger.create_module_logger(__name__)
-    width = c.MAX_NAME_LENGTH * 2
+    width = c.HTTP_STATUS_MIN * 2
     separator = "=" * width
     print(separator)
     print("FLEXT CONTEXT - REQUEST CONTEXT MANAGEMENT")

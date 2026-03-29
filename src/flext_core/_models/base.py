@@ -30,7 +30,9 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextUtilitiesGuardsTypeCore, c, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelFoundation:
@@ -753,11 +755,11 @@ class FlextModelFoundation:
         version: Annotated[
             t.NonNegativeInt,
             Field(
-                default=c.DEFAULT_VERSION,
+                default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Version number for optimistic locking",
                 frozen=False,
             ),
-        ] = c.DEFAULT_VERSION
+        ] = c.DEFAULT_RETRY_DELAY_SECONDS
 
         def increment_version(self) -> None:
             """Increment the version number."""
@@ -766,8 +768,8 @@ class FlextModelFoundation:
         @model_validator(mode="after")
         def validate_version_consistency(self) -> Self:
             """Ensure version consistency."""
-            if self.version < c.DEFAULT_VERSION:
-                msg = f"Version {self.version} is below minimum {c.DEFAULT_VERSION}"
+            if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
+                msg = f"Version {self.version} is below minimum {c.DEFAULT_RETRY_DELAY_SECONDS}"
                 raise ValueError(msg)
             return self
 
@@ -778,11 +780,11 @@ class FlextModelFoundation:
         max_retries: Annotated[
             t.NonNegativeInt,
             Field(
-                default=c.DEFAULT_MAX_RETRIES,
+                default=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
                 description="Maximum retry attempts",
             ),
-        ] = c.DEFAULT_MAX_RETRIES
+        ] = c.MAX_RETRY_ATTEMPTS
         initial_delay_seconds: Annotated[
             t.PositiveFloat,
             Field(
@@ -793,10 +795,10 @@ class FlextModelFoundation:
         max_delay_seconds: Annotated[
             t.PositiveFloat,
             Field(
-                default=c.RETRY_BACKOFF_MAX,
+                default=c.DEFAULT_MAX_DELAY_SECONDS,
                 description="Maximum delay between retries",
             ),
-        ] = c.RETRY_BACKOFF_MAX
+        ] = c.DEFAULT_MAX_DELAY_SECONDS
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

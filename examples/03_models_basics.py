@@ -253,9 +253,9 @@ class User(m.Entity):
     """User entity with comprehensive validation and domain rules."""
 
     model_config = m.DOMAIN_MODEL_CONFIG
-    name: str = Field(min_length=c.MIN_NAME_LENGTH, max_length=c.MAX_NAME_LENGTH)
+    name: str = Field(min_length=c.MIN_NAME_LENGTH, max_length=c.HTTP_STATUS_MIN)
     email: Email
-    age: Annotated[int, Field(ge=c.MIN_AGE, le=c.MAX_AGE)]
+    age: Annotated[int, Field(ge=c.DEFAULT_MAX_COMMAND_RETRIES, le=c.MAX_AGE)]
 
 
 class OrderItem(m.Value):

@@ -38,7 +38,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         """
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
-                c.FIELD_CONFIG: lambda v: isinstance(v, p.Settings),
+                c.DIR_CONFIG: lambda v: isinstance(v, p.Settings),
                 c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
                 "command_bus": lambda v: (
@@ -65,7 +65,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
-                    p.Settings: c.FIELD_CONFIG,
+                    p.Settings: c.DIR_CONFIG,
                     p.Context: c.FIELD_CONTEXT,
                     p.Container: "container",
                     p.Dispatcher: "command_bus",

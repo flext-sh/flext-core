@@ -11,10 +11,10 @@ class ExConfigAppConfig(FlextSettings):
     """Application settings model for configuration examples."""
 
     database_url: str = Field(
-        default=f"postgresql://{c.DEFAULT_HOST}:5432/testdb",
+        default=f"postgresql://{c.LOCALHOST}:5432/testdb",
         min_length=1,
     )
-    api_timeout: float = Field(default=c.DEFAULT_TIMEOUT, gt=0)
+    api_timeout: float = Field(default=c.DEFAULT_TIMEOUT_SECONDS, gt=0)
     debug: bool = Field(default=False)
     max_workers: int = Field(default=4, ge=1)
     log_level: c.LogLevel = Field(default=c.LogLevel.INFO)

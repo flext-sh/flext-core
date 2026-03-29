@@ -1633,7 +1633,7 @@ class FlextUtilitiesMapper:
             r containing extracted value or default
 
         Example:
-            config = {"database": {"host": c.DEFAULT_HOST, "port": 5432}}
+            config = {"database": {"host": c.LOCALHOST, "port": 5432}}
             result = FlextUtilitiesMapper.extract(config, "database.port")
             # → r[t.NormalizedValue].ok(5432)
 

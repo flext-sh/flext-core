@@ -51,16 +51,13 @@ from pydantic import (
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
-from flext_core import (
-    FlextModelFoundation,
-    FlextModelsResult,
-    FlextModelsService,
-    FlextUtilitiesGuardsTypeCore,
-    T,
-    c,
-    p,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.result import FlextModelsResult
+from flext_core._models.service import FlextModelsService
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import T, t
 
 
 class FlextRuntime:
@@ -121,7 +118,7 @@ class FlextRuntime:
                 None,
             )
             self.queue: queue.Queue[str | None] = queue.Queue(
-                maxsize=c.ASYNC_QUEUE_SIZE,
+                maxsize=c.MAX_ITEMS,
             )
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
@@ -882,7 +879,7 @@ class FlextRuntime:
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
                 configured_container.config = configuration_provider
             else:
-                setattr(di_container, c.FIELD_CONFIG, configuration_provider)
+                setattr(di_container, c.DIR_CONFIG, configuration_provider)
             return configuration_provider
 
         @staticmethod
@@ -1226,8 +1223,8 @@ class FlextRuntime:
         filtered_dict: t.MutableConfigurationMapping = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
-                parts = key.split("_", c.LEVEL_PREFIX_PARTS_COUNT)
-                if len(parts) >= c.LEVEL_PREFIX_PARTS_COUNT:
+                parts = key.split("_", c.DEFAULT_MAX_WORKERS)
+                if len(parts) >= c.DEFAULT_MAX_WORKERS:
                     required_level_name = parts[2]
                     actual_key = parts[3]
                     required_level = level_hierarchy.get(

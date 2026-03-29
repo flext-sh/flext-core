@@ -121,7 +121,7 @@ class FlextRuntime:
                 None,
             )
             self.queue: queue.Queue[str | None] = queue.Queue(
-                maxsize=c.ASYNC_QUEUE_SIZE,
+                maxsize=c.MAX_ITEMS,
             )
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
@@ -882,7 +882,7 @@ class FlextRuntime:
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
                 configured_container.config = configuration_provider
             else:
-                setattr(di_container, c.FIELD_CONFIG, configuration_provider)
+                setattr(di_container, c.DIR_CONFIG, configuration_provider)
             return configuration_provider
 
         @staticmethod
@@ -1226,8 +1226,8 @@ class FlextRuntime:
         filtered_dict: t.MutableConfigurationMapping = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
-                parts = key.split("_", c.LEVEL_PREFIX_PARTS_COUNT)
-                if len(parts) >= c.LEVEL_PREFIX_PARTS_COUNT:
+                parts = key.split("_", c.DEFAULT_MAX_WORKERS)
+                if len(parts) >= c.DEFAULT_MAX_WORKERS:
                     required_level_name = parts[2]
                     actual_key = parts[3]
                     required_level = level_hierarchy.get(

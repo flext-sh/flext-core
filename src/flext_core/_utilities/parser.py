@@ -39,8 +39,8 @@ class FlextUtilitiesParser:
 
     """
 
-    PATTERN_TUPLE_MIN_LENGTH: int = c.PATTERN_TUPLE_MIN_LENGTH
-    PATTERN_TUPLE_MAX_LENGTH: int = c.PATTERN_TUPLE_MAX_LENGTH
+    PATTERN_TUPLE_MIN_LENGTH: int = c.MIN_NAME_LENGTH
+    PATTERN_TUPLE_MAX_LENGTH: int = c.MAX_RETRY_ATTEMPTS
     TUPLE_LENGTH_2: int = 2
     TUPLE_LENGTH_3: int = 3
 
@@ -950,7 +950,9 @@ class FlextUtilitiesParser:
         Examples:
             >>> result = FlextUtilitiesParser.parse("ACTIVE", Status)
             >>> result = FlextUtilitiesParser.parse("42", int)  # Ok(42)
-            >>> result = FlextUtilitiesParser.parse("invalid", int, default=c.ZERO)
+            >>> result = FlextUtilitiesParser.parse(
+            ...     "invalid", int, default=c.DEFAULT_MAX_COMMAND_RETRIES
+            ... )
 
         """
         field_prefix = f"{field_name}: " if field_name else ""

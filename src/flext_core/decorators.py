@@ -176,9 +176,7 @@ class FlextDecorators:
                         completion_extra[c.KEY_CORRELATION_ID] = correlation_id
                     if track_perf:
                         duration = time.perf_counter() - start_time
-                        completion_extra["duration_ms"] = (
-                            duration * c.MILLISECONDS_MULTIPLIER
-                        )
+                        completion_extra["duration_ms"] = duration * c.DEFAULT_SIZE
                         completion_extra["duration_seconds"] = duration
                     logger.debug("%s_completed", op_name, **completion_extra)
                     return result
@@ -202,9 +200,7 @@ class FlextDecorators:
                         time.perf_counter() - start_time if track_perf else 0.0
                     )
                     if track_perf:
-                        failure_extra["duration_ms"] = (
-                            tracked_duration * c.MILLISECONDS_MULTIPLIER
-                        )
+                        failure_extra["duration_ms"] = tracked_duration * c.DEFAULT_SIZE
                         failure_extra["duration_seconds"] = tracked_duration
                     exc_info_value = True
                     if correlation_id is not None and track_perf:
@@ -218,7 +214,7 @@ class FlextDecorators:
                             error_type=exc.__class__.__name__,
                             operation=op_name,
                             correlation_id=correlation_id,
-                            duration_ms=tracked_duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_ms=tracked_duration * c.DEFAULT_SIZE,
                             duration_seconds=tracked_duration,
                         )
                     elif correlation_id is not None:
@@ -243,7 +239,7 @@ class FlextDecorators:
                             error=str(exc),
                             error_type=exc.__class__.__name__,
                             operation=op_name,
-                            duration_ms=tracked_duration * c.MILLISECONDS_MULTIPLIER,
+                            duration_ms=tracked_duration * c.DEFAULT_SIZE,
                             duration_seconds=tracked_duration,
                         )
                     else:
@@ -326,7 +322,7 @@ class FlextDecorators:
 
         Args:
             max_attempts: Maximum retry attempts (default:
-                FlextConstants.DEFAULT_MAX_RETRIES)
+                c.MAX_RETRY_ATTEMPTS)
             delay_seconds: Initial delay between retries (default:
                 FlextConstants.DEFAULT_RETRY_DELAY_SECONDS)
             backoff_strategy: Backoff strategy ('exponential' or 'linear',
@@ -338,7 +334,7 @@ class FlextDecorators:
 
         """
         attempts: int = (
-            max_attempts if max_attempts is not None else c.DEFAULT_MAX_RETRIES
+            max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
         )
         delay: float = (
             delay_seconds
@@ -360,7 +356,7 @@ class FlextDecorators:
                 retry_config = m.RetryConfiguration(
                     max_retries=attempts,
                     initial_delay_seconds=delay,
-                    exponential_backoff=strategy == c.BACKOFF_STRATEGY_EXPONENTIAL,
+                    exponential_backoff=strategy == c.DEFAULT_BACKOFF_STRATEGY,
                     retry_on_exceptions=[],
                     retry_on_status_codes=[],
                 )
@@ -515,7 +511,7 @@ class FlextDecorators:
         attempts = retry_config.max_retries
         delay = retry_config.initial_delay_seconds
         strategy = (
-            c.BACKOFF_STRATEGY_EXPONENTIAL
+            c.DEFAULT_BACKOFF_STRATEGY
             if retry_config.exponential_backoff
             else c.BACKOFF_STRATEGY_LINEAR
         )
@@ -543,7 +539,7 @@ class FlextDecorators:
                     error=str(e),
                     error_type=e.__class__.__name__,
                 )
-                if strategy == c.BACKOFF_STRATEGY_EXPONENTIAL:
+                if strategy == c.DEFAULT_BACKOFF_STRATEGY:
                     current_delay *= 2
                 elif strategy == c.BACKOFF_STRATEGY_LINEAR:
                     current_delay += delay
@@ -771,7 +767,7 @@ class FlextDecorators:
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
-        Uses FlextConstants.DEFAULT_TIMEOUT_SECONDS for default
+        Uses c.DEFAULT_TIMEOUT_SECONDS for default
         timeout and e.TimeoutError for structured error
         handling.
 

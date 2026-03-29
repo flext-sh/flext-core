@@ -85,16 +85,16 @@ class FlextModelsCqrs:
         page: Annotated[
             t.PositiveInt,
             Field(
-                default=c.DEFAULT_PAGE_NUMBER,
+                default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Page number (1-based indexing)",
                 examples=[1, 2, 10, 100],
             ),
-        ] = c.DEFAULT_PAGE_NUMBER
+        ] = c.DEFAULT_RETRY_DELAY_SECONDS
         size: Annotated[
             t.PositiveInt,
             Field(
                 default=c.DEFAULT_PAGE_SIZE,
-                le=c.MAX_PAGE_SIZE_EXAMPLE,
+                le=c.MAX_PAGE_SIZE,
                 description="Number of items per page (max 1000)",
                 examples=[10, 20, 50, 100],
             ),
@@ -261,17 +261,17 @@ class FlextModelsCqrs:
         execution_timeout: Annotated[
             int,
             Field(
-                default=c.TIMEOUT,
+                default=c.DEFAULT_TIMEOUT_SECONDS,
                 description="Command execution timeout",
             ),
-        ] = c.TIMEOUT
+        ] = c.DEFAULT_TIMEOUT_SECONDS
         max_cache_size: Annotated[
             t.PositiveInt,
             Field(
-                default=c.DEFAULT_MAX_CACHE_SIZE,
+                default=c.HTTP_STATUS_MIN,
                 description="Maximum cache size",
             ),
-        ] = c.DEFAULT_MAX_CACHE_SIZE
+        ] = c.HTTP_STATUS_MIN
         implementation_path: Annotated[
             str,
             Field(
@@ -315,10 +315,10 @@ class FlextModelsCqrs:
         command_timeout: Annotated[
             int,
             Field(
-                default=c.DEFAULT_COMMAND_TIMEOUT,
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Command timeout from c (default). Models use Config values in initialization.",
             ),
-        ] = c.DEFAULT_COMMAND_TIMEOUT
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         max_command_retries: Annotated[
             int,
             Field(
@@ -352,12 +352,12 @@ class FlextModelsCqrs:
                 self._data: t.Dict = t.Dict(
                     root={
                         "handler_type": handler_type,
-                        c.FIELD_HANDLER_MODE: c.HANDLER_MODE_COMMAND
+                        c.FIELD_HANDLER_MODE: c.DEFAULT_HANDLER_MODE
                         if handler_type == c.HandlerType.COMMAND
                         else c.HANDLER_MODE_QUERY,
                         "handler_id": f"{handler_type}_handler_{handler_short_id}",
                         "handler_name": f"{handler_type.title()} Handler",
-                        "command_timeout": c.DEFAULT_COMMAND_TIMEOUT,
+                        "command_timeout": c.DEFAULT_MAX_COMMAND_RETRIES,
                         "max_command_retries": c.DEFAULT_MAX_COMMAND_RETRIES,
                         c.FIELD_METADATA: None,
                     },

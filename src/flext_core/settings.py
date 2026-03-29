@@ -85,7 +85,7 @@ class FlextSettings(BaseSettings, u):
     ]
     enable_caching: Annotated[
         bool,
-        Field(default=c.DEFAULT_ENABLE_CACHING, description="Enable caching"),
+        Field(default=c.ASYNC_ENABLED, description="Enable caching"),
     ]
     cache_ttl: Annotated[
         t.PositiveInt,
@@ -98,28 +98,28 @@ class FlextSettings(BaseSettings, u):
     database_pool_size: Annotated[
         t.PositiveInt,
         Field(
-            default=c.DEFAULT_DB_POOL_SIZE,
+            default=c.DEFAULT_PAGE_SIZE,
             description="Database pool size",
         ),
     ]
     circuit_breaker_threshold: Annotated[
         t.PositiveInt,
         Field(
-            default=c.DEFAULT_FAILURE_THRESHOLD,
+            default=c.BACKUP_COUNT,
             description="Circuit breaker threshold",
         ),
     ]
     rate_limit_max_requests: Annotated[
         t.PositiveInt,
         Field(
-            default=c.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+            default=c.HTTP_STATUS_MIN,
             description="Rate limit max requests",
         ),
     ]
     rate_limit_window_seconds: Annotated[
         t.PositiveInt,
         Field(
-            default=c.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+            default=c.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
             description="Rate limit window",
         ),
     ]
@@ -144,14 +144,14 @@ class FlextSettings(BaseSettings, u):
     dispatcher_enable_logging: Annotated[
         bool,
         Field(
-            default=c.DEFAULT_ENABLE_LOGGING,
+            default=c.ASYNC_ENABLED,
             description="Enable dispatcher logging",
         ),
     ]
     dispatcher_auto_context: Annotated[
         bool,
         Field(
-            default=c.DEFAULT_AUTO_CONTEXT,
+            default=c.ASYNC_ENABLED,
             description="Auto context in dispatcher",
         ),
     ]
@@ -165,17 +165,17 @@ class FlextSettings(BaseSettings, u):
     dispatcher_enable_metrics: Annotated[
         bool,
         Field(
-            default=c.DEFAULT_ENABLE_METRICS,
+            default=c.ASYNC_ENABLED,
             description="Enable dispatcher metrics",
         ),
     ]
     executor_workers: Annotated[
         t.WorkerCount,
-        Field(default=c.DEFAULT_WORKERS, description="Executor workers"),
+        Field(default=c.DEFAULT_MAX_WORKERS, description="Executor workers"),
     ]
     timeout_seconds: Annotated[
         t.PositiveTimeout,
-        Field(default=c.DEFAULT_TIMEOUT, description="Default timeout"),
+        Field(default=c.DEFAULT_TIMEOUT_SECONDS, description="Default timeout"),
     ]
     max_workers: Annotated[
         t.WorkerCount,
@@ -183,7 +183,7 @@ class FlextSettings(BaseSettings, u):
     ]
     max_batch_size: Annotated[
         t.BatchSize,
-        Field(default=c.MAX_BATCH_SIZE, description="Max batch size"),
+        Field(default=c.MAX_ITEMS, description="Max batch size"),
     ]
     api_key: Annotated[str | None, Field(default=None, description="API key")]
     exception_failure_level: Annotated[

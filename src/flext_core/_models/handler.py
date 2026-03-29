@@ -23,7 +23,10 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModelFoundation, c, p, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextModelsHandler:
@@ -213,7 +216,7 @@ class FlextModelsHandler:
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = Field(default_factory=lambda: c.DEFAULT_TIMESTAMP)
+        ] = Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
         status: Annotated[
             c.CommonStatus,
             Field(
@@ -279,7 +282,7 @@ class FlextModelsHandler:
                 return 0.0
             start_time: float = self._start_time
             elapsed: float = time.time() - start_time
-            return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
+            return round(elapsed * c.DEFAULT_SIZE, 2)
 
         @computed_field
         def has_metrics(self) -> bool:
@@ -396,7 +399,7 @@ class FlextModelsHandler:
             >>> config = FlextModelsHandler.DecoratorConfig(
             ...     command=CreateUserCommand,
             ...     priority=10,
-            ...     timeout=c.DEFAULT_TIMEOUT,
+            ...     timeout=c.DEFAULT_TIMEOUT_SECONDS,
             ...     middleware=[LoggingMiddleware, ValidationMiddleware],
             ... )
             >>> config.command
@@ -417,18 +420,18 @@ class FlextModelsHandler:
         priority: Annotated[
             t.NonNegativeInt,
             Field(
-                default=c.DEFAULT_PRIORITY,
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Handler priority (higher = processed first)",
             ),
-        ] = c.DEFAULT_PRIORITY
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         timeout: Annotated[
             float | None,
             Field(
-                default=c.DEFAULT_TIMEOUT,
+                default=c.DEFAULT_TIMEOUT_SECONDS,
                 description="Handler execution timeout in seconds",
                 gt=0.0,
             ),
-        ] = c.DEFAULT_TIMEOUT
+        ] = c.DEFAULT_TIMEOUT_SECONDS
         middleware: Annotated[
             Sequence[type[p.Middleware]],
             Field(

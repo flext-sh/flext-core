@@ -88,13 +88,17 @@ class RailwayService(s[DemonstrationResult]):
     def _demonstrate_advanced_combinators() -> None:
         """Advanced functional programming patterns."""
         print("\n=== Advanced Combinators ===")
-        results = [r[int].ok(c.ZERO + 1), r[int].ok(c.ZERO + 2), r[int].ok(c.ZERO + 3)]
+        results = [
+            r[int].ok(c.DEFAULT_MAX_COMMAND_RETRIES + 1),
+            r[int].ok(c.DEFAULT_MAX_COMMAND_RETRIES + 2),
+            r[int].ok(c.DEFAULT_MAX_COMMAND_RETRIES + 3),
+        ]
         traversed = r.traverse(results, lambda r_val: r_val)
         traversed_val = traversed.value
         print(f".traverse(): {len(traversed_val)} results")
-        test_value = c.FILTER_THRESHOLD + c.MIN_AGE
-        filtered = r[int].ok(test_value).filter(lambda x: x > c.FILTER_THRESHOLD)
-        print(f".filter(>{c.FILTER_THRESHOLD}): {filtered.is_success}")
+        test_value = c.BACKUP_COUNT + c.DEFAULT_MAX_COMMAND_RETRIES
+        filtered = r[int].ok(test_value).filter(lambda x: x > c.BACKUP_COUNT)
+        print(f".filter(>{c.BACKUP_COUNT}): {filtered.is_success}")
 
     @staticmethod
     def _demonstrate_error_recovery() -> None:
@@ -143,7 +147,7 @@ class RailwayService(s[DemonstrationResult]):
         print(f"❌ .fail(): {failure.error}")
 
         def risky_operation() -> int:
-            zero = c.ZERO
+            zero = c.DEFAULT_MAX_COMMAND_RETRIES
             return c.MAX_AGE // zero
 
         from_callable = r[int].create_from_callable(risky_operation)
@@ -163,7 +167,7 @@ class RailwayService(s[DemonstrationResult]):
         test_value = "test"
 
         def validate_length(v: str) -> r[str]:
-            return u.validate_length(v, min_length=c.MIN_USERNAME_LENGTH)
+            return u.validate_length(v, min_length=c.MAX_RETRY_ATTEMPTS)
 
         chained = r[str].ok(test_value).flat_map(validate_length).map(to_upper)
         print(f".flat_map chain: {chained.value}")
@@ -199,8 +203,8 @@ class RailwayService(s[DemonstrationResult]):
             .flat_map(
                 lambda email: u.validate_length(
                     email,
-                    min_length=c.MIN_USERNAME_LENGTH,
-                    max_length=c.MAX_NAME_LENGTH,
+                    min_length=c.MAX_RETRY_ATTEMPTS,
+                    max_length=c.HTTP_STATUS_MIN,
                 ),
             )
         )
@@ -210,8 +214,8 @@ class RailwayService(s[DemonstrationResult]):
             u.validate_pattern(test_email_2, c.PATTERN_EMAIL, "email"),
             u.validate_length(
                 test_email_2,
-                min_length=c.MIN_USERNAME_LENGTH,
-                max_length=c.MAX_NAME_LENGTH,
+                min_length=c.MAX_RETRY_ATTEMPTS,
+                max_length=c.HTTP_STATUS_MIN,
             ),
         ]
         all_valid = r.traverse(validation_results, lambda r: r)
@@ -282,7 +286,7 @@ class RailwayService(s[DemonstrationResult]):
 
 def main() -> None:
     """Main entry point using centralized t and advanced features."""
-    width = c.MAX_NAME_LENGTH * 2
+    width = c.HTTP_STATUS_MIN * 2
     separator = "=" * width
     print(separator)
     print("r COMPREHENSIVE DEMONSTRATION")

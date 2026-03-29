@@ -16,7 +16,9 @@ from typing import override
 
 from pydantic import Field, field_validator
 
-from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.typings import t
 
 
 class FlextModelsDomainEvent:

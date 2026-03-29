@@ -79,7 +79,7 @@ class CacheService(m.ArbitraryTypesModel):
         """Get value from cache using railway pattern."""
         if self.status != c.CommonStatus.ACTIVE:
             return r[str | int].fail(c.CONNECTION_ERROR)
-        return u.validate_length(key, max_length=c.MAX_NAME_LENGTH).flat_map(
+        return u.validate_length(key, max_length=c.HTTP_STATUS_MIN).flat_map(
             lambda _: (
                 r[str | int].fail(c.NOT_FOUND_ERROR)
                 if key == "missing"
@@ -93,9 +93,9 @@ class CacheService(m.ArbitraryTypesModel):
             return r[bool].fail(c.CONNECTION_ERROR)
         return (
             u
-            .validate_length(key, max_length=c.MAX_NAME_LENGTH)
+            .validate_length(key, max_length=c.HTTP_STATUS_MIN)
             .flat_map(
-                lambda _: u.validate_length(str(value), max_length=c.MAX_NAME_LENGTH),
+                lambda _: u.validate_length(str(value), max_length=c.HTTP_STATUS_MIN),
             )
             .map(lambda _: True)
         )
@@ -114,8 +114,8 @@ class EmailService(m.ArbitraryTypesModel):
             return r[bool].fail(c.CONNECTION_ERROR)
         validations = [
             u.validate_pattern(to, c.PATTERN_EMAIL, "email"),
-            u.validate_length(subject, min_length=1, max_length=c.MAX_NAME_LENGTH),
-            u.validate_length(body, min_length=1, max_length=c.MAX_MESSAGE_LENGTH),
+            u.validate_length(subject, min_length=1, max_length=c.HTTP_STATUS_MIN),
+            u.validate_length(body, min_length=1, max_length=c.HTTP_STATUS_MIN),
         ]
         return r.traverse(validations, lambda r: r).map(lambda _: True)
 
@@ -177,13 +177,13 @@ class DependencyInjectionService(s[t.ConfigMap]):
             root={
                 "driver": "sqlite",
                 "url": "sqlite:///:memory:",
-                "timeout": c.DEFAULT_TIMEOUT,
+                "timeout": c.DEFAULT_TIMEOUT_SECONDS,
             },
         )
         db_service = DatabaseService(config=db_config)
         db_service.status = c.CommonStatus.ACTIVE
         cache_config: t.ConfigMap = t.ConfigMap(
-            root={"backend": "memory", "ttl": c.DEFAULT_CACHE_TTL},
+            root={"backend": "memory", "ttl": c.CACHE_TTL},
         )
         cache_service = CacheService(config=cache_config)
         cache_service.status = c.CommonStatus.ACTIVE
