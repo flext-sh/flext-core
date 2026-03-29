@@ -163,6 +163,11 @@ precision = 2
 show_missing = true
 skip_covered = false
 
+[tool.coverage.run]
+omit = [
+  "*/dependency_injector/providers.pyx",
+]
+
 # [MANAGED] deptry
 [tool.deptry]
 known_first_party = [
