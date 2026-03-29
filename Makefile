@@ -66,12 +66,16 @@ venv: _bootstrap-venv ## Create standalone virtual environment
 setup: venv ## Full standalone setup (venv + dependencies + base.mk)
 	@echo "==> Installing project dependencies..."
 	@$(BOOTSTRAP_PIP) install -q flext-infra
+	@$(BOOTSTRAP_PYTHON) -m flext_infra deps path-sync \
+		--mode standalone \
+		--apply \
+		--workspace "$(CURDIR)"
 	@$(BOOTSTRAP_PYTHON) -m flext_infra deps internal-sync \
-		--project-root "$(CURDIR)" 2>/dev/null || true
+		--workspace "$(CURDIR)"
 	@$(BOOTSTRAP_VENV)/bin/poetry lock
 	@$(BOOTSTRAP_VENV)/bin/poetry install --all-extras --all-groups
 	@if git rev-parse --git-dir >/dev/null 2>&1; then \
-		$(BOOTSTRAP_VENV)/bin/poetry run pre-commit install 2>/dev/null || true; \
+		$(BOOTSTRAP_VENV)/bin/poetry run pre-commit install; \
 	fi
 	@$(BOOTSTRAP_PYTHON) -m flext_infra basemk generate \
 		--project-name $(PROJECT_NAME) --output base.mk

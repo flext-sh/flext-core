@@ -235,7 +235,8 @@ boot: ## Complete setup
 		go mod tidy; \
 		exit 0; \
 	fi
-	$(Q)python -m flext_infra deps internal-sync
+	$(Q)$(POETRY) run python -m flext_infra deps path-sync --mode auto --apply --workspace "$(CURDIR)"
+	$(Q)$(POETRY) run python -m flext_infra deps internal-sync --workspace "$(CURDIR)"
 	$(Q)$(POETRY) lock
 	$(Q)$(POETRY) install --all-extras --all-groups
 	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
@@ -432,7 +433,7 @@ fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
 		elif [ -f ".markdownlint.json" ]; then \
 			md_config="--config .markdownlint.json"; \
 		fi; \
-		echo "$$md_files" | xargs markdownlint --fix $$md_config 2>/dev/null || true; \
+		echo "$$md_files" | xargs markdownlint --fix $$md_config; \
 	fi
 	$(Q)echo "Format complete: $(PROJECT_NAME)"
 
