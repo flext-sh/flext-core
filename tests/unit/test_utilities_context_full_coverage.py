@@ -135,25 +135,3 @@ class TestUtilitiesContextFullCoverage:
         assert isinstance(cloned, self._MinimalRuntime)
         assert cloned.runtime_dispatcher is None
         assert cloned.runtime_config is None
-
-    def test_clone_container_calls_scoped(self) -> None:
-        """Calls container.scoped() with provided args."""
-        container = MagicMock()
-        expected = MagicMock()
-        container.scoped.return_value = expected
-        result = u.clone_container(
-            container,
-            scope_id="test-scope",
-            overrides={"service": "mock"},
-        )
-        container.scoped.assert_called_once_with(
-            subproject="test-scope",
-            services={"service": "mock"},
-        )
-        assert result is expected
-
-    def test_clone_container_with_defaults(self) -> None:
-        """With no args, scoped() is called with None defaults."""
-        container = MagicMock()
-        u.clone_container(container)
-        container.scoped.assert_called_once_with(subproject=None, services=None)

@@ -5,104 +5,112 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from examples._models import (
-        ex00,
-        ex01,
-        ex02,
-        ex03,
-        ex04,
-        ex05,
-        ex07,
-        ex08,
-        ex10,
-        ex11,
-        ex12,
-        ex14,
-        exconfig,
-        shared,
+        ex00 as ex00,
+        ex01 as ex01,
+        ex02 as ex02,
+        ex03 as ex03,
+        ex04 as ex04,
+        ex05 as ex05,
+        ex07 as ex07,
+        ex08 as ex08,
+        ex10 as ex10,
+        ex11 as ex11,
+        ex12 as ex12,
+        ex14 as ex14,
+        exconfig as exconfig,
+        shared as shared,
     )
-    from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
+    from examples._models.ex00 import (
+        Ex00UserInput as Ex00UserInput,
+        Ex00UserProfile as Ex00UserProfile,
+    )
     from examples._models.ex01 import (
-        Ex01DemonstrationResult,
-        Ex01InvalidPersonPayload,
-        Ex01RunDemonstrationCommand,
-        Ex01User,
-        Ex01ValidPersonPayload,
+        Ex01DemonstrationResult as Ex01DemonstrationResult,
+        Ex01InvalidPersonPayload as Ex01InvalidPersonPayload,
+        Ex01RunDemonstrationCommand as Ex01RunDemonstrationCommand,
+        Ex01User as Ex01User,
+        Ex01ValidPersonPayload as Ex01ValidPersonPayload,
     )
     from examples._models.ex02 import (
-        Ex02CacheService,
-        Ex02DatabaseService,
-        Ex02EmailService,
-        Ex02TestConfig,
+        Ex02CacheService as Ex02CacheService,
+        Ex02DatabaseService as Ex02DatabaseService,
+        Ex02EmailService as Ex02EmailService,
+        Ex02TestConfig as Ex02TestConfig,
     )
     from examples._models.ex03 import (
-        Ex03Email,
-        Ex03Money,
-        Ex03Order,
-        Ex03OrderItem,
-        Ex03User,
+        Ex03Email as Ex03Email,
+        Ex03Money as Ex03Money,
+        Ex03Order as Ex03Order,
+        Ex03OrderItem as Ex03OrderItem,
+        Ex03User as Ex03User,
     )
     from examples._models.ex04 import (
-        Ex04AutoCommand,
-        Ex04CreateUser,
-        Ex04DeleteUser,
-        Ex04FailingDelete,
-        Ex04GetUser,
-        Ex04NoSubscriberEvent,
-        Ex04Ping,
-        Ex04UnknownQuery,
-        Ex04UserCreated,
+        Ex04AutoCommand as Ex04AutoCommand,
+        Ex04CreateUser as Ex04CreateUser,
+        Ex04DeleteUser as Ex04DeleteUser,
+        Ex04FailingDelete as Ex04FailingDelete,
+        Ex04GetUser as Ex04GetUser,
+        Ex04NoSubscriberEvent as Ex04NoSubscriberEvent,
+        Ex04Ping as Ex04Ping,
+        Ex04UnknownQuery as Ex04UnknownQuery,
+        Ex04UserCreated as Ex04UserCreated,
     )
     from examples._models.ex05 import (
-        Ex05BadProcessor,
-        Ex05GoodProcessor,
-        Ex05HandlerBad,
-        Ex05HandlerLike,
-        Ex05StatusEnum,
-        Ex05UserModel,
+        Ex05BadProcessor as Ex05BadProcessor,
+        Ex05GoodProcessor as Ex05GoodProcessor,
+        Ex05HandlerBad as Ex05HandlerBad,
+        Ex05HandlerLike as Ex05HandlerLike,
+        Ex05StatusEnum as Ex05StatusEnum,
+        Ex05UserModel as Ex05UserModel,
     )
     from examples._models.ex07 import (
-        Ex07CreateUserCommand,
-        Ex07DemoPlugin,
-        Ex07GetUserQuery,
-        Ex07UserCreatedEvent,
+        Ex07CreateUserCommand as Ex07CreateUserCommand,
+        Ex07DemoPlugin as Ex07DemoPlugin,
+        Ex07GetUserQuery as Ex07GetUserQuery,
+        Ex07UserCreatedEvent as Ex07UserCreatedEvent,
     )
-    from examples._models.ex08 import Ex08Order, Ex08User
+    from examples._models.ex08 import Ex08Order as Ex08Order, Ex08User as Ex08User
     from examples._models.ex10 import (
-        Ex10CommandBusStub,
-        Ex10ContextPayload,
-        Ex10DerivedMessage,
-        Ex10Entity,
-        Ex10Message,
-        Ex10ProcessorBad,
-        Ex10ProcessorGood,
-        Ex10ProtocolHandler,
-        Ex10ServiceStub,
+        Ex10CommandBusStub as Ex10CommandBusStub,
+        Ex10ContextPayload as Ex10ContextPayload,
+        Ex10DerivedMessage as Ex10DerivedMessage,
+        Ex10Entity as Ex10Entity,
+        Ex10Message as Ex10Message,
+        Ex10ProcessorBad as Ex10ProcessorBad,
+        Ex10ProcessorGood as Ex10ProcessorGood,
+        Ex10ProtocolHandler as Ex10ProtocolHandler,
+        Ex10ServiceStub as Ex10ServiceStub,
     )
     from examples._models.ex11 import (
-        Ex11CommandBusStub,
-        Ex11EntityStub,
-        Ex11HandlerLike,
-        Ex11HandlerLikeService,
-        Ex11Payload,
-        Ex11ProcessorProtocolBad,
-        Ex11ProcessorProtocolGood,
+        Ex11CommandBusStub as Ex11CommandBusStub,
+        Ex11EntityStub as Ex11EntityStub,
+        Ex11HandlerLike as Ex11HandlerLike,
+        Ex11HandlerLikeService as Ex11HandlerLikeService,
+        Ex11Payload as Ex11Payload,
+        Ex11ProcessorProtocolBad as Ex11ProcessorProtocolBad,
+        Ex11ProcessorProtocolGood as Ex11ProcessorProtocolGood,
     )
-    from examples._models.ex12 import Ex12CommandA, Ex12CommandB
+    from examples._models.ex12 import (
+        Ex12CommandA as Ex12CommandA,
+        Ex12CommandB as Ex12CommandB,
+    )
     from examples._models.ex14 import (
-        Ex14CreateUserCommand,
-        Ex14GetUserQuery,
-        Ex14UserDTO,
+        Ex14CreateUserCommand as Ex14CreateUserCommand,
+        Ex14GetUserQuery as Ex14GetUserQuery,
+        Ex14UserDTO as Ex14UserDTO,
     )
-    from examples._models.exconfig import ExConfigAppConfig
-    from examples._models.shared import SharedHandle, SharedPerson
-    from flext_core import FlextTypes
+    from examples._models.exconfig import ExConfigAppConfig as ExConfigAppConfig
+    from examples._models.shared import (
+        SharedHandle as SharedHandle,
+        SharedPerson as SharedPerson,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "Ex00UserInput": ["examples._models.ex00", "Ex00UserInput"],
@@ -185,7 +193,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "shared": ["examples._models.shared", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "Ex00UserInput",
     "Ex00UserProfile",
     "Ex01DemonstrationResult",
@@ -264,41 +272,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

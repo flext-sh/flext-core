@@ -26,14 +26,11 @@ from enum import StrEnum, unique
 from typing import ClassVar, cast, override
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, r
-from tests import u
-
-from ..test_utils import assertion_helpers
-from .contracts.text_contract import TextUtilityContract
+from flext_core import r
+from tests import TextUtilityContract, assertion_helpers, t, u
 
 
 class Testu(TextUtilityContract):
@@ -406,18 +403,6 @@ class Testu(TextUtilityContract):
         """Test type checking with no accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = ()
         tm.that(not u.can_handle_message_type(accepted, str), eq=True)
-
-    def test_configuration_get_parameter(self) -> None:
-        """Test parameter retrieval from config."""
-        config = self.UtilityScenarios.create_mock_config(timeout=30)
-        value = u.get_parameter(config, "timeout")
-        tm.that(value, eq=30)
-
-    def test_configuration_get_parameter_missing(self) -> None:
-        """Test parameter retrieval for missing parameter."""
-        config = self.UtilityScenarios.create_mock_config(timeout=30)
-        with pytest.raises(FlextExceptions.NotFoundError):
-            u.get_parameter(config, "missing")
 
 
 __all__ = ["Testu"]

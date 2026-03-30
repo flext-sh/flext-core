@@ -13,68 +13,105 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
     from flext_core._utilities import (
-        args,
-        cache,
-        checker,
-        collection,
-        configuration,
-        context,
-        conversion,
-        deprecation,
-        discovery,
-        domain,
-        enum,
-        file_ops,
-        generators,
-        guards,
-        guards_ensure,
-        guards_type,
-        guards_type_core,
-        guards_type_model,
-        guards_type_protocol,
-        mapper,
-        model,
-        pagination,
-        parser,
-        reliability,
-        result_helpers,
-        text,
+        args as args,
+        cache as cache,
+        checker as checker,
+        collection as collection,
+        configuration as configuration,
+        context as context,
+        conversion as conversion,
+        deprecation as deprecation,
+        discovery as discovery,
+        domain as domain,
+        enum as enum,
+        file_ops as file_ops,
+        generators as generators,
+        guards as guards,
+        guards_ensure as guards_ensure,
+        guards_type as guards_type,
+        guards_type_core as guards_type_core,
+        guards_type_model as guards_type_model,
+        guards_type_protocol as guards_type_protocol,
+        mapper as mapper,
+        model as model,
+        pagination as pagination,
+        parser as parser,
+        reliability as reliability,
+        result_helpers as result_helpers,
+        text as text,
     )
-    from flext_core._utilities.args import FlextUtilitiesArgs
-    from flext_core._utilities.cache import FlextUtilitiesCache
-    from flext_core._utilities.checker import FlextUtilitiesChecker
-    from flext_core._utilities.collection import FlextUtilitiesCollection
-    from flext_core._utilities.configuration import FlextUtilitiesConfiguration
-    from flext_core._utilities.context import FlextUtilitiesContext
-    from flext_core._utilities.conversion import FlextUtilitiesConversion
-    from flext_core._utilities.discovery import FlextUtilitiesDiscovery
-    from flext_core._utilities.domain import FlextUtilitiesDomain
-    from flext_core._utilities.enum import FlextUtilitiesEnum
-    from flext_core._utilities.file_ops import FlextUtilitiesFileOps
-    from flext_core._utilities.generators import FlextUtilitiesGenerators
-    from flext_core._utilities.guards import FlextUtilitiesGuards
-    from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
-    from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
-    from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-    from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+    from flext_core._utilities.args import FlextUtilitiesArgs as FlextUtilitiesArgs
+    from flext_core._utilities.cache import FlextUtilitiesCache as FlextUtilitiesCache
+    from flext_core._utilities.checker import (
+        FlextUtilitiesChecker as FlextUtilitiesChecker,
+    )
+    from flext_core._utilities.collection import (
+        FlextUtilitiesCollection as FlextUtilitiesCollection,
+    )
+    from flext_core._utilities.configuration import (
+        FlextUtilitiesConfiguration as FlextUtilitiesConfiguration,
+    )
+    from flext_core._utilities.context import (
+        FlextUtilitiesContext as FlextUtilitiesContext,
+    )
+    from flext_core._utilities.conversion import (
+        FlextUtilitiesConversion as FlextUtilitiesConversion,
+    )
+    from flext_core._utilities.discovery import (
+        FlextUtilitiesDiscovery as FlextUtilitiesDiscovery,
+    )
+    from flext_core._utilities.domain import (
+        FlextUtilitiesDomain as FlextUtilitiesDomain,
+    )
+    from flext_core._utilities.enum import FlextUtilitiesEnum as FlextUtilitiesEnum
+    from flext_core._utilities.file_ops import (
+        FlextUtilitiesFileOps as FlextUtilitiesFileOps,
+    )
+    from flext_core._utilities.generators import (
+        FlextUtilitiesGenerators as FlextUtilitiesGenerators,
+    )
+    from flext_core._utilities.guards import (
+        FlextUtilitiesGuards as FlextUtilitiesGuards,
+    )
+    from flext_core._utilities.guards_ensure import (
+        FlextUtilitiesGuardsEnsure as FlextUtilitiesGuardsEnsure,
+    )
+    from flext_core._utilities.guards_type import (
+        FlextUtilitiesGuardsType as FlextUtilitiesGuardsType,
+    )
+    from flext_core._utilities.guards_type_core import (
+        FlextUtilitiesGuardsTypeCore as FlextUtilitiesGuardsTypeCore,
+    )
+    from flext_core._utilities.guards_type_model import (
+        FlextUtilitiesGuardsTypeModel as FlextUtilitiesGuardsTypeModel,
+    )
     from flext_core._utilities.guards_type_protocol import (
-        FlextUtilitiesGuardsTypeProtocol,
+        FlextUtilitiesGuardsTypeProtocol as FlextUtilitiesGuardsTypeProtocol,
     )
-    from flext_core._utilities.mapper import FlextUtilitiesMapper
-    from flext_core._utilities.model import FlextUtilitiesModel
-    from flext_core._utilities.pagination import FlextUtilitiesPagination
-    from flext_core._utilities.parser import FlextUtilitiesParser
-    from flext_core._utilities.reliability import FlextUtilitiesReliability
-    from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
-    from flext_core._utilities.text import FlextUtilitiesText
+    from flext_core._utilities.mapper import (
+        FlextUtilitiesMapper as FlextUtilitiesMapper,
+    )
+    from flext_core._utilities.model import FlextUtilitiesModel as FlextUtilitiesModel
+    from flext_core._utilities.pagination import (
+        FlextUtilitiesPagination as FlextUtilitiesPagination,
+    )
+    from flext_core._utilities.parser import (
+        FlextUtilitiesParser as FlextUtilitiesParser,
+    )
+    from flext_core._utilities.reliability import (
+        FlextUtilitiesReliability as FlextUtilitiesReliability,
+    )
+    from flext_core._utilities.result_helpers import (
+        FlextUtilitiesResultHelpers as FlextUtilitiesResultHelpers,
+    )
+    from flext_core._utilities.text import FlextUtilitiesText as FlextUtilitiesText
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextUtilitiesArgs": ["flext_core._utilities.args", "FlextUtilitiesArgs"],
@@ -172,7 +209,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "text": ["flext_core._utilities.text", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextUtilitiesArgs",
     "FlextUtilitiesCache",
     "FlextUtilitiesChecker",
@@ -227,41 +264,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

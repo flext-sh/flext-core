@@ -5,25 +5,30 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
     from tests.unit.flext_tests import (
-        test_docker,
-        test_domains,
-        test_files,
-        test_matchers,
-        test_utilities,
+        test_docker as test_docker,
+        test_domains as test_domains,
+        test_files as test_files,
+        test_matchers as test_matchers,
+        test_utilities as test_utilities,
     )
-    from tests.unit.flext_tests.test_docker import TestDocker
-    from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
-    from tests.unit.flext_tests.test_files import TestFlextTestsFiles
-    from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
-    from tests.unit.flext_tests.test_utilities import TestUtilities
+    from tests.unit.flext_tests.test_docker import TestDocker as TestDocker
+    from tests.unit.flext_tests.test_domains import (
+        TestFlextTestsDomains as TestFlextTestsDomains,
+    )
+    from tests.unit.flext_tests.test_files import (
+        TestFlextTestsFiles as TestFlextTestsFiles,
+    )
+    from tests.unit.flext_tests.test_matchers import (
+        TestFlextTestsMatchers as TestFlextTestsMatchers,
+    )
+    from tests.unit.flext_tests.test_utilities import TestUtilities as TestUtilities
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "TestDocker": ["tests.unit.flext_tests.test_docker", "TestDocker"],
@@ -44,7 +49,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "test_utilities": ["tests.unit.flext_tests.test_utilities", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "TestDocker",
     "TestFlextTestsDomains",
     "TestFlextTestsFiles",
@@ -58,41 +63,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

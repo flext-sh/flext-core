@@ -43,16 +43,6 @@ class FlextModelsConfig:
     All nested classes are accessed via FlextModels.Config.* in the main models.py.
     """
 
-    @staticmethod
-    def _get_log_level_from_config() -> int:
-        """Get default log level from configuration constants.
-
-        Returns:
-            int: Numeric logging level (e.g., logging.INFO = 20)
-
-        """
-        return FlextRuntime.get_log_level_from_config()
-
     class AutoConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Automatic settings wrapper for BaseSettings classes."""
 

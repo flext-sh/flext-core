@@ -82,8 +82,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "validation": ["flext_core._typings.validation", ""],
 }
 
-__all__ = [
-    "TV",
+_EXPORTS: Sequence[str] = [
     "EnumT",
     "FlextTypesCore",
     "FlextTypesServices",
@@ -96,6 +95,7 @@ __all__ = [
     "ResultT",
     "T",
     "TRuntime",
+    "TV",
     "TV_co",
     "T_Model",
     "T_Namespace",
@@ -110,6 +110,9 @@ __all__ = [
     "services",
     "validation",
 ]
+
+
+__all__ = list(_EXPORTS)
 
 
 def __getattr__(name: str) -> type:

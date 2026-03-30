@@ -7,7 +7,6 @@ from typing import override
 import pytest
 
 from flext_core import e, r, s
-from tests import t
 
 
 class RuntimeCloneService(s[str]):
@@ -54,10 +53,3 @@ def test_result_property_raises_on_failure() -> None:
     service = FailingOnResultService()
     with pytest.raises(e.BaseError, match="fail_exec"):
         _ = service.result
-
-
-def test_get_service_info() -> None:
-    """Service should return basic service info."""
-    service = RuntimeCloneService()
-    info: t.ContainerMapping = service.get_service_info()
-    assert info["service_type"] == "RuntimeCloneService"

@@ -16,53 +16,78 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
     from flext_core._models import (
-        base,
-        collections,
-        container,
-        containers,
-        context,
-        cqrs,
-        decorators,
-        dispatcher,
-        domain_event,
-        entity,
-        errors,
-        exception_params,
-        generic,
-        handler,
-        service,
-        settings,
+        base as base,
+        collections as collections,
+        container as container,
+        containers as containers,
+        context as context,
+        cqrs as cqrs,
+        decorators as decorators,
+        dispatcher as dispatcher,
+        domain_event as domain_event,
+        entity as entity,
+        errors as errors,
+        exception_params as exception_params,
+        generic as generic,
+        handler as handler,
+        service as service,
+        settings as settings,
     )
-    from flext_core._models._context._data import FlextModelsContextData
-    from flext_core._models._context._export import FlextModelsContextExport
-    from flext_core._models._context._metadata import FlextModelsContextMetadata
-    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
-    from flext_core._models._context._scope import FlextModelsContextScope
-    from flext_core._models._context._tokens import FlextModelsContextTokens
-    from flext_core._models.base import FlextModelFoundation
-    from flext_core._models.collections import FlextModelsCollections
-    from flext_core._models.container import FlextModelsContainer
-    from flext_core._models.containers import FlextModelsContainers
-    from flext_core._models.context import FlextModelsContext
-    from flext_core._models.cqrs import FlextModelsCqrs
-    from flext_core._models.decorators import FlextModelsDecorators
-    from flext_core._models.dispatcher import FlextModelsDispatcher
-    from flext_core._models.domain_event import FlextModelsDomainEvent
-    from flext_core._models.entity import FlextModelsEntity
-    from flext_core._models.errors import FlextModelsErrors
-    from flext_core._models.exception_params import FlextModelsExceptionParams
-    from flext_core._models.generic import FlextGenericModels
-    from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.service import FlextModelsService
-    from flext_core._models.settings import FlextModelsConfig
+    from flext_core._models._context._data import (
+        FlextModelsContextData as FlextModelsContextData,
+    )
+    from flext_core._models._context._export import (
+        FlextModelsContextExport as FlextModelsContextExport,
+    )
+    from flext_core._models._context._metadata import (
+        FlextModelsContextMetadata as FlextModelsContextMetadata,
+    )
+    from flext_core._models._context._proxy_var import (
+        FlextModelsContextProxyVar as FlextModelsContextProxyVar,
+    )
+    from flext_core._models._context._scope import (
+        FlextModelsContextScope as FlextModelsContextScope,
+    )
+    from flext_core._models._context._tokens import (
+        FlextModelsContextTokens as FlextModelsContextTokens,
+    )
+    from flext_core._models.base import FlextModelFoundation as FlextModelFoundation
+    from flext_core._models.collections import (
+        FlextModelsCollections as FlextModelsCollections,
+    )
+    from flext_core._models.container import (
+        FlextModelsContainer as FlextModelsContainer,
+    )
+    from flext_core._models.containers import (
+        FlextModelsContainers as FlextModelsContainers,
+    )
+    from flext_core._models.context import FlextModelsContext as FlextModelsContext
+    from flext_core._models.cqrs import FlextModelsCqrs as FlextModelsCqrs
+    from flext_core._models.decorators import (
+        FlextModelsDecorators as FlextModelsDecorators,
+    )
+    from flext_core._models.dispatcher import (
+        FlextModelsDispatcher as FlextModelsDispatcher,
+    )
+    from flext_core._models.domain_event import (
+        FlextModelsDomainEvent as FlextModelsDomainEvent,
+    )
+    from flext_core._models.entity import FlextModelsEntity as FlextModelsEntity
+    from flext_core._models.errors import FlextModelsErrors as FlextModelsErrors
+    from flext_core._models.exception_params import (
+        FlextModelsExceptionParams as FlextModelsExceptionParams,
+    )
+    from flext_core._models.generic import FlextGenericModels as FlextGenericModels
+    from flext_core._models.handler import FlextModelsHandler as FlextModelsHandler
+    from flext_core._models.service import FlextModelsService as FlextModelsService
+    from flext_core._models.settings import FlextModelsConfig as FlextModelsConfig
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextGenericModels": ["flext_core._models.generic", "FlextGenericModels"],
@@ -132,7 +157,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "settings": ["flext_core._models.settings", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextGenericModels",
     "FlextModelFoundation",
     "FlextModelsCollections",
@@ -174,41 +199,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

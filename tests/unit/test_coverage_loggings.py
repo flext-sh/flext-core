@@ -21,7 +21,7 @@ from __future__ import annotations
 from flext_tests import tm
 
 from flext_core import FlextLogger, r
-from tests import p, t
+from tests import p
 
 
 class TestCoverageLoggings:
@@ -55,110 +55,6 @@ class TestCoverageLoggings:
         tm.ok(result)
         return result
 
-    def test_bind_global_context(self) -> None:
-        """Test binding global context."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger.bind_global_context(
-            request_id="req-123",
-            user_id="usr-456",
-        )
-        _ = assert_log_result_success(result)
-
-    def test_bind_global_context_multiple_calls(self) -> None:
-        """Test multiple global context bindings accumulate."""
-        FlextLogger.clear_global_context()
-        result1 = FlextLogger.bind_global_context(request_id="req-123")
-        result2 = FlextLogger.bind_global_context(user_id="usr-456")
-        tm.ok(result1)
-        tm.ok(result2)
-
-    def test_unbind_global_context(self) -> None:
-        """Test unbinding specific global context keys."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(request_id="req-123", user_id="usr-456")
-        result = FlextLogger.unbind_global_context("request_id")
-        _ = assert_log_result_success(result)
-
-    def test_unbind_global_context_multiple_keys(self) -> None:
-        """Test unbinding multiple keys at once."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(
-            request_id="req-123",
-            user_id="usr-456",
-            correlation_id="cor-789",
-        )
-        result = FlextLogger.unbind_global_context("request_id", "user_id")
-        _ = assert_log_result_success(result)
-
-    def test_clear_global_context(self) -> None:
-        """Test clearing all global context."""
-        FlextLogger.bind_global_context(request_id="req-123")
-        result = FlextLogger.clear_global_context()
-        _ = assert_log_result_success(result)
-
-    def test_get_global_context(self) -> None:
-        """Test retrieving global context."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(request_id="req-123", user_id="usr-456")
-        context = FlextLogger._get_global_context()
-        tm.that(context, is_=t.ConfigMap)
-
-    def test_unbind_global_context_specific_key(self) -> None:
-        """Test unbind_global_context with valid keys."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(request_id="req-123")
-        result = FlextLogger.unbind_global_context("request_id")
-        tm.ok(result)
-
-    def test_get_global_context_empty(self) -> None:
-        """Test _get_global_context with empty context."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger._get_global_context()
-        tm.that(result, is_=t.ConfigMap)
-        tm.that(result.root, eq={})
-
-    def test_get_global_context_with_values(self) -> None:
-        """Test _get_global_context with existing context."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(test_key="test_value")
-        result = FlextLogger._get_global_context()
-        tm.that(result, is_=t.ConfigMap)
-        tm.that(result.root, has="test_key")
-        tm.that(result.root["test_key"], eq="test_value")
-
-    def test_bind_application_context(self) -> None:
-        """Test binding application-level context via bind_context."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger.bind_context(
-            scope="application",
-            app_name="test-app",
-            app_version="1.0.0",
-            environment="test",
-        )
-        _ = assert_log_result_success(result)
-
-    def test_bind_request_context(self) -> None:
-        """Test binding request-level context via bind_context."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger.bind_context(
-            scope="request",
-            correlation_id="flext-abc123",
-            command="migrate",
-            user_id="REDACTED_LDAP_BIND_PASSWORD",
-        )
-        _ = assert_log_result_success(result)
-
-    def test_bind_operation_context(self) -> None:
-        """Test binding operation-level context via bind_context."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger.bind_context(
-            scope="operation",
-            operation="migrate",
-            service="MigrationService",
-            method="execute",
-        )
-        _ = assert_log_result_success(result)
-
     def test_clear_scope_application(self) -> None:
         """Test clearing application scope."""
         FlextLogger.bind_context(scope="application", app_name="test")
@@ -180,60 +76,6 @@ class TestCoverageLoggings:
     def test_clear_scope_nonexistent(self) -> None:
         """Test clearing nonexistent scope."""
         result = FlextLogger.clear_scope("nonexistent")
-        _ = assert_log_result_success(result)
-
-    def test_scoped_context_manager_request(self) -> None:
-        """Test scoped_context manager for request scope."""
-        FlextLogger.clear_global_context()
-        with FlextLogger.scoped_context("request", correlation_id="flext-123"):
-            context = FlextLogger._get_global_context()
-            tm.that(context, is_=t.ConfigMap)
-
-    def test_scoped_context_manager_operation(self) -> None:
-        """Test scoped_context manager for operation scope."""
-        FlextLogger.clear_global_context()
-        with FlextLogger.scoped_context("operation", operation="test"):
-            context = FlextLogger._get_global_context()
-            tm.that(context, is_=t.ConfigMap)
-
-    def test_scoped_context_manager_cleanup(self) -> None:
-        """Test scoped_context clears context after exit."""
-        FlextLogger.clear_global_context()
-        with FlextLogger.scoped_context("operation", operation="test"):
-            pass
-        result = FlextLogger.clear_scope("operation")
-        _ = assert_log_result_success(result)
-
-    def test_bind_context_for_level_debug(self) -> None:
-        """Test binding DEBUG-level context."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger.bind_context_for_level("DEBUG", config="debug_config")
-        _ = assert_log_result_success(result)
-
-    def test_bind_context_for_level_error(self) -> None:
-        """Test binding ERROR-level context."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger.bind_context_for_level("ERROR", stack_trace="trace_info")
-        _ = assert_log_result_success(result)
-
-    def test_bind_context_for_level_lowercase(self) -> None:
-        """Test binding context with lowercase level."""
-        FlextLogger.clear_global_context()
-        result = FlextLogger.bind_context_for_level("info", message="info_context")
-        _ = assert_log_result_success(result)
-
-    def test_unbind_context_for_level(self) -> None:
-        """Test unbinding level-specific context."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_context_for_level("DEBUG", config="config_data")
-        result = FlextLogger.unbind_context_for_level("DEBUG", "config")
-        _ = assert_log_result_success(result)
-
-    def test_unbind_context_for_level_multiple_keys(self) -> None:
-        """Test unbinding multiple level-specific keys."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_context_for_level("ERROR", stack="trace", error="code")
-        result = FlextLogger.unbind_context_for_level("ERROR", "stack", "error")
         _ = assert_log_result_success(result)
 
     def test_create_service_logger(self) -> None:
@@ -568,54 +410,6 @@ class TestCoverageLoggings:
         tm.that(exception_obj, is_=OSError)
         tm.that(str(exception_obj), eq=msg)
 
-    def test_logger_with_global_context(self) -> None:
-        """Test logger respects global context."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(request_id="req-123")
-        logger = make_result_logger("test")
-        assert_log_result_success(logger.info("Message with global context"))
-        FlextLogger.clear_global_context()
-
-    def test_logger_with_scoped_context(self) -> None:
-        """Test logger respects scoped context."""
-        FlextLogger.clear_global_context()
-        with FlextLogger.scoped_context("request", correlation_id="flext-456"):
-            logger = make_result_logger("test")
-            assert_log_result_success(logger.info("Message with scoped context"))
-        FlextLogger.clear_global_context()
-
-    def test_logger_bind_with_global_context(self) -> None:
-        """Test bound logger includes all context."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(app="test_app")
-        logger = make_result_logger("test").bind(user_id="123")
-        assert_log_result_success(logger.info("Bound logger message"))
-        FlextLogger.clear_global_context()
-
-    def test_multiple_loggers_share_global_context(self) -> None:
-        """Test multiple logger instances share global context."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_global_context(shared="context_value")
-        logger1 = make_result_logger("logger1")
-        logger2 = make_result_logger("logger2")
-        result1 = assert_log_result_success(logger1.info("First logger message"))
-        result2 = assert_log_result_success(logger2.info("Second logger message"))
-        tm.ok(result1)
-        tm.ok(result2)
-        FlextLogger.clear_global_context()
-
-    def test_logger_complete_workflow(self) -> None:
-        """Test complete logging workflow with all features."""
-        FlextLogger.clear_global_context()
-        FlextLogger.bind_context(scope="application", app="test_app", version="1.0.0")
-        logger = FlextLogger.create_module_logger(__name__)
-        logger.debug("Debug message")
-        logger.info("Info message", action="start")
-        bound_logger = logger.bind(operation="workflow_test")
-        bound_logger.info("Operation in progress")
-        logger.info("Completed")
-        FlextLogger.clear_global_context()
-
     def test_logging_with_empty_message(self) -> None:
         """Test logging with empty message."""
         logger = make_result_logger("test")
@@ -633,15 +427,6 @@ class TestCoverageLoggings:
         assert_log_result_success(
             logger.info("Message with large context", **large_context),
         )
-
-    def test_multiple_context_managers_nested(self) -> None:
-        """Test nested scoped context managers."""
-        FlextLogger.clear_global_context()
-        with FlextLogger.scoped_context("request", req_id="r1"):
-            with FlextLogger.scoped_context("operation", op_id="o1"):
-                logger = make_result_logger("test")
-                assert_log_result_success(logger.info("Nested context message"))
-        FlextLogger.clear_global_context()
 
 
 make_result_logger = TestCoverageLoggings.make_result_logger

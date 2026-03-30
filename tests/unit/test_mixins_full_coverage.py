@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import (
     Callable,
-    Iterator,
     MutableSequence,
     Sequence,
 )
@@ -12,12 +11,10 @@ from types import SimpleNamespace
 from typing import cast, override
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 
-from flext_core import FlextLogger, FlextMixins, r, x
-from tests import c, p, u
-
-from ._models import TestUnitModels
+from flext_core import FlextLogger, r, x
+from tests import p, t
 
 
 class TestMixinsFullCoverage:
@@ -164,36 +161,6 @@ class TestMixinsFullCoverage:
             _ = value
             return self
 
-    def test_mixins_result_and_model_conversion_paths(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        _ = monkeypatch
-        tm.that(c.SCOPE_OPERATION, is_=str)
-        tm.that(hasattr(u, "merge_mappings"), eq=True)
-        tm.fail(x.fail("error"))
-        conf = t.ConfigMap(root={"a": "b"})
-        tm.that(x.normalize_to_container(conf) is conf, eq=True)
-        model = TestUnitModels._SvcModel(value="ok")
-        tm.that(x.normalize_to_container(model) is model, eq=True)
-
-        class _BadMap(t.ContainerMappingBase):
-            @override
-            def __iter__(self) -> Iterator[str]:
-                return iter(["k"])
-
-            @override
-            def __len__(self) -> int:
-                return 1
-
-            @override
-            def __getitem__(self, _key: str) -> t.NormalizedValue:
-                msg = "boom"
-                raise RuntimeError(msg)
-
-        with pytest.raises(RuntimeError, match="boom"):
-            _ = x.normalize_to_container(_BadMap())
-
     def test_mixins_runtime_bootstrap_and_track_paths(
         self,
         monkeypatch: pytest.MonkeyPatch,
@@ -288,7 +255,7 @@ class TestMixinsFullCoverage:
             property(lambda _self: _FailContainer()),
         )
         service._init_service("svc")
-        FlextMixins._logger_cache.clear()
+        x._logger_cache.clear()
         monkeypatch.setattr(
             "flext_core.mixins.FlextContainer.create",
             staticmethod(
@@ -561,7 +528,7 @@ class TestMixinsFullCoverage:
             [self._validation_ok_true],
         )
         tm.ok(valid)
-        FlextMixins._logger_cache.clear()
+        x._logger_cache.clear()
         logger_obj = _LoggerService._get_or_create_logger()
         tm.that(logger_obj, is_=p.Logger)
 
@@ -577,7 +544,7 @@ class TestMixinsFullCoverage:
         def _create_broken_container() -> _BrokenContainer:
             return _BrokenContainer()
 
-        FlextMixins._logger_cache.clear()
+        x._logger_cache.clear()
         monkeypatch.setattr(
             "flext_core.mixins.FlextContainer.create",
             staticmethod(_create_broken_container),

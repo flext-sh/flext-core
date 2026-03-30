@@ -52,14 +52,6 @@ class TestService100Coverage:
         is_valid = service.is_valid()
         tm.that(is_valid, is_=bool)
 
-    def test_get_service_info(self) -> None:
-        """Test get_service_info."""
-        service = self._ServiceStub()
-        info = service.get_service_info()
-        tm.that(info, is_=dict)
-        tm.that(len(info), gt=0)
-        assert "service_type" in info or "service_name" in info or "class_name" in info
-
     def test_execute_success(self) -> None:
         """Test execute method."""
         service = self._ServiceStub()

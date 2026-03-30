@@ -202,18 +202,6 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(len(taken), eq=2)
             assert "a" in taken and "b" in taken
 
-        def test_pick_dict(self) -> None:
-            """Test pick as dict."""
-            data = {"a": 1, "b": 2, "c": 3}
-            picked = u.pick(data, "a", "c")
-            tm.that(picked, eq={"a": 1, "c": 3})
-
-        def test_pick_list(self) -> None:
-            """Test pick as list."""
-            data = {"a": 1, "b": 2, "c": 3}
-            picked = u.pick(data, "a", "c", as_dict=False)
-            tm.that(picked, eq=[1, 3])
-
     class TestuMapperUtils:
         """Tests for u utils (or_, flat, agg)."""
 
@@ -221,11 +209,6 @@ class UtilitiesMapperCoverage100Namespace:
             """Test or_ fallback."""
             tm.that(u.or_(None, 1, 2).value, eq=1)
             tm.that(u.or_(None, None, default=3).value, eq=3)
-
-        def test_flat(self) -> None:
-            """Test flat."""
-            items: Sequence[Sequence[int]] = [[1, 2], [3], []]
-            tm.that(u.flat(items), eq=[1, 2, 3])
 
         def test_agg(self) -> None:
             """Test agg."""
@@ -251,21 +234,6 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(u.ensure_str("s"), eq="s")
             tm.that(u.ensure_str(1), eq="1")
             tm.that(u.ensure_str(None, "def"), eq="def")
-
-        def test_ensure_list(self) -> None:
-            """Test ensure."""
-            tm.that(u.ensure_str_list(["a"]), eq=["a"])
-            tm.that(u.ensure_str_list("a"), eq=["a"])
-            tm.that(u.ensure_str_list([1, 2]), eq=["1", "2"])
-            tm.that(u.ensure_str_list(None), eq=[])
-
-        def test_ensure_str_or_none(self) -> None:
-            """Test ensure_str_or_none."""
-            str_result = u.ensure_str_or_none("s")
-            tm.ok(str_result)
-            tm.that(str_result.value, eq="s")
-            tm.fail(u.ensure_str_or_none(1))
-            tm.fail(u.ensure_str_or_none(None))
 
         def test_convert_to_json_value(self) -> None:
             obj = SimpleObj(name="test", value=1)
@@ -374,18 +342,6 @@ class UtilitiesMapperCoverage100Namespace:
             ops = {"chunk": 2}
             res = u.build([1, 2, 3, 4], ops=ops)
             tm.that(res, eq=[[1, 2], [3, 4]])
-
-        def test_fields_single(self) -> None:
-            """Test fields single extraction."""
-            data = {"a": 1}
-            tm.that(u.field(data, "a"), eq=1)
-
-        def test_fields_multi(self) -> None:
-            """Test fields multi extraction."""
-            data: t.ContainerMapping = {"a": 1, "b": 2}
-            spec: t.ContainerMapping = {"a": None, "b": None}
-            res = u.fields_multi(data, spec)
-            tm.that(res, eq={"a": 1, "b": 2})
 
         def test_construct(self) -> None:
             """Test construct."""

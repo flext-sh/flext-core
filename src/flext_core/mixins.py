@@ -301,9 +301,9 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         runtime = self._runtime if hasattr(self, "_runtime") else None
         if isinstance(runtime, m.ServiceRuntime):
             return runtime
-        config_type_raw = getattr(self, "config_type", None)
-        config_cls_typed: type[FlextSettings]
 
+        options = FlextMixins._resolve_bootstrap_options(self)
+        config_type_raw = getattr(self, "config_type", None)
         overrides: t.ContainerMapping | None = None
         initial_ctx: p.Context | None = None
         bootstrap_services: Mapping[str, t.RegisterableService] | None = None
@@ -313,89 +313,41 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         bootstrap_wire_packages: t.StrSequence | None = None
         bootstrap_wire_classes: Sequence[type] | None = None
 
-        options: m.RuntimeBootstrapOptions | None = None
-        try:
-            options_raw: t.BootstrapInput = getattr(
-                self,
-                "_runtime_bootstrap_options",
-                lambda: None,
-            )()
-            if options_raw is not None:
-                if isinstance(options_raw, m.RuntimeBootstrapOptions):
-                    options = options_raw
-                elif isinstance(options_raw, (dict, Mapping)):
-                    options = m.RuntimeBootstrapOptions.model_validate(options_raw)
-                else:
-                    try:
-                        options = m.RuntimeBootstrapOptions.model_validate(
-                            options_raw,
-                            from_attributes=True,
-                        )
-                    except ValidationError:
-                        options = None
-            if options:
-                if options.config_type is not None:
-                    config_type_raw = options.config_type
-                if options.config_overrides is not None:
-                    overrides = options.config_overrides
-                if options.context is not None:
-                    initial_ctx = options.context
-                if options.services is not None:
-                    services_typed: MutableMapping[str, t.RegisterableService] = {}
-                    for key, value in options.services.items():
-                        if u.is_registerable_service(value):
-                            services_typed[str(key)] = value
-                    bootstrap_services = services_typed
-                bootstrap_factories = options.factories
-                bootstrap_resources = options.resources
-                if options.wire_modules is not None:
-                    modules_list: MutableSequence[ModuleType] = []
-                    packages_list: MutableSequence[str] = []
-                    for item in options.wire_modules:
-                        if isinstance(item, str):
-                            packages_list.append(item)
-                        else:
-                            modules_list.append(item)
-                    bootstrap_wire_modules = modules_list
-                    if packages_list:
-                        bootstrap_wire_packages = packages_list
-                if options.wire_packages is not None:
-                    current_packages = list(bootstrap_wire_packages or [])
-                    current_packages.extend(options.wire_packages)
-                    bootstrap_wire_packages = current_packages
-                if options.wire_classes is not None:
-                    bootstrap_wire_classes = options.wire_classes
-        except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
-            FlextLogger.create_module_logger(__name__).warning(
-                "Failed to load runtime bootstrap options",
-                exc_info=exc,
+        if options:
+            config_type_raw, overrides, initial_ctx = (
+                options.config_type or config_type_raw,
+                options.config_overrides,
+                options.context,
+            )
+            bootstrap_services = FlextMixins._filter_registerable_services(options)
+            bootstrap_factories = options.factories
+            bootstrap_resources = options.resources
+            bootstrap_wire_modules, bootstrap_wire_packages, bootstrap_wire_classes = (
+                FlextMixins._resolve_wire_targets(options)
             )
 
-        if FlextMixins._is_flext_settings_type(config_type_raw):
-            config_cls_typed = config_type_raw
-        else:
-            config_cls_typed = FlextSettings
-
+        config_cls_typed: type[FlextSettings] = (
+            config_type_raw
+            if FlextMixins._is_flext_settings_type(config_type_raw)
+            else FlextSettings
+        )
         if overrides is None:
             overrides = getattr(self, "config_overrides", None)
-
-        overrides_typed: t.ScalarMapping | None = None
-        if overrides is not None:
-            overrides_typed = {
-                key: value for key, value in overrides.items() if u.is_scalar(value)
-            }
-
-        runtime_config = config_cls_typed.get_global(overrides=overrides_typed)
-
+        overrides_typed: t.ScalarMapping | None = (
+            {k: v for k, v in overrides.items() if u.is_scalar(v)}
+            if overrides is not None
+            else None
+        )
+        runtime_config: p.Settings = config_cls_typed.get_global(
+            overrides=overrides_typed,
+        )
         if initial_ctx is None:
             initial_ctx = getattr(self, "initial_context", None)
-
         runtime_context: p.Context = (
             initial_ctx if isinstance(initial_ctx, p.Context) else FlextContext.create()
         )
-        runtime_config_typed: p.Settings = runtime_config
         runtime_container = FlextContainer.create().scoped(
-            config=runtime_config_typed,
+            config=runtime_config,
             context=runtime_context,
             services=bootstrap_services,
             factories=bootstrap_factories,
@@ -410,10 +362,90 @@ class FlextMixins(m.ArbitraryTypesModel, u):
 
         self._runtime = m.ServiceRuntime(
             container=runtime_container,
-            config=runtime_config_typed,
+            config=runtime_config,
             context=runtime_context,
         )
         return self._runtime
+
+    @staticmethod
+    def _resolve_bootstrap_options(
+        instance: FlextMixins,
+    ) -> m.RuntimeBootstrapOptions | None:
+        """Load and validate bootstrap options from the mixin consumer."""
+        try:
+            options_raw: t.BootstrapInput = getattr(
+                instance,
+                "_runtime_bootstrap_options",
+                lambda: None,
+            )()
+            if options_raw is None:
+                return None
+            match options_raw:
+                case m.RuntimeBootstrapOptions():
+                    return options_raw
+                case dict() | Mapping():
+                    return m.RuntimeBootstrapOptions.model_validate(options_raw)
+                case _:
+                    try:
+                        return m.RuntimeBootstrapOptions.model_validate(
+                            options_raw,
+                            from_attributes=True,
+                        )
+                    except ValidationError:
+                        return None
+        except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
+            FlextLogger.create_module_logger(__name__).warning(
+                "Failed to load runtime bootstrap options",
+                exc_info=exc,
+            )
+            return None
+
+    @staticmethod
+    def _filter_registerable_services(
+        options: m.RuntimeBootstrapOptions,
+    ) -> Mapping[str, t.RegisterableService] | None:
+        """Extract type-checked registerable services from bootstrap options."""
+        if options.services is None:
+            return None
+        return {
+            str(key): value
+            for key, value in options.services.items()
+            if u.is_registerable_service(value)
+        }
+
+    @staticmethod
+    def _resolve_wire_targets(
+        options: m.RuntimeBootstrapOptions,
+    ) -> tuple[
+        Sequence[ModuleType] | None,
+        t.StrSequence | None,
+        Sequence[type] | None,
+    ]:
+        """Separate wire_modules into actual modules vs package name strings."""
+        wire_modules: Sequence[ModuleType] | None = None
+        wire_packages: t.StrSequence | None = None
+        wire_classes: Sequence[type] | None = None
+
+        if options.wire_modules is not None:
+            modules_list: MutableSequence[ModuleType] = []
+            packages_list: MutableSequence[str] = []
+            for item in options.wire_modules:
+                match item:
+                    case str():
+                        packages_list.append(item)
+                    case _:
+                        modules_list.append(item)
+            wire_modules = modules_list
+            if packages_list:
+                wire_packages = packages_list
+
+        if options.wire_packages is not None:
+            current = list(wire_packages or [])
+            current.extend(options.wire_packages)
+            wire_packages = current
+
+        wire_classes = options.wire_classes
+        return wire_modules, wire_packages, wire_classes
 
     @staticmethod
     def _is_flext_settings_type(
@@ -714,23 +746,6 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                         f"{obj.__class__.__name__} missing '{attr}' required by {protocol_name}",
                     )
             return r[bool].ok(value=True)
-
-    @classmethod
-    def fail(cls, error: str, *, error_code: str | None = None) -> r[bool]:
-        """Create a failure result — convenience shortcut for mixin consumers.
-
-        Delegates to ``r[bool].fail`` so callers can write ``x.fail("msg")``
-        without importing ``r`` separately.
-
-        Args:
-            error: Human-readable error description.
-            error_code: Optional machine-readable error code for routing.
-
-        Returns:
-            r[bool]: Failure result carrying the given error message.
-
-        """
-        return r[bool].fail(error, error_code=error_code)
 
 
 x = FlextMixins

@@ -9,9 +9,7 @@ from typing import cast
 
 import pytest
 
-from tests import p, r, t, u
-
-from ._models import TestUnitModels
+from tests import TestUnitModels, p, r, t, u
 
 
 class TestUtilitiesConfigurationFullCoverage:
@@ -106,40 +104,3 @@ class TestUtilitiesConfigurationFullCoverage:
             False,
             None,
         )
-
-    def test_build_options_invalid_only_kwargs_returns_base(self) -> None:
-        base = TestUnitModels._Opts(value=9)
-        result = u.build_options_from_kwargs(
-            model_class=TestUnitModels._Opts,
-            explicit_options=base,
-            default_factory=TestUnitModels._Opts,
-            invalid_field=10,
-        )
-        assert result.is_success
-        assert result.value is base
-
-    def test_register_singleton_register_factory_and_bulk_register_paths(
-        self,
-    ) -> None:
-        ok = cast("p.Container", cast("t.NormalizedValue", self._ContainerOK()))
-        fail = cast("p.Container", cast("t.NormalizedValue", self._ContainerFail()))
-        err = cast("p.Container", cast("t.NormalizedValue", self._ContainerRaise()))
-        singleton_ok = u.register_singleton(ok, "s", 1)
-        singleton_fail = u.register_singleton(fail, "s", 1)
-        singleton_err = u.register_singleton(err, "s", 1)
-        assert singleton_ok.is_success
-        assert singleton_fail.is_failure
-        assert singleton_err.is_failure
-        factory_ok = u.register_factory(ok, "f", lambda: 1, _cache=True)
-        factory_fail = u.register_factory(fail, "f", lambda: 1)
-        factory_err = u.register_factory(err, "f", lambda: 1)
-        assert factory_ok.is_success
-        assert factory_fail.is_failure
-        assert factory_err.is_failure
-        bulk_ok = u.bulk_register(ok, {"a": 1, "b": 2})
-        assert bulk_ok.is_success
-        assert bulk_ok.value == 2
-        bulk_fail = u.bulk_register(fail, {"a": 1})
-        assert bulk_fail.is_failure
-        bulk_err = u.bulk_register(err, {"a": 1})
-        assert bulk_err.is_failure

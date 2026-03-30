@@ -11,16 +11,11 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, FlextUtilitiesGuardsTypeCore, c, m, p, r, t
+from flext_core import FlextUtilitiesGuardsTypeCore, c, m, p, r, t
 
 
 class FlextUtilitiesCache:
     """Cache utilities for deterministic normalization and key management."""
-
-    @property
-    def logger(self) -> p.Logger:
-        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def clear_object_cache(

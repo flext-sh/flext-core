@@ -445,10 +445,6 @@ class FlextService[
         """
         raise NotImplementedError
 
-    def get_service_info(self) -> t.ScalarMapping:
-        """Get service metadata and configuration information."""
-        return {"service_type": self.__class__.__name__}
-
     def is_valid(self) -> bool:
         """Check if service is in valid state for execution."""
         validation_result = (

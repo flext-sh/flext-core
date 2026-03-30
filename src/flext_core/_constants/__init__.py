@@ -5,33 +5,46 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes
     from flext_core._constants import (
-        base,
-        cqrs,
-        domain,
-        errors,
-        infrastructure,
-        mixins,
-        platform,
-        settings,
-        validation,
+        base as base,
+        cqrs as cqrs,
+        domain as domain,
+        errors as errors,
+        infrastructure as infrastructure,
+        mixins as mixins,
+        platform as platform,
+        settings as settings,
+        validation as validation,
     )
-    from flext_core._constants.base import FlextConstantsBase
-    from flext_core._constants.cqrs import FlextConstantsCqrs
-    from flext_core._constants.domain import FlextConstantsDomain
-    from flext_core._constants.errors import FlextConstantsErrors
-    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
-    from flext_core._constants.mixins import FlextConstantsMixins
-    from flext_core._constants.platform import FlextConstantsPlatform
-    from flext_core._constants.settings import FlextConstantsSettings
-    from flext_core._constants.validation import FlextConstantsValidation
+    from flext_core._constants.base import FlextConstantsBase as FlextConstantsBase
+    from flext_core._constants.cqrs import FlextConstantsCqrs as FlextConstantsCqrs
+    from flext_core._constants.domain import (
+        FlextConstantsDomain as FlextConstantsDomain,
+    )
+    from flext_core._constants.errors import (
+        FlextConstantsErrors as FlextConstantsErrors,
+    )
+    from flext_core._constants.infrastructure import (
+        FlextConstantsInfrastructure as FlextConstantsInfrastructure,
+    )
+    from flext_core._constants.mixins import (
+        FlextConstantsMixins as FlextConstantsMixins,
+    )
+    from flext_core._constants.platform import (
+        FlextConstantsPlatform as FlextConstantsPlatform,
+    )
+    from flext_core._constants.settings import (
+        FlextConstantsSettings as FlextConstantsSettings,
+    )
+    from flext_core._constants.validation import (
+        FlextConstantsValidation as FlextConstantsValidation,
+    )
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextConstantsBase": ["flext_core._constants.base", "FlextConstantsBase"],
@@ -66,7 +79,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "validation": ["flext_core._constants.validation", ""],
 }
 
-__all__ = [
+_EXPORTS: Sequence[str] = [
     "FlextConstantsBase",
     "FlextConstantsCqrs",
     "FlextConstantsDomain",
@@ -88,41 +101,4 @@ __all__ = [
 ]
 
 
-_LAZY_CACHE: MutableMapping[str, FlextTypes.ModuleExport] = {}
-
-
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562).
-
-    A local cache ``_LAZY_CACHE`` persists resolved objects across repeated
-    accesses during process lifetime.
-
-    Args:
-        name: Attribute name requested by dir()/import.
-
-    Returns:
-        Lazy-loaded module export type.
-
-    Raises:
-        AttributeError: If attribute not registered.
-
-    """
-    if name in _LAZY_CACHE:
-        return _LAZY_CACHE[name]
-
-    value = lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
-    _LAZY_CACHE[name] = value
-    return value
-
-
-def __dir__() -> Sequence[str]:
-    """Return list of available attributes for dir() and autocomplete.
-
-    Returns:
-        List of public names from module exports.
-
-    """
-    return sorted(__all__)
-
-
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, _EXPORTS)

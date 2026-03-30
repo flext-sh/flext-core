@@ -165,15 +165,3 @@ class TestUtilitiesDataMapper:
             lambda k, v: isinstance(v, int) and v > mc.NUM_1,
         )
         assert result == {mc.B: mc.NUM_2, mc.C: mc.NUM_3}
-
-    def test_basic_invert(self) -> None:
-        mc = c.Core.Mapper
-        source = {mc.X: mc.Y, mc.A: mc.B}
-        result = u.invert_dict(source)
-        assert result == {mc.Y: mc.X, mc.B: mc.A}
-
-    def test_collision_handling_last(self) -> None:
-        mc = c.Core.Mapper
-        source = {mc.A: mc.B, mc.X: mc.B}
-        result = u.invert_dict(source, handle_collisions="last")
-        assert result == {mc.B: mc.X}

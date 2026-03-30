@@ -40,11 +40,6 @@ class FlextUtilitiesMapper:
     objects from flags/mappings, and transforming dict/list structures.
     """
 
-    @property
-    def logger(self) -> p.Logger:
-        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-        return FlextRuntime.get_logger(__name__)
-
     @staticmethod
     def _apply_exclude_keys(
         result: t.ContainerMapping,
@@ -644,7 +639,7 @@ class FlextUtilitiesMapper:
             FlextUtilitiesMapper._narrow_to_configuration_dict(current)
         )
         transform_result = r[t.NormalizedValue].create_from_callable(
-            lambda: FlextUtilitiesMapper.apply_transform_steps(
+            lambda: FlextUtilitiesMapper._apply_transform_steps(
                 dict(current_dict),
                 normalize=normalize_bool,
                 map_keys=map_keys_dict,
@@ -1028,27 +1023,6 @@ class FlextUtilitiesMapper:
         return 0
 
     @staticmethod
-    def apply_transform_steps(
-        result: t.ContainerMapping,
-        *,
-        normalize: bool,
-        map_keys: t.StrMapping | None,
-        filter_keys: set[str] | None,
-        exclude_keys: set[str] | None,
-        strip_none: bool,
-        strip_empty: bool,
-    ) -> t.ContainerMapping:
-        return FlextUtilitiesMapper._apply_transform_steps(
-            result,
-            normalize=normalize,
-            map_keys=map_keys,
-            filter_keys=filter_keys,
-            exclude_keys=exclude_keys,
-            strip_none=strip_none,
-            strip_empty=strip_empty,
-        )
-
-    @staticmethod
     def at[T](
         items: Sequence[T] | tuple[T, ...] | Mapping[str, T],
         index: int | str,
@@ -1263,41 +1237,13 @@ class FlextUtilitiesMapper:
                 if normalized in {"0", "false", "no", "off"}:
                     return False
             return default if default is not None else value
-        return FlextUtilitiesMapper.cast_generic(
-            value,
-            target_type=target_type,
-            default=default,
-        )
-
-    @staticmethod
-    def cast_generic[T](
-        value: t.NormalizedValue,
-        target_type: Callable[[t.ValueOrModel], T] | None = None,
-        *,
-        default: T | None = None,
-    ) -> T | t.NormalizedValue:
-        """Safe cast with fallback.
-
-        Args:
-            value: Value to cast
-            target_type: Callable/type that converts input to T (optional)
-            default: Default value if cast fails
-
-        Returns:
-            Cast value or default
-
-        Example:
-            port = u.cast_generic(config.get("port"), int, default=8080)
-
-        """
-        if target_type is None:
+        try:
+            converter: Callable[[t.ValueOrModel], T] = target_type  # type: ignore[assignment]
+            return converter(value)
+        except (TypeError, ValueError, AttributeError, KeyError):
+            if default is not None:
+                return default
             return value
-        cast_result = r[T].create_from_callable(lambda: target_type(value))
-        if cast_result.is_success and cast_result.value is not None:
-            return cast_result.value
-        if default is not None:
-            return default
-        return value
 
     @staticmethod
     def collect_active_keys(
@@ -1514,43 +1460,6 @@ class FlextUtilitiesMapper:
         return True
 
     @staticmethod
-    def ensure_str_list(
-        value: t.NormalizedValue,
-        default: t.StrSequence | None = None,
-    ) -> t.StrSequence:
-        """Ensure value is a list of strings, converting if needed.
-
-        **Generic replacement for**: [str(item) for item in list] patterns
-        **Renamed from**: ensure_str_list
-
-        Args:
-            value: Value to convert (list, tuple, set, or single value)
-            default: Default value if None (empty list if not specified)
-
-        Returns:
-            List of strings
-
-        Example:
-            >>> FlextUtilitiesMapper.ensure_str_list(["a", "b"])
-            ['a', 'b']
-            >>> FlextUtilitiesMapper.ensure_str_list([1, 2, 3])
-            ['1', '2', '3']
-            >>> FlextUtilitiesMapper.ensure_str_list("single")
-            ['single']
-            >>> FlextUtilitiesMapper.ensure_str_list(None)
-            []
-
-        """
-        resolved_default: t.StrSequence = default if default is not None else []
-        if value is None:
-            return resolved_default
-        if isinstance(value, str):
-            return [value]
-        if isinstance(value, (list, tuple)):
-            return [str(item) for item in value]
-        return [str(value)]
-
-    @staticmethod
     def ensure_str(value: t.NormalizedValue, default: str = "") -> str:
         """Ensure value is a string, converting if needed.
 
@@ -1577,31 +1486,6 @@ class FlextUtilitiesMapper:
         if isinstance(value, str):
             return str(value)
         return str(value)
-
-    @staticmethod
-    def ensure_str_or_none(value: t.NormalizedValue) -> r[str]:
-        """Ensure value is a string result.
-
-        **Generic replacement for**: value if isinstance(value, str) else None
-
-        Args:
-            value: Value to check/convert
-
-        Returns:
-            p.Result[str]: ok(str) when value is str, fail otherwise
-
-        Example:
-            >>> FlextUtilitiesMapper.ensure_str_or_none("hello")
-            r[str].ok("hello")
-            >>> FlextUtilitiesMapper.ensure_str_or_none(123)
-            r[str].fail("Value is not a string")
-            >>> FlextUtilitiesMapper.ensure_str_or_none(None)
-            r[str].fail("Value is not a string")
-
-        """
-        if isinstance(value, str):
-            return r[str].ok(value)
-        return r[str].fail("Value is not a string")
 
     @staticmethod
     def _extract_fail_or_default(
@@ -1749,59 +1633,6 @@ class FlextUtilitiesMapper:
             return r[t.NormalizedValue].fail(f"Extract failed: {e}")
 
     @staticmethod
-    def field(
-        source: p.AccessibleData,
-        name: str,
-        *,
-        default: t.NormalizedValue = None,
-        required: bool = False,
-        ops: Mapping[str, t.MapperInput] | None = None,
-    ) -> t.NormalizedValue:
-        """Extract single field from source with optional DSL processing.
-
-        FLEXT Pattern: Simplified single-field extraction (split from overloaded fields).
-
-        Args:
-            source: Source data (dict or t.NormalizedValue)
-            name: Field name to extract
-            default: Default value if field not found
-            required: If True, returns None on missing
-            ops: Optional DSL operations dict
-
-        Returns:
-            Extracted value or default/None
-
-        Example:
-            name = FlextUtilitiesMapper.field(payload, "name", default="")
-            age = FlextUtilitiesMapper.field(user, "age", default=0)
-
-        """
-        has_value = False
-        if isinstance(source, Mapping):
-            has_value = name in source
-        elif hasattr(source, name):
-            has_value = True
-        if not has_value:
-            if required:
-                return None
-            value: t.NormalizedValue = default if default is not None else ""
-        else:
-            raw_value: t.NormalizedValue = FlextUtilitiesMapper.map_get(
-                source,
-                name,
-                default=default,
-            )
-            value = raw_value if raw_value is not None else default
-        if ops is not None:
-            value_for_build: t.NormalizedValue = (
-                FlextUtilitiesMapper.narrow_to_container(value)
-                if value is not None
-                else FlextUtilitiesMapper.narrow_to_container("")
-            )
-            return FlextUtilitiesMapper.build(value_for_build, ops=ops, on_error="stop")
-        return value
-
-    @staticmethod
     def _resolve_single_field(
         obj: p.AccessibleData,
         name: str,
@@ -1880,39 +1711,6 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def fields_multi(
-        source: t.ValueOrModel | t.ContainerMapping,
-        spec: t.ContainerMapping,
-    ) -> t.ContainerMapping:
-        """Extract multiple fields using specification dict.
-
-        FLEXT Pattern: Simplified multi-field extraction (split from overloaded fields).
-
-        Args:
-            source: Source data (dict or t.NormalizedValue)
-            spec: Field specification dict {field_name: default_value}
-
-        Returns:
-            dict with extracted values
-
-        Example:
-            data = FlextUtilitiesMapper.fields_multi(
-                payload,
-                {"name": "", "age": 0, "email": ""},
-            )
-
-        """
-        result: t.MutableContainerMapping = {}
-        for field_name, field_default in spec.items():
-            value: t.NormalizedValue = FlextUtilitiesMapper.map_get(
-                source,
-                field_name,
-                default=field_default,
-            )
-            result[field_name] = value if value is not None else field_default
-        return result
-
-    @staticmethod
     def filter_dict(
         source: t.ContainerMapping,
         predicate: Callable[[str, t.NormalizedValue], bool],
@@ -1982,27 +1780,6 @@ class FlextUtilitiesMapper:
         return r[str].fail("No callable predicate matched")
 
     @staticmethod
-    def flat[T](
-        items: Sequence[Sequence[T]],
-    ) -> Sequence[T]:
-        """Flatten nested lists (mnemonic: flat = flatten).
-
-        Generic replacement for: [item for sublist in items for item in sublist]
-
-        Args:
-            items: Nested list/tuple structure
-
-        Returns:
-            Flattened list
-
-        Example:
-            flat_list = FlextUtilitiesMapper.flat([[1, 2], [3, 4]])
-            # → [1, 2, 3, 4]
-
-        """
-        return [item for sublist in items for item in sublist]
-
-    @staticmethod
     def map_get(
         data: p.AccessibleData,
         key: str,
@@ -2039,63 +1816,6 @@ class FlextUtilitiesMapper:
 
         """
         return FlextUtilitiesMapper._get_raw(data, key, default=default)
-
-    @staticmethod
-    def invert_dict(
-        source: t.StrMapping,
-        *,
-        handle_collisions: str = "last",
-    ) -> t.StrMapping:
-        """Invert dict mapping (values become keys, keys become values).
-
-        **Generic replacement for**: Manual dict inversion
-
-        Args:
-            source: Source dictionary
-            handle_collisions: How to handle duplicate values:
-                - "first": Keep first occurrence
-                - "last": Keep last occurrence (default)
-
-        Returns:
-            Inverted dictionary
-
-        Example:
-            >>> source = {"a": "x", "b": "y", "c": "x"}
-            >>> result = FlextUtilitiesMapper.invert_dict(
-            ...     source, handle_collisions="first"
-            ... )
-            >>> # {"x": "a", "y": "b"}  (first "a" kept)
-
-        """
-        if handle_collisions == "first":
-            result: MutableMapping[str, str] = {}
-            for k, v in source.items():
-                if v not in result:
-                    result[v] = k
-            return result
-        return {v: k for k, v in source.items()}
-
-    @staticmethod
-    def key_by[T, K](items: Sequence[T], key_func: Callable[[T], K]) -> Mapping[K, T]:
-        """Create dict keyed by function result.
-
-        Generic replacement for: {key_func(item): item for item in items}
-
-        Args:
-            items: Items to index
-            key_func: Function to extract key from each item
-
-        Returns:
-            Dict mapping keys to items (last item wins if duplicate keys)
-
-        Example:
-            users_by_id = u.key_by(users, lambda u: u.id)
-            # {1: User(id=1, ...), 2: User(id=2, ...)}
-
-            users_by_email = u.key_by(users, lambda u: u.email.lower())
-
-        """
-        return {key_func(item): item for item in items}
 
     @staticmethod
     def map_dict_keys(
@@ -2237,47 +1957,6 @@ class FlextUtilitiesMapper:
         return str(value)
 
     @staticmethod
-    def normalize_context_values(
-        context: t.ConfigMap | None,
-        extra_kwargs: t.ConfigMap,
-        **specific_fields: t.MetadataValue,
-    ) -> Mapping[str, t.MetadataValue]:
-        """Normalize and merge context values for exception handling.
-
-        Convenience method for exception context processing.
-        Uses process_context_data with metadata normalization.
-
-        Args:
-            context: Optional context mapping to normalize
-            extra_kwargs: Additional kwargs to normalize and merge
-            **specific_fields: Specific fields to add (field, value, config_key, etc.)
-
-        Returns:
-            Normalized metadata attribute dict
-
-        """
-        field_overrides_config: t.ContainerMapping = {
-            k: FlextUtilitiesMapper.narrow_to_container(
-                FlextRuntime.normalize_to_container(v),
-            )
-            for k, v in specific_fields.items()
-        }
-
-        raw_result: t.ContainerMapping = FlextUtilitiesMapper.process_context_data(
-            primary_data=context,
-            secondary_data=extra_kwargs,
-            transformer=lambda value: FlextUtilitiesMapper.narrow_to_container(
-                FlextRuntime.normalize_to_metadata(value),
-            ),
-            field_overrides=field_overrides_config,
-            merge_strategy="merge",
-        )
-        result: MutableMapping[str, t.MetadataValue] = {}
-        for k, v in raw_result.items():
-            result[k] = FlextRuntime.normalize_to_metadata(v)
-        return result
-
-    @staticmethod
     def omit[T](data: Mapping[str, T], *keys: str) -> Mapping[str, T]:
         """Omit specific keys from mapping.
 
@@ -2321,185 +2000,6 @@ class FlextUtilitiesMapper:
         if default is not None:
             return r[T].ok(default)
         return r[T].fail("No non-None value found")
-
-    @staticmethod
-    def pick(
-        data: p.AccessibleData,
-        *keys: str,
-        as_dict: bool = True,
-    ) -> t.ContainerMapping | t.ContainerList:
-        """Pick multiple fields at once (mnemonic: pick = select fields).
-
-        Generic replacement for: Multiple get() calls
-
-        Args:
-            data: Source data (dict or t.NormalizedValue)
-            *keys: Field names to pick
-            as_dict: If True, return dict; if False, return list
-
-        Returns:
-            Dict with picked fields or list of values
-
-        Example:
-            fields = FlextUtilitiesMapper.pick(data, "name", "email", "age")
-            values = FlextUtilitiesMapper.pick(data, "x", "y", "z", as_dict=False)
-
-        """
-        if as_dict:
-            return {k: FlextUtilitiesMapper.map_get(data, k) for k in keys}
-        return [FlextUtilitiesMapper.map_get(data, k) for k in keys]
-
-    @staticmethod
-    def pluck(
-        items: Sequence[t.ContainerMapping],
-        key: str,
-        default: t.NormalizedValue = None,
-    ) -> t.ContainerList:
-        """Extract single key from sequence of mappings.
-
-        Generic replacement for: [item.get(key) for item in items]
-
-        Args:
-            items: Sequence of mappings
-            key: Key to extract
-            default: Default value if key not found
-
-        Returns:
-            List of values for the specified key
-
-        Example:
-            names = u.pluck(users, "name")
-            # ["Alice", "Bob", "Charlie"]
-
-            ages = u.pluck(users, "age", default=0)
-            # [25, 30, 0]
-
-        """
-        values: t.MutableContainerList = []
-        for item in items:
-            raw_value = item.get(key, default)
-            if raw_value is None:
-                values.append(None)
-            elif FlextUtilitiesGuards.is_container(raw_value):
-                values.append(FlextUtilitiesMapper.narrow_to_container(raw_value))
-            else:
-                values.append(str(raw_value))
-        return values
-
-    @staticmethod
-    def process_context_data(
-        primary_data: t.ConfigModelInput | t.ContainerMapping | None = None,
-        secondary_data: t.ConfigModelInput | t.ContainerMapping | None = None,
-        *,
-        transformer: t.MapperCallable | None = None,
-        field_overrides: t.ContainerMapping | None = None,
-        merge_strategy: str = "merge",
-        filter_keys: set[str] | None = None,
-        exclude_keys: set[str] | None = None,
-    ) -> t.ContainerMapping:
-        """Process and merge contextual data with flexible transformation options.
-
-        Generic utility for processing context data across the FLEXT ecosystem.
-        Handles conversion, transformation, filtering, and merging of contextual information.
-
-        **Usage Examples:**
-        ```python
-        # Exception context processing
-        context = FlextUtilitiesMapper.process_context_data(
-            primary_data=user_context,
-            secondary_data=extra_kwargs,
-            field_overrides={"error_type": "ValidationError"},
-            transformer=FlextRuntime.normalize_to_metadata,
-        )
-
-        # Configuration merging
-        config = FlextUtilitiesMapper.process_context_data(
-            primary_data=base_config,
-            secondary_data=user_overrides,
-            merge_strategy="deep_merge",
-        )
-
-        # API request processing
-        request_data = FlextUtilitiesMapper.process_context_data(
-            primary_data=request_body,
-            secondary_data=query_params,
-            filter_keys={"password", "secret"},
-            transformer=str,
-        )
-        ```
-
-        Args:
-            primary_data: Main data source (dict, t.NormalizedValue, or None)
-            secondary_data: Additional data to merge (dict, t.NormalizedValue, or None)
-            transformer: Function to transform all values (default: identity)
-            field_overrides: Specific field values to override/add
-            merge_strategy: How to merge data ("merge", "primary_only", "secondary_only")
-            filter_keys: Only include these keys if specified
-            exclude_keys: Exclude these keys from result
-
-        Returns:
-            Processed and merged configuration dictionary
-
-        """
-        if transformer is None:
-
-            def identity_transformer(
-                x: t.NormalizedValue,
-            ) -> t.NormalizedValue:
-                return x
-
-            transformer = identity_transformer
-        result: t.MutableContainerMapping = {}
-        if primary_data is not None:
-            primary_source = FlextUtilitiesMapper._normalize_to_container_mapping(
-                primary_data,
-            )
-            if primary_source is not None:
-                primary_dict = {
-                    str(key): FlextUtilitiesMapper.narrow_to_container(value)
-                    for key, value in primary_source.items()
-                }
-                transformed_primary = FlextUtilitiesMapper.transform_values(
-                    primary_dict,
-                    transformer,
-                )
-                result.update(transformed_primary)
-        if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source = FlextUtilitiesMapper._normalize_to_container_mapping(
-                secondary_data,
-            )
-            if secondary_source is not None:
-                secondary_dict = {
-                    str(key): FlextUtilitiesMapper.narrow_to_container(value)
-                    for key, value in secondary_source.items()
-                }
-                transformed_secondary = FlextUtilitiesMapper.transform_values(
-                    secondary_dict,
-                    transformer,
-                )
-                if merge_strategy == "secondary_only":
-                    result = dict(transformed_secondary)
-                elif merge_strategy == "merge":
-                    result.update(transformed_secondary)
-        if field_overrides:
-            for key, value in field_overrides.items():
-                transformed_value: t.NormalizedValue = transformer(value)
-                result[key] = transformed_value
-        if filter_keys:
-            result = dict(
-                FlextUtilitiesMapper.filter_dict(
-                    result,
-                    lambda k, _v: k in filter_keys,
-                ),
-            )
-        if exclude_keys:
-            result = dict(
-                FlextUtilitiesMapper.filter_dict(
-                    result,
-                    lambda k, _v: k not in exclude_keys,
-                ),
-            )
-        return result
 
     @staticmethod
     def prop(

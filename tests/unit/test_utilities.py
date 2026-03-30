@@ -27,7 +27,7 @@ import pytest
 from flext_tests import t, tm, u
 from hypothesis import given, strategies as st
 
-from flext_core import FlextSettings, r
+from flext_core import r
 from tests import c
 
 from .contracts.text_contract import TextUtilityContract
@@ -304,23 +304,6 @@ class Testu(TextUtilityContract):
         """Test type checking."""
         result = u.can_handle_message_type(accepted_types, message_type)
         assert result is expected
-
-    def test_configuration_get_parameter(self) -> None:
-        """Test getting configuration parameter."""
-        config = FlextSettings.get_global()
-        value = u.get_parameter(config, "app_name")
-        assert value is not None
-
-    def test_configuration_set_parameter(self) -> None:
-        """Test setting configuration parameter."""
-        config = FlextSettings.get_global()
-        result = u.set_parameter(config, "test_param", "test_value")
-        assert isinstance(result, bool)
-
-    def test_configuration_get_singleton(self) -> None:
-        """Test getting singleton configuration."""
-        value = u.get_singleton(FlextSettings, "app_name")
-        assert value is not None
 
     def test_reliability_retry_immediate_success(self) -> None:
         """Test retry with immediate success."""

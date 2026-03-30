@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import datetime
 
 from pydantic import BaseModel
@@ -20,28 +19,6 @@ from flext_core import m, p, t
 
 class FlextUtilitiesContext:
     """Context utility helpers for creating and managing context variables."""
-
-    @staticmethod
-    def clone_container(
-        container: p.Container,
-        *,
-        scope_id: str | None = None,
-        overrides: Mapping[str, t.RegisterableService] | None = None,
-    ) -> p.Container:
-        """Clone container with scoping.
-
-        Creates a scoped container instance with optional service overrides.
-
-        Args:
-            container: Container instance to clone (must implement DI protocol).
-            scope_id: Optional scope identifier.
-            overrides: Optional service overrides.
-
-        Returns:
-            p.Container: Scoped container instance.
-
-        """
-        return container.scoped(subproject=scope_id, services=overrides)
 
     @staticmethod
     def clone_runtime[T: p.CloneableRuntime](

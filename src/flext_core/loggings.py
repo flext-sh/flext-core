@@ -19,12 +19,10 @@ import traceback
 import types
 import warnings
 from collections.abc import (
-    Generator,
     Mapping,
     MutableMapping,
-    MutableSequence,
 )
-from contextlib import contextmanager, suppress
+from contextlib import suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
 
@@ -300,30 +298,6 @@ class FlextLogger(u, p.Logger):
             return r[bool].fail(f"Failed to bind global context: {exc}")
 
     @classmethod
-    def clear_global_context(cls) -> r[bool]:
-        """Clear all globally bound context.
-
-        Business Rule: Clears all globally bound context variables, removing them from
-        all subsequent log messages. Uses u for centralized logging management.
-        This operation is irreversible - all context must be rebound if needed.
-
-        Audit Implication: Clearing global context removes audit trail context from
-        log messages. Use with caution in production environments. Typically used
-        during application shutdown or context reset scenarios. All context variables
-        are cleared through this method, ensuring consistent context management.
-
-        Example:
-            >>> FlextLogger.clear_global_context()
-            >>> # All global context cleared
-
-        """
-        try:
-            u.structlog().contextvars.clear_contextvars()
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to clear global context: {exc}")
-
-    @classmethod
     def clear_scope(cls, scope: str) -> r[bool]:
         """Clear all context variables for a specific scope.
 
@@ -436,93 +410,6 @@ class FlextLogger(u, p.Logger):
         return logger
 
     @classmethod
-    @contextmanager
-    def scoped_context(cls, scope: str, **context: t.RuntimeData) -> Generator[None]:
-        """Context manager for automatic scoped context cleanup.
-
-        Business Rule: Context manager that binds context variables to a specific scope
-        and automatically clears them when exiting the context. Uses bind_context for
-        binding and clear_scope for cleanup. Ensures context is always cleaned up even
-        if exceptions occur, maintaining consistent context state.
-
-        Audit Implication: Scoped context ensures audit trail completeness by attaching
-        context variables to log messages within the scope. Automatic cleanup ensures
-        context doesn't leak between scopes, maintaining audit trail integrity. All
-        context variables are bound and cleared through this method, ensuring consistent
-        context management across FLEXT.
-
-        Args:
-            scope: Scope name (use c.SCOPE_* constants)
-            **context: Context variables to bind
-
-        Yields:
-            None: Context manager yields control to caller
-
-        Example:
-            >>> with FlextLogger.scoped_context(
-            ...     c.SCOPE_OPERATION, operation="sync_users"
-            ... ):
-            ...     # Context automatically bound and cleared
-            ...     logger.info("Operation started")
-
-        """
-        _ = cls.bind_context(scope, **context)
-        try:
-            yield
-        finally:
-            _ = cls.clear_scope(scope)
-
-    @classmethod
-    def unbind_context_for_level(cls, level: str, *keys: str) -> r[bool]:
-        """Unbind context variables that were bound for a specific log level.
-
-        Business Rule: Unbinds context variables that were bound for a specific log level,
-        removing them from logs at that level or higher. Uses u for centralized
-        logging management. Only specified keys are removed; other level-based context
-        remains intact. Normalizes log level to standard format (DEBUG, INFO, WARNING,
-        ERROR, CRITICAL).
-
-        Audit Implication: Unbinding level-based context removes specific audit trail
-        context from log messages at that level. Use with caution in production environments.
-        Typically used when specific context variables are no longer relevant or need to
-        be updated. All context variables are unbound through this method, ensuring
-        consistent context management across FLEXT.
-
-        Args:
-            level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - case insensitive
-            *keys: Context keys to unbind
-
-        Returns:
-            r[bool]: Success with True if unbound, failure with error details
-
-        Example:
-            >>> FlextLogger.bind_context_for_level("DEBUG", config="debug_config")
-            >>> FlextLogger.unbind_context_for_level("DEBUG", "config")
-            >>> # 'config' will no longer appear in DEBUG logs
-
-        """
-        try:
-            level_lower = level.lower()
-            level_normalized = {
-                "debug": "debug",
-                "info": "info",
-                "warning": "warning",
-                c.WarningLevel.ERROR: c.WarningLevel.ERROR,
-                "critical": "critical",
-            }.get(level_lower, level_lower)
-            prefixed_keys: MutableSequence[str] = []
-            for key in keys:
-                prefixed_key = f"_level_{level_normalized}_{key}"
-                prefixed_keys.append(prefixed_key)
-                if level_normalized in cls._level_contexts:
-                    _ = cls._level_contexts[level_normalized].pop(key, None)
-            if prefixed_keys:
-                u.structlog().contextvars.unbind_contextvars(*prefixed_keys)
-            return r[bool].ok(value=True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Failed to unbind context for level {level}: {e}")
-
-    @classmethod
     def unbind_global_context(cls, *keys: str) -> r[bool]:
         """Unbind specific keys from global context.
 
@@ -550,46 +437,6 @@ class FlextLogger(u, p.Logger):
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to unbind global context: {exc}")
-
-    @classmethod
-    @contextmanager
-    def with_container_context(
-        cls,
-        container: p.Container,
-        level: c.LogLevel | str | None = None,
-        **context: t.RuntimeData,
-    ) -> Generator[Self]:
-        """Context manager for container-scoped logging.
-
-        Creates a logger bound to container context for the duration of the context
-        manager. Context is automatically cleaned up when exiting the context.
-
-        Args:
-            container: Container instance to bind logger to.
-            **context: Additional context variables to bind.
-
-        Yields:
-            FlextLogger: Logger instance configured for the container.
-
-        Example:
-            >>> with FlextLogger.with_container_context(
-            ...     container, worker_id="1"
-            ... ) as logger:
-            ...     logger.info("Processing task")
-
-        """
-        resolved_level: str | None
-        match level:
-            case c.LogLevel() as enum_level:
-                resolved_level = enum_level.value
-            case None:
-                resolved_level = None
-            case _:
-                resolved_level = level
-        logger = cls.for_container(container, level=resolved_level)
-        if context:
-            _ = logger.bind_global_context(**context)
-        yield logger
 
     @staticmethod
     def _convert_to_relative_path(filename: str) -> str:

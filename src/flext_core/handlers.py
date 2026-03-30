@@ -595,31 +595,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             )
 
         @staticmethod
-        def has_handlers_module(module: ModuleType) -> bool:
-            """Check if module has any handler-decorated functions.
-
-            Efficiently checks if a module contains any functions marked with
-            the @handler() decorator without scanning all items.
-
-            Args:
-                module: Module to check for handlers
-
-            Returns:
-                True if module has at least one handler, False otherwise
-
-            Example:
-                >>> if FlextHandlers.Discovery.has_handlers_module(my_module):
-                ...     # Auto-register handlers from module
-                ...     dispatcher.auto_register_handlers_from_module(my_module)
-
-            """
-            return any(
-                hasattr(getattr(module, name, None), c.HANDLER_ATTR)
-                for name in dir(module)
-                if not name.startswith("_") and callable(getattr(module, name, None))
-            )
-
-        @staticmethod
         def scan_class(
             target_class: type,
         ) -> Sequence[tuple[str, m.DecoratorConfig]]:

@@ -133,12 +133,5 @@ class FlextUtilitiesEnum:
         """Check whether all values belong to the target enum."""
         return all(FlextUtilitiesEnum.is_member(enum_cls, value) for value in values)
 
-    @staticmethod
-    def coerce_by_name_validator[E: StrEnum](
-        enum_cls: type[E],
-    ) -> Callable[[t.Scalar | E], E]:
-        """Create validator that accepts enum names or values."""
-        return FlextUtilitiesEnum.coerce_validator(enum_cls)
-
 
 __all__ = ["FlextUtilitiesEnum"]

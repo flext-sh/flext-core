@@ -8,7 +8,7 @@ from typing import override
 
 from flext_tests import tm
 
-from flext_core import FlextService, h, r
+from flext_core import h, r, s
 from tests import c, m, p
 
 
@@ -81,7 +81,7 @@ class TestHandlerDecoratorDiscovery:
         class CreateCommand:
             pass
 
-        def original_handler(self: FlextService, cmd: CreateCommand) -> r[str]:
+        def original_handler(self: s, cmd: CreateCommand) -> r[str]:
             _ = self
             _ = cmd
             return r[str].ok("handled")
@@ -206,21 +206,6 @@ class TestHandlerDecoratorDiscovery:
         tm.that("_private_handler" not in names, eq=True)
         tm.that(names, has="public_handler")
 
-    def test_has_handlers_module(self) -> None:
-        module_with_handlers = types.ModuleType("module_with_handlers")
-        module_without_handlers = types.ModuleType("module_without_handlers")
-
-        @h.handler(command=str)
-        def handler(cmd: str) -> r[str]:
-            return r[str].ok(cmd)
-
-        setattr(module_with_handlers, "handler", handler)
-        tm.that(h.Discovery.has_handlers_module(module_with_handlers) is True, eq=True)
-        tm.that(
-            h.Discovery.has_handlers_module(module_without_handlers) is False,
-            eq=True,
-        )
-
     def test_scan_class_with_inherited_handlers(self) -> None:
         class CreateCommand:
             pass
@@ -281,7 +266,7 @@ class TestHandlerDecoratorDiscovery:
             def __init__(self, name: str) -> None:
                 self.name = name
 
-        class Service(FlextService[str]):
+        class Service(s[str]):
             @h.handler(command=CreateCommand, priority=10)
             def handle_user_create(self, cmd: CreateCommand) -> r[str]:
                 return r[str].ok(f"created_{cmd.name}")

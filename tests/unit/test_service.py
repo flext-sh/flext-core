@@ -28,7 +28,7 @@ import pytest
 from hypothesis import given, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, FlextService, FlextSettings, r, s
+from flext_core import FlextContext, FlextSettings, r, s
 from tests import m, p, t, u
 
 
@@ -255,13 +255,6 @@ class TestsCore:
         result = service.validate_business_rules()
         u.Tests.Result.assert_failure_with_error(result, "Missing value")
 
-    def test_get_service_info(self) -> None:
-        """Test get_service_info returns proper metadata."""
-        service = self.UserService()
-        info = service.get_service_info()
-        assert isinstance(info, Mapping)
-        assert "service_type" in info
-
     def test_service_validation_using_generic_helpers(self) -> None:
         """Test service validation using generic helpers - real behavior."""
         service = self.ComplexService()
@@ -307,9 +300,9 @@ class TestsCore:
 
 
 class TestServiceInternals:
-    """Tests for FlextService internal runtime creation methods."""
+    """Tests for s internal runtime creation methods."""
 
-    class _Svc(FlextService[bool]):
+    class _Svc(s[bool]):
         @override
         def execute(self) -> r[bool]:
             return r[bool].ok(True)

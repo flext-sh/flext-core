@@ -464,46 +464,6 @@ class FlextExceptions:
                 result.update(filtered_attrs)
             return result
 
-        def _init_from_params[TParams: BaseModel](
-            self,
-            message: str,
-            *,
-            error_code: str,
-            context: Mapping[str, t.MetadataValue] | None,
-            extra_kwargs: t.FlatContainerMapping,
-            named_params: Mapping[str, t.RuntimeData | None],
-            params_cls: type[TParams],
-            existing_params: TParams | None,
-            param_keys: set[str] | frozenset[str],
-            correlation_id: str | None = None,
-            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
-            excluded_context_keys: set[str] | frozenset[str] | None = None,
-        ) -> TParams:
-            """Resolve params, call super().__init__, return resolved params model."""
-            result: tuple[
-                TParams, t.ConfigMap | None, t.MetadataValue | None, str | None
-            ] = e._init_error_params(
-                context,
-                extra_kwargs,
-                named_params,
-                params_cls,
-                existing_params,
-                param_keys,
-                excluded_context_keys=excluded_context_keys,
-            )
-            resolved, ctx, meta, corr = result
-            final_meta = metadata if metadata is not None else meta
-            final_corr = correlation_id if correlation_id is not None else corr
-            e.BaseError.__init__(
-                self,
-                message,
-                error_code=error_code,
-                context=ctx,
-                metadata=final_meta,
-                correlation_id=final_corr,
-            )
-            return resolved
-
         def _init_declared_error(
             self,
             message: str,
@@ -517,7 +477,7 @@ class FlextExceptions:
             correlation_id: str | None = None,
             metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
         ) -> None:
-            """Initialize a typed error from class-declared params metadata."""
+            """Initialize a typed error: resolve params, call BaseError.__init__, assign attrs."""
             declared_params_cls = type(self)._params_cls
             if declared_params_cls is None:
                 msg = f"{type(self).__qualname__} is missing _params_cls"
@@ -525,29 +485,28 @@ class FlextExceptions:
             declared_param_keys = (
                 param_keys if param_keys is not None else type(self)._param_keys
             )
-            remaining_extra_kwargs: t.MutableFlatContainerMapping = dict(
-                extra_kwargs or {}
-            )
-            resolved_named_params: MutableMapping[str, t.RuntimeData | None] = dict(
+            remaining_extra: t.MutableFlatContainerMapping = dict(extra_kwargs or {})
+            resolved_named: MutableMapping[str, t.RuntimeData | None] = dict(
                 named_params or {},
             )
             for key in declared_param_keys:
-                resolved_named_params.setdefault(
-                    key,
-                    remaining_extra_kwargs.pop(key, None),
-                )
-            resolved = self._init_from_params(
+                resolved_named.setdefault(key, remaining_extra.pop(key, None))
+            resolved, ctx, meta, corr = e._init_error_params(
+                context,
+                remaining_extra,
+                resolved_named,
+                declared_params_cls,
+                params,
+                declared_param_keys,
+                excluded_context_keys=type(self)._excluded_context_keys,
+            )
+            e.BaseError.__init__(
+                self,
                 message,
                 error_code=error_code,
-                context=context,
-                extra_kwargs=remaining_extra_kwargs,
-                named_params=resolved_named_params,
-                params_cls=declared_params_cls,
-                existing_params=params,
-                param_keys=declared_param_keys,
-                correlation_id=correlation_id,
-                metadata=metadata,
-                excluded_context_keys=type(self)._excluded_context_keys,
+                context=ctx,
+                metadata=metadata if metadata is not None else meta,
+                correlation_id=correlation_id if correlation_id is not None else corr,
             )
             for key in declared_param_keys:
                 setattr(self, key, getattr(resolved, key))

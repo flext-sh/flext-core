@@ -96,22 +96,6 @@ class FlextUtilitiesCollection:
         return str(fallback)
 
     @staticmethod
-    def _validate_dict_str_metadata(
-        data: t.NormalizedValue,
-    ) -> r[t.ContainerMapping]:
-        return r[t.ContainerMapping].create_from_callable(
-            lambda: m.Validators.dict_str_metadata_adapter().validate_python(data),
-        )
-
-    @staticmethod
-    def _validate_list_container(
-        data: t.NormalizedValue,
-    ) -> r[t.FlatContainerList]:
-        return r[t.FlatContainerList].create_from_callable(
-            lambda: m.Validators.list_container_adapter().validate_python(data),
-        )
-
-    @staticmethod
     def _normalize_unknown_value(value: t.NormalizedValue) -> t.NormalizedValue:
         validated = FlextUtilitiesCollection._safe_validate_serializable(value)
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
@@ -139,10 +123,6 @@ class FlextUtilitiesCollection:
             data,
         )
         return list(normalized_mapping.items())
-
-    @staticmethod
-    def _normalize_sequence_items(data: t.NormalizedValue) -> t.FlatContainerList:
-        return m.Validators.list_container_adapter().validate_python(data)
 
     @staticmethod
     def _is_empty_value(value: t.NormalizedValue) -> bool:
@@ -245,6 +225,63 @@ class FlextUtilitiesCollection:
             results.append(value)
 
     @staticmethod
+    def _process_result_value(
+        result_raw: r[t.Serializable],
+        results: t.MutableContainerList,
+        errors: MutableSequence[tuple[int, str]],
+        error_mode: str,
+        processed: int,
+        *,
+        do_flatten: bool,
+    ) -> r[m.BatchResultDict] | None:
+        """Process a Result-wrapped operation return value."""
+        if result_raw.is_success:
+            result_value = m.Validators.serializable_adapter().validate_python(
+                result_raw.unwrap_or(None),
+            )
+            if do_flatten and isinstance(result_value, list):
+                FlextUtilitiesCollection._flatten_items(result_value, results)
+            else:
+                FlextUtilitiesCollection._append_or_extend(
+                    FlextUtilitiesCollection._coerce_or_stringify(result_value),
+                    results,
+                    do_flatten=do_flatten,
+                )
+            return None
+        return FlextUtilitiesCollection._handle_batch_error(
+            error_mode,
+            result_raw.error or "Unknown error",
+            processed,
+            errors,
+        )
+
+    @staticmethod
+    def _process_raw_value(
+        result_raw: t.Serializable,
+        results: t.MutableContainerList,
+        *,
+        do_flatten: bool,
+    ) -> None:
+        """Validate and append a non-Result operation return value."""
+        try:
+            normalized = m.Validators.serializable_adapter().validate_python(
+                result_raw,
+            )
+            if do_flatten and isinstance(normalized, list):
+                FlextUtilitiesCollection._flatten_items(normalized, results)
+                return
+            direct_result: t.NormalizedValue = (
+                FlextUtilitiesCollection._coerce_or_stringify(normalized)
+            )
+        except (TypeError, ValueError):
+            direct_result = str(result_raw)
+        FlextUtilitiesCollection._append_or_extend(
+            direct_result,
+            results,
+            do_flatten=do_flatten,
+        )
+
+    @staticmethod
     def batch(
         items: Sequence[T],
         operation: Callable[[T], t.Serializable | r[t.Serializable]],
@@ -293,54 +330,19 @@ class FlextUtilitiesCollection:
             try:
                 result_raw = operation(item)
                 if isinstance(result_raw, r):
-                    if result_raw.is_success:
-                        result_value = (
-                            m.Validators.serializable_adapter().validate_python(
-                                result_raw.unwrap_or(None),
-                            )
-                        )
-                        if do_flatten and isinstance(result_value, list):
-                            FlextUtilitiesCollection._flatten_items(
-                                result_value,
-                                results,
-                            )
-                            continue
-                        FlextUtilitiesCollection._append_or_extend(
-                            FlextUtilitiesCollection._coerce_or_stringify(
-                                result_value,
-                            ),
-                            results,
-                            do_flatten=do_flatten,
-                        )
-                    else:
-                        err = FlextUtilitiesCollection._handle_batch_error(
-                            error_mode,
-                            result_raw.error or "Unknown error",
-                            processed,
-                            errors,
-                        )
-                        if err is not None:
-                            return err
+                    err = FlextUtilitiesCollection._process_result_value(
+                        result_raw,
+                        results,
+                        errors,
+                        error_mode,
+                        processed,
+                        do_flatten=do_flatten,
+                    )
+                    if err is not None:
+                        return err
                     continue
-                try:
-                    normalized_result_raw = (
-                        m.Validators.serializable_adapter().validate_python(
-                            result_raw,
-                        )
-                    )
-                    if do_flatten and isinstance(normalized_result_raw, list):
-                        FlextUtilitiesCollection._flatten_items(
-                            normalized_result_raw,
-                            results,
-                        )
-                        continue
-                    direct_result = FlextUtilitiesCollection._coerce_or_stringify(
-                        normalized_result_raw,
-                    )
-                except (TypeError, ValueError):
-                    direct_result = str(result_raw)
-                FlextUtilitiesCollection._append_or_extend(
-                    direct_result,
+                FlextUtilitiesCollection._process_raw_value(
+                    result_raw,
                     results,
                     do_flatten=do_flatten,
                 )
@@ -408,8 +410,8 @@ class FlextUtilitiesCollection:
             if isinstance(data, str):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
-            normalized_items_result = FlextUtilitiesCollection._validate_list_container(
-                data,
+            normalized_items_result = r[t.FlatContainerList].create_from_callable(
+                lambda: m.Validators.list_container_adapter().validate_python(data),
             )
             if normalized_items_result.is_failure:
                 msg = f"Expected sequence, got {data.__class__.__name__}"

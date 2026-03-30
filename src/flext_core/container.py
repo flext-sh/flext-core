@@ -356,61 +356,81 @@ class FlextContainer(p.Container):
         instance = cls()
         if auto_register_factories:
             frame = inspect.currentframe()
-            if frame and frame.f_back:
-                caller_globals = frame.f_back.f_globals
-                module_name_raw = caller_globals.get("__name__", "__main__")
-                module_name = str(module_name_raw) if module_name_raw else "__main__"
-                caller_module = sys.modules.get(module_name)
-                if caller_module:
-                    factories = u.scan_module(caller_module)
-                    for factory_name, factory_config in factories:
-                        factory_func_raw = (
-                            getattr(caller_module, factory_name)
-                            if hasattr(caller_module, factory_name)
-                            else None
-                        )
-                        if factory_func_raw is not None and u.is_factory(
-                            factory_func_raw,
-                        ):
-                            factory_func_ref: t.FactoryCallable = factory_func_raw
-
-                            def factory_wrapper(
-                                *,
-                                _factory_func_ref: t.FactoryCallable = factory_func_ref,
-                                _factory_name: str = factory_name,
-                                _factory_config: m.FactoryDecoratorConfig = factory_config,
-                            ) -> t.RegisterableService:
-                                config_callable = getattr(_factory_config, "fn", None)
-                                raw_result: t.RegisterableService
-                                if callable(config_callable):
-                                    config_raw = config_callable()
-                                    if isinstance(
-                                        config_raw,
-                                        (*t.CONTAINER_TYPES, BaseModel),
-                                    ):
-                                        raw_result = config_raw
-                                    else:
-                                        raw_result = str(config_raw)
-                                elif config_callable is not None:
-                                    return t.ConfigMap(root={})
-                                else:
-                                    raw_result = _factory_func_ref()
-                                try:
-                                    m.ServiceRegistration(
-                                        name=_factory_name,
-                                        service=raw_result,
-                                    )
-                                    return raw_result
-                                except ValidationError:
-                                    msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
-                                    raise TypeError(msg) from None
-
-                            _ = instance.register(
-                                factory_config.name,
-                                factory_wrapper,
-                                kind=c.CONTAINER_KIND_FACTORY,
-                            )
+            caller_module = FlextContainer._resolve_caller_module(frame)
+            if caller_module is not None:
+                FlextContainer._auto_register_module_factories(instance, caller_module)
         return instance
+
+    @staticmethod
+    def _resolve_caller_module(
+        create_frame: inspect.FrameType | None,
+    ) -> ModuleType | None:
+        """Resolve the module that called create() via frame introspection."""
+        if not create_frame or not create_frame.f_back:
+            return None
+        caller_globals = create_frame.f_back.f_globals
+        module_name_raw = caller_globals.get("__name__", "__main__")
+        module_name = str(module_name_raw) if module_name_raw else "__main__"
+        return sys.modules.get(module_name)
+
+    @staticmethod
+    def _auto_register_module_factories(
+        instance: FlextContainer,
+        caller_module: ModuleType,
+    ) -> None:
+        """Scan module for @d.factory() functions and register them."""
+        factories = u.scan_module(caller_module)
+        for factory_name, factory_config in factories:
+            factory_func_raw = getattr(caller_module, factory_name, None)
+            if factory_func_raw is None or not u.is_factory(factory_func_raw):
+                continue
+            factory_func_ref: t.FactoryCallable = factory_func_raw
+            wrapper = FlextContainer._make_factory_wrapper(
+                factory_func_ref,
+                factory_name,
+                factory_config,
+            )
+            _ = instance.register(
+                factory_config.name,
+                wrapper,
+                kind=c.CONTAINER_KIND_FACTORY,
+            )
+
+    @staticmethod
+    def _make_factory_wrapper(
+        func_ref: t.FactoryCallable,
+        name: str,
+        config: m.FactoryDecoratorConfig,
+    ) -> Callable[[], t.RegisterableService]:
+        """Build a closure that invokes factory with validation on return type."""
+
+        def factory_wrapper(
+            *,
+            _factory_func_ref: t.FactoryCallable = func_ref,
+            _factory_name: str = name,
+            _factory_config: m.FactoryDecoratorConfig = config,
+        ) -> t.RegisterableService:
+            config_callable = getattr(_factory_config, "fn", None)
+            raw_result: t.RegisterableService
+            match config_callable:
+                case _ if callable(config_callable):
+                    config_raw = config_callable()
+                    if isinstance(config_raw, (*t.CONTAINER_TYPES, BaseModel)):
+                        raw_result = config_raw
+                    else:
+                        raw_result = str(config_raw)
+                case None:
+                    raw_result = _factory_func_ref()
+                case _:
+                    return t.ConfigMap(root={})
+            try:
+                m.ServiceRegistration(name=_factory_name, service=raw_result)
+                return raw_result
+            except ValidationError:
+                msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
+                raise TypeError(msg) from None
+
+        return factory_wrapper
 
     @classmethod
     def get_global(
