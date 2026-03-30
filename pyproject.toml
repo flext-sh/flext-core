@@ -268,7 +268,7 @@ bad-override = false
 bad-param-name-override = true
 bad-raise = true
 bad-return = true
-bad-specialization = false
+bad-specialization = true
 bad-typed-dict = true
 bad-typed-dict-key = true
 bad-unpacking = true
@@ -321,7 +321,7 @@ unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
 unbound-name = true
-unexpected-keyword = false
+unexpected-keyword = true
 unexpected-positional-argument = true
 unknown-name = true
 unnecessary-comparison = true
@@ -340,6 +340,9 @@ variance-mismatch = true
 [tool.pyright]
 exclude = [
   "**/.*",
+  "**/.mypy_cache",
+  "**/.pytest_cache",
+  "**/.ruff_cache",
   "**/.venv",
   "**/.venv/**",
   "**/__pycache__",
@@ -350,8 +353,6 @@ exclude = [
   "**/site-packages/**",
   "**/venv",
   "**/venv/**",
-  ".pytest_cache",
-  ".ruff_cache",
   ".venv",
 ]
 extraPaths = [
@@ -732,6 +733,7 @@ split-on-trailing-comma = true
   "D107",
   "F401",
   "F403",
+  "F405",
   "F822",
   "N999",
   "PLC2701",

@@ -1,4 +1,4 @@
-"""Lazy import utilities for PEP 562 module-level __getattr__.
+"""Lazy import utilities for PEP 562 module-level ``__getattr__``.
 
 Provides reusable functions for lazy module loading and submodule
 namespace cleanup across the FLEXT ecosystem.
@@ -11,71 +11,78 @@ from __future__ import annotations
 
 import importlib
 import sys
-from collections.abc import Mapping, MutableMapping, Sequence
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core import FlextTypesServices
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from datetime import date, datetime, time
+from enum import Enum
+from types import ModuleType
+from typing import Protocol
 
 # INFRASTRUCTURE EXCEPTION: lazy_getattr and cleanup_submodule_namespace MUST remain
 # module-level functions. They are imported directly by all auto-generated __init__.py
 # files for PEP 562 lazy loading. Moving them into a class would break the lazy import
 # mechanism across the entire package hierarchy.
 
+type LazyScalar = str | int | float | bool | bytes | date | datetime | time
+type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
+type LazyCallable = Callable[..., LazyScalar | LazyCollection | None]
+type LazyGetattr = Callable[[str], LazyExport]
+type LazyDir = Callable[[], list[str]]
+type LazyExport = (
+    type[BaseException | Enum] | LazyScalar | LazyCollection | ModuleType | LazyCallable
+)
+
+
+class LazyNamespace(Protocol):
+    """Mutable namespace for generated module globals."""
+
+    def __setitem__(
+        self,
+        key: str,
+        value: LazyExport | Sequence[str] | LazyGetattr | LazyDir,
+        /,
+    ) -> None: ...
+
+
+def _resolve_entry(
+    name: str,
+    entry: str | Sequence[str],
+) -> tuple[str, str]:
+    if isinstance(entry, str):
+        return (entry, name)
+    return (entry[0], entry[1])
+
 
 def lazy_getattr(
     name: str,
     lazy_imports: Mapping[str, str | Sequence[str]],
-    module_globals: MutableMapping[str, FlextTypesServices.ModuleExport],
+    module_globals: LazyNamespace,
     module_name: str,
-) -> FlextTypesServices.ModuleExport:
-    """Lazy-load a module attribute on first access (PEP 562).
+) -> LazyExport:
+    """Lazy-load a module attribute on first access (PEP 562)."""
+    if name not in lazy_imports:
+        msg = f"module {module_name!r} has no attribute {name!r}"
+        raise AttributeError(msg)
 
-    Args:
-        name: The attribute name being accessed.
-        lazy_imports: Mapping of export_name to either:
-            - ``"module.path"`` — attr_name defaults to the key name
-            - ``["module.path", "attr_name"]`` — explicit attr (or empty for submodule)
-        module_globals: The calling module's globals() dict for caching.
-        module_name: The calling module's __name__ for error messages.
+    module_path, attr_name = _resolve_entry(name, lazy_imports[name])
+    module = importlib.import_module(module_path)
+    if not attr_name:
+        module_globals[name] = module
+        return module
 
-    """
-    if name in lazy_imports:
-        entry = lazy_imports[name]
-        if isinstance(entry, str):
-            module_path, attr_name = entry, name
-        else:
-            module_path, attr_name = entry[0], entry[1]
-        module = importlib.import_module(module_path)
-        if not attr_name:
-            module_globals[name] = module
-            return module
-        try:
-            value = getattr(module, attr_name)
-        except AttributeError:
-            msg = f"module {module_path!r} has no attribute {attr_name!r}"
-            raise AttributeError(msg) from None
-        module_globals[name] = value
-        return value
-    msg = f"module {module_name!r} has no attribute {name!r}"
-    raise AttributeError(msg)
+    try:
+        value: LazyExport = getattr(module, attr_name)
+    except AttributeError:
+        msg = f"module {module_path!r} has no attribute {attr_name!r}"
+        raise AttributeError(msg) from None
+    module_globals[name] = value
+    return value
 
 
 def cleanup_submodule_namespace(
     module_name: str,
     lazy_imports: Mapping[str, str | Sequence[str]],
 ) -> None:
-    """Remove submodules from namespace to force __getattr__ usage.
-
-    When submodules are imported, Python adds them to the parent module's
-    namespace. This removes them so attribute access goes through __getattr__.
-    Supports unlimited hierarchy depth for nested submodules.
-
-    Args:
-        module_name: The __name__ of the module to clean up.
-        lazy_imports: The _LAZY_IMPORTS dict to derive submodule names from.
-
-    """
+    """Remove submodules from namespace to force ``__getattr__`` usage."""
     current_module = sys.modules.get(module_name)
     if current_module is None:
         return
@@ -83,45 +90,37 @@ def cleanup_submodule_namespace(
     current_parts = module_name.split(".")
     for entry in lazy_imports.values():
         mod_path = entry if isinstance(entry, str) else entry[0]
-        if mod_path:
-            parts = mod_path.split(".")
-            if (
-                len(parts) > len(current_parts)
-                and parts[: len(current_parts)] == current_parts
-            ):
-                submodule_names.add(parts[len(current_parts)])
+        if not mod_path:
+            continue
+        parts = mod_path.split(".")
+        if (
+            len(parts) > len(current_parts)
+            and parts[: len(current_parts)] == current_parts
+        ):
+            submodule_names.add(parts[len(current_parts)])
     module_dict = vars(current_module)
     for sub_name in submodule_names:
         attr = module_dict.get(sub_name)
-        if attr is not None and isinstance(attr, type(sys)):
+        if attr is not None and isinstance(attr, ModuleType):
             delattr(current_module, sub_name)
 
 
 def install_lazy_exports(
     module_name: str,
-    module_globals: dict[str, object],
+    module_globals: LazyNamespace,
     lazy_imports: Mapping[str, str | Sequence[str]],
     all_exports: Sequence[str],
 ) -> None:
-    """Install PEP 562 lazy loading into a module's namespace.
+    """Install PEP 562 lazy loading into a module's namespace."""
+    resolved: MutableMapping[str, LazyExport] = {}
 
-    Sets ``__getattr__``, ``__dir__``, ``__all__`` and cleans up submodules
-    in a single call.
-
-    Args:
-        module_name: The ``__name__`` of the calling module.
-        module_globals: The calling module's ``globals()`` dict.
-        lazy_imports: ``_LAZY_IMPORTS`` mapping of export → (module, attr).
-        all_exports: List of public export names for ``__all__``.
-
-    """
-    resolved: MutableMapping[str, FlextTypesServices.ModuleExport] = {}
-    typed_globals: MutableMapping[str, FlextTypesServices.ModuleExport] = module_globals
-
-    def _getattr(name: str) -> FlextTypesServices.ModuleExport:
+    def _getattr(name: str) -> LazyExport:
         if name in resolved:
             return resolved[name]
-        value = lazy_getattr(name, lazy_imports, typed_globals, module_name)
+        if name not in lazy_imports:
+            msg = f"module {module_name!r} has no attribute {name!r}"
+            raise AttributeError(msg)
+        value = lazy_getattr(name, lazy_imports, module_globals, module_name)
         resolved[name] = value
         return value
 
