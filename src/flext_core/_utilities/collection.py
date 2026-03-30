@@ -62,6 +62,14 @@ class FlextUtilitiesCollection:
         return str(validated)
 
     @staticmethod
+    def _coerce_or_stringify(value: t.Serializable) -> t.NormalizedValue:
+        """Coerce a serializable value via _coerce_guard_value, or stringify."""
+        if isinstance(value, (dict, list) + t.SCALAR_TYPES):
+            return FlextUtilitiesCollection._coerce_guard_value(value)
+        fallback: t.NormalizedValue = value
+        return str(fallback)
+
+    @staticmethod
     def _validate_dict_str_metadata(
         data: t.NormalizedValue,
     ) -> r[t.ContainerMapping]:
@@ -285,23 +293,9 @@ class FlextUtilitiesCollection:
                                     inner_item_obj: t.NormalizedValue = inner_item
                                     results.append(str(inner_item_obj))
                             continue
-                        if isinstance(result_value, dict):
-                            dict_value: Mapping[str, t.Serializable] = result_value
-                            value = FlextUtilitiesCollection._coerce_guard_value(
-                                dict_value,
-                            )
-                        elif isinstance(result_value, list):
-                            list_value: Sequence[t.Serializable] = result_value
-                            value = FlextUtilitiesCollection._coerce_guard_value(
-                                list_value,
-                            )
-                        elif isinstance(result_value, t.SCALAR_TYPES):
-                            value = FlextUtilitiesCollection._coerce_guard_value(
-                                result_value,
-                            )
-                        else:
-                            result_value_obj: t.NormalizedValue = result_value
-                            value = str(result_value_obj)
+                        value = FlextUtilitiesCollection._coerce_or_stringify(
+                            result_value,
+                        )
                         if do_flatten and isinstance(value, list):
                             results.extend(value)
                         else:
@@ -337,23 +331,9 @@ class FlextUtilitiesCollection:
                                 inner_item_obj_flat: t.NormalizedValue = inner_item
                                 results.append(str(inner_item_obj_flat))
                         continue
-                    if isinstance(normalized_result_raw, dict):
-                        raw_dict: Mapping[str, t.Serializable] = normalized_result_raw
-                        direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            raw_dict,
-                        )
-                    elif isinstance(normalized_result_raw, list):
-                        raw_list: Sequence[t.Serializable] = normalized_result_raw
-                        direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            raw_list,
-                        )
-                    elif isinstance(normalized_result_raw, t.SCALAR_TYPES):
-                        direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            normalized_result_raw,
-                        )
-                    else:
-                        raw_unknown: t.NormalizedValue = normalized_result_raw
-                        direct_result = str(raw_unknown)
+                    direct_result = FlextUtilitiesCollection._coerce_or_stringify(
+                        normalized_result_raw,
+                    )
                 except (TypeError, ValueError):
                     raw_error: t.NormalizedValue = result_raw
                     direct_result = str(raw_error)

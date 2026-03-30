@@ -114,6 +114,25 @@ class FlextProtocolsResult:
             ...
 
     @runtime_checkable
+    class SuccessCheckable(Protocol):
+        """Protocol for any model with success/failure outcome semantics.
+
+        Lighter than Result[T] — requires only success/failure status properties.
+        Satisfied by RuntimeResult, FlextResult, BatchResult, HTTP response models,
+        and any domain model that reports pass/fail status.
+        """
+
+        @property
+        def is_success(self) -> bool:
+            """True when the operation succeeded."""
+            ...
+
+        @property
+        def is_failure(self) -> bool:
+            """True when the operation failed."""
+            ...
+
+    @runtime_checkable
     class ErrorDomainProtocol(Protocol):
         """Protocol for error domain enumeration.
 

@@ -74,8 +74,7 @@ class Testu(TextUtilityContract):
         """Mock t.NormalizedValue without cache attributes."""
 
         def __init__(self) -> None:
-            msg = "Must use unified test helpers per Rule 3.6"
-            raise NotImplementedError(msg)
+            self.name: str = "uncached"
 
     class _CustomObject:
         """Custom serializable t.NormalizedValue."""

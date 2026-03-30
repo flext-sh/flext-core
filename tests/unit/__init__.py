@@ -211,6 +211,7 @@ if TYPE_CHECKING:
     from tests.unit.test_runtime_full_coverage import (
         reset_runtime_state,
         runtime_cov_tests,
+        runtime_module,
         runtime_tests,
         test_async_log_writer_paths,
         test_async_log_writer_shutdown_with_full_queue,
@@ -312,7 +313,6 @@ if TYPE_CHECKING:
     from tests.unit.test_utilities_generators_full_coverage import (
         TestUtilitiesGeneratorsFullCoverage,
         generators_module,
-        runtime_module,
     )
     from tests.unit.test_utilities_guards_full_coverage import (
         test_aliases_are_available,
@@ -803,10 +803,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "reset_runtime_state",
     ],
     "runtime_cov_tests": ["tests.unit.test_runtime_full_coverage", "runtime_cov_tests"],
-    "runtime_module": [
-        "tests.unit.test_utilities_generators_full_coverage",
-        "runtime_module",
-    ],
+    "runtime_module": ["tests.unit.test_runtime_full_coverage", "runtime_module"],
     "runtime_tests": ["tests.unit.test_runtime_full_coverage", "runtime_tests"],
     "test_accessor_take_pick_as_or_flat_and_agg_branches": [
         "tests.unit.test_utilities_mapper_full_coverage",

@@ -14,12 +14,12 @@ from typing import NoReturn, cast, override
 import pytest
 from pydantic import BaseModel
 
+from flext_core import FlextRuntime
 from tests import t, u
 
 from ._models import TestUnitModels
 
 generators_module = importlib.import_module("flext_core._utilities.generators")
-runtime_module = importlib.import_module("flext_core.runtime")
 
 
 class TestUtilitiesGeneratorsFullCoverage:
@@ -71,12 +71,12 @@ class TestUtilitiesGeneratorsFullCoverage:
     ) -> None:
         ids = iter(["trace-x", "span-x", "corr-x"])
         monkeypatch.setattr(
-            runtime_module.FlextRuntime,
+            FlextRuntime,
             "generate_id",
             staticmethod(lambda: next(ids)),
         )
         monkeypatch.setattr(
-            runtime_module.FlextRuntime,
+            FlextRuntime,
             "generate_datetime_utc",
             staticmethod(lambda: datetime(2026, 1, 1, tzinfo=UTC)),
         )

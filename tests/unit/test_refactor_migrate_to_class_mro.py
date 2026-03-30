@@ -46,10 +46,9 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
         constants_source.split("class SampleConstants:", maxsplit=1)[1],
         has="VALUE: Final[int] = 42",
     )
-    # Consumer import rewriting (VALUE → c.VALUE) is not yet supported by rope
-    # rename; the migration only moves the constant into the class.
-    tm.that(consumer_source, has="from sample_pkg.constants import VALUE")
-    tm.that(consumer_source, has="result = VALUE")
+    # Consumer import rewritten: VALUE → c.VALUE with facade alias import.
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="result = c.VALUE")
 
 
 def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
@@ -86,10 +85,9 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     )
     tm.that(constants_source, has="TIMEOUT: Final[int] = 30")
     tm.that("TIMEOUT = _TIMEOUT" not in constants_source, eq=True)
-    # Consumer import rewriting (_TIMEOUT → c.DEFAULT_TIMEOUT_SECONDS) is not yet supported;
-    # the migration only inlines the alias into the class.
-    tm.that(consumer_source, has="from sample_pkg.constants import _TIMEOUT")
-    tm.that(consumer_source, has="value = _TIMEOUT")
+    # Consumer import rewritten: _TIMEOUT → c.TIMEOUT with facade alias import.
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="value = c.TIMEOUT")
 
 
 def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
@@ -116,10 +114,9 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     )
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     tm.that(report.errors, eq=())
-    # Consumer import rewriting (VALUE → c.VALUE) is not yet supported;
-    # the migration moves the constant into the class but consumers are unchanged.
-    tm.that(consumer_source, has="from sample_pkg.constants import VALUE")
-    tm.that(consumer_source, has="result = VALUE")
+    # Consumer import rewritten: VALUE → c.VALUE with facade alias import.
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="result = c.VALUE")
 
 
 def test_migrate_to_mro_rejects_unknown_target(tmp_path: Path) -> None:
@@ -164,10 +161,9 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
         typings_source.split("class SampleTypes:", maxsplit=1)[1],
         has="ValueType: TypeAlias = str | int",
     )
-    # Consumer import rewriting (ValueType → t.ValueType) is not yet supported;
-    # the migration moves the type alias into the class but consumers are unchanged.
-    tm.that(consumer_source, has="from sample_pkg.typings import ValueType")
-    tm.that(consumer_source, has="value: ValueType = 1")
+    # Consumer import rewritten: ValueType → t.ValueType with facade alias import.
+    tm.that(consumer_source, has="from sample_pkg.typings import t")
+    tm.that(consumer_source, has="value: t.ValueType = 1")
 
 
 def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> None:
@@ -204,10 +200,9 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
         protocols_source.split("class SampleProtocols:", maxsplit=1)[1],
         has="class Greeter(Protocol):",
     )
-    # Consumer import rewriting (Greeter → p.Greeter) is not yet supported;
-    # the migration moves the protocol into the class but consumers are unchanged.
-    tm.that(consumer_source, has="from sample_pkg.protocols import Greeter")
-    tm.that(consumer_source, has="def call_greet(protocol: Greeter) -> str:")
+    # Consumer import rewritten: Greeter → p.Greeter with facade alias import.
+    tm.that(consumer_source, has="from sample_pkg.protocols import p")
+    tm.that(consumer_source, has="def call_greet(protocol: p.Greeter) -> str:")
 
 
 def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
@@ -290,7 +285,6 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
         constants_source.split("class SampleConstants:", maxsplit=1)[1],
         has="VALUE = 42",
     )
-    # Consumer import rewriting (VALUE → c.VALUE) is not yet supported;
-    # the migration moves the constant into the class but consumers are unchanged.
-    tm.that(consumer_source, has="from sample_pkg.constants import VALUE")
-    tm.that(consumer_source, has="result = VALUE")
+    # Consumer import rewritten: VALUE → c.VALUE with facade alias import.
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="result = c.VALUE")

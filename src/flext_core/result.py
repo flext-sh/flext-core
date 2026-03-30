@@ -265,7 +265,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
 
     @override
     @classmethod
-    def ok(cls, value: T) -> Self:
+    def ok[V](cls, value: V) -> FlextResult[V]:
         """Create successful result wrapping value.
 
         None IS a valid value when T includes None (e.g. r[str | None].ok(None)).
@@ -275,7 +275,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             value: Value to wrap (any T, including None when T allows it)
 
         """
-        result = cls(value=value, is_success=True)
+        result: FlextResult[V] = FlextResult[V](value=value, is_success=True)
         result._result = Success(value)
         return result
 

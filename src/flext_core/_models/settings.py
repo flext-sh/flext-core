@@ -26,6 +26,7 @@ from pydantic_settings import BaseSettings
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.exception_params import FlextModelsExceptionParams as _ep
 from flext_core._utilities.runtime import FlextRuntime
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -828,132 +829,32 @@ class FlextModelsConfig:
             Field(default=None, description="Additional error data (Pydantic model)"),
         ] = None
 
-    class ValidationErrorConfig(ExceptionConfig):
+    class ValidationErrorConfig(_ep.ValidationErrorParams, ExceptionConfig):
         """Configuration for ValidationError (Pydantic v2)."""
 
-        field: Annotated[
-            str | None,
-            Field(default=None, description="Field name that failed validation"),
-        ] = None
-        value: Annotated[
-            t.ValueOrModel | None,
-            Field(default=None, description="Value that failed validation"),
-        ] = None
-
-    class ConfigurationErrorConfig(ExceptionConfig):
+    class ConfigurationErrorConfig(_ep.ConfigurationErrorParams, ExceptionConfig):
         """Configuration for ConfigurationError (Pydantic v2)."""
 
-        config_key: Annotated[
-            str | None,
-            Field(default=None, description="Configuration key that caused error"),
-        ] = None
-        config_source: Annotated[
-            str | None,
-            Field(
-                default=None,
-                description="Source of configuration (file, env, etc.)",
-            ),
-        ] = None
-
-    class ConnectionErrorConfig(ExceptionConfig):
+    class ConnectionErrorConfig(_ep.ConnectionErrorParams, ExceptionConfig):
         """Configuration for ConnectionError (Pydantic v2)."""
 
-        host: Annotated[
-            str | None,
-            Field(default=None, description="Host that connection failed to"),
-        ] = None
-        port: Annotated[
-            int | None,
-            Field(default=None, description="Port that connection failed to"),
-        ] = None
-        timeout: Annotated[
-            float | None,
-            Field(default=None, description="Timeout value that was exceeded"),
-        ] = None
-
-    class TimeoutErrorConfig(ExceptionConfig):
+    class TimeoutErrorConfig(_ep.TimeoutErrorParams, ExceptionConfig):
         """Configuration for TimeoutError (Pydantic v2)."""
 
-        timeout_seconds: Annotated[
-            t.PositiveTimeout | None,
-            Field(default=None, description="Timeout in seconds that was exceeded"),
-        ] = None
-        operation: Annotated[
-            str | None,
-            Field(default=None, description="Operation that timed out"),
-        ] = None
-
-    class AuthenticationErrorConfig(ExceptionConfig):
+    class AuthenticationErrorConfig(_ep.AuthenticationErrorParams, ExceptionConfig):
         """Configuration for AuthenticationError (Pydantic v2)."""
 
-        auth_method: Annotated[
-            str | None,
-            Field(default=None, description="Authentication method that failed"),
-        ] = None
-        user_id: Annotated[
-            str | None,
-            Field(default=None, description="User ID that authentication failed for"),
-        ] = None
-
-    class AuthorizationErrorConfig(ExceptionConfig):
+    class AuthorizationErrorConfig(_ep.AuthorizationErrorParams, ExceptionConfig):
         """Configuration for AuthorizationError (Pydantic v2)."""
 
-        user_id: Annotated[
-            str | None,
-            Field(default=None, description="User ID that authorization failed for"),
-        ] = None
-        resource: Annotated[
-            str | None,
-            Field(default=None, description="Resource that access was denied to"),
-        ] = None
-        permission: Annotated[
-            str | None,
-            Field(default=None, description="Permission that was denied"),
-        ] = None
-
-    class NotFoundErrorConfig(ExceptionConfig):
+    class NotFoundErrorConfig(_ep.NotFoundErrorParams, ExceptionConfig):
         """Configuration for NotFoundError (Pydantic v2)."""
 
-        resource_type: Annotated[
-            str | None,
-            Field(default=None, description="Type of resource that was not found"),
-        ] = None
-        resource_id: Annotated[
-            str | None,
-            Field(default=None, description="ID of resource that was not found"),
-        ] = None
-
-    class ConflictErrorConfig(ExceptionConfig):
+    class ConflictErrorConfig(_ep.ConflictErrorParams, ExceptionConfig):
         """Configuration for ConflictError (Pydantic v2)."""
 
-        resource_type: Annotated[
-            str | None,
-            Field(default=None, description="Type of resource that conflicted"),
-        ] = None
-        resource_id: Annotated[
-            str | None,
-            Field(default=None, description="ID of resource that conflicted"),
-        ] = None
-        conflict_reason: Annotated[
-            str | None,
-            Field(default=None, description="Reason for the conflict"),
-        ] = None
-
-    class RateLimitErrorConfig(ExceptionConfig):
+    class RateLimitErrorConfig(_ep.RateLimitErrorParams, ExceptionConfig):
         """Configuration for RateLimitError (Pydantic v2)."""
-
-        limit: Annotated[
-            int | None,
-            Field(default=None, description="Rate limit that was exceeded"),
-        ] = None
-        window_seconds: Annotated[
-            int | None,
-            Field(default=None, description="Time window for rate limit"),
-        ] = None
-        retry_after: Annotated[
-            float | None,
-            Field(default=None, description="Seconds to wait before retrying"),
-        ] = None
 
     class InternalErrorConfig(ExceptionConfig):
         """Configuration for InternalError (Pydantic v2)."""
@@ -967,17 +868,8 @@ class FlextModelsConfig:
             Field(default=None, description="Operation that caused internal error"),
         ] = None
 
-    class TypeErrorConfig(ExceptionConfig):
+    class TypeErrorConfig(_ep.TypeErrorParams, ExceptionConfig):
         """Configuration for TypeError (Pydantic v2)."""
-
-        expected_type: Annotated[
-            str | None,
-            Field(default=None, description="Expected type name"),
-        ] = None
-        actual_type: Annotated[
-            str | None,
-            Field(default=None, description="Actual type name"),
-        ] = None
 
     class TypeErrorOptions(FlextModelsCollections.Config):
         """Options for TypeError initialization (Pydantic v2).
@@ -1014,39 +906,11 @@ class FlextModelsConfig:
             Field(default=None, description="Actual value that caused error"),
         ] = None
 
-    class CircuitBreakerErrorConfig(ExceptionConfig):
+    class CircuitBreakerErrorConfig(_ep.CircuitBreakerErrorParams, ExceptionConfig):
         """Configuration for CircuitBreakerError (Pydantic v2)."""
 
-        service_name: Annotated[
-            str | None,
-            Field(
-                default=None,
-                description="Service name where circuit breaker opened",
-            ),
-        ] = None
-        failure_count: Annotated[
-            int | None,
-            Field(
-                default=None,
-                description="Number of failures that triggered circuit breaker",
-            ),
-        ] = None
-        reset_timeout: Annotated[
-            float | None,
-            Field(default=None, description="Timeout before circuit breaker resets"),
-        ] = None
-
-    class OperationErrorConfig(ExceptionConfig):
+    class OperationErrorConfig(_ep.OperationErrorParams, ExceptionConfig):
         """Configuration for OperationError (Pydantic v2)."""
-
-        operation: Annotated[
-            str | None,
-            Field(default=None, description="Operation that failed"),
-        ] = None
-        reason: Annotated[
-            str | None,
-            Field(default=None, description="Reason for operation failure"),
-        ] = None
 
     class AttributeAccessErrorConfig(ExceptionConfig):
         """Configuration for AttributeAccessError (Pydantic v2)."""

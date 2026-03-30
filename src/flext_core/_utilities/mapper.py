@@ -2150,6 +2150,21 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
+    def _normalize_to_container_mapping(
+        data: t.ConfigModelInput | t.ContainerMapping,
+    ) -> t.ContainerMapping | None:
+        """Normalize ConfigMap or dict-like data to a ContainerMapping."""
+        if isinstance(data, t.ConfigMap):
+            return {
+                k: FlextUtilitiesMapper.narrow_to_container(v)
+                for k, v in data.root.items()
+            }
+        general = FlextUtilitiesMapper.narrow_to_container(data)
+        if FlextRuntime.is_dict_like(general) and isinstance(general, dict):
+            return {str(key): val for key, val in general.items()}
+        return None
+
+    @staticmethod
     def narrow_to_container(
         value: t.MetadataOrValue
         | t.NormalizedValue
@@ -2421,22 +2436,9 @@ class FlextUtilitiesMapper:
             transformer = identity_transformer
         result: t.MutableContainerMapping = {}
         if primary_data is not None:
-            primary_source: t.ContainerMapping | None = None
-            if isinstance(primary_data, t.ConfigMap):
-                primary_source = {
-                    k: FlextUtilitiesMapper.narrow_to_container(v)
-                    for k, v in primary_data.root.items()
-                }
-            else:
-                primary_general = FlextUtilitiesMapper.narrow_to_container(primary_data)
-                if FlextRuntime.is_dict_like(primary_general) and isinstance(
-                    primary_general,
-                    dict,
-                ):
-                    primary_source = {
-                        str(key): item_value
-                        for key, item_value in primary_general.items()
-                    }
+            primary_source = FlextUtilitiesMapper._normalize_to_container_mapping(
+                primary_data,
+            )
             if primary_source is not None:
                 primary_dict = {
                     str(key): FlextUtilitiesMapper.narrow_to_container(value)
@@ -2448,24 +2450,9 @@ class FlextUtilitiesMapper:
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source: t.ContainerMapping | None = None
-            if isinstance(secondary_data, t.ConfigMap):
-                secondary_source = {
-                    k: FlextUtilitiesMapper.narrow_to_container(v)
-                    for k, v in secondary_data.root.items()
-                }
-            else:
-                secondary_general = FlextUtilitiesMapper.narrow_to_container(
-                    secondary_data,
-                )
-                if FlextRuntime.is_dict_like(secondary_general) and isinstance(
-                    secondary_general,
-                    dict,
-                ):
-                    secondary_source = {
-                        str(key): item_value
-                        for key, item_value in secondary_general.items()
-                    }
+            secondary_source = FlextUtilitiesMapper._normalize_to_container_mapping(
+                secondary_data,
+            )
             if secondary_source is not None:
                 secondary_dict = {
                     str(key): FlextUtilitiesMapper.narrow_to_container(value)

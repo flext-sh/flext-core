@@ -150,7 +150,7 @@ class FlextModelsResult:
             return instance
 
         @classmethod
-        def ok(cls, value: T) -> Self:
+        def ok[V](cls, value: V) -> FlextModelsResult.RuntimeResult[V]:
             """Create successful result wrapping data.
 
             Business Rule: Creates successful RuntimeResult wrapping value. Raises ValueError
@@ -164,7 +164,7 @@ class FlextModelsResult:
                 Successful RuntimeResult instance
 
             """
-            instance = cls(
+            instance: FlextModelsResult.RuntimeResult[V] = FlextModelsResult.RuntimeResult[V](
                 is_success=True,
                 error=None,
                 error_code=None,
