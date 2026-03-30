@@ -19,6 +19,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.helpers import factories, factories_impl, scenarios
     from tests.helpers.factories import TestHelperFactories
     from tests.helpers.factories_impl import (
         FailingService,
@@ -86,7 +87,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.helpers.factories_impl",
         "ValidatingServiceFactory",
     ],
+    "factories": ["tests.helpers.factories", ""],
+    "factories_impl": ["tests.helpers.factories_impl", ""],
     "reset_all_factories": ["tests.helpers.factories_impl", "reset_all_factories"],
+    "scenarios": ["tests.helpers.scenarios", ""],
 }
 
 __all__ = [
@@ -112,7 +116,10 @@ __all__ = [
     "ValidatingServiceAuto",
     "ValidatingServiceAutoFactory",
     "ValidatingServiceFactory",
+    "factories",
+    "factories_impl",
     "reset_all_factories",
+    "scenarios",
 ]
 
 

@@ -30,7 +30,7 @@ from flext_tests import c, t, tm, u
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextContext, r
+from flext_core import FlextContainer, FlextContext
 from tests import p
 
 
@@ -294,12 +294,12 @@ class TestFlextContainer:
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
-        result: r[t.RegisterableService] = clean_container.get(scenario.name)
+        result: p.Result[t.RegisterableService] = clean_container.get(scenario.name)
         u.Tests.Result.assert_success_with_value(result, scenario.service)
 
     def test_get_nonexistent_service(self, clean_container: p.Container) -> None:
         """Test getting non-existent service using fixtures."""
-        result: r[t.RegisterableService] = clean_container.get("nonexistent")
+        result: p.Result[t.RegisterableService] = clean_container.get("nonexistent")
         u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",
@@ -312,7 +312,7 @@ class TestFlextContainer:
         clean_container.register(
             "factory_service", factory, kind=c.CONTAINER_KIND_FACTORY
         )
-        result: r[t.RegisterableService] = clean_container.get("factory_service")
+        result: p.Result[t.RegisterableService] = clean_container.get("factory_service")
         u.Tests.Result.assert_success_with_value(result, factory_result)
 
     def test_get_factory_called_each_time(self, clean_container: p.Container) -> None:
@@ -323,10 +323,14 @@ class TestFlextContainer:
         clean_container.register(
             "factory_service", factory, kind=c.CONTAINER_KIND_FACTORY
         )
-        result1: r[t.RegisterableService] = clean_container.get("factory_service")
+        result1: p.Result[t.RegisterableService] = clean_container.get(
+            "factory_service"
+        )
         _ = u.Tests.Result.assert_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
-        result2: r[t.RegisterableService] = clean_container.get("factory_service")
+        result2: p.Result[t.RegisterableService] = clean_container.get(
+            "factory_service"
+        )
         _ = u.Tests.Result.assert_success(result2)
         tm.that(
             get_count(),
@@ -347,7 +351,7 @@ class TestFlextContainer:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         _ = container.register(scenario.name, scenario.service)
-        typed_result: r[t.RegisterableService] = container.get(
+        typed_result: p.Result[t.RegisterableService] = container.get(
             scenario.name,
             type_cls=scenario.expected_type,
         )
@@ -369,7 +373,7 @@ class TestFlextContainer:
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result: r[dict[str, t.NormalizedValue]] = clean_container.get(
+        result: p.Result[dict[str, t.NormalizedValue]] = clean_container.get(
             "string_service",
             type_cls=dict,
         )
@@ -377,7 +381,7 @@ class TestFlextContainer:
 
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result: r[dict[str, t.NormalizedValue]] = clean_container.get(
+        result: p.Result[dict[str, t.NormalizedValue]] = clean_container.get(
             "nonexistent", type_cls=dict
         )
         u.Tests.Result.assert_result_failure_with_error(
@@ -575,7 +579,7 @@ class TestFlextContainer:
                 msg=f"Container must have {service_name} after registration",
             )
         for name in required_services:
-            result: r[t.RegisterableService] = container.get(name)
+            result: p.Result[t.RegisterableService] = container.get(name)
             _ = u.Tests.Result.assert_success(result)
         tm.that(
             len(container.list_services()),
@@ -600,7 +604,7 @@ class TestFlextContainer:
         _ = container.register(
             "failing", failing_factory, kind=c.CONTAINER_KIND_FACTORY
         )
-        result: r[t.RegisterableService] = container.get("failing")
+        result: p.Result[t.RegisterableService] = container.get("failing")
         _ = u.Tests.Result.assert_failure(result)
 
     def test_scoped_container_with_context(

@@ -11,6 +11,22 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from examples._models import (
+        ex00,
+        ex01,
+        ex02,
+        ex03,
+        ex04,
+        ex05,
+        ex07,
+        ex08,
+        ex10,
+        ex11,
+        ex12,
+        ex14,
+        exconfig,
+        shared,
+    )
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,
@@ -153,6 +169,20 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "ExConfigAppConfig": ["examples._models.exconfig", "ExConfigAppConfig"],
     "SharedHandle": ["examples._models.shared", "SharedHandle"],
     "SharedPerson": ["examples._models.shared", "SharedPerson"],
+    "ex00": ["examples._models.ex00", ""],
+    "ex01": ["examples._models.ex01", ""],
+    "ex02": ["examples._models.ex02", ""],
+    "ex03": ["examples._models.ex03", ""],
+    "ex04": ["examples._models.ex04", ""],
+    "ex05": ["examples._models.ex05", ""],
+    "ex07": ["examples._models.ex07", ""],
+    "ex08": ["examples._models.ex08", ""],
+    "ex10": ["examples._models.ex10", ""],
+    "ex11": ["examples._models.ex11", ""],
+    "ex12": ["examples._models.ex12", ""],
+    "ex14": ["examples._models.ex14", ""],
+    "exconfig": ["examples._models.exconfig", ""],
+    "shared": ["examples._models.shared", ""],
 }
 
 __all__ = [
@@ -217,6 +247,20 @@ __all__ = [
     "ExConfigAppConfig",
     "SharedHandle",
     "SharedPerson",
+    "ex00",
+    "ex01",
+    "ex02",
+    "ex03",
+    "ex04",
+    "ex05",
+    "ex07",
+    "ex08",
+    "ex10",
+    "ex11",
+    "ex12",
+    "ex14",
+    "exconfig",
+    "shared",
 ]
 
 

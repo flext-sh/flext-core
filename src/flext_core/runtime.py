@@ -48,6 +48,7 @@ from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
+from structlog.types import Processor as _StructlogProcessor
 
 from flext_core import (
     T,
@@ -290,6 +291,23 @@ class FlextRuntime:
         """Return the dependency-injector providers module."""
         return providers
 
+    _GENERIC_LIST_ALIASES: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "StringList": (str,),
+        "List": (str,),
+        "IntList": (int,),
+        "FloatList": (float,),
+        "BoolList": (bool,),
+    }
+
+    _GENERIC_DICT_ALIASES: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "Dict": (str, str),
+        "StringDict": (str, str),
+        "NestedDict": (str, dict),
+        "IntDict": (str, int),
+        "FloatDict": (str, float),
+        "BoolDict": (str, bool),
+    }
+
     @staticmethod
     def extract_generic_args(
         type_hint: t.TypeHintSpecifier,
@@ -297,13 +315,9 @@ class FlextRuntime:
         """Extract generic type arguments from a type hint.
 
         Business Rule: Extracts generic type arguments from type hints using
-        typing.get_args() for standard generics,         and mapping for type
+        typing.get_args() for standard generics, and mapping for type
         aliases. Returns empty tuple if no arguments found or on error. Used for
         type introspection and generic type analysis.
-
-        Audit Implication: Type argument extraction enables audit trail completeness
-        by providing type information for generic types. All type introspection is
-        safe and never raises exceptions.
 
         Args:
             type_hint: Type hint to extract args from
@@ -316,27 +330,14 @@ class FlextRuntime:
             args = typing.get_args(type_hint)
             if args:
                 return args
-            if hasattr(type_hint, "__name__"):
-                type_name = getattr(type_hint, "__name__", "")
-                if type_name in {"StringList", "List"}:
-                    return (str,)
-                if type_name == "IntList":
-                    return (int,)
-                if type_name == "FloatList":
-                    return (float,)
-                if type_name == "BoolList":
-                    return (bool,)
-                if type_name in {"Dict", "StringDict"}:
-                    return (str, str)
-                if type_name == "NestedDict":
-                    return (str, dict)
-                if type_name == "IntDict":
-                    return (str, int)
-                if type_name == "FloatDict":
-                    return (str, float)
-                if type_name == "BoolDict":
-                    return (str, bool)
-            return ()
+            type_name = getattr(type_hint, "__name__", "")
+            if not type_name:
+                return ()
+            return (
+                FlextRuntime._GENERIC_LIST_ALIASES.get(type_name)
+                or FlextRuntime._GENERIC_DICT_ALIASES.get(type_name)
+                or ()
+            )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return ()
 
@@ -529,8 +530,39 @@ class FlextRuntime:
     @staticmethod
     def _is_structlog_processor(
         value: object,
-    ) -> TypeIs[structlog.types.Processor]:
+    ) -> TypeIs[_StructlogProcessor]:
         return callable(value)
+
+    @staticmethod
+    def _to_plain_container(value: t.RuntimeAtomic) -> t.NormalizedValue:
+        """Flatten a runtime atomic value to plain Python types."""
+        match value:
+            case t.ConfigMap() | t.Dict():
+                return {
+                    str(k): FlextRuntime._to_plain_container(
+                        FlextRuntime.normalize_to_container(v),
+                    )
+                    for k, v in value.root.items()
+                }
+            case t.ObjectList():
+                return list(value.root)
+            case str() | int() | float() | bool() | Path():
+                return value
+            case datetime():
+                return value
+            case _:
+                return str(value)
+
+    @staticmethod
+    def _normalize_dict_entries(
+        items: Sequence[tuple[str, t.RuntimeData]],
+    ) -> MutableMapping[str, t.ValueOrModel]:
+        """Normalize key-value pairs for container dict construction."""
+        result: MutableMapping[str, t.ValueOrModel] = {}
+        for key, item in items:
+            normalized = FlextRuntime.normalize_to_container(item)
+            result[key] = FlextRuntime._to_plain_container(normalized)
+        return result
 
     @staticmethod
     def normalize_to_container(
@@ -545,53 +577,33 @@ class FlextRuntime:
             Scalar | Path | BaseModel
 
         """
-        if val is None:
-            return ""
-        if FlextRuntime.is_scalar(val) or isinstance(val, Path):
-            return val
-        if isinstance(val, BaseModel):
-            return val
-
-        def _to_plain_container(value: t.RuntimeAtomic) -> t.NormalizedValue:
-            if isinstance(
-                value,
-                (t.ConfigMap, t.Dict),
-            ):
-                return {
-                    str(inner_key): _to_plain_container(
-                        FlextRuntime.normalize_to_container(inner_value),
+        match val:
+            case None:
+                return ""
+            case BaseModel():
+                return val
+            case Path():
+                return val
+            case _ if FlextRuntime.is_scalar(val):
+                return val
+            case _ if FlextRuntime.is_dict_like(val):
+                if isinstance(val, t.ConfigMap):
+                    entries = [(k, v) for k, v in val.root.items()]
+                else:
+                    entries = [(str(k), v) for k, v in val.items()]
+                return t.Dict(root=FlextRuntime._normalize_dict_entries(entries))
+            case _ if FlextRuntime.is_list_like(val):
+                normalized_list: Sequence[t.Container] = [
+                    item
+                    for v in val
+                    if isinstance(
+                        item := FlextRuntime.normalize_to_container(v),
+                        (str, int, float, bool, datetime, Path),
                     )
-                    for inner_key, inner_value in value.root.items()
-                }
-            if isinstance(value, t.ObjectList):
-                return list(value.root)
-            if isinstance(value, (str, int, float, bool, datetime, Path)):
-                return value
-            return str(value)
-
-        if FlextRuntime.is_dict_like(val):
-            normalized_dict: MutableMapping[str, t.ValueOrModel] = {}
-            if isinstance(val, t.ConfigMap):
-                for key, item in val.root.items():
-                    normalized_item = FlextRuntime.normalize_to_container(item)
-                    normalized_dict[key] = _to_plain_container(normalized_item)
-            else:
-                typed_mapping = val
-                for key, item in typed_mapping.items():
-                    normalized_item = FlextRuntime.normalize_to_container(item)
-                    normalized_dict[str(key)] = _to_plain_container(normalized_item)
-            return t.Dict(root=normalized_dict)
-        if FlextRuntime.is_list_like(val):
-            normalized_list: Sequence[t.Container] = [
-                normalized_item
-                for v in val
-                if isinstance(
-                    normalized_item := FlextRuntime.normalize_to_container(v),
-                    (str, int, float, bool, datetime, Path),
-                )
-            ]
-            return t.ObjectList(root=normalized_list)
-        return str(val)
+                ]
+                return t.ObjectList(root=normalized_list)
+            case _:
+                return str(val)
 
     @staticmethod
     def _normalize_to_metadata_scalar(val: t.RuntimeData) -> t.Primitives:
@@ -608,47 +620,56 @@ class FlextRuntime:
         return str(val)
 
     @staticmethod
+    def _normalize_metadata_dict_value(
+        v: t.RuntimeData,
+    ) -> t.Scalar | t.ScalarList:
+        """Normalize a single dict value for metadata context."""
+        match v:
+            case None:
+                return ""
+            case Path():
+                return str(v)
+            case BaseModel():
+                return v.model_dump_json()
+            case _ if FlextRuntime.is_scalar(v):
+                return v
+            case _ if FlextRuntime.is_list_like(v):
+                return [FlextRuntime._normalize_to_metadata_scalar(item) for item in v]
+            case _ if FlextRuntime.is_dict_like(v):
+                inner: MutableMapping[str, t.Primitives] = {}
+                for ik, iv in v.items():
+                    inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
+                return orjson.dumps(inner).decode()
+            case _:
+                return str(v)
+
+    @staticmethod
     def normalize_to_metadata(
         val: t.RuntimeData,
     ) -> t.MetadataValue:
         """Normalize input into metadata-compatible scalar, list, or mapping values."""
-        if val is None:
-            return ""
-        if FlextRuntime.is_primitive(val):
-            return val
-        if isinstance(val, datetime):
-            return val
-        if isinstance(val, Path):
-            return str(val)
-        if isinstance(val, BaseModel):
-            return val.model_dump_json()
-        if FlextRuntime.is_dict_like(val):
-            normalized: MutableMapping[str, t.Scalar | t.ScalarList] = {}
-            for k, v in val.items():
-                str_k = str(k)
-                if v is None:
-                    normalized[str_k] = ""
-                elif FlextRuntime.is_scalar(v):
-                    normalized[str_k] = v
-                elif isinstance(v, Path):
-                    normalized[str_k] = str(v)
-                elif isinstance(v, BaseModel):
-                    normalized[str_k] = v.model_dump_json()
-                elif FlextRuntime.is_list_like(v):
-                    normalized[str_k] = [
-                        FlextRuntime._normalize_to_metadata_scalar(item) for item in v
-                    ]
-                elif FlextRuntime.is_dict_like(v):
-                    inner: MutableMapping[str, t.Primitives] = {}
-                    for ik, iv in v.items():
-                        inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
-                    normalized[str_k] = orjson.dumps(inner).decode()
-                else:
-                    normalized[str_k] = str(v)
-            return normalized
-        if FlextRuntime.is_list_like(val):
-            return [FlextRuntime._normalize_to_metadata_scalar(item) for item in val]
-        return str(val)
+        match val:
+            case None:
+                return ""
+            case Path():
+                return str(val)
+            case BaseModel():
+                return val.model_dump_json()
+            case datetime():
+                return val
+            case _ if FlextRuntime.is_primitive(val):
+                return val
+            case _ if FlextRuntime.is_dict_like(val):
+                normalized: MutableMapping[str, t.Scalar | t.ScalarList] = {}
+                for k, v in val.items():
+                    normalized[str(k)] = FlextRuntime._normalize_metadata_dict_value(v)
+                return normalized
+            case _ if FlextRuntime.is_list_like(val):
+                return [
+                    FlextRuntime._normalize_to_metadata_scalar(item) for item in val
+                ]
+            case _:
+                return str(val)
 
     @staticmethod
     def safe_get_attribute(
@@ -727,6 +748,90 @@ class FlextRuntime:
                 raise RuntimeError(msg)
             return options_model
 
+        _OPTION_FIELDS: ClassVar[Sequence[str]] = (
+            "config",
+            "services",
+            "factories",
+            "resources",
+            "wire_modules",
+            "wire_packages",
+            "wire_classes",
+        )
+
+        @classmethod
+        def _parse_options(
+            cls,
+            container_options: p.ContainerCreationOptions
+            | Mapping[str, t.RuntimeData]
+            | None,
+        ) -> p.ContainerCreationOptions:
+            """Parse raw container options into a validated model."""
+            options_model = cls._require_container_creation_options_model()
+            match container_options:
+                case None:
+                    return options_model.model_validate({})
+                case Mapping():
+                    return options_model.model_validate(dict(container_options))
+                case _:
+                    return options_model.model_validate(
+                        {
+                            field: getattr(container_options, field)
+                            for field in cls._OPTION_FIELDS
+                        }
+                        | {"factory_cache": container_options.factory_cache}
+                    )
+
+        @classmethod
+        def _merge_options(
+            cls,
+            base: p.ContainerCreationOptions,
+            overrides: Mapping[str, t.RuntimeData],
+        ) -> p.ContainerCreationOptions:
+            """Merge runtime kwargs over base options (override wins if not None)."""
+            options_model = cls._require_container_creation_options_model()
+            override_opts = options_model.model_validate(overrides)
+            merged: MutableMapping[str, t.RuntimeData] = {
+                field: (
+                    getattr(override_opts, field)
+                    if getattr(override_opts, field) is not None
+                    else getattr(base, field)
+                )
+                for field in cls._OPTION_FIELDS
+            }
+            merged["factory_cache"] = override_opts.factory_cache
+            return options_model.model_validate(merged)
+
+        @classmethod
+        def _populate_container(
+            cls,
+            di_container: containers.DynamicContainer,
+            opts: p.ContainerCreationOptions,
+        ) -> None:
+            """Register config, services, factories, resources, and wiring."""
+            if opts.config is not None:
+                _ = cls.bind_configuration(di_container, opts.config)
+            if opts.services:
+                for name, instance in opts.services.items():
+                    _ = cls.register_object(di_container, name, instance)
+            if opts.factories:
+                for name, factory in opts.factories.items():
+                    _ = cls.register_factory(
+                        di_container,
+                        name,
+                        factory,
+                        cache=opts.factory_cache,
+                    )
+            if opts.resources:
+                for name, resource_factory in opts.resources.items():
+                    _ = cls.register_resource(di_container, name, resource_factory)
+            if opts.wire_modules or opts.wire_packages or opts.wire_classes:
+                cls.wire(
+                    di_container,
+                    modules=opts.wire_modules,
+                    packages=opts.wire_packages,
+                    classes=opts.wire_classes,
+                )
+
         @classmethod
         def create_container(
             cls,
@@ -738,117 +843,18 @@ class FlextRuntime:
             """Create a DynamicContainer with optional pre-registration and wiring.
 
             Args:
-                config: Optional configuration mapping bound to ``config`` provider.
-                services: Optional mapping of provider names to concrete objects
-                    registered via ``providers.Object``.
-                factories: Optional mapping of provider names to factory callables
-                    registered via ``providers.Singleton`` (default) or
-                    ``providers.Factory`` when ``factory_cache=False``.
-                resources: Optional mapping of provider names to resource factories
-                    registered via ``providers.Resource``.
-                wire_modules: Optional modules to wire immediately for ``@inject``/
-                    ``Provide`` usage.
-                wire_packages: Optional packages to wire immediately.
-                wire_classes: Optional classes to wire immediately.
-                factory_cache: Whether factories use singleton semantics. When
-                    ``False``, factories are registered with ``providers.Factory``
-                    to produce new instances per resolution.
+                container_options: Options as protocol, mapping, or None.
+                **runtime_kwargs: Override individual option fields.
 
             Returns:
                 A dynamic container ready for immediate ``@inject`` consumption
                 without manual follow-up registration calls.
 
             """
-            options_model = cls._require_container_creation_options_model()
-            if container_options is None:
-                base_options = options_model.model_validate({})
-            elif isinstance(container_options, Mapping):
-                base_options = options_model.model_validate(dict(container_options))
-            else:
-                base_options = options_model.model_validate({
-                    "config": container_options.config,
-                    "services": container_options.services,
-                    "factories": container_options.factories,
-                    "resources": container_options.resources,
-                    "wire_modules": container_options.wire_modules,
-                    "wire_packages": container_options.wire_packages,
-                    "wire_classes": container_options.wire_classes,
-                    "factory_cache": container_options.factory_cache,
-                })
-            if runtime_kwargs:
-                override_options = options_model.model_validate(runtime_kwargs)
-                container_options = options_model.model_validate({
-                    "config": (
-                        override_options.config
-                        if override_options.config is not None
-                        else base_options.config
-                    ),
-                    "services": (
-                        override_options.services
-                        if override_options.services is not None
-                        else base_options.services
-                    ),
-                    "factories": (
-                        override_options.factories
-                        if override_options.factories is not None
-                        else base_options.factories
-                    ),
-                    "resources": (
-                        override_options.resources
-                        if override_options.resources is not None
-                        else base_options.resources
-                    ),
-                    "wire_modules": (
-                        override_options.wire_modules
-                        if override_options.wire_modules is not None
-                        else base_options.wire_modules
-                    ),
-                    "wire_packages": (
-                        override_options.wire_packages
-                        if override_options.wire_packages is not None
-                        else base_options.wire_packages
-                    ),
-                    "wire_classes": (
-                        override_options.wire_classes
-                        if override_options.wire_classes is not None
-                        else base_options.wire_classes
-                    ),
-                    "factory_cache": override_options.factory_cache,
-                })
-            else:
-                container_options = base_options
-            config = container_options.config
-            services = container_options.services
-            factories = container_options.factories
-            resources = container_options.resources
-            wire_modules = container_options.wire_modules
-            wire_packages = container_options.wire_packages
-            wire_classes = container_options.wire_classes
-            factory_cache = container_options.factory_cache
+            base = cls._parse_options(container_options)
+            opts = cls._merge_options(base, runtime_kwargs) if runtime_kwargs else base
             di_container = cls.DynamicContainerWithConfig()
-            if config is not None:
-                _ = cls.bind_configuration(di_container, config)
-            if services:
-                for name, instance in services.items():
-                    _ = cls.register_object(di_container, name, instance)
-            if factories:
-                for name, factory in factories.items():
-                    _ = cls.register_factory(
-                        di_container,
-                        name,
-                        factory,
-                        cache=factory_cache,
-                    )
-            if resources:
-                for name, resource_factory in resources.items():
-                    _ = cls.register_resource(di_container, name, resource_factory)
-            if wire_modules or wire_packages or wire_classes:
-                cls.wire(
-                    di_container,
-                    modules=wire_modules,
-                    packages=wire_packages,
-                    classes=wire_classes,
-                )
+            cls._populate_container(di_container, opts)
             return di_container
 
         @classmethod
@@ -1006,6 +1012,102 @@ class FlextRuntime:
                 container=container,
             )
 
+    @staticmethod
+    def _resolve_structlog_params(
+        config: BaseModel | None,
+        *,
+        log_level: int | None,
+        console_renderer: bool,
+        additional_processors: Sequence[t.StructlogProcessor] | None,
+        wrapper_class_factory: Callable[[], type[p.Logger]] | None,
+        logger_factory: Callable[[], p.Logger] | None,
+        cache_logger_on_first_use: bool,
+    ) -> tuple[
+        int,
+        bool,
+        Sequence[t.StructlogProcessor] | None,
+        Callable[[], type[p.Logger]] | None,
+        Callable[[], p.Logger] | None,
+        bool,
+        bool,
+    ]:
+        """Extract structlog params from config model or pass-through individual args.
+
+        Returns (log_level, console_renderer, additional_processors,
+                 wrapper_class_factory, logger_factory, cache_logger_on_first_use,
+                 async_logging).
+        """
+        async_logging = True
+        if config is not None:
+            log_level = getattr(config, "log_level", log_level)
+            console_renderer = getattr(config, "console_renderer", console_renderer)
+            cfg_processors = getattr(config, "additional_processors", None)
+            if cfg_processors:
+                additional_processors = cfg_processors
+            wrapper_class_factory = getattr(
+                config,
+                "wrapper_class_factory",
+                wrapper_class_factory,
+            )
+            logger_factory = getattr(config, "logger_factory", logger_factory)
+            cache_logger_on_first_use = getattr(
+                config,
+                "cache_logger_on_first_use",
+                cache_logger_on_first_use,
+            )
+            async_logging = getattr(config, "async_logging", True)
+        level = log_level if log_level is not None else logging.INFO
+        return (
+            level,
+            console_renderer,
+            additional_processors,
+            wrapper_class_factory,
+            logger_factory,
+            cache_logger_on_first_use,
+            async_logging,
+        )
+
+    @classmethod
+    def _build_structlog_processors(
+        cls,
+        *,
+        console_renderer: bool,
+        additional_processors: Sequence[t.StructlogProcessor] | None,
+    ) -> MutableSequence[_StructlogProcessor]:
+        """Assemble the structlog processor chain."""
+        processors: MutableSequence[_StructlogProcessor] = [
+            structlog.contextvars.merge_contextvars,
+            add_log_level,
+            cls.level_based_context_filter,
+            TimeStamper(fmt="iso"),
+            StackInfoRenderer(),
+        ]
+        if additional_processors:
+            processors.extend(
+                proc
+                for proc in additional_processors
+                if cls._is_structlog_processor(proc)
+            )
+        if console_renderer:
+            processors.append(structlog.dev.ConsoleRenderer(colors=True))
+        else:
+            processors.append(JSONRenderer())
+        return processors
+
+    @classmethod
+    def _resolve_logger_factory(
+        cls,
+        *,
+        logger_factory: Callable[[], p.Logger] | None,
+        async_logging: bool,
+    ) -> t.LoggerFactory | None:
+        """Resolve the logger factory, setting up async writer if needed."""
+        if logger_factory is not None:
+            return logger_factory
+        if async_logging and cls._async_writer is None:
+            cls._async_writer = cls._AsyncLogWriter(sys.stdout)
+        return None
+
     @classmethod
     def configure_structlog(
         cls,
@@ -1020,9 +1122,7 @@ class FlextRuntime:
     ) -> None:
         """Configure structlog once using FLEXT defaults.
 
-        DEBUG INSTRUMENTATION ACTIVE
-
-        Supports both config t.NormalizedValue pattern (reduced params) and individual parameters.
+        Supports both config model pattern (reduced params) and individual parameters.
 
         Args:
             config: Optional FlextModels.Config.StructlogConfig for all params
@@ -1033,79 +1133,40 @@ class FlextRuntime:
             logger_factory: Custom logger factory (ignored if config provided)
             cache_logger_on_first_use: Cache logger (ignored if config provided)
 
-        Example (config pattern - RECOMMENDED):
-            ```python
-            from flext_core import FlextModels
-
-            config = FlextModels.Config.StructlogConfig(
-                log_level=20, console_renderer=True
-            )
-            FlextRuntime.configure_structlog(config=config)
-            ```
-
         """
-        async_logging = True
-        if config is not None:
-            log_level = getattr(config, "log_level", log_level)
-            console_renderer = getattr(config, "console_renderer", console_renderer)
-            additional_processors_from_config = getattr(
-                config,
-                "additional_processors",
-                None,
-            )
-            if additional_processors_from_config:
-                additional_processors = additional_processors_from_config
-            wrapper_class_factory = getattr(
-                config,
-                "wrapper_class_factory",
-                wrapper_class_factory,
-            )
-            logger_factory = getattr(config, "logger_factory", logger_factory)
-            cache_logger_on_first_use = getattr(
-                config,
-                "cache_logger_on_first_use",
-                cache_logger_on_first_use,
-            )
-            async_logging = getattr(config, "async_logging", True)
         if cls._structlog_configured:
             return
-        level_to_use = log_level if log_level is not None else logging.INFO
-        module = structlog
-        processors: MutableSequence[structlog.types.Processor] = [
-            module.contextvars.merge_contextvars,
-            add_log_level,
-            cls.level_based_context_filter,
-            TimeStamper(fmt="iso"),
-            StackInfoRenderer(),
-        ]
-        if additional_processors:
-            processors.extend(
-                proc
-                for proc in additional_processors
-                if cls._is_structlog_processor(proc)
-            )
-        if console_renderer:
-            processors.append(module.dev.ConsoleRenderer(colors=True))
-        else:
-            processors.append(JSONRenderer())
-        wrapper_arg: type | None = None
-        if wrapper_class_factory is not None:
-            wrapper_arg = wrapper_class_factory()
-        else:
-            wrapper_arg = module.make_filtering_bound_logger(level_to_use)
-        factory_to_use: t.LoggerFactory | None
-        if logger_factory is not None:
-            factory_to_use = logger_factory
-        elif async_logging:
-            if cls._async_writer is None:
-                cls._async_writer = cls._AsyncLogWriter(sys.stdout)
-            # Check PrintLoggerFactory availability twice for fallback pattern
-            _ = getattr(module, "PrintLoggerFactory", None)
-            _ = getattr(module, "PrintLoggerFactory", None)
-            factory_to_use = None
-        else:
-            factory_to_use = None
-        configure_fn = module.configure if hasattr(module, "configure") else None
+        (
+            level,
+            console_renderer,
+            additional_processors,
+            wrapper_class_factory,
+            logger_factory,
+            cache_logger_on_first_use,
+            async_logging,
+        ) = cls._resolve_structlog_params(
+            config,
+            log_level=log_level,
+            console_renderer=console_renderer,
+            additional_processors=additional_processors,
+            wrapper_class_factory=wrapper_class_factory,
+            logger_factory=logger_factory,
+            cache_logger_on_first_use=cache_logger_on_first_use,
+        )
+        processors = cls._build_structlog_processors(
+            console_renderer=console_renderer,
+            additional_processors=additional_processors,
+        )
+        wrapper_arg = (
+            wrapper_class_factory()
+            if wrapper_class_factory is not None
+            else structlog.make_filtering_bound_logger(level)
+        )
+        factory_to_use = cls._resolve_logger_factory(
+            logger_factory=logger_factory,
+            async_logging=async_logging,
+        )
+        configure_fn = getattr(structlog, "configure", None)
         if configure_fn is not None and callable(configure_fn):
             _ = configure_fn(
                 processors=processors,

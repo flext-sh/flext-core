@@ -12,7 +12,28 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.integration import patterns
+    from tests.integration import (
+        patterns,
+        test_architecture,
+        test_config_integration,
+        test_infra_integration,
+        test_integration,
+        test_migration_validation,
+        test_refactor_nesting_file,
+        test_refactor_nesting_idempotency,
+        test_refactor_nesting_project,
+        test_refactor_nesting_workspace,
+        test_refactor_policy_mro,
+        test_service,
+        test_system,
+    )
+    from tests.integration.patterns import (
+        test_advanced_patterns,
+        test_architectural_patterns,
+        test_patterns_commands,
+        test_patterns_logging,
+        test_patterns_testing,
+    )
     from tests.integration.patterns.test_advanced_patterns import (
         TestAdvancedPatterns,
         TestFunction,
@@ -118,10 +139,39 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "patterns": ["tests.integration.patterns", ""],
     "pytestmark": ["tests.integration.test_refactor_nesting_file", "pytestmark"],
+    "test_advanced_patterns": ["tests.integration.patterns.test_advanced_patterns", ""],
+    "test_architectural_patterns": [
+        "tests.integration.patterns.test_architectural_patterns",
+        "",
+    ],
+    "test_architecture": ["tests.integration.test_architecture", ""],
     "test_class_nesting_refactor_single_file_end_to_end": [
         "tests.integration.test_refactor_nesting_file",
         "test_class_nesting_refactor_single_file_end_to_end",
     ],
+    "test_config_integration": ["tests.integration.test_config_integration", ""],
+    "test_infra_integration": ["tests.integration.test_infra_integration", ""],
+    "test_integration": ["tests.integration.test_integration", ""],
+    "test_migration_validation": ["tests.integration.test_migration_validation", ""],
+    "test_patterns_commands": ["tests.integration.patterns.test_patterns_commands", ""],
+    "test_patterns_logging": ["tests.integration.patterns.test_patterns_logging", ""],
+    "test_patterns_testing": ["tests.integration.patterns.test_patterns_testing", ""],
+    "test_refactor_nesting_file": ["tests.integration.test_refactor_nesting_file", ""],
+    "test_refactor_nesting_idempotency": [
+        "tests.integration.test_refactor_nesting_idempotency",
+        "",
+    ],
+    "test_refactor_nesting_project": [
+        "tests.integration.test_refactor_nesting_project",
+        "",
+    ],
+    "test_refactor_nesting_workspace": [
+        "tests.integration.test_refactor_nesting_workspace",
+        "",
+    ],
+    "test_refactor_policy_mro": ["tests.integration.test_refactor_policy_mro", ""],
+    "test_service": ["tests.integration.test_service", ""],
+    "test_system": ["tests.integration.test_system", ""],
 }
 
 __all__ = [
@@ -145,7 +195,24 @@ __all__ = [
     "TestWorkspaceLevelRefactor",
     "patterns",
     "pytestmark",
+    "test_advanced_patterns",
+    "test_architectural_patterns",
+    "test_architecture",
     "test_class_nesting_refactor_single_file_end_to_end",
+    "test_config_integration",
+    "test_infra_integration",
+    "test_integration",
+    "test_migration_validation",
+    "test_patterns_commands",
+    "test_patterns_logging",
+    "test_patterns_testing",
+    "test_refactor_nesting_file",
+    "test_refactor_nesting_idempotency",
+    "test_refactor_nesting_project",
+    "test_refactor_nesting_workspace",
+    "test_refactor_policy_mro",
+    "test_service",
+    "test_system",
 ]
 
 

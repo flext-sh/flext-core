@@ -12,6 +12,13 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.unit.flext_tests import (
+        test_docker,
+        test_domains,
+        test_files,
+        test_matchers,
+        test_utilities,
+    )
     from tests.unit.flext_tests.test_docker import TestDocker
     from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
     from tests.unit.flext_tests.test_files import TestFlextTestsFiles
@@ -30,6 +37,11 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "TestFlextTestsMatchers",
     ],
     "TestUtilities": ["tests.unit.flext_tests.test_utilities", "TestUtilities"],
+    "test_docker": ["tests.unit.flext_tests.test_docker", ""],
+    "test_domains": ["tests.unit.flext_tests.test_domains", ""],
+    "test_files": ["tests.unit.flext_tests.test_files", ""],
+    "test_matchers": ["tests.unit.flext_tests.test_matchers", ""],
+    "test_utilities": ["tests.unit.flext_tests.test_utilities", ""],
 }
 
 __all__ = [
@@ -38,6 +50,11 @@ __all__ = [
     "TestFlextTestsFiles",
     "TestFlextTestsMatchers",
     "TestUtilities",
+    "test_docker",
+    "test_domains",
+    "test_files",
+    "test_matchers",
+    "test_utilities",
 ]
 
 

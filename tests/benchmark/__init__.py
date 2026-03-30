@@ -12,6 +12,11 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.benchmark import (
+        test_container_memory,
+        test_container_performance,
+        test_refactor_nesting_performance,
+    )
     from tests.benchmark.test_container_memory import (
         TestContainerMemory,
         get_memory_usage,
@@ -35,6 +40,12 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "TestPerformanceBenchmarks",
     ],
     "get_memory_usage": ["tests.benchmark.test_container_memory", "get_memory_usage"],
+    "test_container_memory": ["tests.benchmark.test_container_memory", ""],
+    "test_container_performance": ["tests.benchmark.test_container_performance", ""],
+    "test_refactor_nesting_performance": [
+        "tests.benchmark.test_refactor_nesting_performance",
+        "",
+    ],
 }
 
 __all__ = [
@@ -42,6 +53,9 @@ __all__ = [
     "TestContainerPerformance",
     "TestPerformanceBenchmarks",
     "get_memory_usage",
+    "test_container_memory",
+    "test_container_performance",
+    "test_refactor_nesting_performance",
 ]
 
 

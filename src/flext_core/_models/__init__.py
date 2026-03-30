@@ -23,6 +23,24 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from flext_core._models import (
+        base,
+        collections,
+        container,
+        containers,
+        context,
+        cqrs,
+        decorators,
+        dispatcher,
+        domain_event,
+        entity,
+        errors,
+        exception_params,
+        generic,
+        handler,
+        service,
+        settings,
+    )
     from flext_core._models._context._data import FlextModelsContextData
     from flext_core._models._context._export import FlextModelsContextExport
     from flext_core._models._context._metadata import FlextModelsContextMetadata
@@ -96,6 +114,22 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
     "FlextModelsService": ["flext_core._models.service", "FlextModelsService"],
+    "base": ["flext_core._models.base", ""],
+    "collections": ["flext_core._models.collections", ""],
+    "container": ["flext_core._models.container", ""],
+    "containers": ["flext_core._models.containers", ""],
+    "context": ["flext_core._models.context", ""],
+    "cqrs": ["flext_core._models.cqrs", ""],
+    "decorators": ["flext_core._models.decorators", ""],
+    "dispatcher": ["flext_core._models.dispatcher", ""],
+    "domain_event": ["flext_core._models.domain_event", ""],
+    "entity": ["flext_core._models.entity", ""],
+    "errors": ["flext_core._models.errors", ""],
+    "exception_params": ["flext_core._models.exception_params", ""],
+    "generic": ["flext_core._models.generic", ""],
+    "handler": ["flext_core._models.handler", ""],
+    "service": ["flext_core._models.service", ""],
+    "settings": ["flext_core._models.settings", ""],
 }
 
 __all__ = [
@@ -121,6 +155,22 @@ __all__ = [
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsService",
+    "base",
+    "collections",
+    "container",
+    "containers",
+    "context",
+    "cqrs",
+    "decorators",
+    "dispatcher",
+    "domain_event",
+    "entity",
+    "errors",
+    "exception_params",
+    "generic",
+    "handler",
+    "service",
+    "settings",
 ]
 
 

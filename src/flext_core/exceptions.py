@@ -594,6 +594,8 @@ class FlextExceptions:
     class ValidationError(BaseError):
         """Exception raised for input validation failures."""
 
+        field: str | None = None
+        value: t.Scalar | None = None
         _params_cls: ClassVar[type[BaseModel] | None] = m.ValidationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({"field", "value"})
 
@@ -623,6 +625,8 @@ class FlextExceptions:
     class ConfigurationError(BaseError):
         """Exception raised for configuration-related errors."""
 
+        config_key: str | None = None
+        config_source: str | None = None
         _params_cls: ClassVar[type[BaseModel] | None] = m.ConfigurationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "config_key",
@@ -658,6 +662,9 @@ class FlextExceptions:
     class ConnectionError(BaseError):
         """Exception raised for network and connection failures."""
 
+        host: str | None = None
+        port: int | None = None
+        timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.CONNECTION_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.ConnectionErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -669,6 +676,8 @@ class FlextExceptions:
     class TimeoutError(BaseError):
         """Exception raised for operation timeout errors."""
 
+        timeout_seconds: t.Numeric | None = None
+        operation: str | None = None
         _params_cls: ClassVar[type[BaseModel] | None] = m.TimeoutErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "timeout_seconds",
@@ -704,6 +713,8 @@ class FlextExceptions:
     class AuthenticationError(BaseError):
         """Exception raised for authentication failures."""
 
+        auth_method: str | None = None
+        user_id: str | None = None
         _params_cls: ClassVar[type[BaseModel] | None] = m.AuthenticationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "auth_method",
@@ -739,6 +750,9 @@ class FlextExceptions:
     class AuthorizationError(BaseError):
         """Exception raised for permission and authorization failures."""
 
+        user_id: str | None = None
+        resource: str | None = None
+        permission: str | None = None
         _default_error_code: ClassVar[str] = c.AUTHORIZATION_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.AuthorizationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -750,6 +764,8 @@ class FlextExceptions:
     class NotFoundError(BaseError):
         """Exception raised when a resource is not found."""
 
+        resource_type: str | None = None
+        resource_id: str | None = None
         _params_cls: ClassVar[type[BaseModel] | None] = m.NotFoundErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "resource_type",
@@ -791,6 +807,9 @@ class FlextExceptions:
     class ConflictError(BaseError):
         """Exception raised for resource conflicts."""
 
+        resource_type: str | None = None
+        resource_id: str | None = None
+        conflict_reason: str | None = None
         _default_error_code: ClassVar[str] = c.ALREADY_EXISTS
         _params_cls: ClassVar[type[BaseModel] | None] = m.ConflictErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -802,6 +821,9 @@ class FlextExceptions:
     class RateLimitError(BaseError):
         """Exception raised when rate limits are exceeded."""
 
+        limit: int | None = None
+        window_seconds: int | None = None
+        retry_after: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.OPERATION_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.RateLimitErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
@@ -813,6 +835,9 @@ class FlextExceptions:
     class CircuitBreakerError(BaseError):
         """Exception raised when circuit breaker is open."""
 
+        service_name: str | None = None
+        failure_count: int | None = None
+        reset_timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.EXTERNAL_SERVICE_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.CircuitBreakerErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({

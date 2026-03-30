@@ -16,6 +16,17 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from flext_core._protocols import (
+        base,
+        config,
+        container,
+        context,
+        handler,
+        logging,
+        registry,
+        result,
+        service,
+    )
     from flext_core._protocols.base import FlextProtocolsBase
     from flext_core._protocols.config import FlextProtocolsConfig
     from flext_core._protocols.container import FlextProtocolsContainer
@@ -42,6 +53,15 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextProtocolsResult": ["flext_core._protocols.result", "FlextProtocolsResult"],
     "FlextProtocolsService": ["flext_core._protocols.service", "FlextProtocolsService"],
+    "base": ["flext_core._protocols.base", ""],
+    "config": ["flext_core._protocols.config", ""],
+    "container": ["flext_core._protocols.container", ""],
+    "context": ["flext_core._protocols.context", ""],
+    "handler": ["flext_core._protocols.handler", ""],
+    "logging": ["flext_core._protocols.logging", ""],
+    "registry": ["flext_core._protocols.registry", ""],
+    "result": ["flext_core._protocols.result", ""],
+    "service": ["flext_core._protocols.service", ""],
 }
 
 __all__ = [
@@ -54,6 +74,15 @@ __all__ = [
     "FlextProtocolsRegistry",
     "FlextProtocolsResult",
     "FlextProtocolsService",
+    "base",
+    "config",
+    "container",
+    "context",
+    "handler",
+    "logging",
+    "registry",
+    "result",
+    "service",
 ]
 
 

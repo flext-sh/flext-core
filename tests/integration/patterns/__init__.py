@@ -24,6 +24,13 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.integration.patterns import (
+        test_advanced_patterns,
+        test_architectural_patterns,
+        test_patterns_commands,
+        test_patterns_logging,
+        test_patterns_testing,
+    )
     from tests.integration.patterns.test_advanced_patterns import (
         TestAdvancedPatterns,
         TestFunction,
@@ -71,6 +78,14 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "TestPatternsTesting",
     ],
     "pytestmark": ["tests.integration.patterns.test_patterns_testing", "pytestmark"],
+    "test_advanced_patterns": ["tests.integration.patterns.test_advanced_patterns", ""],
+    "test_architectural_patterns": [
+        "tests.integration.patterns.test_architectural_patterns",
+        "",
+    ],
+    "test_patterns_commands": ["tests.integration.patterns.test_patterns_commands", ""],
+    "test_patterns_logging": ["tests.integration.patterns.test_patterns_logging", ""],
+    "test_patterns_testing": ["tests.integration.patterns.test_patterns_testing", ""],
 }
 
 __all__ = [
@@ -82,6 +97,11 @@ __all__ = [
     "TestPatternsLogging",
     "TestPatternsTesting",
     "pytestmark",
+    "test_advanced_patterns",
+    "test_architectural_patterns",
+    "test_patterns_commands",
+    "test_patterns_logging",
+    "test_patterns_testing",
 ]
 
 

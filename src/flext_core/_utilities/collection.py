@@ -21,7 +21,7 @@ from collections.abc import (
 from datetime import datetime
 from enum import StrEnum
 from itertools import batched, chain
-from typing import overload
+from typing import ClassVar, overload
 
 from flext_core import FlextUtilitiesGuardsTypeCore, T, U, m, r, t
 
@@ -201,6 +201,52 @@ class FlextUtilitiesCollection:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod
+    def _flatten_items(
+        items: Sequence[t.Serializable],
+        results: t.MutableContainerList,
+    ) -> None:
+        """Flatten list items into results, coercing each to container type."""
+        for inner_item in items:
+            if isinstance(
+                inner_item,
+                (dict, list, str, int, float, bool, datetime),
+            ):
+                results.append(
+                    FlextUtilitiesCollection._coerce_guard_value(inner_item),
+                )
+            else:
+                results.append(str(inner_item))
+
+    @staticmethod
+    def _handle_batch_error(
+        error_mode: str,
+        error_msg: str,
+        processed: int,
+        errors: MutableSequence[tuple[int, str]],
+    ) -> r[m.BatchResultDict] | None:
+        """Handle batch error: return fail result or collect and continue."""
+        if error_mode == "fail":
+            return r[m.BatchResultDict].fail(
+                f"Batch processing failed: {error_msg}",
+            )
+        if error_mode == "collect":
+            errors.append((processed - 1, str(error_msg)))
+        return None
+
+    @staticmethod
+    def _append_or_extend(
+        value: t.NormalizedValue,
+        results: t.MutableContainerList,
+        *,
+        do_flatten: bool,
+    ) -> None:
+        """Append value to results, extending if flatten and value is a list."""
+        if do_flatten and isinstance(value, list):
+            results.extend(value)
+        else:
+            results.append(value)
+
+    @staticmethod
     def batch(
         items: Sequence[T],
         operation: Callable[[T], t.Serializable | r[t.Serializable]],
@@ -281,73 +327,65 @@ class FlextUtilitiesCollection:
                             )
                         )
                         if do_flatten and isinstance(result_value, list):
-                            for inner_item in result_value:
-                                if isinstance(
-                                    inner_item,
-                                    (dict, list, str, int, float, bool, datetime),
-                                ):
-                                    results.append(
-                                        FlextUtilitiesCollection._coerce_guard_value(
-                                            inner_item,
-                                        ),
-                                    )
-                                else:
-                                    inner_item_obj: t.NormalizedValue = inner_item
-                                    results.append(str(inner_item_obj))
-                            continue
-                        value = FlextUtilitiesCollection._coerce_or_stringify(
-                            result_value,
-                        )
-                        if do_flatten and isinstance(value, list):
-                            results.extend(value)
-                        else:
-                            results.append(value)
-                    else:
-                        error_msg = result_raw.error or "Unknown error"
-                        if error_mode == "fail":
-                            return r[m.BatchResultDict].fail(
-                                f"Batch processing failed: {error_msg}",
+                            FlextUtilitiesCollection._flatten_items(
+                                result_value,
+                                results,
                             )
-                        if error_mode == "collect":
-                            errors.append((processed - 1, str(error_msg)))
+                            continue
+                        FlextUtilitiesCollection._append_or_extend(
+                            FlextUtilitiesCollection._coerce_or_stringify(
+                                result_value,
+                            ),
+                            results,
+                            do_flatten=do_flatten,
+                        )
+                    else:
+                        err = FlextUtilitiesCollection._handle_batch_error(
+                            error_mode,
+                            result_raw.error or "Unknown error",
+                            processed,
+                            errors,
+                        )
+                        if err is not None:
+                            return err
                     continue
                 try:
                     normalized_result_raw = (
-                        m.Validators.serializable_adapter().validate_python(result_raw)
+                        m.Validators.serializable_adapter().validate_python(
+                            result_raw,
+                        )
                     )
                     if do_flatten and isinstance(normalized_result_raw, list):
-                        result_raw_flat: Sequence[t.Serializable] = (
-                            normalized_result_raw
+                        FlextUtilitiesCollection._flatten_items(
+                            normalized_result_raw,
+                            results,
                         )
-                        for inner_item in result_raw_flat:
-                            if isinstance(
-                                inner_item,
-                                (dict, list, str, int, float, bool, datetime),
-                            ):
-                                results.append(
-                                    FlextUtilitiesCollection._coerce_guard_value(
-                                        inner_item,
-                                    ),
-                                )
-                            else:
-                                inner_item_obj_flat: t.NormalizedValue = inner_item
-                                results.append(str(inner_item_obj_flat))
                         continue
                     direct_result = FlextUtilitiesCollection._coerce_or_stringify(
                         normalized_result_raw,
                     )
                 except (TypeError, ValueError):
-                    raw_error: t.NormalizedValue = result_raw
-                    direct_result = str(raw_error)
-                if do_flatten and isinstance(direct_result, list):
-                    results.extend(direct_result)
-                else:
-                    results.append(direct_result)
-            except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                if error_mode == "fail":
-                    return r[m.BatchResultDict].fail(f"Batch processing failed: {e}")
-                if error_mode == "collect":
-                    errors.append((processed - 1, str(e)))
+                    direct_result = str(result_raw)
+                FlextUtilitiesCollection._append_or_extend(
+                    direct_result,
+                    results,
+                    do_flatten=do_flatten,
+                )
+            except (
+                TypeError,
+                ValueError,
+                RuntimeError,
+                AttributeError,
+                KeyError,
+            ) as exc:
+                err = FlextUtilitiesCollection._handle_batch_error(
+                    error_mode,
+                    str(exc),
+                    processed,
+                    errors,
+                )
+                if err is not None:
+                    return err
             if progress is not None and processed % progress_interval == 0:
                 progress(processed, total)
         result_dict = m.BatchResultDict(
@@ -912,6 +950,93 @@ class FlextUtilitiesCollection:
         return frozenset(mapper(item) for item in items)
 
     @staticmethod
+    def _merge_replace(
+        other: t.ContainerMapping,
+        base: t.ContainerMapping,
+    ) -> r[t.ContainerMapping]:
+        """Replace strategy: base values overwrite other."""
+        result: t.MutableContainerMapping = dict(other)
+        result.update(base)
+        return r[t.ContainerMapping].ok(result)
+
+    @staticmethod
+    def _merge_filter_none(
+        other: t.ContainerMapping,
+        base: t.ContainerMapping,
+    ) -> r[t.ContainerMapping]:
+        """Filter-none strategy: skip None values from base."""
+        result: t.MutableContainerMapping = dict(other)
+        for key, value in base.items():
+            if value is not None:
+                result[key] = value
+        return r[t.ContainerMapping].ok(result)
+
+    @staticmethod
+    def _merge_filter_empty(
+        other: t.ContainerMapping,
+        base: t.ContainerMapping,
+    ) -> r[t.ContainerMapping]:
+        """Filter-empty strategy: skip empty values from base."""
+        result: t.MutableContainerMapping = dict(other)
+        for key, value in base.items():
+            if not FlextUtilitiesCollection._is_empty_value(value):
+                result[key] = value
+        return r[t.ContainerMapping].ok(result)
+
+    @staticmethod
+    def _merge_append(
+        other: t.ContainerMapping,
+        base: t.ContainerMapping,
+    ) -> r[t.ContainerMapping]:
+        """Append strategy: concatenate lists instead of replacing."""
+        result: t.MutableContainerMapping = dict(other)
+        for key, value in base.items():
+            current_val = result.get(key)
+            if (
+                current_val is not None
+                and isinstance(current_val, list)
+                and isinstance(value, list)
+            ):
+                result[key] = current_val + value
+            else:
+                result[key] = value
+        return r[t.ContainerMapping].ok(result)
+
+    @staticmethod
+    def _merge_deep(
+        other: t.ContainerMapping,
+        base: t.ContainerMapping,
+    ) -> r[t.ContainerMapping]:
+        """Deep strategy: recursively merge nested dicts."""
+        result: t.MutableContainerMapping = dict(other)
+        for key, value in base.items():
+            merge_result = FlextUtilitiesCollection._merge_deep_single_key(
+                result,
+                key,
+                value,
+            )
+            if merge_result.is_failure:
+                return r[t.ContainerMapping].fail(
+                    merge_result.error or "Unknown error",
+                )
+        return r[t.ContainerMapping].ok(result)
+
+    _MergeHandler = Callable[
+        [t.ContainerMapping, t.ContainerMapping],
+        "r[t.ContainerMapping]",
+    ]
+
+    _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
+        "replace": _merge_replace,
+        "override": _merge_replace,
+        "filter_none": _merge_filter_none,
+        "filter_empty": _merge_filter_empty,
+        "filter_both": _merge_filter_empty,
+        "append": _merge_append,
+        "deep": _merge_deep,
+    }
+
+    @staticmethod
     def merge_mappings(
         other: t.ContainerMapping,
         base: t.ContainerMapping,
@@ -929,51 +1054,12 @@ class FlextUtilitiesCollection:
         - "filter_empty": Skip empty values (None, "", [], {}) from base
         - "filter_both": Same as filter_empty (alias)
         """
-        if strategy in {"replace", "override"}:
-            result: t.MutableContainerMapping = dict(other)
-            result.update(base)
-            return r[t.ContainerMapping].ok(result)
-        if strategy == "filter_none":
-            result = dict(other)
-            for key, value in base.items():
-                if value is not None:
-                    result[key] = value
-            return r[t.ContainerMapping].ok(result)
-        if strategy in {"filter_empty", "filter_both"}:
-            result = dict(other)
-            for key, value in base.items():
-                if not FlextUtilitiesCollection._is_empty_value(value):
-                    result[key] = value
-            return r[t.ContainerMapping].ok(result)
-        if strategy == "append":
-            result = dict(other)
-            for key, value in base.items():
-                current_val = result.get(key)
-                if (
-                    current_val is not None
-                    and isinstance(current_val, list)
-                    and isinstance(value, list)
-                ):
-                    result[key] = current_val + value
-                else:
-                    result[key] = value
-            return r[t.ContainerMapping].ok(result)
-        if strategy == "deep":
-            result = dict(other)
-            for key, value in base.items():
-                merge_result = FlextUtilitiesCollection._merge_deep_single_key(
-                    result,
-                    key,
-                    value,
-                )
-                if merge_result.is_failure:
-                    return r[t.ContainerMapping].fail(
-                        merge_result.error or "Unknown error",
-                    )
-            return r[t.ContainerMapping].ok(result)
-        return r[t.ContainerMapping].fail(
-            f"Unknown merge strategy: {strategy}",
-        )
+        handler = FlextUtilitiesCollection._MERGE_STRATEGIES.get(strategy)
+        if handler is None:
+            return r[t.ContainerMapping].fail(
+                f"Unknown merge strategy: {strategy}",
+            )
+        return handler(other, base)
 
     @staticmethod
     def mul(*values: float) -> t.Numeric:

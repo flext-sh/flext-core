@@ -334,7 +334,7 @@ class FlextResult[T](BaseModel):
         return cls._validate_model(data, model, failure_prefix="Validation failed")
 
     @classmethod
-    def ok[V](cls, value: V) -> FlextResult[V]:
+    def ok[V](cls: type[FlextResult[V]], value: V) -> FlextResult[V]:
         """Create successful result wrapping value.
 
         None IS a valid value when T includes None (e.g. r[str | None].ok(None)).
@@ -344,7 +344,7 @@ class FlextResult[T](BaseModel):
             value: Value to wrap (any T, including None when T allows it)
 
         """
-        result: FlextResult[V] = FlextResult[V](value=value, is_success=True)
+        result: FlextResult[V] = cls(value=value, is_success=True)
         result._result = Success(value)
         return result
 
@@ -410,16 +410,12 @@ class FlextResult[T](BaseModel):
         return str(error)
 
     @staticmethod
-    def is_failure_result(
-        value: p.Result[t.Container] | t.Container,
-    ) -> TypeIs[p.Result[t.Container]]:
+    def is_failure_result[TValue](value: object) -> TypeIs[p.Result[TValue]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, p.Result) and value.is_failure
 
     @staticmethod
-    def is_success_result(
-        value: p.Result[t.Container] | t.Container,
-    ) -> TypeIs[p.Result[t.Container]]:
+    def is_success_result[TValue](value: object) -> TypeIs[p.Result[TValue]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, p.Result) and value.is_success
 

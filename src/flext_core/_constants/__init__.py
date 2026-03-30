@@ -12,6 +12,17 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from flext_core._constants import (
+        base,
+        cqrs,
+        domain,
+        errors,
+        infrastructure,
+        mixins,
+        platform,
+        settings,
+        validation,
+    )
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
@@ -44,6 +55,15 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_core._constants.validation",
         "FlextConstantsValidation",
     ],
+    "base": ["flext_core._constants.base", ""],
+    "cqrs": ["flext_core._constants.cqrs", ""],
+    "domain": ["flext_core._constants.domain", ""],
+    "errors": ["flext_core._constants.errors", ""],
+    "infrastructure": ["flext_core._constants.infrastructure", ""],
+    "mixins": ["flext_core._constants.mixins", ""],
+    "platform": ["flext_core._constants.platform", ""],
+    "settings": ["flext_core._constants.settings", ""],
+    "validation": ["flext_core._constants.validation", ""],
 }
 
 __all__ = [
@@ -56,6 +76,15 @@ __all__ = [
     "FlextConstantsPlatform",
     "FlextConstantsSettings",
     "FlextConstantsValidation",
+    "base",
+    "cqrs",
+    "domain",
+    "errors",
+    "infrastructure",
+    "mixins",
+    "platform",
+    "settings",
+    "validation",
 ]
 
 

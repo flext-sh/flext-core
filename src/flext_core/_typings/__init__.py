@@ -19,6 +19,14 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from flext_core._typings import (
+        base,
+        containers,
+        core,
+        generics,
+        services,
+        validation,
+    )
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.containers import FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
@@ -66,6 +74,12 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "T_co": ["flext_core._typings.generics", "T_co"],
     "T_contra": ["flext_core._typings.generics", "T_contra"],
     "U": ["flext_core._typings.generics", "U"],
+    "base": ["flext_core._typings.base", ""],
+    "containers": ["flext_core._typings.containers", ""],
+    "core": ["flext_core._typings.core", ""],
+    "generics": ["flext_core._typings.generics", ""],
+    "services": ["flext_core._typings.services", ""],
+    "validation": ["flext_core._typings.validation", ""],
 }
 
 __all__ = [
@@ -89,6 +103,12 @@ __all__ = [
     "T_co",
     "T_contra",
     "U",
+    "base",
+    "containers",
+    "core",
+    "generics",
+    "services",
+    "validation",
 ]
 
 

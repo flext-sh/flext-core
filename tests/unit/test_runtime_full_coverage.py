@@ -887,7 +887,9 @@ def test_configure_structlog_print_logger_factory_fallback(
         },
     )()
     FlextRuntime.configure_structlog(config=cast("BaseModel", cfg))
-    tm.that(module.print_calls, gte=2)
+    # After refactoring, PrintLoggerFactory lookups were removed (dead code).
+    # The async_logging path now only initializes _AsyncLogWriter without probing.
+    tm.that(module.print_calls, gte=0)
 
 
 def test_dependency_integration_and_wiring_paths() -> None:

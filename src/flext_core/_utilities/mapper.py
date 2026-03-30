@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from itertools import starmap
 from typing import overload
 
 from pydantic import BaseModel
@@ -24,6 +25,13 @@ from flext_core import (
     r,
     t,
 )
+
+
+class _FieldNotFound:
+    """Sentinel for _resolve_single_field when no value can be resolved."""
+
+
+_FIELD_NOT_FOUND = _FieldNotFound()
 
 
 class FlextUtilitiesMapper:
@@ -158,6 +166,58 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_strip_empty(result, strip_empty=strip_empty)
 
     @staticmethod
+    def _narrow_list_items(items: t.ContainerList) -> t.ContainerList:
+        """Narrow each item in a sequence to a container type.
+
+        Common pattern used by chunk, group, sort, and unique operations.
+        """
+        return [FlextUtilitiesMapper.narrow_to_container(item) for item in items]
+
+    @staticmethod
+    def _resolve_field_key_func(field_name: str) -> Callable[[t.NormalizedValue], str]:
+        """Build a key function that extracts a named field from a Mapping or BaseModel.
+
+        Used by sort (str branch) and group (str branch) to resolve key values.
+        """
+
+        def _key_func(item: t.NormalizedValue) -> str:
+            if isinstance(item, Mapping):
+                return str(item.get(field_name, ""))
+            if isinstance(item, BaseModel) and hasattr(item, field_name):
+                return str(getattr(item, field_name))
+            return ""
+
+        return _key_func
+
+    @staticmethod
+    def _apply_callable_over_collection(
+        current: t.NormalizedValue,
+        func: t.MapperCallable,
+    ) -> t.NormalizedValue:
+        """Apply a callable to each element of a list/tuple, each value of a Mapping, or a scalar.
+
+        Shared logic for map and process operations.
+        """
+        if isinstance(current, (list, tuple)):
+            seq_current: t.ContainerList = current
+            return [
+                FlextUtilitiesMapper.narrow_to_container(
+                    func(FlextUtilitiesMapper.narrow_to_container(x)),
+                )
+                for x in seq_current
+            ]
+        if isinstance(current, Mapping):
+            current_dict: t.ContainerMapping = (
+                FlextUtilitiesMapper._narrow_to_configuration_dict(current)
+            )
+            return {
+                k: FlextUtilitiesMapper.narrow_to_container(func(v))
+                for k, v in current_dict.items()
+            }
+        current_general = FlextUtilitiesMapper.narrow_to_container(current)
+        return FlextUtilitiesMapper.narrow_to_container(func(current_general))
+
+    @staticmethod
     def _build_apply_chunk(
         current: t.NormalizedValue,
         ops: Mapping[str, t.MapperInput],
@@ -170,10 +230,7 @@ class FlextUtilitiesMapper:
         chunk_size = ops["chunk"]
         if not isinstance(chunk_size, int) or chunk_size <= 0:
             return current
-        current_items: t.ContainerList = current
-        current_list: t.ContainerList = [
-            FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
-        ]
+        current_list: t.ContainerList = FlextUtilitiesMapper._narrow_list_items(current)
         chunked: t.MutableContainerList = []
         for i in range(0, len(current_list), chunk_size):
             chunk: t.ContainerList = current_list[i : i + chunk_size]
@@ -342,9 +399,9 @@ class FlextUtilitiesMapper:
             return current
         group_spec_raw: t.MapperInput = ops["group"]
         current_items: t.ContainerList = current
-        current_list: t.ContainerList = [
-            FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
-        ]
+        current_list: t.ContainerList = FlextUtilitiesMapper._narrow_list_items(
+            current_items,
+        )
         if isinstance(group_spec_raw, str):
             group_spec = group_spec_raw
             grouped: MutableMapping[str, t.MutableContainerList] = {}
@@ -395,25 +452,10 @@ class FlextUtilitiesMapper:
         if map_func_result.is_failure:
             return current
         map_callable: t.MapperCallable = map_func_result.value
-
-        if isinstance(current, (list, tuple)):
-            seq_current: t.ContainerList = current
-            return [
-                FlextUtilitiesMapper.narrow_to_container(
-                    map_callable(FlextUtilitiesMapper.narrow_to_container(x)),
-                )
-                for x in seq_current
-            ]
-        if isinstance(current, Mapping):
-            current_dict: t.ContainerMapping = (
-                FlextUtilitiesMapper._narrow_to_configuration_dict(current)
-            )
-            return {
-                k: FlextUtilitiesMapper.narrow_to_container(map_callable(v))
-                for k, v in current_dict.items()
-            }
-        current_general = FlextUtilitiesMapper.narrow_to_container(current)
-        return FlextUtilitiesMapper.narrow_to_container(map_callable(current_general))
+        return FlextUtilitiesMapper._apply_callable_over_collection(
+            current,
+            map_callable,
+        )
 
     @staticmethod
     def _build_apply_normalize(
@@ -461,25 +503,9 @@ class FlextUtilitiesMapper:
         process_callable: t.MapperCallable = process_func_result.value
 
         def _process_current() -> t.NormalizedValue:
-            if isinstance(current, (list, tuple)):
-                seq_current: t.ContainerList = current
-                return [
-                    FlextUtilitiesMapper.narrow_to_container(
-                        process_callable(FlextUtilitiesMapper.narrow_to_container(x)),
-                    )
-                    for x in seq_current
-                ]
-            if isinstance(current, Mapping):
-                current_dict: t.ContainerMapping = (
-                    FlextUtilitiesMapper._narrow_to_configuration_dict(current)
-                )
-                return {
-                    k: FlextUtilitiesMapper.narrow_to_container(process_callable(v))
-                    for k, v in current_dict.items()
-                }
-            current_general = FlextUtilitiesMapper.narrow_to_container(current)
-            return FlextUtilitiesMapper.narrow_to_container(
-                process_callable(current_general),
+            return FlextUtilitiesMapper._apply_callable_over_collection(
+                current,
+                process_callable,
             )
 
         process_result: r[t.NormalizedValue] = r[
@@ -538,22 +564,9 @@ class FlextUtilitiesMapper:
         if not isinstance(current, (list, tuple)):
             return current
         sort_spec_raw: t.MapperInput = ops["sort"]
-        current_items: t.ContainerList = current
-        current_list: t.ContainerList = [
-            FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
-        ]
+        current_list: t.ContainerList = FlextUtilitiesMapper._narrow_list_items(current)
         if isinstance(sort_spec_raw, str):
-            field_name: str = sort_spec_raw
-
-            def key_func(item: t.NormalizedValue) -> str:
-                if isinstance(item, Mapping):
-                    return str(item.get(field_name, ""))
-                if isinstance(item, BaseModel):
-                    if hasattr(item, field_name):
-                        return str(getattr(item, field_name))
-                    return ""
-                return ""
-
+            key_func = FlextUtilitiesMapper._resolve_field_key_func(sort_spec_raw)
             sorted_list_key: t.ContainerList = sorted(current_list, key=key_func)
             return (
                 list(sorted_list_key)
@@ -658,10 +671,9 @@ class FlextUtilitiesMapper:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        current_items: t.ContainerList = current
-        current_list_unique: t.ContainerList = [
-            FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
-        ]
+        current_list_unique: t.ContainerList = FlextUtilitiesMapper._narrow_list_items(
+            current,
+        )
         seen: set[t.NormalizedValue | str] = set()
         unique_list: t.MutableContainerList = []
         for item in current_list_unique:
@@ -1344,6 +1356,64 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
+    def _resolve_spec_value(
+        target_key: str,
+        target_spec: t.MapperInput,
+        source: t.ConfigModelInput | None,
+    ) -> t.NormalizedValue:
+        """Resolve a single key from a construct_spec specification.
+
+        Returns the final value for *target_key* given its spec and optional source.
+        """
+        # Mapping spec — may contain a literal "value" shortcut
+        if isinstance(target_spec, Mapping):
+            spec_mapping: t.ContainerMapping = target_spec
+            if "value" in spec_mapping:
+                return spec_mapping["value"]
+            source_field_raw = spec_mapping.get("field", target_key)
+            source_field = (
+                str(source_field_raw) if source_field_raw is not None else target_key
+            )
+            field_default = spec_mapping.get(c.IDENTIFIER_DEFAULT)
+            field_ops = spec_mapping.get("ops")
+        elif isinstance(target_spec, str):
+            source_field = target_spec
+            field_default = None
+            field_ops = None
+        else:
+            # Non-string, non-mapping scalar — store as-is
+            return (
+                FlextUtilitiesMapper.narrow_to_container(target_spec)
+                if not callable(target_spec)
+                else None
+            )
+
+        if source is None:
+            return field_default
+
+        extracted_result = FlextUtilitiesMapper.extract(
+            source,
+            source_field,
+            default=field_default,
+            required=False,
+        )
+        extracted_raw = (
+            extracted_result.value if extracted_result.is_success else field_default
+        )
+
+        extracted: t.NormalizedValue = extracted_raw
+        if (
+            field_ops is not None
+            and extracted_raw is not None
+            and isinstance(field_ops, Mapping)
+        ):
+            extracted = FlextUtilitiesMapper.build(extracted_raw, ops=dict(field_ops))
+
+        return FlextUtilitiesMapper.narrow_to_container(
+            extracted if extracted is not None else field_default,
+        )
+
+    @staticmethod
     def construct_spec(
         spec: Mapping[str, t.MapperInput],
         source: t.ConfigModelInput | None = None,
@@ -1381,67 +1451,11 @@ class FlextUtilitiesMapper:
         constructed: t.MutableContainerMapping = {}
         for target_key, target_spec in spec.items():
             try:
-                target_spec_mapping: t.ContainerMapping | None = None
-                if callable(target_spec):
-                    pass
-                elif isinstance(target_spec, Mapping):
-                    spec_mapping: t.ContainerMapping = target_spec
-                    target_spec_mapping = spec_mapping
-                    if "value" in target_spec_mapping:
-                        value_item: t.NormalizedValue = target_spec_mapping["value"]
-                        constructed[target_key] = value_item
-                        continue
-                if isinstance(target_spec, str):
-                    source_field = target_spec
-                    field_default = None
-                    field_ops = None
-                elif target_spec_mapping is not None:
-                    source_field_raw = target_spec_mapping.get("field", target_key)
-                    source_field = (
-                        str(source_field_raw)
-                        if source_field_raw is not None
-                        else target_key
-                    )
-                    field_default = target_spec_mapping.get(c.IDENTIFIER_DEFAULT)
-                    field_ops = target_spec_mapping.get("ops")
-                else:
-                    fallback_val: t.NormalizedValue = (
-                        FlextUtilitiesMapper.narrow_to_container(target_spec)
-                        if not callable(target_spec)
-                        else None
-                    )
-                    constructed[target_key] = fallback_val
-                    continue
-                if source is None:
-                    constructed[target_key] = field_default
-                    continue
-                extracted_result = FlextUtilitiesMapper.extract(
+                constructed[target_key] = FlextUtilitiesMapper._resolve_spec_value(
+                    target_key,
+                    target_spec,
                     source,
-                    source_field,
-                    default=field_default,
-                    required=False,
                 )
-                extracted_raw = (
-                    extracted_result.value
-                    if extracted_result.is_success
-                    else field_default
-                )
-                if field_ops is not None and extracted_raw is not None:
-                    if isinstance(field_ops, Mapping):
-                        extracted = FlextUtilitiesMapper.build(
-                            extracted_raw,
-                            ops=dict(field_ops),
-                        )
-                    else:
-                        extracted = extracted_raw
-                else:
-                    extracted = extracted_raw
-                final_value: t.NormalizedValue = (
-                    FlextUtilitiesMapper.narrow_to_container(
-                        extracted if extracted is not None else field_default,
-                    )
-                )
-                constructed[target_key] = final_value
             except (TypeError, ValueError, KeyError, AttributeError) as e:
                 error_msg = f"Failed to construct '{target_key}': {e}"
                 if on_error == "stop":
@@ -1449,6 +1463,34 @@ class FlextUtilitiesMapper:
                 if on_error == "skip":
                     continue
         return constructed
+
+    @staticmethod
+    def _deep_eq_values(
+        val_a: t.NormalizedValue,
+        val_b: t.NormalizedValue,
+    ) -> bool:
+        """Recursive deep equality for any two NormalizedValue items."""
+        if val_a is val_b:
+            return True
+        match (val_a, val_b):
+            case (None, None):
+                return True
+            case (None, _) | (_, None):
+                return False
+            case (Mapping() as ma, Mapping() as mb):
+                dict_a = FlextUtilitiesMapper._narrow_to_configuration_dict(ma)
+                dict_b = FlextUtilitiesMapper._narrow_to_configuration_dict(mb)
+                return FlextUtilitiesMapper.deep_eq(dict_a, dict_b)
+            case (list() as la, list() as lb):
+                if len(la) != len(lb):
+                    return False
+                return all(
+                    starmap(
+                        FlextUtilitiesMapper._deep_eq_values, zip(la, lb, strict=True)
+                    )
+                )
+            case _:
+                return val_a == val_b
 
     @staticmethod
     def deep_eq(a: t.ContainerMapping, b: t.ContainerMapping) -> bool:
@@ -1483,36 +1525,7 @@ class FlextUtilitiesMapper:
         for key, val_a in a.items():
             if key not in b:
                 return False
-            val_b = b[key]
-            if val_a is None and val_b is None:
-                continue
-            if val_a is None or val_b is None:
-                return False
-            if isinstance(val_a, Mapping) and isinstance(val_b, Mapping):
-                val_a_dict = FlextUtilitiesMapper._narrow_to_configuration_dict(val_a)
-                val_b_dict = FlextUtilitiesMapper._narrow_to_configuration_dict(val_b)
-                if not FlextUtilitiesMapper.deep_eq(val_a_dict, val_b_dict):
-                    return False
-                continue
-            if isinstance(val_a, list) and isinstance(val_b, list):
-                val_a_list = val_a
-                val_b_list = val_b
-                if len(val_a_list) != len(val_b_list):
-                    return False
-                for item_a, item_b in zip(val_a_list, val_b_list, strict=True):
-                    if isinstance(item_a, Mapping) and isinstance(item_b, Mapping):
-                        item_a_dict = (
-                            FlextUtilitiesMapper._narrow_to_configuration_dict(item_a)
-                        )
-                        item_b_dict = (
-                            FlextUtilitiesMapper._narrow_to_configuration_dict(item_b)
-                        )
-                        if not FlextUtilitiesMapper.deep_eq(item_a_dict, item_b_dict):
-                            return False
-                    elif item_a != item_b:
-                        return False
-                continue
-            if val_a != val_b:
+            if not FlextUtilitiesMapper._deep_eq_values(val_a, b[key]):
                 return False
         return True
 
@@ -1607,6 +1620,71 @@ class FlextUtilitiesMapper:
         return r[str].fail("Value is not a string")
 
     @staticmethod
+    def _extract_fail_or_default(
+        msg: str,
+        *,
+        default: t.NormalizedValue,
+        required: bool,
+    ) -> r[t.NormalizedValue]:
+        """Return fail (required) or ok(default) / fail (no default) for extract paths."""
+        if required:
+            return r[t.NormalizedValue].fail(msg)
+        if default is None:
+            return r[t.NormalizedValue].fail(f"{msg} and default is None")
+        return r[t.NormalizedValue].ok(default)
+
+    @staticmethod
+    def _extract_resolve_path_part(
+        current: t.ValueOrModel,
+        part: str,
+        *,
+        path_context: str,
+        default: t.NormalizedValue,
+        required: bool,
+    ) -> tuple[t.ValueOrModel, r[t.NormalizedValue] | None]:
+        """Resolve one path segment during extract traversal.
+
+        Returns (next_current, None) on success, or (None, result) to short-circuit.
+        """
+        found_none_prefix = "found_none:"
+        key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(part)
+
+        get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
+        if get_result.is_failure:
+            error_str = get_result.error or ""
+            if error_str.startswith(found_none_prefix):
+                next_val: t.ValueOrModel = None
+            else:
+                return None, FlextUtilitiesMapper._extract_fail_or_default(
+                    f"Key '{key_part}' not found at '{path_context}'",
+                    default=default,
+                    required=required,
+                )
+        else:
+            next_val = get_result.value
+
+        if array_match and next_val is not None:
+            narrowed_for_index = FlextUtilitiesMapper.narrow_to_container(next_val)
+            index_result = FlextUtilitiesMapper._extract_handle_array_index(
+                narrowed_for_index,
+                array_match,
+            )
+            if index_result.is_failure:
+                error_str = index_result.error or ""
+                if error_str.startswith(found_none_prefix):
+                    next_val = None
+                else:
+                    return None, FlextUtilitiesMapper._extract_fail_or_default(
+                        f"Array error at '{key_part}': {index_result.error}",
+                        default=default,
+                        required=required,
+                    )
+            else:
+                next_val = index_result.value
+
+        return next_val, None
+
+    @staticmethod
     def extract(
         data: p.AccessibleData,
         path: str,
@@ -1654,68 +1732,30 @@ class FlextUtilitiesMapper:
                     current = str(data)
                 case _:
                     current = data
-            found_none_prefix = "found_none:"
+
             for i, part in enumerate(parts):
                 if current is None:
-                    if required:
-                        return r[t.NormalizedValue].fail(
-                            f"Path '{separator.join(parts[:i])}' is None",
-                        )
-                    if default is None:
-                        return r[t.NormalizedValue].fail(
-                            f"Path '{separator.join(parts[:i])}' is None and default is None",
-                        )
-                    return r[t.NormalizedValue].ok(default)
-                key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
+                    return FlextUtilitiesMapper._extract_fail_or_default(
+                        f"Path '{separator.join(parts[:i])}' is None",
+                        default=default,
+                        required=required,
+                    )
+                current, early_return = FlextUtilitiesMapper._extract_resolve_path_part(
+                    current,
                     part,
+                    path_context=separator.join(parts[:i]),
+                    default=default,
+                    required=required,
                 )
-                get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
-                if get_result.is_failure:
-                    error_str = get_result.error or ""
-                    if error_str.startswith(found_none_prefix):
-                        current = None
-                    else:
-                        path_context = separator.join(parts[:i])
-                        if required:
-                            return r[t.NormalizedValue].fail(
-                                f"Key '{key_part}' not found at '{path_context}'",
-                            )
-                        if default is None:
-                            return r[t.NormalizedValue].fail(
-                                f"Key '{key_part}' not found at '{path_context}' and default is None",
-                            )
-                        return r[t.NormalizedValue].ok(default)
-                else:
-                    current = get_result.value
-                if array_match and current is not None:
-                    index_result = FlextUtilitiesMapper._extract_handle_array_index(
-                        current,
-                        array_match,
-                    )
-                    if index_result.is_failure:
-                        error_str = index_result.error or ""
-                        if error_str.startswith(found_none_prefix):
-                            current = None
-                        else:
-                            if required:
-                                return r[t.NormalizedValue].fail(
-                                    f"Array error at '{key_part}': {index_result.error}",
-                                )
-                            if default is None:
-                                return r[t.NormalizedValue].fail(
-                                    f"Array error at '{key_part}': {index_result.error} and default is None",
-                                )
-                            return r[t.NormalizedValue].ok(default)
-                    else:
-                        current = index_result.value
+                if early_return is not None:
+                    return early_return
+
             if current is None:
-                if required:
-                    return r[t.NormalizedValue].fail("Extracted value is None")
-                if default is None:
-                    return r[t.NormalizedValue].fail(
-                        "Extracted value is None and default is None",
-                    )
-                return r[t.NormalizedValue].ok(default)
+                return FlextUtilitiesMapper._extract_fail_or_default(
+                    "Extracted value is None",
+                    default=default,
+                    required=required,
+                )
             if FlextUtilitiesGuards.is_container(current):
                 return r[t.NormalizedValue].ok(
                     FlextUtilitiesMapper.narrow_to_container(current),
@@ -1778,6 +1818,38 @@ class FlextUtilitiesMapper:
         return value
 
     @staticmethod
+    def _resolve_single_field(
+        obj: p.AccessibleData,
+        name: str,
+        field_config: t.NormalizedValue | None = None,
+    ) -> t.NormalizedValue | _FieldNotFound:
+        """Resolve one field from obj (Mapping or attribute), with optional config default.
+
+        Returns _FieldNotFound sentinel when the field cannot be resolved.
+        """
+        if isinstance(obj, Mapping):
+            if name in obj:
+                return FlextUtilitiesMapper.narrow_to_container(obj[name])
+            # For Mapping obj: Mapping config uses default key; scalar config used as-is
+            if isinstance(field_config, Mapping):
+                default_value = field_config.get(c.IDENTIFIER_DEFAULT)
+                if default_value is not None:
+                    return default_value
+            elif field_config is not None:
+                return field_config
+            return _FIELD_NOT_FOUND
+
+        # Attribute-based access
+        if hasattr(obj, name):
+            return FlextUtilitiesMapper.narrow_to_container(getattr(obj, name))
+        # For attr objects: only Mapping-based config defaults are honored
+        if isinstance(field_config, Mapping):
+            default_value = field_config.get(c.IDENTIFIER_DEFAULT)
+            if default_value is not None:
+                return default_value
+        return _FIELD_NOT_FOUND
+
+    @staticmethod
     def fields(
         obj: p.AccessibleData,
         *field_names: str | t.NormalizedValue,
@@ -1807,44 +1879,20 @@ class FlextUtilitiesMapper:
 
         """
         result: t.MutableContainerMapping = {}
-        spec_item: str | t.NormalizedValue
         for spec_item in field_names:
             if isinstance(spec_item, Mapping):
-                name: str
-                field_config: t.NormalizedValue
                 for name, field_config in spec_item.items():
-                    if isinstance(obj, Mapping):
-                        if name in obj:
-                            result[name] = FlextUtilitiesMapper.narrow_to_container(
-                                obj[name],
-                            )
-                        elif isinstance(field_config, Mapping):
-                            default_value = field_config.get(
-                                c.IDENTIFIER_DEFAULT,
-                            )
-                            if default_value is not None:
-                                result[name] = default_value
-                        else:
-                            result[name] = field_config
-                    elif hasattr(obj, name):
-                        result[name] = FlextUtilitiesMapper.narrow_to_container(
-                            getattr(obj, name),
-                        )
-                    elif isinstance(field_config, Mapping):
-                        default_value = field_config.get(c.IDENTIFIER_DEFAULT)
-                        if default_value is not None:
-                            result[name] = default_value
-            elif isinstance(spec_item, str):
-                field_name: str = spec_item
-                if isinstance(obj, Mapping):
-                    if field_name in obj:
-                        result[field_name] = FlextUtilitiesMapper.narrow_to_container(
-                            obj[field_name],
-                        )
-                elif hasattr(obj, field_name):
-                    result[field_name] = FlextUtilitiesMapper.narrow_to_container(
-                        getattr(obj, field_name),
+                    resolved = FlextUtilitiesMapper._resolve_single_field(
+                        obj,
+                        name,
+                        field_config,
                     )
+                    if not isinstance(resolved, _FieldNotFound):
+                        result[name] = resolved
+            elif isinstance(spec_item, str):
+                resolved = FlextUtilitiesMapper._resolve_single_field(obj, spec_item)
+                if not isinstance(resolved, _FieldNotFound):
+                    result[spec_item] = resolved
         return result
 
     @staticmethod

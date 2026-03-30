@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
+from typing import ClassVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -154,66 +155,64 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         return ""
 
     @staticmethod
+    def _is_numeric_not_bool(value: t.NormalizedValue) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+    _SHORTCUT_VALIDATORS: ClassVar[
+        Mapping[str, tuple[Callable[[t.NormalizedValue], bool], str]]
+    ] = {
+        "non_empty": (
+            lambda v: bool(v) and isinstance(v, (str, list, dict)),
+            "must be non-empty",
+        ),
+        "positive": (
+            lambda v: FlextUtilitiesGuardsEnsure._is_numeric_not_bool(v) and v > 0,  # type: ignore[operator]
+            "must be positive number",
+        ),
+        "non_negative": (
+            lambda v: FlextUtilitiesGuardsEnsure._is_numeric_not_bool(v) and v >= 0,  # type: ignore[operator]
+            "must be non-negative number",
+        ),
+        "dict": (
+            lambda v: hasattr(v, "items") and not isinstance(v, (str, bytes)),
+            "must be dict-like",
+        ),
+        "list": (
+            lambda v: (
+                hasattr(v, "__iter__")
+                and not isinstance(v, (str, bytes))
+                and not hasattr(v, "items")
+            ),
+            "must be list-like",
+        ),
+        "string": (lambda v: isinstance(v, str), "must be string"),
+        "int": (
+            lambda v: isinstance(v, int) and not isinstance(v, bool),
+            "must be int",
+        ),
+        "float": (
+            lambda v: FlextUtilitiesGuardsEnsure._is_numeric_not_bool(v),
+            "must be float",
+        ),
+        "bool": (lambda v: isinstance(v, bool), "must be bool"),
+    }
+
+    @staticmethod
     def _guard_check_string_shortcut(
         value: t.NormalizedValue,
         condition: str,
         context_name: str,
         error_msg: str | None,
     ) -> str:
-        shortcut_lower = condition.lower()
-        if shortcut_lower == "non_empty":
-            if isinstance(value, str) and bool(value):
-                return ""
-            if isinstance(value, list) and value:
-                return ""
-            if isinstance(value, dict) and value:
-                return ""
-            return error_msg or f"{context_name} must be non-empty"
-        if shortcut_lower == "positive":
-            if (
-                isinstance(value, (int, float))
-                and (not isinstance(value, bool))
-                and (value > 0)
-            ):
-                return ""
-            return error_msg or f"{context_name} must be positive number"
-        if shortcut_lower == "non_negative":
-            if (
-                isinstance(value, (int, float))
-                and (not isinstance(value, bool))
-                and (value >= 0)
-            ):
-                return ""
-            return error_msg or f"{context_name} must be non-negative number"
-        if shortcut_lower == "dict":
-            if hasattr(value, "items") and (not isinstance(value, (str, bytes))):
-                return ""
-            return error_msg or f"{context_name} must be dict-like"
-        if shortcut_lower == "list":
-            if (
-                hasattr(value, "__iter__")
-                and (not isinstance(value, (str, bytes)))
-                and (not hasattr(value, "items"))
-            ):
-                return ""
-            return error_msg or f"{context_name} must be list-like"
-        if shortcut_lower == "string":
-            if isinstance(value, str):
-                return ""
-            return error_msg or f"{context_name} must be string"
-        if shortcut_lower == "int":
-            if isinstance(value, int) and (not isinstance(value, bool)):
-                return ""
-            return error_msg or f"{context_name} must be int"
-        if shortcut_lower == "float":
-            if isinstance(value, (int, float)) and (not isinstance(value, bool)):
-                return ""
-            return error_msg or f"{context_name} must be float"
-        if shortcut_lower == "bool":
-            if isinstance(value, bool):
-                return ""
-            return error_msg or f"{context_name} must be bool"
-        return error_msg or f"{context_name} unknown guard shortcut: {condition}"
+        entry = FlextUtilitiesGuardsEnsure._SHORTCUT_VALIDATORS.get(
+            condition.lower(),
+        )
+        if entry is None:
+            return error_msg or f"{context_name} unknown guard shortcut: {condition}"
+        predicate, default_msg = entry
+        if predicate(value):
+            return ""
+        return error_msg or f"{context_name} {default_msg}"
 
     @staticmethod
     def _guard_check_type(
@@ -434,6 +433,43 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         return r[t.ConfigMap].fail("Value is not a configuration mapping")
 
     @staticmethod
+    def _to_container_or_str(value: t.NormalizedValue) -> t.Container:
+        """Normalize a value to Container: pass through if already, else str()."""
+        return value if FlextUtilitiesGuardsEnsure.is_container(value) else str(value)
+
+    @staticmethod
+    def _check_validator(
+        value: t.NormalizedValue,
+        validator: Callable[[t.NormalizedValue], bool] | type | tuple[type, ...] | None,
+    ) -> bool:
+        """Evaluate validator against value. Returns True if guard passes."""
+        if isinstance(validator, type):
+            return isinstance(value, validator)
+        if FlextUtilitiesGuardsEnsure.is_object_tuple(validator):
+            tuple_types: tuple[type, ...] = tuple(
+                item for item in validator if isinstance(item, type)
+            )
+            return len(tuple_types) == len(validator) and isinstance(
+                value,
+                tuple_types,
+            )
+        if callable(validator):
+            return validator(value)
+        return bool(value)
+
+    @staticmethod
+    def _guard_fallback(
+        default: t.NormalizedValue | None,
+        *,
+        return_value: bool,
+        fail_msg: str,
+    ) -> t.Container | bool | r[t.Container]:
+        """Return default or fail result for guard misses."""
+        if default is not None:
+            return FlextUtilitiesGuardsEnsure._to_container_or_str(default)
+        return r[t.Container].fail(fail_msg) if return_value else False
+
+    @staticmethod
     def guard(
         value: t.NormalizedValue,
         validator: Callable[[t.NormalizedValue], bool]
@@ -444,71 +480,21 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         default: t.NormalizedValue | None = None,
         return_value: bool = False,
     ) -> t.Container | bool | r[t.Container]:
-        guarded_value: t.NormalizedValue = value
         try:
-            if isinstance(validator, type):
-                if isinstance(value, validator):
-                    if return_value:
-                        return (
-                            guarded_value
-                            if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
-                            else str(guarded_value)
-                        )
-                    return True
-            elif FlextUtilitiesGuardsEnsure.is_object_tuple(validator):
-                tuple_types: tuple[type, ...] = tuple(
-                    item for item in validator if isinstance(item, type)
-                )
-                if len(tuple_types) == len(validator) and isinstance(
-                    value,
-                    tuple_types,
-                ):
-                    if return_value:
-                        return (
-                            guarded_value
-                            if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
-                            else str(guarded_value)
-                        )
-                    return True
-            elif callable(validator):
-                if validator(value):
-                    if return_value:
-                        return (
-                            guarded_value
-                            if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
-                            else str(guarded_value)
-                        )
-                    return True
-            elif value:
+            if FlextUtilitiesGuardsEnsure._check_validator(value, validator):
                 if return_value:
-                    return (
-                        guarded_value
-                        if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
-                        else str(guarded_value)
-                    )
+                    return FlextUtilitiesGuardsEnsure._to_container_or_str(value)
                 return True
-            if default is not None:
-                return (
-                    default
-                    if FlextUtilitiesGuardsEnsure.is_container(default)
-                    else str(default)
-                )
-            return (
-                r[t.Container].fail("Guard validation failed")
-                if return_value
-                else False
+            return FlextUtilitiesGuardsEnsure._guard_fallback(
+                default,
+                return_value=return_value,
+                fail_msg="Guard validation failed",
             )
         except (TypeError, ValueError, AttributeError):
-            if default is not None:
-                return (
-                    default
-                    if FlextUtilitiesGuardsEnsure.is_container(default)
-                    else str(default)
-                )
-            return (
-                r[t.Container].fail("Guard validation raised an exception")
-                if return_value
-                else False
+            return FlextUtilitiesGuardsEnsure._guard_fallback(
+                default,
+                return_value=return_value,
+                fail_msg="Guard validation raised an exception",
             )
 
     @staticmethod

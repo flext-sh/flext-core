@@ -12,6 +12,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.unit.contracts import text_contract
     from tests.unit.contracts.text_contract import TextUtilityContract
 
 _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
@@ -19,10 +20,12 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.contracts.text_contract",
         "TextUtilityContract",
     ],
+    "text_contract": ["tests.unit.contracts.text_contract", ""],
 }
 
 __all__ = [
     "TextUtilityContract",
+    "text_contract",
 ]
 
 
