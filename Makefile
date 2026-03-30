@@ -92,7 +92,7 @@ help: ## Show available commands
 	@printf "  %-14s %s\n" "help"   "Show this help"
 	@echo ""
 	@echo "After 'make setup', all standard verbs become available:"
-	@echo "  check, test, format, build, validate, clean, docs, pr"
+	@echo "  check, test, fmt, build, val, clean, docs, pr"
 	@echo ""
 	@echo "Run 'make setup' first, then 'make help' for full verb list."
 endif
