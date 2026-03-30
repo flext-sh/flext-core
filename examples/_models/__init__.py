@@ -11,22 +11,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from examples._models import (
-        ex00,
-        ex01,
-        ex02,
-        ex03,
-        ex04,
-        ex05,
-        ex07,
-        ex08,
-        ex10,
-        ex11,
-        ex12,
-        ex14,
-        exconfig,
-        shared,
-    )
     from examples._models.ex00 import *
     from examples._models.ex01 import *
     from examples._models.ex02 import *
@@ -121,4 +105,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

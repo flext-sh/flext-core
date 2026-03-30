@@ -19,33 +19,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
+from flext_core._models._context import _LAZY_IMPORTS as _CHILD_LAZY_0
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models import (
-        base,
-        collections,
-        container,
-        containers,
-        context,
-        cqrs,
-        decorators,
-        dispatcher,
-        domain_event,
-        entity,
-        errors,
-        exception_params,
-        generic,
-        handler,
-        service,
-        settings,
-    )
-    from flext_core._models._context._data import *
-    from flext_core._models._context._export import *
-    from flext_core._models._context._metadata import *
-    from flext_core._models._context._proxy_var import *
-    from flext_core._models._context._scope import *
-    from flext_core._models._context._tokens import *
+    from flext_core._models._context import *
     from flext_core._models.base import *
     from flext_core._models.collections import *
     from flext_core._models.container import *
@@ -64,6 +42,7 @@ if TYPE_CHECKING:
     from flext_core._models.settings import *
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+    **_CHILD_LAZY_0,
     "FlextGenericModels": "flext_core._models.generic",
     "FlextModelFoundation": "flext_core._models.base",
     "FlextModelsCollections": "flext_core._models.collections",
@@ -71,12 +50,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextModelsContainer": "flext_core._models.container",
     "FlextModelsContainers": "flext_core._models.containers",
     "FlextModelsContext": "flext_core._models.context",
-    "FlextModelsContextData": "flext_core._models._context._data",
-    "FlextModelsContextExport": "flext_core._models._context._export",
-    "FlextModelsContextMetadata": "flext_core._models._context._metadata",
-    "FlextModelsContextProxyVar": "flext_core._models._context._proxy_var",
-    "FlextModelsContextScope": "flext_core._models._context._scope",
-    "FlextModelsContextTokens": "flext_core._models._context._tokens",
     "FlextModelsCqrs": "flext_core._models.cqrs",
     "FlextModelsDecorators": "flext_core._models.decorators",
     "FlextModelsDispatcher": "flext_core._models.dispatcher",
@@ -86,6 +59,7 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextModelsExceptionParams": "flext_core._models.exception_params",
     "FlextModelsHandler": "flext_core._models.handler",
     "FlextModelsService": "flext_core._models.service",
+    "_context": "flext_core._models._context",
     "base": "flext_core._models.base",
     "collections": "flext_core._models.collections",
     "container": "flext_core._models.container",
@@ -105,4 +79,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

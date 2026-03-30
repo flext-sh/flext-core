@@ -15,17 +15,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._protocols import (
-        base,
-        config,
-        container,
-        context,
-        handler,
-        logging,
-        registry,
-        result,
-        service,
-    )
     from flext_core._protocols.base import *
     from flext_core._protocols.config import *
     from flext_core._protocols.container import *
@@ -58,4 +47,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

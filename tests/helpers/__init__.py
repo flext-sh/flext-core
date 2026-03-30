@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests.helpers import factories, factories_impl, scenarios
+    from tests.helpers._scenarios_impl import *
     from tests.helpers.factories import *
     from tests.helpers.factories_impl import *
     from tests.helpers.scenarios import *
@@ -33,6 +33,10 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "GetUserServiceAuto": "tests.helpers.factories_impl",
     "GetUserServiceAutoFactory": "tests.helpers.factories_impl",
     "GetUserServiceFactory": "tests.helpers.factories_impl",
+    "ParserScenario": "tests.helpers._scenarios_impl",
+    "ParserScenarios": "tests.helpers._scenarios_impl",
+    "ReliabilityScenario": "tests.helpers._scenarios_impl",
+    "ReliabilityScenarios": "tests.helpers._scenarios_impl",
     "ServiceFactoryRegistry": "tests.helpers.factories_impl",
     "ServiceTestCase": "tests.helpers.factories_impl",
     "ServiceTestCaseFactory": "tests.helpers.factories_impl",
@@ -46,6 +50,9 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "ValidatingServiceAuto": "tests.helpers.factories_impl",
     "ValidatingServiceAutoFactory": "tests.helpers.factories_impl",
     "ValidatingServiceFactory": "tests.helpers.factories_impl",
+    "ValidationScenario": "tests.helpers._scenarios_impl",
+    "ValidationScenarios": "tests.helpers._scenarios_impl",
+    "_scenarios_impl": "tests.helpers._scenarios_impl",
     "factories": "tests.helpers.factories",
     "factories_impl": "tests.helpers.factories_impl",
     "reset_all_factories": "tests.helpers.factories_impl",
@@ -53,4 +60,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

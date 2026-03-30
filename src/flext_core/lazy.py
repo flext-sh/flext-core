@@ -109,9 +109,20 @@ def install_lazy_exports(
     module_name: str,
     module_globals: LazyNamespace,
     lazy_imports: Mapping[str, str | Sequence[str]],
-    all_exports: Sequence[str],
+    all_exports: Sequence[str] | None = None,
 ) -> None:
-    """Install PEP 562 lazy loading into a module's namespace."""
+    """Install PEP 562 lazy loading into a module's namespace.
+
+    When ``all_exports`` is omitted, ``__all__`` and ``__dir__`` are derived
+    directly from ``lazy_imports``. Callers that need extra eager names may
+    pass only those extras. Legacy callers that still pass the complete export
+    list remain compatible.
+    """
+    export_names = tuple(
+        sorted(lazy_imports)
+        if all_exports is None
+        else sorted(set(lazy_imports) | set(all_exports)),
+    )
     resolved: MutableMapping[str, LazyExport] = {}
 
     def _getattr(name: str) -> LazyExport:
@@ -125,11 +136,11 @@ def install_lazy_exports(
         return value
 
     def _dir() -> list[str]:
-        return sorted(all_exports)
+        return list(export_names)
 
     module_globals["__getattr__"] = _getattr
     module_globals["__dir__"] = _dir
-    module_globals["__all__"] = list(all_exports)
+    module_globals["__all__"] = list(export_names)
     cleanup_submodule_namespace(module_name, lazy_imports)
 
 

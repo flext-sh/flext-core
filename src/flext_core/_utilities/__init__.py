@@ -19,34 +19,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities import (
-        args,
-        cache,
-        checker,
-        collection,
-        configuration,
-        context,
-        conversion,
-        deprecation,
-        discovery,
-        domain,
-        enum,
-        file_ops,
-        generators,
-        guards,
-        guards_ensure,
-        guards_type,
-        guards_type_core,
-        guards_type_model,
-        guards_type_protocol,
-        mapper,
-        model,
-        pagination,
-        parser,
-        reliability,
-        result_helpers,
-        text,
-    )
     from flext_core._utilities.args import *
     from flext_core._utilities.cache import *
     from flext_core._utilities.checker import *
@@ -128,4 +100,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

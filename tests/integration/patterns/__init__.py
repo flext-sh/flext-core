@@ -23,13 +23,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests.integration.patterns import (
-        test_advanced_patterns,
-        test_architectural_patterns,
-        test_patterns_commands,
-        test_patterns_logging,
-        test_patterns_testing,
-    )
     from tests.integration.patterns.test_advanced_patterns import *
     from tests.integration.patterns.test_architectural_patterns import *
     from tests.integration.patterns.test_patterns_commands import *
@@ -53,4 +46,4 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
 }
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, sorted(_LAZY_IMPORTS))
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
