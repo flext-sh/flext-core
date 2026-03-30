@@ -344,25 +344,6 @@ class Testu(TextUtilityContract):
         obj = self.UtilityScenarios.create_mock_uncached_object()
         assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is False
 
-    def test_reliability_timeout_success(self) -> None:
-        """Test timeout with successful operation."""
-
-        def quick_op() -> r[str]:
-            return r[str].ok("success")
-
-        result = u.with_timeout(quick_op, 5.0)
-        _ = assertion_helpers.assert_flext_result_success(result)
-        tm.that(result.value, eq="success")
-
-    def test_reliability_timeout_invalid(self) -> None:
-        """Test timeout with invalid timeout value."""
-
-        def op() -> r[str]:
-            return r[str].ok("success")
-
-        result = u.with_timeout(op, -1.0)
-        _ = assertion_helpers.assert_flext_result_failure(result)
-
     def test_reliability_retry_first_success(self) -> None:
         """Test retry that succeeds immediately."""
 

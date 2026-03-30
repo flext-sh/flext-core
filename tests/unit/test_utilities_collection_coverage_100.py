@@ -956,53 +956,6 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.parse_mapping_cases(),
-        ids=lambda s: s.name,
-    )
-    def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
-        """Test parse_mapping with various scenarios."""
-        result = u.parse_mapping(scenario.enum_cls, scenario.mapping)
-        if scenario.expected_success:
-            _ = assertion_helpers.assert_flext_result_success(result)
-            tm.that(result.value, none=False)
-            if scenario.expected_keys is not None:
-                assert set(result.value.keys()) == set(scenario.expected_keys)
-            for val in result.value.values():
-                tm.that(val, is_=scenario.enum_cls)
-        else:
-            _ = assertion_helpers.assert_flext_result_failure(result)
-            tm.that(result.error, none=False)
-            if scenario.error_contains:
-                tm.that(result.error, has=scenario.error_contains)
-
-    def test_parse_mapping_with_custom_enum(self) -> None:
-        """Test parse_mapping with custom enum class."""
-        result = u.parse_mapping(
-            FixturePriority,
-            {"task1": "low", "task2": "medium", "task3": "high"},
-        )
-        _ = assertion_helpers.assert_flext_result_success(result)
-        tm.that(result.value, none=False)
-        tm.that(len(result.value), eq=3)
-        tm.that(
-            all(v in FixturePriority for v in result.value.values()),
-            eq=True,
-        )
-
-    def test_parse_mapping_error_message_format(self) -> None:
-        """Test parse_mapping error message format."""
-        result = u.parse_mapping(
-            FixtureStatus,
-            {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
-        )
-        _ = assertion_helpers.assert_flext_result_failure(result)
-        tm.that(result.error, none=False)
-        tm.that(result.error, has="Invalid")
-        error_message = result.error or ""
-        assert "invalid1" in error_message or "invalid2" in error_message
-
-    @pytest.mark.parametrize(
-        "scenario",
         CollectionUtilitiesScenarios.map_cases(),
         ids=lambda s: s.name,
     )
@@ -1076,71 +1029,6 @@ class TestUtilitiesCollectionCoverage:
         else:
             _ = assertion_helpers.assert_flext_result_success(result)
             assert result.value == scenario.expected_result
-
-    @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.group_cases(),
-        ids=lambda s: s.name,
-    )
-    def test_group(self, scenario: GroupScenario) -> None:
-        """Test group_by with various scenarios."""
-        result = u.group_by(scenario.items, scenario.key)
-        assert result == scenario.expected_result
-
-    @pytest.mark.parametrize(
-        "scenario",
-        CollectionUtilitiesScenarios.chunk_cases(),
-        ids=lambda s: s.name,
-    )
-    def test_chunk(self, scenario: ChunkScenario) -> None:
-        """Test chunk with various scenarios."""
-        result = u.chunk(scenario.items, scenario.size)
-        assert result == scenario.expected_result
-
-    def test_batch_basic(self) -> None:
-        """Test batch basic functionality."""
-        items = [1, 2, 3, 4, 5]
-        result = u.batch(items, lambda x: x * 2, size=2)
-        _ = assertion_helpers.assert_flext_result_success(result)
-        data = result.value
-        tm.that(data.total, eq=5)
-        tm.that(data.success_count, eq=5)
-        tm.that(data.results, eq=[2, 4, 6, 8, 10])
-        tm.that(data.errors, eq=[])
-
-    def test_batch_with_errors_collect(self) -> None:
-        """Test batch with errors (collect mode)."""
-        items = [1, 2, 0, 4]
-
-        def op(x: int) -> int:
-            if x == 0:
-                msg = "Zero"
-                raise ValueError(msg)
-            return 10 // x
-
-        result = u.batch(items, op, on_error="collect")
-        _ = assertion_helpers.assert_flext_result_success(result)
-        data = result.value
-        tm.that(data.total, eq=4)
-        tm.that(data.success_count, eq=3)
-        tm.that(len(data.errors), eq=1)
-        tm.that(data.errors[0][1], has="Zero")
-
-    def test_batch_flatten(self) -> None:
-        """Test batch with flattening."""
-        items: list[t.NormalizedValue] = [[1, 2], [3, 4], 5]
-
-        def flatten_op(value: t.NormalizedValue) -> t.Serializable:
-            return cast("t.Serializable", value)
-
-        result = u.batch(
-            items,
-            flatten_op,
-            flatten=True,
-        )
-        _ = assertion_helpers.assert_flext_result_success(result)
-        data = result.value
-        tm.that(data.results, eq=[1, 2, 3, 4, 5])
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""

@@ -346,7 +346,9 @@ class FlextExceptions:
             params_cls = cls.__dict__.get("_params_cls")
             if params_cls is None or "__init__" in cls.__dict__:
                 return
-            default_code = cls.__dict__.get("_default_error_code", c.UNKNOWN_ERROR)
+            default_code: str = cls.__dict__.get(
+                "_default_error_code", c.UNKNOWN_ERROR,
+            )
 
             def _auto_init(
                 self: e.BaseError,

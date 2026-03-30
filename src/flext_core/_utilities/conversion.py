@@ -8,13 +8,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from datetime import datetime
 from typing import ClassVar
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import ValidationError
 
-from flext_core import m, r, t
+from flext_core import m, t
 
 
 class FlextUtilitiesConversion:
@@ -69,36 +67,6 @@ class FlextUtilitiesConversion:
         return str_value
 
     @staticmethod
-    def to_flexible_value(value: t.StrictValue) -> r[t.Scalar]:
-        """Convert strict value to strict scalar if compatible.
-
-        Strict scalar is a subset of strict value that excludes
-        BaseModel, Path, and Callable types.
-
-        Args:
-            value: strict value to convert
-
-        Returns:
-            p.Result containing strict scalar value or failure
-
-        """
-        if value is None:
-            return r[t.Scalar].fail("None is not a scalar-compatible value")
-        if isinstance(value, (BaseModel, Mapping, list, tuple, set, frozenset)):
-            return r[t.Scalar].fail("Value is not a scalar-compatible type")
-        if isinstance(value, datetime) and hasattr(value, "isoformat"):
-            isoformat_method = value.isoformat
-            if callable(isoformat_method):
-                return r[t.Scalar].ok(str(value))
-        try:
-            strict_value = FlextUtilitiesConversion._V.strict_json_scalar_adapter().validate_python(
-                value,
-            )
-            return r[t.Scalar].ok(strict_value)
-        except ValidationError:
-            return r[t.Scalar].ok(str(value))
-
-    @staticmethod
     def to_str(value: t.StrictValue, *, default: str | None = None) -> str:
         """Convert value to string.
 
@@ -142,7 +110,7 @@ class FlextUtilitiesConversion:
 
         """
         if value is None:
-            return default if default is not None else []
+            return default if default is not None else list[str]()
         value_class = value.__class__
         if value_class is str:
             return [str(value)]
@@ -156,23 +124,6 @@ class FlextUtilitiesConversion:
         except ValidationError:
             pass
         return [str(value)]
-
-    @staticmethod
-    def narrow[T](value: t.ValueOrModel, type_cls: type[T]) -> T:
-        """Narrow *value* to *type_cls*, attempting coercion via Pydantic validation.
-
-        Args:
-            value: Value to narrow
-            type_cls: Target type
-
-        Returns:
-            T: Value narrowed or coerced to type_cls
-
-        """
-        if isinstance(value, type_cls):
-            return value
-        adapter: TypeAdapter[T] = TypeAdapter(type_cls)
-        return adapter.validate_python(value)
 
 
 __all__ = ["FlextUtilitiesConversion"]

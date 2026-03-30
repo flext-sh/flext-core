@@ -136,36 +136,32 @@ class TestAdvancedPatterns:
                     return int(value)
                 return str(value)
 
-            given_mapped = u.transform_values(
-                u.map_dict_keys(
-                    cast("t.ContainerMapping", self._given),
-                    {k: str(k) for k in self._given},
-                    keep_unmapped=True,
-                ).value,
-                convert_dict_value,
-            )
+            given_mapped_raw = u.map_dict_keys(
+                cast("t.ContainerMapping", self._given),
+                {k: str(k) for k in self._given},
+                keep_unmapped=True,
+            ).value
+            given_mapped = {
+                k: convert_dict_value(v) for k, v in given_mapped_raw.items()
+            }
             given_converted: t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in given_mapped.items()
             }
-            when_mapped = u.transform_values(
-                u.map_dict_keys(
-                    cast("t.ContainerMapping", self._when),
-                    {k: str(k) for k in self._when},
-                    keep_unmapped=True,
-                ).value,
-                convert_dict_value,
-            )
+            when_mapped_raw = u.map_dict_keys(
+                cast("t.ContainerMapping", self._when),
+                {k: str(k) for k in self._when},
+                keep_unmapped=True,
+            ).value
+            when_mapped = {k: convert_dict_value(v) for k, v in when_mapped_raw.items()}
             when_converted: t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in when_mapped.items()
             }
-            then_mapped = u.transform_values(
-                u.map_dict_keys(
-                    cast("t.ContainerMapping", self._then),
-                    {k: str(k) for k in self._then},
-                    keep_unmapped=True,
-                ).value,
-                convert_dict_value,
-            )
+            then_mapped_raw = u.map_dict_keys(
+                cast("t.ContainerMapping", self._then),
+                {k: str(k) for k in self._then},
+                keep_unmapped=True,
+            ).value
+            then_mapped = {k: convert_dict_value(v) for k, v in then_mapped_raw.items()}
             then_converted: t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in then_mapped.items()
             }

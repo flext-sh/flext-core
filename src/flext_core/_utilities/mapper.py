@@ -19,18 +19,10 @@ from flext_core import (
     FlextUtilitiesCache,
     FlextUtilitiesGuards,
     FlextUtilitiesGuardsTypeCore,
-    c,
     p,
     r,
     t,
 )
-
-
-class _FieldNotFound:
-    """Sentinel for _resolve_single_field when no value can be resolved."""
-
-
-_FIELD_NOT_FOUND = _FieldNotFound()
 
 
 class FlextUtilitiesMapper:
@@ -1023,47 +1015,6 @@ class FlextUtilitiesMapper:
         return 0
 
     @staticmethod
-    def at[T](
-        items: Sequence[T] | tuple[T, ...] | Mapping[str, T],
-        index: int | str,
-        *,
-        default: T | None = None,
-    ) -> r[T]:
-        """Get item at index/key (mnemonic: at = get at position).
-
-        Generic replacement for: items[index] with safe access
-
-        Args:
-            items: Items to access
-            index: Index (int) or key (str)
-            default: Default if not found
-
-        Returns:
-            Item at index/key or default
-
-        Example:
-            user = FlextUtilitiesMapper.at(users, 0)
-            value = FlextUtilitiesMapper.at(data_dict, "key")
-
-        """
-        try:
-            if isinstance(items, Mapping):
-                if isinstance(index, str) and index in items:
-                    return r[T].ok(items[index])
-                if default is not None:
-                    return r[T].ok(default)
-                return r[T].fail(f"Key '{index}' not found")
-            if isinstance(index, int) and 0 <= index < len(items):
-                return r[T].ok(items[index])
-            if default is not None:
-                return r[T].ok(default)
-            return r[T].fail(f"Index '{index}' out of bounds")
-        except (IndexError, KeyError, TypeError):
-            if default is not None:
-                return r[T].ok(default)
-            return r[T].fail("Failed to access item at index/key")
-
-    @staticmethod
     def build(
         value: p.AccessibleData,
         *,
@@ -1139,260 +1090,6 @@ class FlextUtilitiesMapper:
         current = FlextUtilitiesMapper._build_apply_unique(current, ops)
         current = FlextUtilitiesMapper._build_apply_slice(current, ops)
         return FlextUtilitiesMapper._build_apply_chunk(current, ops)
-
-    @staticmethod
-    def build_flags_dict(
-        active_flags: t.StrSequence,
-        flag_mapping: t.StrMapping,
-        *,
-        default_value: bool = False,
-    ) -> r[Mapping[str, bool]]:
-        """Build boolean flags dictionary from list of active flags.
-
-        **Generic replacement for**: Permission building, feature flags
-
-        Args:
-            active_flags: List of active flag names
-            flag_mapping: Mapping of flag_name → output_key
-            default_value: Default value for inactive flags (default: False)
-
-        Returns:
-            p.Result with flags dictionary or error
-
-        Example:
-            >>> flags = ["read", "write"]
-            >>> mapping = {
-            ...     "read": "can_read",
-            ...     "write": "can_write",
-            ...     "delete": "can_delete",
-            ... }
-            >>> result = FlextUtilitiesMapper.build_flags_dict(flags, mapping)
-            >>> flags_dict = result.value
-            >>> # {"can_read": True, "can_write": True, "can_delete": False}
-
-        """
-
-        def _build_flags() -> Mapping[str, bool]:
-            result: MutableMapping[str, bool] = {}
-            for output_key in flag_mapping.values():
-                result[output_key] = default_value
-            for flag in active_flags:
-                mapped_key: str | None = flag_mapping.get(flag)
-                if mapped_key:
-                    result[mapped_key] = True
-            return result
-
-        flags_result = r[Mapping[str, bool]].create_from_callable(_build_flags)
-        return flags_result.fold(
-            on_failure=lambda e: r[Mapping[str, bool]].fail(
-                f"Failed to build flags dict: {e}",
-            ),
-            on_success=lambda _: flags_result,
-        )
-
-    @overload
-    @staticmethod
-    def as_(
-        value: t.NormalizedValue,
-        target_type: type[bool],
-        *,
-        strict: bool = False,
-        default: bool | None = None,
-    ) -> bool | t.NormalizedValue: ...
-
-    @overload
-    @staticmethod
-    def as_[T](
-        value: t.NormalizedValue,
-        target_type: Callable[[t.ValueOrModel], T] | type[T] | None = None,
-        *,
-        strict: bool = False,
-        default: T | None = None,
-    ) -> T | t.NormalizedValue: ...
-
-    @staticmethod
-    def as_[T](
-        value: t.NormalizedValue,
-        target_type: Callable[[t.ValueOrModel], T] | type[T] | None = None,
-        *,
-        strict: bool = False,
-        default: T | None = None,
-    ) -> T | t.NormalizedValue:
-        """Coerce *value* to *target_type* with optional strict instance checking."""
-        if target_type is None:
-            return value
-        if value is None:
-            return default if default is not None else value
-        if strict and isinstance(target_type, type):
-            if isinstance(value, target_type):
-                return value
-            return default if default is not None else value
-        if target_type is bool:
-            if isinstance(value, bool):
-                return value
-            if isinstance(value, str):
-                normalized = value.strip().lower()
-                if normalized in {"1", "true", "yes", "on"}:
-                    return True
-                if normalized in {"0", "false", "no", "off"}:
-                    return False
-            return default if default is not None else value
-        try:
-            converter: Callable[[t.ValueOrModel], T] = target_type  # type: ignore[assignment]
-            return converter(value)
-        except (TypeError, ValueError, AttributeError, KeyError):
-            if default is not None:
-                return default
-            return value
-
-    @staticmethod
-    def collect_active_keys(
-        source: Mapping[str, bool],
-        key_mapping: t.StrMapping,
-    ) -> r[t.StrSequence]:
-        """Collect list of output keys where source value is True.
-
-        **Generic replacement for**: Collecting active permissions/flags
-
-        Args:
-            source: Dictionary with boolean values
-            key_mapping: Mapping of source_key → output_key
-
-        Returns:
-            p.Result with list of active output keys or error
-
-        Example:
-            >>> source = {"read": True, "write": True, "delete": False}
-            >>> mapping = {"read": "p.Result", "write": "w", "delete": "d"}
-            >>> result = FlextUtilitiesMapper.collect_active_keys(source, mapping)
-            >>> active = result.value  # ["p.Result", "w"]
-
-        """
-
-        def _collect_keys() -> t.StrSequence:
-            active_keys: Sequence[str] = [
-                output_key
-                for source_key, output_key in key_mapping.items()
-                if source.get(source_key)
-            ]
-            return active_keys
-
-        active_keys_result = r[t.StrSequence].create_from_callable(_collect_keys)
-        return active_keys_result.fold(
-            on_failure=lambda e: r[t.StrSequence].fail(
-                f"Failed to collect active keys: {e}",
-            ),
-            on_success=lambda _: active_keys_result,
-        )
-
-    @staticmethod
-    def _resolve_spec_value(
-        target_key: str,
-        target_spec: t.MapperInput,
-        source: t.ConfigModelInput | None,
-    ) -> t.NormalizedValue:
-        """Resolve a single key from a construct_spec specification.
-
-        Returns the final value for *target_key* given its spec and optional source.
-        """
-        # Mapping spec — may contain a literal "value" shortcut
-        if isinstance(target_spec, Mapping):
-            spec_mapping: t.ContainerMapping = target_spec
-            if "value" in spec_mapping:
-                return spec_mapping["value"]
-            source_field_raw = spec_mapping.get("field", target_key)
-            source_field = (
-                str(source_field_raw) if source_field_raw is not None else target_key
-            )
-            field_default = spec_mapping.get(c.IDENTIFIER_DEFAULT)
-            field_ops = spec_mapping.get("ops")
-        elif isinstance(target_spec, str):
-            source_field = target_spec
-            field_default = None
-            field_ops = None
-        else:
-            # Non-string, non-mapping scalar — store as-is
-            return (
-                FlextUtilitiesMapper.narrow_to_container(target_spec)
-                if not callable(target_spec)
-                else None
-            )
-
-        if source is None:
-            return field_default
-
-        extracted_result = FlextUtilitiesMapper.extract(
-            source,
-            source_field,
-            default=field_default,
-            required=False,
-        )
-        extracted_raw = (
-            extracted_result.value if extracted_result.is_success else field_default
-        )
-
-        extracted: t.NormalizedValue = extracted_raw
-        if (
-            field_ops is not None
-            and extracted_raw is not None
-            and isinstance(field_ops, Mapping)
-        ):
-            extracted = FlextUtilitiesMapper.build(extracted_raw, ops=dict(field_ops))
-
-        return FlextUtilitiesMapper.narrow_to_container(
-            extracted if extracted is not None else field_default,
-        )
-
-    @staticmethod
-    def construct_spec(
-        spec: Mapping[str, t.MapperInput],
-        source: t.ConfigModelInput | None = None,
-        *,
-        on_error: str = "stop",
-    ) -> t.ContainerMapping:
-        """Construct t.NormalizedValue using mnemonic specification pattern.
-
-        Builds t.NormalizedValue from mnemonic spec that maps target keys to source
-        fields or DSL operations. Supports field mapping, default values,
-        and DSL operations.
-
-        Args:
-            spec: Construction specification:
-                - Direct: {"target_key": "source_field"}
-                - Default: {"target_key": {"field": "source_field", "default": value}}
-                - DSL: {"target_key": {"field": "source_field", "ops": {...}}}
-                - Literal: {"target_key": {"value": literal}}
-            source: Optional source data
-            on_error: Error handling ("stop", "skip", "collect")
-
-        Returns:
-            Constructed dict with target keys
-
-        Example:
-            plugin_info = FlextUtilitiesMapper.construct_spec(
-                {
-                    "name": "plugin_name",
-                    "type": "plugin_type",
-                },
-                source=plugin_data,
-            )
-
-        """
-        constructed: t.MutableContainerMapping = {}
-        for target_key, target_spec in spec.items():
-            try:
-                constructed[target_key] = FlextUtilitiesMapper._resolve_spec_value(
-                    target_key,
-                    target_spec,
-                    source,
-                )
-            except (TypeError, ValueError, KeyError, AttributeError) as e:
-                error_msg = f"Failed to construct '{target_key}': {e}"
-                if on_error == "stop":
-                    raise ValueError(error_msg) from e
-                if on_error == "skip":
-                    continue
-        return constructed
 
     @staticmethod
     def _deep_eq_values(
@@ -1633,84 +1330,6 @@ class FlextUtilitiesMapper:
             return r[t.NormalizedValue].fail(f"Extract failed: {e}")
 
     @staticmethod
-    def _resolve_single_field(
-        obj: p.AccessibleData,
-        name: str,
-        field_config: t.NormalizedValue | None = None,
-    ) -> t.NormalizedValue | _FieldNotFound:
-        """Resolve one field from obj (Mapping or attribute), with optional config default.
-
-        Returns _FieldNotFound sentinel when the field cannot be resolved.
-        """
-        if isinstance(obj, Mapping):
-            if name in obj:
-                return FlextUtilitiesMapper.narrow_to_container(obj[name])
-            # For Mapping obj: Mapping config uses default key; scalar config used as-is
-            if isinstance(field_config, Mapping):
-                default_value = field_config.get(c.IDENTIFIER_DEFAULT)
-                if default_value is not None:
-                    return default_value
-            elif field_config is not None:
-                return field_config
-            return _FIELD_NOT_FOUND
-
-        # Attribute-based access
-        if hasattr(obj, name):
-            return FlextUtilitiesMapper.narrow_to_container(getattr(obj, name))
-        # For attr objects: only Mapping-based config defaults are honored
-        if isinstance(field_config, Mapping):
-            default_value = field_config.get(c.IDENTIFIER_DEFAULT)
-            if default_value is not None:
-                return default_value
-        return _FIELD_NOT_FOUND
-
-    @staticmethod
-    def fields(
-        obj: p.AccessibleData,
-        *field_names: str | t.NormalizedValue,
-    ) -> t.ContainerMapping:
-        """Extract specified fields from t.NormalizedValue.
-
-        Supports two patterns:
-        1. Simple: u.fields(obj, "name", "email", "id")
-        2. DSL spec: u.fields(obj, {"name": {"default": ""}, ...})
-
-        Args:
-            obj: Object or dict to extract from
-            *field_names: Field names (str) or field specs (dict)
-
-        Returns:
-            Mapping with extracted fields (string-keyed payload values)
-
-        Example:
-            # Simple extraction
-            data = u.fields(user, "name", "email", "id")
-
-            # With field specs
-            data = u.fields(payload, {
-                "name": {"default": ""},
-                "count": {"default": 0}
-            })
-
-        """
-        result: t.MutableContainerMapping = {}
-        for spec_item in field_names:
-            if isinstance(spec_item, Mapping):
-                for name, field_config in spec_item.items():
-                    resolved = FlextUtilitiesMapper._resolve_single_field(
-                        obj,
-                        name,
-                        field_config,
-                    )
-                    if not isinstance(resolved, _FieldNotFound):
-                        result[name] = resolved
-            elif isinstance(spec_item, str):
-                resolved = FlextUtilitiesMapper._resolve_single_field(obj, spec_item)
-                if not isinstance(resolved, _FieldNotFound):
-                    result[spec_item] = resolved
-        return result
-
-    @staticmethod
     def filter_dict(
         source: t.ContainerMapping,
         predicate: Callable[[str, t.NormalizedValue], bool],
@@ -1733,51 +1352,6 @@ class FlextUtilitiesMapper:
 
         """
         return {k: v for k, v in source.items() if predicate(k, v)}
-
-    @staticmethod
-    def find_callable[T](
-        callables: Mapping[str, Callable[[T], bool]],
-        value: T,
-    ) -> r[str]:
-        """Find first matching callable key from dict of predicates.
-
-        Iterates through mapping of named predicates and returns the key of
-        the first predicate that returns True for the given value.
-
-        Args:
-            callables: Mapping of name → predicate function
-            value: Value to test against predicates
-
-        Returns:
-            Key of matching predicate, or None if no match found
-
-        Example:
-            >>> predicates = {
-            ...     "is_empty": lambda v: len(v) == 0,
-            ...     "is_single": lambda v: len(v) == 1,
-            ...     "is_multiple": lambda v: len(v) > 1,
-            ... }
-            >>> result = u.find_callable(predicates, [1, 2])
-            >>> assert result == "is_multiple"
-
-        """
-
-        def build_predicate_call(
-            predicate_fn: Callable[[T], bool],
-        ) -> Callable[[], bool]:
-
-            def _call_predicate() -> bool:
-                return predicate_fn(value)
-
-            return _call_predicate
-
-        for name, predicate in callables.items():
-            predicate_result = r[bool].create_from_callable(
-                build_predicate_call(predicate),
-            )
-            if predicate_result.is_success and predicate_result.value:
-                return r[str].ok(name)
-        return r[str].fail("No callable predicate matched")
 
     @staticmethod
     def map_get(
@@ -1955,27 +1529,6 @@ class FlextUtilitiesMapper:
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             return FlextUtilitiesMapper._narrow_untyped_list(list(value))
         return str(value)
-
-    @staticmethod
-    def omit[T](data: Mapping[str, T], *keys: str) -> Mapping[str, T]:
-        """Omit specific keys from mapping.
-
-        Generic replacement for: {k: v for k, v in data.items() if k not in keys}
-
-        Args:
-            data: Source mapping
-            *keys: Keys to omit
-
-        Returns:
-            Dict without the specified keys
-
-        Example:
-            clean = u.omit(user_data, "password", "secret")
-            # {"name": "John", "email": "john@test.com"}
-
-        """
-        keys_set = set(keys)
-        return {k: v for k, v in data.items() if k not in keys_set}
 
     @staticmethod
     def or_[T](*values: T | None, default: T | None = None) -> r[T]:
@@ -2198,32 +1751,6 @@ class FlextUtilitiesMapper:
             on_failure=lambda e: r[t.ContainerMapping].fail(f"Transform failed: {e}"),
             on_success=lambda _: transform_result,
         )
-
-    @staticmethod
-    def transform_values(
-        source: t.ContainerMapping,
-        transformer: Callable[[t.NormalizedValue], t.NormalizedValue],
-    ) -> t.ContainerMapping:
-        """Transform all values in dict using transformer function.
-
-        **Generic replacement for**: Manual dict value transformations
-
-        Args:
-            source: Source dictionary
-            transformer: Function to apply to each value
-
-        Returns:
-            Dictionary with transformed values
-
-        Example:
-            >>> source = {"a": "hello", "b": "world"}
-            >>> result = FlextUtilitiesMapper.transform_values(
-            ...     source, lambda v: str(v).upper()
-            ... )
-            >>> # {"a": "HELLO", "b": "WORLD"}
-
-        """
-        return {k: transformer(v) for k, v in source.items()}
 
 
 __all__ = ["FlextUtilitiesMapper"]

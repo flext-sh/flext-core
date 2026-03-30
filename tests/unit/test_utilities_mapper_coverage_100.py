@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, cast
@@ -172,19 +172,6 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(data.get("a"), eq=1)
             tm.that(data.get("b", 2), eq=2)
 
-        def test_at_list(self) -> None:
-            """Test at list."""
-            items = [10, 20, 30]
-            tm.that(u.at(items, 1).value, eq=20)
-            tm.fail(u.at(items, 5))
-            tm.that(u.at(items, 5, default=0).value, eq=0)
-
-        def test_at_dict(self) -> None:
-            """Test at dict."""
-            items = {"a": 10}
-            tm.that(u.at(items, "a").value, eq=10)
-            tm.fail(u.at(items, "b"))
-
         def test_take_extraction(self) -> None:
             """Test take value extraction."""
             data: t.ConfigurationMapping = {"a": 1, "b": "str"}
@@ -342,29 +329,6 @@ class UtilitiesMapperCoverage100Namespace:
             ops = {"chunk": 2}
             res = u.build([1, 2, 3, 4], ops=ops)
             tm.that(res, eq=[[1, 2], [3, 4]])
-
-        def test_construct(self) -> None:
-            """Test construct."""
-            source: MutableMapping[str, t.ValueOrModel] = {
-                "user_name": "john",
-                "user_age": 30,
-            }
-            spec: Mapping[str, t.NormalizedValue | t.MapperCallable] = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {
-                    "name": "user_name",
-                    "age": "user_age",
-                    "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
-                },
-            )
-            res = u.construct_spec(spec, t.ConfigMap(root=source))
-            tm.that(
-                res,
-                eq=cast(
-                    "t.Tests.Testobject",
-                    {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"},
-                ),
-            )
 
     class TestuMapperAdvanced:
         """Advanced tests for u to reach 100% coverage."""

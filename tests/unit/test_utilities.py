@@ -357,22 +357,6 @@ class Testu(TextUtilityContract):
         assert value["data"] == "fallback-data"
         assert value["pagination"] == "fallback-pagination"
 
-    @given(
-        st.one_of(
-            st.none(),
-            st.text(),
-            st.lists(st.integers()),
-            st.dictionaries(st.text(), st.integers()),
-        ),
-    )
-    def test_hypothesis_empty_returns_bool(
-        self,
-        value: t.NormalizedValue | None,
-    ) -> None:
-        """Property: u.empty always returns bool."""
-        result = u.empty(value)
-        tm.that(result, is_=bool)
-
     @given(st.text())
     def test_hypothesis_generate_always_non_empty(self, _value: str) -> None:
         """Property: u.generate always returns non-empty string."""

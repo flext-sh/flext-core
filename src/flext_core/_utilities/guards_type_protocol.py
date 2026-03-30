@@ -109,27 +109,6 @@ class FlextUtilitiesGuardsTypeProtocol:
         return callable(value)
 
     @staticmethod
-    def is_handler_type(
-        value: t.NormalizedValue | t.HandlerCallable,
-    ) -> TypeIs[t.HandlerLike]:
-        """Check if value can be used as a handler.
-
-        Handlers can be callables, mappings, BaseModel instances,
-        or objects with handle/can_handle methods.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a valid handler-like type, False otherwise.
-
-        """
-        return callable(value) or isinstance(
-            value,
-            (Mapping, p.HasModelDump, p.Handle, p.AutoDiscoverableHandler),
-        )
-
-    @staticmethod
     def is_factory(
         value: t.GuardInput,
     ) -> TypeIs[t.FactoryCallable]:

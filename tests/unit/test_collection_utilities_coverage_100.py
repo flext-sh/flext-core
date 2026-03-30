@@ -260,18 +260,3 @@ class TestCollectionUtilitiesCoverage:
                 assert expected_error is not None
                 tm.that(exc_info.value, is_=(TypeError, ValueError))
                 tm.that(str(exc_info.value), has=expected_error)
-
-    def test_parse_mapping(self) -> None:
-        for scenario in self._parse_mapping_scenarios():
-            result = u.parse_mapping(self.Status, scenario.mapping)
-            if scenario.expected_success:
-                _ = u.Tests.Result.assert_success(result)
-                parsed = result.value
-                tm.that(len(parsed), eq=scenario.expected_count)
-                tm.that(parsed, is_=dict)
-                tm.that(all(v in self.Status for v in parsed.values()), eq=True)
-            else:
-                _ = u.Tests.Result.assert_failure(result)
-                error_msg = result.error
-                assert error_msg is not None and scenario.expected_error is not None
-                tm.that(error_msg, has=scenario.expected_error)

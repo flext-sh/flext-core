@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 def lazy_getattr(
     name: str,
-    lazy_imports: Mapping[str, Sequence[str]],
+    lazy_imports: Mapping[str, str | Sequence[str]],
     module_globals: MutableMapping[str, FlextTypesServices.ModuleExport],
     module_name: str,
 ) -> FlextTypesServices.ModuleExport:
@@ -33,13 +33,19 @@ def lazy_getattr(
 
     Args:
         name: The attribute name being accessed.
-        lazy_imports: Mapping of export_name -> (module_path, attr_name).
+        lazy_imports: Mapping of export_name to either:
+            - ``"module.path"`` — attr_name defaults to the key name
+            - ``["module.path", "attr_name"]`` — explicit attr (or empty for submodule)
         module_globals: The calling module's globals() dict for caching.
         module_name: The calling module's __name__ for error messages.
 
     """
     if name in lazy_imports:
-        module_path, attr_name = lazy_imports[name]
+        entry = lazy_imports[name]
+        if isinstance(entry, str):
+            module_path, attr_name = entry, name
+        else:
+            module_path, attr_name = entry[0], entry[1]
         module = importlib.import_module(module_path)
         if not attr_name:
             module_globals[name] = module
@@ -57,7 +63,7 @@ def lazy_getattr(
 
 def cleanup_submodule_namespace(
     module_name: str,
-    lazy_imports: Mapping[str, Sequence[str]],
+    lazy_imports: Mapping[str, str | Sequence[str]],
 ) -> None:
     """Remove submodules from namespace to force __getattr__ usage.
 
@@ -75,7 +81,8 @@ def cleanup_submodule_namespace(
         return
     submodule_names: set[str] = set()
     current_parts = module_name.split(".")
-    for mod_path, _ in lazy_imports.values():
+    for entry in lazy_imports.values():
+        mod_path = entry if isinstance(entry, str) else entry[0]
         if mod_path:
             parts = mod_path.split(".")
             if (
@@ -93,7 +100,7 @@ def cleanup_submodule_namespace(
 def install_lazy_exports(
     module_name: str,
     module_globals: dict[str, object],
-    lazy_imports: Mapping[str, Sequence[str]],
+    lazy_imports: Mapping[str, str | Sequence[str]],
     all_exports: Sequence[str],
 ) -> None:
     """Install PEP 562 lazy loading into a module's namespace.
@@ -126,3 +133,6 @@ def install_lazy_exports(
     module_globals["__dir__"] = _dir
     module_globals["__all__"] = list(all_exports)
     cleanup_submodule_namespace(module_name, lazy_imports)
+
+
+__all__ = ["cleanup_submodule_namespace", "install_lazy_exports", "lazy_getattr"]

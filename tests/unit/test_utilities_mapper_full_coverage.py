@@ -8,7 +8,6 @@ from collections.abc import (
     ItemsView,
     Iterator,
     Mapping,
-    MutableMapping,
     MutableSequence,
     Sequence,
     Set as AbstractSet,
@@ -62,15 +61,6 @@ class UtilitiesMapperFullCoverageNamespace:
             msg = "bad iter"
             raise RuntimeError(msg)
 
-    class _AtCallable(Protocol):
-        def __call__(
-            self,
-            items: ExplodingLenList,
-            index: int | str,
-            *,
-            default: int | None = None,
-        ) -> None: ...
-
     class _ExtractFieldCallable(Protocol):
         def __call__(self, item: AttrObject, field_name: str) -> None: ...
 
@@ -118,24 +108,6 @@ class UtilitiesMapperFullCoverageNamespace:
             *,
             keep_unmapped: bool = True,
         ) -> r[t.ContainerMapping]: ...
-
-    class _BuildFlagsCallable(Protocol):
-        def __call__(
-            self,
-            active_flags: _BadIter,
-            flag_mapping: t.StrMapping,
-        ) -> r[Mapping[str, bool]]: ...
-
-    @staticmethod
-    def _at_obj(
-        items: ExplodingLenList,
-        index: int | str,
-        *,
-        default: int | None = None,
-    ) -> None:
-        """Call Mapper.at with arbitrary t.NormalizedValue for error-path testing."""
-        fn: _AtCallable = getattr(u, "at")
-        return fn(items, index, default=default)
 
     @staticmethod
     def _extract_field_obj(item: AttrObject, field_name: str) -> None:
@@ -217,15 +189,6 @@ class UtilitiesMapperFullCoverageNamespace:
     ) -> r[t.ContainerMapping]:
         fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
         return fn(source, key_map, keep_unmapped=keep_unmapped)
-
-    @staticmethod
-    def _build_flags_obj(
-        active_flags: _BadIter,
-        flag_mapping: t.StrMapping,
-    ) -> r[Mapping[str, bool]]:
-        """Call build_flags_dict with arbitrary t.NormalizedValue for error-path testing."""
-        fn: _BuildFlagsCallable = getattr(u, "build_flags_dict")
-        return fn(active_flags, flag_mapping)
 
     class AttrObject(BaseModel):
         """AttrObject class."""
@@ -362,8 +325,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(u().logger, none=False)
 
     @staticmethod
-    def test_ensure_and_extract_array_index_helpers(mapper: type[u]) -> None:
-        tm.that(mapper.ensure(123), eq=[123])
+    def test_extract_array_index_helpers(mapper: type[u]) -> None:
         idx_result = mapper._extract_handle_array_index("x", "0")
         tm.fail(idx_result)
         tm.that(idx_result.error, eq="Not a sequence")
@@ -435,12 +397,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
 
     @staticmethod
-    def test_at_take_and_as_branches(mapper: type[u]) -> None:
-        tm.that(mapper.at({"a": 1}, 0, default=5).value, eq=5)
-        tm.that(
-            cast("r[int]", _at_obj(ExplodingLenList([1]), 0, default=7)).value,
-            eq=7,
-        )
+    def test_take_and_as_branches(mapper: type[u]) -> None:
         model = _PortModel(port=8081, nested={})
         tm.that(_take_obj(model, "port"), eq=8081)
         tm.that(mapper.take(123, "port", default="d"), eq="d")
@@ -705,63 +662,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.build([1, 2], ops=None), eq=[1, 2])
 
     @staticmethod
-    def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
-        constructed_none = mapper.construct_spec(
-            {"x": {"field": "a", "default": 9}},
-            None,
-        )
-        tm.that(constructed_none["x"], eq=9)
-        source: MutableMapping[str, t.ValueOrModel] = {
-            "name": "alice",
-            "n": 3,
-        }
-        spec = cast(
-            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-            {
-                "name": {"field": "name", "ops": "skip-ops"},
-                "n": {"field": "n", "ops": {"map": _plus_one}},
-                "literal": 5,
-            },
-        )
-        constructed = mapper.construct_spec(spec, t.ConfigMap(root=source))
-        tm.that(constructed["name"], eq="alice")
-        tm.that(constructed["n"], eq=4)
-        tm.that(constructed["literal"], eq=5)
-
-        class ExplodeOnGet(t.ContainerMappingBase):
-            @override
-            def __getitem__(self, _key: str) -> t.NormalizedValue:
-                msg = "get exploded"
-                raise TypeError(msg)
-
-            @override
-            def __iter__(self) -> Iterator[str]:
-                return iter(["x"])
-
-            @override
-            def __len__(self) -> int:
-                return 1
-
-        with pytest.raises(ValueError, match="get exploded"):
-            mapper.construct_spec(
-                cast(
-                    "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                    {"x": ExplodeOnGet()},
-                ),
-                t.ConfigMap(root={"x": 1}),
-                on_error="stop",
-            )
-        tm.that(
-            mapper.construct_spec(
-                cast(
-                    "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                    {"x": ExplodeOnGet()},
-                ),
-                t.ConfigMap(root={"x": 1}),
-                on_error="skip",
-            ),
-            eq={},
-        )
+    def test_transform_and_deep_eq_branches(mapper: type[u]) -> None:
         tm.ok(mapper.transform({"a": 1}, map_keys={"a": "A"}))
         bad_result = _transform_obj(BadMapping())
         tm.fail(bad_result)
@@ -783,7 +684,6 @@ _MaybeModel = UtilitiesMapperFullCoverageNamespace._MaybeModel
 _GroupModel = UtilitiesMapperFullCoverageNamespace._GroupModel
 _BadItems = UtilitiesMapperFullCoverageNamespace._BadItems
 _BadIter = UtilitiesMapperFullCoverageNamespace._BadIter
-_AtCallable = UtilitiesMapperFullCoverageNamespace._AtCallable
 _ExtractFieldCallable = UtilitiesMapperFullCoverageNamespace._ExtractFieldCallable
 _TakeCallable = UtilitiesMapperFullCoverageNamespace._TakeCallable
 _BuildApplyConvertCallable = (
@@ -795,8 +695,6 @@ _ExtractTransformOptionsCallable = (
 _BuildApplyOpCallable = UtilitiesMapperFullCoverageNamespace._BuildApplyOpCallable
 _TransformCallable = UtilitiesMapperFullCoverageNamespace._TransformCallable
 _MapDictKeysCallable = UtilitiesMapperFullCoverageNamespace._MapDictKeysCallable
-_BuildFlagsCallable = UtilitiesMapperFullCoverageNamespace._BuildFlagsCallable
-_at_obj = UtilitiesMapperFullCoverageNamespace._at_obj
 _extract_field_obj = UtilitiesMapperFullCoverageNamespace._extract_field_obj
 _take_obj = UtilitiesMapperFullCoverageNamespace._take_obj
 _build_apply_convert_obj = UtilitiesMapperFullCoverageNamespace._build_apply_convert_obj
@@ -809,7 +707,6 @@ _build_apply_slice_obj = UtilitiesMapperFullCoverageNamespace._build_apply_slice
 _build_apply_group_obj = UtilitiesMapperFullCoverageNamespace._build_apply_group_obj
 _transform_obj = UtilitiesMapperFullCoverageNamespace._transform_obj
 _map_dict_keys_obj = UtilitiesMapperFullCoverageNamespace._map_dict_keys_obj
-_build_flags_obj = UtilitiesMapperFullCoverageNamespace._build_flags_obj
 AttrObject = UtilitiesMapperFullCoverageNamespace.AttrObject
 BadString = UtilitiesMapperFullCoverageNamespace.BadString
 BadBool = UtilitiesMapperFullCoverageNamespace.BadBool
@@ -832,14 +729,14 @@ test_narrow_to_string_keyed_dict_and_mapping_paths = UtilitiesMapperFullCoverage
 test_general_value_helpers_and_logger = (
     UtilitiesMapperFullCoverageNamespace.test_general_value_helpers_and_logger
 )
-test_ensure_and_extract_array_index_helpers = (
-    UtilitiesMapperFullCoverageNamespace.test_ensure_and_extract_array_index_helpers
+test_extract_array_index_helpers = (
+    UtilitiesMapperFullCoverageNamespace.test_extract_array_index_helpers
 )
 test_extract_error_paths_and_prop_accessor = (
     UtilitiesMapperFullCoverageNamespace.test_extract_error_paths_and_prop_accessor
 )
-test_at_take_and_as_branches = (
-    UtilitiesMapperFullCoverageNamespace.test_at_take_and_as_branches
+test_take_and_as_branches = (
+    UtilitiesMapperFullCoverageNamespace.test_take_and_as_branches
 )
 test_extract_field_value_and_ensure_variants = (
     UtilitiesMapperFullCoverageNamespace.test_extract_field_value_and_ensure_variants
@@ -860,6 +757,6 @@ test_build_apply_transform_and_process_error_paths = UtilitiesMapperFullCoverage
 test_group_sort_unique_slice_chunk_branches = (
     UtilitiesMapperFullCoverageNamespace.test_group_sort_unique_slice_chunk_branches
 )
-test_construct_transform_and_deep_eq_branches = (
-    UtilitiesMapperFullCoverageNamespace.test_construct_transform_and_deep_eq_branches
+test_transform_and_deep_eq_branches = (
+    UtilitiesMapperFullCoverageNamespace.test_transform_and_deep_eq_branches
 )

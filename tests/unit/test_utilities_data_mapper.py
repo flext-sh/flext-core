@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections import UserDict, UserList
-from collections.abc import ItemsView, Iterator, Mapping
-from typing import cast, override
+from collections import UserDict
+from collections.abc import ItemsView
+from typing import override
 
 from flext_tests import tm
 
@@ -29,18 +29,6 @@ class TestUtilitiesDataMapper:
         @override
         def items(self) -> ItemsView[str, t.Container]:
             msg = "Bad dict items"
-            raise RuntimeError(msg)
-
-    class _BadList(UserList[str]):
-        @override
-        def __iter__(self) -> Iterator[str]:
-            msg = "Bad list iteration"
-            raise RuntimeError(msg)
-
-    class _BadDictGet:
-        def get(self, key: str, default: bool | None = None) -> bool:
-            _ = (key, default)
-            msg = "Bad dict get"
             raise RuntimeError(msg)
 
     def test_basic_key_mapping(self) -> None:
@@ -79,83 +67,6 @@ class TestUtilitiesDataMapper:
         bad_dict_instance = self._BadDict()
         result = u.map_dict_keys(bad_dict_instance, {})
         tm.fail(result, contains="Failed to map dict keys")
-
-    def test_basic_flags_building(self) -> None:
-        mc = c.Core.Mapper
-        flags = [mc.FLAGS_READ, mc.FLAGS_WRITE]
-        mapping = {
-            mc.FLAGS_READ: mc.CAN_READ,
-            mc.FLAGS_WRITE: mc.CAN_WRITE,
-            mc.FLAGS_DELETE: mc.CAN_DELETE,
-        }
-        result = u.build_flags_dict(flags, mapping)
-        _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == {
-            mc.CAN_READ: True,
-            mc.CAN_WRITE: True,
-            mc.CAN_DELETE: False,
-        }
-
-    def test_custom_default_value(self) -> None:
-        mc = c.Core.Mapper
-        flags = [mc.FLAGS_READ]
-        mapping = {mc.FLAGS_READ: mc.CAN_READ, mc.FLAGS_WRITE: mc.CAN_WRITE}
-        result = u.build_flags_dict(
-            flags,
-            mapping,
-            default_value=True,
-        )
-        _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == {mc.CAN_READ: True, mc.CAN_WRITE: True}
-
-    def test_build_flags_dict_exception_handling(self) -> None:
-        bad_list_instance = self._BadList()
-        bad_list_typed: t.StrSequence = cast("t.StrSequence", bad_list_instance)
-        result = u.build_flags_dict(bad_list_typed, {})
-        _ = assertion_helpers.assert_flext_result_failure(result)
-        assert "Failed to build flags dict" in str(result.error)
-
-    def test_basic_active_keys(self) -> None:
-        mc = c.Core.Mapper
-        source = {mc.FLAGS_READ: True, mc.FLAGS_WRITE: True, mc.FLAGS_DELETE: False}
-        mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w", mc.FLAGS_DELETE: "d"}
-        result = u.collect_active_keys(source, mapping)
-        _ = assertion_helpers.assert_flext_result_success(result)
-        assert set(result.value) == {"r", "w"}
-
-    def test_none_active(self) -> None:
-        mc = c.Core.Mapper
-        source = {mc.FLAGS_READ: False, mc.FLAGS_WRITE: False}
-        mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w"}
-        result = u.collect_active_keys(source, mapping)
-        _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == []
-
-    def test_collect_active_keys_exception_handling(self) -> None:
-        result = u.collect_active_keys(
-            cast("Mapping[str, bool]", self._BadDictGet()),
-            {"key": "output"},
-        )
-        _ = assertion_helpers.assert_flext_result_failure(result)
-        assert "Failed to collect active keys" in str(result.error)
-
-    def test_basic_transform(self) -> None:
-        mc = c.Core.Mapper
-        source_raw = {mc.A: mc.HELLO, mc.B: mc.WORLD}
-        result = u.transform_values(
-            source_raw,
-            lambda v: str(v).upper(),
-        )
-        assert result == {mc.A: mc.HELLO_UPPER, mc.B: mc.WORLD_UPPER}
-
-    def test_numeric_transform(self) -> None:
-        mc = c.Core.Mapper
-        source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
-        result = u.transform_values(
-            source_raw,
-            lambda v: v * 2 if isinstance(v, int) else v,
-        )
-        assert result == {mc.A: 2, mc.B: 4, mc.C: 6}
 
     def test_basic_filter(self) -> None:
         mc = c.Core.Mapper

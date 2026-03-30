@@ -72,32 +72,6 @@ def test_is_container_negative_paths_and_callable() -> None:
     tm.that(not u.is_container(cast("t.NormalizedValue", {"x": {1}})), eq=True)
 
 
-def test_is_handler_type_branches() -> None:
-    tm.that(u.is_handler_type({"a": 1}), eq=True)
-    tm.that(
-        u.is_handler_type(
-            cast(
-                "t.NormalizedValue",
-                TestUnitModels._Model.model_validate({"value": 1}),
-            ),
-        ),
-        eq=True,
-    )
-    tm.that(u.is_handler_type(cast("t.NormalizedValue", _sample_handler)), eq=True)
-
-    class _BaseModelSubclass:
-        value: str = "ok"
-
-    class _DuckHandler:
-        value: str = "ok"
-
-        def handle(self, _value: t.NormalizedValue) -> None:
-            return None
-
-    tm.that(u.is_handler_type(cast("t.NormalizedValue", _BaseModelSubclass)), eq=True)
-    tm.that(u.is_handler_type(cast("t.NormalizedValue", _DuckHandler())), eq=True)
-
-
 def test_non_empty_and_normalize_branches() -> None:
     tm.that(u.is_string_non_empty("x"), eq=True)
     tm.that(u.is_type("x", "string_non_empty"), eq=True)
@@ -197,17 +171,6 @@ def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> 
     tm.that(not _is_type_obj(plain_obj, "logger"), eq=True)
 
 
-def test_extract_mapping_or_none_branches() -> None:
-    mapping_result = u.extract_mapping_or_none({"k": "v"})
-    tm.that(mapping_result.is_success, eq=True)
-    tm.that(mapping_result.value, eq={"k": "v"})
-    mapping_non_str_keys = u.extract_mapping_or_none(
-        cast("t.NormalizedValue", {1: "v"}),
-    )
-    tm.that(mapping_non_str_keys.is_success, eq=True)
-    tm.that(u.extract_mapping_or_none([1, 2, 3]).is_failure, eq=True)
-
-
 def test_guard_in_has_empty_none_helpers() -> None:
     tm.that(not _return_false("x"), eq=True)
     tm.that(u.guard("x", str), eq=True)
@@ -235,10 +198,6 @@ def test_guard_in_has_empty_none_helpers() -> None:
     tm.that(not u.in_("a", 42), eq=True)
     tm.that({"k": 1}, has="k")
     tm.that({"key": "value"}, has="key")
-    tm.that(u.empty(None), eq=True)
-    tm.that(u.empty(()), eq=True)
-    tm.that(not u.empty([1]), eq=True)
-    tm.that(u.empty(0), eq=True)
 
 
 def test_chk_exercises_missed_branches() -> None:

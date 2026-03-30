@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator, Mapping, MutableSequence, Sequence
+from collections.abc import Iterator, Mapping
 from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
@@ -91,92 +91,14 @@ class TestUtilitiesCollectionFullCoverage:
                 strategy="deep",
             )
 
-    def test_batch_fail_collect_flatten_and_progress(self) -> None:
-        def _success_list(_item: int) -> Sequence[int]:
-            return [1, 2]
-
-        def _failure_result(_item: int) -> NoReturn:
-            msg = "err"
-            raise ValueError(msg)
-
-        def _hard_failure(_item: int) -> NoReturn:
-            msg = "hard"
-            raise ValueError(msg)
-
-        def _raise_value_error(_item: int) -> NoReturn:
-            msg = "x"
-            raise ValueError(msg)
-
-        def _identity(item: int) -> int:
-            return item
-
-        flattened = u.batch(
-            [1],
-            _success_list,
-            flatten=True,
-        )
-        tm.ok(flattened)
-        flat_value = flattened.value
-        assert flat_value.results == [1, 2]
-        collected = u.batch(
-            [1],
-            _failure_result,
-            on_error="collect",
-        )
-        tm.ok(collected)
-        collected_value = collected.value
-        tm.that(len(collected_value.errors), eq=1)
-        tm.that(collected_value.errors[0][1], has="err")
-        failed = u.batch([1], _hard_failure, on_error="fail")
-        tm.fail(failed)
-        failed_exc = u.batch(
-            [1],
-            _raise_value_error,
-        )
-        tm.fail(failed_exc)
-        progress_calls: MutableSequence[tuple[int, int]] = []
-        ok = u.batch(
-            [1, 2],
-            _identity,
-            progress=lambda processed, total: progress_calls.append((processed, total)),
-        )
-        tm.ok(ok)
-        assert progress_calls[-1] == (2, 2)
-
     def test_process_outer_exception_and_coercion_branches(self) -> None:
         with pytest.raises(TypeError, match="iter failed"):
             _ = u.process(
                 cast("t.StrSequence", self._BadSequence()),
                 lambda x: x,
             )
-        assert u.first([], default=9).value == 9
-        assert u.last([], default=8).value == 8
 
-    def test_parse_mapping_outer_exception(self) -> None:
-        result = u.parse_mapping(
-            self._Color,
-            cast(
-                "Mapping[str, str | TestUtilitiesCollectionFullCoverage._Color]",
-                self._BadMapping(),
-            ),
-        )
-        tm.fail(result)
-        assert result.error is not None and "Parse mapping failed" in result.error
-
-    def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error(
-        self,
-    ) -> None:
-        collected = u.batch(
-            [1],
-            lambda _item: str(self._FailureResult()),
-            on_error="collect",
-        )
-        tm.ok(collected)
-        collected_value = collected.value
-        assert collected_value.errors == []
-        tm.that(str(collected_value.results[0]), has="_FailureResult")
-        failed = u.batch([1], lambda _item: str(self._FailureResult()), on_error="fail")
-        tm.ok(failed)
+    def test_parse_sequence_outer_error(self) -> None:
         parsed = u.parse_sequence(
             cast(
                 "type[TestUtilitiesCollectionFullCoverage._Color]",
