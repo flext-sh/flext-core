@@ -1,4 +1,4 @@
-"""Tests for FlextUtilitiesText - text cleaning, truncation, safe_string, format.
+"""Tests for FlextUtilitiesText - safe_string, format.
 
 Module: flext_core._utilities.text
 Coverage target: lines 33, 82-83, 109
@@ -8,8 +8,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
-import re
 
 import pytest
 from hypothesis import given, strategies as st
@@ -74,18 +72,3 @@ class TestUtilitiesTextFullCoverage(TextUtilityContract):
         assert formatted == name.lower().replace(" ", "-").replace("_", "-")
         assert " " not in formatted
         assert "_" not in formatted
-
-    @pytest.mark.parametrize(
-        ("raw", "expected"),
-        TextUtilityContract.CLEAN_TEXT_CASES,
-    )
-    def test_clean_text_examples(self, raw: str, expected: str) -> None:
-        """Clean text should remove control chars and normalize whitespace."""
-        self.assert_clean_text(raw, expected)
-
-    @given(st.text())
-    def test_clean_text_never_contains_repeated_whitespace(self, raw: str) -> None:
-        """Property-based guarantee for whitespace normalization."""
-        cleaned = u.clean_text(raw)
-        assert re.search(r"\s{2,}", cleaned) is None
-        assert cleaned == cleaned.strip()

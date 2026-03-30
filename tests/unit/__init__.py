@@ -408,14 +408,9 @@ if TYPE_CHECKING:
         create_compare_value_objects_cases,
         create_hash_entity_cases,
         create_hash_value_object_cases,
-        create_validate_entity_has_id_cases,
-        create_validate_value_object_immutable_cases,
     )
     from tests.unit.test_utilities_domain_full_coverage import (
         TestUtilitiesDomainFullCoverage,
-    )
-    from tests.unit.test_utilities_enum_full_coverage import (
-        TestUtilitiesEnumFullCoverage,
     )
     from tests.unit.test_utilities_generators_full_coverage import (
         TestUtilitiesGeneratorsFullCoverage,
@@ -748,10 +743,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.test_utilities_domain_full_coverage",
         "TestUtilitiesDomainFullCoverage",
     ],
-    "TestUtilitiesEnumFullCoverage": [
-        "tests.unit.test_utilities_enum_full_coverage",
-        "TestUtilitiesEnumFullCoverage",
-    ],
     "TestUtilitiesGeneratorsFullCoverage": [
         "tests.unit.test_utilities_generators_full_coverage",
         "TestUtilitiesGeneratorsFullCoverage",
@@ -867,14 +858,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "create_hash_value_object_cases": [
         "tests.unit.test_utilities_domain",
         "create_hash_value_object_cases",
-    ],
-    "create_validate_entity_has_id_cases": [
-        "tests.unit.test_utilities_domain",
-        "create_validate_entity_has_id_cases",
-    ],
-    "create_validate_value_object_immutable_cases": [
-        "tests.unit.test_utilities_domain",
-        "create_validate_value_object_immutable_cases",
     ],
     "flext_tests": ["tests.unit.flext_tests", ""],
     "generators_module": [
@@ -1836,7 +1819,6 @@ __all__ = [
     "TestUtilitiesCoverage",
     "TestUtilitiesDataMapper",
     "TestUtilitiesDomainFullCoverage",
-    "TestUtilitiesEnumFullCoverage",
     "TestUtilitiesGeneratorsFullCoverage",
     "TestUtilitiesParserFullCoverage",
     "TestUtilitiesTextFullCoverage",
@@ -1872,8 +1854,6 @@ __all__ = [
     "create_compare_value_objects_cases",
     "create_hash_entity_cases",
     "create_hash_value_object_cases",
-    "create_validate_entity_has_id_cases",
-    "create_validate_value_object_immutable_cases",
     "flext_tests",
     "generators_module",
     "handlers_module",

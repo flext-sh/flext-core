@@ -262,18 +262,6 @@ class Testu(TextUtilityContract):
         short_id = u.generate("ulid", length=8)
         tm.that(len(short_id), eq=8)
 
-    @pytest.mark.parametrize(("raw", "expected"), TextUtilityContract.CLEAN_TEXT_CASES)
-    def test_text_processor_clean(self, raw: str, expected: str) -> None:
-        """Test text cleaning contract across reusable shared cases."""
-        self.assert_clean_text(raw, expected)
-
-    def test_text_processor_truncate(self) -> None:
-        """Test text truncation - returns r[str]."""
-        result = u.truncate_text("hello world", max_length=8)
-        _ = assertion_helpers.assert_flext_result_success(result)
-        tm.that(len(result.value), lte=8)
-        tm.that(result.value.endswith("..."), eq=True)
-
     @pytest.mark.parametrize(
         ("raw", "expected"),
         TextUtilityContract.SAFE_STRING_VALID_CASES,

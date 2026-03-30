@@ -16,7 +16,7 @@ from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, FlextUtilitiesGuards, c, p, r, t
+from flext_core import FlextUtilitiesGuards, c, p, r, t
 
 
 class FlextUtilitiesChecker:
@@ -40,11 +40,6 @@ class FlextUtilitiesChecker:
 
         """
         return callable(value)
-
-    @property
-    def logger(self) -> p.Logger:
-        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def _is_subclass_of(candidate: t.TypeHintSpecifier, parent: type) -> bool:

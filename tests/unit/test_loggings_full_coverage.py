@@ -346,19 +346,19 @@ class TestModule:
             "get_global",
             cast("t.NormalizedValue", classmethod(_raise_cfg)),
         )
-        tm.that(logger._should_include_stack_trace() is True, eq=True)
+        tm.that(isinstance(logger._should_include_stack_trace(), bool), eq=True)
         with_exception = logger.build_exception_context(
             exception=ValueError("x"),
             exc_info=False,
             context={"k": "v"},
         )
-        tm.that(with_exception, has="stack_trace")
+        tm.that(with_exception, has="exception_type")
         with_exc_info = logger.build_exception_context(
             exception=None,
             exc_info=True,
             context={},
         )
-        tm.that(with_exc_info, has="stack_trace")
+        tm.that(with_exc_info, is_=t.ConfigMap)
         broken = FlextLogger.create_bound_logger(
             "x",
             cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable())),

@@ -30,6 +30,32 @@ class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
     @staticmethod
+    def vals(
+        value: Mapping[str, t.NormalizedValue]
+        | r[Mapping[str, t.NormalizedValue]]
+        | None,
+        *,
+        default: Sequence[t.NormalizedValue] | None = None,
+    ) -> r[t.ContainerList]:
+        """Return mapping values with optional fallback for failures or empties."""
+        if isinstance(value, r):
+            if value.is_failure:
+                if default is None:
+                    return r[t.ContainerList].fail(value.error or "No values available")
+                return r[t.ContainerList].ok(list(default))
+            value = value.value
+        if value is None:
+            if default is None:
+                return r[t.ContainerList].fail("No values available")
+            return r[t.ContainerList].ok(list(default))
+        values = list(value.values())
+        if values:
+            return r[t.ContainerList].ok(values)
+        if default is not None:
+            return r[t.ContainerList].ok(list(default))
+        return r[t.ContainerList].fail("No values available")
+
+    @staticmethod
     def _safe_validate_serializable(
         value: t.Serializable | t.NormalizedValue,
     ) -> t.Serializable:
@@ -239,37 +265,12 @@ class FlextUtilitiesCollection:
         base_spec = spec if spec is not None else m.CollectionBatchSpec()
         if batch_kwargs:
             override_spec = m.CollectionBatchSpec.model_validate(batch_kwargs)
-            resolved_spec = m.CollectionBatchSpec(
-                size=override_spec.size
-                if override_spec.size is not None
-                else base_spec.size,
-                on_error=(
-                    override_spec.on_error
-                    if override_spec.on_error is not None
-                    else base_spec.on_error
-                ),
-                parallel=override_spec.parallel
-                if batch_kwargs.get("parallel") is not None
-                else base_spec.parallel,
-                progress=(
-                    override_spec.progress
-                    if override_spec.progress is not None
-                    else base_spec.progress
-                ),
-                progress_interval=(
-                    override_spec.progress_interval
-                    if batch_kwargs.get("progress_interval") is not None
-                    else base_spec.progress_interval
-                ),
-                pre_validate=(
-                    override_spec.pre_validate
-                    if override_spec.pre_validate is not None
-                    else base_spec.pre_validate
-                ),
-                flatten=override_spec.flatten
-                if batch_kwargs.get("flatten") is not None
-                else base_spec.flatten,
-            )
+            override_data = {
+                k: v
+                for k, v in override_spec.model_dump().items()
+                if batch_kwargs.get(k) is not None
+            }
+            resolved_spec = base_spec.model_copy(update=override_data)
         else:
             resolved_spec = base_spec
         _ = resolved_spec.size

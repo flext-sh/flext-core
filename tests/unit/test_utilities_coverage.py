@@ -14,10 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
-
-from flext_core import r
-from tests import t, u
+from tests import t
 
 
 class TestUtilitiesCoverage:
@@ -38,16 +35,3 @@ def test_utilities_get_method_coverage() -> None:
     assert result == "value"
     result = test_data.root.get("missing", "fallback")
     assert result == "fallback"
-
-
-def test_utilities_vals_result_contract() -> None:
-    values_from_mapping = u.vals({"a": 1, "b": 2})
-    assert values_from_mapping.is_success and values_from_mapping.value == [1, 2]
-    failed_values_result = r[Mapping[str, int]].fail("failed")
-    values_from_failed_result = u.vals(failed_values_result, default=[0])
-    assert values_from_failed_result.is_success and values_from_failed_result.value == [
-        0,
-    ]
-    empty_mapping: MutableMapping[str, int] = {}
-    empty_without_default = u.vals(empty_mapping)
-    assert empty_without_default.is_failure

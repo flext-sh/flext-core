@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import overload
 
@@ -45,15 +44,6 @@ class FlextUtilitiesFileOps:
             path.write_bytes(content)
         else:
             _ = path.write_text(content, encoding=encoding)
-
-    @staticmethod
-    def write_stdout(text: str) -> None:
-        """Write *text* to stdout and flush, discarding the byte-count.
-
-        Replaces ``sys.stdout.write(...)`` where the ``int`` return is unused.
-        """
-        _ = sys.stdout.write(text)
-        sys.stdout.flush()
 
 
 __all__ = ["FlextUtilitiesFileOps"]

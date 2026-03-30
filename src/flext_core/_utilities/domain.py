@@ -10,18 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
-from flext_core import FlextRuntime, c, p, t
+from pydantic import BaseModel
+
+from flext_core import c, t
 
 
 class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
-
-    @property
-    def logger(self) -> p.Logger:
-        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def same_type(
@@ -145,46 +142,16 @@ class FlextUtilitiesDomain:
             return hash(repr(obj))
 
     @staticmethod
-    def validate_entity_has_id(
-        entity: t.RuntimeData,
-        id_attr: str = c.FIELD_ID,
-    ) -> bool:
-        """Validate that entity has a non-None unique ID.
-
-        Args:
-            entity: Entity to validate
-            id_attr: Attribute name for unique ID (default: "unique_id")
-
-        Returns:
-            True if entity has non-None ID, False otherwise
-
-        """
-        entity_id = getattr(entity, id_attr, None)
-        return bool(entity_id)
-
-    @staticmethod
-    def validate_value_object_immutable(
-        obj: t.RuntimeData,
-    ) -> bool:
-        """Check if value t.NormalizedValue appears to be immutable (frozen).
-
-        Args:
-            obj: Value t.NormalizedValue to check
-
-        Returns:
-            True if appears immutable (frozen=True or no __setattr__)
-
-        """
-        if hasattr(obj, "model_config"):
-            try:
-                config = getattr(obj, "model_config", {})
-                if FlextRuntime.is_dict_like(config) and config.get("frozen"):
-                    return True
-            except (AttributeError, TypeError):
-                pass
-        if hasattr(obj, "__setattr__"):
-            setattr_method = getattr(obj.__class__, "__setattr__", None)
-            return setattr_method is not object.__setattr__
+    def validate_value_object_immutable(value: object) -> bool:
+        """Check whether a value object is configured as immutable/frozen."""
+        if not isinstance(value, BaseModel):
+            return False
+        try:
+            model_config = getattr(value.__class__, "model_config", {})
+            if isinstance(model_config, Mapping):
+                return bool(model_config.get("frozen", False))
+        except (AttributeError, TypeError, ValueError):
+            return False
         return False
 
 

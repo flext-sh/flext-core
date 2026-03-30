@@ -13,33 +13,11 @@ from __future__ import annotations
 
 import re
 
-from flext_core import FlextRuntime, c, p, r
+from flext_core import r
 
 
 class FlextUtilitiesText:
     """Low-level text normalization helpers for CQRS utilities."""
-
-    @property
-    def logger(self) -> p.Logger:
-        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-        return FlextRuntime.get_logger(__name__)
-
-    @staticmethod
-    def clean_text(text: str) -> str:
-        """Clean text by removing extra whitespace and control characters.
-
-        Args:
-            text: Text to clean
-
-        Returns:
-            str: Cleaned text with normalized whitespace
-
-        """
-        return re.sub(
-            r"\s+",
-            " ",
-            re.sub(c.CONTROL_CHARS_PATTERN, "", text),
-        ).strip()
 
     @staticmethod
     def format_app_id(name: str) -> str:
@@ -80,28 +58,6 @@ class FlextUtilitiesText:
         return stripped
 
     @staticmethod
-    def truncate_text(
-        text: str,
-        max_length: int = c.DEFAULT_SIZE,
-        suffix: str = "...",
-    ) -> r[str]:
-        """Truncate text to maximum length and append suffix if needed.
-
-        Args:
-            text: Text to truncate.
-            max_length: Maximum length including suffix (default: DEFAULT_SIZE).
-            suffix: Suffix to append if truncated (default: "...").
-
-        Returns:
-            p.Result[str] with truncated text or original if already short enough.
-
-        """
-        if len(text) <= max_length:
-            return r[str].ok(text)
-        truncated = text[: max_length - len(suffix)] + suffix
-        return r[str].ok(truncated)
-
-    @staticmethod
     def normalize_alnum(text: str) -> str:
         """Strip non-alphanumeric characters and lowercase the result.
 
@@ -116,6 +72,21 @@ class FlextUtilitiesText:
 
         """
         return "".join(ch for ch in text.lower() if ch.isalnum())
+
+    @staticmethod
+    def clean_text(text: str) -> str:
+        """Normalize whitespace and strip control characters from text."""
+        cleaned = text.translate(str.maketrans("", "", "\x00\r\n\t"))
+        return re.sub(r" +", " ", cleaned).strip()
+
+    @staticmethod
+    def truncate_text(text: str, *, max_length: int) -> r[str]:
+        """Truncate text with an ellipsis when it exceeds the target length."""
+        if max_length <= 0:
+            return r[str].fail("max_length must be greater than zero")
+        if len(text) <= max_length:
+            return r[str].ok(text)
+        return r[str].ok(f"{text[:max_length]}...")
 
 
 __all__ = ["FlextUtilitiesText"]

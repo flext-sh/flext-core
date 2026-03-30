@@ -78,16 +78,6 @@ class Testu(TextUtilityContract):
             (20, 20),
             (None, c.SHORT_UUID_LENGTH),
         ]
-        TEXT_CLEAN_CASES: ClassVar[Sequence[tuple[str, str]]] = list(
-            TextUtilityContract.CLEAN_TEXT_CASES,
-        ) + [
-            ("a    b    c", "a b c"),
-            ("  Test  Text  ", "Test Text"),
-        ]
-        TEXT_TRUNCATE_CASES: ClassVar[Sequence[tuple[str, int, bool]]] = [
-            ("VeryLongText", 5, True),
-            ("Hi", 10, False),
-        ]
         CACHE_NORMALIZE_CASES: ClassVar[
             Sequence[tuple[t.NormalizedValue, type | tuple[type, ...]]]
         ] = [
@@ -211,37 +201,6 @@ class Testu(TextUtilityContract):
         id1 = u.generate()
         id2 = u.generate()
         assert id1 != id2
-
-    @pytest.mark.parametrize(
-        ("input_text", "expected_pattern"),
-        UtilityScenarios.TEXT_CLEAN_CASES,
-    )
-    def test_text_processor_clean_text(
-        self,
-        input_text: str,
-        expected_pattern: str,
-    ) -> None:
-        """Test text cleaning."""
-        result = u.clean_text(input_text)
-        assert result.replace(" ", "") == expected_pattern.replace(" ", "")
-
-    @pytest.mark.parametrize(
-        ("text", "max_length", "should_truncate"),
-        UtilityScenarios.TEXT_TRUNCATE_CASES,
-    )
-    def test_text_processor_truncate(
-        self,
-        text: str,
-        max_length: int,
-        should_truncate: bool,
-    ) -> None:
-        """Test text truncation."""
-        result = u.truncate_text(text, max_length=max_length)
-        _ = u.Tests.Result.assert_success(result)
-        if should_truncate:
-            assert len(result.value) <= max_length + 3
-        else:
-            assert result.value == text
 
     def test_text_processor_safe_string_success(self) -> None:
         """Test safe string with valid input."""

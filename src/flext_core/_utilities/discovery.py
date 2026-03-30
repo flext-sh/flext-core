@@ -30,19 +30,6 @@ class FlextUtilitiesDiscovery:
     """
 
     @staticmethod
-    def has_factories(module: ModuleType) -> bool:
-        """Check if module has any factory-decorated functions."""
-        for name in dir(module):
-            if name.startswith("_"):
-                continue
-            candidate = vars(module).get(name)
-            if candidate is None:
-                continue
-            if callable(candidate) and hasattr(candidate, c.FACTORY_ATTR):
-                return True
-        return False
-
-    @staticmethod
     def scan_module(
         module: ModuleType,
     ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
@@ -72,6 +59,18 @@ class FlextUtilitiesDiscovery:
                 )
             ],
             key=operator.itemgetter(0),
+        )
+
+    @staticmethod
+    def has_factories(target: ModuleType | type | object) -> bool:
+        """Check whether a module or class exposes factory-decorated callables."""
+        if isinstance(target, ModuleType):
+            return bool(FlextUtilitiesDiscovery.scan_module(target))
+        target_vars = vars(target if isinstance(target, type) else target.__class__)
+        return any(
+            callable(value)
+            and isinstance(vars(value).get(c.FACTORY_ATTR), m.FactoryDecoratorConfig)
+            for value in target_vars.values()
         )
 
 

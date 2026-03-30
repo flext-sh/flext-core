@@ -250,6 +250,75 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return r[T].ok(default)
         return r[T].fail(error_message)
 
+    _EQUALITY_OPS: ClassVar[
+        Mapping[str, Callable[[t.NormalizedValue, t.NormalizedValue], bool]]
+    ] = {
+        "eq": lambda val, cmp: val == cmp,
+        "ne": lambda val, cmp: val != cmp,
+    }
+
+    _MEMBERSHIP_OPS: ClassVar[
+        Mapping[str, Callable[[t.NormalizedValue, t.ContainerList], bool]]
+    ] = {
+        "in_": lambda val, cmp: val in cmp,
+        "not_in": lambda val, cmp: val not in cmp,
+    }
+
+    _NUMERIC_OPS: ClassVar[Mapping[str, Callable[[t.Numeric, float], bool]]] = {
+        "gt": lambda val, cmp: val > cmp,
+        "gte": lambda val, cmp: val >= cmp,
+        "lt": lambda val, cmp: val < cmp,
+        "lte": lambda val, cmp: val <= cmp,
+    }
+
+    @staticmethod
+    def _resolve_numeric(value: t.NormalizedValue) -> t.Numeric:
+        """Extract numeric value (raw for numbers, len for sized types)."""
+        if isinstance(value, (int, float)):
+            return value
+        if isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
+            sized_value: Sized = value
+            return len(sized_value)
+        if hasattr(value, "__len__"):
+            try:
+                len_method = getattr(value, "__len__", None)
+                if callable(len_method):
+                    length = len_method()
+                    if isinstance(length, int):
+                        return length
+            except (TypeError, AttributeError):
+                pass
+        return 0
+
+    @staticmethod
+    def _check_string_ops(
+        value: str,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Check string-specific operations (match, starts, ends, contains)."""
+        if guard_spec.match is not None and not re.search(guard_spec.match, value):
+            return False
+        if guard_spec.starts is not None and not value.startswith(guard_spec.starts):
+            return False
+        if guard_spec.ends is not None and not value.endswith(guard_spec.ends):
+            return False
+        return not (
+            guard_spec.contains is not None
+            and isinstance(guard_spec.contains, str)
+            and guard_spec.contains not in value
+        )
+
+    @staticmethod
+    def _check_iterable_contains(
+        value: t.NormalizedValue,
+        contains: t.NormalizedValue,
+    ) -> bool:
+        """Check if iterable value contains the target."""
+        if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
+            iterable_value: Iterable[t.NormalizedValue] = value
+            return any(item == contains for item in iterable_value)
+        return False
+
     @staticmethod
     def chk(
         value: t.NormalizedValue,
@@ -264,91 +333,48 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 criteria,
             )
             guard_spec = guard_spec.model_copy(update=criteria_spec.model_dump())
-        eq = guard_spec.eq
-        ne = guard_spec.ne
-        gt = guard_spec.gt
-        gte = guard_spec.gte
-        lt = guard_spec.lt
-        lte = guard_spec.lte
-        is_ = guard_spec.is_
-        not_ = guard_spec.not_
-        in_ = guard_spec.in_
-        not_in = guard_spec.not_in
-        none = guard_spec.none
-        empty = guard_spec.empty
-        match = guard_spec.match
-        contains = guard_spec.contains
-        starts = guard_spec.starts
-        ends = guard_spec.ends
-        if none is True and value is not None:
+        # None/type checks (special semantics, not data-driven)
+        if guard_spec.none is True and value is not None:
             return False
-        if none is False and value is None:
+        if guard_spec.none is False and value is None:
             return False
-        if is_ is not None and (not isinstance(value, is_)):
+        if guard_spec.is_ is not None and not isinstance(value, guard_spec.is_):
             return False
-        if not_ is not None and isinstance(value, not_):
+        if guard_spec.not_ is not None and isinstance(value, guard_spec.not_):
             return False
-        if eq is not None and value != eq:
+        # Equality checks via dispatch
+        for op_name, check_fn in FlextUtilitiesGuardsEnsure._EQUALITY_OPS.items():
+            spec_val = getattr(guard_spec, op_name, None)
+            if spec_val is not None and not check_fn(value, spec_val):
+                return False
+        # Membership checks via dispatch
+        for op_name, check_fn in FlextUtilitiesGuardsEnsure._MEMBERSHIP_OPS.items():
+            spec_val: t.ContainerList | None = getattr(guard_spec, op_name, None)
+            if spec_val is not None and not check_fn(value, spec_val):
+                return False
+        # Numeric/size checks via dispatch
+        check_val = FlextUtilitiesGuardsEnsure._resolve_numeric(value)
+        for op_name, num_fn in FlextUtilitiesGuardsEnsure._NUMERIC_OPS.items():
+            spec_val_num: float | None = getattr(guard_spec, op_name, None)
+            if spec_val_num is not None and not num_fn(check_val, spec_val_num):
+                return False
+        # Empty checks
+        if guard_spec.empty is True and check_val != 0:
             return False
-        if ne is not None and value == ne:
+        if guard_spec.empty is False and check_val == 0:
             return False
-        if in_ is not None and value not in in_:
-            return False
-        if not_in is not None and value in not_in:
-            return False
-        check_val: t.Numeric = 0
-        if isinstance(value, (int, float)):
-            check_val = value
-        elif isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
-            sized_value: Sized = value
-            check_val = len(sized_value)
-        elif hasattr(value, "__len__"):
-            try:
-                len_method = getattr(value, "__len__", None)
-                if callable(len_method):
-                    length = len_method()
-                    if isinstance(length, int):
-                        check_val = length
-            except (TypeError, AttributeError):
-                check_val = 0
-        if gt is not None and check_val <= gt:
-            return False
-        if gte is not None and check_val < gte:
-            return False
-        if lt is not None and check_val >= lt:
-            return False
-        if lte is not None and check_val > lte:
-            return False
-        if empty is True and check_val != 0:
-            return False
-        if empty is False and check_val == 0:
-            return False
+        # String-specific checks
         if isinstance(value, str):
-            if match is not None and (not re.search(match, value)):
+            if not FlextUtilitiesGuardsEnsure._check_string_ops(value, guard_spec):
                 return False
-            if starts is not None and (not value.startswith(starts)):
-                return False
-            if ends is not None and (not value.endswith(ends)):
-                return False
-            if (
-                contains is not None
-                and isinstance(contains, str)
-                and (contains not in value)
-            ):
-                return False
-        elif contains is not None:
-            if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
-                iterable_value: Iterable[t.NormalizedValue] = value
-                found = False
-                for item in iterable_value:
-                    item_value: t.NormalizedValue = item
-                    if item_value == contains:
-                        found = True
-                        break
-                if not found:
-                    return False
-            else:
-                return False
+        elif (
+            guard_spec.contains is not None
+            and not FlextUtilitiesGuardsEnsure._check_iterable_contains(
+                value,
+                guard_spec.contains,
+            )
+        ):
+            return False
         return True
 
     @staticmethod

@@ -8,101 +8,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
-from enum import Enum, StrEnum
+from collections.abc import Callable, Mapping, MutableSequence
+from enum import StrEnum
 from functools import wraps
-from types import UnionType
-from typing import (
-    Annotated,
-    ClassVar,
-    get_args,
-    get_origin,
-    get_type_hints,
-)
+from inspect import BoundArguments, Parameter, signature
+from typing import ClassVar, get_args, get_origin, get_type_hints
 
-from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
-from pydantic.errors import PydanticSchemaGenerationError
+from pydantic import TypeAdapter, ValidationError
 
-from flext_core import P, R, m, r, t
+from flext_core import m, r, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for automatic args/kwargs parsing."""
 
     _V: ClassVar[type[m.Validators]] = m.Validators
-
-    @staticmethod
-    def _validate_enum_type(
-        candidate: t.MessageTypeSpecifier,
-    ) -> r[type[StrEnum]]:
-        """Validate that candidate is a StrEnum subclass."""
-        try:
-            return r[type[StrEnum]].ok(
-                FlextUtilitiesArgs._V.enum_type_adapter().validate_python(candidate),
-            )
-        except ValidationError:
-            return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")
-
-    @staticmethod
-    def get_enum_params(func: Callable[..., R]) -> Mapping[str, type[StrEnum]]:
-        """Extract parameters that are StrEnum from function signature."""
-        hints: Mapping[str, t.TypeHintSpecifier]
-        try:
-            resolved_hints = get_type_hints(func, include_extras=True)
-            hints = {str(name): hint for name, hint in resolved_hints.items()}
-        except (NameError, TypeError, AttributeError):
-            fallback_annotations = getattr(func, "__annotations__", None)
-            if isinstance(fallback_annotations, Mapping):
-                try:
-                    hints = TypeAdapter(
-                        Mapping[str, t.TypeHintSpecifier],
-                    ).validate_python(
-                        fallback_annotations,
-                    )
-                except (ValidationError, PydanticSchemaGenerationError):
-                    return {}
-            else:
-                return {}
-        enum_params: MutableMapping[str, type[StrEnum]] = {}
-        for name, hint in hints.items():
-            if name == "return":
-                continue
-            current_hint = hint
-            origin = get_origin(current_hint)
-            while origin is Annotated:
-                current_hint = get_args(current_hint)[0]
-                origin = get_origin(current_hint)
-            if isinstance(current_hint, str) or (
-                isinstance(current_hint, type) and issubclass(current_hint, Enum)
-            ):
-                validated_hint = FlextUtilitiesArgs._validate_enum_type(current_hint)
-            else:
-                validated_hint = r[type[StrEnum]].fail(
-                    "Candidate is not a valid StrEnum type",
-                )
-            if validated_hint.is_success:
-                enum_params[name] = validated_hint.value
-            elif origin is UnionType:
-                for arg in get_args(current_hint):
-                    current_arg = arg
-                    arg_origin = get_origin(current_arg)
-                    while arg_origin is Annotated:
-                        current_arg = get_args(current_arg)[0]
-                        arg_origin = get_origin(current_arg)
-                    if isinstance(current_arg, str) or (
-                        isinstance(current_arg, type) and issubclass(current_arg, Enum)
-                    ):
-                        validated_arg = FlextUtilitiesArgs._validate_enum_type(
-                            current_arg,
-                        )
-                    else:
-                        validated_arg = r[type[StrEnum]].fail(
-                            "Candidate is not a valid StrEnum type",
-                        )
-                    if validated_arg.is_success:
-                        enum_params[name] = validated_arg.value
-                        break
-        return enum_params
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
@@ -140,29 +60,98 @@ class FlextUtilitiesArgs:
         return r[Mapping[str, t.ValueOrModel]].ok(parsed)
 
     @staticmethod
-    def validated(func: Callable[P, R]) -> Callable[P, R]:
-        """Decorator that uses @validate_call from Pydantic internally."""
-        return validate_call(
-            config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
-            validate_return=False,
-        )(func)
+    def _resolve_enum_annotation(annotation: object) -> type[StrEnum] | None:
+        if isinstance(annotation, type) and issubclass(annotation, StrEnum):
+            return annotation
+        origin = get_origin(annotation)
+        if origin is None:
+            return None
+        for arg in get_args(annotation):
+            resolved = FlextUtilitiesArgs._resolve_enum_annotation(arg)
+            if resolved is not None:
+                return resolved
+        return None
+
+    @classmethod
+    def get_enum_params(
+        cls,
+        func: Callable[..., object],
+    ) -> Mapping[str, type[StrEnum]]:
+        """Extract StrEnum-typed parameters from a callable signature."""
+        hints_map: Mapping[str, object]
+        try:
+            hints_map = get_type_hints(func)
+        except (AttributeError, NameError, TypeError):
+            hints_map = dict[str, object]()
+        enum_fields: dict[str, type[StrEnum]] = {}
+        for name, param in signature(func).parameters.items():
+            if param.kind in {Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD}:
+                continue
+            enum_cls = cls._resolve_enum_annotation(
+                hints_map.get(name, param.annotation),
+            )
+            if enum_cls is not None:
+                enum_fields[name] = enum_cls
+        return enum_fields
 
     @staticmethod
-    def validated_with_result[V, **P](
-        func: Callable[P, r[V]],
-    ) -> Callable[P, r[V]]:
-        """Decorator that converts ValidationError to ``r.fail()``."""
-        validated_func: Callable[P, r[V]] = validate_call(
-            config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
-            validate_return=False,
-        )(func)
+    def _coerce_bound_arguments(
+        bound: BoundArguments,
+        enum_fields: Mapping[str, type[StrEnum]],
+    ) -> None:
+        for field, enum_cls in enum_fields.items():
+            if field not in bound.arguments:
+                continue
+            adapter = TypeAdapter(enum_cls)
+            bound.arguments[field] = adapter.validate_python(bound.arguments[field])
+
+    @classmethod
+    def validated[**P, R](cls, func: Callable[P, R]) -> Callable[P, R]:
+        """Decorator that coerces StrEnum parameters before function execution."""
+        enum_fields = cls.get_enum_params(func)
+        func_signature = signature(func)
 
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[V]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            if not enum_fields:
+                return func(*args, **kwargs)
+            bound = func_signature.bind(*args, **kwargs)
+            cls._coerce_bound_arguments(bound, enum_fields)
+            return func(*bound.args, **bound.kwargs)
+
+        return wrapper
+
+    @classmethod
+    def validated_with_result[**P, R](
+        cls,
+        func: Callable[P, R | r[R]],
+    ) -> Callable[P, r[R]]:
+        """Decorator that coerces StrEnums and converts failures into `r.fail()`."""
+        enum_fields = cls.get_enum_params(func)
+        func_signature = signature(func)
+
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[R]:
             try:
-                return validated_func(*args, **kwargs)
-            except (ValidationError, TypeError, ValueError) as e:
-                return r[V].fail(str(e))
+                if enum_fields:
+                    bound = func_signature.bind(*args, **kwargs)
+                    cls._coerce_bound_arguments(bound, enum_fields)
+                    result = func(*bound.args, **bound.kwargs)
+                else:
+                    result = func(*args, **kwargs)
+            except ValidationError as exc:
+                return r[R].fail(f"Validation failed: {exc}")
+            except (
+                ValueError,
+                TypeError,
+                KeyError,
+                AttributeError,
+                RuntimeError,
+            ) as exc:
+                return r[R].fail(str(exc))
+            if isinstance(result, r):
+                return result
+            return r[R].ok(result)
 
         return wrapper
 

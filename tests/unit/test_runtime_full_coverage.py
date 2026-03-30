@@ -570,7 +570,7 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(success.map_error(lambda err: err.upper()) is success, eq=True)
     filtered = success.filter(lambda value: value > 10)
     tm.that(filtered.is_failure, eq=True)
-    tm.that(filtered.error, eq="Filter predicate failed")
+    tm.that(filtered.error, eq="Value did not pass filter predicate")
     tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
     tm.that(
         failure.lash(lambda _err: r[int].ok(5)).value,
@@ -791,11 +791,6 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_runtime_module_accessors_and_metadata() -> None:
-    metadata_ref = FlextRuntime.Metadata
-    assert metadata_ref is not None
-    tm.that(metadata_ref, is_=type)
-    metadata = metadata_ref()
-    tm.that(metadata.version, eq="1.0.0")
     tm.that(FlextRuntime.structlog() is structlog, eq=True)
     tm.that(FlextRuntime.dependency_providers() is providers, eq=True)
     tm.that(FlextRuntime.dependency_containers() is containers, eq=True)

@@ -21,7 +21,7 @@ import pytest
 from flext_tests import t, tm
 from pydantic import ValidationError
 
-from tests import m, u
+from tests import m
 
 
 class TestFlextModelsContainer:
@@ -84,16 +84,6 @@ class TestFlextModelsContainer:
             "factory": factory,
             "metadata": metadata,
         })
-
-    @staticmethod
-    def _normalize_metadata_obj(value: Sequence[int]) -> m.Metadata:
-        """Pass an invalid list to ensure_metadata to trigger the TypeError error path.
-
-        Uses getattr to bypass the type checker: ensure_metadata's signature does not
-        accept list[int], but the test needs to verify runtime rejection of this type.
-        """
-        fn = getattr(u, "ensure_metadata")
-        return fn(value)
 
     def test_is_dict_like_static_method(self) -> None:
         """Test dict-like checking using utilities."""
@@ -325,61 +315,6 @@ class TestFlextModelsContainer:
         if registration.metadata is not None:
             metadata_dump = registration.metadata.model_dump()
             tm.that(metadata_dump.get("attributes", {}), eq={})
-
-    def test_normalize_to_metadata_none(self) -> None:
-        """Test normalize_to_metadata with None returns empty Metadata."""
-        result = u.ensure_metadata(None)
-        tm.that(hasattr(result, "attributes"), eq=True)
-        tm.that(result.attributes, eq={})
-
-    def test_normalize_to_metadata_empty_dict(self) -> None:
-        """Test normalize_to_metadata with empty dict."""
-        result = u.ensure_metadata(t.ConfigMap(root={}))
-        tm.that(hasattr(result, "attributes"), eq=True)
-        tm.that(result.attributes, eq={})
-
-    def test_normalize_to_metadata_with_values(self) -> None:
-        """Test normalize_to_metadata with dict containing values."""
-        result = u.ensure_metadata(
-            t.ConfigMap(root={"key1": "value1", "key2": 42, "key3": True}),
-        )
-        tm.that(hasattr(result, "attributes"), eq=True)
-        tm.that(result.attributes["key1"], eq="value1")
-        tm.that(result.attributes["key2"], eq=42)
-        tm.that(result.attributes["key3"], eq=True)
-
-    def test_normalize_to_metadata_existing_metadata(self) -> None:
-        """Test normalize_to_metadata with existing Metadata instance."""
-        existing = m.Metadata(attributes={"existing": "value"})
-        result = u.ensure_metadata(existing)
-        tm.that(result is existing, eq=True)
-        tm.that(result.attributes["existing"], eq="value")
-
-    def test_normalize_to_metadata_nested_dict(self) -> None:
-        """Test normalize_to_metadata with nested dict values."""
-        result = u.ensure_metadata(
-            t.ConfigMap(root={"nested": {"level1": {"level2": "value"}}}),
-        )
-        tm.that(hasattr(result, "attributes"), eq=True)
-        tm.that(result.attributes, has="nested")
-
-    def test_normalize_to_metadata_invalid_type(self) -> None:
-        """Test normalize_to_metadata with invalid type raises TypeError."""
-        with pytest.raises(
-            TypeError,
-            match=r"metadata must be None, dict, or.*Metadata",
-        ):
-            u.ensure_metadata("invalid_string")
-        with pytest.raises(
-            TypeError,
-            match=r"metadata must be None, dict, or.*Metadata",
-        ):
-            u.ensure_metadata(123)
-        with pytest.raises(
-            TypeError,
-            match=r"metadata must be None, dict, or.*Metadata",
-        ):
-            self._normalize_metadata_obj([1, 2, 3])
 
     def test_resource_registration_metadata_normalized(self) -> None:
         """Test ResourceRegistration with metadata attribute."""

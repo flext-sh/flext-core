@@ -39,21 +39,11 @@ class TextUtilityContract:
         ("my_app", "my-app"),
         ("My Application_Name", "my-application-name"),
     ]
-    CLEAN_TEXT_CASES: ClassVar[Sequence[tuple[str, str]]] = [
-        ("  hello   world  ", "hello world"),
-        ("hello\x00world", "helloworld"),
-        ("\nline1\tline2\r\n", "line1line2"),
-    ]
 
     @staticmethod
     def assert_safe_string_valid(raw: str, expected: str) -> None:
         """Assert safe string normalization for valid input."""
         assert u.safe_string(raw) == expected
-
-    @staticmethod
-    def assert_clean_text(raw: str, expected: str) -> None:
-        """Assert clean_text normalization."""
-        assert u.clean_text(raw) == expected
 
     @staticmethod
     def assert_format_app_id(raw: str, expected: str) -> None:

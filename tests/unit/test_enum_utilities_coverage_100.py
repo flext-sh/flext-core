@@ -43,35 +43,6 @@ class TestEnumUtilitiesCoverage:
         MEDIUM = "medium"
         HIGH = "high"
 
-    class IsMemberScenario(BaseModel):
-        """Is member test scenario."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Is member scenario name")]
-        value: Annotated[
-            t.NormalizedValue,
-            Field(description="Input value to validate"),
-        ]
-        expected: Annotated[bool, Field(description="Expected membership result")]
-
-    class IsSubsetScenario(BaseModel):
-        """Is subset test scenario."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        name: Annotated[str, Field(description="Is subset scenario name")]
-        valid_members: Annotated[
-            frozenset[StrEnum],
-            Field(description="Allowed enum members"),
-        ]
-        value: Annotated[
-            t.NormalizedValue,
-            Field(description="Input value to validate"),
-        ]
-        expected: Annotated[
-            bool,
-            Field(description="Expected subset membership result"),
-        ]
-
     class ParseScenario(BaseModel):
         """Parse test scenario."""
 
@@ -125,45 +96,6 @@ class TestEnumUtilitiesCoverage:
             Field(default=None, description="Expected error message fragment"),
         ] = None
 
-    IS_MEMBER: ClassVar[Sequence[IsMemberScenario]] = [
-        IsMemberScenario(name="valid_enum", value=Status.ACTIVE, expected=True),
-        IsMemberScenario(name="valid_string", value="active", expected=True),
-        IsMemberScenario(name="invalid_string", value="invalid", expected=False),
-        IsMemberScenario(name="invalid_type", value=123, expected=False),
-        IsMemberScenario(name="none", value=None, expected=False),
-    ]
-    IS_SUBSET: ClassVar[Sequence[IsSubsetScenario]] = [
-        IsSubsetScenario(
-            name="valid_enum_in_subset",
-            valid_members=frozenset({Status.ACTIVE, Status.PENDING}),
-            value=Status.ACTIVE,
-            expected=True,
-        ),
-        IsSubsetScenario(
-            name="valid_string_in_subset",
-            valid_members=frozenset({Status.ACTIVE, Status.PENDING}),
-            value="active",
-            expected=True,
-        ),
-        IsSubsetScenario(
-            name="valid_enum_not_in_subset",
-            valid_members=frozenset({Status.ACTIVE, Status.PENDING}),
-            value=Status.INACTIVE,
-            expected=False,
-        ),
-        IsSubsetScenario(
-            name="invalid_string",
-            valid_members=frozenset({Status.ACTIVE, Status.PENDING}),
-            value="invalid",
-            expected=False,
-        ),
-        IsSubsetScenario(
-            name="invalid_type",
-            valid_members=frozenset({Status.ACTIVE, Status.PENDING}),
-            value=123,
-            expected=False,
-        ),
-    ]
     PARSE: ClassVar[Sequence[ParseScenario]] = [
         ParseScenario(
             name="valid_string",
@@ -244,31 +176,6 @@ class TestEnumUtilitiesCoverage:
         ),
     ]
 
-    @pytest.mark.parametrize("scenario", IS_MEMBER, ids=lambda s: s.name)
-    def test_is_member(self, scenario: IsMemberScenario) -> None:
-        """Test is_member with various scenarios."""
-        value_typed: t.Primitives | StrEnum = (
-            scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, StrEnum))
-            else str(scenario.value)
-        )
-        result = u.is_member(self.Status, value_typed)
-        tm.that(result, eq=scenario.expected)
-
-    @pytest.mark.parametrize("scenario", IS_SUBSET, ids=lambda s: s.name)
-    def test_is_subset(self, scenario: IsSubsetScenario) -> None:
-        """Test is_subset with various scenarios."""
-        if isinstance(scenario.value, (str, int, float, bool)):
-            value_typed: t.Primitives = scenario.value
-        else:
-            value_typed = str(scenario.value)
-        result = u.is_subset(
-            self.Status,
-            cast("frozenset[TestEnumUtilitiesCoverage.Status]", scenario.valid_members),
-            value_typed,
-        )
-        tm.that(result, eq=scenario.expected)
-
     @pytest.mark.parametrize("scenario", PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
         """Test parse with various scenarios."""
@@ -324,31 +231,6 @@ class TestEnumUtilitiesCoverage:
                 and scenario.expected_error in error_str
             )
 
-    def test_coerce_by_name_validator_by_name(self) -> None:
-        """Test coerce_by_name_validator with member name."""
-        validator = u.coerce_by_name_validator(self.Status)
-        result = validator("ACTIVE")
-        tm.that(result, eq=self.Status.ACTIVE)
-
-    def test_coerce_by_name_validator_by_value(self) -> None:
-        """Test coerce_by_name_validator with member value."""
-        validator = u.coerce_by_name_validator(self.Status)
-        result = validator("active")
-        tm.that(result, eq=self.Status.ACTIVE)
-
-    def test_coerce_by_name_validator_direct_enum(self) -> None:
-        """Test coerce_by_name_validator with direct enum."""
-        validator = u.coerce_by_name_validator(self.Status)
-        result = validator(self.Status.PENDING)
-        tm.that(result, eq=self.Status.PENDING)
-
-    def test_coerce_by_name_validator_invalid(self) -> None:
-        """Test coerce_by_name_validator with invalid value."""
-        validator = u.coerce_by_name_validator(self.Status)
-        with pytest.raises(ValueError) as exc_info:
-            _ = validator("invalid")
-        assert "Invalid Status" in str(exc_info.value)
-
     def test_values(self) -> None:
         """Test values method."""
         values = u.enum_values(self.Status)
@@ -356,22 +238,6 @@ class TestEnumUtilitiesCoverage:
         assert "active" in values
         assert "pending" in values
         assert "inactive" in values
-
-    def test_names(self) -> None:
-        """Test names method."""
-        names = u.names(self.Status)
-        tm.that(names.__class__, eq=frozenset)
-        assert "ACTIVE" in names
-        assert "PENDING" in names
-        assert "INACTIVE" in names
-
-    def test_members(self) -> None:
-        """Test members method."""
-        members = u.members(self.Status)
-        tm.that(members.__class__, eq=frozenset)
-        assert self.Status.ACTIVE in members
-        assert self.Status.PENDING in members
-        assert self.Status.INACTIVE in members
 
     def test_metadata_caching(self) -> None:
         """Test that metadata methods are cached."""
