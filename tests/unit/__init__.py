@@ -6,11 +6,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
-if TYPE_CHECKING:
+if _TYPE_CHECKING:
     from tests.unit._models import *
     from tests.unit._models_impl import *
     from tests.unit.conftest_infra import *

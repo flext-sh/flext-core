@@ -68,6 +68,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
+        # pyrefly: ignore [unexpected-keyword]
         super().__init_subclass__(**kwargs)
 
     @property

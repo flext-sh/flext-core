@@ -13,6 +13,8 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
+import flext_core._utilities.discovery as _discovery_mod
+
 from flext_core import FlextContainer, FlextContext, FlextSettings, r
 from tests import m, p
 
@@ -186,7 +188,8 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
-            "flext_core._utilities.discovery.FlextUtilitiesDiscovery.scan_module",
+            _discovery_mod.FlextUtilitiesDiscovery,
+            "scan_module",
             _scan_factory_module,
         )
 
@@ -448,7 +451,8 @@ class TestContainerFullCoverage:
         )
         monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
-            "flext_core._utilities.discovery.FlextUtilitiesDiscovery.scan_module",
+            _discovery_mod.FlextUtilitiesDiscovery,
+            "scan_module",
             _scan_factory_module_captured,
         )
         original_register = FlextContainer.register

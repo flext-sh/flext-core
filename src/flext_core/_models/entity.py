@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, MutableSequence, Sequence
+from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
@@ -54,6 +55,10 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
+        updated_at: datetime | None = Field(
+            default=None,
+            description="Timestamp of last update, set in model_post_init",
+        )
         domain_events: Annotated[
             list[FlextModelsDomainEvent.Entry],
             Field(
