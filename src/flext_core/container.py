@@ -15,8 +15,6 @@ import inspect
 import sys
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from datetime import datetime
-from pathlib import Path
 from types import ModuleType
 from typing import Self, TypeIs, overload, override
 
@@ -87,15 +85,7 @@ class FlextContainer(p.Container):
         """
         override_updates: MutableMapping[
             str,
-            t.RuntimeData
-            | p.Settings
-            | p.Context
-            | m.ContainerConfig
-            | Mapping[str, m.ServiceRegistration]
-            | Mapping[str, m.FactoryRegistration]
-            | Mapping[str, m.ResourceRegistration]
-            | Mapping[str, t.Scalar | t.ConfigMap | t.ScalarList]
-            | t.ConfigMap,
+            t.RegistrationKwarg | t.UserOverridesMapping | t.ConfigMap,
         ] = {}
         if override.config is not None:
             override_updates["config"] = override.config
@@ -116,13 +106,7 @@ class FlextContainer(p.Container):
     @staticmethod
     def _resolve_bootstrap_registration(
         registration: m.ServiceRegistrationSpec | None,
-        **registration_kwargs: t.RuntimeData
-        | p.Settings
-        | p.Context
-        | m.ContainerConfig
-        | Mapping[str, m.ServiceRegistration]
-        | Mapping[str, m.FactoryRegistration]
-        | Mapping[str, m.ResourceRegistration],
+        **registration_kwargs: t.RegistrationKwarg,
     ) -> m.ServiceRegistrationSpec:
         base_registration = (
             registration if registration is not None else m.ServiceRegistrationSpec()
@@ -146,13 +130,7 @@ class FlextContainer(p.Container):
     @staticmethod
     def _resolve_scoped_registration(
         registration: m.ServiceRegistrationSpec,
-        **registration_kwargs: t.RuntimeData
-        | p.Settings
-        | p.Context
-        | m.ContainerConfig
-        | Mapping[str, m.ServiceRegistration]
-        | Mapping[str, m.FactoryRegistration]
-        | Mapping[str, m.ResourceRegistration],
+        **registration_kwargs: t.RegistrationKwarg,
     ) -> m.ServiceRegistrationSpec:
         if not registration_kwargs:
             return registration
@@ -168,13 +146,7 @@ class FlextContainer(p.Container):
         cls,
         *,
         registration: m.ServiceRegistrationSpec | None = None,
-        **registration_kwargs: t.RuntimeData
-        | p.Settings
-        | p.Context
-        | m.ContainerConfig
-        | Mapping[str, m.ServiceRegistration]
-        | Mapping[str, m.FactoryRegistration]
-        | Mapping[str, m.ResourceRegistration],
+        **registration_kwargs: t.RegistrationKwarg,
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -194,13 +166,7 @@ class FlextContainer(p.Container):
         self,
         *,
         registration: m.ServiceRegistrationSpec | None = None,
-        **registration_kwargs: t.RuntimeData
-        | p.Settings
-        | p.Context
-        | m.ContainerConfig
-        | Mapping[str, m.ServiceRegistration]
-        | Mapping[str, m.FactoryRegistration]
-        | Mapping[str, m.ResourceRegistration],
+        **registration_kwargs: t.RegistrationKwarg,
     ) -> None:
         """Wire the Dependency Injector container and supporting registries.
 
@@ -278,7 +244,9 @@ class FlextContainer(p.Container):
 
            container = FlextContainer.get_global()
            _ = container.register(
-               "token_factory", lambda: {"token": "abc123"}, kind="factory"
+               "token_factory",
+               lambda: {"token": "abc123"},
+               kind=c.CONTAINER_KIND_FACTORY,
            )
 
 
@@ -313,13 +281,7 @@ class FlextContainer(p.Container):
         cls,
         *,
         registration: m.ServiceRegistrationSpec,
-        **registration_kwargs: t.RuntimeData
-        | p.Settings
-        | p.Context
-        | m.ContainerConfig
-        | Mapping[str, m.ServiceRegistration]
-        | Mapping[str, m.FactoryRegistration]
-        | Mapping[str, m.ResourceRegistration],
+        **registration_kwargs: t.RegistrationKwarg,
     ) -> Self:
         """Create a scoped container instance bypassing singleton pattern.
 
@@ -424,15 +386,7 @@ class FlextContainer(p.Container):
                                     config_raw = config_callable()
                                     if isinstance(
                                         config_raw,
-                                        (
-                                            str,
-                                            int,
-                                            float,
-                                            bool,
-                                            datetime,
-                                            Path,
-                                            BaseModel,
-                                        ),
+                                        (*t.CONTAINER_TYPES, BaseModel),
                                     ):
                                         raw_result = config_raw
                                     else:
@@ -454,7 +408,7 @@ class FlextContainer(p.Container):
                             _ = instance.register(
                                 factory_config.name,
                                 factory_wrapper,
-                                kind="factory",
+                                kind=c.CONTAINER_KIND_FACTORY,
                             )
         return instance
 
@@ -568,7 +522,7 @@ class FlextContainer(p.Container):
             A FlextLogger instance configured for the specified module.
 
         """
-        return FlextLogger.create_module_logger(module_name or "flext_core")
+        return FlextLogger.create_module_logger(module_name or c.DEFAULT_LOGGER_MODULE)
 
     @staticmethod
     def _narrow_service[T](service: object, cls: type[T]) -> r[T]:
@@ -720,9 +674,7 @@ class FlextContainer(p.Container):
         factories: Mapping[str, m.FactoryRegistration] | None = None,
         resources: Mapping[str, m.ResourceRegistration] | None = None,
         global_config: m.ContainerConfig | None = None,
-        user_overrides: Mapping[str, t.Scalar | t.ConfigMap | t.ScalarList]
-        | t.ConfigMap
-        | None = None,
+        user_overrides: t.UserOverridesMapping | t.ConfigMap | None = None,
         config: p.Settings | None = None,
         context: p.Context | None = None,
     ) -> None:
@@ -744,11 +696,13 @@ class FlextContainer(p.Container):
                 for ok, ov in user_overrides.items():
                     if isinstance(
                         ov,
-                        (str, int, float, bool, datetime, Path, BaseModel),
+                        (*t.CONTAINER_TYPES, BaseModel),
                     ):
                         overrides_root[ok] = ov
-                    else:
+                    elif isinstance(ov, Sequence):
                         overrides_root[ok] = list(ov)
+                    else:
+                        overrides_root[ok] = ov
         user_overrides_map = t.ConfigMap(root=overrides_root)
         self._user_overrides = user_overrides_map
         config_instance: p.Settings = (
@@ -772,7 +726,7 @@ class FlextContainer(p.Container):
         name: str,
         impl: t.RegisterableService,
         *,
-        kind: str = "service",
+        kind: str = c.CONTAINER_KIND_SERVICE,
     ) -> Self:
         """Register a service instance for dependency resolution.
 
@@ -796,7 +750,7 @@ class FlextContainer(p.Container):
         if not name:
             return self
         try:
-            if kind == "service":
+            if kind == c.CONTAINER_KIND_SERVICE:
                 if hasattr(self._di_services, name):
                     return self
                 service_impl: t.RegisterableService = impl
@@ -814,7 +768,7 @@ class FlextContainer(p.Container):
                 setattr(self._di_bridge, name, provider)
                 setattr(self._di_container, name, provider)
                 return self
-            if kind == "factory":
+            if kind == c.CONTAINER_KIND_FACTORY:
                 if not u.is_factory(impl):
                     return self
                 if hasattr(self._di_services, name):
@@ -894,11 +848,11 @@ class FlextContainer(p.Container):
             and u.is_registerable_service(self._config)
         ):
             _ = self.register(c.DIR_CONFIG, self._config)
-        if not self.has_service("logger"):
+        if not self.has_service(c.SERVICE_NAME_LOGGER):
             _ = self.register(
-                "logger",
-                lambda: FlextLogger.create_module_logger("flext_core"),
-                kind="factory",
+                c.SERVICE_NAME_LOGGER,
+                lambda: FlextLogger.create_module_logger(c.DEFAULT_LOGGER_MODULE),
+                kind=c.CONTAINER_KIND_FACTORY,
             )
         if (
             not self.has_service(c.FIELD_CONTEXT)
@@ -906,13 +860,13 @@ class FlextContainer(p.Container):
             and u.is_registerable_service(self._context)
         ):
             _ = self.register(c.FIELD_CONTEXT, self._context)
-        if not self.has_service("command_bus"):
+        if not self.has_service(c.SERVICE_NAME_COMMAND_BUS):
             dispatcher = FlextDispatcher()
             dispatcher_candidate = dispatcher
             if not u.is_registerable_service(dispatcher_candidate):
                 return
             service_candidate: t.RegisterableService = dispatcher_candidate
-            dispatcher_name = "command_bus"
+            dispatcher_name = c.SERVICE_NAME_COMMAND_BUS
             registration = m.ServiceRegistration(
                 name=dispatcher_name,
                 service=service_candidate,
@@ -1111,7 +1065,11 @@ class FlextContainer(p.Container):
                 return FlextSettings.get_global().get_namespace(ns, config_cls)
 
             if not self.has_service(factory_name):
-                self.register(factory_name, _create_namespace_config, kind="factory")
+                self.register(
+                    factory_name,
+                    _create_namespace_config,
+                    kind=c.CONTAINER_KIND_FACTORY,
+                )
 
     def unregister(self, name: str) -> r[bool]:
         """Remove a service or factory registration by name."""

@@ -189,17 +189,11 @@ class FlextRegistry(s[bool]):
 
     def _get_handler_mode(self, value: t.RuntimeAtomic) -> c.HandlerType:
         """Safe conversion to HandlerType."""
-        result = u.parse_enum(c.HandlerType, str(value))
-        if result.is_success:
-            return result.value
-        return c.HandlerType.COMMAND
+        return u.parse_or_default(c.HandlerType, str(value), c.HandlerType.COMMAND)
 
     def _get_status(self, value: t.RuntimeAtomic) -> c.CommonStatus:
         """Safe conversion to CommonStatus."""
-        result = u.parse_enum(c.CommonStatus, str(value))
-        if result.is_success:
-            return result.value
-        return c.CommonStatus.ACTIVE
+        return u.parse_or_default(c.CommonStatus, str(value), c.CommonStatus.ACTIVE)
 
     @override
     def execute(self) -> r[bool]:

@@ -217,7 +217,7 @@ class AdvancedUtilitiesService(s[t.ConfigMap]):
         long_text = str(TEST_DATA["long_text"])
         truncate_result = u.truncate_text(long_text, max_length=50)
         if truncate_result.is_success:
-            truncated = truncate_result.value
+            truncated: str = truncate_result.value
             print(f"✅ Text truncation: {len(truncated)} chars")
         try:
             safe = u.safe_string("  valid  ")

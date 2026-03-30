@@ -59,9 +59,9 @@ class FlextModelsResult:
 
         def __exit__(
             self,
-            exc_type: type[BaseException] | None,
-            exc_val: BaseException | None,
-            exc_tb: TracebackType | None,
+            _exc_type: type[BaseException] | None,
+            _exc_val: BaseException | None,
+            _exc_tb: TracebackType | None,
         ) -> None:
             """Context manager exit."""
 
@@ -100,8 +100,6 @@ class FlextModelsResult:
             if not self.is_success:
                 msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)
-            if self._payload is not None:
-                return self._payload
             return cast("T", self._payload)
 
         @classmethod

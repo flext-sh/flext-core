@@ -222,7 +222,7 @@ class TestFlextContainer:
         """Test factory registration using fixtures."""
         factory = u.Tests.ContainerHelpers.create_factory(return_value)
         factory_name = f"factory_{type(return_value).__name__}"
-        clean_container.register(factory_name, factory, kind="factory")
+        clean_container.register(factory_name, factory, kind=c.CONTAINER_KIND_FACTORY)
         tm.that(
             clean_container.has_service(factory_name),
             eq=True,
@@ -246,7 +246,7 @@ class TestFlextContainer:
         result = container.register(
             f"factory_{type(return_value).__name__}",
             factory_typed,
-            kind="factory",
+            kind=c.CONTAINER_KIND_FACTORY,
         )
         tm.that(
             result is container,
@@ -263,7 +263,7 @@ class TestFlextContainer:
     def test_register_factory_non_callable(self, clean_container: p.Container) -> None:
         """Test that registering non-callable with factory kind handles gracefully."""
         non_callable = cast("t.FactoryCallable", "not_callable")
-        clean_container.register("invalid", non_callable, kind="factory")
+        clean_container.register("invalid", non_callable, kind=c.CONTAINER_KIND_FACTORY)
         tm.that(
             clean_container.has_service("invalid"),
             eq=False,
@@ -273,9 +273,9 @@ class TestFlextContainer:
     def test_register_duplicate_factory(self, clean_container: p.Container) -> None:
         """Test that registering duplicate factory name preserves original using fixtures."""
         factory1 = u.Tests.ContainerHelpers.create_factory("value1")
-        clean_container.register("factory1", factory1, kind="factory")
+        clean_container.register("factory1", factory1, kind=c.CONTAINER_KIND_FACTORY)
         factory2 = u.Tests.ContainerHelpers.create_factory("value2")
-        clean_container.register("factory1", factory2, kind="factory")
+        clean_container.register("factory1", factory2, kind=c.CONTAINER_KIND_FACTORY)
         tm.that(
             clean_container.has_service("factory1"),
             eq=True,
@@ -309,7 +309,9 @@ class TestFlextContainer:
         """Test retrieving service created by factory using fixtures."""
         factory_result = {"created": "by_factory"}
         factory = u.Tests.ContainerHelpers.create_factory(factory_result)
-        clean_container.register("factory_service", factory, kind="factory")
+        clean_container.register(
+            "factory_service", factory, kind=c.CONTAINER_KIND_FACTORY
+        )
         result: r[t.RegisterableService] = clean_container.get("factory_service")
         u.Tests.Result.assert_success_with_value(result, factory_result)
 
@@ -318,7 +320,9 @@ class TestFlextContainer:
         factory, get_count = u.Tests.ContainerHelpers.create_counting_factory(
             "service_value",
         )
-        clean_container.register("factory_service", factory, kind="factory")
+        clean_container.register(
+            "factory_service", factory, kind=c.CONTAINER_KIND_FACTORY
+        )
         result1: r[t.RegisterableService] = clean_container.get("factory_service")
         _ = u.Tests.Result.assert_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
@@ -407,7 +411,9 @@ class TestFlextContainer:
         """Test has_service returns True for factories using fixtures."""
         container = clean_container
         factory = u.Tests.ContainerHelpers.create_factory("value")
-        _ = container.register("factory_service", factory, kind="factory")
+        _ = container.register(
+            "factory_service", factory, kind=c.CONTAINER_KIND_FACTORY
+        )
         tm.that(
             container.has_service("factory_service"),
             eq=True,
@@ -436,7 +442,7 @@ class TestFlextContainer:
         _ = container.register("service1", "value1")
         _ = container.register("service2", "value2")
         factory = u.Tests.ContainerHelpers.create_factory("value3")
-        _ = container.register("factory1", factory, kind="factory")
+        _ = container.register("factory1", factory, kind=c.CONTAINER_KIND_FACTORY)
         services = container.list_services()
         tm.that(len(services), eq=3, msg="Container must list 3 registered services")
         required_keys = ["service1", "service2", "factory1"]
@@ -521,7 +527,7 @@ class TestFlextContainer:
         _ = container.register("service1", "value1")
         _ = container.register("service2", "value2")
         factory = u.Tests.ContainerHelpers.create_factory("value3")
-        _ = container.register("factory1", factory, kind="factory")
+        _ = container.register("factory1", factory, kind=c.CONTAINER_KIND_FACTORY)
         tm.that(
             len(container.list_services()),
             eq=3,
@@ -560,7 +566,7 @@ class TestFlextContainer:
         _ = container.register("db_connection", {"host": c.LOCALHOST})
         _ = container.register("cache", {"type": "redis"})
         factory = u.Tests.ContainerHelpers.create_factory({"logger": "instance"})
-        _ = container.register("logger", factory, kind="factory")
+        _ = container.register("logger", factory, kind=c.CONTAINER_KIND_FACTORY)
         required_services = ["db_connection", "cache", "logger"]
         for service_name in required_services:
             tm.that(
@@ -591,7 +597,9 @@ class TestFlextContainer:
         def failing_factory() -> str:
             raise RuntimeError(error_msg)
 
-        _ = container.register("failing", failing_factory, kind="factory")
+        _ = container.register(
+            "failing", failing_factory, kind=c.CONTAINER_KIND_FACTORY
+        )
         result: r[t.RegisterableService] = container.get("failing")
         _ = u.Tests.Result.assert_failure(result)
 
@@ -627,7 +635,9 @@ class TestFlextContainer:
         def dynamic_factory() -> str:
             return sanitized
 
-        _ = container.register(sanitized, dynamic_factory, kind="factory")
+        _ = container.register(
+            sanitized, dynamic_factory, kind=c.CONTAINER_KIND_FACTORY
+        )
         tm.ok(container.get(sanitized, type_cls=str), eq=sanitized)
         FlextContainer.reset_for_testing()
 

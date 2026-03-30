@@ -17,7 +17,7 @@ from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.containers import FlextTypingContainers
 
 if TYPE_CHECKING:
-    from flext_core import FlextDispatcher, p
+    from flext_core import FlextDispatcher, m, p
 
 
 class FlextTypesServices:
@@ -34,30 +34,17 @@ class FlextTypesServices:
         BaseModel | Mapping[str, FlextTypingBase.NormalizedValue] | None
     )
 
-    if TYPE_CHECKING:
-        type RegisterableService = (
-            FlextTypingBase.Container
-            | BaseModel
-            | Mapping[
-                str,
-                FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
-            ]
-            | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
-            | Callable[..., FlextTypingBase.Container | BaseModel]
-            | Callable[..., FlextTypesServices.RegisterableService]
-        )
-    else:
-        type RegisterableService = (
-            FlextTypingBase.Container
-            | BaseModel
-            | Mapping[
-                str,
-                FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
-            ]
-            | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
-            | Callable[..., FlextTypingBase.Container | BaseModel]
-            | Callable[..., FlextTypesServices.RegisterableService]
-        )
+    type RegisterableService = (
+        FlextTypingBase.Container
+        | BaseModel
+        | Mapping[
+            str,
+            FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
+        ]
+        | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
+        | Callable[..., FlextTypingBase.Container | BaseModel]
+        | Callable[..., FlextTypesServices.RegisterableService]
+    )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
     type MetadataValue = (
@@ -179,4 +166,21 @@ class FlextTypesServices:
         | FlextDispatcher
         | p.Result[RuntimeAtomic]
         | None
+    )
+
+    type UserOverridesMapping = Mapping[
+        str,
+        FlextTypingBase.Scalar
+        | FlextTypingContainers.ConfigMap
+        | FlextTypingBase.ScalarList,
+    ]
+
+    type RegistrationKwarg = (
+        RuntimeData
+        | p.Settings
+        | p.Context
+        | m.ContainerConfig
+        | Mapping[str, m.ServiceRegistration]
+        | Mapping[str, m.FactoryRegistration]
+        | Mapping[str, m.ResourceRegistration]
     )

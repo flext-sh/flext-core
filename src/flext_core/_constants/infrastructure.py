@@ -120,6 +120,19 @@ class FlextConstantsInfrastructure:
         REGISTRATION_STATUS_ERROR,
     )
 
+    CONTAINER_KIND_SERVICE: Final[str] = "service"
+    "Container registration kind: service (singleton instance)."
+    CONTAINER_KIND_FACTORY: Final[str] = "factory"
+    "Container registration kind: factory (callable)."
+    CONTAINER_KIND_RESOURCE: Final[str] = "resource"
+    "Container registration kind: resource (lifecycle-managed)."
+    SERVICE_NAME_LOGGER: Final[str] = "logger"
+    "Standard service name for logger registration."
+    SERVICE_NAME_COMMAND_BUS: Final[str] = "command_bus"
+    "Standard service name for command bus registration."
+    DEFAULT_LOGGER_MODULE: Final[str] = "flext_core"
+    "Default module name for logger creation."
+
     DEFAULT_PAGE_NUMBER: Final[int] = 1
     # DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE inherited from FlextConstantsBase via FlextConstants MRO
     MIN_PAGE_NUMBER: Final[int] = 1

@@ -25,22 +25,24 @@ PYTHON_CMD := $(firstword $(shell command -v python$(PYTHON_VERSION) python3 pyt
 BOOTSTRAP_VENV := .venv
 BOOTSTRAP_PIP := $(BOOTSTRAP_VENV)/bin/pip
 BOOTSTRAP_PYTHON := $(BOOTSTRAP_VENV)/bin/python
+FLEXT_INFRA_BASEMK_GROUP := basemk
+FLEXT_INFRA_DEPS_GROUP := deps
 
 -include base.mk
 
 base.mk: Makefile
 	@echo "==> Resolving base.mk for $(PROJECT_NAME)..."
 	@if [ -d "$(BOOTSTRAP_VENV)" ] && $(BOOTSTRAP_PYTHON) -c 'import flext_infra' 2>/dev/null; then \
-		$(BOOTSTRAP_PYTHON) -m flext_infra basemk generate \
+		$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
 			--project-name $(PROJECT_NAME) --output $@; \
 	elif $(PYTHON_CMD) -c 'import flext_infra' 2>/dev/null; then \
-		$(PYTHON_CMD) -m flext_infra basemk generate \
+		$(PYTHON_CMD) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
 			--project-name $(PROJECT_NAME) --output $@; \
 	else \
 		echo "==> flext-infra not found. Bootstrapping standalone environment..."; \
 		$(MAKE) _bootstrap-venv; \
 		$(BOOTSTRAP_PIP) install -q flext-infra; \
-		$(BOOTSTRAP_PYTHON) -m flext_infra basemk generate \
+		$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
 			--project-name $(PROJECT_NAME) --output $@; \
 	fi
 	@test -s $@ || { echo "ERROR: base.mk generation failed"; rm -f $@; exit 1; }
@@ -66,18 +68,18 @@ venv: _bootstrap-venv ## Create standalone virtual environment
 setup: venv ## Full standalone setup (venv + dependencies + base.mk)
 	@echo "==> Installing project dependencies..."
 	@$(BOOTSTRAP_PIP) install -q flext-infra
-	@$(BOOTSTRAP_PYTHON) -m flext_infra deps path-sync \
+	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_DEPS_GROUP) path-sync \
 		--mode standalone \
 		--apply \
 		--workspace "$(CURDIR)"
-	@$(BOOTSTRAP_PYTHON) -m flext_infra deps internal-sync \
+	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_DEPS_GROUP) internal-sync \
 		--workspace "$(CURDIR)"
 	@$(BOOTSTRAP_VENV)/bin/poetry lock
 	@$(BOOTSTRAP_VENV)/bin/poetry install --all-extras --all-groups
 	@if git rev-parse --git-dir >/dev/null 2>&1; then \
 		$(BOOTSTRAP_VENV)/bin/poetry run pre-commit install; \
 	fi
-	@$(BOOTSTRAP_PYTHON) -m flext_infra basemk generate \
+	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
 		--project-name $(PROJECT_NAME) --output base.mk
 	@echo "==> Setup complete. All 'make' verbs now available."
 
@@ -87,9 +89,13 @@ help: ## Show available commands
 	@echo "================================================"
 	@echo ""
 	@echo "Bootstrap targets (no base.mk required):"
-	@printf "  %-14s %s\n" "venv"   "Create virtual environment"
-	@printf "  %-14s %s\n" "setup"  "Full standalone setup"
-	@printf "  %-14s %s\n" "help"   "Show this help"
+
+	@printf "  %-14s %s\n" "venv" "Create virtual environment"
+
+	@printf "  %-14s %s\n" "setup" "Full standalone setup"
+
+	@printf "  %-14s %s\n" "help" "Show this help"
+
 	@echo ""
 	@echo "After 'make setup', all standard verbs become available:"
 	@echo "  check, test, fmt, build, val, clean, docs, pr"

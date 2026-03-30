@@ -13,33 +13,34 @@ TESTS_DIR ?= tests
 DOCSTRING_MIN ?= 80
 COMPLEXITY_MAX ?= 10
 CORE_STACK ?= python
-PYTEST_ARGS ?=
+PYTEST_ARGS ?= 
 DIAG ?= 0
-CHECK_GATES ?=
-VALIDATE_GATES ?=
+CHECK_GATES ?= 
+VALIDATE_GATES ?= 
 DOCS_PHASE ?= all
-FIX ?=
-AUTO_ADJUST ?= 1
+FIX ?= 
 PR_ACTION ?= status
 PR_BASE ?= main
-PR_HEAD ?=
-PR_NUMBER ?=
-PR_TITLE ?=
-PR_BODY ?=
+PR_HEAD ?= 
+PR_NUMBER ?= 
+PR_TITLE ?= 
+PR_BODY ?= 
 PR_DRAFT ?= 0
 PR_MERGE_METHOD ?= squash
 PR_AUTO ?= 0
 PR_DELETE_BRANCH ?= 0
 PR_CHECKS_STRICT ?= 0
 PR_RELEASE_ON_MERGE ?= 1
-FILE ?=
-FILES ?=
-CHANGED_ONLY ?=
-MATCH ?=
-RUFF_ARGS ?=
-PYRIGHT_ARGS ?=
-CHECK_ONLY ?=
-FAIL_FAST ?=
+FILE ?= 
+FILES ?= 
+CHANGED_ONLY ?= 
+MATCH ?= 
+RUFF_ARGS ?= 
+PYRIGHT_ARGS ?= 
+CHECK_ONLY ?= 
+FAIL_FAST ?= 
+VERBOSE ?= 
+
 
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
@@ -127,6 +128,7 @@ endif
 # === CACHE ===
 LINT_CACHE_DIR := .lint-cache
 CACHE_TIMEOUT := 300
+BASE_INFRA_WORKSPACE := python -m flext_infra workspace
 
 $(LINT_CACHE_DIR):
 	$(Q)mkdir -p $(LINT_CACHE_DIR)
@@ -164,22 +166,25 @@ elif [ "$(filter boot,$(MAKECMDGOALS))" != "boot" ] && [ ! -d "$(ACTIVE_VENV)" ]
 fi
 endef
 
-define AUTO_ADJUST_PROJECT
-endef
-
 define AUTO_SYNC_BASE_AND_SCRIPTS
 if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
-	python -m flext_infra workspace sync \
+	$(BASE_INFRA_WORKSPACE) sync \
 		--workspace "$(CURDIR)" --apply; \
 elif [ "$(FLEXT_MODE)" = "standalone" ]; then \
 	echo "INFO: [preflight] Standalone mode: skipping workspace dependency sync."; \
 fi
 endef
 
-_preflight: ## Preflight: sync base.mk, check venv, auto-adjust files
+_preflight: ## Preflight: sync base.mk and enforce venv contract
 	$(Q)$(AUTO_SYNC_BASE_AND_SCRIPTS)
 	$(Q)$(ENFORCE_WORKSPACE_VENV)
-	$(Q)$(AUTO_ADJUST_PROJECT)
+
+PROJECT_INFRA_ROOT := $(POETRY) run python -m flext_infra
+PROJECT_INFRA_CHECK := env -u PYTHONPATH -u MYPYPATH FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) check
+PROJECT_INFRA_DEPS := $(PROJECT_INFRA_ROOT) deps
+PROJECT_INFRA_DOCS := env -u PYTHONPATH -u MYPYPATH $(VENV_PYTHON) -m flext_infra docs
+PROJECT_INFRA_GITHUB := env -u PYTHONPATH -u MYPYPATH $(VENV_PYTHON) -m flext_infra github
+PROJECT_INFRA_VALIDATE := $(VENV_PYTHON) -m flext_infra validate
 
 help: ## Show commands
 	$(Q)echo "================================================"
@@ -187,47 +192,85 @@ help: ## Show commands
 	$(Q)echo "================================================"
 	$(Q)echo ""
 	$(Q)echo "Core verbs:"
-	$(Q)printf "  %-14s %s\n" "boot"      "Install dependencies and hooks"
-	$(Q)printf "  %-14s %s\n" "build"     "Build distributable artifacts"
-	$(Q)printf "  %-14s %s\n" "check"     "Run lint gates (CHECK_GATES= to select)"
-	$(Q)printf "  %-14s %s\n" "scan"      "Run all security checks"
-	$(Q)printf "  %-14s %s\n" "fmt"       "Run all formatting"
-	$(Q)printf "  %-14s %s\n" "docs"      "Build docs (DOCS_PHASE= to select)"
-	$(Q)printf "  %-14s %s\n" "test"      "Run pytest (PYTEST_ARGS= for options)"
-	$(Q)printf "  %-14s %s\n" "val"       "Run validate gates (FIX=1 to auto-fix)"
-	$(Q)printf "  %-14s %s\n" "clean"     "Clean build/test/type artifacts"
+
+	$(Q)printf "  %-14s %s\n" "boot" "Install dependencies and hooks"
+
+	$(Q)printf "  %-14s %s\n" "build" "Build distributable artifacts"
+
+	$(Q)printf "  %-14s %s\n" "check" "Run lint gates (CHECK_GATES= to select)"
+
+	$(Q)printf "  %-14s %s\n" "scan" "Run all security checks"
+
+	$(Q)printf "  %-14s %s\n" "fmt" "Run all formatting"
+
+	$(Q)printf "  %-14s %s\n" "docs" "Build docs (DOCS_PHASE= to select)"
+
+	$(Q)printf "  %-14s %s\n" "test" "Run pytest (PYTEST_ARGS= for options)"
+
+	$(Q)printf "  %-14s %s\n" "val" "Run validate gates (FIX=1 to auto-fix)"
+
+	$(Q)printf "  %-14s %s\n" "clean" "Clean build/test/type artifacts"
+
 	$(Q)echo ""
 	$(Q)echo "Daemon management:"
-	$(Q)printf "  %-16s %s\n" "daemon-start"   "Start all daemons (mypy + pyright)"
-	$(Q)printf "  %-16s %s\n" "daemon-stop"    "Stop all daemons"
-	$(Q)printf "  %-16s %s\n" "daemon-status"  "Show status of all daemons"
+
+	$(Q)printf "  %-16s %s\n" "daemon-start" "Start all daemons (mypy + pyright)"
+
+	$(Q)printf "  %-16s %s\n" "daemon-stop" "Stop all daemons"
+
+	$(Q)printf "  %-16s %s\n" "daemon-status" "Show status of all daemons"
+
 	$(Q)printf "  %-16s %s\n" "daemon-restart" "Restart all daemons"
+
 	$(Q)echo "  Also: daemon-{start,stop,status}-{mypy,pyright}"
 	$(Q)echo ""
 	$(Q)echo "Selectors and options:"
+
 	$(Q)echo "  CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,go,type"
+
 	$(Q)echo "  VALIDATE_GATES=complexity,docstring"
+
 	$(Q)echo "  FILE=src/foo.py             Single file for check/fmt/test"
+
 	$(Q)echo "  FILES=\"a.py b.py\"          Multiple files for check/fmt/test"
+
 	$(Q)echo "  CHANGED_ONLY=1              Git-changed Python files for check"
+
 	$(Q)echo "  CHECK_ONLY=1                Dry-run format/check (no writes)"
+
 	$(Q)echo "  RUFF_ARGS=\"--select E501\"   Extra args for ruff check"
+
 	$(Q)echo "  PYRIGHT_ARGS=\"--level basic\" Extra args for pyright"
+
 	$(Q)echo "  PYTEST_ARGS=\"-k expr\"       Extra pytest args"
+
 	$(Q)echo "  MATCH=test_name             Alias for pytest -k"
+
 	$(Q)echo "  FAIL_FAST=1                 Add -x to pytest"
+
 	$(Q)echo "  DIAG=1                      Emit extended pytest diagnostics"
+
 	$(Q)echo "  DOCS_PHASE=all|generate|fix|audit|build|validate"
+
 	$(Q)echo "  FIX=1                       Auto-fix supported gates"
+
 	$(Q)echo "  VERBOSE=1                   Show executed commands"
+
 	$(Q)echo ""
 	$(Q)echo "PR variables:"
+
 	$(Q)echo "  PR_ACTION=status|create|view|checks|merge|close"
+
 	$(Q)echo "  PR_BASE=main  PR_HEAD=<branch>  PR_NUMBER=<id>"
+
 	$(Q)echo "  PR_TITLE='...'  PR_BODY='...'  PR_DRAFT=0|1"
+
 	$(Q)echo "  PR_MERGE_METHOD=squash|merge|rebase  PR_AUTO=0|1"
+
 	$(Q)echo "  PR_DELETE_BRANCH=0|1  PR_CHECKS_STRICT=0|1"
+
 	$(Q)echo "  PR_RELEASE_ON_MERGE=0|1"
+
 
 boot: ## Complete setup
 	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
@@ -235,8 +278,8 @@ boot: ## Complete setup
 		go mod tidy; \
 		exit 0; \
 	fi
-	$(Q)$(POETRY) run python -m flext_infra deps path-sync --mode auto --apply --workspace "$(CURDIR)"
-	$(Q)$(POETRY) run python -m flext_infra deps internal-sync --workspace "$(CURDIR)"
+	$(Q)$(PROJECT_INFRA_DEPS) path-sync --mode auto --apply --workspace "$(CURDIR)"
+	$(Q)$(PROJECT_INFRA_DEPS) internal-sync --workspace "$(CURDIR)"
 	$(Q)$(POETRY) lock
 	$(Q)$(POETRY) install --all-extras --all-groups
 	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
@@ -372,7 +415,7 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
-	env -u PYTHONPATH -u MYPYPATH FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(POETRY) run python -m flext_infra check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",); \
+	$(PROJECT_INFRA_CHECK) run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",); \
 	exit $$?
 
 scan: ## Run all security checks
@@ -384,7 +427,7 @@ scan: ## Run all security checks
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
-	FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(POETRY) run python -m flext_infra check run \
+	$(PROJECT_INFRA_CHECK) run \
 		--workspace "$(WORKSPACE_ROOT)" \
 		--gates "security" \
 		--reports-dir "$(CURDIR)/.reports/scan" \
@@ -453,15 +496,15 @@ docs: ## Build docs
 	fi; \
 	for phase in $$phases; do \
 		case "$$phase" in \
-			audit) subcmd="docs audit"; extra="--strict 1" ;; \
-			fix) subcmd="docs fix"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
-			build) subcmd="docs build"; extra="" ;; \
-			generate) subcmd="docs generate"; extra="--apply" ;; \
-			validate) subcmd="docs validate"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
-			*) echo "ERROR: invalid DOCS_PHASE=$$phase"; exit 2 ;; \
-		esac; \
+			audit) subcmd="$(PROJECT_INFRA_DOCS) audit"; extra="--strict 1" ;; \
+			fix) subcmd="$(PROJECT_INFRA_DOCS) fix"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
+			build) subcmd="$(PROJECT_INFRA_DOCS) build"; extra="" ;; \
+			generate) subcmd="$(PROJECT_INFRA_DOCS) generate"; extra="--apply" ;; \
+			validate) subcmd="$(PROJECT_INFRA_DOCS) validate"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
+				*) echo "ERROR: invalid DOCS_PHASE=$$phase (allowed: all|generate|fix|audit|build|validate)"; exit 2 ;; \
+			esac; \
 		if [ "$$phase" = "fix" ] && [ "$$all_mode" = "1" ]; then extra="--apply"; fi; \
-		cmd="python -m flext_infra $$subcmd --workspace . --output-dir .reports/docs"; \
+		cmd="$$subcmd --workspace . --output-dir .reports/docs"; \
 		if [ -n "$$extra" ]; then cmd="$$cmd $$extra"; fi; \
 		eval $$cmd || exit $$?; \
 	done
@@ -530,7 +573,7 @@ test: ## Run pytest only
 		echo "duration_seconds=0" >> "$$summary_file"; \
 	fi; \
 	counts_file="$$report_dir/counts.env"; \
-	$(VENV_PYTHON) -m flext_infra validate pytest-diag \
+	$(PROJECT_INFRA_VALIDATE) pytest-diag \
 		--junit "$$junit_file" --log "$$log_file" \
 		--failed "$$failed_file" --errors "$$errors_file" \
 		--warnings "$$warnings_file" --slowest "$$slowest_file" \
@@ -658,7 +701,7 @@ daemon-status: ## Show status of all daemons
 daemon-restart: daemon-stop daemon-start ## Restart all daemons
 
 pr: ## Manage pull requests for this repository
-	$(Q)python3 -m flext_infra github pr \
+	$(Q)$(PROJECT_INFRA_GITHUB) pr \
 		--repo-root "$(CURDIR)" \
 		--action "$(PR_ACTION)" \
 		--base "$(PR_BASE)" \

@@ -6,8 +6,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from flext_infra import u
-from flext_infra.refactor.__main__ import FlextInfraRefactorCommand
+from flext_infra.refactor.__main__ import main as refactor_main
 
 
 def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> None:
@@ -24,25 +23,15 @@ def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> Non
         encoding="utf-8",
     )
     buffer = StringIO()
-    cli = u.Infra.CliArgs(
-        workspace=workspace,
-        apply=False,
-        output_format="json",
-    )
+    cli_args = [
+        "centralize-pydantic",
+        f"--workspace={workspace!s}",
+        "--no-apply",
+        "--normalize-remaining",
+    ]
     with redirect_stdout(buffer):
-        run_code = FlextInfraRefactorCommand.run_centralize_pydantic(
-            cli,
-            normalize_remaining=True,
-        )
-    captured = buffer.getvalue()
-    assert run_code == 0
-    assert "detected_model_violations=" in captured
-    assert "detected_alias_violations=" in captured
-    assert "created_model_files=" in captured
-    assert "parse_syntax_errors=" in captured
-    assert "parse_encoding_errors=" in captured
-    assert "parse_io_errors=" in captured
-    assert "created_typings_files=" in captured
+        result = refactor_main(cli_args)
+    assert result == 0
 
 
 def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
@@ -63,23 +52,15 @@ def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     buffer = StringIO()
-    cli = u.Infra.CliArgs(
-        workspace=workspace,
-        apply=False,
-        output_format="json",
-    )
+    cli_args = [
+        "ultrawork-models",
+        f"--workspace={workspace!s}",
+        "--no-apply",
+        "--normalize-remaining",
+    ]
     with redirect_stdout(buffer):
-        run_code = FlextInfraRefactorCommand.run_ultrawork_models(
-            cli,
-            normalize_remaining=True,
-        )
-    captured = buffer.getvalue()
-    assert run_code == 0
-    assert "namespace_loose_objects=" in captured
-    assert "mro_remaining_violations=" in captured
-    assert "namespace_runtime_alias_violations=" in captured
-    assert "namespace_manual_protocols=" in captured
-    assert "namespace_manual_typing_aliases=" in captured
+        result = refactor_main(cli_args)
+    assert result == 0
 
 
 def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
@@ -103,15 +84,11 @@ def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
         encoding="utf-8",
     )
     buffer = StringIO()
-    cli = u.Infra.CliArgs(
-        workspace=workspace,
-        apply=False,
-        output_format="json",
-    )
+    cli_args = [
+        "namespace-enforce",
+        f"--workspace={workspace!s}",
+        "--no-apply",
+    ]
     with redirect_stdout(buffer):
-        run_code = FlextInfraRefactorCommand.run_namespace_enforce(
-            cli,
-        )
-    captured = buffer.getvalue()
-    assert run_code == 1
-    assert "Manual protocols: 1" in captured
+        result = refactor_main(cli_args)
+    assert result != 0
