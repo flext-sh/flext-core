@@ -14,8 +14,7 @@ from typing import Self
 
 import pytest
 
-from flext_core import r
-from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core import FlextModelsDomainEvent, r
 from tests import c, t
 from tests.test_utils import assertion_helpers
 

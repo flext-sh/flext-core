@@ -184,9 +184,7 @@ class TestContainerFullCoverage:
             "fake_mod",
             cast("types.ModuleType", fake_module),
         )
-        monkeypatch.setattr(
-            "flext_core._utilities.container.inspect.currentframe", lambda: frame
-        )
+        monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
             "flext_core._utilities.discovery.FlextUtilitiesDiscovery.scan_module",
             _scan_factory_module,
@@ -208,7 +206,7 @@ class TestContainerFullCoverage:
             return container
 
         monkeypatch.setattr(
-            "flext_core._utilities.container.FlextContainer.__call__",
+            "flext_core.container.FlextContainer.__call__",
             _call_container,
             raising=False,
         )
@@ -240,7 +238,7 @@ class TestContainerFullCoverage:
         with pytest.raises(RuntimeError):
             _ = c.context
         monkeypatch.setattr(
-            "flext_core._utilities.container.FlextSettings.get_global",
+            "flext_core.container.FlextSettings.get_global",
             lambda: FlextSettings(),
         )
         tm.that(c._get_default_config(), is_=p.Settings)
@@ -252,7 +250,7 @@ class TestContainerFullCoverage:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config="not-provider")
         monkeypatch.setattr(
-            "flext_core._utilities.runtime.FlextRuntime.DependencyIntegration.create_layered_bridge",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
         with pytest.raises(TypeError, match="Bridge must have config provider"):
@@ -328,12 +326,12 @@ class TestContainerFullCoverage:
         c.register("res", lambda: "x", kind="resource")
         tm.that(c._resources, has="res")
         monkeypatch.setattr(
-            "flext_core._utilities.runtime.FlextRuntime.DependencyIntegration.register_object",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.register_object",
             _raise_register_object,
         )
         c.register("x", "y")
         monkeypatch.setattr(
-            "flext_core._utilities.runtime.FlextRuntime.DependencyIntegration.register_factory",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.register_factory",
             _raise_register_factory,
         )
         c.register("x2", lambda: "v", kind="factory")
@@ -341,7 +339,7 @@ class TestContainerFullCoverage:
         c.register("dup", lambda: "v", kind="resource")
         del c._di_resources.dup
         monkeypatch.setattr(
-            "flext_core._utilities.runtime.FlextRuntime.DependencyIntegration.register_resource",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.register_resource",
             _raise_register_resource,
         )
         c.register("new", lambda: "v", kind="resource")
@@ -419,7 +417,7 @@ class TestContainerFullCoverage:
             return c
 
         monkeypatch.setattr(
-            "flext_core._utilities.container.FlextContainer._create_scoped_instance",
+            "flext_core.container.FlextContainer._create_scoped_instance",
             _fake_create_scoped_instance,
         )
         _ = c.scoped(subproject="sub")
@@ -448,9 +446,7 @@ class TestContainerFullCoverage:
             "fake_factory_mod",
             cast("types.ModuleType", fake_module),
         )
-        monkeypatch.setattr(
-            "flext_core._utilities.container.inspect.currentframe", lambda: frame
-        )
+        monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
             "flext_core._utilities.discovery.FlextUtilitiesDiscovery.scan_module",
             _scan_factory_module_captured,
@@ -488,11 +484,11 @@ class TestContainerFullCoverage:
         c = FlextContainer.create()
         bad_bridge = types.SimpleNamespace(config=None)
         monkeypatch.setattr(
-            "flext_core._utilities.runtime.FlextRuntime.DependencyIntegration.create_layered_bridge",
+            "flext_core.runtime.FlextRuntime.DependencyIntegration.create_layered_bridge",
             lambda: (bad_bridge, types.SimpleNamespace(), types.SimpleNamespace()),
         )
         monkeypatch.setattr(
-            "flext_core._utilities.container.di_providers.Configuration",
+            "flext_core.container.di_providers.Configuration",
             cast("t.NormalizedValue", t.NormalizedValue),
         )
         with pytest.raises(TypeError, match="cannot be None"):

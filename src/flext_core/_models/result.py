@@ -13,8 +13,7 @@ from typing import Annotated, ClassVar, Self, cast, override
 import structlog
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core.typings import U, t
+from flext_core import FlextProtocolsLogging, U, t
 
 
 class FlextModelsResult:
@@ -164,11 +163,13 @@ class FlextModelsResult:
                 Successful RuntimeResult instance
 
             """
-            instance: FlextModelsResult.RuntimeResult[V] = FlextModelsResult.RuntimeResult[V](
-                is_success=True,
-                error=None,
-                error_code=None,
-                error_data=t.ConfigMap(root={}),
+            instance: FlextModelsResult.RuntimeResult[V] = (
+                FlextModelsResult.RuntimeResult[V](
+                    is_success=True,
+                    error=None,
+                    error_code=None,
+                    error_data=t.ConfigMap(root={}),
+                )
             )
             instance._payload = value
             return instance

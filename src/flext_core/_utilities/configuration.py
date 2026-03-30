@@ -14,8 +14,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, T_Model, c, e, p, r, t
-from flext_core._models.result import FlextModelsResult
+from flext_core import FlextModelsResult, FlextRuntime, T_Model, c, e, p, r, t
 
 
 class FlextUtilitiesConfiguration:

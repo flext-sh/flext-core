@@ -6,8 +6,7 @@ from typing import ClassVar, override
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextSettings, m, r, t
-from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core import FlextModelsDomainEvent, FlextSettings, m, r, t
 
 
 class Ex11HandlerLikeService(FlextSettings):

@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from flext_core._models.domain_event import FlextModelsDomainEvent
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.errors import FlextModelsErrors
+    from flext_core._models.exception_params import FlextModelsExceptionParams
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.result import FlextModelsResult
@@ -90,10 +91,8 @@ if TYPE_CHECKING:
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.configuration import FlextUtilitiesConfiguration
-    from flext_core._utilities.container import FlextContainer
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
-    from flext_core._utilities.decorators import FlextDecorators, d
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enum import FlextUtilitiesEnum
@@ -108,25 +107,27 @@ if TYPE_CHECKING:
         FlextUtilitiesGuardsTypeProtocol,
     )
     from flext_core._utilities.mapper import FlextUtilitiesMapper
-    from flext_core._utilities.mixins import FlextMixins, x
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.pagination import FlextUtilitiesPagination
     from flext_core._utilities.parser import FlextUtilitiesParser
-    from flext_core._utilities.registry import FlextRegistry
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
-    from flext_core._utilities.runtime import FlextRuntime
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, FlextConstants as c
+    from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
+    from flext_core.decorators import FlextDecorators, FlextDecorators as d
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.errors import FlextError, FlextErrorDomain
     from flext_core.exceptions import FlextExceptions, FlextExceptions as e
     from flext_core.handlers import FlextHandlers, FlextHandlers as h
     from flext_core.loggings import FlextLogger
+    from flext_core.mixins import FlextMixins, FlextMixins as x
     from flext_core.models import FlextModels, FlextModels as m
     from flext_core.protocols import FlextProtocols, FlextProtocols as p
+    from flext_core.registry import FlextRegistry
     from flext_core.result import FlextResult, FlextResult as r
+    from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, FlextService as s
     from flext_core.settings import FlextSettings
     from flext_core.typings import BaseModel, FlextTypes, FlextTypes as t
@@ -157,9 +158,9 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "flext_core._constants.validation",
         "FlextConstantsValidation",
     ],
-    "FlextContainer": ["flext_core._utilities.container", "FlextContainer"],
+    "FlextContainer": ["flext_core.container", "FlextContainer"],
     "FlextContext": ["flext_core.context", "FlextContext"],
-    "FlextDecorators": ["flext_core._utilities.decorators", "FlextDecorators"],
+    "FlextDecorators": ["flext_core.decorators", "FlextDecorators"],
     "FlextDispatcher": ["flext_core.dispatcher", "FlextDispatcher"],
     "FlextError": ["flext_core.errors", "FlextError"],
     "FlextErrorDomain": ["flext_core.errors", "FlextErrorDomain"],
@@ -167,7 +168,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "FlextGenericModels": ["flext_core._models.generic", "FlextGenericModels"],
     "FlextHandlers": ["flext_core.handlers", "FlextHandlers"],
     "FlextLogger": ["flext_core.loggings", "FlextLogger"],
-    "FlextMixins": ["flext_core._utilities.mixins", "FlextMixins"],
+    "FlextMixins": ["flext_core.mixins", "FlextMixins"],
     "FlextModelFoundation": ["flext_core._models.base", "FlextModelFoundation"],
     "FlextModels": ["flext_core.models", "FlextModels"],
     "FlextModelsCollections": [
@@ -211,6 +212,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextModelsEntity": ["flext_core._models.entity", "FlextModelsEntity"],
     "FlextModelsErrors": ["flext_core._models.errors", "FlextModelsErrors"],
+    "FlextModelsExceptionParams": [
+        "flext_core._models.exception_params",
+        "FlextModelsExceptionParams",
+    ],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
     "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
     "FlextModelsService": ["flext_core._models.service", "FlextModelsService"],
@@ -230,9 +235,9 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextProtocolsResult": ["flext_core._protocols.result", "FlextProtocolsResult"],
     "FlextProtocolsService": ["flext_core._protocols.service", "FlextProtocolsService"],
-    "FlextRegistry": ["flext_core._utilities.registry", "FlextRegistry"],
+    "FlextRegistry": ["flext_core.registry", "FlextRegistry"],
     "FlextResult": ["flext_core.result", "FlextResult"],
-    "FlextRuntime": ["flext_core._utilities.runtime", "FlextRuntime"],
+    "FlextRuntime": ["flext_core.runtime", "FlextRuntime"],
     "FlextService": ["flext_core.service", "FlextService"],
     "FlextSettings": ["flext_core.settings", "FlextSettings"],
     "FlextTypes": ["flext_core.typings", "FlextTypes"],
@@ -341,7 +346,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "_typings": ["flext_core._typings", ""],
     "_utilities": ["flext_core._utilities", ""],
     "c": ["flext_core.constants", "FlextConstants"],
-    "d": ["flext_core._utilities.decorators", "d"],
+    "d": ["flext_core.decorators", "FlextDecorators"],
     "e": ["flext_core.exceptions", "FlextExceptions"],
     "h": ["flext_core.handlers", "FlextHandlers"],
     "m": ["flext_core.models", "FlextModels"],
@@ -350,7 +355,7 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "s": ["flext_core.service", "FlextService"],
     "t": ["flext_core.typings", "FlextTypes"],
     "u": ["flext_core.utilities", "FlextUtilities"],
-    "x": ["flext_core._utilities.mixins", "x"],
+    "x": ["flext_core.mixins", "FlextMixins"],
 }
 
 __all__ = [
@@ -397,6 +402,7 @@ __all__ = [
     "FlextModelsDomainEvent",
     "FlextModelsEntity",
     "FlextModelsErrors",
+    "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsResult",
     "FlextModelsService",

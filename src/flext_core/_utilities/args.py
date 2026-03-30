@@ -23,9 +23,7 @@ from typing import (
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 from pydantic.errors import PydanticSchemaGenerationError
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core.result import r
-from flext_core.typings import P, R, t
+from flext_core import FlextModelFoundation, P, R, r, t
 
 
 class FlextUtilitiesArgs:

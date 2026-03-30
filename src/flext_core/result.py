@@ -17,9 +17,7 @@ from pydantic import BaseModel, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core._models.result import FlextModelsResult
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core.typings import T_Model, U, t
+from flext_core import FlextModelsResult, FlextProtocolsResult, T_Model, U, t
 
 
 class FlextResult[T](FlextModelsResult.RuntimeResult[T]):

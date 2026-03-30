@@ -14,8 +14,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict, Field
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core.typings import t
+from flext_core import FlextModelFoundation, t
 
 
 class FlextModelsExceptionParams:

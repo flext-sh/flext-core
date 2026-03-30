@@ -24,8 +24,7 @@ from collections.abc import Mapping, Sequence
 from typing import cast
 
 import pytest
-from flext_tests import t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, t, u
 from pydantic import BaseModel
 
 from flext_core import r

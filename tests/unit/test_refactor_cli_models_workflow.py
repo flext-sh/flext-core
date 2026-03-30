@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from flext_infra.refactor.__main__ import main as refactor_main
+from flext_infra import FlextInfraCli
 
 
 def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> None:
@@ -30,7 +30,7 @@ def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> Non
         "--normalize-remaining",
     ]
     with redirect_stdout(buffer):
-        result = refactor_main(cli_args)
+        result = FlextInfraCli().main(["refactor"] + cli_args)
     assert result == 0
 
 
@@ -59,7 +59,7 @@ def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
         "--normalize-remaining",
     ]
     with redirect_stdout(buffer):
-        result = refactor_main(cli_args)
+        result = FlextInfraCli().main(["refactor"] + cli_args)
     assert result == 0
 
 
@@ -90,5 +90,5 @@ def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
         "--no-apply",
     ]
     with redirect_stdout(buffer):
-        result = refactor_main(cli_args)
+        result = FlextInfraCli().main(["refactor"] + cli_args)
     assert result != 0

@@ -22,16 +22,16 @@ from dependency_injector import containers as di_containers, providers as di_pro
 from pydantic import BaseModel, ValidationError
 
 from flext_core import (
+    FlextConstants as c,
     FlextContext,
     FlextDispatcher,
     FlextLogger,
+    FlextModels as m,
+    FlextProtocols as p,
+    FlextResult as r,
     FlextSettings,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
+    FlextTypes as t,
+    FlextUtilities as u,
 )
 
 

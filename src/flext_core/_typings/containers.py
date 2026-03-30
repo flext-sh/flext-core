@@ -19,7 +19,7 @@ from typing import Annotated, override
 
 from pydantic import BaseModel, Field, RootModel
 
-from flext_core._typings.base import FlextTypingBase
+from flext_core import FlextTypingBase
 
 
 class FlextTypingContainers:

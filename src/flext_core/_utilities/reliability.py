@@ -19,15 +19,17 @@ from typing import ClassVar, TypeIs
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.result import FlextModelsResult
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core._utilities.runtime import FlextRuntime
-from flext_core.constants import c
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import (
+    FlextModelFoundation,
+    FlextModelsResult,
+    FlextProtocolsLogging,
+    FlextRuntime,
+    FlextUtilitiesGuards,
+    FlextUtilitiesMapper,
+    c,
+    r,
+    t,
+)
 
 
 class FlextUtilitiesReliability:

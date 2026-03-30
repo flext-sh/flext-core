@@ -18,23 +18,23 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core._constants.errors import (
-        FlextConstantsErrors as _FlextConstantsErrors,
+    from flext_core import (
+        FlextConstantsErrors,
+        FlextModelsErrors,
     )
-    from flext_core._models.errors import FlextModelsErrors as _FlextModelsErrors
 
-    FlextErrorDomain: type[_FlextConstantsErrors.ErrorDomain]
-    FlextError: type[_FlextModelsErrors.Error]
+    FlextErrorDomain: type[FlextConstantsErrors.ErrorDomain]
+    FlextError: type[FlextModelsErrors.Error]
 
 
 def __getattr__(name: str) -> type:
     """Lazy re-export canonical error types on first access."""
     if name == "FlextErrorDomain":
-        from flext_core._constants.errors import FlextConstantsErrors  # noqa: PLC0415
+        from flext_core import FlextConstantsErrors  # noqa: PLC0415
 
         return FlextConstantsErrors.ErrorDomain
     if name == "FlextError":
-        from flext_core._models.errors import FlextModelsErrors  # noqa: PLC0415
+        from flext_core import FlextModelsErrors  # noqa: PLC0415
 
         return FlextModelsErrors.Error
     msg = f"module {__name__!r} has no attribute {name!r}"

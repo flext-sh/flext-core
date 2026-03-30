@@ -24,14 +24,16 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.exception_params import FlextModelsExceptionParams as _ep
-from flext_core._utilities.runtime import FlextRuntime
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import (
+    FlextModelFoundation,
+    FlextModelsCollections,
+    FlextRuntime,
+    c,
+    p,
+    r,
+    t,
+)
+from flext_core._models.exception_params import FlextModelsExceptionParams
 
 
 class FlextModelsConfig:
@@ -829,31 +831,49 @@ class FlextModelsConfig:
             Field(default=None, description="Additional error data (Pydantic model)"),
         ] = None
 
-    class ValidationErrorConfig(_ep.ValidationErrorParams, ExceptionConfig):
+    class ValidationErrorConfig(
+        FlextModelsExceptionParams.ValidationErrorParams, ExceptionConfig
+    ):
         """Configuration for ValidationError (Pydantic v2)."""
 
-    class ConfigurationErrorConfig(_ep.ConfigurationErrorParams, ExceptionConfig):
+    class ConfigurationErrorConfig(
+        FlextModelsExceptionParams.ConfigurationErrorParams, ExceptionConfig
+    ):
         """Configuration for ConfigurationError (Pydantic v2)."""
 
-    class ConnectionErrorConfig(_ep.ConnectionErrorParams, ExceptionConfig):
+    class ConnectionErrorConfig(
+        FlextModelsExceptionParams.ConnectionErrorParams, ExceptionConfig
+    ):
         """Configuration for ConnectionError (Pydantic v2)."""
 
-    class TimeoutErrorConfig(_ep.TimeoutErrorParams, ExceptionConfig):
+    class TimeoutErrorConfig(
+        FlextModelsExceptionParams.TimeoutErrorParams, ExceptionConfig
+    ):
         """Configuration for TimeoutError (Pydantic v2)."""
 
-    class AuthenticationErrorConfig(_ep.AuthenticationErrorParams, ExceptionConfig):
+    class AuthenticationErrorConfig(
+        FlextModelsExceptionParams.AuthenticationErrorParams, ExceptionConfig
+    ):
         """Configuration for AuthenticationError (Pydantic v2)."""
 
-    class AuthorizationErrorConfig(_ep.AuthorizationErrorParams, ExceptionConfig):
+    class AuthorizationErrorConfig(
+        FlextModelsExceptionParams.AuthorizationErrorParams, ExceptionConfig
+    ):
         """Configuration for AuthorizationError (Pydantic v2)."""
 
-    class NotFoundErrorConfig(_ep.NotFoundErrorParams, ExceptionConfig):
+    class NotFoundErrorConfig(
+        FlextModelsExceptionParams.NotFoundErrorParams, ExceptionConfig
+    ):
         """Configuration for NotFoundError (Pydantic v2)."""
 
-    class ConflictErrorConfig(_ep.ConflictErrorParams, ExceptionConfig):
+    class ConflictErrorConfig(
+        FlextModelsExceptionParams.ConflictErrorParams, ExceptionConfig
+    ):
         """Configuration for ConflictError (Pydantic v2)."""
 
-    class RateLimitErrorConfig(_ep.RateLimitErrorParams, ExceptionConfig):
+    class RateLimitErrorConfig(
+        FlextModelsExceptionParams.RateLimitErrorParams, ExceptionConfig
+    ):
         """Configuration for RateLimitError (Pydantic v2)."""
 
     class InternalErrorConfig(ExceptionConfig):
@@ -868,7 +888,7 @@ class FlextModelsConfig:
             Field(default=None, description="Operation that caused internal error"),
         ] = None
 
-    class TypeErrorConfig(_ep.TypeErrorParams, ExceptionConfig):
+    class TypeErrorConfig(FlextModelsExceptionParams.TypeErrorParams, ExceptionConfig):
         """Configuration for TypeError (Pydantic v2)."""
 
     class TypeErrorOptions(FlextModelsCollections.Config):
@@ -906,10 +926,14 @@ class FlextModelsConfig:
             Field(default=None, description="Actual value that caused error"),
         ] = None
 
-    class CircuitBreakerErrorConfig(_ep.CircuitBreakerErrorParams, ExceptionConfig):
+    class CircuitBreakerErrorConfig(
+        FlextModelsExceptionParams.CircuitBreakerErrorParams, ExceptionConfig
+    ):
         """Configuration for CircuitBreakerError (Pydantic v2)."""
 
-    class OperationErrorConfig(_ep.OperationErrorParams, ExceptionConfig):
+    class OperationErrorConfig(
+        FlextModelsExceptionParams.OperationErrorParams, ExceptionConfig
+    ):
         """Configuration for OperationError (Pydantic v2)."""
 
     class AttributeAccessErrorConfig(ExceptionConfig):

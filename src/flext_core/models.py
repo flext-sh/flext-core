@@ -25,11 +25,12 @@ from flext_core import (
     FlextModelsDispatcher,
     FlextModelsDomainEvent,
     FlextModelsEntity,
+    FlextModelsErrors,
     FlextModelsHandler,
     FlextModelsResult,
     FlextModelsService,
 )
-from flext_core._models.errors import FlextModelsErrors
+from flext_core._models.exception_params import FlextModelsExceptionParams
 
 
 class FlextModels(
@@ -49,6 +50,7 @@ class FlextModels(
     FlextModelsResult,
     FlextModelsService,
     FlextModelsConfig,
+    FlextModelsExceptionParams,
 ):
     """Facade that groups DDD building blocks for CQRS-ready domains.
 

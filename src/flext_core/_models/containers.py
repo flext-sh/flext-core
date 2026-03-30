@@ -23,8 +23,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, RootModel
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core.typings import t
+from flext_core import FlextModelFoundation, t
 
 # Module-level aliases to avoid pydantic mypy plugin crash on t.* in RootModel bases
 _ScalarOrModel = str | int | float | bool | datetime | Path | BaseModel

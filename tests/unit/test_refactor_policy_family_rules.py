@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_infra import FlextInfraPreCheckGate as PreCheckGate
 from flext_infra.rules import class_reconstructor
-from flext_infra.rules.class_reconstructor import FlextInfraPreCheckGate as PreCheckGate
 
 
 def _policy_path() -> Path:

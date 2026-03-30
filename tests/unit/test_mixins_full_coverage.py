@@ -200,7 +200,7 @@ class TestMixinsFullCoverage:
     ) -> None:
         runtime_container = self._RuntimeContainer()
         monkeypatch.setattr(
-            "flext_core._utilities.mixins.FlextContainer.create",
+            "flext_core.mixins.FlextContainer.create",
             staticmethod(lambda: runtime_container),
         )
 
@@ -290,7 +290,7 @@ class TestMixinsFullCoverage:
         service._init_service("svc")
         FlextMixins._logger_cache.clear()
         monkeypatch.setattr(
-            "flext_core._utilities.mixins.FlextContainer.create",
+            "flext_core.mixins.FlextContainer.create",
             staticmethod(
                 lambda: self._ContainerForLogger(True, logger="l"),
             ),
@@ -298,13 +298,13 @@ class TestMixinsFullCoverage:
         logger_from_di = _Service._get_or_create_logger()
         tm.that(logger_from_di, none=False)
         monkeypatch.setattr(
-            "flext_core._utilities.mixins.FlextContainer.create",
+            "flext_core.mixins.FlextContainer.create",
             staticmethod(lambda: self._ContainerForLogger(False)),
         )
         logger_created = _Service._get_or_create_logger()
         tm.that(logger_created, none=False)
         monkeypatch.setattr(
-            "flext_core._utilities.mixins.FlextContainer.create",
+            "flext_core.mixins.FlextContainer.create",
             staticmethod(lambda: (_ for _ in ()).throw(RuntimeError("no container"))),
         )
         logger_fallback = _Service._get_or_create_logger()
@@ -455,7 +455,7 @@ class TestMixinsFullCoverage:
             return runtime_container
 
         monkeypatch.setattr(
-            "flext_core._utilities.mixins.FlextContainer.create",
+            "flext_core.mixins.FlextContainer.create",
             staticmethod(_create_runtime_container),
         )
 
@@ -477,7 +477,7 @@ class TestMixinsFullCoverage:
         class _ModelMarker:
             pass
 
-        monkeypatch.setattr("flext_core._utilities.mixins.BaseModel", _ModelMarker)
+        monkeypatch.setattr("flext_core.mixins.BaseModel", _ModelMarker)
 
         class _ModelService(_ModelMarker, x):
             pass
@@ -579,7 +579,7 @@ class TestMixinsFullCoverage:
 
         FlextMixins._logger_cache.clear()
         monkeypatch.setattr(
-            "flext_core._utilities.mixins.FlextContainer.create",
+            "flext_core.mixins.FlextContainer.create",
             staticmethod(_create_broken_container),
         )
         fallback_logger = _LoggerService._get_or_create_logger()

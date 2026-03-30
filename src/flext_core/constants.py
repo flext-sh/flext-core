@@ -10,13 +10,13 @@ from flext_core import (
     FlextConstantsBase,
     FlextConstantsCqrs,
     FlextConstantsDomain,
+    FlextConstantsErrors,
     FlextConstantsInfrastructure,
     FlextConstantsMixins,
     FlextConstantsPlatform,
     FlextConstantsSettings,
     FlextConstantsValidation,
 )
-from flext_core._constants.errors import FlextConstantsErrors
 
 
 class FlextConstants(

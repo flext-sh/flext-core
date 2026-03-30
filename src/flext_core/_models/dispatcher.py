@@ -16,10 +16,7 @@ from typing import Annotated, override
 
 from pydantic import Field, PrivateAttr
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import FlextModelFoundation, c, r, t
 
 
 class FlextModelsDispatcher:

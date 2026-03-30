@@ -6,8 +6,7 @@ from typing import ClassVar
 
 from pydantic import ConfigDict
 
-from flext_core import m, r, t
-from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core import FlextModelsDomainEvent, m, r, t
 
 
 class Ex10Message(m.Command):

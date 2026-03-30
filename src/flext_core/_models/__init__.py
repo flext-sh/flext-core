@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from flext_core._models.domain_event import FlextModelsDomainEvent
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.errors import FlextModelsErrors
+    from flext_core._models.exception_params import FlextModelsExceptionParams
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.result import FlextModelsResult
@@ -90,6 +91,10 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     ],
     "FlextModelsEntity": ["flext_core._models.entity", "FlextModelsEntity"],
     "FlextModelsErrors": ["flext_core._models.errors", "FlextModelsErrors"],
+    "FlextModelsExceptionParams": [
+        "flext_core._models.exception_params",
+        "FlextModelsExceptionParams",
+    ],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
     "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
     "FlextModelsService": ["flext_core._models.service", "FlextModelsService"],
@@ -115,6 +120,7 @@ __all__ = [
     "FlextModelsDomainEvent",
     "FlextModelsEntity",
     "FlextModelsErrors",
+    "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsResult",
     "FlextModelsService",
