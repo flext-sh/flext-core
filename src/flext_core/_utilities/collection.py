@@ -78,7 +78,9 @@ class FlextUtilitiesCollection:
         )
 
     @staticmethod
-    def _validate_list_container(data: t.NormalizedValue) -> r[t.FlatContainerList]:
+    def _validate_list_container(
+        data: t.NormalizedValue,
+    ) -> r[t.FlatContainerList]:
         return r[t.FlatContainerList].create_from_callable(
             lambda: m.Validators.list_container_adapter().validate_python(data),
         )
@@ -212,7 +214,7 @@ class FlextUtilitiesCollection:
 
         Args:
             items: Items to process
-            operation: Function that returns R or r[R]
+            operation: Function that returns R or p.Result[R]
             spec: Batch execution specification.
 
         """
@@ -1001,7 +1003,7 @@ class FlextUtilitiesCollection:
             mapping: Dict with string or enum values
 
         Returns:
-            r with parsed dict
+            p.Result with parsed dict
 
         Example:
             result = u.parse_mapping(Status, {"key": "active"})
@@ -1114,7 +1116,7 @@ class FlextUtilitiesCollection:
             exclude_keys: Exclude items with these keys (for dict items)
 
         Returns:
-            r with list of processed results or error
+            p.Result with list of processed results or error
 
         """
         _ = filter_keys

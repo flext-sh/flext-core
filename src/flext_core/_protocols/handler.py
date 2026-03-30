@@ -7,14 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
-
-if TYPE_CHECKING:
-    from flext_core import r
 
 
 class FlextProtocolsHandler:
@@ -29,7 +26,10 @@ class FlextProtocolsHandler:
 
         def can_handle(self, message_type: type) -> bool: ...
 
-        def handle(self, message: MessageT) -> r[ResultT]: ...
+        def handle(
+            self,
+            message: MessageT,
+        ) -> FlextProtocolsResult.Result[ResultT]: ...
 
     @runtime_checkable
     class DispatchMessage(Protocol):

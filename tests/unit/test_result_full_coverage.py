@@ -12,7 +12,6 @@ from typing import cast
 from flext_tests import t, tm
 
 from flext_core import r
-from tests import m
 
 from ._models_impl import _ErrorsModel, _PlainErrorModel, _TargetModel
 
@@ -29,8 +28,8 @@ def test_validation_like_error_structure() -> None:
 
 
 def test_type_guards_result() -> None:
-    ok_res = m.RuntimeResult[t.Container].ok("ok")
-    fail_res = m.RuntimeResult[t.Container].fail("x")
+    ok_res = r[t.Container].ok("ok")
+    fail_res = r[t.Container].fail("x")
     tm.that(r.is_success_result(ok_res), eq=True)
     tm.that(r.is_failure_result(fail_res), eq=True)
 
@@ -51,13 +50,13 @@ def test_map_flat_map_and_then_paths() -> None:
     mapped_fail = r[int].ok(2).map(lambda _: (_ for _ in ()).throw(ValueError("m")))
     tm.fail(mapped_fail)
     tm.that(mapped_fail.error, eq="m")
-    runtime_ok: r[int] = cast("r[int]", m.RuntimeResult[int].ok(20))
+    runtime_ok: r[int] = cast("r[int]", r[int].ok(20))
     flat_ok: r[int] = r[int].ok(1).flat_map(lambda _: runtime_ok)
     tm.ok(flat_ok)
     tm.that(flat_ok.value, eq=20)
     runtime_fail: r[int] = cast(
         "r[int]",
-        m.RuntimeResult(
+        r(
             error="inner",
             is_success=False,
             error_code=None,
@@ -136,12 +135,12 @@ def test_from_validation_and_to_model_paths() -> None:
 
 
 def test_lash_runtime_result_paths() -> None:
-    runtime_ok2: m.RuntimeResult[int] = m.RuntimeResult[int].ok(99)
+    runtime_ok2: r[int] = r[int].ok(99)
     failed_for_lash: r[int] = cast("r[int]", r.fail("x"))
     lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok2)
     tm.ok(lash_ok)
     tm.that(lash_ok.value, eq=99)
-    runtime_fail2: m.RuntimeResult[int] = m.RuntimeResult(
+    runtime_fail2: r[int] = r(
         error="recovery failed",
         is_success=False,
         error_code=None,

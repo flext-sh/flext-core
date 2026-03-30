@@ -709,7 +709,7 @@ class FlextUtilitiesMapper:
         """Helper: Get raw value from dict/t.NormalizedValue/model.
 
         Returns:
-            r[t.NormalizedValue]: Ok with value if found (non-None),
+            p.Result[t.NormalizedValue]: Ok with value if found (non-None),
                 fail("found_none:...") if found but None,
                 fail("Key ... not found") if not found.
 
@@ -753,7 +753,7 @@ class FlextUtilitiesMapper:
         """Helper: Handle array indexing with support for negative indices.
 
         Returns:
-            r[t.NormalizedValue]: Ok with indexed value, fail("found_none:index") if None,
+            p.Result[t.NormalizedValue]: Ok with indexed value, fail("found_none:index") if None,
             Fail with error message if out of bounds or invalid.
 
         """
@@ -987,7 +987,7 @@ class FlextUtilitiesMapper:
 
             # Max with custom extractor
             max_val = FlextUtilitiesMapper.agg(
-                items, lambda r: r.total_entries, fn=max
+                items, lambda p.Result: p.Result.total_entries, fn=max
             )
             # → 30
 
@@ -1240,7 +1240,7 @@ class FlextUtilitiesMapper:
             default_value: Default value for inactive flags (default: False)
 
         Returns:
-            r with flags dictionary or error
+            p.Result with flags dictionary or error
 
         Example:
             >>> flags = ["read", "write"]
@@ -1317,13 +1317,13 @@ class FlextUtilitiesMapper:
             key_mapping: Mapping of source_key → output_key
 
         Returns:
-            r with list of active output keys or error
+            p.Result with list of active output keys or error
 
         Example:
             >>> source = {"read": True, "write": True, "delete": False}
-            >>> mapping = {"read": "r", "write": "w", "delete": "d"}
+            >>> mapping = {"read": "p.Result", "write": "w", "delete": "d"}
             >>> result = FlextUtilitiesMapper.collect_active_keys(source, mapping)
-            >>> active = result.value  # ["r", "w"]
+            >>> active = result.value  # ["p.Result", "w"]
 
         """
 
@@ -1591,7 +1591,7 @@ class FlextUtilitiesMapper:
             value: Value to check/convert
 
         Returns:
-            r[str]: ok(str) when value is str, fail otherwise
+            p.Result[str]: ok(str) when value is str, fail otherwise
 
         Example:
             >>> FlextUtilitiesMapper.ensure_str_or_none("hello")
@@ -1630,7 +1630,7 @@ class FlextUtilitiesMapper:
             separator: Path separator (default: ".")
 
         Returns:
-            r containing extracted value or default
+            p.Result containing extracted value or default
 
         Example:
             config = {"database": {"host": c.LOCALHOST, "port": 5432}}
@@ -2082,7 +2082,7 @@ class FlextUtilitiesMapper:
             keep_unmapped: Keep keys not in mapping (default: True)
 
         Returns:
-            r with remapped dictionary or error
+            p.Result with remapped dictionary or error
 
         Example:
             >>> mapping = {"oldName": "newName", "foo": "bar"}
@@ -2652,7 +2652,7 @@ class FlextUtilitiesMapper:
             exclude_keys: Set of keys to remove.
 
         Returns:
-            r with transformed dictionary.
+            p.Result with transformed dictionary.
 
         Example:
             >>> result = FlextUtilitiesMapper.transform(

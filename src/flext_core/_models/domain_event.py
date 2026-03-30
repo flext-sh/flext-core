@@ -16,7 +16,7 @@ from typing import override
 
 from pydantic import Field, field_validator
 
-from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, t
+from flext_core import FlextModelFoundation, FlextRuntime, t
 
 
 class FlextModelsDomainEvent:
@@ -69,18 +69,14 @@ class FlextModelsDomainEvent:
             for key, value in item.items():
                 normalized_map[str(key)] = (
                     FlextModelsDomainEvent.metadata_to_normalized(
-                        value
-                        if FlextUtilitiesGuardsTypeCore.is_scalar(value)
-                        else str(value),
+                        value if FlextRuntime.is_scalar(value) else str(value),
                     )
                 )
             return normalized_map
         if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
             return [
                 FlextModelsDomainEvent.metadata_to_normalized(
-                    value
-                    if FlextUtilitiesGuardsTypeCore.is_scalar(value)
-                    else str(value),
+                    value if FlextRuntime.is_scalar(value) else str(value),
                 )
                 for value in item
             ]
@@ -131,11 +127,7 @@ class FlextModelsDomainEvent:
             return FlextModelsDomainEvent.ComparableConfigMap(root={})
         return FlextModelsDomainEvent.ComparableConfigMap(
             root={
-                str(key): (
-                    value
-                    if FlextUtilitiesGuardsTypeCore.is_primitive(value)
-                    else str(value)
-                )
+                str(key): (value if FlextRuntime.is_primitive(value) else str(value))
                 for key, value in data.items()
             },
         )

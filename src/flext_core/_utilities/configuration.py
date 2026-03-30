@@ -14,7 +14,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import FlextModelsResult, FlextRuntime, T_Model, c, e, p, r, t
+from flext_core import FlextRuntime, T_Model, c, e, p, r, t
 
 
 class FlextUtilitiesConfiguration:
@@ -168,7 +168,7 @@ class FlextUtilitiesConfiguration:
         explicit_options: T_Model | None,
         default_factory: Callable[[], T_Model],
         **kwargs: t.Scalar,
-    ) -> FlextModelsResult.RuntimeResult[T_Model]:
+    ) -> r[T_Model]:
         """Build Pydantic options model from explicit options or kwargs.
 
         Args:
@@ -178,7 +178,7 @@ class FlextUtilitiesConfiguration:
             **kwargs: Individual option overrides (snake_case field names)
 
         Returns:
-            r[T_Model]: ok(validated_model) or fail(error_msg)
+            p.Result[T_Model]: ok(validated_model) or fail(error_msg)
 
         """
         try:
@@ -233,7 +233,7 @@ class FlextUtilitiesConfiguration:
             registrations: Mapping of name to service instance or factory.
 
         Returns:
-            r[int]: Success with count of registered services, or failure.
+            p.Result[int]: Success with count of registered services, or failure.
 
         """
         count = 0
@@ -432,7 +432,7 @@ class FlextUtilitiesConfiguration:
             _cache: Reserved for future implementation of cached factory pattern.
 
         Returns:
-            r[bool]: Success(true) if registration succeeds, failure otherwise.
+            p.Result[bool]: Success(true) if registration succeeds, failure otherwise.
 
         """
         try:
@@ -462,7 +462,7 @@ class FlextUtilitiesConfiguration:
             instance: Service instance to register.
 
         Returns:
-            r[bool]: Success(true) if registration succeeds, failure otherwise.
+            p.Result[bool]: Success(true) if registration succeeds, failure otherwise.
 
         """
         try:
@@ -510,7 +510,7 @@ class FlextUtilitiesConfiguration:
         singleton_class: type,
         parameter: str,
         value: t.Scalar | t.ConfigMap,
-    ) -> FlextModelsResult.RuntimeResult[bool]:
+    ) -> r[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
         Args:
@@ -519,7 +519,7 @@ class FlextUtilitiesConfiguration:
             value: The new value to set (will be validated by Pydantic)
 
         Returns:
-            r[bool] - ok(True) on success, fail(error_msg) on failure
+            p.Result[bool] - ok(True) on success, fail(error_msg) on failure
 
         """
         if not hasattr(singleton_class, "get_global"):
@@ -550,7 +550,7 @@ class FlextUtilitiesConfiguration:
             config_class: Configuration class to validate (Pydantic BaseSettings)
 
         Returns:
-            r[bool]: ok(True) if valid, fail(error_message) if invalid
+            p.Result[bool]: ok(True) if valid, fail(error_message) if invalid
 
         """
         try:

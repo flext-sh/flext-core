@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from flext_core._models.exception_params import FlextModelsExceptionParams
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.result import FlextModelsResult
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
 
@@ -96,7 +95,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "FlextModelsExceptionParams",
     ],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
-    "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
     "FlextModelsService": ["flext_core._models.service", "FlextModelsService"],
 }
 
@@ -122,7 +120,6 @@ __all__ = [
     "FlextModelsErrors",
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
-    "FlextModelsResult",
     "FlextModelsService",
 ]
 

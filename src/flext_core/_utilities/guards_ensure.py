@@ -7,7 +7,8 @@ from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextUtilitiesGuardsType, m, p, r, t
+from flext_core import FlextUtilitiesGuardsType, p, r, t
+from flext_core._models.collections import FlextModelsCollections
 
 
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
@@ -271,12 +272,16 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def chk(
         value: t.NormalizedValue,
-        spec: m.GuardCheckSpec | None = None,
+        spec: FlextModelsCollections.GuardCheckSpec | None = None,
         **criteria: t.GuardInput,
     ) -> bool:
-        guard_spec = spec if spec is not None else m.GuardCheckSpec()
+        guard_spec = (
+            spec if spec is not None else FlextModelsCollections.GuardCheckSpec()
+        )
         if criteria:
-            criteria_spec = m.GuardCheckSpec.model_validate(criteria)
+            criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
+                criteria,
+            )
             guard_spec = guard_spec.model_copy(update=criteria_spec.model_dump())
         eq = guard_spec.eq
         ne = guard_spec.ne

@@ -41,18 +41,18 @@ class TestFlextUtilitiesConfiguration:
 
         @staticmethod
         def assert_success_with_value[T: t.NormalizedValue](
-            result: m.RuntimeResult[T],
+            result: p.Result[T],
             expected: T,
         ) -> None:
             tm.that(getattr(result, "is_success"), eq=True)
             tm.that(getattr(result, "value"), eq=expected)
 
         @staticmethod
-        def assert_success[T](result: m.RuntimeResult[T]) -> None:
+        def assert_success[T](result: p.Result[T]) -> None:
             tm.that(getattr(result, "is_success"), eq=True)
 
         @staticmethod
-        def assert_failure[T](result: m.RuntimeResult[T]) -> None:
+        def assert_failure[T](result: p.Result[T]) -> None:
             tm.that(getattr(result, "is_failure"), eq=True)
 
     class OptionsModelForTest(m.Value):

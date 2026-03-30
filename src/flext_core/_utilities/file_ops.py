@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from typing import overload
 
-from flext_core import FlextConstants as c
+from flext_core import c
 
 
 class FlextUtilitiesFileOps:

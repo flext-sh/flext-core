@@ -2,7 +2,7 @@
 
 These helpers centralize delimiter handling, whitespace normalization, and
 escaped character parsing so dispatcher handlers and services receive
-predictable ``r`` outcomes instead of ad-hoc string handling.
+predictable ``p.Result`` outcomes instead of ad-hoc string handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,10 +31,10 @@ from flext_core import (
 
 
 class FlextUtilitiesParser:
-    r"""Parse delimited and structured strings with predictable results.
+    """Parse delimited and structured strings with predictable results.
 
     The parser consolidates delimiter handling, escape-aware splits, and
-    normalization routines behind ``r`` so callers can compose
+    normalization routines behind ``p.Result`` so callers can compose
     parsing logic in dispatcher pipelines without manual error handling.
 
     """
@@ -100,7 +100,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _coerce_to_str(value: t.NormalizedValue) -> r[str]:
-        """Coerce value to string - returns r[str]."""
+        """Coerce value to string - returns p.Result[str]."""
         return r[str].ok(str(value))
 
     @staticmethod
@@ -545,7 +545,7 @@ class FlextUtilitiesParser:
             escape_char: Escape character
 
         Returns:
-            r[bool]: True if valid, failure with error message
+            p.Result[bool]: True if valid, failure with error message
 
         """
         if not split_char:
@@ -945,7 +945,7 @@ class FlextUtilitiesParser:
             field_name: Field name for error messages.
 
         Returns:
-            r[T]: Ok(parsed_value) or Fail with error message.
+            p.Result[T]: Ok(parsed_value) or Fail with error message.
 
         Examples:
             >>> result = FlextUtilitiesParser.parse("ACTIVE", Status)
@@ -1022,13 +1022,13 @@ class FlextUtilitiesParser:
             patterns: List of (pattern, replacement) or (pattern, replacement, flags) tuples
 
         Returns:
-            r with transformed text or error
+            p.Result with transformed text or error
 
         Example:
             >>> patterns = [
-            ...     (r"\\\\s+=", "="),  # Remove spaces before =
-            ...     (r",\\\\s+", ","),  # Remove spaces after ,
-            ...     (r"\\\\s+", " "),  # Normalize whitespace
+            ...     (p.Result"\\\\s+=", "="),  # Remove spaces before =
+            ...     (p.Result",\\\\s+", ","),  # Remove spaces after ,
+            ...     (p.Result"\\\\s+", " "),  # Normalize whitespace
             ... ]
             >>> parser = FlextUtilitiesParser()
             >>> result = parser.apply_regex_pipeline(
@@ -1189,7 +1189,7 @@ class FlextUtilitiesParser:
             replacement: Replacement string (default: single space)
 
         Returns:
-            r with normalized text or error
+            p.Result with normalized text or error
 
         Example:
             >>> parser = FlextUtilitiesParser()
@@ -1263,7 +1263,7 @@ class FlextUtilitiesParser:
             options: ParseOptions t.NormalizedValue with parsing configuration
 
         Returns:
-            r with list of parsed components or error
+            p.Result with list of parsed components or error
 
         Example:
             >>> from flext_core import m
@@ -1354,7 +1354,7 @@ class FlextUtilitiesParser:
         split_char: str,
         escape_char: str = "\\",
     ) -> r[t.StrSequence]:
-        r"""Split string on character, respecting escape sequences.
+        """Split string on character, respecting escape sequences.
 
         **Generic replacement for**: DN parsing with escapes, CSV with quotes
 
@@ -1364,16 +1364,7 @@ class FlextUtilitiesParser:
             escape_char: Escape character (default: backslash)
 
         Returns:
-            r with list of split components or error
-
-        Example:
-            >>> # Parse DN with escaped commas
-            >>> parser = FlextUtilitiesParser()
-            >>> result = parser.split_on_char_with_escape(
-            ...     "cn=REDACTED_LDAP_BIND_PASSWORD\\\\,user,ou=users", ","
-            ... )
-            >>> parts = result.value
-            >>> # ["cn=REDACTED_LDAP_BIND_PASSWORD\\\\,user", "ou=users"]
+            p.Result with list of split components or error
 
         """
         validation_result = self._validate_split_inputs(split_char, escape_char)
@@ -1433,7 +1424,7 @@ class FlextUtilitiesParser:
             escape_char: Escape character
 
         Returns:
-            r with list of split components or error
+            p.Result with list of split components or error
 
         """
         text_len = self._get_safe_text_length(text)
@@ -1501,7 +1492,11 @@ class FlextUtilitiesParser:
                 pattern_val, replacement_val = (
                     self._tuple_str_str_adapter.validate_python(pattern_tuple)
                 )
-                return r[tuple[str, str, int]].ok((pattern_val, replacement_val, 0))
+                return r[tuple[str, str, int]].ok((
+                    pattern_val,
+                    replacement_val,
+                    0,
+                ))
             if tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
                 pattern_val, replacement_val, flags_val = (
                     self._tuple_str_str_int_adapter.validate_python(pattern_tuple)
@@ -1551,7 +1546,7 @@ class FlextUtilitiesParser:
         """Handle edge cases for regex pipeline application.
 
         Returns:
-            r if edge case handled, None to continue processing
+            p.Result if edge case handled, None to continue processing
 
         """
         if text is None:

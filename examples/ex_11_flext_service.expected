@@ -121,5 +121,3 @@ hash_value_object_by_value.type: 'int'
 ensure_trace_context.has_trace_id: True
 ensure_trace_context.has_span_id: True
 ensure_trace_context.has_correlation_id: True
-validate_http_status_codes.ok: [200, 201]
-validate_http_status_codes.fail: 'Invalid HTTP status code: 99 (must be 100-599)'

@@ -11,23 +11,93 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, MutableSequence, Sequence
-from typing import Self, TypeIs, overload, override
+from types import TracebackType
+from typing import Annotated, ClassVar, Self, TypeIs, cast, overload, override
 
-from pydantic import BaseModel, PrivateAttr, ValidationError
+import structlog
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import FlextModelsResult, FlextProtocolsResult, T_Model, U, t
+from flext_core import U, p, t
 
 
-class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
+class FlextResult[T](BaseModel):
     """Type-safe result with monadic helpers for operation composition.
 
     Provides success/failure handling with various conversion and operation
     methods for composing operations without exceptions.
     """
 
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        arbitrary_types_allowed=True,
+        frozen=False,
+        populate_by_name=True,
+    )
+
+    is_success: Annotated[bool, Field(default=True)]
+    error: Annotated[str | None, Field(default=None)]
+    error_code: Annotated[str | None, Field(default=None)]
+    error_data: Annotated[t.ConfigMap | None, Field(default=None)]
+
+    _payload: T | None = PrivateAttr(default=None)
+    _exception: BaseException | None = PrivateAttr(default=None)
     _result: Result[T, str] | None = PrivateAttr(default=None)
+    _result_logger: p.Logger | None = PrivateAttr(default=None)
+
+    @override
+    def __repr__(self) -> str:
+        """String representation using short alias 'r' for brevity."""
+        if self.is_success:
+            return f"r[T].ok({self.value!r})"
+        return f"r[T].fail({self.error!r})"
+
+    def __bool__(self) -> bool:
+        """Boolean conversion based on success state."""
+        return self.is_success
+
+    def __enter__(self) -> Self:
+        """Context manager entry."""
+        return self
+
+    def __exit__(
+        self,
+        _exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: TracebackType | None,
+    ) -> None:
+        """Context manager exit."""
+
+    def __or__(self, default: T) -> T:
+        """Operator overload for default values."""
+        return self.unwrap_or(default)
+
+    @property
+    def exception(self) -> BaseException | None:
+        """Get the exception if one was captured."""
+        return self._exception
+
+    @property
+    def is_failure(self) -> bool:
+        """Check if result is a failure."""
+        return not self.is_success
+
+    @property
+    def result_logger(self) -> p.Logger:
+        """Logger for FlextResult."""
+        logger = self._result_logger
+        if logger is None:
+            logger = structlog.get_logger(__name__)
+            self._result_logger = logger
+        return logger
+
+    @property
+    def value(self) -> T:
+        """Result value — returns _payload directly on success."""
+        if not self.is_success:
+            msg = f"Cannot access value of failed result: {self.error}"
+            raise RuntimeError(msg)
+        return cast("T", self._payload)
 
     @staticmethod
     def _validate_error_data(
@@ -105,7 +175,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
     @classmethod
     def _fail_like[S](
         cls,
-        source: FlextProtocolsResult.Result[S],
+        source: p.Result[S],
         *,
         default_error: str = "",
     ) -> FlextResult[S]:
@@ -122,7 +192,7 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
     @classmethod
     def _from_result_like[V](
         cls,
-        source: FlextProtocolsResult.Result[V],
+        source: p.Result[V],
     ) -> FlextResult[V]:
         if source.is_success:
             return FlextResult[V].ok(source.value)
@@ -162,9 +232,12 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             )
 
     @classmethod
-    def accumulate_errors(cls, *results: FlextResult[U]) -> FlextResult[Sequence[U]]:
+    def accumulate_errors[ValueT](
+        cls,
+        *results: FlextResult[ValueT],
+    ) -> FlextResult[Sequence[ValueT]]:
         """Collect all successes, fail if any failure with all errors combined."""
-        successes: MutableSequence[U] = []
+        successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
         for result in results:
             if result.is_success:
@@ -172,8 +245,8 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             else:
                 errors.append(result.error or "Unknown error")
         if errors:
-            return FlextResult[Sequence[U]].fail("; ".join(errors))
-        return FlextResult[Sequence[U]](value=successes, is_success=True)
+            return FlextResult[Sequence[ValueT]].fail("; ".join(errors))
+        return FlextResult[Sequence[ValueT]](value=successes, is_success=True)
 
     @classmethod
     def create_from_callable[V](
@@ -195,7 +268,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             return FlextResult[V].fail(str(e), error_code=error_code, exception=e)
 
     @classmethod
-    @override
     def fail(
         cls,
         error: str | None,
@@ -240,11 +312,11 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
         return result
 
     @classmethod
-    def from_validation(
-        cls: type[FlextResult[T_Model]],
+    def from_validation[ModelT: BaseModel](
+        cls: type[FlextResult[ModelT]],
         data: t.ScalarMapping | BaseModel,
-        model: type[T_Model],
-    ) -> FlextResult[T_Model]:
+        model: type[ModelT],
+    ) -> FlextResult[ModelT]:
         """Create result from Pydantic validation.
 
         Validates data against a Pydantic model and returns a successful result
@@ -261,7 +333,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
         """
         return cls._validate_model(data, model, failure_prefix="Validation failed")
 
-    @override
     @classmethod
     def ok[V](cls, value: V) -> FlextResult[V]:
         """Create successful result wrapping value.
@@ -340,17 +411,17 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
 
     @staticmethod
     def is_failure_result(
-        value: FlextModelsResult.RuntimeResult[t.Container] | t.Container,
-    ) -> TypeIs[FlextResult[t.Container]]:
+        value: p.Result[t.Container] | t.Container,
+    ) -> TypeIs[p.Result[t.Container]]:
         """Return ``True`` when *value* is a failed runtime result."""
-        return isinstance(value, FlextModelsResult.RuntimeResult) and value.is_failure
+        return isinstance(value, p.Result) and value.is_failure
 
     @staticmethod
     def is_success_result(
-        value: FlextModelsResult.RuntimeResult[t.Container] | t.Container,
-    ) -> TypeIs[FlextResult[t.Container]]:
+        value: p.Result[t.Container] | t.Container,
+    ) -> TypeIs[p.Result[t.Container]]:
         """Return ``True`` when *value* is a successful runtime result."""
-        return isinstance(value, FlextModelsResult.RuntimeResult) and value.is_success
+        return isinstance(value, p.Result) and value.is_success
 
     @staticmethod
     def safe[U, **PFunc](func: Callable[PFunc, U]) -> Callable[PFunc, FlextResult[U]]:
@@ -387,7 +458,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
 
         return wrapper
 
-    @override
     def filter(self, predicate: Callable[[T], bool]) -> FlextResult[T]:
         """Filter success value based on predicate.
 
@@ -415,10 +485,9 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             return FlextResult[T].fail("Value did not pass filter predicate")
         return self
 
-    @override
     def flat_map(
         self,
-        func: Callable[[T], FlextModelsResult.RuntimeResult[U]],
+        func: Callable[[T], FlextResult[U] | p.Result[U]],
     ) -> FlextResult[U]:
         """Chain operations returning FlextResult.
 
@@ -452,10 +521,9 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             exception=self.exception,
         )
 
-    @override
     def flow_through(
         self,
-        *funcs: Callable[[T | U], FlextModelsResult.RuntimeResult[U]],
+        *funcs: Callable[[T | U], FlextResult[U] | p.Result[U]],
     ) -> FlextResult[T] | FlextResult[U]:
         """Chain multiple operations in a pipeline.
 
@@ -498,7 +566,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
                 break
         return current
 
-    @override
     def fold[U](
         self,
         on_failure: Callable[[str], U],
@@ -537,10 +604,9 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             return on_success(self.value)
         return on_failure(self.error or "")
 
-    @override
     def lash(
         self,
-        func: Callable[[str], FlextModelsResult.RuntimeResult[T]],
+        func: Callable[[str], FlextResult[T] | p.Result[T]],
     ) -> FlextResult[T]:
         """Apply recovery function on failure.
 
@@ -562,7 +628,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             return FlextResult[T]._from_result_like(inner_result)
         return self
 
-    @override
     def map[U](self, func: Callable[[T], U]) -> FlextResult[U]:
         """Transform success value using function.
 
@@ -581,7 +646,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
         result._exception = self._exception
         return result
 
-    @override
     def map_error(self, func: Callable[[str], str]) -> FlextResult[T]:
         """Apply transformation function to error message on failure.
 
@@ -637,7 +701,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             return self.value
         return default
 
-    @override
     def recover(self, func: Callable[[str], T]) -> FlextResult[T]:
         """Recover from failure with fallback value.
 
@@ -648,7 +711,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
         fallback_value = func(self.error or "")
         return FlextResult[T].ok(fallback_value)
 
-    @override
     def tap(self, func: Callable[[T], None]) -> FlextResult[T]:
         """Apply side effect to success value, return unchanged.
 
@@ -658,7 +720,6 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             func(self.value)
         return self
 
-    @override
     def tap_error(self, func: Callable[[str], None]) -> Self:
         """Execute side effect on failure, return unchanged.
 
@@ -709,7 +770,13 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
                 exception=e,
             )
 
-    @override
+    def unwrap(self) -> T:
+        """Unwrap the success value or raise RuntimeError."""
+        if self.is_failure:
+            msg = f"Cannot unwrap failed result: {self.error}"
+            raise RuntimeError(msg)
+        return self.value
+
     def unwrap_or[D](self, default: D) -> T | D:
         """Return value if success, otherwise return default.
 
@@ -734,11 +801,14 @@ class FlextResult[T](FlextModelsResult.RuntimeResult[T]):
             return self.value
         return default
 
+    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+        """Return the success value or call func if failed."""
+        if self.is_success and self.value is not None:
+            return self.value
+        return func()
 
-# Type alias: r[T] is FlextResult[T] — used throughout the codebase as the
-# canonical short name. Declared as TypeAlias so mypy resolves r[T] generically.
-r = FlextResult  # Generic alias: use as r[T]
+
+r = FlextResult
 
 
-# Ensure we export all types needed for module clients
 __all__ = ["FlextResult", "r"]

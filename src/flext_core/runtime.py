@@ -45,17 +45,11 @@ from typing import (
 import orjson
 import structlog
 from dependency_injector import containers, providers, wiring
-from pydantic import (
-    BaseModel,
-)
+from pydantic import BaseModel
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
 from flext_core import (
-    FlextModelFoundation,
-    FlextModelsResult,
-    FlextModelsService,
-    FlextUtilitiesGuardsTypeCore,
     T,
     c,
     p,
@@ -76,6 +70,16 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
     _runtime_logger: ClassVar[p.Logger | None] = None
+    Metadata: ClassVar[type[p.Metadata] | None] = None
+
+    @classmethod
+    def _require_metadata_model(cls) -> type[p.Metadata]:
+        """Return the bound metadata model class or raise a runtime contract error."""
+        metadata_cls = cls.Metadata
+        if metadata_cls is None:
+            msg = "FlextRuntime.Metadata is not bound to a concrete model"
+            raise RuntimeError(msg)
+        return metadata_cls
 
     @property
     def logger(self) -> p.Logger:
@@ -86,20 +90,6 @@ class FlextRuntime:
             logger = structlog.get_logger(__name__)
             cls._runtime_logger = logger
         return logger
-
-    class _LazyMetadata:
-        """Lazy access to Metadata model to avoid heavy Tier 0 imports."""
-
-        _model: ClassVar[type | None] = None
-
-        @classmethod
-        def get(cls) -> type:
-            """Lazily import and return the Metadata model."""
-            if cls._model is None:
-                cls._model = FlextModelFoundation.Metadata
-            return cls._model
-
-    Metadata: ClassVar[type] = _LazyMetadata.get()
 
     class _AsyncLogWriter(io.TextIOBase):
         """Background log writer using a queue and a separate thread.
@@ -281,7 +271,12 @@ class FlextRuntime:
             return FlextRuntime.create_instance(class_type)
 
     @staticmethod
-    def _is_scalar(value: t.RuntimeData) -> TypeIs[t.Scalar]:
+    def is_primitive(value: t.RuntimeData) -> TypeIs[t.Primitives]:
+        """Check if value is a primitive type accepted by t.Primitives."""
+        return isinstance(value, t.PRIMITIVES_TYPES)
+
+    @staticmethod
+    def is_scalar(value: t.GuardInput) -> TypeIs[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         return isinstance(value, t.SCALAR_TYPES)
 
@@ -552,7 +547,7 @@ class FlextRuntime:
         """
         if val is None:
             return ""
-        if FlextRuntime._is_scalar(val) or isinstance(val, Path):
+        if FlextRuntime.is_scalar(val) or isinstance(val, Path):
             return val
         if isinstance(val, BaseModel):
             return val
@@ -602,7 +597,7 @@ class FlextRuntime:
     def _normalize_to_metadata_scalar(val: t.RuntimeData) -> t.Primitives:
         if val is None:
             return ""
-        if FlextUtilitiesGuardsTypeCore.is_primitive(val):
+        if FlextRuntime.is_primitive(val):
             return val
         if isinstance(val, datetime):
             return val.isoformat()
@@ -619,7 +614,7 @@ class FlextRuntime:
         """Normalize input into metadata-compatible scalar, list, or mapping values."""
         if val is None:
             return ""
-        if FlextUtilitiesGuardsTypeCore.is_primitive(val):
+        if FlextRuntime.is_primitive(val):
             return val
         if isinstance(val, datetime):
             return val
@@ -633,7 +628,7 @@ class FlextRuntime:
                 str_k = str(k)
                 if v is None:
                     normalized[str_k] = ""
-                elif FlextUtilitiesGuardsTypeCore.is_scalar(v):
+                elif FlextRuntime.is_scalar(v):
                     normalized[str_k] = v
                 elif isinstance(v, Path):
                     normalized[str_k] = str(v)
@@ -647,12 +642,7 @@ class FlextRuntime:
                     inner: MutableMapping[str, t.Primitives] = {}
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
-                    normalized[str_k] = (
-                        FlextModelFoundation.Validators
-                        .metadata_json_dict_adapter()
-                        .dump_json(inner)
-                        .decode()
-                    )
+                    normalized[str_k] = orjson.dumps(inner).decode()
                 else:
                     normalized[str_k] = str(v)
             return normalized
@@ -716,13 +706,32 @@ class FlextRuntime:
             services = providers.Object(containers.DynamicContainer())
             resources = providers.Object(containers.DynamicContainer())
 
+        ContainerCreationOptionsModel: ClassVar[
+            p.ContainerCreationOptionsType | None
+        ] = None
+
         Provide = wiring.Provide
         inject = staticmethod(wiring.inject)
 
         @classmethod
+        def _require_container_creation_options_model(
+            cls,
+        ) -> p.ContainerCreationOptionsType:
+            """Return the bound container options model or raise a contract error."""
+            options_model = cls.ContainerCreationOptionsModel
+            if options_model is None:
+                msg = (
+                    "FlextRuntime.DependencyIntegration.ContainerCreationOptionsModel "
+                    "is not bound to a concrete implementation"
+                )
+                raise RuntimeError(msg)
+            return options_model
+
+        @classmethod
         def create_container(
             cls,
-            container_options: FlextModelsService.DependencyContainerCreationOptions
+            container_options: p.ContainerCreationOptions
+            | Mapping[str, t.RuntimeData]
             | None = None,
             **runtime_kwargs: t.RuntimeData,
         ) -> containers.DynamicContainer:
@@ -750,16 +759,25 @@ class FlextRuntime:
                 without manual follow-up registration calls.
 
             """
-            base_options = (
-                container_options
-                if container_options is not None
-                else FlextModelsService.DependencyContainerCreationOptions()
-            )
+            options_model = cls._require_container_creation_options_model()
+            if container_options is None:
+                base_options = options_model.model_validate({})
+            elif isinstance(container_options, Mapping):
+                base_options = options_model.model_validate(dict(container_options))
+            else:
+                base_options = options_model.model_validate({
+                    "config": container_options.config,
+                    "services": container_options.services,
+                    "factories": container_options.factories,
+                    "resources": container_options.resources,
+                    "wire_modules": container_options.wire_modules,
+                    "wire_packages": container_options.wire_packages,
+                    "wire_classes": container_options.wire_classes,
+                    "factory_cache": container_options.factory_cache,
+                })
             if runtime_kwargs:
-                override_options = FlextModelsService.DependencyContainerCreationOptions.model_validate(
-                    runtime_kwargs,
-                )
-                container_options = FlextModelsService.DependencyContainerCreationOptions.model_validate({
+                override_options = options_model.model_validate(runtime_kwargs)
+                container_options = options_model.model_validate({
                     "config": (
                         override_options.config
                         if override_options.config is not None
@@ -1402,7 +1420,7 @@ class FlextRuntime:
                 )
                 parsed_context = {}
             context_dict = t.ConfigMap(root=parsed_context)
-        elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):
+        elif not isinstance(context, Mapping) and FlextRuntime.is_scalar(context):
             context_dict = t.ConfigMap(root={})
         elif isinstance(context, BaseModel):
             context_dict.update(context.model_dump())
@@ -1428,14 +1446,14 @@ class FlextRuntime:
         id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by unique ID attribute."""
-        if FlextRuntime._is_scalar(entity_a):
+        if FlextRuntime.is_scalar(entity_a):
             return False
         match entity_a:
             case Sequence() | Mapping():
                 return False
             case _:
                 pass
-        if FlextRuntime._is_scalar(entity_b):
+        if FlextRuntime.is_scalar(entity_b):
             return False
         match entity_b:
             case Sequence() | Mapping():
@@ -1455,9 +1473,9 @@ class FlextRuntime:
         obj_b: t.RuntimeData,
     ) -> bool:
         """Compare value objects by their values (all attributes)."""
-        if FlextRuntime._is_scalar(obj_a):
+        if FlextRuntime.is_scalar(obj_a):
             return obj_a == obj_b
-        if FlextRuntime._is_scalar(obj_b):
+        if FlextRuntime.is_scalar(obj_b):
             return False
         if hasattr(obj_a, "__iter__") and (not hasattr(obj_a, "model_dump")):
             return obj_a == obj_b
@@ -1510,7 +1528,7 @@ class FlextRuntime:
     @staticmethod
     def hash_entity_by_id(entity: t.RuntimeData, id_attr: str = "unique_id") -> int:
         """Hash entity based on unique ID and type."""
-        if FlextRuntime._is_scalar(entity):
+        if FlextRuntime.is_scalar(entity):
             return hash(entity)
         entity_id = FlextRuntime.safe_get_attribute(entity, id_attr)
         if entity_id is None:
@@ -1520,7 +1538,7 @@ class FlextRuntime:
     @staticmethod
     def hash_value_object_by_value(obj: t.RuntimeData) -> int:
         """Hash value t.NormalizedValue based on all attribute values."""
-        if FlextRuntime._is_scalar(obj):
+        if FlextRuntime.is_scalar(obj):
             return hash(obj)
         if isinstance(obj, BaseModel):
             data = obj.model_dump()
@@ -1528,39 +1546,6 @@ class FlextRuntime:
         if hasattr(obj, "__iter__"):
             return hash(repr(obj))
         return hash(repr(obj))
-
-    @staticmethod
-    def validate_http_status_codes(
-        codes: Sequence[int] | t.StrSequence | Sequence[int | str],
-        min_code: int | None = None,
-        max_code: int | None = None,
-    ) -> FlextModelsResult.RuntimeResult[Sequence[int]]:
-        """Validate and normalize HTTP status codes (bridge for _models).
-
-        Args:
-            codes: List of status codes (int or str) to validate
-            min_code: Minimum valid HTTP status code (default: 100)
-            max_code: Maximum valid HTTP status code (default: 599)
-
-        Returns:
-            RuntimeResult[Sequence[int]]: Success with normalized codes or failure
-
-        """
-        min_val = min_code if min_code is not None else c.HTTP_STATUS_MIN
-        max_val = max_code if max_code is not None else c.HTTP_STATUS_MAX
-        validated_codes: MutableSequence[int] = []
-        for code in codes:
-            try:
-                code_int = int(str(code))
-                if not min_val <= code_int <= max_val:
-                    msg = f"Invalid HTTP status code: {code} (must be {min_val}-{max_val})"
-                    return FlextModelsResult.RuntimeResult[Sequence[int]].fail(msg)
-                validated_codes.append(code_int)
-            except ValueError:
-                return FlextModelsResult.RuntimeResult[Sequence[int]].fail(
-                    f"Cannot convert to integer: {code}",
-                )
-        return FlextModelsResult.RuntimeResult[Sequence[int]].ok(validated_codes)
 
 
 __all__ = ["FlextRuntime"]

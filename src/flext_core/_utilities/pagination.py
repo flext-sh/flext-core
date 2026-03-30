@@ -2,7 +2,7 @@
 
 Provides comprehensive pagination functionality for API responses,
 including parameter extraction, validation, data preparation, and
-response building with ``r``-based error handling. Keep
+response building with ``p.Result``-based error handling. Keep
 metadata deterministic so dispatcher handlers can compose paginated
 results without side effects.
 
@@ -24,7 +24,7 @@ class FlextUtilitiesPagination:
 
     Provides methods for extracting pagination parameters from requests,
     validating them, preparing paginated data, and building responses.
-    All methods use r for consistent error handling.
+    All methods use p.Result for consistent error handling.
     """
 
     @staticmethod
@@ -42,7 +42,7 @@ class FlextUtilitiesPagination:
             message: Optional response message
 
         Returns:
-            r with response dictionary or error
+            p.Result with response dictionary or error
 
         """
         data = pagination_data.get(c.DIR_DATA)
@@ -78,7 +78,7 @@ class FlextUtilitiesPagination:
             max_page_size: Maximum allowed page size
 
         Returns:
-            r with (page, page_size) tuple or error
+            p.Result with (page, page_size) tuple or error
 
         """
         page_str = str(default_page)
@@ -156,7 +156,7 @@ class FlextUtilitiesPagination:
             page_size: Page size
 
         Returns:
-            r with pagination data dictionary or error
+            p.Result with pagination data dictionary or error
 
         """
         resolved_data: t.FlatContainerList = data if data is not None else []
@@ -199,7 +199,7 @@ class FlextUtilitiesPagination:
             max_page_size: Maximum allowed page size
 
         Returns:
-            r with validated parameters or error
+            p.Result with validated parameters or error
 
         """
         if page < 1:
@@ -209,7 +209,10 @@ class FlextUtilitiesPagination:
             return r[Mapping[str, int]].fail("Page size must be >= 1")
         if effective_page_size > max_page_size:
             return r[Mapping[str, int]].fail(f"Page size must be <= {max_page_size}")
-        return r[Mapping[str, int]].ok({"page": page, "page_size": effective_page_size})
+        return r[Mapping[str, int]].ok({
+            "page": page,
+            "page_size": effective_page_size,
+        })
 
 
 __all__ = ["FlextUtilitiesPagination"]

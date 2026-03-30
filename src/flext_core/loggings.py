@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+import logging
 import time
 import traceback
 import types
@@ -30,7 +31,7 @@ from typing import ClassVar, Self, override
 from pydantic import BaseModel
 from structlog.typing import Context
 
-from flext_core import FlextSettings, c, p, r, t, u
+from flext_core import c, p, r, t, u
 
 
 class FlextLogger(u, p.Logger):
@@ -423,11 +424,11 @@ class FlextLogger(u, p.Logger):
 
         """
         if level is None:
-            config = (
-                container.config
-                if hasattr(container, c.DIR_CONFIG)
-                else FlextSettings.get_global()
-            )
+            config: p.Settings | None
+            try:
+                config = container.config
+            except (AttributeError, RuntimeError, TypeError, ValueError):
+                config = None
             level = getattr(config, "log_level", "INFO")
         logger = cls.create_module_logger(f"container_{id(container)}")
         if context:
@@ -745,8 +746,7 @@ class FlextLogger(u, p.Logger):
     @staticmethod
     def _should_include_stack_trace() -> bool:
         try:
-            config = FlextSettings.get_global()
-            return config.effective_log_level.upper() == c.LogLevel.DEBUG.value
+            return logging.getLogger().getEffectiveLevel() <= logging.DEBUG
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             FlextLogger._report_internal_logging_failure(
                 "should_include_stack_trace",

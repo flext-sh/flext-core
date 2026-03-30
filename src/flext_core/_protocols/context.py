@@ -8,15 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
+from typing import Protocol, Self, overload, runtime_checkable
 
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
-from flext_core import t
-
-if TYPE_CHECKING:
-    from flext_core import r
+from flext_core import FlextProtocolsResult, t
 
 
 class FlextProtocolsContext:
@@ -26,7 +23,11 @@ class FlextProtocolsContext:
     class ContextRead(Protocol):
         """Read-only context operations."""
 
-        def get(self, key: str, scope: str = ...) -> r[t.RuntimeAtomic]:
+        def get(
+            self,
+            key: str,
+            scope: str = ...,
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
             """Get a context value by key and scope."""
             ...
 
@@ -57,7 +58,7 @@ class FlextProtocolsContext:
             value: t.RuntimeAtomic,
             *,
             scope: str = ...,
-        ) -> r[bool]: ...
+        ) -> FlextProtocolsResult.Result[bool]: ...
 
         @overload
         def set(
@@ -66,7 +67,7 @@ class FlextProtocolsContext:
             value: None = ...,
             *,
             scope: str = ...,
-        ) -> r[bool]: ...
+        ) -> FlextProtocolsResult.Result[bool]: ...
 
         def set(
             self,
@@ -74,7 +75,7 @@ class FlextProtocolsContext:
             value: t.RuntimeAtomic | None = ...,
             *,
             scope: str = ...,
-        ) -> r[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Set a context value or bulk-set from ConfigMap."""
             ...
 
@@ -101,7 +102,7 @@ class FlextProtocolsContext:
             """Merge another context or mapping into this one."""
             ...
 
-        def validate_context(self) -> r[bool]:
+        def validate_context(self) -> FlextProtocolsResult.Result[bool]:
             """Validate context state consistency."""
             ...
 
@@ -123,7 +124,10 @@ class FlextProtocolsContext:
     class ContextMetadataAccess(Protocol):
         """Context metadata read/write operations."""
 
-        def get_metadata(self, key: str) -> r[t.RuntimeAtomic]:
+        def get_metadata(
+            self,
+            key: str,
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
             """Get a metadata value by key."""
             ...
 

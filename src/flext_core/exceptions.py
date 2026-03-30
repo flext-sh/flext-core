@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import ClassVar, override
 
 from pydantic import (
     BaseModel,
@@ -26,22 +26,6 @@ from flext_core import (
     m,
     t,
 )
-from flext_core._models.exception_params import FlextModelsExceptionParams
-
-if TYPE_CHECKING:
-    _AttributeAccessErrorParams = FlextModelsExceptionParams.AttributeAccessErrorParams
-    _AuthenticationErrorParams = FlextModelsExceptionParams.AuthenticationErrorParams
-    _AuthorizationErrorParams = FlextModelsExceptionParams.AuthorizationErrorParams
-    _CircuitBreakerErrorParams = FlextModelsExceptionParams.CircuitBreakerErrorParams
-    _ConfigurationErrorParams = FlextModelsExceptionParams.ConfigurationErrorParams
-    _ConflictErrorParams = FlextModelsExceptionParams.ConflictErrorParams
-    _ConnectionErrorParams = FlextModelsExceptionParams.ConnectionErrorParams
-    _NotFoundErrorParams = FlextModelsExceptionParams.NotFoundErrorParams
-    _OperationErrorParams = FlextModelsExceptionParams.OperationErrorParams
-    _RateLimitErrorParams = FlextModelsExceptionParams.RateLimitErrorParams
-    _TimeoutErrorParams = FlextModelsExceptionParams.TimeoutErrorParams
-    _TypeErrorParams = FlextModelsExceptionParams.TypeErrorParams
-    _ValidationErrorParams = FlextModelsExceptionParams.ValidationErrorParams
 
 
 class FlextExceptions:
@@ -50,26 +34,6 @@ class FlextExceptions:
     Provides structured exceptions with error codes and correlation tracking
     for consistent error handling and logging.
     """
-
-    _V: ClassVar[type[m.Validators]] = m.Validators
-
-    _ParamsModel = FlextModelsExceptionParams._ParamsModel
-    _StrictStringValue = FlextModelsExceptionParams._StrictStringValue
-    _StrictBooleanValue = FlextModelsExceptionParams._StrictBooleanValue
-    _StrictNumberValue = FlextModelsExceptionParams._StrictNumberValue
-    ValidationErrorParams = FlextModelsExceptionParams.ValidationErrorParams
-    ConfigurationErrorParams = FlextModelsExceptionParams.ConfigurationErrorParams
-    ConnectionErrorParams = FlextModelsExceptionParams.ConnectionErrorParams
-    TimeoutErrorParams = FlextModelsExceptionParams.TimeoutErrorParams
-    AuthenticationErrorParams = FlextModelsExceptionParams.AuthenticationErrorParams
-    AuthorizationErrorParams = FlextModelsExceptionParams.AuthorizationErrorParams
-    NotFoundErrorParams = FlextModelsExceptionParams.NotFoundErrorParams
-    ConflictErrorParams = FlextModelsExceptionParams.ConflictErrorParams
-    RateLimitErrorParams = FlextModelsExceptionParams.RateLimitErrorParams
-    CircuitBreakerErrorParams = FlextModelsExceptionParams.CircuitBreakerErrorParams
-    TypeErrorParams = FlextModelsExceptionParams.TypeErrorParams
-    OperationErrorParams = FlextModelsExceptionParams.OperationErrorParams
-    AttributeAccessErrorParams = FlextModelsExceptionParams.AttributeAccessErrorParams
 
     @staticmethod
     def _build_context_map(
@@ -128,7 +92,7 @@ class FlextExceptions:
     def _init_error_params[TParams: BaseModel](
         context: Mapping[str, t.MetadataValue] | None,
         extra_kwargs: t.FlatContainerMapping,
-        named_params: Mapping[str, t.MetadataValue | None],
+        named_params: Mapping[str, t.RuntimeData | None],
         params_cls: type[TParams],
         existing_params: TParams | None,
         param_keys: set[str] | frozenset[str],
@@ -194,7 +158,7 @@ class FlextExceptions:
                     return str(value)
 
                 param_values[key] = to_normalized(normalized_val)
-        resolved = (
+        resolved: TParams = (
             existing_params
             if existing_params is not None
             else params_cls.model_validate(dict(param_values))
@@ -234,7 +198,7 @@ class FlextExceptions:
         if value is None:
             return None
         try:
-            return e._V.dict_str_metadata_adapter().validate_python(value)
+            return m.Validators.dict_str_metadata_adapter().validate_python(value)
         except PydanticValidationError:
             return None
 
@@ -267,7 +231,7 @@ class FlextExceptions:
         if isinstance(value, BaseModel):
             dumped_candidate = value.model_dump()
             try:
-                dumped_map = e._V.dict_str_metadata_adapter().validate_python(
+                dumped_map = m.Validators.dict_str_metadata_adapter().validate_python(
                     dumped_candidate,
                 )
             except PydanticValidationError:
@@ -313,6 +277,10 @@ class FlextExceptions:
         All FLEXT exceptions inherit from this to ensure consistent error
         handling, logging, and correlation tracking across the ecosystem.
         """
+
+        _params_cls: ClassVar[type[BaseModel] | None] = None
+        _param_keys: ClassVar[frozenset[str]] = frozenset()
+        _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
 
         def __init__(
             self,
@@ -373,6 +341,42 @@ class FlextExceptions:
             self.metadata = e.BaseError._normalize_metadata(metadata, final_kwargs)
             self.timestamp = time.time()
             self.auto_log = auto_log
+
+        @classmethod
+        def __init_subclass__(cls, **kwargs: t.Container) -> None:
+            """Auto-generate __init__ for declarative typed error subclasses.
+
+            Subclasses that declare _params_cls, _default_error_code, and
+            _param_keys as ClassVar but omit __init__ get a standard
+            __init__ auto-injected. This eliminates boilerplate for exceptions
+            whose domain params come entirely from **extra_kwargs.
+            """
+            super().__init_subclass__(**kwargs)
+            params_cls = cls.__dict__.get("_params_cls")
+            if params_cls is None or "__init__" in cls.__dict__:
+                return
+            default_code = cls.__dict__.get("_default_error_code", c.UNKNOWN_ERROR)
+
+            def _auto_init(
+                self: e.BaseError,
+                message: str,
+                *,
+                error_code: str = default_code,
+                context: Mapping[str, t.MetadataValue] | None = None,
+                correlation_id: str | None = None,
+                params: BaseModel | None = None,
+                **extra_kwargs: t.Container,
+            ) -> None:
+                self._init_declared_error(
+                    message,
+                    error_code=error_code,
+                    context=context,
+                    params=params,
+                    correlation_id=correlation_id,
+                    extra_kwargs=extra_kwargs,
+                )
+
+            cls.__init__ = _auto_init  # type: ignore[assignment]
 
         @override
         def __str__(self) -> str:
@@ -476,7 +480,7 @@ class FlextExceptions:
             error_code: str,
             context: Mapping[str, t.MetadataValue] | None,
             extra_kwargs: t.FlatContainerMapping,
-            named_params: Mapping[str, t.MetadataValue | None],
+            named_params: Mapping[str, t.RuntimeData | None],
             params_cls: type[TParams],
             existing_params: TParams | None,
             param_keys: set[str] | frozenset[str],
@@ -509,8 +513,89 @@ class FlextExceptions:
             )
             return resolved
 
+        def _init_typed_error[TParams: BaseModel](
+            self,
+            message: str,
+            *,
+            error_code: str,
+            context: Mapping[str, t.MetadataValue] | None,
+            extra_kwargs: t.FlatContainerMapping,
+            named_params: Mapping[str, t.RuntimeData | None],
+            params_cls: type[TParams],
+            existing_params: TParams | None,
+            param_keys: frozenset[str],
+            correlation_id: str | None = None,
+            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
+            excluded_context_keys: set[str] | frozenset[str] | None = None,
+        ) -> None:
+            """Resolve params via _init_from_params and auto-assign to self."""
+            resolved = self._init_from_params(
+                message,
+                error_code=error_code,
+                context=context,
+                extra_kwargs=extra_kwargs,
+                named_params=named_params,
+                params_cls=params_cls,
+                existing_params=existing_params,
+                param_keys=param_keys,
+                correlation_id=correlation_id,
+                metadata=metadata,
+                excluded_context_keys=excluded_context_keys,
+            )
+            for key in param_keys:
+                setattr(self, key, getattr(resolved, key))
+
+        def _init_declared_error(
+            self,
+            message: str,
+            *,
+            error_code: str,
+            context: Mapping[str, t.MetadataValue] | None,
+            params: BaseModel | None,
+            named_params: Mapping[str, t.RuntimeData | None] | None = None,
+            extra_kwargs: t.FlatContainerMapping | None = None,
+            param_keys: frozenset[str] | None = None,
+            correlation_id: str | None = None,
+            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
+        ) -> None:
+            """Initialize a typed error from class-declared params metadata."""
+            declared_params_cls = type(self)._params_cls
+            if declared_params_cls is None:
+                msg = f"{type(self).__qualname__} is missing _params_cls"
+                raise ValueError(msg)
+            declared_param_keys = (
+                param_keys if param_keys is not None else type(self)._param_keys
+            )
+            remaining_extra_kwargs: t.MutableFlatContainerMapping = dict(
+                extra_kwargs or {}
+            )
+            resolved_named_params: MutableMapping[str, t.RuntimeData | None] = dict(
+                named_params or {},
+            )
+            for key in declared_param_keys:
+                resolved_named_params.setdefault(
+                    key,
+                    remaining_extra_kwargs.pop(key, None),
+                )
+            self._init_typed_error(
+                message,
+                error_code=error_code,
+                context=context,
+                extra_kwargs=remaining_extra_kwargs,
+                named_params=resolved_named_params,
+                params_cls=declared_params_cls,
+                existing_params=params,
+                param_keys=declared_param_keys,
+                correlation_id=correlation_id,
+                metadata=metadata,
+                excluded_context_keys=type(self)._excluded_context_keys,
+            )
+
     class ValidationError(BaseError):
         """Exception raised for input validation failures."""
+
+        _params_cls: ClassVar[type[BaseModel] | None] = m.ValidationErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({"field", "value"})
 
         def __init__(
             self,
@@ -520,26 +605,29 @@ class FlextExceptions:
             value: t.Scalar | None = None,
             error_code: str = c.VALIDATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
-            _correlation_id: str | None = None,
-            params: _ValidationErrorParams | None = None,
+            correlation_id: str | None = None,
+            params: m.ValidationErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize validation error with field and value information."""
-            resolved = self._init_from_params(
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
-                extra_kwargs=extra_kwargs,
+                params=params,
                 named_params={"field": field, "value": value},
-                params_cls=e.ValidationErrorParams,
-                existing_params=params,
-                param_keys={"field", "value"},
+                correlation_id=correlation_id,
+                extra_kwargs=extra_kwargs,
             )
-            self.field = resolved.field
-            self.value = resolved.value
 
     class ConfigurationError(BaseError):
         """Exception raised for configuration-related errors."""
+
+        _params_cls: ClassVar[type[BaseModel] | None] = m.ConfigurationErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "config_key",
+            "config_source",
+        })
 
         def __init__(
             self,
@@ -549,54 +637,43 @@ class FlextExceptions:
             config_source: str | None = None,
             error_code: str = c.CONFIGURATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
-            _correlation_id: str | None = None,
-            params: _ConfigurationErrorParams | None = None,
+            correlation_id: str | None = None,
+            params: m.ConfigurationErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize configuration error with config context."""
-            resolved = self._init_from_params(
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
+                params=params,
+                named_params={
+                    "config_key": config_key,
+                    "config_source": config_source,
+                },
+                correlation_id=correlation_id,
                 extra_kwargs=extra_kwargs,
-                named_params={"config_key": config_key, "config_source": config_source},
-                params_cls=e.ConfigurationErrorParams,
-                existing_params=params,
-                param_keys={"config_key", "config_source"},
             )
-            self.config_key = resolved.config_key
-            self.config_source = resolved.config_source
 
     class ConnectionError(BaseError):
         """Exception raised for network and connection failures."""
 
-        def __init__(
-            self,
-            message: str,
-            *,
-            error_code: str = c.CONNECTION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            _correlation_id: str | None = None,
-            params: _ConnectionErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize connection error with network context."""
-            resolved = self._init_from_params(
-                message,
-                error_code=error_code,
-                context=context,
-                extra_kwargs=extra_kwargs,
-                named_params={},
-                params_cls=e.ConnectionErrorParams,
-                existing_params=params,
-                param_keys={"host", "port", "timeout"},
-            )
-            self.host = resolved.host
-            self.port = resolved.port
-            self.timeout = resolved.timeout
+        _default_error_code: ClassVar[str] = c.CONNECTION_ERROR
+        _params_cls: ClassVar[type[BaseModel] | None] = m.ConnectionErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "host",
+            "port",
+            "timeout",
+        })
 
     class TimeoutError(BaseError):
         """Exception raised for operation timeout errors."""
+
+        _params_cls: ClassVar[type[BaseModel] | None] = m.TimeoutErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "timeout_seconds",
+            "operation",
+        })
 
         def __init__(
             self,
@@ -606,29 +683,32 @@ class FlextExceptions:
             operation: str | None = None,
             error_code: str = c.TIMEOUT_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
-            _correlation_id: str | None = None,
-            params: _TimeoutErrorParams | None = None,
+            correlation_id: str | None = None,
+            params: m.TimeoutErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize timeout error with timeout context."""
-            resolved = self._init_from_params(
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
-                extra_kwargs=extra_kwargs,
+                params=params,
                 named_params={
                     "timeout_seconds": timeout_seconds,
                     "operation": operation,
                 },
-                params_cls=e.TimeoutErrorParams,
-                existing_params=params,
-                param_keys={"timeout_seconds", "operation"},
+                correlation_id=correlation_id,
+                extra_kwargs=extra_kwargs,
             )
-            self.timeout_seconds = resolved.timeout_seconds
-            self.operation = resolved.operation
 
     class AuthenticationError(BaseError):
         """Exception raised for authentication failures."""
+
+        _params_cls: ClassVar[type[BaseModel] | None] = m.AuthenticationErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "auth_method",
+            c.KEY_USER_ID,
+        })
 
         def __init__(
             self,
@@ -638,55 +718,47 @@ class FlextExceptions:
             user_id: str | None = None,
             error_code: str = c.AUTHENTICATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
-            _correlation_id: str | None = None,
-            params: _AuthenticationErrorParams | None = None,
+            correlation_id: str | None = None,
+            params: m.AuthenticationErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize authentication error with auth context."""
-            resolved = self._init_from_params(
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
+                params=params,
+                named_params={
+                    "auth_method": auth_method,
+                    c.KEY_USER_ID: user_id,
+                },
+                correlation_id=correlation_id,
                 extra_kwargs=extra_kwargs,
-                named_params={"auth_method": auth_method, c.KEY_USER_ID: user_id},
-                params_cls=e.AuthenticationErrorParams,
-                existing_params=params,
-                param_keys={"auth_method", c.KEY_USER_ID},
             )
-            self.auth_method = resolved.auth_method
-            self.user_id = resolved.user_id
 
     class AuthorizationError(BaseError):
         """Exception raised for permission and authorization failures."""
 
-        def __init__(
-            self,
-            message: str,
-            *,
-            error_code: str = c.AUTHORIZATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: _AuthorizationErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize authorization error with permission context."""
-            resolved = self._init_from_params(
-                message,
-                error_code=error_code,
-                context=context,
-                extra_kwargs=extra_kwargs,
-                named_params={},
-                params_cls=e.AuthorizationErrorParams,
-                existing_params=params,
-                param_keys={c.KEY_USER_ID, "resource", "permission"},
-                correlation_id=correlation_id,
-            )
-            self.user_id = resolved.user_id
-            self.resource = resolved.resource
-            self.permission = resolved.permission
+        _default_error_code: ClassVar[str] = c.AUTHORIZATION_ERROR
+        _params_cls: ClassVar[type[BaseModel] | None] = m.AuthorizationErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            c.KEY_USER_ID,
+            "resource",
+            "permission",
+        })
 
     class NotFoundError(BaseError):
         """Exception raised when a resource is not found."""
+
+        _params_cls: ClassVar[type[BaseModel] | None] = m.NotFoundErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "resource_type",
+            "resource_id",
+        })
+        _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = frozenset({
+            c.KEY_CORRELATION_ID,
+            c.FIELD_METADATA,
+        })
 
         def __init__(
             self,
@@ -698,118 +770,88 @@ class FlextExceptions:
             context: Mapping[str, t.MetadataValue] | None = None,
             metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
             correlation_id: str | None = None,
-            params: _NotFoundErrorParams | None = None,
+            params: m.NotFoundErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize not found error with resource context."""
-            resolved = self._init_from_params(
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
-                extra_kwargs=extra_kwargs,
+                params=params,
                 named_params={
                     "resource_type": resource_type,
                     "resource_id": resource_id,
                 },
-                params_cls=e.NotFoundErrorParams,
-                existing_params=params,
-                param_keys={"resource_type", "resource_id"},
                 correlation_id=correlation_id,
                 metadata=metadata,
-                excluded_context_keys={
-                    c.KEY_CORRELATION_ID,
-                    c.FIELD_METADATA,
-                },
+                extra_kwargs=extra_kwargs,
             )
-            self.resource_type = resolved.resource_type
-            self.resource_id = resolved.resource_id
 
     class ConflictError(BaseError):
         """Exception raised for resource conflicts."""
 
-        def __init__(
-            self,
-            message: str,
-            *,
-            error_code: str = c.ALREADY_EXISTS,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: _ConflictErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize conflict error with resource context."""
-            resolved = self._init_from_params(
-                message,
-                error_code=error_code,
-                context=context,
-                extra_kwargs=extra_kwargs,
-                named_params={},
-                params_cls=e.ConflictErrorParams,
-                existing_params=params,
-                param_keys={"resource_type", "resource_id", "conflict_reason"},
-                correlation_id=correlation_id,
-            )
-            self.resource_type = resolved.resource_type
-            self.resource_id = resolved.resource_id
-            self.conflict_reason = resolved.conflict_reason
+        _default_error_code: ClassVar[str] = c.ALREADY_EXISTS
+        _params_cls: ClassVar[type[BaseModel] | None] = m.ConflictErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "resource_type",
+            "resource_id",
+            "conflict_reason",
+        })
 
     class RateLimitError(BaseError):
         """Exception raised when rate limits are exceeded."""
 
-        def __init__(
-            self,
-            message: str,
-            *,
-            error_code: str = c.OPERATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: _RateLimitErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize rate limit error with limit context."""
-            resolved = self._init_from_params(
-                message,
-                error_code=error_code,
-                context=context,
-                extra_kwargs=extra_kwargs,
-                named_params={},
-                params_cls=e.RateLimitErrorParams,
-                existing_params=params,
-                param_keys={"limit", "window_seconds", "retry_after"},
-                correlation_id=correlation_id,
-            )
-            self.limit = resolved.limit
-            self.window_seconds = resolved.window_seconds
-            self.retry_after = resolved.retry_after
+        _default_error_code: ClassVar[str] = c.OPERATION_ERROR
+        _params_cls: ClassVar[type[BaseModel] | None] = m.RateLimitErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "limit",
+            "window_seconds",
+            "retry_after",
+        })
 
     class CircuitBreakerError(BaseError):
         """Exception raised when circuit breaker is open."""
 
+        _default_error_code: ClassVar[str] = c.EXTERNAL_SERVICE_ERROR
+        _params_cls: ClassVar[type[BaseModel] | None] = m.CircuitBreakerErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            c.KEY_SERVICE_NAME,
+            "failure_count",
+            "reset_timeout",
+        })
+
         def __init__(
             self,
             message: str,
             *,
+            service_name: str | None = None,
+            service: str | None = None,
+            failure_count: int | None = None,
+            reset_timeout: t.Numeric | None = None,
             error_code: str = c.EXTERNAL_SERVICE_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
-            params: _CircuitBreakerErrorParams | None = None,
+            params: m.CircuitBreakerErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
-            """Initialize circuit breaker error with service context."""
-            resolved = self._init_from_params(
+            """Initialize circuit breaker error with canonical service metadata."""
+            resolved_service_name = (
+                service_name if service_name is not None else service
+            )
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
-                extra_kwargs=extra_kwargs,
-                named_params={},
-                params_cls=e.CircuitBreakerErrorParams,
-                existing_params=params,
-                param_keys={c.KEY_SERVICE_NAME, "failure_count", "reset_timeout"},
+                params=params,
+                named_params={
+                    c.KEY_SERVICE_NAME: resolved_service_name,
+                    "failure_count": failure_count,
+                    "reset_timeout": reset_timeout,
+                },
                 correlation_id=correlation_id,
+                extra_kwargs=extra_kwargs,
             )
-            self.service_name = resolved.service_name
-            self.failure_count = resolved.failure_count
-            self.reset_timeout = resolved.reset_timeout
 
     class TypeError(BaseError):
         """Exception raised for type mismatch errors."""
@@ -823,7 +865,7 @@ class FlextExceptions:
             actual_type: type | str | None = None,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
-            params: _TypeErrorParams | None = None,
+            params: m.TypeErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize type error with type information."""
@@ -847,7 +889,7 @@ class FlextExceptions:
                 extra_kwargs,
                 "actual_type",
             )
-            param_values = {
+            param_values: dict[str, str | None] = {
                 "expected_type": normalized_expected_type.__qualname__
                 if normalized_expected_type is not None
                 else None,
@@ -855,10 +897,10 @@ class FlextExceptions:
                 if normalized_actual_type is not None
                 else None,
             }
-            resolved_params = (
+            resolved_params: m.TypeErrorParams = (
                 params
                 if params is not None
-                else e.TypeErrorParams.model_validate(param_values)
+                else m.TypeErrorParams.model_validate(param_values)
             )
             normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
                 key: FlextRuntime.normalize_to_metadata(value)
@@ -945,44 +987,14 @@ class FlextExceptions:
             )
             return e._safe_optional_str(qualname_value)
 
-    @staticmethod
-    def _init_from_params[TParams: BaseModel](
-        error_instance: e.BaseError,
-        message: str,
-        *,
-        error_code: str,
-        context: Mapping[str, t.MetadataValue] | None,
-        correlation_id: str | None,
-        params_cls: type[TParams],
-        params: TParams | None,
-        named_params: Mapping[str, t.MetadataValue | None],
-        param_keys: set[str] | frozenset[str],
-        extra_kwargs: t.FlatContainerMapping,
-    ) -> None:
-        resolved, ctx, meta, corr = e._init_error_params(
-            context,
-            extra_kwargs,
-            named_params,
-            params_cls,
-            params,
-            param_keys,
-        )
-        e.BaseError.__init__(
-            error_instance,
-            message,
-            error_code=error_code,
-            context=ctx,
-            metadata=meta,
-            correlation_id=correlation_id if correlation_id is not None else corr,
-        )
-        for key in param_keys:
-            setattr(error_instance, key, getattr(resolved, key, None))
-
     class OperationError(BaseError):
         """Exception raised for general operation failures."""
 
         operation: str | None
         reason: str | None
+
+        _params_cls: ClassVar[type[BaseModel] | None] = m.OperationErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({"operation", "reason"})
 
         def __init__(
             self,
@@ -993,20 +1005,17 @@ class FlextExceptions:
             error_code: str = c.OPERATION_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
-            params: _OperationErrorParams | None = None,
+            params: m.OperationErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize operation error with operation context."""
-            e._init_from_params(
-                self,
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
-                correlation_id=correlation_id,
-                params_cls=e.OperationErrorParams,
                 params=params,
                 named_params={"operation": operation, "reason": reason},
-                param_keys={"operation", "reason"},
+                correlation_id=correlation_id,
                 extra_kwargs=extra_kwargs,
             )
 
@@ -1015,6 +1024,12 @@ class FlextExceptions:
 
         attribute_name: str | None
         attribute_context: t.MetadataValue | None
+
+        _params_cls: ClassVar[type[BaseModel] | None] = m.AttributeAccessErrorParams
+        _param_keys: ClassVar[frozenset[str]] = frozenset({
+            "attribute_name",
+            "attribute_context",
+        })
 
         def __init__(
             self,
@@ -1025,23 +1040,20 @@ class FlextExceptions:
             error_code: str = c.ATTRIBUTE_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
-            params: _AttributeAccessErrorParams | None = None,
+            params: m.AttributeAccessErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize attribute access error with attribute context."""
-            e._init_from_params(
-                self,
+            self._init_declared_error(
                 message,
                 error_code=error_code,
                 context=context,
-                correlation_id=correlation_id,
-                params_cls=e.AttributeAccessErrorParams,
                 params=params,
                 named_params={
                     "attribute_name": attribute_name,
                     "attribute_context": attribute_context,
                 },
-                param_keys={"attribute_name", "attribute_context"},
+                correlation_id=correlation_id,
                 extra_kwargs=extra_kwargs,
             )
 

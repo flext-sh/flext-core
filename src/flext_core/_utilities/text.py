@@ -2,7 +2,7 @@
 
 The functions here intentionally return raw values and may raise on invalid
 input; dispatcher-facing wrappers in ``flext_core.utilities`` apply
-``r`` semantics when needed. Keeping this layer minimal reduces
+``p.Result`` semantics when needed. Keeping this layer minimal reduces
 cross-layer coupling while providing deterministic normalization behaviors.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -93,7 +93,7 @@ class FlextUtilitiesText:
             suffix: Suffix to append if truncated (default: "...").
 
         Returns:
-            r[str] with truncated text or original if already short enough.
+            p.Result[str] with truncated text or original if already short enough.
 
         """
         if len(text) <= max_length:

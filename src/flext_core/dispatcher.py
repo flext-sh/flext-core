@@ -15,7 +15,7 @@ from collections.abc import Callable, MutableSequence, Sequence
 
 from pydantic import BaseModel
 
-from flext_core import FlextLogger, c, p, r, t, u
+from flext_core import c, p, r, t, u
 
 type DispatcherResolvedCallable = Callable[
     [p.Routable],
@@ -33,7 +33,7 @@ class FlextDispatcher:
     def __init__(self) -> None:
         """Initialize dispatcher."""
         super().__init__()
-        self._logger = FlextLogger.create_module_logger(__name__)
+        self._logger = u.get_logger(__name__)
         self._handlers: t.RegistryDict[
             tuple[t.HandlerProtocolVariant, DispatcherResolvedCallable]
         ] = {}

@@ -547,15 +547,6 @@ class Ex11FlextService(Examples):
         self.check("ensure_trace_context.has_trace_id", "trace_id" in trace)
         self.check("ensure_trace_context.has_span_id", "span_id" in trace)
         self.check("ensure_trace_context.has_correlation_id", "correlation_id" in trace)
-        http_mixed: Sequence[int | str] = [200, "201"]
-        self.check(
-            "validate_http_status_codes.ok",
-            s.validate_http_status_codes(http_mixed).unwrap_or([]),
-        )
-        self.check(
-            "validate_http_status_codes.fail",
-            s.validate_http_status_codes([99]).error,
-        )
 
     def demo_runtime_creation_and_serialization(self) -> None:
         """Exercise runtime factory params and serialization helpers."""

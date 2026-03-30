@@ -25,20 +25,11 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import u
 from hypothesis import given, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import (
-    FlextContext,
-    FlextModelsService,
-    FlextService,
-    FlextSettings,
-    p,
-    r,
-    s,
-)
-from tests import t
+from flext_core import FlextContext, FlextService, FlextSettings, r, s
+from tests import m, p, t, u
 
 
 class TestsCore:
@@ -331,7 +322,7 @@ class TestServiceInternals:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test service init with non-standard context and config types."""
-        bad_ctx_runtime = FlextModelsService.ServiceRuntime.model_construct(
+        bad_ctx_runtime = m.ServiceRuntime.model_construct(
             config=FlextSettings(),
             context=cast("p.Context", "invalid-context"),
             container=cast("p.Container", "invalid-container"),
@@ -339,7 +330,7 @@ class TestServiceInternals:
 
         def _bad_ctx_runtime_factory(
             _cls: type[TestServiceInternals._Svc],
-        ) -> FlextModelsService.ServiceRuntime:
+        ) -> m.ServiceRuntime:
             return bad_ctx_runtime
 
         monkeypatch.setattr(
@@ -350,7 +341,7 @@ class TestServiceInternals:
         service_with_bad_ctx = self._Svc()
         assert service_with_bad_ctx.context == "invalid-context"
         good_ctx = FlextContext.create()
-        bad_cfg_runtime = FlextModelsService.ServiceRuntime.model_construct(
+        bad_cfg_runtime = m.ServiceRuntime.model_construct(
             config=cast("p.Settings", self._FakeConfig()),
             context=good_ctx,
             container=cast("p.Container", "invalid-container"),
@@ -358,7 +349,7 @@ class TestServiceInternals:
 
         def _bad_cfg_runtime_factory(
             _cls: type[TestServiceInternals._Svc],
-        ) -> FlextModelsService.ServiceRuntime:
+        ) -> m.ServiceRuntime:
             return bad_cfg_runtime
 
         monkeypatch.setattr(
@@ -372,7 +363,7 @@ class TestServiceInternals:
     def test_service_create_runtime_container_overrides_branch(self) -> None:
         """Test _create_runtime with container_overrides."""
         runtime = self._Svc._create_runtime(container_overrides={"strict": True})
-        assert isinstance(runtime, FlextModelsService.ServiceRuntime)
+        assert isinstance(runtime, m.ServiceRuntime)
 
     def test_service_create_initial_runtime_prefers_custom_config_type(self) -> None:
         """Test _create_initial_runtime with custom config type via bootstrap options."""
@@ -385,8 +376,8 @@ class TestServiceInternals:
             @override
             def _runtime_bootstrap_options(
                 cls,
-            ) -> FlextModelsService.RuntimeBootstrapOptions:
-                return FlextModelsService.RuntimeBootstrapOptions(
+            ) -> m.RuntimeBootstrapOptions:
+                return m.RuntimeBootstrapOptions(
                     config_type=_CustomSettings,
                 )
 

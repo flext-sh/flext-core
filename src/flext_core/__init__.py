@@ -8,21 +8,21 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import TYPE_CHECKING
 
+from flext_core.__version__ import (
+    FlextVersion,
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core import _constants, _models, _protocols, _typings, _utilities
-    from flext_core.__version__ import (
-        __all__,
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
-    )
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
@@ -52,7 +52,6 @@ if TYPE_CHECKING:
     from flext_core._models.exception_params import FlextModelsExceptionParams
     from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.result import FlextModelsResult
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
     from flext_core._protocols.base import FlextProtocolsBase
@@ -217,7 +216,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "FlextModelsExceptionParams",
     ],
     "FlextModelsHandler": ["flext_core._models.handler", "FlextModelsHandler"],
-    "FlextModelsResult": ["flext_core._models.result", "FlextModelsResult"],
     "FlextModelsService": ["flext_core._models.service", "FlextModelsService"],
     "FlextProtocols": ["flext_core.protocols", "FlextProtocols"],
     "FlextProtocolsBase": ["flext_core._protocols.base", "FlextProtocolsBase"],
@@ -331,15 +329,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
     "T_co": ["flext_core._typings.generics", "T_co"],
     "T_contra": ["flext_core._typings.generics", "T_contra"],
     "U": ["flext_core._typings.generics", "U"],
-    "__all__": ["flext_core.__version__", "__all__"],
-    "__author__": ["flext_core.__version__", "__author__"],
-    "__author_email__": ["flext_core.__version__", "__author_email__"],
-    "__description__": ["flext_core.__version__", "__description__"],
-    "__license__": ["flext_core.__version__", "__license__"],
-    "__title__": ["flext_core.__version__", "__title__"],
-    "__url__": ["flext_core.__version__", "__url__"],
-    "__version__": ["flext_core.__version__", "__version__"],
-    "__version_info__": ["flext_core.__version__", "__version_info__"],
     "_constants": ["flext_core._constants", ""],
     "_models": ["flext_core._models", ""],
     "_protocols": ["flext_core._protocols", ""],
@@ -404,7 +393,6 @@ __all__ = [
     "FlextModelsErrors",
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
-    "FlextModelsResult",
     "FlextModelsService",
     "FlextProtocols",
     "FlextProtocolsBase",
@@ -453,6 +441,7 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
+    "FlextVersion",
     "MessageT_contra",
     "P",
     "R",
@@ -466,7 +455,6 @@ __all__ = [
     "T_co",
     "T_contra",
     "U",
-    "__all__",
     "__author__",
     "__author_email__",
     "__description__",

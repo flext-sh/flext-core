@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 if TYPE_CHECKING:
-    from flext_core import FlextModelFoundation, FlextModelsHandler, r
+    from flext_core import FlextModelFoundation, FlextModelsHandler
 
 
 class FlextProtocolsRegistry:
@@ -24,7 +24,7 @@ class FlextProtocolsRegistry:
     class Registry(FlextProtocolsBase.Base, Protocol):
         """Registry protocol for CQRS handler and plugin management."""
 
-        def execute(self) -> r[bool]:
+        def execute(self) -> FlextProtocolsResult.Result[bool]:
             """Validate registry is properly initialized."""
             ...
 
@@ -33,7 +33,7 @@ class FlextProtocolsRegistry:
             name: str,
             service: t.RegistrablePlugin,
             metadata: t.ConfigMap | FlextModelFoundation.Metadata | None = None,
-        ) -> r[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Register a service component with optional metadata."""
             ...
 
@@ -41,7 +41,7 @@ class FlextProtocolsRegistry:
             self,
             handler: t.HandlerLike,
             _metadata: t.ConfigMap | FlextModelFoundation.Metadata | None = None,
-        ) -> r[FlextModelsHandler.RegistrationDetails]:
+        ) -> FlextProtocolsResult.Result[FlextModelsHandler.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
@@ -65,9 +65,13 @@ class FlextProtocolsRegistry:
             name: str,
             plugin: t.RegistrablePlugin,
             *,
-            validate: Callable[[t.RegistrablePlugin], r[bool]] | None = None,
+            validate: Callable[
+                [t.RegistrablePlugin],
+                FlextProtocolsResult.Result[bool],
+            ]
+            | None = None,
             scope: Literal["instance", "class"] = "instance",
-        ) -> r[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Register a plugin with optional validation."""
             ...
 
@@ -77,7 +81,7 @@ class FlextProtocolsRegistry:
             name: str,
             *,
             scope: Literal["instance", "class"] = "instance",
-        ) -> r[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Unregister a plugin."""
             ...
 
@@ -87,7 +91,7 @@ class FlextProtocolsRegistry:
             name: str,
             *,
             scope: str = "instance",
-        ) -> r[t.RuntimeAtomic | None]:
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic | None]:
             """Get a registered plugin by category and name."""
             ...
 
@@ -96,7 +100,7 @@ class FlextProtocolsRegistry:
             category: str,
             *,
             scope: str = "instance",
-        ) -> r[t.StrSequence]:
+        ) -> FlextProtocolsResult.Result[t.StrSequence]:
             """List all plugins in a category."""
             ...
 

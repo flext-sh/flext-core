@@ -1,7 +1,7 @@
 """Result and boolean composition helpers for dispatcher workflows.
 
 Provides utility functions for working with Result types, boolean logic,
-string validation, and exception handling. All functions use r for consistent
+string validation, and exception handling. All functions use p.Result for consistent
 error handling where applicable.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,14 +12,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 
-from flext_core import FlextUtilitiesGuards, T, p, r, t
+from flext_core import FlextUtilitiesGuards, T, r, t
 
 
 class FlextUtilitiesResultHelpers:
     """Result composition and boolean logic helpers.
 
     Provides utilities for working with Result types, boolean composition,
-    string validation, and exception handling with r-based error handling.
+    string validation, and exception handling with p.Result-based error handling.
     Pure namespace class with only @staticmethod members.
     """
 
@@ -69,7 +69,7 @@ class FlextUtilitiesResultHelpers:
         return any(value.endswith(s) for s in (suffix, *suffixes))
 
     @staticmethod
-    def err(result: p.Result[T], *, default: str = "Unknown error") -> str:
+    def err(result: r[T], *, default: str = "Unknown error") -> str:
         """Extract error message from result.
 
         Args:
@@ -106,7 +106,7 @@ class FlextUtilitiesResultHelpers:
             default: Default value if all inputs are None.
 
         Returns:
-            r[T] with first non-None value, default, or failure if none found.
+            p.Result[T] with first non-None value, default, or failure if none found.
 
         """
         for value in values:
@@ -146,7 +146,7 @@ class FlextUtilitiesResultHelpers:
             catch: Exception type(s) to catch (default: all Exceptions).
 
         Returns:
-            r[T] with function result, default, or failure message.
+            p.Result[T] with function result, default, or failure message.
 
         Raises:
             Exception: If raised exception is not in catch types.
@@ -163,7 +163,7 @@ class FlextUtilitiesResultHelpers:
         return r[T].fail(func_result.error or "Callable failed")
 
     @staticmethod
-    def val(result: p.Result[T], *, default: T | None = None) -> r[T]:
+    def val(result: r[T], *, default: T | None = None) -> r[T]:
         """Extract value from result, using default on failure.
 
         Args:
@@ -171,7 +171,7 @@ class FlextUtilitiesResultHelpers:
             default: Default value if result is failure.
 
         Returns:
-            r[T] with result value, default, or failure message.
+            p.Result[T] with result value, default, or failure message.
 
         """
         if result.is_success:
@@ -193,7 +193,7 @@ class FlextUtilitiesResultHelpers:
             default: Default list if no values available.
 
         Returns:
-            r[Sequence[T]] with list of values, default, or failure.
+            p.Result[Sequence[T]] with list of values, default, or failure.
 
         """
         if isinstance(items, r):
@@ -212,7 +212,7 @@ class FlextUtilitiesResultHelpers:
         return r[Sequence[T]].fail("No values available")
 
     @staticmethod
-    def vals_sequence(results: Sequence[p.Result[T]]) -> Sequence[T]:
+    def vals_sequence(results: Sequence[r[T]]) -> Sequence[T]:
         """Extract values from sequence of results, filtering successes only.
 
         Args:

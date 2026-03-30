@@ -179,7 +179,7 @@ class FlextUtilitiesConversion:
             value: strict value to convert
 
         Returns:
-            r containing strict scalar value or failure
+            p.Result containing strict scalar value or failure
 
         """
         if value is None:

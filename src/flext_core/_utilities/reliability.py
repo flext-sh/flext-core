@@ -1,9 +1,9 @@
 """Reliability helpers aligned with dispatcher-centric CQRS flows.
 
 Utilities extracted from ``flext_core.utilities`` to keep retry and
-timeout behaviors modular. All helpers return ``FlextRuntime.RuntimeResult`` so
-dispatcher handlers can compose reliability policies without raising
-exceptions or leaking thread-local state.
+timeout behaviors modular. All helpers return ``p.Result``-compatible
+implementations so dispatcher handlers can compose reliability policies
+without raising exceptions or leaking thread-local state.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,7 +21,6 @@ from pydantic import BaseModel, ValidationError
 
 from flext_core import (
     FlextModelFoundation,
-    FlextModelsResult,
     FlextProtocolsLogging,
     FlextRuntime,
     FlextUtilitiesGuards,
@@ -267,17 +266,17 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
-        """Chain multiple operations on r.
+        """Chain multiple operations on p.Result.
 
         Applies each function in sequence, short-circuiting on failure.
         Railway-oriented programming pattern for composing result-returning operations.
 
         Args:
-            result: Initial r to chain
-            *funcs: Functions that take a value and return r[T]
+            result: Initial p.Result to chain
+            *funcs: Functions that take a value and return p.Result[T]
 
         Returns:
-            Final r after all operations or first failure
+            Final p.Result after all operations or first failure
 
         Example:
             result = u.flow_result(
@@ -331,12 +330,12 @@ class FlextUtilitiesReliability:
         on_failure: Callable[[str], U],
         on_success: Callable[[T], U],
     ) -> U:
-        """Fold r into single value (catamorphism).
+        """Fold p.Result into single value (catamorphism).
 
         Allows handling both success and failure cases uniformly.
 
         Args:
-            result: r to fold
+            result: p.Result to fold
             on_failure: Handler for failure case (receives error message)
             on_success: Handler for success case (receives value)
 
@@ -445,7 +444,7 @@ class FlextUtilitiesReliability:
     ) -> r[t.Container]:
         """Functional pipeline with railway-oriented error handling.
 
-        Business Rule: Chains operations sequentially, unwrapping r
+        Business Rule: Chains operations sequentially, unwrapping p.Result
         values automatically. Error handling modes: "stop" (fail fast) or
         "skip" (continue with previous value). Railway pattern ensures errors
         propagate correctly through the pipeline.
@@ -456,7 +455,7 @@ class FlextUtilitiesReliability:
             on_error: Error handling ("stop" or "skip")
 
         Returns:
-            r containing final value or error
+            p.Result containing final value or error
 
         Example:
             result = FlextUtilitiesReliability.pipe(
@@ -533,7 +532,7 @@ class FlextUtilitiesReliability:
             retry_on: Tuple of exception types to retry on. If None, retries on all exceptions.
 
         Returns:
-            r[TResult]: Result of operation with retry logic applied
+            p.Result[TResult]: Result of operation with retry logic applied
 
         Fast fail: explicit default values instead of 'or' fallback.
 
@@ -599,7 +598,7 @@ class FlextUtilitiesReliability:
         Useful for logging, metrics, or other side effects.
 
         Args:
-            result: r to tap
+            result: p.Result to tap
             func: Side effect function (return value ignored)
 
         Returns:
@@ -618,13 +617,13 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def then[T, U](result: r[T], func: Callable[[T], r[U]]) -> r[U]:
-        """Chain single operation on r (monadic bind).
+        """Chain single operation on p.Result (monadic bind).
 
         Also known as flatMap or bind in other languages.
 
         Args:
-            result: r to chain
-            func: Function that takes value and returns new r
+            result: p.Result to chain
+            func: Function that takes value and returns new p.Result
 
         Returns:
             Result of applying func, or original failure
@@ -647,7 +646,7 @@ class FlextUtilitiesReliability:
         max_attempts: int = c.MAX_RETRY_ATTEMPTS,
         should_retry_func: Callable[[int, str | None], bool] | None = None,
         cleanup_func: Callable[[], None] | None = None,
-    ) -> FlextModelsResult.RuntimeResult[TResult]:
+    ) -> r[TResult]:
         """Execute operation with retry logic using railway patterns.
 
         Args:
@@ -657,7 +656,7 @@ class FlextUtilitiesReliability:
             cleanup_func: Function to call for cleanup after each attempt
 
         Returns:
-            r[TResult]: Result of operation with retry
+            p.Result[TResult]: Result of operation with retry
 
         """
         for attempt in range(max_attempts):

@@ -32,7 +32,7 @@ class FlextUtilitiesCache:
             obj: Object with potential cache attributes
 
         Returns:
-            r[bool]: ok(True) on success, fail(msg) on error
+            p.Result[bool]: ok(True) on success, fail(msg) on error
 
         """
         try:

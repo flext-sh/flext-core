@@ -8,15 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
-
-if TYPE_CHECKING:
-    from flext_core import r
 
 
 class FlextProtocolsLogging:
@@ -36,7 +33,7 @@ class FlextProtocolsLogging:
             msg: str,
             *args: t.RuntimeData,
             **kw: t.RuntimeData | Exception,
-        ) -> r[bool] | None:
+        ) -> FlextProtocolsResult.Result[bool] | None:
             """Log critical message."""
             ...
 
@@ -45,7 +42,7 @@ class FlextProtocolsLogging:
             msg: str,
             *args: t.RuntimeData,
             **kw: t.RuntimeData | Exception,
-        ) -> r[bool] | None:
+        ) -> FlextProtocolsResult.Result[bool] | None:
             """Log debug message."""
             ...
 
@@ -54,7 +51,7 @@ class FlextProtocolsLogging:
             msg: str,
             *args: t.RuntimeData,
             **kw: t.RuntimeData | Exception,
-        ) -> r[bool] | None:
+        ) -> FlextProtocolsResult.Result[bool] | None:
             """Log error message."""
             ...
 
@@ -63,7 +60,7 @@ class FlextProtocolsLogging:
             msg: str,
             *args: t.RuntimeData,
             **kw: t.RuntimeData | Exception,
-        ) -> r[bool] | None:
+        ) -> FlextProtocolsResult.Result[bool] | None:
             """Log exception with traceback."""
             ...
 
@@ -72,7 +69,7 @@ class FlextProtocolsLogging:
             msg: str,
             *args: t.RuntimeData,
             **kw: t.RuntimeData | Exception,
-        ) -> r[bool] | None:
+        ) -> FlextProtocolsResult.Result[bool] | None:
             """Log info message."""
             ...
 
@@ -81,7 +78,7 @@ class FlextProtocolsLogging:
             msg: str,
             *args: t.RuntimeData,
             **kw: t.RuntimeData | Exception,
-        ) -> r[bool] | None:
+        ) -> FlextProtocolsResult.Result[bool] | None:
             """Log warning message."""
             ...
 
@@ -90,7 +87,7 @@ class FlextProtocolsLogging:
         """Metadata protocol."""
 
         @property
-        def attributes(self) -> t.ConfigMap:
+        def attributes(self) -> Mapping[str, t.MetadataValue]:
             """Metadata attributes."""
             ...
 

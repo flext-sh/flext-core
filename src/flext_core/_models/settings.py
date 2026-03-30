@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import (
@@ -27,13 +27,13 @@ from pydantic_settings import BaseSettings
 from flext_core import (
     FlextModelFoundation,
     FlextModelsCollections,
+    FlextModelsExceptionParams,
     FlextRuntime,
     c,
     p,
     r,
     t,
 )
-from flext_core._models.exception_params import FlextModelsExceptionParams
 
 
 class FlextModelsConfig:
@@ -189,39 +189,6 @@ class FlextModelsConfig:
                 description="HTTP status codes to retry on",
             ),
         ] = Field(default_factory=list[int])
-
-        @field_validator("retry_on_status_codes", mode="after")
-        @classmethod
-        def validate_backoff_strategy(
-            cls,
-            v: Sequence[int] | t.ScalarList,
-        ) -> Sequence[int]:
-            """Validate status codes are valid HTTP codes."""
-            codes_for_validation: MutableSequence[int] = []
-            for item in v:
-                if isinstance(item, bool):
-                    msg = "retry_on_status_codes item must be int or str, got bool"
-                    raise TypeError(msg)
-                if isinstance(item, int):
-                    codes_for_validation.append(item)
-                else:
-                    try:
-                        parsed_code = int(str(item))
-                    except (TypeError, ValueError) as parse_exc:
-                        msg = f"retry_on_status_codes item must be int or str: {parse_exc}"
-                        raise TypeError(msg) from parse_exc
-                    codes_for_validation.append(parsed_code)
-            result = FlextRuntime.validate_http_status_codes(codes_for_validation)
-            if result.is_failure:
-                base_msg = "HTTP status code validation failed"
-                error_msg = (
-                    f"{base_msg}: {result.error}"
-                    if result.error
-                    else f"{base_msg} (invalid status code)"
-                )
-                raise ValueError(error_msg)
-            validated_codes: Sequence[int] = result.value
-            return validated_codes
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:
@@ -813,7 +780,7 @@ class FlextModelsConfig:
         ] = Field(default_factory=t.Dict)
 
     class ResultConfig(FlextModelsCollections.Config):
-        """Configuration for r failure case (Pydantic v2).
+        """Configuration for p.Result failure case (Pydantic v2).
 
         Groups optional error context for result failures.
         """

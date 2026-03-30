@@ -49,7 +49,7 @@ class FlextUtilitiesGenerators:
             prefix: Custom prefix (overrides kind).
 
         Returns:
-            Actual prefix string wrapped in r.
+            Actual prefix string wrapped in p.Result.
 
         """
         if prefix is not None:

@@ -23,18 +23,18 @@ from typing import (
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 from pydantic.errors import PydanticSchemaGenerationError
 
-from flext_core import FlextModelFoundation, P, R, r, t
+from flext_core import P, R, m, r, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for automatic args/kwargs parsing."""
 
-    _V: ClassVar[type[FlextModelFoundation.Validators]] = (
-        FlextModelFoundation.Validators
-    )
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @staticmethod
-    def _validate_enum_type(candidate: t.MessageTypeSpecifier) -> r[type[StrEnum]]:
+    def _validate_enum_type(
+        candidate: t.MessageTypeSpecifier,
+    ) -> r[type[StrEnum]]:
         """Validate that candidate is a StrEnum subclass."""
         try:
             return r[type[StrEnum]].ok(
@@ -148,8 +148,10 @@ class FlextUtilitiesArgs:
         )(func)
 
     @staticmethod
-    def validated_with_result[V, **P](func: Callable[P, r[V]]) -> Callable[P, r[V]]:
-        """Decorator that converts ValidationError to r.fail()."""
+    def validated_with_result[V, **P](
+        func: Callable[P, r[V]],
+    ) -> Callable[P, r[V]]:
+        """Decorator that converts ValidationError to ``r.fail()``."""
         validated_func: Callable[P, r[V]] = validate_call(
             config=ConfigDict(arbitrary_types_allowed=True, use_enum_values=False),
             validate_return=False,

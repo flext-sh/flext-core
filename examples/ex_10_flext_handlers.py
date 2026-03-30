@@ -615,20 +615,6 @@ class Ex10FlextHandlers(Examples):
             ],
         )
         self.check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
-        http_mixed: Sequence[int | str] = [200, "404"]
-        self.check(
-            "runtime.validate_http.success",
-            h.validate_http_status_codes(http_mixed).unwrap_or([]),
-        )
-        self.check(
-            "runtime.validate_http.range_fail",
-            h.validate_http_status_codes([99]).error,
-        )
-        http_bad_type: Sequence[int | str] = ["x"]
-        self.check(
-            "runtime.validate_http.type_fail",
-            h.validate_http_status_codes(http_bad_type).error,
-        )
         self.check("runtime.is_dict_like.true", h.is_dict_like({"a": 1}))
         self.check("runtime.is_dict_like.false", h.is_dict_like([1, 2]))
         self.check("runtime.is_list_like.true", h.is_list_like([1, 2]))

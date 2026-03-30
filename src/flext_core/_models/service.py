@@ -17,7 +17,7 @@ from typing import Annotated, Self
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextModelFoundation, c, p, t
+from flext_core import FlextModelFoundation, FlextRuntime, c, p, t
 
 
 class FlextModelsService:
@@ -401,6 +401,11 @@ class FlextModelsService:
                 description="Whether registered factories use singleton caching semantics.",
             ),
         ] = True
+
+
+FlextRuntime.DependencyIntegration.ContainerCreationOptionsModel = (
+    FlextModelsService.DependencyContainerCreationOptions
+)
 
 
 __all__ = ["FlextModelsService"]

@@ -30,7 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextUtilitiesGuardsTypeCore, c, t
+from flext_core import FlextRuntime, c, t
 
 
 class FlextModelFoundation:
@@ -318,7 +318,7 @@ class FlextModelFoundation:
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
             except (TypeError, ValueError):
-                if FlextUtilitiesGuardsTypeCore.is_scalar(v):
+                if FlextRuntime.is_scalar(v):
                     return [v]
                 return [str(v)]
 

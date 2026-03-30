@@ -6,9 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, override, runtime_checkable
+from collections.abc import Callable
+from types import TracebackType
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import FlextProtocolsBase, t
+
+if TYPE_CHECKING:
+    from flext_core import FlextProtocolsLogging
 
 
 class FlextProtocolsResult:
@@ -16,24 +21,34 @@ class FlextProtocolsResult:
 
     @runtime_checkable
     class Result[T_co](FlextProtocolsBase.Base, Protocol):
-        """Lightweight result protocol for railway-oriented programming.
+        """Observable result contract for structural interop across FLEXT.
 
-        Defines the read-only contract that RuntimeResult and FlextResult satisfy.
-        No monadic methods (flat_map, map, lash) — those cause recursive structural
-        matching failures in mypy. Implementations add them concretely.
+        ``FlextResult`` is a ``BaseModel`` carrier, so this protocol intentionally
+        models only the stable observation/extraction surface consumed across
+        layers. Recursive monadic combinators stay on the concrete carrier to
+        avoid unsound higher-kinded structural recursion in type checkers.
         """
 
-        @classmethod
-        @override
-        def __subclasshook__(cls, subclass: type, /) -> bool:
-            """Enable isinstance() for Pydantic-backed implementations."""
-            if cls is FlextProtocolsResult.Result:
-                required = frozenset({"is_failure", "value", "is_success", "error"})
-                if all(
-                    any(a in B.__dict__ for B in subclass.__mro__) for a in required
-                ):
-                    return True
-            return NotImplemented
+        def __bool__(self) -> bool:
+            """Boolean conversion based on success state."""
+            ...
+
+        def __enter__(self) -> Self:
+            """Context manager entry."""
+            ...
+
+        def __exit__(
+            self,
+            _exc_type: type[BaseException] | None,
+            _exc_val: BaseException | None,
+            _exc_tb: TracebackType | None,
+        ) -> None:
+            """Context manager exit."""
+            ...
+
+        def __or__(self, default: T_co) -> T_co:
+            """Return the success value or ``default``."""
+            ...
 
         @property
         def error(self) -> str | None:
@@ -70,12 +85,21 @@ class FlextProtocolsResult:
             """Result value (available on success, strictly typed as T)."""
             ...
 
+        @property
+        def result_logger(self) -> FlextProtocolsLogging.Logger:
+            """Logger used by the result implementation."""
+            ...
+
         def unwrap(self) -> T_co:
             """Unwrap success value (raises RuntimeError on failure)."""
             ...
 
         def unwrap_or(self, default: T_co) -> T_co:
             """Unwrap success value or return default on failure."""
+            ...
+
+        def unwrap_or_else(self, func: Callable[[], T_co]) -> T_co:
+            """Unwrap success value or lazily compute a fallback."""
             ...
 
     @runtime_checkable

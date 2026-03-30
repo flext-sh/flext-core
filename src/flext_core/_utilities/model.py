@@ -108,7 +108,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def from_kwargs[M: BaseModel](model_cls: type[M], **kwargs: t.Scalar) -> r[M]:
-        """Create Pydantic model from kwargs with r.
+        """Create Pydantic model from kwargs with p.Result.
 
         Accepts any type in kwargs - Pydantic 2 field_validators will handle
         type conversions automatically (e.g., str → Path, dict → BaseModel, etc.).
@@ -133,7 +133,7 @@ class FlextUtilitiesModel:
         *,
         strict: bool = False,
     ) -> r[T_Model]:
-        """Load Pydantic model from mapping with r.
+        """Load Pydantic model from mapping with p.Result.
 
         Generic replacement for: Model(data) with error handling.
 
@@ -143,7 +143,7 @@ class FlextUtilitiesModel:
             strict: If True, enforce strict type checking during validation.
 
         Returns:
-            r containing model instance or error message.
+            p.Result containing model instance or error message.
 
         """
         instance_result = r[T_Model].create_from_callable(

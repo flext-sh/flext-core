@@ -120,7 +120,7 @@ class FlextUtilitiesEnum:
                 except ValueError:
                     pass
             enum_name = enum_cls.__name__
-            msg = f"Invalid {enum_name}: {value!r}"
+            msg = f"Invalid {enum_name}: {value}"
             raise ValueError(msg)
 
         return _coerce
@@ -138,7 +138,7 @@ class FlextUtilitiesEnum:
                 except ValueError:
                     pass
             enum_name = enum_cls.__name__
-            msg = f"Invalid {enum_name}: {value!r}"
+            msg = f"Invalid {enum_name}: {value}"
             raise ValueError(msg)
 
         return _coerce
@@ -259,12 +259,12 @@ class FlextUtilitiesEnum:
             mode: Operation mode
                 - "is_member": Check if value is member (returns bool, acts as TypeIs[E])
                 - "is_name": Check if value is member by name (returns bool, acts as TypeIs[E])
-                - "parse": Parse value to enum (returns r[E])
+                - "parse": Parse value to enum (returns p.Result[E])
                 - "coerce": Coerce value to enum (returns E, raises on failure)
             by_name: For is_member, check by name instead of value
 
         Returns:
-            Depends on mode - bool (for is_member/is_name), r[E] (for parse), or E (for coerce)
+            Depends on mode - bool (for is_member/is_name), p.Result[E] (for parse), or E (for coerce)
 
         """
         if mode == "is_member":
@@ -367,7 +367,7 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def parse_enum(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
-        """Convert string to StrEnum with r."""
+        """Convert string to StrEnum with p.Result."""
         if isinstance(value, enum_cls):
             return r[EnumT].ok(value)
         try:

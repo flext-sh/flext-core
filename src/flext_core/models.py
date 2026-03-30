@@ -26,11 +26,10 @@ from flext_core import (
     FlextModelsDomainEvent,
     FlextModelsEntity,
     FlextModelsErrors,
+    FlextModelsExceptionParams,
     FlextModelsHandler,
-    FlextModelsResult,
     FlextModelsService,
 )
-from flext_core._models.exception_params import FlextModelsExceptionParams
 
 
 class FlextModels(
@@ -47,7 +46,6 @@ class FlextModels(
     FlextModelsErrors,
     FlextGenericModels,
     FlextModelsHandler,
-    FlextModelsResult,
     FlextModelsService,
     FlextModelsConfig,
     FlextModelsExceptionParams,

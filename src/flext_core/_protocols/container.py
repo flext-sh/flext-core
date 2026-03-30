@@ -8,12 +8,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
+from typing import Protocol, Self, overload, runtime_checkable
 
-from flext_core import FlextProtocolsConfig, FlextProtocolsContext, t
-
-if TYPE_CHECKING:
-    from flext_core import r
+from flext_core import (
+    FlextProtocolsBase,
+    FlextProtocolsConfig,
+    FlextProtocolsContext,
+    FlextProtocolsResult,
+    t,
+)
 
 
 class FlextProtocolsContainer:
@@ -50,6 +53,31 @@ class FlextProtocolsContainer:
             ...
 
     @runtime_checkable
+    class ContainerCreationOptions(FlextProtocolsBase.Base, Protocol):
+        """Structural contract for DI container bootstrap options."""
+
+        config: t.ConfigMap | None
+        services: Mapping[str, t.RegisterableService] | None
+        factories: Mapping[str, t.FactoryCallable] | None
+        resources: Mapping[str, t.ResourceCallable] | None
+        wire_modules: Sequence[ModuleType] | None
+        wire_packages: t.StrSequence | None
+        wire_classes: Sequence[type] | None
+        factory_cache: bool
+
+    @runtime_checkable
+    class ContainerCreationOptionsType(Protocol):
+        """Protocol for concrete model classes that validate container options."""
+
+        @classmethod
+        def model_validate(
+            cls,
+            obj: object,
+        ) -> FlextProtocolsContainer.ContainerCreationOptions:
+            """Validate arbitrary input into container creation options."""
+            ...
+
+    @runtime_checkable
     class Container(FlextProtocolsConfig.Configurable, Protocol):
         """Dependency injection container protocol.
 
@@ -77,7 +105,7 @@ class FlextProtocolsContainer:
             name: str,
             *,
             type_cls: type[T],
-        ) -> r[T]: ...
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
         def get(
@@ -85,7 +113,7 @@ class FlextProtocolsContainer:
             name: str,
             *,
             type_cls: None = None,
-        ) -> r[t.RegisterableService]: ...
+        ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
         def get_config(self) -> t.ConfigMap:
             """Return the merged configuration exposed by this container."""

@@ -24,7 +24,7 @@ import pytest
 from flext_tests import u
 
 from flext_core import r
-from tests import m, t
+from tests import t
 
 
 class TestFlextUtilitiesReliability:
@@ -285,7 +285,7 @@ class TestFlextUtilitiesReliability:
 
     def test_with_retry_blocked(self) -> None:
         """Test retry blocked by should_retry_func."""
-        blocked: m.RuntimeResult[str] = u.with_retry(
+        blocked: r[str] = u.with_retry(
             lambda: r[str].fail("stop"),
             max_attempts=2,
             should_retry_func=lambda attempt, _error: attempt == 0,

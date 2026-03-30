@@ -20,7 +20,7 @@ from flext_core import FlextModelFoundation, t
 class FlextModelsExceptionParams:
     """Validated parameter models for the FLEXT exception hierarchy."""
 
-    class _ParamsModel(FlextModelFoundation.ArbitraryTypesModel):
+    class ParamsModel(FlextModelFoundation.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -31,22 +31,22 @@ class FlextModelsExceptionParams:
             use_enum_values=True,
         )
 
-    class _StrictStringValue(_ParamsModel):
+    class StrictStringValue(ParamsModel):
         """Strict string extractor for kwargs/context parsing."""
 
         value: Annotated[str, Field(strict=True)]
 
-    class _StrictBooleanValue(_ParamsModel):
+    class StrictBooleanValue(ParamsModel):
         """Strict boolean extractor for kwargs/context parsing."""
 
         value: Annotated[bool, Field(strict=True)]
 
-    class _StrictNumberValue(_ParamsModel):
+    class StrictNumberValue(ParamsModel):
         """Strict numeric extractor for kwargs/context parsing."""
 
         value: Annotated[t.Numeric, Field()]
 
-    class ValidationErrorParams(_ParamsModel):
+    class ValidationErrorParams(ParamsModel):
         """Validated params for ValidationError."""
 
         field: Annotated[
@@ -61,7 +61,7 @@ class FlextModelsExceptionParams:
         ]
         value: t.Scalar | None = None
 
-    class ConfigurationErrorParams(_ParamsModel):
+    class ConfigurationErrorParams(ParamsModel):
         """Validated params for ConfigurationError."""
 
         config_key: Annotated[
@@ -85,7 +85,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class ConnectionErrorParams(_ParamsModel):
+    class ConnectionErrorParams(ParamsModel):
         """Validated params for ConnectionError."""
 
         host: Annotated[
@@ -118,7 +118,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class TimeoutErrorParams(_ParamsModel):
+    class TimeoutErrorParams(ParamsModel):
         """Validated params for TimeoutError."""
 
         timeout_seconds: Annotated[
@@ -141,7 +141,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class AuthenticationErrorParams(_ParamsModel):
+    class AuthenticationErrorParams(ParamsModel):
         """Validated params for AuthenticationError."""
 
         auth_method: Annotated[
@@ -165,7 +165,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class AuthorizationErrorParams(_ParamsModel):
+    class AuthorizationErrorParams(ParamsModel):
         """Validated params for AuthorizationError."""
 
         user_id: Annotated[
@@ -199,7 +199,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class NotFoundErrorParams(_ParamsModel):
+    class NotFoundErrorParams(ParamsModel):
         """Validated params for NotFoundError."""
 
         resource_type: Annotated[
@@ -223,7 +223,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class ConflictErrorParams(_ParamsModel):
+    class ConflictErrorParams(ParamsModel):
         """Validated params for ConflictError."""
 
         resource_type: Annotated[
@@ -257,7 +257,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class RateLimitErrorParams(_ParamsModel):
+    class RateLimitErrorParams(ParamsModel):
         """Validated params for RateLimitError."""
 
         limit: Annotated[
@@ -290,7 +290,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class CircuitBreakerErrorParams(_ParamsModel):
+    class CircuitBreakerErrorParams(ParamsModel):
         """Validated params for CircuitBreakerError."""
 
         service_name: Annotated[
@@ -323,7 +323,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class TypeErrorParams(_ParamsModel):
+    class TypeErrorParams(ParamsModel):
         """Validated params for TypeError."""
 
         expected_type: Annotated[
@@ -347,7 +347,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class OperationErrorParams(_ParamsModel):
+    class OperationErrorParams(ParamsModel):
         """Validated params for OperationError."""
 
         operation: Annotated[
@@ -371,7 +371,7 @@ class FlextModelsExceptionParams:
             ),
         ]
 
-    class AttributeAccessErrorParams(_ParamsModel):
+    class AttributeAccessErrorParams(ParamsModel):
         """Validated params for AttributeAccessError."""
 
         attribute_name: Annotated[

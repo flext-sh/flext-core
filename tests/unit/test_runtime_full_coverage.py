@@ -27,11 +27,11 @@ from typing import ClassVar, cast, override
 import pytest
 import structlog
 from dependency_injector import containers, providers
-from flext_tests import t, tm
+from flext_tests import tm
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, r
-from tests import c, m, u
+from tests import c, m, t, u
 
 runtime_module = inspect.getmodule(FlextRuntime)
 
@@ -525,19 +525,19 @@ def test_runtime_result_all_missed_branches() -> None:
         msg = "bad"
         raise ValueError(msg)
 
-    def _ok_plus_one(value: int | None) -> m.RuntimeResult[int | None]:
+    def _ok_plus_one(value: int | None) -> r[int | None]:
         if value is None:
-            return m.RuntimeResult[int | None].fail("none")
-        return m.RuntimeResult[int | None].ok(value + 1)
+            return r[int | None].fail("none")
+        return r[int | None].ok(value + 1)
 
-    def _ok_plus_two(value: int) -> m.RuntimeResult[int]:
-        return m.RuntimeResult[int].ok(value + 2)
+    def _ok_plus_two(value: int) -> r[int]:
+        return r[int].ok(value + 2)
 
     def _error_to_int(error: str) -> int:
         return len(error)
 
-    success: m.RuntimeResult[int] = m.RuntimeResult[int].ok(1)
-    failure: m.RuntimeResult[int] = m.RuntimeResult[int].fail(
+    success: r[int] = r[int].ok(1)
+    failure: r[int] = r[int].fail(
         "e",
         error_code="E1",
         error_data=t.ConfigMap(root={"x": 1}),
@@ -573,18 +573,18 @@ def test_runtime_result_all_missed_branches() -> None:
     tm.that(filtered.error, eq="Filter predicate failed")
     tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
     tm.that(
-        failure.lash(lambda _err: m.RuntimeResult[int].ok(5)).value,
+        failure.lash(lambda _err: r[int].ok(5)).value,
         eq=5,
     )
     tm.that(failure.recover(lambda _err: 7).value, eq=7)
 
-    class NoneValueResult(m.RuntimeResult[int | None]):
+    class NoneValueResult(r[int | None]):
         @property
         @override
         def value(self) -> int | None:
             return None
 
-    none_success: m.RuntimeResult[int | None] = NoneValueResult(
+    none_success: r[int | None] = NoneValueResult(
         is_success=True,
         error=None,
         error_code=None,
@@ -593,14 +593,14 @@ def test_runtime_result_all_missed_branches() -> None:
     flowed = none_success.flow_through(_ok_plus_one)
     tm.that(flowed is none_success, eq=True)
 
-    none_ok = m.RuntimeResult[int | None].ok(None)
+    none_ok = r[int | None].ok(None)
     tm.that(none_ok.is_success, eq=True)
     tm.that(none_ok.value, none=True)
-    none_error: m.RuntimeResult[int] = m.RuntimeResult[int].fail(
+    none_error: r[int] = r[int].fail(
         None,
     )
     tm.that(none_error.error, eq="")
-    broken: m.RuntimeResult[int] = m.RuntimeResult(
+    broken: r[int] = r(
         is_success=True,
         error=None,
         error_code=None,
@@ -748,29 +748,10 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     tm.that(trace_from_mapping, has="trace_id")
     trace_from_other = FlextRuntime.ensure_trace_context("path")
     tm.that(trace_from_other, has="trace_id")
-    ok_statuses: Sequence[int | str] = [200, "201"]
-    ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
-    tm.that(ok_result.is_success and ok_result.value == [200, 201], eq=True)
-    bad_range = FlextRuntime.validate_http_status_codes([99])
-    tm.that(
-        bad_range.is_failure and "Invalid HTTP status code" in (bad_range.error or ""),
-        eq=True,
-    )
-    invalid_statuses: Sequence[int | str] = cast("Sequence[int | str]", ["normalized"])
-    bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
-    tm.that(
-        bad_type.is_failure and "Cannot convert to integer" in (bad_type.error or ""),
-        eq=True,
-    )
-    bad_value = FlextRuntime.validate_http_status_codes(["abc"])
-    tm.that(
-        bad_value.is_failure and "Cannot convert to integer" in (bad_value.error or ""),
-        eq=True,
-    )
 
 
 def test_runtime_result_alias_compatibility() -> None:
-    rr: m.RuntimeResult[int] = m.RuntimeResult[int].ok(10)
+    rr: r[int] = r[int].ok(10)
     wrapped: r[int] = r[int].ok(rr.value)
     assert isinstance(wrapped, r)
 
@@ -811,6 +792,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_runtime_module_accessors_and_metadata() -> None:
     metadata_ref = FlextRuntime.Metadata
+    assert metadata_ref is not None
     tm.that(metadata_ref, is_=type)
     metadata = metadata_ref()
     tm.that(metadata.version, eq="1.0.0")
@@ -941,17 +923,17 @@ def test_dependency_integration_and_wiring_paths() -> None:
 
 def test_runtime_result_remaining_paths() -> None:
 
-    def _ok_passthrough(value: int) -> m.RuntimeResult[int]:
-        return m.RuntimeResult[int].ok(value)
+    def _ok_passthrough(value: int) -> r[int]:
+        return r[int].ok(value)
 
-    def _ok_inc(value: int) -> m.RuntimeResult[int]:
-        return m.RuntimeResult[int].ok(value + 1)
+    def _ok_inc(value: int) -> r[int]:
+        return r[int].ok(value + 1)
 
-    def _fail_boom(_value: int) -> m.RuntimeResult[int]:
-        return m.RuntimeResult[int].fail("boom")
+    def _fail_boom(_value: int) -> r[int]:
+        return r[int].fail("boom")
 
-    success: m.RuntimeResult[int] = m.RuntimeResult[int].ok(3)
-    failure: m.RuntimeResult[int] = m.RuntimeResult[int].fail(
+    success: r[int] = r[int].ok(3)
+    failure: r[int] = r[int].fail(
         "err",
         error_code="E2",
         error_data=t.ConfigMap(root={"k": "v"}),
@@ -965,7 +947,7 @@ def test_runtime_result_remaining_paths() -> None:
     tm.that(failure.flat_map(_ok_passthrough).is_failure, eq=True)
     tm.that(success.filter(lambda value: value > 0) is success, eq=True)
     tm.that(success.map_error(str) is success, eq=True)
-    tm.that(success.lash(m.RuntimeResult.fail) is success, eq=True)
+    tm.that(success.lash(r.fail) is success, eq=True)
     tm.that(success.recover(lambda _e: 0) is success, eq=True)
     chain_success = success.flow_through(_ok_inc, _ok_inc)
     tm.that(chain_success.is_success and chain_success.value == 5, eq=True)
