@@ -74,13 +74,8 @@ class FlextProtocolsHandler:
         ): ...
 
     @runtime_checkable
-    class Dispatcher(FlextProtocolsBase.Base, Protocol):
-        """Protocol for dispatching and publishing messages in CQRS systems."""
-
-        def dispatch(
-            self,
-            message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]: ...
+    class _MessageBusBase(Protocol):
+        """Shared protocol for publish/register_handler on bus-like types."""
 
         def publish(
             self,
@@ -93,6 +88,15 @@ class FlextProtocolsHandler:
             *,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]: ...
+
+    @runtime_checkable
+    class Dispatcher(_MessageBusBase, FlextProtocolsBase.Base, Protocol):
+        """Protocol for dispatching and publishing messages in CQRS systems."""
+
+        def dispatch(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]: ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):
@@ -101,25 +105,13 @@ class FlextProtocolsHandler:
         def can_handle(self, message_type: type) -> bool: ...
 
     @runtime_checkable
-    class CommandBus(Protocol):
+    class CommandBus(_MessageBusBase, Protocol):
         """Protocol for command bus implementations with dispatch/publish/register."""
 
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
         ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
-
-        def publish(
-            self,
-            event: FlextProtocolsBase.Routable | Sequence[FlextProtocolsBase.Routable],
-        ) -> FlextProtocolsResult.Result[bool]: ...
-
-        def register_handler(
-            self,
-            handler: t.HandlerLike,
-            *,
-            is_event: bool = False,
-        ) -> FlextProtocolsResult.Result[bool]: ...
 
     @runtime_checkable
     class Middleware(FlextProtocolsBase.Base, Protocol):
