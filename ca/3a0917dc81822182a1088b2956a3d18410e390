@@ -1,0 +1,49 @@
+src/flext_core/_models/exception_params.py
+  a515941f01841250 1-399
+tests/unit/test_container_full_coverage.py
+  a515941f01841250 211,243,255,331,336,344,422,491,495
+src/flext_core/_models/settings.py
+  a515941f01841250 832,835,838,841,844,847,850,853,856,871,909,912
+tests/unit/test_utilities_generators_full_coverage.py
+  a515941f01841250 17,74,79
+src/flext_core/_utilities/mapper.py
+  a515941f01841250 2153-2166,2439-2441,2453-2455
+src/flext_core/_utilities/collection.py
+  a515941f01841250 65-71,296-298,334-336
+tests/unit/test_decorators_full_coverage.py
+  a515941f01841250 78,144,148,152,182,215,259,281,388,418,422,426,436,440,475,479,483,531,535,554
+tests/unit/test_runtime_full_coverage.py
+  a515941f01841250 36
+src/flext_core/loggings.py
+  a515941f01841250 624
+tests/unit/test_mixins_full_coverage.py
+  a515941f01841250 203,293,301,307,458,480,582
+tests/unit/test_refactor_migrate_to_class_mro.py
+  a515941f01841250 49-51,88-90,117-119,164-166,203-205,288-290
+src/flext_core/exceptions.py
+  a515941f01841250 23,50-66,466-505,522,525-530,551,554-559,578,581-586,608,611-614,616-619,640,643-648,667,670-676,699-704,708-712,735,738-744,764,767-773,793,796-802
+tests/unit/test_coverage_utilities.py
+  a515941f01841250 77
+tests/integration/patterns/test_patterns_testing.py
+  a515941f01841250 749,752
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "ca3a0917dc81822182a1088b2956a3d18410e390",
+  "prompts": {
+    "a515941f01841250": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea677372-a323-4dc3-9490-9087d4585c99",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 703,
+      "total_deletions": 838,
+      "accepted_lines": 650,
+      "overriden_lines": 2
+    }
+  }
+}
