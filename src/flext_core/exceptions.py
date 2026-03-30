@@ -346,9 +346,10 @@ class FlextExceptions:
             params_cls = cls.__dict__.get("_params_cls")
             if params_cls is None or "__init__" in cls.__dict__:
                 return
-            default_code: str = cls.__dict__.get(
-                "_default_error_code", c.UNKNOWN_ERROR,
-            )
+            default_code: str = str(cls.__dict__.get(
+                "_default_error_code",
+                c.UNKNOWN_ERROR,
+            ))
 
             def _auto_init(
                 self: e.BaseError,
@@ -369,7 +370,7 @@ class FlextExceptions:
                     extra_kwargs=extra_kwargs,
                 )
 
-            cls.__init__ = _auto_init  # type: ignore[assignment]
+            cls.__init__ = _auto_init
 
         @override
         def __str__(self) -> str:

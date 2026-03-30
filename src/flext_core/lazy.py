@@ -106,8 +106,7 @@ def install_lazy_exports(
     """Install PEP 562 lazy loading into a module's namespace.
 
     Sets ``__getattr__``, ``__dir__``, ``__all__`` and cleans up submodules
-    in a single call. Replaces the ~30-line boilerplate that was previously
-    inlined into every auto-generated ``__init__.py``.
+    in a single call.
 
     Args:
         module_name: The ``__name__`` of the calling module.
@@ -117,7 +116,7 @@ def install_lazy_exports(
 
     """
     resolved: MutableMapping[str, FlextTypesServices.ModuleExport] = {}
-    typed_globals: MutableMapping[str, FlextTypesServices.ModuleExport] = module_globals  # type: ignore[assignment]
+    typed_globals: MutableMapping[str, FlextTypesServices.ModuleExport] = module_globals
 
     def _getattr(name: str) -> FlextTypesServices.ModuleExport:
         if name in resolved:

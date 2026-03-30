@@ -23,11 +23,6 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import (
-        _constants,
-        _models,
-        _protocols,
-        _typings,
-        _utilities,
         constants,
         container,
         context,
@@ -49,122 +44,11 @@ if TYPE_CHECKING:
         typings,
         utilities,
     )
-    from flext_core._constants import (
-        base,
-        cqrs,
-        domain,
-        infrastructure,
-        platform,
-        validation,
-    )
-    from flext_core._constants.base import *
-    from flext_core._constants.cqrs import *
-    from flext_core._constants.domain import *
-    from flext_core._constants.errors import *
-    from flext_core._constants.infrastructure import *
-    from flext_core._constants.mixins import *
-    from flext_core._constants.platform import *
-    from flext_core._constants.settings import *
-    from flext_core._constants.validation import *
-    from flext_core._models import (
-        collections,
-        containers,
-        domain_event,
-        entity,
-        exception_params,
-        generic,
-        handler,
-    )
-    from flext_core._models._context._data import *
-    from flext_core._models._context._export import *
-    from flext_core._models._context._metadata import *
-    from flext_core._models._context._proxy_var import *
-    from flext_core._models._context._scope import *
-    from flext_core._models._context._tokens import *
-    from flext_core._models.base import *
-    from flext_core._models.collections import *
-    from flext_core._models.container import *
-    from flext_core._models.containers import *
-    from flext_core._models.context import *
-    from flext_core._models.cqrs import *
-    from flext_core._models.decorators import *
-    from flext_core._models.dispatcher import *
-    from flext_core._models.domain_event import *
-    from flext_core._models.entity import *
-    from flext_core._models.errors import *
-    from flext_core._models.exception_params import *
-    from flext_core._models.generic import *
-    from flext_core._models.handler import *
-    from flext_core._models.service import *
-    from flext_core._models.settings import *
-    from flext_core._protocols import config, logging
-    from flext_core._protocols.base import *
-    from flext_core._protocols.config import *
-    from flext_core._protocols.container import *
-    from flext_core._protocols.context import *
-    from flext_core._protocols.handler import *
-    from flext_core._protocols.logging import *
-    from flext_core._protocols.registry import *
-    from flext_core._protocols.result import *
-    from flext_core._protocols.service import *
-    from flext_core._typings import core, generics, services
-    from flext_core._typings.base import *
-    from flext_core._typings.containers import *
-    from flext_core._typings.core import *
-    from flext_core._typings.generics import *
-    from flext_core._typings.services import *
-    from flext_core._typings.validation import *
-    from flext_core._utilities import (
-        args,
-        cache,
-        checker,
-        collection,
-        configuration,
-        conversion,
-        deprecation,
-        discovery,
-        enum,
-        file_ops,
-        generators,
-        guards,
-        guards_ensure,
-        guards_type,
-        guards_type_core,
-        guards_type_model,
-        guards_type_protocol,
-        mapper,
-        model,
-        pagination,
-        parser,
-        reliability,
-        result_helpers,
-        text,
-    )
-    from flext_core._utilities.args import *
-    from flext_core._utilities.cache import *
-    from flext_core._utilities.checker import *
-    from flext_core._utilities.collection import *
-    from flext_core._utilities.configuration import *
-    from flext_core._utilities.context import *
-    from flext_core._utilities.conversion import *
-    from flext_core._utilities.discovery import *
-    from flext_core._utilities.domain import *
-    from flext_core._utilities.enum import *
-    from flext_core._utilities.file_ops import *
-    from flext_core._utilities.generators import *
-    from flext_core._utilities.guards import *
-    from flext_core._utilities.guards_ensure import *
-    from flext_core._utilities.guards_type import *
-    from flext_core._utilities.guards_type_core import *
-    from flext_core._utilities.guards_type_model import *
-    from flext_core._utilities.guards_type_protocol import *
-    from flext_core._utilities.mapper import *
-    from flext_core._utilities.model import *
-    from flext_core._utilities.pagination import *
-    from flext_core._utilities.parser import *
-    from flext_core._utilities.reliability import *
-    from flext_core._utilities.result_helpers import *
-    from flext_core._utilities.text import *
+    from flext_core._constants import *
+    from flext_core._models import *
+    from flext_core._protocols import *
+    from flext_core._typings import *
+    from flext_core._utilities import *
     from flext_core.constants import *
     from flext_core.container import *
     from flext_core.context import *

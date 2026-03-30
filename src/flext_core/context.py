@@ -613,7 +613,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
         """
         if not self._active:
-            return []
+            return list[str]()
         all_keys: set[str] = set()
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -866,7 +866,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 "Custom metadata field normalization failed",
                 exc_info=exc,
             )
-            custom_fields_dict = {}
+            custom_fields_dict = dict[str, t.Container]()
         result: t.MutableContainerMapping = {}
         for k, v in data.items():
             if v is None or v == {}:

@@ -13,8 +13,6 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from tests.unit import (
         conftest_infra,
-        contracts,
-        flext_tests,
         protocols,
         test_args_coverage_100,
         test_collection_utilities_coverage_100,
@@ -112,19 +110,8 @@ if TYPE_CHECKING:
         typings,
     )
     from tests.unit.conftest_infra import *
-    from tests.unit.contracts import text_contract
-    from tests.unit.contracts.text_contract import *
-    from tests.unit.flext_tests import (
-        test_docker,
-        test_domains,
-        test_files,
-        test_matchers,
-    )
-    from tests.unit.flext_tests.test_docker import *
-    from tests.unit.flext_tests.test_domains import *
-    from tests.unit.flext_tests.test_files import *
-    from tests.unit.flext_tests.test_matchers import *
-    from tests.unit.flext_tests.test_utilities import *
+    from tests.unit.contracts import *
+    from tests.unit.flext_tests import *
     from tests.unit.protocols import *
     from tests.unit.test_args_coverage_100 import *
     from tests.unit.test_collection_utilities_coverage_100 import *

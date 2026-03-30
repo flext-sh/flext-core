@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from examples import (
-        _models,
         ex_01_flext_result,
         ex_02_flext_settings,
         ex_03_flext_logger,
@@ -29,35 +28,7 @@ if TYPE_CHECKING:
         models,
         shared,
     )
-    from examples._models import (
-        ex00,
-        ex01,
-        ex02,
-        ex03,
-        ex04,
-        ex05,
-        ex07,
-        ex08,
-        ex10,
-        ex11,
-        ex12,
-        ex14,
-        exconfig,
-    )
-    from examples._models.ex00 import *
-    from examples._models.ex01 import *
-    from examples._models.ex02 import *
-    from examples._models.ex03 import *
-    from examples._models.ex04 import *
-    from examples._models.ex05 import *
-    from examples._models.ex07 import *
-    from examples._models.ex08 import *
-    from examples._models.ex10 import *
-    from examples._models.ex11 import *
-    from examples._models.ex12 import *
-    from examples._models.ex14 import *
-    from examples._models.exconfig import *
-    from examples._models.shared import *
+    from examples._models import *
     from examples.ex_01_flext_result import *
     from examples.ex_02_flext_settings import *
     from examples.ex_03_flext_logger import *

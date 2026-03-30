@@ -30,11 +30,11 @@ if TYPE_CHECKING:
 def __getattr__(name: str) -> type:
     """Lazy re-export canonical error types on first access."""
     if name == "FlextErrorDomain":
-        from flext_core import FlextConstantsErrors  # noqa: PLC0415
+        from flext_core import FlextConstantsErrors
 
         return FlextConstantsErrors.ErrorDomain
     if name == "FlextError":
-        from flext_core import FlextModelsErrors  # noqa: PLC0415
+        from flext_core import FlextModelsErrors
 
         return FlextModelsErrors.Error
     msg = f"module {__name__!r} has no attribute {name!r}"

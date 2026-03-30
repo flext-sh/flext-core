@@ -15,29 +15,18 @@ if TYPE_CHECKING:
 
     from tests import (
         base,
-        benchmark,
         conftest,
         constants,
-        helpers,
-        integration,
         models,
         protocols,
         test_documented_patterns,
         test_service_result_property,
         test_utils,
         typings,
-        unit,
         utilities,
     )
     from tests.base import *
-    from tests.benchmark import (
-        test_container_memory,
-        test_container_performance,
-        test_refactor_nesting_performance,
-    )
-    from tests.benchmark.test_container_memory import *
-    from tests.benchmark.test_container_performance import *
-    from tests.benchmark.test_refactor_nesting_performance import *
+    from tests.benchmark import *
     from tests.conftest import *
     from tests.constants import *
     from tests.fixtures.namespace_validator.rule0_loose_items import *
@@ -49,260 +38,15 @@ if TYPE_CHECKING:
     from tests.fixtures.namespace_validator.rule1_magic_number import *
     from tests.fixtures.namespace_validator.rule2_protocol_in_types import *
     from tests.fixtures.namespace_validator.typings import *
-    from tests.helpers import factories, factories_impl, scenarios
-    from tests.helpers._scenarios_impl import *
-    from tests.helpers.factories import *
-    from tests.helpers.factories_impl import *
-    from tests.helpers.scenarios import *
-    from tests.integration import (
-        patterns,
-        test_architecture,
-        test_config_integration,
-        test_infra_integration,
-        test_integration,
-        test_migration_validation,
-        test_refactor_nesting_file,
-        test_refactor_nesting_idempotency,
-        test_refactor_nesting_project,
-        test_refactor_nesting_workspace,
-        test_refactor_policy_mro,
-        test_service,
-        test_system,
-    )
-    from tests.integration.patterns import (
-        test_advanced_patterns,
-        test_architectural_patterns,
-        test_patterns_commands,
-        test_patterns_logging,
-        test_patterns_testing,
-    )
-    from tests.integration.patterns.test_advanced_patterns import *
-    from tests.integration.patterns.test_architectural_patterns import *
-    from tests.integration.patterns.test_patterns_commands import *
-    from tests.integration.patterns.test_patterns_logging import *
-    from tests.integration.patterns.test_patterns_testing import *
-    from tests.integration.test_architecture import *
-    from tests.integration.test_config_integration import *
-    from tests.integration.test_infra_integration import *
-    from tests.integration.test_integration import *
-    from tests.integration.test_migration_validation import *
-    from tests.integration.test_refactor_nesting_file import *
-    from tests.integration.test_refactor_nesting_idempotency import *
-    from tests.integration.test_refactor_nesting_project import *
-    from tests.integration.test_refactor_nesting_workspace import *
-    from tests.integration.test_refactor_policy_mro import *
-    from tests.integration.test_service import *
-    from tests.integration.test_system import *
+    from tests.helpers import *
+    from tests.integration import *
     from tests.models import *
     from tests.protocols import *
     from tests.test_documented_patterns import *
     from tests.test_service_result_property import *
     from tests.test_utils import *
     from tests.typings import *
-    from tests.unit import (
-        conftest_infra,
-        contracts,
-        flext_tests,
-        test_args_coverage_100,
-        test_collection_utilities_coverage_100,
-        test_collections_coverage_100,
-        test_config,
-        test_constants,
-        test_container,
-        test_container_full_coverage,
-        test_context_coverage_100,
-        test_context_full_coverage,
-        test_coverage_context,
-        test_coverage_exceptions,
-        test_coverage_loggings,
-        test_coverage_models,
-        test_coverage_utilities,
-        test_decorators,
-        test_decorators_discovery_full_coverage,
-        test_decorators_full_coverage,
-        test_deprecation_warnings,
-        test_di_incremental,
-        test_di_services_access,
-        test_dispatcher_di,
-        test_dispatcher_full_coverage,
-        test_dispatcher_minimal,
-        test_dispatcher_reliability,
-        test_dispatcher_timeout_coverage_100,
-        test_entity_coverage,
-        test_enum_utilities_coverage_100,
-        test_exceptions,
-        test_handler_decorator_discovery,
-        test_handlers,
-        test_handlers_full_coverage,
-        test_loggings_error_paths_coverage,
-        test_loggings_full_coverage,
-        test_loggings_strict_returns,
-        test_mixins,
-        test_mixins_full_coverage,
-        test_models,
-        test_models_base_full_coverage,
-        test_models_container,
-        test_models_context_full_coverage,
-        test_models_cqrs_full_coverage,
-        test_models_entity_full_coverage,
-        test_models_generic_full_coverage,
-        test_namespace_validator,
-        test_pagination_coverage_100,
-        test_protocols,
-        test_refactor_cli_models_workflow,
-        test_refactor_migrate_to_class_mro,
-        test_refactor_namespace_enforcer,
-        test_refactor_policy_family_rules,
-        test_registry,
-        test_registry_full_coverage,
-        test_result,
-        test_result_additional,
-        test_result_coverage_100,
-        test_result_exception_carrying,
-        test_result_full_coverage,
-        test_runtime,
-        test_runtime_coverage_100,
-        test_runtime_full_coverage,
-        test_service_additional,
-        test_service_bootstrap,
-        test_service_coverage_100,
-        test_settings_coverage,
-        test_transformer_class_nesting,
-        test_transformer_helper_consolidation,
-        test_transformer_nested_class_propagation,
-        test_typings,
-        test_typings_full_coverage,
-        test_utilities,
-        test_utilities_cache_coverage_100,
-        test_utilities_collection_coverage_100,
-        test_utilities_collection_full_coverage,
-        test_utilities_configuration_coverage_100,
-        test_utilities_configuration_full_coverage,
-        test_utilities_context_full_coverage,
-        test_utilities_coverage,
-        test_utilities_data_mapper,
-        test_utilities_domain,
-        test_utilities_domain_full_coverage,
-        test_utilities_enum_full_coverage,
-        test_utilities_generators_full_coverage,
-        test_utilities_guards_full_coverage,
-        test_utilities_mapper_coverage_100,
-        test_utilities_mapper_full_coverage,
-        test_utilities_parser_full_coverage,
-        test_utilities_reliability,
-        test_utilities_text_full_coverage,
-        test_utilities_type_checker_coverage_100,
-        test_utilities_type_guards_coverage_100,
-        test_version,
-    )
-    from tests.unit._models import *
-    from tests.unit._models_impl import *
-    from tests.unit.conftest_infra import *
-    from tests.unit.contracts import text_contract
-    from tests.unit.contracts.text_contract import *
-    from tests.unit.flext_tests import (
-        test_docker,
-        test_domains,
-        test_files,
-        test_matchers,
-    )
-    from tests.unit.flext_tests.test_docker import *
-    from tests.unit.flext_tests.test_domains import *
-    from tests.unit.flext_tests.test_files import *
-    from tests.unit.flext_tests.test_matchers import *
-    from tests.unit.flext_tests.test_utilities import *
-    from tests.unit.protocols import *
-    from tests.unit.test_args_coverage_100 import *
-    from tests.unit.test_collection_utilities_coverage_100 import *
-    from tests.unit.test_collections_coverage_100 import *
-    from tests.unit.test_config import *
-    from tests.unit.test_constants import *
-    from tests.unit.test_container import *
-    from tests.unit.test_container_full_coverage import *
-    from tests.unit.test_context import *
-    from tests.unit.test_context_coverage_100 import *
-    from tests.unit.test_context_full_coverage import *
-    from tests.unit.test_coverage_context import *
-    from tests.unit.test_coverage_exceptions import *
-    from tests.unit.test_coverage_loggings import *
-    from tests.unit.test_coverage_models import *
-    from tests.unit.test_coverage_utilities import *
-    from tests.unit.test_decorators import *
-    from tests.unit.test_decorators_discovery_full_coverage import *
-    from tests.unit.test_decorators_full_coverage import *
-    from tests.unit.test_deprecation_warnings import *
-    from tests.unit.test_di_incremental import *
-    from tests.unit.test_di_services_access import *
-    from tests.unit.test_dispatcher_di import *
-    from tests.unit.test_dispatcher_full_coverage import *
-    from tests.unit.test_dispatcher_minimal import *
-    from tests.unit.test_dispatcher_reliability import *
-    from tests.unit.test_dispatcher_timeout_coverage_100 import *
-    from tests.unit.test_entity_coverage import *
-    from tests.unit.test_enum_utilities_coverage_100 import *
-    from tests.unit.test_exceptions import *
-    from tests.unit.test_handler_decorator_discovery import *
-    from tests.unit.test_handlers import *
-    from tests.unit.test_handlers_full_coverage import *
-    from tests.unit.test_loggings_error_paths_coverage import *
-    from tests.unit.test_loggings_full_coverage import *
-    from tests.unit.test_loggings_strict_returns import *
-    from tests.unit.test_mixins import *
-    from tests.unit.test_mixins_full_coverage import *
-    from tests.unit.test_models import *
-    from tests.unit.test_models_base_full_coverage import *
-    from tests.unit.test_models_container import *
-    from tests.unit.test_models_context_full_coverage import *
-    from tests.unit.test_models_cqrs_full_coverage import *
-    from tests.unit.test_models_entity_full_coverage import *
-    from tests.unit.test_models_generic_full_coverage import *
-    from tests.unit.test_namespace_validator import *
-    from tests.unit.test_pagination_coverage_100 import *
-    from tests.unit.test_protocols import *
-    from tests.unit.test_refactor_cli_models_workflow import *
-    from tests.unit.test_refactor_migrate_to_class_mro import *
-    from tests.unit.test_refactor_namespace_enforcer import *
-    from tests.unit.test_refactor_policy_family_rules import *
-    from tests.unit.test_registry import *
-    from tests.unit.test_registry_full_coverage import *
-    from tests.unit.test_result import *
-    from tests.unit.test_result_additional import *
-    from tests.unit.test_result_coverage_100 import *
-    from tests.unit.test_result_exception_carrying import *
-    from tests.unit.test_result_full_coverage import *
-    from tests.unit.test_runtime import *
-    from tests.unit.test_runtime_coverage_100 import *
-    from tests.unit.test_runtime_full_coverage import *
-    from tests.unit.test_service import *
-    from tests.unit.test_service_additional import *
-    from tests.unit.test_service_bootstrap import *
-    from tests.unit.test_service_coverage_100 import *
-    from tests.unit.test_settings_coverage import *
-    from tests.unit.test_transformer_class_nesting import *
-    from tests.unit.test_transformer_helper_consolidation import *
-    from tests.unit.test_transformer_nested_class_propagation import *
-    from tests.unit.test_typings import *
-    from tests.unit.test_typings_full_coverage import *
-    from tests.unit.test_utilities_cache_coverage_100 import *
-    from tests.unit.test_utilities_collection_coverage_100 import *
-    from tests.unit.test_utilities_collection_full_coverage import *
-    from tests.unit.test_utilities_configuration_coverage_100 import *
-    from tests.unit.test_utilities_configuration_full_coverage import *
-    from tests.unit.test_utilities_context_full_coverage import *
-    from tests.unit.test_utilities_coverage import *
-    from tests.unit.test_utilities_data_mapper import *
-    from tests.unit.test_utilities_domain import *
-    from tests.unit.test_utilities_domain_full_coverage import *
-    from tests.unit.test_utilities_generators_full_coverage import *
-    from tests.unit.test_utilities_guards_full_coverage import *
-    from tests.unit.test_utilities_mapper_coverage_100 import *
-    from tests.unit.test_utilities_mapper_full_coverage import *
-    from tests.unit.test_utilities_parser_full_coverage import *
-    from tests.unit.test_utilities_reliability import *
-    from tests.unit.test_utilities_text_full_coverage import *
-    from tests.unit.test_utilities_type_checker_coverage_100 import *
-    from tests.unit.test_utilities_type_guards_coverage_100 import *
-    from tests.unit.test_version import *
+    from tests.unit import *
     from tests.utilities import *
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {

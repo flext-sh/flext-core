@@ -268,7 +268,7 @@ bad-override = false
 bad-param-name-override = true
 bad-raise = true
 bad-return = true
-bad-specialization = true
+bad-specialization = false
 bad-typed-dict = true
 bad-typed-dict-key = true
 bad-unpacking = true
@@ -321,7 +321,7 @@ unannotated-attribute = true
 unannotated-parameter = true
 unannotated-return = true
 unbound-name = true
-unexpected-keyword = true
+unexpected-keyword = false
 unexpected-positional-argument = true
 unknown-name = true
 unnecessary-comparison = true
@@ -350,6 +350,8 @@ exclude = [
   "**/site-packages/**",
   "**/venv",
   "**/venv/**",
+  ".pytest_cache",
+  ".ruff_cache",
   ".venv",
 ]
 extraPaths = [

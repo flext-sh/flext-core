@@ -12,7 +12,6 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests.integration import (
-        patterns,
         test_architecture,
         test_config_integration,
         test_infra_integration,
@@ -26,18 +25,7 @@ if TYPE_CHECKING:
         test_service,
         test_system,
     )
-    from tests.integration.patterns import (
-        test_advanced_patterns,
-        test_architectural_patterns,
-        test_patterns_commands,
-        test_patterns_logging,
-        test_patterns_testing,
-    )
-    from tests.integration.patterns.test_advanced_patterns import *
-    from tests.integration.patterns.test_architectural_patterns import *
-    from tests.integration.patterns.test_patterns_commands import *
-    from tests.integration.patterns.test_patterns_logging import *
-    from tests.integration.patterns.test_patterns_testing import *
+    from tests.integration.patterns import *
     from tests.integration.test_architecture import *
     from tests.integration.test_config_integration import *
     from tests.integration.test_infra_integration import *

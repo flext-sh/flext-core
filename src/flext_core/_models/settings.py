@@ -134,7 +134,7 @@ class FlextModelsConfig:
             ConfigurationDict since str is a subtype.
             """
             if v is None:
-                return {}
+                return dict[str, str]()
             return FlextRuntime.ensure_trace_context(
                 v,
                 include_correlation_id=True,
