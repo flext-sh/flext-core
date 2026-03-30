@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import builtins
-from collections.abc import Callable, Mapping, MutableSequence, Set as AbstractSet
-from datetime import UTC, datetime
+from collections.abc import Callable, MutableSequence
+from datetime import datetime
 from typing import cast
 
 import pytest
@@ -25,12 +25,6 @@ def _is_type_obj(
         "is_type",
     )
     return fn(value, type_spec)
-
-
-def _is_flexible_value_obj(value: Mapping[int, str] | AbstractSet[int]) -> bool:
-    """Call is_flexible_value with arbitrary t.NormalizedValue for negative-case testing."""
-    fn: Callable[..., bool] = getattr(u, "is_flexible_value")
-    return fn(value)
 
 
 class _LoggerLike:
@@ -108,7 +102,6 @@ def test_non_empty_and_normalize_branches() -> None:
     tm.that(u.is_string_non_empty("x"), eq=True)
     tm.that(u.is_type("x", "string_non_empty"), eq=True)
     tm.that(u.is_dict_non_empty({"k": "v"}), eq=True)
-    tm.that(u.is_list_non_empty([1]), eq=True)
     tm.that(u.normalize_to_metadata("x"), eq="x")
     dict_scalar_out = u.normalize_to_metadata({"k": 1})
     tm.that(dict_scalar_out, eq={"k": 1})
@@ -130,19 +123,6 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     tm.that(not u.is_configuration_mapping(bad_value_mapping), eq=True)
     tm.that(not u.is_configuration_dict(bad_value_dict), eq=True)
     tm.that(u.is_configuration_dict({"k": 1}), eq=True)
-
-
-def test_is_flexible_value_covers_all_branches() -> None:
-    tm.that(u.is_flexible_value(None), eq=True)
-    tm.that(u.is_flexible_value(1), eq=True)
-    tm.that(u.is_flexible_value(datetime.now(UTC)), eq=True)
-    tm.that(u.is_flexible_value(["a", 1, None, datetime.now(UTC)]), eq=True)
-    tm.that(not u.is_flexible_value(["a", {"no": "nested"}]), eq=True)
-    tm.that(_is_flexible_value_obj({1: "bad_key"}), eq=True)
-    tm.that(not u.is_flexible_value({"k": {"nested": "bad"}}), eq=True)
-    tm.that(u.is_flexible_value({"k": "v"}), eq=True)
-    empty_set: set[int] = set()
-    tm.that(not _is_flexible_value_obj(empty_set), eq=True)
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
@@ -259,8 +239,6 @@ def test_guard_in_has_empty_none_helpers() -> None:
     tm.that(u.empty(()), eq=True)
     tm.that(not u.empty([1]), eq=True)
     tm.that(u.empty(0), eq=True)
-    tm.that(u.none_(None, None), eq=True)
-    tm.that(not u.none_(None, "x"), eq=True)
 
 
 def test_chk_exercises_missed_branches() -> None:

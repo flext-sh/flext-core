@@ -23,8 +23,6 @@ from flext_tests import t as test_t, tm
 from flext_core import (
     FlextRuntime,
     FlextUtilities,
-    FlextUtilitiesGuards,
-    FlextUtilitiesMapper,
 )
 from tests import m, t
 
@@ -50,42 +48,6 @@ class TestDeprecationWarnings:
                 cast("t.RuntimeData", val),
             )
             tm.that(type(normalized_result), eq=type(strict_result))
-
-    def test_is_general_value_type_emits_deprecation(self) -> None:
-        """FlextUtilitiesGuards.is_general_value_type -> is_container."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = FlextUtilitiesGuards.is_general_value_type("test")
-            tm.that(result, eq=True)
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            tm.that(len(deprecation_warnings), gt=0)
-            tm.that(str(deprecation_warnings[0].message), has="is_container")
-
-    def test_narrow_to_general_value_type_emits_deprecation(self) -> None:
-        """FlextUtilitiesMapper.narrow_to_general_value_type -> narrow_to_container."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = FlextUtilitiesMapper.narrow_to_general_value_type("hello")
-            tm.that(result, eq="hello")
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            tm.that(len(deprecation_warnings), gt=0)
-            tm.that(str(deprecation_warnings[0].message), has="narrow_to_container")
-
-    def test_to_general_value_from_object_emits_deprecation(self) -> None:
-        """FlextUtilitiesMapper._to_general_value_from_object -> narrow_to_container."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = FlextUtilitiesMapper._to_general_value_from_object(99)
-            tm.that(result, eq=99)
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            tm.that(len(deprecation_warnings), gt=0)
-            tm.that(str(deprecation_warnings[0].message), has="narrow_to_container")
 
     def test_facade_normalize_to_container(self) -> None:
         result = FlextUtilities.normalize_to_container("facade_test")

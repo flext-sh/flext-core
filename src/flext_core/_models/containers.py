@@ -13,7 +13,6 @@ from collections.abc import (
     Callable,
     ItemsView,
     Mapping,
-    MutableMapping,
     Sequence,
     ValuesView,
 )
@@ -37,33 +36,6 @@ class FlextModelsContainers:
     configuration, service maps, and validator collections.
     Access via ``t.ConfigMap``, ``t.Dict``, etc.
     """
-
-    class ErrorCodeMap(FlextModelFoundation.FlexibleInternalModel):
-        """Model for nested error code mappings."""
-
-        codes: Annotated[
-            Mapping[str, int],
-            Field(
-                title="Error Codes",
-                description="Mapping from error keys to numeric error codes.",
-                examples=[{"timeout": 504, "invalid_payload": 400}],
-            ),
-        ] = Field(default_factory=dict)
-
-    class ErrorMap(t.RootDictModel[int | str | BaseModel]):
-        """Error type mapping container.
-
-        Replaces: ErrorTypeMapping
-        """
-
-        root: Annotated[
-            MutableMapping[str, int | str | BaseModel],
-            Field(
-                title="Error Map",
-                description="Error catalog mapping keys to codes, messages, or nested code maps.",
-                examples=[{"user_missing": 404, "bad_input": "invalid data"}],
-            ),
-        ] = Field(default_factory=dict)
 
     class ValidatorCallable(RootModel[_ValidatorCallable]):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
@@ -107,30 +79,6 @@ class FlextModelsContainers:
                 title="Field Validator Map",
                 description="Field-level validators keyed by field name.",
                 examples=[{"email": "validate_email"}],
-            ),
-        ] = Field(default_factory=dict)
-
-    class ConsistencyRuleMap(_RootValidatorMapModel):
-        """Map of consistency rules."""
-
-        root: Annotated[
-            Mapping[str, t.ValidatorCallable],
-            Field(
-                title="Consistency Rule Map",
-                description="Consistency rule callables keyed by rule identifier.",
-                examples=[{"order_total": "validate_order_total"}],
-            ),
-        ] = Field(default_factory=dict)
-
-    class EventValidatorMap(_RootValidatorMapModel):
-        """Map of event validators."""
-
-        root: Annotated[
-            Mapping[str, t.ValidatorCallable],
-            Field(
-                title="Event Validator Map",
-                description="Event validator callables keyed by event type or alias.",
-                examples=[{"user.created": "validate_user_created"}],
             ),
         ] = Field(default_factory=dict)
 

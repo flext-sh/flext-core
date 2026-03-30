@@ -493,8 +493,6 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.take(123, "port", default="d"), eq="d")
         tm.that(mapper.take({"port": None}, "port", default="x"), eq="x")
         tm.that(_take_obj(123, 2), eq="")
-        tm.that(mapper.as_(12, str), eq="12")
-        tm.that(not mapper.as_("off", bool), eq=True)
 
     @staticmethod
     def test_extract_field_value_and_ensure_variants(mapper: type[u]) -> None:
@@ -1057,15 +1055,6 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(mapper.take({"a": 1, "b": 2}, 1), eq={"a": 1})
         tm.that(mapper.pick({"a": 1, "b": 2}, "a"), eq={"a": 1})
         tm.that(mapper.pick({"a": 1, "b": 2}, "a", "b", as_dict=False), eq=[1, 2])
-        tm.that(mapper.as_(1, int), eq=1)
-        tm.that(mapper.as_("1", int, strict=True, default=0), eq=0)
-        tm.that(mapper.as_("1", int), eq=1)
-        float_value = mapper.as_("1.5", float)
-        tm.that(float_value, is_=float)
-        tm.that(abs(cast("float", float_value) - 1.5), lt=1e-09)
-        tm.that(mapper.as_("true", bool), eq=True)
-        tm.that(not mapper.as_("maybe", bool, default=False), eq=True)
-        tm.that(mapper.as_(None, int, default=3), eq=3)
         tm.that(mapper.or_(None, None, 1, default=2).value, eq=1)
         tm.that(mapper.or_(None, None, default=2).value, eq=2)
         tm.that(mapper.flat([[1, 2], [3]]), eq=[1, 2, 3])
@@ -1201,7 +1190,6 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(terminal_default.value, eq="fallback")
 
         tm.that(_take_obj(_MaybeModel(x=None), "x", default="d"), eq="d")
-        tm.that(mapper.as_("nope", int, default=9), eq=9)
         tm.that(mapper.agg([{"v": "x"}], "v"), eq=0)
         tm.that(mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}), eq={"A": 1})
 

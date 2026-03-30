@@ -31,21 +31,6 @@ class FlextModelsExceptionParams:
             use_enum_values=True,
         )
 
-    class StrictStringValue(ParamsModel):
-        """Strict string extractor for kwargs/context parsing."""
-
-        value: Annotated[str, Field(strict=True)]
-
-    class StrictBooleanValue(ParamsModel):
-        """Strict boolean extractor for kwargs/context parsing."""
-
-        value: Annotated[bool, Field(strict=True)]
-
-    class StrictNumberValue(ParamsModel):
-        """Strict numeric extractor for kwargs/context parsing."""
-
-        value: Annotated[t.Numeric, Field()]
-
     class ValidationErrorParams(ParamsModel):
         """Validated params for ValidationError."""
 

@@ -48,34 +48,6 @@ class FlextUtilitiesGuardsTypeModel:
         return isinstance(value, tuple)
 
     @staticmethod
-    def is_config_value(value: t.NormalizedValue) -> TypeIs[t.NormalizedValue]:
-        """Check if value is a valid configuration value.
-
-        Configuration values are None, scalars, or containers (list, tuple, dict)
-        with scalar/None contents.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a valid configuration value, False otherwise.
-
-        """
-        if value is None or FlextUtilitiesGuardsTypeCore.is_scalar(value):
-            return True
-        if isinstance(value, (list, tuple)):
-            for item in value:
-                if not (item is None or FlextUtilitiesGuardsTypeCore.is_scalar(item)):
-                    return False
-            return True
-        if isinstance(value, Mapping):
-            for item in value.values():
-                if not (item is None or FlextUtilitiesGuardsTypeCore.is_scalar(item)):
-                    return False
-            return True
-        return False
-
-    @staticmethod
     def is_configuration_dict(
         value: t.ValueOrModel,
     ) -> TypeIs[t.Dict]:

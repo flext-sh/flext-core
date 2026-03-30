@@ -149,13 +149,6 @@ class TestUtilitiesCollectionFullCoverage:
                 cast("t.StrSequence", self._BadSequence()),
                 lambda x: x,
             )
-        value = u._coerce_value_to_float(1.5)
-        tm.that(abs(value - 1.5), lt=1e-9)
-        assert u._coerce_value_to_bool(True) is True
-        enum_dict = u.coerce_dict_to_enum(self._Color)({"a": self._Color.RED})
-        assert enum_dict["a"] is self._Color.RED
-        enum_list = u.coerce_list_to_enum(self._Color)([self._Color.BLUE])
-        tm.that(enum_list, eq=[self._Color.BLUE])
         assert u.first([], default=9).value == 9
         assert u.last([], default=8).value == 8
 
@@ -192,7 +185,3 @@ class TestUtilitiesCollectionFullCoverage:
             ["x"],
         )
         tm.fail(parsed)
-
-    def test_is_general_value_list_accepts_list_subclass(self) -> None:
-        value = self._ListSubclass([1, 2, 3])
-        assert u._is_general_value_list(cast("t.NormalizedValue", value)) is False

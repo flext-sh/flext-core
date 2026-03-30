@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TypeIs
@@ -62,29 +61,6 @@ class FlextUtilitiesGuardsTypeCore:
         return bool(isinstance(value, Mapping) and value)
 
     @staticmethod
-    def is_flexible_value(
-        value: t.GuardInput,
-    ) -> TypeIs[t.NormalizedValue]:
-        """Check if value is a flexible value (scalar or containers of scalars).
-
-        Flexible values are None, scalars, or collections containing only
-        scalars and None values. Used for configuration values and simple data.
-        """
-        if value is None or isinstance(value, t.SCALAR_TYPES):
-            return True
-        if FlextUtilitiesGuardsTypeCore._is_object_sequence(value):
-            for item in value:
-                if not (item is None or isinstance(item, t.SCALAR_TYPES)):
-                    return False
-            return True
-        if FlextUtilitiesGuardsTypeCore._is_object_mapping(value):
-            for mapped_val in value.values():
-                if not (mapped_val is None or isinstance(mapped_val, t.SCALAR_TYPES)):
-                    return False
-            return True
-        return False
-
-    @staticmethod
     def is_container(
         value: t.GuardInput,
     ) -> TypeIs[t.Container]:
@@ -102,31 +78,9 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, Path)
 
     @staticmethod
-    def is_general_value_type(value: t.GuardInput) -> bool:
-        """Check if value is callable or container (deprecated).
-
-        Deprecated in favor of is_container. Will be removed in v0.12.
-        """
-        warnings.warn(
-            "is_general_value_type is deprecated; use is_container. Planned removal: v0.12.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return callable(value) or FlextUtilitiesGuardsTypeCore.is_container(value)
-
-    @staticmethod
     def is_list(value: t.GuardInput) -> TypeIs[t.ContainerList]:
         """Check if value is a list."""
         return isinstance(value, list)
-
-    @staticmethod
-    def is_list_non_empty(value: t.ValueOrModel) -> bool:
-        """Check if value is a non-empty sequence (excluding strings/bytes)."""
-        return bool(
-            isinstance(value, Sequence)
-            and (not isinstance(value, (str, bytes)))
-            and value,
-        )
 
     @staticmethod
     def is_mapping(
@@ -173,11 +127,6 @@ class FlextUtilitiesGuardsTypeCore:
         return value
 
     @staticmethod
-    def has_type(obj: t.GuardInput, key: str) -> bool:
-        """Check if value has key or attribute."""
-        return key in obj if isinstance(obj, dict) else hasattr(obj, key)
-
-    @staticmethod
     def in_(value: t.GuardInput, container: t.GuardInput) -> bool:
         """Check if value is in container, handling TypeError gracefully."""
         if isinstance(container, (list, tuple, set, dict)):
@@ -186,11 +135,6 @@ class FlextUtilitiesGuardsTypeCore:
             except TypeError:
                 return False
         return False
-
-    @staticmethod
-    def none_(*values: t.GuardInput) -> bool:
-        """Check if all provided values are None."""
-        return all(v is None for v in values)
 
 
 __all__ = ["FlextUtilitiesGuardsTypeCore"]

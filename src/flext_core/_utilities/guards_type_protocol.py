@@ -130,21 +130,6 @@ class FlextUtilitiesGuardsTypeProtocol:
         )
 
     @staticmethod
-    def is_registerable(
-        value: t.GuardInput,
-    ) -> TypeIs[t.RegisterableService]:
-        """Check if value can be registered as a service.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a registerable service type, False otherwise.
-
-        """
-        return FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
-
-    @staticmethod
     def is_factory(
         value: t.GuardInput,
     ) -> TypeIs[t.FactoryCallable]:

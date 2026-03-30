@@ -275,35 +275,3 @@ class TestCollectionUtilitiesCoverage:
                 error_msg = result.error
                 assert error_msg is not None and scenario.expected_error is not None
                 tm.that(error_msg, has=scenario.expected_error)
-
-    def test_coerce_dict_validator_valid_strings(self) -> None:
-        validator = u.coerce_dict_validator(self.Status)
-        result = validator({"user1": "active", "user2": "pending"})
-        tm.that(result, is_=dict)
-        tm.that(result["user1"], eq=self.Status.ACTIVE)
-        tm.that(result["user2"], eq=self.Status.PENDING)
-
-    def test_coerce_dict_validator_valid_enums(self) -> None:
-        validator = u.coerce_dict_validator(self.Status)
-        result = validator({"user1": self.Status.ACTIVE, "user2": self.Status.PENDING})
-        tm.that(result, is_=dict)
-        tm.that(result["user1"], eq=self.Status.ACTIVE)
-        tm.that(result["user2"], eq=self.Status.PENDING)
-
-    def test_coerce_dict_validator_invalid_not_dict(self) -> None:
-        validator = u.coerce_dict_validator(self.Status)
-        with pytest.raises(TypeError) as exc_info:
-            validator("not a dict")
-        tm.that(str(exc_info.value), has="Expected dict")
-
-    def test_coerce_dict_validator_invalid_string(self) -> None:
-        validator = u.coerce_dict_validator(self.Status)
-        with pytest.raises(ValueError) as exc_info:
-            validator({"user1": "invalid"})
-        tm.that(str(exc_info.value), has="Invalid Status")
-
-    def test_coerce_dict_validator_invalid_type(self) -> None:
-        validator = u.coerce_dict_validator(self.Status)
-        with pytest.raises(TypeError) as exc_info:
-            validator({"user1": 123})
-        tm.that(str(exc_info.value), has="Expected str")

@@ -8,9 +8,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from datetime import datetime
-from typing import ClassVar, Literal, overload
+from typing import ClassVar
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -21,106 +21,6 @@ class FlextUtilitiesConversion:
     """Utilities for value conversion operations."""
 
     _V: ClassVar[type[m.Validators]] = m.Validators
-
-    @overload
-    @staticmethod
-    def conversion(
-        value: t.StrictValue,
-        *,
-        mode: Literal["to_str"] = "to_str",
-        default: str | None = None,
-        case: str | None = None,
-    ) -> str: ...
-
-    @overload
-    @staticmethod
-    def conversion(
-        value: t.StrictValue,
-        *,
-        mode: Literal["to_str_list"],
-        default: t.StrSequence | None = None,
-        case: str | None = None,
-    ) -> t.StrSequence: ...
-
-    @overload
-    @staticmethod
-    def conversion(
-        value: t.StrictValue,
-        *,
-        mode: Literal["normalize"],
-        default: str | None = None,
-        case: str | None = None,
-    ) -> str: ...
-
-    @staticmethod
-    def conversion(
-        value: t.StrictValue,
-        *,
-        mode: str = "to_str",
-        default: str | t.StrSequence | None = None,
-        case: str | None = None,
-        separator: str = " ",
-    ) -> str | t.StrSequence:
-        """Generalized conversion utility function.
-
-        Args:
-            value: Value to convert
-            mode: Operation mode
-                - "to_str": Convert to string (returns str)
-                - "to_str_list": Convert to list of strings (returns t.StrSequence)
-                - "normalize": Normalize string value (returns str)
-                - "join": Join sequence of strings (returns str)
-            default: Default value if None (str for to_str/normalize, t.StrSequence for to_str_list)
-            case: Case normalization ("lower", "upper", or None)
-            separator: Separator for join mode (default: " ")
-
-        Returns:
-            Depends on mode - str or t.StrSequence
-
-        """
-        if mode == "to_str":
-            default_str: str | None = None
-            if default is not None:
-                try:
-                    default_str = (
-                        FlextUtilitiesConversion._V.str_adapter().validate_python(
-                            default,
-                        )
-                    )
-                except ValidationError:
-                    default_str = None
-            return FlextUtilitiesConversion.to_str(value, default=default_str)
-        if mode == "to_str_list":
-            default_list: t.StrSequence | None = None
-            if default is not None:
-                try:
-                    default_list = (
-                        FlextUtilitiesConversion._V.tags_adapter().validate_python(
-                            default,
-                        )
-                    )
-                except ValidationError:
-                    default_list = None
-            return FlextUtilitiesConversion.to_str_list(value, default=default_list)
-        if mode == "normalize":
-            return FlextUtilitiesConversion.normalize(value, case=case)
-        if mode == "join":
-            raw_values: Sequence[t.StrictValue]
-            try:
-                raw_values = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
-                    value,
-                )
-            except ValidationError as err:
-                error_msg = "join mode requires Sequence"
-                raise TypeError(error_msg) from err
-            str_values: t.StrSequence = [str(v) for v in raw_values]
-            return FlextUtilitiesConversion.join(
-                str_values,
-                separator=separator,
-                case=case,
-            )
-        error_msg = f"Unknown mode: {mode}"
-        raise ValueError(error_msg)
 
     @staticmethod
     def join(
@@ -256,75 +156,6 @@ class FlextUtilitiesConversion:
         except ValidationError:
             pass
         return [str(value)]
-
-    @staticmethod
-    def to_str_list_safe(
-        value: t.StrictValue,
-        *,
-        filter_list_like: bool = True,
-    ) -> t.StrSequence:
-        """Convert value to t.StrSequence with safe nested list handling.
-
-        Safely handles nested list-like structures by filtering them out
-        to prevent nested lists in the returned result.
-
-        Args:
-            value: Value to convert
-            filter_list_like: If True, filter out list-like items from result
-
-        Returns:
-            t.StrSequence: List of string values
-
-        Example:
-            >>> u.to_str_list_safe("foo")
-            ["foo"]
-            >>> u.to_str_list_safe(["a", "b", ["nested"]])
-            ["a", "b"]  # nested list filtered
-
-        """
-        if value is None:
-            return []
-        items: Sequence[t.StrictValue] = []
-        value_class = value.__class__
-        if value_class is str:
-            items = [value]
-        elif value_class is list:
-            try:
-                items = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
-                    value,
-                )
-            except ValidationError:
-                items = []
-        else:
-            items = [value]
-        filtered_items: Sequence[t.StrictValue]
-        if filter_list_like:
-            filtered_items = [
-                item
-                for item in items
-                if item is not None
-                and (
-                    not (
-                        isinstance(item, (list, tuple, set, frozenset))
-                        or (
-                            isinstance(item, (list, tuple))
-                            or (
-                                hasattr(item, "__getitem__")
-                                and not isinstance(item, (str, bytes))
-                            )
-                        )
-                    )
-                )
-            ]
-        else:
-            filtered_items = [item for item in items if item is not None]
-        return [str(item) for item in filtered_items]
-
-    @staticmethod
-    def to_str_list_truthy(value: t.StrictValue) -> t.StrSequence:
-        """Convert value to t.StrSequence filtering out falsy values."""
-        result = FlextUtilitiesConversion.to_str_list_safe(value, filter_list_like=True)
-        return [item for item in result if item]
 
     @staticmethod
     def narrow[T](value: t.ValueOrModel, type_cls: type[T]) -> T:

@@ -254,15 +254,6 @@ class FlextExceptions:
         return None
 
     @staticmethod
-    def _safe_number(value: t.Scalar | None) -> t.Numeric | None:
-        """Extract optional strict numeric value from dynamic values."""
-        if value is None:
-            return None
-        if isinstance(value, (int, float)) and (not isinstance(value, bool)):
-            return value
-        return None
-
-    @staticmethod
     def _safe_optional_str(value: t.Container | type | None) -> str | None:
         """Extract optional strict string from dynamic values."""
         if value is None:
@@ -513,38 +504,6 @@ class FlextExceptions:
             )
             return resolved
 
-        def _init_typed_error[TParams: BaseModel](
-            self,
-            message: str,
-            *,
-            error_code: str,
-            context: Mapping[str, t.MetadataValue] | None,
-            extra_kwargs: t.FlatContainerMapping,
-            named_params: Mapping[str, t.RuntimeData | None],
-            params_cls: type[TParams],
-            existing_params: TParams | None,
-            param_keys: frozenset[str],
-            correlation_id: str | None = None,
-            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
-            excluded_context_keys: set[str] | frozenset[str] | None = None,
-        ) -> None:
-            """Resolve params via _init_from_params and auto-assign to self."""
-            resolved = self._init_from_params(
-                message,
-                error_code=error_code,
-                context=context,
-                extra_kwargs=extra_kwargs,
-                named_params=named_params,
-                params_cls=params_cls,
-                existing_params=existing_params,
-                param_keys=param_keys,
-                correlation_id=correlation_id,
-                metadata=metadata,
-                excluded_context_keys=excluded_context_keys,
-            )
-            for key in param_keys:
-                setattr(self, key, getattr(resolved, key))
-
         def _init_declared_error(
             self,
             message: str,
@@ -577,7 +536,7 @@ class FlextExceptions:
                     key,
                     remaining_extra_kwargs.pop(key, None),
                 )
-            self._init_typed_error(
+            resolved = self._init_from_params(
                 message,
                 error_code=error_code,
                 context=context,
@@ -590,6 +549,8 @@ class FlextExceptions:
                 metadata=metadata,
                 excluded_context_keys=type(self)._excluded_context_keys,
             )
+            for key in declared_param_keys:
+                setattr(self, key, getattr(resolved, key))
 
     class ValidationError(BaseError):
         """Exception raised for input validation failures."""

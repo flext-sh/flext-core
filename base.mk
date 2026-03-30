@@ -169,7 +169,7 @@ endef
 define AUTO_SYNC_BASE_AND_SCRIPTS
 if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
 	$(BASE_INFRA_WORKSPACE) sync \
-		--workspace "$(CURDIR)" --apply; \
+		--workspace "$(CURDIR)" --canonical-root "$(WORKSPACE_ROOT)" --apply; \
 elif [ "$(FLEXT_MODE)" = "standalone" ]; then \
 	echo "INFO: [preflight] Standalone mode: skipping workspace dependency sync."; \
 fi
@@ -306,8 +306,8 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 		if [ -n "$$gates" ]; then \
 			for g in $$(echo "$$gates" | tr ',' ' '); do \
 				case "$$g" in \
-					lint|format|security|markdown|go|type) ;; \
-					*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,security,markdown,go,type)"; exit 2;; \
+					lint|format|pyrefly|mypy|pyright|security|markdown|go|type) ;; \
+					*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,pyrefly,mypy,pyright,security,markdown,go,type)"; exit 2;; \
 				esac; \
 			done; \
 		else \
@@ -361,6 +361,14 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 		fi; \
 		if echo "$$gates" | grep -qw go; then \
 			go vet ./... || { echo "FAIL: go"; exit 1; }; \
+		fi; \
+		python_gates=$$(printf '%s\n' "$$gates" | tr ',' '\n' | grep -E '^(pyrefly|mypy|pyright)$$' | tr '\n' ',' | sed 's/,$$//'); \
+		if [ -n "$$python_gates" ]; then \
+			project_key="$(PROJECT_NAME)"; \
+			if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+				project_key="."; \
+			fi; \
+			$(PROJECT_INFRA_CHECK) run --gates "$$python_gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",) || exit $$?; \
 		fi; \
 		exit 0; \
 	fi

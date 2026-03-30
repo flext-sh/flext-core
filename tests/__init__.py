@@ -650,7 +650,6 @@ if TYPE_CHECKING:
         test_guards_issubclass_success_when_callable_is_patched,
         test_guards_issubclass_typeerror_when_class_not_treated_as_callable,
         test_is_container_negative_paths_and_callable,
-        test_is_flexible_value_covers_all_branches,
         test_is_handler_type_branches,
         test_is_type_non_empty_unknown_and_tuple_and_fallback,
         test_is_type_protocol_fallback_branches,
@@ -1778,10 +1777,6 @@ _LAZY_IMPORTS: Mapping[str, Sequence[str]] = {
         "tests.unit.test_utilities_guards_full_coverage",
         "test_is_container_negative_paths_and_callable",
     ],
-    "test_is_flexible_value_covers_all_branches": [
-        "tests.unit.test_utilities_guards_full_coverage",
-        "test_is_flexible_value_covers_all_branches",
-    ],
     "test_is_handler_type_branches": [
         "tests.unit.test_utilities_guards_full_coverage",
         "test_is_handler_type_branches",
@@ -2706,7 +2701,6 @@ __all__ = [
     "test_integration",
     "test_invert_and_json_conversion_branches",
     "test_is_container_negative_paths_and_callable",
-    "test_is_flexible_value_covers_all_branches",
     "test_is_handler_type_branches",
     "test_is_type_non_empty_unknown_and_tuple_and_fallback",
     "test_is_type_protocol_fallback_branches",

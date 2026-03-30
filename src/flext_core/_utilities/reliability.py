@@ -14,17 +14,14 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
-from collections.abc import Callable, Mapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 from typing import ClassVar, TypeIs
-
-from pydantic import BaseModel, ValidationError
 
 from flext_core import (
     FlextModelFoundation,
     FlextProtocolsLogging,
     FlextRuntime,
     FlextUtilitiesGuards,
-    FlextUtilitiesMapper,
     c,
     r,
     t,
@@ -124,147 +121,6 @@ class FlextUtilitiesReliability:
         return float(delay)
 
     @staticmethod
-    def chain(
-        value: t.NormalizedValue,
-        *funcs: Callable[[t.NormalizedValue], t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """Chain operations (mnemonic: chain = pipeline).
-
-        Business Rule: Execute a sequence of functions in order, passing each
-        result to the next function. This is the functional pipeline pattern.
-
-        Generic replacement for: func3(func2(func1(value))) patterns
-
-        Args:
-            value: Initial value (any type)
-            *funcs: Functions to apply in sequence
-
-        Returns:
-            Final result after all operations
-
-        Example:
-            result = FlextUtilitiesReliability.chain(
-                data,
-                lambda x: x.get("items", []),
-                lambda x: [i for i in x if i > 0],
-                lambda x: [i * 2 for i in x],
-            )
-
-        """
-        current: t.NormalizedValue = value
-        for func in funcs:
-            current = func(current)
-        return current
-
-    @staticmethod
-    def compose(
-        *funcs: Callable[[t.NormalizedValue], t.NormalizedValue],
-        mode: str = "pipe",
-    ) -> Callable[[t.Container], t.Container | r[t.Container]]:
-        """Compose multiple functions into a single function.
-
-        Unifies pipe/chain/flow patterns into a single super-method.
-
-        Args:
-            *funcs: Functions to compose
-            mode: Composition mode ("pipe", "chain", "flow")
-
-        Returns:
-            Composed function
-
-        Example:
-            composed = FlextUtilitiesReliability.compose(
-                str.strip,
-                str.upper,
-                mode="pipe",
-            )
-            result = composed("  hello  ")  # → "HELLO"
-
-        """
-        if mode == "pipe":
-
-            def piped(
-                value: t.Container,
-            ) -> t.Container | r[t.Container]:
-                result = FlextUtilitiesReliability.pipe(value, *funcs)
-                if result.is_success:
-                    val = result.value
-                    if FlextUtilitiesGuards.is_container(val):
-                        return val
-                    return str(val)
-                return result
-
-            return piped
-        if mode == "chain":
-
-            def chained(
-                value: t.Container,
-            ) -> t.Container | r[t.Container]:
-                raw = FlextUtilitiesReliability.chain(value, *funcs)
-                if FlextUtilitiesGuards.is_container(raw):
-                    return raw
-                return str(raw)
-
-            return chained
-
-        def flowed(
-            value: t.Container,
-        ) -> t.Container | r[t.Container]:
-            raw = FlextUtilitiesReliability.flow(value, *funcs)
-            if FlextUtilitiesGuards.is_container(raw):
-                return raw
-            return str(raw)
-
-        return flowed
-
-    @staticmethod
-    def flow(
-        value: t.NormalizedValue,
-        *ops: t.ContainerMapping | Callable[[t.NormalizedValue], t.NormalizedValue],
-    ) -> t.NormalizedValue:
-        """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
-
-        Generic replacement for: build() + chain() combinations
-
-        Args:
-            value: Initial value
-            *ops: Operations (dict DSL or callable functions)
-
-        Returns:
-            Final result
-
-        Example:
-            result = FlextUtilitiesReliability.flow(
-                data,
-                {"ensure": "dict"},
-                {"get": "items", "default": []},
-                lambda x: [i for i in x if i > 0],
-                {"map": lambda i: i * 2},
-            )
-
-        """
-        current: t.NormalizedValue = value
-        for op in ops:
-            if isinstance(op, Mapping):
-                op_dict: t.ContainerMapping
-                try:
-                    op_dict = dict(
-                        FlextUtilitiesReliability._V.dict_str_metadata_adapter().validate_python(
-                            op,
-                        ),
-                    )
-                except ValidationError:
-                    op_dict = {}
-                if isinstance(
-                    current,
-                    (*t.CONTAINER_TYPES,),
-                ) and FlextUtilitiesGuards.is_container(current):
-                    current = FlextUtilitiesMapper.build(current, ops=op_dict)
-            elif callable(op):
-                current = op(current)
-        return current
-
-    @staticmethod
     def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
         """Chain multiple operations on p.Result.
 
@@ -293,36 +149,6 @@ class FlextUtilitiesReliability:
                 return current
             current = func(current.value)
         return current
-
-    @staticmethod
-    def flow_through[T, U](
-        result: r[T | U],
-        *funcs: Callable[[T | U], r[T | U]],
-    ) -> r[T | U]:
-        """Chain multiple operations in a pipeline.
-
-        Args:
-            result: Initial result to start the pipeline
-            *funcs: Functions to chain, each takes value and returns result
-
-        Returns:
-            Final result after all operations
-
-        Example:
-            result = u.flow_through(
-                initial_result,
-                validate_user,
-                save_user,
-                notify_user,
-            )
-
-        """
-        current_result = result
-        for func in funcs:
-            if current_result.is_failure:
-                break
-            current_result = func(current_result.value)
-        return current_result
 
     @staticmethod
     def fold_result[T, U](
@@ -435,82 +261,6 @@ class FlextUtilitiesReliability:
                 FlextUtilitiesReliability._resolve_match_output(default, input_value),
             )
         return r[t.Container].fail("No match found and no default provided")
-
-    @staticmethod
-    def pipe(
-        value: t.NormalizedValue,
-        *operations: Callable[[t.NormalizedValue], t.NormalizedValue],
-        on_error: str = "stop",
-    ) -> r[t.Container]:
-        """Functional pipeline with railway-oriented error handling.
-
-        Business Rule: Chains operations sequentially, unwrapping p.Result
-        values automatically. Error handling modes: "stop" (fail fast) or
-        "skip" (continue with previous value). Railway pattern ensures errors
-        propagate correctly through the pipeline.
-
-        Args:
-            value: Initial value to process
-            *operations: Functions to apply in sequence
-            on_error: Error handling ("stop" or "skip")
-
-        Returns:
-            p.Result containing final value or error
-
-        Example:
-            result = FlextUtilitiesReliability.pipe(
-                "  hello world  ",
-                str.strip,
-                str.upper,
-                lambda s: s.replace(" ", "_"),
-            )
-            # → r[t.Container].ok("HELLO_WORLD")
-
-        """
-        if not operations:
-            if FlextUtilitiesGuards.is_container(value):
-                return r[t.Container].ok(value)
-            return r[t.Container].fail(
-                f"Value is not a Container type: {type(value).__name__}",
-            )
-        current: t.NormalizedValue = value
-        for i, op in enumerate(operations):
-            try:
-                op_result = op(current)
-                if FlextUtilitiesGuards.is_result_like(op_result):
-                    if op_result.is_failure:
-                        if on_error == "stop":
-                            err_msg = op_result.error or "Unknown error"
-                            return r[t.Container].fail(
-                                f"Pipeline step {i} failed: {err_msg}",
-                            )
-                        continue
-                    result_value = op_result.value
-                    if isinstance(result_value, BaseModel):
-                        current = FlextUtilitiesMapper.narrow_to_container(
-                            result_value.model_dump(mode="python"),
-                        )
-                    elif FlextUtilitiesGuards.is_container(result_value):
-                        current = result_value
-                    else:
-                        current = str(result_value)
-                else:
-                    current = op_result
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-                OSError,
-            ) as e:
-                if on_error == "stop":
-                    return r[t.Container].fail(f"Pipeline step {i} failed: {e}")
-        if FlextUtilitiesGuards.is_container(current):
-            return r[t.Container].ok(current)
-        return r[t.Container].fail(
-            f"Pipeline result is not a Container type: {type(current).__name__}",
-        )
 
     @staticmethod
     def retry[TResult](

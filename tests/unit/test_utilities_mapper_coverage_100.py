@@ -215,22 +215,7 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(picked, eq=[1, 3])
 
     class TestuMapperUtils:
-        """Tests for u utils (as_, or_, flat, agg)."""
-
-        def test_as_conversion(self) -> None:
-            """Test as_ type conversion."""
-            tm.that(u.as_("123", int), eq=123)
-            converted = u.as_("12.3", float)
-            tm.that(converted, is_=float)
-            assert isinstance(converted, float)
-            assert abs(converted - 12.3) < 1e-9
-            assert u.as_("true", bool) is True
-            tm.that(u.as_("invalid", int, default=0), eq=0)
-
-        def test_as_strict(self) -> None:
-            """Test as_ strict mode."""
-            tm.that(u.as_("123", int, strict=True, default=0), eq=0)
-            tm.that(u.as_(123, int, strict=True), eq=123)
+        """Tests for u utils (or_, flat, agg)."""
 
         def test_or_fallback(self) -> None:
             """Test or_ fallback."""

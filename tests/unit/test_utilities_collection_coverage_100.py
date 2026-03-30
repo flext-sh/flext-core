@@ -1003,52 +1003,6 @@ class TestUtilitiesCollectionCoverage:
 
     @pytest.mark.parametrize(
         "scenario",
-        CollectionUtilitiesScenarios.coerce_dict_cases(),
-        ids=lambda s: s.name,
-    )
-    def test_coerce_dict_validator(self, scenario: CoerceDictScenario) -> None:
-        """Test coerce_dict_validator with various scenarios."""
-        validator = u.coerce_dict_validator(scenario.enum_cls)
-        if scenario.expected_success:
-            result = validator(scenario.value)
-            u.Tests.Assertions.assert_result_matches_expected(result, dict)
-            if scenario.expected_keys is not None:
-                assert set(result.keys()) == set(scenario.expected_keys)
-            for val in result.values():
-                tm.that(val, is_=scenario.enum_cls)
-        else:
-            with pytest.raises(
-                scenario.error_type or Exception,
-                match=scenario.error_contains or "",
-            ):
-                _ = validator(scenario.value)
-
-    def test_coerce_dict_validator_with_pydantic(self) -> None:
-        """Test coerce_dict_validator integration with Pydantic."""
-        _ = u.coerce_dict_validator(FixtureStatus)
-
-        class TestModel(BaseModel):
-            user_statuses: Annotated[
-                Mapping[str, FixtureStatus],
-                Field(default_factory=dict),
-            ]
-
-        model1 = TestModel.model_validate({
-            "user_statuses": {"user1": "active", "user2": "pending"},
-        })
-        tm.that(len(model1.user_statuses), eq=2)
-        assert all(isinstance(s, FixtureStatus) for s in model1.user_statuses.values())
-        model2 = TestModel.model_validate({
-            "user_statuses": {
-                "user1": FixtureStatus.ACTIVE,
-                "user2": FixtureStatus.PENDING,
-            },
-        })
-        tm.that(len(model2.user_statuses), eq=2)
-        assert all(isinstance(s, FixtureStatus) for s in model2.user_statuses.values())
-
-    @pytest.mark.parametrize(
-        "scenario",
         CollectionUtilitiesScenarios.map_cases(),
         ids=lambda s: s.name,
     )

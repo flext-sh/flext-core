@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from itertools import starmap
 from typing import overload
@@ -961,19 +960,6 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _to_general_value_from_object(
-        value: t.NormalizedValue,
-    ) -> t.NormalizedValue:
-        """Deprecated: use narrow_to_container instead. Planned removal: v0.12."""
-        warnings.warn(
-            "_to_general_value_from_object is deprecated; use narrow_to_container. "
-            "Planned removal: v0.12.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextUtilitiesMapper.narrow_to_container(value)
-
-    @staticmethod
     def agg[T](
         items: Sequence[T] | tuple[T, ...],
         field: str | Callable[[T], t.Numeric],
@@ -1061,61 +1047,6 @@ class FlextUtilitiesMapper:
             strip_none=strip_none,
             strip_empty=strip_empty,
         )
-
-    @staticmethod
-    def as_(
-        value: t.NormalizedValue,
-        target: type,
-        *,
-        default: t.NormalizedValue = None,
-        strict: bool = False,
-    ) -> t.NormalizedValue:
-        """Type conversion with guard (mnemonic: as_ = convert to type).
-
-         Generic replacement for: type check +  patterns
-
-        Args:
-            value: Value to convert
-            target: Target type
-            default: Default if conversion fails
-            strict: If True, only exact type; if False, allow coercion
-
-        Returns:
-            Converted value or default
-
-        Example:
-            port = FlextUtilitiesMapper.as_(config.get("port"), int, default=c.DEFAULT_HTTP_PORT)
-            name = FlextUtilitiesMapper.as_(value, str, default="")
-
-        """
-        # Bind before isinstance: mypy narrows value→object after isinstance(value, target:type)
-        typed_value: t.NormalizedValue = value
-        try:
-            if isinstance(value, target):
-                if FlextUtilitiesGuards.is_container(typed_value):
-                    return FlextUtilitiesMapper.narrow_to_container(typed_value)
-                return str(value)
-        except TypeError:
-            if strict:
-                return default
-        if strict:
-            return default
-        try:
-            if target is int and isinstance(value, str | float | bool):
-                return int(value)
-            if target is float and isinstance(value, str | int | float | bool):
-                return float(value)
-            if target is str:
-                return str(value)
-            if target is bool and isinstance(value, str):
-                normalized = value.lower()
-                if normalized in {"true", "1", "yes", "on"}:
-                    return True
-                if normalized in {"false", "0", "no", "off"}:
-                    return False
-            return default
-        except (ValueError, TypeError):
-            return default
 
     @staticmethod
     def at[T](
@@ -1283,6 +1214,59 @@ class FlextUtilitiesMapper:
                 f"Failed to build flags dict: {e}",
             ),
             on_success=lambda _: flags_result,
+        )
+
+    @overload
+    @staticmethod
+    def as_(
+        value: t.NormalizedValue,
+        target_type: type[bool],
+        *,
+        strict: bool = False,
+        default: bool | None = None,
+    ) -> bool | t.NormalizedValue: ...
+
+    @overload
+    @staticmethod
+    def as_[T](
+        value: t.NormalizedValue,
+        target_type: Callable[[t.ValueOrModel], T] | type[T] | None = None,
+        *,
+        strict: bool = False,
+        default: T | None = None,
+    ) -> T | t.NormalizedValue: ...
+
+    @staticmethod
+    def as_[T](
+        value: t.NormalizedValue,
+        target_type: Callable[[t.ValueOrModel], T] | type[T] | None = None,
+        *,
+        strict: bool = False,
+        default: T | None = None,
+    ) -> T | t.NormalizedValue:
+        """Coerce *value* to *target_type* with optional strict instance checking."""
+        if target_type is None:
+            return value
+        if value is None:
+            return default if default is not None else value
+        if strict and isinstance(target_type, type):
+            if isinstance(value, target_type):
+                return value
+            return default if default is not None else value
+        if target_type is bool:
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in {"1", "true", "yes", "on"}:
+                    return True
+                if normalized in {"0", "false", "no", "off"}:
+                    return False
+            return default if default is not None else value
+        return FlextUtilitiesMapper.cast_generic(
+            value,
+            target_type=target_type,
+            default=default,
         )
 
     @staticmethod
@@ -2251,23 +2235,6 @@ class FlextUtilitiesMapper:
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             return FlextUtilitiesMapper._narrow_untyped_list(list(value))
         return str(value)
-
-    @staticmethod
-    def narrow_to_general_value_type(
-        value: t.ValueOrModel
-        | t.ContainerMapping
-        | Mapping[str, t.ValueOrModel]
-        | p.HasModelDump
-        | None,
-    ) -> t.NormalizedValue:
-        """Deprecated alias; use narrow_to_container. Planned removal: v0.12."""
-        warnings.warn(
-            "narrow_to_general_value_type is deprecated; use narrow_to_container. "
-            "Planned removal: v0.12.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextUtilitiesMapper.narrow_to_container(value)
 
     @staticmethod
     def normalize_context_values(

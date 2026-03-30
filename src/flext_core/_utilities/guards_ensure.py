@@ -16,24 +16,6 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     """Ensure-style guard utility methods for data validation and normalization."""
 
     @staticmethod
-    def _is_general_value_list(
-        value: t.NormalizedValue,
-    ) -> bool:
-        """Check if input value is a general list type.
-
-        Args:
-            value: The value to check. (t.NormalizedValue): The normalized value to be checked.
-
-        Returns:
-            bool: True if value is a general list type, False otherwise.
-
-        Raises:
-            None
-
-        """
-        return isinstance(value, list)
-
-    @staticmethod
     def _ensure_to_dict(
         value: t.NormalizedValue | None,
         default: t.ContainerMapping | None,
