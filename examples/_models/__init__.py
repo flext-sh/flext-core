@@ -11,20 +11,97 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
-    from examples._models.ex00 import *
-    from examples._models.ex01 import *
-    from examples._models.ex02 import *
-    from examples._models.ex03 import *
-    from examples._models.ex04 import *
-    from examples._models.ex05 import *
-    from examples._models.ex07 import *
-    from examples._models.ex08 import *
-    from examples._models.ex10 import *
-    from examples._models.ex11 import *
-    from examples._models.ex12 import *
-    from examples._models.ex14 import *
-    from examples._models.exconfig import *
-    from examples._models.shared import *
+    from examples._models import (
+        ex00,
+        ex01,
+        ex02,
+        ex03,
+        ex04,
+        ex05,
+        ex07,
+        ex08,
+        ex10,
+        ex11,
+        ex12,
+        ex14,
+        exconfig,
+        shared,
+    )
+    from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
+    from examples._models.ex01 import (
+        Ex01DemonstrationResult,
+        Ex01InvalidPersonPayload,
+        Ex01RunDemonstrationCommand,
+        Ex01User,
+        Ex01ValidPersonPayload,
+    )
+    from examples._models.ex02 import (
+        Ex02CacheService,
+        Ex02DatabaseService,
+        Ex02EmailService,
+        Ex02TestConfig,
+    )
+    from examples._models.ex03 import (
+        Ex03Email,
+        Ex03Money,
+        Ex03Order,
+        Ex03OrderItem,
+        Ex03User,
+    )
+    from examples._models.ex04 import (
+        Ex04AutoCommand,
+        Ex04CreateUser,
+        Ex04DeleteUser,
+        Ex04FailingDelete,
+        Ex04GetUser,
+        Ex04NoSubscriberEvent,
+        Ex04Ping,
+        Ex04UnknownQuery,
+        Ex04UserCreated,
+    )
+    from examples._models.ex05 import (
+        Ex05BadProcessor,
+        Ex05GoodProcessor,
+        Ex05HandlerBad,
+        Ex05HandlerLike,
+        Ex05StatusEnum,
+        Ex05UserModel,
+    )
+    from examples._models.ex07 import (
+        Ex07CreateUserCommand,
+        Ex07DemoPlugin,
+        Ex07GetUserQuery,
+        Ex07UserCreatedEvent,
+    )
+    from examples._models.ex08 import Ex08Order, Ex08User
+    from examples._models.ex10 import (
+        Ex10CommandBusStub,
+        Ex10ContextPayload,
+        Ex10DerivedMessage,
+        Ex10Entity,
+        Ex10Message,
+        Ex10ProcessorBad,
+        Ex10ProcessorGood,
+        Ex10ProtocolHandler,
+        Ex10ServiceStub,
+    )
+    from examples._models.ex11 import (
+        Ex11CommandBusStub,
+        Ex11EntityStub,
+        Ex11HandlerLike,
+        Ex11HandlerLikeService,
+        Ex11Payload,
+        Ex11ProcessorProtocolBad,
+        Ex11ProcessorProtocolGood,
+    )
+    from examples._models.ex12 import Ex12CommandA, Ex12CommandB
+    from examples._models.ex14 import (
+        Ex14CreateUserCommand,
+        Ex14GetUserQuery,
+        Ex14UserDTO,
+    )
+    from examples._models.exconfig import ExConfigAppConfig
+    from examples._models.shared import SharedHandle, SharedPerson
     from flext_core import FlextTypes
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {

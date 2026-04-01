@@ -24,6 +24,13 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
+    from tests.integration.patterns import (
+        test_advanced_patterns,
+        test_architectural_patterns,
+        test_patterns_commands,
+        test_patterns_logging,
+        test_patterns_testing,
+    )
     from tests.integration.patterns.test_advanced_patterns import (
         TestAdvancedPatterns,
         TestFunction,

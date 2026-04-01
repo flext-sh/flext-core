@@ -20,30 +20,58 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_core._utilities.args import *
-    from flext_core._utilities.cache import *
-    from flext_core._utilities.checker import *
-    from flext_core._utilities.collection import *
-    from flext_core._utilities.configuration import *
-    from flext_core._utilities.context import *
-    from flext_core._utilities.conversion import *
-    from flext_core._utilities.discovery import *
-    from flext_core._utilities.domain import *
-    from flext_core._utilities.enum import *
-    from flext_core._utilities.file_ops import *
-    from flext_core._utilities.generators import *
-    from flext_core._utilities.guards import *
-    from flext_core._utilities.guards_ensure import *
-    from flext_core._utilities.guards_type import *
-    from flext_core._utilities.guards_type_core import *
-    from flext_core._utilities.guards_type_model import *
-    from flext_core._utilities.guards_type_protocol import *
-    from flext_core._utilities.mapper import *
-    from flext_core._utilities.model import *
-    from flext_core._utilities.parser import *
-    from flext_core._utilities.reliability import *
-    from flext_core._utilities.result_helpers import *
-    from flext_core._utilities.text import *
+    from flext_core._utilities import (
+        args,
+        cache,
+        checker,
+        collection,
+        configuration,
+        context,
+        conversion,
+        discovery,
+        domain,
+        enum,
+        file_ops,
+        generators,
+        guards,
+        guards_ensure,
+        guards_type,
+        guards_type_core,
+        guards_type_model,
+        guards_type_protocol,
+        mapper,
+        model,
+        parser,
+        reliability,
+        result_helpers,
+        text,
+    )
+    from flext_core._utilities.args import FlextUtilitiesArgs
+    from flext_core._utilities.cache import FlextUtilitiesCache
+    from flext_core._utilities.checker import FlextUtilitiesChecker
+    from flext_core._utilities.collection import FlextUtilitiesCollection
+    from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+    from flext_core._utilities.context import FlextUtilitiesContext
+    from flext_core._utilities.conversion import FlextUtilitiesConversion
+    from flext_core._utilities.discovery import FlextUtilitiesDiscovery
+    from flext_core._utilities.domain import FlextUtilitiesDomain
+    from flext_core._utilities.enum import FlextUtilitiesEnum
+    from flext_core._utilities.file_ops import FlextUtilitiesFileOps
+    from flext_core._utilities.generators import FlextUtilitiesGenerators
+    from flext_core._utilities.guards import FlextUtilitiesGuards
+    from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
+    from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+    from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+    from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+    from flext_core._utilities.guards_type_protocol import (
+        FlextUtilitiesGuardsTypeProtocol,
+    )
+    from flext_core._utilities.mapper import FlextUtilitiesMapper
+    from flext_core._utilities.model import FlextUtilitiesModel
+    from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.reliability import FlextUtilitiesReliability
+    from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
+    from flext_core._utilities.text import FlextUtilitiesText
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextUtilitiesArgs": "flext_core._utilities.args",

@@ -12,15 +12,26 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_core._constants.base import *
-    from flext_core._constants.cqrs import *
-    from flext_core._constants.domain import *
-    from flext_core._constants.errors import *
-    from flext_core._constants.infrastructure import *
-    from flext_core._constants.mixins import *
-    from flext_core._constants.platform import *
-    from flext_core._constants.settings import *
-    from flext_core._constants.validation import *
+    from flext_core._constants import (
+        base,
+        cqrs,
+        domain,
+        errors,
+        infrastructure,
+        mixins,
+        platform,
+        settings,
+        validation,
+    )
+    from flext_core._constants.base import FlextConstantsBase
+    from flext_core._constants.cqrs import FlextConstantsCqrs
+    from flext_core._constants.domain import FlextConstantsDomain
+    from flext_core._constants.errors import FlextConstantsErrors
+    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+    from flext_core._constants.mixins import FlextConstantsMixins
+    from flext_core._constants.platform import FlextConstantsPlatform
+    from flext_core._constants.settings import FlextConstantsSettings
+    from flext_core._constants.validation import FlextConstantsValidation
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextConstantsBase": "flext_core._constants.base",

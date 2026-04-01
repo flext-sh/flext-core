@@ -16,15 +16,26 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_core._protocols.base import *
-    from flext_core._protocols.config import *
-    from flext_core._protocols.container import *
-    from flext_core._protocols.context import *
-    from flext_core._protocols.handler import *
-    from flext_core._protocols.logging import *
-    from flext_core._protocols.registry import *
-    from flext_core._protocols.result import *
-    from flext_core._protocols.service import *
+    from flext_core._protocols import (
+        base,
+        config,
+        container,
+        context,
+        handler,
+        logging,
+        registry,
+        result,
+        service,
+    )
+    from flext_core._protocols.base import FlextProtocolsBase
+    from flext_core._protocols.config import FlextProtocolsConfig
+    from flext_core._protocols.container import FlextProtocolsContainer
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core._protocols.registry import FlextProtocolsRegistry
+    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols.service import FlextProtocolsService
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextProtocolsBase": "flext_core._protocols.base",

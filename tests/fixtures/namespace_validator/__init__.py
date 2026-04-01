@@ -11,6 +11,24 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
+    from tests.fixtures.namespace_validator import (
+        rule0_loose_items,
+        rule0_multiple_classes,
+        rule0_no_class,
+        rule0_valid,
+        rule0_wrong_prefix,
+        rule1_loose_constant,
+        rule1_loose_enum,
+        rule1_magic_number,
+        rule1_method_in_constants,
+        rule1_valid_constants,
+        rule2_composite_type_loose,
+        rule2_protocol_in_types,
+        rule2_typevar_in_class,
+        rule2_typevar_wrong_module,
+        rule2_valid_types,
+        typings,
+    )
     from tests.fixtures.namespace_validator.rule0_loose_items import (
         Rule0LooseItemsFixture,
     )

@@ -12,7 +12,37 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.integration.patterns import *
+    from tests.integration import (
+        patterns,
+        test_architecture,
+        test_config_integration,
+        test_infra_integration,
+        test_integration,
+        test_migration_validation,
+        test_refactor_nesting_file,
+        test_refactor_nesting_idempotency,
+        test_refactor_nesting_project,
+        test_refactor_nesting_workspace,
+        test_refactor_policy_mro,
+        test_service,
+        test_system,
+    )
+    from tests.integration.patterns import (
+        EXPECTED_BULK_SIZE,
+        P,
+        R,
+        TestAdvancedPatterns,
+        TestArchitecturalPatterns,
+        TestFunction,
+        TestPatternsCommands,
+        TestPatternsLogging,
+        TestPatternsTesting,
+        test_advanced_patterns,
+        test_architectural_patterns,
+        test_patterns_commands,
+        test_patterns_logging,
+        test_patterns_testing,
+    )
     from tests.integration.test_architecture import TestAutomatedArchitecture
     from tests.integration.test_config_integration import (
         TestFlextSettingsSingletonIntegration,

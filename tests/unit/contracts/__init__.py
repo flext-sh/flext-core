@@ -12,7 +12,8 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.unit.contracts.text_contract import *
+    from tests.unit.contracts import text_contract
+    from tests.unit.contracts.text_contract import TextUtilityContract
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "TextUtilityContract": "tests.unit.contracts.text_contract",

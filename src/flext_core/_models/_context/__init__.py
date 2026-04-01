@@ -16,12 +16,20 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_core._models._context._data import *
-    from flext_core._models._context._export import *
-    from flext_core._models._context._metadata import *
-    from flext_core._models._context._proxy_var import *
-    from flext_core._models._context._scope import *
-    from flext_core._models._context._tokens import *
+    from flext_core._models._context import (
+        _data,
+        _export,
+        _metadata,
+        _proxy_var,
+        _scope,
+        _tokens,
+    )
+    from flext_core._models._context._data import FlextModelsContextData
+    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core._models._context._metadata import FlextModelsContextMetadata
+    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._scope import FlextModelsContextScope
+    from flext_core._models._context._tokens import FlextModelsContextTokens
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextModelsContextData": "flext_core._models._context._data",

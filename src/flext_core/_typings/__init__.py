@@ -19,12 +19,36 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from flext_core._typings.base import *
-    from flext_core._typings.containers import *
-    from flext_core._typings.core import *
-    from flext_core._typings.generics import *
-    from flext_core._typings.services import *
-    from flext_core._typings.validation import *
+    from flext_core._typings import (
+        base,
+        containers,
+        core,
+        generics,
+        services,
+        validation,
+    )
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.containers import FlextTypingContainers
+    from flext_core._typings.core import FlextTypesCore
+    from flext_core._typings.generics import (
+        TV,
+        EnumT,
+        MessageT_contra,
+        P,
+        R,
+        ResultT,
+        T,
+        T_co,
+        T_contra,
+        T_Model,
+        T_Namespace,
+        T_Settings,
+        TRuntime,
+        TV_co,
+        U,
+    )
+    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings.validation import FlextTypesValidation
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "EnumT": "flext_core._typings.generics",
