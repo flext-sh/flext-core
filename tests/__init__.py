@@ -39,9 +39,16 @@ if _TYPE_CHECKING:
     from tests.integration.patterns import *
     from tests.models import *
     from tests.protocols import *
-    from tests.test_documented_patterns import *
-    from tests.test_service_result_property import *
-    from tests.test_utils import *
+    from tests.test_documented_patterns import TestDocumentedPatterns
+    from tests.test_service_result_property import TestServiceResultProperty
+    from tests.test_utils import (
+        FlextTestResult,
+        FlextTestResultCo,
+        TestUtils,
+        assertion_helpers,
+        fixture_factory,
+        test_data_factory,
+    )
     from tests.typings import *
     from tests.unit import *
     from tests.unit.contracts import *

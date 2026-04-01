@@ -12,9 +12,14 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.benchmark.test_container_memory import *
-    from tests.benchmark.test_container_performance import *
-    from tests.benchmark.test_refactor_nesting_performance import *
+    from tests.benchmark.test_container_memory import (
+        TestContainerMemory,
+        get_memory_usage,
+    )
+    from tests.benchmark.test_container_performance import TestContainerPerformance
+    from tests.benchmark.test_refactor_nesting_performance import (
+        TestPerformanceBenchmarks,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "TestContainerMemory": "tests.benchmark.test_container_memory",

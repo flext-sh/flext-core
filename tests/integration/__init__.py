@@ -13,18 +13,25 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
     from tests.integration.patterns import *
-    from tests.integration.test_architecture import *
-    from tests.integration.test_config_integration import *
-    from tests.integration.test_infra_integration import *
-    from tests.integration.test_integration import *
-    from tests.integration.test_migration_validation import *
-    from tests.integration.test_refactor_nesting_file import *
-    from tests.integration.test_refactor_nesting_idempotency import *
-    from tests.integration.test_refactor_nesting_project import *
-    from tests.integration.test_refactor_nesting_workspace import *
-    from tests.integration.test_refactor_policy_mro import *
-    from tests.integration.test_service import *
-    from tests.integration.test_system import *
+    from tests.integration.test_architecture import TestAutomatedArchitecture
+    from tests.integration.test_config_integration import (
+        TestFlextSettingsSingletonIntegration,
+    )
+    from tests.integration.test_infra_integration import TestInfraIntegration
+    from tests.integration.test_integration import TestLibraryIntegration
+    from tests.integration.test_migration_validation import TestMigrationValidation
+    from tests.integration.test_refactor_nesting_file import (
+        pytestmark,
+        test_class_nesting_refactor_single_file_end_to_end,
+    )
+    from tests.integration.test_refactor_nesting_idempotency import TestIdempotency
+    from tests.integration.test_refactor_nesting_project import TestProjectLevelRefactor
+    from tests.integration.test_refactor_nesting_workspace import (
+        TestWorkspaceLevelRefactor,
+    )
+    from tests.integration.test_refactor_policy_mro import TestRefactorPolicyMRO
+    from tests.integration.test_service import TestService
+    from tests.integration.test_system import TestCompleteFlextSystemIntegration
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
     ("tests.integration.patterns",),

@@ -24,11 +24,24 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
-    from tests.integration.patterns.test_advanced_patterns import *
-    from tests.integration.patterns.test_architectural_patterns import *
-    from tests.integration.patterns.test_patterns_commands import *
-    from tests.integration.patterns.test_patterns_logging import *
-    from tests.integration.patterns.test_patterns_testing import *
+    from tests.integration.patterns.test_advanced_patterns import (
+        TestAdvancedPatterns,
+        TestFunction,
+    )
+    from tests.integration.patterns.test_architectural_patterns import (
+        TestArchitecturalPatterns,
+    )
+    from tests.integration.patterns.test_patterns_commands import TestPatternsCommands
+    from tests.integration.patterns.test_patterns_logging import (
+        EXPECTED_BULK_SIZE,
+        TestPatternsLogging,
+    )
+    from tests.integration.patterns.test_patterns_testing import (
+        P,
+        R,
+        TestPatternsTesting,
+        pytestmark,
+    )
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "EXPECTED_BULK_SIZE": "tests.integration.patterns.test_patterns_logging",
