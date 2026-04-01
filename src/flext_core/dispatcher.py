@@ -13,9 +13,11 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable, MutableSequence, Sequence
 
-from pydantic import BaseModel
-
-from flext_core import c, p, r, t, u
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
+from flext_core.utilities import u
 
 type DispatcherResolvedCallable = Callable[
     [p.Routable],
@@ -97,7 +99,7 @@ class FlextDispatcher:
         def _coerce(value: t.RuntimeAtomic) -> r[DispatchValueT]:
             if isinstance(value, expected_type):
                 return r[DispatchValueT].ok(value)
-            if isinstance(value, BaseModel):
+            if u.is_pydantic_model(value):
                 return r[DispatchValueT].fail(
                     f"Expected {expected_type.__name__}, got {value.__class__.__name__}",
                 )
@@ -223,7 +225,7 @@ class FlextDispatcher:
                         raw_output.error or "Handler failed",
                         error_code=raw_output.error_code,
                         error_data=error_data_value
-                        if isinstance(error_data_value, BaseModel)
+                        if u.is_pydantic_model(error_data_value)
                         else None,
                     )
                 value: t.RuntimeAtomic | None = raw_output.value

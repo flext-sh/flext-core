@@ -12,33 +12,35 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from pydantic import BaseModel
-
-from flext_core import c, t
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @staticmethod
-    def same_type(
-        obj_a: object,
-        obj_b: object,
-    ) -> bool:
+    def same_type(obj_a: object, obj_b: object) -> bool:
         """Exact-type identity comparison (no MRO traversal).
 
-        Equivalent to ``__class__ is`` semantics: only returns True when both
-        objects are instances of the exact same concrete type, not a subtype.
-
-        Args:
-            obj_a: First object to compare.
-            obj_b: Second object to compare.
-
-        Returns:
-            True only if both objects are the exact same concrete type.
-
+        Returns True only when both objects are the exact same concrete type.
         """
         return type(obj_a) is type(obj_b)
+
+    @staticmethod
+    def _get_obj_dict(obj: t.RuntimeData) -> Mapping[str, t.NormalizedValue] | None:
+        """Extract __dict__ safely, returning None on failure."""
+        try:
+            return obj.__dict__
+        except (AttributeError, TypeError):
+            return None
+
+    @staticmethod
+    def _to_hashable(value: t.NormalizedValue) -> t.NormalizedValue:
+        """Coerce a value to something hashable for dict-based hashing."""
+        if isinstance(value, (str, int, float, bool, type(None))):
+            return value
+        return value.__class__.__name__
 
     @staticmethod
     def compare_entities_by_id(
@@ -46,18 +48,9 @@ class FlextUtilitiesDomain:
         entity_b: t.RuntimeData,
         id_attr: str = c.FIELD_ID,
     ) -> bool:
-        """Compare two entities by their unique ID attribute.
+        """Compare two entities by unique ID (identity, not value).
 
-        Generic comparison for DDD entities - compares by identity, not by value.
-
-        Args:
-            entity_a: First entity to compare.
-            entity_b: Second entity to compare.
-            id_attr: Attribute name for unique ID (default: "unique_id").
-
-        Returns:
-            True if both entities have same ID and type, False otherwise.
-
+        Returns True if both entities have same type and ID.
         """
         if not FlextUtilitiesDomain.same_type(entity_b, entity_a):
             return False
@@ -70,43 +63,24 @@ class FlextUtilitiesDomain:
         obj_a: t.RuntimeData,
         obj_b: t.RuntimeData,
     ) -> bool:
-        """Compare two value objects by their values (all attributes).
+        """Compare two value objects by all attributes (value, not identity).
 
-        Generic comparison for DDD Value Objects - compares by value, not identity.
-
-        Args:
-            obj_a: First value t.NormalizedValue to compare.
-            obj_b: Second value t.NormalizedValue to compare.
-
-        Returns:
-            True if same type and all attributes equal, False otherwise.
-
+        Returns True if same type and all attributes equal.
         """
         if not FlextUtilitiesDomain.same_type(obj_b, obj_a):
             return False
-        try:
-            return obj_a.__dict__ == obj_b.__dict__
-        except (AttributeError, TypeError):
-            return repr(obj_a) == repr(obj_b)
+        dict_a = FlextUtilitiesDomain._get_obj_dict(obj_a)
+        dict_b = FlextUtilitiesDomain._get_obj_dict(obj_b)
+        if dict_a is not None and dict_b is not None:
+            return dict_a == dict_b
+        return repr(obj_a) == repr(obj_b)
 
     @staticmethod
     def hash_entity_by_id(
         entity: t.RuntimeData,
         id_attr: str = c.FIELD_ID,
     ) -> int:
-        """Generate hash for entity based on unique ID and type.
-
-        Generic hashing for DDD entities - uses identity (ID + type), not value.
-        Falls back to t.NormalizedValue identity hash if ID is missing.
-
-        Args:
-            entity: Entity to hash.
-            id_attr: Attribute name for unique ID (default: "unique_id").
-
-        Returns:
-            Hash value based on entity ID and type, or t.NormalizedValue identity if ID missing.
-
-        """
+        """Hash entity by ID + type. Falls back to identity hash if ID missing."""
         entity_id = getattr(entity, id_attr, None)
         if entity_id is None:
             return hash(id(entity))
@@ -114,45 +88,15 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_value_object_by_value(obj: t.RuntimeData) -> int:
-        """Generate hash for value t.NormalizedValue based on all attribute values.
-
-        Generic hashing for DDD Value Objects - uses values, not identity.
-        Falls back to repr-based hash if __dict__ is unavailable.
-
-        Args:
-            obj: Value t.NormalizedValue to hash.
-
-        Returns:
-            Hash value based on all t.NormalizedValue attributes or repr hash as fallback.
-
-        """
-        try:
-            obj_dict = obj.__dict__
-            hashable_items: Sequence[tuple[str, t.NormalizedValue]] = [
-                (
-                    str(key),
-                    value
-                    if isinstance(value, (str, int, float, bool, type(None)))
-                    else value.__class__.__name__,
-                )
-                for key, value in sorted(obj_dict.items())
-            ]
-            return hash(tuple(hashable_items))
-        except (AttributeError, TypeError):
+        """Hash value object by all attributes. Falls back to repr hash."""
+        obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
+        if obj_dict is None:
             return hash(repr(obj))
-
-    @staticmethod
-    def validate_value_object_immutable(value: object) -> bool:
-        """Check whether a value object is configured as immutable/frozen."""
-        if not isinstance(value, BaseModel):
-            return False
-        try:
-            model_config = getattr(value.__class__, "model_config", {})
-            if isinstance(model_config, Mapping):
-                return bool(model_config.get("frozen", False))
-        except (AttributeError, TypeError, ValueError):
-            return False
-        return False
+        items: Sequence[tuple[str, t.NormalizedValue]] = [
+            (str(k), FlextUtilitiesDomain._to_hashable(v))
+            for k, v in sorted(obj_dict.items())
+        ]
+        return hash(tuple(items))
 
 
 __all__ = ["FlextUtilitiesDomain"]

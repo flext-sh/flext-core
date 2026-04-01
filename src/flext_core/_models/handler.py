@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import (
@@ -23,7 +23,11 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModelFoundation, c, p, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextModelsHandler:
@@ -379,6 +383,97 @@ class FlextModelsHandler:
 
             """
             self._start_time = time.time()
+
+    class MetricsTracker(FlextModelFoundation.ArbitraryTypesModel):
+        """Tracks handler execution metrics via ExecutionContext.
+
+        Delegates metric storage to an internal ExecutionContext instance,
+        providing a simplified record/get interface for CQRS handler pipelines.
+        """
+
+        _context: FlextModelsHandler.ExecutionContext = PrivateAttr(
+            default_factory=lambda: (
+                FlextModelsHandler.ExecutionContext.create_for_handler(
+                    handler_name="metrics",
+                    handler_mode=c.HandlerType.OPERATION,
+                )
+            ),
+        )
+
+        def get_metrics(self) -> r[t.ConfigMap]:
+            """Return all recorded metrics as a ConfigMap result."""
+            raw_state = self._context.metrics_state  # pyright: ignore[reportAttributeAccessIssue]
+            state: t.Dict = (
+                raw_state if isinstance(raw_state, t.Dict) else t.Dict(root={})
+            )
+            return r[t.ConfigMap].ok(t.ConfigMap(root=dict(state.root.items())))
+
+        def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
+            """Record a named metric value in the tracker."""
+            raw_state = self._context.metrics_state  # pyright: ignore[reportAttributeAccessIssue]
+            state: t.Dict = (
+                raw_state if isinstance(raw_state, t.Dict) else t.Dict(root={})
+            )
+            current = dict(state.root.items())
+            current[name] = value
+            self._context.set_metrics_state(t.Dict(root=current))
+            return r[bool].ok(value=True)
+
+    class ContextStack(FlextModelFoundation.ArbitraryTypesModel):
+        """Manages a stack of ExecutionContext instances for CQRS handler pipelines."""
+
+        _stack: MutableSequence[FlextModelsHandler.ExecutionContext] = PrivateAttr(
+            default_factory=list,
+        )
+
+        def current_context(self) -> FlextModelsHandler.ExecutionContext | None:
+            """Return the current top-of-stack execution context, or None."""
+            if self._stack:
+                return self._stack[-1]
+            return None
+
+        def pop_context(self) -> r[t.ScalarMapping]:
+            """Pop and return the top context from the stack as a scalar dict."""
+            if self._stack:
+                popped = self._stack.pop()
+                return r[t.ScalarMapping].ok({
+                    "handler_name": popped.handler_name,
+                    c.FIELD_HANDLER_MODE: popped.handler_mode,
+                })
+            return r[t.ScalarMapping].ok({})
+
+        def push_context(
+            self,
+            ctx: FlextModelsHandler.ExecutionContext | t.ScalarMapping,
+        ) -> r[bool]:
+            """Push an execution context or mapping onto the context stack."""
+            if isinstance(ctx, FlextModelsHandler.ExecutionContext):
+                self._stack.append(ctx)
+                return r[bool].ok(value=True)
+            ctx_mapping: t.ScalarMapping = {str(k): v for k, v in ctx.items()}
+            handler_name: str = str(
+                ctx_mapping.get("handler_name", c.IDENTIFIER_UNKNOWN),
+            )
+            handler_mode_str: str = str(
+                ctx_mapping.get(c.FIELD_HANDLER_MODE, c.HandlerType.OPERATION),
+            )
+            handler_mode_literal: c.HandlerType = (
+                c.HandlerType.COMMAND
+                if handler_mode_str == c.HandlerType.COMMAND
+                else c.HandlerType.QUERY
+                if handler_mode_str == c.HandlerType.QUERY
+                else c.HandlerType.EVENT
+                if handler_mode_str == c.HandlerType.EVENT
+                else c.HandlerType.SAGA
+                if handler_mode_str == "saga"
+                else c.HandlerType.OPERATION
+            )
+            execution_ctx = FlextModelsHandler.ExecutionContext.create_for_handler(
+                handler_name=handler_name,
+                handler_mode=handler_mode_literal,
+            )
+            self._stack.append(execution_ctx)
+            return r[bool].ok(value=True)
 
     class DecoratorConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator.

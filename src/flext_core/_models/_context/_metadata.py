@@ -11,8 +11,10 @@ from typing import Annotated, Self
 
 from pydantic import BeforeValidator, Field, model_validator
 
-from flext_core import FlextModelFoundation, c, t
 from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models.base import FlextModelFoundation
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsContextMetadata:

@@ -7,61 +7,32 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import FlextUtilitiesGuardsTypeCore, t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.typings import t
 
 
 class FlextUtilitiesGuardsTypeModel:
-    """Pydantic and data model type guards.
-
-    Provides type guard functions for validating Pydantic models, configuration
-    structures, and normalized value collections (lists, tuples, dicts).
-    """
+    """Pydantic and data model type guards."""
 
     @staticmethod
     def is_object_list(
         value: t.NormalizedValue,
     ) -> TypeIs[t.ContainerList]:
-        """Check if value is a list of normalized values.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a list, False otherwise.
-
-        """
+        """Narrow value to list of normalized values."""
         return isinstance(value, list)
 
     @staticmethod
     def is_object_tuple(
         value: t.GuardInput,
     ) -> TypeIs[tuple[t.NormalizedValue, ...]]:
-        """Check if value is a tuple of normalized values.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a tuple, False otherwise.
-
-        """
+        """Narrow value to tuple of normalized values."""
         return isinstance(value, tuple)
 
     @staticmethod
     def is_configuration_dict(
         value: t.ValueOrModel,
     ) -> TypeIs[t.Dict]:
-        """Check if value is a valid configuration dictionary.
-
-        Configuration dicts are Dict model instances or mappings with container values.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a valid configuration dict, False otherwise.
-
-        """
+        """Check if value is a Dict model or mapping with container values."""
         if isinstance(value, t.Dict):
             for item_value in value.root.values():
                 if isinstance(
@@ -79,17 +50,7 @@ class FlextUtilitiesGuardsTypeModel:
     def is_configuration_mapping(
         value: t.ContainerMapping | t.ConfigMap | t.Dict,
     ) -> TypeIs[t.ConfigMap]:
-        """Check if value is a valid configuration mapping.
-
-        Accepts ConfigMap/Dict model instances or mappings with container values.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a valid configuration mapping, False otherwise.
-
-        """
+        """Check if value is a ConfigMap/Dict or mapping with container values."""
         candidate: Mapping[str, t.ValueOrModel] = (
             value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
         )
@@ -103,15 +64,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_pydantic_model(value: t.ValueOrModel) -> TypeIs[BaseModel]:
-        """Check if value is a Pydantic BaseModel with model_dump method.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a Pydantic model with callable model_dump, False otherwise.
-
-        """
+        """Narrow value to Pydantic BaseModel with callable model_dump."""
         return (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")

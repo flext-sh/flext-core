@@ -19,13 +19,11 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import (
-    FlextRuntime,
-    FlextUtilitiesGuardsTypeCore,
-    c,
-    m,
-    t,
-)
+from flext_core.constants import c
+from flext_core.models import m
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextExceptions:
@@ -126,7 +124,7 @@ class FlextExceptions:
         correlation_id_raw = mutable_extra.pop(c.KEY_CORRELATION_ID, None)
         correlation_id_str = (
             e._safe_optional_str(correlation_id_raw)
-            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
+            if u.is_scalar(correlation_id_raw)
             else None
         )
         normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
@@ -141,9 +139,9 @@ class FlextExceptions:
                 normalized_val = FlextRuntime.normalize_to_metadata(val)
 
                 def to_normalized(value: t.MetadataValue) -> t.NormalizedValue:
-                    if FlextUtilitiesGuardsTypeCore.is_scalar(value):
+                    if u.is_scalar(value):
                         return value
-                    if isinstance(value, Mapping):
+                    if u.is_mapping(value):
                         return {
                             str(inner_key): to_normalized(
                                 FlextRuntime.normalize_to_metadata(inner_val),
@@ -203,15 +201,6 @@ class FlextExceptions:
             return None
 
     @staticmethod
-    def _safe_int(value: t.Scalar | None) -> int | None:
-        """Extract optional strict integer from dynamic values."""
-        if value is None:
-            return None
-        if isinstance(value, int) and (not isinstance(value, bool)):
-            return value
-        return None
-
-    @staticmethod
     def _safe_metadata(
         value: m.Metadata
         | t.ConfigMap
@@ -228,7 +217,7 @@ class FlextExceptions:
         except (PydanticValidationError, TypeError):
             pass
         dumped_map: Mapping[str, t.MetadataOrValue | None] | None = None
-        if isinstance(value, BaseModel):
+        if u.is_pydantic_model(value):
             dumped_candidate = value.model_dump()
             try:
                 dumped_map = m.Validators.dict_str_metadata_adapter().validate_python(
@@ -372,7 +361,7 @@ class FlextExceptions:
                     extra_kwargs=extra_kwargs,
                 )
 
-            cls.__init__ = _auto_init
+            setattr(cls, "__init__", _auto_init)
 
         @override
         def __str__(self) -> str:
@@ -521,68 +510,21 @@ class FlextExceptions:
 
         field: str | None = None
         value: t.Scalar | None = None
+        _default_error_code: ClassVar[str] = c.VALIDATION_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.ValidationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({"field", "value"})
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            field: str | None = None,
-            value: t.Scalar | None = None,
-            error_code: str = c.VALIDATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: m.ValidationErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize validation error with field and value information."""
-            self._init_declared_error(
-                message,
-                error_code=error_code,
-                context=context,
-                params=params,
-                named_params={"field": field, "value": value},
-                correlation_id=correlation_id,
-                extra_kwargs=extra_kwargs,
-            )
 
     class ConfigurationError(BaseError):
         """Exception raised for configuration-related errors."""
 
         config_key: str | None = None
         config_source: str | None = None
+        _default_error_code: ClassVar[str] = c.CONFIGURATION_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.ConfigurationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "config_key",
             "config_source",
         })
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            config_key: str | None = None,
-            config_source: str | None = None,
-            error_code: str = c.CONFIGURATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: m.ConfigurationErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize configuration error with config context."""
-            self._init_declared_error(
-                message,
-                error_code=error_code,
-                context=context,
-                params=params,
-                named_params={
-                    "config_key": config_key,
-                    "config_source": config_source,
-                },
-                correlation_id=correlation_id,
-                extra_kwargs=extra_kwargs,
-            )
 
     class ConnectionError(BaseError):
         """Exception raised for network and connection failures."""
@@ -640,37 +582,12 @@ class FlextExceptions:
 
         auth_method: str | None = None
         user_id: str | None = None
+        _default_error_code: ClassVar[str] = c.AUTHENTICATION_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.AuthenticationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "auth_method",
             c.KEY_USER_ID,
         })
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            auth_method: str | None = None,
-            user_id: str | None = None,
-            error_code: str = c.AUTHENTICATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: m.AuthenticationErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize authentication error with auth context."""
-            self._init_declared_error(
-                message,
-                error_code=error_code,
-                context=context,
-                params=params,
-                named_params={
-                    "auth_method": auth_method,
-                    c.KEY_USER_ID: user_id,
-                },
-                correlation_id=correlation_id,
-                extra_kwargs=extra_kwargs,
-            )
 
     class AuthorizationError(BaseError):
         """Exception raised for permission and authorization failures."""
@@ -691,6 +608,7 @@ class FlextExceptions:
 
         resource_type: str | None = None
         resource_id: str | None = None
+        _default_error_code: ClassVar[str] = c.NOT_FOUND_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.NotFoundErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "resource_type",
@@ -700,34 +618,6 @@ class FlextExceptions:
             c.KEY_CORRELATION_ID,
             c.FIELD_METADATA,
         })
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            resource_type: str | None = None,
-            resource_id: str | None = None,
-            error_code: str = c.NOT_FOUND_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            metadata: m.Metadata | t.ConfigMap | t.MetadataValue | None = None,
-            correlation_id: str | None = None,
-            params: m.NotFoundErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize not found error with resource context."""
-            self._init_declared_error(
-                message,
-                error_code=error_code,
-                context=context,
-                params=params,
-                named_params={
-                    "resource_type": resource_type,
-                    "resource_id": resource_id,
-                },
-                correlation_id=correlation_id,
-                metadata=metadata,
-                extra_kwargs=extra_kwargs,
-            )
 
     class ConflictError(BaseError):
         """Exception raised for resource conflicts."""
@@ -943,31 +833,9 @@ class FlextExceptions:
         operation: str | None
         reason: str | None
 
+        _default_error_code: ClassVar[str] = c.OPERATION_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.OperationErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({"operation", "reason"})
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            operation: str | None = None,
-            reason: str | None = None,
-            error_code: str = c.OPERATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: m.OperationErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize operation error with operation context."""
-            self._init_declared_error(
-                message,
-                error_code=error_code,
-                context=context,
-                params=params,
-                named_params={"operation": operation, "reason": reason},
-                correlation_id=correlation_id,
-                extra_kwargs=extra_kwargs,
-            )
 
     class AttributeAccessError(BaseError):
         """Exception raised for attribute access errors."""
@@ -975,37 +843,12 @@ class FlextExceptions:
         attribute_name: str | None
         attribute_context: t.MetadataValue | None
 
+        _default_error_code: ClassVar[str] = c.ATTRIBUTE_ERROR
         _params_cls: ClassVar[type[BaseModel] | None] = m.AttributeAccessErrorParams
         _param_keys: ClassVar[frozenset[str]] = frozenset({
             "attribute_name",
             "attribute_context",
         })
-
-        def __init__(
-            self,
-            message: str,
-            *,
-            attribute_name: str | None = None,
-            attribute_context: t.MetadataValue | None = None,
-            error_code: str = c.ATTRIBUTE_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
-            correlation_id: str | None = None,
-            params: m.AttributeAccessErrorParams | None = None,
-            **extra_kwargs: t.Container,
-        ) -> None:
-            """Initialize attribute access error with attribute context."""
-            self._init_declared_error(
-                message,
-                error_code=error_code,
-                context=context,
-                params=params,
-                named_params={
-                    "attribute_name": attribute_name,
-                    "attribute_context": attribute_context,
-                },
-                correlation_id=correlation_id,
-                extra_kwargs=extra_kwargs,
-            )
 
     @staticmethod
     def _build_error_context(
@@ -1123,7 +966,7 @@ class FlextExceptions:
         correlation_id_raw = kwargs.get(c.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
+            if u.is_scalar(correlation_id_raw)
             else None
         )
         metadata_raw = kwargs.get(c.FIELD_METADATA)
@@ -1202,7 +1045,7 @@ class FlextExceptions:
         correlation_id_raw = merged_kwargs.get(c.KEY_CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if FlextUtilitiesGuardsTypeCore.is_scalar(correlation_id_raw)
+            if u.is_scalar(correlation_id_raw)
             else None
         )
         auto_log_raw = merged_kwargs.get(field_auto_log)
@@ -1211,15 +1054,11 @@ class FlextExceptions:
             correlation_id,
             merged_kwargs.get(field_metadata),
             e._safe_bool(
-                auto_log_raw
-                if FlextUtilitiesGuardsTypeCore.is_scalar(auto_log_raw)
-                else None,
+                auto_log_raw if u.is_scalar(auto_log_raw) else None,
                 default=False,
             ),
             e._safe_bool(
-                auto_correlation_raw
-                if FlextUtilitiesGuardsTypeCore.is_scalar(auto_correlation_raw)
-                else None,
+                auto_correlation_raw if u.is_scalar(auto_correlation_raw) else None,
                 default=False,
             ),
             merged_kwargs.get(field_config),
@@ -1361,4 +1200,5 @@ class FlextExceptions:
 
 
 e = FlextExceptions
+
 __all__ = ["FlextExceptions", "e"]

@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import Final
 
-from flext_core import FlextConstantsBase
+from flext_core._constants.base import FlextConstantsBase
 
 
 class FlextConstantsInfrastructure:
@@ -22,6 +22,21 @@ class FlextConstantsInfrastructure:
     SCOPE_TRANSACTION: Final[str] = "transaction"
     SCOPE_APPLICATION: Final[str] = "application"
     SCOPE_OPERATION: Final[str] = "operation"
+
+    DEBUG_CONTEXT_KEYS: Final[frozenset[str]] = frozenset({
+        "schema",
+        "params",
+    })
+    "Keys whose values are bound at DEBUG level in operation context."
+
+    ERROR_CONTEXT_KEYS: Final[frozenset[str]] = frozenset({
+        "stack_trace",
+        "exception",
+        "traceback",
+        "error_details",
+    })
+    "Keys whose values are bound at ERROR level in operation context."
+
     CORRELATION_ID_PREFIX: Final[str] = "flext-"
     CORRELATION_ID_LENGTH: Final[int] = 12
     DEFAULT_CONTEXT_TIMEOUT: Final[int] = FlextConstantsBase.DEFAULT_TIMEOUT_SECONDS

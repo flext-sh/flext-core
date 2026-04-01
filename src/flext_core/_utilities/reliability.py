@@ -15,13 +15,11 @@ import time
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core import (
-    FlextModelFoundation,
-    FlextProtocolsLogging,
-    FlextRuntime,
-    c,
-    r,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core.constants import c
+from flext_core.result import FlextResult as r
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesReliability:
@@ -77,6 +75,57 @@ class FlextUtilitiesReliability:
         return current
 
     @staticmethod
+    def _resolve_retry_config(
+        max_attempts: int | None,
+        delay: float | None,
+        delay_seconds: float | None,
+        backoff_multiplier: float | None,
+    ) -> tuple[int, float, float]:
+        """Resolve retry configuration with defaults."""
+        delay_value = delay if delay is not None else delay_seconds
+        return (
+            max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS,
+            delay_value if delay_value is not None else c.DEFAULT_RETRY_DELAY_SECONDS,
+            backoff_multiplier
+            if backoff_multiplier is not None
+            else c.DEFAULT_BACKOFF_MULTIPLIER,
+        )
+
+    @staticmethod
+    def _should_retry(
+        exc: Exception,
+        retry_on: tuple[type[Exception], ...] | None,
+    ) -> bool:
+        """Check if the exception is retryable."""
+        return retry_on is None or isinstance(exc, retry_on)
+
+    @staticmethod
+    def _sleep_between_retries(
+        attempt: int,
+        max_attempts: int,
+        delay_seconds: float,
+        backoff_multiplier: float,
+    ) -> None:
+        """Sleep between retry attempts with exponential backoff."""
+        if attempt < max_attempts - 1:
+            current_delay = FlextUtilitiesReliability._calculate_retry_delay(
+                attempt,
+                delay_seconds,
+                backoff_multiplier,
+            )
+            if current_delay > 0:
+                time.sleep(current_delay)
+
+    _RETRYABLE_EXCEPTIONS: tuple[type[Exception], ...] = (
+        AttributeError,
+        TypeError,
+        ValueError,
+        RuntimeError,
+        KeyError,
+        OSError,
+    )
+
+    @staticmethod
     def retry[TResult](
         operation: Callable[[], r[TResult]],
         max_attempts: int | None = None,
@@ -101,58 +150,35 @@ class FlextUtilitiesReliability:
         Fast fail: explicit default values instead of 'or' fallback.
 
         """
-        delay_value: float | None = delay if delay is not None else delay_seconds
-        max_attempts_value: int = (
-            max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
+        max_att, delay_sec, backoff = FlextUtilitiesReliability._resolve_retry_config(
+            max_attempts,
+            delay,
+            delay_seconds,
+            backoff_multiplier,
         )
-        delay_seconds_value: float = (
-            delay_value if delay_value is not None else c.DEFAULT_RETRY_DELAY_SECONDS
-        )
-        backoff_multiplier_value: float = (
-            backoff_multiplier
-            if backoff_multiplier is not None
-            else c.DEFAULT_BACKOFF_MULTIPLIER
-        )
-        if max_attempts_value < c.DEFAULT_RETRY_DELAY_SECONDS:
+        if max_att < c.DEFAULT_RETRY_DELAY_SECONDS:
             return r[TResult].fail(
                 f"Max attempts must be at least {c.DEFAULT_RETRY_DELAY_SECONDS}",
             )
         last_error: str | None = None
-        for attempt in range(max_attempts_value):
+        for attempt in range(max_att):
             try:
                 result = operation()
                 if result.is_success:
                     return result
                 last_error = result.error or "Unknown error"
-                if attempt < max_attempts_value - 1:
-                    current_delay = FlextUtilitiesReliability._calculate_retry_delay(
-                        attempt,
-                        delay_seconds_value,
-                        backoff_multiplier_value,
-                    )
-                    if current_delay > 0:
-                        time.sleep(current_delay)
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-                OSError,
-            ) as e:
-                if retry_on is not None and (not isinstance(e, retry_on)):
+            except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as e:
+                if not FlextUtilitiesReliability._should_retry(e, retry_on):
                     raise
                 last_error = str(e)
-                if attempt < max_attempts_value - 1:
-                    current_delay = FlextUtilitiesReliability._calculate_retry_delay(
-                        attempt,
-                        delay_seconds_value,
-                        backoff_multiplier_value,
-                    )
-                    if current_delay > 0:
-                        time.sleep(current_delay)
+            FlextUtilitiesReliability._sleep_between_retries(
+                attempt,
+                max_att,
+                delay_sec,
+                backoff,
+            )
         return r[TResult].fail(
-            f"Operation failed after {max_attempts_value} attempts: {last_error}",
+            f"Operation failed after {max_att} attempts: {last_error}",
         )
 
 

@@ -25,6 +25,7 @@ if _TYPE_CHECKING:
     from examples._models.ex14 import *
     from examples._models.exconfig import *
     from examples._models.shared import *
+    from flext_core import FlextTypes
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "Ex00UserInput": "examples._models.ex00",

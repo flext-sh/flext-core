@@ -84,7 +84,7 @@ class TestArchitecturalPatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: t.MutableContainerMapping = {}
+                self._config: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
 
             def with_database(self, host: str, port: int) -> Self:
                 """Add database configuration."""

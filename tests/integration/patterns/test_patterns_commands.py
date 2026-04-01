@@ -175,7 +175,9 @@ class TestPatternsCommands:
                 handler_mode=c.HandlerType.COMMAND,
             )
             super().__init__(config=config)
-            self.updated_users: t.MutableContainerMapping = {}
+            self.updated_users: t.MutableContainerMapping = dict[
+                str, t.NormalizedValue
+            ]()
 
         def get_command_type(self) -> str:
             """Get command type this handler processes."""

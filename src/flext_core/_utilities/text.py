@@ -11,10 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
-
-from flext_core import r
-
 
 class FlextUtilitiesText:
     """Low-level text normalization helpers for CQRS utilities."""
@@ -72,21 +68,6 @@ class FlextUtilitiesText:
 
         """
         return "".join(ch for ch in text.lower() if ch.isalnum())
-
-    @staticmethod
-    def clean_text(text: str) -> str:
-        """Normalize whitespace and strip control characters from text."""
-        cleaned = text.translate(str.maketrans("", "", "\x00\r\n\t"))
-        return re.sub(r" +", " ", cleaned).strip()
-
-    @staticmethod
-    def truncate_text(text: str, *, max_length: int) -> r[str]:
-        """Truncate text with an ellipsis when it exceeds the target length."""
-        if max_length <= 0:
-            return r[str].fail("max_length must be greater than zero")
-        if len(text) <= max_length:
-            return r[str].ok(text)
-        return r[str].ok(f"{text[:max_length]}...")
 
 
 __all__ = ["FlextUtilitiesText"]

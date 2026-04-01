@@ -6,8 +6,10 @@ import re
 from collections.abc import Callable, Iterable, Mapping, Sized
 from typing import ClassVar
 
-from flext_core import FlextUtilitiesGuardsType, r, t
 from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
@@ -111,9 +113,9 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             if spec_val is not None and not check_fn(value, spec_val):
                 return False
         # Membership checks via dispatch
-        for op_name, check_fn in FlextUtilitiesGuardsEnsure._MEMBERSHIP_OPS.items():
-            spec_val: t.ContainerList | None = getattr(guard_spec, op_name, None)
-            if spec_val is not None and not check_fn(value, spec_val):
+        for mem_op, mem_fn in FlextUtilitiesGuardsEnsure._MEMBERSHIP_OPS.items():
+            mem_val: t.ContainerList | None = getattr(guard_spec, mem_op, None)
+            if mem_val is not None and not mem_fn(value, mem_val):
                 return False
         # Numeric/size checks via dispatch
         check_val = FlextUtilitiesGuardsEnsure._resolve_numeric(value)
@@ -204,12 +206,6 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return_value=return_value,
                 fail_msg="Guard validation raised an exception",
             )
-
-    @staticmethod
-    def validate_pattern(value: str, pattern: str, field_name: str = "value") -> r[str]:
-        if re.search(pattern, value) is None:
-            return r[str].fail(f"{field_name} has invalid format")
-        return r[str].ok(value)
 
 
 __all__ = ["FlextUtilitiesGuardsEnsure"]

@@ -13,7 +13,9 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import c, p, t
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextUtilitiesGuardsTypeProtocol:
@@ -29,13 +31,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _get_protocol_specs() -> Mapping[str, Callable[[t.GuardInput], bool]]:
-        """Get cached mapping of protocol names to type check predicates.
-
-        Returns:
-            Mapping of protocol name (str) to predicate function that validates if
-            a value implements that protocol.
-
-        """
+        """Get cached mapping of protocol names to type check predicates."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
                 c.DIR_CONFIG: lambda v: isinstance(v, p.Settings),
@@ -56,12 +52,7 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _get_protocol_type_map() -> Mapping[type, str]:
-        """Get cached mapping of protocol types to their string names.
-
-        Returns:
-            Mapping of protocol type (class) to its canonical string identifier.
-
-        """
+        """Get cached mapping of protocol types to their string names."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
@@ -82,93 +73,42 @@ class FlextUtilitiesGuardsTypeProtocol:
     def is_context(
         value: t.GuardInput,
     ) -> TypeIs[p.Context]:
-        """Check if value is a Context protocol instance.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value implements Context protocol, False otherwise.
-
-        """
+        """Narrow value to Context protocol."""
         return isinstance(value, p.Context)
 
     @staticmethod
     def is_handler_callable(
         value: object,
     ) -> TypeIs[t.HandlerCallable]:
-        """Check if value is a callable handler function.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is callable, False otherwise.
-
-        """
+        """Narrow value to callable handler function."""
         return callable(value)
 
     @staticmethod
     def is_factory(
         value: t.GuardInput,
     ) -> TypeIs[t.FactoryCallable]:
-        """Check if value is a factory callable.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is callable, False otherwise.
-
-        """
+        """Narrow value to factory callable."""
         return callable(value)
 
     @staticmethod
     def is_resource(
         value: t.GuardInput,
     ) -> TypeIs[t.ResourceCallable]:
-        """Check if value is a resource factory callable.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is callable, False otherwise.
-
-        """
+        """Narrow value to resource factory callable."""
         return callable(value)
 
     @staticmethod
     def is_result_like(
         value: t.GuardInput,
     ) -> TypeIs[p.Result[t.RuntimeAtomic]]:
-        """Check if value is a Result protocol instance.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value implements Result protocol, False otherwise.
-
-        """
+        """Narrow value to Result protocol."""
         return isinstance(value, p.Result)
 
     @staticmethod
     def is_registerable_service(
         value: t.GuardInput,
     ) -> TypeIs[t.RegisterableService]:
-        """Check if value can be registered as a service in the DI container.
-
-        Accepts None, primitives, BaseModel, Path, Mapping, callables, sequences
-        (except str/bytes), Context, and objects with __dict__ or bind/info attrs.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a registerable service, False otherwise.
-
-        """
+        """Narrow value to DI-registerable service (primitives, models, callables, etc.)."""
         return (
             value is None
             or isinstance(value, (str, int, float, bool, BaseModel, Path, Mapping))
@@ -182,87 +122,61 @@ class FlextUtilitiesGuardsTypeProtocol:
             or bool(hasattr(value, "bind") and hasattr(value, "info"))
         )
 
+    _STRING_TYPE_CHECKS: Mapping[str, Callable[[t.GuardInput], bool]] = {
+        "str": lambda v: isinstance(v, str),
+        "dict": lambda v: isinstance(v, dict),
+        "list": lambda v: isinstance(v, list),
+        "tuple": lambda v: isinstance(v, tuple),
+        "sequence": lambda v: isinstance(v, (list, tuple, range)),
+        "mapping": lambda v: isinstance(v, Mapping),
+        "list_or_tuple": lambda v: isinstance(v, (list, tuple)),
+        "sequence_not_str": lambda v: (
+            isinstance(v, (list, tuple, range)) and not isinstance(v, str)
+        ),
+        "sequence_not_str_bytes": lambda v: (
+            isinstance(v, (list, tuple, range)) and not isinstance(v, (str, bytes))
+        ),
+        "sized": lambda v: hasattr(v, "__len__"),
+        "callable": lambda v: callable(v),
+        "bytes": lambda v: isinstance(v, bytes),
+        "int": lambda v: isinstance(v, int),
+        "float": lambda v: isinstance(v, float),
+        "bool": lambda v: isinstance(v, bool),
+        "none": lambda v: v is None,
+        "string_non_empty": lambda v: isinstance(v, str) and bool(v.strip()),
+    }
+
+    @staticmethod
+    def _check_dict_non_empty(value: t.GuardInput) -> bool:
+        """Check if value is a non-empty dict or ConfigMap."""
+        if isinstance(value, dict):
+            return value.__len__() > 0
+        if isinstance(value, t.ConfigMap):
+            return value.root.__len__() > 0
+        return False
+
+    @staticmethod
+    def _check_list_non_empty(value: t.GuardInput) -> bool:
+        """Check if value is a non-empty list/tuple (excluding str/bytes)."""
+        if isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes)):
+            return value.__len__() > 0
+        return False
+
     @staticmethod
     def _run_string_type_check(type_name: str, value: t.GuardInput) -> bool:
-        """Check value against a string type specification.
-
-        Args:
-            type_name: String identifier for the type to check (e.g., 'str', 'list', 'dict').
-            value: Value to check.
-
-        Returns:
-            True if value matches the type specification, False otherwise.
-
-        """
-        match type_name:
-            case "str":
-                return bool(isinstance(value, str))
-            case "dict":
-                return bool(isinstance(value, dict))
-            case "list":
-                return bool(isinstance(value, list))
-            case "tuple":
-                return bool(isinstance(value, tuple))
-            case "sequence":
-                return bool(isinstance(value, (list, tuple, range)))
-            case "mapping":
-                return bool(isinstance(value, Mapping))
-            case "list_or_tuple":
-                return bool(isinstance(value, (list, tuple)))
-            case "sequence_not_str":
-                return bool(
-                    isinstance(value, (list, tuple, range))
-                    and (not isinstance(value, str)),
-                )
-            case "sequence_not_str_bytes":
-                return bool(
-                    isinstance(value, (list, tuple, range))
-                    and (not isinstance(value, (str, bytes))),
-                )
-            case "sized":
-                return bool(hasattr(value, "__len__"))
-            case "callable":
-                return bool(callable(value))
-            case "bytes":
-                return bool(isinstance(value, bytes))
-            case "int":
-                return bool(isinstance(value, int))
-            case "float":
-                return bool(isinstance(value, float))
-            case "bool":
-                return bool(isinstance(value, bool))
-            case "none":
-                return bool(value is None)
-            case "string_non_empty":
-                return bool(isinstance(value, str) and bool(value.strip()))
-            case "dict_non_empty":
-                if isinstance(value, dict):
-                    return value.__len__() > 0
-                if isinstance(value, t.ConfigMap):
-                    return value.root.__len__() > 0
-                return False
-            case "list_non_empty":
-                if isinstance(value, (list, tuple)) and not isinstance(
-                    value,
-                    (str, bytes),
-                ):
-                    return value.__len__() > 0
-                return False
-            case _:
-                return False
+        """Check value against a string type specification (e.g., 'str', 'list', 'dict')."""
+        if type_name == "dict_non_empty":
+            return FlextUtilitiesGuardsTypeProtocol._check_dict_non_empty(value)
+        if type_name == "list_non_empty":
+            return FlextUtilitiesGuardsTypeProtocol._check_list_non_empty(value)
+        checker = FlextUtilitiesGuardsTypeProtocol._STRING_TYPE_CHECKS.get(type_name)
+        if checker is None:
+            return False
+        return checker(value)
 
     @staticmethod
     def _check_protocol(value: t.GuardInput, name: str) -> bool:
-        """Check if value implements a named protocol.
-
-        Args:
-            value: Value to check.
-            name: Protocol name to verify against.
-
-        Returns:
-            True if value implements the protocol, False otherwise or on error.
-
-        """
+        """Check if value implements a named protocol."""
         if name == c.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.is_context(value)
         try:
@@ -274,15 +188,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     def _is_type_tuple(
         value: t.GuardInput,
     ) -> TypeIs[tuple[type, ...]]:
-        """Check if value is a tuple of types.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is a tuple, False otherwise.
-
-        """
+        """Narrow value to tuple of types."""
         return isinstance(value, tuple)
 
     @staticmethod
@@ -290,19 +196,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         value: t.GuardInput,
         type_spec: str | type | tuple[type, ...],
     ) -> bool:
-        """Check if value matches a type specification.
-
-        Supports string type names (e.g., 'str', 'dict'), protocol types,
-        actual type objects, and tuples of types for isinstance checks.
-
-        Args:
-            value: Value to check.
-            type_spec: Type specification (string name, type, or tuple of types).
-
-        Returns:
-            True if value matches the type specification, False otherwise.
-
-        """
+        """Check if value matches a type spec (string name, type, or tuple of types)."""
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
             if type_name in FlextUtilitiesGuardsTypeProtocol._get_protocol_specs():
@@ -341,6 +235,35 @@ class FlextUtilitiesGuardsTypeProtocol:
             )
         except TypeError:
             return False
+
+    @staticmethod
+    def is_settings_type(
+        candidate: type | t.GuardInput,
+    ) -> TypeIs[type[p.Settings]]:
+        """Narrow candidate to Settings type with callable get_global."""
+        return isinstance(candidate, type) and callable(
+            getattr(candidate, "get_global", None),
+        )
+
+    @staticmethod
+    def filter_registerable_services(
+        services: Mapping[str, t.GuardInput] | None,
+    ) -> Mapping[str, t.RegisterableService] | None:
+        """Filter a service mapping to only registerable values."""
+        if services is None:
+            return None
+        return {
+            str(key): value
+            for key, value in services.items()
+            if FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
+        }
+
+    @staticmethod
+    def is_handler(obj: p.Base | BaseModel) -> bool:
+        """Check if obj satisfies p.Handle protocol with validate capability."""
+        return isinstance(obj, p.Handle) and callable(
+            getattr(obj, "validate", None),
+        )
 
 
 __all__ = ["FlextUtilitiesGuardsTypeProtocol"]

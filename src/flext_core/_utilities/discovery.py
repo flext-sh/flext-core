@@ -10,41 +10,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from types import ModuleType
 
-from flext_core import c, m
+from flext_core.constants import c
+from flext_core.models import m
+from flext_core.typings import t
 
 
 class FlextUtilitiesDiscovery:
-    """Auto-discovery mechanism for factory decorators (namespace-only, no MRO base).
-
-    Governance: Pure namespace class with only @staticmethod members. No state,
-    no instantiation, no fields. BaseModel inheritance not required per §3.1.
-
-    Scans modules and classes for functions decorated with @factory() and provides
-    utilities for finding and analyzing factory configurations.
-
-    This class enables zero-config factory registration in FlextContainer
-    by automatically discovering decorated functions at initialization time.
-    """
+    """Auto-discovery for @factory() decorated functions in modules."""
 
     @staticmethod
     def scan_module(
         module: ModuleType,
     ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
-        """Scan module for functions decorated with @factory().
-
-        Introspects the module to find all functions with factory configuration
-        metadata, returning them sorted by name for consistent ordering.
-
-        Args:
-            module: Module t.NormalizedValue to scan for factory decorators
-
-        Returns:
-            List of tuples (function_name, FactoryDecoratorConfig) sorted by name
-
-        """
+        """Scan module for @factory()-decorated functions, sorted by name."""
         return sorted(
             [
                 (name, config_raw)
@@ -62,16 +43,39 @@ class FlextUtilitiesDiscovery:
         )
 
     @staticmethod
-    def has_factories(target: ModuleType | type | object) -> bool:
-        """Check whether a module or class exposes factory-decorated callables."""
-        if isinstance(target, ModuleType):
-            return bool(FlextUtilitiesDiscovery.scan_module(target))
-        target_vars = vars(target if isinstance(target, type) else target.__class__)
-        return any(
-            callable(value)
-            and isinstance(vars(value).get(c.FACTORY_ATTR), m.FactoryDecoratorConfig)
-            for value in target_vars.values()
-        )
+    def resolve_wire_targets(
+        wire_modules: Sequence[ModuleType | str] | None,
+        wire_packages: t.StrSequence | None,
+        wire_classes: Sequence[type] | None,
+    ) -> tuple[
+        Sequence[ModuleType] | None,
+        t.StrSequence | None,
+        Sequence[type] | None,
+    ]:
+        """Separate mixed wire_modules into actual modules vs package name strings."""
+        resolved_modules: Sequence[ModuleType] | None = None
+        resolved_packages: t.StrSequence | None = None
+        resolved_classes: Sequence[type] | None = wire_classes
+
+        if wire_modules is not None:
+            modules_list: MutableSequence[ModuleType] = []
+            packages_list: MutableSequence[str] = []
+            for item in wire_modules:
+                match item:
+                    case str():
+                        packages_list.append(item)
+                    case _:
+                        modules_list.append(item)
+            resolved_modules = modules_list
+            if packages_list:
+                resolved_packages = packages_list
+
+        if wire_packages is not None:
+            current = list(resolved_packages or [])
+            current.extend(wire_packages)
+            resolved_packages = current
+
+        return resolved_modules, resolved_packages, resolved_classes
 
 
 __all__ = ["FlextUtilitiesDiscovery"]

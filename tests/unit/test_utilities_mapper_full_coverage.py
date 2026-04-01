@@ -78,6 +78,8 @@ class UtilitiesMapperFullCoverageNamespace:
             self,
             current: tuple[str, ...] | str | int,
             operations: Mapping[str, t.NormalizedValue | t.MapperCallable],
+            default_val: t.NormalizedValue,
+            on_error: str,
         ) -> None: ...
 
     class _ExtractTransformOptionsCallable(Protocol):
@@ -91,6 +93,8 @@ class UtilitiesMapperFullCoverageNamespace:
             self,
             current: tuple[str, str] | tuple[int, int, int] | Sequence[_GroupModel],
             operations: t.ContainerMapping,
+            default_val: t.NormalizedValue,
+            on_error: str,
         ) -> None: ...
 
     class _TransformCallable(Protocol):
@@ -130,8 +134,8 @@ class UtilitiesMapperFullCoverageNamespace:
         current: tuple[str, ...] | str | int,
         operations: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> None:
-        fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
-        return fn(current, operations)
+        fn: _BuildApplyConvertCallable = getattr(u, "_op_convert")
+        return fn(current, operations, None, "stop")
 
     @staticmethod
     def _extract_transform_options_obj(
@@ -145,32 +149,32 @@ class UtilitiesMapperFullCoverageNamespace:
         current: tuple[str, str],
         operations: t.ContainerMapping,
     ) -> None:
-        fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
-        return fn(current, operations)
+        fn: _BuildApplyOpCallable = getattr(u, "_op_sort")
+        return fn(current, operations, None, "stop")
 
     @staticmethod
     def _build_apply_unique_obj(
         current: tuple[int, int, int],
         operations: t.ContainerMapping,
     ) -> None:
-        fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
-        return fn(current, operations)
+        fn: _BuildApplyOpCallable = getattr(u, "_op_unique")
+        return fn(current, operations, None, "stop")
 
     @staticmethod
     def _build_apply_slice_obj(
         current: tuple[int, int, int],
         operations: t.ContainerMapping,
     ) -> None:
-        fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
-        return fn(current, operations)
+        fn: _BuildApplyOpCallable = getattr(u, "_op_slice")
+        return fn(current, operations, None, "stop")
 
     @staticmethod
     def _build_apply_group_obj(
         current: Sequence[_GroupModel],
         operations: t.ContainerMapping,
     ) -> None:
-        fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
-        return fn(current, operations)
+        fn: _BuildApplyOpCallable = getattr(u, "_op_group")
+        return fn(current, operations, None, "stop")
 
     @staticmethod
     def _transform_obj(
@@ -296,15 +300,6 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(converted["b"], is_=str)
         with pytest.raises(TypeError, match="Cannot narrow"):
             mapper._narrow_to_string_keyed_dict(123)
-        mapped = mapper._narrow_to_configuration_mapping({"x": 1})
-        tm.that(mapped, is_=t.ConfigMap)
-        tm.that(mapped.root["x"], eq=1)
-        with pytest.raises(TypeError, match="Cannot narrow"):
-            _ = mapper._narrow_to_configuration_mapping(
-                cast("t.NormalizedValue", {1: BadString()}),
-            )
-        with pytest.raises(TypeError, match="Cannot narrow"):
-            mapper._narrow_to_configuration_mapping(3)
 
     @staticmethod
     def test_general_value_helpers_and_logger(mapper: type[u]) -> None:
@@ -408,73 +403,81 @@ class UtilitiesMapperFullCoverageNamespace:
     def test_extract_field_value_and_ensure_variants(mapper: type[u]) -> None:
         tm.that(_extract_field_obj(AttrObject(name="a", value=2), "value"), eq=2)
         tm.that(_extract_field_obj(AttrObject(), "missing"), none=True)
-        tm.that(mapper._build_apply_ensure(5, {"ensure": "str"}), eq="5")
-        tm.that(mapper._build_apply_ensure(5, {"ensure": "list"}), eq=[5])
+        tm.that(mapper._op_ensure(5, {"ensure": "str"}, None, "stop"), eq="5")
+        tm.that(mapper._op_ensure(5, {"ensure": "list"}, None, "stop"), eq=[5])
         tm.that(
-            mapper._build_apply_ensure([1, "a"], {"ensure": "str_list"}),
+            mapper._op_ensure([1, "a"], {"ensure": "str_list"}, None, "stop"),
             eq=["1", "a"],
         )
-        tm.that(mapper._build_apply_ensure(5, {"ensure": "dict"}), eq={})
-        tm.that(mapper._build_apply_ensure(5, {"ensure": "unknown"}), eq=5)
+        tm.that(mapper._op_ensure(5, {"ensure": "dict"}, None, "stop"), eq={})
+        tm.that(mapper._op_ensure(5, {"ensure": "unknown"}, None, "stop"), eq=5)
 
     @staticmethod
     def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
         plus_one = cast("Callable[..., t.NormalizedValue]", _plus_one)
         times_two = cast("Callable[..., t.NormalizedValue]", _times_two)
-        tm.that(mapper._build_apply_filter(1, {"filter": 1}, 0), eq=1)
+        tm.that(mapper._op_filter(1, {"filter": 1}, 0, "stop"), eq=1)
         tm.that(
-            mapper._build_apply_filter(
+            mapper._op_filter(
                 {"a": 1, "b": 0},
                 cast(
                     "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                     {"filter": bool},
                 ),
                 0,
+                "stop",
             ),
             eq={"a": 1},
         )
         tm.that(
-            mapper._build_apply_filter(
+            mapper._op_filter(
                 0,
                 cast(
                     "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                     {"filter": bool},
                 ),
                 "d",
+                "stop",
             ),
             eq="d",
         )
-        tm.that(mapper._build_apply_map(1, {"map": 1}), eq=1)
+        tm.that(mapper._op_map(1, {"map": 1}, None, "stop"), eq=1)
         tm.that(
-            mapper._build_apply_map(
+            mapper._op_map(
                 {"a": 1},
                 cast(
                     "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                     {"map": plus_one},
                 ),
+                None,
+                "stop",
             ),
             eq={"a": 2},
         )
         tm.that(
-            mapper._build_apply_map(
+            mapper._op_map(
                 2,
                 cast(
                     "Mapping[str, t.NormalizedValue | t.MapperCallable]",
                     {"map": times_two},
                 ),
+                None,
+                "stop",
             ),
             eq=4,
         )
-        tm.that(mapper._build_apply_normalize("ABC", {"normalize": "lower"}), eq="abc")
         tm.that(
-            mapper._build_apply_normalize(["ABC", 1], {"normalize": "lower"}),
+            mapper._op_normalize("ABC", {"normalize": "lower"}, None, "stop"), eq="abc"
+        )
+        tm.that(
+            mapper._op_normalize(["ABC", 1], {"normalize": "lower"}, None, "stop"),
             eq=[
                 "abc",
                 1,
             ],
         )
-        tm.that(mapper._build_apply_normalize(1, {"normalize": "lower"}), eq=1)
-        tm.that(mapper._build_apply_convert(1, {"convert": "not-callable"}), eq=1)
+        tm.that(mapper._op_normalize(1, {"normalize": "lower"}, None, "stop"), eq=1)
+        tm.that(mapper._op_convert(1, {"convert": "not-callable"}, None, "stop"), eq=1)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -571,7 +574,7 @@ class UtilitiesMapperFullCoverageNamespace:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         tm.that(
-            mapper._build_apply_transform({"a": 1}, {"transform": 1}, {}, "stop"),
+            mapper._op_transform({"a": 1}, {"transform": 1}, {}, "stop"),
             eq={
                 "a": 1,
             },
@@ -597,39 +600,41 @@ class UtilitiesMapperFullCoverageNamespace:
             staticmethod(explode_transform_steps),
         )
         tm.that(
-            mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "stop"),
+            mapper._op_transform({"a": 1}, {"transform": {}}, "d", "stop"),
             eq={
                 "a": 1,
             },
         )
         tm.that(
-            mapper._build_apply_transform({"a": 1}, {"transform": {}}, "d", "skip"),
+            mapper._op_transform({"a": 1}, {"transform": {}}, "d", "skip"),
             eq={
                 "a": 1,
             },
         )
-        tm.that(mapper._build_apply_process(1, {"process": 1}, 0, "stop"), eq=1)
+        tm.that(mapper._op_process(1, {"process": 1}, 0, "stop"), eq=1)
         process_map_ops = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {"process": _plus_one},
         )
         tm.that(
-            mapper._build_apply_process({"a": 1}, process_map_ops, 0, "stop"),
+            mapper._op_process({"a": 1}, process_map_ops, 0, "stop"),
             eq={"a": 2},
         )
         process_fail_ops = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {"process": _raise_value_error},
         )
-        tm.that(mapper._build_apply_process(1, process_fail_ops, 7, "stop"), eq=7)
-        tm.that(mapper._build_apply_process(1, process_fail_ops, 7, "skip"), eq=1)
+        tm.that(mapper._op_process(1, process_fail_ops, 7, "stop"), eq=7)
+        tm.that(mapper._op_process(1, process_fail_ops, 7, "skip"), eq=1)
 
     @staticmethod
     def test_group_sort_unique_slice_chunk_branches(mapper: type[u]) -> None:
-        tm.that(mapper._build_apply_group(1, {"group": "k"}), eq=1)
-        grouped = mapper._build_apply_group(
+        tm.that(mapper._op_group(1, {"group": "k"}, None, "stop"), eq=1)
+        grouped = mapper._op_group(
             [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}],
             {"group": "kind"},
+            None,
+            "stop",
         )
         tm.that(
             grouped,
@@ -638,27 +643,29 @@ class UtilitiesMapperFullCoverageNamespace:
                 {"a": [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}]},
             ),
         )
-        tm.that(mapper._build_apply_group([1, 2], {"group": 5}), eq=[1, 2])
-        tm.that(mapper._build_apply_sort(1, {"sort": True}), eq=1)
-        sorted_with_scalar = mapper._build_apply_sort(
+        tm.that(mapper._op_group([1, 2], {"group": 5}, None, "stop"), eq=[1, 2])
+        tm.that(mapper._op_sort(1, {"sort": True}, None, "stop"), eq=1)
+        sorted_with_scalar = mapper._op_sort(
             [{"name": "b"}, 3, {"name": "a"}],
             {"sort": "name"},
+            None,
+            "stop",
         )
         tm.that(sorted_with_scalar, is_=list)
         bad_sort_ops = cast(
             "Mapping[str, t.NormalizedValue | t.MapperCallable]",
             {"sort": _raise_value_error},
         )
-        bad_sort = mapper._build_apply_sort([1, 2], bad_sort_ops)
+        bad_sort = mapper._op_sort([1, 2], bad_sort_ops, None, "stop")
         tm.that(bad_sort, eq=[1, 2])
         sorted_tuple = _build_apply_sort_obj(("b", "a"), {"sort": True})
         tm.that(sorted_tuple, eq=("a", "b"))
-        tm.that(mapper._build_apply_unique(1, {"unique": True}), eq=1)
+        tm.that(mapper._op_unique(1, {"unique": True}, None, "stop"), eq=1)
         tm.that(_build_apply_unique_obj((1, 2, 1), {"unique": True}), eq=(1, 2))
-        tm.that(mapper._build_apply_slice(1, {"slice": (0, 1)}), eq=1)
+        tm.that(mapper._op_slice(1, {"slice": (0, 1)}, None, "stop"), eq=1)
         tm.that(_build_apply_slice_obj((1, 2, 3), {"slice": (1, 3)}), eq=(2, 3))
-        tm.that(mapper._build_apply_chunk(1, {"chunk": 2}), eq=1)
-        tm.that(mapper._build_apply_chunk([1, 2], {"chunk": 0}), eq=[1, 2])
+        tm.that(mapper._op_chunk(1, {"chunk": 2}, None, "stop"), eq=1)
+        tm.that(mapper._op_chunk([1, 2], {"chunk": 0}, None, "stop"), eq=[1, 2])
         tm.that(mapper.build([1, 2], ops=None), eq=[1, 2])
 
     @staticmethod

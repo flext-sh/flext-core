@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import override
 
-from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
+from flext_core import FlextRuntime, FlextSettings, c, m, r, t, u, x
 
 from .shared import Examples
 
@@ -33,7 +33,7 @@ class Ex05FlextMixins(Examples):
             return {"has_duration": has_duration, "operation_count": operation_count}
 
     class HandlerLike(FlextSettings):
-        """Minimal handler-like satisfying ``x.ProtocolValidation.is_handler``."""
+        """Minimal handler-like satisfying ``u.is_handler``."""
 
         @classmethod
         @override
@@ -136,15 +136,15 @@ class Ex05FlextMixins(Examples):
         self.check("track.failure.message", failure_message)
 
     def _exercise_cqrs_validation_and_protocols(self) -> None:
-        """Exercise CQRS, Validation, and ProtocolValidation namespaces."""
+        """Exercise CQRS models, validation, and protocol check utilities."""
         self.section("cqrs_validation_protocols")
-        tracker = x.CQRS.MetricsTracker()
+        tracker = m.MetricsTracker()
         self.check("metrics.record_metric", tracker.record_metric("hits", 3).is_success)
         metrics_result = tracker.get_metrics()
         self.check("metrics.get_metrics.success", metrics_result.is_success)
         metrics_str: str = metrics_result.map(lambda value: str(value)).unwrap_or("{}")
         self.check("metrics.get_metrics.value", metrics_str)
-        stack = x.CQRS.ContextStack()
+        stack = m.ContextStack()
         self.check(
             "context_stack.push_context",
             stack.push_context(
@@ -176,22 +176,22 @@ class Ex05FlextMixins(Examples):
 
         validators_ok: Sequence[Callable[..., r[bool]]] = [_validator_ok]
         validators_fail: Sequence[Callable[..., r[bool]]] = [_validator_fail]
-        validation_ok = x.Validation.validate_with_result("abc", validators_ok)
-        validation_fail = x.Validation.validate_with_result("abc", validators_fail)
+        validation_ok = u.validate_with_result("abc", validators_ok)
+        validation_fail = u.validate_with_result("abc", validators_fail)
         self.check("validation.ok", validation_ok.is_success)
         self.check("validation.fail", validation_fail.error)
         self.check(
             "protocol.is_handler.good",
-            bool(x.ProtocolValidation.is_handler(self.HandlerLike())),
+            bool(u.is_handler(self.HandlerLike())),
         )
         self.check(
             "protocol.is_handler.bad",
-            bool(x.ProtocolValidation.is_handler(self.HandlerBad())),
+            bool(u.is_handler(self.HandlerBad())),
         )
-        processor_ok = x.ProtocolValidation.validate_processor_protocol(
+        processor_ok = u.validate_processor_protocol(
             self.GoodProcessor(),
         )
-        processor_fail = x.ProtocolValidation.validate_processor_protocol(
+        processor_fail = u.validate_processor_protocol(
             self.BadProcessor(),
         )
         self.check("protocol.validate_processor.good", processor_ok.is_success)

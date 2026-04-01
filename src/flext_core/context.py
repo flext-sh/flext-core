@@ -26,7 +26,12 @@ from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import c, m, p, r, t, u
+from flext_core.constants import c
+from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextContext(m.ArbitraryTypesModel, u):
@@ -53,12 +58,12 @@ class FlextContext(m.ArbitraryTypesModel, u):
         BaseModel instances are converted via ``model_dump()`` so the result
         is always a plain ``NormalizedValue`` (no BaseModel).
         """
-        if isinstance(value, BaseModel):
+        if u.is_pydantic_model(value):
             raw = value.model_dump()
             result: t.MutableContainerMapping = {}
             for k, v in raw.items():
                 container_val = u.normalize_to_container(v)
-                if isinstance(container_val, BaseModel):
+                if u.is_pydantic_model(container_val):
                     result[str(k)] = str(container_val)
                 else:
                     result[str(k)] = container_val
@@ -89,7 +94,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         payload: Mapping[str, t.ValueOrModel] | t.ContainerMapping
         if isinstance(ctx_value, (t.ConfigMap, t.Dict)):
             payload = ctx_value.root
-        elif isinstance(ctx_value, BaseModel):
+        elif u.is_pydantic_model(ctx_value):
             payload = ctx_value.model_dump()
         elif u.is_mapping(ctx_value):
             payload = ctx_value
@@ -110,7 +115,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                     normalized[key] = None
                     continue
                 normalized_value = u.normalize_to_container(value)
-                if isinstance(normalized_value, BaseModel):
+                if u.is_pydantic_model(normalized_value):
                     metadata_normalized = u.normalize_to_container(
                         u.normalize_to_metadata(normalized_value),
                     )
@@ -319,7 +324,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                     u.normalize_to_metadata(value),
                 ),
             )
-            if isinstance(value, BaseModel)
+            if u.is_pydantic_model(value)
             else value
         )
         if not isinstance(
@@ -409,7 +414,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             normalized_metadata_map: MutableMapping[str, t.ValueOrModel] = {}
             for k, v in metadata_dict_export.items():
                 metadata_value: t.ValueOrModel = v
-                if isinstance(v, Mapping):
+                if u.is_mapping(v):
                     metadata_value = t.ConfigMap(
                         root=dict(v.items()),
                     )
@@ -620,6 +625,56 @@ class FlextContext(m.ArbitraryTypesModel, u):
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
+    _MERGEABLE_SCOPES: ClassVar[frozenset[str]] = frozenset({
+        c.SCOPE_GLOBAL,
+        c.SCOPE_USER,
+        c.SCOPE_SESSION,
+    })
+
+    @staticmethod
+    def _as_config_map(
+        source: Mapping[str, t.ValueOrModel] | t.ContainerMapping,
+        label: str,
+    ) -> t.ConfigMap | None:
+        """Try to wrap a mapping as ConfigMap, logging on failure."""
+        try:
+            return t.ConfigMap(root=dict(source.items()))
+        except (TypeError, ValueError, AttributeError) as exc:
+            FlextContext._logger.debug(
+                f"Context {label} validation failed",
+                exc_info=exc,
+            )
+            return None
+
+    def _extract_config_map(
+        self,
+        other: p.Context | t.ConfigMap | t.ContainerMapping,
+    ) -> t.ConfigMap | None:
+        """Extract a ConfigMap from any supported merge source."""
+        match other:
+            case FlextContext():
+                exported_result = other.export(as_dict=True)
+                if u.is_pydantic_model(exported_result):
+                    return None
+                return self._as_config_map(exported_result, "export payload")
+            case t.ConfigMap():
+                return other
+            case _ if isinstance(other, Mapping):
+                return self._as_config_map(other, "export payload")
+            case _:
+                return None
+
+    def _apply_scoped_merge(self, exported_map: t.ConfigMap) -> None:
+        """Merge exported scopes from another FlextContext."""
+        for scope_name, scope_payload in exported_map.items():
+            if scope_name not in self._MERGEABLE_SCOPES:
+                continue
+            if not u.is_mapping(scope_payload):
+                continue
+            scope_data = self._as_config_map(scope_payload, "scope payload")
+            if scope_data is not None:
+                self._set_in_contextvar(scope_name, scope_data)
+
     def merge(
         self,
         other: p.Context | t.ConfigMap | t.ContainerMapping,
@@ -638,53 +693,12 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return self
-        exported_map: t.ConfigMap | None = None
+        exported_map = self._extract_config_map(other)
+        if exported_map is None:
+            return self
         if isinstance(other, FlextContext):
-            exported_result = other.export(as_dict=True)
-            if not isinstance(exported_result, BaseModel):
-                try:
-                    exported_items: Mapping[str, t.ValueOrModel] = dict(
-                        exported_result.items(),
-                    )
-                    exported_map = t.ConfigMap(root=dict(exported_items))
-                except (TypeError, ValueError, AttributeError) as exc:
-                    FlextContext._logger.debug(
-                        "Context export payload validation failed",
-                        exc_info=exc,
-                    )
-        elif isinstance(other, t.ConfigMap):
-            exported_map = other
+            self._apply_scoped_merge(exported_map)
         else:
-            try:
-                mapping_root: Mapping[str, t.ValueOrModel] = dict(other.items())
-                exported_map = t.ConfigMap(root=dict(mapping_root))
-            except (TypeError, ValueError, AttributeError) as exc:
-                FlextContext._logger.debug(
-                    "Context export payload validation failed",
-                    exc_info=exc,
-                )
-        if exported_map is not None and isinstance(other, FlextContext):
-            for scope_name, scope_payload in exported_map.items():
-                if scope_name not in {
-                    c.SCOPE_GLOBAL,
-                    c.SCOPE_USER,
-                    c.SCOPE_SESSION,
-                }:
-                    continue
-                try:
-                    if isinstance(scope_payload, Mapping):
-                        scope_data = t.ConfigMap(root=dict(scope_payload.items()))
-                    else:
-                        scope_data = None
-                except (TypeError, ValueError, AttributeError) as exc:
-                    FlextContext._logger.debug(
-                        "Context scope payload validation failed",
-                        exc_info=exc,
-                    )
-                    scope_data = None
-                if scope_data is not None:
-                    self._set_in_contextvar(scope_name, scope_data)
-        elif exported_map is not None:
             self._set_in_contextvar(c.SCOPE_GLOBAL, exported_map)
         return self
 
@@ -866,7 +880,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 "Custom metadata field normalization failed",
                 exc_info=exc,
             )
-            custom_fields_dict = dict[str, t.Container]()
+            custom_fields_dict = dict[str, t.NormalizedValue]()
         result: t.MutableContainerMapping = {}
         for k, v in data.items():
             if v is None or v == {}:
@@ -875,7 +889,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 result[k] = v.isoformat()
             elif isinstance(v, (str, int, float, bool, list, dict, tuple)):
                 result[k] = v
-            elif isinstance(v, BaseModel):
+            elif u.is_pydantic_model(v):
                 result[k] = FlextContext._to_normalized(v)
             else:
                 result[k] = str(v)

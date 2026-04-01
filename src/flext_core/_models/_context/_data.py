@@ -17,14 +17,13 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import (
-    FlextModelFoundation,
-    FlextModelsEntity,
-    FlextRuntime,
-    FlextUtilitiesGuardsTypeCore,
-    c,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core.constants import c
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextModelsContextData:
@@ -37,12 +36,12 @@ class FlextModelsContextData:
         if v is None:
             out: t.ContainerMapping = {}
             return out
-        if isinstance(v, Mapping):
+        if FlextUtilitiesGuardsTypeCore.is_mapping(v):
             validated = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 v,
             )
             return dict(validated)
-        if isinstance(v, BaseModel):
+        if FlextUtilitiesGuardsTypeModel.is_pydantic_model(v):
             return v.model_dump()
         msg = f"Cannot normalize {type(v)} to Mapping"
         raise ValueError(msg)
@@ -55,7 +54,7 @@ class FlextModelsContextData:
             return None
         if isinstance(v, FlextModelFoundation.Metadata):
             return v
-        if isinstance(v, Mapping):
+        if FlextUtilitiesGuardsTypeCore.is_mapping(v):
             return FlextModelFoundation.Metadata.model_validate({
                 c.FIELD_ATTRIBUTES: FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     v,
@@ -84,7 +83,7 @@ class FlextModelsContextData:
                     for key, value in v.attributes.items()
                 }
                 normalized_mapping = normalized_metadata
-            elif isinstance(v, BaseModel):
+            elif FlextUtilitiesGuardsTypeModel.is_pydantic_model(v):
                 dump_result = v.model_dump()
                 normalized_mapping = {
                     str(k): FlextRuntime.normalize_to_container(dv)
@@ -159,13 +158,13 @@ class FlextModelsContextData:
                     str(key): cls.normalize_to_serializable_value(item_value)
                     for key, item_value in normalized.root.items()
                 }
-            if isinstance(normalized, BaseModel):
+            if FlextUtilitiesGuardsTypeModel.is_pydantic_model(normalized):
                 dumped_model = normalized.model_dump()
                 return {
                     str(key): cls.normalize_to_serializable_value(item_value)
                     for key, item_value in dumped_model.items()
                 }
-            if isinstance(normalized, Mapping):
+            if FlextUtilitiesGuardsTypeCore.is_mapping(normalized):
                 normalized_map = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     normalized,
                 )
@@ -188,7 +187,7 @@ class FlextModelsContextData:
                 return ""
             if isinstance(val, t.SCALAR_TYPES):
                 return val
-            if isinstance(val, BaseModel):
+            if FlextUtilitiesGuardsTypeModel.is_pydantic_model(val):
                 return val
             if FlextRuntime.is_dict_like(val) or FlextRuntime.is_list_like(val):
                 return FlextRuntime.normalize_to_container(val)

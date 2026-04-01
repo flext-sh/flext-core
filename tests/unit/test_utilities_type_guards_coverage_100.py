@@ -137,7 +137,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         if scenario.value == "has_items":
             test_value: t.StrMapping = {"key": "value"}
         else:
-            test_value = {}
+            test_value = dict[str, str]()
         result = u.is_dict_non_empty(test_value)
         tm.that(result, eq=scenario.expected_result)
 

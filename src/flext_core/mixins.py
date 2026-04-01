@@ -12,11 +12,9 @@ from __future__ import annotations
 
 import threading
 from collections.abc import (
-    Callable,
     Generator,
     Mapping,
     MutableMapping,
-    MutableSequence,
     Sequence,
 )
 from contextlib import contextmanager
@@ -24,29 +22,22 @@ from types import ModuleType
 from typing import (
     Annotated,
     ClassVar,
-    TypeIs,
     Unpack,
     override,
 )
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
+from pydantic import ConfigDict, Field, PrivateAttr, ValidationError
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    FlextLogger,
-    FlextSettings,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
-
-
-def _new_operation_stats_map() -> MutableMapping[str, t.ConfigMap]:
-    return {}
+from flext_core.constants import c
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
+from flext_core.loggings import FlextLogger
+from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.settings import FlextSettings
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextMixins(m.ArbitraryTypesModel, u):
@@ -56,11 +47,19 @@ class FlextMixins(m.ArbitraryTypesModel, u):
     context management so dispatcher-executed services can stay focused on
     domain work while still emitting `r` outcomes and metrics.
 
+    All utility logic delegates to canonical facades:
+    - Constants: c.DEBUG_CONTEXT_KEYS, c.ERROR_CONTEXT_KEYS
+    - Utilities: u.to_int, u.to_float, u.normalize_log_payload,
+      u.is_settings_type, u.filter_registerable_services,
+      u.resolve_wire_targets, u.validate_with_result
+    - Protocol checks: u.is_handler, u.is_service, u.is_command_bus,
+      u.validate_processor_protocol, u.validate_named_protocol
+
     """
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _operation_stats: MutableMapping[str, t.ConfigMap] = PrivateAttr(
-        default_factory=_new_operation_stats_map,
+        default_factory=dict,
     )
 
     _logger_cache: ClassVar[MutableMapping[str, FlextLogger]] = {}
@@ -68,17 +67,11 @@ class FlextMixins(m.ArbitraryTypesModel, u):
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
-        # pyrefly: ignore [unexpected-keyword]
         super().__init_subclass__(**kwargs)
 
     @property
     def config(self) -> p.Settings:
-        """Return the runtime configuration associated with this component.
-
-        Returns p.Settings protocol type for type safety. In practice, this is
-        FlextSettings - callers needing concrete attributes can use type
-        identity or MRO checks for type narrowing.
-        """
+        """Return the runtime configuration associated with this component."""
         return self._get_runtime().config
 
     @property
@@ -148,19 +141,21 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         FlextMixins._propagate_context(operation_name)
         if operation_data:
-            debug_keys = {"schema", "params"}
-            error_keys = {"stack_trace", "exception", "traceback", "error_details"}
             debug_data: t.ConfigMap = t.ConfigMap(
-                root={k: v for k, v in operation_data.items() if k in debug_keys},
+                root={
+                    k: v for k, v in operation_data.items() if k in c.DEBUG_CONTEXT_KEYS
+                },
             )
             error_data: t.ConfigMap = t.ConfigMap(
-                root={k: v for k, v in operation_data.items() if k in error_keys},
+                root={
+                    k: v for k, v in operation_data.items() if k in c.ERROR_CONTEXT_KEYS
+                },
             )
             normal_data: t.ConfigMap = t.ConfigMap(
                 root={
                     k: v
                     for k, v in operation_data.items()
-                    if k not in debug_keys and k not in error_keys
+                    if k not in c.DEBUG_CONTEXT_KEYS and k not in c.ERROR_CONTEXT_KEYS
                 },
             )
             all_context_data: t.ConfigMap = normal_data.model_copy()
@@ -188,19 +183,6 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                     **normal_metadata_context,
                 )
 
-    @staticmethod
-    def _normalize_log_payload(
-        payload: Mapping[str, t.ValueOrModel],
-    ) -> t.FlatContainerMapping:
-        normalized: t.MutableFlatContainerMapping = {}
-        for key, value in payload.items():
-            atomic = u.normalize_to_container(value)
-            if isinstance(atomic, BaseModel):
-                normalized[str(key)] = str(atomic.model_dump())
-            else:
-                normalized[str(key)] = atomic
-        return normalized
-
     @contextmanager
     def track(self, operation_name: str) -> Generator[Mapping[str, t.ValueOrModel]]:
         """Track operation performance with timing and automatic context cleanup."""
@@ -210,32 +192,23 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
             ),
         )
-        op_count_raw = stats.get("operation_count", 0)
-        stats["operation_count"] = (
-            int(op_count_raw) if isinstance(op_count_raw, (int, float, str)) else 0
-        ) + 1
+        stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
                 metrics_map: MutableMapping[str, t.ValueOrModel] = (
                     {str(k): u.normalize_to_container(v) for k, v in metrics.items()}
-                    if hasattr(metrics, "items")
+                    if isinstance(metrics, (Mapping, t.ConfigMap))
                     else {}
                 )
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
                     yield metrics_map
                     if "duration_ms" in metrics_map:
-                        total_dur_raw = stats.get("total_duration_ms", 0.0)
-                        dur_ms_raw = metrics_map.get("duration_ms", 0.0)
-                        total_dur = (
-                            float(total_dur_raw)
-                            if isinstance(total_dur_raw, (int, float, str))
-                            else 0.0
+                        total_dur = u.to_float(
+                            stats.get("total_duration_ms", 0.0),
                         )
-                        dur_ms = (
-                            float(dur_ms_raw)
-                            if isinstance(dur_ms_raw, (int, float, str))
-                            else 0.0
+                        dur_ms = u.to_float(
+                            metrics_map.get("duration_ms", 0.0),
                         )
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except (
@@ -245,33 +218,22 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                     AttributeError,
                     RuntimeError,
                 ) as exc:
-                    log_debug = getattr(self.logger, "debug", None)
-                    if callable(log_debug):
-                        log_debug(
-                            "Tracked operation raised expected exception",
-                            exc_info=exc,
-                        )
-                    err_raw = stats.get("error_count", 0)
-                    stats["error_count"] = (
-                        int(err_raw) if isinstance(err_raw, (int, float, str)) else 0
-                    ) + 1
+                    self.logger.debug(
+                        "Tracked operation raised expected exception",
+                        exc_info=exc,
+                    )
+                    stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
                     raise
                 finally:
-                    op_raw = stats.get("operation_count", 1)
-                    err_raw2 = stats.get("error_count", 0)
-                    op_count = (
-                        int(op_raw) if isinstance(op_raw, (int, float, str)) else 1
+                    op_count = u.to_int(
+                        stats.get("operation_count", 1),
+                        default=1,
                     )
-                    err_count = (
-                        int(err_raw2) if isinstance(err_raw2, (int, float, str)) else 0
-                    )
+                    err_count = u.to_int(stats.get("error_count", 0))
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
-                        total_raw = stats.get("total_duration_ms", 0.0)
-                        total_dur_final = (
-                            float(total_raw)
-                            if isinstance(total_raw, (int, float, str))
-                            else 0.0
+                        total_dur_final = u.to_float(
+                            stats.get("total_duration_ms", 0.0),
                         )
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     metrics_map["error_count"] = stats["error_count"]
@@ -294,7 +256,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         self.logger.info(
             "Service initialized",
             return_result=False,
-            **FlextMixins._normalize_log_payload(service_context.root),
+            **u.normalize_log_payload(service_context.root),
         )
 
     def _get_runtime(self) -> m.ServiceRuntime:
@@ -320,17 +282,19 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 options.config_overrides,
                 options.context,
             )
-            bootstrap_services = FlextMixins._filter_registerable_services(options)
+            bootstrap_services = u.filter_registerable_services(options.services)
             bootstrap_factories = options.factories
             bootstrap_resources = options.resources
             bootstrap_wire_modules, bootstrap_wire_packages, bootstrap_wire_classes = (
-                FlextMixins._resolve_wire_targets(options)
+                u.resolve_wire_targets(
+                    options.wire_modules,
+                    options.wire_packages,
+                    options.wire_classes,
+                )
             )
 
-        config_cls_typed: type[FlextSettings] = (
-            config_type_raw
-            if FlextMixins._is_flext_settings_type(config_type_raw)
-            else FlextSettings
+        config_cls_typed: type[p.Settings] = (
+            config_type_raw if u.is_settings_type(config_type_raw) else FlextSettings
         )
         if overrides is None:
             overrides = getattr(self, "config_overrides", None)
@@ -385,7 +349,10 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 case m.RuntimeBootstrapOptions():
                     return options_raw
                 case dict() | Mapping():
-                    return m.RuntimeBootstrapOptions.model_validate(options_raw)
+                    try:
+                        return m.RuntimeBootstrapOptions.model_validate(options_raw)
+                    except ValidationError:
+                        return None
                 case _:
                     try:
                         return m.RuntimeBootstrapOptions.model_validate(
@@ -400,61 +367,6 @@ class FlextMixins(m.ArbitraryTypesModel, u):
                 exc_info=exc,
             )
             return None
-
-    @staticmethod
-    def _filter_registerable_services(
-        options: m.RuntimeBootstrapOptions,
-    ) -> Mapping[str, t.RegisterableService] | None:
-        """Extract type-checked registerable services from bootstrap options."""
-        if options.services is None:
-            return None
-        return {
-            str(key): value
-            for key, value in options.services.items()
-            if u.is_registerable_service(value)
-        }
-
-    @staticmethod
-    def _resolve_wire_targets(
-        options: m.RuntimeBootstrapOptions,
-    ) -> tuple[
-        Sequence[ModuleType] | None,
-        t.StrSequence | None,
-        Sequence[type] | None,
-    ]:
-        """Separate wire_modules into actual modules vs package name strings."""
-        wire_modules: Sequence[ModuleType] | None = None
-        wire_packages: t.StrSequence | None = None
-        wire_classes: Sequence[type] | None = None
-
-        if options.wire_modules is not None:
-            modules_list: MutableSequence[ModuleType] = []
-            packages_list: MutableSequence[str] = []
-            for item in options.wire_modules:
-                match item:
-                    case str():
-                        packages_list.append(item)
-                    case _:
-                        modules_list.append(item)
-            wire_modules = modules_list
-            if packages_list:
-                wire_packages = packages_list
-
-        if options.wire_packages is not None:
-            current = list(wire_packages or [])
-            current.extend(options.wire_packages)
-            wire_packages = current
-
-        wire_classes = options.wire_classes
-        return wire_modules, wire_packages, wire_classes
-
-    @staticmethod
-    def _is_flext_settings_type(
-        candidate: type | t.ValueOrModel,
-    ) -> TypeIs[type[FlextSettings]]:
-        return isinstance(candidate, type) and callable(
-            getattr(candidate, "get_global", None),
-        )
 
     def _init_service(self, service_name: str | None = None) -> None:
         """Initialize service with automatic container registration."""
@@ -483,7 +395,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         config_typed: t.ConfigMap = t.ConfigMap(root=dict(config.items()))
         self.logger.info(
             message,
-            **FlextMixins._normalize_log_payload(config_typed.root),
+            **u.normalize_log_payload(config_typed.root),
         )
 
     def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
@@ -508,7 +420,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         )
         _ = log_method(
             message,
-            **FlextMixins._normalize_log_payload(context_data.root),
+            **u.normalize_log_payload(context_data.root),
         )
 
     def _register_in_container(self, service_name: str) -> r[bool]:
@@ -524,230 +436,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
             return r[bool].fail(str(e))
 
-    class CQRS:
-        """CQRS utilities for handlers."""
-
-        class MetricsTracker:
-            """Tracks handler execution metrics."""
-
-            _metrics: t.MutableConfigurationMapping
-
-            def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-                """Initialize metrics tracker with empty metrics store."""
-                super().__init__(*args, **kwargs)
-                self._metrics: t.MutableConfigurationMapping = {}
-
-            def get_metrics(self) -> r[t.ConfigMap]:
-                """Return all recorded metrics as a ConfigMap result."""
-                if not hasattr(self, "_metrics"):
-                    self._metrics: t.MutableConfigurationMapping = {}
-                return r[t.ConfigMap].ok(t.ConfigMap(root=dict(self._metrics.items())))
-
-            def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
-                """Record a named metric value in the tracker."""
-                if not hasattr(self, "_metrics"):
-                    self._metrics: t.MutableConfigurationMapping = {}
-                self._metrics[name] = value
-                return r[bool].ok(value=True)
-
-        class ContextStack:
-            """Manages execution context stack."""
-
-            _stack: MutableSequence[m.ExecutionContext | t.ConfigMap | t.ScalarMapping]
-
-            def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
-                """Initialize context stack with empty stack list."""
-                super().__init__(*args, **kwargs)
-                self._stack: MutableSequence[
-                    m.ExecutionContext | t.ConfigMap | t.ScalarMapping
-                ] = []
-
-            def current_context(self) -> m.ExecutionContext | None:
-                """Return the current top-of-stack execution context, or None."""
-                if not hasattr(self, "_stack"):
-                    self._stack: MutableSequence[
-                        m.ExecutionContext | t.ConfigMap | t.ScalarMapping
-                    ] = []
-                if self._stack:
-                    top_item = self._stack[-1]
-                    match top_item:
-                        case m.ExecutionContext() as execution_ctx:
-                            return execution_ctx
-                        case _:
-                            return None
-                return None
-
-            def pop_context(self) -> r[t.ScalarMapping]:
-                """Pop and return the top context from the stack as a scalar dict."""
-                if not hasattr(self, "_stack"):
-                    self._stack: MutableSequence[
-                        m.ExecutionContext | t.ConfigMap | t.ScalarMapping
-                    ] = []
-                if self._stack:
-                    popped = self._stack.pop()
-                    if isinstance(popped, m.ExecutionContext):
-                        return r[t.ScalarMapping].ok({
-                            "handler_name": popped.handler_name,
-                            c.FIELD_HANDLER_MODE: popped.handler_mode,
-                        })
-                    if isinstance(popped, t.ConfigMap):
-                        return r[t.ScalarMapping].ok({
-                            str(ck): cv
-                            for ck, cv in popped.root.items()
-                            if u.is_scalar(cv)
-                        })
-                    return r[t.ScalarMapping].ok(popped)
-                return r[t.ScalarMapping].ok({})
-
-            def push_context(
-                self,
-                ctx: m.ExecutionContext | t.ScalarMapping,
-            ) -> r[bool]:
-                """Push an execution context or mapping onto the context stack."""
-                if not hasattr(self, "_stack"):
-                    self._stack: MutableSequence[
-                        m.ExecutionContext | t.ConfigMap | t.ScalarMapping
-                    ] = []
-                if isinstance(ctx, m.ExecutionContext):
-                    self._stack.append(ctx)
-                    return r[bool].ok(value=True)
-                ctx_mapping: t.ScalarMapping = {str(k): v for k, v in ctx.items()}
-                handler_name_raw: t.Scalar | None = ctx_mapping.get(
-                    "handler_name",
-                    c.IDENTIFIER_UNKNOWN,
-                )
-                handler_name: str = str(handler_name_raw)
-                handler_mode_raw: t.Scalar | None = ctx_mapping.get(
-                    c.FIELD_HANDLER_MODE,
-                    c.HandlerType.OPERATION,
-                )
-                handler_mode_str: str = str(handler_mode_raw)
-                handler_mode_literal: c.HandlerType = (
-                    c.HandlerType.COMMAND
-                    if handler_mode_str == c.HandlerType.COMMAND
-                    else c.HandlerType.QUERY
-                    if handler_mode_str == c.HandlerType.QUERY
-                    else c.HandlerType.EVENT
-                    if handler_mode_str == c.HandlerType.EVENT
-                    else c.HandlerType.SAGA
-                    if handler_mode_str == "saga"
-                    else c.HandlerType.OPERATION
-                )
-                execution_ctx = m.ExecutionContext.create_for_handler(
-                    handler_name=handler_name,
-                    handler_mode=handler_mode_literal,
-                )
-                self._stack.append(execution_ctx)
-                return r[bool].ok(value=True)
-
-    class Validation:
-        """Railway-oriented validation patterns with r composition."""
-
-        @staticmethod
-        def validate_with_result[TValidation](
-            data: TValidation,
-            validators: Sequence[Callable[[TValidation], r[bool]]],
-        ) -> r[TValidation]:
-            """Chain validators sequentially, returning first failure or data on success."""
-            current_data: TValidation = data
-            result: r[TValidation] = r[TValidation].ok(current_data)
-            for validator in validators:
-                if result.is_success:
-                    validation_result = validator(current_data)
-                    if validation_result.is_failure:
-                        base_msg = "Validation failed"
-                        error_msg = (
-                            f"{base_msg}: {validation_result.error}"
-                            if validation_result.error
-                            else f"{base_msg} (validation rule failed)"
-                        )
-                        fail_error_data: t.FlatContainerMapping | None = {}
-                        if validation_result.error_data is not None:
-                            normalized_error_data: t.MutableFlatContainerMapping = {}
-                            for key, value in validation_result.error_data.root.items():
-                                normalized = u.normalize_to_container(value)
-                                if isinstance(normalized, BaseModel):
-                                    normalized_error_data[str(key)] = str(normalized)
-                                else:
-                                    normalized_error_data[str(key)] = normalized
-                            fail_error_data = normalized_error_data
-                        return r[TValidation].fail(
-                            error_msg,
-                            error_code=validation_result.error_code,
-                            error_data=fail_error_data,
-                        )
-                    if validation_result.value is not True:
-                        return r[TValidation].fail(
-                            f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}",
-                        )
-                    result = r[TValidation].ok(current_data)
-            return result
-
-    class ProtocolValidation:
-        """Runtime protocol compliance validation utilities."""
-
-        @staticmethod
-        def is_command_bus(obj: p.Base | BaseModel) -> bool:
-            """Check if *obj* satisfies ``p.CommandBus`` structurally."""
-            return isinstance(obj, p.CommandBus)
-
-        @staticmethod
-        def is_handler(obj: p.Base | BaseModel) -> bool:
-            """Check if *obj* satisfies ``p.Handler`` structurally."""
-            return (
-                hasattr(obj, c.METHOD_HANDLE)
-                and callable(getattr(obj, c.METHOD_HANDLE, None))
-                and hasattr(obj, "validate")
-                and callable(getattr(obj, "validate", None))
-            )
-
-        @staticmethod
-        def is_service(obj: p.Base | BaseModel) -> bool:
-            """Check if *obj* satisfies ``p.Executable`` structurally."""
-            return isinstance(obj, p.Executable)
-
-        @staticmethod
-        def validate_processor_protocol(
-            obj: p.Base | BaseModel,
-        ) -> r[bool]:
-            """Validate *obj* has ``model_dump``, ``process``, and ``validate``."""
-            required_methods = ["model_dump", "process", "validate"]
-            for method_name in required_methods:
-                if not hasattr(obj, method_name):
-                    methods_str = ", ".join(required_methods)
-                    error_msg = f"Processor {obj.__class__.__name__} missing required method '{method_name}()'. Processors must implement: {methods_str}"
-                    return r[bool].fail(error_msg)
-                if not callable(getattr(obj, method_name, None)):
-                    return r[bool].fail(
-                        f"Processor {obj.__class__.__name__}.{method_name} is not callable",
-                    )
-            return r[bool].ok(value=True)
-
-        @staticmethod
-        def validate_protocol_compliance(
-            obj: p.Base | BaseModel,
-            protocol_name: str,
-        ) -> r[bool]:
-            """Validate *obj* compliance with named protocol via duck-typing."""
-            protocol_required_attrs: Mapping[str, t.StrSequence] = {
-                "Handler": [c.METHOD_HANDLE, "can_handle"],
-                "Service": ["execute", "get_service_info", "is_valid"],
-                "CommandBus": ["dispatch", "publish", "register_handler"],
-                "Repository": ["get_by_id", "save", "delete", "find_all"],
-                "Configurable": ["configure"],
-            }
-            if protocol_name not in protocol_required_attrs:
-                supported = ", ".join(protocol_required_attrs.keys())
-                return r[bool].fail(
-                    f"Unknown protocol: {protocol_name}. Supported: {supported}",
-                )
-            for attr in protocol_required_attrs[protocol_name]:
-                if not hasattr(obj, attr):
-                    return r[bool].fail(
-                        f"{obj.__class__.__name__} missing '{attr}' required by {protocol_name}",
-                    )
-            return r[bool].ok(value=True)
-
 
 x = FlextMixins
+
 __all__ = ["FlextMixins", "x"]

@@ -12,7 +12,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core import T, r, t
+from flext_core._typings.generics import T
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextUtilitiesResultHelpers:

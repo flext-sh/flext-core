@@ -192,11 +192,6 @@ class UtilitiesMapperCoverage100Namespace:
     class TestuMapperUtils:
         """Tests for u utils (or_, flat, agg)."""
 
-        def test_or_fallback(self) -> None:
-            """Test or_ fallback."""
-            tm.that(u.or_(None, 1, 2).value, eq=1)
-            tm.that(u.or_(None, None, default=3).value, eq=3)
-
         def test_agg(self) -> None:
             """Test agg."""
             items = [{"v": 10}, {"v": 20}]

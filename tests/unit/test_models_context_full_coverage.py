@@ -8,8 +8,8 @@ import pytest
 import structlog.contextvars
 from flext_tests import t, tm
 from pydantic import BaseModel
-import flext_core._models._context._proxy_var as _proxy_var_mod
 
+import flext_core._models._context._proxy_var as _proxy_var_mod
 from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
 from tests import m
 

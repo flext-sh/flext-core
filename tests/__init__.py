@@ -13,11 +13,27 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 if _TYPE_CHECKING:
     from flext_tests import d, e, h, r, s, x
 
+    from flext_core import FlextTypes
     from tests.base import *
     from tests.benchmark import *
     from tests.conftest import *
     from tests.constants import *
-    from tests.fixtures.namespace_validator import *
+    from tests.fixtures.namespace_validator import (
+        DEFAULT_TIMEOUT,
+        MAX_RETRIES,
+        MAX_VALUE,
+        FlextTestConstants,
+        FlextTestModels,
+        FlextTestTypes,
+        FlextTestUtilities,
+        LooseTypeAlias,
+        RandomConstants,
+        Rule0LooseItemsFixture,
+        Rule0MultipleClassesFixture,
+        Rule1LooseEnumFixture,
+        Status,
+        helper,
+    )
     from tests.helpers import *
     from tests.integration import *
     from tests.integration.patterns import *

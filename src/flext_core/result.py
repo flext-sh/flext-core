@@ -19,7 +19,9 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import U, p, t
+from flext_core._typings.generics import U
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextResult[T](BaseModel):
@@ -410,12 +412,12 @@ class FlextResult[T](BaseModel):
         return str(error)
 
     @staticmethod
-    def is_failure_result[TValue](value: object) -> TypeIs[p.Result[TValue]]:
+    def is_failure_result(value: object) -> TypeIs[p.Result[t.NormalizedValue]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, p.Result) and value.is_failure
 
     @staticmethod
-    def is_success_result[TValue](value: object) -> TypeIs[p.Result[TValue]]:
+    def is_success_result(value: object) -> TypeIs[p.Result[t.NormalizedValue]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, p.Result) and value.is_success
 
@@ -483,7 +485,7 @@ class FlextResult[T](BaseModel):
 
     def flat_map(
         self,
-        func: Callable[[T], FlextResult[U] | p.Result[U]],
+        func: Callable[[T], FlextResult[U]],
     ) -> FlextResult[U]:
         """Chain operations returning FlextResult.
 
@@ -519,7 +521,7 @@ class FlextResult[T](BaseModel):
 
     def flow_through(
         self,
-        *funcs: Callable[[T | U], FlextResult[U] | p.Result[U]],
+        *funcs: Callable[[T | U], FlextResult[U]],
     ) -> FlextResult[T] | FlextResult[U]:
         """Chain multiple operations in a pipeline.
 
@@ -602,7 +604,7 @@ class FlextResult[T](BaseModel):
 
     def lash(
         self,
-        func: Callable[[str], FlextResult[T] | p.Result[T]],
+        func: Callable[[str], FlextResult[T]],
     ) -> FlextResult[T]:
         """Apply recovery function on failure.
 
@@ -773,7 +775,7 @@ class FlextResult[T](BaseModel):
             raise RuntimeError(msg)
         return self.value
 
-    def unwrap_or[D](self, default: D) -> T | D:
+    def unwrap_or(self, default: T) -> T:
         """Return value if success, otherwise return default.
 
         Safe way to extract value without raising exceptions.

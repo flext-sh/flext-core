@@ -27,6 +27,7 @@ if _TYPE_CHECKING:
     from examples.logging_config_once_pattern import *
     from examples.models import *
     from examples.shared import *
+    from flext_core import FlextTypes
 
 _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
     ("examples._models",),

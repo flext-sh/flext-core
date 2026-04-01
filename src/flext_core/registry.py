@@ -16,18 +16,16 @@ from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
-from flext_core import (
-    FlextContainer,
-    FlextDispatcher,
-    c,
-    h,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_core.constants import c
+from flext_core.container import FlextContainer
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.handlers import FlextHandlers as h
+from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.service import FlextService as s
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextRegistry(s[bool]):
@@ -159,7 +157,7 @@ class FlextRegistry(s[bool]):
             FlextRegistry instance with auto-discovered handlers if enabled.
 
         """
-        instance = cls(dispatcher=dispatcher)
+        instance = cls.model_validate({"dispatcher": dispatcher})
         if auto_discover_handlers:
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -370,9 +368,11 @@ class FlextRegistry(s[bool]):
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
-        status_raw = getattr(handler, c.FIELD_STATUS, c.CommonStatus.ACTIVE)
+        status_raw: t.RuntimeAtomic = getattr(
+            handler, c.FIELD_STATUS, c.CommonStatus.ACTIVE
+        )
         status = self._get_status(status_raw)
-        handler_mode_raw = getattr(
+        handler_mode_raw: t.RuntimeAtomic = getattr(
             handler,
             c.FIELD_HANDLER_MODE,
             getattr(handler, "mode", c.HandlerType.COMMAND),

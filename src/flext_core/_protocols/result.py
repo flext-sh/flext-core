@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import FlextProtocolsBase, t
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core.typings import t
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsLogging
+    from flext_core._protocols.logging import FlextProtocolsLogging
 
 
 class FlextProtocolsResult:
@@ -44,10 +44,6 @@ class FlextProtocolsResult:
             _exc_tb: TracebackType | None,
         ) -> None:
             """Context manager exit."""
-            ...
-
-        def __or__(self, default: T_co) -> T_co:
-            """Return the success value or ``default``."""
             ...
 
         @property
@@ -92,14 +88,6 @@ class FlextProtocolsResult:
 
         def unwrap(self) -> T_co:
             """Unwrap success value (raises RuntimeError on failure)."""
-            ...
-
-        def unwrap_or(self, default: T_co) -> T_co:
-            """Unwrap success value or return default on failure."""
-            ...
-
-        def unwrap_or_else(self, func: Callable[[], T_co]) -> T_co:
-            """Unwrap success value or lazily compute a fallback."""
             ...
 
     @runtime_checkable

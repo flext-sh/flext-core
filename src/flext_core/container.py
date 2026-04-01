@@ -15,24 +15,22 @@ import inspect
 import sys
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from types import ModuleType
+from types import FrameType, ModuleType
 from typing import Self, TypeIs, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
 
-from flext_core import (
-    FlextConstants as c,
-    FlextContext,
-    FlextDispatcher,
-    FlextLogger,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextSettings,
-    FlextTypes as t,
-    FlextUtilities as u,
-)
+from flext_core.constants import FlextConstants as c
+from flext_core.context import FlextContext
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.loggings import FlextLogger
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
+from flext_core.settings import FlextSettings
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
 
 
 def _is_service_of_type[T](value: object, cls: type[T]) -> TypeIs[T]:
@@ -363,7 +361,7 @@ class FlextContainer(p.Container):
 
     @staticmethod
     def _resolve_caller_module(
-        create_frame: inspect.FrameType | None,
+        create_frame: FrameType | None,
     ) -> ModuleType | None:
         """Resolve the module that called create() via frame introspection."""
         if not create_frame or not create_frame.f_back:

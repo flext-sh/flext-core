@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
+    from flext_core import FlextTypes
     from flext_core._models._context import *
     from flext_core._models.base import *
     from flext_core._models.collections import *

@@ -18,7 +18,11 @@ from collections.abc import (
 from enum import StrEnum
 from typing import ClassVar, overload
 
-from flext_core import FlextUtilitiesGuardsTypeCore, T, U, m, r, t
+from flext_core._typings.generics import T, U
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.models import m
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextUtilitiesCollection:
@@ -147,19 +151,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def count(items: Sequence[T], predicate: Callable[[T], bool] | None = None) -> int:
-        """Count items, optionally matching predicate.
-
-        Args:
-            items: Sequence to count
-            predicate: Optional filter function
-
-        Returns:
-            Count of matching items
-
-        Example:
-            active_count = u.count(users, lambda u: u.is_active)
-
-        """
+        """Count items, optionally matching predicate."""
         if predicate is None:
             return len(items)
         return sum(1 for item in items if predicate(item))
@@ -474,22 +466,7 @@ class FlextUtilitiesCollection:
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
     ) -> r[Sequence[U]]:
-        """Process items with optional filtering and error handling.
-
-        Transforms items using processor, optionally filtering with predicate.
-
-        Args:
-            items: Items to process
-            processor: Function to transform each item
-            predicate: Optional filter function (applied before processor)
-            on_error: "fail" to abort on error, "skip" to skip failed items
-            filter_keys: Only include items with these keys (for dict items)
-            exclude_keys: Exclude items with these keys (for dict items)
-
-        Returns:
-            p.Result with list of processed results or error
-
-        """
+        """Process items with optional filtering; on_error="skip" to skip failures."""
         _ = filter_keys
         _ = exclude_keys
         results: MutableSequence[U] = []

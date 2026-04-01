@@ -9,14 +9,13 @@ from types import ModuleType
 from typing import ClassVar, Self, cast
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 import flext_core._utilities.discovery as _discovery_mod
-
 from flext_core import FlextContainer, FlextContext, FlextSettings, r
-from tests import m, p
+from tests import m, p, t
 
 
 class TestContainerFullCoverage:
@@ -37,7 +36,7 @@ class TestContainerFullCoverage:
             return self
 
         def model_dump(self) -> t.ScalarMapping:
-            return {}
+            return dict[str, t.Scalar]()
 
     class _ContextNoClone:
         def clone(self) -> _ContextNoClone:
@@ -59,10 +58,10 @@ class TestContainerFullCoverage:
             return False
 
         def keys(self) -> t.StrSequence:
-            return []
+            return list[str]()
 
         def values(self) -> t.ContainerList:
-            return []
+            return list[t.NormalizedValue]()
 
         def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
             return []
@@ -94,7 +93,7 @@ class TestContainerFullCoverage:
             _ = include_statistics
             _ = include_metadata
             _ = as_dict
-            return {}
+            return dict[str, t.NormalizedValue]()
 
         def get_metadata(self, key: str) -> r[t.RuntimeAtomic]:
             _ = key
@@ -307,7 +306,7 @@ class TestContainerFullCoverage:
         setattr(c._di_services, "fac", "normalized")
         setattr(c._di_resources, "res", "normalized")
         c.register_existing_providers()
-        c._config = _FalseConfig()
+        c._config = cast("p.Settings", _FalseConfig())
         c._context = None
         monkeypatch.setattr(c, "has_service", _has_service_false)
         c.register_core_services()
@@ -426,7 +425,7 @@ class TestContainerFullCoverage:
         _ = c.scoped(subproject="sub")
         tm.that(captured["config"], is_=p.Settings)
         _ = c.scoped(
-            config=_FalseConfig(),
+            config=cast("p.Settings", _FalseConfig()),
             context=FlextContext(),
         )
         tm.that(captured["context"], is_=p.Context)
@@ -523,7 +522,7 @@ class TestContainerFullCoverage:
                     "beta": _NsBeta,
                 }
 
-            c._config = _Cfg()
+            c._config = cast("p.Settings", _Cfg())
             c._global_config = m.ContainerConfig(
                 enable_singleton=True,
                 enable_factory_caching=False,
@@ -602,7 +601,7 @@ class TestContainerFullCoverage:
             ),
         )
         tm.that(scoped, is_=p.Container)
-        base._config = _FalseConfig()
+        base._config = cast("p.Settings", _FalseConfig())
         base._context = FlextContext()
         _ = base.scoped(
             config=FlextSettings(app_name="x"),
@@ -610,7 +609,7 @@ class TestContainerFullCoverage:
             factories={"fx": lambda: "fv"},
             resources={"rx": lambda: "rv"},
         )
-        base._config = _FalseConfig()
+        base._config = cast("p.Settings", _FalseConfig())
         base._context = FlextContext()
         _ = base.scoped()
 
@@ -674,7 +673,7 @@ class TestContainerFullCoverage:
                 "n1": _BaseSettings,
             }
 
-        c._config = _CfgNoMethod()
+        c._config = cast("p.Settings", _CfgNoMethod())
         c.sync_config_to_di()
 
         # --- Create real BaseSettings subclasses for n2, n3, n4 ---
@@ -705,7 +704,7 @@ class TestContainerFullCoverage:
                     "n4": _NsModel,
                 }
 
-            c._config = _CfgFallback()
+            c._config = cast("p.Settings", _CfgFallback())
             captured: MutableMapping[str, t.RegisterableService] = {}
             monkeypatch.setattr(c, "has_service", _has_service_false)
 
@@ -721,9 +720,9 @@ class TestContainerFullCoverage:
 
             monkeypatch.setattr(c, "register", _capture_register)
             c.sync_config_to_di()
-            c._config = _CfgBadNamespace()
+            c._config = cast("p.Settings", _CfgBadNamespace())
             c.sync_config_to_di()
-            c._config = _CfgGoodNamespace()
+            c._config = cast("p.Settings", _CfgGoodNamespace())
             c.sync_config_to_di()
             assert isinstance(
                 cast("Callable[[], BaseModel]", captured["config.n2"])(), BaseModel
@@ -787,9 +786,9 @@ class TestContainerFullCoverage:
                 return c
 
             monkeypatch.setattr(c, "register", _track_register)
-            c._config = _CfgFallback()
+            c._config = cast("p.Settings", _CfgFallback())
             c.sync_config_to_di()
-            c._config = _CfgBadNamespace()
+            c._config = cast("p.Settings", _CfgBadNamespace())
             c.sync_config_to_di()
             tm.that(executed, ne=[])
         finally:

@@ -81,7 +81,7 @@ def test_set_set_all_get_validation_and_error_paths(
 
     class _BadVar:
         def get(self) -> t.ContainerMapping:
-            return {}
+            return dict[str, t.NormalizedValue]()
 
         def set(self, _v: t.NormalizedValue) -> None:
             msg = "boom"

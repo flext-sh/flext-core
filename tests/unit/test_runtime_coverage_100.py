@@ -28,7 +28,7 @@ class TestRuntimeCoverage100:
 
         class BadDictLike:
             def keys(self) -> t.StrSequence:
-                return []
+                return list[str]()
 
             def items(self) -> Never:
                 msg = "items not available"
@@ -46,7 +46,7 @@ class TestRuntimeCoverage100:
 
         class BadDictLike:
             def keys(self) -> t.StrSequence:
-                return []
+                return list[str]()
 
             def items(self) -> Never:
                 msg = "items failed"
@@ -94,7 +94,7 @@ class TestRuntimeCoverage100:
 
         class NotDictLike:
             def keys(self) -> t.StrSequence:
-                return []
+                return list[str]()
 
             def get(self, key: str) -> None:
                 return None
@@ -108,10 +108,10 @@ class TestRuntimeCoverage100:
 
         class NotDictLike:
             def keys(self) -> t.StrSequence:
-                return []
+                return list[str]()
 
             def items(self) -> Sequence[tuple[str, str]]:
-                return []
+                return list[tuple[str, str]]()
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))

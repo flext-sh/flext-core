@@ -123,29 +123,8 @@ class TestUtilitiesParserFullCoverage:
         )
         tm.ok(parsed)
 
-    def test_parser_convert_and_norm_branches(self) -> None:
+    def test_parser_norm_branches(self) -> None:
         parser = u()
-        tm.that(parser.convert("10", int, 0), eq=10)
-        tm.that(parser._convert_to_int(True, default=7), eq=7)
-        parsed_float = parser._convert_to_float(1.5, default=0.0)
-        tm.that(abs(parsed_float - 1.5), lt=1e-09)
-        tm.that(parser._convert_to_str("x", default=""), eq="x")
-        tm.that(parser._convert_to_str(None, default="d"), eq="d")
-        tm.that(
-            parser._convert_to_str(
-                cast("t.NormalizedValue", self._BadStr()),
-                default="d",
-            ),
-            eq="d",
-        )
-        tm.that(parser._convert_to_bool(True, default=False), eq=True)
-        tm.that(
-            parser._convert_to_bool(
-                cast("t.NormalizedValue", self._BadConv()),
-                default=True,
-            ),
-            eq=True,
-        )
         tm.that(parser.norm_str("abc"), eq="abc")
         tm.that(parser.norm_join(["A", "B"], sep="-"), eq="A-B")
         mapping_result = parser.norm_in(
@@ -208,28 +187,6 @@ class TestUtilitiesParserFullCoverage:
         )
         failed_str = parser._parse_try_primitive("x", str, "d", None, "field: ")
         tm.fail(failed_str)
-        tm.that(
-            parser.convert("x", bool, cast("bool", cast("t.NormalizedValue", "d"))),
-            eq="d",
-        )
-        tm.that(parser._convert_to_int(5, default=7), eq=5)
-        tm.that(
-            parser._convert_to_float(
-                cast("t.NormalizedValue", "normalized"),
-                default=1.5,
-            ),
-            eq=1.5,
-        )
-        tm.that(
-            abs(
-                parser._convert_to_float(
-                    cast("t.NormalizedValue", "normalized"),
-                    default=1.5,
-                )
-                - 1.5,
-            ),
-            lt=1e-09,
-        )
         tm.that(
             parser.norm_in("a", t.ConfigMap(root={"A": "1"}), case="lower"),
             eq=True,

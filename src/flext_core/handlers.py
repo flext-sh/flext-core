@@ -17,7 +17,14 @@ from typing import ClassVar, Unpack, override
 
 from pydantic import ConfigDict
 
-from flext_core import c, e, m, p, r, t, u, x
+from flext_core.constants import c
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.mixins import FlextMixins as x
+from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -491,14 +498,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
-        exec_time_value = self._execution_context.execution_time_ms
-        try:
-            if isinstance(exec_time_value, (int, float, str)):
-                exec_time = float(exec_time_value)
-            else:
-                exec_time = 0.0
-        except (TypeError, ValueError):
-            exec_time = 0.0
+        raw_time = self._execution_context.execution_time_ms
+        exec_time = u.to_float(raw_time() if callable(raw_time) else raw_time)
         _ = self.record_metric("execution_time_ms", exec_time)
         _ = self.record_metric("success", success)
         if error is not None:

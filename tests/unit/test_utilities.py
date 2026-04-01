@@ -20,8 +20,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from typing import ClassVar, cast
+from collections.abc import Callable, Mapping, Sequence
+from typing import ClassVar
 
 import pytest
 from flext_tests import t, tm, u
@@ -239,58 +239,6 @@ class Testu(TextUtilityContract):
         else:
             assert isinstance(normalized, expected_type)
 
-    def test_cache_sort_dict_keys(self) -> None:
-        """Test dictionary key sorting."""
-        data: t.ConfigMap = t.ConfigMap(root={"z": 1, "a": 2, "m": 3})
-        result = u.sort_dict_keys(data)
-        assert result == {"a": 2, "m": 3, "z": 1}
-
-    def test_cache_generate_key(self) -> None:
-        """Test cache key generation."""
-        key1 = u.generate_cache_key("arg1", "arg2")
-        key2 = u.generate_cache_key("arg1", "arg2")
-        assert key1 == key2 and isinstance(key1, str)
-
-    def test_cache_generate_key_with_kwargs(self) -> None:
-        """Test cache key generation with kwargs."""
-        key = u.generate_cache_key("test", foo="bar", num=42)
-        assert isinstance(key, str) and key
-
-    def test_cache_clear_object_cache(self) -> None:
-        """Test clearing t.NormalizedValue cache."""
-        cache_data: t.ConfigMap = t.ConfigMap(root={"test": "data"})
-        result = u.clear_object_cache(cache_data)
-        _ = u.Tests.Result.assert_success(result)
-
-    @pytest.mark.parametrize(("has_cache", "expected"), [(True, True), (False, False)])
-    def test_cache_has_attributes(self, has_cache: bool, expected: bool) -> None:
-        """Test detecting cache attributes."""
-        if has_cache:
-
-            class TestWithCache:
-                _cache: ClassVar[t.ConfigMap] = t.ConfigMap(root={})
-
-            cache_obj = TestWithCache()
-            result = u.has_cache_attributes(
-                cast("t.NormalizedValue", cache_obj),
-            )
-            assert result is expected
-        else:
-
-            class TestNoCache:
-                pass
-
-            no_cache_obj = TestNoCache()
-            result = u.has_cache_attributes(
-                cast("t.NormalizedValue", no_cache_obj),
-            )
-            assert result is expected
-
-    def test_cache_sort_key(self) -> None:
-        """Test sort_key returns tuple."""
-        key = u.sort_key("test")
-        assert isinstance(key, tuple) and len(key) == 2
-
     @pytest.mark.parametrize(
         ("accepted_types", "message_type", "expected"),
         UtilityScenarios.TYPE_CHECKER_CASES,
@@ -341,21 +289,6 @@ class Testu(TextUtilityContract):
         assert u.normalize("Ab") == "Ab"
         assert u.join([]) == ""
         assert u.join(["A", "B"], case="lower") == "a b"
-
-    def test_pagination_response_string_fallbacks(self) -> None:
-        """Test build_pagination_response with string fallback values."""
-        pagination_data: Mapping[
-            str,
-            str | MutableMapping[str, t.Container] | MutableSequence[t.Container],
-        ] = {
-            "data": "fallback-data",
-            "pagination": "fallback-pagination",
-        }
-        response = u.build_pagination_response(pagination_data, message="ok")
-        assert response.is_success
-        value = response.value
-        assert value["data"] == "fallback-data"
-        assert value["pagination"] == "fallback-pagination"
 
     @given(st.text())
     def test_hypothesis_generate_always_non_empty(self, _value: str) -> None:

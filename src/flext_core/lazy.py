@@ -108,6 +108,15 @@ def lazy_getattr(
         raise AttributeError(msg)
 
     if isinstance(entry, str):
+        direct_child_module_path = f"{module_name}.{name}"
+        if direct_child_module_path != entry:
+            try:
+                direct_child_module = _load_module(direct_child_module_path)
+            except ModuleNotFoundError:
+                direct_child_module = None
+            if direct_child_module is not None:
+                module_globals[name] = direct_child_module
+                return direct_child_module
         module_path = entry
         attr_name = name
     else:
@@ -122,6 +131,10 @@ def lazy_getattr(
     try:
         value: LazyExport = getattr(module, attr_name)
     except AttributeError:
+        module_basename = module_path.rsplit(".", maxsplit=1)[-1]
+        if isinstance(entry, str) and module_basename == name:
+            module_globals[name] = module
+            return module
         msg = f"module {module_path!r} has no attribute {attr_name!r}"
         raise AttributeError(msg) from None
     module_globals[name] = value
@@ -167,7 +180,6 @@ def _load_child_lazy_imports(module_path: str) -> LazyImportMap:
     if child_lazy_imports is None or not isinstance(child_lazy_imports, Mapping):
         msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
         raise AttributeError(msg)
-
     _CHILD_LAZY_IMPORTS_CACHE[module_path] = child_lazy_imports
     return child_lazy_imports
 
@@ -176,13 +188,24 @@ def merge_lazy_imports(
     child_module_paths: Sequence[str],
     local_lazy_imports: LazyImportMap,
 ) -> dict[str, LazyImportEntry]:
-    """Merge child package lazy maps with local entries using cached children."""
+    """Merge child package lazy maps with local entries using cached children.
+
+    Lowercase/module-style names keep first-child precedence to avoid submodule
+    shadowing. CamelCase/public export names keep last-child precedence so later
+    packages can intentionally override earlier class exports. Local module
+    entries still override merged child entries explicitly.
+    """
     child_paths_key = tuple(child_module_paths)
-    cached_children = _CHILD_MERGE_CACHE.get(child_paths_key)
+    cached_children: dict[str, LazyImportEntry] | None = _CHILD_MERGE_CACHE.get(
+        child_paths_key
+    )
     if cached_children is None:
         cached_children = {}
         for child_module_path in child_paths_key:
-            cached_children.update(_load_child_lazy_imports(child_module_path))
+            for name, entry in _load_child_lazy_imports(child_module_path).items():
+                if name in cached_children and name.lower() == name:
+                    continue
+                cached_children[name] = entry
         _CHILD_MERGE_CACHE[child_paths_key] = cached_children
 
     merged_lazy_imports = dict(cached_children)

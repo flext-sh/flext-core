@@ -24,16 +24,14 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings
 
-from flext_core import (
-    FlextModelFoundation,
-    FlextModelsCollections,
-    FlextModelsExceptionParams,
-    FlextRuntime,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.exception_params import FlextModelsExceptionParams
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextModelsConfig:

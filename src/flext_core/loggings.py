@@ -26,10 +26,13 @@ from contextlib import suppress
 from pathlib import Path
 from typing import ClassVar, Self, override
 
-from pydantic import BaseModel
 from structlog.typing import Context
 
-from flext_core import c, p, r, t, u
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextLogger(u, p.Logger):
@@ -507,7 +510,7 @@ class FlextLogger(u, p.Logger):
             return ""
         if u.is_scalar(value) or isinstance(value, Path):
             return value
-        if isinstance(value, BaseModel):
+        if u.is_pydantic_model(value):
             return value.model_dump_json()
         normalized = u.normalize_to_container(value)
         if u.is_scalar(normalized) or isinstance(normalized, Path):
@@ -926,7 +929,7 @@ class FlextLogger(u, p.Logger):
             status = "success" if is_success else "failed"
             context: t.ConfigMap = t.ConfigMap(
                 root={
-                    "duration_seconds": elapsed,
+                    c.METADATA_KEY_DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,
                     c.FIELD_STATUS: status,
                 },

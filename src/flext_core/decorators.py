@@ -22,21 +22,17 @@ from typing import Literal, NoReturn, Protocol, TypeIs, overload
 
 from pydantic import BaseModel
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    FlextLogger,
-    P,
-    R,
-    T,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core._typings.generics import P, R, T
+from flext_core.constants import c
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.loggings import FlextLogger
+from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextDecorators:
@@ -49,7 +45,6 @@ class FlextDecorators:
     """
 
     @staticmethod
-    # pyrefly: ignore [bad-specialization]
     def deprecated(message: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to mark functions/variables as deprecated.
 
@@ -64,7 +59,6 @@ class FlextDecorators:
 
         """
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             """Apply deprecation warning to callable."""
 
@@ -79,7 +73,6 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    # pyrefly: ignore [bad-specialization]
     def inject(**dependencies: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically inject dependencies from FlextContainer.
 
@@ -96,7 +89,6 @@ class FlextDecorators:
 
         """
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
             @wraps(func)
@@ -118,7 +110,6 @@ class FlextDecorators:
         operation_name: str | None = None,
         *,
         track_perf: bool = False,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically log operation execution with structured logging.
 
@@ -135,7 +126,6 @@ class FlextDecorators:
 
         """
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
             @wraps(func)
@@ -208,7 +198,6 @@ class FlextDecorators:
     @staticmethod
     def railway(
         error_code: str | None = None,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
         """Decorator to automatically wrap function in railway pattern.
 
@@ -224,7 +213,6 @@ class FlextDecorators:
 
         """
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, T]) -> Callable[P, r[T]]:
 
             @wraps(func)
@@ -254,7 +242,6 @@ class FlextDecorators:
         delay_seconds: float | None = None,
         backoff_strategy: str | None = None,
         error_code: str | None = None,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically retry failed operations with exponential backoff.
 
@@ -289,19 +276,18 @@ class FlextDecorators:
             else c.DEFAULT_BACKOFF_STRATEGY
         )
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(tuple(args), func)
-                retry_config = m.RetryConfiguration(
-                    max_retries=attempts,
-                    initial_delay_seconds=delay,
-                    exponential_backoff=strategy == c.DEFAULT_BACKOFF_STRATEGY,
-                    retry_on_exceptions=[],
-                    retry_on_status_codes=[],
-                )
+                retry_config = m.RetryConfiguration.model_validate({
+                    "max_retries": attempts,
+                    "initial_delay_seconds": delay,
+                    "exponential_backoff": strategy == c.DEFAULT_BACKOFF_STRATEGY,
+                    "retry_on_exceptions": [],
+                    "retry_on_status_codes": [],
+                })
                 try:
                     retry_args = FlextDecorators._normalize_retry_args(args)
                     retry_kwargs = FlextDecorators._normalize_retry_kwargs(kwargs)
@@ -603,7 +589,7 @@ class FlextDecorators:
         if track_perf:
             duration = time.perf_counter() - start_time
             extra["duration_ms"] = duration * c.DEFAULT_SIZE
-            extra["duration_seconds"] = duration
+            extra[c.METADATA_KEY_DURATION_SECONDS] = duration
         logger.debug("%s_completed", op_name, **extra)
 
     @staticmethod
@@ -625,10 +611,10 @@ class FlextDecorators:
             "operation": op_name,
         }
         if correlation_id is not None:
-            kw["correlation_id"] = correlation_id
+            kw[c.KEY_CORRELATION_ID] = correlation_id
         if track_perf:
             kw["duration_ms"] = tracked_duration * c.DEFAULT_SIZE
-            kw["duration_seconds"] = tracked_duration
+            kw[c.METADATA_KEY_DURATION_SECONDS] = tracked_duration
         return kw
 
     @staticmethod
@@ -698,7 +684,6 @@ class FlextDecorators:
         return None
 
     @staticmethod
-    # pyrefly: ignore [bad-specialization]
     def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> p.Logger:
         """Resolve logger from first argument or create module logger.
 
@@ -710,8 +695,8 @@ class FlextDecorators:
         if isinstance(first_arg, p.Logger):
             return first_arg
         if (
-            first_arg is not None
-            and isinstance(first_arg, BaseModel)
+            isinstance(first_arg, BaseModel)
+            and u.is_pydantic_model(first_arg)
             and FlextDecorators._has_flext_logger(first_arg)
         ):
             return first_arg.logger
@@ -726,7 +711,6 @@ class FlextDecorators:
         track_perf: bool = True,
         use_railway: Literal[False] = False,
         error_code: str | None = None,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
     @overload
@@ -738,7 +722,6 @@ class FlextDecorators:
         track_perf: bool = True,
         use_railway: Literal[True],
         error_code: str | None = None,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
 
     @staticmethod
@@ -749,7 +732,6 @@ class FlextDecorators:
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, r[R]]]:
         """Combined decorator applying multiple automation patterns at once.
 
@@ -770,7 +752,7 @@ class FlextDecorators:
 
         """
         if use_railway:
-            # pyrefly: ignore [bad-specialization]
+
             def railway_decorator(func: Callable[P, R]) -> Callable[P, r[R]]:
                 result = FlextDecorators.railway(error_code=error_code)(func)
                 if inject_deps:
@@ -782,7 +764,6 @@ class FlextDecorators:
 
             return railway_decorator
 
-        # pyrefly: ignore [bad-specialization]
         def standard_decorator(func: Callable[P, R]) -> Callable[P, R]:
             result = func
             if inject_deps:
@@ -828,7 +809,6 @@ class FlextDecorators:
     def timeout(
         timeout_seconds: float | None = None,
         error_code: str | None = None,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
@@ -851,7 +831,6 @@ class FlextDecorators:
             else c.DEFAULT_TIMEOUT_SECONDS
         )
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
             @wraps(func)
@@ -897,7 +876,6 @@ class FlextDecorators:
         operation_name: str | None = None,
         *,
         track_correlation: bool = True,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to track operation execution with u.Integration.
 
@@ -915,7 +893,6 @@ class FlextDecorators:
 
         """
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
             @wraps(func)
@@ -953,7 +930,6 @@ class FlextDecorators:
     @staticmethod
     def with_context(
         **context_vars: t.Primitives | None,
-        # pyrefly: ignore [bad-specialization]
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to manage context lifecycle for an operation.
 
@@ -969,7 +945,6 @@ class FlextDecorators:
 
         """
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
             @wraps(func)
@@ -1011,7 +986,6 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    # pyrefly: ignore [bad-specialization]
     def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to ensure correlation ID exists for operation tracking.
 
@@ -1024,7 +998,6 @@ class FlextDecorators:
 
         """
 
-        # pyrefly: ignore [bad-specialization]
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
             @wraps(func)

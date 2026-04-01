@@ -103,7 +103,7 @@ def mock_external_service() -> FunctionalExternalService:
 @pytest.fixture
 def sample_data() -> t.ContainerMapping:
     """Provide sample test data for integration tests."""
-    return {
+    result: t.ContainerMapping = {
         "string": "test_value",
         "integer": 42,
         "float": math.pi,
@@ -112,6 +112,7 @@ def sample_data() -> t.ContainerMapping:
         "list": ["item1", "item2"],
         "dict": {"key": "value"},
     }
+    return result
 
 
 @pytest.fixture

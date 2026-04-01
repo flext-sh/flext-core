@@ -269,7 +269,7 @@ class TestUtils:
             success: bool = True,
             value: str | None = None,
             error: str = "Test error",
-        ) -> FlextTestResult[str]:
+        ) -> r[str]:
             """Create test service result fixture."""
             if success:
                 resolved_value = str(value) if value is not None else "test_value"

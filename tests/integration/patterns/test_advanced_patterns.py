@@ -49,9 +49,9 @@ class TestAdvancedPatterns:
             """Initialize givenwhenthenbuilder:."""
             super().__init__()
             self.name = name
-            self._given: t.MutableContainerMapping = {}
-            self._when: t.MutableContainerMapping = {}
-            self._then: t.MutableContainerMapping = {}
+            self._given: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self._when: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self._then: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
             self._tags: MutableSequence[str] = []
             self._priority = "normal"
 
@@ -182,8 +182,10 @@ class TestAdvancedPatterns:
         def __init__(self) -> None:
             """Initialize flexttestbuilder:."""
             super().__init__()
-            self._data: t.MutableContainerMapping = {}
-            self._validation_rules: t.MutableContainerMapping = {}
+            self._data: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
+            self._validation_rules: t.MutableContainerMapping = dict[
+                str, t.NormalizedValue
+            ]()
 
         def with_id(self, id_: str) -> TestAdvancedPatterns.FlextTestBuilder:
             """with_id method.

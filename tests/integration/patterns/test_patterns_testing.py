@@ -20,13 +20,15 @@ from collections.abc import (
 from contextlib import AbstractContextManager as ContextManager, contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import TypeIs
+from typing import ParamSpec, TypeIs, TypeVar
 
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from flext_core import P, R
 from tests import t, u
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 type FixtureCaseDict = t.ContainerMapping
 type FixtureDataDict = t.ContainerMapping
@@ -54,7 +56,7 @@ class TestPatternsTesting:
         @staticmethod
         def to_string_list(value: t.FlatContainerList | None) -> t.StrSequence:
             if value is None:
-                return []
+                return list[str]()
             return [str(item) for item in value]
 
         @staticmethod
@@ -68,7 +70,7 @@ class TestPatternsTesting:
         @staticmethod
         def as_object_dict(value: t.NormalizedValue) -> t.ContainerMapping:
             if not TestPatternsTesting.Helpers.is_object_mapping(value):
-                return {}
+                return dict[str, t.NormalizedValue]()
             output: t.MutableContainerMapping = {}
             for key, item in value.items():
                 output[str(key)] = item
@@ -249,7 +251,7 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._data: t.MutableContainerMapping = {}
+            self._data: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
 
         def with_id(self, id_: str) -> TestPatternsTesting.FlextTestBuilder:
             self._data["id"] = id_
@@ -405,7 +407,7 @@ class TestPatternsTesting:
             super().__init__()
             self.name = name
             self._scenarios: MutableSequence[TestPatternsTesting.MockScenario] = []
-            self._setup_data: t.MutableContainerMapping = {}
+            self._setup_data: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
             self._tags: MutableSequence[str] = []
 
         def add_scenarios(
@@ -440,7 +442,7 @@ class TestPatternsTesting:
 
         def __init__(self) -> None:
             super().__init__()
-            self._fixtures: t.MutableContainerMapping = {}
+            self._fixtures: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
             self._setups: MutableSequence[Callable[[], None]] = []
             self._teardowns: MutableSequence[Callable[[], None]] = []
 

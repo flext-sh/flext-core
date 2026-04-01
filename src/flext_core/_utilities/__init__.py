@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
+    from flext_core import FlextTypes
     from flext_core._utilities.args import *
     from flext_core._utilities.cache import *
     from flext_core._utilities.checker import *
@@ -39,7 +40,6 @@ if _TYPE_CHECKING:
     from flext_core._utilities.guards_type_protocol import *
     from flext_core._utilities.mapper import *
     from flext_core._utilities.model import *
-    from flext_core._utilities.pagination import *
     from flext_core._utilities.parser import *
     from flext_core._utilities.reliability import *
     from flext_core._utilities.result_helpers import *
@@ -66,7 +66,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "FlextUtilitiesGuardsTypeProtocol": "flext_core._utilities.guards_type_protocol",
     "FlextUtilitiesMapper": "flext_core._utilities.mapper",
     "FlextUtilitiesModel": "flext_core._utilities.model",
-    "FlextUtilitiesPagination": "flext_core._utilities.pagination",
     "FlextUtilitiesParser": "flext_core._utilities.parser",
     "FlextUtilitiesReliability": "flext_core._utilities.reliability",
     "FlextUtilitiesResultHelpers": "flext_core._utilities.result_helpers",
@@ -78,7 +77,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "configuration": "flext_core._utilities.configuration",
     "context": "flext_core._utilities.context",
     "conversion": "flext_core._utilities.conversion",
-    "deprecation": "flext_core._utilities.deprecation",
     "discovery": "flext_core._utilities.discovery",
     "domain": "flext_core._utilities.domain",
     "enum": "flext_core._utilities.enum",
@@ -92,7 +90,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
     "guards_type_protocol": "flext_core._utilities.guards_type_protocol",
     "mapper": "flext_core._utilities.mapper",
     "model": "flext_core._utilities.model",
-    "pagination": "flext_core._utilities.pagination",
     "parser": "flext_core._utilities.parser",
     "reliability": "flext_core._utilities.reliability",
     "result_helpers": "flext_core._utilities.result_helpers",

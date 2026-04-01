@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
+    from flext_core import FlextTypes
     from tests.unit._models import *
     from tests.unit._models_impl import *
     from tests.unit.conftest_infra import *
@@ -62,7 +63,6 @@ if _TYPE_CHECKING:
     from tests.unit.test_models_entity_full_coverage import *
     from tests.unit.test_models_generic_full_coverage import *
     from tests.unit.test_namespace_validator import *
-    from tests.unit.test_pagination_coverage_100 import *
     from tests.unit.test_protocols import *
     from tests.unit.test_refactor_cli_models_workflow import *
     from tests.unit.test_refactor_migrate_to_class_mro import *
@@ -121,7 +121,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "BadMapping": "tests.unit.test_utilities_mapper_full_coverage",
         "BadString": "tests.unit.test_utilities_mapper_full_coverage",
         "CacheTestModel": "tests.unit._models_impl",
-        "ClearCacheScenario": "tests.unit.test_utilities_cache_coverage_100",
         "ComplexModel": "tests.unit._models_impl",
         "ConfigModelForTest": "tests.unit._models_impl",
         "ExplodingLenList": "tests.unit.test_utilities_mapper_full_coverage",
@@ -133,11 +132,9 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "NestedModel": "tests.unit._models_impl",
         "NormalizeComponentScenario": "tests.unit.test_utilities_cache_coverage_100",
         "RuntimeCloneService": "tests.unit.test_service_additional",
-        "SORT_KEY_SCENARIOS": "tests.unit.test_utilities_cache_coverage_100",
         "SampleModel": "tests.unit._models_impl",
         "SimpleObj": "tests.unit.test_utilities_mapper_coverage_100",
         "SingletonClassForTest": "tests.unit._models_impl",
-        "SortKeyScenario": "tests.unit.test_utilities_cache_coverage_100",
         "T": "tests.unit.test_utilities_type_checker_coverage_100",
         "TMessage": "tests.unit.test_utilities_type_checker_coverage_100",
         "TestCaseMap": "tests.unit._models_impl",
@@ -166,7 +163,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "TestFlextDecorators": "tests.unit.test_decorators",
         "TestFlextHandlers": "tests.unit.test_handlers",
         "TestFlextInfraNamespaceValidator": "tests.unit.test_namespace_validator",
-        "TestFlextMixinsCQRS": "tests.unit.test_mixins",
         "TestFlextMixinsNestedClasses": "tests.unit.test_mixins",
         "TestFlextModelsCollectionsCoverage100": "tests.unit.test_collections_coverage_100",
         "TestFlextModelsContainer": "tests.unit.test_models_container",
@@ -188,7 +184,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "TestModels": "tests.unit.test_models",
         "TestModelsBaseFullCoverage": "tests.unit.test_models_base_full_coverage",
         "TestModule": "tests.unit.test_loggings_full_coverage",
-        "TestPaginationCoverage100": "tests.unit.test_pagination_coverage_100",
         "TestResultExceptionCarrying": "tests.unit.test_result_exception_carrying",
         "TestRuntimeCoverage100": "tests.unit.test_runtime_coverage_100",
         "TestService100Coverage": "tests.unit.test_service_coverage_100",
@@ -213,13 +208,8 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "TestrCoverage": "tests.unit.test_result_coverage_100",
         "TestsCore": "tests.unit.test_service",
         "Testu": "tests.unit.test_coverage_utilities",
-        "TestuCacheClearObjectCache": "tests.unit.test_utilities_cache_coverage_100",
-        "TestuCacheGenerateCacheKey": "tests.unit.test_utilities_cache_coverage_100",
-        "TestuCacheHasCacheAttributes": "tests.unit.test_utilities_cache_coverage_100",
         "TestuCacheLogger": "tests.unit.test_utilities_cache_coverage_100",
         "TestuCacheNormalizeComponent": "tests.unit.test_utilities_cache_coverage_100",
-        "TestuCacheSortDictKeys": "tests.unit.test_utilities_cache_coverage_100",
-        "TestuCacheSortKey": "tests.unit.test_utilities_cache_coverage_100",
         "TestuDomain": "tests.unit.test_utilities_domain",
         "TestuMapperAccessors": "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperAdvanced": "tests.unit.test_utilities_mapper_coverage_100",
@@ -436,7 +426,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "test_normalize_to_metadata_alias_removal_path": "tests.unit.test_runtime_full_coverage",
         "test_ok_accepts_none": "tests.unit.test_result_additional",
         "test_operation_progress_start_operation_sets_runtime_fields": "tests.unit.test_models_generic_full_coverage",
-        "test_pagination_coverage_100": "tests.unit.test_pagination_coverage_100",
         "test_protocol_and_simple_guard_helpers": "tests.unit.test_utilities_guards_full_coverage",
         "test_protocols": "tests.unit.test_protocols",
         "test_query_resolve_pagination_wrapper_and_fallback": "tests.unit.test_models_cqrs_full_coverage",

@@ -50,12 +50,10 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 from structlog.types import Processor as _StructlogProcessor
 
-from flext_core import (
-    T,
-    c,
-    p,
-    t,
-)
+from flext_core._typings.generics import T
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextRuntime:
@@ -274,7 +272,7 @@ class FlextRuntime:
             return FlextRuntime.create_instance(class_type)
 
     @staticmethod
-    def is_primitive(value: t.RuntimeData) -> TypeIs[t.Primitives]:
+    def is_primitive(value: t.GuardInput) -> TypeIs[t.Primitives]:
         """Check if value is a primitive type accepted by t.Primitives."""
         return isinstance(value, t.PRIMITIVES_TYPES)
 

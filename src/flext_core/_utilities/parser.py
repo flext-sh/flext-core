@@ -13,16 +13,14 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import TypeAliasType, overload
+from typing import TypeAliasType
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import (
-    FlextUtilitiesGuards,
-    p,
-    r,
-    t,
-)
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextUtilitiesParser:
@@ -81,49 +79,6 @@ class FlextUtilitiesParser:
         return r[str].ok(str(value))
 
     @staticmethod
-    def _convert_to_bool(value: t.NormalizedValue, *, default: bool) -> bool:
-        """Convert value to bool with fallback."""
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
-            return normalized in {"true", "1", "yes", "on"}
-        if isinstance(value, (int, float)):
-            return bool(value)
-        return default
-
-    @staticmethod
-    def _convert_to_float(value: t.NormalizedValue, *, default: float) -> float:
-        """Convert value to float with fallback."""
-        if isinstance(value, float):
-            return value
-        if isinstance(value, int | str) and (not isinstance(value, bool)):
-            return (
-                r[float].create_from_callable(lambda: float(value)).unwrap_or(default)
-            )
-        return default
-
-    @staticmethod
-    def _convert_to_int(value: t.NormalizedValue, *, default: int) -> int:
-        """Convert value to int with fallback."""
-        if isinstance(value, int) and (not isinstance(value, bool)):
-            return value
-        if isinstance(value, str):
-            return r[int].create_from_callable(lambda: int(value)).unwrap_or(default)
-        if isinstance(value, float):
-            return int(value)
-        return default
-
-    @staticmethod
-    def _convert_to_str(value: t.NormalizedValue, *, default: str) -> str:
-        """Convert value to str with fallback."""
-        if isinstance(value, str):
-            return value
-        if value is None:
-            return default
-        return r[str].create_from_callable(lambda: str(value)).unwrap_or(default)
-
-    @staticmethod
     def _is_primitive_type(target: type) -> bool:
         """Check if target is a primitive type."""
         return target in {int, float, str, bool}
@@ -147,17 +102,18 @@ class FlextUtilitiesParser:
         except (ValidationError, TypeError, ValueError) as exc:
             return r[TModel].fail(f"Model parse failed: {exc}")
 
+    _CASE_OPS: Mapping[str, Callable[[str], str]] = {
+        "lower": str.lower,
+        "upper": str.upper,
+        "title": str.title,
+    }
+
     @staticmethod
     def _parse_normalize_str(value: t.NormalizedValue, *, case: str = "lower") -> str:
         """Normalize string value (avoids circular import with u.normalize)."""
-        if not isinstance(value, str):
-            return str(value)
-        value_str: str = value
-        if case == "lower":
-            return value_str.lower()
-        if case == "upper":
-            return value_str.upper()
-        return value_str
+        value_str = value if isinstance(value, str) else str(value)
+        op = FlextUtilitiesParser._CASE_OPS.get(case)
+        return op(value_str) if op else value_str
 
     @staticmethod
     def _parse_result_error[T](result: r[T], default: str = "") -> str:
@@ -194,6 +150,34 @@ class FlextUtilitiesParser:
             )
 
     @staticmethod
+    def _find_enum_member_insensitive[T](
+        members: Mapping[str, T],
+        value_lower: str,
+    ) -> T | None:
+        """Case-insensitive lookup by member name or value."""
+        for member_name, member_value in members.items():
+            if member_name.lower() == value_lower:
+                return member_value
+            member_val = getattr(member_value, "value", None)
+            if member_val is not None and str(member_val).lower() == value_lower:
+                return member_value
+        return None
+
+    @staticmethod
+    def _find_enum_member_exact[T](
+        members: Mapping[str, T],
+        value_str: str,
+    ) -> T | None:
+        """Exact lookup by member name or value."""
+        if value_str in members:
+            return members[value_str]
+        for member_value in members.values():
+            member_val = getattr(member_value, "value", None)
+            if member_val == value_str:
+                return member_value
+        return None
+
+    @staticmethod
     def _parse_try_enum[T](
         value: t.NormalizedValue,
         target: type[T],
@@ -213,27 +197,24 @@ class FlextUtilitiesParser:
             target.__members__
         )
         value_str = str(value)
-        if case_insensitive:
-            value_lower = value_str.lower()
-            for member_name, member_value in members.items():
-                if member_name.lower() == value_lower:
-                    return r[T].ok(member_value)
-                member_val = getattr(member_value, "value", None)
-                if member_val is not None and str(member_val).lower() == value_lower:
-                    return r[T].ok(member_value)
-        else:
-            if value_str in members:
-                return r[T].ok(members[value_str])
-            for member_value in members.values():
-                member_val = getattr(member_value, "value", None)
-                if member_val == value_str:
-                    return r[T].ok(member_value)
+        match case_insensitive:
+            case True:
+                found = FlextUtilitiesParser._find_enum_member_insensitive(
+                    members,
+                    value_str.lower(),
+                )
+            case False:
+                found = FlextUtilitiesParser._find_enum_member_exact(
+                    members,
+                    value_str,
+                )
+        if found is not None:
+            return r[T].ok(found)
         target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"
-        error_msg = f"Cannot parse '{value_str}' as {target_name}"
         return FlextUtilitiesParser._parse_with_default(
             default,
             default_factory,
-            f"{field_prefix}{error_msg}",
+            f"{field_prefix}Cannot parse '{value_str}' as {target_name}",
         )
 
     @staticmethod
@@ -268,6 +249,18 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
+    def _get_primitive_coercers() -> Mapping[
+        type, Callable[[t.NormalizedValue], r[int] | r[float] | r[str] | r[bool]]
+    ]:
+        """Dispatch table for primitive type coercion."""
+        return {
+            int: FlextUtilitiesParser._coerce_to_int,
+            float: FlextUtilitiesParser._coerce_to_float,
+            str: FlextUtilitiesParser._coerce_to_str,
+            bool: FlextUtilitiesParser._coerce_to_bool,
+        }
+
+    @staticmethod
     def _parse_try_primitive(
         value: t.NormalizedValue,
         target: type,
@@ -275,67 +268,23 @@ class FlextUtilitiesParser:
         default_factory: Callable[[], t.Numeric | str | bool] | None,
         field_prefix: str,
     ) -> r[t.Primitives]:
-        """Helper: Try primitive coercion."""
-        if not FlextUtilitiesParser._is_primitive_type(target):
+        """Helper: Try primitive coercion via dispatch table."""
+        coercer = FlextUtilitiesParser._get_primitive_coercers().get(target)
+        if coercer is None:
             return r[t.Primitives].fail(
                 f"{field_prefix}Target is not primitive",
                 error_code="TARGET_NOT_PRIMITIVE",
             )
         try:
-            if target is int:
-                int_result = FlextUtilitiesParser._coerce_to_int(value)
-                if int_result.is_failure:
-                    return r[t.Primitives].fail(int_result.error)
-                int_val = int_result.value
-                return r[t.Primitives].ok(int_val)
-            if target is float:
-                float_result = FlextUtilitiesParser._coerce_to_float(value)
-                if float_result.is_failure:
-                    return r[t.Primitives].fail(float_result.error)
-                float_val = float_result.value
-                if not isinstance(float_val, float):
-                    return r[t.Primitives].fail(
-                        f"Expected float, got {type(float_val).__name__}",
-                    )
-                return r[t.Primitives].ok(float_val)
-            if target is str:
-                str_result = FlextUtilitiesParser._coerce_to_str(value)
-                if str_result.is_failure:
-                    return r[t.Primitives].fail(str_result.error)
-                str_val = str_result.value
-                return r[t.Primitives].ok(str_val)
-            if target is bool:
-                bool_result = FlextUtilitiesParser._coerce_to_bool(value)
-                if bool_result.is_failure:
-                    return r[t.Primitives].fail(bool_result.error)
-                bool_val = bool_result.value
-                return r[t.Primitives].ok(bool_val)
+            coerce_result = coercer(value)
+            if coerce_result.is_failure:
+                return r[t.Primitives].fail(coerce_result.error)
+            return r[t.Primitives].ok(coerce_result.value)
         except (ValueError, TypeError) as e:
             target_name = getattr(target, "__name__", "type")
-            if (
-                target is int
-                and isinstance(default, int)
-                and (not isinstance(default, bool))
-            ):
-                return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
-                )
-            if target is float and isinstance(default, float):
-                return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
-                )
-            if target is str and isinstance(default, str):
-                return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
-                )
-            if target is bool and isinstance(default, bool):
-                return r[t.Primitives].fail(
-                    f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
-                )
-        return r[t.Primitives].fail(
-            f"{field_prefix}Unsupported primitive target: {target.__name__}",
-            error_code="UNSUPPORTED_PRIMITIVE_TARGET",
-        )
+            return r[t.Primitives].fail(
+                f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
+            )
 
     @staticmethod
     def _parse_with_default[T](
@@ -349,97 +298,6 @@ class FlextUtilitiesParser:
         if default_factory is not None:
             return r[T].ok(default_factory())
         return r[T].fail(error_msg)
-
-    @overload
-    @staticmethod
-    def convert(
-        value: t.NormalizedValue,
-        target_type: type[bool],
-        default: bool,
-    ) -> bool: ...
-
-    @overload
-    @staticmethod
-    def convert(
-        value: t.NormalizedValue,
-        target_type: type[int],
-        default: int,
-    ) -> int: ...
-
-    @overload
-    @staticmethod
-    def convert(
-        value: t.NormalizedValue,
-        target_type: type[float],
-        default: float,
-    ) -> float: ...
-
-    @overload
-    @staticmethod
-    def convert(
-        value: t.NormalizedValue,
-        target_type: type[str],
-        default: str,
-    ) -> str: ...
-
-    @staticmethod
-    def convert(
-        value: t.NormalizedValue,
-        target_type: type[t.Numeric | str | bool],
-        default: t.Numeric | str | bool,
-    ) -> t.Numeric | str | bool:
-        """Unified type conversion with safe fallback.
-
-        Automatically handles common type conversions (int, str, float, bool) with
-        safe fallback to default value on conversion failure.
-
-        Args:
-            value: Value to convert
-            target_type: Target type (int, str, float, bool)
-            default: Default value to return on conversion failure
-
-        Returns:
-            Converted value or default
-
-        Example:
-            # Convert to int
-            result = FlextUtilitiesParser.convert("123", int, 0)
-            # → 123
-
-            # Convert to int (invalid)
-            result = FlextUtilitiesParser.convert("invalid", int, 0)
-            # → 0
-
-            # Convert to float
-            result = FlextUtilitiesParser.convert("3.14", float, 0.0)
-            # → 3.14
-
-        """
-        if (
-            target_type is int
-            and isinstance(value, int)
-            and (not isinstance(value, bool))
-        ):
-            return value
-        if target_type is float and isinstance(value, float):
-            return value
-        if target_type is str and isinstance(value, str):
-            return value
-        if target_type is bool and isinstance(value, bool):
-            return value
-        if (
-            target_type is int
-            and isinstance(default, int)
-            and (not isinstance(default, bool))
-        ):
-            return FlextUtilitiesParser._convert_to_int(value, default=default)
-        if target_type is float and isinstance(default, float):
-            return FlextUtilitiesParser._convert_to_float(value, default=default)
-        if target_type is str and isinstance(default, str):
-            return FlextUtilitiesParser._convert_to_str(value, default=default)
-        if target_type is bool and isinstance(default, bool):
-            return FlextUtilitiesParser._convert_to_bool(value, default=default)
-        return default
 
     @staticmethod
     def norm_in(
@@ -553,6 +411,30 @@ class FlextUtilitiesParser:
         return str_value
 
     @staticmethod
+    def _parse_dispatch_primitive[T](
+        value: t.NormalizedValue,
+        target: type[T],
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+        field_prefix: str,
+    ) -> r[T]:
+        """Dispatch primitive coercion with validation."""
+        prim = FlextUtilitiesParser._parse_try_primitive(
+            value,
+            target,
+            default=None,
+            default_factory=None,
+            field_prefix=field_prefix,
+        )
+        if prim.is_success:
+            return r[T].ok(TypeAdapter(target).validate_python(prim.value))
+        return FlextUtilitiesParser._parse_with_default(
+            default,
+            default_factory,
+            prim.error or f"{field_prefix}Primitive coercion failed",
+        )
+
+    @staticmethod
     def parse[T](
         value: t.NormalizedValue,
         target: type[T],
@@ -566,7 +448,7 @@ class FlextUtilitiesParser:
     ) -> r[T]:
         """Universal type parser supporting enums, models, and primitives.
 
-        Parsing order: enum → model → primitive coercion → direct type call.
+        Parsing order: enum -> model -> primitive coercion -> direct type call.
 
         Args:
             value: The value to parse.
@@ -581,66 +463,45 @@ class FlextUtilitiesParser:
         Returns:
             p.Result[T]: Ok(parsed_value) or Fail with error message.
 
-        Examples:
-            >>> result = FlextUtilitiesParser.parse("ACTIVE", Status)
-            >>> result = FlextUtilitiesParser.parse("42", int)  # Ok(42)
-            >>> result = FlextUtilitiesParser.parse(
-            ...     "invalid", int, default=c.DEFAULT_MAX_COMMAND_RETRIES
-            ... )
-
         """
-        field_prefix = f"{field_name}: " if field_name else ""
+        fp = f"{field_name}: " if field_name else ""
         if value is None:
-            if default is not None:
-                return r[T].ok(default)
-            if default_factory is not None:
-                return r[T].ok(default_factory())
-            return r[T].fail(field_prefix or "Value is None")
+            return FlextUtilitiesParser._parse_with_default(
+                default, default_factory, fp or "Value is None"
+            )
         if isinstance(value, target):
             return r[T].ok(value)
-        if issubclass(target, StrEnum):
-            return FlextUtilitiesParser._parse_try_enum(
-                value,
-                target,
-                case_insensitive=case_insensitive,
-                default=default,
-                default_factory=default_factory,
-                field_prefix=field_prefix,
-            )
-        if issubclass(target, BaseModel):
-            return FlextUtilitiesParser._parse_try_model(
-                value,
-                target,
-                field_prefix,
-                strict=strict,
-                default=default,
-                default_factory=default_factory,
-            )
-        if FlextUtilitiesParser._is_primitive_type(target):
-            primitive_result = FlextUtilitiesParser._parse_try_primitive(
-                value,
-                target,
-                default=None,
-                default_factory=None,
-                field_prefix=field_prefix,
-            )
-            if primitive_result.is_success:
-                validated_primitive = TypeAdapter(target).validate_python(
-                    primitive_result.value,
+        match target:
+            case tgt if issubclass(tgt, StrEnum):
+                return FlextUtilitiesParser._parse_try_enum(
+                    value,
+                    target,
+                    case_insensitive=case_insensitive,
+                    default=default,
+                    default_factory=default_factory,
+                    field_prefix=fp,
                 )
-                return r[T].ok(validated_primitive)
-            return FlextUtilitiesParser._parse_with_default(
-                default,
-                default_factory,
-                primitive_result.error or f"{field_prefix}Primitive coercion failed",
-            )
-        return FlextUtilitiesParser._parse_try_direct(
-            value,
-            target,
-            default,
-            default_factory,
-            field_prefix,
-        )
+            case tgt if issubclass(tgt, BaseModel):
+                return FlextUtilitiesParser._parse_try_model(
+                    value,
+                    target,
+                    fp,
+                    strict=strict,
+                    default=default,
+                    default_factory=default_factory,
+                )
+            case tgt if FlextUtilitiesParser._is_primitive_type(tgt):
+                return FlextUtilitiesParser._parse_dispatch_primitive(
+                    value,
+                    target,
+                    default,
+                    default_factory,
+                    fp,
+                )
+            case _:
+                return FlextUtilitiesParser._parse_try_direct(
+                    value, target, default, default_factory, fp
+                )
 
 
 __all__ = ["FlextUtilitiesParser"]

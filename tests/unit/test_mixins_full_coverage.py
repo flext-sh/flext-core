@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
     MutableSequence,
-    Sequence,
 )
 from types import SimpleNamespace
 from typing import cast, override
@@ -13,7 +11,7 @@ from typing import cast, override
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextLogger, r, x
+from flext_core import FlextLogger, m, r, x
 from tests import p, t
 
 
@@ -78,7 +76,7 @@ class TestMixinsFullCoverage:
             self.wired = dict(kwargs)
 
         def list_services(self) -> t.StrSequence:
-            return []
+            return list[str]()
 
         def has_service(self, _name: str) -> bool:
             return False
@@ -119,7 +117,7 @@ class TestMixinsFullCoverage:
             super().__init__()
             self.success: bool = success
             self.logger: t.RuntimeAtomic | None = logger
-            self.factories: t.MutableContainerMapping = {}
+            self.factories: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
             self.register_calls: MutableSequence[tuple[str, str]] = []
 
         def get_typed(
@@ -308,14 +306,12 @@ class TestMixinsFullCoverage:
             normal="n",
         )
         service._clear_operation_context()
-        monkeypatch.delattr(x.CQRS.MetricsTracker, "_metrics", raising=False)
-        mt = x.CQRS.MetricsTracker()
+        mt = m.MetricsTracker()
         result_record = mt.record_metric("k", 1)
         tm.ok(result_record)
         result_metrics = mt.get_metrics()
         tm.ok(result_metrics)
-        monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
-        cs = x.CQRS.ContextStack()
+        cs = m.ContextStack()
         result_push1 = cs.push_context({"handler_name": "h", "handler_mode": "query"})
         tm.ok(result_push1)
         result_push2 = cs.push_context({"x": "y"})
@@ -331,86 +327,6 @@ class TestMixinsFullCoverage:
         })
         tm.ok(result_push3)
         tm.that(cs.current_context(), none=False)
-
-    def test_mixins_validation_and_protocol_paths(self) -> None:
-        validators: Sequence[Callable[..., r[bool]]] = [
-            self._validation_ok_false,
-        ]
-        bad_true = x.Validation.validate_with_result("v", validators)
-        tm.fail(bad_true)
-        fail_validators: Sequence[Callable[..., r[bool]]] = [
-            self._validation_fail_no,
-        ]
-        fail_result = x.Validation.validate_with_result("v", fail_validators)
-        tm.fail(fail_result)
-        tm.that(
-            not x.ProtocolValidation.is_handler(
-                cast("t.NormalizedValue", SimpleNamespace(handle=self._noop)),
-            ),
-            eq=True,
-        )
-        tm.that(
-            not x.ProtocolValidation.is_service(
-                cast(
-                    "p.Service[bool]",
-                    cast("t.NormalizedValue", SimpleNamespace()),
-                ),
-            ),
-            eq=True,
-        )
-        cmd_bus = SimpleNamespace(
-            dispatch=self._noop,
-            publish=self._noop,
-            register_handler=self._noop,
-        )
-        tm.that(x.ProtocolValidation.is_command_bus(cmd_bus), eq=True)
-        unknown = x.ProtocolValidation.validate_protocol_compliance(
-            t.ConfigMap(root={}),
-            "Nope",
-        )
-        service_like = SimpleNamespace(
-            execute=self._noop,
-            get_service_info=self._noop,
-            is_valid=self._return_true,
-        )
-        known = x.ProtocolValidation.validate_protocol_compliance(
-            cast("p.Base", service_like),
-            "Service",
-        )
-        tm.fail(unknown)
-        tm.ok(known)
-
-        class _ModelDumpOnly:
-            pass
-
-        missing = x.ProtocolValidation.validate_processor_protocol(
-            cast("p.HasModelDump", cast("t.NormalizedValue", _ModelDumpOnly())),
-        )
-        bad_callable = x.ProtocolValidation.validate_processor_protocol(
-            cast(
-                "p.HasModelDump",
-                cast(
-                    "t.NormalizedValue",
-                    SimpleNamespace(model_dump=dict, process=1, validate=lambda: True),
-                ),
-            ),
-        )
-        good = x.ProtocolValidation.validate_processor_protocol(
-            cast(
-                "p.HasModelDump",
-                cast(
-                    "t.NormalizedValue",
-                    SimpleNamespace(
-                        model_dump=dict,
-                        process=self._return_true_no_args,
-                        validate=self._return_true_no_args,
-                    ),
-                ),
-            ),
-        )
-        tm.fail(missing)
-        tm.fail(bad_callable)
-        tm.ok(good)
 
     def test_mixins_remaining_branch_paths(
         self,
@@ -441,12 +357,9 @@ class TestMixinsFullCoverage:
         )._get_runtime()
         tm.that(runtime_container.wired, none=True)
 
-        class _ModelMarker:
-            pass
+        captured: t.MutableContainerMapping = {}
 
-        monkeypatch.setattr("flext_core.mixins.BaseModel", _ModelMarker)
-
-        class _ModelService(_ModelMarker, x):
+        class _ModelService(x):
             pass
 
         model_service = _ModelService(
@@ -454,12 +367,13 @@ class TestMixinsFullCoverage:
             config_overrides=None,
             initial_context=None,
         )
-        captured: t.MutableContainerMapping = {}
 
         class _RegContainer:
             def __init__(self) -> None:
                 super().__init__()
-                self._services: t.MutableContainerMapping = {}
+                self._services: t.MutableContainerMapping = dict[
+                    str, t.NormalizedValue
+                ]()
 
             def has_service(self, name: str) -> bool:
                 return name in self._services
@@ -479,7 +393,7 @@ class TestMixinsFullCoverage:
             property(_container_getter),
         )
         tm.ok(model_service._register_in_container("svc_model"))
-        tm.that(captured["value"], is_=_ModelMarker)
+        tm.that(captured["value"], is_=_ModelService)
 
         class _WarnLogger:
             def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
@@ -505,29 +419,26 @@ class TestMixinsFullCoverage:
             self._mock_register_fail,
         )
         warn_service._init_service("svc_warn")
-        monkeypatch.delattr(x.CQRS.MetricsTracker, "_metrics", raising=False)
-        tracker = x.CQRS.MetricsTracker()
-        del tracker._metrics
+        tracker = m.MetricsTracker()
         tm.ok(tracker.record_metric("a", 1))
-        del tracker._metrics
         tm.ok(tracker.get_metrics())
-        monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
-        stack = x.CQRS.ContextStack()
-        del stack._stack
+        tracker2 = m.MetricsTracker()
+        tm.ok(tracker2.record_metric("b", 2))
+        tm.ok(tracker2.get_metrics())
+        stack = m.ContextStack()
         tm.ok(stack.push_context({"handler_name": "h", "handler_mode": "event"}))
-        object.__setattr__(stack, "_stack", [{"k": "v"}])
         popped_dict = stack.pop_context()
         tm.ok(popped_dict)
-        tm.that(popped_dict.value, eq={"k": "v"})
-        del stack._stack
-        tm.that(stack.current_context(), none=True)
-        object.__setattr__(stack, "_stack", [{"k": "v"}])
-        tm.that(stack.current_context(), none=True)
-        valid = x.Validation.validate_with_result(
-            "v",
-            [self._validation_ok_true],
+        tm.that(
+            popped_dict.value,
+            eq={"handler_name": "h", "handler_mode": "event"},
         )
-        tm.ok(valid)
+        tm.that(stack.current_context(), none=True)
+        stack2 = m.ContextStack()
+        tm.ok(stack2.push_context({"handler_name": "h2", "handler_mode": "query"}))
+        popped2 = stack2.pop_context()
+        tm.ok(popped2)
+        tm.that(stack2.current_context(), none=True)
         x._logger_cache.clear()
         logger_obj = _LoggerService._get_or_create_logger()
         tm.that(logger_obj, is_=p.Logger)
@@ -552,14 +463,9 @@ class TestMixinsFullCoverage:
         fallback_logger = _LoggerService._get_or_create_logger()
         tm.that(fallback_logger, none=False)
 
-    def test_mixins_context_stack_pop_initializes_missing_stack_attr(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
+    def test_mixins_context_stack_pop_empty_stack_returns_empty(self) -> None:
         _ = self
-        monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
-        stack = x.CQRS.ContextStack()
-        del stack._stack
+        stack = m.ContextStack()
         popped = stack.pop_context()
         tm.ok(popped)
         tm.that(popped.value, eq={})

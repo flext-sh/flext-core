@@ -14,7 +14,10 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import c, p, r, t
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextUtilitiesConfiguration:
@@ -53,23 +56,13 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_log_level_from_config() -> int:
-        """Get log level from default constant (avoids circular import with config.py).
-
-        Returns:
-            int: Numeric logging level (e.g., logging.INFO = 20)
-
-        """
+        """Get numeric log level from default constant."""
         default_log_level = c.DEFAULT_LEVEL.upper()
         return getattr(logging, default_log_level, logging.INFO)
 
     @staticmethod
     def resolve_env_file() -> str:
-        """Resolve .env file path from FLEXT_ENV_FILE environment variable.
-
-        Returns:
-            str: Path to .env file (custom, discovered, or default ".env")
-
-        """
+        """Resolve .env file path from FLEXT_ENV_FILE env var."""
         custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
         if custom_env_file:
             custom_path = Path(custom_env_file)
@@ -88,16 +81,7 @@ class FlextUtilitiesConfiguration:
         obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
-        """Try to get attribute value from t.NormalizedValue via direct attribute access.
-
-        Args:
-            obj: Object instance that might have the parameter as attribute
-            parameter: Attribute name to retrieve
-
-        Returns:
-            (True, value) if attribute exists, (False, None) if not
-
-        """
+        """Try direct attribute access, returning (found, value) tuple."""
         obj_vars: t.ContainerMapping = vars(obj) if hasattr(obj, "__dict__") else {}
         if parameter not in obj_vars:
             return FlextUtilitiesConfiguration._NOT_FOUND
@@ -109,16 +93,7 @@ class FlextUtilitiesConfiguration:
         obj: Mapping[str, t.ValueOrModel],
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
-        """Try to get parameter from dict-like t.NormalizedValue.
-
-        Args:
-            obj: Potentially dict-like t.NormalizedValue
-            parameter: Key to retrieve
-
-        Returns:
-            (True, value) if key exists, (False, None) if not dict-like or missing
-
-        """
+        """Try dict-like key lookup, returning (found, value) tuple."""
         if parameter in obj:
             return (True, obj[parameter])
         return FlextUtilitiesConfiguration._NOT_FOUND
@@ -139,16 +114,7 @@ class FlextUtilitiesConfiguration:
         obj: p.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.ValueOrModel]:
-        """Try to get parameter from HasModelDump protocol t.NormalizedValue.
-
-        Args:
-            obj: Object implementing HasModelDump protocol
-            parameter: Field name to retrieve from dumped dict
-
-        Returns:
-            (True, value) if found in model_dump(), (False, None) if not
-
-        """
+        """Try model_dump() field lookup, returning (found, value) tuple."""
         try:
             obj_dict = obj.model_dump()
             if parameter in obj_dict:
@@ -165,18 +131,7 @@ class FlextUtilitiesConfiguration:
         *,
         _cache: bool = False,
     ) -> r[bool]:
-        """Register factory with optional caching.
-
-        Args:
-            container: Container to register in (must implement DI protocol).
-            name: Factory name.
-            factory: Factory function to register.
-            _cache: Reserved for future implementation of cached factory pattern.
-
-        Returns:
-            p.Result[bool]: Success(true) if registration succeeds, failure otherwise.
-
-        """
+        """Register factory in DI container with optional caching."""
         try:
             _ = _cache
             register_result = container.register(name, factory, kind="factory")
@@ -197,19 +152,7 @@ class FlextUtilitiesConfiguration:
         debug: bool,
         log_level: c.LogLevel,
     ) -> c.LogLevel:
-        """Resolve effective log level based on debug/trace flags.
-
-        Pure function extracted from FlextSettings.effective_log_level computed field.
-
-        Args:
-            trace: Whether trace mode is enabled.
-            debug: Whether debug mode is enabled.
-            log_level: Base log level when neither flag is active.
-
-        Returns:
-            Resolved log level: DEBUG if trace, INFO if debug, else log_level.
-
-        """
+        """Resolve log level: DEBUG if trace, INFO if debug, else log_level."""
         if trace:
             return c.LogLevel.DEBUG
         if debug:
@@ -229,31 +172,14 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def validate_database_url_scheme(url: str) -> None:
-        """Validate database URL has a supported scheme.
-
-        Args:
-            url: Database URL to validate.
-
-        Raises:
-            ValueError: If URL scheme is not postgresql://, mysql://, or sqlite://.
-
-        """
+        """Validate database URL scheme is postgresql://, mysql://, or sqlite://."""
         if url and not url.startswith(("postgresql://", "mysql://", "sqlite://")):
             msg = "Invalid database URL scheme"
             raise ValueError(msg)
 
     @staticmethod
     def validate_trace_requires_debug(*, trace: bool, debug: bool) -> None:
-        """Validate that trace mode requires debug mode.
-
-        Args:
-            trace: Whether trace mode is enabled.
-            debug: Whether debug mode is enabled.
-
-        Raises:
-            ValueError: If trace is True but debug is False.
-
-        """
+        """Validate that trace mode requires debug mode."""
         if trace and not debug:
             msg = "Trace mode requires debug mode"
             raise ValueError(msg)

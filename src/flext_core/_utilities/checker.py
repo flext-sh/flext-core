@@ -16,7 +16,11 @@ from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from flext_core import FlextUtilitiesGuards, c, p, r, t
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextUtilitiesChecker:
@@ -30,42 +34,17 @@ class FlextUtilitiesChecker:
     def _is_module_export_callable(
         value: Callable[..., t.ModuleExport] | t.GuardInput,
     ) -> TypeIs[Callable[..., t.ModuleExport]]:
-        """Check if value is a callable that returns module exports.
-
-        Args:
-            value: Value to check.
-
-        Returns:
-            True if value is callable, narrowed to Callable[..., ModuleExport].
-
-        """
+        """Narrow value to callable returning module exports."""
         return callable(value)
 
     @staticmethod
     def _is_subclass_of(candidate: t.TypeHintSpecifier, parent: type) -> bool:
-        """Safe subclass check that never raises TypeError.
-
-        Args:
-            candidate: Potential subclass to check.
-            parent: Parent class to check against.
-
-        Returns:
-            True if candidate is a class and subclass of parent, False otherwise.
-
-        """
+        """Safe subclass check that never raises TypeError."""
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
     def _is_dict_type(cls, candidate: t.TypeHintSpecifier) -> bool:
-        """Check if candidate is dict or a subclass of dict.
-
-        Args:
-            candidate: Type to check.
-
-        Returns:
-            True if candidate is dict or dict subclass, False otherwise.
-
-        """
+        """Check if candidate is dict or a subclass of dict."""
         return cls._is_subclass_of(candidate, dict)
 
     @classmethod
@@ -76,18 +55,7 @@ class FlextUtilitiesChecker:
         origin_type: t.TypeHintSpecifier,
         message_origin: t.TypeHintSpecifier,
     ) -> bool:
-        """Check dict type compatibility.
-
-        Args:
-            expected_type: Expected type
-            message_type: Message type
-            origin_type: Origin of expected type
-            message_origin: Origin of message type
-
-        Returns:
-            True if dict compatible, False if not dict types
-
-        """
+        """Check dict type compatibility between expected and message types."""
         origin_is_dict = cls._is_dict_type(origin_type)
         message_origin_is_dict = cls._is_dict_type(message_origin)
         if origin_is_dict and (
@@ -103,15 +71,7 @@ class FlextUtilitiesChecker:
         cls,
         expected_type: t.TypeHintSpecifier,
     ) -> bool:
-        """Check if expected type is t.NormalizedValue (universal compatibility).
-
-        Args:
-            expected_type: Type to check for t.NormalizedValue compatibility
-
-        Returns:
-            True if t.NormalizedValue type (accepts everything), False otherwise
-
-        """
+        """Check if expected type is t.NormalizedValue (universal compatibility)."""
         return expected_type is t.NormalizedValue or str(expected_type) == "typing.Any"
 
     @classmethod
@@ -120,16 +80,7 @@ class FlextUtilitiesChecker:
         expected_type: t.TypeHintSpecifier,
         message_type: t.MessageTypeSpecifier,
     ) -> bool:
-        """Evaluate compatibility between expected and actual message types.
-
-        Args:
-            expected_type: Expected message type
-            message_type: Actual message type
-
-        Returns:
-            True if types are compatible
-
-        """
+        """Evaluate compatibility between expected and actual message types."""
         object_check = cls._check_object_type_compatibility(expected_type)
         if object_check:
             return object_check
@@ -157,15 +108,7 @@ class FlextUtilitiesChecker:
         cls,
         handler_class: type,
     ) -> Sequence[t.MessageTypeSpecifier]:
-        """Extract message types from generic base annotations.
-
-        Args:
-            handler_class: Handler class to analyze
-
-        Returns:
-            List of message types from generic annotations
-
-        """
+        """Extract message types from generic base annotations."""
         message_types: MutableSequence[t.MessageTypeSpecifier] = []
         raw_bases: t.GuardInput = getattr(
             handler_class,
@@ -201,15 +144,7 @@ class FlextUtilitiesChecker:
         cls,
         handler_class: type,
     ) -> r[t.MessageTypeSpecifier]:
-        """Extract message type from handle method annotations when generics are absent.
-
-        Args:
-            handler_class: Handler class to analyze
-
-        Returns:
-            r[t.MessageTypeSpecifier]: Success with message type or failure.
-
-        """
+        """Extract message type from handle method annotations when generics are absent."""
         if not hasattr(handler_class, c.METHOD_HANDLE):
             return r[t.MessageTypeSpecifier].fail("Handler has no handle method")
         handle_method_raw: t.GuardInput = getattr(handler_class, c.METHOD_HANDLE, None)
@@ -237,17 +172,7 @@ class FlextUtilitiesChecker:
         type_hints: Mapping[str, t.TypeHintSpecifier | None],
         param_name: str,
     ) -> r[t.MessageTypeSpecifier]:
-        """Extract message type from parameter hints or signature annotation.
-
-        Args:
-            parameter: Parameter to extract type from.
-            type_hints: Type hints mapping for the function.
-            param_name: Name of the parameter.
-
-        Returns:
-            r[MessageTypeSpecifier] with extracted type or failure message.
-
-        """
+        """Extract message type from parameter hints or signature annotation."""
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
@@ -273,15 +198,7 @@ class FlextUtilitiesChecker:
         cls,
         handle_method: Callable[..., t.ModuleExport],
     ) -> r[inspect.Signature]:
-        """Extract signature from handle method.
-
-        Args:
-            handle_method: Method to extract signature from.
-
-        Returns:
-            r[Signature] with method signature or failure message.
-
-        """
+        """Extract signature from handle method, wrapping errors in Result."""
         try:
             return r[inspect.Signature].ok(inspect.signature(handle_method))
         except (TypeError, ValueError):
@@ -293,16 +210,7 @@ class FlextUtilitiesChecker:
         handle_method: Callable[..., t.ModuleExport],
         handler_class: type,
     ) -> Mapping[str, t.TypeHintSpecifier | None]:
-        """Safely extract type hints from handle method.
-
-        Args:
-            handle_method: Method to extract type hints from.
-            handler_class: Handler class for local namespace context.
-
-        Returns:
-            Mapping of parameter names to type hints, empty dict on error.
-
-        """
+        """Safely extract type hints, returning empty dict on error."""
         try:
             return get_type_hints(
                 handle_method,
@@ -318,16 +226,7 @@ class FlextUtilitiesChecker:
         message_type: t.TypeHintSpecifier,
         origin_type: t.TypeHintSpecifier,
     ) -> bool:
-        """Handle instance checking for non-type objects.
-
-        Args:
-            message_type: Message type or instance to check.
-            origin_type: Origin type to check against.
-
-        Returns:
-            True if instance or subclass check passes, True on TypeError.
-
-        """
+        """Instance check for non-type objects; returns True on TypeError."""
         try:
             if isinstance(origin_type, type):
                 return isinstance(message_type, origin_type) or cls._is_subclass_of(
@@ -346,18 +245,7 @@ class FlextUtilitiesChecker:
         origin_type: t.TypeHintSpecifier,
         message_origin: t.TypeHintSpecifier,
     ) -> bool:
-        """Handle type checking for types or objects with __origin__.
-
-        Args:
-            expected_type: Expected type.
-            message_type: Message type or instance.
-            origin_type: Origin of expected type.
-            message_origin: Origin of message type.
-
-        Returns:
-            True if types are compatible or match, False otherwise.
-
-        """
+        """Type checking for types or objects with __origin__."""
         try:
             if hasattr(message_type, "__origin__"):
                 return message_origin is origin_type
@@ -373,16 +261,7 @@ class FlextUtilitiesChecker:
         accepted_types: tuple[t.MessageTypeSpecifier, ...],
         message_type: t.MessageTypeSpecifier,
     ) -> bool:
-        """Check if handler can process this message type.
-
-        Args:
-            accepted_types: Types accepted by handler
-            message_type: Type to check
-
-        Returns:
-            True if handler can process this message type
-
-        """
+        """Check if handler can process this message type."""
         if not accepted_types:
             return False
         for expected_type in accepted_types:
@@ -395,15 +274,7 @@ class FlextUtilitiesChecker:
         cls,
         handler_class: type,
     ) -> tuple[t.MessageTypeSpecifier, ...]:
-        """Compute message types accepted by a handler using cached introspection.
-
-        Args:
-            handler_class: Handler class to analyze
-
-        Returns:
-            Tuple of accepted message types
-
-        """
+        """Compute message types accepted by a handler using cached introspection."""
         message_types: MutableSequence[t.MessageTypeSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
         message_types.extend(generic_types)
@@ -415,13 +286,7 @@ class FlextUtilitiesChecker:
 
     @classmethod
     def get_message_route(cls, msg: p.Routable | type[p.Routable] | str) -> str:
-        """Resolve route name strictly from Routable attributes or string.
-
-        Args:
-            msg: Message instance, type, or explicit route string.
-
-        Returns:
-            str: Resolved route name.
+        """Resolve route name from Routable attributes or string.
 
         Raises:
             TypeError: If message does not provide a valid route.

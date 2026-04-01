@@ -16,7 +16,10 @@ from typing import override
 
 from pydantic import Field, field_validator
 
-from flext_core import FlextModelFoundation, FlextRuntime, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextModelsDomainEvent:
@@ -33,7 +36,9 @@ class FlextModelsDomainEvent:
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
                 return self.root == other
-            if isinstance(other, Mapping):
+            if isinstance(other, Mapping) and FlextUtilitiesGuardsTypeCore.is_mapping(
+                other
+            ):
                 typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     other,
                 )
@@ -64,7 +69,7 @@ class FlextModelsDomainEvent:
             return item
         if isinstance(item, datetime):
             return item
-        if isinstance(item, Mapping):
+        if FlextUtilitiesGuardsTypeCore.is_mapping(item):
             normalized_map: t.MutableContainerMapping = {}
             for key, value in item.items():
                 normalized_map[str(key)] = (
@@ -102,7 +107,7 @@ class FlextModelsDomainEvent:
                 },
             )
             return FlextModelsDomainEvent.ComparableConfigMap(root=intermediate.root)
-        if isinstance(value, Mapping):
+        if FlextUtilitiesGuardsTypeCore.is_mapping(value):
             typed_mapping = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 value,
             )
@@ -133,9 +138,8 @@ class FlextModelsDomainEvent:
         )
 
     class Entry(
-        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelFoundation.TimestampedModel,
         FlextModelFoundation.IdentifiableMixin,
-        FlextModelFoundation.TimestampableMixin,
     ):
         """Base class for domain events."""
 

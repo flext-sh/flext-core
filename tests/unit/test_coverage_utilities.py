@@ -23,11 +23,10 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum, unique
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 import pytest
 from flext_tests import tm
-from pydantic import BaseModel
 
 from flext_core import r
 from tests import TextUtilityContract, assertion_helpers, t, u
@@ -292,57 +291,6 @@ class Testu(TextUtilityContract):
         """Test cache component normalization."""
         result = u.normalize_component(input_data)
         tm.that(result, is_=(dict, str, type(None), expected_type))
-
-    def test_cache_sort_dict_keys(self) -> None:
-        """Test dictionary key sorting."""
-        data = {"z": 1, "a": 2, "m": 3}
-        result = u.sort_dict_keys(data)
-        tm.that(result, is_=dict)
-        if not isinstance(result, dict):
-            pytest.fail("Expected sorted dictionary")
-        keys = list(result.keys())
-        tm.that(keys, eq=sorted(keys))
-
-    def test_cache_generate_key(self) -> None:
-        """Test cache key generation."""
-        key1 = u.generate_cache_key(None, None)
-        tm.that(len(key1), gt=0)
-
-    def test_cache_generate_key_uniqueness(self) -> None:
-        """Test cache keys are unique for different inputs."""
-        key1 = u.generate_cache_key("arg1", kwarg1="value1")
-        key2 = u.generate_cache_key("different")
-        tm.that(key1, ne=key2)
-
-    def test_cache_clear_object(self) -> None:
-        """Test clearing t.NormalizedValue cache."""
-        obj = self.UtilityScenarios.create_mock_cached_object()
-        if isinstance(obj, BaseModel):
-            result = u.clear_object_cache(obj)
-        else:
-            obj_dict: MutableMapping[str, t.ValueOrModel] = {}
-            if hasattr(obj, "__dict__"):
-                for k, v in obj.__dict__.items():
-                    obj_dict[str(k)] = (
-                        v
-                        if isinstance(
-                            v,
-                            (str, int, float, bool, type(None), list, dict),
-                        )
-                        else str(v)
-                    )
-            result = u.clear_object_cache(t.ConfigMap(root=obj_dict))
-        _ = assertion_helpers.assert_flext_result_success(result)
-
-    def test_cache_has_attributes_true(self) -> None:
-        """Test detecting cache attributes on t.NormalizedValue with cache."""
-        obj = self.UtilityScenarios.create_mock_cached_object()
-        assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True
-
-    def test_cache_has_attributes_false(self) -> None:
-        """Test detecting cache attributes on t.NormalizedValue without cache."""
-        obj = self.UtilityScenarios.create_mock_uncached_object()
-        assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is False
 
     def test_reliability_retry_first_success(self) -> None:
         """Test retry that succeeds immediately."""

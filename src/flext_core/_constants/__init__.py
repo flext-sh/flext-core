@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
+    from flext_core import FlextTypes
     from flext_core._constants.base import *
     from flext_core._constants.cqrs import *
     from flext_core._constants.domain import *

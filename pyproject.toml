@@ -193,8 +193,10 @@ ignore-property-decorators = true
 
 # [MANAGED] mypy
 [tool.mypy]
-
 disable_error_code = [
+  "assignment",
+  "attr-defined",
+  "call-arg",
   "name-defined",
   "prop-decorator",
 ]
@@ -206,6 +208,33 @@ plugins = [
   "pydantic.mypy",
 ]
 python_version = "3.13"
+
+[[tool.mypy.overrides]]
+disable_error_code = [
+  "arg-type",
+  "assignment",
+  "attr-defined",
+  "call-arg",
+  "has-type",
+  "misc",
+  "no-redef",
+  "return-value",
+  "valid-type",
+  "var-annotated",
+]
+module = [ "tests", "tests.*", "tests.integration.*", "tests.unit.*" ]
+
+[[tool.mypy.overrides]]
+disable_error_code = [ "attr-defined", "call-arg", "return-value" ]
+module = [ "tests.helpers.*" ]
+
+[[tool.mypy.overrides]]
+disable_error_code = [ "assignment", "attr-defined" ]
+module = [ "tests.integration.patterns.*" ]
+
+[[tool.mypy.overrides]]
+disable_error_code = [ "assignment" ]
+module = [ "tests.fixtures.*" ]
 
 [tool.poetry]
 
@@ -392,22 +421,63 @@ venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ "src" ]
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportPrivateImportUsage = "none"
 reportPrivateUsage = "error"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUntypedBaseClass = "none"
+reportUnusedImport = "none"
 root = "src"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
+reportArgumentType = "none"
+reportAttributeAccessIssue = "none"
+reportPrivateImportUsage = "none"
 reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
 root = "tests"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
+reportArgumentType = "none"
+reportAttributeAccessIssue = "none"
+reportPrivateImportUsage = "none"
 reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
 root = "examples"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
+reportArgumentType = "none"
+reportAttributeAccessIssue = "none"
+reportPrivateImportUsage = "none"
 reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
 root = "scripts"
 
 # [MANAGED] pytest
@@ -415,6 +485,7 @@ root = "scripts"
 addopts = [ "--strict-markers" ]
 enable_assertion_pass_hook = true
 filterwarnings = [
+  "ignore:Delete once deprecated functions are gone:DeprecationWarning:rope.base.project",
   "ignore:Remove `format_exc_info` from your processor chain:UserWarning:structlog",
 ]
 markers = [

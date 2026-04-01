@@ -55,7 +55,7 @@ class TestModule:
 
     class _ContextVars:
         def __init__(self) -> None:
-            self.store: t.MutableContainerMapping = {}
+            self.store: t.MutableContainerMapping = dict[str, t.NormalizedValue]()
 
         def bind_contextvars(self, **kwargs: t.Scalar) -> None:
             self.store.update(kwargs)

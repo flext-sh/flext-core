@@ -9,19 +9,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core import EnumT, r, t
+from flext_core._typings.generics import EnumT
+from flext_core.result import FlextResult as r
+from flext_core.typings import t
 
 
 class FlextUtilitiesEnum:
     """Utilities for working with StrEnum in a type-safe way."""
 
     _values_cache: ClassVar[MutableMapping[type[StrEnum], frozenset[str]]] = {}
-    _names_cache: ClassVar[MutableMapping[type[StrEnum], tuple[str, ...]]] = {}
-    _members_cache: ClassVar[MutableMapping[type[StrEnum], tuple[StrEnum, ...]]] = {}
 
     @staticmethod
     def _parse[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
@@ -96,27 +96,6 @@ class FlextUtilitiesEnum:
         return result
 
     @staticmethod
-    def get_enum_values[E: StrEnum](enum_cls: type[E]) -> tuple[str, ...]:
-        """Return enum values in declaration order."""
-        return tuple(member.value for member in FlextUtilitiesEnum.members(enum_cls))
-
-    @staticmethod
-    def names[E: StrEnum](enum_cls: type[E]) -> tuple[str, ...]:
-        """Return enum member names in declaration order."""
-        if enum_cls not in FlextUtilitiesEnum._names_cache:
-            FlextUtilitiesEnum._names_cache[enum_cls] = tuple(enum_cls.__members__)
-        return FlextUtilitiesEnum._names_cache[enum_cls]
-
-    @staticmethod
-    def members[E: StrEnum](enum_cls: type[E]) -> tuple[E, ...]:
-        """Return enum members in declaration order."""
-        if enum_cls not in FlextUtilitiesEnum._members_cache:
-            FlextUtilitiesEnum._members_cache[enum_cls] = tuple(
-                enum_cls.__members__.values(),
-            )
-        return tuple(enum_cls.__members__.values())
-
-    @staticmethod
     def is_member[E: StrEnum](enum_cls: type[E], value: object) -> bool:
         """Check if a value matches an enum member by name or value."""
         if isinstance(value, enum_cls):
@@ -127,11 +106,6 @@ class FlextUtilitiesEnum:
             enum_cls,
             value,
         ) or FlextUtilitiesEnum._is_member_by_value(enum_cls, value)
-
-    @staticmethod
-    def is_subset[E: StrEnum](enum_cls: type[E], values: Sequence[object]) -> bool:
-        """Check whether all values belong to the target enum."""
-        return all(FlextUtilitiesEnum.is_member(enum_cls, value) for value in values)
 
 
 __all__ = ["FlextUtilitiesEnum"]

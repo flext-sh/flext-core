@@ -8,11 +8,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import ClassVar
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
-from flext_core import m, t
+from flext_core.models import m
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextUtilitiesConversion:
@@ -27,17 +30,7 @@ class FlextUtilitiesConversion:
         separator: str = " ",
         case: str | None = None,
     ) -> str:
-        """Join string values with separator and optional case conversion.
-
-        Args:
-            values: Sequence of strings to join
-            separator: Separator string (default: " ")
-            case: Case normalization ("lower", "upper", or None)
-
-        Returns:
-            str: Joined string value
-
-        """
+        """Join string values with separator and optional case conversion."""
         if not values:
             return ""
         normalized = values
@@ -49,16 +42,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def normalize(value: t.StrictValue, *, case: str | None = None) -> str:
-        """Normalize string value with optional case conversion.
-
-        Args:
-            value: Value to normalize
-            case: Case normalization ("lower", "upper", or None)
-
-        Returns:
-            str: Normalized string value
-
-        """
+        """Normalize value to string with optional case conversion."""
         str_value = FlextUtilitiesConversion.to_str(value)
         if case == "lower":
             return str_value.lower()
@@ -68,16 +52,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str(value: t.StrictValue, *, default: str | None = None) -> str:
-        """Convert value to string.
-
-        Args:
-            value: Value to convert
-            default: Default value if None
-
-        Returns:
-            str: Converted string value
-
-        """
+        """Convert value to string, formatting floats as integers when possible."""
         if value is None:
             return default if default is not None else ""
         if isinstance(value, str):
@@ -99,16 +74,7 @@ class FlextUtilitiesConversion:
         *,
         default: t.StrSequence | None = None,
     ) -> t.StrSequence:
-        """Convert value to list of strings.
-
-        Args:
-            value: Value to convert
-            default: Default value if None
-
-        Returns:
-            t.StrSequence: Converted list of strings
-
-        """
+        """Convert value to list of strings."""
         if value is None:
             return default if default is not None else list[str]()
         value_class = value.__class__
@@ -124,6 +90,48 @@ class FlextUtilitiesConversion:
         except ValidationError:
             pass
         return [str(value)]
+
+    @staticmethod
+    def to_int(value: t.ValueOrModel, *, default: int = 0) -> int:
+        """Convert value to int with safe fallback; bool returns default."""
+        if value is None or isinstance(value, bool):
+            return default
+        if isinstance(value, (int, float)):
+            return int(value)
+        if isinstance(value, str):
+            try:
+                return int(float(value))
+            except (ValueError, OverflowError):
+                return default
+        return default
+
+    @staticmethod
+    def to_float(value: t.ValueOrModel, *, default: float = 0.0) -> float:
+        """Convert value to float with safe fallback; bool returns default."""
+        if value is None or isinstance(value, bool):
+            return default
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value)
+            except (ValueError, OverflowError):
+                return default
+        return default
+
+    @staticmethod
+    def normalize_log_payload(
+        payload: Mapping[str, t.ValueOrModel],
+    ) -> t.FlatContainerMapping:
+        """Normalize payload to flat container types, stringifying BaseModel instances."""
+        normalized: t.MutableFlatContainerMapping = {}
+        for key, value in payload.items():
+            atomic = FlextRuntime.normalize_to_container(value)
+            if isinstance(atomic, BaseModel):
+                normalized[str(key)] = str(atomic.model_dump())
+            else:
+                normalized[str(key)] = atomic
+        return normalized
 
 
 __all__ = ["FlextUtilitiesConversion"]
