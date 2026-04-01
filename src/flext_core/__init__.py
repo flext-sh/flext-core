@@ -8,10 +8,20 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
+from flext_core.__version__ import (
+    FlextVersion,
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
-    from flext_core.__version__ import *
     from flext_core._constants import *
     from flext_core._models import *
     from flext_core._models._context import *
@@ -65,15 +75,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "FlextSettings": "flext_core.settings",
         "FlextTypes": "flext_core.typings",
         "FlextUtilities": "flext_core.utilities",
-        "FlextVersion": "flext_core.__version__",
-        "__author__": "flext_core.__version__",
-        "__author_email__": "flext_core.__version__",
-        "__description__": "flext_core.__version__",
-        "__license__": "flext_core.__version__",
-        "__title__": "flext_core.__version__",
-        "__url__": "flext_core.__version__",
-        "__version__": "flext_core.__version__",
-        "__version_info__": "flext_core.__version__",
         "_constants": "flext_core._constants",
         "_models": "flext_core._models",
         "_protocols": "flext_core._protocols",
@@ -113,4 +114,19 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
 )
 
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+install_lazy_exports(
+    __name__,
+    globals(),
+    _LAZY_IMPORTS,
+    [
+        "FlextVersion",
+        "__author__",
+        "__author_email__",
+        "__description__",
+        "__license__",
+        "__title__",
+        "__url__",
+        "__version__",
+        "__version_info__",
+    ],
+)
