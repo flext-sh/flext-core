@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import Annotated
+from typing import Annotated, cast
 
 import pytest
 from pydantic import BaseModel, Field
@@ -39,28 +39,28 @@ class _Item(BaseModel):
     value: Annotated[int, Field(description="Item value")]
 
 
-class _DoubleOp(BaseModel):
+class _DoubleOp:
     """Callable that doubles numeric values."""
 
-    def __call__(self, value: float | str) -> t.Numeric | str:
+    def __call__(self, value: t.RecursiveContainer) -> t.RecursiveContainer:
         if isinstance(value, (int, float)):
             return value * 2
         return value
 
 
-class _GtTwoOp(BaseModel):
+class _GtTwoOp:
     """Callable predicate: value > 2."""
 
-    def __call__(self, value: float | str) -> bool:
+    def __call__(self, value: t.RecursiveContainer) -> bool:
         if isinstance(value, (int, float)):
             return value > 2
         return False
 
 
-class _FailingOp(BaseModel):
+class _FailingOp:
     """Callable that always raises."""
 
-    def __call__(self, value: float | str) -> t.Numeric | str:
+    def __call__(self, value: t.RecursiveContainer) -> t.RecursiveContainer:
         msg = "boom"
         raise RuntimeError(msg)
 
@@ -298,12 +298,12 @@ class TestFlextUtilitiesMapper:
 
     def test_prop_accessor_dict(self) -> None:
         accessor = u.prop("name")
-        data: t.ContainerMapping = {"name": "alice"}
+        data = t.ConfigMap({"name": "alice"})
         tm.that(accessor(data), eq="alice")
 
     def test_prop_accessor_missing_key(self) -> None:
         accessor = u.prop("missing")
-        data: t.ContainerMapping = {"name": "alice"}
+        data = t.ConfigMap({"name": "alice"})
         tm.that(accessor(data), eq="")
 
     # ── take: by key ───────────────────────────────────────────────
@@ -459,19 +459,24 @@ class TestFlextUtilitiesMapper:
     # ── build DSL: convert ─────────────────────────────────────────
 
     def test_build_convert_to_int(self) -> None:
-        result = u.build("42", ops={"convert": int})
+        result = u.build("42", ops=cast("t.ContainerMapping", {"convert": int}))
         tm.that(result, eq=42)
 
     def test_build_convert_list(self) -> None:
-        result = u.build(["1", "2", "3"], ops={"convert": int})
+        result = u.build(
+            ["1", "2", "3"], ops=cast("t.ContainerMapping", {"convert": int})
+        )
         tm.that(result, eq=[1, 2, 3])
 
     def test_build_convert_failure_uses_default(self) -> None:
-        result = u.build("not_a_number", ops={"convert": int, "convert_default": -1})
+        result = u.build(
+            "not_a_number",
+            ops=cast("t.ContainerMapping", {"convert": int, "convert_default": -1}),
+        )
         tm.that(result, eq=-1)
 
     def test_build_convert_auto_default_int(self) -> None:
-        result = u.build("bad", ops={"convert": int})
+        result = u.build("bad", ops=cast("t.ContainerMapping", {"convert": int}))
         tm.that(result, eq=0)
 
     # ── build DSL: sort ────────────────────────────────────────────
@@ -546,8 +551,8 @@ class TestFlextUtilitiesMapper:
         tm.that(result, keys=["a", "b"])
 
     def test_build_group_by_callable(self) -> None:
-        class _LenGrouper(BaseModel):
-            def __call__(self, value: float | str) -> int:
+        class _LenGrouper:
+            def __call__(self, value: t.RecursiveContainer) -> int:
                 return len(value) if isinstance(value, str) else 0
 
         result = u.build(["hi", "hey", "yo"], ops={"group": _LenGrouper()})
@@ -584,7 +589,13 @@ class TestFlextUtilitiesMapper:
         tm.that(result, eq={"a": 1, "c": 3})
 
     def test_build_transform_strip_empty(self) -> None:
-        data: t.ContainerMapping = {"a": 1, "b": "", "c": [], "d": {}, "e": None}
+        data: t.ContainerMapping = {
+            "a": 1,
+            "b": "",
+            "c": cast("t.ContainerList", []),
+            "d": cast("t.ContainerMapping", {}),
+            "e": None,
+        }
         result = u.build(data, ops={"transform": {"strip_empty": True}})
         tm.that(result, eq={"a": 1})
 
@@ -675,8 +686,8 @@ class TestFlextUtilitiesMapper:
         tm.that(u.deep_eq({}, {}), eq=True)
 
     def test_deep_eq_nested_none_vs_none(self) -> None:
-        a: t.ContainerMapping = {"x": {"y": None}}
-        b: t.ContainerMapping = {"x": {"y": None}}
+        a: t.ContainerMapping = {"x": cast("t.ContainerMapping", {"y": None})}
+        b: t.ContainerMapping = {"x": cast("t.ContainerMapping", {"y": None})}
         tm.that(u.deep_eq(a, b), eq=True)
 
     @pytest.mark.parametrize(
@@ -719,8 +730,8 @@ class TestFlextUtilitiesMapper:
     # ── sort with callable key ─────────────────────────────────────
 
     def test_build_sort_with_callable(self) -> None:
-        class _Negator(BaseModel):
-            def __call__(self, value: float | str) -> t.Numeric | str:
+        class _Negator:
+            def __call__(self, value: t.RecursiveContainer) -> t.RecursiveContainer:
                 return -value if isinstance(value, (int, float)) else value
 
         result = u.build([3, 1, 2], ops={"sort": _Negator()})

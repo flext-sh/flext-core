@@ -4,8 +4,6 @@ from typing import TypeAlias
 
 from . import _models_impl as impl
 
-__all__ = ["TestUnitModels"]
-
 
 class TestUnitModels:
     _ValidationLikeError = impl._ValidationLikeError
@@ -35,3 +33,6 @@ class TestUnitModels:
     ComplexModel = impl.ComplexModel
     _Cfg = impl._Cfg
     _BadCopyModel = impl._BadCopyModel
+
+
+__all__ = ["TestUnitModels"]

@@ -11,6 +11,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 from types import ModuleType
+from typing import cast
 
 import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -74,7 +75,7 @@ class TestFlextModelsCqrs:
 
     def test_command_message_type_frozen(self) -> None:
         with pytest.raises(ValidationError):
-            m.Command(message_type="query")
+            m.Command.model_validate({"message_type": "query"})
 
     def test_command_rejects_empty_command_type(self) -> None:
         with pytest.raises(ValidationError):
@@ -171,7 +172,7 @@ class TestFlextModelsCqrs:
 
     def test_query_message_type_frozen(self) -> None:
         with pytest.raises(ValidationError):
-            m.Query(message_type="command")
+            m.Query.model_validate({"message_type": "command"})
 
     def test_query_serialization_round_trip(self) -> None:
         query = m.Query(query_type="list_items")
@@ -188,8 +189,9 @@ class TestFlextModelsCqrs:
             "filters": {},
         })
         tm.that(parsed.pagination, is_=m.Pagination)
-        tm.that(parsed.pagination.page, eq=4)
-        tm.that(parsed.pagination.size, eq=20)
+        pag = cast("m.Pagination", parsed.pagination)
+        tm.that(pag.page, eq=4)
+        tm.that(pag.size, eq=20)
 
     def test_query_validate_pagination_from_string_coercion(self) -> None:
         parsed = m.Query.model_validate({
@@ -197,21 +199,24 @@ class TestFlextModelsCqrs:
             "filters": {},
         })
         tm.that(parsed.pagination, is_=m.Pagination)
-        tm.that(parsed.pagination.page, eq=3)
-        tm.that(parsed.pagination.size, eq=15)
+        pag = cast("m.Pagination", parsed.pagination)
+        tm.that(pag.page, eq=3)
+        tm.that(pag.size, eq=15)
 
     def test_query_validate_pagination_none_defaults(self) -> None:
         defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
         tm.that(defaulted.pagination, is_=m.Pagination)
-        tm.that(defaulted.pagination.page, eq=c.DEFAULT_RETRY_DELAY_SECONDS)
-        tm.that(defaulted.pagination.size, eq=c.DEFAULT_PAGE_SIZE)
+        pag = cast("m.Pagination", defaulted.pagination)
+        tm.that(pag.page, eq=c.DEFAULT_RETRY_DELAY_SECONDS)
+        tm.that(pag.size, eq=c.DEFAULT_PAGE_SIZE)
 
     def test_query_validate_pagination_from_model(self) -> None:
         pag = m.Pagination(page=7, size=30)
         query = m.Query(pagination=pag)
         tm.that(query.pagination, is_=m.Pagination)
-        tm.that(query.pagination.page, eq=7)
-        tm.that(query.pagination.size, eq=30)
+        pag = cast("m.Pagination", query.pagination)
+        tm.that(pag.page, eq=7)
+        tm.that(pag.size, eq=30)
 
     def test_query_resolve_pagination_wrapper(
         self, monkeypatch: pytest.MonkeyPatch
@@ -311,7 +316,7 @@ class TestFlextModelsCqrs:
 
     def test_event_rejects_missing_required_fields(self) -> None:
         with pytest.raises(ValidationError):
-            m.Event()  # type: ignore[call-arg]
+            m.Event.model_validate({})
 
     def test_event_serialization_round_trip(self) -> None:
         evt = m.Event(
@@ -335,7 +340,11 @@ class TestFlextModelsCqrs:
 
     def test_event_message_type_frozen(self) -> None:
         with pytest.raises(ValidationError):
-            m.Event(message_type="command", event_type="x", aggregate_id="y")
+            m.Event.model_validate({
+                "message_type": "command",
+                "event_type": "x",
+                "aggregate_id": "y",
+            })
 
     # ── Bus ────────────────────────────────────────────────────
 
@@ -408,9 +417,9 @@ class TestFlextModelsCqrs:
         )
         tm.that(handler.handler_type, eq=handler_type)
 
-    def test_handler_rejects_missing_required_fields(self) -> None:
+    def test_handler_rejects_missing_handler_name(self) -> None:
         with pytest.raises(ValidationError):
-            m.Handler()  # type: ignore[call-arg]
+            m.Handler.model_validate({})
 
     def test_handler_serialization_round_trip(self) -> None:
         handler = m.Handler(
@@ -563,7 +572,7 @@ class TestFlextModelsCqrs:
         expected_tag: str,
     ) -> None:
         instance = model_factory()
-        tm.that(instance.tag, eq=expected_tag)
+        tm.that(getattr(instance, "tag", None), eq=expected_tag)
 
     @pytest.mark.parametrize(
         ("model_factory", "has_command_type", "has_query_type", "has_event_type"),
@@ -588,14 +597,14 @@ class TestFlextModelsCqrs:
     ) -> None:
         instance = model_factory()
         if has_command_type:
-            tm.that(instance.command_type, none=False)
+            tm.that(getattr(instance, "command_type", None), none=False)
         else:
-            tm.that(instance.command_type, none=True)
+            tm.that(getattr(instance, "command_type", None), none=True)
         if has_event_type:
-            tm.that(instance.event_type, none=False)
+            tm.that(getattr(instance, "event_type", None), none=False)
         else:
-            tm.that(instance.event_type, none=True)
+            tm.that(getattr(instance, "event_type", None), none=True)
         if has_query_type:
-            tm.that(instance.query_type, none=False)
+            tm.that(getattr(instance, "query_type", None), none=False)
         else:
-            tm.that(instance.query_type, none=True)
+            tm.that(getattr(instance, "query_type", None), none=True)

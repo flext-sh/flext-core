@@ -398,7 +398,7 @@ class FlextModelsHandler:
 
         def get_metrics(self) -> r[t.ConfigMap]:
             """Return all recorded metrics as a ConfigMap result."""
-            raw_state = self._context.metrics_state  # pyright: ignore[reportAttributeAccessIssue]
+            raw_state = self._context.metrics_state
             state: t.Dict = (
                 raw_state if isinstance(raw_state, t.Dict) else t.Dict(root={})
             )
@@ -406,7 +406,7 @@ class FlextModelsHandler:
 
         def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
             """Record a named metric value in the tracker."""
-            raw_state = self._context.metrics_state  # pyright: ignore[reportAttributeAccessIssue]
+            raw_state = self._context.metrics_state
             state: t.Dict = (
                 raw_state if isinstance(raw_state, t.Dict) else t.Dict(root={})
             )

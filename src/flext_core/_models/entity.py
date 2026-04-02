@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
@@ -97,7 +97,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_type: str,
-            data: t.ConfigMap | None = None,
+            data: t.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None = None,
         ) -> r[FlextModelsDomainEvent.Entry]:
             """Add a domain event to this entity.
 

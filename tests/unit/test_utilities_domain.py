@@ -81,7 +81,7 @@ def _create_value_objects_batch(
     )
 
 
-from ._models import TestUnitModels
+from . import _models_impl as test_unit_models
 
 
 def _build_domain_test_entity(
@@ -141,12 +141,12 @@ def _as_test_payload(
 
 
 def _as_payload_map(
-    value: TestUnitModels.InputPayloadMap,
+    value: test_unit_models.InputPayloadMap,
 ) -> Mapping[str, t.Tests.Testobject]:
     return value
 
 
-def create_compare_entities_cases() -> Sequence[TestUnitModels.TestCaseMap]:
+def create_compare_entities_cases() -> Sequence[test_unit_models.TestCaseMap]:
     """Create test cases for entity comparison using constants."""
     entities_result: r[Sequence[m.Core.DomainTestEntity]] = _create_entities_batch(
         names=[
@@ -178,28 +178,28 @@ def create_compare_entities_cases() -> Sequence[TestUnitModels.TestCaseMap]:
     )
     custom1 = m.Core.CustomEntity(c.Core.TestDomain.CUSTOM_ID_1)
     custom2 = m.Core.CustomEntity(c.Core.TestDomain.CUSTOM_ID_1)
-    input_data_same_id: TestUnitModels.InputPayloadMap = {
+    input_data_same_id: test_unit_models.InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": alice_entity,
     }
-    input_data_different_id: TestUnitModels.InputPayloadMap = {
+    input_data_different_id: test_unit_models.InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": bob_entity,
     }
-    input_data_different_type: TestUnitModels.InputPayloadMap = {
+    input_data_different_type: test_unit_models.InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": value_obj,
     }
-    input_data_no_id: TestUnitModels.InputPayloadMap = {
+    input_data_no_id: test_unit_models.InputPayloadMap = {
         "entity_a": alice_no_id,
         "entity_b": bob_entity,
     }
-    input_data_custom: TestUnitModels.InputPayloadMap = cast(
-        "TestUnitModels.InputPayloadMap",
+    input_data_custom: test_unit_models.InputPayloadMap = cast(
+        "test_unit_models.InputPayloadMap",
         {"entity_a": custom1, "entity_b": custom2},
     )
     return cast(
-        "Sequence[TestUnitModels.TestCaseMap]",
+        "Sequence[test_unit_models.TestCaseMap]",
         [
             u.Tests.TestCaseHelpers.create_operation_test_case(
                 operation="compare_entities_by_id",
@@ -240,7 +240,7 @@ def create_compare_entities_cases() -> Sequence[TestUnitModels.TestCaseMap]:
     )
 
 
-def create_hash_entity_cases() -> Sequence[TestUnitModels.TestCaseMap]:
+def create_hash_entity_cases() -> Sequence[test_unit_models.TestCaseMap]:
     """Create test cases for entity hashing using constants."""
     entities_result: r[Sequence[m.Core.DomainTestEntity]] = _create_entities_batch(
         names=[
@@ -263,14 +263,14 @@ def create_hash_entity_cases() -> Sequence[TestUnitModels.TestCaseMap]:
     alice_no_id: m.Core.DomainTestEntity
     alice_entity, alice_no_id = entities
     custom = m.Core.CustomEntity(c.Core.TestDomain.CUSTOM_ID_1)
-    input_data_with_id: TestUnitModels.InputPayloadMap = {"entity": alice_entity}
-    input_data_no_id: TestUnitModels.InputPayloadMap = {"entity": alice_no_id}
-    input_data_custom: TestUnitModels.InputPayloadMap = cast(
-        "TestUnitModels.InputPayloadMap",
+    input_data_with_id: test_unit_models.InputPayloadMap = {"entity": alice_entity}
+    input_data_no_id: test_unit_models.InputPayloadMap = {"entity": alice_no_id}
+    input_data_custom: test_unit_models.InputPayloadMap = cast(
+        "test_unit_models.InputPayloadMap",
         {"entity": custom},
     )
     return cast(
-        "Sequence[TestUnitModels.TestCaseMap]",
+        "Sequence[test_unit_models.TestCaseMap]",
         [
             u.Tests.TestCaseHelpers.create_operation_test_case(
                 operation="hash_entity_by_id",
@@ -297,7 +297,7 @@ def create_hash_entity_cases() -> Sequence[TestUnitModels.TestCaseMap]:
     )
 
 
-def create_compare_value_objects_cases() -> Sequence[TestUnitModels.TestCaseMap]:
+def create_compare_value_objects_cases() -> Sequence[test_unit_models.TestCaseMap]:
     """Create test cases for value t.NormalizedValue comparison using constants."""
     value_objs: Sequence[m.Core.DomainTestValue] = _create_value_objects_batch(
         data_list=[
@@ -324,8 +324,8 @@ def create_compare_value_objects_cases() -> Sequence[TestUnitModels.TestCaseMap]
     bad2 = u.Tests.BadObjects.BadModelDump()
     no_dict1 = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
     no_dict2 = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
-    input_data_list: Sequence[TestUnitModels.InputPayloadMap] = cast(
-        "Sequence[TestUnitModels.InputPayloadMap]",
+    input_data_list: Sequence[test_unit_models.InputPayloadMap] = cast(
+        "Sequence[test_unit_models.InputPayloadMap]",
         [
             {"obj_a": value1, "obj_b": value1},
             {"obj_a": value1, "obj_b": value2},
@@ -336,7 +336,7 @@ def create_compare_value_objects_cases() -> Sequence[TestUnitModels.TestCaseMap]
         ],
     )
     return cast(
-        "Sequence[TestUnitModels.TestCaseMap]",
+        "Sequence[test_unit_models.TestCaseMap]",
         u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
             operation="compare_value_objects_by_value",
             descriptions=[
@@ -353,7 +353,7 @@ def create_compare_value_objects_cases() -> Sequence[TestUnitModels.TestCaseMap]
     )
 
 
-def create_hash_value_object_cases() -> Sequence[TestUnitModels.TestCaseMap]:
+def create_hash_value_object_cases() -> Sequence[test_unit_models.TestCaseMap]:
     """Create test cases for value t.NormalizedValue hashing using constants."""
     value_obj: m.Core.DomainTestValue = _create_value_object(
         data=c.Core.TestDomain.VALUE_DATA_TEST,
@@ -368,8 +368,8 @@ def create_hash_value_object_cases() -> Sequence[TestUnitModels.TestCaseMap]:
         complex_items_list,
     )
     no_dict_obj = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
-    input_data_list_hash: Sequence[TestUnitModels.InputPayloadMap] = cast(
-        "Sequence[TestUnitModels.InputPayloadMap]",
+    input_data_list_hash: Sequence[test_unit_models.InputPayloadMap] = cast(
+        "Sequence[test_unit_models.InputPayloadMap]",
         [
             {"obj": value_obj},
             {"obj": simple_obj},
@@ -379,7 +379,7 @@ def create_hash_value_object_cases() -> Sequence[TestUnitModels.TestCaseMap]:
         ],
     )
     return cast(
-        "Sequence[TestUnitModels.TestCaseMap]",
+        "Sequence[test_unit_models.TestCaseMap]",
         u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
             operation="hash_value_object_by_value",
             descriptions=[
@@ -411,7 +411,7 @@ class TestuDomain:
     )
     def test_compare_entities_by_id(
         self,
-        test_case: TestUnitModels.TestCaseMap,
+        test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test compare_entities_by_id using u."""
         operation_result = (
@@ -431,7 +431,7 @@ class TestuDomain:
         create_hash_entity_cases(),
         ids=lambda case: f"hash_entity_{case['description']}",
     )
-    def test_hash_entity_by_id(self, test_case: TestUnitModels.TestCaseMap) -> None:
+    def test_hash_entity_by_id(self, test_case: test_unit_models.TestCaseMap) -> None:
         """Test hash_entity_by_id using u."""
         operation_result = (
             FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
@@ -455,7 +455,7 @@ class TestuDomain:
     )
     def test_compare_value_objects_by_value(
         self,
-        test_case: TestUnitModels.TestCaseMap,
+        test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test compare_value_objects_by_value using u."""
         operation_result = (
@@ -481,7 +481,7 @@ class TestuDomain:
     )
     def test_hash_value_object_by_value(
         self,
-        test_case: TestUnitModels.TestCaseMap,
+        test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test hash_value_object_by_value using u."""
         operation_result = (

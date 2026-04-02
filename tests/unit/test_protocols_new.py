@@ -352,7 +352,7 @@ class TestFlextProtocols:
         ]
         for attr in expected:
             tm.that(
-                attr in p.Settings.__protocol_attrs__
+                attr in getattr(p.Settings, "__protocol_attrs__", set())
                 or attr in getattr(p.Settings, "__annotations__", {}),
                 eq=True,
                 msg=f"p.Settings must define {attr}",
@@ -486,7 +486,7 @@ class TestFlextProtocols:
     def test_check_protocol_compliance_positive(self) -> None:
         """check_protocol_compliance returns True for conforming instance."""
 
-        class _Flusher:
+        class _Flusher(BaseModel):
             def flush(self) -> None:
                 pass
 
@@ -496,7 +496,7 @@ class TestFlextProtocols:
     def test_check_protocol_compliance_negative(self) -> None:
         """check_protocol_compliance returns False for non-conforming instance."""
 
-        class _Empty:
+        class _Empty(BaseModel):
             pass
 
         result = p.check_protocol_compliance(_Empty(), p.Flushable)

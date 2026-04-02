@@ -1,4 +1,4 @@
-"""Tests for FlextUtilitiesDiscovery - scan_module and has_factories.
+"""Tests for u - scan_module and has_factories.
 
 Module: flext_core._utilities.discovery
 Coverage target: lines 50-63, 85 (scan_module body, has_factories body)
@@ -11,24 +11,21 @@ from __future__ import annotations
 
 import types
 
-from flext_core import (
-    FlextUtilitiesDiscovery as FactoryDecoratorsDiscovery,
-)
-from tests import c, m
+from tests import c, m, u
 
 
 class TestDecoratorsDiscoveryFullCoverage:
     def test_scan_empty_module_returns_empty_list(self) -> None:
         """Scanning a module with no factory-decorated functions returns []."""
         mod = types.ModuleType("empty_mod")
-        result = FactoryDecoratorsDiscovery.scan_module(mod)
+        result = u.scan_module(mod)
         assert result == []
 
     def test_scan_module_with_non_factory_functions(self) -> None:
         """Functions without factory config attribute are ignored."""
         mod = types.ModuleType("plain_mod")
         mod.__dict__["my_func"] = lambda: None
-        result = FactoryDecoratorsDiscovery.scan_module(mod)
+        result = u.scan_module(mod)
         assert result == []
 
     def test_scan_module_skips_private_names(self) -> None:
@@ -42,7 +39,7 @@ class TestDecoratorsDiscoveryFullCoverage:
         config = m.FactoryDecoratorConfig(name="private")
         setattr(_private_factory, c.FACTORY_ATTR, config)
         mod.__dict__["_private_factory"] = _private_factory
-        result = FactoryDecoratorsDiscovery.scan_module(mod)
+        result = u.scan_module(mod)
         assert result == []
 
     def test_scan_module_finds_factory_decorated_function(self) -> None:
@@ -56,7 +53,7 @@ class TestDecoratorsDiscoveryFullCoverage:
         config = m.FactoryDecoratorConfig(name="my_factory")
         setattr(my_factory, c.FACTORY_ATTR, config)
         mod.__dict__["my_factory"] = my_factory
-        result = FactoryDecoratorsDiscovery.scan_module(mod)
+        result = u.scan_module(mod)
         assert len(result) == 1
         assert result[0][0] == "my_factory"
         assert result[0][1].name == "my_factory"
@@ -79,7 +76,7 @@ class TestDecoratorsDiscoveryFullCoverage:
         setattr(alpha_factory, c.FACTORY_ATTR, config_a)
         mod.__dict__["zebra_factory"] = zebra_factory
         mod.__dict__["alpha_factory"] = alpha_factory
-        result = FactoryDecoratorsDiscovery.scan_module(mod)
+        result = u.scan_module(mod)
         assert len(result) == 2
         assert result[0][0] == "alpha_factory"
         assert result[1][0] == "zebra_factory"
@@ -88,5 +85,5 @@ class TestDecoratorsDiscoveryFullCoverage:
         """Non-callable attributes are skipped even if they have factory attr."""
         mod = types.ModuleType("noncallable_mod")
         mod.__dict__["some_string"] = "not callable"
-        result = FactoryDecoratorsDiscovery.scan_module(mod)
+        result = u.scan_module(mod)
         assert result == []

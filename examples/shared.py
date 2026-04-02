@@ -146,7 +146,7 @@ class Examples:
             return "None"
         if isinstance(v, bool):
             return str(v)
-        if isinstance(v, t.Numeric):
+        if isinstance(v, int | float):
             return str(v)
         if isinstance(v, str):
             return repr(v)

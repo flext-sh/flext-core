@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from enum import StrEnum, unique
 from typing import NoReturn, cast, override
 
@@ -20,7 +20,7 @@ class TestUtilitiesCollectionFullCoverage:
         RED = "red"
         BLUE = "blue"
 
-    class _BadMapping(t.StrMapping):
+    class _BadMapping(Mapping[str, str]):
         @override
         def __getitem__(self, _key: str) -> str:
             msg = "mapping get failed"

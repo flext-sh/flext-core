@@ -12,9 +12,8 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from flext_core import c
 from flext_tests import tm
-from tests import m, t
+from tests import c, m, t
 
 
 class TestFlextModelsErrors:
@@ -181,12 +180,15 @@ class TestFlextModelsErrors:
         """TimeoutConfig is frozen (immutable)."""
         cfg = m.TimeoutConfig(timeout_seconds=5.0)
         with pytest.raises(ValidationError):
-            cfg.timeout_seconds = 10.0  # type: ignore[misc]
+            object.__setattr__(cfg, "timeout_seconds", 10.0)
 
     def test_timeout_config_forbids_extra(self) -> None:
         """TimeoutConfig forbids extra fields."""
         with pytest.raises(ValidationError):
-            m.TimeoutConfig(timeout_seconds=5.0, unknown_field="x")  # type: ignore[call-arg]
+            m.TimeoutConfig.model_validate({
+                "timeout_seconds": 5.0,
+                "unknown_field": "x",
+            })
 
     def test_timeout_config_rejects_zero(self) -> None:
         """TimeoutConfig rejects zero timeout (uses PositiveFloat)."""

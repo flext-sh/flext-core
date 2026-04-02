@@ -101,11 +101,13 @@ class FlextModelsCqrs:
         ] = c.DEFAULT_PAGE_SIZE
 
         @computed_field
+        @property
         def limit(self) -> int:
             """Get limit (same as size)."""
             return self.size
 
         @computed_field
+        @property
         def offset(self) -> int:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
@@ -140,7 +142,7 @@ class FlextModelsCqrs:
             ),
         ] = Field(default_factory=t.Dict)
         pagination: Annotated[
-            BaseModel | t.Dict,
+            FlextModelsCqrs.Pagination | t.Dict,
             Field(
                 description="Pagination settings controlling page number and page size for query results.",
                 title="Pagination",

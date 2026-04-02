@@ -14,14 +14,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextDecorators as _Dec,
     FlextLogger,
-    d,
-    e,
-    r,
 )
 from flext_tests import tm
-from tests import c, m, p, t, u
+from tests import c, d, e, m, p, r, t, u
 
 
 class TestDecoratorsFullCoverage:
@@ -103,9 +99,9 @@ class TestDecoratorsFullCoverage:
         def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
             return None
 
-        monkeypatch.setattr(_Dec, "_resolve_logger", _resolve_logger)
-        monkeypatch.setattr(_Dec, "_bind_operation_context", _bind_operation_context)
-        monkeypatch.setattr(_Dec, "_clear_operation_scope", _clear_operation_scope)
+        monkeypatch.setattr(d, "_resolve_logger", _resolve_logger)
+        monkeypatch.setattr(d, "_bind_operation_context", _bind_operation_context)
+        monkeypatch.setattr(d, "_clear_operation_scope", _clear_operation_scope)
 
         @d.log_operation("boom", track_perf=True)
         def fn() -> None:

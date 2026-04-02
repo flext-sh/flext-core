@@ -13,7 +13,7 @@ import pytest
 from flext_core import FlextRuntime, _utilities
 from tests import u
 
-from ._models import TestUnitModels
+from . import _models_impl as test_unit_models
 
 generators_module = _utilities.generators
 
@@ -35,7 +35,7 @@ class TestUtilitiesGeneratorsFullCoverage:
             staticmethod(lambda: datetime(2026, 1, 1, tzinfo=UTC)),
         )
         enriched = u.ensure_trace_context(
-            TestUnitModels._GoodModel(value=9),
+            test_unit_models._GoodModel(value=9),
             include_correlation_id=True,
             include_timestamp=True,
         )

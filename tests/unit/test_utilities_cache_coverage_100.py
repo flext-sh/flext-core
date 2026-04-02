@@ -24,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_tests import tm
 from tests import t, u
 
-from ._models import TestUnitModels
+from . import _models_impl as test_unit_models
 
 
 class UtilitiesCacheCoverage100Namespace:
@@ -91,13 +91,13 @@ class UtilitiesCacheCoverage100Namespace:
     NORMALIZE_COMPONENT_SCENARIOS: ClassVar[Sequence[NormalizeComponentScenario]] = [
         NormalizeComponentScenario(
             name="pydantic_model",
-            component=TestUnitModels.CacheTestModel(name="test", value=42),
+            component=test_unit_models.CacheTestModel(name="test", value=42),
             expected_type=dict,
         ),
         NormalizeComponentScenario(
             name="nested_pydantic_model",
-            component=TestUnitModels.NestedModel(
-                inner=TestUnitModels.CacheTestModel(name="inner", value=10),
+            component=test_unit_models.NestedModel(
+                inner=test_unit_models.CacheTestModel(name="inner", value=10),
                 count=5,
             ),
             expected_type=dict,
@@ -238,7 +238,7 @@ class UtilitiesCacheCoverage100Namespace:
 
         def test_normalize_pydantic_model(self) -> None:
             """Test normalize_component with Pydantic model."""
-            model = TestUnitModels.CacheTestModel(name="test", value=42)
+            model = test_unit_models.CacheTestModel(name="test", value=42)
             result = u.normalize_component(model)
             assert isinstance(result, dict)
             result_dict: t.ContainerMapping = result
@@ -247,8 +247,8 @@ class UtilitiesCacheCoverage100Namespace:
 
         def test_normalize_nested_pydantic_model(self) -> None:
             """Test normalize_component with nested Pydantic model."""
-            model = TestUnitModels.NestedModel(
-                inner=TestUnitModels.CacheTestModel(name="inner", value=10),
+            model = test_unit_models.NestedModel(
+                inner=test_unit_models.CacheTestModel(name="inner", value=10),
                 count=5,
             )
             result = u.normalize_component(model)

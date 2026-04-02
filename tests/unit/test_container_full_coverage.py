@@ -13,9 +13,9 @@ from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 import flext_core._utilities.discovery as _discovery_mod
-from flext_core import FlextContainer, FlextContext, FlextSettings, r
+from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
-from tests import m, p, t
+from tests import m, p, r, t
 
 
 class TestContainerFullCoverage:

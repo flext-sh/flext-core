@@ -124,11 +124,21 @@ class FlextModelsDomainEvent:
 
     @staticmethod
     def to_config_map(
-        data: t.ConfigMap | None,
+        data: t.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None,
     ) -> FlextModelsDomainEvent.ComparableConfigMap:
         """Convert optional ConfigMap to a comparable variant."""
         if not data:
             return FlextModelsDomainEvent.ComparableConfigMap(root={})
+        if isinstance(data, Mapping):
+            typed_data = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                data,
+            )
+            return FlextModelsDomainEvent.ComparableConfigMap(
+                root={
+                    str(key): FlextModelsDomainEvent.metadata_to_normalized(value)
+                    for key, value in typed_data.items()
+                },
+            )
         return FlextModelsDomainEvent.ComparableConfigMap(
             root={
                 str(key): (value if FlextRuntime.is_primitive(value) else str(value))

@@ -21,10 +21,9 @@ import pytest
 
 from flext_core import (
     FlextRuntime,
-    FlextUtilities,
 )
 from flext_tests import tm
-from tests import m, t
+from tests import m, t, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -50,11 +49,11 @@ class TestDeprecationWarnings:
             tm.that(type(normalized_result), eq=type(strict_result))
 
     def test_facade_normalize_to_container(self) -> None:
-        result = FlextUtilities.normalize_to_container("facade_test")
+        result = u.normalize_to_container("facade_test")
         tm.that(result, eq="facade_test")
 
     def test_facade_normalize_to_metadata(self) -> None:
-        result = FlextUtilities.normalize_to_metadata("facade_meta")
+        result = u.normalize_to_metadata("facade_meta")
         tm.that(result, eq="facade_meta")
 
     def test_normalize_to_container_scalar_passthrough(self) -> None:

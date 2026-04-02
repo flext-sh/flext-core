@@ -1,6 +1,6 @@
-"""Tests for FlextConstants - production constants facade.
+"""Tests for c - production constants facade.
 
-Tests all constant groups through the `c` facade (FlextCoreTestConstants -> FlextConstants MRO).
+Tests all constant groups through the `c` facade (FlextCoreTestConstants -> c MRO).
 Covers: base, cqrs, validation, infrastructure, platform, domain, errors, settings, mixins.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,9 +15,8 @@ from types import MappingProxyType
 
 import pytest
 
-from flext_core.constants import FlextConstants
 from flext_tests import tm
-from tests import c, u
+from tests import c, t, u
 
 
 class TestFlextConstants:
@@ -74,7 +73,9 @@ class TestFlextConstants:
         ],
         ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
     )
-    def test_base_constant_values(self, attr: str, expected: object) -> None:
+    def test_base_constant_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """Base constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -115,7 +116,9 @@ class TestFlextConstants:
             ("HANDLER_CONFIG_INVALID", "HANDLER_CONFIG_INVALID"),
         ],
     )
-    def test_cqrs_constant_values(self, attr: str, expected: object) -> None:
+    def test_cqrs_constant_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """CQRS constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -338,7 +341,9 @@ class TestFlextConstants:
             ("RETRY_COUNT_MAX", 3),
         ],
     )
-    def test_validation_numeric_values(self, attr: str, expected: object) -> None:
+    def test_validation_numeric_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """Validation numeric constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -487,7 +492,9 @@ class TestFlextConstants:
             ("MAX_PAGE_NUMBER", 10000),
         ],
     )
-    def test_infrastructure_constant_values(self, attr: str, expected: object) -> None:
+    def test_infrastructure_constant_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """Infrastructure constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -610,7 +617,9 @@ class TestFlextConstants:
             ("DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD", 3),
         ],
     )
-    def test_platform_constant_values(self, attr: str, expected: object) -> None:
+    def test_platform_constant_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """Platform constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -739,7 +748,9 @@ class TestFlextConstants:
             ("ASYNC_BLOCK_ON_FULL", False),
         ],
     )
-    def test_domain_constant_values(self, attr: str, expected: object) -> None:
+    def test_domain_constant_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """Domain constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -861,7 +872,9 @@ class TestFlextConstants:
             ("EXTRA_ALLOW", "allow"),
         ],
     )
-    def test_settings_constant_values(self, attr: str, expected: object) -> None:
+    def test_settings_constant_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """Settings constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -992,7 +1005,9 @@ class TestFlextConstants:
             ("NONEXISTENT_USERNAME", "nonexistent"),
         ],
     )
-    def test_mixins_constant_values(self, attr: str, expected: object) -> None:
+    def test_mixins_constant_values(
+        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+    ) -> None:
         """Mixins constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
 
@@ -1235,9 +1250,9 @@ class TestFlextConstants:
         tm.that(hasattr(c, attr), eq=True, msg=f"Missing facade attribute: {attr}")
 
     def test_facade_docstring_mentions_layer_zero(self) -> None:
-        """FlextConstants docstring references Layer 0."""
-        tm.that(FlextConstants.__doc__, none=False)
-        doc = FlextConstants.__doc__ or ""
+        """C docstring references Layer 0."""
+        tm.that(c.__doc__, none=False)
+        doc = c.__doc__ or ""
         tm.that("layer 0" in doc.lower(), eq=True)
 
 

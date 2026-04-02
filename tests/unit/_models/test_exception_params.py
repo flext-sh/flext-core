@@ -451,7 +451,7 @@ class TestFlextModelsExceptionParams:
         """Assigning a wrong type to a strict str field raises."""
         params = m.ValidationErrorParams(field="email")
         with pytest.raises(ValidationError):
-            params.field = 123  # type: ignore[assignment]
+            setattr(params, "field", 123)
 
     # ── Cross-cutting: roundtrip model_validate ───────────────
 

@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from tests import p, t, u
 
-from ._models import TestUnitModels
+from . import _models_impl as test_unit_models
 
 
 class TestUtilitiesContextFullCoverage:
@@ -27,7 +27,7 @@ class TestUtilitiesContextFullCoverage:
             self.runtime_dispatcher: p.Dispatcher | None = MagicMock(spec=p.Dispatcher)
             self.runtime_registry: p.Registry | None = MagicMock(spec=p.Registry)
             self.runtime_context: p.Context | None = MagicMock(spec=p.Context)
-            self.runtime_config: BaseModel | None = TestUnitModels._FakeConfig(
+            self.runtime_config: BaseModel | None = test_unit_models._FakeConfig(
                 timeout=10,
             )
 

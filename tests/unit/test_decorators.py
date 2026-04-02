@@ -1,4 +1,4 @@
-"""Refactored comprehensive tests for FlextDecorators - Automation decorators."""
+"""Refactored comprehensive tests for d - Automation decorators."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextDecorators, FlextExceptions, FlextLogger, r
-from tests import u
+from flext_core import FlextLogger
+from tests import d, e, r, u
 
 
 class TestFlextDecorators:
@@ -150,7 +150,7 @@ class TestFlextDecorators:
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.INJECT_BASIC:
 
-            @FlextDecorators.inject(test_service="test_service")
+            @d.inject(test_service="test_service")
             def process_data_basic(
                 data: str,
                 *,
@@ -163,7 +163,7 @@ class TestFlextDecorators:
             assert process_data_basic("input") == "input_default"
         elif test_case.operation == self.DecoratorOperationType.INJECT_MISSING:
 
-            @FlextDecorators.inject(missing_service="missing_service")
+            @d.inject(missing_service="missing_service")
             def process_data_missing(*, missing_service: str = "default") -> str:
                 return missing_service
 
@@ -173,7 +173,7 @@ class TestFlextDecorators:
             class TestServiceTyped(BaseModel):
                 value: str
 
-            @FlextDecorators.inject(service="service")
+            @d.inject(service="service")
             def process(*, service: TestServiceTyped) -> str:
                 return service.value
 
@@ -187,14 +187,14 @@ class TestFlextDecorators:
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.LOG_OPERATION_BASIC:
 
-            @FlextDecorators.log_operation("test_operation")
+            @d.log_operation("test_operation")
             def simple_function() -> str:
                 return "success"
 
             assert simple_function() == "success"
         elif test_case.operation == self.DecoratorOperationType.LOG_OPERATION_EXCEPTION:
 
-            @FlextDecorators.log_operation("failing_operation")
+            @d.log_operation("failing_operation")
             def failing_function() -> None:
                 error_msg = "Test error"
                 raise ValueError(error_msg)
@@ -209,7 +209,7 @@ class TestFlextDecorators:
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.TRACK_PERFORMANCE_BASIC:
 
-            @FlextDecorators.log_operation("timed_operation")
+            @d.log_operation("timed_operation")
             def timed_function() -> str:
                 time.sleep(0.01)
                 return "completed"
@@ -220,7 +220,7 @@ class TestFlextDecorators:
             == self.DecoratorOperationType.TRACK_PERFORMANCE_EXCEPTION
         ):
 
-            @FlextDecorators.log_operation("failing_operation")
+            @d.log_operation("failing_operation")
             def failing_function() -> None:
                 error_msg = "Timed failure"
                 raise RuntimeError(error_msg)
@@ -235,7 +235,7 @@ class TestFlextDecorators:
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.RAILWAY_SUCCESS:
 
-            @FlextDecorators.railway()
+            @d.railway()
             def successful_operation() -> str:
                 return "success"
 
@@ -244,7 +244,7 @@ class TestFlextDecorators:
             u.Tests.Result.assert_success_with_value(result, "success")
         elif test_case.operation == self.DecoratorOperationType.RAILWAY_EXCEPTION:
 
-            @FlextDecorators.railway(error_code="CUSTOM_ERROR")
+            @d.railway(error_code="CUSTOM_ERROR")
             def failing_operation() -> str:
                 error_msg = "Operation failed"
                 raise ValueError(error_msg)
@@ -262,7 +262,7 @@ class TestFlextDecorators:
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.RETRY_SUCCESS_FIRST:
 
-            @FlextDecorators.retry(max_attempts=3)
+            @d.retry(max_attempts=3)
             def successful_operation() -> str:
                 return "success"
 
@@ -273,7 +273,7 @@ class TestFlextDecorators:
         ):
             attempts = 0
 
-            @FlextDecorators.retry(max_attempts=3, delay_seconds=0.001)
+            @d.retry(max_attempts=3, delay_seconds=0.001)
             def flaky_operation() -> str:
                 nonlocal attempts
                 attempts += 1
@@ -286,13 +286,13 @@ class TestFlextDecorators:
             assert attempts == 3
         elif test_case.operation == self.DecoratorOperationType.RETRY_EXHAUSTED:
 
-            @FlextDecorators.retry(max_attempts=2, delay_seconds=0.001)
+            @d.retry(max_attempts=2, delay_seconds=0.001)
             def always_fails() -> str:
                 error_msg = "Always fails"
                 raise ValueError(error_msg)
 
             with pytest.raises(
-                FlextExceptions.TimeoutError,
+                e.TimeoutError,
                 match="failed after 2 attempts",
             ):
                 always_fails()
@@ -304,7 +304,7 @@ class TestFlextDecorators:
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.TIMEOUT_SUCCESS:
 
-            @FlextDecorators.timeout(timeout_seconds=1.0)
+            @d.timeout(timeout_seconds=1.0)
             def fast_operation() -> str:
                 time.sleep(0.01)
                 return "completed"
@@ -312,12 +312,12 @@ class TestFlextDecorators:
             assert fast_operation() == "completed"
         elif test_case.operation == self.DecoratorOperationType.TIMEOUT_EXCEEDED:
 
-            @FlextDecorators.timeout(timeout_seconds=0.005)
+            @d.timeout(timeout_seconds=0.005)
             def slow_operation() -> str:
                 time.sleep(0.01)
                 return "should_not_reach"
 
-            with pytest.raises(FlextExceptions.TimeoutError):
+            with pytest.raises(e.TimeoutError):
                 slow_operation()
 
     @pytest.mark.parametrize(
@@ -331,14 +331,14 @@ class TestFlextDecorators:
     ) -> None:
         if test_case.operation == self.DecoratorOperationType.COMBINED_BASIC:
 
-            @FlextDecorators.combined(operation_name="test_op", track_perf=True)
+            @d.combined(operation_name="test_op", track_perf=True)
             def simple_function() -> str:
                 return "result"
 
             assert simple_function() == "result"
         elif test_case.operation == self.DecoratorOperationType.COMBINED_WITH_RAILWAY:
 
-            @FlextDecorators.combined(use_railway=True, operation_name="wrapped")
+            @d.combined(use_railway=True, operation_name="wrapped")
             def operation() -> str:
                 return "success"
 
@@ -347,7 +347,7 @@ class TestFlextDecorators:
             _ = u.Tests.Result.assert_success(result)
 
     def test_railway_with_existing_result(self) -> None:
-        @FlextDecorators.railway()
+        @d.railway()
         def returns_result() -> r[str]:
             return r[str].ok("already_wrapped")
 
@@ -360,7 +360,7 @@ class TestFlextDecorators:
         assert hasattr(service, "logger")
         assert service.logger is not None
 
-        @FlextDecorators.retry(max_attempts=2, delay_seconds=0.001)
+        @d.retry(max_attempts=2, delay_seconds=0.001)
         def flaky_method() -> str:
             return service.flaky_method()
 
@@ -368,9 +368,9 @@ class TestFlextDecorators:
         assert service.attempts == 2
 
     def test_integration_manual_stacking(self) -> None:
-        @FlextDecorators.log_operation("stacked")
-        @FlextDecorators.log_operation("stacked")
-        @FlextDecorators.railway()
+        @d.log_operation("stacked")
+        @d.log_operation("stacked")
+        @d.railway()
         def stacked_operation() -> str:
             return "stacked_result"
 
@@ -381,8 +381,8 @@ class TestFlextDecorators:
     def test_integration_retry_with_railway(self) -> None:
         attempts = 0
 
-        @FlextDecorators.railway()
-        @FlextDecorators.retry(max_attempts=3, delay_seconds=0.001)
+        @d.railway()
+        @d.retry(max_attempts=3, delay_seconds=0.001)
         def flaky_with_railway() -> str:
             nonlocal attempts
             attempts += 1
@@ -405,7 +405,7 @@ class TestFlextDecorators:
     ) -> None:
         """Property: railway-wrapped division always returns a result."""
 
-        @FlextDecorators.railway(error_code="DIV")
+        @d.railway(error_code="DIV")
         def divide(x: int, y: int) -> float:
             return x / y
 

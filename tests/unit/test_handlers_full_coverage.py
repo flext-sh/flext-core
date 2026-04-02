@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from types import ModuleType
 from typing import cast, override
 
@@ -92,7 +93,7 @@ class TestHandlersFullCoverage:
         assert tuple_result.is_success
 
     def test_run_pipeline_query_and_event_paths(self) -> None:
-        qh = self._QueryHandler(
+        qh: TestHandlersFullCoverage._Handler = self._QueryHandler(
             config=m.Handler(
                 handler_id="q2",
                 handler_name="q2",
@@ -100,9 +101,17 @@ class TestHandlersFullCoverage:
                 handler_mode=c.HandlerType.QUERY,
             ),
         )
-        qr = qh._run_pipeline("query", operation=c.HANDLER_MODE_QUERY)
+        query_message: t.Scalar = "query"
+        query_pipeline = cast(
+            "Callable[[t.Scalar, str], r[t.Container]]",
+            qh._run_pipeline,
+        )
+        qr = query_pipeline(
+            query_message,
+            c.HANDLER_MODE_QUERY,
+        )
         assert qr.is_success
-        eh = self._EventHandler(
+        eh: TestHandlersFullCoverage._Handler = self._EventHandler(
             config=m.Handler(
                 handler_id="e2",
                 handler_name="e2",
@@ -110,7 +119,15 @@ class TestHandlersFullCoverage:
                 handler_mode=c.HandlerType.EVENT,
             ),
         )
-        er = eh._run_pipeline("event", operation=c.HandlerType.EVENT.value)
+        event_message: t.Scalar = "event"
+        event_pipeline = cast(
+            "Callable[[t.Scalar, str], r[t.Container]]",
+            eh._run_pipeline,
+        )
+        er = event_pipeline(
+            event_message,
+            c.HandlerType.EVENT.value,
+        )
         assert er.is_success
 
     def test_discovery_narrowed_function_paths(self) -> None:

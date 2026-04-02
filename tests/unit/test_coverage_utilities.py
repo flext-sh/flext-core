@@ -27,9 +27,8 @@ from typing import ClassVar, override
 
 import pytest
 
-from flext_core import r
 from flext_tests import tm
-from tests import TextUtilityContract, assertion_helpers, t, u
+from tests import TextUtilityContract, assertion_helpers, r, t, u
 
 
 class Testu(TextUtilityContract):

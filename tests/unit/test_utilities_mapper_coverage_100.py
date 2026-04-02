@@ -21,7 +21,8 @@ from typing import Annotated, cast
 from pydantic import BaseModel, Field
 
 from flext_tests import tm
-from tests import TestUnitModels, assertion_helpers, t, u
+from tests import assertion_helpers, t, u
+from tests.unit import _models_impl as test_unit_models
 
 
 class UtilitiesMapperCoverage100Namespace:
@@ -108,7 +109,7 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_extract_model(self) -> None:
             """Test Pydantic model extraction."""
-            model = TestUnitModels.ComplexModel(
+            model = test_unit_models.ComplexModel(
                 id=1,
                 data={"key": "val"},
                 items=["a", "b"],

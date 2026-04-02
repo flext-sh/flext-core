@@ -12,8 +12,7 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict
 
-from flext_core import r
-from tests import u
+from tests import r, u
 
 
 class TestUtilities:

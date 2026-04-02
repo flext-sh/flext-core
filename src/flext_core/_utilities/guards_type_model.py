@@ -29,7 +29,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_configuration_dict(
-        value: t.ValueOrModel,
+        value: t.GuardInput,
     ) -> TypeIs[t.Dict]:
         """Check if value is a Dict model or mapping with container values."""
         if isinstance(value, t.Dict):
@@ -47,9 +47,11 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_configuration_mapping(
-        value: t.ContainerMapping | t.ConfigMap | t.Dict,
+        value: t.GuardInput,
     ) -> TypeIs[t.ConfigMap]:
         """Check if value is a ConfigMap/Dict or mapping with container values."""
+        if not isinstance(value, (t.ConfigMap, t.Dict, Mapping)):
+            return False
         candidate: Mapping[str, t.ValueOrModel] = (
             value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
         )
@@ -62,7 +64,7 @@ class FlextUtilitiesGuardsTypeModel:
         return True
 
     @staticmethod
-    def is_pydantic_model(value: t.ValueOrModel) -> TypeIs[BaseModel]:
+    def is_pydantic_model(value: t.GuardInput) -> TypeIs[BaseModel]:
         """Narrow value to Pydantic BaseModel with callable model_dump."""
         return (
             isinstance(value, BaseModel)

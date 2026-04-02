@@ -9,7 +9,8 @@ from typing import cast
 
 import pytest
 
-from tests import TestUnitModels, p, r, t, u
+from tests import p, r, t, u
+from tests.unit import _models_impl as test_unit_models
 
 
 class TestUtilitiesConfigurationFullCoverage:
@@ -96,7 +97,7 @@ class TestUtilitiesConfigurationFullCoverage:
         assert u._try_get_from_model_dump(
             cast(
                 "p.HasModelDump",
-                cast("t.NormalizedValue", TestUnitModels._DumpErrorModel()),
+                cast("t.NormalizedValue", test_unit_models._DumpErrorModel()),
             ),
             "missing",
         ) == (False, None)

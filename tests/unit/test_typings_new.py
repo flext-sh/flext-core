@@ -131,15 +131,15 @@ class TestFlextTypes:
 
     def test_generic_type_vars_exist(self) -> None:
         """All generic TypeVars and ParamSpec are importable."""
-        tm.that(T, none=False)
-        tm.that(U, none=False)
-        tm.that(R, none=False)
-        tm.that(P, none=False)
-        tm.that(ResultT, none=False)
-        tm.that(T_co, none=False)
-        tm.that(T_contra, none=False)
-        tm.that(T_Model, none=False)
-        tm.that(T_Settings, none=False)
+        tm.that(T is not None, eq=True)
+        tm.that(U is not None, eq=True)
+        tm.that(R is not None, eq=True)
+        tm.that(P is not None, eq=True)
+        tm.that(ResultT is not None, eq=True)
+        tm.that(T_co is not None, eq=True)
+        tm.that(T_contra is not None, eq=True)
+        tm.that(T_Model is not None, eq=True)
+        tm.that(T_Settings is not None, eq=True)
 
     def test_typevar_names(self) -> None:
         """TypeVars have correct __name__ attributes."""
@@ -523,7 +523,7 @@ class TestFlextTypes:
 
     def test_object_list_default_empty(self) -> None:
         """t.ObjectList defaults to empty list."""
-        ol = t.ObjectList()
+        ol = t.ObjectList(root=[])
         tm.that(len(ol.root), eq=0)
 
     # -- MRO composition check --

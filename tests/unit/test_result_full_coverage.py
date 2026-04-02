@@ -50,7 +50,7 @@ def test_map_flat_map_and_then_paths() -> None:
     mapped_fail = r[int].ok(2).map(lambda _: (_ for _ in ()).throw(ValueError("m")))
     tm.fail(mapped_fail)
     tm.that(mapped_fail.error, eq="m")
-    runtime_ok: r[int] = cast("r[int]", r[int].ok(20))
+    runtime_ok: r[int] = r[int].ok(20)
     flat_ok: r[int] = r[int].ok(1).flat_map(lambda _: runtime_ok)
     tm.ok(flat_ok)
     tm.that(flat_ok.value, eq=20)
