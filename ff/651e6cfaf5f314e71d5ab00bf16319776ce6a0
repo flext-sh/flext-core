@@ -1,0 +1,27 @@
+src/flext_core/_models/errors.py
+  cdbb584679205432 107
+tests/unit/_utilities/test_guards.py
+  cdbb584679205432 1-4,6-13,15-48,50-168,170-365,367-540,542-584
+tests/unit/_utilities/test_mapper.py
+  cdbb584679205432 1-12,14-21,23-249,251-771
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "ff651e6cfaf5f314e71d5ab00bf16319776ce6a0",
+  "prompts": {
+    "cdbb584679205432": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "deb21ed0-98e4-498f-8592-3944a588496c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 1455,
+      "total_deletions": 98,
+      "accepted_lines": 1347,
+      "overriden_lines": 6
+    }
+  }
+}
