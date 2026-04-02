@@ -6,9 +6,9 @@ from enum import StrEnum, unique
 from typing import cast, override
 
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextUtilitiesParser, r
+from flext_tests import tm
 from tests import TestUnitModels, t, u
 
 

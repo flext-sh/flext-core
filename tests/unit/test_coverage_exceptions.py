@@ -4,10 +4,10 @@ from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, 
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import e, r
+from flext_tests import tm
 from tests import c, t
 
 from ..test_utils import assertion_helpers

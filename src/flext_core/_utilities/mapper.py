@@ -14,13 +14,15 @@ from typing import ClassVar, overload
 
 from pydantic import BaseModel
 
-from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import (
+    FlextUtilitiesCache,
+    FlextUtilitiesGuards,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    p,
+    r,
+    t,
+)
 
 
 class FlextUtilitiesMapper:
@@ -109,7 +111,7 @@ class FlextUtilitiesMapper:
     ) -> t.ContainerMapping:
         """Apply normalize step."""
         if normalize:
-            normalized: t.NormalizedValue = FlextUtilitiesCache.normalize_component(
+            normalized: t.RecursiveContainer = FlextUtilitiesCache.normalize_component(
                 result,
             )
             if FlextUtilitiesGuardsTypeCore.is_mapping(normalized):
@@ -177,10 +179,12 @@ class FlextUtilitiesMapper:
         return [FlextUtilitiesMapper.narrow_to_container(item) for item in items]
 
     @staticmethod
-    def _resolve_field_key_func(field_name: str) -> Callable[[t.NormalizedValue], str]:
+    def _resolve_field_key_func(
+        field_name: str,
+    ) -> Callable[[t.RecursiveContainer], str]:
         """Build a key function extracting a named field from Mapping or BaseModel."""
 
-        def _key_func(item: t.NormalizedValue) -> str:
+        def _key_func(item: t.RecursiveContainer) -> str:
             if FlextUtilitiesGuardsTypeCore.is_mapping(item):
                 return str(item.get(field_name, ""))
             if FlextUtilitiesGuardsTypeModel.is_pydantic_model(item) and hasattr(
@@ -193,9 +197,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_callable_over_collection(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         func: t.MapperCallable,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Apply callable to each element of a collection or to a scalar."""
         if isinstance(current, (list, tuple)):
             seq_current: t.ContainerList = current
@@ -218,11 +222,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_chunk(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply chunk operation to split into sublists."""
         if not isinstance(current, (list, tuple)):
             return current
@@ -238,11 +242,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_convert(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply convert operation."""
         convert_func_result = FlextUtilitiesMapper._get_callable_from_dict(
             ops,
@@ -252,7 +256,7 @@ class FlextUtilitiesMapper:
             return current
         convert_callable_raw: t.MapperCallable = convert_func_result.value
         convert_default_raw = ops.get("convert_default")
-        fallback: t.NormalizedValue = (
+        fallback: t.RecursiveContainer = (
             convert_default_raw if not callable(convert_default_raw) else None
         )
 
@@ -267,16 +271,16 @@ class FlextUtilitiesMapper:
                 "float": 0.0,
                 "str": "",
                 "bool": False,
-                "list": list[t.NormalizedValue](),
-                "dict": dict[str, t.NormalizedValue](),
+                "list": list[t.RecursiveContainer](),
+                "dict": dict[str, t.RecursiveContainer](),
                 "tuple": (),
-                "set": list[t.NormalizedValue](),
+                "set": list[t.RecursiveContainer](),
             }
             fallback = converter_defaults.get(converter_name, current)
 
-        def _convert(value: t.NormalizedValue) -> t.NormalizedValue:
+        def _convert(value: t.RecursiveContainer) -> t.RecursiveContainer:
             try:
-                raw: t.NormalizedValue = FlextUtilitiesMapper.narrow_to_container(
+                raw: t.RecursiveContainer = FlextUtilitiesMapper.narrow_to_container(
                     convert_callable_raw(value),
                 )
                 return raw if raw is not None else fallback
@@ -299,11 +303,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _ensure_as_list(
-        current: t.NormalizedValue,
-        default_val: t.NormalizedValue,
+        current: t.RecursiveContainer,
+        default_val: t.RecursiveContainer,
         *,
         stringify: bool = False,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Ensure value is a list, optionally stringifying items."""
         narrow = FlextUtilitiesMapper.narrow_to_container
         if isinstance(current, list):
@@ -320,26 +324,26 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_ensure(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply ensure operation."""
         ensure_type = FlextUtilitiesMapper._get_str_from_dict(ops, "ensure", "")
         ensure_default_raw = ops.get("ensure_default")
-        ensure_default_val: t.NormalizedValue = (
+        ensure_default_val: t.RecursiveContainer = (
             FlextUtilitiesMapper.narrow_to_container(ensure_default_raw)
             if ensure_default_raw is not None and not callable(ensure_default_raw)
             else None
         )
         default_map: t.ContainerMapping = {
-            "str_list": list[t.NormalizedValue](),
-            "dict": dict[str, t.NormalizedValue](),
-            "list": list[t.NormalizedValue](),
+            "str_list": list[t.RecursiveContainer](),
+            "dict": dict[str, t.RecursiveContainer](),
+            "list": list[t.RecursiveContainer](),
             "str": "",
         }
-        default_val: t.NormalizedValue = (
+        default_val: t.RecursiveContainer = (
             ensure_default_val
             if ensure_default_val is not None
             else default_map.get(ensure_type, "")
@@ -362,18 +366,18 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_filter(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        default_val: t.NormalizedValue,
+        default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply filter operation."""
         filter_pred_result = FlextUtilitiesMapper._get_callable_from_dict(ops, "filter")
         if filter_pred_result.is_failure:
             return current
         filter_pred_callable = filter_pred_result.value
 
-        def filter_pred(value: t.NormalizedValue) -> bool:
+        def filter_pred(value: t.RecursiveContainer) -> bool:
             return bool(filter_pred_callable(value))
 
         if isinstance(current, (list, tuple)):
@@ -399,12 +403,10 @@ class FlextUtilitiesMapper:
         current_items: t.ContainerList,
         current_list: t.ContainerList,
     ) -> MutableMapping[str, t.MutableContainerList]:
-        """Group items by a named field (BaseModel attr or Mapping key)."""
+        """Group mapping items by a named field key."""
         grouped: MutableMapping[str, t.MutableContainerList] = {}
         for orig_item, item in zip(current_items, current_list, strict=False):
             match orig_item:
-                case BaseModel() if hasattr(orig_item, field_name):
-                    key_raw = getattr(orig_item, field_name)
                 case Mapping():
                     key_raw = (
                         item.get(field_name)
@@ -426,7 +428,7 @@ class FlextUtilitiesMapper:
         grouped: MutableMapping[str, t.MutableContainerList] = {}
         for item in current_list:
             try:
-                group_key: t.NormalizedValue | None = group_callable(item)
+                group_key: t.RecursiveContainer | None = group_callable(item)
             except (ValueError, TypeError, KeyError, AttributeError, RuntimeError):
                 continue
             if group_key is None:
@@ -436,11 +438,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_group(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply group operation."""
         if not isinstance(current, (list, tuple)):
             return current
@@ -471,11 +473,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_map(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply map operation."""
         map_func_result = FlextUtilitiesMapper._get_callable_from_dict(ops, "map")
         if map_func_result.is_failure:
@@ -488,11 +490,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_normalize(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply normalize operation."""
         normalize_case = FlextUtilitiesMapper._get_str_from_dict(ops, "normalize", "")
         if isinstance(current, str):
@@ -515,11 +517,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_process(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        default_val: t.NormalizedValue,
+        default_val: t.RecursiveContainer,
         on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply process operation."""
         process_func_result = FlextUtilitiesMapper._get_callable_from_dict(
             ops,
@@ -529,33 +531,33 @@ class FlextUtilitiesMapper:
             return current
         process_callable: t.MapperCallable = process_func_result.value
 
-        def _process_current() -> t.NormalizedValue:
+        def _process_current() -> t.RecursiveContainer:
             return FlextUtilitiesMapper._apply_callable_over_collection(
                 current,
                 process_callable,
             )
 
-        process_result: r[t.NormalizedValue] = r[
-            t.NormalizedValue
+        process_result: r[t.RecursiveContainer] = r[
+            t.RecursiveContainer
         ].create_from_callable(_process_current)
         if process_result.is_failure:
             return default_val if on_error == "stop" else current
-        process_val: t.NormalizedValue = process_result.value
+        process_val: t.RecursiveContainer = process_result.value
         return process_val if process_val is not None else current
 
     @staticmethod
     def _op_slice(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply slice operation."""
         if not isinstance(current, (list, tuple)):
             return current
         current_items: t.ContainerList = current
         slice_spec_raw = ops["slice"]
-        slice_spec: t.NormalizedValue = (
+        slice_spec: t.RecursiveContainer = (
             slice_spec_raw if not callable(slice_spec_raw) else None
         )
         min_slice_length = 2
@@ -563,8 +565,8 @@ class FlextUtilitiesMapper:
             isinstance(slice_spec, (list, tuple))
             and len(slice_spec) >= min_slice_length
         ):
-            start_raw: t.NormalizedValue = slice_spec[0]
-            end_raw: t.NormalizedValue = slice_spec[1]
+            start_raw: t.RecursiveContainer = slice_spec[0]
+            end_raw: t.RecursiveContainer = slice_spec[1]
             start: int | None = start_raw if isinstance(start_raw, int) else None
             end: int | None = end_raw if isinstance(end_raw, int) else None
             if isinstance(current, list):
@@ -573,7 +575,7 @@ class FlextUtilitiesMapper:
                     for item in current_items[start:end]
                 ]
                 return sliced_list
-            sliced_tuple: tuple[t.NormalizedValue, ...] = tuple(
+            sliced_tuple: tuple[t.RecursiveContainer, ...] = tuple(
                 FlextUtilitiesMapper.narrow_to_container(item)
                 for item in current_items[start:end]
             )
@@ -583,18 +585,18 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _as_original_type(
         sorted_items: t.ContainerList,
-        original: t.ContainerList | tuple[t.NormalizedValue, ...],
-    ) -> t.ContainerList | tuple[t.NormalizedValue, ...]:
+        original: t.ContainerList | tuple[t.RecursiveContainer, ...],
+    ) -> t.ContainerList | tuple[t.RecursiveContainer, ...]:
         """Preserve the original collection type (list vs tuple) after sorting."""
         return list(sorted_items) if isinstance(original, list) else tuple(sorted_items)
 
     @staticmethod
     def _op_sort(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply sort operation."""
         if not isinstance(current, (list, tuple)):
             return current
@@ -629,7 +631,7 @@ class FlextUtilitiesMapper:
                     return current
                 sort_fn = callable_result.value
 
-                def sort_key(item: t.NormalizedValue) -> str:
+                def sort_key(item: t.RecursiveContainer) -> str:
                     return str(sort_fn(item))
 
                 sorted_result = r[t.ContainerList].create_from_callable(
@@ -645,11 +647,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_transform(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        default_val: t.NormalizedValue,
+        default_val: t.RecursiveContainer,
         on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply transform operation."""
         if not FlextUtilitiesGuards.is_type(
             current,
@@ -657,7 +659,7 @@ class FlextUtilitiesMapper:
         ):
             return current
         transform_opts_val = ops["transform"]
-        transform_opts_raw: t.NormalizedValue = (
+        transform_opts_raw: t.RecursiveContainer = (
             transform_opts_val if not callable(transform_opts_val) else None
         )
         if not FlextUtilitiesGuardsTypeCore.is_mapping(transform_opts_raw):
@@ -676,7 +678,7 @@ class FlextUtilitiesMapper:
         current_dict: t.ContainerMapping = (
             FlextUtilitiesMapper._narrow_to_configuration_dict(current)
         )
-        transform_result = r[t.NormalizedValue].create_from_callable(
+        transform_result = r[t.RecursiveContainer].create_from_callable(
             lambda: FlextUtilitiesMapper._apply_transform_steps(
                 dict(current_dict),
                 normalize=normalize_bool,
@@ -695,11 +697,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _op_unique(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         ops: Mapping[str, t.MapperInput],
-        _default_val: t.NormalizedValue,
+        _default_val: t.RecursiveContainer,
         _on_error: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Helper: Apply unique operation to remove duplicates."""
         if not ops.get("unique"):
             return current
@@ -708,10 +710,10 @@ class FlextUtilitiesMapper:
         current_list_unique: t.ContainerList = FlextUtilitiesMapper._narrow_list_items(
             current,
         )
-        seen: set[t.NormalizedValue | str] = set()
+        seen: set[t.Scalar | None] = set()
         unique_list: t.MutableContainerList = []
         for item in current_list_unique:
-            item_hashable: t.NormalizedValue | str = (
+            item_hashable: t.Scalar | None = (
                 item
                 if FlextUtilitiesGuardsTypeCore.is_primitive(item) or item is None
                 else str(item)
@@ -727,12 +729,12 @@ class FlextUtilitiesMapper:
     def _extract_field_value(
         item: t.ValueOrModel | t.ContainerMapping | Mapping[str, t.ValueOrModel],
         field_name: str,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Extract field value from dict or model for pyrefly type inference."""
         if FlextUtilitiesGuardsTypeCore.is_mapping(item):
             dict_item: t.MutableContainerMapping = {}
             for key, value in item.items():
-                coerced_value: t.NormalizedValue = (
+                coerced_value: t.RecursiveContainer = (
                     value if FlextUtilitiesGuards.is_container(value) else str(value)
                 )
                 dict_item[str(key)] = coerced_value
@@ -746,23 +748,23 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _resolve_raw_value(
-        raw: t.NormalizedValue,
+        raw: t.RecursiveContainer,
         key_part: str,
-    ) -> r[t.NormalizedValue]:
+    ) -> r[t.RecursiveContainer]:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
-            return r[t.NormalizedValue].fail(f"found_none:{key_part}")
+            return r[t.RecursiveContainer].fail(f"found_none:{key_part}")
         if FlextUtilitiesGuards.is_container(raw):
-            return r[t.NormalizedValue].ok(
+            return r[t.RecursiveContainer].ok(
                 FlextUtilitiesMapper.narrow_to_container(raw),
             )
-        return r[t.NormalizedValue].ok(str(raw))
+        return r[t.RecursiveContainer].ok(str(raw))
 
     @staticmethod
     def _extract_get_value(
         current: t.ValueOrModel | p.HasModelDump | p.ValidatorSpec | t.ContainerMapping,
         key_part: str,
-    ) -> r[t.NormalizedValue]:
+    ) -> r[t.RecursiveContainer]:
         """Get raw value from dict/object/model, returning found_none or not-found failures."""
         if isinstance(current, Mapping):
             mapping_obj: t.ContainerMapping = current
@@ -770,7 +772,9 @@ class FlextUtilitiesMapper:
                 return FlextUtilitiesMapper._resolve_raw_value(
                     mapping_obj[key_part], key_part
                 )
-            return r[t.NormalizedValue].fail(f"Key '{key_part}' not found in Mapping")
+            return r[t.RecursiveContainer].fail(
+                f"Key '{key_part}' not found in Mapping"
+            )
         if hasattr(current, key_part):
             return FlextUtilitiesMapper._resolve_raw_value(
                 getattr(current, key_part), key_part
@@ -784,18 +788,18 @@ class FlextUtilitiesMapper:
                 if key_part in model_dict:
                     val = FlextUtilitiesMapper.narrow_to_container(model_dict[key_part])
                     if val is None:
-                        return r[t.NormalizedValue].fail(f"found_none:{key_part}")
-                    return r[t.NormalizedValue].ok(val)
-        return r[t.NormalizedValue].fail(f"Key '{key_part}' not found")
+                        return r[t.RecursiveContainer].fail(f"found_none:{key_part}")
+                    return r[t.RecursiveContainer].ok(val)
+        return r[t.RecursiveContainer].fail(f"Key '{key_part}' not found")
 
     @staticmethod
     def _extract_handle_array_index(
-        current: t.NormalizedValue,
+        current: t.RecursiveContainer,
         array_match: str,
-    ) -> r[t.NormalizedValue]:
+    ) -> r[t.RecursiveContainer]:
         """Handle array indexing with negative index support."""
         if not isinstance(current, (list, tuple)):
-            return r[t.NormalizedValue].fail("Not a sequence")
+            return r[t.RecursiveContainer].fail("Not a sequence")
         sequence: t.ContainerList = FlextUtilitiesMapper._narrow_to_sequence(current)
         try:
             idx = int(array_match)
@@ -804,11 +808,13 @@ class FlextUtilitiesMapper:
             if 0 <= idx < len(sequence):
                 item = sequence[idx]
                 if item is None:
-                    return r[t.NormalizedValue].fail("found_none:index")
-                return r[t.NormalizedValue].ok(item)
-            return r[t.NormalizedValue].fail(f"Index {int(array_match)} out of range")
+                    return r[t.RecursiveContainer].fail("found_none:index")
+                return r[t.RecursiveContainer].ok(item)
+            return r[t.RecursiveContainer].fail(
+                f"Index {int(array_match)} out of range"
+            )
         except (ValueError, IndexError):
-            return r[t.NormalizedValue].fail(f"Invalid index {array_match}")
+            return r[t.RecursiveContainer].fail(f"Invalid index {array_match}")
 
     @staticmethod
     def _extract_parse_array_index(part: str) -> tuple[str, str]:
@@ -878,11 +884,11 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.NormalizedValue = None,
-    ) -> t.NormalizedValue:
+        default: t.RecursiveContainer = None,
+    ) -> t.RecursiveContainer:
         """Internal helper for raw get without DSL conversion."""
-        fallback: t.NormalizedValue = default if default is not None else ""
-        raw_value: t.NormalizedValue = None
+        fallback: t.RecursiveContainer = default if default is not None else ""
+        raw_value: t.RecursiveContainer = None
         match data:
             case dict() | Mapping():
                 raw_value = FlextUtilitiesMapper.narrow_to_container(data.get(key))
@@ -912,9 +918,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_configuration_dict(
-        value: t.NormalizedValue | t.ContainerMapping,
+        value: t.RecursiveContainer | t.ContainerMapping,
     ) -> t.ContainerMapping:
-        """Safely narrow t.NormalizedValue to ConfigurationDict with runtime validation."""
+        """Safely narrow a recursive container to ConfigurationDict."""
         if FlextUtilitiesGuards.is_configuration_dict(value):
             normalized_dict: t.MutableContainerMapping = {}
             for key, item in value.items():
@@ -927,9 +933,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_sequence(
-        value: t.NormalizedValue | t.ContainerList,
+        value: t.RecursiveContainer | t.ContainerList,
     ) -> t.ContainerList:
-        """Safely narrow t.NormalizedValue to t.ContainerList."""
+        """Safely narrow a recursive container to t.ContainerList."""
         if isinstance(value, (list, tuple)):
             narrowed_items: t.MutableContainerList = []
             for item_raw in value:
@@ -942,13 +948,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_string_keyed_dict(
-        value: t.NormalizedValue | t.ContainerMapping,
+        value: t.RecursiveContainer | t.ContainerMapping,
     ) -> t.ContainerMapping:
         """Narrow to ConfigurationDict with string keys and container values."""
         if FlextUtilitiesGuardsTypeCore.is_mapping(value):
             result: t.MutableContainerMapping = {}
             key: str
-            val: t.NormalizedValue
+            val: t.RecursiveContainer
             for key, val in value.items():
                 str_key = str(key)
                 if FlextUtilitiesGuards.is_container(val):
@@ -961,17 +967,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_numeric_field(
-        item: BaseModel | Mapping[str, t.NormalizedValue],
+        item: BaseModel | Mapping[str, t.RecursiveContainer],
         field_name: str,
     ) -> t.Numeric | None:
         """Extract a numeric field value from a BaseModel or Mapping-like object."""
         if isinstance(item, BaseModel):
             val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
             return val_raw if isinstance(val_raw, (int, float)) else None
-        if isinstance(item, Mapping):
-            val = item.get(field_name)
-            return val if isinstance(val, (int, float)) else None
-        return None
+        val = item.get(field_name)
+        return val if isinstance(val, (int, float)) else None
 
     @staticmethod
     def agg[T](
@@ -1004,37 +1008,37 @@ class FlextUtilitiesMapper:
         value: p.AccessibleData,
         *,
         ops: Mapping[str, t.MapperInput] | None = None,
-        default: t.NormalizedValue = None,
+        default: t.RecursiveContainer = None,
         on_error: str = "stop",
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         """Compose operations via DSL dict applied in order: ensure/filter/map/normalize/convert/transform/process/group/sort/unique/slice/chunk."""
         narrowed_value = FlextUtilitiesMapper.narrow_to_container(value)
         if ops is None:
             return narrowed_value
-        current: t.NormalizedValue = narrowed_value
-        default_val: t.NormalizedValue = (
+        current: t.RecursiveContainer = narrowed_value
+        default_val: t.RecursiveContainer = (
             default if default is not None else narrowed_value
         )
         for op_key, op_method_name in FlextUtilitiesMapper._BUILD_OPS:
             if op_key in ops:
                 handler: Callable[
                     [
-                        t.NormalizedValue,
+                        t.RecursiveContainer,
                         Mapping[str, t.MapperInput],
-                        t.NormalizedValue,
+                        t.RecursiveContainer,
                         str,
                     ],
-                    t.NormalizedValue,
+                    t.RecursiveContainer,
                 ] = getattr(FlextUtilitiesMapper, op_method_name)
                 current = handler(current, ops, default_val, on_error)
         return current
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.NormalizedValue,
-        val_b: t.NormalizedValue,
+        val_a: t.RecursiveContainer,
+        val_b: t.RecursiveContainer,
     ) -> bool:
-        """Recursive deep equality for any two NormalizedValue items."""
+        """Recursive deep equality for any two recursive container items."""
         if val_a is val_b:
             return True
         match (val_a, val_b):
@@ -1305,7 +1309,7 @@ class FlextUtilitiesMapper:
             case tuple():
                 return FlextUtilitiesMapper._narrow_untyped_list(list(value))
             case Mapping():
-                return FlextUtilitiesMapper._narrow_untyped_dict(dict(value.items()))
+                return FlextUtilitiesMapper._narrow_untyped_dict(dict(value))
             case Sequence() if not isinstance(value, (str, bytes)):
                 return FlextUtilitiesMapper._narrow_untyped_list(list(value))
             case _:
@@ -1342,8 +1346,6 @@ class FlextUtilitiesMapper:
                 data_or_items
             ):
                 data: p.AccessibleData = data_or_items
-            case BaseModel():
-                data = data_or_items
             case _:
                 return fallback
         value = FlextUtilitiesMapper.map_get(data, key, default=default)

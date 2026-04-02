@@ -4,9 +4,9 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel, Field
 
+from flext_tests import tm
 from tests import m, p, t
 
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]

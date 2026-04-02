@@ -17,13 +17,15 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core.constants import c
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import (
+    FlextModelFoundation,
+    FlextModelsEntity,
+    FlextRuntime,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    c,
+    t,
+)
 
 
 class FlextModelsContextData:
@@ -125,7 +127,7 @@ class FlextModelsContextData:
 
         @classmethod
         def check_json_serializable(cls, obj: t.ValueOrModel, path: str = "") -> None:
-            """Recursively check if t.NormalizedValue is JSON-serializable."""
+            """Recursively check if a canonical container value is JSON-serializable."""
             if obj is None or FlextUtilitiesGuardsTypeCore.is_primitive(obj):
                 return
             if FlextRuntime.is_dict_like(obj):
@@ -144,7 +146,7 @@ class FlextModelsContextData:
         def normalize_to_serializable_value(
             cls,
             val: t.ValueOrModel,
-        ) -> t.NormalizedValue:
+        ) -> t.RecursiveContainer:
             normalized = cls.normalize_to_container(val)
             if normalized is None or FlextUtilitiesGuardsTypeCore.is_primitive(
                 normalized,

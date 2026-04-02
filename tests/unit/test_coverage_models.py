@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from datetime import datetime
 from typing import override
 
 import pytest
-from flext_tests import tm
 from pydantic import ValidationError, field_validator
 
+from flext_tests import tm
 from tests import m, t
 
 
@@ -417,7 +417,7 @@ class TestCoverageModels:
 
     def test_aggregate_root_serialization(self) -> None:
         class ShoppingCart(m.AggregateRoot):
-            items: Sequence[Mapping[str, int | str]]
+            items: Sequence[t.HeaderMapping]
             total: float
 
         cart = ShoppingCart(

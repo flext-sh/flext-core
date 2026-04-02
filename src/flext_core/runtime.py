@@ -50,10 +50,7 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 from structlog.types import Processor as _StructlogProcessor
 
-from flext_core._typings.generics import T
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core import T, c, p, t
 
 
 class FlextRuntime:
@@ -370,10 +367,10 @@ class FlextRuntime:
 
     @staticmethod
     def is_base_model(obj: t.RuntimeData) -> TypeIs[BaseModel]:
-        """Type guard to narrow t.NormalizedValue to BaseModel.
+        """Type guard to narrow broad runtime data to BaseModel.
 
         This allows isinstance checks to narrow types for FlextRuntime methods
-        that accept t.NormalizedValue (which includes BaseModel).
+        that accept broad runtime contracts that may include BaseModel.
         """
         match obj:
             case BaseModel():
@@ -402,13 +399,13 @@ class FlextRuntime:
 
         Note:
             ``value`` remains broad because this guard is a boundary utility used
-            by normalization paths that accept full ``t.NormalizedValue``.
+            by normalization paths that accept full runtime payload contracts.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a ConfigMap or dict-like t.NormalizedValue, False otherwise
+            True if value is a ConfigMap or dict-like recursive payload, False otherwise
 
         """
         match value:
@@ -534,7 +531,7 @@ class FlextRuntime:
         return callable(value)
 
     @staticmethod
-    def _to_plain_container(value: t.RuntimeAtomic) -> t.NormalizedValue:
+    def _to_plain_container(value: t.RuntimeAtomic) -> t.RecursiveContainer:
         """Flatten a runtime atomic value to plain Python types."""
         match value:
             case t.ConfigMap() | t.Dict():
@@ -546,9 +543,7 @@ class FlextRuntime:
                 }
             case t.ObjectList():
                 return list(value.root)
-            case str() | int() | float() | bool() | Path():
-                return value
-            case datetime():
+            case bool() | str() | int() | float() | datetime() | Path():
                 return value
             case _:
                 return str(value)
@@ -679,13 +674,13 @@ class FlextRuntime:
     ) -> t.ValueOrModel | None:
         """Safe attribute access without raising AttributeError.
 
-        Business Rule: Accesses t.NormalizedValue attributes safely using getattr() with
+        Business Rule: Accesses runtime data attributes safely using getattr() with
         default value. Never raises AttributeError, always returns default if
         attribute doesn't exist. Used for safe introspection of arbitrary objects
         without type checking.
 
         Audit Implication: Safe attribute access ensures audit trail completeness
-        by preventing AttributeError exceptions during t.NormalizedValue introspection. All
+        by preventing AttributeError exceptions during runtime data introspection. All
         attribute access is safe and logged appropriately.
 
         Args:
@@ -898,7 +893,7 @@ class FlextRuntime:
             """
             configuration_provider = providers.Configuration()
             if config:
-                configuration_provider.from_dict(dict(config.items()))
+                configuration_provider.from_dict(dict(config))
             if isinstance(
                 di_container,
                 FlextRuntime.DependencyIntegration.DynamicContainerWithConfig,
@@ -916,7 +911,7 @@ class FlextRuntime:
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if config:
-                configuration_provider.from_dict(dict(config.items()))
+                configuration_provider.from_dict(dict(config))
             return configuration_provider
 
         @staticmethod
@@ -1460,7 +1455,7 @@ class FlextRuntime:
         """Ensure context dict has distributed tracing fields (bridge for _models).
 
         Args:
-            context: Context dictionary or t.NormalizedValue to enrich
+            context: Context dictionary or recursive payload to enrich
             include_correlation_id: If True, ensure correlation_id exists
             include_timestamp: If True, ensure timestamp exists
 
@@ -1598,7 +1593,7 @@ class FlextRuntime:
 
     @staticmethod
     def hash_value_object_by_value(obj: t.RuntimeData) -> int:
-        """Hash value t.NormalizedValue based on all attribute values."""
+        """Hash runtime value object based on all attribute values."""
         if FlextRuntime.is_scalar(obj):
             return hash(obj)
         if isinstance(obj, BaseModel):

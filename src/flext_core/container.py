@@ -21,16 +21,18 @@ from typing import Self, TypeIs, overload, override
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
 
-from flext_core.constants import FlextConstants as c
-from flext_core.context import FlextContext
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.loggings import FlextLogger
-from flext_core.models import FlextModels as m
-from flext_core.protocols import FlextProtocols as p
-from flext_core.result import FlextResult as r
-from flext_core.settings import FlextSettings
-from flext_core.typings import FlextTypes as t
-from flext_core.utilities import FlextUtilities as u
+from flext_core import (
+    FlextContext,
+    FlextDispatcher,
+    FlextLogger,
+    FlextSettings,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 def _is_service_of_type[T](value: object, cls: type[T]) -> TypeIs[T]:
@@ -511,8 +513,8 @@ class FlextContainer(p.Container):
         processed_dict = t.ConfigMap(root={})
         for key, value in config_map.items():
             processed_dict[str(key)] = u.normalize_to_container(value)
-        merged = t.ConfigMap(root=dict(self._user_overrides.items()))
-        merged.update(dict(processed_dict.items()))
+        merged = t.ConfigMap(root=dict(self._user_overrides))
+        merged.update(dict(processed_dict))
         self._user_overrides = merged
         container_values = self._global_config.model_dump()
         applicable_overrides = {
@@ -702,9 +704,9 @@ class FlextContainer(p.Container):
         Can be called from __init__ or _create_scoped_instance.
         Sets private attributes directly - this is internal initialization.
         """
-        self._services = dict(services.items()) if services is not None else {}
-        self._factories = dict(factories.items()) if factories is not None else {}
-        self._resources = dict(resources.items()) if resources is not None else {}
+        self._services = dict(services) if services is not None else {}
+        self._factories = dict(factories) if factories is not None else {}
+        self._resources = dict(resources) if resources is not None else {}
         self._global_config = global_config or self._create_container_config()
         overrides_root: MutableMapping[str, t.ValueOrModel] = {}
         if user_overrides is not None:
@@ -1018,7 +1020,7 @@ class FlextContainer(p.Container):
                     name=name,
                     factory=resource_factory,
                 )
-        user_overrides_copy = t.ConfigMap(root=dict(self._user_overrides.items()))
+        user_overrides_copy = t.ConfigMap(root=dict(self._user_overrides))
         return self.__class__._create_scoped_instance(
             registration=m.ServiceRegistrationSpec.model_validate({
                 "config": base_config,
@@ -1055,7 +1057,7 @@ class FlextContainer(p.Container):
             self._di_container,
             config_map,
         )
-        user_overrides_plain = dict(self._user_overrides.items())
+        user_overrides_plain = dict(self._user_overrides)
         self._user_config_provider.from_dict(user_overrides_plain)
         namespace_registry_raw = getattr(
             self._config.__class__,

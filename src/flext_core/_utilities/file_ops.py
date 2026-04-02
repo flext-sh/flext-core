@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import overload
 
-from flext_core.constants import c
+from flext_core import c
 
 
 class FlextUtilitiesFileOps:

@@ -13,9 +13,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core.models import m
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextRuntime, m, t
 
 
 class FlextUtilitiesConversion:

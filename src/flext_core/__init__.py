@@ -204,7 +204,7 @@ if _TYPE_CHECKING:
     from flext_core.typings import BaseModel, FlextTypes, FlextTypes as t
     from flext_core.utilities import FlextUtilities, FlextUtilities as u
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     (
         "flext_core._constants",
         "flext_core._models",

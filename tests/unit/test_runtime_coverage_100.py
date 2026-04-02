@@ -14,9 +14,9 @@ from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Never, cast, overload, override
 
 import structlog
-from flext_tests import tm
 
 from flext_core import FlextRuntime
+from flext_tests import tm
 from tests import p, t
 
 

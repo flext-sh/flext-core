@@ -10,8 +10,7 @@ from collections.abc import Mapping
 
 import structlog.contextvars
 
-from flext_core._models._context._tokens import FlextModelsContextTokens
-from flext_core.typings import t
+from flext_core import FlextModelsContextTokens, t
 
 
 class FlextModelsContextProxyVar:

@@ -28,16 +28,18 @@ from typing import (
 
 from pydantic import ConfigDict, Field, PrivateAttr, ValidationError
 
-from flext_core.constants import c
-from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
-from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.settings import FlextSettings
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextLogger,
+    FlextSettings,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class FlextMixins(m.ArbitraryTypesModel, u):
@@ -392,7 +394,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context."""
-        config_typed: t.ConfigMap = t.ConfigMap(root=dict(config.items()))
+        config_typed: t.ConfigMap = t.ConfigMap(root=dict(config))
         self.logger.info(
             message,
             **u.normalize_log_payload(config_typed.root),

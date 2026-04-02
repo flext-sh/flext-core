@@ -22,8 +22,6 @@ from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import override
 
-from flext_tests import tm
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -32,6 +30,7 @@ from flext_core import (
     r,
     s,
 )
+from flext_tests import tm
 from tests import m, p, t, u
 
 inject = FlextRuntime.DependencyIntegration.inject
@@ -170,18 +169,18 @@ class TestDIIncremental:
         def api_call(
             key: str = FlextRuntime.DependencyIntegration.Provide["api_key"],
             timeout_sec: int = FlextRuntime.DependencyIntegration.Provide["timeout"],
-        ) -> Mapping[str, str | int]:
+        ) -> t.HeaderMapping:
             return {"key": key, "timeout": timeout_sec}
 
         setattr(module, "api_call", api_call)
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
         try:
-            api_call_func: Callable[[], Mapping[str, str | int]] = getattr(
+            api_call_func: Callable[[], t.HeaderMapping] = getattr(
                 module,
                 "api_call",
             )
             result = api_call_func()
-            expected: Mapping[str, str | int] = {"key": "secret123", "timeout": 30}
+            expected: t.HeaderMapping = {"key": "secret123", "timeout": 30}
             tm.that(result, eq=expected)
         finally:
             di_container.unwire()
@@ -320,17 +319,15 @@ class TestDIIncremental:
             pool: Mapping[str, int] = FlextRuntime.DependencyIntegration.Provide[
                 "db_pool"
             ],
-        ) -> Mapping[str, str | int]:
+        ) -> t.HeaderMapping:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
         setattr(handler_module, "process_request", process_request)
         container.wire_modules(modules=[handler_module])
         try:
-            process_func: Callable[[], Mapping[str, str | int]] = (
-                handler_module.process_request
-            )
+            process_func: Callable[[], t.HeaderMapping] = handler_module.process_request
             result = process_func()
-            expected2: Mapping[str, str | int] = {
+            expected2: t.HeaderMapping = {
                 "logger": "test_logger",
                 "pool_size": 10,
             }

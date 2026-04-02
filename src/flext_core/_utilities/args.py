@@ -14,9 +14,7 @@ from typing import ClassVar
 
 from pydantic import TypeAdapter, ValidationError
 
-from flext_core.models import m
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import m, r, t
 
 
 class FlextUtilitiesArgs:

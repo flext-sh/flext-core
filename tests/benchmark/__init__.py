@@ -26,7 +26,7 @@ if _TYPE_CHECKING:
         TestPerformanceBenchmarks,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "TestContainerMemory": "tests.benchmark.test_container_memory",
     "TestContainerPerformance": "tests.benchmark.test_container_performance",
     "TestPerformanceBenchmarks": "tests.benchmark.test_refactor_nesting_performance",

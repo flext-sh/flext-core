@@ -9,13 +9,13 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_tests import tm
 
 from flext_core import (
     FlextLogger,
     FlextRuntime,
     FlextSettings,
 )
+from flext_tests import tm
 from tests import p, t
 
 

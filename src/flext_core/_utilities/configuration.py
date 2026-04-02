@@ -14,10 +14,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import c, p, r, t
 
 
 class FlextUtilitiesConfiguration:

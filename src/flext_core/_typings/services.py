@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING, TypeAliasType
 
 from pydantic import BaseModel
 
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.containers import FlextTypingContainers
+from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import FlextDispatcher, m, p
@@ -113,6 +112,7 @@ class FlextTypesServices:
     type MessageTypeSpecifier = str | type
     type IncEx = set[str] | Mapping[str, set[str] | bool]
 
+    type LazyImportIndex = Mapping[str, str | Sequence[str]]
     type ConfigurationMapping = Mapping[str, FlextTypingBase.Scalar]
     type ResultErrorData = Mapping[str, FlextTypingBase.Container]
     type FlatContainerMapping = Mapping[str, FlextTypingBase.Container]

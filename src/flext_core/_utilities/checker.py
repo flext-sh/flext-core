@@ -16,11 +16,7 @@ from typing import TypeIs, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import FlextUtilitiesGuards, c, p, r, t
 
 
 class FlextUtilitiesChecker:
@@ -71,8 +67,8 @@ class FlextUtilitiesChecker:
         cls,
         expected_type: t.TypeHintSpecifier,
     ) -> bool:
-        """Check if expected type is t.NormalizedValue (universal compatibility)."""
-        return expected_type is t.NormalizedValue or str(expected_type) == "typing.Any"
+        """Check if expected type is a canonical catch-all value contract."""
+        return expected_type in {t.RecursiveContainer, t.ValueOrModel}
 
     @classmethod
     def _evaluate_type_compatibility(
@@ -296,7 +292,7 @@ class FlextUtilitiesChecker:
             return msg
         route_attrs = ("command_type", "query_type", "event_type")
         for attr in route_attrs:
-            attr_val: t.NormalizedValue | None = getattr(msg, attr, None)
+            attr_val: t.TextValue | None = getattr(msg, attr, None)
             if isinstance(attr_val, str) and attr_val:
                 return attr_val
         if isinstance(msg, type) and issubclass(msg, BaseModel):

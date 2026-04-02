@@ -10,11 +10,13 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Protocol, Self, overload, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.config import FlextProtocolsConfig
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core.typings import t
+from flext_core import (
+    FlextProtocolsBase,
+    FlextProtocolsConfig,
+    FlextProtocolsContext,
+    FlextProtocolsResult,
+    t,
+)
 
 
 class FlextProtocolsContainer:

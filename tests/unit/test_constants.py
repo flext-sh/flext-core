@@ -1,18 +1,7 @@
-"""Comprehensive tests for FlextConstants - Foundation Constants.
+"""Tests for FlextConstants - production constants facade.
 
-Module: flext_core.constants
-Scope: FlextConstants - core constants, validation patterns, error codes,
-network settings, platform configs, and all nested constant classes
-
-Tests FlextConstants functionality including:
-- Core constant values and nested access
-- Validation regex patterns
-- Type safety and immutability
-- Completeness checks
-- Edge cases and integration
-
-Uses Python 3.13 patterns, u, FlextConstants,
-and aggressive parametrization for DRY testing.
+Tests all constant groups through the `c` facade (FlextCoreTestConstants -> FlextConstants MRO).
+Covers: base, cqrs, validation, infrastructure, platform, domain, errors, settings, mixins.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,312 +9,1236 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Annotated, ClassVar, cast
+from enum import StrEnum
+from re import Pattern
+from types import MappingProxyType
 
 import pytest
+
+from flext_core.constants import FlextConstants
 from flext_tests import tm
-from pydantic import BaseModel, ConfigDict, Field
-
-from tests import c, t, u
+from tests import c, u
 
 
-class TestConstants:
-    """Comprehensive test suite for FlextConstants using u."""
+class TestFlextConstants:
+    """Production constants accessed through the c.* facade."""
 
-    class ConstantPathScenario(BaseModel):
-        """Test scenario for constant path access."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        path: Annotated[str, Field(description="Constant access path")]
-        expected: Annotated[str | int, Field(description="Expected constant value")]
-
-    class PatternValidationScenario(BaseModel):
-        """Test scenario for pattern validation."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
-        pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
-        valid_cases: Annotated[
-            t.StrSequence,
-            Field(description="Inputs expected to match the pattern"),
-        ]
-        invalid_cases: Annotated[
-            t.StrSequence,
-            Field(description="Inputs expected to fail the pattern"),
-        ]
-
-    CORE_CONSTANT_PATHS: ClassVar[Sequence[ConstantPathScenario]] = [
-        ConstantPathScenario(path="NAME", expected="FLEXT"),
-        ConstantPathScenario(path="MIN_PORT", expected=1),
-        ConstantPathScenario(path="MAX_PORT", expected=65535),
-        ConstantPathScenario(path="MIN_NAME_LENGTH", expected=2),
-        ConstantPathScenario(path="MAX_NAME_LENGTH", expected=100),
-        ConstantPathScenario(path="MAX_EMAIL_LENGTH", expected=254),
-        ConstantPathScenario(path="MIN_PHONE_DIGITS", expected=10),
-        ConstantPathScenario(path="DEFAULT_TIMEOUT_SECONDS", expected=30),
-        ConstantPathScenario(path="MAX_TIMEOUT_SECONDS", expected=3600),
-        ConstantPathScenario(path="DEFAULT_LEVEL", expected="INFO"),
-        ConstantPathScenario(path="FLEXT_API_PORT", expected=8000),
-        ConstantPathScenario(path="DEFAULT_HOST", expected=c.LOCALHOST),
-        ConstantPathScenario(path="MAX_TIMEOUT_SECONDS_PERFORMANCE", expected=600),
-        ConstantPathScenario(path="DEFAULT_BATCH_SIZE", expected=1000),
-        ConstantPathScenario(path="MAX_RETRY_ATTEMPTS", expected=3),
-        ConstantPathScenario(path="JWT_DEFAULT_ALGORITHM", expected="HS256"),
-        ConstantPathScenario(path="DEFAULT_HANDLER_TYPE", expected="command"),
-        ConstantPathScenario(path="DEFAULT_WORKERS", expected=4),
-        ConstantPathScenario(path="DEFAULT_HANDLER_MODE", expected="command"),
-        ConstantPathScenario(path="FIELD_CREATED_AT", expected="created_at"),
-        ConstantPathScenario(path="TYPE_MISMATCH", expected="Type mismatch"),
-    ]
-    PATTERN_VALIDATION_SCENARIOS: ClassVar[Sequence[PatternValidationScenario]] = [
-        PatternValidationScenario(
-            pattern_attr="PATTERN_EMAIL",
-            valid_cases=[
-                "test@example.com",
-                "user.name+tag@example.co.uk",
-                "valid_email@domain.com",
-            ],
-            invalid_cases=["invalid.email", "@example.com", "test@", "test@.com"],
-        ),
-        PatternValidationScenario(
-            pattern_attr="PATTERN_URL",
-            valid_cases=[
-                "https://github.com",
-                "http://FlextConstants.LOCALHOST:8000",
-                "https://example.com/path?query=1",
-            ],
-            invalid_cases=[
-                "not-a-url",
-                "ftp://invalid.com",
-                "://missing.protocol",
-                "www.example.com",
-            ],
-        ),
-        PatternValidationScenario(
-            pattern_attr="PATTERN_PHONE_NUMBER",
-            valid_cases=[
-                "+5511987654321",
-                "5511987654321",
-                "+1234567890",
-                "11987654321",
-            ],
-            invalid_cases=["123", "abc1234567890", "+abc1234567890", "123456789"],
-        ),
-        PatternValidationScenario(
-            pattern_attr="PATTERN_UUID",
-            valid_cases=[
-                "550e8400-e29b-41d4-a716-446655440000",
-                "550e8400e29b41d4a716446655440000",
-            ],
-            invalid_cases=[
-                "invalid-uuid",
-                "550e8400-e29b-41d4",
-                "550e8400-e29b-41d4-a716-44665544000",
-            ],
-        ),
-        PatternValidationScenario(
-            pattern_attr="PATTERN_PATH",
-            valid_cases=[
-                "/home/user/file.txt",
-                "C:\\Users\\file.txt",
-                "relative/path/file.py",
-            ],
-            invalid_cases=[
-                "path/with<invalid>chars",
-                'path/with"quotes',
-                "path/with|pipe",
-            ],
-        ),
-    ]
-    TYPE_CHECKS: ClassVar[Sequence[tuple[str | int, type]]] = [
-        (c.NAME, str),
-        (c.DEFAULT_RETRY_DELAY_SECONDS, int),
-        (c.MAX_PORT, int),
-        (c.MIN_NAME_LENGTH, int),
-        (c.DEFAULT_LEVEL, str),
-        (c.FLEXT_API_PORT, int),
-    ]
-    TYPE_CHECK_IDS: ClassVar[t.StrSequence] = [
-        "name_str",
-        "network_min_port_int",
-        "network_max_port_int",
-        "validation_min_name_length_int",
-        "logging_default_level_str",
-        "platform_flext_api_port_int",
-    ]
-    REQUIRED_ATTRIBUTES: ClassVar[t.StrSequence] = [
-        "MIN_PORT",
-        "MAX_PORT",
-        "MIN_NAME_LENGTH",
-        "MAX_EMAIL_LENGTH",
-        "VALIDATION_ERROR",
-        "TYPE_MISMATCH",
-        "DEFAULT_TIMEOUT_SECONDS",
-        "MAX_TIMEOUT_SECONDS",
-        "LogLevel",
-        "FLEXT_API_PORT",
-        "MAX_TIMEOUT_SECONDS_PERFORMANCE",
-        "MAX_RETRY_ATTEMPTS",
-        "JWT_DEFAULT_ALGORITHM",
-        "DEFAULT_HANDLER_TYPE",
-        "DEFAULT_WORKERS",
-        "DEFAULT_HANDLER_MODE",
-        "FIELD_CREATED_AT",
-        "DEFAULT_PAGE_SIZE",
-        "ErrorType",
-    ]
-    LOG_LEVELS: ClassVar[t.StrSequence] = [
-        "DEBUG",
-        "INFO",
-        "WARNING",
-        "ERROR",
-        "CRITICAL",
-    ]
+    # ------------------------------------------------------------------
+    # Base constants - value correctness
+    # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
-        "scenario",
-        CORE_CONSTANT_PATHS,
-        ids=lambda s: s.path,
+        ("attr", "expected"),
+        [
+            ("NAME", "FLEXT"),
+            ("INITIAL_TIME", 0.0),
+            ("PERCENTAGE_MULTIPLIER", 100),
+            ("MILLISECONDS_MULTIPLIER", 1000),
+            ("MICROSECONDS_MULTIPLIER", 1000000),
+            ("LOOPBACK_IP", "127.0.0.1"),
+            ("LOCALHOST", "localhost"),
+            ("MIN_PORT", 1),
+            ("MAX_PORT", 65535),
+            ("DEFAULT_TIMEOUT", 30),
+            ("DEFAULT_CONNECTION_POOL_SIZE", 10),
+            ("MAX_CONNECTION_POOL_SIZE", 100),
+            ("MAX_HOSTNAME_LENGTH", 253),
+            ("HTTP_STATUS_MIN", 100),
+            ("HTTP_STATUS_MAX", 599),
+            ("TYPE_MISMATCH", "Type mismatch"),
+            ("PAGE_SIZE", 100),
+            ("CACHE_TTL", 300),
+            ("MAX_MESSAGE_LENGTH", 100),
+            ("DEFAULT_MIDDLEWARE_ORDER", 0),
+            ("DATABASE_URL", "sqlite:///:memory:"),
+            ("MAX_TIMEOUT_SECONDS", 3600),
+            ("MIN_TIMEOUT_SECONDS", 1),
+            ("DEFAULT_MAX_CACHE_SIZE", 100),
+            ("DEFAULT_BATCH_SIZE", 1000),
+            ("DEFAULT_PAGE_SIZE", 10),
+            ("MAX_PAGE_SIZE", 1000),
+            ("MIN_PAGE_SIZE", 1),
+            ("DEFAULT_MAX_RETRY_ATTEMPTS", 3),
+            ("DEFAULT_WORKERS", 4),
+            ("ZERO", 0),
+            ("EXPECTED_TUPLE_LENGTH", 2),
+            ("DEFAULT_FAILURE_THRESHOLD", 5),
+            ("PREVIEW_LENGTH", 50),
+            ("DEFAULT_RECOVERY_TIMEOUT_SECONDS", 60),
+            ("IDENTIFIER_LENGTH", 12),
+            ("MAX_BATCH_SIZE_LIMIT", 10000),
+            ("DEFAULT_BACKOFF_MULTIPLIER", 2.0),
+            ("DEFAULT_MAX_DELAY_SECONDS", 60.0),
+            ("MAX_TIMEOUT_SECONDS_PERFORMANCE", 600),
+            ("DEFAULT_HOUR_IN_SECONDS", 3600),
+        ],
+        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
     )
-    def test_core_constant_values(self, scenario: ConstantPathScenario) -> None:
-        """Test all core constant values using parametrized test cases."""
-        actual = u.Tests.ConstantsHelpers.get_constant_by_path(scenario.path)
-        tm.that(str(actual), eq=str(scenario.expected))
+    def test_base_constant_values(self, attr: str, expected: object) -> None:
+        """Base constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
 
-    @pytest.mark.parametrize("level", LOG_LEVELS)
-    def test_core_logging_enum_levels(self, level: str) -> None:
-        """Test logging level enum values."""
-        actual = getattr(c.LogLevel, level)
-        tm.that(actual, eq=level)
+    def test_base_derived_aliases_are_consistent(self) -> None:
+        """Derived aliases point to same value as their source."""
+        tm.that(c.TIMEOUT, eq=c.DEFAULT_TIMEOUT)
+        tm.that(c.TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT)
+        tm.that(c.DEFAULT_CACHE_TTL, eq=c.CACHE_TTL)
+        tm.that(c.DEFAULT_DATABASE_URL, eq=c.DATABASE_URL)
+        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT)
+        tm.that(c.OPERATION_TIMEOUT_SECONDS, eq=c.DEFAULT_TIMEOUT)
+        tm.that(c.DEFAULT_POOL_SIZE, eq=c.DEFAULT_CONNECTION_POOL_SIZE)
+        tm.that(c.MAX_POOL_SIZE, eq=c.MAX_CONNECTION_POOL_SIZE)
+        tm.that(c.MAX_PORT_NUMBER, eq=c.MAX_PORT)
+        tm.that(c.MIN_PORT_NUMBER, eq=c.MIN_PORT)
+
+    # ------------------------------------------------------------------
+    # CQRS constants
+    # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
-        "scenario",
-        PATTERN_VALIDATION_SCENARIOS,
-        ids=lambda s: s.pattern_attr,
+        ("attr", "expected"),
+        [
+            ("DEFAULT_COMMAND_TYPE", "generic_command"),
+            ("DEFAULT_TIMESTAMP", ""),
+            ("DEFAULT_COMMAND_TIMEOUT_MS", 30000),
+            ("MIN_TIMEOUT_MS", 1000),
+            ("MAX_TIMEOUT_MS", 300000),
+            ("DEFAULT_RETRIES", 0),
+            ("MIN_RETRIES", 0),
+            ("MAX_RETRIES", 5),
+            ("DEFAULT_MAX_VALIDATION_ERRORS", 10),
+            ("DEFAULT_PARALLEL_EXECUTION", False),
+            ("DEFAULT_STOP_ON_ERROR", True),
+            ("CQRS_OPERATION_FAILED", "CQRS_OPERATION_FAILED"),
+            ("COMMAND_VALIDATION_FAILED", "COMMAND_VALIDATION_FAILED"),
+            ("QUERY_VALIDATION_FAILED", "QUERY_VALIDATION_FAILED"),
+            ("HANDLER_CONFIG_INVALID", "HANDLER_CONFIG_INVALID"),
+        ],
     )
-    def test_validation_regex_patterns(
-        self,
-        scenario: PatternValidationScenario,
-    ) -> None:
-        """Test regex patterns with comprehensive valid and invalid cases."""
-        compiled_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            scenario.pattern_attr,
-        )
-        for valid_case in scenario.valid_cases:
-            match_result = compiled_pattern.match(valid_case)
-            tm.that(
-                cast("t.NormalizedValue", match_result),
-                none=False,
-                msg=f"Expected '{valid_case}' to match pattern {scenario.pattern_attr}",
-            )
-        for invalid_case in scenario.invalid_cases:
-            pattern_name = scenario.pattern_attr
-            match_result = compiled_pattern.match(invalid_case)
-            tm.that(
-                cast("t.NormalizedValue", match_result),
-                none=True,
-                msg=f"Expected '{invalid_case}' to NOT match pattern {pattern_name}",
-            )
+    def test_cqrs_constant_values(self, attr: str, expected: object) -> None:
+        """CQRS constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
 
     @pytest.mark.parametrize(
-        ("value", "expected_type"),
-        TYPE_CHECKS,
-        ids=TYPE_CHECK_IDS,
-    )
-    def test_type_safety_constant_types(
-        self,
-        value: t.NormalizedValue,
-        expected_type: type,
-    ) -> None:
-        """Test that constants have correct types."""
-        tm.that(value, is_=expected_type, msg=f"Expected {value} to be {expected_type}")
-
-    def test_type_safety_immutability(self) -> None:
-        """Test that constants are effectively immutable."""
-        tm.that(c.NAME, eq="FLEXT")
-        tm.that(c.FLEXT_API_PORT, eq=8000)
-
-    def test_type_safety_nested_access_patterns(self) -> None:
-        """Test various nested access patterns work correctly."""
-        tm.that(c.VALIDATION_ERROR, eq="VALIDATION_ERROR")
-        tm.that(c.DEFAULT_TIMEOUT_SECONDS, eq=30)
-        tm.that(c.LogLevel.ERROR, eq="ERROR")
-
-    @pytest.mark.parametrize("attr", REQUIRED_ATTRIBUTES)
-    def test_completeness_required_attributes_exist(self, attr: str) -> None:
-        """Test that all required constant attributes exist."""
-        tm.that(hasattr(c, attr), eq=True, msg=f"Missing attribute: {attr}")
-
-    def test_completeness_documentation_exists(self) -> None:
-        """Test that constants have proper documentation."""
-        tm.that(c.__doc__, none=False)
-        doc_lower = c.__doc__.lower() if c.__doc__ else ""
-        tm.that(doc_lower, has="layer 0")
-
-    def test_edge_cases_pattern_edge_cases(self) -> None:
-        """Test regex patterns with edge cases."""
-        email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "PATTERN_EMAIL",
-        )
-        long_email = "a" * 64 + "@" + "b" * 63 + ".com"
-        tm.that(len(long_email), lte=c.MAX_EMAIL_LENGTH)
-        tm.that(
-            cast("t.NormalizedValue", email_pattern.match(long_email)),
-            none=False,
-        )
-        phone_pattern = u.Tests.ConstantsHelpers.compile_pattern(
-            "PATTERN_PHONE_NUMBER",
-        )
-        tm.that(
-            cast(
-                "t.NormalizedValue",
-                phone_pattern.match("+123456789012345"),
+        ("enum_cls", "members"),
+        [
+            (
+                "DispatcherStatus",
+                {"STOPPED": "stopped"},
             ),
-            none=False,
-        )
+            (
+                "CommonStatus",
+                {
+                    "ACTIVE": "active",
+                    "INACTIVE": "inactive",
+                    "PENDING": "pending",
+                    "RUNNING": "running",
+                    "COMPLETED": "completed",
+                    "FAILED": "failed",
+                    "CANCELLED": "cancelled",
+                    "COMPENSATING": "compensating",
+                    "ARCHIVED": "archived",
+                },
+            ),
+            (
+                "HandlerType",
+                {
+                    "COMMAND": "command",
+                    "QUERY": "query",
+                    "EVENT": "event",
+                    "OPERATION": "operation",
+                    "SAGA": "saga",
+                },
+            ),
+            (
+                "MetricType",
+                {
+                    "COUNTER": "counter",
+                    "GAUGE": "gauge",
+                    "HISTOGRAM": "histogram",
+                    "SUMMARY": "summary",
+                },
+            ),
+            (
+                "ServiceMetricCategory",
+                {
+                    "PERFORMANCE": "performance",
+                    "ERRORS": "errors",
+                    "THROUGHPUT": "throughput",
+                },
+            ),
+            (
+                "ProcessingMode",
+                {
+                    "BATCH": "batch",
+                    "STREAM": "stream",
+                    "PARALLEL": "parallel",
+                    "SEQUENTIAL": "sequential",
+                },
+            ),
+            (
+                "ProcessingPhase",
+                {
+                    "PREPARE": "prepare",
+                    "EXECUTE": "execute",
+                    "VALIDATE": "validate",
+                    "COMPLETE": "complete",
+                },
+            ),
+            (
+                "BindType",
+                {"TEMPORARY": "temporary", "PERMANENT": "permanent"},
+            ),
+            (
+                "MergeStrategy",
+                {
+                    "REPLACE": "replace",
+                    "UPDATE": "update",
+                    "MERGE_DEEP": "merge_deep",
+                },
+            ),
+            (
+                "HealthStatus",
+                {
+                    "HEALTHY": "healthy",
+                    "DEGRADED": "degraded",
+                    "UNHEALTHY": "unhealthy",
+                },
+            ),
+            (
+                "SpecialStatus",
+                {"SENT": "sent", "IDLE": "idle", "PROCESSING": "processing"},
+            ),
+            (
+                "TokenType",
+                {"BEARER": "bearer", "API_KEY": "api_key", "JWT": "jwt"},
+            ),
+            (
+                "OperationStatus",
+                {
+                    "SUCCESS": "success",
+                    "FAILURE": "failure",
+                    "PARTIAL": "partial",
+                },
+            ),
+            (
+                "SerializationFormat",
+                {
+                    "JSON": "json",
+                    "YAML": "yaml",
+                    "TOML": "toml",
+                    "MSGPACK": "msgpack",
+                },
+            ),
+            (
+                "Compression",
+                {
+                    "NONE": "none",
+                    "GZIP": "gzip",
+                    "BZIP2": "bzip2",
+                    "LZ4": "lz4",
+                },
+            ),
+            (
+                "Aggregation",
+                {
+                    "SUM": "sum",
+                    "AVG": "avg",
+                    "MIN": "min",
+                    "MAX": "max",
+                    "COUNT": "count",
+                },
+            ),
+            (
+                "Action",
+                {
+                    "GET": "get",
+                    "CREATE": "create",
+                    "UPDATE": "update",
+                    "DELETE": "delete",
+                    "LIST": "list",
+                },
+            ),
+            (
+                "PersistenceLevel",
+                {
+                    "MEMORY": "memory",
+                    "DISK": "disk",
+                    "DISTRIBUTED": "distributed",
+                },
+            ),
+            (
+                "TargetFormat",
+                {"FULL": "full", "COMPACT": "compact", "MINIMAL": "minimal"},
+            ),
+            (
+                "WarningLevel",
+                {"NONE": "none", "WARN": "warn", "ERROR": "error"},
+            ),
+            (
+                "OutputFormat",
+                {"DICT": "dict", "JSON": "json"},
+            ),
+            (
+                "Mode",
+                {"VALIDATION": "validation", "SERIALIZATION": "serialization"},
+            ),
+            (
+                "RegistrationStatus",
+                {"ACTIVE": "active", "INACTIVE": "inactive"},
+            ),
+        ],
+        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+    )
+    def test_cqrs_enum_members(
+        self,
+        enum_cls: str,
+        members: dict[str, str],
+    ) -> None:
+        """CQRS StrEnum classes contain exactly the expected members and values."""
+        cls = getattr(c, enum_cls)
+        tm.that(issubclass(cls, StrEnum), eq=True, msg=f"{enum_cls} not StrEnum")
+        for name, value in members.items():
+            member = cls[name]
+            tm.that(str(member), eq=value)
+        # Completeness: no extra members
+        tm.that(len(cls), eq=len(members), msg=f"{enum_cls} member count mismatch")
+
+    def test_cqrs_default_metric_categories_tuple(self) -> None:
+        """DEFAULT_METRIC_CATEGORIES is a tuple of all ServiceMetricCategory values."""
+        tm.that(c.DEFAULT_METRIC_CATEGORIES, is_=tuple)
+        tm.that(len(c.DEFAULT_METRIC_CATEGORIES), eq=3)
+        tm.that(c.DEFAULT_METRIC_CATEGORIES[0], eq=c.ServiceMetricCategory.PERFORMANCE)
+        tm.that(c.DEFAULT_METRIC_CATEGORIES[1], eq=c.ServiceMetricCategory.ERRORS)
+        tm.that(c.DEFAULT_METRIC_CATEGORIES[2], eq=c.ServiceMetricCategory.THROUGHPUT)
+
+    def test_cqrs_default_handler_type(self) -> None:
+        """DEFAULT_HANDLER_TYPE equals HandlerType.COMMAND."""
+        tm.that(c.DEFAULT_HANDLER_TYPE, eq=c.HandlerType.COMMAND)
+
+    # ------------------------------------------------------------------
+    # Validation constants
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("attr", "expected"),
+        [
+            ("MIN_NAME_LENGTH", 2),
+            ("MAX_EMAIL_LENGTH", 254),
+            ("EMAIL_PARTS_COUNT", 2),
+            ("MIN_PHONE_DIGITS", 10),
+            ("MAX_PHONE_DIGITS", 20),
+            ("MIN_USERNAME_LENGTH", 3),
+            ("MAX_AGE", 150),
+            ("MIN_AGE", 0),
+            ("VALIDATION_TIMEOUT_MS", 100.0),
+            ("MAX_UNCOMMITTED_EVENTS", 100),
+            ("DISCOUNT_THRESHOLD", 100),
+            ("DISCOUNT_RATE", 0.05),
+            ("RETRY_COUNT_MAX", 3),
+        ],
+    )
+    def test_validation_numeric_values(self, attr: str, expected: object) -> None:
+        """Validation numeric constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
+
+    @pytest.mark.parametrize(
+        "code",
+        [
+            "VALIDATION_ERROR",
+            "TYPE_ERROR",
+            "ATTRIBUTE_ERROR",
+            "CONFIG_ERROR",
+            "GENERIC_ERROR",
+            "COMMAND_PROCESSING_FAILED",
+            "UNKNOWN_ERROR",
+            "SERIALIZATION_ERROR",
+            "MAP_ERROR",
+            "BIND_ERROR",
+            "CHAIN_ERROR",
+            "UNWRAP_ERROR",
+            "OPERATION_ERROR",
+            "SERVICE_ERROR",
+            "BUSINESS_RULE_VIOLATION",
+            "BUSINESS_RULE_ERROR",
+            "NOT_FOUND_ERROR",
+            "NOT_FOUND",
+            "RESOURCE_NOT_FOUND",
+            "ALREADY_EXISTS",
+            "COMMAND_BUS_ERROR",
+            "COMMAND_HANDLER_NOT_FOUND",
+            "DOMAIN_EVENT_ERROR",
+            "TIMEOUT_ERROR",
+            "PROCESSING_ERROR",
+            "CONNECTION_ERROR",
+            "CONFIGURATION_ERROR",
+            "EXTERNAL_SERVICE_ERROR",
+            "PERMISSION_ERROR",
+            "AUTHENTICATION_ERROR",
+            "AUTHORIZATION_ERROR",
+            "EXCEPTION_ERROR",
+            "CRITICAL_ERROR",
+        ],
+    )
+    def test_validation_error_codes_are_uppercase_strings(self, code: str) -> None:
+        """All error code constants exist as non-empty uppercase strings matching their name."""
+        value = getattr(c, code)
+        tm.that(value, is_=str)
+        tm.that(value, eq=code)
+
+    @pytest.mark.parametrize(
+        ("enum_cls", "members"),
+        [
+            (
+                "ErrorType",
+                {
+                    "VALIDATION": "validation",
+                    "CONFIGURATION": "configuration",
+                    "OPERATION": "operation",
+                    "CONNECTION": "connection",
+                    "TIMEOUT": "timeout",
+                    "AUTHORIZATION": "authorization",
+                    "AUTHENTICATION": "authentication",
+                    "NOT_FOUND": "not_found",
+                    "ATTRIBUTE_ACCESS": "attribute_access",
+                    "CONFLICT": "conflict",
+                    "RATE_LIMIT": "rate_limit",
+                    "CIRCUIT_BREAKER": "circuit_breaker",
+                    "TYPE_ERROR": "type_error",
+                    "VALUE_ERROR": "value_error",
+                    "RUNTIME_ERROR": "runtime_error",
+                    "SYSTEM_ERROR": "system_error",
+                },
+            ),
+            (
+                "FailureLevel",
+                {
+                    "STRICT": "strict",
+                    "WARN": "warn",
+                    "PERMISSIVE": "permissive",
+                },
+            ),
+        ],
+        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+    )
+    def test_validation_enum_members(
+        self,
+        enum_cls: str,
+        members: dict[str, str],
+    ) -> None:
+        """Validation StrEnum classes have all expected members."""
+        cls = getattr(c, enum_cls)
+        tm.that(issubclass(cls, StrEnum), eq=True)
+        for name, value in members.items():
+            tm.that(str(cls[name]), eq=value)
+        tm.that(len(cls), eq=len(members))
+
+    def test_validation_failure_level_default(self) -> None:
+        """FAILURE_LEVEL_DEFAULT is PERMISSIVE."""
+        tm.that(c.FAILURE_LEVEL_DEFAULT, eq=c.FailureLevel.PERMISSIVE)
+
+    def test_validation_string_method_map_is_frozenset(self) -> None:
+        """STRING_METHOD_MAP is a non-empty frozenset of strings."""
+        tm.that(c.STRING_METHOD_MAP, is_=frozenset)
+        tm.that(len(c.STRING_METHOD_MAP), gt=0)
+        # Spot-check some expected entries
+        tm.that("str" in c.STRING_METHOD_MAP, eq=True)
+        tm.that("dict" in c.STRING_METHOD_MAP, eq=True)
+        tm.that("list" in c.STRING_METHOD_MAP, eq=True)
+        tm.that("none" in c.STRING_METHOD_MAP, eq=True)
+
+    # ------------------------------------------------------------------
+    # Infrastructure constants
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("attr", "expected"),
+        [
+            ("SCOPE_GLOBAL", "global"),
+            ("SCOPE_REQUEST", "request"),
+            ("SCOPE_USER", "user"),
+            ("SCOPE_SESSION", "session"),
+            ("SCOPE_TRANSACTION", "transaction"),
+            ("SCOPE_APPLICATION", "application"),
+            ("SCOPE_OPERATION", "operation"),
+            ("CORRELATION_ID_PREFIX", "flext-"),
+            ("CORRELATION_ID_LENGTH", 12),
+            ("MAX_CONTEXT_DEPTH", 10),
+            ("MAX_CONTEXT_SIZE", 1000),
+            ("MILLISECONDS_PER_SECOND", 1000),
+            ("EXPORT_FORMAT_JSON", "json"),
+            ("EXPORT_FORMAT_DICT", "dict"),
+            ("THREAD_NAME_PREFIX", "flext-dispatcher"),
+            ("HANDLER_MODE_COMMAND", "command"),
+            ("HANDLER_MODE_QUERY", "query"),
+            ("DEFAULT_HANDLER_MODE", "command"),
+            ("DEFAULT_AUTO_CONTEXT", True),
+            ("DEFAULT_ENABLE_LOGGING", True),
+            ("DEFAULT_ENABLE_METRICS", True),
+            ("DEFAULT_DISPATCHER_PATH", "flext_core.dispatcher:FlextDispatcher"),
+            ("DEFAULT_SERVICE_NAME", "default_service"),
+            ("DEFAULT_RESOURCE_TYPE", "default_resource"),
+            ("SENTINEL_MISSING", "__sentinel_missing__"),
+            ("DEFAULT_MAX_SERVICES", 1000),
+            ("DEFAULT_MAX_FACTORIES", 500),
+            ("MAX_FACTORIES", 5000),
+            ("DEFAULT_PAGE_NUMBER", 1),
+            ("MIN_PAGE_NUMBER", 1),
+            ("MAX_PAGE_NUMBER", 10000),
+        ],
+    )
+    def test_infrastructure_constant_values(self, attr: str, expected: object) -> None:
+        """Infrastructure constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
+
+    def test_infrastructure_context_timeout_derives_from_base(self) -> None:
+        """DEFAULT_CONTEXT_TIMEOUT equals DEFAULT_TIMEOUT_SECONDS from base."""
+        tm.that(c.DEFAULT_CONTEXT_TIMEOUT, eq=c.DEFAULT_TIMEOUT_SECONDS)
+
+    def test_infrastructure_valid_handler_modes(self) -> None:
+        """VALID_HANDLER_MODES is a tuple of command and query."""
+        tm.that(c.VALID_HANDLER_MODES, is_=tuple)
+        tm.that(len(c.VALID_HANDLER_MODES), eq=2)
+        tm.that(c.HANDLER_MODE_COMMAND in c.VALID_HANDLER_MODES, eq=True)
+        tm.that(c.HANDLER_MODE_QUERY in c.VALID_HANDLER_MODES, eq=True)
+
+    def test_infrastructure_valid_registration_statuses(self) -> None:
+        """VALID_REGISTRATION_STATUSES contains active, inactive, error."""
+        tm.that(c.VALID_REGISTRATION_STATUSES, is_=tuple)
+        tm.that(len(c.VALID_REGISTRATION_STATUSES), eq=3)
+        tm.that(c.REGISTRATION_STATUS_ACTIVE in c.VALID_REGISTRATION_STATUSES, eq=True)
         tm.that(
-            cast("t.NormalizedValue", phone_pattern.match("+1234567890")),
-            none=False,
+            c.REGISTRATION_STATUS_INACTIVE in c.VALID_REGISTRATION_STATUSES, eq=True
+        )
+        tm.that(c.REGISTRATION_STATUS_ERROR in c.VALID_REGISTRATION_STATUSES, eq=True)
+
+    def test_infrastructure_debug_context_keys_frozenset(self) -> None:
+        """DEBUG_CONTEXT_KEYS is a frozenset with schema and params."""
+        tm.that(c.DEBUG_CONTEXT_KEYS, is_=frozenset)
+        tm.that("schema" in c.DEBUG_CONTEXT_KEYS, eq=True)
+        tm.that("params" in c.DEBUG_CONTEXT_KEYS, eq=True)
+
+    def test_infrastructure_error_context_keys_frozenset(self) -> None:
+        """ERROR_CONTEXT_KEYS is a frozenset with error-related keys."""
+        tm.that(c.ERROR_CONTEXT_KEYS, is_=frozenset)
+        tm.that("stack_trace" in c.ERROR_CONTEXT_KEYS, eq=True)
+        tm.that("exception" in c.ERROR_CONTEXT_KEYS, eq=True)
+
+    @pytest.mark.parametrize(
+        ("enum_cls", "members"),
+        [
+            (
+                "MetadataField",
+                {
+                    "USER_ID": "user_id",
+                    "CORRELATION_ID": "correlation_id",
+                    "REQUEST_ID": "request_id",
+                    "SESSION_ID": "session_id",
+                    "TENANT_ID": "tenant_id",
+                },
+            ),
+        ],
+    )
+    def test_infrastructure_enum_members(
+        self,
+        enum_cls: str,
+        members: dict[str, str],
+    ) -> None:
+        """Infrastructure StrEnum classes have all expected members."""
+        cls = getattr(c, enum_cls)
+        tm.that(issubclass(cls, StrEnum), eq=True)
+        for name, value in members.items():
+            tm.that(str(cls[name]), eq=value)
+        tm.that(len(cls), eq=len(members))
+
+    def test_infrastructure_header_constants_prefixed(self) -> None:
+        """HTTP header constants start with X-."""
+        tm.that(c.HEADER_CORRELATION_ID, starts="X-")
+        tm.that(c.HEADER_PARENT_CORRELATION_ID, starts="X-")
+        tm.that(c.HEADER_SERVICE_NAME, starts="X-")
+        tm.that(c.HEADER_USER_ID, starts="X-")
+
+    # ------------------------------------------------------------------
+    # Platform constants
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("attr", "expected"),
+        [
+            ("ENV_PREFIX", "FLEXT_"),
+            ("ENV_FILE_DEFAULT", ".env"),
+            ("ENV_FILE_ENV_VAR", "FLEXT_ENV_FILE"),
+            ("ENV_NESTED_DELIMITER", "__"),
+            ("DEFAULT_APP_NAME", "flext"),
+            ("FLEXT_API_PORT", 8000),
+            ("DEFAULT_HOST", "localhost"),
+            ("DEFAULT_HTTP_PORT", 80),
+            ("MIME_TYPE_JSON", "application/json"),
+            ("MAX_RETRY_ATTEMPTS", 3),
+            ("CIRCUIT_BREAKER_THRESHOLD", 5),
+            ("HEADER_REQUEST_ID", "X-Request-ID"),
+            ("EXT_PYTHON", ".py"),
+            ("EXT_YAML", ".yaml"),
+            ("EXT_JSON", ".json"),
+            ("EXT_TOML", ".toml"),
+            ("EXT_XML", ".xml"),
+            ("EXT_TXT", ".txt"),
+            ("EXT_MD", ".md"),
+            ("DIR_CONFIG", "config"),
+            ("DIR_PLUGINS", "plugins"),
+            ("DIR_LOGS", "logs"),
+            ("DIR_DATA", "data"),
+            ("DIR_TEMP", "temp"),
+            ("DEFAULT_DB_POOL_SIZE", 10),
+            ("MIN_DB_POOL_SIZE", 1),
+            ("MAX_DB_POOL_SIZE", 100),
+            ("DEFAULT_INITIAL_DELAY_SECONDS", 1.0),
+            ("MAX_BATCH_SIZE", 10000),
+            ("DEFAULT_VERSION", 1),
+            ("MIN_VERSION", 1),
+            ("HIGH_MEMORY_THRESHOLD_BYTES", 1073741824),
+            ("DEFAULT_MAX_RETRIES", 3),
+            ("DEFAULT_RETRY_DELAY_SECONDS", 1),
+            ("RETRY_BACKOFF_BASE", 2.0),
+            ("RETRY_BACKOFF_MAX", 60.0),
+            ("DEFAULT_BACKOFF_STRATEGY", "exponential"),
+            ("BACKOFF_STRATEGY_EXPONENTIAL", "exponential"),
+            ("BACKOFF_STRATEGY_LINEAR", "linear"),
+            ("DEFAULT_RATE_LIMIT_WINDOW_SECONDS", 60),
+            ("DEFAULT_RATE_LIMIT_MAX_REQUESTS", 100),
+            ("DEFAULT_CIRCUIT_BREAKER_THRESHOLD", 5),
+            ("DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD", 3),
+        ],
+    )
+    def test_platform_constant_values(self, attr: str, expected: object) -> None:
+        """Platform constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
+
+    def test_platform_circuit_breaker_state_enum(self) -> None:
+        """CircuitBreakerState has closed/open/half_open members."""
+        cls = c.CircuitBreakerState
+        tm.that(issubclass(cls, StrEnum), eq=True)
+        tm.that(str(cls.CLOSED), eq="closed")
+        tm.that(str(cls.OPEN), eq="open")
+        tm.that(str(cls.HALF_OPEN), eq="half_open")
+        tm.that(len(cls), eq=3)
+
+    def test_platform_recovery_timeout_derives_from_base(self) -> None:
+        """DEFAULT_RECOVERY_TIMEOUT equals base DEFAULT_RECOVERY_TIMEOUT_SECONDS."""
+        tm.that(c.DEFAULT_RECOVERY_TIMEOUT, eq=c.DEFAULT_RECOVERY_TIMEOUT_SECONDS)
+
+    def test_platform_circuit_breaker_recovery_timeout_derives_from_base(self) -> None:
+        """DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT equals base DEFAULT_RECOVERY_TIMEOUT_SECONDS."""
+        tm.that(
+            c.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
+            eq=c.DEFAULT_RECOVERY_TIMEOUT_SECONDS,
         )
 
-    def test_edge_cases_constant_ranges(self) -> None:
-        """Test that numeric constants are in valid ranges."""
-        tm.that(c.DEFAULT_RETRY_DELAY_SECONDS, gte=0)
+    # ------------------------------------------------------------------
+    # Platform regex patterns
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("pattern_attr", "valid", "invalid"),
+        [
+            (
+                "PATTERN_EMAIL",
+                ["test@example.com", "user.name+tag@example.co.uk"],
+                ["invalid.email", "@example.com", "test@"],
+            ),
+            (
+                "PATTERN_PHONE_NUMBER",
+                ["+5511987654321", "5511987654321", "+1234567890"],
+                ["123", "abc1234567890", "123456789"],
+            ),
+            (
+                "PATTERN_UUID",
+                [
+                    "550e8400-e29b-41d4-a716-446655440000",
+                    "550e8400e29b41d4a716446655440000",
+                ],
+                ["invalid-uuid", "550e8400-e29b-41d4"],
+            ),
+            (
+                "PATTERN_PATH",
+                ["/home/user/file.txt", "relative/path/file.py"],
+                ["path/with<invalid>chars", 'path/with"quotes'],
+            ),
+            (
+                "PATTERN_IDENTIFIER",
+                ["myVar", "handler1", "testCase"],
+                ["1starts_with_digit", "", "-invalid"],
+            ),
+            (
+                "PATTERN_IDENTIFIER_WITH_UNDERSCORE",
+                ["_private", "myVar", "__dunder"],
+                ["1digit", "-dash"],
+            ),
+            (
+                "PATTERN_SIMPLE_IDENTIFIER",
+                ["abc123", "TEST"],
+                ["has_underscore", "has-dash", "has space"],
+            ),
+            (
+                "PATTERN_MODULE_PATH",
+                ["flext_core.dispatcher:FlextDispatcher"],
+                ["no_colon_here", "too:many:colons"],
+            ),
+        ],
+        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+    )
+    def test_platform_regex_patterns(
+        self,
+        pattern_attr: str,
+        valid: list[str],
+        invalid: list[str],
+    ) -> None:
+        """Platform regex patterns correctly match/reject inputs."""
+        compiled: Pattern[str] = u.Tests.ConstantsHelpers.compile_pattern(pattern_attr)
+        for case in valid:
+            tm.that(
+                compiled.match(case) is not None,
+                eq=True,
+                msg=f"'{case}' should match {pattern_attr}",
+            )
+        for case in invalid:
+            tm.that(
+                compiled.match(case) is None,
+                eq=True,
+                msg=f"'{case}' should NOT match {pattern_attr}",
+            )
+
+    # ------------------------------------------------------------------
+    # Domain constants
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("attr", "expected"),
+        [
+            ("DEFAULT_LEVEL", "INFO"),
+            ("DEFAULT_LEVEL_DEVELOPMENT", "DEBUG"),
+            ("DEFAULT_LEVEL_PRODUCTION", "WARNING"),
+            ("DEFAULT_LEVEL_TESTING", "INFO"),
+            ("JSON_OUTPUT_DEFAULT", False),
+            ("STRUCTURED_OUTPUT", True),
+            ("INCLUDE_SOURCE", True),
+            ("VERBOSITY", "compact"),
+            ("MAX_FILE_SIZE", 10485760),
+            ("BACKUP_COUNT", 5),
+            ("CONSOLE_ENABLED", True),
+            ("CONSOLE_COLOR_ENABLED", True),
+            ("TRACK_PERFORMANCE", False),
+            ("TRACK_TIMING", False),
+            ("INCLUDE_CONTEXT", True),
+            ("INCLUDE_CORRELATION_ID", True),
+            ("MAX_CONTEXT_KEYS", 50),
+            ("MASK_SENSITIVE_DATA", True),
+            ("ASYNC_ENABLED", True),
+            ("ASYNC_QUEUE_SIZE", 10000),
+            ("ASYNC_WORKERS", 1),
+            ("ASYNC_BLOCK_ON_FULL", False),
+        ],
+    )
+    def test_domain_constant_values(self, attr: str, expected: object) -> None:
+        """Domain constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
+
+    def test_domain_valid_levels_tuple(self) -> None:
+        """VALID_LEVELS contains all five standard log levels in order."""
+        tm.that(c.VALID_LEVELS, is_=tuple)
+        tm.that(c.VALID_LEVELS, eq=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"))
+
+    def test_domain_level_hierarchy_is_mapping_proxy(self) -> None:
+        """LEVEL_HIERARCHY is an immutable MappingProxyType with correct numeric values."""
+        tm.that(isinstance(c.LEVEL_HIERARCHY, MappingProxyType), eq=True)
+        tm.that(c.LEVEL_HIERARCHY["debug"], eq=10)
+        tm.that(c.LEVEL_HIERARCHY["info"], eq=20)
+        tm.that(c.LEVEL_HIERARCHY["warning"], eq=30)
+        tm.that(c.LEVEL_HIERARCHY["error"], eq=40)
+        tm.that(c.LEVEL_HIERARCHY["critical"], eq=50)
+
+    def test_domain_level_hierarchy_is_monotonically_increasing(self) -> None:
+        """Log level numeric values increase: debug < info < warning < error < critical."""
+        levels = ["debug", "info", "warning", "error", "critical"]
+        for i in range(len(levels) - 1):
+            tm.that(
+                c.LEVEL_HIERARCHY[levels[i]] < c.LEVEL_HIERARCHY[levels[i + 1]],
+                eq=True,
+                msg=f"{levels[i]} should be less than {levels[i + 1]}",
+            )
+
+    @pytest.mark.parametrize(
+        ("enum_cls", "members"),
+        [
+            (
+                "ContextOperation",
+                {"BIND": "bind", "UNBIND": "unbind", "CLEAR": "clear", "GET": "get"},
+            ),
+            (
+                "Status",
+                {"ACTIVE": "active", "INACTIVE": "inactive", "ARCHIVED": "archived"},
+            ),
+            (
+                "Currency",
+                {"USD": "USD", "EUR": "EUR", "GBP": "GBP", "BRL": "BRL"},
+            ),
+            (
+                "OrderStatus",
+                {
+                    "PENDING": "pending",
+                    "CONFIRMED": "confirmed",
+                    "SHIPPED": "shipped",
+                    "DELIVERED": "delivered",
+                    "CANCELLED": "cancelled",
+                },
+            ),
+        ],
+        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+    )
+    def test_domain_enum_members(
+        self,
+        enum_cls: str,
+        members: dict[str, str],
+    ) -> None:
+        """Domain StrEnum classes have all expected members."""
+        cls = getattr(c, enum_cls)
+        tm.that(issubclass(cls, StrEnum), eq=True)
+        for name, value in members.items():
+            tm.that(str(cls[name]), eq=value)
+        tm.that(len(cls), eq=len(members))
+
+    # ------------------------------------------------------------------
+    # Errors constants
+    # ------------------------------------------------------------------
+
+    def test_errors_error_domain_enum(self) -> None:
+        """ErrorDomain has all seven categories with uppercase values."""
+        cls = c.ErrorDomain
+        tm.that(issubclass(cls, StrEnum), eq=True)
+        expected = {
+            "VALIDATION": "VALIDATION",
+            "NETWORK": "NETWORK",
+            "AUTH": "AUTH",
+            "NOT_FOUND": "NOT_FOUND",
+            "TIMEOUT": "TIMEOUT",
+            "INTERNAL": "INTERNAL",
+            "UNKNOWN": "UNKNOWN",
+        }
+        for name, value in expected.items():
+            tm.that(str(cls[name]), eq=value)
+        tm.that(len(cls), eq=len(expected))
+
+    def test_errors_error_domain_str_returns_value(self) -> None:
+        """ErrorDomain.__str__ returns the value, not the name."""
+        tm.that(str(c.ErrorDomain.VALIDATION), eq="VALIDATION")
+        tm.that(str(c.ErrorDomain.AUTH), eq="AUTH")
+
+    # ------------------------------------------------------------------
+    # Settings constants
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("attr", "expected"),
+        [
+            ("DEFAULT_ENCODING", "utf-8"),
+            ("SERIALIZATION_ISO8601", "iso8601"),
+            ("SERIALIZATION_FLOAT", "float"),
+            ("SERIALIZATION_BASE64", "base64"),
+            ("SERIALIZATION_UTF8", "utf8"),
+            ("SERIALIZATION_HEX", "hex"),
+            ("LONG_UUID_LENGTH", 12),
+            ("SHORT_UUID_LENGTH", 8),
+            ("VERSION_MODULO", 100),
+            ("MAX_WORKERS_THRESHOLD", 50),
+            ("DEFAULT_ENABLE_CACHING", True),
+            ("DEFAULT_ENABLE_TRACING", False),
+            ("DEFAULT_DEBUG_MODE", False),
+            ("DEFAULT_TRACE_MODE", False),
+            ("JWT_DEFAULT_ALGORITHM", "HS256"),
+            ("CREDENTIAL_BCRYPT_ROUNDS", 12),
+            ("EXTRA_FORBID", "forbid"),
+            ("EXTRA_IGNORE", "ignore"),
+            ("EXTRA_ALLOW", "allow"),
+        ],
+    )
+    def test_settings_constant_values(self, attr: str, expected: object) -> None:
+        """Settings constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
+
+    def test_settings_cache_attribute_names_tuple(self) -> None:
+        """CACHE_ATTRIBUTE_NAMES is a tuple of expected cache attribute names."""
+        tm.that(c.CACHE_ATTRIBUTE_NAMES, is_=tuple)
+        tm.that("_cache" in c.CACHE_ATTRIBUTE_NAMES, eq=True)
+        tm.that("_ttl" in c.CACHE_ATTRIBUTE_NAMES, eq=True)
+        tm.that("_cached_at" in c.CACHE_ATTRIBUTE_NAMES, eq=True)
+        tm.that("_cached_value" in c.CACHE_ATTRIBUTE_NAMES, eq=True)
+
+    @pytest.mark.parametrize(
+        ("enum_cls", "members"),
+        [
+            (
+                "ConversionMode",
+                {
+                    "TO_STR": "to_str",
+                    "TO_STR_LIST": "to_str_list",
+                    "NORMALIZE": "normalize",
+                    "JOIN": "join",
+                },
+            ),
+            (
+                "LogLevel",
+                {
+                    "DEBUG": "DEBUG",
+                    "INFO": "INFO",
+                    "WARNING": "WARNING",
+                    "ERROR": "ERROR",
+                    "CRITICAL": "CRITICAL",
+                },
+            ),
+            (
+                "Environment",
+                {
+                    "DEVELOPMENT": "development",
+                    "STAGING": "staging",
+                    "PRODUCTION": "production",
+                    "TESTING": "testing",
+                    "LOCAL": "local",
+                },
+            ),
+        ],
+        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+    )
+    def test_settings_enum_members(
+        self,
+        enum_cls: str,
+        members: dict[str, str],
+    ) -> None:
+        """Settings StrEnum classes have all expected members."""
+        cls = getattr(c, enum_cls)
+        tm.that(issubclass(cls, StrEnum), eq=True)
+        for name, value in members.items():
+            tm.that(str(cls[name]), eq=value)
+        tm.that(len(cls), eq=len(members))
+
+    # ------------------------------------------------------------------
+    # Mixins constants
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("attr", "expected"),
+        [
+            ("FIELD_ID", "unique_id"),
+            ("FIELD_NAME", "name"),
+            ("FIELD_TYPE", "type"),
+            ("FIELD_STATUS", "status"),
+            ("FIELD_DATA", "data"),
+            ("FIELD_CONFIG", "config"),
+            ("FIELD_METADATA", "metadata"),
+            ("FIELD_ATTRIBUTES", "attributes"),
+            ("FIELD_DESCRIPTION", "description"),
+            ("FIELD_CONTEXT", "context"),
+            ("FIELD_HANDLER_MODE", "handler_mode"),
+            ("FIELD_AUTO_LOG", "auto_log"),
+            ("FIELD_AUTO_CORRELATION", "auto_correlation"),
+            ("FIELD_STATE", "state"),
+            ("FIELD_CREATED_AT", "created_at"),
+            ("FIELD_UPDATED_AT", "updated_at"),
+            ("FIELD_VALIDATED", "validated"),
+            ("FIELD_CLASS", "class"),
+            ("FIELD_MODULE", "module"),
+            ("FIELD_REGISTERED", "registered"),
+            ("FIELD_EVENT_NAME", "event_name"),
+            ("FIELD_AGGREGATE_ID", "aggregate_id"),
+            ("FIELD_OCCURRED_AT", "occurred_at"),
+            ("STATUS_PASSED", "PASS"),
+            ("STATUS_FAIL", "FAIL"),
+            ("STATUS_NO_TARGET", "NO_TARGET"),
+            ("STATUS_SKIP", "SKIP"),
+            ("STATUS_UNKNOWN", "UNKNOWN"),
+            ("IDENTIFIER_UNKNOWN", "unknown"),
+            ("IDENTIFIER_DEFAULT", "default"),
+            ("IDENTIFIER_ANONYMOUS", "anonymous"),
+            ("IDENTIFIER_GUEST", "guest"),
+            ("IDENTIFIER_SYSTEM", "system"),
+            ("METHOD_HANDLE", "handle"),
+            ("METHOD_PROCESS", "process"),
+            ("METHOD_EXECUTE", "execute"),
+            ("METHOD_PROCESS_COMMAND", "process_command"),
+            ("METHOD_VALIDATE", "validate"),
+            ("OPERATION_OVERRIDE", "override"),
+            ("OPERATION_COLLECTION", "collection"),
+            ("AUTH_BEARER", "bearer"),
+            ("AUTH_API_KEY", "api_key"),
+            ("AUTH_JWT", "jwt"),
+            ("HANDLER_COMMAND", "command"),
+            ("HANDLER_QUERY", "query"),
+            ("DEFAULT_JSON_INDENT", 2),
+            ("DEFAULT_SORT_KEYS", False),
+            ("DEFAULT_ENSURE_ASCII", False),
+            ("STRING_TRUE", "true"),
+            ("STRING_FALSE", "false"),
+            ("DEFAULT_USE_UTC", True),
+            ("DEFAULT_AUTO_UPDATE", True),
+            ("MAX_STATE_VALUE_LENGTH", 50),
+            ("MAX_FIELD_NAME_LENGTH", 50),
+            ("MIN_FIELD_NAME_LENGTH", 1),
+            ("PATTERN_TUPLE_MIN_LENGTH", 2),
+            ("PATTERN_TUPLE_MAX_LENGTH", 3),
+            ("HANDLER_ATTR", "_flext_handler_config_"),
+            ("FACTORY_ATTR", "_flext_factory_config_"),
+            ("DEFAULT_PRIORITY", 0),
+            ("DEFAULT_HANDLER_TIMEOUT", None),
+            ("DEFAULT_TEST_CREDENTIAL", "test_password"),
+            ("NONEXISTENT_USERNAME", "nonexistent"),
+        ],
+    )
+    def test_mixins_constant_values(self, attr: str, expected: object) -> None:
+        """Mixins constants have correct values."""
+        tm.that(getattr(c, attr), eq=expected)
+
+    def test_mixins_state_active_derives_from_domain_status(self) -> None:
+        """STATE_ACTIVE equals Domain.Status.ACTIVE."""
+        tm.that(c.STATE_ACTIVE, eq=str(c.Status.ACTIVE))
+
+    def test_mixins_state_inactive_derives_from_domain_status(self) -> None:
+        """STATE_INACTIVE equals Domain.Status.INACTIVE."""
+        tm.that(c.STATE_INACTIVE, eq=str(c.Status.INACTIVE))
+
+    def test_mixins_health_states_derive_from_cqrs(self) -> None:
+        """Health state constants derive from HealthStatus enum."""
+        tm.that(c.STATE_HEALTHY, eq=str(c.HealthStatus.HEALTHY))
+        tm.that(c.STATE_DEGRADED, eq=str(c.HealthStatus.DEGRADED))
+        tm.that(c.STATE_UNHEALTHY, eq=str(c.HealthStatus.UNHEALTHY))
+
+    @pytest.mark.parametrize(
+        ("enum_cls", "members"),
+        [
+            (
+                "BoolTrueValue",
+                {
+                    "TRUE": "true",
+                    "ONE": "1",
+                    "YES": "yes",
+                    "ON": "on",
+                    "ENABLED": "enabled",
+                },
+            ),
+            (
+                "BoolFalseValue",
+                {
+                    "FALSE": "false",
+                    "ZERO": "0",
+                    "NO": "no",
+                    "OFF": "off",
+                    "DISABLED": "disabled",
+                },
+            ),
+        ],
+        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+    )
+    def test_mixins_bool_enum_members(
+        self,
+        enum_cls: str,
+        members: dict[str, str],
+    ) -> None:
+        """Boolean StrEnum classes have all expected members."""
+        cls = getattr(c, enum_cls)
+        tm.that(issubclass(cls, StrEnum), eq=True)
+        for name, value in members.items():
+            tm.that(str(cls[name]), eq=value)
+        tm.that(len(cls), eq=len(members))
+
+    def test_mixins_default_max_workers_derives_from_base(self) -> None:
+        """DEFAULT_MAX_WORKERS equals base DEFAULT_WORKERS."""
+        tm.that(c.DEFAULT_MAX_WORKERS, eq=c.DEFAULT_WORKERS)
+
+    # ------------------------------------------------------------------
+    # Cross-cutting: type correctness
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("attr", "expected_type"),
+        [
+            ("NAME", str),
+            ("MIN_PORT", int),
+            ("MAX_PORT", int),
+            ("DEFAULT_TIMEOUT", int),
+            ("INITIAL_TIME", float),
+            ("DEFAULT_BACKOFF_MULTIPLIER", float),
+            ("DEFAULT_PARALLEL_EXECUTION", bool),
+            ("DEFAULT_STOP_ON_ERROR", bool),
+            ("DEFAULT_ENCODING", str),
+            ("FLEXT_API_PORT", int),
+            ("DEFAULT_LEVEL", str),
+            ("DATABASE_URL", str),
+        ],
+    )
+    def test_type_correctness(self, attr: str, expected_type: type) -> None:
+        """Constants have the correct runtime type."""
+        tm.that(getattr(c, attr), is_=expected_type)
+
+    # ------------------------------------------------------------------
+    # Cross-cutting: numeric range invariants
+    # ------------------------------------------------------------------
+
+    def test_port_range_invariant(self) -> None:
+        """MIN_PORT < MAX_PORT and both are within valid TCP range."""
+        tm.that(c.MIN_PORT, gt=0)
         tm.that(c.MAX_PORT, lte=65535)
-        tm.that(c.DEFAULT_RETRY_DELAY_SECONDS, lte=c.MAX_PORT)
-        tm.that(c.DEFAULT_TIMEOUT_SECONDS, gt=0)
+        tm.that(c.MIN_PORT, lt=c.MAX_PORT)
+
+    def test_timeout_range_invariant(self) -> None:
+        """MIN < DEFAULT < MAX for timeout seconds."""
+        tm.that(c.MIN_TIMEOUT_SECONDS, gt=0)
+        tm.that(c.DEFAULT_TIMEOUT_SECONDS, gte=c.MIN_TIMEOUT_SECONDS)
+        tm.that(c.MAX_TIMEOUT_SECONDS, gt=c.DEFAULT_TIMEOUT_SECONDS)
+
+    def test_page_size_range_invariant(self) -> None:
+        """MIN < DEFAULT < MAX for page sizes."""
+        tm.that(c.MIN_PAGE_SIZE, gt=0)
+        tm.that(c.DEFAULT_PAGE_SIZE, gte=c.MIN_PAGE_SIZE)
+        tm.that(c.MAX_PAGE_SIZE, gte=c.DEFAULT_PAGE_SIZE)
+
+    def test_http_status_range_invariant(self) -> None:
+        """HTTP_STATUS_MIN < HTTP_STATUS_MAX within valid HTTP range."""
+        tm.that(c.HTTP_STATUS_MIN, gte=100)
+        tm.that(c.HTTP_STATUS_MAX, lte=599)
+        tm.that(c.HTTP_STATUS_MIN, lt=c.HTTP_STATUS_MAX)
+
+    def test_retry_range_invariant(self) -> None:
+        """MIN_RETRIES <= DEFAULT_RETRIES <= MAX_RETRIES."""
+        tm.that(c.MIN_RETRIES, lte=c.DEFAULT_RETRIES)
+        tm.that(c.DEFAULT_RETRIES, lte=c.MAX_RETRIES)
+
+    def test_pool_size_range_invariant(self) -> None:
+        """MIN < DEFAULT < MAX for pool sizes."""
+        tm.that(c.MIN_POOL_SIZE, gt=0)
+        tm.that(c.DEFAULT_POOL_SIZE, gte=c.MIN_POOL_SIZE)
+        tm.that(c.MAX_POOL_SIZE, gte=c.DEFAULT_POOL_SIZE)
+
+    def test_db_pool_size_range_invariant(self) -> None:
+        """MIN < DEFAULT < MAX for database pool sizes."""
+        tm.that(c.MIN_DB_POOL_SIZE, gt=0)
+        tm.that(c.DEFAULT_DB_POOL_SIZE, gte=c.MIN_DB_POOL_SIZE)
+        tm.that(c.MAX_DB_POOL_SIZE, gte=c.DEFAULT_DB_POOL_SIZE)
+
+    def test_cqrs_timeout_ms_range_invariant(self) -> None:
+        """MIN_TIMEOUT_MS < DEFAULT < MAX for CQRS timeouts."""
+        tm.that(c.MIN_TIMEOUT_MS, gt=0)
+        tm.that(c.DEFAULT_COMMAND_TIMEOUT_MS, gte=c.MIN_TIMEOUT_MS)
+        tm.that(c.MAX_TIMEOUT_MS, gte=c.DEFAULT_COMMAND_TIMEOUT_MS)
+
+    # ------------------------------------------------------------------
+    # Cross-cutting: no duplicate enum values within a single enum
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        "enum_cls",
+        [
+            "DispatcherStatus",
+            "CommonStatus",
+            "HandlerType",
+            "MetricType",
+            "ServiceMetricCategory",
+            "ProcessingMode",
+            "ProcessingPhase",
+            "BindType",
+            "MergeStrategy",
+            "HealthStatus",
+            "SpecialStatus",
+            "TokenType",
+            "OperationStatus",
+            "SerializationFormat",
+            "Compression",
+            "Aggregation",
+            "Action",
+            "PersistenceLevel",
+            "TargetFormat",
+            "WarningLevel",
+            "OutputFormat",
+            "Mode",
+            "RegistrationStatus",
+            "ErrorType",
+            "FailureLevel",
+            "ContextOperation",
+            "Status",
+            "Currency",
+            "OrderStatus",
+            "ErrorDomain",
+            "ConversionMode",
+            "LogLevel",
+            "Environment",
+            "CircuitBreakerState",
+            "MetadataField",
+            "BoolTrueValue",
+            "BoolFalseValue",
+        ],
+    )
+    def test_enum_values_are_unique(self, enum_cls: str) -> None:
+        """Each StrEnum has no duplicate values (@unique guarantees this at class creation)."""
+        cls = getattr(c, enum_cls)
+        values = [member.value for member in cls]
         tm.that(
-            c.MAX_TIMEOUT_SECONDS,
-            gt=c.DEFAULT_TIMEOUT_SECONDS,
+            len(values), eq=len(set(values)), msg=f"{enum_cls} has duplicate values"
         )
-        tm.that(c.MIN_NAME_LENGTH, gt=0)
-        tm.that(c.MIN_NAME_LENGTH, lt=c.HTTP_STATUS_MIN)
 
-    def test_edge_cases_enum_completeness(self) -> None:
-        """Test that enums contain all expected values."""
-        for level in self.LOG_LEVELS:
-            tm.that(hasattr(c.LogLevel, level), eq=True)
-            tm.that(getattr(c.LogLevel, level), eq=level)
+    # ------------------------------------------------------------------
+    # Facade completeness: all subclass constants accessible via c
+    # ------------------------------------------------------------------
 
-    def test_integration_cross_category_consistency(self) -> None:
-        """Test consistency across related constant categories."""
-        tm.that(
-            c.DEFAULT_TIMEOUT_SECONDS,
-            eq=c.DEFAULT_TIMEOUT_SECONDS,
-        )
-        tm.that(c.DEFAULT_HANDLER_TYPE, eq=c.DEFAULT_HANDLER_MODE)
-
-    def test_integration_pattern_and_validation_consistency(self) -> None:
-        """Test that patterns work with validation constants."""
-        email_pattern = u.Tests.ConstantsHelpers.compile_pattern(
+    @pytest.mark.parametrize(
+        "attr",
+        [
+            # From base
+            "NAME",
+            "DEFAULT_TIMEOUT",
+            "ZERO",
+            # From cqrs
+            "DEFAULT_COMMAND_TYPE",
+            "CQRS_OPERATION_FAILED",
+            "HandlerType",
+            "CommonStatus",
+            # From validation
+            "VALIDATION_ERROR",
+            "ErrorType",
+            "FailureLevel",
+            "STRING_METHOD_MAP",
+            # From infrastructure
+            "SCOPE_GLOBAL",
+            "MetadataField",
+            "SENTINEL_MISSING",
+            # From platform
+            "ENV_PREFIX",
+            "CircuitBreakerState",
             "PATTERN_EMAIL",
-        )
-        max_length_email = "a" * (c.MAX_EMAIL_LENGTH - 9) + "@test.com"
-        tm.that(len(max_length_email), lte=c.MAX_EMAIL_LENGTH)
-        tm.that(
-            cast("t.NormalizedValue", email_pattern.match(max_length_email)),
-            none=False,
-        )
+            # From domain
+            "DEFAULT_LEVEL",
+            "LEVEL_HIERARCHY",
+            "ContextOperation",
+            "Currency",
+            # From errors
+            "ErrorDomain",
+            # From settings
+            "DEFAULT_ENCODING",
+            "ConversionMode",
+            "LogLevel",
+            "Environment",
+            # From mixins
+            "FIELD_ID",
+            "BoolTrueValue",
+            "BoolFalseValue",
+            "HANDLER_ATTR",
+        ],
+    )
+    def test_facade_attribute_accessible(self, attr: str) -> None:
+        """All subclass constants and enums are accessible through the facade."""
+        tm.that(hasattr(c, attr), eq=True, msg=f"Missing facade attribute: {attr}")
+
+    def test_facade_docstring_mentions_layer_zero(self) -> None:
+        """FlextConstants docstring references Layer 0."""
+        tm.that(FlextConstants.__doc__, none=False)
+        doc = FlextConstants.__doc__ or ""
+        tm.that("layer 0" in doc.lower(), eq=True)
 
 
-__all__ = ["TestConstants"]
+__all__ = ["TestFlextConstants"]

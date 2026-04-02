@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextContainer, FlextContext, r
+from flext_tests import tm
 from tests import c, m, p, t
 
 

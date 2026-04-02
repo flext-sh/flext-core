@@ -498,7 +498,7 @@ if _TYPE_CHECKING:
     )
     from tests.unit.test_version import TestFlextVersion
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     (
         "tests.unit.contracts",
         "tests.unit.flext_tests",

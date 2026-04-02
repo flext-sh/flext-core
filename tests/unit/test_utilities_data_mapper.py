@@ -15,7 +15,6 @@ from collections.abc import ItemsView
 from typing import override
 
 from flext_tests import tm
-
 from tests import (
     assertion_helpers,
     c,

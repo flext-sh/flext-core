@@ -10,9 +10,7 @@ from typing import Annotated, override
 
 from pydantic import Field
 
-from flext_core._constants.errors import FlextConstantsErrors
-from flext_core._models.base import FlextModelFoundation
-from flext_core.typings import t
+from flext_core import FlextConstantsErrors, FlextModelFoundation, t
 
 
 class FlextModelsErrors:

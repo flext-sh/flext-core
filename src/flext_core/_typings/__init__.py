@@ -50,7 +50,7 @@ if _TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices
     from flext_core._typings.validation import FlextTypesValidation
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "EnumT": "flext_core._typings.generics",
     "FlextTypesCore": "flext_core._typings.core",
     "FlextTypesServices": "flext_core._typings.services",

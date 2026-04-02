@@ -11,9 +11,9 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
-from flext_tests import tm
 
 from flext_core import r
+from flext_tests import tm
 from tests import c, t
 
 
@@ -537,9 +537,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_deep_parameter(self) -> None:
         """Test tm.that() with deep parameter."""
-        data: Mapping[str, Mapping[str, str | int]] = {
-            "user": {"name": "John", "age": 30}
-        }
+        data: Mapping[str, t.HeaderMapping] = {"user": {"name": "John", "age": 30}}
         tm.that(data, deep={"user.name": "John"})
 
     def test_that_with_where_parameter(self) -> None:

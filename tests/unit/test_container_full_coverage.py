@@ -9,12 +9,12 @@ from types import ModuleType
 from typing import ClassVar, Self, cast
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 import flext_core._utilities.discovery as _discovery_mod
 from flext_core import FlextContainer, FlextContext, FlextSettings, r
+from flext_tests import tm
 from tests import m, p, t
 
 

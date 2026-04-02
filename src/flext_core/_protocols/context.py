@@ -13,8 +13,7 @@ from typing import Protocol, Self, overload, runtime_checkable
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core.typings import t
+from flext_core import FlextProtocolsResult, t
 
 
 class FlextProtocolsContext:
@@ -44,7 +43,7 @@ class FlextProtocolsContext:
             """Return all values across all scopes."""
             ...
 
-        def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
+        def items(self) -> Sequence[tuple[str, t.RecursiveContainer]]:
             """Return all key-value pairs across all scopes."""
             ...
 

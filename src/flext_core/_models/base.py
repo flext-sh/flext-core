@@ -30,9 +30,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core.constants import c
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextRuntime, c, t
 
 
 class FlextModelFoundation:
@@ -522,7 +520,7 @@ class FlextModelFoundation:
             if isinstance(value, BaseModel):
                 result = value.model_dump()
             elif isinstance(value, Mapping):
-                result = dict(value.items())
+                result = dict(value)
             else:
                 msg = "attributes must be dict-like"
                 raise TypeError(msg)

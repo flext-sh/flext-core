@@ -26,10 +26,10 @@ from typing import ClassVar, cast, override
 import pytest
 import structlog
 from dependency_injector import containers, providers
-from flext_tests import tm
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, r
+from flext_tests import tm
 from tests import c, m, t, u
 from tests.unit import (
     test_runtime as runtime_tests,

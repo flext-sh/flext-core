@@ -33,7 +33,7 @@ if _TYPE_CHECKING:
     from flext_core._constants.settings import FlextConstantsSettings
     from flext_core._constants.validation import FlextConstantsValidation
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextConstantsBase": "flext_core._constants.base",
     "FlextConstantsCqrs": "flext_core._constants.cqrs",
     "FlextConstantsDomain": "flext_core._constants.domain",

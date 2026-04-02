@@ -12,8 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from flext_core.models import m
-from flext_core.typings import t
+from flext_core import m, t
 
 
 class FlextUtilitiesContext:

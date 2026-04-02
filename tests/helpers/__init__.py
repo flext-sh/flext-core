@@ -52,7 +52,7 @@ if _TYPE_CHECKING:
     )
     from tests.helpers.scenarios import TestHelperScenarios
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FailingService": "tests.helpers.factories_impl",
     "FailingServiceAuto": "tests.helpers.factories_impl",
     "FailingServiceAutoFactory": "tests.helpers.factories_impl",

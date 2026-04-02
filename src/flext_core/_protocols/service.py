@@ -10,12 +10,14 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.registry import FlextProtocolsRegistry
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core.typings import t
+from flext_core import (
+    FlextProtocolsBase,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsRegistry,
+    FlextProtocolsResult,
+    t,
+)
 
 
 class FlextProtocolsService:

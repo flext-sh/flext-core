@@ -63,7 +63,7 @@ if _TYPE_CHECKING:
     from tests.integration.test_service import TestService
     from tests.integration.test_system import TestCompleteFlextSystemIntegration
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     ("tests.integration.patterns",),
     {
         "TestAutomatedArchitecture": "tests.integration.test_architecture",

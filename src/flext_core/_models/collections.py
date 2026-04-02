@@ -14,8 +14,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core.typings import t
+from flext_core import FlextModelFoundation, t
 
 
 class FlextModelsCollections:
@@ -403,7 +402,7 @@ class FlextModelsCollections:
         """Specification for guard conditions used in collection filters."""
 
         eq: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(
                 default=None,
                 title="Equals",
@@ -411,7 +410,7 @@ class FlextModelsCollections:
             ),
         ] = None
         ne: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(
                 default=None,
                 title="Not Equals",
@@ -507,7 +506,7 @@ class FlextModelsCollections:
             ),
         ] = None
         contains: Annotated[
-            t.NormalizedValue | None,
+            t.RecursiveContainer | None,
             Field(
                 default=None,
                 title="Contains",

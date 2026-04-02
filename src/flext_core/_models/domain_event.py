@@ -16,10 +16,12 @@ from typing import override
 
 from pydantic import Field, field_validator
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import (
+    FlextModelFoundation,
+    FlextRuntime,
+    FlextUtilitiesGuardsTypeCore,
+    t,
+)
 
 
 class FlextModelsDomainEvent:
@@ -56,7 +58,7 @@ class FlextModelsDomainEvent:
     @staticmethod
     def metadata_to_normalized(
         item: t.MetadataOrValue | None,
-    ) -> t.NormalizedValue:
+    ) -> t.RecursiveContainer:
         if item is None:
             return None
         if isinstance(item, bool):
@@ -95,7 +97,7 @@ class FlextModelsDomainEvent:
         if isinstance(value, FlextModelsDomainEvent.ComparableConfigMap):
             return value
         if isinstance(value, t.ConfigMap):
-            return FlextModelsDomainEvent.ComparableConfigMap(root=dict(value.items()))
+            return FlextModelsDomainEvent.ComparableConfigMap(root=dict(value))
         if isinstance(value, dict):
             typed_value = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 value,

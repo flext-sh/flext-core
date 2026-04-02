@@ -18,11 +18,7 @@ from collections.abc import (
 from enum import StrEnum
 from typing import ClassVar, overload
 
-from flext_core._typings.generics import T, U
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core.models import m
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import FlextUtilitiesGuardsTypeCore, T, U, m, r, t
 
 
 class FlextUtilitiesCollection:
@@ -30,7 +26,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _safe_validate_serializable(
-        value: t.Serializable | t.NormalizedValue,
+        value: t.Serializable | t.RecursiveContainer,
     ) -> t.Serializable:
         """Validate via Pydantic adapter, falling back to str on any error."""
         try:
@@ -40,7 +36,7 @@ class FlextUtilitiesCollection:
             return result
 
     @staticmethod
-    def _normalize_unknown_value(value: t.NormalizedValue) -> t.NormalizedValue:
+    def _normalize_unknown_value(value: t.RecursiveContainer) -> t.RecursiveContainer:
         validated = FlextUtilitiesCollection._safe_validate_serializable(value)
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
@@ -61,15 +57,15 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _normalize_mapping_items(
-        data: t.NormalizedValue,
-    ) -> Sequence[tuple[str, t.NormalizedValue]]:
+        data: t.RecursiveContainer,
+    ) -> Sequence[tuple[str, t.RecursiveContainer]]:
         normalized_mapping = m.Validators.dict_str_metadata_adapter().validate_python(
             data,
         )
         return list(normalized_mapping.items())
 
     @staticmethod
-    def _is_empty_value(value: t.NormalizedValue) -> bool:
+    def _is_empty_value(value: t.RecursiveContainer) -> bool:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True
@@ -85,7 +81,7 @@ class FlextUtilitiesCollection:
     def _merge_deep_single_key(
         result: t.MutableContainerMapping,
         key: str,
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -111,7 +107,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[t.NormalizedValue], Sequence[E]]:
+    ) -> Callable[[t.RecursiveContainer], Sequence[E]]:
         """Create validator that coerces list values to a StrEnum type.
 
         Raises:
@@ -120,7 +116,7 @@ class FlextUtilitiesCollection:
 
         """
 
-        def validator(data: t.NormalizedValue) -> Sequence[E]:
+        def validator(data: t.RecursiveContainer) -> Sequence[E]:
             if isinstance(data, str):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)

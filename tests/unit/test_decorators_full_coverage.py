@@ -9,7 +9,6 @@ from types import SimpleNamespace
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
@@ -21,6 +20,7 @@ from flext_core import (
     e,
     r,
 )
+from flext_tests import tm
 from tests import c, m, p, t, u
 
 

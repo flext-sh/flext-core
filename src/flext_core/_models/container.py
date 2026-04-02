@@ -19,11 +19,7 @@ from typing import Annotated, ClassVar, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, c, p, t
 
 
 class FlextModelsContainer:
@@ -51,7 +47,7 @@ class FlextModelsContainer:
             msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
             raise TypeError(msg)
         return FlextModelFoundation.Metadata.model_validate({
-            c.FIELD_ATTRIBUTES: dict(value.items()),
+            c.FIELD_ATTRIBUTES: dict(value),
         })
 
     class _MetadataValidatorMixin:

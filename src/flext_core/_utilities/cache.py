@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core.typings import t
+from flext_core import FlextUtilitiesGuardsTypeCore, FlextUtilitiesGuardsTypeModel, t
 
 
 class FlextUtilitiesCache:

@@ -8,10 +8,10 @@ from datetime import datetime
 from typing import cast
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel
 from pydantic_core import ValidationError
 
+from flext_tests import tm
 from tests import TestUnitModels, c, m, r, t, u
 
 

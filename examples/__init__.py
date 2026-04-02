@@ -132,7 +132,7 @@ if _TYPE_CHECKING:
     from examples.shared import Examples
     from flext_core import FlextTypes
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     ("examples._models",),
     {
         "DatabaseService": "examples.logging_config_once_pattern",

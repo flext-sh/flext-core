@@ -23,11 +23,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import FlextModelFoundation, c, p, r, t
 
 
 class FlextModelsHandler:
@@ -406,7 +402,7 @@ class FlextModelsHandler:
             state: t.Dict = (
                 raw_state if isinstance(raw_state, t.Dict) else t.Dict(root={})
             )
-            return r[t.ConfigMap].ok(t.ConfigMap(root=dict(state.root.items())))
+            return r[t.ConfigMap].ok(t.ConfigMap(root=dict(state.root)))
 
         def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
             """Record a named metric value in the tracker."""
@@ -414,7 +410,7 @@ class FlextModelsHandler:
             state: t.Dict = (
                 raw_state if isinstance(raw_state, t.Dict) else t.Dict(root={})
             )
-            current = dict(state.root.items())
+            current = dict(state.root)
             current[name] = value
             self._context.set_metrics_state(t.Dict(root=current))
             return r[bool].ok(value=True)

@@ -19,11 +19,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import FlextRuntime, c, m, t, u
 
 
 class FlextExceptions:
@@ -981,7 +977,7 @@ class FlextExceptions:
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
                 metadata = m.Metadata.model_validate({
-                    c.FIELD_ATTRIBUTES: dict(attrs_map.items()),
+                    c.FIELD_ATTRIBUTES: dict(attrs_map),
                 })
         return (correlation_id, metadata)
 

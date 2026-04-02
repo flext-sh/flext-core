@@ -19,7 +19,7 @@ from typing import Annotated, override
 
 from pydantic import BaseModel, Field, RootModel
 
-from flext_core._typings.base import FlextTypingBase
+from flext_core import FlextTypingBase
 
 
 class FlextTypingContainers:
@@ -119,7 +119,7 @@ class FlextTypingContainers:
         ) -> FlextTypingBase.RecursiveContainer | BaseModel | None:
             value = self.root.get(key, default)
             if isinstance(value, Mapping) and not isinstance(value, BaseModel):
-                return dict(value.items())
+                return dict(value)
             return value
 
     class ConfigMap(RootDictModel[FlextTypingBase.RecursiveContainer | BaseModel]):

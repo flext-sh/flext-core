@@ -13,9 +13,7 @@ from collections.abc import Callable, Mapping, MutableMapping
 from enum import StrEnum
 from typing import ClassVar
 
-from flext_core._typings.generics import EnumT
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import EnumT, r, t
 
 
 class FlextUtilitiesEnum:

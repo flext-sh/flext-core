@@ -12,8 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_core.constants import c
-from flext_core.typings import t
+from flext_core import c, t
 
 
 class FlextUtilitiesDomain:

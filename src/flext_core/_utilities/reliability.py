@@ -15,11 +15,7 @@ import time
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core._models.base import FlextModelFoundation
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core.constants import c
-from flext_core.result import FlextResult as r
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextModelFoundation, FlextProtocolsLogging, FlextRuntime, c, r
 
 
 class FlextUtilitiesReliability:

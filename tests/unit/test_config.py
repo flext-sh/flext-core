@@ -28,11 +28,11 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_tests import tm
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings
+from flext_tests import tm
 from tests import c, p, t, u
 
 
@@ -40,7 +40,7 @@ class TestFlextSettings:
     class ConfigScenarios:
         """Centralized config test scenarios using c."""
 
-        INIT_CASES: ClassVar[Sequence[Mapping[str, str | bool]]] = [
+        INIT_CASES: ClassVar[Sequence[t.FeatureFlagMapping]] = [
             {"app_name": "test_app", "version": "1.0.0", "debug": True},
             {"app_name": "dict_app", "version": "2.0.0", "debug": False},
             {"app_name": "valid_app", "version": "1.0.0"},
@@ -72,7 +72,7 @@ class TestFlextSettings:
         ConfigScenarios.INIT_CASES,
         ids=lambda d: str(d.get("app_name", "default")),
     )
-    def test_config_initialization(self, config_data: Mapping[str, str | bool]) -> None:
+    def test_config_initialization(self, config_data: t.FeatureFlagMapping) -> None:
         """Test config initialization with various values."""
         config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
@@ -83,7 +83,7 @@ class TestFlextSettings:
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
-        config_data: Mapping[str, str | bool] = {
+        config_data: t.FeatureFlagMapping = {
             "app_name": "dict_app",
             "version": "2.0.0",
             "debug": False,

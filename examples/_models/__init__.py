@@ -104,7 +104,7 @@ if _TYPE_CHECKING:
     from examples._models.shared import SharedHandle, SharedPerson
     from flext_core import FlextTypes
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "Ex00UserInput": "examples._models.ex00",
     "Ex00UserProfile": "examples._models.ex00",
     "Ex01DemonstrationResult": "examples._models.ex01",

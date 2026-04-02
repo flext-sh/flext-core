@@ -16,16 +16,18 @@ from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
-from flext_core.constants import c
-from flext_core.container import FlextContainer
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import FlextHandlers as h
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.service import FlextService as s
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import (
+    FlextContainer,
+    FlextDispatcher,
+    FlextHandlers as h,
+    FlextService as s,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class FlextRegistry(s[bool]):

@@ -22,8 +22,6 @@ from collections.abc import Mapping
 from types import ModuleType
 from typing import override
 
-from flext_tests import tm
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -34,6 +32,7 @@ from flext_core import (
     r,
     s,
 )
+from flext_tests import tm
 from tests import p, t, u
 
 from ..test_utils import assertion_helpers

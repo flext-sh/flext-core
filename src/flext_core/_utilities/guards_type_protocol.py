@@ -13,9 +13,7 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core import c, p, t
 
 
 class FlextUtilitiesGuardsTypeProtocol:

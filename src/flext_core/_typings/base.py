@@ -46,11 +46,38 @@ class FlextTypingBase:
 
     # Flat (non-recursive) mapping/list aliases for high-frequency patterns
     type StrMapping = Mapping[str, str]
+    type MutableStrMapping = MutableMapping[str, str]
     type StrSequence = Sequence[str]
 
     type ScalarMapping = Mapping[str, Scalar]
+    type MutableScalarMapping = MutableMapping[str, Scalar]
     type ScalarList = Sequence[Scalar]
     type FlatContainerList = Sequence[Container]
+
+    type IntMapping = Mapping[str, int]
+    type MutableIntMapping = MutableMapping[str, int]
+    type BoolMapping = Mapping[str, bool]
+    type MutableBoolMapping = MutableMapping[str, bool]
+    type FrozensetMapping = Mapping[str, frozenset[str]]
+    type MutableFrozensetMapping = MutableMapping[str, frozenset[str]]
+    type StrSequenceMapping = Mapping[str, Sequence[str]]
+    type MutableStrSequenceMapping = MutableMapping[str, MutableSequence[str]]
+
+    # Recurring domain-specific flat mapping aliases
+    type AttributeMapping = Mapping[str, str | MutableSequence[str]]
+    type MutableAttributeMapping = MutableMapping[str, str | MutableSequence[str]]
+    type ConfigValueMapping = Mapping[str, str | int | float]
+    type OptionalStrMapping = Mapping[str, str | None]
+    type MutableOptionalStrMapping = MutableMapping[str, str | None]
+    type HeaderMapping = Mapping[str, int | str]
+    type FeatureFlagMapping = Mapping[str, str | bool]
+    type MutableFeatureFlagMapping = MutableMapping[str, str | bool]
+    type OptionalFeatureFlagMapping = Mapping[str, str | bool | None]
+    type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
+    type MutableHeaderMapping = MutableMapping[str, int | str]
+    type MutableConfigValueMapping = MutableMapping[str, str | int | float]
+    type OptionalBoolMapping = Mapping[str, bool | None]
+    type MutableOptionalBoolMapping = MutableMapping[str, bool | None]
 
     class ContainerMappingBase(Mapping[str, "FlextTypingBase.RecursiveContainer"]):
         """Concrete base for Mapping[str, RecursiveContainer] inheritance.

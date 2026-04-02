@@ -73,7 +73,7 @@ if _TYPE_CHECKING:
     from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextUtilitiesArgs": "flext_core._utilities.args",
     "FlextUtilitiesCache": "flext_core._utilities.cache",
     "FlextUtilitiesChecker": "flext_core._utilities.checker",

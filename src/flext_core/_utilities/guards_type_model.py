@@ -7,8 +7,7 @@ from typing import TypeIs
 
 from pydantic import BaseModel
 
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core.typings import t
+from flext_core import FlextUtilitiesGuardsTypeCore, t
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -16,16 +15,16 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_object_list(
-        value: t.NormalizedValue,
-    ) -> TypeIs[t.ContainerList]:
-        """Narrow value to list of normalized values."""
+        value: t.RecursiveContainer,
+    ) -> TypeIs[t.RecursiveContainerList]:
+        """Narrow value to a recursive container list."""
         return isinstance(value, list)
 
     @staticmethod
     def is_object_tuple(
         value: t.GuardInput,
-    ) -> TypeIs[tuple[t.NormalizedValue, ...]]:
-        """Narrow value to tuple of normalized values."""
+    ) -> TypeIs[tuple[t.RecursiveContainer, ...]]:
+        """Narrow value to a recursive container tuple."""
         return isinstance(value, tuple)
 
     @staticmethod

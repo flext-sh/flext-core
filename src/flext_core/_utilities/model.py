@@ -12,10 +12,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import FlextUtilitiesGuardsTypeCore, FlextUtilitiesGuardsTypeModel, r, t
 
 
 class FlextUtilitiesModel:

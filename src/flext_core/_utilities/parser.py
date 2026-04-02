@@ -17,10 +17,7 @@ from typing import TypeAliasType
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import FlextUtilitiesGuards, p, r, t
 
 
 class FlextUtilitiesParser:

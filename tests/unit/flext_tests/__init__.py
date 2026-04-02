@@ -25,7 +25,7 @@ if _TYPE_CHECKING:
     from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
     from tests.unit.flext_tests.test_utilities import TestUtilities
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "TestDocker": "tests.unit.flext_tests.test_docker",
     "TestFlextTestsDomains": "tests.unit.flext_tests.test_domains",
     "TestFlextTestsFiles": "tests.unit.flext_tests.test_files",

@@ -28,11 +28,7 @@ from typing import ClassVar, Self, override
 
 from structlog.typing import Context
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import c, p, r, t, u
 
 
 class FlextLogger(u, p.Logger):
@@ -126,7 +122,7 @@ class FlextLogger(u, p.Logger):
                 if context_vars
                 else {}
             )
-            context_obj: Mapping[str, t.ValueOrModel] = dict(context_map.items())
+            context_obj: Mapping[str, t.ValueOrModel] = dict(context_map)
             return t.ConfigMap(root=dict(context_obj))
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return t.ConfigMap(root={})

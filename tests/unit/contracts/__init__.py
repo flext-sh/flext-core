@@ -15,7 +15,7 @@ if _TYPE_CHECKING:
     from tests.unit.contracts import text_contract
     from tests.unit.contracts.text_contract import TextUtilityContract
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "TextUtilityContract": "tests.unit.contracts.text_contract",
     "text_contract": "tests.unit.contracts.text_contract",
 }

@@ -9,11 +9,10 @@ from __future__ import annotations
 from types import TracebackType
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core.typings import t
+from flext_core import FlextProtocolsBase, t
 
 if TYPE_CHECKING:
-    from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core import FlextProtocolsLogging
 
 
 class FlextProtocolsResult:

@@ -19,9 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core._typings.generics import U
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core import U, p, t
 
 
 class FlextResult[T](BaseModel):

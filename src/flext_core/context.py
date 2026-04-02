@@ -26,12 +26,7 @@ from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import c, m, p, r, t, u
 
 
 class FlextContext(m.ArbitraryTypesModel, u):
@@ -52,11 +47,11 @@ class FlextContext(m.ArbitraryTypesModel, u):
     _logger: ClassVar[p.Logger] = u.get_logger(__name__)
 
     @staticmethod
-    def _to_normalized(value: t.ValueOrModel) -> t.NormalizedValue:
-        """Narrow ``Container | BaseModel`` to ``NormalizedValue``.
+    def _to_normalized(value: t.ValueOrModel) -> t.RecursiveContainer:
+        """Narrow ``Container | BaseModel`` to ``RecursiveContainer``.
 
         BaseModel instances are converted via ``model_dump()`` so the result
-        is always a plain ``NormalizedValue`` (no BaseModel).
+        is always a plain ``RecursiveContainer`` (no BaseModel).
         """
         if u.is_pydantic_model(value):
             raw = value.model_dump()
@@ -165,7 +160,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             else:
                 context_data = m.ContextData(
                     data=t.Dict(
-                        root=dict(self.initial_data.items()),
+                        root=dict(self.initial_data),
                     ),
                 )
         self._metadata = m.Metadata()
@@ -265,7 +260,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             if user_id is not None:
                 initial_data_dict[c.KEY_USER_ID] = user_id
             if metadata is not None:
-                initial_data_dict.update(dict(metadata.items()))
+                initial_data_dict.update(dict(metadata))
             return cls(
                 initial_data=m.ContextData(data=t.Dict(root=initial_data_dict.root)),
             )
@@ -318,7 +313,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             return r[bool].fail("Key must be a non-empty string")
         if value is None:
             return r[bool].fail("Value cannot be None")
-        value_for_guard: t.NormalizedValue = (
+        value_for_guard: t.RecursiveContainer = (
             FlextContext._to_normalized(
                 u.normalize_to_container(
                     u.normalize_to_metadata(value),
@@ -352,7 +347,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 u.structlog().contextvars.clear_contextvars()
         self._metadata = m.Metadata()
         self._statistics.clears += 1
-        operations = dict(self._statistics.operations.items())
+        operations = dict(self._statistics.operations)
         clear_value = operations.get(c.OPERATION_CLEAR)
         if isinstance(clear_value, int):
             operations[c.OPERATION_CLEAR] = clear_value + 1
@@ -374,7 +369,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
                 cloned.set(
-                    t.ConfigMap(root=dict(scope_dict.items())),
+                    t.ConfigMap(root=dict(scope_dict)),
                     scope=scope_name,
                 )
         cloned.set_all_metadata_for_clone(self._metadata.model_copy())
@@ -402,7 +397,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         all_data: t.ConfigMap = t.ConfigMap(root={})
         all_scopes = self._get_all_scopes()
-        all_data.update(dict(all_scopes.items()))
+        all_data.update(dict(all_scopes))
         stats_dict_export: t.ConfigMap | None = None
         if include_statistics and self._statistics:
             stats_dict_export = t.ConfigMap(root=self._statistics.model_dump())
@@ -416,17 +411,17 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 metadata_value: t.ValueOrModel = v
                 if u.is_mapping(v):
                     metadata_value = t.ConfigMap(
-                        root=dict(v.items()),
+                        root=dict(v),
                     )
                 normalized_metadata_map[k] = u.normalize_to_container(
                     u.normalize_to_metadata(metadata_value),
                 )
             metadata_for_model = t.ConfigMap(root=normalized_metadata_map)
         statistics_mapping: t.Dict = t.Dict(
-            root=dict((stats_dict_export or t.ConfigMap(root={})).items()),
+            root=dict(stats_dict_export or t.ConfigMap(root={})),
         )
         if as_dict:
-            result_dict: t.MutableContainerMapping = dict(all_scopes.items())
+            result_dict: t.MutableContainerMapping = dict(all_scopes)
             if include_statistics and stats_dict_export:
                 stats_items: t.ContainerMapping = {
                     sk: FlextContext._to_normalized(sv)
@@ -435,7 +430,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 result_dict["statistics"] = stats_items
             if include_metadata and metadata_dict_export:
                 metadata_container: t.ConfigMap = t.ConfigMap(
-                    root=dict(metadata_dict_export.items()),
+                    root=dict(metadata_dict_export),
                 )
                 meta_items: t.ContainerMapping = {
                     mk: FlextContext._to_normalized(mv)
@@ -454,7 +449,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             else None
         )
         return m.ContextExport(
-            data=dict(all_data.items()),
+            data=dict(all_data),
             metadata=m.Metadata(
                 attributes={
                     key: u.normalize_to_metadata(value)
@@ -574,7 +569,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         scope_data = self._get_from_contextvar(scope)
         return key in scope_data
 
-    def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
+    def items(self) -> Sequence[tuple[str, t.RecursiveContainer]]:
         """Get all items (key-value pairs) in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -585,7 +580,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if not self._active:
             return []
-        all_items: Sequence[tuple[str, t.NormalizedValue]] = [
+        all_items: Sequence[tuple[str, t.RecursiveContainer]] = [
             item
             for ctx_var in self._scope_vars.values()
             for item in self._narrow_contextvar_to_configuration_dict(
@@ -638,7 +633,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
     ) -> t.ConfigMap | None:
         """Try to wrap a mapping as ConfigMap, logging on failure."""
         try:
-            return t.ConfigMap(root=dict(source.items()))
+            return t.ConfigMap(root=dict(source))
         except (TypeError, ValueError, AttributeError) as exc:
             FlextContext._logger.debug(
                 f"Context {label} validation failed",
@@ -711,7 +706,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         if key in current:
             filtered = {k: v for k, v in current.items() if k != key}
             try:
-                _ = ctx_var.set(t.ConfigMap(root=dict(filtered.items())))
+                _ = ctx_var.set(t.ConfigMap(root=dict(filtered)))
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
                     "Failed to validate context after removal",
@@ -781,7 +776,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
 
         """
         normalized_value: t.MetadataValue = u.normalize_to_metadata(value)
-        updated_attributes = dict(self._metadata.attributes.items())
+        updated_attributes = dict(self._metadata.attributes)
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
             update={c.FIELD_ATTRIBUTES: updated_attributes},
@@ -835,7 +830,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
     def _execute_hooks(
         self,
         event: str,
-        event_data: t.NormalizedValue | t.ConfigMap,
+        event_data: t.RecursiveContainer | t.ConfigMap,
     ) -> None:
         """Execute hooks for an event (DRY helper).
 
@@ -868,11 +863,11 @@ class FlextContext(m.ArbitraryTypesModel, u):
             Dictionary of all metadata (with custom_fields flattened)
 
         """
-        data = dict(self._metadata.model_dump().items())
+        data = dict(self._metadata.model_dump())
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: t.MutableContainerMapping = {}
         try:
-            cf_map = t.ConfigMap(root=dict(custom_fields_raw.items()))
+            cf_map = t.ConfigMap(root=dict(custom_fields_raw))
             for ck, cv in cf_map.items():
                 custom_fields_dict[ck] = FlextContext._to_normalized(cv)
         except (TypeError, ValueError, AttributeError) as exc:
@@ -880,7 +875,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 "Custom metadata field normalization failed",
                 exc_info=exc,
             )
-            custom_fields_dict = dict[str, t.NormalizedValue]()
+            custom_fields_dict = {}
         result: t.MutableContainerMapping = {}
         for k, v in data.items():
             if v is None or v == {}:
@@ -911,7 +906,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         for scope_name, ctx_var in self._scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
-                scopes[scope_name] = dict(scope_dict.items())
+                scopes[scope_name] = dict(scope_dict)
         return scopes
 
     def _get_from_contextvar(self, scope: str) -> t.ConfigMap:
@@ -951,7 +946,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = t.ConfigMap(root=dict(current.items()))
+            updated = t.ConfigMap(root=dict(current))
             updated.update(data.root)
             _ = ctx_var.set(updated)
             self._update_statistics(c.OPERATION_SET)
@@ -968,7 +963,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         ctx_var = self._get_or_create_scope_var(scope)
         current = t.ConfigMap(
             root=dict(
-                self._narrow_contextvar_to_configuration_dict(ctx_var.get()).items(),
+                self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
             ),
         )
         updated = current.model_copy()
@@ -997,7 +992,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = t.ConfigMap(root=dict(current.items()))
+            updated = t.ConfigMap(root=dict(current))
             updated[key] = value
             _ = ctx_var.set(updated)
             FlextContext._propagate_to_logger(key, value, scope)
@@ -1023,7 +1018,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             current_value = getattr(self._statistics, counter_attr, 0)
             if isinstance(current_value, int):
                 update_fields[counter_attr] = current_value + 1
-        operations = dict(self._statistics.operations.items())
+        operations = dict(self._statistics.operations)
         op_value = operations.get(operation)
         if isinstance(op_value, int):
             operations[operation] = op_value + 1
@@ -1343,7 +1338,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             operation_metadata_raw = context_vars.Performance.OPERATION_METADATA.get()
-            operation_metadata_value: t.NormalizedValue = ""
+            operation_metadata_value: t.RecursiveContainer = ""
             if operation_metadata_raw is not None:
                 operation_metadata_value = FlextContext._to_normalized(
                     u.normalize_to_container(

@@ -10,12 +10,9 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Protocol, Self, runtime_checkable
 
-from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core.typings import t
+from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 
 class FlextProtocolsLogging:
@@ -206,10 +203,8 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
     type AccessibleData = (
-        t.ConfigMap
+        t.ValueOrModel
         | Mapping[str, t.ValueOrModel]
-        | t.NormalizedValue
-        | BaseModel
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.ValidatorSpec
     )

@@ -19,9 +19,9 @@ import math
 from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast, override
 
-from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_tests import tm
 from tests import t, u
 
 from ._models import TestUnitModels

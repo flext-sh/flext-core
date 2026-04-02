@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import time
 
-from flext_tests import tm
-
 from flext_core import FlextModelsDispatcher
+from flext_tests import tm
 from tests import c
 
 

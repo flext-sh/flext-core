@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import time
 
-from flext_tests import tm
-
 from flext_core import FlextContainer, FlextContext
+from flext_tests import tm
 from tests import m, t, u
 
 from ..test_utils import assertion_helpers

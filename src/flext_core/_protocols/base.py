@@ -9,10 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core.typings import t
+from flext_core import t
 
 if TYPE_CHECKING:
-    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core import FlextProtocolsResult
 
 
 class FlextProtocolsBase:
@@ -40,7 +40,7 @@ class FlextProtocolsBase:
             obj: t.ValueOrModel,
             **kwargs: t.Container,
         ) -> Self:
-            """Validate t.NormalizedValue against model."""
+            """Validate a canonical value-or-model input against the model."""
             ...
 
     @runtime_checkable
@@ -65,7 +65,7 @@ class FlextProtocolsBase:
     @classmethod
     def check_protocol_compliance(
         cls,
-        instance: t.NormalizedValue,
+        instance: t.GuardInput,
         protocol: type,
     ) -> bool:
         """Check protocol compliance via stdlib isinstance().

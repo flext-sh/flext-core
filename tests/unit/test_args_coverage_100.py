@@ -20,9 +20,9 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, Final
 
 import pytest
-from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_tests import tm
 from tests import t, u
 
 

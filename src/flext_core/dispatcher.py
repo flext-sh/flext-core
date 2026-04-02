@@ -13,11 +13,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable, MutableSequence, Sequence
 
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import c, p, r, t, u
 
 type DispatcherResolvedCallable = Callable[
     [p.Routable],

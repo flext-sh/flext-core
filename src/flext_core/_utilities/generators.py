@@ -15,10 +15,7 @@ import string
 import uuid
 from datetime import UTC, datetime
 
-from flext_core.constants import c
-from flext_core.result import FlextResult as r
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextRuntime, c, r, t
 
 
 class FlextUtilitiesGenerators:
@@ -68,7 +65,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: t.NormalizedValue,
+        *parts: t.RecursiveContainer,
         length: int = c.SHORT_UUID_LENGTH,
     ) -> str:
         """Generate {prefix}_{parts}_{uuid[:length]} formatted ID."""
@@ -85,7 +82,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _build_parts_list(
-        parts: tuple[t.NormalizedValue, ...] | None,
+        parts: tuple[t.RecursiveContainer, ...] | None,
         *,
         include_timestamp: bool,
     ) -> t.MutableContainerList:
@@ -116,7 +113,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.NormalizedValue, ...] | None = None,
+        parts: tuple[t.RecursiveContainer, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",

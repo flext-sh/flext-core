@@ -31,7 +31,7 @@ if _TYPE_CHECKING:
     from flext_core._models._context._scope import FlextModelsContextScope
     from flext_core._models._context._tokens import FlextModelsContextTokens
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextModelsContextData": "flext_core._models._context._data",
     "FlextModelsContextExport": "flext_core._models._context._export",
     "FlextModelsContextMetadata": "flext_core._models._context._metadata",

@@ -13,9 +13,7 @@ import operator
 from collections.abc import MutableSequence, Sequence
 from types import ModuleType
 
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.typings import t
+from flext_core import c, m, t
 
 
 class FlextUtilitiesDiscovery:

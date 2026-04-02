@@ -67,7 +67,7 @@ if _TYPE_CHECKING:
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     ("flext_core._models._context",),
     {
         "FlextGenericModels": "flext_core._models.generic",

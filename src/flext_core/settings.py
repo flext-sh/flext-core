@@ -25,12 +25,15 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core.__version__ import __version__ as _flext_version
-from flext_core._typings.generics import T_Namespace, T_Settings
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import (
+    T_Namespace,
+    T_Settings,
+    __version__ as _flext_version,
+    c,
+    m,
+    t,
+    u,
+)
 
 
 class FlextSettings(BaseSettings, u):
@@ -278,7 +281,7 @@ class FlextSettings(BaseSettings, u):
         else:
             instance = cls()
         if overrides:
-            update_data = dict(overrides.items())
+            update_data = dict(overrides)
             instance = instance.model_copy(update=update_data, deep=True)
         return instance
 

@@ -50,7 +50,7 @@ if _TYPE_CHECKING:
         pytestmark,
     )
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "EXPECTED_BULK_SIZE": "tests.integration.patterns.test_patterns_logging",
     "P": "tests.integration.patterns.test_patterns_testing",
     "R": "tests.integration.patterns.test_patterns_testing",

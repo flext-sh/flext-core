@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core._typings.generics import T
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
+from flext_core import T, r, t
 
 
 class FlextUtilitiesResultHelpers:
@@ -26,7 +24,7 @@ class FlextUtilitiesResultHelpers:
     """
 
     @staticmethod
-    def any_(*values: t.NormalizedValue) -> bool:
+    def any_(*values: t.RecursiveContainer) -> bool:
         """Check if any value is truthy.
 
         Args:

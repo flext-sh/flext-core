@@ -26,9 +26,9 @@ from enum import StrEnum, unique
 from typing import ClassVar, override
 
 import pytest
-from flext_tests import tm
 
 from flext_core import r
+from flext_tests import tm
 from tests import TextUtilityContract, assertion_helpers, t, u
 
 

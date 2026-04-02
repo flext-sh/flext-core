@@ -37,7 +37,7 @@ if _TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult
     from flext_core._protocols.service import FlextProtocolsService
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "FlextProtocolsBase": "flext_core._protocols.base",
     "FlextProtocolsConfig": "flext_core._protocols.config",
     "FlextProtocolsContainer": "flext_core._protocols.container",

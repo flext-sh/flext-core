@@ -61,7 +61,7 @@ if _TYPE_CHECKING:
 
     from flext_core import FlextTypes
 
-_LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = {
+_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "DEFAULT_TIMEOUT": "tests.fixtures.namespace_validator.rule1_loose_constant",
     "FlextTestConstants": "tests.fixtures.namespace_validator.rule0_multiple_classes",
     "FlextTestModels": "tests.fixtures.namespace_validator.rule1_loose_enum",

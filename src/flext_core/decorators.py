@@ -22,17 +22,21 @@ from typing import Literal, NoReturn, Protocol, TypeIs, overload
 
 from pydantic import BaseModel
 
-from flext_core._typings.generics import P, R, T
-from flext_core.constants import c
-from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
-from flext_core.exceptions import FlextExceptions as e
-from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import FlextResult as r
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextExceptions as e,
+    FlextLogger,
+    P,
+    R,
+    T,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
 class FlextDecorators:

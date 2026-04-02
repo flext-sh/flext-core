@@ -18,12 +18,12 @@ from collections.abc import Sequence
 from typing import cast
 
 import pytest
-from flext_tests import tm
 
 from flext_core import (
     FlextRuntime,
     FlextUtilities,
 )
+from flext_tests import tm
 from tests import m, t
 
 pytestmark = [pytest.mark.unit]
