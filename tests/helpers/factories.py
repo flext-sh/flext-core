@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from tests import m
+
 from .factories_impl import (
     FailingService,
     FailingServiceAuto,
@@ -11,11 +13,9 @@ from .factories_impl import (
     GetUserServiceAutoFactory,
     GetUserServiceFactory,
     ServiceFactoryRegistry,
-    ServiceTestCase as _ServiceTestCase,
     ServiceTestCaseFactory,
     ServiceTestCases,
     TestDataGenerators,
-    User as _User,
     UserFactory,
     ValidatingService,
     ValidatingServiceAuto,
@@ -26,8 +26,8 @@ from .factories_impl import (
 
 
 class TestHelperFactories:
-    User = _User
-    ServiceTestCase = _ServiceTestCase
+    User = m.Core.User
+    ServiceTestCase = m.Core.ServiceTestCase
     GetUserService = GetUserService
     ValidatingService = ValidatingService
     FailingService = FailingService

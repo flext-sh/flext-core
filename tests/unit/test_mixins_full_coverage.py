@@ -11,8 +11,8 @@ from typing import cast, override
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextLogger, m, r, x
-from tests import p, t
+from flext_core import FlextLogger, r, x
+from tests import m, p, t
 
 
 class TestMixinsFullCoverage:

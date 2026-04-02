@@ -17,7 +17,7 @@ from collections.abc import Mapping, MutableSequence
 
 from flext_tests import FlextTestsTypes
 
-from flext_core import FlextTypes, T, T_co, T_contra, t as ft
+from flext_core import FlextTypes, T, T_co, T_contra
 
 
 class FlextCoreTestTypes(FlextTestsTypes, FlextTypes):
@@ -41,12 +41,12 @@ class FlextCoreTestTypes(FlextTestsTypes, FlextTypes):
 
         type ServiceConfigMapping = Mapping[
             str,
-            ft.NormalizedValue | MutableSequence[str],
+            FlextTypes.NormalizedValue | MutableSequence[str],
         ]
         "Service configuration mapping specific to flext-core services."
         type HandlerConfigMapping = Mapping[
             str,
-            ft.NormalizedValue | MutableSequence[str],
+            FlextTypes.NormalizedValue | MutableSequence[str],
         ]
         "Handler configuration mapping specific to flext-core handlers."
 

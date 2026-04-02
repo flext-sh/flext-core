@@ -15,9 +15,7 @@ from itertools import count
 from typing import ClassVar, cast, override
 
 from flext_core import r, s
-from tests import t
-
-from .. import c, m
+from tests import c, m, t
 
 __all__ = [
     "FailingService",
@@ -40,12 +38,6 @@ __all__ = [
     "ValidatingServiceFactory",
     "reset_all_factories",
 ]
-
-User = m.Tests.User
-"""Type alias for backward-compatible import: ``from .helpers.factories import User``."""
-
-ServiceTestCase = m.Core.ServiceTestCase
-"""Type alias for backward-compatible import: ``from .helpers.factories import ServiceTestCase``."""
 
 
 class GetUserService(s[m.Tests.User]):

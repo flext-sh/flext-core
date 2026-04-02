@@ -25,10 +25,10 @@ from collections.abc import MutableMapping
 from typing import TypeVar, cast, get_origin, override
 
 import pytest
-from flext_tests import tm, u
+from flext_tests import tm
 
 from flext_core import h, r
-from tests import t
+from tests import t, u
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")

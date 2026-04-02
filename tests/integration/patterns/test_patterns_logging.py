@@ -12,9 +12,9 @@ import time
 from collections.abc import Sequence
 
 import pytest
-from flext_tests import t
 
 from flext_core import FlextLogger, r
+from tests import t
 
 EXPECTED_BULK_SIZE = 2
 

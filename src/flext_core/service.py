@@ -60,7 +60,7 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type[p.Settings] | None = None
+    config_type: type | None = None
     config_overrides: Annotated[
         t.ContainerMapping | None,
         Field(default=None, exclude=True),
@@ -336,13 +336,13 @@ class FlextService[
             )
         except TypeError:
             cfg_is_settings = False
-        config_cls: type[FlextSettings] = (
-            config_type
-            if cfg_is_settings
-            and isinstance(config_type, type)
-            and issubclass(config_type, FlextSettings)
-            else FlextSettings
-        )
+        config_cls: type[FlextSettings] = FlextSettings
+        if cfg_is_settings and isinstance(config_type, type):
+            try:
+                if issubclass(config_type, FlextSettings):
+                    config_cls = config_type
+            except TypeError:
+                pass
         runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (
             context if context is not None else FlextContext.create()

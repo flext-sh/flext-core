@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 
 from flext_core import FlextContainer, FlextContext, r
-from tests import c, m, p
+from tests import c, m, p, t
 
 
 class _ContainerStub:

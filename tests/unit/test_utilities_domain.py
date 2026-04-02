@@ -24,11 +24,11 @@ from collections.abc import Mapping, Sequence
 from typing import cast
 
 import pytest
-from flext_tests import FlextTestsUtilities, t, u
+from flext_tests import FlextTestsUtilities
 from pydantic import BaseModel
 
 from flext_core import r
-from tests import c, m, p
+from tests import c, m, p, t, u
 
 
 def _create_entities_batch(

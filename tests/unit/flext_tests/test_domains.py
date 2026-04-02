@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import operator
 
-from flext_tests import td, u
+from flext_tests import td
+
+from tests import u
 
 
 class TestFlextTestsDomains:

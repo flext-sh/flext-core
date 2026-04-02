@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import t as test_t, tm
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
@@ -204,7 +204,7 @@ class TestDecoratorsFullCoverage:
         tm.that(result_exc, is_=Exception)
         tm.that(calls["n"], eq=2)
 
-        def _fake_retry_config(**_kw: test_t.NormalizedValue) -> SimpleNamespace:
+        def _fake_retry_config(**_kw: t.NormalizedValue) -> SimpleNamespace:
             return SimpleNamespace(
                 max_retries=0,
                 initial_delay_seconds=0.1,

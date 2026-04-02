@@ -26,11 +26,10 @@ from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
-from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContext, x
-from tests import p, t
+from tests import p, t, u
 
 
 class TestFlextMixinsNestedClasses:

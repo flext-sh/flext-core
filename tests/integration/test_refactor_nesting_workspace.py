@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence
 from pathlib import Path
 
-from flext_infra import FlextInfraRefactorLooseClassScanner, m
+from flext_infra import FlextInfraModels, FlextInfraRefactorLooseClassScanner
 
 
 class TestWorkspaceLevelRefactor:
@@ -70,18 +70,20 @@ class TestWorkspaceLevelRefactor:
                 '\nclass UtilityHelper:\n    @staticmethod\n    def help() -> str:\n        return "help"\n',
             )
         scanner = FlextInfraRefactorLooseClassScanner()
-        all_violations: MutableSequence[m.Infra.LooseClassViolation] = []
+        all_violations: MutableSequence[FlextInfraModels.Infra.LooseClassViolation] = []
         for proj in projects:
             result = scanner.scan(tmp_path / proj)
             assert result.is_success
             violations_raw = result.value.get("violations", [])
             if isinstance(violations_raw, list):
                 for v_item in violations_raw:
-                    if isinstance(v_item, m.Infra.LooseClassViolation):
+                    if isinstance(v_item, FlextInfraModels.Infra.LooseClassViolation):
                         all_violations.append(v_item)
                     elif isinstance(v_item, Mapping):
                         all_violations.append(
-                            m.Infra.LooseClassViolation.model_validate(v_item),
+                            FlextInfraModels.Infra.LooseClassViolation.model_validate(
+                                v_item
+                            ),
                         )
         assert len(all_violations) >= 3
         for v in all_violations:

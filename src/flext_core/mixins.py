@@ -103,7 +103,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         return logger
 
     config_type: Annotated[
-        type[p.Settings] | None,
+        type | None,
         Field(
             default=None,
             description="Configuration class to initialize the service.",

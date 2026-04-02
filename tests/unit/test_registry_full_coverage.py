@@ -7,23 +7,22 @@ from types import ModuleType
 from typing import cast, override
 
 import pytest
-from flext_tests import t as test_t
 
 from flext_core import FlextHandlers, FlextRegistry, h, r
 from tests import c, m, p, t
 
 
-class _Handler(FlextHandlers[test_t.NormalizedValue, t.Container]):
+class _Handler(FlextHandlers[t.NormalizedValue, t.Container]):
     """Test handler implementation."""
 
     @override
-    def handle(self, message: test_t.NormalizedValue) -> r[t.Container]:
+    def handle(self, message: t.NormalizedValue) -> r[t.Container]:
         if isinstance(message, (str, int, float, bool)):
             return r[t.Container].ok(message)
         return r[t.Container].fail("unsupported message")
 
     @override
-    def __call__(self, message: test_t.NormalizedValue) -> r[t.Container]:
+    def __call__(self, message: t.NormalizedValue) -> r[t.Container]:
         return self.handle(message)
 
 

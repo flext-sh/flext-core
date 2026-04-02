@@ -13,11 +13,11 @@ from collections import UserDict
 from collections.abc import Mapping
 
 import pytest
-from flext_tests import tm, u
+from flext_tests import tm
 from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextContext
-from tests import c, m, p, t
+from tests import c, m, p, t, u
 
 
 class TestContext100Coverage:

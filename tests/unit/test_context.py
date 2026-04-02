@@ -28,12 +28,12 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar
 
 import pytest
-from flext_tests import tm, u
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext
-from tests import t
+from tests import t, u
 
 
 class TestFlextContext:

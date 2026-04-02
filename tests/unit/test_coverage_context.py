@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import time
 
-from flext_tests import tm, u
+from flext_tests import tm
 
 from flext_core import FlextContainer, FlextContext
-from tests import m, t
+from tests import m, t, u
 
 from ..test_utils import assertion_helpers
 

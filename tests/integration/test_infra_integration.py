@@ -20,8 +20,8 @@ from flext_infra import (
     FlextInfraBaseMkGenerator,
     FlextInfraBaseMkTemplateEngine,
     FlextInfraOrchestratorService,
+    FlextInfraUtilitiesOutput,
     FlextInfraWorkspaceDetector,
-    output,
     u,
 )
 
@@ -95,14 +95,14 @@ class TestInfraIntegration:
 
     @pytest.mark.integration
     def test_output_singleton_is_same_instance_everywhere(self) -> None:
-        """Test that flext_infra.output is same instance everywhere.
+        """Test that FlextInfraUtilitiesOutput is same instance everywhere.
 
         Validates:
         - output singleton is consistent
         - output has expected u.Infra methods via MRO
         - Singleton pattern is maintained
         """
-        assert output is not None
+        assert FlextInfraUtilitiesOutput is not None
 
     @pytest.mark.integration
     def test_output_singleton_has_expected_methods(self) -> None:
@@ -127,13 +127,13 @@ class TestInfraIntegration:
         - All methods are callable
         - Methods can be invoked without error
         """
-        assert callable(output.status)
-        assert callable(output.summary)
-        assert callable(output.error)
-        assert callable(output.warning)
-        assert callable(output.info)
-        assert callable(output.header)
-        assert callable(output.progress)
+        assert callable(FlextInfraUtilitiesOutput.status)
+        assert callable(FlextInfraUtilitiesOutput.summary)
+        assert callable(FlextInfraUtilitiesOutput.error)
+        assert callable(FlextInfraUtilitiesOutput.warning)
+        assert callable(FlextInfraUtilitiesOutput.info)
+        assert callable(FlextInfraUtilitiesOutput.header)
+        assert callable(FlextInfraUtilitiesOutput.progress)
 
     @pytest.mark.integration
     def test_service_result_chaining_with_map(self) -> None:

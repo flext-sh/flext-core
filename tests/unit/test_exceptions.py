@@ -25,11 +25,11 @@ from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from typing import cast, override
 
 import pytest
-from flext_tests import t, tm, u
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import e
-from tests import c, m
+from tests import c, m, t, u
 
 
 class Teste:

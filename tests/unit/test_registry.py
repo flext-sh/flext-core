@@ -5,12 +5,12 @@ from enum import StrEnum, unique
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from flext_tests import t, tm, u
+from flext_tests import tm
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRegistry, h, r
-from tests import c, m
+from tests import c, m, t, u
 
 
 class TestFlextRegistry:

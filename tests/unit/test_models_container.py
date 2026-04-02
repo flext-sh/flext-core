@@ -18,10 +18,10 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 from pydantic import ValidationError
 
-from tests import m
+from tests import m, t
 
 
 class TestFlextModelsContainer:

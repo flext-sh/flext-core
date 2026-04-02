@@ -28,12 +28,12 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import pytest
-from flext_tests import c, tm, u
+from flext_tests import tm
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings
-from tests import p, t
+from tests import c, p, t, u
 
 
 class TestFlextSettings:

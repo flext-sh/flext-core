@@ -24,8 +24,10 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast
 
 import pytest
-from flext_tests import c, t, t as test_t, tm, u
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
+
+from tests import c, t, u
 
 
 class TestConstants:
@@ -212,7 +214,7 @@ class TestConstants:
         for valid_case in scenario.valid_cases:
             match_result = compiled_pattern.match(valid_case)
             tm.that(
-                cast("test_t.NormalizedValue", match_result),
+                cast("t.NormalizedValue", match_result),
                 none=False,
                 msg=f"Expected '{valid_case}' to match pattern {scenario.pattern_attr}",
             )
@@ -220,7 +222,7 @@ class TestConstants:
             pattern_name = scenario.pattern_attr
             match_result = compiled_pattern.match(invalid_case)
             tm.that(
-                cast("test_t.NormalizedValue", match_result),
+                cast("t.NormalizedValue", match_result),
                 none=True,
                 msg=f"Expected '{invalid_case}' to NOT match pattern {pattern_name}",
             )
@@ -232,7 +234,7 @@ class TestConstants:
     )
     def test_type_safety_constant_types(
         self,
-        value: test_t.NormalizedValue,
+        value: t.NormalizedValue,
         expected_type: type,
     ) -> None:
         """Test that constants have correct types."""
@@ -268,7 +270,7 @@ class TestConstants:
         long_email = "a" * 64 + "@" + "b" * 63 + ".com"
         tm.that(len(long_email), lte=c.MAX_EMAIL_LENGTH)
         tm.that(
-            cast("test_t.NormalizedValue", email_pattern.match(long_email)),
+            cast("t.NormalizedValue", email_pattern.match(long_email)),
             none=False,
         )
         phone_pattern = u.Tests.ConstantsHelpers.compile_pattern(
@@ -276,13 +278,13 @@ class TestConstants:
         )
         tm.that(
             cast(
-                "test_t.NormalizedValue",
+                "t.NormalizedValue",
                 phone_pattern.match("+123456789012345"),
             ),
             none=False,
         )
         tm.that(
-            cast("test_t.NormalizedValue", phone_pattern.match("+1234567890")),
+            cast("t.NormalizedValue", phone_pattern.match("+1234567890")),
             none=False,
         )
 
@@ -321,7 +323,7 @@ class TestConstants:
         max_length_email = "a" * (c.MAX_EMAIL_LENGTH - 9) + "@test.com"
         tm.that(len(max_length_email), lte=c.MAX_EMAIL_LENGTH)
         tm.that(
-            cast("test_t.NormalizedValue", email_pattern.match(max_length_email)),
+            cast("t.NormalizedValue", email_pattern.match(max_length_email)),
             none=False,
         )
 

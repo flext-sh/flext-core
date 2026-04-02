@@ -14,10 +14,10 @@ from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Never, cast, overload, override
 
 import structlog
-from flext_tests import t, tm
+from flext_tests import tm
 
 from flext_core import FlextRuntime
-from tests import p
+from tests import p, t
 
 
 class TestRuntimeCoverage100:

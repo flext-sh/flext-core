@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Annotated, Never, Protocol, cast, override
 
 import pytest
-from flext_tests import t as test_t, tm
+from flext_tests import tm
 from pydantic import BaseModel, Field
 
 from flext_core import r
@@ -29,7 +29,7 @@ class UtilitiesMapperFullCoverageNamespace:
 
         port: int = 0
         nested: Annotated[
-            Mapping[str, test_t.NormalizedValue],
+            Mapping[str, t.NormalizedValue],
             Field(default_factory=dict),
         ]
 
@@ -590,7 +590,7 @@ class UtilitiesMapperFullCoverageNamespace:
             _strip_none: bool,
             _strip_empty: bool,
             _to_json: bool,
-        ) -> Mapping[str, test_t.NormalizedValue]:
+        ) -> Mapping[str, t.NormalizedValue]:
             raise RuntimeError(msg)
 
         msg = "explode transform"
@@ -639,7 +639,7 @@ class UtilitiesMapperFullCoverageNamespace:
         tm.that(
             grouped,
             eq=cast(
-                "test_t.Tests.Testobject",
+                "t.Tests.Testobject",
                 {"a": [{"kind": "a", "v": 1}, {"kind": "a", "v": 2}]},
             ),
         )

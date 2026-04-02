@@ -22,19 +22,17 @@ from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import override
 
-from flext_tests import tm, u
+from flext_tests import tm
 
 from flext_core import (
     FlextContainer,
     FlextContext,
     FlextRuntime,
     FlextSettings,
-    m,
-    p,
     r,
     s,
-    t,
 )
+from tests import m, p, t, u
 
 inject = FlextRuntime.DependencyIntegration.inject
 

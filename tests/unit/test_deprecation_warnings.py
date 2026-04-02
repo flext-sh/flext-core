@@ -18,7 +18,7 @@ from collections.abc import Sequence
 from typing import cast
 
 import pytest
-from flext_tests import t as test_t, tm
+from flext_tests import tm
 
 from flext_core import (
     FlextRuntime,
@@ -31,7 +31,7 @@ pytestmark = [pytest.mark.unit]
 
 class TestDeprecationWarnings:
     def test_normalize_to_container_functional_equivalence(self) -> None:
-        test_cases: Sequence[test_t.NormalizedValue] = [
+        test_cases: Sequence[t.NormalizedValue] = [
             "str",
             42,
             math.pi,
