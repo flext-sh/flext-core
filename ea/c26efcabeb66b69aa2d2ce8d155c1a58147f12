@@ -1,0 +1,35 @@
+tests/unit/_models/test_cqrs.py
+  cdbb584679205432 1-228,230-262,264-394,396-445,447-449,451-453,455-458,460-601
+tests/unit/test_typings.py.new
+  cdbb584679205432 1-11,13-19,21-29,32-383,385-571
+tests/unit/_models/test_base.py
+  cdbb584679205432 1-981
+tests/unit/_models/test_entity.py
+  cdbb584679205432 1-10,12-113,115-424
+tests/unit/_models/test_errors.py
+  cdbb584679205432 1-14,16-217
+tests/unit/test_protocols_new.py
+  cdbb584679205432 114-115,146-160,163-165,176-190,785
+tests/unit/_models/test_exception_params.py
+  cdbb584679205432 1-11,14-17,19-52,54-106,109-111,113-136,139-140,142-264,267-269,271-481
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "eac26efcabeb66b69aa2d2ce8d155c1a58147f12",
+  "prompts": {
+    "cdbb584679205432": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "deb21ed0-98e4-498f-8592-3944a588496c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 5417,
+      "total_deletions": 90,
+      "accepted_lines": 3283,
+      "overriden_lines": 22
+    }
+  }
+}
