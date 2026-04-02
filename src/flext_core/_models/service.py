@@ -179,7 +179,7 @@ class FlextModelsService:
         """Domain service metrics request."""
 
         service_name: t.NonEmptyStr
-        metric_types: Sequence[str] = Field(
+        metric_types: t.StrSequence = Field(
             default_factory=lambda: [*c.DEFAULT_METRIC_CATEGORIES],
             description="Types of metrics to collect",
         )

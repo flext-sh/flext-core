@@ -23,9 +23,9 @@ from __future__ import annotations
 
 import json
 import threading
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -60,7 +60,7 @@ class TestModels:
             Field(description="Model type under creation test"),
         ]
         field_data: Annotated[
-            Mapping[str, t.NormalizedValue],
+            t.ContainerMapping,
             Field(description="Model input payload"),
         ]
         expected_checks: Annotated[
@@ -101,11 +101,7 @@ class TestModels:
     def test_models_initialization(self) -> None:
         """Test models initialization with real validation."""
         models = m()
-        tm.that(
-            cast("t.NormalizedValue", models),
-            none=False,
-            msg="m instance must not be None",
-        )
+        assert models is not None, "m instance must not be None"
         assert isinstance(
             models,
             m,
@@ -162,7 +158,7 @@ class TestModels:
             _ = TestEntity(name="Test User", email="invalid-email", domain_events=[])
 
     def test_models_value_object_creation(self) -> None:
-        """Test value t.NormalizedValue creation and immutability."""
+        """Test value-object creation and immutability."""
 
         class TestValue(m.Value):
             data: str
@@ -593,7 +589,7 @@ class TestModels:
             _ = FailingAggregate(name="test", domain_events=[])
 
     def test_value_object_immutability(self) -> None:
-        """Test Value t.NormalizedValue immutability and equality."""
+        """Test value immutability and equality."""
 
         class TestValue(m.Value):
             name: str
@@ -736,11 +732,11 @@ class TestModels:
             name: str
             handler_called: bool = False
             handler_data: Annotated[
-                Mapping[str, t.NormalizedValue],
+                t.ContainerMapping,
                 Field(default_factory=dict),
             ]
 
-            def _apply_test_event(self, data: Mapping[str, t.NormalizedValue]) -> None:
+            def _apply_test_event(self, data: t.ContainerMapping) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
@@ -761,7 +757,7 @@ class TestModels:
 
             def _apply_failing_event(
                 self,
-                _data: Mapping[str, t.NormalizedValue],
+                _data: t.ContainerMapping,
             ) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
@@ -879,7 +875,7 @@ class TestModels:
         )
         tm.that(retry.backoff_multiplier, eq=2.0, msg="backoff_multiplier must be 2.0")
         tm.that(
-            cast("t.NormalizedValue", retry.retry_on_exceptions),
+            retry.retry_on_exceptions,
             is_=list,
             none=False,
             empty=True,

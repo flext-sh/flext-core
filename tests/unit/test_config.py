@@ -23,7 +23,7 @@ from __future__ import annotations
 import os
 import threading
 import time
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -49,7 +49,7 @@ class TestFlextSettings:
             ("app_name", "test_value", "modified_value"),
             ("version", "1.0.0", "2.0.0"),
         ]
-        DEBUG_TRACE_CASES: ClassVar[Sequence[Mapping[str, bool]]] = [
+        DEBUG_TRACE_CASES: ClassVar[Sequence[t.BoolMapping]] = [
             {"debug": True, "trace": False},
             {"debug": True, "trace": True},
             {"debug": False, "trace": False},
@@ -63,7 +63,7 @@ class TestFlextSettings:
             ("DEBUG", "true", False, "INFO"),
             ("FLEXT_DEBUG", "true", True, "INFO"),
         ]
-        VALIDATION_ERROR_CASES: ClassVar[Sequence[tuple[Mapping[str, bool], str]]] = [
+        VALIDATION_ERROR_CASES: ClassVar[Sequence[tuple[t.BoolMapping, str]]] = [
             ({"trace": True, "debug": False}, "Trace mode requires debug mode"),
         ]
 
@@ -260,7 +260,7 @@ class TestFlextSettings:
     )
     def test_config_validation_errors(
         self,
-        config_data: Mapping[str, bool],
+        config_data: t.BoolMapping,
         error_pattern: str,
     ) -> None:
         """Test config validation with invalid inputs."""
@@ -290,7 +290,7 @@ class TestFlextSettings:
         ConfigScenarios.DEBUG_TRACE_CASES,
         ids=lambda d: f"debug_{d.get('debug')}_trace_{d.get('trace', False)}",
     )
-    def test_config_debug_enabled(self, debug_trace: Mapping[str, bool]) -> None:
+    def test_config_debug_enabled(self, debug_trace: t.BoolMapping) -> None:
         """Test debug enabled checking using direct fields."""
         config = u.Tests.ConfigHelpers.create_test_config(**debug_trace)
         assert config.debug == debug_trace["debug"]

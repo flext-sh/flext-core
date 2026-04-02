@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 import pytest
@@ -175,7 +175,7 @@ class TestFlextModelsCollectionsCoverage100:
         categories = m.Categories(categories={})
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
-        summary: Mapping[str, int] = {
+        summary: t.IntMapping = {
             name: len(entries) for name, entries in categories.categories.items()
         }
         tm.that(summary["users"], eq=2)

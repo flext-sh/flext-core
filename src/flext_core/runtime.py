@@ -588,7 +588,7 @@ class FlextRuntime:
                     entries = [(str(k), v) for k, v in val.items()]
                 return t.Dict(root=FlextRuntime._normalize_dict_entries(entries))
             case _ if FlextRuntime.is_list_like(val):
-                normalized_list: Sequence[t.Container] = [
+                normalized_list: t.FlatContainerList = [
                     item
                     for v in val
                     if isinstance(
@@ -743,7 +743,7 @@ class FlextRuntime:
                 raise RuntimeError(msg)
             return options_model
 
-        _OPTION_FIELDS: ClassVar[Sequence[str]] = (
+        _OPTION_FIELDS: ClassVar[t.StrSequence] = (
             "config",
             "services",
             "factories",
@@ -1482,7 +1482,7 @@ class FlextRuntime:
             context_dict.update(context.model_dump())
         else:
             context_dict = t.ConfigMap(root={})
-        result: MutableMapping[str, str] = {}
+        result: t.MutableStrMapping = {}
         for key, value in context_dict.items():
             result[key] = str(value)
         if "trace_id" not in result:

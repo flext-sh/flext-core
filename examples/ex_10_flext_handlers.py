@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from types import ModuleType
 from typing import ClassVar, cast, override
 
@@ -567,12 +567,12 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "runtime.extract_generic_args",
-            len(h.extract_generic_args(Mapping[str, int])) >= 1,
+            len(h.extract_generic_args(t.IntMapping)) >= 1,
         )
         self.check("runtime.is_sequence_type.true", h.is_sequence_type(Sequence[int]))
         self.check(
             "runtime.is_sequence_type.false",
-            h.is_sequence_type(Mapping[str, int]),
+            h.is_sequence_type(t.IntMapping),
         )
         self.check(
             "runtime.normalize_general",

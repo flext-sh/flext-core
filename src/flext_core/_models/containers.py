@@ -16,8 +16,6 @@ from collections.abc import (
     Sequence,
     ValuesView,
 )
-from datetime import datetime
-from pathlib import Path
 from typing import Annotated
 
 from pydantic import BaseModel, Field, RootModel
@@ -25,7 +23,7 @@ from pydantic import BaseModel, Field, RootModel
 from flext_core import FlextModelFoundation, t
 
 # Module-level aliases to avoid pydantic mypy plugin crash on t.* in RootModel bases
-_ScalarOrModel = str | int | float | bool | datetime | Path | BaseModel
+_ScalarOrModel = t.Container | BaseModel
 _ValidatorCallable = Callable[[_ScalarOrModel | None], _ScalarOrModel | None]
 
 

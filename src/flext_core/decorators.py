@@ -331,7 +331,7 @@ class FlextDecorators:
         return decorator
 
     class _HasLogger(Protocol):
-        """Protocol indicating a logger-carrying t.NormalizedValue contract."""
+        """Protocol indicating a logger-carrying canonical value contract."""
 
         logger: p.Logger
 
@@ -514,9 +514,9 @@ class FlextDecorators:
     @staticmethod
     def _flatten_config_kwargs(
         kwargs: t.ConfigMap,
-    ) -> MutableMapping[str, t.Container | Exception]:
+    ) -> MutableMapping[str, t.Container]:
         """Flatten ConfigMap into a flat warning-context dict."""
-        context: MutableMapping[str, t.Container | Exception] = {}
+        context: MutableMapping[str, t.Container] = {}
         for key, value in kwargs.root.items():
             if key == "extra" and u.is_dict_like(value):
                 extra_items: Mapping[str, t.ValueOrModel]
@@ -530,13 +530,10 @@ class FlextDecorators:
                     else:
                         context[f"extra_{extra_key}"] = str(extra_value)
                 continue
-            match value:
-                case Exception():
-                    context[str(key)] = value
-                case str() | int() | float() | bool() | datetime() | Path():
-                    context[str(key)] = value
-                case _:
-                    context[str(key)] = str(value)
+            if isinstance(value, t.CONTAINER_TYPES):
+                context[str(key)] = value
+                continue
+            context[str(key)] = str(value)
         return context
 
     @staticmethod

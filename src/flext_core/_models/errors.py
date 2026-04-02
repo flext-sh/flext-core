@@ -104,7 +104,7 @@ class FlextModelsErrors:
             """
             return t.ConfigMap(
                 root={
-                    "domain": self.domain.value,
+                    "domain": self.domain,
                     "code": self.code,
                     "message": self.message,
                 }

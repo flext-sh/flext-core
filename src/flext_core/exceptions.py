@@ -134,7 +134,7 @@ class FlextExceptions:
             if val is not None:
                 normalized_val = FlextRuntime.normalize_to_metadata(val)
 
-                def to_normalized(value: t.MetadataValue) -> t.NormalizedValue:
+                def to_normalized(value: t.MetadataValue) -> t.RecursiveContainer:
                     if u.is_scalar(value):
                         return value
                     if u.is_mapping(value):
@@ -185,7 +185,7 @@ class FlextExceptions:
         | t.ConfigMap
         | Mapping[str, t.MetadataOrValue | None]
         | t.MetadataValue
-        | t.NormalizedValue
+        | t.RecursiveContainer
         | None,
     ) -> Mapping[str, t.MetadataOrValue | None] | None:
         """Extract ConfigMap when value is mapping-compatible."""
@@ -202,7 +202,7 @@ class FlextExceptions:
         | t.ConfigMap
         | Mapping[str, t.MetadataOrValue | None]
         | t.MetadataValue
-        | t.NormalizedValue
+        | t.RecursiveContainer
         | None,
     ) -> m.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
@@ -374,7 +374,7 @@ class FlextExceptions:
             """Normalize metadata from various input types to m.Metadata model.
 
             Args:
-                metadata: m.Metadata instance, dict-like t.NormalizedValue, or None
+                metadata: m.Metadata instance, dict-like recursive container, or None
                 merged_kwargs: Additional attributes to merge
 
             Returns:
@@ -419,7 +419,7 @@ class FlextExceptions:
             metadata_dict: Mapping[str, t.MetadataOrValue | None] | t.ConfigMap,
             merged_kwargs: Mapping[str, t.MetadataValue] | t.ConfigMap,
         ) -> m.Metadata:
-            """Normalize metadata from dict-like t.NormalizedValue."""
+            """Normalize metadata from dict-like recursive containers."""
             merged_attrs: MutableMapping[str, t.MetadataValue | None] = {}
             for k, v in metadata_dict.items():
                 merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
@@ -986,7 +986,7 @@ class FlextExceptions:
         context: t.ConfigMap,
         metadata_obj: m.Metadata | Mapping[str, t.MetadataOrValue | None] | None,
     ) -> None:
-        """Merge metadata t.NormalizedValue into context dictionary."""
+        """Merge metadata recursive-container values into the context dictionary."""
         if metadata_obj is None:
             return
         metadata_model = e._safe_metadata(metadata_obj)
@@ -1168,7 +1168,7 @@ class FlextExceptions:
             for exc_type, count in cls._exception_counts.items()
         ]
         exception_counts_str = ";".join(exception_counts_list)
-        exception_counts_dict: MutableMapping[str, int] = {}
+        exception_counts_dict: t.MutableIntMapping = {}
         for exc_type, count in cls._exception_counts.items():
             exc_name = (
                 exc_type.__qualname__

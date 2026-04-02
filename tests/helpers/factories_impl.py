@@ -542,7 +542,7 @@ class GenericModelFactory:
     def health_status(
         *,
         healthy: bool = True,
-        checks: Mapping[str, bool] | None = None,
+        checks: t.BoolMapping | None = None,
     ) -> m.Health:
         """Create HealthStatus."""
         return m.Health.model_validate({

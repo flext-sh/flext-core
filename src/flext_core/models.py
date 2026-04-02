@@ -58,7 +58,7 @@ class FlextModels(
     collect domain events, and validate inputs through Pydantic v2.
 
     Core concepts
-    - Entity: Domain t.NormalizedValue with identity and lifecycle controls.
+    - Entity: Domain value object with identity and lifecycle controls.
     - Value: Immutable value objects for pure operations.
     - AggregateRoot: Consistency boundary that aggregates events.
     - Command/Query: Message shapes consumed by dispatcher handlers.

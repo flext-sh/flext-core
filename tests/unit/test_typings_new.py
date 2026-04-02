@@ -19,6 +19,11 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import (
     FlextTypes,
+    FlextTypesCore,
+    FlextTypesServices,
+    FlextTypesValidation,
+    FlextTypingBase,
+    FlextTypingContainers,
     P,
     R,
     ResultT,
@@ -525,23 +530,23 @@ class TestFlextTypes:
 
     def test_flexttypes_inherits_base(self) -> None:
         """FlextTypes inherits from FlextTypingBase through MRO."""
-        tm.that(issubclass(FlextTypes, t.FlextTypingBase), eq=True)
+        tm.that(issubclass(FlextTypes, FlextTypingBase), eq=True)
 
     def test_flexttypes_inherits_containers(self) -> None:
         """FlextTypes inherits from FlextTypingContainers through MRO."""
-        tm.that(issubclass(FlextTypes, t.FlextTypingContainers), eq=True)
+        tm.that(issubclass(FlextTypes, FlextTypingContainers), eq=True)
 
     def test_flexttypes_inherits_core(self) -> None:
         """FlextTypes inherits from FlextTypesCore through MRO."""
-        tm.that(issubclass(FlextTypes, t.FlextTypesCore), eq=True)
+        tm.that(issubclass(FlextTypes, FlextTypesCore), eq=True)
 
     def test_flexttypes_inherits_services(self) -> None:
         """FlextTypes inherits from FlextTypesServices through MRO."""
-        tm.that(issubclass(FlextTypes, t.FlextTypesServices), eq=True)
+        tm.that(issubclass(FlextTypes, FlextTypesServices), eq=True)
 
     def test_flexttypes_inherits_validation(self) -> None:
         """FlextTypes inherits from FlextTypesValidation through MRO."""
-        tm.that(issubclass(FlextTypes, t.FlextTypesValidation), eq=True)
+        tm.that(issubclass(FlextTypes, FlextTypesValidation), eq=True)
 
     # -- Generic tuple aliases --
 

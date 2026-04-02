@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar
 
 import pytest
@@ -37,9 +37,7 @@ from tests import t, u
 
 
 class TestFlextContext:
-    type SetGetInputValue = (
-        t.Primitives | MutableSequence[int] | MutableMapping[str, str]
-    )
+    type SetGetInputValue = t.Primitives | MutableSequence[int] | t.MutableStrMapping
     type SetGetExpectedValue = t.Primitives
     type NestedDictValue = Mapping[str, Mapping[str, Mapping[str, t.StrMapping]]]
 
@@ -191,7 +189,7 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        nested_data: Mapping[str, Mapping[str, str | MutableMapping[str, str]]] = {
+        nested_data: Mapping[str, Mapping[str, str | t.MutableStrMapping]] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import MutableMapping, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import Never, cast, overload, override
 
 import structlog
@@ -203,7 +203,7 @@ class TestRuntimeCoverage100:
         """Test extract_generic_args when typing.get_args returns values."""
         args = FlextRuntime.extract_generic_args(MutableSequence[str])
         tm.that(args, eq=(str,))
-        args = FlextRuntime.extract_generic_args(MutableMapping[str, int])
+        args = FlextRuntime.extract_generic_args(t.MutableIntMapping)
         tm.that(args, eq=(str, int))
 
     def test_extract_generic_args_exception_path(self) -> None:
@@ -228,7 +228,7 @@ class TestRuntimeCoverage100:
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
 
-        class MySequence(Sequence[str]):
+        class MySequence(t.StrSequence):
             @overload
             def __getitem__(self, index: int) -> str: ...
 

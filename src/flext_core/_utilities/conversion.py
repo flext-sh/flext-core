@@ -126,7 +126,7 @@ class FlextUtilitiesConversion:
         for key, value in payload.items():
             atomic = FlextRuntime.normalize_to_container(value)
             if isinstance(atomic, BaseModel):
-                normalized[str(key)] = str(atomic.model_dump())
+                normalized[str(key)] = atomic.model_dump_json()
             else:
                 normalized[str(key)] = atomic
         return normalized

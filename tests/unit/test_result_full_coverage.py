@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import cast
 
 from flext_core import r
@@ -106,7 +106,7 @@ def test_from_validation_and_to_model_paths() -> None:
     tm.fail(plain_result)
     tm.that((plain_result.error or ""), has="plain boom")
     failure_to_model = (
-        r[Mapping[str, int]]
+        r[t.IntMapping]
         .fail("already failed")
         .to_model(
             _TargetModel,
@@ -115,7 +115,7 @@ def test_from_validation_and_to_model_paths() -> None:
     tm.fail(failure_to_model)
     tm.that(failure_to_model.error, eq="already failed")
     success_to_model = (
-        r[Mapping[str, int]]
+        r[t.IntMapping]
         .ok({"value": 9})
         .to_model(
             _TargetModel,

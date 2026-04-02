@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Never, override
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -140,7 +140,7 @@ class CacheTestModel(BaseModel):
     name: str
     value: int
     tags: MutableSequence[str] = []
-    meta: MutableMapping[str, str] = {}
+    meta: t.MutableStrMapping = {}
 
 
 class NestedModel(BaseModel):

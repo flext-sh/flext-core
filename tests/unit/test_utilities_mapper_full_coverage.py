@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import (
-    Callable,
     ItemsView,
     Iterator,
     Mapping,
@@ -29,7 +28,7 @@ class UtilitiesMapperFullCoverageNamespace:
 
         port: int = 0
         nested: Annotated[
-            Mapping[str, t.NormalizedValue],
+            t.ContainerMapping,
             Field(default_factory=dict),
         ]
 
@@ -43,11 +42,11 @@ class UtilitiesMapperFullCoverageNamespace:
 
         kind: str | None = None
 
-    class _BadItems(UserDict[str, t.NormalizedValue]):
+    class _BadItems(UserDict[str, t.RecursiveContainer]):
         """UserDict that explodes on items() for error-path testing."""
 
         @override
-        def items(self) -> ItemsView[str, t.NormalizedValue]:
+        def items(self) -> ItemsView[str, t.RecursiveContainer]:
             """Items method."""
             msg = "bad items"
             raise RuntimeError(msg)
@@ -62,7 +61,9 @@ class UtilitiesMapperFullCoverageNamespace:
             raise RuntimeError(msg)
 
     class _ExtractFieldCallable(Protocol):
-        def __call__(self, item: AttrObject, field_name: str) -> None: ...
+        def __call__(
+            self, item: AttrObject, field_name: str
+        ) -> t.RecursiveContainer: ...
 
     class _TakeCallable(Protocol):
         def __call__(
@@ -71,31 +72,38 @@ class UtilitiesMapperFullCoverageNamespace:
             key_or_index: int | str,
             *,
             default: str | None = None,
-        ) -> None: ...
+        ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer: ...
 
     class _BuildApplyConvertCallable(Protocol):
         def __call__(
             self,
             current: tuple[str, ...] | str | int,
-            operations: Mapping[str, t.NormalizedValue | t.MapperCallable],
-            default_val: t.NormalizedValue,
+            operations: Mapping[str, t.MapperInput],
+            default_val: t.RecursiveContainer,
             on_error: str,
-        ) -> None: ...
+        ) -> t.RecursiveContainer: ...
 
     class _ExtractTransformOptionsCallable(Protocol):
         def __call__(
             self,
-            transform_opts: Mapping[str, t.NormalizedValue | t.MapperCallable],
-        ) -> tuple[t.NormalizedValue, ...]: ...
+            transform_opts: Mapping[str, t.MapperInput],
+        ) -> tuple[
+            bool,
+            bool,
+            bool,
+            t.StrMapping | None,
+            set[str] | None,
+            set[str] | None,
+        ]: ...
 
     class _BuildApplyOpCallable(Protocol):
         def __call__(
             self,
             current: tuple[str, str] | tuple[int, int, int] | Sequence[_GroupModel],
-            operations: t.ContainerMapping,
-            default_val: t.NormalizedValue,
+            operations: Mapping[str, t.MapperInput],
+            default_val: t.RecursiveContainer,
             on_error: str,
-        ) -> None: ...
+        ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer: ...
 
     class _TransformCallable(Protocol):
         def __call__(
@@ -114,8 +122,8 @@ class UtilitiesMapperFullCoverageNamespace:
         ) -> r[t.ContainerMapping]: ...
 
     @staticmethod
-    def _extract_field_obj(item: AttrObject, field_name: str) -> None:
-        """Call _extract_field_value with arbitrary t.NormalizedValue for testing."""
+    def _extract_field_obj(item: AttrObject, field_name: str) -> t.RecursiveContainer:
+        """Call _extract_field_value with arbitrary recursive container inputs."""
         fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
         return fn(item, field_name)
 
@@ -125,54 +133,61 @@ class UtilitiesMapperFullCoverageNamespace:
         key_or_index: int | str,
         *,
         default: str | None = None,
-    ) -> None:
+    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
         fn: _TakeCallable = getattr(u, "take")
         return fn(data_or_items, key_or_index, default=default)
 
     @staticmethod
     def _build_apply_convert_obj(
         current: tuple[str, ...] | str | int,
-        operations: Mapping[str, t.NormalizedValue | t.MapperCallable],
-    ) -> None:
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.RecursiveContainer:
         fn: _BuildApplyConvertCallable = getattr(u, "_op_convert")
         return fn(current, operations, None, "stop")
 
     @staticmethod
     def _extract_transform_options_obj(
-        transform_opts: Mapping[str, t.NormalizedValue | t.MapperCallable],
-    ) -> tuple[t.NormalizedValue, ...]:
+        transform_opts: Mapping[str, t.MapperInput],
+    ) -> tuple[
+        bool,
+        bool,
+        bool,
+        t.StrMapping | None,
+        set[str] | None,
+        set[str] | None,
+    ]:
         fn: _ExtractTransformOptionsCallable = getattr(u, "_extract_transform_options")
         return fn(transform_opts)
 
     @staticmethod
     def _build_apply_sort_obj(
         current: tuple[str, str],
-        operations: t.ContainerMapping,
-    ) -> None:
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
         fn: _BuildApplyOpCallable = getattr(u, "_op_sort")
         return fn(current, operations, None, "stop")
 
     @staticmethod
     def _build_apply_unique_obj(
         current: tuple[int, int, int],
-        operations: t.ContainerMapping,
-    ) -> None:
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
         fn: _BuildApplyOpCallable = getattr(u, "_op_unique")
         return fn(current, operations, None, "stop")
 
     @staticmethod
     def _build_apply_slice_obj(
         current: tuple[int, int, int],
-        operations: t.ContainerMapping,
-    ) -> None:
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
         fn: _BuildApplyOpCallable = getattr(u, "_op_slice")
         return fn(current, operations, None, "stop")
 
     @staticmethod
     def _build_apply_group_obj(
         current: Sequence[_GroupModel],
-        operations: t.ContainerMapping,
-    ) -> None:
+        operations: Mapping[str, t.MapperInput],
+    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
         fn: _BuildApplyOpCallable = getattr(u, "_op_group")
         return fn(current, operations, None, "stop")
 
@@ -199,11 +214,11 @@ class UtilitiesMapperFullCoverageNamespace:
 
         name: Annotated[
             str,
-            Field(default="name", description="Attribute t.NormalizedValue name"),
+            Field(default="name", description="Attribute recursive container name"),
         ] = "name"
         value: Annotated[
             int,
-            Field(default=1, description="Attribute t.NormalizedValue value"),
+            Field(default=1, description="Attribute recursive container value"),
         ] = 1
 
     class BadString:
@@ -241,7 +256,7 @@ class UtilitiesMapperFullCoverageNamespace:
         raise ValueError(msg)
 
     @staticmethod
-    def _normalize_not_dict(_value: t.NormalizedValue) -> str:
+    def _normalize_not_dict(_value: t.RecursiveContainer) -> str:
         return "not-a-dict"
 
     @staticmethod
@@ -266,7 +281,7 @@ class UtilitiesMapperFullCoverageNamespace:
 
     class BadMapping(t.ContainerMappingBase):
         @override
-        def __getitem__(self, _key: str) -> t.NormalizedValue:
+        def __getitem__(self, _key: str) -> t.RecursiveContainer:
             msg = "get exploded"
             raise TypeError(msg)
 
@@ -294,7 +309,7 @@ class UtilitiesMapperFullCoverageNamespace:
     @staticmethod
     def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u]) -> None:
         converted = mapper._narrow_to_string_keyed_dict(
-            cast("t.NormalizedValue", {1: "x", "b": "y"}),
+            cast("t.RecursiveContainer", {1: "x", "b": "y"}),
         )
         tm.that(converted, has="1")
         tm.that(converted["b"], is_=str)
@@ -310,7 +325,7 @@ class UtilitiesMapperFullCoverageNamespace:
                 return "stable"
 
         tm.that(
-            mapper.narrow_to_container(cast("t.NormalizedValue", Stable())),
+            mapper.narrow_to_container(cast("t.MetadataOrValue", Stable())),
             eq="stable",
         )
         tm.that(mapper._get_str_from_dict({"k": 2}, "k", default=""), eq="2")
@@ -355,7 +370,7 @@ class UtilitiesMapperFullCoverageNamespace:
             field: NotGeneral = NotGeneral()
 
         res_non_general = mapper.extract(
-            cast("t.ConfigMap | BaseModel", cast("t.NormalizedValue", Container())),
+            cast("p.AccessibleData", cast("object", Container())),
             "field",
         )
         tm.ok(res_non_general)
@@ -367,8 +382,8 @@ class UtilitiesMapperFullCoverageNamespace:
 
         res_exception = mapper.extract(
             cast(
-                "t.ConfigMap | BaseModel",
-                cast("t.NormalizedValue", ExplodingModelDump()),
+                "p.AccessibleData",
+                cast("object", ExplodingModelDump()),
             ),
             "a",
         )
@@ -386,7 +401,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(
             mapper.prop("missing")(
-                cast("t.ConfigMap | BaseModel", cast("t.NormalizedValue", {"a": 1})),
+                cast("t.ConfigModelInput", cast("t.RecursiveContainer", {"a": 1})),
             ),
             eq="",
         )
@@ -414,14 +429,14 @@ class UtilitiesMapperFullCoverageNamespace:
 
     @staticmethod
     def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
-        plus_one = cast("Callable[..., t.NormalizedValue]", _plus_one)
-        times_two = cast("Callable[..., t.NormalizedValue]", _times_two)
+        plus_one = cast("t.MapperCallable", _plus_one)
+        times_two = cast("t.MapperCallable", _times_two)
         tm.that(mapper._op_filter(1, {"filter": 1}, 0, "stop"), eq=1)
         tm.that(
             mapper._op_filter(
                 {"a": 1, "b": 0},
                 cast(
-                    "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+                    "Mapping[str, t.MapperInput]",
                     {"filter": bool},
                 ),
                 0,
@@ -433,7 +448,7 @@ class UtilitiesMapperFullCoverageNamespace:
             mapper._op_filter(
                 0,
                 cast(
-                    "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+                    "Mapping[str, t.MapperInput]",
                     {"filter": bool},
                 ),
                 "d",
@@ -446,7 +461,7 @@ class UtilitiesMapperFullCoverageNamespace:
             mapper._op_map(
                 {"a": 1},
                 cast(
-                    "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+                    "Mapping[str, t.MapperInput]",
                     {"map": plus_one},
                 ),
                 None,
@@ -458,7 +473,7 @@ class UtilitiesMapperFullCoverageNamespace:
             mapper._op_map(
                 2,
                 cast(
-                    "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+                    "Mapping[str, t.MapperInput]",
                     {"map": times_two},
                 ),
                 None,
@@ -503,14 +518,14 @@ class UtilitiesMapperFullCoverageNamespace:
             | tuple[t.Scalar, ...]
             | set[t.Scalar]
         ]
-        | Callable[..., t.NormalizedValue],
+        | t.MapperCallable,
         expected: float
         | MutableSequence[t.Scalar]
         | t.MutableConfigurationMapping
         | tuple[t.Scalar, ...],
     ) -> None:
         operations = cast(
-            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+            "Mapping[str, t.MapperInput]",
             {"convert": convert_spec},
         )
         tm.that(_build_apply_convert_obj(value, operations), eq=expected)
@@ -520,7 +535,7 @@ class UtilitiesMapperFullCoverageNamespace:
         converted = _build_apply_convert_obj(
             ("bad",),
             cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+                "Mapping[str, t.MapperInput]",
                 {"convert": int},
             ),
         )
@@ -541,7 +556,7 @@ class UtilitiesMapperFullCoverageNamespace:
             "to_json": True,
         }
         extracted = _extract_transform_options_obj(
-            cast("Mapping[str, t.NormalizedValue | t.MapperCallable]", opts),
+            cast("Mapping[str, t.MapperInput]", opts),
         )
         extracted_dict = extracted[3]
         if isinstance(extracted_dict, Mapping):
@@ -590,7 +605,7 @@ class UtilitiesMapperFullCoverageNamespace:
             _strip_none: bool,
             _strip_empty: bool,
             _to_json: bool,
-        ) -> Mapping[str, t.NormalizedValue]:
+        ) -> t.ContainerMapping:
             raise RuntimeError(msg)
 
         msg = "explode transform"
@@ -613,7 +628,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(mapper._op_process(1, {"process": 1}, 0, "stop"), eq=1)
         process_map_ops = cast(
-            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+            "Mapping[str, t.MapperInput]",
             {"process": _plus_one},
         )
         tm.that(
@@ -621,7 +636,7 @@ class UtilitiesMapperFullCoverageNamespace:
             eq={"a": 2},
         )
         process_fail_ops = cast(
-            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+            "Mapping[str, t.MapperInput]",
             {"process": _raise_value_error},
         )
         tm.that(mapper._op_process(1, process_fail_ops, 7, "stop"), eq=7)
@@ -653,7 +668,7 @@ class UtilitiesMapperFullCoverageNamespace:
         )
         tm.that(sorted_with_scalar, is_=list)
         bad_sort_ops = cast(
-            "Mapping[str, t.NormalizedValue | t.MapperCallable]",
+            "Mapping[str, t.MapperInput]",
             {"sort": _raise_value_error},
         )
         bad_sort = mapper._op_sort([1, 2], bad_sort_ops, None, "stop")

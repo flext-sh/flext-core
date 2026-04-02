@@ -381,7 +381,7 @@ class TestCoverageExceptions:
         metrics = e.get_metrics()
         tm.that(metrics["total_exceptions"], eq=3)
         raw_counts = metrics.root.get("exception_counts")
-        exception_counts = cast("Mapping[str, int]", raw_counts)
+        exception_counts = cast("t.IntMapping", raw_counts)
         tm.that(exception_counts.get("FlextExceptions.ValidationError"), eq=2)
         tm.that(exception_counts.get("FlextExceptions.ConfigurationError"), eq=1)
         tm.that(metrics["unique_exception_types"], eq=2)

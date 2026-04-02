@@ -15,6 +15,7 @@ if _TYPE_CHECKING:
     from tests.unit import (
         _models,
         _models_impl,
+        _utilities,
         conftest_infra,
         contracts,
         flext_tests,
@@ -23,7 +24,7 @@ if _TYPE_CHECKING:
         test_collection_utilities_coverage_100,
         test_collections_coverage_100,
         test_config,
-        test_constants,
+        test_constants_new,
         test_container,
         test_container_full_coverage,
         test_context,
@@ -64,7 +65,7 @@ if _TYPE_CHECKING:
         test_models_entity_full_coverage,
         test_models_generic_full_coverage,
         test_namespace_validator,
-        test_protocols,
+        test_protocols_new,
         test_refactor_cli_models_workflow,
         test_refactor_migrate_to_class_mro,
         test_refactor_namespace_enforcer,
@@ -87,8 +88,8 @@ if _TYPE_CHECKING:
         test_transformer_class_nesting,
         test_transformer_helper_consolidation,
         test_transformer_nested_class_propagation,
-        test_typings,
         test_typings_full_coverage,
+        test_typings_new,
         test_utilities,
         test_utilities_cache_coverage_100,
         test_utilities_collection_coverage_100,
@@ -113,7 +114,18 @@ if _TYPE_CHECKING:
         test_version,
         typings,
     )
-    from tests.unit._models import TestUnitModels
+    from tests.unit._models import (
+        TestFlextModelsBase,
+        TestFlextModelsCqrs,
+        TestFlextModelsEntity,
+        TestFlextModelsErrors,
+        TestFlextModelsExceptionParams,
+        test_base,
+        test_cqrs,
+        test_entity,
+        test_errors,
+        test_exception_params,
+    )
     from tests.unit._models_impl import (
         BadConfigForTest,
         CacheTestModel,
@@ -142,6 +154,12 @@ if _TYPE_CHECKING:
         _SvcModel,
         _TargetModel,
         _ValidationLikeError,
+    )
+    from tests.unit._utilities import (
+        TestFlextUtilitiesGuards,
+        TestFlextUtilitiesMapper,
+        test_guards,
+        test_mapper,
     )
     from tests.unit.conftest_infra import (
         infra_git,
@@ -178,7 +196,7 @@ if _TYPE_CHECKING:
         TestFlextModelsCollectionsCoverage100,
     )
     from tests.unit.test_config import TestFlextSettings
-    from tests.unit.test_constants import TestConstants
+    from tests.unit.test_constants_new import TestFlextConstants
     from tests.unit.test_container import TestFlextContainer
     from tests.unit.test_container_full_coverage import TestContainerFullCoverage
     from tests.unit.test_context import TestFlextContext
@@ -273,7 +291,7 @@ if _TYPE_CHECKING:
         test_operation_progress_start_operation_sets_runtime_fields,
     )
     from tests.unit.test_namespace_validator import TestFlextInfraNamespaceValidator
-    from tests.unit.test_protocols import TestFlextProtocols
+    from tests.unit.test_protocols_new import TestFlextProtocols
     from tests.unit.test_refactor_cli_models_workflow import (
         test_centralize_pydantic_cli_outputs_extended_metrics,
         test_namespace_enforce_cli_fails_on_manual_protocol_violation,
@@ -389,8 +407,8 @@ if _TYPE_CHECKING:
         test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage,
         test_nested_class_propagation_updates_import_annotations_and_calls,
     )
-    from tests.unit.test_typings import TestTypings
     from tests.unit.test_typings_full_coverage import TestTypingsFullCoverage
+    from tests.unit.test_typings_new import TestFlextTypes
     from tests.unit.test_utilities_cache_coverage_100 import (
         NORMALIZE_COMPONENT_SCENARIOS,
         NormalizeComponentScenario,
@@ -500,6 +518,8 @@ if _TYPE_CHECKING:
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     (
+        "tests.unit._models",
+        "tests.unit._utilities",
         "tests.unit.contracts",
         "tests.unit.flext_tests",
     ),
@@ -527,7 +547,6 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "TMessage": "tests.unit.test_utilities_type_checker_coverage_100",
         "TestCaseMap": "tests.unit._models_impl",
         "TestCollectionUtilitiesCoverage": "tests.unit.test_collection_utilities_coverage_100",
-        "TestConstants": "tests.unit.test_constants",
         "TestContainerFullCoverage": "tests.unit.test_container_full_coverage",
         "TestContext100Coverage": "tests.unit.test_context_coverage_100",
         "TestCoverageContext": "tests.unit.test_coverage_context",
@@ -546,6 +565,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "TestEntityCoverageEdgeCases": "tests.unit.test_entity_coverage",
         "TestEnumUtilitiesCoverage": "tests.unit.test_enum_utilities_coverage_100",
         "TestExceptionsHypothesis": "tests.unit.test_exceptions",
+        "TestFlextConstants": "tests.unit.test_constants_new",
         "TestFlextContainer": "tests.unit.test_container",
         "TestFlextContext": "tests.unit.test_context",
         "TestFlextDecorators": "tests.unit.test_decorators",
@@ -554,11 +574,12 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "TestFlextMixinsNestedClasses": "tests.unit.test_mixins",
         "TestFlextModelsCollectionsCoverage100": "tests.unit.test_collections_coverage_100",
         "TestFlextModelsContainer": "tests.unit.test_models_container",
-        "TestFlextProtocols": "tests.unit.test_protocols",
+        "TestFlextProtocols": "tests.unit.test_protocols_new",
         "TestFlextRegistry": "tests.unit.test_registry",
         "TestFlextRuntime": "tests.unit.test_runtime",
         "TestFlextSettings": "tests.unit.test_config",
         "TestFlextSettingsCoverage": "tests.unit.test_settings_coverage",
+        "TestFlextTypes": "tests.unit.test_typings_new",
         "TestFlextUtilitiesArgs": "tests.unit.test_args_coverage_100",
         "TestFlextUtilitiesConfiguration": "tests.unit.test_utilities_configuration_coverage_100",
         "TestFlextUtilitiesReliability": "tests.unit.test_utilities_reliability",
@@ -577,9 +598,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "TestService100Coverage": "tests.unit.test_service_coverage_100",
         "TestServiceBootstrap": "tests.unit.test_service_bootstrap",
         "TestServiceInternals": "tests.unit.test_service",
-        "TestTypings": "tests.unit.test_typings",
         "TestTypingsFullCoverage": "tests.unit.test_typings_full_coverage",
-        "TestUnitModels": "tests.unit._models",
         "TestUtilitiesCollectionCoverage": "tests.unit.test_utilities_collection_coverage_100",
         "TestUtilitiesCollectionFullCoverage": "tests.unit.test_utilities_collection_full_coverage",
         "TestUtilitiesConfigurationFullCoverage": "tests.unit.test_utilities_configuration_full_coverage",
@@ -628,6 +647,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "_ValidationLikeError": "tests.unit._models_impl",
         "_models": "tests.unit._models",
         "_models_impl": "tests.unit._models_impl",
+        "_utilities": "tests.unit._utilities",
         "conftest_infra": "tests.unit.conftest_infra",
         "contracts": "tests.unit.contracts",
         "create_compare_entities_cases": "tests.unit.test_utilities_domain",
@@ -678,7 +698,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "test_configuration_mapping_and_dict_negative_branches": "tests.unit.test_utilities_guards_full_coverage",
         "test_configure_structlog_edge_paths": "tests.unit.test_runtime_full_coverage",
         "test_configure_structlog_print_logger_factory_fallback": "tests.unit.test_runtime_full_coverage",
-        "test_constants": "tests.unit.test_constants",
+        "test_constants_new": "tests.unit.test_constants_new",
         "test_container": "tests.unit.test_container",
         "test_container_and_service_domain_paths": "tests.unit.test_context_full_coverage",
         "test_container_full_coverage": "tests.unit.test_container_full_coverage",
@@ -812,7 +832,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "test_ok_accepts_none": "tests.unit.test_result_additional",
         "test_operation_progress_start_operation_sets_runtime_fields": "tests.unit.test_models_generic_full_coverage",
         "test_protocol_and_simple_guard_helpers": "tests.unit.test_utilities_guards_full_coverage",
-        "test_protocols": "tests.unit.test_protocols",
+        "test_protocols_new": "tests.unit.test_protocols_new",
         "test_query_resolve_pagination_wrapper_and_fallback": "tests.unit.test_models_cqrs_full_coverage",
         "test_query_validate_pagination_dict_and_default": "tests.unit.test_models_cqrs_full_coverage",
         "test_rate_limiter_blocks_then_recovers": "tests.unit.test_dispatcher_reliability",
@@ -867,8 +887,8 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "test_transformer_nested_class_propagation": "tests.unit.test_transformer_nested_class_propagation",
         "test_type_guards_and_narrowing_failures": "tests.unit.test_utilities_mapper_full_coverage",
         "test_type_guards_result": "tests.unit.test_result_full_coverage",
-        "test_typings": "tests.unit.test_typings",
         "test_typings_full_coverage": "tests.unit.test_typings_full_coverage",
+        "test_typings_new": "tests.unit.test_typings_new",
         "test_ultrawork_models_cli_runs_dry_run_copy": "tests.unit.test_refactor_cli_models_workflow",
         "test_update_statistics_remove_hook_and_clone_false_result": "tests.unit.test_context_full_coverage",
         "test_utilities": "tests.unit.test_utilities",

@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
@@ -476,7 +476,7 @@ class FlextGenericModels:
 
         def _upsert_skip_reason(self, item: t.ValueOrModel, reason: str) -> None:
             raw_reasons = self.metadata.root.get("skip_reasons", {})
-            reasons: MutableMapping[str, str] = {}
+            reasons: t.MutableStrMapping = {}
             if isinstance(raw_reasons, Mapping):
                 reasons = {str(k): str(v) for k, v in raw_reasons.items()}
             reasons[str(item)] = reason

@@ -1076,7 +1076,7 @@ class FlextUtilitiesMapper:
         return True
 
     @staticmethod
-    def ensure_str(value: t.NormalizedValue, default: str = "") -> str:
+    def ensure_str(value: t.RecursiveContainer, default: str = "") -> str:
         """Convert value to str, returning default if None."""
         if value is None:
             return default
@@ -1088,15 +1088,15 @@ class FlextUtilitiesMapper:
     def _extract_fail_or_default(
         msg: str,
         *,
-        default: t.NormalizedValue,
+        default: t.RecursiveContainer,
         required: bool,
-    ) -> r[t.NormalizedValue]:
+    ) -> r[t.RecursiveContainer]:
         """Return fail (required) or ok(default) / fail (no default) for extract paths."""
         if required:
-            return r[t.NormalizedValue].fail(msg)
+            return r[t.RecursiveContainer].fail(msg)
         if default is None:
-            return r[t.NormalizedValue].fail(f"{msg} and default is None")
-        return r[t.NormalizedValue].ok(default)
+            return r[t.RecursiveContainer].fail(f"{msg} and default is None")
+        return r[t.RecursiveContainer].ok(default)
 
     @staticmethod
     def _extract_resolve_path_part(
@@ -1104,9 +1104,9 @@ class FlextUtilitiesMapper:
         part: str,
         *,
         path_context: str,
-        default: t.NormalizedValue,
+        default: t.RecursiveContainer,
         required: bool,
-    ) -> tuple[t.ValueOrModel, r[t.NormalizedValue] | None]:
+    ) -> tuple[t.ValueOrModel, r[t.RecursiveContainer] | None]:
         """Resolve one path segment; returns (next_current, None) or (None, early_result)."""
         found_none_prefix = "found_none:"
         key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(part)
@@ -1151,10 +1151,10 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         path: str,
         *,
-        default: t.NormalizedValue = None,
+        default: t.RecursiveContainer = None,
         required: bool = False,
         separator: str = ".",
-    ) -> r[t.NormalizedValue]:
+    ) -> r[t.RecursiveContainer]:
         """Extract nested value via dot-notation path with array index support (e.g. "user.addresses[0].city")."""
         try:
             parts = path.split(separator)
@@ -1197,17 +1197,17 @@ class FlextUtilitiesMapper:
                     required=required,
                 )
             if FlextUtilitiesGuards.is_container(current):
-                return r[t.NormalizedValue].ok(
+                return r[t.RecursiveContainer].ok(
                     FlextUtilitiesMapper.narrow_to_container(current),
                 )
-            return r[t.NormalizedValue].ok(str(current))
+            return r[t.RecursiveContainer].ok(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
-            return r[t.NormalizedValue].fail(f"Extract failed: {e}")
+            return r[t.RecursiveContainer].fail(f"Extract failed: {e}")
 
     @staticmethod
     def filter_dict(
         source: t.ContainerMapping,
-        predicate: Callable[[str, t.NormalizedValue], bool],
+        predicate: Callable[[str, t.RecursiveContainer], bool],
     ) -> t.ContainerMapping:
         """Filter dict keeping only entries where predicate(key, value) is True."""
         return {k: v for k, v in source.items() if predicate(k, v)}
@@ -1217,8 +1217,8 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.NormalizedValue = None,
-    ) -> t.NormalizedValue:
+        default: t.RecursiveContainer = None,
+    ) -> t.RecursiveContainer:
         """Get value by key from dict/object, returning default if missing."""
         return FlextUtilitiesMapper._get_raw(data, key, default=default)
 
@@ -1253,7 +1253,7 @@ class FlextUtilitiesMapper:
     def _narrow_untyped_dict(
         raw: Mapping[str, t.MetadataOrValue | BaseModel],
     ) -> t.ContainerMapping:
-        """Convert heterogeneous dict to NormalizedValue dict."""
+        """Convert heterogeneous dict to recursive-container dict."""
         result: t.MutableContainerMapping = {}
         for k in list(raw.keys()):
             v = raw[k]
@@ -1269,7 +1269,7 @@ class FlextUtilitiesMapper:
     def _narrow_untyped_list(
         raw: Sequence[t.MetadataOrValue | BaseModel],
     ) -> t.ContainerList:
-        """Convert heterogeneous list to NormalizedValue list."""
+        """Convert heterogeneous list to recursive-container list."""
         result: t.MutableContainerList = []
         for item in raw:
             if isinstance(item, (BaseModel, *t.CONTAINER_TYPES, list, dict, tuple)):
@@ -1281,7 +1281,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def narrow_to_container(
         value: t.MetadataOrValue
-        | t.NormalizedValue
+        | t.RecursiveContainer
         | BaseModel
         | t.ContainerMapping
         | Mapping[str, t.ValueOrModel]
@@ -1289,8 +1289,8 @@ class FlextUtilitiesMapper:
         | p.HasModelDump
         | p.ValidatorSpec
         | None,
-    ) -> t.NormalizedValue:
-        """Narrow any value to t.NormalizedValue; non-containers become str."""
+    ) -> t.RecursiveContainer:
+        """Narrow any value to a recursive container; non-containers become str."""
         if value is None:
             return None
         if isinstance(value, t.CONTAINER_TYPES):
@@ -1318,10 +1318,10 @@ class FlextUtilitiesMapper:
     @staticmethod
     def prop(
         key: str,
-    ) -> Callable[[t.ConfigModelInput], t.NormalizedValue]:
+    ) -> Callable[[t.ConfigModelInput], t.RecursiveContainer]:
         """Return an accessor function that extracts the named property from an object."""
 
-        def accessor(obj: t.ConfigModelInput) -> t.NormalizedValue:
+        def accessor(obj: t.ConfigModelInput) -> t.RecursiveContainer:
             """Access property from object."""
             result = FlextUtilitiesMapper.map_get(obj, key)
             return result if result is not None else ""
@@ -1331,16 +1331,16 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _take_by_key(
         data_or_items: t.ContainerMapping
-        | t.NormalizedValue
+        | t.RecursiveContainer
         | t.ContainerList
-        | tuple[t.NormalizedValue, ...],
+        | tuple[t.RecursiveContainer, ...],
         key: str,
         *,
         as_type: type | None,
-        default: t.NormalizedValue,
-    ) -> t.NormalizedValue:
+        default: t.RecursiveContainer,
+    ) -> t.RecursiveContainer:
         """Extract a value by key from a Mapping or BaseModel."""
-        fallback: t.NormalizedValue = default if default is not None else ""
+        fallback: t.RecursiveContainer = default if default is not None else ""
         match data_or_items:
             case Mapping() if FlextUtilitiesGuards.is_configuration_mapping(
                 data_or_items
@@ -1358,14 +1358,14 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _take_n_items(
         data_or_items: t.ContainerMapping
-        | t.NormalizedValue
+        | t.RecursiveContainer
         | t.ContainerList
-        | tuple[t.NormalizedValue, ...],
+        | tuple[t.RecursiveContainer, ...],
         n: int,
         *,
-        default: t.NormalizedValue,
+        default: t.RecursiveContainer,
         from_start: bool,
-    ) -> t.ContainerMapping | t.ContainerList | t.NormalizedValue:
+    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
         """Take N items from a Mapping or Sequence."""
         match data_or_items:
             case Mapping():
@@ -1383,13 +1383,13 @@ class FlextUtilitiesMapper:
     @staticmethod
     @overload
     def take(
-        data_or_items: t.ContainerMapping | t.NormalizedValue,
+        data_or_items: t.ContainerMapping | t.RecursiveContainer,
         key_or_n: str,
         *,
         as_type: type | None = None,
-        default: t.NormalizedValue = None,
+        default: t.RecursiveContainer = None,
         from_start: bool = True,
-    ) -> t.NormalizedValue: ...
+    ) -> t.RecursiveContainer: ...
 
     @staticmethod
     @overload
@@ -1398,33 +1398,33 @@ class FlextUtilitiesMapper:
         key_or_n: int,
         *,
         as_type: type | None = None,
-        default: t.NormalizedValue = None,
+        default: t.RecursiveContainer = None,
         from_start: bool = True,
     ) -> t.ContainerMapping: ...
 
     @staticmethod
     @overload
     def take(
-        data_or_items: t.ContainerList | tuple[t.NormalizedValue, ...],
+        data_or_items: t.ContainerList | tuple[t.RecursiveContainer, ...],
         key_or_n: int,
         *,
         as_type: type | None = None,
-        default: t.NormalizedValue = None,
+        default: t.RecursiveContainer = None,
         from_start: bool = True,
     ) -> t.ContainerList: ...
 
     @staticmethod
     def take(
         data_or_items: t.ContainerMapping
-        | t.NormalizedValue
+        | t.RecursiveContainer
         | t.ContainerList
-        | tuple[t.NormalizedValue, ...],
+        | tuple[t.RecursiveContainer, ...],
         key_or_n: str | int,
         *,
         as_type: type | None = None,
-        default: t.NormalizedValue = None,
+        default: t.RecursiveContainer = None,
         from_start: bool = True,
-    ) -> t.ContainerMapping | t.ContainerList | t.NormalizedValue:
+    ) -> t.ContainerMapping | t.ContainerList | t.RecursiveContainer:
         """Extract by key (str) or take N items (int) from a dict/list/tuple."""
         match key_or_n:
             case str() as key:

@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import MutableMapping
 
 from flext_core import FlextContainer, e, r
 from tests import c, t, u
@@ -173,7 +172,7 @@ class TestCompleteFlextSystemIntegration:
                     "Dados não fornecidos",
                     error_code=c.VALIDATION_ERROR,
                 )
-            dados_processados: MutableMapping[str, str] = {}
+            dados_processados: t.MutableStrMapping = {}
             for key, value in dados.items():
                 if not u.is_string_non_empty(value):
                     return r[t.StrMapping].fail(

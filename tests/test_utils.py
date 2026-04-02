@@ -6,7 +6,7 @@ type-system-architecture.md rules with zero duplication.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from typing import override
 
 from pydantic import BaseModel
@@ -60,7 +60,7 @@ class TestUtils:
         def create_operation_test_case(
             operation: str,
             description: str,
-            input_data: Mapping[str, t.ContainerValue],
+            input_data: t.ContainerValueMapping,
             expected_result: t.ContainerValue,
             *,
             expected_success: bool = True,
@@ -115,7 +115,7 @@ class TestUtils:
         @staticmethod
         def assert_entity_properties(
             entity: BaseModel,
-            expected_props: Mapping[str, t.ContainerValue],
+            expected_props: t.ContainerValueMapping,
             context: str = "",
         ) -> None:
             """Assert entity has expected properties."""

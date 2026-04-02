@@ -17,7 +17,7 @@ from typing import TypeAliasType
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextUtilitiesGuards, p, r, t
+from flext_core import FlextUtilitiesGuards, m, p, r, t
 
 
 class FlextUtilitiesParser:
@@ -49,7 +49,7 @@ class FlextUtilitiesParser:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
-                lambda: float(str(value)),
+                lambda: m.Validators.float_adapter().validate_python(value),
                 error_code="FLOAT_COERCE_ERROR",
             )
         return r[float].fail(
@@ -62,7 +62,7 @@ class FlextUtilitiesParser:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
-                lambda: int(float(str(value))),
+                lambda: int(m.Validators.float_adapter().validate_python(value)),
                 error_code="INT_COERCE_ERROR",
             )
         return r[int].fail(

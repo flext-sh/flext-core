@@ -132,7 +132,7 @@ class FlextModelsHandler:
         handler: Annotated[
             t.HandlerCallable | p.Handler[p.Model, t.ValueOrModel] | BaseModel,
             Field(
-                description="Handler instance (callable, t.NormalizedValue, or FlextHandlers)",
+                description="Handler instance (callable, canonical value, or FlextHandlers)",
             ),
         ]
         message_type: Annotated[
@@ -229,7 +229,7 @@ class FlextModelsHandler:
         Provides timing and metrics tracking for handler executions in the
         FlextContext system. Uses Pydantic 2 PrivateAttr for internal state.
 
-        This mutable context t.NormalizedValue tracks handler execution performance,
+        This mutable context value tracks handler execution performance,
         including timing, metrics, and execution state. It is designed to be
         created at the start of handler execution and updated throughout.
 

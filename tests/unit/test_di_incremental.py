@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from types import ModuleType
 from typing import override
 
@@ -94,7 +94,7 @@ class TestDIIncremental:
         di_container = FlextRuntime.DependencyIntegration.create_container()
         call_count = {"count": 0}
 
-        def factory() -> Mapping[str, int]:
+        def factory() -> t.IntMapping:
             call_count["count"] += 1
             return {"calls": call_count["count"]}
 
@@ -115,7 +115,7 @@ class TestDIIncremental:
         di_container = FlextRuntime.DependencyIntegration.create_container()
         call_count = {"count": 0}
 
-        def factory() -> Mapping[str, int]:
+        def factory() -> t.IntMapping:
             call_count["count"] += 1
             return {"calls": call_count["count"]}
 
@@ -136,11 +136,11 @@ class TestDIIncremental:
         di_container = FlextRuntime.DependencyIntegration.create_container()
         lifecycle = {"created": False, "closed": False}
 
-        def resource_factory() -> Mapping[str, bool]:
+        def resource_factory() -> t.BoolMapping:
             lifecycle["created"] = True
             return {"connected": True}
 
-        def resource_teardown(_resource: Mapping[str, bool]) -> None:
+        def resource_teardown(_resource: t.BoolMapping) -> None:
             lifecycle["closed"] = True
 
         provider = FlextRuntime.DependencyIntegration.register_resource(
@@ -214,7 +214,7 @@ class TestDIIncremental:
         container = FlextContainer(_context=FlextContext())
         lifecycle = {"created": False, "closed": False}
 
-        def resource_factory() -> Mapping[str, bool]:
+        def resource_factory() -> t.BoolMapping:
             lifecycle["created"] = True
             return {"connected": True}
 
@@ -251,7 +251,7 @@ class TestDIIncremental:
         """Test create_service_runtime with resources."""
         lifecycle = {"created": False}
 
-        def db_factory() -> Mapping[str, bool]:
+        def db_factory() -> t.BoolMapping:
             lifecycle["created"] = True
             return {"connected": True}
 
@@ -316,9 +316,7 @@ class TestDIIncremental:
             logger_name: str = FlextRuntime.DependencyIntegration.Provide[
                 "custom_logger"
             ],
-            pool: Mapping[str, int] = FlextRuntime.DependencyIntegration.Provide[
-                "db_pool"
-            ],
+            pool: t.IntMapping = FlextRuntime.DependencyIntegration.Provide["db_pool"],
         ) -> t.HeaderMapping:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
@@ -444,7 +442,7 @@ class TestDIIncremental:
         def factory() -> t.StrMapping:
             return {"token": "generated_token"}
 
-        def resource_factory() -> Mapping[str, bool]:
+        def resource_factory() -> t.BoolMapping:
             return {"connected": True}
 
         runtime = s._create_runtime(
@@ -516,7 +514,7 @@ class TestDIIncremental:
         container = FlextContainer(_context=FlextContext())
         lifecycle = {"created": False, "destroyed": False}
 
-        def resource_factory() -> Mapping[str, bool]:
+        def resource_factory() -> t.BoolMapping:
             lifecycle["created"] = True
             return {"resource": True}
 

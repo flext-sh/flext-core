@@ -33,11 +33,11 @@ class FlextVersion:
     __url__ = _metadata.get("Home-Page", "")
 
     @classmethod
-    def get_package_info(cls) -> Mapping[str, str]:
+    def get_package_info(cls) -> t.StrMapping:
         """Get comprehensive package information dictionary.
 
         Returns:
-            Mapping[str, str]: Metadata including name, version, author, license, and url.
+            t.StrMapping: Metadata including name, version, author, license, and url.
 
         """
         return {

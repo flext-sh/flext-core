@@ -924,7 +924,7 @@ class TestFlextRuntime:
         ):
             counter = {"calls": 0}
 
-            def token_factory() -> Mapping[str, int]:
+            def token_factory() -> t.IntMapping:
                 counter["calls"] += 1
                 return {"token": counter["calls"]}
 
@@ -935,7 +935,7 @@ class TestFlextRuntime:
                 static_value: int = FlextRuntime.DependencyIntegration.Provide[
                     "static_value"
                 ],
-                token: Mapping[str, int] = FlextRuntime.DependencyIntegration.Provide[
+                token: t.IntMapping = FlextRuntime.DependencyIntegration.Provide[
                     "token_factory"
                 ],
                 config_flag: bool = FlextRuntime.DependencyIntegration.Provide[
@@ -945,7 +945,7 @@ class TestFlextRuntime:
                     str,
                     bool,
                 ] = FlextRuntime.DependencyIntegration.Provide["api_client"],
-            ) -> tuple[int, Mapping[str, int], bool, Mapping[str, bool]]:
+            ) -> tuple[int, t.IntMapping, bool, t.BoolMapping]:
                 return (static_value, token, config_flag, resource)
 
             setattr(module, "consume", consume_automation)
@@ -961,7 +961,7 @@ class TestFlextRuntime:
             )
             try:
                 consume_automation_func = cast(
-                    "Callable[[], tuple[int, Mapping[str, int], bool, Mapping[str, bool]]]",
+                    "Callable[[], tuple[int, t.IntMapping, bool, t.BoolMapping]]",
                     getattr(module, "consume"),
                 )
                 tm.that(callable(consume_automation_func), eq=True)
@@ -981,7 +981,7 @@ class TestFlextRuntime:
         ):
             counter = {"calls": 0}
 
-            def token_factory() -> Mapping[str, int]:
+            def token_factory() -> t.IntMapping:
                 counter["calls"] += 1
                 return {"count": counter["calls"]}
 
@@ -990,14 +990,14 @@ class TestFlextRuntime:
             @FlextRuntime.DependencyIntegration.inject
             def consume_service(
                 flag: bool = FlextRuntime.DependencyIntegration.Provide["feature_flag"],
-                token: Mapping[str, int] = FlextRuntime.DependencyIntegration.Provide[
+                token: t.IntMapping = FlextRuntime.DependencyIntegration.Provide[
                     "token_factory"
                 ],
                 resource: Mapping[
                     str,
                     bool,
                 ] = FlextRuntime.DependencyIntegration.Provide["api_client"],
-            ) -> tuple[bool, Mapping[str, int], Mapping[str, bool]]:
+            ) -> tuple[bool, t.IntMapping, t.BoolMapping]:
                 return (flag, token, resource)
 
             setattr(module, "consume", consume_service)
@@ -1013,7 +1013,7 @@ class TestFlextRuntime:
             runtime = runtime_raw
             try:
                 consume_service_func = cast(
-                    "Callable[[], tuple[bool, Mapping[str, int], Mapping[str, bool]]]",
+                    "Callable[[], tuple[bool, t.IntMapping, t.BoolMapping]]",
                     getattr(module, "consume"),
                 )
                 tm.that(callable(consume_service_func), eq=True)
@@ -1033,7 +1033,7 @@ class TestFlextRuntime:
                 @classmethod
                 def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
 
-                    def counter_factory() -> Mapping[str, int]:
+                    def counter_factory() -> t.IntMapping:
                         return {"count": 1}
 
                     return m.RuntimeBootstrapOptions(

@@ -62,7 +62,7 @@ class UtilitiesMapperCoverage100Namespace:
             return 0
 
     class _GetKeyAOp(BaseModel):
-        def __call__(self, value: Mapping[str, int] | float | str) -> int:
+        def __call__(self, value: t.IntMapping | float | str) -> int:
             if isinstance(value, dict):
                 inner = value.get("a")
                 return inner if inner is not None else 0

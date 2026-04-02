@@ -446,7 +446,7 @@ class FlextModelsConfig:
         """Configuration for external command execution (Pydantic v2).
 
         Reduces parameter count for u.CommandExecution
-        run_external_command using config t.NormalizedValue pattern.
+        run_external_command using canonical config-container patterns.
         Reuses timeout pattern from ProcessingRequest and HandlerExecutionConfig.
         """
 
@@ -904,7 +904,7 @@ class FlextModelsConfig:
             str | None,
             Field(
                 default=None,
-                description="Type of t.NormalizedValue that attribute access failed on",
+                description="Type of canonical value that attribute access failed on",
             ),
         ] = None
 

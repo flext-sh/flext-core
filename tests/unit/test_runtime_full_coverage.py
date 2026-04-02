@@ -14,7 +14,6 @@ from collections.abc import (
     Generator,
     Iterator,
     Mapping,
-    MutableMapping,
     MutableSequence,
     Sequence,
 )
@@ -1038,7 +1037,7 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         str,
         t.Container
         | MutableSequence[int]
-        | MutableMapping[str, int]
+        | t.MutableIntMapping
         | Callable[[], int]
         | type
         | None,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Mapping
 from types import ModuleType
 from typing import override
 
@@ -240,7 +239,7 @@ class Ex08FlextContainer(Examples):
         )
         resource_calls = {"count": 0}
 
-        def _resource_data() -> Mapping[str, int]:
+        def _resource_data() -> t.IntMapping:
             resource_calls["count"] = int(resource_calls["count"]) + 1
             return {self.rand_str(4): int(resource_calls["count"])}
 

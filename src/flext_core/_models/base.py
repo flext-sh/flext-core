@@ -152,7 +152,7 @@ class FlextModelFoundation:
 
         @classmethod
         def list_container_adapter(cls) -> TypeAdapter[t.FlatContainerList]:
-            """Lazy-load Sequence[Container] TypeAdapter on first access."""
+            """Lazy-load t.FlatContainerList TypeAdapter on first access."""
             if cls._list_container_adapter is None:
                 cls._list_container_adapter = TypeAdapter(t.FlatContainerList)
             return cls._list_container_adapter
