@@ -10,7 +10,7 @@ from typing import Annotated, override
 
 from pydantic import Field
 
-from flext_core import FlextConstantsErrors, FlextModelFoundation, t
+from flext_core import FlextModelFoundation, c, t
 
 
 class FlextModelsErrors:
@@ -32,9 +32,9 @@ class FlextModelsErrors:
         """
 
         domain: Annotated[
-            FlextConstantsErrors.ErrorDomain,
+            c.ErrorDomain,
             Field(
-                default=FlextConstantsErrors.ErrorDomain.UNKNOWN,
+                default=c.ErrorDomain.UNKNOWN,
                 description="Error domain category for routing",
             ),
         ]
@@ -72,7 +72,7 @@ class FlextModelsErrors:
         def from_exception(
             cls,
             exc: BaseException,
-            domain: FlextConstantsErrors.ErrorDomain = FlextConstantsErrors.ErrorDomain.INTERNAL,
+            domain: c.ErrorDomain = c.ErrorDomain.INTERNAL,
             code: str | None = None,
         ) -> FlextModelsErrors.Error:
             """Create Error from caught exception.

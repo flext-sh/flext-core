@@ -19,7 +19,7 @@ from typing import Annotated, ClassVar, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core import FlextModelFoundation, FlextUtilitiesGuardsTypeCore, c, p, t
+from flext_core import FlextModelFoundation, c, p, t
 
 
 class FlextModelsContainer:
@@ -43,7 +43,7 @@ class FlextModelsContainer:
             })
         if FlextModelsContainer._is_metadata_instance(value):
             return value
-        if not FlextUtilitiesGuardsTypeCore.is_mapping(value):
+        if not isinstance(value, Mapping):
             msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
             raise TypeError(msg)
         return FlextModelFoundation.Metadata.model_validate({
@@ -120,7 +120,7 @@ class FlextModelsContainer:
                 return v
             if callable(v):
                 return v
-            if FlextUtilitiesGuardsTypeCore.is_mapping(v):
+            if isinstance(v, Mapping):
                 normalized_mapping: MutableMapping[str, t.ValueOrModel] = {}
                 for key_s, item in v.items():
                     if isinstance(item, datetime):

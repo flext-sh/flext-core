@@ -19,7 +19,6 @@ from pydantic import Field, field_validator
 from flext_core import (
     FlextModelFoundation,
     FlextRuntime,
-    FlextUtilitiesGuardsTypeCore,
     t,
 )
 
@@ -38,9 +37,7 @@ class FlextModelsDomainEvent:
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
                 return self.root == other
-            if isinstance(other, Mapping) and FlextUtilitiesGuardsTypeCore.is_mapping(
-                other
-            ):
+            if isinstance(other, Mapping) and isinstance(other, Mapping):
                 typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     other,
                 )
@@ -71,7 +68,7 @@ class FlextModelsDomainEvent:
             return item
         if isinstance(item, datetime):
             return item
-        if FlextUtilitiesGuardsTypeCore.is_mapping(item):
+        if isinstance(item, Mapping):
             normalized_map: t.MutableContainerMapping = {}
             for key, value in item.items():
                 normalized_map[str(key)] = (
@@ -109,7 +106,7 @@ class FlextModelsDomainEvent:
                 },
             )
             return FlextModelsDomainEvent.ComparableConfigMap(root=intermediate.root)
-        if FlextUtilitiesGuardsTypeCore.is_mapping(value):
+        if isinstance(value, Mapping):
             typed_mapping = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                 value,
             )

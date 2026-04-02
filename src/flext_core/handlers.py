@@ -17,7 +17,7 @@ from typing import ClassVar, Unpack, override
 
 from pydantic import ConfigDict
 
-from flext_core import FlextExceptions as e, FlextMixins as x, c, m, p, r, t, u
+from flext_core import c, e, m, p, r, t, u, x
 
 
 class FlextHandlers[MessageT_contra, ResultT](x):
@@ -680,5 +680,5 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return sorted(handlers, key=lambda x: (-x[2].priority, x[0]))
 
 
-h = FlextHandlers
+h: type[FlextHandlers[object, object]] = FlextHandlers
 __all__ = ["FlextHandlers", "h"]

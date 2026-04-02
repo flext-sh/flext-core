@@ -15,18 +15,16 @@ import time
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core import FlextModelFoundation, FlextProtocolsLogging, FlextRuntime, c, r
+from flext_core import FlextRuntime, c, m, p, r
 
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    _V: ClassVar[type[FlextModelFoundation.Validators]] = (
-        FlextModelFoundation.Validators
-    )
+    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @property
-    def logger(self) -> FlextProtocolsLogging.Logger:
+    def logger(self) -> p.Logger:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 

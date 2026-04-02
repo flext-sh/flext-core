@@ -19,15 +19,15 @@ from pydantic import BaseModel, Field, PrivateAttr, computed_field
 from flext_core import (
     FlextContainer,
     FlextDispatcher,
-    FlextHandlers as h,
-    FlextService as s,
     c,
     m,
     p,
     r,
+    s,
     t,
     u,
 )
+from flext_core.handlers import h
 
 
 class FlextRegistry(s[bool]):
@@ -174,11 +174,13 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _narrow_value(
-        value: t.RecursiveContainer
-        | t.RegisterableService
-        | t.RegistrablePlugin
-        | BaseModel
-        | None,
+        value: (
+            t.RecursiveContainer
+            | t.RegisterableService
+            | t.RegistrablePlugin
+            | BaseModel
+            | None
+        ),
     ) -> t.RuntimeAtomic | None:
         """Safe conversion using centralized utilities."""
         if value is None:

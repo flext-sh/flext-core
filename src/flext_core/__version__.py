@@ -11,6 +11,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from importlib.metadata import PackageMetadata, metadata
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextVersion:

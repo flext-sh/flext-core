@@ -25,12 +25,12 @@ from pydantic import BaseModel
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextExceptions as e,
     FlextLogger,
     P,
     R,
     T,
     c,
+    e,
     m,
     p,
     r,
