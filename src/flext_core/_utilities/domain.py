@@ -28,7 +28,7 @@ class FlextUtilitiesDomain:
         return type(obj_a) is type(obj_b)
 
     @staticmethod
-    def _get_obj_dict(obj: t.RuntimeData) -> Mapping[str, t.NormalizedValue] | None:
+    def _get_obj_dict(obj: t.RuntimeData) -> Mapping[str, t.RecursiveContainer] | None:
         """Extract __dict__ safely, returning None on failure."""
         try:
             return obj.__dict__
@@ -36,7 +36,7 @@ class FlextUtilitiesDomain:
             return None
 
     @staticmethod
-    def _to_hashable(value: t.NormalizedValue) -> t.NormalizedValue:
+    def _to_hashable(value: t.RecursiveContainer) -> t.RecursiveContainer:
         """Coerce a value to something hashable for dict-based hashing."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
@@ -92,7 +92,7 @@ class FlextUtilitiesDomain:
         obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
         if obj_dict is None:
             return hash(repr(obj))
-        items: Sequence[tuple[str, t.NormalizedValue]] = [
+        items: Sequence[tuple[str, t.RecursiveContainer]] = [
             (str(k), FlextUtilitiesDomain._to_hashable(v))
             for k, v in sorted(obj_dict.items())
         ]

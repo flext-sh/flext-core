@@ -6,17 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from datetime import UTC, datetime, tzinfo
 
 import pytest
 
-from flext_core import FlextRuntime
+from flext_core import FlextRuntime, _utilities
 from tests import u
 
 from ._models import TestUnitModels
 
-generators_module = importlib.import_module("flext_core._utilities.generators")
+generators_module = _utilities.generators
 
 
 class TestUtilitiesGeneratorsFullCoverage:

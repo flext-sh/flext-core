@@ -93,14 +93,14 @@ class FlextTypingContainers:
             ),
         ] = Field(default_factory=list)
 
-    class Dict(RootDictModel[FlextTypingBase.NormalizedValue | BaseModel]):
+    class Dict(RootDictModel[FlextTypingBase.RecursiveContainer | BaseModel]):
         """Validated dict payload for requests, responses, and data transfer.
 
-        Type-safe MutableMapping[str, NormalizedValue | BaseModel] with full dict protocol.
+        Type-safe MutableMapping[str, RecursiveContainer | BaseModel] with full dict protocol.
         """
 
         root: Annotated[
-            MutableMapping[str, FlextTypingBase.NormalizedValue | BaseModel],
+            MutableMapping[str, FlextTypingBase.RecursiveContainer | BaseModel],
             Field(
                 title="Dictionary Payload",
                 description=(
@@ -115,21 +115,21 @@ class FlextTypingContainers:
         def get(
             self,
             key: str,
-            default: FlextTypingBase.NormalizedValue | BaseModel | None = None,
-        ) -> FlextTypingBase.NormalizedValue | BaseModel | None:
+            default: FlextTypingBase.RecursiveContainer | BaseModel | None = None,
+        ) -> FlextTypingBase.RecursiveContainer | BaseModel | None:
             value = self.root.get(key, default)
             if isinstance(value, Mapping) and not isinstance(value, BaseModel):
                 return dict(value.items())
             return value
 
-    class ConfigMap(RootDictModel[FlextTypingBase.NormalizedValue | BaseModel]):
+    class ConfigMap(RootDictModel[FlextTypingBase.RecursiveContainer | BaseModel]):
         """Configuration container for settings and environment parameters.
 
         Semantically distinct Dict for configuration (not data).
         """
 
         root: Annotated[
-            MutableMapping[str, FlextTypingBase.NormalizedValue | BaseModel],
+            MutableMapping[str, FlextTypingBase.RecursiveContainer | BaseModel],
             Field(
                 title="Configuration Map",
                 description="Configuration entries keyed by normalized setting names.",

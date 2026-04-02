@@ -21,6 +21,13 @@ from flext_core._typings.containers import FlextTypingContainers
 class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
     """Type aliases for core scalar/container foundations."""
 
+    type TextValue = str
+    type IntegerValue = int
+    type FloatValue = float
+    type BinaryContent = bytes
+    type TextOrBinaryContent = FlextTypesCore.TextValue | FlextTypesCore.BinaryContent
+    type OptionalPrimitive = FlextTypingBase.Primitives | None
+    type OptionalScalar = FlextTypingBase.Scalar | None
     type RegistryBindingKey = str | type
 
     type Serializable = (
@@ -40,6 +47,7 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         | Sequence[FlextTypesCore.GeneralValueType]
         | Mapping[str, FlextTypesCore.GeneralValueType]
     )
+    type OptionalContainerValue = FlextTypesCore.ContainerValue | None
 
     type ConstantValue = (
         FlextTypingBase.Primitives
@@ -59,15 +67,24 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         | Mapping[str, FlextTypesCore.JsonValue]
         | None
     )
-    type FileContent = str | bytes | Sequence[FlextTypingBase.StrSequence]
+    type FileContent = (
+        str | FlextTypesCore.BinaryContent | Sequence[FlextTypingBase.StrSequence]
+    )
     type GeneralValueTypeMapping = Mapping[str, FlextTypingBase.Scalar]
 
     # Short aliases for high-frequency inline patterns (annotation-only, not base classes)
     type ContainerValueMapping = Mapping[str, FlextTypesCore.ContainerValue]
     type ContainerValueList = Sequence[FlextTypesCore.ContainerValue]
+    type OptionalContainerValueMapping = Mapping[
+        str,
+        FlextTypesCore.OptionalContainerValue,
+    ]
     type JsonMapping = Mapping[str, FlextTypesCore.JsonValue]
     type JsonList = Sequence[FlextTypesCore.JsonValue]
     type GeneralValueMapping = Mapping[str, FlextTypesCore.GeneralValueType]
+
+    type JsonObject = ContainerValueMapping
+    type ApiJsonValue = ContainerValue | None
 
     # Runtime tuples for isinstance checks (mirrors base.py CONTAINER_TYPES pattern)
     CONTAINER_VALUE_SCALAR_TYPES: tuple[type, ...] = FlextTypingBase.SCALAR_TYPES

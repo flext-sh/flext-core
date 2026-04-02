@@ -19,9 +19,8 @@ from collections.abc import (
     Sequence,
 )
 from datetime import UTC, datetime
-from importlib import import_module
 from pathlib import Path
-from types import MappingProxyType, ModuleType
+from types import MappingProxyType
 from typing import ClassVar, cast, override
 
 import pytest
@@ -32,11 +31,12 @@ from pydantic import BaseModel
 
 from flext_core import FlextRuntime, r
 from tests import c, m, t, u
+from tests.unit import (
+    test_runtime as runtime_tests,
+    test_runtime_coverage_100 as runtime_cov_tests,
+)
 
 runtime_module = inspect.getmodule(FlextRuntime)
-
-runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
-runtime_cov_tests: ModuleType = import_module("tests.unit.test_runtime_coverage_100")
 
 
 @pytest.fixture(autouse=True)

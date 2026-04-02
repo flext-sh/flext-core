@@ -2,18 +2,11 @@
 
 from __future__ import annotations
 
-import importlib
-
 import libcst as cst
+from flext_infra.transformers import (
+    FlextInfraNestedClassPropagationTransformer as NestedClassPropagationTransformer,
+)
 from libcst.metadata import MetadataWrapper
-
-_nested_class_propagation = importlib.import_module(
-    "flext_infra.transformers.nested_class_propagation",
-)
-NestedClassPropagationTransformer = getattr(
-    _nested_class_propagation,
-    "FlextInfraNestedClassPropagationTransformer",
-)
 
 
 def test_nested_class_propagation_updates_import_annotations_and_calls() -> None:

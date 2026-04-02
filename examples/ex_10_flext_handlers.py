@@ -9,9 +9,9 @@ from typing import ClassVar, cast, override
 
 from pydantic import BaseModel
 
-from flext_core import FlextHandlers, c, e, h, m, r, t
+from flext_core import FlextHandlers, c, e, h, m, r, t, u
 
-from ._models.ex10 import Ex10CommandBusStub, Ex10ProtocolHandler, Ex10ServiceStub
+from ._models.ex10 import Ex10ProtocolHandler
 from .shared import Examples
 
 
@@ -34,20 +34,6 @@ class _Entity(m.Value):
 class _NoArgs:
     def __init__(self) -> None:
         self.marker = "created"
-
-
-class _ProcessorGood(m.Value):
-    marker: str = "good"
-
-    def process(self) -> str:
-        return "ok"
-
-
-class _ProcessorBad(m.Value):
-    marker: str = "bad"
-
-    def process(self) -> str:
-        return "ok"
 
 
 class _NotImplementedPatternHandler(FlextHandlers[_Message | str, str]):
@@ -201,10 +187,10 @@ class Ex10FlextHandlers(Examples):
             module_scan[0][1](_Message(text=module_text)) if module_scan else "none"
         )
         self.check("scan_module.wrapped_result", module_text in str(wrapped_result))
-        self.check("has_handlers_module.true", h.Discovery.has_handlers_module(module))
+        self.check("has_handlers.module.true", h.Discovery.has_handlers(type(module)))
         self.check(
-            "has_handlers_module.false",
-            h.Discovery.has_handlers_module(ModuleType("empty")),
+            "has_handlers.module.false",
+            not h.Discovery.has_handlers(type(ModuleType("empty"))),
         )
 
     def demo_handler_core(self) -> None:
@@ -322,10 +308,9 @@ class Ex10FlextHandlers(Examples):
             f"{self.rand_int(1, 9)}.{self.rand_int(0, 9)}.{self.rand_int(0, 9)}"
         )
         metadata_tag = self.rand_str(4)
-        positive_token = self.rand_str(4)
         created = h.Bootstrap.create_instance(_NoArgs)
         self.check("bootstrap.create_instance", created.__class__.__name__)
-        tracker = h.CQRS.MetricsTracker()
+        tracker = m.MetricsTracker()
         self.check(
             "cqrs.record_metric",
             tracker.record_metric(hit_key, hit_value).is_success,
@@ -333,7 +318,7 @@ class Ex10FlextHandlers(Examples):
         metrics_map = tracker.get_metrics().unwrap_or(t.ConfigMap(root={}))
         metrics_val = metrics_map.get(hit_key, -1)
         self.check("cqrs.get_metrics", metrics_val)
-        stack = h.CQRS.ContextStack()
+        stack = m.ContextStack()
         self.check(
             "cqrs.push_context.mapping",
             stack.push_context({
@@ -348,10 +333,10 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.pop_context",
-            cast(
-                "t.ConfigMap",
-                stack.pop_context().unwrap_or(t.ConfigMap(root={})),
-            ).get("handler_name", "-"),
+            stack
+            .pop_context()
+            .unwrap_or({"handler_name": "-"})
+            .get("handler_name", "-"),
         )
         di = h.DependencyIntegration
         di_container = di.create_container(config=t.ConfigMap(root={"env": env_value}))
@@ -416,67 +401,11 @@ class Ex10FlextHandlers(Examples):
         protocol_handler = Ex10ProtocolHandler()
         self.check(
             "protocol.is_handler.true",
-            h.ProtocolValidation.is_handler(protocol_handler),
+            u.is_handler(protocol_handler),
         )
         self.check(
             "protocol.is_handler.false",
-            h.ProtocolValidation.is_handler(t.ConfigMap(root={})),
-        )
-        self.check(
-            "protocol.is_service",
-            h.ProtocolValidation.is_service(Ex10ServiceStub()),
-        )
-        self.check(
-            "protocol.is_command_bus",
-            h.ProtocolValidation.is_command_bus(Ex10CommandBusStub()),
-        )
-        self.check(
-            "protocol.validate_known",
-            h.ProtocolValidation.validate_protocol_compliance(
-                protocol_handler,
-                "Handler",
-            ).is_success,
-        )
-        self.check(
-            "protocol.validate_unknown",
-            h.ProtocolValidation.validate_protocol_compliance(
-                protocol_handler,
-                "Unknown",
-            ).error,
-        )
-        self.check(
-            "protocol.validate_processor.good",
-            h.ProtocolValidation.validate_processor_protocol(
-                _ProcessorGood(),
-            ).is_success,
-        )
-        self.check(
-            "protocol.validate_processor.bad",
-            h.ProtocolValidation.validate_processor_protocol(_ProcessorBad()).error,
-        )
-
-        def positive_validator(item: str) -> r[bool]:
-            return r[bool].ok(item == positive_token)
-
-        def strict_validator(item: str) -> r[bool]:
-            return r[bool].ok(bool(item))
-
-        def fail_validator(_item: str) -> r[bool]:
-            return r[bool].fail("rule-failed")
-
-        self.check(
-            "validation.chain.ok",
-            h.Validation.validate_with_result(
-                positive_token,
-                [positive_validator, strict_validator],
-            ).is_success,
-        )
-        self.check(
-            "validation.chain.fail",
-            h.Validation.validate_with_result(
-                "x",
-                [positive_validator, fail_validator],
-            ).error,
+            not u.is_handler(t.ConfigMap(root={})),
         )
 
     def demo_runtime_result_and_utilities(self) -> None:

@@ -203,7 +203,6 @@ class Ex12FlextRegistry(Examples):
             reg_explicit.validate_business_rules().is_success,
         )
         self.check("is_valid", reg_explicit.is_valid())
-        self.check("service_info", reg_explicit.get_service_info())
         self.check("result_property.type", type(reg_explicit.result).__name__)
         self.check("runtime.type", type(reg_explicit.runtime).__name__)
         self.check("context.type", type(reg_explicit.context).__name__)

@@ -33,7 +33,7 @@ class FlextUtilitiesParser:
     """
 
     @staticmethod
-    def _coerce_to_bool(value: t.NormalizedValue) -> r[bool]:
+    def _coerce_to_bool(value: t.RecursiveContainer) -> r[bool]:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.is_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
@@ -48,7 +48,7 @@ class FlextUtilitiesParser:
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_float(value: t.NormalizedValue) -> r[float]:
+    def _coerce_to_float(value: t.RecursiveContainer) -> r[float]:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
@@ -61,7 +61,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_int(value: t.NormalizedValue) -> r[int]:
+    def _coerce_to_int(value: t.RecursiveContainer) -> r[int]:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
@@ -74,7 +74,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_str(value: t.NormalizedValue) -> r[str]:
+    def _coerce_to_str(value: t.RecursiveContainer) -> r[str]:
         """Coerce value to string - returns p.Result[str]."""
         return r[str].ok(str(value))
 
@@ -85,7 +85,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_model[TModel: BaseModel](
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         target: type[TModel],
         field_prefix: str,
         *,
@@ -109,7 +109,9 @@ class FlextUtilitiesParser:
     }
 
     @staticmethod
-    def _parse_normalize_str(value: t.NormalizedValue, *, case: str = "lower") -> str:
+    def _parse_normalize_str(
+        value: t.RecursiveContainer, *, case: str = "lower"
+    ) -> str:
         """Normalize string value (avoids circular import with u.normalize)."""
         value_str = value if isinstance(value, str) else str(value)
         op = FlextUtilitiesParser._CASE_OPS.get(case)
@@ -125,7 +127,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_direct[T](
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         target: type[T],
         default: T | None,
         default_factory: Callable[[], T] | None,
@@ -179,7 +181,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_enum[T](
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         target: type[T],
         *,
         case_insensitive: bool,
@@ -219,7 +221,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_model[T](
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         target: type[T],
         field_prefix: str,
         *,
@@ -250,7 +252,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _get_primitive_coercers() -> Mapping[
-        type, Callable[[t.NormalizedValue], r[int] | r[float] | r[str] | r[bool]]
+        type, Callable[[t.RecursiveContainer], r[int] | r[float] | r[str] | r[bool]]
     ]:
         """Dispatch table for primitive type coercion."""
         return {
@@ -262,7 +264,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_primitive(
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         target: type,
         default: t.Primitives | None,
         default_factory: Callable[[], t.Numeric | str | bool] | None,
@@ -376,7 +378,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_str(
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         *,
         case: str | None = None,
         default: str = "",
@@ -412,7 +414,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_dispatch_primitive[T](
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         target: type[T],
         default: T | None,
         default_factory: Callable[[], T] | None,
@@ -436,7 +438,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def parse[T](
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         target: type[T],
         *,
         strict: bool = False,

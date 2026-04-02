@@ -86,10 +86,12 @@ class FlextModelFoundation:
         ] = None
         _strict_json_scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
         _scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
-        _float_adapter: ClassVar[TypeAdapter[float] | None] = None
-        _str_adapter: ClassVar[TypeAdapter[str] | None] = None
+        _float_adapter: ClassVar[TypeAdapter[t.FloatValue] | None] = None
+        _str_adapter: ClassVar[TypeAdapter[t.TextValue] | None] = None
         _str_list_adapter: ClassVar[TypeAdapter[t.StrSequence] | None] = None
-        _str_or_bytes_adapter: ClassVar[TypeAdapter[str | bytes] | None] = None
+        _str_or_bytes_adapter: ClassVar[TypeAdapter[t.TextOrBinaryContent] | None] = (
+            None
+        )
         _enum_type_adapter: ClassVar[TypeAdapter[type[StrEnum]] | None] = None
         _serializable_adapter: ClassVar[TypeAdapter[t.Serializable] | None] = None
         _metadata_json_dict_adapter: ClassVar[
@@ -244,15 +246,15 @@ class FlextModelFoundation:
             return cls._scalar_adapter
 
         @classmethod
-        def float_adapter(cls) -> TypeAdapter[float]:
+        def float_adapter(cls) -> TypeAdapter[t.FloatValue]:
             if cls._float_adapter is None:
-                cls._float_adapter = TypeAdapter(float)
+                cls._float_adapter = TypeAdapter(t.FloatValue)
             return cls._float_adapter
 
         @classmethod
-        def str_adapter(cls) -> TypeAdapter[str]:
+        def str_adapter(cls) -> TypeAdapter[t.TextValue]:
             if cls._str_adapter is None:
-                cls._str_adapter = TypeAdapter(str)
+                cls._str_adapter = TypeAdapter(t.TextValue)
             return cls._str_adapter
 
         @classmethod
@@ -262,9 +264,9 @@ class FlextModelFoundation:
             return cls._str_list_adapter
 
         @classmethod
-        def str_or_bytes_adapter(cls) -> TypeAdapter[str | bytes]:
+        def str_or_bytes_adapter(cls) -> TypeAdapter[t.TextOrBinaryContent]:
             if cls._str_or_bytes_adapter is None:
-                cls._str_or_bytes_adapter = TypeAdapter(str | bytes)
+                cls._str_or_bytes_adapter = TypeAdapter(t.TextOrBinaryContent)
             return cls._str_or_bytes_adapter
 
         @classmethod

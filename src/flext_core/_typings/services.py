@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from datetime import date, time
+from enum import Enum
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
 from typing import TYPE_CHECKING, TypeAliasType
@@ -26,22 +28,20 @@ class FlextTypesServices:
     type RegistryDict[T] = MutableMapping[str, T]
 
     type ScalarOrModel = FlextTypingBase.Scalar | Path | BaseModel
-    type ValueOrModel = FlextTypingBase.NormalizedValue | BaseModel
+    type ValueOrModel = FlextTypingBase.RecursiveContainer | BaseModel
     type RuntimeData = ValueOrModel | FlextTypesServices.MetadataValue
     type RuntimeAtomic = FlextTypingBase.Container | BaseModel
 
-    type BootstrapInput = (
-        BaseModel | Mapping[str, FlextTypingBase.NormalizedValue] | None
-    )
+    type BootstrapInput = BaseModel | FlextTypingBase.RecursiveContainerMapping | None
 
     type RegisterableService = (
         FlextTypingBase.Container
         | BaseModel
         | Mapping[
             str,
-            FlextTypingBase.Container | FlextTypingBase.NormalizedValue,
+            FlextTypingBase.Container | FlextTypingBase.RecursiveContainer,
         ]
-        | Sequence[FlextTypingBase.Container | FlextTypingBase.NormalizedValue]
+        | Sequence[FlextTypingBase.Container | FlextTypingBase.RecursiveContainer]
         | Callable[..., FlextTypingBase.Container | BaseModel]
         | Callable[..., FlextTypesServices.RegisterableService]
     )
@@ -55,7 +55,7 @@ class FlextTypesServices:
         ]
         | Sequence[FlextTypingBase.Scalar]
     )
-    type MetadataOrValue = MetadataValue | FlextTypingBase.NormalizedValue
+    type MetadataOrValue = MetadataValue | FlextTypingBase.RecursiveContainer
     type MetadataAttributeValue = MetadataValue
     type ConfigModelInput = BaseModel | FlextTypingContainers.ConfigMap
     type MetadataInput = (
@@ -96,7 +96,7 @@ class FlextTypesServices:
     type LoggerFactory = Callable[[], p.Logger] | p.Logger | None
     type StructlogProcessor = Callable[
         ...,
-        Mapping[str, FlextTypingBase.NormalizedValue],
+        FlextTypingBase.RecursiveContainerMapping,
     ]
 
     type SortableObjectType = str | int | float
@@ -127,20 +127,24 @@ class FlextTypesServices:
         MutableMapping[str, FlextTypingBase.Scalar],
     ]
     type ServiceMap = Mapping[str, RegisterableService]
+    type LazyScalar = FlextTypingBase.Scalar | bytes | date | time
+    type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
+    type ModuleExportValue = FlextTypingBase.Container | bytes | date | time
     type ModuleExport = (
-        FlextTypingBase.Container
+        ModuleExportValue
+        | LazyCollection
         | ModuleType
-        | type
-        | Callable[..., FlextTypingBase.Container]
+        | type[BaseException | Enum]
+        | Callable[..., ModuleExportValue | LazyCollection | None]
     )
 
     type ValidatorCallable = Callable[[ScalarOrModel | None], ScalarOrModel | None]
 
     type MapperCallable = Callable[
-        [FlextTypingBase.NormalizedValue],
-        FlextTypingBase.NormalizedValue,
+        [FlextTypingBase.RecursiveContainer],
+        FlextTypingBase.RecursiveContainer,
     ]
-    type MapperInput = MapperCallable | FlextTypingBase.NormalizedValue
+    type MapperInput = MapperCallable | FlextTypingBase.RecursiveContainer
     type StrictValue = (
         FlextTypingBase.Scalar
         | ConfigurationMapping
@@ -152,11 +156,11 @@ class FlextTypesServices:
     type GuardInput = (
         FlextTypingBase.Scalar
         | Path
-        | Sequence[FlextTypingBase.NormalizedValue]
-        | Mapping[str, FlextTypingBase.NormalizedValue | BaseModel]
-        | tuple[FlextTypingBase.NormalizedValue, ...]
+        | FlextTypingBase.RecursiveContainerList
+        | Mapping[str, FlextTypingBase.RecursiveContainer | BaseModel]
+        | tuple[FlextTypingBase.RecursiveContainer, ...]
         | tuple[type, ...]
-        | set[FlextTypingBase.NormalizedValue]
+        | set[FlextTypingBase.RecursiveContainer]
         | BaseModel
         | FlextTypingContainers.ConfigMap
         | RegisterableService

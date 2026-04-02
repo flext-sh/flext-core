@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import override
 
 from flext_core import FlextRuntime, FlextSettings, c, m, r, t, u, x
@@ -167,19 +167,6 @@ class Ex05FlextMixins(Examples):
             stack.current_context() is None,
         )
 
-        def _validator_ok(value: str) -> r[bool]:
-            text = str(value)
-            return r[bool].ok(text.startswith("a"))
-
-        def _validator_fail(_value: str) -> r[bool]:
-            return r[bool].fail("bad-input")
-
-        validators_ok: Sequence[Callable[..., r[bool]]] = [_validator_ok]
-        validators_fail: Sequence[Callable[..., r[bool]]] = [_validator_fail]
-        validation_ok = u.validate_with_result("abc", validators_ok)
-        validation_fail = u.validate_with_result("abc", validators_fail)
-        self.check("validation.ok", validation_ok.is_success)
-        self.check("validation.fail", validation_fail.error)
         self.check(
             "protocol.is_handler.good",
             bool(u.is_handler(self.HandlerLike())),
@@ -188,14 +175,6 @@ class Ex05FlextMixins(Examples):
             "protocol.is_handler.bad",
             bool(u.is_handler(self.HandlerBad())),
         )
-        processor_ok = u.validate_processor_protocol(
-            self.GoodProcessor(),
-        )
-        processor_fail = u.validate_processor_protocol(
-            self.BadProcessor(),
-        )
-        self.check("protocol.validate_processor.good", processor_ok.is_success)
-        self.check("protocol.validate_processor.fail", processor_fail.error)
 
 
 if __name__ == "__main__":

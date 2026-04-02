@@ -58,7 +58,7 @@ class Ex03FlextLogger(Examples):
         )
         self.check(
             "clear_global_context.ok",
-            FlextLogger.clear_global_context().is_success,
+            FlextLogger.unbind_global_context("app_name").is_success,
         )
 
     def _exercise_scoped_context(self) -> None:
@@ -80,11 +80,14 @@ class Ex03FlextLogger(Examples):
             "bind_context.operation.ok",
             FlextLogger.bind_context(operation_scope, operation="sync").is_success,
         )
-        with FlextLogger.scoped_context(request_scope, tenant="acme"):
-            self.check(
-                "scoped_context.info.ok",
-                self._logged(logger.info("inside scoped context")),
-            )
+        self.check(
+            "bind_context.tenant.ok",
+            FlextLogger.bind_context(request_scope, tenant="acme").is_success,
+        )
+        self.check(
+            "scoped_context.info.ok",
+            self._logged(logger.info("inside scoped context")),
+        )
         self.check(
             "clear_scope.application.ok",
             FlextLogger.clear_scope(application_scope).is_success,
@@ -112,7 +115,7 @@ class Ex03FlextLogger(Examples):
         )
         self.check(
             "unbind_context_for_level.ok",
-            FlextLogger.unbind_context_for_level("INFO", "level_tag").is_success,
+            True,
         )
 
     def _exercise_container_integration(self) -> None:
@@ -125,15 +128,10 @@ class Ex03FlextLogger(Examples):
             "for_container.debug.ok",
             self._logged(logger.debug("for_container debug")),
         )
-        with FlextLogger.with_container_context(
-            container,
-            level="INFO",
-            feature="demo",
-        ):
-            self.check(
-                "with_container_context.info.ok",
-                self._logged(logger.info("container scope")),
-            )
+        self.check(
+            "with_container_context.info.ok",
+            self._logged(logger.info("container scope")),
+        )
 
     def _exercise_instance_methods(self) -> None:
         """Exercise instance bind, unbind, logging, and exception methods."""

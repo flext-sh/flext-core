@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from importlib import import_module
-
-_impl = import_module("tests.helpers._scenarios_impl")
+from tests.helpers import _scenarios_impl as _impl
 
 
 class TestHelperScenarios:

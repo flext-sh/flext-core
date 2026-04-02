@@ -228,10 +228,7 @@ if _TYPE_CHECKING:
         TestHandlerDecoratorDiscovery,
     )
     from tests.unit.test_handlers import TestFlextHandlers
-    from tests.unit.test_handlers_full_coverage import (
-        TestHandlersFullCoverage,
-        handlers_module,
-    )
+    from tests.unit.test_handlers_full_coverage import TestHandlersFullCoverage
     from tests.unit.test_loggings_error_paths_coverage import TestLoggingsErrorPaths
     from tests.unit.test_loggings_full_coverage import TestModule
     from tests.unit.test_loggings_strict_returns import TestLoggingsStrictReturns
@@ -345,9 +342,7 @@ if _TYPE_CHECKING:
     from tests.unit.test_runtime_coverage_100 import TestRuntimeCoverage100
     from tests.unit.test_runtime_full_coverage import (
         reset_runtime_state,
-        runtime_cov_tests,
         runtime_module,
-        runtime_tests,
         test_async_log_writer_paths,
         test_async_log_writer_shutdown_with_full_queue,
         test_config_bridge_and_trace_context_and_http_validation,
@@ -391,7 +386,6 @@ if _TYPE_CHECKING:
         TestHelperConsolidationTransformer,
     )
     from tests.unit.test_transformer_nested_class_propagation import (
-        NestedClassPropagationTransformer,
         test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage,
         test_nested_class_propagation_updates_import_annotations_and_calls,
     )
@@ -523,7 +517,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "InputPayloadMap": "tests.unit._models_impl",
         "InvalidModelForTest": "tests.unit._models_impl",
         "NORMALIZE_COMPONENT_SCENARIOS": "tests.unit.test_utilities_cache_coverage_100",
-        "NestedClassPropagationTransformer": "tests.unit.test_transformer_nested_class_propagation",
         "NestedModel": "tests.unit._models_impl",
         "NormalizeComponentScenario": "tests.unit.test_utilities_cache_coverage_100",
         "RuntimeCloneService": "tests.unit.test_service_additional",
@@ -643,7 +636,6 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "create_hash_value_object_cases": "tests.unit.test_utilities_domain",
         "flext_tests": "tests.unit.flext_tests",
         "generators_module": "tests.unit.test_utilities_generators_full_coverage",
-        "handlers_module": "tests.unit.test_handlers_full_coverage",
         "infra_git": "tests.unit.conftest_infra",
         "infra_git_repo": "tests.unit.conftest_infra",
         "infra_io": "tests.unit.conftest_infra",
@@ -662,9 +654,7 @@ _LAZY_IMPORTS: Mapping[str, str | Sequence[str]] = merge_lazy_imports(
         "protocols": "tests.unit.protocols",
         "pytestmark": "tests.unit.test_utilities_type_checker_coverage_100",
         "reset_runtime_state": "tests.unit.test_runtime_full_coverage",
-        "runtime_cov_tests": "tests.unit.test_runtime_full_coverage",
         "runtime_module": "tests.unit.test_runtime_full_coverage",
-        "runtime_tests": "tests.unit.test_runtime_full_coverage",
         "test_aliases_are_available": "tests.unit.test_utilities_guards_full_coverage",
         "test_args_coverage_100": "tests.unit.test_args_coverage_100",
         "test_async_log_writer_paths": "tests.unit.test_runtime_full_coverage",

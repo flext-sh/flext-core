@@ -412,12 +412,12 @@ class FlextResult[T](BaseModel):
         return str(error)
 
     @staticmethod
-    def is_failure_result(value: object) -> TypeIs[p.Result[t.NormalizedValue]]:
+    def is_failure_result(value: object) -> TypeIs[p.Result[t.RecursiveContainer]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, p.Result) and value.is_failure
 
     @staticmethod
-    def is_success_result(value: object) -> TypeIs[p.Result[t.NormalizedValue]]:
+    def is_success_result(value: object) -> TypeIs[p.Result[t.RecursiveContainer]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, p.Result) and value.is_success
 

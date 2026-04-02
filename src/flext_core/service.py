@@ -15,7 +15,6 @@ from types import ModuleType
 from typing import Annotated, ClassVar, override
 
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Field,
     PrivateAttr,
@@ -39,8 +38,7 @@ from flext_core.utilities import u
 
 
 class FlextService[
-    TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel] = t.NormalizedValue
-    | BaseModel
+    TDomainResult: t.ValueOrModel | Sequence[t.ValueOrModel] = t.ValueOrModel
     | Sequence[t.ValueOrModel],
 ](x):
     """Base class for domain services in FLEXT applications.

@@ -960,20 +960,18 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _get_numeric_field[T](item: T, field_name: str) -> t.Numeric | None:
+    def _get_numeric_field(
+        item: BaseModel | Mapping[str, t.NormalizedValue],
+        field_name: str,
+    ) -> t.Numeric | None:
         """Extract a numeric field value from a BaseModel or Mapping-like object."""
-        match item:
-            case BaseModel():
-                val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
-                return val_raw if isinstance(val_raw, (int, float)) else None
-            case _ if hasattr(item, "get") and callable(getattr(item, "get", None)):
-                try:
-                    result = getattr(item, "get")(field_name)
-                    return result if isinstance(result, (int, float)) else None
-                except (TypeError, KeyError, AttributeError):
-                    return None
-            case _:
-                return None
+        if isinstance(item, BaseModel):
+            val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
+            return val_raw if isinstance(val_raw, (int, float)) else None
+        if isinstance(item, Mapping):
+            val = item.get(field_name)
+            return val if isinstance(val, (int, float)) else None
+        return None
 
     @staticmethod
     def agg[T](
@@ -992,7 +990,8 @@ class FlextUtilitiesMapper:
             numeric_values = [
                 val
                 for item in items_list
-                if (val := FlextUtilitiesMapper._get_numeric_field(item, field))
+                if isinstance(item, (BaseModel, Mapping))
+                and (val := FlextUtilitiesMapper._get_numeric_field(item, field))
                 is not None
             ]
         agg_fn: Callable[[Sequence[t.Numeric]], t.Numeric] = (

@@ -16,14 +16,14 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     """Ensure-style guard utility methods for data validation and normalization."""
 
     _EQUALITY_OPS: ClassVar[
-        Mapping[str, Callable[[t.NormalizedValue, t.NormalizedValue], bool]]
+        Mapping[str, Callable[[t.RecursiveContainer, t.RecursiveContainer], bool]]
     ] = {
         "eq": lambda val, cmp: val == cmp,
         "ne": lambda val, cmp: val != cmp,
     }
 
     _MEMBERSHIP_OPS: ClassVar[
-        Mapping[str, Callable[[t.NormalizedValue, t.ContainerList], bool]]
+        Mapping[str, Callable[[t.RecursiveContainer, t.RecursiveContainerList], bool]]
     ] = {
         "in_": lambda val, cmp: val in cmp,
         "not_in": lambda val, cmp: val not in cmp,
@@ -37,7 +37,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     }
 
     @staticmethod
-    def _resolve_numeric(value: t.NormalizedValue) -> t.Numeric:
+    def _resolve_numeric(value: t.RecursiveContainer) -> t.Numeric:
         """Extract numeric value (raw for numbers, len for sized types)."""
         if isinstance(value, (int, float)):
             return value
@@ -75,18 +75,18 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _check_iterable_contains(
-        value: t.NormalizedValue,
-        contains: t.NormalizedValue,
+        value: t.RecursiveContainer,
+        contains: t.RecursiveContainer,
     ) -> bool:
         """Check if iterable value contains the target."""
         if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
-            iterable_value: Iterable[t.NormalizedValue] = value
+            iterable_value: Iterable[t.RecursiveContainer] = value
             return any(item == contains for item in iterable_value)
         return False
 
     @staticmethod
     def chk(
-        value: t.NormalizedValue,
+        value: t.RecursiveContainer,
         spec: FlextModelsCollections.GuardCheckSpec | None = None,
         **criteria: t.GuardInput,
     ) -> bool:
@@ -114,7 +114,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return False
         # Membership checks via dispatch
         for mem_op, mem_fn in FlextUtilitiesGuardsEnsure._MEMBERSHIP_OPS.items():
-            mem_val: t.ContainerList | None = getattr(guard_spec, mem_op, None)
+            mem_val: t.RecursiveContainerList | None = getattr(guard_spec, mem_op, None)
             if mem_val is not None and not mem_fn(value, mem_val):
                 return False
         # Numeric/size checks via dispatch
@@ -143,14 +143,17 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         return True
 
     @staticmethod
-    def _to_container_or_str(value: t.NormalizedValue) -> t.Container:
+    def _to_container_or_str(value: t.RecursiveContainer) -> t.Container:
         """Normalize a value to Container: pass through if already, else str()."""
         return value if FlextUtilitiesGuardsEnsure.is_container(value) else str(value)
 
     @staticmethod
     def _check_validator(
-        value: t.NormalizedValue,
-        validator: Callable[[t.NormalizedValue], bool] | type | tuple[type, ...] | None,
+        value: t.RecursiveContainer,
+        validator: Callable[[t.RecursiveContainer], bool]
+        | type
+        | tuple[type, ...]
+        | None,
     ) -> bool:
         """Evaluate validator against value. Returns True if guard passes."""
         if isinstance(validator, type):
@@ -169,7 +172,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _guard_fallback(
-        default: t.NormalizedValue | None,
+        default: t.RecursiveContainer | None,
         *,
         return_value: bool,
         fail_msg: str,
@@ -181,13 +184,13 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def guard(
-        value: t.NormalizedValue,
-        validator: Callable[[t.NormalizedValue], bool]
+        value: t.RecursiveContainer,
+        validator: Callable[[t.RecursiveContainer], bool]
         | type
         | tuple[type, ...]
         | None = None,
         *,
-        default: t.NormalizedValue | None = None,
+        default: t.RecursiveContainer | None = None,
         return_value: bool = False,
     ) -> t.Container | bool | r[t.Container]:
         try:

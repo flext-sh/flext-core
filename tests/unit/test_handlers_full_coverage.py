@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib
 from types import ModuleType
 from typing import cast, override
 
@@ -11,8 +10,6 @@ from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextHandlers, h, r
 from tests import c, m, t
-
-handlers_module = importlib.import_module("flext_core.handlers")
 
 
 class TestHandlersFullCoverage:

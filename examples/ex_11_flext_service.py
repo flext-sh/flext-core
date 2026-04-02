@@ -14,19 +14,14 @@ from flext_core import (
     FlextService,
     FlextSettings,
     m,
-    p,
     r,
     s,
     t,
 )
 
 from ._models.ex11 import (
-    Ex11CommandBusStub as _CommandBusStub,
     Ex11EntityStub as _EntityStub,
-    Ex11HandlerLike as _HandlerLike,
     Ex11Payload as _Payload,
-    Ex11ProcessorProtocolBad as _ProcessorProtocolBad,
-    Ex11ProcessorProtocolGood as _ProcessorProtocolGood,
 )
 from .shared import Examples
 
@@ -128,29 +123,6 @@ class _TinyType:
         self.initialized = True
 
 
-class _ServiceLike:
-    def __init__(self) -> None:
-        self._inner = _EchoService()
-
-    @property
-    def config(self) -> p.Settings:
-        return self._inner.config
-
-    @property
-    def container(self) -> p.Container:
-        return self._inner.container
-
-    @property
-    def context(self) -> p.Context:
-        return self._inner.context
-
-    def execute(self) -> r[str]:
-        return r[str].ok("service-like")
-
-    def validate_business_rules(self) -> r[bool]:
-        return r[bool].ok(True)
-
-
 class Ex11FlextService(Examples):
     """Exercise FlextService public API."""
 
@@ -238,8 +210,6 @@ class Ex11FlextService(Examples):
         metric_key = self.rand_str(5)
         metric_value = self.rand_int(1, 9)
         ctx_handler_name = self.rand_str(6)
-        valid_upper = self.rand_str(3).upper()
-        invalid_lower = self.rand_str(2)
 
         tiny = s.Bootstrap.create_instance(_TinyType)
         self.check("Bootstrap.create_instance.type", type(tiny).__name__)
@@ -248,18 +218,18 @@ class Ex11FlextService(Examples):
             hasattr(tiny, "initialized"),
         )
 
-        metrics = s.CQRS.MetricsTracker()
+        metrics = m.MetricsTracker()
         self.check(
             "CQRS.MetricsTracker.record",
             metrics.record_metric(metric_key, metric_value).is_success,
         )
+        metrics_map = metrics.get_metrics().unwrap_or(t.ConfigMap(root={}))
         self.check(
             "CQRS.MetricsTracker.get",
-            metrics.get_metrics().unwrap_or(t.ConfigMap(root={})).get(metric_key)
-            == metric_value,
+            metrics_map.get(metric_key) == metric_value,
         )
 
-        stack = s.CQRS.ContextStack()
+        stack = m.ContextStack()
         self.check(
             "CQRS.ContextStack.push.dict",
             stack.push_context({
@@ -272,53 +242,9 @@ class Ex11FlextService(Examples):
             "CQRS.ContextStack.current.type",
             type(current).__name__ if current is not None else "None",
         )
-        popped = stack.pop_context().unwrap_or(t.ConfigMap(root={}))
+        popped = stack.pop_context().unwrap_or({"handler_name": "-"})
         self.check("CQRS.ContextStack.pop.handler_name", popped.get("handler_name"))
         self.check("CQRS.ContextStack.pop.empty", stack.pop_context().unwrap_or({}))
-
-        proto_handler = s.ProtocolValidation.is_handler(_HandlerLike())
-        service_like = _ServiceLike()
-        is_service_fn = s.ProtocolValidation.is_service
-        proto_service = bool(is_service_fn(service_like))
-        proto_bus = s.ProtocolValidation.is_command_bus(_CommandBusStub())
-        validate_protocol_fn = s.ProtocolValidation.validate_protocol_compliance
-        proto_ok = validate_protocol_fn(service_like, "Service")
-        proto_unknown = validate_protocol_fn(service_like, "UnknownProto")
-        processor_ok = s.ProtocolValidation.validate_processor_protocol(
-            _ProcessorProtocolGood(),
-        )
-        processor_bad = s.ProtocolValidation.validate_processor_protocol(
-            _ProcessorProtocolBad(),
-        )
-
-        self.check("ProtocolValidation.is_handler", proto_handler)
-        self.check("ProtocolValidation.is_service", proto_service)
-        self.check("ProtocolValidation.is_command_bus", proto_bus)
-        self.check("ProtocolValidation.protocol_ok", proto_ok.is_success)
-        self.check("ProtocolValidation.protocol_unknown", proto_unknown.error)
-        self.check("ProtocolValidation.processor_ok", processor_ok.is_success)
-        self.check("ProtocolValidation.processor_bad", processor_bad.error)
-
-        def _validator_len(data: str) -> r[bool]:
-            if len(data) >= 3:
-                return r[bool].ok(True)
-            return r[bool].fail("too-short")
-
-        def _validator_upper(data: str) -> r[bool]:
-            if data.isupper():
-                return r[bool].ok(True)
-            return r[bool].fail("not-upper")
-
-        valid = s.Validation.validate_with_result(
-            valid_upper,
-            [_validator_len, _validator_upper],
-        )
-        invalid = s.Validation.validate_with_result(
-            invalid_lower,
-            [_validator_len, _validator_upper],
-        )
-        self.check("Validation.validate_with_result.ok", valid.unwrap_or(""))
-        self.check("Validation.validate_with_result.fail", invalid.error)
 
     def demo_namespace_runtime_and_integration(self) -> None:
         """Exercise RuntimeResult, Integration, DependencyIntegration, and Metadata."""
@@ -616,7 +542,6 @@ class Ex11FlextService(Examples):
             service.validate_business_rules().is_success,
         )
         self.check("is_valid.default", service.is_valid())
-        self.check("service_info.type", service.get_service_info().get("service_type"))
 
         rule_service = _RuleService()
         self.check(
