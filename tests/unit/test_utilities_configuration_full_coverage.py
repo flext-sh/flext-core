@@ -75,15 +75,15 @@ class TestUtilitiesConfigurationFullCoverage:
         existing = tmp_path / "custom.env"
         existing.write_text("A=1\n", encoding="utf-8")
         monkeypatch.setenv("FLEXT_ENV_FILE", str(existing))
-        assert u.resolve_env_file() == str(existing.resolve())
+        assert u.Infra.resolve_env_file() == str(existing.resolve())
         missing = tmp_path / "missing.env"
         monkeypatch.setenv("FLEXT_ENV_FILE", str(missing))
-        assert u.resolve_env_file() == str(missing)
+        assert u.Infra.resolve_env_file() == str(missing)
         monkeypatch.delenv("FLEXT_ENV_FILE", raising=False)
         env_file = tmp_path / ".env"
         env_file.write_text("B=2\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
-        assert u.resolve_env_file() == str(env_file.resolve())
+        assert u.Infra.resolve_env_file() == str(env_file.resolve())
         assert isinstance(u.get_log_level_from_config(), int)
         assert u.get_log_level_from_config() in {
             logging.DEBUG,

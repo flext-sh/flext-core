@@ -66,8 +66,8 @@ class TestPerformanceBenchmarks:
                 "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: test.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n",
             )
             rule = ClassNestingRefactorRule(config_file)
-            rope_project = u.init_rope_project(tmp_path)
-            resource = u.get_resource_from_path(rope_project, test_file)
+            rope_project = u.Infra.init_rope_project(tmp_path)
+            resource = u.Infra.get_resource_from_path(rope_project, test_file)
             if resource is None:
                 raise FileNotFoundError(test_file)
             start = time.perf_counter()

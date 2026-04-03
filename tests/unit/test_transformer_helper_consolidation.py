@@ -15,9 +15,9 @@ def _transform_source(
     file_path = tmp_path / "helper_consolidation.py"
     file_path.write_text(source, encoding="utf-8")
     transformer = FlextInfraHelperConsolidationTransformer(mappings)
-    rope_project = u.init_rope_project(tmp_path)
+    rope_project = u.Infra.init_rope_project(tmp_path)
     try:
-        resource = u.get_resource_from_path(rope_project, file_path)
+        resource = u.Infra.get_resource_from_path(rope_project, file_path)
         if resource is None:
             raise FileNotFoundError(file_path)
         transformed, _ = transformer.transform(rope_project, resource)
