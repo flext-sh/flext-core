@@ -506,7 +506,6 @@ if _TYPE_CHECKING:
         TestUtilitiesTextFullCoverage,
     )
     from tests.unit.test_utilities_type_checker_coverage_100 import (
-        T,
         TestuTypeChecker,
         TMessage,
         pytestmark,

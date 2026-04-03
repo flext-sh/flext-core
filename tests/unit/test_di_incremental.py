@@ -26,12 +26,9 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextSettings,
-    r,
-    s,
-    u,
 )
 from flext_tests import tm
-from tests import m, p, t, u
+from tests import m, p, t, u, r,s
 
 inject = u.DependencyIntegration.inject
 
