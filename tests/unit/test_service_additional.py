@@ -6,7 +6,7 @@ from typing import override
 
 import pytest
 
-from flext_core import e, r, s
+from tests import e, r, s
 
 
 class RuntimeCloneService(s[str]):

@@ -183,7 +183,7 @@ from flext_core import (
     p,
     FlextRegistry,
     r,  # Only this one!
-    FlextRuntime,
+    u,
     FlextService,
     t,
     u,

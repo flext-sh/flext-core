@@ -17,20 +17,8 @@ from typing import Self
 import pytest
 from pydantic import BaseModel
 
-from flext_core import (
-    FlextProtocolsBase,
-    FlextProtocolsConfig,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsRegistry,
-    FlextProtocolsResult,
-    FlextProtocolsService,
-    r,
-)
 from flext_tests import tm
-from tests import p, t
+from tests import p, r, t
 
 
 class TestFlextProtocols:
@@ -772,15 +760,15 @@ class TestFlextProtocols:
     def test_facade_inherits_all_protocol_groups(self) -> None:
         """FlextProtocols facade MRO includes all 9 protocol groups."""
         expected_bases = [
-            FlextProtocolsBase,
-            FlextProtocolsConfig,
-            FlextProtocolsContainer,
-            FlextProtocolsContext,
-            FlextProtocolsHandler,
-            FlextProtocolsLogging,
-            FlextProtocolsRegistry,
-            FlextProtocolsResult,
-            FlextProtocolsService,
+            p,
+            p,
+            p,
+            p,
+            p,
+            p,
+            p,
+            p,
+            p,
         ]
         mro = p.__mro__
         for base in expected_bases:

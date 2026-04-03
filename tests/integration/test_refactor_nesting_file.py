@@ -8,12 +8,9 @@ from pathlib import Path
 
 import pytest
 
-try:
-    from flext_infra import (
-        FlextInfraClassNestingRefactorRule as ClassNestingRefactorRule,
-    )
-except ImportError as exc:
-    pytest.skip(f"class nesting rule unavailable: {exc}", allow_module_level=True)
+from flext_infra import (
+    FlextInfraClassNestingRefactorRule as ClassNestingRefactorRule,
+)
 
 pytestmark = [pytest.mark.integration]
 

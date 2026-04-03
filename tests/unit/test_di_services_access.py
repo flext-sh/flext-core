@@ -26,15 +26,10 @@ from flext_core import (
     FlextContext,
     FlextLogger,
     FlextModelsService,
-    FlextRuntime,
     FlextSettings,
-    r,
-    s,
 )
 from flext_tests import tm
-from tests import p, t, u
-
-from ..test_utils import assertion_helpers
+from tests import assertion_helpers, p, r, s, t, u
 
 
 class TestDiServicesAccess:
@@ -64,21 +59,19 @@ class TestDiServicesAccess:
 
     def test_config_injection_via_wiring(self) -> None:
         """Test injecting FlextSettings via @inject decorator."""
-        di_container = FlextRuntime.DependencyIntegration.create_container(
+        di_container = u.DependencyIntegration.create_container(
             config=t.ConfigMap(root={"app_name": "injected_config"}),
         )
         module = ModuleType("config_injection_module")
 
-        @FlextRuntime.DependencyIntegration.inject
+        @u.DependencyIntegration.inject
         def get_config(
-            app_name: str = FlextRuntime.DependencyIntegration.Provide[
-                "config.app_name"
-            ],
+            app_name: str = u.DependencyIntegration.Provide["config.app_name"],
         ) -> str:
             return app_name
 
         setattr(module, "get_config", get_config)
-        FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
+        u.DependencyIntegration.wire(di_container, modules=[module])
         try:
             func = getattr(module, "get_config")
             result = func()
@@ -87,8 +80,8 @@ class TestDiServicesAccess:
             di_container.unwire()
 
     def test_logger_via_runtime_structlog(self) -> None:
-        """Test accessing logger via FlextRuntime.structlog()."""
-        structlog_module = FlextRuntime.structlog()
+        """Test accessing logger via u.structlog()."""
+        structlog_module = u.structlog()
         assert structlog_module is not None
         assert hasattr(structlog_module, "get_logger")
         assert hasattr(structlog_module, "configure")
@@ -205,22 +198,20 @@ class TestDiServicesAccess:
     def test_services_injection_combined(self) -> None:
         """Test injecting multiple services via @inject."""
         services = {"logger_name": "test"}
-        di_container = FlextRuntime.DependencyIntegration.create_container(
+        di_container = u.DependencyIntegration.create_container(
             config=t.ConfigMap(root={"app_name": "injected"}),
             services=services,
         )
         module = ModuleType("services_injection_module")
 
-        @FlextRuntime.DependencyIntegration.inject
+        @u.DependencyIntegration.inject
         def process(
-            app_name: str = FlextRuntime.DependencyIntegration.Provide[
-                "config.app_name"
-            ],
+            app_name: str = u.DependencyIntegration.Provide["config.app_name"],
         ) -> t.StrMapping:
             return {"app": app_name}
 
         setattr(module, "process", process)
-        FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
+        u.DependencyIntegration.wire(di_container, modules=[module])
         try:
             process_func = getattr(module, "process")
             result = process_func()

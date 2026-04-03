@@ -26,9 +26,8 @@ from typing import ClassVar
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_core import r
 from flext_tests import tm
-from tests import c, t, u
+from tests import c, r, t, u
 
 from .contracts.text_contract import TextUtilityContract
 

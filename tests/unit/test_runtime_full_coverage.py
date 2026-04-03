@@ -27,35 +27,30 @@ import structlog
 from dependency_injector import containers, providers
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, r
 from flext_tests import tm
-from tests import c, m, t, u
-from tests.unit import (
-    test_runtime as runtime_tests,
-    test_runtime_coverage_100 as runtime_cov_tests,
-)
+from tests import c, m, r, t, test_runtime, test_runtime_coverage_100, u
 
-runtime_module = inspect.getmodule(FlextRuntime)
+runtime_module = inspect.getmodule(u)
 
 
 @pytest.fixture(autouse=True)
 def reset_runtime_state() -> Generator[None]:
-    FlextRuntime._structlog_configured = False
-    if FlextRuntime._async_writer is not None:
-        FlextRuntime._async_writer.shutdown()
-        FlextRuntime._async_writer = None
+    u._structlog_configured = False
+    if u._async_writer is not None:
+        u._async_writer.shutdown()
+        u._async_writer = None
     yield
-    FlextRuntime._structlog_configured = False
-    if FlextRuntime._async_writer is not None:
-        FlextRuntime._async_writer.shutdown()
-        FlextRuntime._async_writer = None
+    u._structlog_configured = False
+    if u._async_writer is not None:
+        u._async_writer.shutdown()
+        u._async_writer = None
 
 
 def test_reuse_existing_runtime_scenarios() -> None:
-    suite = runtime_tests.TestFlextRuntime()
+    suite = test_runtime.TestFlextRuntime()
     _ = c.DEFAULT_LEVEL
     _ = u.ensure_str("x")
-    scenarios = runtime_tests.TestFlextRuntime.RuntimeScenarios
+    scenarios = test_runtime.TestFlextRuntime.RuntimeScenarios
     for case in scenarios.dict_like_scenarios():
         suite.test_dict_like_validation(case)
     for case in scenarios.list_like_scenarios():
@@ -75,7 +70,7 @@ def test_reuse_existing_runtime_scenarios() -> None:
 
 
 def test_reuse_existing_runtime_coverage_branches() -> None:
-    coverage = runtime_cov_tests.TestRuntimeCoverage100()
+    coverage = test_runtime_coverage_100.TestRuntimeCoverage100()
     coverage.test_is_dict_like_with_exception_on_items()
     coverage.test_is_dict_like_with_exception_on_items_typeerror()
     coverage.test_is_dict_like_with_userdict()
@@ -117,7 +112,7 @@ def test_async_log_writer_paths() -> None:
             self.flushed += 1
 
     stream = Stream()
-    writer = FlextRuntime._AsyncLogWriter(stream)
+    writer = u._AsyncLogWriter(stream)
     writer.write("hello")
     writer.shutdown()
     writer.shutdown()
@@ -129,8 +124,8 @@ def test_async_log_writer_paths() -> None:
             raise queue.Empty
 
     forced = cast(
-        "FlextRuntime._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
+        "u._AsyncLogWriter",
+        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
     )
     forced.stream = stream
     forced.queue = cast(
@@ -177,8 +172,8 @@ def test_async_log_writer_paths() -> None:
 
     failing = FailingStream()
     broken = cast(
-        "FlextRuntime._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
+        "u._AsyncLogWriter",
+        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
     )
     broken.stream = failing
     broken.queue = cast(
@@ -205,8 +200,8 @@ def test_async_log_writer_paths() -> None:
             return None
 
     continue_writer = cast(
-        "FlextRuntime._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
+        "u._AsyncLogWriter",
+        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
     )
     continue_writer.stream = stream
     continue_writer.queue = cast(
@@ -247,8 +242,8 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
 
     stream = FlushOnlyStream()
     writer = cast(
-        "FlextRuntime._AsyncLogWriter",
-        cast("t.NormalizedValue", object.__new__(FlextRuntime._AsyncLogWriter)),
+        "u._AsyncLogWriter",
+        cast("t.NormalizedValue", object.__new__(u._AsyncLogWriter)),
     )
     writer.stream = stream
     writer.queue = cast(
@@ -274,13 +269,13 @@ def test_runtime_create_instance_failure_branch(
     class Marker:
         pass
 
-    instance = FlextRuntime.create_instance(Marker)
+    instance = u.create_instance(Marker)
     assert isinstance(instance, Marker)
 
 
 def test_normalization_edge_branches() -> None:
     cfg = t.ConfigMap(root={"a": 1})
-    normalized_cfg = FlextRuntime.normalize_to_container(cfg)
+    normalized_cfg = u.normalize_to_container(cfg)
     tm.that(normalized_cfg, is_=(t.ConfigMap, t.Dict))
     tm.that(getattr(normalized_cfg, "root", None), eq={"a": 1})
 
@@ -299,63 +294,63 @@ def test_normalization_edge_branches() -> None:
         def __iter__(self) -> Iterator[str]:
             return iter(["x"])
 
-    normalized_dict_like = FlextRuntime.normalize_to_container(
+    normalized_dict_like = u.normalize_to_container(
         cast("t.RuntimeData", DictLike()),
     )
     tm.that(normalized_dict_like, is_=t.Dict)
     tm.that(getattr(normalized_dict_like, "root", None), eq={"x": 1})
-    metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
+    metadata_cfg = u.normalize_to_metadata(cfg)
     tm.that(metadata_cfg, is_=str)
-    metadata_dict_like = FlextRuntime.normalize_to_metadata(
+    metadata_dict_like = u.normalize_to_metadata(
         cast("t.RuntimeData", DictLike()),
     )
     tm.that(
         isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1},
         eq=True,
     )
-    metadata_list = FlextRuntime.normalize_to_metadata(
+    metadata_list = u.normalize_to_metadata(
         cast("t.RuntimeData", ["a", "normalized"]),
     )
     tm.that(metadata_list, is_=list)
 
 
 def test_normalize_to_container_alias_removal_path() -> None:
-    result = FlextRuntime.normalize_to_container("hello")
+    result = u.normalize_to_container("hello")
     tm.that(result, eq="hello")
 
 
 def test_normalize_to_metadata_alias_removal_path() -> None:
-    result = FlextRuntime.normalize_to_metadata(42)
+    result = u.normalize_to_metadata(42)
     tm.that(result, none=False)
 
 
 def test_get_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    logger_with_frame = FlextRuntime.get_logger()
+    logger_with_frame = u.get_logger()
     tm.that(logger_with_frame, none=False)
     monkeypatch.setattr(inspect, "currentframe", lambda: None)
-    logger_no_frame = FlextRuntime.get_logger()
+    logger_no_frame = u.get_logger()
     tm.that(logger_no_frame, none=False)
 
 
 def test_dependency_registration_duplicate_guards() -> None:
-    container = FlextRuntime.DependencyIntegration.create_container()
-    FlextRuntime.DependencyIntegration.register_object(container, "svc", 1)
+    container = u.DependencyIntegration.create_container()
+    u.DependencyIntegration.register_object(container, "svc", 1)
     with pytest.raises(ValueError, match="already registered"):
-        FlextRuntime.DependencyIntegration.register_object(container, "svc", 2)
-    FlextRuntime.DependencyIntegration.register_factory(container, "factory", lambda: 1)
+        u.DependencyIntegration.register_object(container, "svc", 2)
+    u.DependencyIntegration.register_factory(container, "factory", lambda: 1)
     with pytest.raises(ValueError, match="already registered"):
-        FlextRuntime.DependencyIntegration.register_factory(
+        u.DependencyIntegration.register_factory(
             container,
             "factory",
             lambda: 2,
         )
-    FlextRuntime.DependencyIntegration.register_resource(
+    u.DependencyIntegration.register_resource(
         container,
         "resource",
         lambda: 1,
     )
     with pytest.raises(ValueError, match="already registered"):
-        FlextRuntime.DependencyIntegration.register_resource(
+        u.DependencyIntegration.register_resource(
             container,
             "resource",
             lambda: 2,
@@ -446,10 +441,10 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     _ = Config  # referenced for pyright
-    FlextRuntime.configure_structlog(config=None)
-    tm.that(FlextRuntime.is_structlog_configured(), eq=True)
+    u.configure_structlog(config=None)
+    tm.that(u.is_structlog_configured(), eq=True)
     tm.that(bool(calls), eq=True)
-    FlextRuntime._structlog_configured = False
+    u._structlog_configured = False
     calls.clear()
     fake_module._print_access = 0
     with contextlib.suppress(AttributeError):
@@ -472,9 +467,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = False
 
     _ = ConfigNoAsync  # referenced for pyright
-    FlextRuntime.configure_structlog(config=None)
-    tm.that(FlextRuntime._structlog_configured, eq=True)
-    FlextRuntime._structlog_configured = False
+    u.configure_structlog(config=None)
+    tm.that(u._structlog_configured, eq=True)
+    u._structlog_configured = False
     calls.clear()
     fake_module._print_access = 0
 
@@ -490,8 +485,8 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     _ = ConfigAsyncFallback  # referenced for pyright
-    FlextRuntime.configure_structlog(config=None)
-    tm.that(FlextRuntime._structlog_configured, eq=True)
+    u.configure_structlog(config=None)
+    tm.that(u._structlog_configured, eq=True)
 
 
 def test_reconfigure_and_reset_state_paths() -> None:
@@ -504,15 +499,15 @@ def test_reconfigure_and_reset_state_paths() -> None:
             self.called = True
 
     dummy = DummyWriter()
-    FlextRuntime._async_writer = cast(
-        "FlextRuntime._AsyncLogWriter",
+    u._async_writer = cast(
+        "u._AsyncLogWriter",
         cast("t.NormalizedValue", dummy),
     )
-    FlextRuntime._structlog_configured = True
-    FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
+    u._structlog_configured = True
+    u.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
     tm.that(dummy.called, eq=True)
-    FlextRuntime.reset_structlog_state_for_testing()
-    tm.that(not FlextRuntime._structlog_configured, eq=True)
+    u.reset_structlog_state_for_testing()
+    tm.that(not u._structlog_configured, eq=True)
 
 
 def test_runtime_result_all_missed_branches() -> None:
@@ -609,14 +604,14 @@ def test_runtime_result_all_missed_branches() -> None:
 
 
 def test_model_support_and_hash_compare_paths() -> None:
-    prefixed = FlextRuntime.generate_prefixed_id("item", length=8)
+    prefixed = u.generate_prefixed_id("item", length=8)
     tm.that(
         prefixed.startswith("item_") and len(prefixed.split("_", 1)[1]) == 8,
         eq=True,
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(
+            u.compare_entities_by_id(
                 "a",
                 cast("t.RuntimeData", "normalized"),
             )
@@ -625,10 +620,7 @@ def test_model_support_and_hash_compare_paths() -> None:
         eq=True,
     )
     tm.that(
-        (
-            FlextRuntime.compare_entities_by_id(cast("t.RuntimeData", "normalized"), 3)
-            is False
-        ),
+        (u.compare_entities_by_id(cast("t.RuntimeData", "normalized"), 3) is False),
         eq=True,
     )
 
@@ -640,7 +632,7 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(
+            u.compare_entities_by_id(
                 cast("t.RuntimeData", A()),
                 cast("t.RuntimeData", B()),
             )
@@ -654,15 +646,15 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     obj = cast("t.RuntimeData", _Opaque())
     tm.that(
-        FlextRuntime.hash_entity_by_id(obj),
+        u.hash_entity_by_id(obj),
         eq=hash(
             id(obj),
         ),
     )
-    tm.that(FlextRuntime.compare_value_objects_by_value("a", "a"), eq=True)
+    tm.that(u.compare_value_objects_by_value("a", "a"), eq=True)
     tm.that(
         (
-            FlextRuntime.compare_value_objects_by_value(
+            u.compare_value_objects_by_value(
                 cast("t.RuntimeData", "normalized"),
                 1,
             )
@@ -670,7 +662,7 @@ def test_model_support_and_hash_compare_paths() -> None:
         ),
         eq=True,
     )
-    tm.that(FlextRuntime.compare_value_objects_by_value([1], [1]), eq=True)
+    tm.that(u.compare_value_objects_by_value([1], [1]), eq=True)
 
     class C:
         @override
@@ -684,7 +676,7 @@ def test_model_support_and_hash_compare_paths() -> None:
 
     tm.that(
         (
-            FlextRuntime.compare_value_objects_by_value(
+            u.compare_value_objects_by_value(
                 cast("t.RuntimeData", C()),
                 cast("t.RuntimeData", D()),
             )
@@ -694,7 +686,7 @@ def test_model_support_and_hash_compare_paths() -> None:
     )
     tm.that(
         (
-            FlextRuntime.compare_value_objects_by_value(
+            u.compare_value_objects_by_value(
                 cast("t.RuntimeData", C()),
                 cast("t.RuntimeData", C()),
             )
@@ -702,26 +694,26 @@ def test_model_support_and_hash_compare_paths() -> None:
         ),
         eq=True,
     )
-    tm.that(FlextRuntime.hash_value_object_by_value("x"), is_=int)
-    tm.that(FlextRuntime.hash_value_object_by_value({"a": 1}), is_=int)
-    tm.that(FlextRuntime.hash_value_object_by_value([1, 2]), is_=int)
+    tm.that(u.hash_value_object_by_value("x"), is_=int)
+    tm.that(u.hash_value_object_by_value({"a": 1}), is_=int)
+    tm.that(u.hash_value_object_by_value([1, 2]), is_=int)
     tm.that(
-        FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})),
+        u.hash_value_object_by_value(MappingProxyType({"a": 1})),
         is_=int,
     )
-    tm.that(FlextRuntime.hash_value_object_by_value((1, 2)), is_=int)
-    tm.that(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), is_=int)
+    tm.that(u.hash_value_object_by_value((1, 2)), is_=int)
+    tm.that(u.hash_value_object_by_value(datetime.now(UTC)), is_=int)
 
     class Empty:
         pass
 
-    assert isinstance(FlextRuntime.Bootstrap.create_instance(Empty), Empty)
+    assert isinstance(u.Bootstrap.create_instance(Empty), Empty)
 
 
 def test_config_bridge_and_trace_context_and_http_validation() -> None:
-    level = FlextRuntime.get_log_level_from_config()
+    level = u.get_log_level_from_config()
     tm.that(level, is_=int)
-    trace_from_scalar = FlextRuntime.ensure_trace_context(
+    trace_from_scalar = u.ensure_trace_context(
         1,
         include_correlation_id=True,
         include_timestamp=True,
@@ -736,16 +728,16 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     class TraceModel(BaseModel):
         key: str = "value"
 
-    trace_from_model = FlextRuntime.ensure_trace_context(TraceModel())
+    trace_from_model = u.ensure_trace_context(TraceModel())
     tm.that(trace_from_model["key"], eq="value")
 
     # ensure_trace_context catches RuntimeError internally for bad mappings
-    bad_trace = FlextRuntime.ensure_trace_context({"broken": "x"})
+    bad_trace = u.ensure_trace_context({"broken": "x"})
     tm.that(bad_trace, has="trace_id")  # graceful fallback
     tm.that(bad_trace, has="span_id")
-    trace_from_mapping = FlextRuntime.ensure_trace_context(MappingProxyType({"a": "b"}))
+    trace_from_mapping = u.ensure_trace_context(MappingProxyType({"a": "b"}))
     tm.that(trace_from_mapping, has="trace_id")
-    trace_from_other = FlextRuntime.ensure_trace_context("path")
+    trace_from_other = u.ensure_trace_context("path")
     tm.that(trace_from_other, has="trace_id")
 
 
@@ -756,43 +748,43 @@ def test_runtime_result_alias_compatibility() -> None:
 
 
 def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    FlextRuntime._structlog_configured = False
-    FlextRuntime.ensure_structlog_configured()
-    tm.that(FlextRuntime.is_structlog_configured(), eq=True)
+    u._structlog_configured = False
+    u.ensure_structlog_configured()
+    tm.that(u.is_structlog_configured(), eq=True)
 
     class BasicModel(BaseModel):
         value: int = 1
 
-    tm.that(FlextRuntime.is_base_model(BasicModel()), eq=True)
-    normalized_mapping = FlextRuntime.normalize_to_container(
+    tm.that(u.is_base_model(BasicModel()), eq=True)
+    normalized_mapping = u.normalize_to_container(
         MappingProxyType({"k": "v"}),
     )
     tm.that(normalized_mapping, is_=t.Dict)
     tm.that(getattr(normalized_mapping, "root", None), eq={"k": "v"})
-    norm_list = FlextRuntime.normalize_to_container([1, "x"])
+    norm_list = u.normalize_to_container([1, "x"])
     tm.that(norm_list, is_=t.ObjectList)
     tm.that(list(getattr(norm_list, "root", [])), eq=[1, "x"])
     # Path is Container, returned as-is
-    tm.that(FlextRuntime.normalize_to_container(Path("/tmp")), eq=Path("/tmp"))
-    tm.that(FlextRuntime.normalize_to_metadata(1), eq=1)
-    metadata_mapping = FlextRuntime.normalize_to_metadata(MappingProxyType({"a": 1}))
+    tm.that(u.normalize_to_container(Path("/tmp")), eq=Path("/tmp"))
+    tm.that(u.normalize_to_metadata(1), eq=1)
+    metadata_mapping = u.normalize_to_metadata(MappingProxyType({"a": 1}))
     tm.that(
         isinstance(metadata_mapping, dict) and metadata_mapping == {"a": 1},
         eq=True,
     )
-    tm.that(FlextRuntime.normalize_to_metadata(Path("/tmp")), eq=str(Path("/tmp")))
+    tm.that(u.normalize_to_metadata(Path("/tmp")), eq=str(Path("/tmp")))
 
     class Frame:
         f_back: types.FrameType | None = None
 
     monkeypatch.setattr(inspect, "currentframe", lambda: Frame())
-    tm.that(FlextRuntime.get_logger(None), none=False)
+    tm.that(u.get_logger(None), none=False)
 
 
 def test_runtime_module_accessors_and_metadata() -> None:
-    tm.that(FlextRuntime.structlog() is structlog, eq=True)
-    tm.that(FlextRuntime.dependency_providers() is providers, eq=True)
-    tm.that(FlextRuntime.dependency_containers() is containers, eq=True)
+    tm.that(u.structlog() is structlog, eq=True)
+    tm.that(u.dependency_providers() is providers, eq=True)
+    tm.that(u.dependency_containers() is containers, eq=True)
 
 
 def test_configure_structlog_print_logger_factory_fallback(
@@ -866,7 +858,7 @@ def test_configure_structlog_print_logger_factory_fallback(
 
     module = FallbackModule()
     monkeypatch.setattr(runtime_module, "structlog", module)
-    FlextRuntime._structlog_configured = False
+    u._structlog_configured = False
     cfg = type(
         "Cfg",
         (),
@@ -880,21 +872,19 @@ def test_configure_structlog_print_logger_factory_fallback(
             "async_logging": True,
         },
     )()
-    FlextRuntime.configure_structlog(config=cast("BaseModel", cfg))
+    u.configure_structlog(config=cast("BaseModel", cfg))
     # After refactoring, PrintLoggerFactory lookups were removed (dead code).
     # The async_logging path now only initializes _AsyncLogWriter without probing.
     tm.that(module.print_calls, gte=0)
 
 
 def test_dependency_integration_and_wiring_paths() -> None:
-    bridge, services, resources = (
-        FlextRuntime.DependencyIntegration.create_layered_bridge(
-            config=t.ConfigMap(root={"db": t.Dict(root={"dsn": "sqlite://"})}),
-        )
+    bridge, services, resources = u.DependencyIntegration.create_layered_bridge(
+        config=t.ConfigMap(root={"db": t.Dict(root={"dsn": "sqlite://"})}),
     )
     _ = (bridge, services, resources)
     tm.that(True, eq=True)
-    di = FlextRuntime.DependencyIntegration.create_container(
+    di = u.DependencyIntegration.create_container(
         container_options=m.DependencyContainerCreationOptions(
             config=t.ConfigMap(root={"feature": t.Dict(root={"enabled": True})}),
             services={"svc": 1},
@@ -902,7 +892,7 @@ def test_dependency_integration_and_wiring_paths() -> None:
             resources={"resource": lambda: {"ok": True}},
             wire_modules=[],
             wire_packages=["unused.package"],
-            wire_classes=[FlextRuntime],
+            wire_classes=[u],
         ),
     )
     tm.that(getattr(getattr(di.config, "feature"), "enabled")(), eq=True)
@@ -910,7 +900,7 @@ def test_dependency_integration_and_wiring_paths() -> None:
     tm.that(di.factory(), eq=2)
     tm.that(di.resource(), eq={"ok": True})
     provider = providers.Configuration()
-    FlextRuntime.DependencyIntegration.bind_configuration_provider(
+    u.DependencyIntegration.bind_configuration_provider(
         provider,
         t.ConfigMap(root={"api": t.Dict(root={"url": "x"})}),
     )
@@ -985,18 +975,18 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
         {"contextvars": CtxVars, "get_logger": staticmethod(_get_logger)},
     )
     monkeypatch.setattr(runtime_module, "structlog", fake_structlog)
-    FlextRuntime.Integration.track_service_resolution("svc", resolved=True)
-    FlextRuntime.Integration.track_service_resolution(
+    u.Integration.track_service_resolution("svc", resolved=True)
+    u.Integration.track_service_resolution(
         "svc",
         resolved=False,
         error_message="x",
     )
-    FlextRuntime.Integration.track_domain_event(
+    u.Integration.track_domain_event(
         "evt",
         aggregate_id="agg",
         event_data=t.ConfigMap(root={"k": "v"}),
     )
-    FlextRuntime.Integration.setup_service_infrastructure(
+    u.Integration.setup_service_infrastructure(
         service_name="svc",
         service_version="1.0.0",
         enable_context_correlation=True,
@@ -1017,7 +1007,7 @@ def test_model_helpers_remaining_paths() -> None:
     right = Entity("u-1")
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(
+            u.compare_entities_by_id(
                 cast("t.RuntimeData", left),
                 cast("t.RuntimeData", right),
             )
@@ -1025,11 +1015,11 @@ def test_model_helpers_remaining_paths() -> None:
         ),
         eq=True,
     )
-    tm.that(FlextRuntime.hash_entity_by_id(cast("t.RuntimeData", left)), is_=int)
+    tm.that(u.hash_entity_by_id(cast("t.RuntimeData", left)), is_=int)
     vm_a = ValueModel(a=1)
     vm_b = ValueModel(a=1)
-    tm.that(FlextRuntime.compare_value_objects_by_value(vm_a, vm_b), eq=True)
-    tm.that(FlextRuntime.hash_value_object_by_value(vm_a), is_=int)
+    tm.that(u.compare_value_objects_by_value(vm_a, vm_b), eq=True)
+    tm.that(u.hash_value_object_by_value(vm_a), is_=int)
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:
@@ -1054,7 +1044,7 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         "callable": lambda: 1,
         "other": type("Sentinel", (), {}),
     }
-    result = FlextRuntime.ensure_trace_context(cast("t.ConfigurationMapping", payload))
+    result = u.ensure_trace_context(cast("t.ConfigurationMapping", payload))
     tm.that(result["str"], eq="x")
     tm.that(result["int"], eq="1")
     tm.that("trace_id" in result and "span_id" in result, eq=True)

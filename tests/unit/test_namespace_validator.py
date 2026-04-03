@@ -5,8 +5,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from flext_infra import FlextInfraModels, FlextInfraNamespaceValidator
+from flext_infra import FlextInfraNamespaceValidator
 from flext_tests import tm
+from tests import m
 
 _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "namespace_validator"
 
@@ -298,7 +299,7 @@ class TestFlextInfraNamespaceValidator:
         )
         result = validator.validate(root)
         tm.that(result.is_success, eq=True)
-        tm.that(result.value, is_=FlextInfraModels.Infra.ValidationReport)
+        tm.that(result.value, is_=m.Infra.ValidationReport)
         tm.that(result.value.summary, has="files checked")
 
     def test_violation_message_format(self, tmp_path: Path) -> None:

@@ -17,7 +17,6 @@ from flext_core import (
     FlextDispatcher,
     FlextLogger,
     FlextRegistry,
-    FlextRuntime,
     FlextSettings,
     T,
     T_co,
@@ -26,6 +25,7 @@ from flext_core import (
     h,
     r,
     s,
+    u,
     x,
 )
 from tests import m, t, u
@@ -233,9 +233,9 @@ class TestUtils:
             return r
 
         @staticmethod
-        def create_test_runtime_instance() -> type[FlextRuntime]:
+        def create_test_runtime_instance() -> type[u]:
             """Create test runtime fixture."""
-            return FlextRuntime
+            return u
 
         @staticmethod
         def create_test_service_instance() -> s[t.ConfigMap]:

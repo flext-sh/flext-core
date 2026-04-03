@@ -213,7 +213,7 @@ class UserHandler:
 
 ## Auto-Configuration
 
-FLEXT automatically configures structlog on first logger creation. You don't need to manually call `FlextRuntime.configure_structlog()` unless you need custom configuration:
+FLEXT automatically configures structlog on first logger creation. You don't need to manually call `u.configure_structlog()` unless you need custom configuration:
 
 ```python
 # Automatic configuration - no manual setup required
@@ -221,7 +221,7 @@ logger = FlextLogger.create_module_logger(__name__)
 logger.info("This works automatically!")
 ```
 
-For custom configuration, you can still call `FlextRuntime.configure_structlog()` explicitly before creating loggers.
+For custom configuration, you can still call `u.configure_structlog()` explicitly before creating loggers.
 
 ## See Also
 

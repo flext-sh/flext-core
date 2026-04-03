@@ -15,8 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence, Sequence
 from typing import Final
 
-from flext_core import r
-from tests import u
+from tests import r, u
 
 
 class TestFlextUtilitiesReliability:

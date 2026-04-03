@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_infra import u
+from tests import u
 
 
 def test_models_family_blocks_utilities_target() -> None:

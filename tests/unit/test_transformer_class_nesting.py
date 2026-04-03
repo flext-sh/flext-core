@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from flext_infra import (
-    FlextInfraRefactorClassNestingTransformer,
-)
+import libcst as cst
+
+from flext_infra import FlextInfraRefactorClassNestingTransformer
 
 
 def test_class_nesting_moves_top_level_class_into_new_namespace() -> None:

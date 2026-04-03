@@ -7,7 +7,7 @@
   - [t — Type System](#t-type-system)
   - [p — Runtime Interfaces](#p-runtime-interfaces)
 - [Layer 0.5: Runtime Bridge](#layer-05-runtime-bridge)
-  - [FlextRuntime — External Library Integration](#flextruntime-external-library-integration)
+  - [u — External Library Integration](#flextruntime-external-library-integration)
 - [Layer 1: Foundation (Core Primitives)](#layer-1-foundation-core-primitives)
   - [r[T] — Railway-Oriented Programming {#flextresult}](#rt-railway-oriented-programming-flextresult)
   - [FlextContainer — Dependency Injection {#flextcontainer}](#flextcontainer-dependency-injection-flextcontainer)
@@ -79,17 +79,17 @@ ______________________________________________________________________
 
 ## Layer 0.5: Runtime Bridge
 
-### FlextRuntime — External Library Integration
+### u — External Library Integration
 
 Adapters for external libraries (for example, `structlog`) that stay isolated from the dispatcher and domain layers.
 
 ```python
-from flext_core import FlextRuntime
+from flext_core import u
 
-if FlextRuntime.is_valid_email(email):
+if u.is_valid_email(email):
     process_email(email)
 
-data = FlextRuntime.to_json_serializable(payload)
+data = u.to_json_serializable(payload)
 ```
 
 ______________________________________________________________________

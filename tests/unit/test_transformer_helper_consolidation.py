@@ -1,10 +1,10 @@
-"""Tests for HelperConsolidationTransformer."""
+"""Tests for FlextInfraHelperConsolidationTransformer."""
 
 from __future__ import annotations
 
-from flext_infra import (
-    FlextInfraHelperConsolidationTransformer as HelperConsolidationTransformer,
-)
+import libcst as cst
+
+from flext_infra import FlextInfraHelperConsolidationTransformer
 
 
 class TestHelperConsolidationTransformer:
@@ -14,7 +14,7 @@ class TestHelperConsolidationTransformer:
         """Test that loose function becomes @staticmethod."""
         source = '\ndef util_helper(x: int) -> int:\n    """Helper docstring."""\n    return x * 2\n'
         mappings = {"util_helper": "FlextUtilities"}
-        transformer = HelperConsolidationTransformer(mappings)
+        transformer = FlextInfraHelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
         modified = module.visit(transformer)
         assert "@staticmethod" in modified.code
@@ -25,7 +25,7 @@ class TestHelperConsolidationTransformer:
         """Test that type hints are preserved."""
         source = "\ndef typed_helper(x: int, y: str) -> bool:\n    return True\n"
         mappings = {"typed_helper": "FlextUtilities"}
-        transformer = HelperConsolidationTransformer(mappings)
+        transformer = FlextInfraHelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
         modified = module.visit(transformer)
         assert "x: int" in modified.code
@@ -36,7 +36,7 @@ class TestHelperConsolidationTransformer:
         """Test that docstrings are preserved."""
         source = '\ndef documented_helper():\n    """This is a documented helper."""\n    pass\n'
         mappings = {"documented_helper": "FlextUtilities"}
-        transformer = HelperConsolidationTransformer(mappings)
+        transformer = FlextInfraHelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
         modified = module.visit(transformer)
         assert "This is a documented helper" in modified.code
@@ -45,7 +45,7 @@ class TestHelperConsolidationTransformer:
         """Test multiple helpers consolidated into same namespace."""
         source = "\ndef helper_one():\n    pass\n\ndef helper_two():\n    pass\n"
         mappings = {"helper_one": "FlextUtilities", "helper_two": "FlextUtilities"}
-        transformer = HelperConsolidationTransformer(mappings)
+        transformer = FlextInfraHelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
         modified = module.visit(transformer)
         assert modified.code.count("def helper_") == 2
@@ -57,7 +57,7 @@ class TestHelperConsolidationTransformer:
             "\ndef mapped_helper():\n    pass\n\ndef unmapped_helper():\n    pass\n"
         )
         mappings = {"mapped_helper": "FlextUtilities"}
-        transformer = HelperConsolidationTransformer(mappings)
+        transformer = FlextInfraHelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
         modified = module.visit(transformer)
         assert "def unmapped_helper()" in modified.code
@@ -69,7 +69,7 @@ class TestHelperConsolidationTransformer:
         """Test that existing namespace class is extended."""
         source = "\nclass FlextUtilities:\n    pass\n\ndef new_helper():\n    pass\n"
         mappings = {"new_helper": "FlextUtilities"}
-        transformer = HelperConsolidationTransformer(mappings)
+        transformer = FlextInfraHelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
         modified = module.visit(transformer)
         assert modified.code.count("class FlextUtilities:") == 1
@@ -79,7 +79,7 @@ class TestHelperConsolidationTransformer:
         """Test that internal calls to helpers are updated."""
         source = "\ndef helper():\n    pass\n\ndef caller():\n    helper()\n"
         mappings = {"helper": "FlextUtilities"}
-        transformer = HelperConsolidationTransformer(mappings)
+        transformer = FlextInfraHelperConsolidationTransformer(mappings)
         module = cst.parse_module(source)
         modified = module.visit(transformer)
         assert "FlextUtilities.helper()" in modified.code

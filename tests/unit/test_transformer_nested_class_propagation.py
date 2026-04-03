@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from flext_infra import (
-    FlextInfraNestedClassPropagationTransformer as NestedClassPropagationTransformer,
-)
+from flext_infra import FlextInfraNestedClassPropagationTransformer
 
 
 def test_nested_class_propagation_updates_import_annotations_and_calls() -> None:
     source = "from pkg import TimeoutEnforcer\n\nclass Child(TimeoutEnforcer):\n    pass\n\ndef validate(x: TimeoutEnforcer) -> bool:\n    if isinstance(x, TimeoutEnforcer):\n        y = TimeoutEnforcer()\n        return isinstance(y, pkg.TimeoutEnforcer)\n    return False\n"
     transformed = MetadataWrapper(cst.parse_module(source)).visit(
-        NestedClassPropagationTransformer({
+        FlextInfraNestedClassPropagationTransformer({
             "TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer",
         }),
     )
@@ -26,7 +24,7 @@ def test_nested_class_propagation_updates_import_annotations_and_calls() -> None
 def test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage() -> None:
     source = "from pkg import TimeoutEnforcer as TE\n\nvalue = TE()\n"
     transformed = MetadataWrapper(cst.parse_module(source)).visit(
-        NestedClassPropagationTransformer({
+        FlextInfraNestedClassPropagationTransformer({
             "TimeoutEnforcer": "FlextDispatcher.TimeoutEnforcer",
         }),
     )

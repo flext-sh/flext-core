@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextContainer, FlextLogger, FlextRuntime, c, r
+from flext_core import FlextContainer, FlextLogger, c, r, u
 
 from .shared import Examples
 
-FlextRuntime.configure_structlog()
+u.configure_structlog()
 
 
 class Ex03FlextLogger(Examples):

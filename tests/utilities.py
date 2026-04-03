@@ -18,11 +18,12 @@ from collections.abc import Callable, Iterator, Mapping
 from typing import Never, override
 
 from flext_core import r
+from flext_infra import FlextInfraUtilities
 from flext_tests import FlextTestsUtilities, tm
 from tests.typings import FlextCoreTestTypes
 
 
-class FlextCoreTestUtilities(FlextTestsUtilities):
+class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
     """Utilities for flext-core tests - extends FlextTestsUtilities.
 
     Architecture: Extends FlextTestsUtilities with flext-core-specific utility

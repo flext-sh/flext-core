@@ -28,8 +28,8 @@ import pytest
 from hypothesis import given, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, FlextSettings, r, s
-from tests import m, p, t, u
+from flext_core import FlextContext, FlextSettings
+from tests import m, p, r, s, t, u
 
 
 class TestsCore:

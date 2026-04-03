@@ -1,6 +1,6 @@
-"""Integration tests for FlextService implementations.
+"""Integration tests for s implementations.
 
-Tests real FlextService implementations with proper dependency injection,
+Tests real s implementations with proper dependency injection,
 service composition, and lifecycle management patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,11 +15,7 @@ from typing import Annotated, override
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import FlextService, r
-from tests import m, p, t
-
-from ..conftest import FunctionalExternalService
-from ..test_utils import assertion_helpers
+from tests import FunctionalExternalService, assertion_helpers, m, p, r, s, t
 
 
 class TestService:
@@ -34,8 +30,8 @@ class TestService:
             Field(default=True, description="Whether user is active"),
         ] = True
 
-    class UserQueryService(FlextService[bool]):
-        """Real user query service using FlextService.
+    class UserQueryService(s[bool]):
+        """Real user query service using s.
 
         Business Rule: execute() returns bool to indicate success/failure status.
         This pattern is used for services that don't return domain entities but
@@ -121,8 +117,8 @@ class TestService:
             """Get call count."""
             return self._call_count
 
-    class NotificationService(FlextService[str]):
-        """Real notification service using FlextService."""
+    class NotificationService(s[str]):
+        """Real notification service using s."""
 
         _sent_notifications: MutableSequence[str] = PrivateAttr(
             default_factory=lambda: list[str](),
@@ -196,8 +192,8 @@ class TestService:
             temp_dir=temp_dir,
         )
 
-    class LifecycleService(FlextService[str]):
-        """Real lifecycle service using FlextService with config model."""
+    class LifecycleService(s[str]):
+        """Real lifecycle service using s with config model."""
 
         _initialized: bool = PrivateAttr(default=False)
         _service_config: TestService.ServiceConfig | None = PrivateAttr(default=None)
@@ -288,7 +284,7 @@ class TestService:
 
     @pytest.mark.integration
     def test_user_service_execution(self, clean_container: p.Container) -> None:
-        """Test user service execution with FlextService.
+        """Test user service execution with s.
 
         Args:
             clean_container: Isolated container fixture.
@@ -534,7 +530,7 @@ class TestService:
     ) -> None:
         """Test dependency injection patterns with real services.
 
-        Demonstrates proper dependency injection testing with real FlextService
+        Demonstrates proper dependency injection testing with real s
         implementations, service composition, and result validation.
 
         Args:

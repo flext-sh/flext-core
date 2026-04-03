@@ -68,7 +68,7 @@ else:
 
 ### Dependency Injection
 
-Manage your application's dependencies cleanly using `FlextContainer` and `FlextRuntime`.
+Manage your application's dependencies cleanly using `FlextContainer` and `u`.
 
 ```python
 from flext_core import FlextContainer, Provide, inject, FlextService

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, t
+from flext_core import FlextContainer, FlextContext, c, t, u
 
 from .shared import Examples
 
@@ -61,7 +61,7 @@ class Ex06FlextContext(Examples):
 
     def _exercise_container_and_service_methods(self) -> None:
         self.section("container_and_service")
-        self.check("runtime.class", FlextRuntime.__name__)
+        self.check("runtime.class", u.__name__)
         container = FlextContainer()
         _ = FlextContext.set_container(container)
         self.check("set_get_container.same", FlextContext.get_container() is container)

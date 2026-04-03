@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import override
 
-from flext_core import FlextRuntime, FlextSettings, c, m, r, t, u, x
+from flext_core import FlextSettings, c, m, r, t, u, x
 
 from .shared import Examples
 
@@ -72,7 +72,7 @@ class Ex05FlextMixins(Examples):
     @override
     def exercise(self) -> None:
         """Run all scenarios and record deterministic golden output."""
-        FlextRuntime.configure_structlog()
+        u.configure_structlog()
         service = self.DemoService()
         self._exercise_result_and_conversion()
         self._exercise_runtime_properties_and_tracking(service)

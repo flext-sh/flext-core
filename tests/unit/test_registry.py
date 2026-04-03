@@ -8,9 +8,9 @@ import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRegistry, h, r
+from flext_core import FlextRegistry
 from flext_tests import tm
-from tests import c, m, t, u
+from tests import c, h, m, r, t, u
 
 
 class TestFlextRegistry:

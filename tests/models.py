@@ -1,11 +1,11 @@
 """Models for flext-core tests.
 
-Provides FlextCoreTestModels using composition with FlextTestsModels and FlextModels.
+Provides FlextCoreTestModels using composition with FlextTestsModels and FlextTestsModels.
 All generic test models come from flext_tests.
 
 Architecture:
 - FlextTestsModels (flext_tests) = Generic models for all FLEXT projects
-- FlextModels (flext_core) = Core domain models
+- FlextTestsModels (flext_core) = Core domain models
 - FlextCoreTestModels (tests/) = flext-core-specific models using composition
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -20,21 +20,21 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels
+from flext_infra import FlextInfraModels
 from flext_tests import FlextTestsModels
 from tests import t
 
 
-class FlextCoreTestModels(FlextTestsModels, FlextModels):
+class FlextCoreTestModels(FlextTestsModels, FlextInfraModels):
     """Models for flext-core tests - uses composition with FlextTestsModels.
 
-    Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextModels
+    Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextTestsModels
     for flext-core-specific model definitions.
 
     Access patterns:
     - FlextCoreTestModels.Tests.* = flext_tests test models (via inheritance)
     - FlextCoreTestModels.Core.* = flext-core-specific test models
-    - FlextCoreTestModels.Entity, .Value, etc. = FlextModels domain models (via inheritance)
+    - FlextCoreTestModels.Entity, .Value, etc. = FlextTestsModels domain models (via inheritance)
 
     Rules:
     - flext-core-specific models go in Core namespace
@@ -52,7 +52,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             VALIDATE = "validate"
             FAIL = "fail"
 
-        class User(FlextModels.Entity):
+        class User(FlextTestsModels.Entity):
             """Shared user model for tests."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -74,7 +74,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             extra_param: int = 3
             description: str = ""
 
-        class DomainTestEntity(FlextModels.Entity):
+        class DomainTestEntity(FlextTestsModels.Entity):
             """Test entity for domain tests."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -82,7 +82,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             name: str
             value: t.ContainerValue
 
-        class DomainTestValue(FlextModels.Value):
+        class DomainTestValue(FlextTestsModels.Value):
             """Test value t.NormalizedValue for domain tests."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
@@ -105,7 +105,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
                 self.data = data
 
         class ComplexValue:
-            """FlextModels.Value t.NormalizedValue with non-hashable attributes."""
+            """FlextTestsModels.Value t.NormalizedValue with non-hashable attributes."""
 
             def __init__(self, data: str, items: t.StrSequence) -> None:
                 """Initialize complex value with non-hashable items."""
@@ -156,7 +156,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
         class NoSetattr:
             """Object without __setattr__."""
 
-        class ParseOptions(FlextModels.ParseOptions):
+        class ParseOptions(FlextTestsModels.ParseOptions):
             """Parse options - real inheritance."""
 
         class ParseDelimitedCase(BaseModel):
@@ -171,7 +171,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             delimiter: str
             expected: t.StrSequence | None = None
             expected_error: str | None = None
-            options: FlextModels.ParseOptions | None = None
+            options: FlextTestsModels.ParseOptions | None = None
             strip: bool = True
             remove_empty: bool = True
             validator: Callable[[str], bool] | None = None
@@ -244,7 +244,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             expected_success: bool = True
             error_contains: str | None = None
 
-        class UtilityEntityModel(FlextModels.Entity):
+        class UtilityEntityModel(FlextTestsModels.Entity):
             """Shared entity model for generic test fixtures."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -252,7 +252,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextModels):
             name: str
             value: t.ContainerValue
 
-        class UtilityValueModel(FlextModels.Value):
+        class UtilityValueModel(FlextTestsModels.Value):
             """Shared value model for generic test fixtures."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)

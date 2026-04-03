@@ -13,8 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, MutableSequence
 from typing import cast
 
-from flext_core import r
-from tests import t, u
+from tests import r, t, u
 
 
 def test_ok_accepts_none() -> None:

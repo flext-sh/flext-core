@@ -6,7 +6,7 @@ import sys
 from types import ModuleType
 from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, t, u
+from flext_core import FlextContainer, FlextContext, c, r, t, u
 
 from .shared import Examples
 
@@ -330,7 +330,7 @@ class Ex08FlextContainer(Examples):
             "result.ok.roundtrip",
             r[int].ok(random_ok_val).value == random_ok_val,
         )
-        self.check("runtime.normalize.bool", FlextRuntime.normalize_to_container(True))
+        self.check("runtime.normalize.bool", u.normalize_to_container(True))
         self.check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 

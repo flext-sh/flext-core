@@ -8,11 +8,11 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextHandlers, FlextRegistry, h, r
-from tests import c, m, p, t
+from flext_core import FlextRegistry
+from tests import c, h, m, p, r, t
 
 
-class _Handler(FlextHandlers[t.NormalizedValue, t.Container]):
+class _Handler(h[t.NormalizedValue, t.Container]):
     """Test handler implementation."""
 
     @override

@@ -14,7 +14,6 @@ from flext_core import (
     FlextContext,
     FlextDecorators,
     FlextExceptions,
-    FlextRuntime,
     c,
     d,
     m,
@@ -422,7 +421,7 @@ class Ex09FlextDecorators(Examples):
         @d.with_context(tenant=tenant, retries=retries, enabled=enabled, dropped=None)
         def read_bound_context() -> Mapping[str, t.Scalar | None]:
             """Read context values while decorator-managed context is active."""
-            context_vars = dict(FlextRuntime.structlog().contextvars.get_contextvars())
+            context_vars = dict(u.structlog().contextvars.get_contextvars())
             return {
                 "tenant": context_vars.get("tenant"),
                 "retries": context_vars.get("retries"),
@@ -431,7 +430,7 @@ class Ex09FlextDecorators(Examples):
             }
 
         inside = read_bound_context()
-        after = dict(FlextRuntime.structlog().contextvars.get_contextvars())
+        after = dict(u.structlog().contextvars.get_contextvars())
         inside_dropped = inside.get("dropped")
         after_tenant_raw = after.get("tenant")
         after_tenant = (

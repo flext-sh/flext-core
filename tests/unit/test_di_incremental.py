@@ -25,21 +25,21 @@ from typing import override
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextRuntime,
     FlextSettings,
     r,
     s,
+    u,
 )
 from flext_tests import tm
 from tests import m, p, t, u
 
-inject = FlextRuntime.DependencyIntegration.inject
+inject = u.DependencyIntegration.inject
 
 
 class TestDIIncremental:
     def test_dependency_providers_returns_valid_module(self) -> None:
         """Test dependency_providers returns valid providers module."""
-        providers_module = FlextRuntime.dependency_providers()
+        providers_module = u.dependency_providers()
         tm.that(hasattr(providers_module, "Singleton"), eq=True)
         tm.that(hasattr(providers_module, "Factory"), eq=True)
         tm.that(hasattr(providers_module, "Resource"), eq=True)
@@ -51,7 +51,7 @@ class TestDIIncremental:
 
     def test_dependency_containers_returns_valid_module(self) -> None:
         """Test dependency_containers returns valid containers module."""
-        containers_module = FlextRuntime.dependency_containers()
+        containers_module = u.dependency_containers()
         tm.that(hasattr(containers_module, "DeclarativeContainer"), eq=True)
         tm.that(hasattr(containers_module, "DynamicContainer"), eq=True)
         dynamic_container = containers_module.DynamicContainer()
@@ -68,7 +68,7 @@ class TestDIIncremental:
     def test_create_layered_bridge_with_config(self) -> None:
         """Test create_layered_bridge with real configuration."""
         bridge, service_module, resource_module = (
-            FlextRuntime.DependencyIntegration.create_layered_bridge(
+            u.DependencyIntegration.create_layered_bridge(
                 config=t.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
@@ -79,8 +79,8 @@ class TestDIIncremental:
 
     def test_register_object_with_real_container(self) -> None:
         """Test register_object with real container execution."""
-        di_container = FlextRuntime.DependencyIntegration.create_container()
-        provider = FlextRuntime.DependencyIntegration.register_object(
+        di_container = u.DependencyIntegration.create_container()
+        provider = u.DependencyIntegration.register_object(
             di_container,
             "test_object",
             {"key": "value"},
@@ -91,14 +91,14 @@ class TestDIIncremental:
 
     def test_register_factory_with_caching(self) -> None:
         """Test register_factory with caching enabled."""
-        di_container = FlextRuntime.DependencyIntegration.create_container()
+        di_container = u.DependencyIntegration.create_container()
         call_count = {"count": 0}
 
         def factory() -> t.IntMapping:
             call_count["count"] += 1
             return {"calls": call_count["count"]}
 
-        provider = FlextRuntime.DependencyIntegration.register_factory(
+        provider = u.DependencyIntegration.register_factory(
             di_container,
             "cached_factory",
             factory,
@@ -112,14 +112,14 @@ class TestDIIncremental:
 
     def test_register_factory_without_caching(self) -> None:
         """Test register_factory without caching (Factory)."""
-        di_container = FlextRuntime.DependencyIntegration.create_container()
+        di_container = u.DependencyIntegration.create_container()
         call_count = {"count": 0}
 
         def factory() -> t.IntMapping:
             call_count["count"] += 1
             return {"calls": call_count["count"]}
 
-        provider = FlextRuntime.DependencyIntegration.register_factory(
+        provider = u.DependencyIntegration.register_factory(
             di_container,
             "factory_no_cache",
             factory,
@@ -133,7 +133,7 @@ class TestDIIncremental:
 
     def test_register_resource_with_lifecycle(self) -> None:
         """Test register_resource with real teardown."""
-        di_container = FlextRuntime.DependencyIntegration.create_container()
+        di_container = u.DependencyIntegration.create_container()
         lifecycle = {"created": False, "closed": False}
 
         def resource_factory() -> t.BoolMapping:
@@ -143,7 +143,7 @@ class TestDIIncremental:
         def resource_teardown(_resource: t.BoolMapping) -> None:
             lifecycle["closed"] = True
 
-        provider = FlextRuntime.DependencyIntegration.register_resource(
+        provider = u.DependencyIntegration.register_resource(
             di_container,
             "db_connection",
             resource_factory,
@@ -156,24 +156,24 @@ class TestDIIncremental:
 
     def test_wire_modules_with_inject(self) -> None:
         """Test wire with @inject decorator real execution."""
-        di_container = FlextRuntime.DependencyIntegration.create_container()
-        FlextRuntime.DependencyIntegration.register_object(
+        di_container = u.DependencyIntegration.create_container()
+        u.DependencyIntegration.register_object(
             di_container,
             "api_key",
             "secret123",
         )
-        FlextRuntime.DependencyIntegration.register_object(di_container, "timeout", 30)
+        u.DependencyIntegration.register_object(di_container, "timeout", 30)
         module = ModuleType("test_module")
 
-        @FlextRuntime.DependencyIntegration.inject
+        @u.DependencyIntegration.inject
         def api_call(
-            key: str = FlextRuntime.DependencyIntegration.Provide["api_key"],
-            timeout_sec: int = FlextRuntime.DependencyIntegration.Provide["timeout"],
+            key: str = u.DependencyIntegration.Provide["api_key"],
+            timeout_sec: int = u.DependencyIntegration.Provide["timeout"],
         ) -> t.HeaderMapping:
             return {"key": key, "timeout": timeout_sec}
 
         setattr(module, "api_call", api_call)
-        FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
+        u.DependencyIntegration.wire(di_container, modules=[module])
         try:
             api_call_func: Callable[[], t.HeaderMapping] = getattr(
                 module,
@@ -194,8 +194,8 @@ class TestDIIncremental:
 
         @inject
         def log_message(
-            name: str = FlextRuntime.DependencyIntegration.Provide["logger_name"],
-            level: str = FlextRuntime.DependencyIntegration.Provide["log_level"],
+            name: str = u.DependencyIntegration.Provide["logger_name"],
+            level: str = u.DependencyIntegration.Provide["log_level"],
         ) -> t.StrMapping:
             return {"logger": name, "level": level}
 
@@ -313,10 +313,8 @@ class TestDIIncremental:
 
         @inject
         def process_request(
-            logger_name: str = FlextRuntime.DependencyIntegration.Provide[
-                "custom_logger"
-            ],
-            pool: t.IntMapping = FlextRuntime.DependencyIntegration.Provide["db_pool"],
+            logger_name: str = u.DependencyIntegration.Provide["custom_logger"],
+            pool: t.IntMapping = u.DependencyIntegration.Provide["db_pool"],
         ) -> t.HeaderMapping:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
@@ -342,17 +340,13 @@ class TestDIIncremental:
 
         @inject
         def func1(
-            config: t.StrMapping = FlextRuntime.DependencyIntegration.Provide[
-                "shared_config"
-            ],
+            config: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
         ) -> str:
             return config["env"]
 
         @inject
         def func2(
-            config: t.StrMapping = FlextRuntime.DependencyIntegration.Provide[
-                "shared_config"
-            ],
+            config: t.StrMapping = u.DependencyIntegration.Provide["shared_config"],
         ) -> bool:
             return config["env"] == "test"
 
@@ -377,15 +371,15 @@ class TestDIIncremental:
 
         @inject
         def build_url(
-            base: str = FlextRuntime.DependencyIntegration.Provide["base_url"],
-            version: str = FlextRuntime.DependencyIntegration.Provide["api_version"],
+            base: str = u.DependencyIntegration.Provide["base_url"],
+            version: str = u.DependencyIntegration.Provide["api_version"],
         ) -> str:
             return f"{base}/{version}"
 
         @inject
         def api_call(
-            url: str = FlextRuntime.DependencyIntegration.Provide["built_url"],
-            base: str = FlextRuntime.DependencyIntegration.Provide["base_url"],
+            url: str = u.DependencyIntegration.Provide["built_url"],
+            base: str = u.DependencyIntegration.Provide["base_url"],
         ) -> t.StrMapping:
             return {"url": url, "base": base}
 
@@ -411,7 +405,7 @@ class TestDIIncremental:
 
         @inject
         def test_func(
-            value: str = FlextRuntime.DependencyIntegration.Provide["test_value"],
+            value: str = u.DependencyIntegration.Provide["test_value"],
         ) -> str:
             return value
 
@@ -474,9 +468,7 @@ class TestDIIncremental:
             @inject
             def __init__(
                 self,
-                value: str = FlextRuntime.DependencyIntegration.Provide[
-                    "injected_value"
-                ],
+                value: str = u.DependencyIntegration.Provide["injected_value"],
             ) -> None:
                 self.value = value
 
@@ -494,7 +486,7 @@ class TestDIIncremental:
 
         @inject
         def func_with_missing(
-            missing: str = FlextRuntime.DependencyIntegration.Provide["nonexistent"],
+            missing: str = u.DependencyIntegration.Provide["nonexistent"],
         ) -> str:
             return missing
 

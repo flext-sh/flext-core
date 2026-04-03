@@ -5,9 +5,8 @@ from typing import cast
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import r
 from flext_tests import tm
-from tests import t
+from tests import r, t
 
 
 class TestResultExceptionCarrying:

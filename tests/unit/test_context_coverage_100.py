@@ -272,7 +272,7 @@ class TestContext100Coverage:
         """Test ContextData.validate_dict_serializable with non-serializable value.
 
         Note: Non-JSON-serializable values (like sets) are converted to strings
-        by FlextRuntime.normalize_to_container() before serializability check,
+        by u.normalize_to_container() before serializability check,
         so they become valid strings. This is intentional - ensures any value
         can be stored in context.
         """
@@ -313,7 +313,7 @@ class TestContext100Coverage:
         """Test ContextExport.validate_dict_serializable with non-serializable value.
 
         Note: Non-JSON-serializable values (like sets) are converted to strings
-        by FlextRuntime.normalize_to_container() before serializability check.
+        by u.normalize_to_container() before serializability check.
         """
         data = {"key": {1, 2, 3}}
         result = m.ContextExport.model_validate({"data": data})

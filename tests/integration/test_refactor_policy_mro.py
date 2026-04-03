@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from flext_infra import FlextInfraConstants, FlextInfraRefactorMROResolver
+from flext_infra import FlextInfraRefactorMROResolver
+from tests import c
 
 
 class TestRefactorPolicyMRO:
@@ -56,30 +57,30 @@ class TestRefactorPolicyMRO:
     def test_mro_resolver_accepts_expected_order(self) -> None:
         resolutions = FlextInfraRefactorMROResolver.resolve(
             family_classes={
-                FlextInfraConstants.Infra.FacadeFamily.C: self.AlgarOudMigConstants,
-                FlextInfraConstants.Infra.FacadeFamily.T: self.AlgarOudMigTypes,
-                FlextInfraConstants.Infra.FacadeFamily.P: self.AlgarOudMigProtocols,
-                FlextInfraConstants.Infra.FacadeFamily.M: self.AlgarOudMigModels,
-                FlextInfraConstants.Infra.FacadeFamily.U: self.AlgarOudMigUtilities,
+                c.Infra.FacadeFamily.C: self.AlgarOudMigConstants,
+                c.Infra.FacadeFamily.T: self.AlgarOudMigTypes,
+                c.Infra.FacadeFamily.P: self.AlgarOudMigProtocols,
+                c.Infra.FacadeFamily.M: self.AlgarOudMigModels,
+                c.Infra.FacadeFamily.U: self.AlgarOudMigUtilities,
             },
             expected_base_chains={
-                FlextInfraConstants.Infra.FacadeFamily.C: [
+                c.Infra.FacadeFamily.C: [
                     "FlextLdapConstants",
                     "FlextCliConstants",
                 ],
-                FlextInfraConstants.Infra.FacadeFamily.T: [
+                c.Infra.FacadeFamily.T: [
                     "FlextLdapTypes",
                     "FlextCliTypes",
                 ],
-                FlextInfraConstants.Infra.FacadeFamily.P: [
+                c.Infra.FacadeFamily.P: [
                     "FlextLdapProtocols",
                     "FlextCliProtocols",
                 ],
-                FlextInfraConstants.Infra.FacadeFamily.M: [
+                c.Infra.FacadeFamily.M: [
                     "FlextLdapModels",
                     "FlextCliModels",
                 ],
-                FlextInfraConstants.Infra.FacadeFamily.U: [
+                c.Infra.FacadeFamily.U: [
                     "FlextLdapUtilities",
                     "FlextCliUtilities",
                 ],
@@ -94,36 +95,30 @@ class TestRefactorPolicyMRO:
         try:
             FlextInfraRefactorMROResolver.resolve(
                 family_classes={
-                    FlextInfraConstants.Infra.FacadeFamily.C: (
-                        self.AlgarOudMigConstants
-                    ),
-                    FlextInfraConstants.Infra.FacadeFamily.T: self.AlgarOudMigTypes,
-                    FlextInfraConstants.Infra.FacadeFamily.P: (
-                        self.AlgarOudMigProtocols
-                    ),
-                    FlextInfraConstants.Infra.FacadeFamily.M: self.AlgarOudMigModels,
-                    FlextInfraConstants.Infra.FacadeFamily.U: (
-                        self.AlgarOudMigUtilities
-                    ),
+                    c.Infra.FacadeFamily.C: (self.AlgarOudMigConstants),
+                    c.Infra.FacadeFamily.T: self.AlgarOudMigTypes,
+                    c.Infra.FacadeFamily.P: (self.AlgarOudMigProtocols),
+                    c.Infra.FacadeFamily.M: self.AlgarOudMigModels,
+                    c.Infra.FacadeFamily.U: (self.AlgarOudMigUtilities),
                 },
                 expected_base_chains={
-                    FlextInfraConstants.Infra.FacadeFamily.C: [
+                    c.Infra.FacadeFamily.C: [
                         "FlextLdapConstants",
                         "FlextCliConstants",
                     ],
-                    FlextInfraConstants.Infra.FacadeFamily.T: [
+                    c.Infra.FacadeFamily.T: [
                         "FlextLdapTypes",
                         "FlextCliTypes",
                     ],
-                    FlextInfraConstants.Infra.FacadeFamily.P: [
+                    c.Infra.FacadeFamily.P: [
                         "FlextLdapProtocols",
                         "FlextCliProtocols",
                     ],
-                    FlextInfraConstants.Infra.FacadeFamily.M: [
+                    c.Infra.FacadeFamily.M: [
                         "FlextCliModels",
                         "FlextLdapModels",
                     ],
-                    FlextInfraConstants.Infra.FacadeFamily.U: [
+                    c.Infra.FacadeFamily.U: [
                         "FlextLdapUtilities",
                         "FlextCliUtilities",
                     ],

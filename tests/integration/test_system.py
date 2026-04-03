@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import uuid
 
-from flext_core import FlextContainer, e, r
-from tests import c, t, u
+from flext_core import FlextContainer
+from tests import c, e, r, t, u
 
 
 class TestCompleteFlextSystemIntegration:

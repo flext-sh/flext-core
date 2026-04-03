@@ -15,11 +15,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_core import FlextTypes, T, T_co, T_contra
+from flext_core import T, T_co, T_contra
+from flext_infra import FlextInfraTypes
 from flext_tests import FlextTestsTypes
 
 
-class FlextCoreTestTypes(FlextTestsTypes, FlextTypes):
+class FlextCoreTestTypes(FlextTestsTypes, FlextInfraTypes):
     """Type system foundation for flext-core tests - extends FlextTestsTypes.
 
     Architecture: Extends FlextTestsTypes with flext-core-specific type definitions.
@@ -40,12 +41,12 @@ class FlextCoreTestTypes(FlextTestsTypes, FlextTypes):
 
         type ServiceConfigMapping = Mapping[
             str,
-            FlextTypes.ContainerValue | MutableSequence[str],
+            FlextTestsTypes.ContainerValue | MutableSequence[str],
         ]
         "Service configuration mapping specific to flext-core services."
         type HandlerConfigMapping = Mapping[
             str,
-            FlextTypes.ContainerValue | MutableSequence[str],
+            FlextTestsTypes.ContainerValue | MutableSequence[str],
         ]
         "Handler configuration mapping specific to flext-core handlers."
 

@@ -28,9 +28,8 @@ from typing import cast
 
 import pytest
 
-from flext_core import r
 from flext_tests import tm
-from tests import t
+from tests import r, t
 
 
 class TestrCoverage:
