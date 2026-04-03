@@ -1,25 +1,14 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Internal module for FlextModels nested classes.
-
-This module contains extracted nested classes from FlextModels to improve
-maintainability.
-
-All classes are re-exported through FlextModels in models.py - users should
-NEVER import from this module directly.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
+"""Models package."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes

@@ -1,22 +1,14 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Internal utilities package - implementation modules only.
-
-This package contains implementation modules for u.
-External code MUST NOT import from this package directly.
-Use u from flext_core instead.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Utilities package."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes

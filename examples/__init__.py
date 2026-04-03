@@ -131,6 +131,16 @@ if _TYPE_CHECKING:
     )
     from examples.shared import Examples
     from flext_core import FlextTypes
+    from flext_core.constants import FlextConstants as c
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.protocols import FlextProtocols as p
+    from flext_core.result import FlextResult as r
+    from flext_core.service import FlextService as s
+    from flext_core.typings import FlextTypes as t
+    from flext_core.utilities import FlextUtilities as u
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
     ("examples._models",),
@@ -154,6 +164,9 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "UserInput": "examples.models",
         "UserProfile": "examples.models",
         "_models": "examples._models",
+        "c": ("flext_core.constants", "FlextConstants"),
+        "d": ("flext_core.decorators", "FlextDecorators"),
+        "e": ("flext_core.exceptions", "FlextExceptions"),
         "em": "examples.models",
         "ex_01_flext_result": "examples.ex_01_flext_result",
         "ex_02_flext_settings": "examples.ex_02_flext_settings",
@@ -167,11 +180,18 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "ex_10_flext_handlers": "examples.ex_10_flext_handlers",
         "ex_11_flext_service": "examples.ex_11_flext_service",
         "ex_12_flext_registry": "examples.ex_12_flext_registry",
+        "h": ("flext_core.handlers", "FlextHandlers"),
         "logging_config_once_pattern": "examples.logging_config_once_pattern",
         "m": ("examples.models", "FlextCoreExampleModels"),
         "main": "examples.logging_config_once_pattern",
         "models": "examples.models",
+        "p": ("flext_core.protocols", "FlextProtocols"),
+        "r": ("flext_core.result", "FlextResult"),
+        "s": ("flext_core.service", "FlextService"),
         "shared": "examples.shared",
+        "t": ("flext_core.typings", "FlextTypes"),
+        "u": ("flext_core.utilities", "FlextUtilities"),
+        "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
 

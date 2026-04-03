@@ -1,14 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Test helpers for flext-core - service factories only.
-
-This directory contains ONLY flext-core-specific service factories.
-All generic test utilities come from flext_tests directly.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Helpers package."""
 
 from __future__ import annotations
 
@@ -19,6 +12,17 @@ from flext_core.lazy import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
+    from flext_core.constants import FlextConstants as c
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.models import FlextModels as m
+    from flext_core.protocols import FlextProtocols as p
+    from flext_core.result import FlextResult as r
+    from flext_core.service import FlextService as s
+    from flext_core.typings import FlextTypes as t
+    from flext_core.utilities import FlextUtilities as u
     from tests.helpers import _scenarios_impl, factories, factories_impl, scenarios
     from tests.helpers._scenarios_impl import (
         ParserScenario,
@@ -80,10 +84,21 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "ValidationScenario": "tests.helpers._scenarios_impl",
     "ValidationScenarios": "tests.helpers._scenarios_impl",
     "_scenarios_impl": "tests.helpers._scenarios_impl",
+    "c": ("flext_core.constants", "FlextConstants"),
+    "d": ("flext_core.decorators", "FlextDecorators"),
+    "e": ("flext_core.exceptions", "FlextExceptions"),
     "factories": "tests.helpers.factories",
     "factories_impl": "tests.helpers.factories_impl",
+    "h": ("flext_core.handlers", "FlextHandlers"),
+    "m": ("flext_core.models", "FlextModels"),
+    "p": ("flext_core.protocols", "FlextProtocols"),
+    "r": ("flext_core.result", "FlextResult"),
     "reset_all_factories": "tests.helpers.factories_impl",
+    "s": ("flext_core.service", "FlextService"),
     "scenarios": "tests.helpers.scenarios",
+    "t": ("flext_core.typings", "FlextTypes"),
+    "u": ("flext_core.utilities", "FlextUtilities"),
+    "x": ("flext_core.mixins", "FlextMixins"),
 }
 
 

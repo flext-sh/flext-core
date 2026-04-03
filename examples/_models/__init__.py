@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Shared model modules for examples."""
+"""Models package."""
 
 from __future__ import annotations
 

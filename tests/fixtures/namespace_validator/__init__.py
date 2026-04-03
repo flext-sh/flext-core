@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Namespace validator test fixtures."""
+"""Namespace validator package."""
 
 from __future__ import annotations
 
@@ -60,6 +60,13 @@ if _TYPE_CHECKING:
     from tests.fixtures.namespace_validator.typings import LooseTypeAlias
 
     from flext_core import FlextTypes
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.protocols import FlextProtocols as p
+    from flext_core.result import FlextResult as r
+    from flext_core.service import FlextService as s
 
 _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "DEFAULT_TIMEOUT": "tests.fixtures.namespace_validator.rule1_loose_constant",
@@ -76,8 +83,13 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "Rule1LooseEnumFixture": "tests.fixtures.namespace_validator.rule1_loose_enum",
     "Status": "tests.fixtures.namespace_validator.rule1_loose_enum",
     "c": "tests.fixtures.namespace_validator.rule1_method_in_constants",
+    "d": ("flext_core.decorators", "FlextDecorators"),
+    "e": ("flext_core.exceptions", "FlextExceptions"),
+    "h": ("flext_core.handlers", "FlextHandlers"),
     "helper": "tests.fixtures.namespace_validator.rule0_no_class",
     "m": "tests.fixtures.namespace_validator.rule2_composite_type_loose",
+    "p": ("flext_core.protocols", "FlextProtocols"),
+    "r": ("flext_core.result", "FlextResult"),
     "rule0_loose_items": "tests.fixtures.namespace_validator.rule0_loose_items",
     "rule0_multiple_classes": "tests.fixtures.namespace_validator.rule0_multiple_classes",
     "rule0_no_class": "tests.fixtures.namespace_validator.rule0_no_class",
@@ -93,9 +105,11 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "rule2_typevar_in_class": "tests.fixtures.namespace_validator.rule2_typevar_in_class",
     "rule2_typevar_wrong_module": "tests.fixtures.namespace_validator.rule2_typevar_wrong_module",
     "rule2_valid_types": "tests.fixtures.namespace_validator.rule2_valid_types",
+    "s": ("flext_core.service", "FlextService"),
     "t": "tests.fixtures.namespace_validator.rule2_protocol_in_types",
     "typings": "tests.fixtures.namespace_validator.typings",
     "u": "tests.fixtures.namespace_validator.rule1_magic_number",
+    "x": ("flext_core.mixins", "FlextMixins"),
 }
 
 

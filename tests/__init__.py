@@ -180,6 +180,7 @@ if _TYPE_CHECKING:
     from tests.typings import (
         FlextCoreTestTypes,
         FlextCoreTestTypes as t,
+        T,
         T_co,
         T_contra,
     )
@@ -203,7 +204,6 @@ if _TYPE_CHECKING:
         SampleModel,
         SimpleObj,
         SingletonClassForTest,
-        T,
         TestCaseMap,
         TestCollectionUtilitiesCoverage,
         TestContainerFullCoverage,
@@ -631,6 +631,7 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "Rule0MultipleClassesFixture": "tests.fixtures.namespace_validator.rule0_multiple_classes",
         "Rule1LooseEnumFixture": "tests.fixtures.namespace_validator.rule1_loose_enum",
         "Status": "tests.fixtures.namespace_validator.rule1_loose_enum",
+        "T": "tests.typings",
         "T_co": "tests.typings",
         "T_contra": "tests.typings",
         "TestDocumentedPatterns": "tests.test_documented_patterns",

@@ -12,6 +12,16 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
+    from flext_core.constants import FlextConstants as c
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.models import FlextModels as m
+    from flext_core.result import FlextResult as r
+    from flext_core.service import FlextService as s
+    from flext_core.typings import FlextTypes as t
+    from flext_core.utilities import FlextUtilities as u
     from tests.unit import (
         _models,
         _models_impl,
@@ -542,7 +552,6 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "SampleModel": "tests.unit._models_impl",
         "SimpleObj": "tests.unit.test_utilities_mapper_coverage_100",
         "SingletonClassForTest": "tests.unit._models_impl",
-        "T": "tests.unit.test_utilities_type_checker_coverage_100",
         "TMessage": "tests.unit.test_utilities_type_checker_coverage_100",
         "TestCaseMap": "tests.unit._models_impl",
         "TestCollectionUtilitiesCoverage": "tests.unit.test_collection_utilities_coverage_100",
@@ -647,14 +656,18 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "_models": "tests.unit._models",
         "_models_impl": "tests.unit._models_impl",
         "_utilities": "tests.unit._utilities",
+        "c": ("flext_core.constants", "FlextConstants"),
         "conftest_infra": "tests.unit.conftest_infra",
         "contracts": "tests.unit.contracts",
         "create_compare_entities_cases": "tests.unit.test_utilities_domain",
         "create_compare_value_objects_cases": "tests.unit.test_utilities_domain",
         "create_hash_entity_cases": "tests.unit.test_utilities_domain",
         "create_hash_value_object_cases": "tests.unit.test_utilities_domain",
+        "d": ("flext_core.decorators", "FlextDecorators"),
+        "e": ("flext_core.exceptions", "FlextExceptions"),
         "flext_tests": "tests.unit.flext_tests",
         "generators_module": "tests.unit.test_utilities_generators_full_coverage",
+        "h": ("flext_core.handlers", "FlextHandlers"),
         "infra_git": "tests.unit.conftest_infra",
         "infra_git_repo": "tests.unit.conftest_infra",
         "infra_io": "tests.unit.conftest_infra",
@@ -668,12 +681,16 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "infra_test_workspace": "tests.unit.conftest_infra",
         "infra_toml": "tests.unit.conftest_infra",
         "inject": "tests.unit.test_di_incremental",
+        "m": ("flext_core.models", "FlextModels"),
         "mapper": "tests.unit.test_utilities_mapper_full_coverage",
         "p": "tests.unit.protocols",
         "protocols": "tests.unit.protocols",
         "pytestmark": "tests.unit.test_utilities_type_checker_coverage_100",
+        "r": ("flext_core.result", "FlextResult"),
         "reset_runtime_state": "tests.unit.test_runtime_full_coverage",
         "runtime_module": "tests.unit.test_runtime_full_coverage",
+        "s": ("flext_core.service", "FlextService"),
+        "t": ("flext_core.typings", "FlextTypes"),
         "test_aliases_are_available": "tests.unit.test_utilities_guards_full_coverage",
         "test_args_coverage_100": "tests.unit.test_args_coverage_100",
         "test_async_log_writer_paths": "tests.unit.test_runtime_full_coverage",
@@ -916,6 +933,8 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "test_version": "tests.unit.test_version",
         "test_with_resource_cleanup_runs": "tests.unit.test_result_additional",
         "typings": "tests.unit.typings",
+        "u": ("flext_core.utilities", "FlextUtilities"),
+        "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
 

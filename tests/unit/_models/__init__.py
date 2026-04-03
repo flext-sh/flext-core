@@ -1,7 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Unit tests for flext_core._models/ submodules via facade."""
+"""Models package."""
 
 from __future__ import annotations
 

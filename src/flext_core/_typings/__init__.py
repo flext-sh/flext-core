@@ -1,21 +1,14 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make gen
 #
-"""Internal typings subpackage for FlextTypes MRO composition.
-
-This package contains domain-specific typing classes composed by the facade.
-External code should import from ``flext_core.t`` instead.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Typings package."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core import install_lazy_exports
 
 if _TYPE_CHECKING:
     from flext_core import FlextTypes
