@@ -13,18 +13,31 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import ClassVar
 
-from flext_core import FlextRuntime, c, m, p, r
+from flext_core import t
+from flext_core._models.base import FlextModelFoundation
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._utilities.args import FlextUtilitiesArgs
+from flext_core.constants import FlextConstants as c
+from flext_core.result import FlextResult as r
+from flext_core.runtime import FlextRuntime
+
+
+class RetryOptions(FlextModelFoundation.FlexibleInternalModel):
+    """Configuration options for retry logic."""
+
+    max_attempts: int | None = None
+    delay: float | None = None
+    delay_seconds: float | None = None
+    backoff_multiplier: float | None = None
+    retry_on: tuple[type[Exception], ...] | None = None
 
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    _V: ClassVar[type[m.Validators]] = m.Validators
-
     @property
-    def logger(self) -> p.Logger:
+    def logger(self) -> FlextProtocolsLogging.Logger:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 
@@ -122,21 +135,15 @@ class FlextUtilitiesReliability:
     @staticmethod
     def retry[TResult](
         operation: Callable[[], r[TResult]],
-        max_attempts: int | None = None,
-        delay: float | None = None,
-        delay_seconds: float | None = None,
-        backoff_multiplier: float | None = None,
-        retry_on: tuple[type[Exception], ...] | None = None,
+        options: RetryOptions | None = None,
+        **kwargs: t.ValueOrModel,
     ) -> r[TResult]:
         """Execute an operation with retry logic using railway patterns.
 
         Args:
             operation: Operation to execute. Must return RuntimeResult.
-            max_attempts: Maximum number of attempts
-            delay: Delay between retries in seconds (alias for delay_seconds)
-            delay_seconds: Delay between retries in seconds
-            backoff_multiplier: Multiplier for exponential backoff
-            retry_on: Tuple of exception types to retry on. If None, retries on all exceptions.
+            options: Optional retry configuration using RetryOptions model.
+            **kwargs: Inline retry configuration parsed into RetryOptions automatically.
 
         Returns:
             p.Result[TResult]: Result of operation with retry logic applied
@@ -144,11 +151,17 @@ class FlextUtilitiesReliability:
         Fast fail: explicit default values instead of 'or' fallback.
 
         """
+        opts_res = FlextUtilitiesArgs.resolve_options(options, kwargs, RetryOptions)
+        if opts_res.is_failure:
+            return r[TResult].fail(opts_res.error)
+        opts = opts_res.value
+        delay_val = opts.delay if opts.delay is not None else opts.delay_seconds
+
         max_att, delay_sec, backoff = FlextUtilitiesReliability._resolve_retry_config(
-            max_attempts,
-            delay,
-            delay_seconds,
-            backoff_multiplier,
+            opts.max_attempts,
+            delay_val,
+            delay_val,
+            opts.backoff_multiplier,
         )
         if max_att < c.DEFAULT_RETRY_DELAY_SECONDS:
             return r[TResult].fail(
@@ -162,7 +175,7 @@ class FlextUtilitiesReliability:
                     return result
                 last_error = result.error or "Unknown error"
             except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as e:
-                if not FlextUtilitiesReliability._should_retry(e, retry_on):
+                if not FlextUtilitiesReliability._should_retry(e, opts.retry_on):
                     raise
                 last_error = str(e)
             FlextUtilitiesReliability._sleep_between_retries(

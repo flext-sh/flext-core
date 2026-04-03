@@ -26,7 +26,8 @@ from tests import t
 class FlextCoreTestConstants(FlextTestsConstants, FlextInfraConstants):
     """Constants for flext-core tests - extends FlextTestsConstants.
 
-    Architecture: Extends FlextTestsConstants with flext-core-specific constants.
+    Architecture layer: Layer 0 foundation constants with flext-core test extensions.
+    Extends FlextTestsConstants with flext-core-specific constants.
     All generic constants from FlextTestsConstants are available through inheritance.
 
     Rules:

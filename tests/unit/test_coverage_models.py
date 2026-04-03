@@ -5,33 +5,37 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 from datetime import datetime
-from typing import override
+from typing import Annotated, override
 
 import pytest
-from pydantic import ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator
 
+from flext_core import FlextModelsCqrs
 from flext_tests import tm
 from tests import m, t
 
 
+class GetUserQuery(m.Query):
+    """Query to get user."""
+
+
+class ListAccountsQuery(m.Query):
+    """Query to list accounts."""
+
+    page: Annotated[int, Field()]
+    limit: Annotated[int, Field()]
+
+
+class SearchProductsQuery(m.Query):
+    """Query to search products."""
+
+    keyword: Annotated[str, Field()]
+    category: Annotated[str | None, Field(default=None)] = None
+    min_price: Annotated[float | None, Field(default=None)] = None
+    max_price: Annotated[float | None, Field(default=None)] = None
+
+
 class TestCoverageModels:
-    class GetUserQuery(m.Query):
-        """Query to get user."""
-
-    class ListAccountsQuery(m.Query):
-        """Query to list accounts."""
-
-        page: int
-        limit: int
-
-    class SearchProductsQuery(m.Query):
-        """Query to search products."""
-
-        keyword: str
-        category: str | None = None
-        min_price: float | None = None
-        max_price: float | None = None
-
     def test_value_object_creation(self) -> None:
         class Money(m.Value):
             amount: float
@@ -238,7 +242,8 @@ class TestCoverageModels:
             DepositCommand(account_id="ACC-001", amount=-50.0, command_id="cmd-test-4")
 
     def test_query_creation(self) -> None:
-        query = type(self).GetUserQuery(
+        assert GetUserQuery._resolve_pagination_class() is FlextModelsCqrs.Pagination
+        query = GetUserQuery(
             filters=t.Dict(root={"user_id": "USER-001"}),
             query_type="get_user",
             pagination=m.Pagination(),
@@ -249,7 +254,7 @@ class TestCoverageModels:
         tm.that(query.query_type, eq="get_user")
 
     def test_query_mutation_behavior(self) -> None:
-        query = type(self).ListAccountsQuery(
+        query = ListAccountsQuery(
             page=1,
             limit=10,
             filters=t.Dict(root={}),
@@ -262,7 +267,7 @@ class TestCoverageModels:
         tm.that(query.page, ne=original_page)
 
     def test_query_with_filters(self) -> None:
-        query = type(self).SearchProductsQuery(
+        query = SearchProductsQuery(
             keyword="laptop",
             category="electronics",
             min_price=500.0,

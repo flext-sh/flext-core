@@ -49,7 +49,7 @@ def reset_runtime_state() -> Generator[None]:
 def test_reuse_existing_runtime_scenarios() -> None:
     suite = test_runtime.TestFlextRuntime()
     _ = c.DEFAULT_LEVEL
-    _ = u.ensure_str("x")
+    _ = u.to_str("x")
     scenarios = test_runtime.TestFlextRuntime.RuntimeScenarios
     for case in scenarios.dict_like_scenarios():
         suite.test_dict_like_validation(case)

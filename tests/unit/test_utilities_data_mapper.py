@@ -71,7 +71,6 @@ class TestUtilitiesDataMapper:
         mc = c.Core.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
         result = u.filter_dict(
-            source_raw,
-            lambda k, v: isinstance(v, int) and v > mc.NUM_1,
+            source_raw, lambda k, v: isinstance(v, int) and v > mc.NUM_1
         )
         assert result == {mc.B: mc.NUM_2, mc.C: mc.NUM_3}

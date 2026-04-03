@@ -26,7 +26,7 @@ from .factories_impl import (
 
 
 class TestHelperFactories:
-    User = m.Core.User
+    User = m.Tests.User
     ServiceTestCase = m.Core.ServiceTestCase
     GetUserService = GetUserService
     ValidatingService = ValidatingService

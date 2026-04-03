@@ -263,35 +263,35 @@ class TestFlextUtilitiesMapper:
     # ── narrow_to_container ────────────────────────────────────────
 
     def test_narrow_none(self) -> None:
-        tm.that(u.narrow_to_container(None), none=True)
+        tm.that(u.normalize_to_container(None), none=True)
 
     def test_narrow_string(self) -> None:
-        tm.that(u.narrow_to_container("hello"), eq="hello")
+        tm.that(u.normalize_to_container("hello"), eq="hello")
 
     def test_narrow_int(self) -> None:
-        tm.that(u.narrow_to_container(42), eq=42)
+        tm.that(u.normalize_to_container(42), eq=42)
 
     def test_narrow_dict(self) -> None:
-        result = u.narrow_to_container({"a": 1})
+        result = u.normalize_to_container({"a": 1})
         tm.that(result, is_=dict)
 
     def test_narrow_list(self) -> None:
-        result = u.narrow_to_container([1, 2, 3])
+        result = u.normalize_to_container([1, 2, 3])
         tm.that(result, is_=list)
 
     def test_narrow_pydantic_model(self) -> None:
         item = _Item(label="test", value=5)
-        result = u.narrow_to_container(item)
+        result = u.normalize_to_container(item)
         tm.that(result, is_=dict)
         tm.that(result, kv={"label": "test", "value": 5})
 
     def test_narrow_ordered_dict(self) -> None:
         od: OrderedDict[str, int] = OrderedDict([("a", 1), ("b", 2)])
-        result = u.narrow_to_container(od)
+        result = u.normalize_to_container(od)
         tm.that(result, is_=dict)
 
     def test_narrow_tuple_becomes_list(self) -> None:
-        result = u.narrow_to_container((1, 2, 3))
+        result = u.normalize_to_container((1, 2, 3))
         tm.that(result, is_=list)
 
     # ── prop ───────────────────────────────────────────────────────

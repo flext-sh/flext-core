@@ -246,6 +246,16 @@ class FlextUtilitiesCollection:
         return [item for item in items if predicate(item)]
 
     @staticmethod
+    def filter_dict(
+        items: Mapping[str, t.RecursiveContainer],
+        predicate: Callable[[str, t.RecursiveContainer], bool],
+    ) -> MutableMapping[str, t.RecursiveContainer]:
+        """Filter a dictionary by evaluating both keys and values."""
+        if not FlextUtilitiesGuardsTypeCore.is_mapping(items):
+            return {}
+        return {k: v for k, v in items.items() if predicate(k, v)}
+
+    @staticmethod
     def find(
         items: Sequence[T] | tuple[T, ...] | Mapping[str, T],
         predicate: Callable[[T], bool],

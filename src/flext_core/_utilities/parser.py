@@ -10,14 +10,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import typing
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import TypeAliasType
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextUtilitiesGuards, m, p, r, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core._utilities.args import FlextUtilitiesArgs
+
+
+class ParseOptions[T](FlextModelFoundation.FlexibleInternalModel):
+    strict: bool | None = None
+    coerce: bool | None = None
+    case_insensitive: bool | None = None
+    default: T | None = None
+    default_factory: Callable[[], T] | None = None
+    field_name: str | None = None
 
 
 class FlextUtilitiesParser:
@@ -30,7 +41,7 @@ class FlextUtilitiesParser:
     """
 
     @staticmethod
-    def _coerce_to_bool(value: t.RecursiveContainer) -> r[bool]:
+    def _coerce_to_bool[T](value: t.ValueOrModel) -> r[bool]:
         """Coerce value to bool. Returns None if not coercible."""
         if FlextUtilitiesGuards.is_type(value, str):
             normalized_val = FlextUtilitiesParser._parse_normalize_str(
@@ -45,7 +56,7 @@ class FlextUtilitiesParser:
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_float(value: t.RecursiveContainer) -> r[float]:
+    def _coerce_to_float[T](value: t.ValueOrModel) -> r[float]:
         """Coerce value to float. Returns None if not coercible."""
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
@@ -58,7 +69,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_int(value: t.RecursiveContainer) -> r[int]:
+    def _coerce_to_int[T](value: t.ValueOrModel) -> r[int]:
         """Coerce value to int. Returns None if not coercible."""
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
@@ -71,7 +82,7 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _coerce_to_str(value: t.RecursiveContainer) -> r[str]:
+    def _coerce_to_str[T](value: t.ValueOrModel) -> r[str]:
         """Coerce value to string - returns p.Result[str]."""
         return r[str].ok(str(value))
 
@@ -82,7 +93,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_model[TModel: BaseModel](
-        value: t.RecursiveContainer,
+        value: t.ValueOrModel,
         target: type[TModel],
         field_prefix: str,
         *,
@@ -106,9 +117,7 @@ class FlextUtilitiesParser:
     }
 
     @staticmethod
-    def _parse_normalize_str(
-        value: t.RecursiveContainer, *, case: str = "lower"
-    ) -> str:
+    def _parse_normalize_str(value: t.ValueOrModel, *, case: str = "lower") -> str:
         """Normalize string value (avoids circular import with u.normalize)."""
         value_str = value if isinstance(value, str) else str(value)
         op = FlextUtilitiesParser._CASE_OPS.get(case)
@@ -124,166 +133,145 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_try_direct[T](
-        value: t.RecursiveContainer,
+        value: t.ValueOrModel,
         target: type[T],
-        default: T | None,
-        default_factory: Callable[[], T] | None,
-        field_prefix: str,
-    ) -> r[T]:
+        options: ParseOptions[T] | None = None,
+        **kwargs: t.ValueOrModel,
+    ) -> T:
         """Helper: Try direct type call."""
-        if type(target) is TypeAliasType or str(target) == "typing.Any":
+        opts = FlextUtilitiesArgs.resolve_options(
+            options, kwargs, ParseOptions[T]
+        ).unwrap()
+        default = opts.default
+        default_factory = opts.default_factory
+        fp = f"{opts.field_name}: " if opts.field_name else ""
+        if value is None:
             return FlextUtilitiesParser._parse_with_default(
                 default,
                 default_factory,
-                f"{field_prefix}Cannot construct '{getattr(target, '__name__', 'Any')}' type directly",
-            )
+                f"{fp}Value is None",
+            ).unwrap()
+        if isinstance(value, target):
+            return value
         try:
             parsed_value = TypeAdapter(target).validate_python(value)
-            return r[T].ok(parsed_value)
+            if not isinstance(parsed_value, target):
+                msg = (
+                    f"{fp}TypeAdapter returned {type(parsed_value)}, expected {target}"
+                )
+                raise TypeError(msg)
+            return parsed_value
         except (ValidationError, TypeError, ValueError) as e:
             target_name = target.__name__ if hasattr(target, "__name__") else "type"
             return FlextUtilitiesParser._parse_with_default(
                 default,
                 default_factory,
-                f"{field_prefix}Cannot parse {value.__class__.__name__} to {target_name}: {e}",
-            )
+                f"{fp}Cannot parse {value.__class__.__name__} to {target_name}: {e}",
+            ).unwrap()
 
     @staticmethod
-    def _find_enum_member_insensitive[T](
-        members: Mapping[str, T],
-        value_lower: str,
-    ) -> T | None:
-        """Case-insensitive lookup by member name or value."""
-        for member_name, member_value in members.items():
-            if member_name.lower() == value_lower:
-                return member_value
-            member_val = getattr(member_value, "value", None)
-            if member_val is not None and str(member_val).lower() == value_lower:
-                return member_value
-        return None
-
-    @staticmethod
-    def _find_enum_member_exact[T](
-        members: Mapping[str, T],
-        value_str: str,
-    ) -> T | None:
-        """Exact lookup by member name or value."""
-        if value_str in members:
-            return members[value_str]
-        for member_value in members.values():
-            member_val = getattr(member_value, "value", None)
-            if member_val == value_str:
-                return member_value
-        return None
-
-    @staticmethod
+    @r.safe
     def _parse_try_enum[T](
-        value: t.RecursiveContainer,
+        value: t.ValueOrModel,
         target: type[T],
-        *,
-        case_insensitive: bool,
-        default: T | None,
-        default_factory: Callable[[], T] | None,
-        field_prefix: str,
-    ) -> r[T]:
-        """Helper: Try enum parsing, return None if not enum."""
+        options: ParseOptions[T] | None = None,
+        **kwargs: t.ValueOrModel,
+    ) -> T:
+        """Helper: Try enum parsing, raise ValueError if not enum or invalid."""
+        opts = FlextUtilitiesArgs.resolve_options(
+            options, kwargs, ParseOptions[T]
+        ).unwrap()
+        fp = f"{opts.field_name}: " if opts.field_name else ""
         if not issubclass(target, StrEnum):
-            return r[T].fail(
-                f"{field_prefix}Target is not a StrEnum",
-                error_code="TARGET_NOT_ENUM",
+            msg = f"{fp}Target is not a StrEnum. Enum mode cannot be used here."
+            raise ValueError(
+                msg,
             )
-        members: Mapping[str, T] = TypeAdapter(Mapping[str, T]).validate_python(
-            target.__members__
-        )
-        value_str = str(value)
-        match case_insensitive:
-            case True:
-                found = FlextUtilitiesParser._find_enum_member_insensitive(
-                    members,
-                    value_str.lower(),
-                )
-            case False:
-                found = FlextUtilitiesParser._find_enum_member_exact(
-                    members,
-                    value_str,
-                )
+        target_name = target.__name__
+        if value is None:
+            return FlextUtilitiesParser._parse_with_default(
+                opts.default,
+                opts.default_factory,
+                f"{fp}Value is None",
+            ).unwrap()
+        value_str = FlextUtilitiesParser._coerce_to_str(value)
+        found: T | None = None
+        for member in target:
+            member_val = getattr(member, "value", None)
+            if member_val is None:
+                continue
+            if not opts.case_insensitive:
+                if str(member_val) == value_str:
+                    found = typing.cast("T", member)
+                    break
+            elif str(member_val).lower() == str(value_str).lower():
+                found = typing.cast("T", member)
+                break
         if found is not None:
-            return r[T].ok(found)
-        target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"
-        return FlextUtilitiesParser._parse_with_default(
-            default,
-            default_factory,
-            f"{field_prefix}Cannot parse '{value_str}' as {target_name}",
+            return found
+        msg = f"{fp}Cannot parse '{value_str}' as {target_name} [options: {[e.value for e in target]}]"
+        raise ValueError(
+            msg,
         )
 
     @staticmethod
+    @r.safe
     def _parse_try_model[T](
-        value: t.RecursiveContainer,
+        value: t.ValueOrModel,
         target: type[T],
-        field_prefix: str,
-        *,
-        strict: bool,
-        default: T | None,
-        default_factory: Callable[[], T] | None,
-    ) -> r[T]:
-        """Helper: Try model parsing, return None if not model."""
+        options: ParseOptions[T] | None = None,
+        **kwargs: t.ValueOrModel,
+    ) -> T:
+        """Helper: Try model parsing, raise ValueError if not model or invalid."""
+        opts = FlextUtilitiesArgs.resolve_options(
+            options, kwargs, ParseOptions[T]
+        ).unwrap()
+        fp = f"{opts.field_name}: " if opts.field_name else ""
         if not issubclass(target, BaseModel):
-            return r[T].fail(
-                f"{field_prefix}Target is not a BaseModel",
-                error_code="TARGET_NOT_MODEL",
+            msg = f"{fp}Target is not a BaseModel"
+            raise ValueError(msg)
+        if value is None:
+            return FlextUtilitiesParser._parse_with_default(
+                opts.default,
+                opts.default_factory,
+                f"{fp}Value is None",
+            ).unwrap()
+        if not isinstance(value, (Mapping, BaseModel)):
+            msg = f"{fp}Cannot parse scalar '{value}' into {target.__name__}"
+            raise TypeError(
+                msg,
             )
-        model_result = FlextUtilitiesParser._parse_model(
-            value,
-            target,
-            field_prefix,
-            strict=strict,
-        )
-        if model_result.is_success:
-            validated_model = TypeAdapter(target).validate_python(model_result.value)
-            return r[T].ok(validated_model)
-        return FlextUtilitiesParser._parse_with_default(
-            default,
-            default_factory,
-            FlextUtilitiesParser._parse_result_error(model_result, ""),
-        )
+        if opts.strict:
+            return typing.cast("T", target.model_validate(value, strict=True))
+        return typing.cast("T", target.model_validate(value))
 
     @staticmethod
-    def _get_primitive_coercers() -> Mapping[
-        type, Callable[[t.RecursiveContainer], r[int] | r[float] | r[str] | r[bool]]
-    ]:
-        """Dispatch table for primitive type coercion."""
-        return {
-            int: FlextUtilitiesParser._coerce_to_int,
-            float: FlextUtilitiesParser._coerce_to_float,
-            str: FlextUtilitiesParser._coerce_to_str,
-            bool: FlextUtilitiesParser._coerce_to_bool,
-        }
-
-    @staticmethod
-    def _parse_try_primitive(
-        value: t.RecursiveContainer,
-        target: type,
-        default: t.Primitives | None,
-        default_factory: Callable[[], t.Numeric | str | bool] | None,
-        field_prefix: str,
-    ) -> r[t.Primitives]:
-        """Helper: Try primitive coercion via dispatch table."""
-        coercer = FlextUtilitiesParser._get_primitive_coercers().get(target)
-        if coercer is None:
-            return r[t.Primitives].fail(
-                f"{field_prefix}Target is not primitive",
-                error_code="TARGET_NOT_PRIMITIVE",
-            )
-        try:
-            coerce_result = coercer(value)
-            if coerce_result.is_failure:
-                return r[t.Primitives].fail(coerce_result.error)
-            return r[t.Primitives].ok(coerce_result.value)
-        except (ValueError, TypeError) as e:
-            target_name = getattr(target, "__name__", "type")
-            return r[t.Primitives].fail(
-                f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}",
-            )
+    def _parse_try_primitive[T](
+        value: t.ValueOrModel,
+        target: type[T],
+        options: ParseOptions[T] | None = None,
+        **kwargs: t.ValueOrModel,
+    ) -> T | None:
+        """Helper function for type primitive parsing fallback."""
+        opts = FlextUtilitiesArgs.resolve_options(
+            options, kwargs, ParseOptions[T]
+        ).unwrap()
+        fp = f"{opts.field_name}: " if opts.field_name else ""
+        if value is None:
+            return FlextUtilitiesParser._parse_with_default(
+                opts.default,
+                opts.default_factory,
+                f"{fp}Value is None",
+            ).unwrap()
+        if target in {int, float, str, bool}:
+            try:
+                adapter = TypeAdapter(target)
+                parsed_value = adapter.validate_python(value)
+                if isinstance(parsed_value, target):
+                    return parsed_value
+            except ValidationError:
+                pass
+        return None
 
     @staticmethod
     def _parse_with_default[T](
@@ -305,22 +293,7 @@ class FlextUtilitiesParser:
         *,
         case: str | None = None,
     ) -> bool:
-        """Normalized membership check (builder: norm().in_()).
-
-        Mnemonic: norm = normalize, in_ = membership check
-
-        Canonical path: pass t.ConfigMap or any Pydantic BaseModel (p.HasModelDump).
-        Legacy path: raw Mapping or t.StrSequence — emits DeprecationWarning.
-
-        Args:
-            value: Value to check
-            items: Items to check against (ConfigMap/BaseModel preferred; raw Mapping deprecated)
-            case: Case normalization
-
-        Returns:
-            bool: True if normalized value in normalized items
-
-        """
+        """Normalized membership check (builder: norm().in_())."""
         items_to_check: t.StrSequence
         match items:
             case t.ConfigMap():
@@ -354,19 +327,7 @@ class FlextUtilitiesParser:
         case: str | None = None,
         sep: str = " ",
     ) -> str:
-        """Normalize and join (builder: norm().join()).
-
-        Mnemonic: norm = normalize, join = string join
-
-        Args:
-            items: Items to normalize and join
-            case: Case normalization
-            sep: Separator
-
-        Returns:
-            str: Normalized and joined string
-
-        """
+        """Normalize and join (builder: norm().join())."""
         if case:
             normalized = [FlextUtilitiesParser.norm_str(v, case=case) for v in items]
         else:
@@ -375,131 +336,84 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_str(
-        value: t.RecursiveContainer,
+        value: t.ValueOrModel | None,
         *,
         case: str | None = None,
         default: str = "",
     ) -> str:
-        """Normalize string (builder: norm().str()).
-
-        Mnemonic: norm = normalize, str = string
-
-        Args:
-            value: Value to normalize
-            case: Case normalization ("lower", "upper", "title")
-            default: Default if None
-
-        Returns:
-            str: Normalized string
-
-        """
+        """Normalize string (builder: norm().str())."""
         if value is None:
             str_value = default
         elif isinstance(value, str):
             str_value = value
         else:
-            str_value = (
-                r[str]
-                .create_from_callable(lambda: str(value))
-                .unwrap_or(
-                    default,
-                )
-            )
+            str_value = str(value)
         if case:
             return FlextUtilitiesParser._parse_normalize_str(str_value, case=case)
         return str_value
 
     @staticmethod
+    @r.safe
     def _parse_dispatch_primitive[T](
-        value: t.RecursiveContainer,
+        value: t.ValueOrModel,
         target: type[T],
-        default: T | None,
-        default_factory: Callable[[], T] | None,
-        field_prefix: str,
-    ) -> r[T]:
+        options: ParseOptions[T] | None = None,
+        **kwargs: t.ValueOrModel,
+    ) -> T:
         """Dispatch primitive coercion with validation."""
+        opts = FlextUtilitiesArgs.resolve_options(
+            options, kwargs, ParseOptions[T]
+        ).unwrap()
+        fp = f"{opts.field_name}: " if opts.field_name else ""
         prim = FlextUtilitiesParser._parse_try_primitive(
             value,
             target,
-            default=None,
-            default_factory=None,
-            field_prefix=field_prefix,
+            options=opts,
         )
-        if prim.is_success:
-            return r[T].ok(TypeAdapter(target).validate_python(prim.value))
-        return FlextUtilitiesParser._parse_with_default(
-            default,
-            default_factory,
-            prim.error or f"{field_prefix}Primitive coercion failed",
-        )
+        if prim is not None:
+            return prim
+        msg = f"{fp}Failed to parse '{value}' as {target.__name__}"
+        raise TypeError(msg)
 
     @staticmethod
+    @r.safe
     def parse[T](
-        value: t.RecursiveContainer,
+        value: t.ValueOrModel,
         target: type[T],
-        *,
-        strict: bool = False,
-        coerce: bool = True,
-        case_insensitive: bool = False,
-        default: T | None = None,
-        default_factory: Callable[[], T] | None = None,
-        field_name: str | None = None,
-    ) -> r[T]:
-        """Universal type parser supporting enums, models, and primitives.
-
-        Parsing order: enum -> model -> primitive coercion -> direct type call.
-
-        Args:
-            value: The value to parse.
-            target: Target type to parse into.
-            strict: If True, disable type coercion (exact match only).
-            coerce: If True (default), allow type coercion.
-            case_insensitive: For enums, match case-insensitively.
-            default: Default value to return on parse failure.
-            default_factory: Callable to create default on failure.
-            field_name: Field name for error messages.
-
-        Returns:
-            p.Result[T]: Ok(parsed_value) or Fail with error message.
-
-        """
-        fp = f"{field_name}: " if field_name else ""
+        options: ParseOptions[T] | None = None,
+        **kwargs: t.ValueOrModel,
+    ) -> T:
+        """Universal type parser supporting enums, models, and primitives."""
+        opts = FlextUtilitiesArgs.resolve_options(
+            options, kwargs, ParseOptions[T]
+        ).unwrap()
+        fp = f"{opts.field_name}: " if opts.field_name else ""
         if value is None:
             return FlextUtilitiesParser._parse_with_default(
-                default, default_factory, fp or "Value is None"
-            )
+                opts.default,
+                opts.default_factory,
+                f"{fp}Value is None",
+            ).unwrap()
         if isinstance(value, target):
-            return r[T].ok(value)
+            return value
         match target:
             case tgt if issubclass(tgt, StrEnum):
                 return FlextUtilitiesParser._parse_try_enum(
-                    value,
-                    target,
-                    case_insensitive=case_insensitive,
-                    default=default,
-                    default_factory=default_factory,
-                    field_prefix=fp,
-                )
+                    value, target, options=opts, **kwargs
+                ).unwrap()
             case tgt if issubclass(tgt, BaseModel):
-                return FlextUtilitiesParser._parse_try_model(
-                    value,
-                    target,
-                    fp,
-                    strict=strict,
-                    default=default,
-                    default_factory=default_factory,
+                res2 = FlextUtilitiesParser._parse_try_model(
+                    value, target, options=opts, **kwargs
                 )
+                return res2.unwrap()
             case tgt if FlextUtilitiesParser._is_primitive_type(tgt):
-                return FlextUtilitiesParser._parse_dispatch_primitive(
-                    value,
-                    target,
-                    default,
-                    default_factory,
-                    fp,
+                res3 = FlextUtilitiesParser._parse_dispatch_primitive(
+                    value, target, options=opts, **kwargs
                 )
+                return res3.unwrap()
             case _:
                 return FlextUtilitiesParser._parse_try_direct(
-                    value, target, default, default_factory, fp
+                    value, target, options=opts, **kwargs
                 )
 
 

@@ -809,6 +809,7 @@ split-on-trailing-comma = true
   "F403",
   "F405",
   "F822",
+  "INP001",
   "N999",
   "PLC2701",
   "RUF067",

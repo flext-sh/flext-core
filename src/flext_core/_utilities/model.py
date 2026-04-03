@@ -12,7 +12,18 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from flext_core import FlextUtilitiesGuardsTypeCore, FlextUtilitiesGuardsTypeModel, r, t
+from flext_core import FlextUtilitiesGuards, r, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core._utilities.args import FlextUtilitiesArgs
+
+
+class ModelDumpOptions(FlextModelFoundation.FlexibleInternalModel):
+    by_alias: bool | None = None
+    exclude_none: bool | None = None
+    exclude_unset: bool | None = None
+    exclude_defaults: bool | None = None
+    include: set[str] | None = None
+    exclude: set[str] | None = None
 
 
 class FlextUtilitiesModel:
@@ -22,11 +33,9 @@ class FlextUtilitiesModel:
     def _normalize_model_input(
         data: BaseModel | Mapping[str, t.ValueOrModel] | t.ConfigMap,
     ) -> Mapping[str, t.ValueOrModel]:
-        if isinstance(
-            data, BaseModel
-        ) and FlextUtilitiesGuardsTypeModel.is_pydantic_model(data):
+        if isinstance(data, BaseModel) and FlextUtilitiesGuards.is_pydantic_model(data):
             root_value = getattr(data, "root", None)
-            if FlextUtilitiesGuardsTypeCore.is_mapping(root_value):
+            if FlextUtilitiesGuards.is_mapping(root_value):
                 return {str(key): value for key, value in root_value.items()}
             dumped = data.model_dump()
             return {str(key): value for key, value in dumped.items()}
@@ -35,13 +44,8 @@ class FlextUtilitiesModel:
     @staticmethod
     def dump(
         model: BaseModel,
-        *,
-        by_alias: bool = False,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        include: set[str] | None = None,
-        exclude: set[str] | None = None,
+        options: ModelDumpOptions | None = None,
+        **kwargs: object,
     ) -> t.ScalarMapping:
         """Unified Pydantic serialization with options.
 
@@ -49,25 +53,18 @@ class FlextUtilitiesModel:
 
         Args:
             model: Pydantic model instance to serialize.
-            by_alias: Whether to use field aliases.
-            exclude_none: Whether to exclude None values.
-            exclude_unset: Whether to exclude unset values.
-            exclude_defaults: Whether to exclude default values.
-            include: Set of field names to include.
-            exclude: Set of field names to exclude.
+            options: Optional Pydantic model_dump arguments within the config model.
+            **kwargs: Inline fallback serialization arguments mapped to ModelDumpOptions automatically.
 
         Returns:
             Dictionary representation of the model.
 
         """
-        return model.model_dump(
-            by_alias=by_alias,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            include=include,
-            exclude=exclude,
-        )
+        opts = FlextUtilitiesArgs.resolve_options(
+            options, kwargs, ModelDumpOptions
+        ).unwrap_or(ModelDumpOptions())
+        opts_dict = opts.model_dump(exclude_none=True)
+        return model.model_dump(**opts_dict)
 
     @classmethod
     def load[M: BaseModel](

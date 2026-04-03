@@ -12,7 +12,7 @@ from collections.abc import Mapping, MutableSequence
 from enum import StrEnum
 from typing import ClassVar
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import m, r, t
 
@@ -56,6 +56,47 @@ class FlextUtilitiesArgs:
                 f"Invalid values: {'; '.join(errors)}",
             )
         return r[Mapping[str, t.ValueOrModel]].ok(parsed)
+
+    @staticmethod
+    def parse_model[M: BaseModel](
+        kwargs: Mapping[str, t.ValueOrModel],
+        model_cls: type[M],
+        *,
+        allow_empty: bool = True,
+    ) -> r[M]:
+        """Parse kwargs directly into a Pydantic model with detailed error collection.
+
+        Args:
+            kwargs: Dictionary of arguments.
+            model_cls: BaseModel subclass to populate.
+            allow_empty: If true, empty kwargs will validate empty model instances successfully.
+
+        Returns:
+            Result containing hydrated model, or detailed string of failed validation fields.
+
+        """
+        if not kwargs and allow_empty:
+            kwargs = {}
+        return r[M].from_validation(kwargs, model_cls)
+
+    @staticmethod
+    def resolve_options[M: BaseModel](
+        options: M | None,
+        kwargs: Mapping[str, t.ValueOrModel],
+        model_cls: type[M],
+        *,
+        allow_empty: bool = True,
+    ) -> r[M]:
+        """Resolve options from a pre-instantiated model or kwargs concisely.
+
+        Reduces boilerplate by returning an r[M] which callers can unwrap_or()
+        or gracefully fail.
+        """
+        if options is not None:
+            return r[M].ok(options)
+        return FlextUtilitiesArgs.parse_model(
+            kwargs, model_cls, allow_empty=allow_empty
+        )
 
 
 __all__ = ["FlextUtilitiesArgs"]

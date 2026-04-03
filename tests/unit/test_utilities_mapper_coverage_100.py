@@ -214,8 +214,8 @@ class UtilitiesMapperCoverage100Namespace:
 
         def test_ensure_str(self) -> None:
             """Test ensure_str."""
-            tm.that(u.ensure_str("s"), eq="s")
-            tm.that(u.ensure_str(1), eq="1")
+            tm.that(u.to_str("s"), eq="s")
+            tm.that(u.to_str(1), eq="1")
             tm.that(u.ensure_str(None, "def"), eq="def")
 
         def test_convert_to_json_value(self) -> None:

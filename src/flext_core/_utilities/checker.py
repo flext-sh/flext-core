@@ -68,7 +68,11 @@ class FlextUtilitiesChecker:
         expected_type: t.TypeHintSpecifier,
     ) -> bool:
         """Check if expected type is a canonical catch-all value contract."""
-        return expected_type in {t.RecursiveContainer, t.ValueOrModel}
+        return expected_type in {
+            t.NormalizedValue,
+            t.RecursiveContainer,
+            t.ValueOrModel,
+        }
 
     @classmethod
     def _evaluate_type_compatibility(
