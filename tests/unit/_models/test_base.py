@@ -89,7 +89,7 @@ class TestFlextModelsBase:
     # ── Validators ────────────────────────────────────────────
 
     def test_validators_ensure_utc_datetime_naive(self) -> None:
-        naive = datetime(2026, 6, 1, 12, 0, 0, tzinfo=None)
+        naive = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC).replace(tzinfo=None)
         result = m.Validators.ensure_utc_datetime(naive)
         tm.that(result, none=False)
         tm.that(cast("datetime", result).tzinfo, eq=UTC)
@@ -447,7 +447,7 @@ class TestFlextModelsBase:
         class _Ts(m.TimestampableMixin):
             pass
 
-        naive = datetime(2026, 6, 1, 12, 0, 0, tzinfo=None)
+        naive = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC).replace(tzinfo=None)
         inst = _Ts(created_at=naive)
         tm.that(inst.created_at.tzinfo, eq=UTC)
 

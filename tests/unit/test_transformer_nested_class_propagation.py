@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import libcst as cst
+from libcst.metadata import MetadataWrapper
+
 from flext_infra import FlextInfraNestedClassPropagationTransformer
 
 

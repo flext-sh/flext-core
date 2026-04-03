@@ -28,7 +28,7 @@ from flext_core import (
     u,
     x,
 )
-from tests import m, t, u
+from tests import m, t
 
 FlextTestResult = r[T]
 FlextTestResultCo = r[T_co]

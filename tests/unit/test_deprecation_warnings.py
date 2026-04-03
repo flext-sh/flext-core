@@ -19,9 +19,6 @@ from typing import cast
 
 import pytest
 
-from flext_core import (
-    u,
-)
 from flext_tests import tm
 from tests import m, t, u
 
