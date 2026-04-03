@@ -10,9 +10,28 @@ import pytest
 
 from flext_infra import (
     FlextInfraClassNestingRefactorRule as ClassNestingRefactorRule,
+    m,
+    u,
 )
 
 pytestmark = [pytest.mark.integration]
+
+
+def _apply_rule(
+    workspace_root: Path,
+    file_path: Path,
+    rule: ClassNestingRefactorRule,
+    *,
+    dry_run: bool,
+) -> m.Infra.Result:
+    rope_project = u.Infra.init_rope_project(workspace_root)
+    try:
+        resource = u.Infra.get_resource_from_path(rope_project, file_path)
+        if resource is None:
+            raise FileNotFoundError(file_path)
+        return rule.apply(rope_project, resource, dry_run=dry_run)
+    finally:
+        rope_project.close()
 
 
 def test_class_nesting_refactor_single_file_end_to_end(tmp_path: Path) -> None:
@@ -41,7 +60,7 @@ def test_class_nesting_refactor_single_file_end_to_end(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     rule = ClassNestingRefactorRule(config_path=config_path)
-    result = rule.apply(target_file, dry_run=False)
+    result = _apply_rule(tmp_path, target_file, rule, dry_run=False)
     assert result.success
     assert result.modified
     assert result.refactored_code is not None

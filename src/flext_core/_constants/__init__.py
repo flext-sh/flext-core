@@ -5,14 +5,58 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
-from flext_core import install_lazy_exports
+from flext_core._constants.base import FlextConstantsBase
+from flext_core._constants.cqrs import FlextConstantsCqrs
+from flext_core._constants.domain import FlextConstantsDomain
+from flext_core._constants.errors import FlextConstantsErrors
+from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+from flext_core._constants.mixins import FlextConstantsMixins
+from flext_core._constants.platform import FlextConstantsPlatform
+from flext_core._constants.settings import FlextConstantsSettings
+from flext_core._constants.validation import FlextConstantsValidation
+from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core._constants import (
+if _t.TYPE_CHECKING:
+    import flext_core._constants.base as _flext_core__constants_base
+
+    base = _flext_core__constants_base
+    import flext_core._constants.cqrs as _flext_core__constants_cqrs
+
+    cqrs = _flext_core__constants_cqrs
+    import flext_core._constants.domain as _flext_core__constants_domain
+
+    domain = _flext_core__constants_domain
+    import flext_core._constants.errors as _flext_core__constants_errors
+
+    errors = _flext_core__constants_errors
+    import flext_core._constants.infrastructure as _flext_core__constants_infrastructure
+
+    infrastructure = _flext_core__constants_infrastructure
+    import flext_core._constants.mixins as _flext_core__constants_mixins
+
+    mixins = _flext_core__constants_mixins
+    import flext_core._constants.platform as _flext_core__constants_platform
+
+    platform = _flext_core__constants_platform
+    import flext_core._constants.settings as _flext_core__constants_settings
+
+    settings = _flext_core__constants_settings
+    import flext_core._constants.validation as _flext_core__constants_validation
+
+    validation = _flext_core__constants_validation
+
+    _ = (
+        FlextConstantsBase,
+        FlextConstantsCqrs,
+        FlextConstantsDomain,
+        FlextConstantsErrors,
+        FlextConstantsInfrastructure,
+        FlextConstantsMixins,
+        FlextConstantsPlatform,
+        FlextConstantsSettings,
+        FlextConstantsValidation,
         base,
         cqrs,
         domain,
@@ -23,17 +67,7 @@ if _TYPE_CHECKING:
         settings,
         validation,
     )
-    from flext_core._constants.base import FlextConstantsBase
-    from flext_core._constants.cqrs import FlextConstantsCqrs
-    from flext_core._constants.domain import FlextConstantsDomain
-    from flext_core._constants.errors import FlextConstantsErrors
-    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
-    from flext_core._constants.mixins import FlextConstantsMixins
-    from flext_core._constants.platform import FlextConstantsPlatform
-    from flext_core._constants.settings import FlextConstantsSettings
-    from flext_core._constants.validation import FlextConstantsValidation
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "FlextConstantsBase": "flext_core._constants.base",
     "FlextConstantsCqrs": "flext_core._constants.cqrs",
     "FlextConstantsDomain": "flext_core._constants.domain",
@@ -53,6 +87,27 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "settings": "flext_core._constants.settings",
     "validation": "flext_core._constants.validation",
 }
+
+__all__ = [
+    "FlextConstantsBase",
+    "FlextConstantsCqrs",
+    "FlextConstantsDomain",
+    "FlextConstantsErrors",
+    "FlextConstantsInfrastructure",
+    "FlextConstantsMixins",
+    "FlextConstantsPlatform",
+    "FlextConstantsSettings",
+    "FlextConstantsValidation",
+    "base",
+    "cqrs",
+    "domain",
+    "errors",
+    "infrastructure",
+    "mixins",
+    "platform",
+    "settings",
+    "validation",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

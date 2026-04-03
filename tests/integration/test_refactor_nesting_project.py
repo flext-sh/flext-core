@@ -6,7 +6,26 @@ from pathlib import Path
 
 from flext_infra import (
     FlextInfraClassNestingRefactorRule as ClassNestingRefactorRule,
+    m,
+    u,
 )
+
+
+def _apply_rule(
+    workspace_root: Path,
+    file_path: Path,
+    rule: ClassNestingRefactorRule,
+    *,
+    dry_run: bool,
+) -> m.Infra.Result:
+    rope_project = u.Infra.init_rope_project(workspace_root)
+    try:
+        resource = u.Infra.get_resource_from_path(rope_project, file_path)
+        if resource is None:
+            raise FileNotFoundError(file_path)
+        return rule.apply(rope_project, resource, dry_run=dry_run)
+    finally:
+        rope_project.close()
 
 
 class TestProjectLevelRefactor:
@@ -25,7 +44,7 @@ class TestProjectLevelRefactor:
             "\nclass_nesting:\n  - loose_name: TimeoutEnforcer\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: TimeoutEnforcer\n    confidence: high\n  - loose_name: RateLimiter\n    current_file: src/test_project/dispatcher.py\n    target_namespace: FlextDispatcher\n    target_name: RateLimiter\n    confidence: high\n",
         )
         rule = ClassNestingRefactorRule(config_file)
-        result = rule.apply(test_file, dry_run=True)
+        result = _apply_rule(tmp_path, test_file, rule, dry_run=True)
         assert result.success
         assert result.modified is True
 
@@ -42,7 +61,7 @@ class TestProjectLevelRefactor:
             "\nclass_nesting:\n  - loose_name: Helper\n    current_file: src/test.py\n    target_namespace: FlextUtilities\n    target_name: Helper\n    confidence: high\n",
         )
         rule = ClassNestingRefactorRule(config_file)
-        result = rule.apply(test_file, dry_run=True)
+        result = _apply_rule(tmp_path, test_file, rule, dry_run=True)
         assert result.success
         assert result.refactored_code is not None
         assert (

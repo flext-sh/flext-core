@@ -5,14 +5,73 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
-from flext_core import install_lazy_exports
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.containers import FlextTypingContainers
+from flext_core._typings.core import FlextTypesCore
+from flext_core._typings.generics import (
+    TV,
+    EnumT,
+    MessageT_contra,
+    P,
+    R,
+    ResultT,
+    T,
+    T_co,
+    T_contra,
+    T_Model,
+    T_Namespace,
+    T_Settings,
+    TRuntime,
+    TV_co,
+    U,
+)
+from flext_core._typings.services import FlextTypesServices
+from flext_core._typings.validation import FlextTypesValidation
+from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core._typings import (
+if _t.TYPE_CHECKING:
+    import flext_core._typings.base as _flext_core__typings_base
+
+    base = _flext_core__typings_base
+    import flext_core._typings.containers as _flext_core__typings_containers
+
+    containers = _flext_core__typings_containers
+    import flext_core._typings.core as _flext_core__typings_core
+
+    core = _flext_core__typings_core
+    import flext_core._typings.generics as _flext_core__typings_generics
+
+    generics = _flext_core__typings_generics
+    import flext_core._typings.services as _flext_core__typings_services
+
+    services = _flext_core__typings_services
+    import flext_core._typings.validation as _flext_core__typings_validation
+
+    validation = _flext_core__typings_validation
+
+    _ = (
+        EnumT,
+        FlextTypesCore,
+        FlextTypesServices,
+        FlextTypesValidation,
+        FlextTypingBase,
+        FlextTypingContainers,
+        MessageT_contra,
+        P,
+        R,
+        ResultT,
+        T,
+        TRuntime,
+        TV,
+        TV_co,
+        T_Model,
+        T_Namespace,
+        T_Settings,
+        T_co,
+        T_contra,
+        U,
         base,
         containers,
         core,
@@ -20,30 +79,7 @@ if _TYPE_CHECKING:
         services,
         validation,
     )
-    from flext_core._typings.base import FlextTypingBase
-    from flext_core._typings.containers import FlextTypingContainers
-    from flext_core._typings.core import FlextTypesCore
-    from flext_core._typings.generics import (
-        TV,
-        EnumT,
-        MessageT_contra,
-        P,
-        R,
-        ResultT,
-        T,
-        T_co,
-        T_contra,
-        T_Model,
-        T_Namespace,
-        T_Settings,
-        TRuntime,
-        TV_co,
-        U,
-    )
-    from flext_core._typings.services import FlextTypesServices
-    from flext_core._typings.validation import FlextTypesValidation
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "EnumT": "flext_core._typings.generics",
     "FlextTypesCore": "flext_core._typings.core",
     "FlextTypesServices": "flext_core._typings.services",
@@ -71,6 +107,35 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "services": "flext_core._typings.services",
     "validation": "flext_core._typings.validation",
 }
+
+__all__ = [
+    "TV",
+    "EnumT",
+    "FlextTypesCore",
+    "FlextTypesServices",
+    "FlextTypesValidation",
+    "FlextTypingBase",
+    "FlextTypingContainers",
+    "MessageT_contra",
+    "P",
+    "R",
+    "ResultT",
+    "T",
+    "TRuntime",
+    "TV_co",
+    "T_Model",
+    "T_Namespace",
+    "T_Settings",
+    "T_co",
+    "T_contra",
+    "U",
+    "base",
+    "containers",
+    "core",
+    "generics",
+    "services",
+    "validation",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

@@ -5,14 +5,108 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
-from flext_core import install_lazy_exports, merge_lazy_imports
+from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models._context._export import FlextModelsContextExport
+from flext_core._models._context._metadata import FlextModelsContextMetadata
+from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+from flext_core._models._context._scope import FlextModelsContextScope
+from flext_core._models._context._tokens import FlextModelsContextTokens
+from flext_core._models.base import FlextModelFoundation
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.container import FlextModelsContainer
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.context import FlextModelsContext
+from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core._models.decorators import FlextModelsDecorators
+from flext_core._models.dispatcher import FlextModelsDispatcher
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.errors import FlextModelsErrors
+from flext_core._models.exception_params import FlextModelsExceptionParams
+from flext_core._models.generic import FlextGenericModels
+from flext_core._models.handler import FlextModelsHandler
+from flext_core._models.service import FlextModelsService
+from flext_core._models.settings import FlextModelsConfig
+from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core._models import (
+if _t.TYPE_CHECKING:
+    import flext_core._models._context as _flext_core__models__context
+
+    _context = _flext_core__models__context
+    import flext_core._models.base as _flext_core__models_base
+
+    base = _flext_core__models_base
+    import flext_core._models.collections as _flext_core__models_collections
+
+    collections = _flext_core__models_collections
+    import flext_core._models.container as _flext_core__models_container
+
+    container = _flext_core__models_container
+    import flext_core._models.containers as _flext_core__models_containers
+
+    containers = _flext_core__models_containers
+    import flext_core._models.context as _flext_core__models_context
+
+    context = _flext_core__models_context
+    import flext_core._models.cqrs as _flext_core__models_cqrs
+
+    cqrs = _flext_core__models_cqrs
+    import flext_core._models.decorators as _flext_core__models_decorators
+
+    decorators = _flext_core__models_decorators
+    import flext_core._models.dispatcher as _flext_core__models_dispatcher
+
+    dispatcher = _flext_core__models_dispatcher
+    import flext_core._models.domain_event as _flext_core__models_domain_event
+
+    domain_event = _flext_core__models_domain_event
+    import flext_core._models.entity as _flext_core__models_entity
+
+    entity = _flext_core__models_entity
+    import flext_core._models.errors as _flext_core__models_errors
+
+    errors = _flext_core__models_errors
+    import flext_core._models.exception_params as _flext_core__models_exception_params
+
+    exception_params = _flext_core__models_exception_params
+    import flext_core._models.generic as _flext_core__models_generic
+
+    generic = _flext_core__models_generic
+    import flext_core._models.handler as _flext_core__models_handler
+
+    handler = _flext_core__models_handler
+    import flext_core._models.service as _flext_core__models_service
+
+    service = _flext_core__models_service
+    import flext_core._models.settings as _flext_core__models_settings
+
+    settings = _flext_core__models_settings
+
+    _ = (
+        FlextGenericModels,
+        FlextModelFoundation,
+        FlextModelsCollections,
+        FlextModelsConfig,
+        FlextModelsContainer,
+        FlextModelsContainers,
+        FlextModelsContext,
+        FlextModelsContextData,
+        FlextModelsContextExport,
+        FlextModelsContextMetadata,
+        FlextModelsContextProxyVar,
+        FlextModelsContextScope,
+        FlextModelsContextTokens,
+        FlextModelsCqrs,
+        FlextModelsDecorators,
+        FlextModelsDispatcher,
+        FlextModelsDomainEvent,
+        FlextModelsEntity,
+        FlextModelsErrors,
+        FlextModelsExceptionParams,
+        FlextModelsHandler,
+        FlextModelsService,
         _context,
         base,
         collections,
@@ -31,32 +125,7 @@ if _TYPE_CHECKING:
         service,
         settings,
     )
-    from flext_core._models._context import (
-        FlextModelsContextData,
-        FlextModelsContextExport,
-        FlextModelsContextMetadata,
-        FlextModelsContextProxyVar,
-        FlextModelsContextScope,
-        FlextModelsContextTokens,
-    )
-    from flext_core._models.base import FlextModelFoundation
-    from flext_core._models.collections import FlextModelsCollections
-    from flext_core._models.container import FlextModelsContainer
-    from flext_core._models.containers import FlextModelsContainers
-    from flext_core._models.context import FlextModelsContext
-    from flext_core._models.cqrs import FlextModelsCqrs
-    from flext_core._models.decorators import FlextModelsDecorators
-    from flext_core._models.dispatcher import FlextModelsDispatcher
-    from flext_core._models.domain_event import FlextModelsDomainEvent
-    from flext_core._models.entity import FlextModelsEntity
-    from flext_core._models.errors import FlextModelsErrors
-    from flext_core._models.exception_params import FlextModelsExceptionParams
-    from flext_core._models.generic import FlextGenericModels
-    from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.service import FlextModelsService
-    from flext_core._models.settings import FlextModelsConfig
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
+_LAZY_IMPORTS = merge_lazy_imports(
     ("flext_core._models._context",),
     {
         "FlextGenericModels": "flext_core._models.generic",
@@ -94,6 +163,48 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = merge_lazy_imports(
         "settings": "flext_core._models.settings",
     },
 )
+
+__all__ = [
+    "FlextGenericModels",
+    "FlextModelFoundation",
+    "FlextModelsCollections",
+    "FlextModelsConfig",
+    "FlextModelsContainer",
+    "FlextModelsContainers",
+    "FlextModelsContext",
+    "FlextModelsContextData",
+    "FlextModelsContextExport",
+    "FlextModelsContextMetadata",
+    "FlextModelsContextProxyVar",
+    "FlextModelsContextScope",
+    "FlextModelsContextTokens",
+    "FlextModelsCqrs",
+    "FlextModelsDecorators",
+    "FlextModelsDispatcher",
+    "FlextModelsDomainEvent",
+    "FlextModelsEntity",
+    "FlextModelsErrors",
+    "FlextModelsExceptionParams",
+    "FlextModelsHandler",
+    "FlextModelsService",
+    "_context",
+    "base",
+    "collections",
+    "container",
+    "containers",
+    "context",
+    "cqrs",
+    "decorators",
+    "dispatcher",
+    "domain_event",
+    "entity",
+    "errors",
+    "exception_params",
+    "generic",
+    "handler",
+    "service",
+    "settings",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

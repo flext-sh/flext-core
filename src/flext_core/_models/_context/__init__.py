@@ -5,14 +5,43 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
+from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models._context._export import FlextModelsContextExport
+from flext_core._models._context._metadata import FlextModelsContextMetadata
+from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+from flext_core._models._context._scope import FlextModelsContextScope
+from flext_core._models._context._tokens import FlextModelsContextTokens
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core._models._context import (
+if _t.TYPE_CHECKING:
+    import flext_core._models._context._data as _flext_core__models__context__data
+
+    _data = _flext_core__models__context__data
+    import flext_core._models._context._export as _flext_core__models__context__export
+
+    _export = _flext_core__models__context__export
+    import flext_core._models._context._metadata as _flext_core__models__context__metadata
+
+    _metadata = _flext_core__models__context__metadata
+    import flext_core._models._context._proxy_var as _flext_core__models__context__proxy_var
+
+    _proxy_var = _flext_core__models__context__proxy_var
+    import flext_core._models._context._scope as _flext_core__models__context__scope
+
+    _scope = _flext_core__models__context__scope
+    import flext_core._models._context._tokens as _flext_core__models__context__tokens
+
+    _tokens = _flext_core__models__context__tokens
+
+    _ = (
+        FlextModelsContextData,
+        FlextModelsContextExport,
+        FlextModelsContextMetadata,
+        FlextModelsContextProxyVar,
+        FlextModelsContextScope,
+        FlextModelsContextTokens,
         _data,
         _export,
         _metadata,
@@ -20,14 +49,7 @@ if _TYPE_CHECKING:
         _scope,
         _tokens,
     )
-    from flext_core._models._context._data import FlextModelsContextData
-    from flext_core._models._context._export import FlextModelsContextExport
-    from flext_core._models._context._metadata import FlextModelsContextMetadata
-    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
-    from flext_core._models._context._scope import FlextModelsContextScope
-    from flext_core._models._context._tokens import FlextModelsContextTokens
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "FlextModelsContextData": "flext_core._models._context._data",
     "FlextModelsContextExport": "flext_core._models._context._export",
     "FlextModelsContextMetadata": "flext_core._models._context._metadata",
@@ -41,6 +63,21 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "_scope": "flext_core._models._context._scope",
     "_tokens": "flext_core._models._context._tokens",
 }
+
+__all__ = [
+    "FlextModelsContextData",
+    "FlextModelsContextExport",
+    "FlextModelsContextMetadata",
+    "FlextModelsContextProxyVar",
+    "FlextModelsContextScope",
+    "FlextModelsContextTokens",
+    "_data",
+    "_export",
+    "_metadata",
+    "_proxy_var",
+    "_scope",
+    "_tokens",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

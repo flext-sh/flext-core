@@ -5,14 +5,58 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
-from flext_core import install_lazy_exports
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.config import FlextProtocolsConfig
+from flext_core._protocols.container import FlextProtocolsContainer
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.logging import FlextProtocolsLogging
+from flext_core._protocols.registry import FlextProtocolsRegistry
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.service import FlextProtocolsService
+from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core._protocols import (
+if _t.TYPE_CHECKING:
+    import flext_core._protocols.base as _flext_core__protocols_base
+
+    base = _flext_core__protocols_base
+    import flext_core._protocols.config as _flext_core__protocols_config
+
+    config = _flext_core__protocols_config
+    import flext_core._protocols.container as _flext_core__protocols_container
+
+    container = _flext_core__protocols_container
+    import flext_core._protocols.context as _flext_core__protocols_context
+
+    context = _flext_core__protocols_context
+    import flext_core._protocols.handler as _flext_core__protocols_handler
+
+    handler = _flext_core__protocols_handler
+    import flext_core._protocols.logging as _flext_core__protocols_logging
+
+    logging = _flext_core__protocols_logging
+    import flext_core._protocols.registry as _flext_core__protocols_registry
+
+    registry = _flext_core__protocols_registry
+    import flext_core._protocols.result as _flext_core__protocols_result
+
+    result = _flext_core__protocols_result
+    import flext_core._protocols.service as _flext_core__protocols_service
+
+    service = _flext_core__protocols_service
+
+    _ = (
+        FlextProtocolsBase,
+        FlextProtocolsConfig,
+        FlextProtocolsContainer,
+        FlextProtocolsContext,
+        FlextProtocolsHandler,
+        FlextProtocolsLogging,
+        FlextProtocolsRegistry,
+        FlextProtocolsResult,
+        FlextProtocolsService,
         base,
         config,
         container,
@@ -23,17 +67,7 @@ if _TYPE_CHECKING:
         result,
         service,
     )
-    from flext_core._protocols.base import FlextProtocolsBase
-    from flext_core._protocols.config import FlextProtocolsConfig
-    from flext_core._protocols.container import FlextProtocolsContainer
-    from flext_core._protocols.context import FlextProtocolsContext
-    from flext_core._protocols.handler import FlextProtocolsHandler
-    from flext_core._protocols.logging import FlextProtocolsLogging
-    from flext_core._protocols.registry import FlextProtocolsRegistry
-    from flext_core._protocols.result import FlextProtocolsResult
-    from flext_core._protocols.service import FlextProtocolsService
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "FlextProtocolsBase": "flext_core._protocols.base",
     "FlextProtocolsConfig": "flext_core._protocols.config",
     "FlextProtocolsContainer": "flext_core._protocols.container",
@@ -53,6 +87,27 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "result": "flext_core._protocols.result",
     "service": "flext_core._protocols.service",
 }
+
+__all__ = [
+    "FlextProtocolsBase",
+    "FlextProtocolsConfig",
+    "FlextProtocolsContainer",
+    "FlextProtocolsContext",
+    "FlextProtocolsHandler",
+    "FlextProtocolsLogging",
+    "FlextProtocolsRegistry",
+    "FlextProtocolsResult",
+    "FlextProtocolsService",
+    "base",
+    "config",
+    "container",
+    "context",
+    "handler",
+    "logging",
+    "registry",
+    "result",
+    "service",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

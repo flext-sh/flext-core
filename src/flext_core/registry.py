@@ -20,6 +20,7 @@ from flext_core import (
     FlextContainer,
     FlextDispatcher,
     c,
+    h,
     m,
     p,
     r,
@@ -27,7 +28,6 @@ from flext_core import (
     t,
     u,
 )
-from flext_core.handlers import h
 
 
 class FlextRegistry(s[bool]):

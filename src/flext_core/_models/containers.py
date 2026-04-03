@@ -22,9 +22,8 @@ from pydantic import BaseModel, Field, RootModel
 
 from flext_core import FlextModelFoundation, t
 
-# Module-level aliases to avoid pydantic mypy plugin crash on t.* in RootModel bases
-_ScalarOrModel = t.Container | BaseModel
-_ValidatorCallable = Callable[[_ScalarOrModel | None], _ScalarOrModel | None]
+type _ScalarOrModel = t.Container | BaseModel
+type _ValidatorCallable = Callable[[_ScalarOrModel | None], _ScalarOrModel | None]
 
 
 class FlextModelsContainers:

@@ -30,7 +30,7 @@ from pydantic import BaseModel
 from flext_tests import tm
 from tests import c, m, r, t, test_runtime, test_runtime_coverage_100, u
 
-runtime_module = inspect.getmodule(u)
+runtime_module = inspect.getmodule(u.configure_structlog)
 
 
 @pytest.fixture(autouse=True)

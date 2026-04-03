@@ -5,13 +5,191 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
+from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
+from examples._models.ex01 import (
+    Ex01DemonstrationResult,
+    Ex01InvalidPersonPayload,
+    Ex01RunDemonstrationCommand,
+    Ex01User,
+    Ex01ValidPersonPayload,
+)
+from examples._models.ex02 import (
+    Ex02CacheService,
+    Ex02DatabaseService,
+    Ex02EmailService,
+    Ex02TestConfig,
+)
+from examples._models.ex03 import (
+    Ex03Email,
+    Ex03Money,
+    Ex03Order,
+    Ex03OrderItem,
+    Ex03User,
+)
+from examples._models.ex04 import (
+    Ex04AutoCommand,
+    Ex04CreateUser,
+    Ex04DeleteUser,
+    Ex04FailingDelete,
+    Ex04GetUser,
+    Ex04NoSubscriberEvent,
+    Ex04Ping,
+    Ex04UnknownQuery,
+    Ex04UserCreated,
+)
+from examples._models.ex05 import (
+    Ex05BadProcessor,
+    Ex05GoodProcessor,
+    Ex05HandlerBad,
+    Ex05HandlerLike,
+    Ex05StatusEnum,
+    Ex05UserModel,
+)
+from examples._models.ex07 import (
+    Ex07CreateUserCommand,
+    Ex07DemoPlugin,
+    Ex07GetUserQuery,
+    Ex07UserCreatedEvent,
+)
+from examples._models.ex08 import Ex08Order, Ex08User
+from examples._models.ex10 import (
+    Ex10CommandBusStub,
+    Ex10ContextPayload,
+    Ex10DerivedMessage,
+    Ex10Entity,
+    Ex10Message,
+    Ex10ProcessorBad,
+    Ex10ProcessorGood,
+    Ex10ProtocolHandler,
+    Ex10ServiceStub,
+)
+from examples._models.ex11 import (
+    Ex11CommandBusStub,
+    Ex11EntityStub,
+    Ex11HandlerLike,
+    Ex11HandlerLikeService,
+    Ex11Payload,
+    Ex11ProcessorProtocolBad,
+    Ex11ProcessorProtocolGood,
+)
+from examples._models.ex12 import Ex12CommandA, Ex12CommandB
+from examples._models.ex14 import (
+    Ex14CreateUserCommand,
+    Ex14GetUserQuery,
+    Ex14UserDTO,
+)
+from examples._models.exconfig import ExConfigAppConfig
+from examples._models.shared import SharedHandle, SharedPerson
 from flext_core.lazy import install_lazy_exports
 
-if _TYPE_CHECKING:
-    from examples._models import (
+if _t.TYPE_CHECKING:
+    import examples._models.ex00 as _examples__models_ex00
+
+    ex00 = _examples__models_ex00
+    import examples._models.ex01 as _examples__models_ex01
+
+    ex01 = _examples__models_ex01
+    import examples._models.ex02 as _examples__models_ex02
+
+    ex02 = _examples__models_ex02
+    import examples._models.ex03 as _examples__models_ex03
+
+    ex03 = _examples__models_ex03
+    import examples._models.ex04 as _examples__models_ex04
+
+    ex04 = _examples__models_ex04
+    import examples._models.ex05 as _examples__models_ex05
+
+    ex05 = _examples__models_ex05
+    import examples._models.ex07 as _examples__models_ex07
+
+    ex07 = _examples__models_ex07
+    import examples._models.ex08 as _examples__models_ex08
+
+    ex08 = _examples__models_ex08
+    import examples._models.ex10 as _examples__models_ex10
+
+    ex10 = _examples__models_ex10
+    import examples._models.ex11 as _examples__models_ex11
+
+    ex11 = _examples__models_ex11
+    import examples._models.ex12 as _examples__models_ex12
+
+    ex12 = _examples__models_ex12
+    import examples._models.ex14 as _examples__models_ex14
+
+    ex14 = _examples__models_ex14
+    import examples._models.exconfig as _examples__models_exconfig
+
+    exconfig = _examples__models_exconfig
+    import examples._models.shared as _examples__models_shared
+
+    shared = _examples__models_shared
+
+    _ = (
+        Ex00UserInput,
+        Ex00UserProfile,
+        Ex01DemonstrationResult,
+        Ex01InvalidPersonPayload,
+        Ex01RunDemonstrationCommand,
+        Ex01User,
+        Ex01ValidPersonPayload,
+        Ex02CacheService,
+        Ex02DatabaseService,
+        Ex02EmailService,
+        Ex02TestConfig,
+        Ex03Email,
+        Ex03Money,
+        Ex03Order,
+        Ex03OrderItem,
+        Ex03User,
+        Ex04AutoCommand,
+        Ex04CreateUser,
+        Ex04DeleteUser,
+        Ex04FailingDelete,
+        Ex04GetUser,
+        Ex04NoSubscriberEvent,
+        Ex04Ping,
+        Ex04UnknownQuery,
+        Ex04UserCreated,
+        Ex05BadProcessor,
+        Ex05GoodProcessor,
+        Ex05HandlerBad,
+        Ex05HandlerLike,
+        Ex05StatusEnum,
+        Ex05UserModel,
+        Ex07CreateUserCommand,
+        Ex07DemoPlugin,
+        Ex07GetUserQuery,
+        Ex07UserCreatedEvent,
+        Ex08Order,
+        Ex08User,
+        Ex10CommandBusStub,
+        Ex10ContextPayload,
+        Ex10DerivedMessage,
+        Ex10Entity,
+        Ex10Message,
+        Ex10ProcessorBad,
+        Ex10ProcessorGood,
+        Ex10ProtocolHandler,
+        Ex10ServiceStub,
+        Ex11CommandBusStub,
+        Ex11EntityStub,
+        Ex11HandlerLike,
+        Ex11HandlerLikeService,
+        Ex11Payload,
+        Ex11ProcessorProtocolBad,
+        Ex11ProcessorProtocolGood,
+        Ex12CommandA,
+        Ex12CommandB,
+        Ex14CreateUserCommand,
+        Ex14GetUserQuery,
+        Ex14UserDTO,
+        ExConfigAppConfig,
+        SharedHandle,
+        SharedPerson,
         ex00,
         ex01,
         ex02,
@@ -27,84 +205,7 @@ if _TYPE_CHECKING:
         exconfig,
         shared,
     )
-    from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
-    from examples._models.ex01 import (
-        Ex01DemonstrationResult,
-        Ex01InvalidPersonPayload,
-        Ex01RunDemonstrationCommand,
-        Ex01User,
-        Ex01ValidPersonPayload,
-    )
-    from examples._models.ex02 import (
-        Ex02CacheService,
-        Ex02DatabaseService,
-        Ex02EmailService,
-        Ex02TestConfig,
-    )
-    from examples._models.ex03 import (
-        Ex03Email,
-        Ex03Money,
-        Ex03Order,
-        Ex03OrderItem,
-        Ex03User,
-    )
-    from examples._models.ex04 import (
-        Ex04AutoCommand,
-        Ex04CreateUser,
-        Ex04DeleteUser,
-        Ex04FailingDelete,
-        Ex04GetUser,
-        Ex04NoSubscriberEvent,
-        Ex04Ping,
-        Ex04UnknownQuery,
-        Ex04UserCreated,
-    )
-    from examples._models.ex05 import (
-        Ex05BadProcessor,
-        Ex05GoodProcessor,
-        Ex05HandlerBad,
-        Ex05HandlerLike,
-        Ex05StatusEnum,
-        Ex05UserModel,
-    )
-    from examples._models.ex07 import (
-        Ex07CreateUserCommand,
-        Ex07DemoPlugin,
-        Ex07GetUserQuery,
-        Ex07UserCreatedEvent,
-    )
-    from examples._models.ex08 import Ex08Order, Ex08User
-    from examples._models.ex10 import (
-        Ex10CommandBusStub,
-        Ex10ContextPayload,
-        Ex10DerivedMessage,
-        Ex10Entity,
-        Ex10Message,
-        Ex10ProcessorBad,
-        Ex10ProcessorGood,
-        Ex10ProtocolHandler,
-        Ex10ServiceStub,
-    )
-    from examples._models.ex11 import (
-        Ex11CommandBusStub,
-        Ex11EntityStub,
-        Ex11HandlerLike,
-        Ex11HandlerLikeService,
-        Ex11Payload,
-        Ex11ProcessorProtocolBad,
-        Ex11ProcessorProtocolGood,
-    )
-    from examples._models.ex12 import Ex12CommandA, Ex12CommandB
-    from examples._models.ex14 import (
-        Ex14CreateUserCommand,
-        Ex14GetUserQuery,
-        Ex14UserDTO,
-    )
-    from examples._models.exconfig import ExConfigAppConfig
-    from examples._models.shared import SharedHandle, SharedPerson
-    from flext_core import FlextTypes
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "Ex00UserInput": "examples._models.ex00",
     "Ex00UserProfile": "examples._models.ex00",
     "Ex01DemonstrationResult": "examples._models.ex01",
@@ -181,6 +282,84 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "exconfig": "examples._models.exconfig",
     "shared": "examples._models.shared",
 }
+
+__all__ = [
+    "Ex00UserInput",
+    "Ex00UserProfile",
+    "Ex01DemonstrationResult",
+    "Ex01InvalidPersonPayload",
+    "Ex01RunDemonstrationCommand",
+    "Ex01User",
+    "Ex01ValidPersonPayload",
+    "Ex02CacheService",
+    "Ex02DatabaseService",
+    "Ex02EmailService",
+    "Ex02TestConfig",
+    "Ex03Email",
+    "Ex03Money",
+    "Ex03Order",
+    "Ex03OrderItem",
+    "Ex03User",
+    "Ex04AutoCommand",
+    "Ex04CreateUser",
+    "Ex04DeleteUser",
+    "Ex04FailingDelete",
+    "Ex04GetUser",
+    "Ex04NoSubscriberEvent",
+    "Ex04Ping",
+    "Ex04UnknownQuery",
+    "Ex04UserCreated",
+    "Ex05BadProcessor",
+    "Ex05GoodProcessor",
+    "Ex05HandlerBad",
+    "Ex05HandlerLike",
+    "Ex05StatusEnum",
+    "Ex05UserModel",
+    "Ex07CreateUserCommand",
+    "Ex07DemoPlugin",
+    "Ex07GetUserQuery",
+    "Ex07UserCreatedEvent",
+    "Ex08Order",
+    "Ex08User",
+    "Ex10CommandBusStub",
+    "Ex10ContextPayload",
+    "Ex10DerivedMessage",
+    "Ex10Entity",
+    "Ex10Message",
+    "Ex10ProcessorBad",
+    "Ex10ProcessorGood",
+    "Ex10ProtocolHandler",
+    "Ex10ServiceStub",
+    "Ex11CommandBusStub",
+    "Ex11EntityStub",
+    "Ex11HandlerLike",
+    "Ex11HandlerLikeService",
+    "Ex11Payload",
+    "Ex11ProcessorProtocolBad",
+    "Ex11ProcessorProtocolGood",
+    "Ex12CommandA",
+    "Ex12CommandB",
+    "Ex14CreateUserCommand",
+    "Ex14GetUserQuery",
+    "Ex14UserDTO",
+    "ExConfigAppConfig",
+    "SharedHandle",
+    "SharedPerson",
+    "ex00",
+    "ex01",
+    "ex02",
+    "ex03",
+    "ex04",
+    "ex05",
+    "ex07",
+    "ex08",
+    "ex10",
+    "ex11",
+    "ex12",
+    "ex14",
+    "exconfig",
+    "shared",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

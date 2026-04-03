@@ -5,39 +5,63 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
+from flext_core.constants import FlextConstants as c
+from flext_core.decorators import FlextDecorators as d
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.handlers import FlextHandlers as h
 from flext_core.lazy import install_lazy_exports
+from flext_core.mixins import FlextMixins as x
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
+from flext_core.service import FlextService as s
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
+from tests.benchmark.test_container_memory import (
+    TestContainerMemory,
+    get_memory_usage,
+)
+from tests.benchmark.test_container_performance import TestContainerPerformance
+from tests.benchmark.test_refactor_nesting_performance import (
+    TestPerformanceBenchmarks,
+)
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.models import FlextModels as m
-    from flext_core.protocols import FlextProtocols as p
-    from flext_core.result import FlextResult as r
-    from flext_core.service import FlextService as s
-    from flext_core.typings import FlextTypes as t
-    from flext_core.utilities import FlextUtilities as u
-    from tests.benchmark import (
+if _t.TYPE_CHECKING:
+    import tests.benchmark.test_container_memory as _tests_benchmark_test_container_memory
+
+    test_container_memory = _tests_benchmark_test_container_memory
+    import tests.benchmark.test_container_performance as _tests_benchmark_test_container_performance
+
+    test_container_performance = _tests_benchmark_test_container_performance
+    import tests.benchmark.test_refactor_nesting_performance as _tests_benchmark_test_refactor_nesting_performance
+
+    test_refactor_nesting_performance = (
+        _tests_benchmark_test_refactor_nesting_performance
+    )
+
+    _ = (
+        TestContainerMemory,
+        TestContainerPerformance,
+        TestPerformanceBenchmarks,
+        c,
+        d,
+        e,
+        get_memory_usage,
+        h,
+        m,
+        p,
+        r,
+        s,
+        t,
         test_container_memory,
         test_container_performance,
         test_refactor_nesting_performance,
+        u,
+        x,
     )
-    from tests.benchmark.test_container_memory import (
-        TestContainerMemory,
-        get_memory_usage,
-    )
-    from tests.benchmark.test_container_performance import TestContainerPerformance
-    from tests.benchmark.test_refactor_nesting_performance import (
-        TestPerformanceBenchmarks,
-    )
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "TestContainerMemory": "tests.benchmark.test_container_memory",
     "TestContainerPerformance": "tests.benchmark.test_container_performance",
     "TestPerformanceBenchmarks": "tests.benchmark.test_refactor_nesting_performance",
@@ -57,6 +81,27 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }
+
+__all__ = [
+    "TestContainerMemory",
+    "TestContainerPerformance",
+    "TestPerformanceBenchmarks",
+    "c",
+    "d",
+    "e",
+    "get_memory_usage",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "test_container_memory",
+    "test_container_performance",
+    "test_refactor_nesting_performance",
+    "u",
+    "x",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

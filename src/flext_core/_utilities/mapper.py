@@ -631,8 +631,11 @@ class FlextUtilitiesMapper:
                     return current
                 sort_fn = callable_result.value
 
-                def sort_key(item: t.RecursiveContainer) -> str:
-                    return str(sort_fn(item))
+                def sort_key(item: t.RecursiveContainer) -> tuple[bool, float, str]:
+                    key_value = FlextUtilitiesMapper.narrow_to_container(sort_fn(item))
+                    if isinstance(key_value, (int, float)):
+                        return False, float(key_value), ""
+                    return True, 0.0, str(key_value)
 
                 sorted_result = r[t.ContainerList].create_from_callable(
                     lambda: sorted(current_list, key=sort_key),

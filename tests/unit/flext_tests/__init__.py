@@ -5,38 +5,67 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING as _TYPE_CHECKING
+import typing as _t
 
+from flext_core.constants import FlextConstants as c
+from flext_core.decorators import FlextDecorators as d
+from flext_core.exceptions import FlextExceptions as e
+from flext_core.handlers import FlextHandlers as h
 from flext_core.lazy import install_lazy_exports
+from flext_core.mixins import FlextMixins as x
+from flext_core.models import FlextModels as m
+from flext_core.protocols import FlextProtocols as p
+from flext_core.result import FlextResult as r
+from flext_core.service import FlextService as s
+from flext_core.typings import FlextTypes as t
+from flext_core.utilities import FlextUtilities as u
+from tests.unit.flext_tests.test_docker import TestDocker
+from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
+from tests.unit.flext_tests.test_files import TestFlextTestsFiles
+from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
+from tests.unit.flext_tests.test_utilities import TestUtilities
 
-if _TYPE_CHECKING:
-    from flext_core import FlextTypes
-    from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.models import FlextModels as m
-    from flext_core.protocols import FlextProtocols as p
-    from flext_core.result import FlextResult as r
-    from flext_core.service import FlextService as s
-    from flext_core.typings import FlextTypes as t
-    from flext_core.utilities import FlextUtilities as u
-    from tests.unit.flext_tests import (
+if _t.TYPE_CHECKING:
+    import tests.unit.flext_tests.test_docker as _tests_unit_flext_tests_test_docker
+
+    test_docker = _tests_unit_flext_tests_test_docker
+    import tests.unit.flext_tests.test_domains as _tests_unit_flext_tests_test_domains
+
+    test_domains = _tests_unit_flext_tests_test_domains
+    import tests.unit.flext_tests.test_files as _tests_unit_flext_tests_test_files
+
+    test_files = _tests_unit_flext_tests_test_files
+    import tests.unit.flext_tests.test_matchers as _tests_unit_flext_tests_test_matchers
+
+    test_matchers = _tests_unit_flext_tests_test_matchers
+    import tests.unit.flext_tests.test_utilities as _tests_unit_flext_tests_test_utilities
+
+    test_utilities = _tests_unit_flext_tests_test_utilities
+
+    _ = (
+        TestDocker,
+        TestFlextTestsDomains,
+        TestFlextTestsFiles,
+        TestFlextTestsMatchers,
+        TestUtilities,
+        c,
+        d,
+        e,
+        h,
+        m,
+        p,
+        r,
+        s,
+        t,
         test_docker,
         test_domains,
         test_files,
         test_matchers,
         test_utilities,
+        u,
+        x,
     )
-    from tests.unit.flext_tests.test_docker import TestDocker
-    from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
-    from tests.unit.flext_tests.test_files import TestFlextTestsFiles
-    from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
-    from tests.unit.flext_tests.test_utilities import TestUtilities
-
-_LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
+_LAZY_IMPORTS = {
     "TestDocker": "tests.unit.flext_tests.test_docker",
     "TestFlextTestsDomains": "tests.unit.flext_tests.test_domains",
     "TestFlextTestsFiles": "tests.unit.flext_tests.test_files",
@@ -59,6 +88,30 @@ _LAZY_IMPORTS: FlextTypes.LazyImportIndex = {
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }
+
+__all__ = [
+    "TestDocker",
+    "TestFlextTestsDomains",
+    "TestFlextTestsFiles",
+    "TestFlextTestsMatchers",
+    "TestUtilities",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "test_docker",
+    "test_domains",
+    "test_files",
+    "test_matchers",
+    "test_utilities",
+    "u",
+    "x",
+]
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

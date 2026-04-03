@@ -25,10 +25,10 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+import flext_core
 from flext_core import (
     T_Namespace,
     T_Settings,
-    __version__ as _flext_version,
     c,
     m,
     t,
@@ -68,7 +68,7 @@ class FlextSettings(BaseSettings, u):
     app_name: Annotated[str, Field(default="flext", description="Application name")]
     version: Annotated[
         str,
-        Field(default=_flext_version, description="Application version"),
+        Field(default=flext_core.__version__, description="Application version"),
     ]
     debug: Annotated[bool, Field(default=False, description="Enable debug mode")]
     trace: Annotated[bool, Field(default=False, description="Enable trace mode")]

@@ -324,10 +324,13 @@ class FlextRuntime:
 
         """
         try:
-            args = typing.get_args(type_hint)
+            resolved_hint = getattr(type_hint, "__value__", type_hint)
+            args = typing.get_args(resolved_hint)
             if args:
                 return args
             type_name = getattr(type_hint, "__name__", "")
+            if not type_name:
+                type_name = getattr(resolved_hint, "__name__", "")
             if not type_name:
                 return ()
             return (
@@ -1486,13 +1489,13 @@ class FlextRuntime:
         for key, value in context_dict.items():
             result[key] = str(value)
         if "trace_id" not in result:
-            result["trace_id"] = FlextRuntime.generate_id()
+            result["trace_id"] = cls.generate_id()
         if "span_id" not in result:
-            result["span_id"] = FlextRuntime.generate_id()
+            result["span_id"] = cls.generate_id()
         if include_correlation_id and c.KEY_CORRELATION_ID not in result:
-            result[c.KEY_CORRELATION_ID] = FlextRuntime.generate_id()
+            result[c.KEY_CORRELATION_ID] = cls.generate_id()
         if include_timestamp and "timestamp" not in result:
-            result["timestamp"] = FlextRuntime.generate_datetime_utc().isoformat()
+            result["timestamp"] = cls.generate_datetime_utc().isoformat()
         return result
 
     @staticmethod
