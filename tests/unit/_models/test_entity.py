@@ -373,7 +373,7 @@ class TestFlextModelsEntity:
 
         v = _Frozen(name="fixed")
         with pytest.raises(ValidationError):
-            object.__setattr__(v, "name", "changed")
+            v.name = "changed"
 
     def test_value_object_eq_non_model_returns_not_implemented(self) -> None:
         class _Val(m.Value):

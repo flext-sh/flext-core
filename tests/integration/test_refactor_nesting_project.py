@@ -18,9 +18,9 @@ def _apply_rule(
     *,
     dry_run: bool,
 ) -> m.Infra.Result:
-    rope_project = u.Infra.init_rope_project(workspace_root)
+    rope_project = u.init_rope_project(workspace_root)
     try:
-        resource = u.Infra.get_resource_from_path(rope_project, file_path)
+        resource = u.get_resource_from_path(rope_project, file_path)
         if resource is None:
             raise FileNotFoundError(file_path)
         return rule.apply(rope_project, resource, dry_run=dry_run)

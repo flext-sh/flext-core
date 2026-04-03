@@ -7,15 +7,6 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core._constants.base import FlextConstantsBase
-from flext_core._constants.cqrs import FlextConstantsCqrs
-from flext_core._constants.domain import FlextConstantsDomain
-from flext_core._constants.errors import FlextConstantsErrors
-from flext_core._constants.infrastructure import FlextConstantsInfrastructure
-from flext_core._constants.mixins import FlextConstantsMixins
-from flext_core._constants.platform import FlextConstantsPlatform
-from flext_core._constants.settings import FlextConstantsSettings
-from flext_core._constants.validation import FlextConstantsValidation
 from flext_core.lazy import install_lazy_exports
 
 if _t.TYPE_CHECKING:
@@ -23,50 +14,38 @@ if _t.TYPE_CHECKING:
 
     base = _flext_core__constants_base
     import flext_core._constants.cqrs as _flext_core__constants_cqrs
+    from flext_core._constants.base import FlextConstantsBase
 
     cqrs = _flext_core__constants_cqrs
     import flext_core._constants.domain as _flext_core__constants_domain
+    from flext_core._constants.cqrs import FlextConstantsCqrs
 
     domain = _flext_core__constants_domain
     import flext_core._constants.errors as _flext_core__constants_errors
+    from flext_core._constants.domain import FlextConstantsDomain
 
     errors = _flext_core__constants_errors
     import flext_core._constants.infrastructure as _flext_core__constants_infrastructure
+    from flext_core._constants.errors import FlextConstantsErrors
 
     infrastructure = _flext_core__constants_infrastructure
     import flext_core._constants.mixins as _flext_core__constants_mixins
+    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
 
     mixins = _flext_core__constants_mixins
     import flext_core._constants.platform as _flext_core__constants_platform
+    from flext_core._constants.mixins import FlextConstantsMixins
 
     platform = _flext_core__constants_platform
     import flext_core._constants.settings as _flext_core__constants_settings
+    from flext_core._constants.platform import FlextConstantsPlatform
 
     settings = _flext_core__constants_settings
     import flext_core._constants.validation as _flext_core__constants_validation
+    from flext_core._constants.settings import FlextConstantsSettings
 
     validation = _flext_core__constants_validation
-
-    _ = (
-        FlextConstantsBase,
-        FlextConstantsCqrs,
-        FlextConstantsDomain,
-        FlextConstantsErrors,
-        FlextConstantsInfrastructure,
-        FlextConstantsMixins,
-        FlextConstantsPlatform,
-        FlextConstantsSettings,
-        FlextConstantsValidation,
-        base,
-        cqrs,
-        domain,
-        errors,
-        infrastructure,
-        mixins,
-        platform,
-        settings,
-        validation,
-    )
+    from flext_core._constants.validation import FlextConstantsValidation
 _LAZY_IMPORTS = {
     "FlextConstantsBase": "flext_core._constants.base",
     "FlextConstantsCqrs": "flext_core._constants.cqrs",

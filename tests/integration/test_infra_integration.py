@@ -111,13 +111,13 @@ class TestInfraIntegration:
         Validates u.Infra MRO output methods are available:
         - status, summary, error, warning, info, header, progress
         """
-        assert callable(u.Infra.status)
-        assert callable(u.Infra.summary)
-        assert callable(u.Infra.error)
-        assert callable(u.Infra.warning)
-        assert callable(u.Infra.info)
-        assert callable(u.Infra.header)
-        assert callable(u.Infra.progress)
+        assert callable(u.status)
+        assert callable(u.summary)
+        assert callable(u.error)
+        assert callable(u.warning)
+        assert callable(u.info)
+        assert callable(u.header)
+        assert callable(u.progress)
 
     @pytest.mark.integration
     def test_output_singleton_methods_are_callable(self) -> None:
@@ -217,47 +217,47 @@ class TestInfraIntegration:
         - discover_projects is callable via u.Infra MRO
         - workspace_root is callable via u.Infra MRO
         """
-        assert callable(u.Infra.discover_projects)
-        assert callable(u.Infra.workspace_root)
+        assert callable(u.discover_projects)
+        assert callable(u.workspace_root)
 
     @pytest.mark.integration
     def test_path_utilities_via_mro(self, tmp_path: Path) -> None:
         """Test u.Infra path utility methods are available via MRO."""
-        assert callable(u.Infra.discover_workspace_root_from_file)
+        assert callable(u.discover_workspace_root_from_file)
 
     @pytest.mark.integration
     def test_git_service_current_branch_in_real_repo(self, tmp_path: Path) -> None:
         """Test u.Infra.git_current_branch against a real initialized git repository."""
         repo_root = tmp_path / "repo"
         repo_root.mkdir()
-        init_result = u.Infra.run_checked(["git", "init"], cwd=repo_root)
+        init_result = u.run_checked(["git", "init"], cwd=repo_root)
         assert init_result.is_success
-        email_result = u.Infra.run_checked(
+        email_result = u.run_checked(
             ["git", "config", "user.email", "infra@example.com"],
             cwd=repo_root,
         )
         assert email_result.is_success
-        name_result = u.Infra.run_checked(
+        name_result = u.run_checked(
             ["git", "config", "user.name", "Infra Test"],
             cwd=repo_root,
         )
         assert name_result.is_success
         sample_file = repo_root / "README.md"
         _ = sample_file.write_text("infra test\n", encoding="utf-8")
-        add_result = u.Infra.run_checked(["git", "add", "README.md"], cwd=repo_root)
+        add_result = u.run_checked(["git", "add", "README.md"], cwd=repo_root)
         assert add_result.is_success
-        commit_result = u.Infra.run_checked(
+        commit_result = u.run_checked(
             ["git", "commit", "-m", "initial"],
             cwd=repo_root,
         )
         assert commit_result.is_success
-        branch_result = u.Infra.git_current_branch(repo_root)
+        branch_result = u.git_current_branch(repo_root)
         assert branch_result.is_success
         assert branch_result.value != ""
 
     @pytest.mark.integration
     def test_command_runner_capture_executes_real_command(self) -> None:
         """Test u.Infra.capture with a real subprocess command."""
-        capture_result = u.Infra.capture(["python3", "-c", "print('infra-ok')"])
+        capture_result = u.capture(["python3", "-c", "print('infra-ok')"])
         assert capture_result.is_success
         assert capture_result.value == "infra-ok"

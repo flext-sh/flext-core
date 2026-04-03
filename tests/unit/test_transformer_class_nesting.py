@@ -15,9 +15,9 @@ def _transform_source(tmp_path: Path, source: str) -> str:
         {},
         {},
     )
-    rope_project = u.Infra.init_rope_project(tmp_path)
+    rope_project = u.init_rope_project(tmp_path)
     try:
-        resource = u.Infra.get_resource_from_path(rope_project, file_path)
+        resource = u.get_resource_from_path(rope_project, file_path)
         if resource is None:
             raise FileNotFoundError(file_path)
         transformed, _ = transformer.transform(rope_project, resource)
