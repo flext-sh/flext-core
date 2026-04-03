@@ -180,7 +180,7 @@ class TestFlextModelsErrors:
         """TimeoutConfig is frozen (immutable)."""
         cfg = m.TimeoutConfig(timeout_seconds=5.0)
         with pytest.raises(ValidationError):
-            cfg.timeout_seconds = 10.0
+            setattr(cfg, "timeout_seconds", 10.0)
 
     def test_timeout_config_forbids_extra(self) -> None:
         """TimeoutConfig forbids extra fields."""

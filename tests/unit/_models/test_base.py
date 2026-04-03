@@ -53,7 +53,7 @@ class TestFlextModelsBase:
     def test_metadata_is_frozen(self) -> None:
         meta = m.Metadata()
         with pytest.raises(ValidationError):
-            meta.version = "9.9.9"
+            setattr(meta, "version", "9.9.9")
 
     def test_metadata_attributes_none_becomes_empty(self) -> None:
         meta = m.Metadata.model_validate({"attributes": None})
@@ -297,7 +297,7 @@ class TestFlextModelsBase:
 
         inst = _Imm(label="fixed")
         with pytest.raises(ValidationError):
-            inst.label = "changed"
+            setattr(inst, "label", "changed")
 
     def test_immutable_value_model_forbids_extra(self) -> None:
         class _Imm(m.ImmutableValueModel):
@@ -342,7 +342,7 @@ class TestFlextModelsBase:
 
         inst = _Strict(val=10)
         with pytest.raises(ValidationError):
-            inst.val = 20
+            setattr(inst, "val", 20)
 
     # ── FrozenValueModel ──────────────────────────────────────
 
@@ -779,7 +779,7 @@ class TestFlextModelsBase:
 
         v = _Val(name="test")
         with pytest.raises(ValidationError):
-            v.name = "bob"
+            setattr(v, "name", "bob")
 
     def test_value_equality_by_value(self) -> None:
         class _Val(m.Value):

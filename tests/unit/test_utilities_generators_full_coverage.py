@@ -11,7 +11,8 @@ from datetime import UTC, datetime, tzinfo
 import pytest
 
 from flext_core import _utilities
-from tests import _models_impl as test_unit_models, u
+from tests import u
+from tests.unit import _models_impl as test_unit_models
 
 generators_module = _utilities.generators
 
