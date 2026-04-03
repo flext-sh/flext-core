@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import U, p, t
+from flext_core import p, t
 
 
 class FlextResult[T](BaseModel):
@@ -481,7 +481,7 @@ class FlextResult[T](BaseModel):
             return FlextResult[T].fail("Value did not pass filter predicate")
         return self
 
-    def flat_map(
+    def flat_map[U](
         self,
         func: Callable[[T], FlextResult[U]],
     ) -> FlextResult[U]:
@@ -517,7 +517,7 @@ class FlextResult[T](BaseModel):
             exception=self.exception,
         )
 
-    def flow_through(
+    def flow_through[U](
         self,
         *funcs: Callable[[T | U], FlextResult[U]],
     ) -> FlextResult[T] | FlextResult[U]:
