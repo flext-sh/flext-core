@@ -378,10 +378,7 @@ class TestModels:
             "Query",
             "Pagination",
             "Handler",
-            "HandlerExecutionConfig",
-            "BatchProcessingConfig",
             "RetryConfiguration",
-            "ValidationConfiguration",
         ]
         for class_name in critical_classes:
             tm.that(
@@ -810,70 +807,6 @@ class TestModels:
         assert len(meta.tags) == 2
         assert meta.attributes["priority"] == "high"
 
-    def test_processing_request_model_creation(self) -> None:
-        """Test ProcessingRequest model with correct fields."""
-        request = m.ProcessingRequest(
-            data=t.ConfigMap(root={"input": "data"}),
-            enable_validation=True,
-            operation_id="op-test-1",
-            context=t.ConfigMap(root={}),
-        )
-        assert getattr(request.data, "root", request.data) == {"input": "data"}
-        assert request.enable_validation is True
-        assert request.operation_id is not None
-
-    def test_handler_registration_model_creation(self) -> None:
-        """Test HandlerRegistration model with correct fields."""
-
-        def dummy_handler(value: BaseModel) -> BaseModel:
-            return value
-
-        reg = m.Registration(
-            name="TestHandler",
-            handler=dummy_handler,
-            event_types=["CreateUser"],
-        )
-        assert reg.name == "TestHandler"
-        assert callable(reg.handler)
-        assert "CreateUser" in reg.event_types
-
-    def test_batch_processing_config_model(self) -> None:
-        """Test BatchProcessingConfig model normalizes worker count safely."""
-        cfg = m.BatchProcessingConfig(
-            batch_size=3,
-            max_workers=10,
-            continue_on_error=True,
-            data_items=[1, 2, 3],
-        )
-        assert cfg.batch_size == 3
-        assert cfg.max_workers == 3
-
-    def test_batch_processing_config_validate_batch_from_mappings(self) -> None:
-        batch = m.BatchProcessingConfig.validate_batch([
-            {
-                "batch_size": 2,
-                "max_workers": 1,
-                "timeout_per_item": 1.0,
-                "continue_on_error": True,
-                "data_items": ["a", "b"],
-            }
-        ])
-        assert len(batch) == 1
-        assert isinstance(batch[0], m.BatchProcessingConfig)
-        assert batch[0].batch_size == 2
-
-    def test_handler_execution_config_model(self) -> None:
-        """Test HandlerExecutionConfig model with correct fields."""
-        config = m.HandlerExecutionConfig(
-            handler_name="my_handler",
-            input_data=t.ConfigMap(root={"key": "value"}),
-            retry_on_failure=True,
-            execution_context=t.ConfigMap(root={}),
-        )
-        assert config.handler_name == "my_handler"
-        assert getattr(config.input_data, "root", config.input_data) == {"key": "value"}
-        assert config.retry_on_failure is True
-
     def test_retry_configuration_model(self) -> None:
         """Test RetryConfiguration model with correct fields."""
         retry = m.RetryConfiguration.model_validate({
@@ -1002,24 +935,6 @@ class TestModels:
             eq=True,
             msg="503 must be in retry_on_status_codes",
         )
-
-    def test_validation_configuration_model(self) -> None:
-        """Test ValidationConfiguration model with correct fields."""
-        val_config = m.ValidationConfiguration(
-            validate_on_assignment=True,
-            validate_on_read=False,
-            custom_validators=[],
-        )
-        assert val_config.validate_on_assignment is True
-
-    def test_cqrs_handler_model_creation(self) -> None:
-        """Test Cqrs.Handler model creation."""
-        handler_config = m.HandlerExecutionConfig(
-            handler_name="CreateUserHandler",
-            input_data=t.ConfigMap(root={}),
-            execution_context=t.ConfigMap(root={}),
-        )
-        assert handler_config.handler_name == "CreateUserHandler"
 
     def test_pagination_model_creation(self) -> None:
         """Test Pagination model with correct fields."""

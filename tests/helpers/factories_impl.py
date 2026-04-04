@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from itertools import count
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from flext_core import r, s
 from tests import c, m, t
@@ -501,56 +501,6 @@ class ServiceTestCases:
 
 class GenericModelFactory:
     """Factories for generic reusable models (Value, Snapshot, Progress)."""
-
-    @staticmethod
-    def operation_context(source: str | None = None) -> m.OperationContext:
-        """Create OperationContext value t.NormalizedValue."""
-        return m.OperationContext.model_validate({"source": source})
-
-    @staticmethod
-    def service_snapshot(
-        name: str,
-        version: str | None = None,
-        status: str = "active",
-    ) -> m.Service:
-        """Create ServiceSnapshot."""
-        return m.Service(
-            name=name,
-            version=version,
-            status=status,
-            metadata=t.Dict({}),
-        )
-
-    @staticmethod
-    def configuration_snapshot(
-        config: t.ContainerMapping | None = None,
-        source: str | None = None,
-        environment: str | None = None,
-    ) -> m.Configuration:
-        """Create ConfigurationSnapshot."""
-        config_root = cast(
-            "MutableMapping[str, t.ValueOrModel]",
-            dict(config) if config else {},
-        )
-        return m.Configuration.model_validate({
-            "config": t.Dict(config_root),
-            "source": source,
-            "environment": environment,
-        })
-
-    @staticmethod
-    def health_status(
-        *,
-        healthy: bool = True,
-        checks: t.BoolMapping | None = None,
-    ) -> m.Health:
-        """Create HealthStatus."""
-        return m.Health.model_validate({
-            "healthy": healthy,
-            "checks": t.Dict({
-                str(key): value for key, value in (checks or {}).items()
-            }),
-        })
 
     @staticmethod
     def operation_progress(

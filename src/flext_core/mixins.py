@@ -42,21 +42,7 @@ from flext_core import (
 
 
 class FlextMixins(m.ArbitraryTypesModel):
-    """Composable behaviors for dispatcher-driven services and handlers.
-
-    These mixins centralize DI container access, structured logging, and
-    context management so dispatcher-executed services can stay focused on
-    domain work while still emitting `r` outcomes and metrics.
-
-    All utility logic delegates to canonical facades:
-    - Constants: c.DEBUG_CONTEXT_KEYS, c.ERROR_CONTEXT_KEYS
-    - Utilities: u.to_int, u.to_float, u.normalize_log_payload,
-      u.is_settings_type, u.filter_registerable_services,
-      u.resolve_wire_targets, u.validate_with_result
-    - Protocol checks: u.is_handler, u.is_service, u.is_command_bus,
-      u.validate_processor_protocol, u.validate_named_protocol
-
-    """
+    """Composable behaviors for dispatcher-driven services and handlers."""
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _operation_stats: MutableMapping[str, t.ConfigMap] = PrivateAttr(

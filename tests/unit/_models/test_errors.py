@@ -1,7 +1,7 @@
-"""Tests for FlextModelsErrors and FlextModelsDecorators via facade.
+"""Tests for FlextModelsErrors via facade.
 
-Source: flext_core._models/errors.py (117 LOC) + _models/decorators.py (49 LOC)
-Tested through facade: m.Error, m.TimeoutConfig
+Source: flext_core._models/errors.py (117 LOC)
+Tested through facade: m.Error
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,14 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
 
 from flext_tests import tm
 from tests import c, m, t
 
 
 class TestFlextModelsErrors:
-    """Tests for Error model, from_exception, to_dict, and TimeoutConfig."""
+    """Tests for Error model, from_exception, and to_dict."""
 
     # -- Error creation and fields --
 
@@ -161,59 +160,6 @@ class TestFlextModelsErrors:
         exc = TypeError("wrong type")
         error = m.Error.from_exception(exc)
         tm.that(str(error), eq="TypeError: wrong type")
-
-    # -- TimeoutConfig --
-
-    def test_timeout_config_creation(self) -> None:
-        """TimeoutConfig can be created with timeout_seconds."""
-        cfg = m.TimeoutConfig(timeout_seconds=5.0)
-        tm.that(cfg.timeout_seconds, eq=5.0)
-        tm.that(cfg.error_code, eq=None)
-
-    def test_timeout_config_with_error_code(self) -> None:
-        """TimeoutConfig accepts optional error_code."""
-        cfg = m.TimeoutConfig(timeout_seconds=30.0, error_code="TIMEOUT_001")
-        tm.that(cfg.timeout_seconds, eq=30.0)
-        tm.that(cfg.error_code, eq="TIMEOUT_001")
-
-    def test_timeout_config_frozen(self) -> None:
-        """TimeoutConfig is frozen (immutable)."""
-        cfg = m.TimeoutConfig(timeout_seconds=5.0)
-        with pytest.raises(ValidationError):
-            setattr(cfg, "timeout_seconds", 10.0)
-
-    def test_timeout_config_forbids_extra(self) -> None:
-        """TimeoutConfig forbids extra fields."""
-        with pytest.raises(ValidationError):
-            m.TimeoutConfig.model_validate({
-                "timeout_seconds": 5.0,
-                "unknown_field": "x",
-            })
-
-    def test_timeout_config_rejects_zero(self) -> None:
-        """TimeoutConfig rejects zero timeout (uses PositiveFloat)."""
-        with pytest.raises(ValidationError):
-            m.TimeoutConfig(timeout_seconds=0.0)
-
-    def test_timeout_config_rejects_negative(self) -> None:
-        """TimeoutConfig rejects negative timeout."""
-        with pytest.raises(ValidationError):
-            m.TimeoutConfig(timeout_seconds=-1.0)
-
-    def test_timeout_config_serialization(self) -> None:
-        """TimeoutConfig serializes to dict."""
-        cfg = m.TimeoutConfig(timeout_seconds=10.5, error_code="SLOW")
-        data = cfg.model_dump()
-        tm.that(data["timeout_seconds"], eq=10.5)
-        tm.that(data["error_code"], eq="SLOW")
-
-    def test_timeout_config_json_round_trip(self) -> None:
-        """TimeoutConfig survives JSON round-trip."""
-        cfg = m.TimeoutConfig(timeout_seconds=7.5, error_code="TO")
-        json_str = cfg.model_dump_json()
-        restored = m.TimeoutConfig.model_validate_json(json_str)
-        tm.that(restored.timeout_seconds, eq=7.5)
-        tm.that(restored.error_code, eq="TO")
 
 
 __all__ = ["TestFlextModelsErrors"]

@@ -64,27 +64,6 @@ def test_rate_limiter_jitter_application() -> None:
     tm.that(abs(u.apply_jitter(0.5, 0.0) - 0.5), lt=1e-9)
 
 
-def test_retry_policy_behavior() -> None:
-    """Cover retry policy helpers and exponential backoff."""
-    policy = FlextModelsDispatcher.RetryPolicy(max_attempts=3, retry_delay=0.1)
-    tm.that(policy.should_retry(0), eq=True)
-    tm.that(policy.should_retry(1), eq=True)
-    tm.that(not policy.should_retry(2), eq=True)
-    tm.that(
-        u.is_retriable_error_message("Temporary failure - try again later"), eq=True
-    )
-    tm.that(not u.is_retriable_error_message(None), eq=True)
-    tm.that(abs(policy.get_retry_delay() - 0.1), lt=1e-9)
-    tm.that(policy.get_max_attempts(), eq=3)
-    tm.that(abs(policy.get_exponential_delay(0) - 0.1), lt=1e-9)
-    expected_delay = min(0.1 * 2.0**2, 300.0)
-    tm.that(abs(policy.get_exponential_delay(2) - expected_delay), lt=1e-9)
-    policy.record_attempt("cmd")
-    policy.reset("cmd")
-    policy.cleanup()
-    tm.that(policy.should_retry(0), eq=True)
-
-
 def test_circuit_breaker_half_open_and_rate_limiter_accessors() -> None:
     """Test transition_to_half_open, get_max_requests, get_window_seconds."""
     cb = FlextModelsDispatcher.CircuitBreakerManager(

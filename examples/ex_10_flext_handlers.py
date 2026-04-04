@@ -203,7 +203,7 @@ class Ex10FlextHandlers(Examples):
         except NotImplementedError as exc:
             pattern_value = f"{type(exc).__name__}:{exc}"
         self.check("handle.not_implemented_pattern", pattern_value)
-        handler: FlextHandlers[_Message, str] = _DemoHandler()
+        handler = _DemoHandler()
         self.check("handler.handler_name", handler.handler_name)
         self.check("handler.name_matches", bool(handler.handler_name))
         self.check("handler.mode", handler.mode.value)

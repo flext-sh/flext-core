@@ -14,7 +14,6 @@ from collections.abc import MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import (
-    BaseModel,
     BeforeValidator,
     ConfigDict,
     Field,
@@ -113,43 +112,6 @@ class FlextModelsHandler:
                     return self.message_type
                 case _:
                     raise KeyError(key)
-
-    class RegistrationRequest(FlextModelsBase.ArbitraryTypesModel):
-        """Request model for dynamic handler registration.
-
-        Strictly typed model for handler registration parameters, replacing
-        legacy dictionary-based configuration.
-        """
-
-        _flext_enforcement_exempt: ClassVar[bool] = True  # handler union is intentional
-
-        handler: Annotated[
-            t.HandlerCallable | p.Handler[p.Model, t.ValueOrModel] | BaseModel,
-            Field(
-                description="Handler instance (callable, canonical value, or FlextHandlers)",
-            ),
-        ]
-        message_type: Annotated[
-            t.MessageTypeSpecifier | None,
-            Field(
-                default=None,
-                description="Message type to handle (required for explicit mode)",
-            ),
-        ] = None
-        handler_mode: Annotated[
-            c.HandlerType | None,
-            Field(
-                default=None,
-                description="Handler operation mode (command, query, event)",
-            ),
-        ] = None
-        handler_name: Annotated[
-            str | None,
-            Field(
-                default=None,
-                description="Explicit handler name override",
-            ),
-        ] = None
 
     class RegistrationDetails(FlextModelsBase.ArbitraryTypesModel):
         """Registration details for handler registration tracking.

@@ -7,7 +7,7 @@ from typing import override
 from pydantic import BaseModel
 
 from examples import Examples
-from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, t
+from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, t, u
 
 
 class _CommandA(m.Command):
@@ -361,14 +361,14 @@ class Ex12FlextRegistry(Examples):
             "to_dict.basemodel",
             m.Handler(handler_name=handler_name, handler_id=handler_id).model_dump(),
         )
-        self.check("generate_id.len", len(registry.generate_id()))
+        self.check("generate_id.len", len(u.generate_id()))
         self.check(
             "generate_prefixed_id",
-            registry.generate_prefixed_id(prefix, 6).startswith(f"{prefix}_"),
+            u.generate_prefixed_id(prefix, 6).startswith(f"{prefix}_"),
         )
         self.check(
             "generate_datetime_utc.type",
-            type(registry.generate_datetime_utc()).__name__,
+            type(u.generate_datetime_utc()).__name__,
         )
 
 
