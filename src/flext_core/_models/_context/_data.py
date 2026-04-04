@@ -129,11 +129,13 @@ class FlextModelsContextData:
             """Recursively check if a canonical container value is JSON-serializable."""
             if obj is None or FlextUtilitiesGuardsTypeCore.is_primitive(obj):
                 return
-            if FlextRuntime.is_dict_like(obj):
+            if FlextUtilitiesGuardsTypeCore.is_dict_like(obj):
                 for key, val in obj.items():
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return
-            if FlextRuntime.is_list_like(obj) and (not isinstance(obj, (str, bytes))):
+            if FlextUtilitiesGuardsTypeCore.is_list_like(obj) and (
+                not isinstance(obj, (str, bytes))
+            ):
                 seq_obj: t.ContainerList = obj
                 for i, item in enumerate(seq_obj):
                     cls.check_json_serializable(item, f"{path}[{i}]")
@@ -173,7 +175,7 @@ class FlextModelsContextData:
                     str(key): cls.normalize_to_serializable_value(val)
                     for key, val in normalized_map.items()
                 }
-            if FlextRuntime.is_list_like(normalized):
+            if FlextUtilitiesGuardsTypeCore.is_list_like(normalized):
                 return [
                     cls.normalize_to_serializable_value(item) for item in normalized
                 ]
@@ -190,7 +192,9 @@ class FlextModelsContextData:
                 return val
             if FlextUtilitiesGuardsTypeModel.is_pydantic_model(val):
                 return val
-            if FlextRuntime.is_dict_like(val) or FlextRuntime.is_list_like(val):
+            if FlextUtilitiesGuardsTypeCore.is_dict_like(
+                val
+            ) or FlextUtilitiesGuardsTypeCore.is_list_like(val):
                 return FlextRuntime.normalize_to_container(val)
             if hasattr(val, "__iter__"):
                 return str(val)

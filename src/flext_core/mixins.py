@@ -42,7 +42,7 @@ from flext_core import (
 )
 
 
-class FlextMixins(m.ArbitraryTypesModel, u):
+class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers.
 
     These mixins centralize DI container access, structured logging, and
@@ -61,7 +61,7 @@ class FlextMixins(m.ArbitraryTypesModel, u):
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _operation_stats: MutableMapping[str, t.ConfigMap] = PrivateAttr(
-        default_factory=dict,
+        default_factory=dict[str, t.ConfigMap],
     )
 
     _logger_cache: ClassVar[MutableMapping[str, FlextLogger]] = {}
@@ -197,11 +197,9 @@ class FlextMixins(m.ArbitraryTypesModel, u):
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: MutableMapping[str, t.ValueOrModel] = (
-                    {str(k): u.normalize_to_container(v) for k, v in metrics.items()}
-                    if isinstance(metrics, (Mapping, t.ConfigMap))
-                    else {}
-                )
+                metrics_map: MutableMapping[str, t.ValueOrModel] = {
+                    str(k): u.normalize_to_container(v) for k, v in metrics.items()
+                }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
                     yield metrics_map

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Sequence
 from types import ModuleType
 from typing import ClassVar, override
@@ -542,31 +541,26 @@ class Ex10FlextHandlers(Examples):
                 "timestamp" in trace_context,
             ],
         )
-        self.check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
-        self.check("runtime.is_dict_like.true", h.is_dict_like({"a": 1}))
-        self.check("runtime.is_dict_like.false", h.is_dict_like([1, 2]))
-        self.check("runtime.is_list_like.true", h.is_list_like([1, 2]))
-        self.check("runtime.is_list_like.false", h.is_list_like("ab"))
-        self.check(
-            "runtime.is_valid_json.true",
-            h.is_valid_json(json.dumps({dict_key: dict_value})),
-        )
-        self.check("runtime.is_valid_json.false", h.is_valid_json("{bad"))
+        self.check("runtime.get_log_level", u.get_log_level_from_config() >= 0)
+        self.check("runtime.is_dict_like.true", u.is_dict_like({"a": 1}))
+        self.check("runtime.is_dict_like.false", u.is_dict_like([1, 2]))
+        self.check("runtime.is_list_like.true", u.is_list_like([1, 2]))
+        self.check("runtime.is_list_like.false", u.is_list_like("ab"))
         self.check(
             "runtime.is_valid_identifier.true",
-            h.is_valid_identifier(valid_identifier),
+            u.is_valid_identifier(valid_identifier),
         )
         self.check(
             "runtime.is_valid_identifier.false",
-            h.is_valid_identifier(invalid_identifier),
+            u.is_valid_identifier(invalid_identifier),
         )
         self.check(
             "runtime.safe_get_attribute",
-            h.safe_get_attribute(e1, "unique_id", attr_fallback) == entity_id,
+            u.safe_get_attribute(e1, "unique_id", attr_fallback) == entity_id,
         )
         self.check(
             "runtime.extract_generic_args",
-            len(h.extract_generic_args(t.IntMapping)) >= 1,
+            len(u.extract_generic_args(t.IntMapping)) >= 1,
         )
         self.check("runtime.is_sequence_type.true", h.is_sequence_type(Sequence[int]))
         self.check(

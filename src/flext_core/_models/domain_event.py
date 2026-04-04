@@ -14,11 +14,11 @@ import typing
 from collections.abc import Mapping
 from typing import Annotated, override
 
-from pydantic import Field, field_validator
+from pydantic import BeforeValidator, Field
 
 from flext_core import (
     FlextModelsBase,
-    FlextRuntime,
+    FlextUtilitiesDomain,
     t,
 )
 
@@ -40,7 +40,7 @@ class FlextModelsDomainEvent:
             if isinstance(other, Mapping):
                 other_mapping = t.ConfigMap(
                     root=dict(
-                        FlextRuntime.normalize_domain_event_data(
+                        FlextUtilitiesDomain.normalize_domain_event_data(
                             typing.cast("Mapping[str, t.ValueOrModel]", other)
                         )
                     ),
@@ -71,25 +71,16 @@ class FlextModelsDomainEvent:
                 description="Identifier of the aggregate root that produced this event."
             ),
         ]
-        data: FlextModelsDomainEvent.ComparableConfigMap = Field(
+        data: Annotated[
+            FlextModelsDomainEvent.ComparableConfigMap,
+            BeforeValidator(FlextUtilitiesDomain.normalize_domain_event_data),
+        ] = Field(
             validate_default=True,
             description="Event data container",
             default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(
                 root={},
             ),
         )
-
-        @field_validator("data", mode="before")
-        @classmethod
-        def _validate_data(
-            cls,
-            value: t.ValueOrModel,
-        ) -> FlextModelsDomainEvent.ComparableConfigMap:
-            if isinstance(value, FlextModelsDomainEvent.ComparableConfigMap):
-                return value
-            return FlextModelsDomainEvent.ComparableConfigMap(
-                root=dict(FlextRuntime.normalize_domain_event_data(value)),
-            )
 
     # Canonical alias: tests use m.DomainEvent, which resolves to Entry
     DomainEvent = Entry

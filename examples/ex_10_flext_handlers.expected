@@ -117,8 +117,6 @@ runtime.is_dict_like.true: True
 runtime.is_dict_like.false: False
 runtime.is_list_like.true: True
 runtime.is_list_like.false: False
-runtime.is_valid_json.true: True
-runtime.is_valid_json.false: False
 runtime.is_valid_identifier.true: True
 runtime.is_valid_identifier.false: False
 runtime.safe_get_attribute: True

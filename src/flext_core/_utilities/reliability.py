@@ -11,18 +11,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import secrets
 import time
 from collections.abc import Callable
 
 from pydantic import Field
 
-from flext_core import t
-from flext_core._models.base import FlextModelsBase
-from flext_core._protocols.logging import FlextProtocolsLogging
-from flext_core._utilities.args import FlextUtilitiesArgs
-from flext_core.constants import FlextConstants as c
-from flext_core.result import FlextResult as r
-from flext_core.runtime import FlextRuntime
+from flext_core import (
+    FlextModelsBase,
+    FlextUtilitiesArgs,
+    c,
+    r,
+    t,
+)
 
 
 class RetryOptions(FlextModelsBase.FlexibleInternalModel):
@@ -48,10 +49,33 @@ class RetryOptions(FlextModelsBase.FlexibleInternalModel):
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    @property
-    def logger(self) -> FlextProtocolsLogging.Logger:
-        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-        return FlextRuntime.get_logger(__name__)
+    _RETRIABLE_ERROR_PATTERNS: tuple[str, ...] = (
+        "Temporary failure",
+        "timeout",
+        "transient",
+        "temporarily unavailable",
+        "try again",
+    )
+
+    @staticmethod
+    def apply_jitter(base_delay: float, jitter_factor: float) -> float:
+        """Apply symmetric jitter variance to a delay value."""
+        if base_delay <= 0.0 or jitter_factor <= 0.0:
+            return base_delay
+        secure_random = secrets.SystemRandom()
+        variance = (2.0 * secure_random.random() - 1.0) * jitter_factor
+        jittered = base_delay * (1.0 + variance)
+        return max(0.0, jittered)
+
+    @staticmethod
+    def is_retriable_error_message(error: str | None) -> bool:
+        """Return whether an error message matches transient failure heuristics."""
+        if error is None:
+            return False
+        return any(
+            pattern.lower() in error.lower()
+            for pattern in FlextUtilitiesReliability._RETRIABLE_ERROR_PATTERNS
+        )
 
     @staticmethod
     def _calculate_retry_delay(

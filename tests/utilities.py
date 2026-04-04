@@ -17,10 +17,9 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator, Mapping
 from typing import Never, override
 
-from flext_core import r
 from flext_infra import FlextInfraUtilities
 from flext_tests import FlextTestsUtilities, tm
-from tests.typings import FlextCoreTestTypes
+from tests import r, t
 
 
 class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
@@ -44,8 +43,8 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def execute_and_assert_parser_result(
-                operation: Callable[[], r[FlextCoreTestTypes.Container]],
-                expected_value: FlextCoreTestTypes.Container | None = None,
+                operation: Callable[[], r[t.Container]],
+                expected_value: t.Container | None = None,
                 expected_error: str | None = None,
                 description: str = "",
             ) -> None:
@@ -86,8 +85,8 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 def split(
                     self,
                     *_args: str,
-                    **_kwargs: FlextCoreTestTypes.Scalar,
-                ) -> FlextCoreTestTypes.StrSequence:
+                    **_kwargs: t.Scalar,
+                ) -> t.StrSequence:
                     """Raise error on split attempt."""
                     msg = "Bad split"
                     raise RuntimeError(msg)
@@ -140,7 +139,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """Create t.NormalizedValue that fails on str()."""
                 return FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject()
 
-            class BadDict(UserDict[str, FlextCoreTestTypes.Tests.Testobject]):
+            class BadDict(UserDict[str, t.Tests.Testobject]):
                 """Dict that raises on get()."""
 
                 @override
@@ -150,11 +149,11 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
                     msg = "Bad dict get"
                     raise RuntimeError(msg)
 
-            class BadList(UserList[FlextCoreTestTypes.Tests.Testobject]):
+            class BadList(UserList[t.Tests.Testobject]):
                 """List that raises on iteration."""
 
                 @override
-                def __iter__(self) -> Iterator[FlextCoreTestTypes.Tests.Testobject]:
+                def __iter__(self) -> Iterator[t.Tests.Testobject]:
                     """Raise error on iteration."""
                     msg = "Bad list iteration"
                     raise RuntimeError(msg)
@@ -162,10 +161,10 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                model_dump: Callable[
-                    [], Mapping[str, FlextCoreTestTypes.Tests.Testobject]
-                ] = staticmethod(
-                    lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+                model_dump: Callable[[], Mapping[str, t.Tests.Testobject]] = (
+                    staticmethod(
+                        lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
+                    )
                 )
 
             class BadConfig:
@@ -181,7 +180,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_failure(
-                result: r[FlextCoreTestTypes.Container],
+                result: r[t.Container],
                 expected_error: str,
                 description: str = "",
             ) -> None:
@@ -201,7 +200,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success(
-                result: r[FlextCoreTestTypes.Container],
+                result: r[t.Container],
                 description: str = "",
             ) -> None:
                 """Assert that result is a success.
@@ -218,8 +217,8 @@ class FlextCoreTestUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success_with_value(
-                result: r[FlextCoreTestTypes.Container],
-                expected_value: FlextCoreTestTypes.Container,
+                result: r[t.Container],
+                expected_value: t.Container,
                 description: str = "",
             ) -> None:
                 """Assert result is success with specific value.

@@ -13,7 +13,6 @@ import pytest
 from flext_core import (
     FlextLogger,
     FlextSettings,
-    u,
 )
 from flext_tests import tm
 from tests import p, t
@@ -80,10 +79,13 @@ class TestModule:
     ) -> None:
         fake = self._FakeBindable()
 
-        def _get_logger(_name: str | None = None) -> TestModule._FakeBindable:
+        def _get_logger(
+            _cls: type[FlextLogger],
+            _name: str | None = None,
+        ) -> TestModule._FakeBindable:
             return fake
 
-        monkeypatch.setattr(u, "get_logger", staticmethod(_get_logger))
+        monkeypatch.setattr(FlextLogger, "get_logger", classmethod(_get_logger))
 
         class _Config:
             level = "WARNING"
@@ -212,7 +214,7 @@ class TestModule:
             "get_global",
             cast("t.NormalizedValue", classmethod(_raise_cfg)),
         )
-        tm.that(isinstance(logger._should_include_stack_trace(), bool), eq=True)
+        tm.that(logger._should_include_stack_trace(), is_=bool)
         with_exception = logger.build_exception_context(
             exception=ValueError("x"),
             exc_info=False,

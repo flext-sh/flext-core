@@ -9,104 +9,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
-from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_core import FlextModelsBase, t
+from flext_core._utilities.domain import FlextUtilitiesDomain
 
 
 class FlextModelsCollections:
     """Collection models container class."""
-
-    class _MetadataAggregateMixin:
-        """Pure-logic mixin for metadata aggregation via MRO.
-
-        Must be combined with a Pydantic BaseModel subclass.
-        Provides shared conflict resolution for Statistics, Results, and Options.
-        """
-
-        @classmethod
-        def _sum_numeric_values(
-            cls,
-            non_none: Sequence[t.MetadataValue],
-        ) -> t.Numeric | None:
-            numeric: Sequence[t.Numeric] = [
-                v
-                for v in non_none
-                if isinstance(v, (int, float)) and not isinstance(v, bool)
-            ]
-            return sum(numeric) if numeric else None
-
-        @classmethod
-        def _concatenate_lists(
-            cls,
-            non_none: Sequence[t.MetadataValue],
-        ) -> t.ScalarList:
-            combined: MutableSequence[t.Scalar] = []
-            for v in non_none:
-                if isinstance(v, list):
-                    combined.extend(v)
-            return combined
-
-        @classmethod
-        def _merge_dicts(
-            cls,
-            non_none: Sequence[t.MetadataValue],
-        ) -> Mapping[str, t.Scalar | t.ScalarList]:
-            merged: MutableMapping[str, t.Scalar | t.ScalarList] = {}
-            for v in non_none:
-                if isinstance(v, Mapping):
-                    for key, val in v.items():
-                        if isinstance(val, (str, int, float, bool, datetime, list)):
-                            merged[str(key)] = val
-            return merged
-
-        @classmethod
-        def _resolve_conflict(
-            cls,
-            existing: t.MetadataValue | None,
-            value: t.MetadataValue | None,
-        ) -> t.MetadataValue | None:
-            """Resolve conflict when aggregating two metadata values.
-
-            Strategy: booleans last-wins, numerics sum, lists concatenate,
-            mappings merge, all others last-wins.
-            """
-            non_none: Sequence[t.MetadataValue] = [
-                v for v in (existing, value) if v is not None
-            ]
-            if not non_none:
-                return None
-            first_val = non_none[0]
-            if isinstance(first_val, bool):
-                return non_none[-1]
-            if isinstance(first_val, (int, float)):
-                numeric_sum = cls._sum_numeric_values(non_none)
-                return numeric_sum if numeric_sum is not None else non_none[-1]
-            if isinstance(first_val, list):
-                return cls._concatenate_lists(non_none)
-            if isinstance(first_val, Mapping):
-                return cls._merge_dicts(non_none)
-            return non_none[-1]
-
-        @classmethod
-        def _aggregate_dumped_models(
-            cls,
-            items: Sequence[
-                FlextModelsBase.ArbitraryTypesModel | FlextModelsBase.FrozenValueModel
-            ],
-        ) -> Mapping[str, t.MetadataValue]:
-            if not items:
-                return {}
-            aggregated: MutableMapping[str, t.MetadataValue | None] = {}
-            for item in items:
-                for key, value in item.model_dump().items():
-                    aggregated[key] = cls._resolve_conflict(aggregated.get(key), value)
-            return {
-                key: value for key, value in aggregated.items() if value is not None
-            }
 
     class Categories(FlextModelsBase.ArbitraryTypesModel):
         """Generic categorized collection with dynamic categories.
@@ -188,7 +100,7 @@ class FlextModelsCollections:
         def to_mapping(self) -> Mapping[str, Sequence[t.MetadataValue]]:
             return {key: list(entries) for key, entries in self.categories.items()}
 
-    class Statistics(_MetadataAggregateMixin, FlextModelsBase.FrozenValueModel):
+    class Statistics(FlextModelsBase.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
@@ -201,7 +113,7 @@ class FlextModelsCollections:
             Combines statistics by summing numerics, concatenating lists,
             merging mappings, and keeping last value for other types.
             """
-            return cls._aggregate_dumped_models(stats_list)
+            return FlextUtilitiesDomain.aggregate_dumped_models(stats_list)
 
         @classmethod
         def from_mapping(cls, data: Mapping[str, t.MetadataValue]) -> Self:
@@ -219,7 +131,7 @@ class FlextModelsCollections:
                 base = base.model_copy(update=other.model_dump())
             return base
 
-    class Results(_MetadataAggregateMixin, FlextModelsBase.ArbitraryTypesModel):
+    class Results(FlextModelsBase.ArbitraryTypesModel):
         """Base for results models (mutable)."""
 
         @classmethod
@@ -232,7 +144,7 @@ class FlextModelsCollections:
             Combines results by summing numerics, concatenating lists,
             merging mappings, and keeping last value for other types.
             """
-            return cls._aggregate_dumped_models(results_list)
+            return FlextUtilitiesDomain.aggregate_dumped_models(results_list)
 
         @classmethod
         def combine(cls, *results: Self) -> Self:
@@ -243,7 +155,7 @@ class FlextModelsCollections:
                 base = base.model_copy(update=other.model_dump())
             return base
 
-    class Options(_MetadataAggregateMixin, FlextModelsBase.ArbitraryTypesModel):
+    class Options(FlextModelsBase.ArbitraryTypesModel):
         """Base for options models (mutable)."""
 
         @classmethod
@@ -253,7 +165,7 @@ class FlextModelsCollections:
             result: MutableMapping[str, t.MetadataValue | None] = {}
             for opt in options:
                 for key, value in opt.model_dump().items():
-                    result[key] = cls._resolve_conflict(
+                    result[key] = FlextUtilitiesDomain.aggregate_metadata_values(
                         result.get(key),
                         value,
                     )

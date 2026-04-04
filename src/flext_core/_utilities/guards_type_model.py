@@ -14,6 +14,11 @@ class FlextUtilitiesGuardsTypeModel:
     """Pydantic and data model type guards."""
 
     @staticmethod
+    def is_base_model(value: t.RuntimeData) -> TypeIs[BaseModel]:
+        """Narrow broad runtime data to Pydantic BaseModel."""
+        return isinstance(value, BaseModel)
+
+    @staticmethod
     def is_object_list(
         value: t.RecursiveContainer,
     ) -> TypeIs[t.RecursiveContainerList]:

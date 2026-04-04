@@ -302,7 +302,6 @@ class TestFlextProtocols:
             "error_code",
             "error_data",
             "exception",
-            "result_logger",
             "unwrap",
         ]
         for attr in expected_attrs:

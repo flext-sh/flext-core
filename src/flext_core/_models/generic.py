@@ -17,14 +17,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Mapping, MutableSequence
+from collections.abc import MutableSequence
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import Field
 
 from flext_core import FlextModelsBase, c, t
+from flext_core._utilities.domain import FlextUtilitiesDomain
+from flext_core._utilities.generators import FlextUtilitiesGenerators
 
 
 class FlextGenericModels:
@@ -255,20 +256,6 @@ class FlextGenericModels:
 
     """Progress trackers - mutable, accumulate during operation."""
 
-    @staticmethod
-    def safe_percentage(processed: int, total: int | None) -> float:
-        """Percentage with zero-safe fallback, capped at 100."""
-        if not total or total == 0:
-            return 0.0
-        return min(processed / total * 100.0, 100.0)
-
-    @staticmethod
-    def safe_rate(numerator: int, denominator: int) -> float:
-        """Division with zero-safe fallback."""
-        if denominator == 0:
-            return 0.0
-        return numerator / denominator
-
     class Operation(FlextModelsBase.ArbitraryTypesModel):
         """Progress tracking for ongoing operations.
 
@@ -325,27 +312,27 @@ class FlextGenericModels:
         def record_failure(self) -> None:
             """Record a failed operation."""
             self.failure_count += 1
-            self._update_timestamp()
+            self.last_update = FlextUtilitiesGenerators.generate_datetime_utc()
 
         def record_retry(self) -> None:
             """Record a retry attempt."""
             self.retry_count += 1
-            self._update_timestamp()
+            self.last_update = FlextUtilitiesGenerators.generate_datetime_utc()
 
         def record_skip(self) -> None:
             """Record a skipped operation."""
             self.skipped_count += 1
-            self._update_timestamp()
+            self.last_update = FlextUtilitiesGenerators.generate_datetime_utc()
 
         def record_success(self) -> None:
             """Record a successful operation."""
             self.success_count += 1
-            self._update_timestamp()
+            self.last_update = FlextUtilitiesGenerators.generate_datetime_utc()
 
         def record_warning(self) -> None:
             """Record an operation with warnings."""
             self.warning_count += 1
-            self._update_timestamp()
+            self.last_update = FlextUtilitiesGenerators.generate_datetime_utc()
 
         def start_operation(
             self,
@@ -355,12 +342,8 @@ class FlextGenericModels:
             """Start the operation tracking."""
             self.operation_name = name
             self.estimated_total = estimated_total
-            self.start_time = datetime.now(UTC)
+            self.start_time = FlextUtilitiesGenerators.generate_datetime_utc()
             self.last_update = self.start_time
-
-        def _update_timestamp(self) -> None:
-            """Update the last update timestamp."""
-            self.last_update = datetime.now(UTC)
 
     class Conversion(FlextModelsBase.ArbitraryTypesModel):
         """Conversion progress tracking with error reporting.
@@ -419,23 +402,31 @@ class FlextGenericModels:
             """Add an error with optional failed item."""
             self.errors.append(error)
             if item is not None:
-                self._append_metadata_item("failed_items", item)
+                FlextUtilitiesDomain.append_metadata_sequence_item(
+                    self.metadata,
+                    "failed_items",
+                    item,
+                )
 
         def add_skipped(self, item: t.ValueOrModel, reason: str | None = None) -> None:
             """Add a skipped item with optional reason."""
             self.skipped.append(item)
             if reason:
-                self._upsert_skip_reason(item, reason)
+                FlextUtilitiesDomain.upsert_skip_reason(self.metadata, item, reason)
 
         def add_warning(self, warning: str, item: t.ValueOrModel | None = None) -> None:
             """Add a warning with optional item."""
             self.warnings.append(warning)
             if item is not None:
-                self._append_metadata_item("warning_items", item)
+                FlextUtilitiesDomain.append_metadata_sequence_item(
+                    self.metadata,
+                    "warning_items",
+                    item,
+                )
 
         def complete_conversion(self) -> None:
             """Mark conversion as completed."""
-            self.end_time = datetime.now(UTC)
+            self.end_time = FlextUtilitiesGenerators.generate_datetime_utc()
 
         def start_conversion(
             self,
@@ -447,40 +438,7 @@ class FlextGenericModels:
             self.source_format = source_format
             self.target_format = target_format
             self.total_input_count = total_input_count
-            self.start_time = datetime.now(UTC)
-
-        def _append_metadata_item(
-            self,
-            key: Literal["failed_items", "warning_items"],
-            item: t.ValueOrModel,
-        ) -> None:
-            raw_items = self.metadata.root.get(key)
-            result_list: t.MutableContainerList = []
-            if isinstance(raw_items, list):
-                for raw_item in raw_items:
-                    if isinstance(
-                        raw_item,
-                        (str, int, float, bool, datetime, Path, list, dict, tuple),
-                    ):
-                        result_list.append(raw_item)
-                    elif raw_item is not None:
-                        result_list.append(str(raw_item))
-            if isinstance(
-                item,
-                (str, int, float, bool, datetime, Path, list, dict, tuple),
-            ):
-                result_list.append(item)
-            elif item is not None:
-                result_list.append(str(item))
-            self.metadata.root[key] = result_list
-
-        def _upsert_skip_reason(self, item: t.ValueOrModel, reason: str) -> None:
-            raw_reasons = self.metadata.root.get("skip_reasons", {})
-            reasons: t.MutableStrMapping = {}
-            if isinstance(raw_reasons, Mapping):
-                reasons = {str(k): str(v) for k, v in raw_reasons.items()}
-            reasons[str(item)] = reason
-            self.metadata.root["skip_reasons"] = reasons
+            self.start_time = FlextUtilitiesGenerators.generate_datetime_utc()
 
 
 __all__ = ["FlextGenericModels"]

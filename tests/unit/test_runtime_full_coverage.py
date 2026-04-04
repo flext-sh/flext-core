@@ -55,8 +55,7 @@ def test_reuse_existing_runtime_scenarios() -> None:
         suite.test_dict_like_validation(case)
     for case in scenarios.list_like_scenarios():
         suite.test_list_like_validation(case)
-    for case in scenarios.json_scenarios():
-        suite.test_json_validation(case)
+
     for case in scenarios.identifier_scenarios():
         suite.test_identifier_validation(case)
     for case in scenarios.serialization_scenarios():
@@ -82,8 +81,7 @@ def test_reuse_existing_runtime_coverage_branches() -> None:
     coverage.test_is_sequence_type_with_type_mapping()
     coverage.test_level_based_context_filter_malformed_prefix()
     coverage.test_configure_structlog_with_config_object()
-    coverage.test_enable_runtime_checking()
-    coverage.test_is_valid_json_exception_path()
+
     coverage.test_is_valid_identifier_non_string()
     coverage.test_extract_generic_args_with_typing_get_args()
     coverage.test_extract_generic_args_exception_path()

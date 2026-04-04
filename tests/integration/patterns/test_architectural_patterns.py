@@ -8,13 +8,16 @@ SPDX-License-Identifier: MIT
 
 """
 
+from __future__ import annotations
+
 import time
 from collections.abc import MutableMapping, MutableSequence
-from typing import Self
+from typing import Annotated, Self  # noqa: F401
 
 import pytest
+from pydantic import BeforeValidator  # noqa: F401
 
-from flext_core import FlextModelsDomainEvent, r
+from flext_core import FlextModelsDomainEvent, FlextUtilitiesDomain, r  # noqa: F401
 from tests import c, t
 from tests.test_utils import assertion_helpers
 

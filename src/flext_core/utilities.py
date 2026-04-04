@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
-    FlextRuntime,
+    FlextLogger,
     FlextUtilitiesArgs,
     FlextUtilitiesCache,
     FlextUtilitiesChecker,
@@ -36,7 +36,7 @@ from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
 class FlextUtilities(
-    FlextRuntime,
+    FlextLogger,
     FlextUtilitiesArgs,
     FlextUtilitiesCache,
     FlextUtilitiesChecker,

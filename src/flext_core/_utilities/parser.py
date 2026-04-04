@@ -17,12 +17,17 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
-from flext_core import FlextUtilitiesGuards, p, r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.args import FlextUtilitiesArgs
+from flext_core import (
+    FlextUtilitiesArgs,
+    FlextUtilitiesGuards,
+    m,
+    p,
+    r,
+    t,
+)
 
 
-class ParseOptions[T](FlextModelsBase.FlexibleInternalModel):
+class ParseOptions[T](m.FlexibleInternalModel):
     """Options controlling parsing behavior for string-to-type conversion."""
 
     strict: bool | None = Field(

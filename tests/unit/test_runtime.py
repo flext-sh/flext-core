@@ -694,21 +694,6 @@ class TestFlextRuntime:
 
     @pytest.mark.parametrize(
         "test_case",
-        RuntimeScenarios.json_scenarios(),
-        ids=lambda c: c.name,
-    )
-    def test_json_validation(self, test_case: TestFlextRuntime.RuntimeTestCase) -> None:
-        """Test JSON string validation.
-
-        Business Rule: None is a valid test input - validates that is_valid_json
-        correctly returns False for None values.
-        """
-        tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = u.is_valid_json(cast("t.RuntimeData", test_case.test_input))
-        tm.that(result, eq=test_case.expected_result)
-
-    @pytest.mark.parametrize(
-        "test_case",
         RuntimeScenarios.identifier_scenarios(),
         ids=lambda c: c.name,
     )
@@ -1115,7 +1100,6 @@ class TestFlextRuntime:
             == self.RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS
         ):
             tm.that(hasattr(c, "PATTERN_PHONE_NUMBER"), eq=True)
-            tm.that(u.is_valid_json('{"phone": "+5511987654321"}'), eq=True)
         elif (
             test_case.operation == self.RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY
         ):
@@ -1225,7 +1209,6 @@ class TestFlextRuntime:
         """Property: type guards always return bool for any input."""
         tm.that(u.is_dict_like(value), is_=bool)
         tm.that(u.is_list_like(value), is_=bool)
-        tm.that(u.is_valid_json(value), is_=bool)
 
     __all__ = ["TestFlextRuntime"]
 

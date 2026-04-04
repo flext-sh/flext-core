@@ -36,7 +36,7 @@ from flext_core import (
 )
 
 
-class FlextSettings(BaseSettings, u):
+class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)

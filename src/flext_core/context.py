@@ -26,10 +26,10 @@ from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import c, m, p, r, t, u
+from flext_core import FlextLogger, c, m, p, r, t, u
 
 
-class FlextContext(m.ArbitraryTypesModel, u):
+class FlextContext(m.ArbitraryTypesModel):
     """Context manager for correlation, request data, and timing metadata.
 
     The dispatcher and decorators rely on FlextContext to move correlation IDs,
@@ -44,7 +44,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
     - Serialization helpers for propagating context via headers or payloads
     """
 
-    _logger: ClassVar[p.Logger] = u.get_logger(__name__)
+    _logger: ClassVar[p.Logger] = FlextLogger.get_logger(__name__)
 
     @staticmethod
     def _to_normalized(value: t.ValueOrModel) -> t.RecursiveContainer:
@@ -295,7 +295,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         """
         if scope == c.SCOPE_GLOBAL:
             normalized = u.normalize_to_container(value)
-            u.structlog().contextvars.bind_contextvars(**{key: normalized})
+            FlextLogger.structlog().contextvars.bind_contextvars(**{key: normalized})
 
     @staticmethod
     def _validate_set_inputs(key: str, value: t.ValueOrModel) -> r[bool]:
@@ -344,7 +344,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
         for scope_name, ctx_var in self._scope_vars.items():
             _ = ctx_var.set(t.ConfigMap(root={}))
             if scope_name == c.SCOPE_GLOBAL:
-                u.structlog().contextvars.clear_contextvars()
+                FlextLogger.structlog().contextvars.clear_contextvars()
         self._metadata = m.Metadata()
         self._statistics.clears += 1
         operations = dict(self._statistics.operations)
@@ -975,7 +975,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 for key, value in data.items()
                 if value is not None
             }
-            u.structlog().contextvars.bind_contextvars(**normalized_context)
+            FlextLogger.structlog().contextvars.bind_contextvars(**normalized_context)
 
     def _set_single(
         self,

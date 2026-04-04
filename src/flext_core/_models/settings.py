@@ -23,10 +23,12 @@ from pydantic import (
 from pydantic_settings import BaseSettings
 
 from flext_core import (
+    FlextLogger,
     FlextModelsBase,
     FlextModelsCollections,
     FlextModelsExceptionParams,
     FlextRuntime,
+    FlextUtilitiesGenerators,
     c,
     p,
     t,
@@ -83,7 +85,7 @@ class FlextModelsConfig:
             Field(
                 description="Unique operation identifier",
             ),
-        ] = Field(default_factory=FlextRuntime.generate_id)
+        ] = Field(default_factory=FlextUtilitiesGenerators.generate_id)
         data: Annotated[
             t.ConfigMap,
             Field(
@@ -237,12 +239,7 @@ class FlextModelsConfig:
             v: Sequence[p.ValidatorSpec],
         ) -> Sequence[p.ValidatorSpec]:
             """Validate custom validators are callable."""
-            for validator in v:
-                if not callable(validator):
-                    base_msg = "Validator must be callable"
-                    error_msg = f"{base_msg}: got {validator.__class__.__name__}"
-                    raise TypeError(error_msg)
-            return v
+            return FlextRuntime.validate_callable_sequence(v, "Validator")
 
     class BatchProcessingConfig(FlextModelsCollections.Config):
         """Enhanced batch processing configuration."""
@@ -508,7 +505,7 @@ class FlextModelsConfig:
     class StructlogConfig(FlextModelsCollections.Config):
         """Configuration for structlog setup (Pydantic v2).
 
-        Reduces parameter count for FlextRuntime.configure_structlog.
+        Reduces parameter count for FlextLogger.configure_structlog.
         Allows validation and composition of logging configuration.
         """
 
@@ -518,7 +515,7 @@ class FlextModelsConfig:
                 le=c.MAX_CONTEXT_KEYS,
                 description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
             ),
-        ] = Field(default_factory=FlextRuntime.get_log_level_from_config)
+        ] = Field(default_factory=FlextLogger.get_log_level_from_config)
         console_renderer: Annotated[
             bool,
             Field(

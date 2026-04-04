@@ -19,7 +19,15 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextModelsBase, FlextRuntime, c, p, r, t
+from flext_core import (
+    FlextModelsBase,
+    FlextRuntime,
+    FlextUtilitiesGenerators,
+    c,
+    p,
+    r,
+    t,
+)
 
 
 class FlextModelsCqrs:
@@ -56,7 +64,9 @@ class FlextModelsCqrs:
                 title="Command Id",
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"))
+        ] = Field(
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id("cmd")
+        )
         issuer_id: Annotated[
             t.NonEmptyStr | None,
             Field(
@@ -153,7 +163,11 @@ class FlextModelsCqrs:
                 title="Query Id",
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("query"))
+        ] = Field(
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
+                "query"
+            )
+        )
         query_type: Annotated[
             str | None,
             Field(
@@ -307,7 +321,10 @@ class FlextModelsCqrs:
             def __init__(self, handler_type: c.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 super().__init__()
-                handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
+                handler_short_id = FlextUtilitiesGenerators.generate_prefixed_id(
+                    "",
+                    length=8,
+                )
                 self._data: t.Dict = t.Dict(
                     root={
                         "handler_type": handler_type,
@@ -397,7 +414,9 @@ class FlextModelsCqrs:
                 title="Event Id",
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"))
+        ] = Field(
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id("evt")
+        )
         data: Annotated[
             t.Dict,
             Field(

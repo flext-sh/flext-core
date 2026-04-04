@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
-import secrets
 import time
 from typing import Annotated, override
 
@@ -186,21 +185,13 @@ class FlextModelsDispatcher:
             )
         )
 
-        def _get_record(
-            self,
-            message_type: str,
-        ) -> FlextModelsDispatcher.CircuitBreakerStateRecord:
-            """Get or create state record for a message type."""
-            if message_type not in self._breakers:
-                self._breakers[message_type] = (
-                    FlextModelsDispatcher.CircuitBreakerStateRecord()
-                )
-            return self._breakers[message_type]
-
         def attempt_reset(self, message_type: str) -> None:
             """Attempt recovery if circuit is open."""
             if self.is_open(message_type):
-                rec = self._get_record(message_type)
+                rec = self._breakers.setdefault(
+                    message_type,
+                    FlextModelsDispatcher.CircuitBreakerStateRecord(),
+                )
                 if time.time() - rec.opened_at >= self.recovery_timeout:
                     self.transition_to_half_open(message_type)
 
@@ -239,7 +230,10 @@ class FlextModelsDispatcher:
                 Current failure count for the message type.
 
             """
-            return self._get_record(message_type).failures
+            return self._breakers.setdefault(
+                message_type,
+                FlextModelsDispatcher.CircuitBreakerStateRecord(),
+            ).failures
 
         def get_metrics(self) -> t.ScalarMapping:
             """Collect circuit breaker metrics, including recovery statistics.
@@ -292,7 +286,10 @@ class FlextModelsDispatcher:
                 Current circuit breaker state for the message type.
 
             """
-            return self._get_record(message_type).state
+            return self._breakers.setdefault(
+                message_type,
+                FlextModelsDispatcher.CircuitBreakerStateRecord(),
+            ).state
 
         def get_threshold(self) -> int:
             """Get circuit breaker threshold."""
@@ -309,7 +306,10 @@ class FlextModelsDispatcher:
 
         def record_failure(self, message_type: str) -> None:
             """Record failed operation and update state."""
-            rec = self._get_record(message_type)
+            rec = self._breakers.setdefault(
+                message_type,
+                FlextModelsDispatcher.CircuitBreakerStateRecord(),
+            )
             rec.failures += 1
             if rec.state == c.CircuitBreakerState.HALF_OPEN:
                 rec.recovery_failures += 1
@@ -322,7 +322,10 @@ class FlextModelsDispatcher:
 
         def record_success(self, message_type: str) -> None:
             """Record successful operation and update state."""
-            rec = self._get_record(message_type)
+            rec = self._breakers.setdefault(
+                message_type,
+                FlextModelsDispatcher.CircuitBreakerStateRecord(),
+            )
             rec.total_successes += 1
             if rec.state == c.CircuitBreakerState.HALF_OPEN:
                 rec.success_count += 1
@@ -334,7 +337,10 @@ class FlextModelsDispatcher:
 
         def set_state(self, message_type: str, state: str) -> None:
             """Set state for message type."""
-            self._get_record(message_type).state = state
+            self._breakers.setdefault(
+                message_type,
+                FlextModelsDispatcher.CircuitBreakerStateRecord(),
+            ).state = state
 
         def transition_to_closed(self, message_type: str) -> None:
             """Transition to CLOSED state."""
@@ -359,7 +365,10 @@ class FlextModelsDispatcher:
 
         def transition_to_state(self, message_type: str, new_state: str) -> None:
             """Transition to specified state."""
-            rec = self._get_record(message_type)
+            rec = self._breakers.setdefault(
+                message_type,
+                FlextModelsDispatcher.CircuitBreakerStateRecord(),
+            )
             rec.state = new_state
             if new_state == c.CircuitBreakerState.CLOSED:
                 rec.failures = 0
@@ -462,20 +471,6 @@ class FlextModelsDispatcher:
             """Get rate limit window duration in seconds."""
             return self.window_seconds
 
-        def _apply_jitter(self, base_delay: float) -> float:
-            """Apply jitter variance to a delay value.
-
-            Returns:
-                Jittered delay value.
-
-            """
-            if base_delay <= 0.0 or self.jitter_factor <= 0.0:
-                return base_delay
-            secure_random = secrets.SystemRandom()
-            variance = (2.0 * secure_random.random() - 1.0) * self.jitter_factor
-            jittered = base_delay * (1.0 + variance)
-            return max(0.0, jittered)
-
     class RetryPolicy(FlextModelsBase.ArbitraryTypesModel):
         """Coordinate retry attempts with configurable backoff for dispatcher steps."""
 
@@ -509,22 +504,6 @@ class FlextModelsDispatcher:
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             self.max_attempts = max(self.max_attempts, c.DEFAULT_RETRY_DELAY_SECONDS)
             self.retry_delay = max(self.retry_delay, c.INITIAL_TIME)
-
-        @staticmethod
-        def is_retriable_error(error: str | None) -> bool:
-            """Check if an error is retriable."""
-            if error is None:
-                return False
-            retriable_patterns = (
-                "Temporary failure",
-                "timeout",
-                "transient",
-                "temporarily unavailable",
-                "try again",
-            )
-            return any(
-                pattern.lower() in error.lower() for pattern in retriable_patterns
-            )
 
         def cleanup(self) -> None:
             """Clear all attempt tracking."""

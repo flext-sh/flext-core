@@ -9,12 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from types import TracebackType
 from typing import Annotated, ClassVar, Self, TypeIs, cast, overload, override
 
-import structlog
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
@@ -83,15 +81,6 @@ class FlextResult[T](BaseModel):
         return not self.is_success
 
     @property
-    def result_logger(self) -> p.Logger:
-        """Logger for FlextResult."""
-        logger = self._result_logger
-        if logger is None:
-            logger = structlog.get_logger(__name__)
-            self._result_logger = logger
-        return logger
-
-    @property
     def value(self) -> T:
         """Result value — returns _payload directly on success."""
         if not self.is_success:
@@ -130,7 +119,7 @@ class FlextResult[T](BaseModel):
         if source is not None and value is None and (error is None):
             try:
                 failure_value = source.failure()
-            except UnwrapFailedError as exc:
+            except UnwrapFailedError:
                 super().__init__(
                     error_code=error_code,
                     error=None,
@@ -139,10 +128,6 @@ class FlextResult[T](BaseModel):
                 )
                 self._result = source
                 self._payload = source.unwrap()
-                self.result_logger.debug(
-                    "Result source is success path during initialization",
-                    exc_info=exc,
-                )
                 return
             super().__init__(
                 error_code=error_code,
@@ -221,11 +206,6 @@ class FlextResult[T](BaseModel):
             RuntimeError,
             Exception,
         ) as e:
-            logging.getLogger(__name__).debug(
-                "%s during model validation",
-                failure_prefix,
-                exc_info=e,
-            )
             return FlextResult[UModel].fail(
                 f"{failure_prefix}: {cls._model_error_message(e)}",
                 exception=e,
@@ -264,7 +244,6 @@ class FlextResult[T](BaseModel):
                 )
             return FlextResult[V].ok(value)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
-            logging.getLogger(__name__).debug("Callable execution failed", exc_info=e)
             return FlextResult[V].fail(str(e), error_code=error_code, exception=e)
 
     @classmethod
@@ -446,10 +425,6 @@ class FlextResult[T](BaseModel):
                 LookupError,
                 ArithmeticError,
             ) as e:
-                logging.getLogger(__name__).debug(
-                    "FlextResult.safe callable failed",
-                    exc_info=e,
-                )
                 return FlextResult[U].fail(str(e), exception=e)
 
         return wrapper
@@ -634,7 +609,6 @@ class FlextResult[T](BaseModel):
                 mapped_value = func(self.value)
                 return FlextResult[U](value=mapped_value, is_success=True)
             except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
-                self.result_logger.debug("FlextResult.map callable failed", exc_info=e)
                 result = FlextResult[U](error=str(e), is_success=False)
                 result._exception = e
                 return result
@@ -757,10 +731,6 @@ class FlextResult[T](BaseModel):
             RuntimeError,
             Exception,
         ) as e:
-            logging.getLogger(__name__).debug(
-                "Model conversion failed during model validation",
-                exc_info=e,
-            )
             return FlextResult[U].fail(
                 f"Model conversion failed: {self._model_error_message(e)}",
                 exception=e,

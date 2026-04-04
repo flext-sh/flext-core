@@ -7,12 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import TracebackType
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
 from flext_core import FlextProtocolsBase, t
-
-if TYPE_CHECKING:
-    from flext_core import FlextProtocolsLogging
 
 
 class FlextProtocolsResult:
@@ -78,11 +75,6 @@ class FlextProtocolsResult:
         @property
         def value(self) -> T_co:
             """Result value (available on success, strictly typed as T)."""
-            ...
-
-        @property
-        def result_logger(self) -> FlextProtocolsLogging.Logger:
-            """Logger used by the result implementation."""
             ...
 
         def unwrap(self) -> T_co:

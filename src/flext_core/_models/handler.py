@@ -23,7 +23,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModelsBase, c, p, r, t
+from flext_core import FlextModelsBase, FlextRuntime, c, p, r, t
 
 
 class FlextModelsHandler:
@@ -57,10 +57,7 @@ class FlextModelsHandler:
             cls,
             v: t.HandlerCallable | p.Base | BaseModel,
         ) -> t.HandlerCallable | p.Base | BaseModel:
-            if not callable(v):
-                msg = f"Handler must be callable, got {v.__class__.__name__}"
-                raise TypeError(msg)
-            return v
+            return FlextRuntime.validate_callable_input(v, "Handler")
 
         @model_validator(mode="after")
         def validate_handler_interface(self) -> Self:
@@ -226,30 +223,16 @@ class FlextModelsHandler:
     class ExecutionContext(FlextModelsBase.ArbitraryTypesModel):
         """Handler execution context for tracking handler performance and state.
 
-        Provides timing and metrics tracking for handler executions in the
-        FlextContext system. Uses Pydantic 2 PrivateAttr for internal state.
-
-        This mutable context value tracks handler execution performance,
-        including timing, metrics, and execution state. It is designed to be
-        created at the start of handler execution and updated throughout.
-
         Attributes:
             handler_name: Name of the handler being executed
             handler_mode: Mode of execution (command, query, or event)
 
-        Examples:
-            >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-            ...     handler_name="ProcessOrderCommand", handler_mode="command"
-            ... )
-            >>> context.start_execution()
-            >>> # ... handler executes ...
-            >>> elapsed_ms = context.execution_time_ms
-            >>> context.set_metrics_state({"items_processed": 42})
-
         """
 
+        _start_time: float | None = PrivateAttr(default=None)
+        _metrics_state: t.Dict | None = PrivateAttr(default=None)
+
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "HandlerExecutionContext",
                 "description": "Handler execution context for tracking performance and state",
@@ -269,8 +252,6 @@ class FlextModelsHandler:
                 examples=["command", "query", "event"],
             ),
         ]
-        _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: t.Dict | None = PrivateAttr(default=None)
 
         @computed_field
         def execution_time_ms(self) -> float:
@@ -298,14 +279,6 @@ class FlextModelsHandler:
             Returns:
                 Dictionary containing metrics state (empty ConfigurationDict if not set)
 
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> metrics = context.metrics_state
-                >>> FlextRuntime.is_dict_like(metrics)
-                True
-
             """
             if self._metrics_state is None:
                 self._metrics_state = t.Dict(root={})
@@ -320,9 +293,6 @@ class FlextModelsHandler:
         ) -> Self:
             """Create execution context for a handler.
 
-            Factory method for creating handler execution contexts with
-            validation of handler name and mode.
-
             Args:
                 handler_name: Name of the handler
                 handler_mode: Mode of the handler (command/query/event)
@@ -330,34 +300,11 @@ class FlextModelsHandler:
             Returns:
                 New HandlerExecutionContext instance
 
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="ProcessOrderCommand", handler_mode="command"
-                ... )
-                >>> context.handler_name
-                'ProcessOrderCommand'
-                >>> context.handler_mode
-                'command'
-
             """
             return cls(handler_name=handler_name, handler_mode=handler_mode)
 
         def reset(self) -> None:
-            """Reset execution context.
-
-            Clears all timing and metrics state, preparing the context
-            for reuse or cleanup.
-
-            Examples:
-                >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler", handler_mode="command"
-                ... )
-                >>> context.start_execution()
-                >>> context.reset()
-                >>> context.execution_time_ms
-                0.0
-
-            """
+            """Reset execution context."""
             self._start_time = None
             self._metrics_state = None
 
@@ -418,12 +365,8 @@ class FlextModelsHandler:
     class ContextStack(FlextModelsBase.ArbitraryTypesModel):
         """Manages a stack of ExecutionContext instances for CQRS handler pipelines."""
 
-        @staticmethod
-        def _default_stack() -> MutableSequence[FlextModelsHandler.ExecutionContext]:
-            return []
-
         _stack: MutableSequence[FlextModelsHandler.ExecutionContext] = PrivateAttr(
-            default_factory=_default_stack,
+            default_factory=lambda: list[FlextModelsHandler.ExecutionContext](),
         )
 
         def current_context(self) -> FlextModelsHandler.ExecutionContext | None:
@@ -476,30 +419,7 @@ class FlextModelsHandler:
             return r[bool].ok(True)
 
     class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
-        """Configuration extracted from @FlextHandlers.handler() decorator.
-
-        Used by handler discovery to auto-register handlers with FlextDispatcher.
-        Stores metadata about command binding, priority, timeout, and middleware chain.
-
-        Attributes:
-            command: The command type this handler processes.
-            priority: Handler priority (higher = processed first). Default: 0.
-            timeout: Handler execution timeout in seconds (None = no timeout).
-            middleware: List of middleware types to apply to this handler.
-
-        Examples:
-            >>> config = FlextModelsHandler.DecoratorConfig(
-            ...     command=CreateUserCommand,
-            ...     priority=10,
-            ...     timeout=c.DEFAULT_TIMEOUT_SECONDS,
-            ...     middleware=[LoggingMiddleware, ValidationMiddleware],
-            ... )
-            >>> config.command
-            <class 'CreateUserCommand'>
-            >>> config.priority
-            10
-
-        """
+        """Configuration extracted from @FlextHandlers.handler() decorator."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,

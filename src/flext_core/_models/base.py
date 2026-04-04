@@ -20,10 +20,10 @@ from typing import Annotated, ClassVar, Literal, Self, override
 from pydantic import (
     AfterValidator,
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     Field,
     field_serializer,
-    field_validator,
     model_validator,
 )
 
@@ -192,6 +192,7 @@ class FlextModelsBase:
         ] = Field(default_factory=list)
         attributes: Annotated[
             Mapping[str, t.MetadataValue],
+            BeforeValidator(FlextRuntime.validate_metadata_attributes),
             Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
@@ -202,27 +203,6 @@ class FlextModelsBase:
             t.Scalar | None,
             Field(default=None, description="Scalar metadata value."),
         ] = None
-
-        @field_validator("attributes", mode="before")
-        @classmethod
-        def _validate_attributes(
-            cls,
-            value: t.MetadataValue | Mapping[str, t.MetadataValue] | BaseModel | None,
-        ) -> Mapping[str, t.MetadataValue]:
-            if value is None:
-                return {}
-            if isinstance(value, BaseModel):
-                result = value.model_dump()
-            elif isinstance(value, Mapping):
-                result = dict(value)
-            else:
-                msg = "attributes must be dict-like"
-                raise TypeError(msg)
-            for key in result:
-                if key.startswith("_"):
-                    msg = f"Keys starting with '_' are reserved: {key}"
-                    raise ValueError(msg)
-            return t.metadata_map_adapter().validate_python(result)
 
     class CommandMessage(BaseModel):
         """Command message with discriminated union support."""

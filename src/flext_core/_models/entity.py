@@ -18,15 +18,10 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
-from flext_core import (
-    FlextModelsBase,
-    FlextModelsDomainEvent,
-    FlextRuntime,
-    c,
-    p,
-    r,
-    t,
-)
+from flext_core import FlextUtilitiesDomain, FlextUtilitiesGenerators, c, p, r, t
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core.loggings import FlextLogger
 
 
 class FlextModelsEntity:
@@ -67,11 +62,11 @@ class FlextModelsEntity:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
-            return FlextRuntime.compare_entities_by_id(self, other)
+            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
             """Identity-based hash for entities."""
-            return FlextRuntime.hash_entity_by_id(self)
+            return FlextUtilitiesDomain.hash_entity_by_id(self)
 
         @computed_field
         @property
@@ -81,8 +76,8 @@ class FlextModelsEntity:
 
         @property
         def logger(self) -> p.Logger:
-            """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
-            return FlextRuntime.get_logger(__name__)
+            """Get the shared structlog logger for entity instances."""
+            return FlextLogger.get_logger(__name__)
 
         @computed_field
         @property
@@ -114,7 +109,7 @@ class FlextModelsEntity:
                     f"Cannot add event: would exceed max events limit of {c.HTTP_STATUS_MIN}",
                 )
             data_map = FlextModelsDomainEvent.ComparableConfigMap(
-                root=dict(FlextRuntime.normalize_domain_event_data(data)),
+                root=dict(FlextUtilitiesDomain.normalize_domain_event_data(data)),
             )
             event = FlextModelsDomainEvent.Entry(
                 event_type=event_type,
@@ -169,7 +164,9 @@ class FlextModelsEntity:
                     event_type=event_type,
                     aggregate_id=self.unique_id,
                     data=FlextModelsDomainEvent.ComparableConfigMap(
-                        root=dict(FlextRuntime.normalize_domain_event_data(data)),
+                        root=dict(
+                            FlextUtilitiesDomain.normalize_domain_event_data(data)
+                        ),
                     ),
                 )
                 self.domain_events.append(event)
@@ -198,7 +195,7 @@ class FlextModelsEntity:
         @override
         def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
-            self.updated_at = FlextRuntime.generate_datetime_utc()
+            self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
     class Value(FlextModelsBase.ContractModel):
         """Base class for value objects - immutable and compared by value."""
@@ -208,11 +205,11 @@ class FlextModelsEntity:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
-            return FlextRuntime.compare_value_objects_by_value(self, other)
+            return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:
             """Hash based on values for use in sets/dicts."""
-            return FlextRuntime.hash_value_object_by_value(self)
+            return FlextUtilitiesDomain.hash_value_object_by_value(self)
 
     class AggregateRoot(Entity):
         """Base class for aggregate roots - consistency boundaries."""

@@ -6,7 +6,7 @@ import time
 
 from flext_core import FlextModelsDispatcher
 from flext_tests import tm
-from tests import c
+from tests import c, u
 
 
 def test_circuit_breaker_transitions_and_metrics() -> None:
@@ -58,18 +58,10 @@ def test_rate_limiter_blocks_then_recovers() -> None:
 
 
 def test_rate_limiter_jitter_application() -> None:
-    """Ensure jitter calculation respects bounds and zero factor short-circuit."""
-    limiter = FlextModelsDispatcher.RateLimiterManager(
-        max_requests=1, window_seconds=1.0, jitter_factor=0.5
-    )
-    jittered = limiter._apply_jitter(2.0)
+    """Ensure the canonical jitter utility respects bounds and zero short-circuit."""
+    jittered = u.apply_jitter(2.0, 0.5)
     tm.that(jittered, gte=0.0)
-    limiter_zero = FlextModelsDispatcher.RateLimiterManager(
-        max_requests=1,
-        window_seconds=1.0,
-        jitter_factor=0.0,
-    )
-    tm.that(abs(limiter_zero._apply_jitter(0.5) - 0.5), lt=1e-9)
+    tm.that(abs(u.apply_jitter(0.5, 0.0) - 0.5), lt=1e-9)
 
 
 def test_retry_policy_behavior() -> None:
@@ -78,8 +70,10 @@ def test_retry_policy_behavior() -> None:
     tm.that(policy.should_retry(0), eq=True)
     tm.that(policy.should_retry(1), eq=True)
     tm.that(not policy.should_retry(2), eq=True)
-    tm.that(policy.is_retriable_error("Temporary failure - try again later"), eq=True)
-    tm.that(not policy.is_retriable_error(None), eq=True)
+    tm.that(
+        u.is_retriable_error_message("Temporary failure - try again later"), eq=True
+    )
+    tm.that(not u.is_retriable_error_message(None), eq=True)
     tm.that(abs(policy.get_retry_delay() - 0.1), lt=1e-9)
     tm.that(policy.get_max_attempts(), eq=3)
     tm.that(abs(policy.get_exponential_delay(0) - 0.1), lt=1e-9)

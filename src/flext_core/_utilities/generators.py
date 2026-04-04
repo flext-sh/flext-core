@@ -15,7 +15,7 @@ import string
 import uuid
 from datetime import UTC, datetime
 
-from flext_core import FlextRuntime, c, r, t
+from flext_core import c, r, t
 
 
 class FlextUtilitiesGenerators:
@@ -155,7 +155,20 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def generate_datetime_utc() -> datetime:
         """Generate current UTC datetime with full microsecond precision."""
-        return FlextRuntime.generate_datetime_utc()
+        return datetime.now(UTC)
+
+    @staticmethod
+    def generate_id() -> str:
+        """Generate unique ID using UUID4."""
+        return FlextUtilitiesGenerators._generate_id()
+
+    @staticmethod
+    def generate_prefixed_id(prefix: str, length: int | None = None) -> str:
+        """Generate prefixed ID using UUID4 with optional truncation."""
+        base_id = str(uuid.uuid4()).replace("-", "")
+        if length is not None:
+            base_id = base_id[:length]
+        return f"{prefix}_{base_id}" if prefix else base_id
 
     @staticmethod
     def generate_iso_timestamp() -> str:

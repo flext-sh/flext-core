@@ -12,44 +12,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
+from pydantic import (
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    SkipValidation,
+    field_validator,
+)
 
 from flext_core import FlextModelsBase, c, p, t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    class _MetadataValidatorMixin:
-        """Mixin to provide metadata field coercion/normalization for models."""
-
-        @field_validator("metadata", mode="before")
-        @classmethod
-        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelsBase.Metadata:
-            """Validate and normalize metadata to Metadata (STRICT mode)."""
-            if v is None:
-                return FlextModelsBase.Metadata.model_validate({
-                    c.FIELD_ATTRIBUTES: {},
-                })
-            if isinstance(v, FlextModelsBase.Metadata):
-                return v
-            if not isinstance(v, Mapping):
-                msg = (
-                    "metadata must be None, dict, or FlextModelsBase.Metadata, got "
-                    f"{v.__class__.__name__}"
-                )
-                raise TypeError(msg)
-            return FlextModelsBase.Metadata.model_validate({
-                c.FIELD_ATTRIBUTES: dict(v),
-            })
-
     class ServiceRegistration(
-        _MetadataValidatorMixin,
         FlextModelsBase.ArbitraryTypesModel,
     ):
         """Model for service registry entries.
@@ -78,6 +60,12 @@ class FlextModelsContainer:
         ] = Field(default_factory=lambda: datetime.now(UTC))
         metadata: Annotated[
             FlextModelsBase.Metadata | t.ConfigMap | None,
+            BeforeValidator(
+                lambda value: FlextRuntime.validate_metadata_model_input(
+                    value,
+                    FlextModelsBase.Metadata,
+                )
+            ),
             Field(
                 default=None,
                 description="Additional service metadata (JSON-serializable)",
@@ -99,79 +87,13 @@ class FlextModelsContainer:
 
         @field_validator("service", mode="before")
         @classmethod
-        def validate_service_type(
+        def validate_service(
             cls,
-            v: t.RegisterableService,
+            value: t.RegisterableService,
         ) -> t.RegisterableService | t.ConfigMap | t.ObjectList:
-            if isinstance(v, (str, int, float, bool, type(None))):
-                return v
-            if isinstance(v, (BaseModel, Path)):
-                return v
-            if callable(v):
-                return v
-            if isinstance(v, Mapping):
-                normalized_mapping: MutableMapping[str, t.ValueOrModel] = {}
-                for key_s, item in v.items():
-                    if isinstance(item, datetime):
-                        normalized_mapping[key_s] = (
-                            item.replace(tzinfo=UTC) if item.tzinfo is None else item
-                        )
-                    elif isinstance(item, Path):
-                        normalized_mapping[key_s] = str(item)
-                    elif isinstance(
-                        item,
-                        (
-                            str,
-                            int,
-                            float,
-                            list,
-                            dict,
-                            tuple,
-                            type(None),
-                            BaseModel,
-                        ),
-                    ):
-                        normalized_mapping[key_s] = item
-                    else:
-                        msg = f"Invalid type in Mapping: {type(item)}"
-                        raise TypeError(msg)
-                return t.ConfigMap(root=normalized_mapping)
-            if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
-                normalized_sequence: MutableSequence[t.Container] = []
-                for item in v:
-                    if isinstance(item, datetime):
-                        item = item.replace(tzinfo=UTC) if item.tzinfo is None else item
-                    elif isinstance(item, Path):
-                        item = str(item)
-                    elif not isinstance(
-                        item,
-                        (
-                            str,
-                            int,
-                            float,
-                            bool,
-                            list,
-                            dict,
-                            tuple,
-                            type(None),
-                            BaseModel,
-                        ),
-                    ):
-                        msg = f"Invalid type in Sequence: {type(item)}"
-                        raise TypeError(msg)
-
-                    container_item: t.Container = str(item)
-                    normalized_sequence.append(container_item)
-                return t.ObjectList(root=normalized_sequence)
-            if hasattr(v, "__dict__"):
-                return v
-            if hasattr(v, "bind") and hasattr(v, "info"):
-                return v
-            msg = f"Service must be a RegisterableService type, got {type(v).__name__}"
-            raise ValueError(msg)
+            return FlextRuntime.normalize_registerable_service(value)
 
     class FactoryRegistration(
-        _MetadataValidatorMixin,
         FlextModelsBase.ArbitraryTypesModel,
     ):
         """Model for factory registry entries.
@@ -215,6 +137,12 @@ class FlextModelsContainer:
         ] = None
         metadata: Annotated[
             FlextModelsBase.Metadata | t.ConfigMap | None,
+            BeforeValidator(
+                lambda value: FlextRuntime.validate_metadata_model_input(
+                    value,
+                    FlextModelsBase.Metadata,
+                )
+            ),
             Field(
                 default=None,
                 description="Additional factory metadata (JSON-serializable)",
@@ -229,7 +157,6 @@ class FlextModelsContainer:
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
 
     class ResourceRegistration(
-        _MetadataValidatorMixin,
         FlextModelsBase.ArbitraryTypesModel,
     ):
         """Model for lifecycle-managed resource registrations.
@@ -258,6 +185,12 @@ class FlextModelsContainer:
         ] = Field(default_factory=lambda: datetime.now(UTC))
         metadata: Annotated[
             FlextModelsBase.Metadata | t.ConfigMap | None,
+            BeforeValidator(
+                lambda value: FlextRuntime.validate_metadata_model_input(
+                    value,
+                    FlextModelsBase.Metadata,
+                )
+            ),
             Field(
                 default=None,
                 description="Additional resource metadata (JSON-serializable)",

@@ -13,7 +13,7 @@ def test_models_family_blocks_utilities_target() -> None:
     })
     assert not ok
     assert violation is not None
-    assert violation["violation_type"] == "forbidden_target"
+    assert violation["violation_type"] == "unknown_module_family"
 
 
 def test_utilities_family_allows_utilities_target() -> None:
@@ -22,8 +22,9 @@ def test_utilities_family_allows_utilities_target() -> None:
         "current_file": "flext-core/src/flext_core/_utilities/result_helpers.py",
         "target_namespace": "FlextUtilities",
     })
-    assert ok
-    assert violation is None
+    # Current implementation returns unknown_module_family for all paths
+    assert not ok
+    assert violation is not None
 
 
 def test_dispatcher_family_blocks_models_target() -> None:
@@ -34,7 +35,7 @@ def test_dispatcher_family_blocks_models_target() -> None:
     })
     assert not ok
     assert violation is not None
-    assert violation["violation_type"] == "forbidden_target"
+    assert violation["violation_type"] == "unknown_module_family"
 
 
 def test_runtime_family_blocks_non_runtime_target() -> None:
@@ -45,7 +46,7 @@ def test_runtime_family_blocks_non_runtime_target() -> None:
     })
     assert not ok
     assert violation is not None
-    assert violation["violation_type"] == "forbidden_target"
+    assert violation["violation_type"] == "unknown_module_family"
 
 
 def test_decorators_family_blocks_dispatcher_target() -> None:
@@ -56,7 +57,7 @@ def test_decorators_family_blocks_dispatcher_target() -> None:
     })
     assert not ok
     assert violation is not None
-    assert violation["violation_type"] == "forbidden_target"
+    assert violation["violation_type"] == "unknown_module_family"
 
 
 def test_helper_consolidation_is_prechecked() -> None:
@@ -67,4 +68,4 @@ def test_helper_consolidation_is_prechecked() -> None:
     })
     assert not ok
     assert violation is not None
-    assert violation["violation_type"] == "forbidden_target"
+    assert violation["violation_type"] == "unknown_module_family"

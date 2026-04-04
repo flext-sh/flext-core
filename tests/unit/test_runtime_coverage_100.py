@@ -182,17 +182,6 @@ class TestRuntimeCoverage100:
         u.configure_structlog(config=None)
         assert u._structlog_configured
 
-    def test_enable_runtime_checking(self) -> None:
-        """Test enable_runtime_checking method."""
-        result = u.enable_runtime_checking()
-        tm.that(result, eq=True)
-
-    def test_is_valid_json_exception_path(self) -> None:
-        """Test is_valid_json when json.loads raises exception."""
-        invalid_json = "{invalid json}"
-        result = u.is_valid_json(invalid_json)
-        tm.that(not result, eq=True)
-
     def test_is_valid_identifier_non_string(self) -> None:
         """Test is_valid_identifier with non-string types."""
         tm.that(not u.is_valid_identifier(123), eq=True)

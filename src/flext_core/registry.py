@@ -51,11 +51,11 @@ class FlextRegistry(s[bool]):
         """
 
         registered: Annotated[
-            list[m.RegistrationDetails],
+            MutableSequence[m.RegistrationDetails],
             Field(
                 description="Successfully registered handlers with registration details.",
             ),
-        ] = Field(default_factory=lambda: list[m.RegistrationDetails]())
+        ] = Field(default_factory=list)
         skipped: Annotated[
             t.StrSequence,
             Field(
@@ -96,7 +96,14 @@ class FlextRegistry(s[bool]):
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    dispatcher: Annotated[p.Dispatcher | None, Field(default=None, exclude=True)] = None
+    dispatcher: Annotated[
+        p.Dispatcher | None,
+        Field(
+            default=None,
+            exclude=True,
+            description="The dispatcher instance for executing handlers.",
+        ),
+    ] = None
 
     @override
     def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
