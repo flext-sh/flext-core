@@ -585,12 +585,10 @@ if _t.TYPE_CHECKING:
         TestFlextModelsBase,
         TestFlextModelsCqrs,
         TestFlextModelsEntity,
-        TestFlextModelsErrors,
         TestFlextModelsExceptionParams,
         test_base,
         test_cqrs,
         test_entity,
-        test_errors,
         test_exception_params,
     )
     from tests.unit._utilities import (
@@ -833,7 +831,6 @@ __all__ = [
     "TestFlextModelsContainer",
     "TestFlextModelsCqrs",
     "TestFlextModelsEntity",
-    "TestFlextModelsErrors",
     "TestFlextModelsExceptionParams",
     "TestFlextProtocols",
     "TestFlextRegistry",
@@ -1093,7 +1090,6 @@ __all__ = [
     "test_entity_comparable_map_and_bulk_validation_paths",
     "test_entity_coverage",
     "test_enum_utilities_coverage_100",
-    "test_errors",
     "test_exception_params",
     "test_exceptions",
     "test_execute_and_register_handler_failure_paths",

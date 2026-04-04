@@ -9,12 +9,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from pydantic import BaseModel
-
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 if TYPE_CHECKING:
-    from flext_core import FlextModelsBase, FlextModelsHandler
+    from flext_core._models.base import FlextModelsBase
+    from flext_core._models.handler import FlextModelsHandler
+    from flext_core._models.registry import FlextModelsRegistry
 
 
 class FlextProtocolsRegistry:
@@ -48,14 +48,14 @@ class FlextProtocolsRegistry:
         def register_handlers(
             self,
             handlers: Sequence[t.HandlerLike],
-        ) -> FlextProtocolsResult.Result[BaseModel]:
+        ) -> FlextProtocolsResult.Result[FlextModelsRegistry.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
             self,
             bindings: Mapping[t.RegistryBindingKey, t.HandlerLike],
-        ) -> FlextProtocolsResult.Result[BaseModel]:
+        ) -> FlextProtocolsResult.Result[FlextModelsRegistry.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...
 

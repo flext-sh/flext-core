@@ -32,6 +32,7 @@ from flext_core import (
 )
 from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
 class FlextTypes(
@@ -47,6 +48,11 @@ class FlextTypes(
     ``t.NormalizedValue`` and ``Any`` are strictly forbidden in domain state.
     ``None`` is **never** baked into definitions.
     """
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Enforce types governance on subclasses."""
+        super().__init_subclass__(**kwargs)
+        FlextUtilitiesEnforcement.run_types(cls)
 
 
 t = FlextTypes

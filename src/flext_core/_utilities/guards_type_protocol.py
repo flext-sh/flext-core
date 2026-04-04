@@ -75,6 +75,17 @@ class FlextUtilitiesGuardsTypeProtocol:
         return isinstance(value, p.Context)
 
     @staticmethod
+    def check_protocol_compliance(
+        value: t.ProtocolSubject,
+        protocol: type,
+    ) -> bool:
+        """Check runtime protocol compliance via stdlib isinstance()."""
+        try:
+            return isinstance(value, protocol)
+        except TypeError:
+            return False
+
+    @staticmethod
     def is_handler_callable(
         value: object,
     ) -> TypeIs[t.HandlerCallable]:

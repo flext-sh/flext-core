@@ -22,7 +22,7 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-import yaml
+from flext_cli import FlextCliUtilities
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextLogger, FlextSettings
@@ -75,8 +75,7 @@ class TestFlextSettingsSingletonIntegration:
                 with Path(file_path).open("w", encoding="utf-8") as f:
                     json.dump(self.config_data, f, indent=2)
             elif self.file_format == "yaml":
-                with Path(file_path).open("w", encoding="utf-8") as f:
-                    yaml.dump(self.config_data, f, default_flow_style=False)
+                FlextCliUtilities.Cli.yaml_dump(file_path, self.config_data)
             elif self.file_format == "toml":
                 content = "\n".join(
                     (f"{k} = {v!r}" for k, v in self.config_data.items()),
@@ -282,10 +281,11 @@ class TestFlextSettingsSingletonIntegration:
                 "command_timeout": 60,
                 "validation_strict_mode": True,
             }
-            with config_file.open("w", encoding="utf-8") as f:
-                yaml.dump(config_data, f)
+            FlextCliUtilities.Cli.yaml_dump(config_file, config_data)
             assert config_file.exists()
-            loaded_data = yaml.safe_load(config_file.read_text(encoding="utf-8"))
+            loaded_data = FlextCliUtilities.Cli.yaml_parse(
+                config_file.read_text(encoding="utf-8"),
+            ).unwrap_or({})
             assert loaded_data == config_data
             config = FlextSettings.get_global()
             assert config.app_name is not None

@@ -1,7 +1,8 @@
 """Runtime enforcement utilities for Pydantic v2 governance.
 
 Static methods called from __pydantic_init_subclass__ hooks on FLEXT
-base model classes. Constants come from c.ENFORCEMENT_* via MRO.
+base model classes and __init_subclass__ on facade classes.
+Constants come from _ec.ENFORCEMENT_* via MRO.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,22 +10,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import typing
 import warnings
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import get_args, get_origin
+from enum import EnumType
+from typing import Protocol, get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from flext_core import c
+from flext_core._constants.enforcement import FlextConstantsEnforcement as _ec
 
 
 class FlextUtilitiesEnforcement:
     """Pydantic v2 enforcement check utilities.
 
     All methods are static — called from __pydantic_init_subclass__
-    on FLEXT base models. Uses c.ENFORCEMENT_* constants exclusively.
+    on FLEXT base models. Uses _ec.ENFORCEMENT_* constants exclusively.
     """
 
     @staticmethod
@@ -32,10 +35,10 @@ class FlextUtilitiesEnforcement:
         """Check if a class is exempt from enforcement."""
         if getattr(model_type, "_flext_enforcement_exempt", False):
             return True
-        if model_type.__name__ in c.ENFORCEMENT_INFRASTRUCTURE_BASES:
+        if model_type.__name__ in _ec.ENFORCEMENT_INFRASTRUCTURE_BASES:
             return True
         module = getattr(model_type, "__module__", "") or ""
-        return any(frag in module for frag in c.ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS)
+        return any(frag in module for frag in _ec.ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS)
 
     @staticmethod
     def own_fields(model_type: type[BaseModel]) -> Mapping[str, FieldInfo]:
@@ -74,14 +77,14 @@ class FlextUtilitiesEnforcement:
     ) -> Sequence[str]:
         """Reject dict/list/set as field annotation origins."""
         replacements: Mapping[str, str] = dict(
-            c.ENFORCEMENT_COLLECTION_REPLACEMENTS,
+            _ec.ENFORCEMENT_COLLECTION_REPLACEMENTS,
         )
         errors: MutableSequence[str] = []
         for name, info in own.items():
             origin = get_origin(info.annotation)
             if (
                 origin is not None
-                and origin.__name__ in c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
+                and origin.__name__ in _ec.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
             ):
                 fix = replacements.get(origin.__name__, str(origin))
                 errors.append(
@@ -122,7 +125,7 @@ class FlextUtilitiesEnforcement:
     def check_extra_policy(model_type: type[BaseModel]) -> Sequence[str]:
         """Require extra='forbid' unless inheriting from relaxed base."""
         for base in model_type.__mro__:
-            if base.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES:
+            if base.__name__ in _ec.ENFORCEMENT_RELAXED_EXTRA_BASES:
                 return []
         extra = model_type.model_config.get("extra")
         if extra is None:
@@ -241,7 +244,7 @@ class FlextUtilitiesEnforcement:
 
         Called from __pydantic_init_subclass__ on FLEXT base models.
         """
-        mode = c.ENFORCEMENT_MODE
+        mode = _ec.ENFORCEMENT_MODE
         if mode == "off":
             return
         if FlextUtilitiesEnforcement.is_exempt(model_type):
@@ -305,3 +308,352 @@ class FlextUtilitiesEnforcement:
             warnings.warn(detail, UserWarning, stacklevel=3)
             if mode == "strict":
                 raise TypeError(detail)
+
+    # ------------------------------------------------------------------ #
+    # Shared helpers for all-layer enforcement                            #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _is_layer_exempt(target: type) -> bool:
+        """Check if a non-model class is exempt from layer enforcement."""
+        if getattr(target, "_flext_enforcement_exempt", False):
+            return True
+        module = getattr(target, "__module__", "") or ""
+        return any(frag in module for frag in _ec.ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS)
+
+    @staticmethod
+    def _emit(
+        qualname: str,
+        layer: str,
+        errors: Sequence[str],
+        severity: str,
+    ) -> None:
+        """Emit enforcement violation as warning and optionally TypeError."""
+        mode = _ec.ENFORCEMENT_MODE
+        msg = (
+            f"\n{qualname} violates FLEXT {layer} {severity} rules:\n"
+            + "\n".join(f"  - {e}" for e in errors)
+            + f"\n\nFix: See AGENTS.md § {layer} governance."
+            + "\nExempt: _flext_enforcement_exempt: ClassVar[bool] = True"
+        )
+        warnings.warn(msg, UserWarning, stacklevel=4)
+        if mode == "strict":
+            raise TypeError(msg)
+
+    # ------------------------------------------------------------------ #
+    # Constants layer enforcement                                         #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _is_constant_attr(name: str, value: object) -> bool:
+        """Return True if name/value looks like a constant attribute."""
+        if name.startswith("_"):
+            return False
+        if name in _ec.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
+            return False
+        if isinstance(value, (type, classmethod, staticmethod, property)):
+            return False
+        return not callable(value)
+
+    @staticmethod
+    def check_constants_no_mutable_values(target: type) -> Sequence[str]:
+        """Constants must not have mutable default values (list/dict/set)."""
+        errors: MutableSequence[str] = []
+        own_dict = vars(target)
+        for name, value in own_dict.items():
+            if not FlextUtilitiesEnforcement._is_constant_attr(name, value):
+                continue
+            if isinstance(value, (list, dict, set)):
+                type_name = type(value).__name__
+                errors.append(
+                    f"{target.__qualname__}.{name}: mutable {type_name} FORBIDDEN. "
+                    f"Use frozenset, tuple, or MappingProxyType.",
+                )
+        # Recursively check inner namespace classes (not StrEnum/IntEnum)
+        for inner in own_dict.values():
+            if not isinstance(inner, type):
+                continue
+            if isinstance(inner, EnumType):
+                continue
+            errors.extend(
+                FlextUtilitiesEnforcement.check_constants_no_mutable_values(inner),
+            )
+        return errors
+
+    @staticmethod
+    def check_constants_final_hints(target: type) -> Sequence[str]:
+        """Public constant attributes must have Final[...] type hints."""
+        errors: MutableSequence[str] = []
+        own_annotations = vars(target).get("__annotations__", {})
+        own_dict = vars(target)
+        for name, value in own_dict.items():
+            if not FlextUtilitiesEnforcement._is_constant_attr(name, value):
+                continue
+            if name not in own_annotations:
+                errors.append(
+                    f"{target.__qualname__}.{name}: missing type annotation. "
+                    f"Use Final[type] or ClassVar[type].",
+                )
+                continue
+            annotation_str = str(own_annotations[name])
+            if "Final" not in annotation_str and "ClassVar" not in annotation_str:
+                errors.append(
+                    f"{target.__qualname__}.{name}: must be Final[...] or ClassVar[...]. "
+                    f"Constants must be immutable.",
+                )
+        return errors
+
+    @staticmethod
+    def check_constants_upper_case(target: type) -> Sequence[str]:
+        """Public constant attribute names must be UPPER_CASE."""
+        errors: MutableSequence[str] = []
+        own_dict = vars(target)
+        for name, value in own_dict.items():
+            if not FlextUtilitiesEnforcement._is_constant_attr(name, value):
+                continue
+            if name != name.upper():
+                errors.append(
+                    f"{target.__qualname__}.{name}: constant names must be UPPER_CASE.",
+                )
+        return errors
+
+    @staticmethod
+    def run_constants(target: type) -> None:
+        """Enforce governance rules on FlextConstants subclasses.
+
+        Called from FlextConstants.__init_subclass__ on facade.
+        """
+        mode = _ec.ENFORCEMENT_MODE
+        if mode == "off":
+            return
+        if FlextUtilitiesEnforcement._is_layer_exempt(target):
+            return
+
+        hard_errors: MutableSequence[str] = []
+        hard_errors.extend(
+            FlextUtilitiesEnforcement.check_constants_no_mutable_values(target),
+        )
+
+        if hard_errors:
+            FlextUtilitiesEnforcement._emit(
+                target.__qualname__,
+                "Constants",
+                hard_errors,
+                "HARD",
+            )
+
+        config_errors: MutableSequence[str] = []
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_constants_final_hints(target),
+        )
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_constants_upper_case(target),
+        )
+
+        if config_errors:
+            FlextUtilitiesEnforcement._emit(
+                target.__qualname__,
+                "Constants",
+                config_errors,
+                "best practices",
+            )
+
+    # ------------------------------------------------------------------ #
+    # Protocols layer enforcement                                         #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def check_protocols_inner_classes(target: type) -> Sequence[str]:
+        """Inner classes in protocol facades should be Protocol subclasses."""
+        errors: MutableSequence[str] = []
+        own_dict = vars(target)
+        for name, value in own_dict.items():
+            if not isinstance(value, type):
+                continue
+            if name.startswith("_"):
+                continue
+            if issubclass(value, Protocol):
+                continue
+            if isinstance(value, EnumType):
+                continue
+            errors.append(
+                f"{target.__qualname__}.{name}: inner class must be a Protocol subclass. "
+                f"Use class {name}(Protocol): ... with @runtime_checkable.",
+            )
+        return errors
+
+    @staticmethod
+    def check_protocols_runtime_checkable(target: type) -> Sequence[str]:
+        """Protocol inner classes must be @runtime_checkable."""
+        errors: MutableSequence[str] = []
+        own_dict = vars(target)
+        for name, value in own_dict.items():
+            if not isinstance(value, type):
+                continue
+            if name.startswith("_"):
+                continue
+            if not issubclass(value, Protocol):
+                continue
+            if not getattr(value, "_is_runtime_protocol", False):
+                errors.append(
+                    f"{target.__qualname__}.{name}: Protocol must be @runtime_checkable.",
+                )
+        return errors
+
+    @staticmethod
+    def run_protocols(target: type) -> None:
+        """Enforce governance rules on FlextProtocols subclasses.
+
+        Called from FlextProtocols.__init_subclass__ on facade.
+        """
+        mode = _ec.ENFORCEMENT_MODE
+        if mode == "off":
+            return
+        if FlextUtilitiesEnforcement._is_layer_exempt(target):
+            return
+
+        config_errors: MutableSequence[str] = []
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_protocols_inner_classes(target),
+        )
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_protocols_runtime_checkable(target),
+        )
+
+        if config_errors:
+            FlextUtilitiesEnforcement._emit(
+                target.__qualname__,
+                "Protocols",
+                config_errors,
+                "best practices",
+            )
+
+    # ------------------------------------------------------------------ #
+    # Types layer enforcement                                             #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def check_types_no_any_in_aliases(target: type) -> Sequence[str]:
+        """PEP 695 type aliases must not reference Any."""
+        errors: MutableSequence[str] = []
+        own_dict = vars(target)
+        for name, value in own_dict.items():
+            if name.startswith("_"):
+                continue
+            if not hasattr(value, "__value__"):
+                continue
+            alias_str = str(value)
+            if "Any" in alias_str:
+                errors.append(
+                    f"{target.__qualname__}.{name}: Any in type alias FORBIDDEN. "
+                    f"Use t.* contracts.",
+                )
+        return errors
+
+    @staticmethod
+    def check_types_typeadapter_placement(target: type) -> Sequence[str]:
+        """TypeAdapter instances must be in FlextTypes* hierarchy only."""
+        errors: MutableSequence[str] = []
+        own_dict = vars(target)
+        for name, value in own_dict.items():
+            if name.startswith("_"):
+                continue
+            type_name = type(value).__name__
+            if (
+                type_name == "TypeAdapter"
+                and not name.startswith("ADAPTER_")
+                and name.upper() != name
+            ):
+                errors.append(
+                    f"{target.__qualname__}.{name}: TypeAdapter should use "
+                    f"UPPER_CASE naming (e.g., ADAPTER_{name.upper()}).",
+                )
+        return errors
+
+    @staticmethod
+    def run_types(target: type) -> None:
+        """Enforce governance rules on FlextTypes subclasses.
+
+        Called from FlextTypes.__init_subclass__ on facade.
+        """
+        mode = _ec.ENFORCEMENT_MODE
+        if mode == "off":
+            return
+        if FlextUtilitiesEnforcement._is_layer_exempt(target):
+            return
+
+        hard_errors: MutableSequence[str] = []
+        hard_errors.extend(
+            FlextUtilitiesEnforcement.check_types_no_any_in_aliases(target),
+        )
+
+        if hard_errors:
+            FlextUtilitiesEnforcement._emit(
+                target.__qualname__,
+                "Types",
+                hard_errors,
+                "HARD",
+            )
+
+        config_errors: MutableSequence[str] = []
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_types_typeadapter_placement(target),
+        )
+
+        if config_errors:
+            FlextUtilitiesEnforcement._emit(
+                target.__qualname__,
+                "Types",
+                config_errors,
+                "best practices",
+            )
+
+    # ------------------------------------------------------------------ #
+    # Utilities layer enforcement                                         #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def check_utilities_method_types(target: type) -> Sequence[str]:
+        """Public methods on utility classes must be static or classmethod."""
+        errors: MutableSequence[str] = []
+        own_dict = vars(target)
+        exempt = _ec.ENFORCEMENT_UTILITIES_EXEMPT_METHODS
+        for name, value in own_dict.items():
+            if name.startswith("_") and name not in exempt:
+                continue
+            if name in exempt:
+                continue
+            if isinstance(value, (staticmethod, classmethod)):
+                continue
+            if not inspect.isfunction(value):
+                continue
+            errors.append(
+                f"{target.__qualname__}.{name}(): must be @staticmethod or @classmethod. "
+                f"Utilities must be stateless.",
+            )
+        return errors
+
+    @staticmethod
+    def run_utilities(target: type) -> None:
+        """Enforce governance rules on FlextUtilities subclasses.
+
+        Called from FlextUtilities.__init_subclass__ on facade.
+        """
+        mode = _ec.ENFORCEMENT_MODE
+        if mode == "off":
+            return
+        if FlextUtilitiesEnforcement._is_layer_exempt(target):
+            return
+
+        config_errors: MutableSequence[str] = []
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_utilities_method_types(target),
+        )
+
+        if config_errors:
+            FlextUtilitiesEnforcement._emit(
+                target.__qualname__,
+                "Utilities",
+                config_errors,
+                "best practices",
+            )

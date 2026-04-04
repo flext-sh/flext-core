@@ -296,7 +296,7 @@ class TestFlextRegistry:
             if test_case.should_succeed
             else u.Tests.Result.assert_failure(result)
         )
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert isinstance(result.value, m.RegistrySummary)
 
     @pytest.mark.parametrize("test_case", _BINDING_REGISTRATION, ids=lambda c: c.name)
     def test_binding_registration(
@@ -341,7 +341,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        summary = FlextRegistry.Summary(registered=[], skipped=[], errors=[])
+        summary = m.RegistrySummary(registered=[], skipped=[], errors=[])
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(

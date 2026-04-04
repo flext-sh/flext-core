@@ -18,6 +18,7 @@ from flext_core import (
     FlextConstantsValidation,
 )
 from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
 class FlextConstants(
@@ -37,6 +38,11 @@ class FlextConstants(
     This class acts as a facade, composing all constant subclasses via MRO.
     All constants are accessible via inheritance—do not duplicate parent attributes.
     """
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Enforce constants governance on subclasses."""
+        super().__init_subclass__(**kwargs)
+        FlextUtilitiesEnforcement.run_constants(cls)
 
 
 c = FlextConstants

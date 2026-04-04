@@ -18,7 +18,14 @@ import pytest
 from pydantic import BaseModel
 
 from flext_tests import tm
-from tests import p, r, t
+from tests import p, r, t, u
+
+type ProtocolSubject = t.ProtocolSubject
+
+
+def _as_protocol_subject(value: ProtocolSubject) -> ProtocolSubject:
+    """Normalize a concrete sample to the canonical protocol-check subject type."""
+    return value
 
 
 class TestFlextProtocols:
@@ -183,13 +190,13 @@ class TestFlextProtocols:
 
     def test_flext_result_satisfies_success_checkable(self) -> None:
         """FlextResult (via r[T]) satisfies p.SuccessCheckable."""
-        result = r[str].ok("hello")
-        tm.that(isinstance(result, p.SuccessCheckable), eq=True)
+        result = _as_protocol_subject(r[str].ok("hello"))
+        tm.that(u.check_protocol_compliance(result, p.SuccessCheckable), eq=True)
 
     def test_flext_result_satisfies_has_model_dump(self) -> None:
         """FlextResult satisfies p.HasModelDump (it's a BaseModel)."""
-        result = r[str].ok("hello")
-        tm.that(isinstance(result, p.HasModelDump), eq=True)
+        result = _as_protocol_subject(r[str].ok("hello"))
+        tm.that(u.check_protocol_compliance(result, p.HasModelDump), eq=True)
 
     def test_pydantic_model_satisfies_has_model_dump(self) -> None:
         """Any Pydantic BaseModel satisfies p.HasModelDump."""
@@ -197,8 +204,8 @@ class TestFlextProtocols:
         class _SampleModel(BaseModel):
             name: str = "test"
 
-        instance = _SampleModel()
-        tm.that(isinstance(instance, p.HasModelDump), eq=True)
+        instance = _as_protocol_subject(_SampleModel())
+        tm.that(u.check_protocol_compliance(instance, p.HasModelDump), eq=True)
 
     def test_flushable_conformance(self) -> None:
         """Object with flush() satisfies p.Flushable."""
@@ -207,7 +214,8 @@ class TestFlextProtocols:
             def flush(self) -> None:
                 pass
 
-        tm.that(isinstance(_Flusher(), p.Flushable), eq=True)
+        instance = _as_protocol_subject(_Flusher())
+        tm.that(u.check_protocol_compliance(instance, p.Flushable), eq=True)
 
     def test_auto_discoverable_handler_conformance(self) -> None:
         """Object with can_handle() satisfies p.AutoDiscoverableHandler."""
@@ -216,7 +224,11 @@ class TestFlextProtocols:
             def can_handle(self, message_type: type) -> bool:
                 return True
 
-        tm.that(isinstance(_Handler(), p.AutoDiscoverableHandler), eq=True)
+        instance = _as_protocol_subject(_Handler())
+        tm.that(
+            u.check_protocol_compliance(instance, p.AutoDiscoverableHandler),
+            eq=True,
+        )
 
     def test_provider_like_conformance(self) -> None:
         """Callable factory satisfies p.ProviderLike structurally."""
@@ -225,7 +237,8 @@ class TestFlextProtocols:
             def __call__(self) -> str:
                 return "service"
 
-        tm.that(isinstance(_Provider(), p.ProviderLike), eq=True)
+        instance = _as_protocol_subject(_Provider())
+        tm.that(u.check_protocol_compliance(instance, p.ProviderLike), eq=True)
 
     def test_dispatchable_service_conformance(self) -> None:
         """Object with dispatch(message) satisfies p.DispatchableService."""
@@ -234,7 +247,11 @@ class TestFlextProtocols:
             def dispatch(self, message: BaseModel, /) -> BaseModel:
                 return message
 
-        tm.that(isinstance(_Svc(), p.DispatchableService), eq=True)
+        instance = _as_protocol_subject(_Svc())
+        tm.that(
+            u.check_protocol_compliance(instance, p.DispatchableService),
+            eq=True,
+        )
 
     # ------------------------------------------------------------------
     # 4. Non-conforming classes correctly rejected
@@ -313,19 +330,22 @@ class TestFlextProtocols:
 
     def test_context_protocol_composes_sub_protocols(self) -> None:
         """p.Context inherits from all sub-protocols."""
-        tm.that(issubclass(p.Context, p.ContextRead), eq=True)
-        tm.that(issubclass(p.Context, p.ContextWrite), eq=True)
-        tm.that(issubclass(p.Context, p.ContextLifecycle), eq=True)
-        tm.that(issubclass(p.Context, p.ContextExport), eq=True)
-        tm.that(issubclass(p.Context, p.ContextMetadataAccess), eq=True)
+        composed_protocol: type = p.Context
+        tm.that(issubclass(composed_protocol, p.ContextRead), eq=True)
+        tm.that(issubclass(composed_protocol, p.ContextWrite), eq=True)
+        tm.that(issubclass(composed_protocol, p.ContextLifecycle), eq=True)
+        tm.that(issubclass(composed_protocol, p.ContextExport), eq=True)
+        tm.that(issubclass(composed_protocol, p.ContextMetadataAccess), eq=True)
 
     def test_container_protocol_extends_configurable(self) -> None:
         """p.Container inherits from p.Configurable."""
-        tm.that(issubclass(p.Container, p.Configurable), eq=True)
+        container_protocol: type = p.Container
+        tm.that(issubclass(container_protocol, p.Configurable), eq=True)
 
     def test_settings_protocol_extends_has_model_dump(self) -> None:
         """p.Settings inherits from p.HasModelDump."""
-        tm.that(issubclass(p.Settings, p.HasModelDump), eq=True)
+        settings_protocol: type = p.Settings
+        tm.that(issubclass(settings_protocol, p.HasModelDump), eq=True)
 
     def test_settings_protocol_has_expected_attrs(self) -> None:
         """p.Settings defines expected field signatures."""
@@ -477,7 +497,7 @@ class TestFlextProtocols:
             def flush(self) -> None:
                 pass
 
-        result = p.check_protocol_compliance(_Flusher(), p.Flushable)
+        result = u.check_protocol_compliance(_Flusher(), p.Flushable)
         tm.that(result, eq=True)
 
     def test_check_protocol_compliance_negative(self) -> None:
@@ -486,13 +506,13 @@ class TestFlextProtocols:
         class _Empty(BaseModel):
             pass
 
-        result = p.check_protocol_compliance(_Empty(), p.Flushable)
+        result = u.check_protocol_compliance(_Empty(), p.Flushable)
         tm.that(result, eq=False)
 
     def test_check_protocol_compliance_type_error(self) -> None:
         """check_protocol_compliance returns False on TypeError."""
         # Passing a non-protocol type should return False, not raise.
-        result = p.check_protocol_compliance("hello", int)
+        result = u.check_protocol_compliance("hello", int)
         tm.that(result, eq=False)
 
     # ------------------------------------------------------------------
@@ -511,7 +531,8 @@ class TestFlextProtocols:
             def is_failure(self) -> bool:
                 return False
 
-        tm.that(isinstance(_Outcome(), p.SuccessCheckable), eq=True)
+        instance = _as_protocol_subject(_Outcome())
+        tm.that(u.check_protocol_compliance(instance, p.SuccessCheckable), eq=True)
 
     def test_structured_error_custom_implementation(self) -> None:
         """Custom class satisfying p.StructuredError contract."""
@@ -533,7 +554,8 @@ class TestFlextProtocols:
                 return domain == "VALIDATION"
 
         instance = _StructErr()
-        tm.that(isinstance(instance, p.StructuredError), eq=True)
+        subject = _as_protocol_subject(instance)
+        tm.that(u.check_protocol_compliance(subject, p.StructuredError), eq=True)
         tm.that(instance.error_domain, eq="VALIDATION")
         tm.that(instance.is_error_domain("VALIDATION"), eq=True)
         tm.that(instance.is_error_domain("NETWORK"), eq=False)
@@ -545,7 +567,8 @@ class TestFlextProtocols:
             value: str = "AUTH"
             name: str = "AuthError"
 
-        tm.that(isinstance(_ErrDomain(), p.ErrorDomainProtocol), eq=True)
+        instance = _as_protocol_subject(_ErrDomain())
+        tm.that(u.check_protocol_compliance(instance, p.ErrorDomainProtocol), eq=True)
 
     def test_configurable_custom_implementation(self) -> None:
         """Custom class with configure() satisfies p.Configurable."""
@@ -557,7 +580,8 @@ class TestFlextProtocols:
             ) -> Self:
                 return self
 
-        tm.that(isinstance(_Configurable(), p.Configurable), eq=True)
+        instance = _as_protocol_subject(_Configurable())
+        tm.that(u.check_protocol_compliance(instance, p.Configurable), eq=True)
 
     def test_handle_protocol_custom_implementation(self) -> None:
         """Custom class with handle(message) satisfies p.Handle."""
@@ -569,7 +593,8 @@ class TestFlextProtocols:
             ) -> r[t.RuntimeAtomic] | t.Container | BaseModel | None:
                 return None
 
-        tm.that(isinstance(_HandleImpl(), p.Handle), eq=True)
+        instance = _as_protocol_subject(_HandleImpl())
+        tm.that(u.check_protocol_compliance(instance, p.Handle), eq=True)
 
     def test_execute_protocol_custom_implementation(self) -> None:
         """Custom class with execute(message) satisfies p.Execute."""
@@ -581,7 +606,8 @@ class TestFlextProtocols:
             ) -> r[t.RuntimeAtomic] | t.Container | BaseModel | None:
                 return None
 
-        tm.that(isinstance(_ExecImpl(), p.Execute), eq=True)
+        instance = _as_protocol_subject(_ExecImpl())
+        tm.that(u.check_protocol_compliance(instance, p.Execute), eq=True)
 
     # ------------------------------------------------------------------
     # 8. Protocol group completeness — base protocols

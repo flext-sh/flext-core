@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import Protocol, Self, overload, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
-from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
 from flext_core import FlextProtocolsResult, t
+
+if TYPE_CHECKING:
+    from flext_core._models._context._export import FlextModelsContextExport
 
 
 class FlextProtocolsContext:
@@ -116,8 +118,8 @@ class FlextProtocolsContext:
             include_statistics: bool = ...,
             include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> BaseModel | t.ContainerMapping:
-            """Export context state as serializable ConfigMap or dict."""
+        ) -> FlextModelsContextExport.ContextExport | t.ContainerMapping:
+            """Export context state as the canonical context export model or dict."""
             ...
 
     @runtime_checkable

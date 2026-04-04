@@ -2,10 +2,7 @@
 
 TIER 1: Uses Tier 0 modules (constants, typings) and base models.
 
-This module provides generic models organized by business function:
-- Value Objects: Immutable data compared by value (FrozenValueModel)
-- Snapshots: State captured at a specific moment (ContractModel)
-- Progress Trackers: Mutable accumulators during operations (ArbitraryTypesModel)
+This module provides generic models for reusable operation progress tracking.
 
 All downstream projects (flext-cli, flext-ldif, flext-ldap, flext-oud-mig)
 should use these models instead of creating their own dict patterns.
@@ -16,9 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import MutableSequence
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Annotated
 
 from pydantic import Field
@@ -29,80 +25,7 @@ from flext_core._utilities.generators import FlextUtilitiesGenerators
 
 
 class FlextGenericModels:
-    """Generic models organized by business function.
-
-    Categories:
-    - Value: Immutable data objects compared by value
-    - Snapshot: State captured at a specific moment
-    - Progress: Mutable accumulators during operations
-    """
-
-    class OperationContext(FlextModelsBase.FrozenValueModel):
-        """Immutable context of an operation.
-
-        Used by: all projects
-        Function: Metadata of operation that doesn't change during execution.
-        """
-
-        correlation_id: Annotated[
-            str,
-            Field(
-                description="Unique correlation ID for tracing",
-            ),
-        ] = Field(default_factory=lambda: str(uuid.uuid4()))
-        operation_id: Annotated[
-            str,
-            Field(
-                description="Unique operation ID",
-            ),
-        ] = Field(default_factory=lambda: str(uuid.uuid4()))
-        timestamp: Annotated[
-            datetime,
-            Field(
-                description="UTC timestamp when created",
-            ),
-        ] = Field(default_factory=lambda: datetime.now(UTC))
-        source: Annotated[
-            str | None,
-            Field(default=None, description="Source system"),
-        ] = None
-        user_id: Annotated[
-            t.NonEmptyStr | None,
-            Field(default=None, description="User ID"),
-        ] = None
-        tenant_id: Annotated[
-            t.NonEmptyStr | None,
-            Field(default=None, description="Tenant ID"),
-        ] = None
-        environment: Annotated[
-            str | None,
-            Field(default=None, description="Environment"),
-        ] = None
-        version: Annotated[
-            str,
-            Field(default="1.0.0", description="Schema version"),
-        ] = "1.0.0"
-        metadata: Annotated[
-            t.Dict,
-            Field(
-                description="Additional metadata",
-            ),
-        ] = Field(default_factory=t.Dict)
-        message: Annotated[
-            t.ValueOrModel,
-            Field(default=None, description="Message payload"),
-        ] = None
-        message_type: Annotated[str, Field(default="", description="Message type")] = ""
-        dispatch_type: Annotated[
-            str,
-            Field(default="", description="Dispatch type"),
-        ] = ""
-        timeout_override: Annotated[
-            int | None,
-            Field(default=None, description="Timeout override seconds"),
-        ] = None
-
-    """Progress trackers - mutable, accumulate during operation."""
+    """Generic models for mutable progress accumulation during operations."""
 
     class Operation(FlextModelsBase.ArbitraryTypesModel):
         """Progress tracking for ongoing operations.

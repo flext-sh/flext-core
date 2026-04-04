@@ -13,16 +13,9 @@ import time
 from collections.abc import MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self
 
-from pydantic import (
-    BeforeValidator,
-    ConfigDict,
-    Field,
-    PrivateAttr,
-    computed_field,
-    model_validator,
-)
+from pydantic import ConfigDict, Field, PrivateAttr, computed_field
 
-from flext_core import FlextModelsBase, FlextRuntime, c, p, r, t
+from flext_core import FlextModelsBase, c, p, r, t
 
 
 class FlextModelsHandler:
@@ -31,35 +24,6 @@ class FlextModelsHandler:
     This class acts as a namespace container for handler management patterns.
     All nested classes are accessed via FlextModels.Handler.* in the main models.py.
     """
-
-    class Registration(FlextModelsBase.ArbitraryTypesModel):
-        """Handler registration with advanced validation."""
-
-        name: Annotated[
-            t.NonEmptyStr,
-            Field(description="Handler name"),
-        ]
-        handler: Annotated[
-            t.HandlerCallable,
-            BeforeValidator(
-                lambda value: FlextRuntime.validate_callable_input(value, "Handler")
-            ),
-            Field(description="Handler callable function or method"),
-        ]
-        event_types: Annotated[
-            t.StrSequence,
-            Field(
-                description="Event types this handler processes",
-            ),
-        ] = Field(default_factory=list)
-
-        @model_validator(mode="after")
-        def validate_handler_interface(self) -> Self:
-            """Validate handler has handle() or execute() method or is callable."""
-            if not callable(self.handler):
-                msg = "Handler must be callable or have handle()/execute() method"
-                raise TypeError(msg)
-            return self
 
     class RegistrationResult(FlextModelsBase.ArbitraryTypesModel):
         """Result of a handler registration operation.

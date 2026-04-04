@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from types import ModuleType
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from pydantic import BaseModel
 
@@ -57,7 +57,7 @@ class _DemoHandler(FlextHandlers[_Message, str]):
 
     @override
     def execute(self, message: _Message) -> r[str]:
-        return cast("r[str]", super().execute(message))
+        return super().execute(message)
 
     @override
     def dispatch_message(
@@ -65,7 +65,7 @@ class _DemoHandler(FlextHandlers[_Message, str]):
         message: _Message,
         operation: str = c.DEFAULT_HANDLER_MODE,
     ) -> r[str]:
-        return cast("r[str]", super().dispatch_message(message, operation=operation))
+        return super().dispatch_message(message, operation=operation)
 
 
 class Ex10FlextHandlers(Examples):
@@ -215,7 +215,7 @@ class Ex10FlextHandlers(Examples):
         except NotImplementedError as exc:
             pattern_value = f"{type(exc).__name__}:{exc}"
         self.check("handle.not_implemented_pattern", pattern_value)
-        handler = _DemoHandler()
+        handler: _DemoHandler = _DemoHandler()
         self.check("handler.handler_name", handler.handler_name)
         self.check("handler.name_matches", bool(handler.handler_name))
         self.check("handler.mode", handler.mode.value)

@@ -317,8 +317,8 @@ class Ex12FlextRegistry(Examples):
         handler_name = self.rand_str(6)
         handler_id = self.rand_str(8)
         prefix = f"reg.{self.rand_str(4)}"
-        summary_ok = FlextRegistry.Summary()
-        summary_fail = FlextRegistry.Summary(errors=[summary_error])
+        summary_ok = m.RegistrySummary()
+        summary_fail = m.RegistrySummary(errors=[summary_error])
         ok_success_attr = summary_ok.is_success
         summary_ok_success = (
             ok_success_attr() if callable(ok_success_attr) else ok_success_attr

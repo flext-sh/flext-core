@@ -210,50 +210,6 @@ class FlextModelsCqrs:
                 return pagination_cls()
             return validate_result.value
 
-    class Bus(FlextModelsBase.ArbitraryTypesModel):
-        """Dispatcher configuration model for CQRS routing."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            json_schema_extra={
-                "title": "Dispatcher",
-                "description": "CQRS dispatcher configuration",
-            },
-        )
-        enable_middleware: Annotated[
-            bool,
-            Field(default=True, description="Enable middleware pipeline"),
-        ] = True
-        enable_metrics: Annotated[
-            bool,
-            Field(default=True, description="Enable metrics collection"),
-        ] = True
-        enable_caching: Annotated[
-            bool,
-            Field(default=True, description="Enable query result caching"),
-        ] = True
-        execution_timeout: Annotated[
-            int,
-            Field(
-                default=c.DEFAULT_TIMEOUT_SECONDS,
-                description="Command execution timeout",
-            ),
-        ] = c.DEFAULT_TIMEOUT_SECONDS
-        max_cache_size: Annotated[
-            t.PositiveInt,
-            Field(
-                default=c.HTTP_STATUS_MIN,
-                description="Maximum cache size",
-            ),
-        ] = c.HTTP_STATUS_MIN
-        implementation_path: Annotated[
-            str,
-            Field(
-                default=c.DEFAULT_DISPATCHER_PATH,
-                pattern=c.PATTERN_MODULE_PATH,
-                description="Implementation path",
-            ),
-        ] = c.DEFAULT_DISPATCHER_PATH
-
     class Handler(FlextModelsBase.ArbitraryTypesModel):
         """Handler configuration model with Builder pattern support."""
 
@@ -440,26 +396,6 @@ class FlextModelsCqrs:
         _ = payload
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)
-
-    class HandlerBatchRegistrationResult(FlextModelsBase.ArbitraryTypesModel):
-        """Result of batch handler registration."""
-
-        status: Annotated[
-            str,
-            Field(description="Overall result status of the batch registration."),
-        ]
-        count: Annotated[
-            int,
-            Field(
-                description="Number of handlers successfully registered in this batch."
-            ),
-        ]
-        handlers: Annotated[
-            t.StrSequence,
-            Field(
-                description="Names of the handlers included in the batch registration."
-            ),
-        ]
 
 
 __all__ = ["FlextModelsCqrs"]

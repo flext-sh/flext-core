@@ -75,3 +75,55 @@ class FlextConstantsEnforcement:
         ("set", "frozenset[X] or AbstractSet[X]"),
     )
     """Replacement suggestions for forbidden collection origins."""
+
+    # --- Constants layer enforcement ---
+
+    ENFORCEMENT_CONSTANTS_SKIP_ATTRS: Final[frozenset[str]] = frozenset({
+        "__module__",
+        "__qualname__",
+        "__doc__",
+        "__dict__",
+        "__weakref__",
+        "__init_subclass__",
+        "__subclasshook__",
+        "__abstractmethods__",
+        "__orig_bases__",
+        "__class_getitem__",
+        "__pydantic_complete__",
+    })
+    """Class-level attributes to skip during constants enforcement."""
+
+    ENFORCEMENT_CONSTANTS_FACADE_PREFIXES: Final[tuple[str, ...]] = ("FlextConstants",)
+    """Class name prefixes recognized as constants facades."""
+
+    # --- Protocols layer enforcement ---
+
+    ENFORCEMENT_PROTOCOL_EXEMPT_METHODS: Final[frozenset[str]] = frozenset()
+    """Methods on protocols classes exempt from protocol-inner-class checks."""
+
+    ENFORCEMENT_PROTOCOL_FACADE_PREFIXES: Final[tuple[str, ...]] = ("FlextProtocols",)
+    """Class name prefixes recognized as protocols facades."""
+
+    # --- Types layer enforcement ---
+
+    ENFORCEMENT_TYPES_FACADE_PREFIXES: Final[tuple[str, ...]] = (
+        "FlextTypes",
+        "FlextTyping",
+    )
+    """Class name prefixes recognized as types facades."""
+
+    # --- Utilities layer enforcement ---
+
+    ENFORCEMENT_UTILITIES_FACADE_PREFIXES: Final[tuple[str, ...]] = (
+        "FlextUtilities",
+        "FlextLogger",
+    )
+    """Class name prefixes recognized as utilities facades."""
+
+    ENFORCEMENT_UTILITIES_EXEMPT_METHODS: Final[frozenset[str]] = frozenset({
+        "__init__",
+        "__init_subclass__",
+        "__new__",
+        "__class_getitem__",
+    })
+    """Methods exempt from static/classmethod enforcement on utilities."""

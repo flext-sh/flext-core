@@ -62,22 +62,6 @@ class FlextProtocolsBase:
             """Query type identifier."""
             ...
 
-    @classmethod
-    def check_protocol_compliance(
-        cls,
-        instance: t.GuardInput,
-        protocol: type,
-    ) -> bool:
-        """Check protocol compliance via stdlib isinstance().
-
-        Uses @runtime_checkable Protocol + isinstance() — the Python 3.13+
-        standard way to do structural type checks at runtime.
-        """
-        try:
-            return isinstance(instance, protocol)
-        except TypeError:
-            return False
-
     @runtime_checkable
     class Executable(Base, Protocol):
         """Protocol for objects that can be executed and report service info."""

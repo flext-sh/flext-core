@@ -1,7 +1,7 @@
 """Tests for CQRS models via FlextModels facade.
 
 Covers Command, Query, Event, Pagination, Bus, Handler (with Builder),
-HandlerBatchRegistrationResult, and FlextMessage discriminated union.
+and FlextMessage discriminated union.
 
 Source: flext_core._models.cqrs (477 LOC)
 """
@@ -380,37 +380,6 @@ class TestFlextModelsCqrs:
                 "aggregate_id": "y",
             })
 
-    # ── Bus ────────────────────────────────────────────────────
-
-    def test_bus_defaults(self) -> None:
-        bus = m.Bus()
-        tm.that(bus.enable_middleware, eq=True)
-        tm.that(bus.enable_metrics, eq=True)
-        tm.that(bus.enable_caching, eq=True)
-        tm.that(bus.execution_timeout, eq=c.DEFAULT_TIMEOUT_SECONDS)
-        tm.that(bus.max_cache_size, eq=c.HTTP_STATUS_MIN)
-        tm.that(bus.implementation_path, eq=c.DEFAULT_DISPATCHER_PATH)
-
-    def test_bus_custom_values(self) -> None:
-        bus = m.Bus(
-            enable_middleware=False,
-            enable_metrics=False,
-            enable_caching=False,
-            execution_timeout=60,
-            max_cache_size=500,
-        )
-        tm.that(bus.enable_middleware, eq=False)
-        tm.that(bus.enable_metrics, eq=False)
-        tm.that(bus.enable_caching, eq=False)
-        tm.that(bus.execution_timeout, eq=60)
-        tm.that(bus.max_cache_size, eq=500)
-
-    def test_bus_serialization_round_trip(self) -> None:
-        bus = m.Bus(execution_timeout=45)
-        data = bus.model_dump()
-        restored = m.Bus.model_validate(data)
-        tm.that(restored.execution_timeout, eq=45)
-
     # ── Handler ────────────────────────────────────────────────
 
     def test_handler_creation(self) -> None:
@@ -527,27 +496,6 @@ class TestFlextModelsCqrs:
             .build()
         )
         tm.that(handler.handler_name, eq="Merged")
-
-    # ── HandlerBatchRegistrationResult ─────────────────────────
-
-    def test_batch_registration_result_creation(self) -> None:
-        result = m.HandlerBatchRegistrationResult(
-            status="ok",
-            count=3,
-            handlers=["h1", "h2", "h3"],
-        )
-        tm.that(result.status, eq="ok")
-        tm.that(result.count, eq=3)
-        tm.that(result.handlers, eq=["h1", "h2", "h3"])
-
-    def test_batch_registration_result_round_trip(self) -> None:
-        result = m.HandlerBatchRegistrationResult(
-            status="partial", count=1, handlers=["only"]
-        )
-        data = result.model_dump()
-        restored = m.HandlerBatchRegistrationResult.model_validate(data)
-        tm.that(restored.status, eq="partial")
-        tm.that(restored.count, eq=1)
 
     # ── FlextMessage discriminated union ───────────────────────
 

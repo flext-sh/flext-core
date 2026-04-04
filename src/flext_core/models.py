@@ -26,6 +26,7 @@ from flext_core._models.errors import FlextModelsErrors
 from flext_core._models.exception_params import FlextModelsExceptionParams
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
+from flext_core._models.registry import FlextModelsRegistry
 from flext_core._models.service import FlextModelsService
 from flext_core._models.settings import FlextModelsConfig
 
@@ -44,6 +45,7 @@ class FlextModels(
     FlextModelsErrors,
     FlextGenericModels,
     FlextModelsHandler,
+    FlextModelsRegistry,
     FlextModelsService,
     FlextModelsConfig,
     FlextModelsExceptionParams,

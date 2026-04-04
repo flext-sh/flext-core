@@ -172,6 +172,20 @@ class FlextTypesServices:
         | None
     )
 
+    type ProtocolSubject = (
+        GuardInput
+        | p.Flushable
+        | p.AutoDiscoverableHandler
+        | p.ProviderLike[BaseModel | FlextTypingBase.Container]
+        | p.DispatchableService
+        | p.SuccessCheckable
+        | p.StructuredError
+        | p.ErrorDomainProtocol
+        | p.Configurable
+        | p.Handle
+        | p.Execute
+    )
+
     type UserOverridesMapping = Mapping[
         str,
         FlextTypingBase.Scalar

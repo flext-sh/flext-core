@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Annotated, ClassVar, Literal, Self, override
+from typing import Annotated, ClassVar, Self, override
 
 from pydantic import (
     AfterValidator,
@@ -203,123 +203,6 @@ class FlextModelsBase:
             t.Scalar | None,
             Field(default=None, description="Scalar metadata value."),
         ] = None
-
-    class CommandMessage(BaseModel):
-        """Command message with discriminated union support."""
-
-        message_type: Literal["command"] = "command"
-        command_type: str
-        issuer_id: t.NonEmptyStr | None = None
-        data: Annotated[
-            t.Dict,
-            Field(
-                description="Command payload containing input data required for execution.",
-            ),
-        ] = Field(default_factory=t.Dict)
-
-    class QueryMessage(BaseModel):
-        """Query message with discriminated union support."""
-
-        message_type: Literal["query"] = "query"
-        query_type: str
-        filters: Annotated[
-            t.Dict,
-            Field(
-                description="Filter criteria used to constrain query results.",
-            ),
-        ] = Field(default_factory=t.Dict)
-        pagination: t.Dict | None = None
-
-    class EventMessage(BaseModel):
-        """Event message with discriminated union support."""
-
-        message_type: Literal["event"] = "event"
-        event_type: t.NonEmptyStr
-        aggregate_id: t.NonEmptyStr
-        data: Annotated[
-            t.Dict,
-            Field(
-                description="Event payload with domain data describing what happened.",
-            ),
-        ] = Field(default_factory=t.Dict)
-        metadata: Annotated[
-            BaseModel | None,
-            Field(
-                default=None,
-                description="Structured metadata associated with this event message.",
-            ),
-        ] = None
-
-    MessageUnion = t.MessageUnion[CommandMessage, QueryMessage, EventMessage]
-
-    class SuccessResult(BaseModel):
-        """Success result for discriminated union."""
-
-        result_type: Literal["success"] = "success"
-        value: t.Container
-        metadata: Annotated[
-            BaseModel | None,
-            Field(
-                default=None,
-                description="Structured metadata attached to a successful operation result.",
-            ),
-        ] = None
-
-    class FailureResult(BaseModel):
-        """Failure result for discriminated union."""
-
-        result_type: Literal["failure"] = "failure"
-        error: str
-        error_code: str | None = None
-        error_data: FlextModelsBase.Metadata | None = None
-
-    class PartialResult(BaseModel):
-        """Partial result for discriminated union."""
-
-        result_type: Literal["partial"] = "partial"
-        value: t.Container
-        warnings: Annotated[
-            t.StrSequence,
-            Field(
-                description="Non-fatal warning messages generated during partial processing.",
-            ),
-        ] = Field(default_factory=list)
-        partial_success_rate: t.Percentage
-
-    OperationResult = t.OperationResult[SuccessResult, FailureResult, PartialResult]
-
-    class ValidOutcome(BaseModel):
-        """Valid validation outcome."""
-
-        outcome_type: Literal["valid"] = "valid"
-        validated_data: t.Container
-        validation_time_ms: float
-
-    class InvalidOutcome(BaseModel):
-        """Invalid validation outcome."""
-
-        outcome_type: Literal["invalid"] = "invalid"
-        errors: t.StrSequence
-        error_codes: Annotated[
-            t.StrSequence,
-            Field(
-                description="Machine-readable error codes that classify validation failures.",
-            ),
-        ] = Field(default_factory=list)
-
-    class WarningOutcome(BaseModel):
-        """Warning validation outcome."""
-
-        outcome_type: Literal["warning"] = "warning"
-        validated_data: t.Container
-        warnings: t.StrSequence
-        validation_time_ms: float
-
-    ValidationOutcome = t.ValidationOutcome[
-        ValidOutcome,
-        InvalidOutcome,
-        WarningOutcome,
-    ]
 
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""

@@ -41,7 +41,7 @@ def _as_registry_handler(handler: _Handler) -> _Handler:
 
 def test_summary_properties_and_subclass_storage_reset() -> None:
     detail = _success_details("a")
-    summary = FlextRegistry.Summary(registered=[detail], errors=["x"])
+    summary = m.RegistrySummary(registered=[detail], errors=["x"])
     assert len(summary.registered) == 1
     assert len(summary.errors) == 1
 
@@ -168,7 +168,7 @@ def test_summary_error_paths_and_bindings_failures(
         return r[m.RegistrationDetails].fail("x")
 
     registry = FlextRegistry()
-    summary = FlextRegistry.Summary(errors=["something bad"])
+    summary = m.RegistrySummary(errors=["something bad"])
     finalize = registry._finalize_summary(summary)
     assert finalize.is_failure
     monkeypatch.setattr(

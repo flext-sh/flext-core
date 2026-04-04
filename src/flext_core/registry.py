@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, Literal, Self, override
 
-from pydantic import BaseModel, Field, PrivateAttr, computed_field
+from pydantic import BaseModel, Field, PrivateAttr
 
 from flext_core import (
     FlextContainer,
@@ -42,54 +42,6 @@ class FlextRegistry(s[bool]):
     It delegates to ``FlextDispatcher`` (which implements ``p.Dispatcher``)
     for actual handler registration and execution.
     """
-
-    class Summary(m.Value):
-        """Aggregated outcome for batch handler registration tracking.
-
-        Tracks successful, skipped, and failed registrations with computed
-        success indicators for batch handler operations.
-        """
-
-        registered: Annotated[
-            MutableSequence[m.RegistrationDetails],
-            Field(
-                description="Successfully registered handlers with registration details.",
-            ),
-        ] = Field(default_factory=list)
-        skipped: Annotated[
-            t.StrSequence,
-            Field(
-                description="Handler identifiers that were skipped (already registered)",
-                examples=[["CreateUserCommand", "UpdateUserCommand"]],
-            ),
-        ] = Field(default_factory=list)
-        errors: Annotated[
-            MutableSequence[str],
-            Field(
-                description="Error messages for failed registrations",
-                examples=[["Handler validation failed", "Duplicate registration"]],
-            ),
-        ] = Field(default_factory=list)
-
-        @computed_field
-        def is_failure(self) -> bool:
-            """Indicate whether the batch registration had errors.
-
-            Returns:
-                True if any errors occurred, False otherwise
-
-            """
-            return bool(self.errors)
-
-        @computed_field
-        def is_success(self) -> bool:
-            """Indicate whether the batch registration fully succeeded.
-
-            Returns:
-                True if no errors occurred, False otherwise
-
-            """
-            return not self.errors
 
     _dispatcher: p.Dispatcher | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
@@ -337,17 +289,17 @@ class FlextRegistry(s[bool]):
     def register_bindings(
         self,
         bindings: Mapping[t.RegistryBindingKey, t.HandlerLike],
-    ) -> r[FlextRegistry.Summary]:
+    ) -> r[m.RegistrySummary]:
         """Register message-to-handler bindings.
 
         Args:
             bindings: Map of MessageType -> HandlerInstance
 
         Returns:
-            r[FlextRegistry.Summary]: Batch registration summary
+            r[m.RegistrySummary]: Batch registration summary
 
         """
-        summary = FlextRegistry.Summary()
+        summary = m.RegistrySummary()
         for message_type, handler in bindings.items():
             message_type_name = getattr(message_type, "__name__", str(message_type))
             handler_name = getattr(handler, "__name__", handler.__class__.__name__)
@@ -415,17 +367,17 @@ class FlextRegistry(s[bool]):
     def register_handlers(
         self,
         handlers: Sequence[t.HandlerLike],
-    ) -> r[FlextRegistry.Summary]:
+    ) -> r[m.RegistrySummary]:
         """Register multiple handlers in batch.
 
         Args:
             handlers: Sequence of handler instances or callables to register
 
         Returns:
-            r[FlextRegistry.Summary]: Batch registration summary
+            r[m.RegistrySummary]: Batch registration summary
 
         """
-        summary = FlextRegistry.Summary()
+        summary = m.RegistrySummary()
         for handler in handlers:
             result = self.register_handler(handler)
             key = getattr(handler, "__name__", handler.__class__.__name__)
@@ -516,7 +468,7 @@ class FlextRegistry(s[bool]):
         self,
         key: str,
         registration: m.RegistrationDetails,
-        summary: FlextRegistry.Summary,
+        summary: m.RegistrySummary,
     ) -> None:
         """Add successful registration to summary."""
         self._registered_keys.add(key)
@@ -554,17 +506,17 @@ class FlextRegistry(s[bool]):
 
     def _finalize_summary(
         self,
-        summary: FlextRegistry.Summary,
-    ) -> r[FlextRegistry.Summary]:
+        summary: m.RegistrySummary,
+    ) -> r[m.RegistrySummary]:
         """Finalize summary based on error state.
 
         Returns:
-            r[FlextRegistry.Summary]: Success result with summary or failure result with errors.
+            r[m.RegistrySummary]: Success result with summary or failure result with errors.
 
         """
         if summary.errors:
-            return r[FlextRegistry.Summary].fail("; ".join(summary.errors))
-        return r[FlextRegistry.Summary].ok(summary)
+            return r[m.RegistrySummary].fail("; ".join(summary.errors))
+        return r[m.RegistrySummary].ok(summary)
 
 
 __all__ = ["FlextRegistry"]

@@ -1,4 +1,4 @@
-"""Tests for Pydantic v2 runtime enforcement.
+"""Tests for Pydantic v2 runtime enforcement across all Flext* layers.
 
 Verifies that FlextUtilitiesEnforcement check functions correctly
 detect violations. Tests call the check functions directly to avoid
@@ -12,12 +12,22 @@ from __future__ import annotations
 
 import typing
 from collections.abc import Mapping, Sequence
-from typing import ClassVar
+from typing import ClassVar, Final, Protocol, runtime_checkable
 
 import pytest
 from pydantic import Field
 
-from flext_core import c, m
+from flext_core import (
+    FlextConstants,
+    FlextProtocols,
+    FlextTypes,
+    FlextUtilities,
+    c,
+    m,
+    p,
+    t,
+    u,
+)
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
@@ -218,3 +228,281 @@ class TestBaseModelCoverage:
     def test_base_model_has_enforcement_hook(self, base_cls: type) -> None:
         """Each base model class should have __pydantic_init_subclass__."""
         assert hasattr(base_cls, "__pydantic_init_subclass__")
+
+
+# ------------------------------------------------------------------ #
+# Constants layer enforcement tests                                    #
+# ------------------------------------------------------------------ #
+
+
+class TestConstantsEnforcement:
+    """Verify enforcement on FlextConstants subclasses."""
+
+    def test_mutable_list_detected(self) -> None:
+        """List value in constants is flagged as HARD violation."""
+
+        class _C:
+            ITEMS: list[str] = ["a", "b"]
+
+        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        assert len(errors) == 1
+        assert "mutable list" in errors[0]
+
+    def test_mutable_dict_detected(self) -> None:
+        """Dict value in constants is flagged."""
+
+        class _C:
+            DATA: dict[str, int] = {"x": 1}
+
+        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        assert len(errors) == 1
+        assert "mutable dict" in errors[0]
+
+    def test_frozenset_passes(self) -> None:
+        """Frozenset value is not flagged."""
+
+        class _C:
+            ITEMS: Final[frozenset[str]] = frozenset({"a"})
+
+        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        assert len(errors) == 0
+
+    def test_tuple_passes(self) -> None:
+        """Tuple value is not flagged."""
+
+        class _C:
+            ITEMS: Final[tuple[str, ...]] = ("a", "b")
+
+        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        assert len(errors) == 0
+
+    def test_missing_final_annotation_detected(self) -> None:
+        """Public attribute without Final/ClassVar is flagged."""
+
+        class _C:
+            VALUE: int = 42
+
+        errors = FlextUtilitiesEnforcement.check_constants_final_hints(_C)
+        assert len(errors) == 1
+        assert "Final" in errors[0]
+
+    def test_final_annotation_passes(self) -> None:
+        """Attribute with Final passes."""
+
+        class _C:
+            VALUE: Final[int] = 42
+
+        errors = FlextUtilitiesEnforcement.check_constants_final_hints(_C)
+        assert len(errors) == 0
+
+    def test_classvar_annotation_passes(self) -> None:
+        """Attribute with ClassVar passes."""
+
+        class _C:
+            VALUE: ClassVar[int] = 42
+
+        errors = FlextUtilitiesEnforcement.check_constants_final_hints(_C)
+        assert len(errors) == 0
+
+    def test_upper_case_passes(self) -> None:
+        """UPPER_CASE name passes."""
+
+        class _C:
+            MY_VALUE: Final[int] = 42
+
+        errors = FlextUtilitiesEnforcement.check_constants_upper_case(_C)
+        assert len(errors) == 0
+
+    def test_lower_case_detected(self) -> None:
+        """Lowercase name is flagged."""
+
+        class _C:
+            my_value: int = 42
+
+        errors = FlextUtilitiesEnforcement.check_constants_upper_case(_C)
+        assert len(errors) == 1
+        assert "UPPER_CASE" in errors[0]
+
+    def test_inner_namespace_mutable_detected(self) -> None:
+        """Mutable value inside inner namespace class is caught recursively."""
+
+        class _C:
+            class Inner:
+                BAD: list[str] = ["x"]
+
+        errors = FlextUtilitiesEnforcement.check_constants_no_mutable_values(_C)
+        assert len(errors) == 1
+        assert "Inner" in errors[0]
+
+    def test_facade_has_init_subclass(self) -> None:
+        """FlextConstants facade has __init_subclass__ hook."""
+        assert "__init_subclass__" in vars(FlextConstants)
+
+    def test_enforcement_constants_accessible(self) -> None:
+        """New enforcement constants accessible via c.*."""
+        assert hasattr(c, "ENFORCEMENT_CONSTANTS_SKIP_ATTRS")
+        assert hasattr(c, "ENFORCEMENT_UTILITIES_EXEMPT_METHODS")
+
+
+# ------------------------------------------------------------------ #
+# Protocols layer enforcement tests                                    #
+# ------------------------------------------------------------------ #
+
+
+class TestProtocolsEnforcement:
+    """Verify enforcement on FlextProtocols subclasses."""
+
+    def test_non_protocol_inner_class_detected(self) -> None:
+        """Inner class that is not a Protocol is flagged."""
+
+        class _P:
+            class NotProtocol:
+                pass
+
+        errors = FlextUtilitiesEnforcement.check_protocols_inner_classes(_P)
+        assert len(errors) == 1
+        assert "Protocol subclass" in errors[0]
+
+    def test_protocol_inner_class_passes(self) -> None:
+        """Inner class that IS a Protocol passes."""
+
+        class _P:
+            @runtime_checkable
+            class Good(Protocol):
+                def method(self) -> None: ...
+
+        errors = FlextUtilitiesEnforcement.check_protocols_inner_classes(_P)
+        assert len(errors) == 0
+
+    def test_non_runtime_checkable_detected(self) -> None:
+        """Protocol without @runtime_checkable is flagged."""
+
+        class _P:
+            class Bare(Protocol):
+                def method(self) -> None: ...
+
+        errors = FlextUtilitiesEnforcement.check_protocols_runtime_checkable(_P)
+        assert len(errors) == 1
+        assert "runtime_checkable" in errors[0]
+
+    def test_runtime_checkable_passes(self) -> None:
+        """Protocol with @runtime_checkable passes."""
+
+        class _P:
+            @runtime_checkable
+            class Good(Protocol):
+                def method(self) -> None: ...
+
+        errors = FlextUtilitiesEnforcement.check_protocols_runtime_checkable(_P)
+        assert len(errors) == 0
+
+    def test_facade_has_init_subclass(self) -> None:
+        """FlextProtocols facade has __init_subclass__ hook."""
+        assert "__init_subclass__" in vars(FlextProtocols)
+
+
+# ------------------------------------------------------------------ #
+# Types layer enforcement tests                                        #
+# ------------------------------------------------------------------ #
+
+
+class TestTypesEnforcement:
+    """Verify enforcement on FlextTypes subclasses."""
+
+    def test_any_in_type_alias_detected(self) -> None:
+        """Any in PEP 695 type alias is flagged."""
+
+        class _T:
+            type Anything = typing.Any | str
+
+        errors = FlextUtilitiesEnforcement.check_types_no_any_in_aliases(_T)
+        assert len(errors) == 1
+        assert "Any" in errors[0]
+
+    def test_clean_type_alias_passes(self) -> None:
+        """Type alias without Any passes."""
+
+        class _T:
+            type Name = str | int
+
+        errors = FlextUtilitiesEnforcement.check_types_no_any_in_aliases(_T)
+        assert len(errors) == 0
+
+    def test_facade_has_init_subclass(self) -> None:
+        """FlextTypes facade has __init_subclass__ hook."""
+        assert "__init_subclass__" in vars(FlextTypes)
+
+
+# ------------------------------------------------------------------ #
+# Utilities layer enforcement tests                                    #
+# ------------------------------------------------------------------ #
+
+
+class TestUtilitiesEnforcement:
+    """Verify enforcement on FlextUtilities subclasses."""
+
+    def test_instance_method_detected(self) -> None:
+        """Regular instance method is flagged."""
+
+        class _U:
+            def my_method(self, x: int) -> str:
+                return str(x)
+
+        errors = FlextUtilitiesEnforcement.check_utilities_method_types(_U)
+        assert len(errors) == 1
+        assert "staticmethod" in errors[0]
+
+    def test_static_method_passes(self) -> None:
+        """@staticmethod passes."""
+
+        class _U:
+            @staticmethod
+            def my_method(x: int) -> str:
+                return str(x)
+
+        errors = FlextUtilitiesEnforcement.check_utilities_method_types(_U)
+        assert len(errors) == 0
+
+    def test_classmethod_passes(self) -> None:
+        """@classmethod passes."""
+
+        class _U:
+            @classmethod
+            def my_method(cls, x: int) -> str:
+                return str(x)
+
+        errors = FlextUtilitiesEnforcement.check_utilities_method_types(_U)
+        assert len(errors) == 0
+
+    def test_facade_has_init_subclass(self) -> None:
+        """FlextUtilities facade has __init_subclass__ hook."""
+        assert "__init_subclass__" in vars(FlextUtilities)
+
+
+# ------------------------------------------------------------------ #
+# Cross-layer integration tests                                        #
+# ------------------------------------------------------------------ #
+
+
+class TestAllLayerIntegration:
+    """Verify all facades fire enforcement on subclasses."""
+
+    def test_all_facades_have_hooks(self) -> None:
+        """All 4 facade classes have __init_subclass__."""
+        for facade in (FlextConstants, FlextProtocols, FlextTypes, FlextUtilities):
+            assert "__init_subclass__" in vars(facade), (
+                f"{facade.__name__} missing __init_subclass__"
+            )
+
+    def test_downstream_projects_load_cleanly(self) -> None:
+        """Flext-core facades load without any violations."""
+        assert c.__name__ == "FlextConstants"
+        assert m.__name__ == "FlextModels"
+        assert p.__name__ == "FlextProtocols"
+        assert t.__name__ == "FlextTypes"
+        assert u.__name__ == "FlextUtilities"
+
+    def test_exempt_flag_works_across_layers(self) -> None:
+        """_flext_enforcement_exempt disables layer checks."""
+        target = type("_ExemptCls", (), {"_flext_enforcement_exempt": True})
+        assert FlextUtilitiesEnforcement._is_layer_exempt(target)

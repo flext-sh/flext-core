@@ -66,6 +66,11 @@ class FlextUtilities(
     Subprojects use their project u. Aliases/namespaces: MRO registration protocol only.
     """
 
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Enforce utilities governance on subclasses."""
+        super().__init_subclass__(**kwargs)
+        FlextUtilitiesEnforcement.run_utilities(cls)
+
 
 u = FlextUtilities
 __all__ = ["FlextUtilities", "u"]
