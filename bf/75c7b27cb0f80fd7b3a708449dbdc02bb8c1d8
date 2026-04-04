@@ -1,0 +1,37 @@
+src/flext_core/typings.py
+  f05ae18fcd8f171f 35,52,54-55
+tests/unit/test_models_cqrs_full_coverage.py
+  f05ae18fcd8f171f 120,122
+src/flext_core/_utilities/enforcement.py
+  f05ae18fcd8f171f 4-5,13,17-18,23,30,38,41,80,87,128,247,311-316,318,320,322-358,360-361,363-368,370-372,375,377-378,380-383,385-386,389-393,395-400,402-406,408-409,411-415,417-420,422-428,430-433,435-438,440-446,448-449,451-454,456-465,467-468,470-479,481-485,487-488,490-498,500-503,505-511,513-516,518-519,521-524,526-535,537-538,540-547,549-553,555-556,558-561,563,567,569-573,575-581,583-586,588-591,593-599,601-604,606-615,617-618,620-630,632-636,638-644,646-649,651-654,656-659
+src/flext_core/utilities.py
+  f05ae18fcd8f171f 69,71-73
+src/flext_core/_constants/enforcement.py
+  f05ae18fcd8f171f 78-100,102-129
+tests/unit/test_enforcement.py
+  f05ae18fcd8f171f 1,15,21-24,26-28,231-241,243-251,253-261,264-270,273-290,292-308,310-316,318-508
+src/flext_core/constants.py
+  f05ae18fcd8f171f 21,42,44-45
+src/flext_core/protocols.py
+  f05ae18fcd8f171f 20,36,38-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "bf75c7b27cb0f80fd7b3a708449dbdc02bb8c1d8",
+  "prompts": {
+    "f05ae18fcd8f171f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b1bbb82-6621-405d-a638-e11b8325fb7a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 749,
+      "total_deletions": 39,
+      "accepted_lines": 654,
+      "overriden_lines": 66
+    }
+  }
+}
