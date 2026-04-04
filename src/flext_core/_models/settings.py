@@ -13,21 +13,21 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import (
+    AfterValidator,
     AliasChoices,
-    BaseModel,
+    BeforeValidator,
     ConfigDict,
     Field,
-    field_validator,
     model_validator,
 )
 from pydantic_settings import BaseSettings
 
 from flext_core import (
-    FlextLogger,
     FlextModelsBase,
     FlextModelsCollections,
     FlextModelsExceptionParams,
     FlextRuntime,
+    FlextUtilitiesConfiguration,
     FlextUtilitiesGenerators,
     c,
     p,
@@ -96,6 +96,17 @@ class FlextModelsConfig:
         ] = Field(default_factory=t.ConfigMap)
         context: Annotated[
             t.ConfigMap,
+            BeforeValidator(
+                lambda value: (
+                    dict[str, str]()
+                    if value is None
+                    else FlextRuntime.ensure_trace_context(
+                        value,
+                        include_correlation_id=True,
+                        include_timestamp=True,
+                    )
+                )
+            ),
             Field(
                 description="Execution context metadata used for traceability and request scoping.",
                 title="Processing Context",
@@ -125,26 +136,6 @@ class FlextModelsConfig:
                 description="Whether to run input validation before processing the request.",
             ),
         ] = True
-
-        @field_validator("context", mode="before")
-        @classmethod
-        def validate_context(
-            cls,
-            v: BaseModel | t.ScalarMapping | t.Scalar | None,
-        ) -> t.StrMapping:
-            """Ensure context has required fields (using FlextRuntime).
-
-            Returns t.StrMapping because ensure_trace_context generates
-            string trace IDs. This is compatible with the field type
-            ConfigurationDict since str is a subtype.
-            """
-            if v is None:
-                return dict[str, str]()
-            return FlextRuntime.ensure_trace_context(
-                v,
-                include_correlation_id=True,
-                include_timestamp=True,
-            )
 
     class RetryConfiguration(
         FlextModelsBase.ArbitraryTypesModel,
@@ -226,20 +217,17 @@ class FlextModelsConfig:
         ] = False
         custom_validators: Annotated[
             Sequence[p.ValidatorSpec],
+            AfterValidator(
+                lambda values: FlextRuntime.validate_callable_sequence(
+                    values,
+                    "Validator",
+                )
+            ),
             Field(
                 max_length=c.MAX_CONTEXT_KEYS,
                 description="Custom validator callables",
             ),
         ] = Field(default_factory=list[p.ValidatorSpec])
-
-        @field_validator("custom_validators", mode="after")
-        @classmethod
-        def validate_additional_validators(
-            cls,
-            v: Sequence[p.ValidatorSpec],
-        ) -> Sequence[p.ValidatorSpec]:
-            """Validate custom validators are callable."""
-            return FlextRuntime.validate_callable_sequence(v, "Validator")
 
     class BatchProcessingConfig(FlextModelsCollections.Config):
         """Enhanced batch processing configuration."""
@@ -515,7 +503,7 @@ class FlextModelsConfig:
                 le=c.MAX_CONTEXT_KEYS,
                 description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
             ),
-        ] = Field(default_factory=FlextLogger.get_log_level_from_config)
+        ] = Field(default_factory=FlextUtilitiesConfiguration.get_log_level_from_config)
         console_renderer: Annotated[
             bool,
             Field(

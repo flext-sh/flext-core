@@ -1,4 +1,4 @@
-"""Golden-file example for FlextService (s) public APIs."""
+"""Golden-file example for s (s) public APIs."""
 
 from __future__ import annotations
 
@@ -8,22 +8,22 @@ from typing import ClassVar, override
 
 from pydantic import PrivateAttr
 
+from examples import (
+    Ex11EntityStub as _EntityStub,
+    Ex11Payload as _Payload,
+    Examples,
+)
 from flext_core import (
     FlextContext,
-    FlextExceptions,
-    FlextService,
+    FlextLogger,
     FlextSettings,
+    e,
     m,
     r,
     s,
     t,
+    u,
 )
-
-from ._models.ex11 import (
-    Ex11EntityStub as _EntityStub,
-    Ex11Payload as _Payload,
-)
-from .shared import Examples
 
 
 class _EchoService(s[str]):
@@ -124,10 +124,10 @@ class _TinyType:
 
 
 class Ex11FlextService(Examples):
-    """Exercise FlextService public API."""
+    """Exercise s public API."""
 
     def demo_mixins_and_runtime_methods(self) -> None:
-        """Exercise inherited mixin/runtime APIs on FlextService."""
+        """Exercise inherited mixin/runtime APIs on s."""
         self.section("mixins_and_runtime_methods")
 
         ok_value = self.rand_int(1, 999)
@@ -160,14 +160,14 @@ class Ex11FlextService(Examples):
             r[str].ok(ensure_existing).unwrap_or("none") == ensure_existing,
         )
 
-        generated_id = service.generate_id()
-        prefixed = service.generate_prefixed_id(prefix, length=8)
+        generated_id = u.generate_id()
+        prefixed = u.generate_prefixed_id(prefix, length=8)
         self.check("generate_id.length", len(generated_id))
         self.check("generate_prefixed_id.prefix", prefixed.startswith(f"{prefix}_"))
         self.check("generate_prefixed_id.length", len(prefixed))
         self.check(
             "generate_datetime_utc.tz",
-            service.generate_datetime_utc().tzinfo is not None,
+            u.generate_datetime_utc().tzinfo is not None,
         )
 
         with service.track(op_name) as metrics:
@@ -211,7 +211,7 @@ class Ex11FlextService(Examples):
         metric_value = self.rand_int(1, 9)
         ctx_handler_name = self.rand_str(6)
 
-        tiny = s.Bootstrap.create_instance(_TinyType)
+        tiny = u.Bootstrap.create_instance(_TinyType)
         self.check("Bootstrap.create_instance.type", type(tiny).__name__)
         self.check(
             "Bootstrap.create_instance.init_called",
@@ -285,17 +285,17 @@ class Ex11FlextService(Examples):
         self.check("Metadata.attributes", metadata.attributes)
 
         # Integration namespace methods (return None)
-        s.Integration.setup_service_infrastructure(
+        FlextLogger.Integration.setup_service_infrastructure(
             service_name=service_name,
             service_version=service_version,
         )
-        s.Integration.track_service_resolution(resolved_name, resolved=True)
-        s.Integration.track_service_resolution(
+        FlextLogger.Integration.track_service_resolution(resolved_name, resolved=True)
+        FlextLogger.Integration.track_service_resolution(
             unresolved_name,
             resolved=False,
             error_message=unresolved_error,
         )
-        s.Integration.track_domain_event(
+        FlextLogger.Integration.track_domain_event(
             event_name=event_name,
             aggregate_id=aggregate_id,
             event_data=t.ConfigMap(root={event_key: event_value}),
@@ -303,7 +303,7 @@ class Ex11FlextService(Examples):
         self.check("Integration.calls", "ok")
 
         # DependencyIntegration namespace
-        di = s.DependencyIntegration.create_container(
+        di = u.DependencyIntegration.create_container(
             container_options=m.DependencyContainerCreationOptions(
                 config=t.ConfigMap(root={"env": env_value}),
                 services={"object_item": service_object},
@@ -327,7 +327,7 @@ class Ex11FlextService(Examples):
         )
 
         bridge, service_mod, resource_mod = (
-            s.DependencyIntegration.create_layered_bridge(
+            u.DependencyIntegration.create_layered_bridge(
                 config=t.ConfigMap(root={"region": region_value}),
             )
         )
@@ -449,23 +449,23 @@ class Ex11FlextService(Examples):
         )
         self.check("RuntimeResult.ok.none_type", type(valid_container_value).__name__)
 
-        # Runtime model helper methods inherited by FlextService
+        # Runtime model helper methods inherited by s
         e1 = _EntityStub(unique_id=entity_id)
         e2 = _EntityStub(unique_id=entity_id)
         e3 = _EntityStub(unique_id=other_entity_id)
-        self.check("compare_entities_by_id.true", s.compare_entities_by_id(e1, e2))
-        self.check("compare_entities_by_id.false", s.compare_entities_by_id(e1, e3))
-        self.check("hash_entity_by_id.type", type(s.hash_entity_by_id(e1)).__name__)
+        self.check("compare_entities_by_id.true", u.compare_entities_by_id(e1, e2))
+        self.check("compare_entities_by_id.false", u.compare_entities_by_id(e1, e3))
+        self.check("hash_entity_by_id.type", type(u.hash_entity_by_id(e1)).__name__)
         self.check(
             "compare_value_objects_by_value",
-            s.compare_value_objects_by_value(e1, e2),
+            u.compare_value_objects_by_value(e1, e2),
         )
         self.check(
             "hash_value_object_by_value.type",
-            type(s.hash_value_object_by_value(e1)).__name__,
+            type(u.hash_value_object_by_value(e1)).__name__,
         )
 
-        trace = s.ensure_trace_context(
+        trace = u.ensure_trace_context(
             {"source": source_value},
             include_correlation_id=True,
             include_timestamp=True,
@@ -520,7 +520,7 @@ class Ex11FlextService(Examples):
 
         fallback = self.rand_str(4)
 
-        self.check("alias.FlextService_is_s", FlextService is s)
+        self.check("alias.FlextService_is_s", s is s)
 
         service = _EchoService()
         execute_value = service.execute().unwrap_or(fallback)
@@ -562,7 +562,7 @@ class Ex11FlextService(Examples):
             self.check("result.failure.raises", False)
             failing_result = failing.result
             self.check("result.failure.value", failing_result)
-        except FlextExceptions.BaseError as exc:
+        except e.BaseError as exc:
             self.check("result.failure.raises", True)
             self.check("result.failure.type", type(exc).__name__)
 
@@ -578,7 +578,7 @@ class Ex11FlextService(Examples):
 
     @override
     def exercise(self) -> None:
-        """Run all FlextService example sections."""
+        """Run all s example sections."""
         self.demo_service_core_api()
         self.demo_runtime_creation_and_serialization()
         self.demo_mixins_and_runtime_methods()

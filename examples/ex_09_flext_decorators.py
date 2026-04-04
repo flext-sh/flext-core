@@ -1,4 +1,4 @@
-"""Golden-file example for FlextDecorators (d) public APIs."""
+"""Golden-file example for d (d) public APIs."""
 
 from __future__ import annotations
 
@@ -12,10 +12,9 @@ from pydantic import BaseModel
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextDecorators,
-    FlextExceptions,
     c,
     d,
+    e,
     m,
     r,
     t,
@@ -26,7 +25,7 @@ from .shared import Examples
 
 
 class Ex09FlextDecorators(Examples):
-    """Exercise FlextDecorators public APIs."""
+    """Exercise d public APIs."""
 
     _token_service_name: str
     _token_service_value: str
@@ -106,7 +105,7 @@ class Ex09FlextDecorators(Examples):
     def _demo_deprecated(self) -> None:
         """Exercise deprecated decorator warning behavior."""
         self.section("deprecated")
-        decorator_exists = hasattr(FlextDecorators, "deprecated")
+        decorator_exists = hasattr(d, "deprecated")
         self.check("deprecated.exists", decorator_exists)
         if not decorator_exists:
             return
@@ -341,7 +340,7 @@ class Ex09FlextDecorators(Examples):
         try:
             timeout_fail()
             self.check("timeout.failure.raised", False)
-        except FlextExceptions.TimeoutError as exc:
+        except e.TimeoutError as exc:
             self.check("timeout.failure.raised", True)
             self.check("timeout.failure.type", type(exc).__name__ == "TimeoutError")
             self.check("timeout.failure.error_code", exc.error_code == "E_TIMEOUT")

@@ -20,6 +20,34 @@ from flext_core import c, m
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
+class TestCheckNoAny:
+    """Verify Any detection in model fields."""
+
+    def test_any_field_detected(self) -> None:
+        """Any as field annotation is flagged."""
+        import typing
+
+        class _M(m.ArbitraryTypesModel):
+            _flext_enforcement_exempt: ClassVar[bool] = True
+            data: typing.Any = Field(default=None, description="d")
+
+        fields = FlextUtilitiesEnforcement.own_fields(_M)
+        errors = FlextUtilitiesEnforcement.check_no_any(fields)
+        assert len(errors) == 1
+        assert "Any" in errors[0]
+
+    def test_typed_field_passes(self) -> None:
+        """Str field is not flagged."""
+
+        class _M(m.ArbitraryTypesModel):
+            _flext_enforcement_exempt: ClassVar[bool] = True
+            name: str = Field(default="x", description="d")
+
+        fields = FlextUtilitiesEnforcement.own_fields(_M)
+        errors = FlextUtilitiesEnforcement.check_no_any(fields)
+        assert len(errors) == 0
+
+
 class TestCheckNoBareCollections:
     """Verify bare dict/list/set detection in model fields."""
 

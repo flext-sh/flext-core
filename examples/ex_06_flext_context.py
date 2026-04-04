@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
+from examples import Examples
 from flext_core import FlextContainer, FlextContext, c, t, u
-
-from .shared import Examples
 
 
 class Ex06FlextContext(Examples):

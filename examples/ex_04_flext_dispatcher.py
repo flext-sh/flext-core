@@ -7,9 +7,8 @@ from typing import override
 
 from pydantic import BaseModel
 
+from examples import Examples
 from flext_core import FlextDispatcher, m, p, r, t
-
-from .shared import Examples
 
 
 class Ex04FlextDispatcher(Examples):

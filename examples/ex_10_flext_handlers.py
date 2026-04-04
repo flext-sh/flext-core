@@ -1,4 +1,4 @@
-"""Golden-file example for FlextHandlers (h) public APIs."""
+"""Golden-file example for h (h) public APIs."""
 
 from __future__ import annotations
 
@@ -8,10 +8,8 @@ from typing import ClassVar, override
 
 from pydantic import BaseModel
 
-from flext_core import FlextHandlers, c, e, h, m, r, t, u
-
-from ._models.ex10 import Ex10ProtocolHandler
-from .shared import Examples
+from examples import Ex10ProtocolHandler, Examples
+from flext_core import FlextHandlers, FlextLogger, c, e, h, m, r, t, u
 
 
 class _Message(m.Command):
@@ -59,10 +57,10 @@ class _DemoHandler(FlextHandlers[_Message, str]):
 
 
 class Ex10FlextHandlers(Examples):
-    """Exercise FlextHandlers public API."""
+    """Exercise h public API."""
 
     def demo_create_from_callable(self) -> None:
-        """Exercise FlextHandlers.create_from_callable variants."""
+        """Exercise h.create_from_callable variants."""
         self.section("create_from_callable")
         probe_default = self.rand_str(6)
         probe_named = self.rand_str(6)
@@ -72,7 +70,7 @@ class Ex10FlextHandlers(Examples):
         named_handler_name = self.rand_str(10)
         cfg_handler_id = self.rand_str(8)
         cfg_handler_name = self.rand_str(10)
-        default_h = FlextHandlers.create_from_callable(
+        default_h = h.create_from_callable(
             lambda message: f"default:{message}",
         )
         default_value = default_h.handle(probe_default).unwrap_or("-")
@@ -81,7 +79,7 @@ class Ex10FlextHandlers(Examples):
             "callable.default.matches",
             default_value == f"default:{probe_default}",
         )
-        named_h = FlextHandlers.create_from_callable(
+        named_h = h.create_from_callable(
             lambda message: f"named:{message}",
             handler_name=named_handler_name,
             handler_type=c.HandlerType.QUERY,
@@ -96,7 +94,7 @@ class Ex10FlextHandlers(Examples):
             "callable.named.value_matches",
             named_h.handle(probe_named).unwrap_or("-") == f"named:{probe_named}",
         )
-        mode_enum_h = FlextHandlers.create_from_callable(
+        mode_enum_h = h.create_from_callable(
             lambda message: f"enum:{message}",
             mode=c.HandlerType.EVENT,
         )
@@ -105,7 +103,7 @@ class Ex10FlextHandlers(Examples):
             "callable.mode_enum.value_matches",
             mode_enum_h.handle(probe_enum).unwrap_or("-") == f"enum:{probe_enum}",
         )
-        mode_str_h = FlextHandlers.create_from_callable(
+        mode_str_h = h.create_from_callable(
             lambda message: f"str:{message}",
             mode="query",
         )
@@ -114,7 +112,7 @@ class Ex10FlextHandlers(Examples):
             "callable.mode_str.value_matches",
             mode_str_h.handle(probe_str).unwrap_or("-") == f"str:{probe_str}",
         )
-        config_h = FlextHandlers.create_from_callable(
+        config_h = h.create_from_callable(
             lambda message: f"cfg:{message}",
             handler_config=m.Handler(
                 handler_id=cfg_handler_id,
@@ -134,7 +132,7 @@ class Ex10FlextHandlers(Examples):
             config_h.handle(probe_cfg).unwrap_or("-") == f"cfg:{probe_cfg}",
         )
         try:
-            FlextHandlers.create_from_callable(lambda message: message, mode="invalid")
+            h.create_from_callable(lambda message: message, mode="invalid")
             invalid_mode: str = "no-error"
         except e.ValidationError as exc:
             invalid_mode = f"{type(exc).__name__}:{exc}"
@@ -306,7 +304,7 @@ class Ex10FlextHandlers(Examples):
             f"{self.rand_int(1, 9)}.{self.rand_int(0, 9)}.{self.rand_int(0, 9)}"
         )
         metadata_tag = self.rand_str(4)
-        created = h.Bootstrap.create_instance(_NoArgs)
+        created = u.Bootstrap.create_instance(_NoArgs)
         self.check("bootstrap.create_instance", created.__class__.__name__)
         tracker = m.MetricsTracker()
         self.check(
@@ -336,7 +334,7 @@ class Ex10FlextHandlers(Examples):
             .unwrap_or({"handler_name": "-"})
             .get("handler_name", "-"),
         )
-        di = h.DependencyIntegration
+        di = u.DependencyIntegration
         di_container = di.create_container(config=t.ConfigMap(root={"env": env_value}))
         self.check("di.bind_configuration_exists", hasattr(di_container, "config"))
         self.check(
@@ -376,18 +374,18 @@ class Ex10FlextHandlers(Examples):
         self.check("di.layered.resources", resources_mod.__class__.__name__)
         di.wire(di_container, modules=[])
         self.check("di.wire.noop", True)
-        h.Integration.track_service_resolution(service_name, resolved=True)
-        h.Integration.track_service_resolution(
+        FlextLogger.Integration.track_service_resolution(service_name, resolved=True)
+        FlextLogger.Integration.track_service_resolution(
             service_name,
             resolved=False,
             error_message=error_message,
         )
-        h.Integration.track_domain_event(
+        FlextLogger.Integration.track_domain_event(
             event_name,
             aggregate_id=aggregate_id,
             event_data=t.ConfigMap(root={self.rand_str(3): self.rand_int(1, 9)}),
         )
-        h.Integration.setup_service_infrastructure(
+        FlextLogger.Integration.setup_service_infrastructure(
             service_name=service_name,
             service_version=f"{self.rand_int(1, 9)}.{self.rand_int(0, 9)}.{self.rand_int(0, 9)}",
             enable_context_correlation=True,
@@ -483,8 +481,8 @@ class Ex10FlextHandlers(Examples):
             r[int].ok(ensured_result).unwrap_or(-1) == ensured_result,
         )
         self.check("mixin.to_dict", t.ConfigMap(root={dict_key: dict_value}).root)
-        generated_a = h.generate_id()
-        generated_b = h.generate_id()
+        generated_a = u.generate_id()
+        generated_b = u.generate_id()
         self.check(
             "runtime.generate_id.length",
             len(generated_a) == len(generated_b) == 36,
@@ -492,38 +490,38 @@ class Ex10FlextHandlers(Examples):
         self.check("runtime.generate_id.unique", generated_a != generated_b)
         self.check(
             "runtime.generate_prefixed_id.default",
-            h.generate_prefixed_id("cmd").startswith("cmd_"),
+            u.generate_prefixed_id("cmd").startswith("cmd_"),
         )
         self.check(
             "runtime.generate_prefixed_id.length",
-            len(h.generate_prefixed_id("q", length=8).split("_")[1]) == 8,
+            len(u.generate_prefixed_id("q", length=8).split("_")[1]) == 8,
         )
         self.check(
             "runtime.generate_datetime_utc",
-            h.generate_datetime_utc().tzinfo is not None,
+            u.generate_datetime_utc().tzinfo is not None,
         )
         e1 = _Entity(unique_id=entity_id)
         e2 = _Entity(unique_id=entity_id)
         e3 = _Entity(unique_id=other_entity_id)
-        self.check("runtime.compare_entities.true", h.compare_entities_by_id(e1, e2))
-        self.check("runtime.compare_entities.false", h.compare_entities_by_id(e1, e3))
-        self.check("runtime.hash_entity", h.hash_entity_by_id(e1) != 0)
+        self.check("runtime.compare_entities.true", u.compare_entities_by_id(e1, e2))
+        self.check("runtime.compare_entities.false", u.compare_entities_by_id(e1, e3))
+        self.check("runtime.hash_entity", u.hash_entity_by_id(e1) != 0)
         self.check(
             "runtime.compare_value_objects.scalar",
-            h.compare_value_objects_by_value(scalar_value, scalar_value),
+            u.compare_value_objects_by_value(scalar_value, scalar_value),
         )
         self.check(
             "runtime.compare_value_objects.model",
-            h.compare_value_objects_by_value(
+            u.compare_value_objects_by_value(
                 _Message(text=model_text),
                 _Message(text=model_text),
             ),
         )
         self.check(
             "runtime.hash_value_object",
-            h.hash_value_object_by_value(_Message(text=model_text)) != 0,
+            u.hash_value_object_by_value(_Message(text=model_text)) != 0,
         )
-        trace_context = h.ensure_trace_context(
+        trace_context = u.ensure_trace_context(
             {"source": source_value},
             include_correlation_id=True,
             include_timestamp=True,
@@ -562,20 +560,23 @@ class Ex10FlextHandlers(Examples):
             "runtime.extract_generic_args",
             len(u.extract_generic_args(t.IntMapping)) >= 1,
         )
-        self.check("runtime.is_sequence_type.true", h.is_sequence_type(Sequence[int]))
+        self.check("runtime.is_sequence_type.true", u.is_sequence_type(Sequence[int]))
         self.check(
             "runtime.is_sequence_type.false",
-            h.is_sequence_type(t.IntMapping),
+            u.is_sequence_type(t.IntMapping),
         )
         self.check(
             "runtime.normalize_general",
-            h.normalize_to_container({dict_key: dict_value}),
+            u.normalize_to_container({dict_key: dict_value}),
         )
-        self.check("runtime.normalize_metadata", h.normalize_to_metadata({"k": [1, 2]}))
+        self.check(
+            "runtime.normalize_metadata",
+            u.normalize_to_metadata({"k": [1, 2]}),
+        )
 
     @override
     def exercise(self) -> None:
-        """Run all FlextHandlers example sections."""
+        """Run all h example sections."""
         self.demo_handler_core()
         self.demo_create_from_callable()
         self.demo_discovery()

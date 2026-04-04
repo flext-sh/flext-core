@@ -23,7 +23,6 @@ from typing import (
     Annotated,
     ClassVar,
     Unpack,
-    override,
 )
 
 from pydantic import ConfigDict, Field, PrivateAttr, ValidationError
@@ -87,7 +86,6 @@ class FlextMixins(m.ArbitraryTypesModel):
         return self._get_runtime().context
 
     @property
-    @override
     def logger(self) -> p.Logger:
         """Get or create FlextLogger for this component."""
         return self._get_or_create_logger()

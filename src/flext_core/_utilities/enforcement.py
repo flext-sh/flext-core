@@ -9,9 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import typing
 import warnings
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import get_origin
+from typing import get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -45,6 +46,27 @@ class FlextUtilitiesEnforcement:
             for name, info in model_type.model_fields.items()
             if name in own_annotations
         }
+
+    @staticmethod
+    def check_no_any(
+        own: Mapping[str, FieldInfo],
+    ) -> Sequence[str]:
+        """Reject Any in field annotations — use t.* contracts."""
+        errors: MutableSequence[str] = []
+        for name, info in own.items():
+            annotation = info.annotation
+            if annotation is typing.Any:
+                errors.append(
+                    f'Field "{name}": Any is FORBIDDEN. Use a t.* type contract.',
+                )
+                continue
+            for arg in get_args(annotation):
+                if arg is typing.Any:
+                    errors.append(
+                        f'Field "{name}": Any in type args FORBIDDEN. Use t.* contracts.',
+                    )
+                    break
+        return errors
 
     @staticmethod
     def check_no_bare_collections(
@@ -120,6 +142,100 @@ class FlextUtilitiesEnforcement:
         return []
 
     @staticmethod
+    def check_no_object(
+        own: Mapping[str, FieldInfo],
+    ) -> Sequence[str]:
+        """Reject object as field annotation — use specific t.* contract."""
+        errors: MutableSequence[str] = []
+        for name, info in own.items():
+            if info.annotation is object:
+                errors.append(
+                    f'Field "{name}": object is FORBIDDEN. Use a t.* type contract.',
+                )
+        return errors
+
+    @staticmethod
+    def check_no_str_none_with_empty_default(
+        own: Mapping[str, FieldInfo],
+    ) -> Sequence[str]:
+        """Reject str | None with default='' — use str with default='' instead."""
+        errors: MutableSequence[str] = []
+        for name, info in own.items():
+            origin = get_origin(info.annotation)
+            if origin is not None:
+                continue
+            args = get_args(info.annotation)
+            if not args:
+                continue
+            has_str = str in args
+            has_none = type(None) in args
+            if (
+                has_str
+                and has_none
+                and isinstance(info.default, str)
+                and not info.default
+            ):
+                errors.append(
+                    f'Field "{name}": str | None with default="" is wrong. '
+                    f'Use str with default="" (None has no business meaning here).',
+                )
+        return errors
+
+    @staticmethod
+    def check_frozen_value_objects(model_type: type[BaseModel]) -> Sequence[str]:
+        """Value objects (ImmutableValueModel/FrozenValueModel) must be frozen."""
+        value_bases = {"ImmutableValueModel", "FrozenValueModel", "FrozenStrictModel"}
+        is_value = False
+        for base in model_type.__mro__:
+            if base.__name__ in value_bases:
+                is_value = True
+                break
+        if not is_value:
+            return []
+        if not model_type.model_config.get("frozen", False):
+            return [
+                (
+                    "Value objects must be frozen=True. "
+                    "Inherit from ImmutableValueModel or FrozenValueModel."
+                ),
+            ]
+        return []
+
+    @staticmethod
+    def check_no_mutable_field_defaults(
+        own: Mapping[str, FieldInfo],
+    ) -> Sequence[str]:
+        """Reject mutable defaults ([], {}, set()) — use Field(default_factory=...)."""
+        errors: MutableSequence[str] = []
+        for name, info in own.items():
+            default = info.default
+            if isinstance(default, (list, dict, set)) and len(default) == 0:
+                type_name = type(default).__name__
+                errors.append(
+                    f'Field "{name}": mutable default {type_name}() is FORBIDDEN. '
+                    f"Use Field(default_factory={type_name}).",
+                )
+        return errors
+
+    @staticmethod
+    def check_no_inline_union_types(
+        own: Mapping[str, FieldInfo],
+    ) -> Sequence[str]:
+        """Flag complex inline union types that should be t.* aliases."""
+        errors: MutableSequence[str] = []
+        for name, info in own.items():
+            args = get_args(info.annotation)
+            # Count non-None union members
+            real_args = [a for a in args if a is not type(None)]
+            max_inline_union = 2
+            if len(real_args) > max_inline_union:
+                errors.append(
+                    f'Field "{name}": complex inline union with {len(real_args)}+ types. '
+                    f"Centralize as a t.* type alias in typings.py.",
+                )
+        return errors
+
+    @staticmethod
     def run(model_type: type[BaseModel]) -> None:
         """Orchestrate all enforcement checks on a model class.
 
@@ -133,13 +249,22 @@ class FlextUtilitiesEnforcement:
 
         fields = FlextUtilitiesEnforcement.own_fields(model_type)
 
-        # HARD checks — always TypeError
+        # HARD checks — always TypeError in strict
         hard_errors: MutableSequence[str] = []
+        hard_errors.extend(
+            FlextUtilitiesEnforcement.check_no_any(fields),
+        )
+        hard_errors.extend(
+            FlextUtilitiesEnforcement.check_no_object(fields),
+        )
         hard_errors.extend(
             FlextUtilitiesEnforcement.check_no_bare_collections(fields),
         )
         hard_errors.extend(
             FlextUtilitiesEnforcement.check_no_v1_patterns(model_type),
+        )
+        hard_errors.extend(
+            FlextUtilitiesEnforcement.check_no_mutable_field_defaults(fields),
         )
 
         if hard_errors:
@@ -149,9 +274,9 @@ class FlextUtilitiesEnforcement:
                 + "\n\nFix: See AGENTS.md § Code Style > Module Design."
                 + "\nExempt: _flext_enforcement_exempt: ClassVar[bool] = True"
             )
+            warnings.warn(msg, UserWarning, stacklevel=3)
             if mode == "strict":
                 raise TypeError(msg)
-            warnings.warn(msg, UserWarning, stacklevel=3)
 
         # CONFIGURABLE checks
         config_errors: MutableSequence[str] = []
@@ -161,6 +286,15 @@ class FlextUtilitiesEnforcement:
         config_errors.extend(
             FlextUtilitiesEnforcement.check_extra_policy(model_type),
         )
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_frozen_value_objects(model_type),
+        )
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_no_str_none_with_empty_default(fields),
+        )
+        config_errors.extend(
+            FlextUtilitiesEnforcement.check_no_inline_union_types(fields),
+        )
 
         if config_errors:
             detail = (
@@ -168,6 +302,6 @@ class FlextUtilitiesEnforcement:
                 + "\n".join(f"  - {e}" for e in config_errors)
                 + "\n\nFix: See AGENTS.md § Code Style > Module Design."
             )
+            warnings.warn(detail, UserWarning, stacklevel=3)
             if mode == "strict":
                 raise TypeError(detail)
-            warnings.warn(detail, UserWarning, stacklevel=3)

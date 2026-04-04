@@ -28,8 +28,10 @@ class FlextConstantsEnforcement:
     """Module path fragments that auto-exempt classes from enforcement."""
 
     ENFORCEMENT_RELAXED_EXTRA_BASES: Final[frozenset[str]] = frozenset({
+        "DynamicModel",
         "FlexibleModel",
         "FlexibleInternalModel",
+        "FrozenDynamicModel",
     })
     """Base model names allowed to have relaxed extra= policies."""
 

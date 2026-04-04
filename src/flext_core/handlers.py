@@ -681,4 +681,5 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
 
 h: type[FlextHandlers[t.ValueOrModel, t.ValueOrModel]] = FlextHandlers
+
 __all__ = ["FlextHandlers", "h"]

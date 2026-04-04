@@ -15,11 +15,11 @@ from typing import Annotated, ClassVar, Self
 
 from pydantic import (
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     Field,
     PrivateAttr,
     computed_field,
-    field_validator,
     model_validator,
 )
 
@@ -42,6 +42,9 @@ class FlextModelsHandler:
         ]
         handler: Annotated[
             t.HandlerCallable,
+            BeforeValidator(
+                lambda value: FlextRuntime.validate_callable_input(value, "Handler")
+            ),
             Field(description="Handler callable function or method"),
         ]
         event_types: Annotated[
@@ -50,14 +53,6 @@ class FlextModelsHandler:
                 description="Event types this handler processes",
             ),
         ] = Field(default_factory=list)
-
-        @field_validator("handler", mode="before")
-        @classmethod
-        def validate_handler(
-            cls,
-            v: t.HandlerCallable | p.Base | BaseModel,
-        ) -> t.HandlerCallable | p.Base | BaseModel:
-            return FlextRuntime.validate_callable_input(v, "Handler")
 
         @model_validator(mode="after")
         def validate_handler_interface(self) -> Self:
@@ -125,6 +120,8 @@ class FlextModelsHandler:
         Strictly typed model for handler registration parameters, replacing
         legacy dictionary-based configuration.
         """
+
+        _flext_enforcement_exempt: ClassVar[bool] = True  # handler union is intentional
 
         handler: Annotated[
             t.HandlerCallable | p.Handler[p.Model, t.ValueOrModel] | BaseModel,

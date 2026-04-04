@@ -6,9 +6,8 @@ from typing import override
 
 from pydantic import BaseModel
 
-from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r, t
-
-from .shared import Examples
+from examples import Examples
+from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, t
 
 
 class _CommandA(m.Command):
@@ -19,7 +18,7 @@ class _CommandB(m.Command):
     amount: int
 
 
-class _ProtocolHandler(FlextHandlers[BaseModel, t.NormalizedValue]):
+class _ProtocolHandler(h[BaseModel, t.NormalizedValue]):
     def __init__(self, label: str, message_type: type) -> None:
         super().__init__()
         self._label = label
@@ -39,7 +38,7 @@ class _ProtocolHandler(FlextHandlers[BaseModel, t.NormalizedValue]):
         return r[t.NormalizedValue].ok(f"{self._label}:{value}")
 
 
-@FlextHandlers.handler(_CommandA, priority=3)
+@h.handler(_CommandA, priority=3)
 def _discovered_handler(_message: BaseModel) -> BaseModel:
     return _CommandA(value="decorated")
 
@@ -259,7 +258,7 @@ class Ex12FlextRegistry(Examples):
         cmd_b_value = self.rand_int(1, 100)
         handler_a = _ProtocolHandler(label_a, _CommandA)
         handler_b = _ProtocolHandler(label_b, _CommandB)
-        handler_mode = FlextHandlers.create_from_callable(
+        handler_mode = h.create_from_callable(
             lambda msg: f"{callable_prefix}:{msg}",
             handler_name=callable_name,
             mode=c.HandlerType.COMMAND,

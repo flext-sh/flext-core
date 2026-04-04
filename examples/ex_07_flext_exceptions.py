@@ -1,21 +1,20 @@
-"""Golden-file example for FlextExceptions public API."""
+"""Golden-file example for e public API."""
 
 from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextExceptions, c, e, m, r, t
-
-from .shared import Examples
+from examples import Examples
+from flext_core import c, e, m, r, t
 
 
 class Ex07FlextExceptions(Examples):
-    """Exercise FlextExceptions API with deterministic output checks."""
+    """Exercise e API with deterministic output checks."""
 
     @override
     def exercise(self) -> None:
         self.section("imports")
-        self.check("import.e_is_FlextExceptions", e is FlextExceptions)
+        self.check("import.e_is_FlextExceptions", e is e)
         self.check("import.r_ok", r[str].ok("ok").is_success)
         self.check("import.constant", c.UNKNOWN_ERROR)
         try:
@@ -208,7 +207,7 @@ class Ex07FlextExceptions(Examples):
             str(created_dynamic.metadata.attributes.get("caller") or ""),
         )
         self.check("create.correlation_id", created_dynamic.correlation_id or "")
-        instance_created = FlextExceptions()(
+        instance_created = e()(
             "from __call__",
             error_code="E_CALL",
             field="title",
