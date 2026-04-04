@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import typing
 from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
@@ -25,7 +26,6 @@ class TestCheckNoAny:
 
     def test_any_field_detected(self) -> None:
         """Any as field annotation is flagged."""
-        import typing
 
         class _M(m.ArbitraryTypesModel):
             _flext_enforcement_exempt: ClassVar[bool] = True

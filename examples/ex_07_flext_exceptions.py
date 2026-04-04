@@ -14,7 +14,7 @@ class Ex07FlextExceptions(Examples):
     @override
     def exercise(self) -> None:
         self.section("imports")
-        self.check("import.e_is_FlextExceptions", e is e)
+        self.check("import.e_is_FlextExceptions", e.__name__ == "FlextExceptions")
         self.check("import.r_ok", r[str].ok("ok").is_success)
         self.check("import.constant", c.UNKNOWN_ERROR)
         try:

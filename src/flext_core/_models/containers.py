@@ -13,14 +13,13 @@ from collections.abc import (
     Callable,
     ItemsView,
     Mapping,
-    Sequence,
     ValuesView,
 )
 from typing import Annotated
 
 from pydantic import BaseModel, Field, RootModel
 
-from flext_core import FlextModelsBase, t
+from flext_core import t
 
 type _ScalarOrModel = t.Container | BaseModel
 type _ValidatorCallable = Callable[[_ScalarOrModel | None], _ScalarOrModel | None]
@@ -78,54 +77,6 @@ class FlextModelsContainers:
                 examples=[{"email": "validate_email"}],
             ),
         ] = Field(default_factory=dict)
-
-    class BatchResultDict(FlextModelsBase.ArbitraryTypesModel):
-        """Result payload model for batch operation outputs."""
-
-        results: Annotated[
-            Sequence[t.Scalar | None],
-            Field(
-                title="Batch Results",
-                description="Batch result values in processing order.",
-                examples=[["ok", 1, None]],
-            ),
-        ] = Field(default_factory=list)
-
-        errors: Annotated[
-            Sequence[tuple[int, str]],
-            Field(
-                title="Batch Errors",
-                description="Batch error tuples as (index, message).",
-                examples=[[(0, "invalid payload")]],
-            ),
-        ] = Field(default_factory=list[tuple[int, str]])
-        total: Annotated[
-            int,
-            Field(
-                default=0,
-                title="Total Items",
-                description="Total number of batch items processed.",
-                examples=[10],
-            ),
-        ] = 0
-        success_count: Annotated[
-            t.NonNegativeInt,
-            Field(
-                default=0,
-                title="Success Count",
-                description="Number of batch items processed successfully.",
-                examples=[8],
-            ),
-        ] = 0
-        error_count: Annotated[
-            t.NonNegativeInt,
-            Field(
-                default=0,
-                title="Error Count",
-                description="Number of batch items that failed with errors.",
-                examples=[2],
-            ),
-        ] = 0
 
 
 __all__ = ["FlextModelsContainers"]

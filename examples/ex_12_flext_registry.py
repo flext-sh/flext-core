@@ -50,7 +50,7 @@ class Ex12FlextRegistry(Examples):
     def exercise(self) -> None:
         """Run all FlextRegistry example sections."""
         registry, dispatcher = self._exercise_create_and_service_methods()
-        self._exercise_summary_and_mixins(registry)
+        self._exercise_summary_and_mixins()
         handler_a, handler_b = self._exercise_registration_and_dispatch(
             registry,
             dispatcher,
@@ -302,7 +302,7 @@ class Ex12FlextRegistry(Examples):
         )
         return (handler_a, handler_b)
 
-    def _exercise_summary_and_mixins(self, registry: FlextRegistry) -> None:
+    def _exercise_summary_and_mixins(self) -> None:
         self.section("summary_and_mixins")
         summary_error = self.rand_str(5)
         ok_value = self.rand_str(6)

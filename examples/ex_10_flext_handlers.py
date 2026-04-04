@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from types import ModuleType
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
 from pydantic import BaseModel
 
@@ -54,6 +54,18 @@ class _DemoHandler(FlextHandlers[_Message, str]):
         if data.text == "bad":
             return r[bool].fail("blocked")
         return r[bool].ok(True)
+
+    @override
+    def execute(self, message: _Message) -> r[str]:
+        return cast("r[str]", super().execute(message))
+
+    @override
+    def dispatch_message(
+        self,
+        message: _Message,
+        operation: str = c.DEFAULT_HANDLER_MODE,
+    ) -> r[str]:
+        return cast("r[str]", super().dispatch_message(message, operation=operation))
 
 
 class Ex10FlextHandlers(Examples):
@@ -216,10 +228,12 @@ class Ex10FlextHandlers(Examples):
             handler.validate_message(_Message(text=message_ok)).is_success,
         )
         self.check(
-            "validate.blocked_cmd", handler.validate_message(_Message(text="bad")).error
+            "validate.blocked_cmd",
+            handler.validate_message(_Message(text="bad")).error,
         )
         self.check(
-            "validate.blocked_qry", handler.validate_message(_Message(text="bad")).error
+            "validate.blocked_qry",
+            handler.validate_message(_Message(text="bad")).error,
         )
         self.check(
             "validate.consistent",
@@ -230,17 +244,17 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.expected", handler.can_handle(_Message))
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
-        execute_result: r[str] = handler.execute(_Message(text=payload_text))
-        execute_value = execute_result.unwrap_or("-")
+        execute_result = handler.execute(_Message(text=payload_text))
+        execute_value = execute_result.unwrap() if execute_result.is_success else "-"
         self.check("execute.success.value", payload_text in str(execute_value))
         self.check(
             "execute.validation_failure",
             handler.execute(_Message(text="bad")).error,
         )
-        dispatch_result: r[str] = handler.dispatch_message(
+        dispatch_result = handler.dispatch_message(
             _Message(text=dispatch_text),
         )
-        dispatch_value = dispatch_result.unwrap_or("-")
+        dispatch_value = dispatch_result.unwrap() if dispatch_result.is_success else "-"
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
             "dispatch.mode_mismatch",

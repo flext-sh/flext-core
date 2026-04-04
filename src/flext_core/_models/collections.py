@@ -8,10 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Annotated, ClassVar, Self, override
 
-from pydantic import ConfigDict, Field, computed_field
+from pydantic import ConfigDict, Field
 
 from flext_core import FlextModelsBase, t
 from flext_core._utilities.domain import FlextUtilitiesDomain
@@ -19,86 +19,6 @@ from flext_core._utilities.domain import FlextUtilitiesDomain
 
 class FlextModelsCollections:
     """Collection models container class."""
-
-    class Categories(FlextModelsBase.ArbitraryTypesModel):
-        """Generic categorized collection with dynamic categories.
-
-        Provides type-safe storage for items organized by category names.
-        Uses PEP 695 type parameter syntax for Python 3.12+.
-
-        Example:
-            categories = Categories[Entry]()
-            categories.add_entries("users", [user1, user2])
-            categories.add_entries("groups", [group1])
-
-            # Access
-            users = categories.get("users")
-            total = categories.total_entries
-            names = categories.category_names
-
-        """
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
-            validate_default=True,
-            validate_assignment=True,
-        )
-        categories: Annotated[
-            MutableMapping[str, MutableSequence[t.MetadataValue]],
-            Field(
-                description="Map of category name to list of items",
-            ),
-        ] = Field(default_factory=dict)
-
-        def __len__(self) -> int:
-            return sum(len(entries) for entries in self.categories.values())
-
-        @classmethod
-        @override
-        def __class_getitem__(
-            cls,
-            typevar_values: type | tuple[type, ...],
-        ) -> type[FlextModelsCollections.Categories]:
-            _ = typevar_values
-            return cls
-
-        @computed_field
-        @property
-        def category_names(self) -> t.StrSequence:
-            return list(self.categories.keys())
-
-        @computed_field
-        @property
-        def total_entries(self) -> int:
-            return sum(len(entries) for entries in self.categories.values())
-
-        def add_entries(
-            self,
-            category: str,
-            entries: Sequence[t.MetadataValue],
-        ) -> None:
-            self.categories.setdefault(category, []).extend(entries)
-
-        def clear(self) -> None:
-            self.categories.clear()
-
-        def get(
-            self,
-            category: str,
-            default: Sequence[t.MetadataValue] | None = None,
-        ) -> Sequence[t.MetadataValue]:
-            if default is None:
-                return self.categories.get(category, [])
-            return self.categories.get(category, default)
-
-        def has_category(self, category: str) -> bool:
-            return category in self.categories
-
-        def remove_category(self, category: str) -> None:
-            _ = self.categories.pop(category, None)
-
-        def to_mapping(self) -> Mapping[str, Sequence[t.MetadataValue]]:
-            return {key: list(entries) for key, entries in self.categories.items()}
 
     class Statistics(FlextModelsBase.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
@@ -128,30 +48,6 @@ class FlextModelsCollections:
                 return cls()
             base = rules[0].model_copy()
             for other in rules[1:]:
-                base = base.model_copy(update=other.model_dump())
-            return base
-
-    class Results(FlextModelsBase.ArbitraryTypesModel):
-        """Base for results models (mutable)."""
-
-        @classmethod
-        def aggregate(
-            cls,
-            results_list: Sequence[Self],
-        ) -> Mapping[str, t.MetadataValue]:
-            """Aggregate multiple results instances.
-
-            Combines results by summing numerics, concatenating lists,
-            merging mappings, and keeping last value for other types.
-            """
-            return FlextUtilitiesDomain.aggregate_dumped_models(results_list)
-
-        @classmethod
-        def combine(cls, *results: Self) -> Self:
-            if not results:
-                return cls()
-            base = results[0].model_copy()
-            for other in results[1:]:
                 base = base.model_copy(update=other.model_dump())
             return base
 
@@ -223,91 +119,6 @@ class FlextModelsCollections:
 
         def with_updates(self, **updates: t.MetadataValue) -> Self:
             return self.model_copy(update=updates)
-
-    class ParseOptions(FlextModelsBase.ArbitraryTypesModel):
-        """Options for string parsing operations."""
-
-        strip: Annotated[
-            bool,
-            Field(
-                default=True,
-                description="Strip whitespace from components",
-            ),
-        ] = True
-        remove_empty: Annotated[
-            bool,
-            Field(
-                default=True,
-                description="Remove empty components from result",
-            ),
-        ] = True
-        validator: Annotated[
-            Callable[[str], bool] | None,
-            Field(
-                default=None,
-                description="Optional validator function for components",
-            ),
-        ] = None
-
-    class CollectionBatchSpec(FlextModelsBase.ArbitraryTypesModel):
-        """Batch processing options for collection operations."""
-
-        size: Annotated[
-            t.PositiveInt | None,
-            Field(
-                default=None,
-                title="Batch Size",
-                description="Optional batch size hint for compatibility and slicing behavior.",
-            ),
-        ] = None
-        on_error: Annotated[
-            str | None,
-            Field(
-                default=None,
-                title="Error Mode",
-                description="Error handling mode: fail immediately, collect errors, or skip failed items.",
-            ),
-        ] = None
-        parallel: Annotated[
-            bool,
-            Field(
-                default=False,
-                title="Parallel",
-                description="Whether parallel processing should be requested by callers.",
-            ),
-        ] = False
-        progress: Annotated[
-            Callable[[int, int], None] | None,
-            Field(
-                default=None,
-                title="Progress Callback",
-                description="Optional callback receiving processed and total item counts.",
-            ),
-        ] = None
-        progress_interval: Annotated[
-            t.PositiveInt,
-            Field(
-                default=1,
-                title="Progress Interval",
-                description="How often progress callback is invoked during processing.",
-            ),
-        ] = 1
-        pre_validate: Annotated[
-            Callable[[t.ValueOrModel], bool] | None,
-            Field(
-                default=None,
-                title="Pre Validate",
-                description="Optional predicate to filter items before operation execution.",
-            ),
-        ] = None
-        flatten: Annotated[
-            bool,
-            Field(
-                default=False,
-                title="Flatten",
-                description="Whether list-like operation results should be flattened into a single output list.",
-            ),
-        ] = False
 
     class GuardCheckSpec(FlextModelsBase.ArbitraryTypesModel):
         """Specification for guard conditions used in collection filters."""
@@ -440,25 +251,6 @@ class FlextModelsCollections:
                 description="Require string value to end with this suffix.",
             ),
         ] = None
-
-    class PatternApplicationParams(FlextModelsBase.ArbitraryTypesModel):
-        """Parameters for regex pattern application."""
-
-        text: Annotated[str, Field(description="Text to apply pattern to")]
-        pattern: Annotated[t.NonEmptyStr, Field(description="Regex pattern")]
-        replacement: Annotated[str, Field(description="Replacement string")]
-        flags: Annotated[
-            t.NonNegativeInt,
-            Field(default=0, description="Regex flags"),
-        ] = 0
-        pattern_index: Annotated[
-            t.NonNegativeInt,
-            Field(description="Index of pattern in pipeline"),
-        ]
-        total_patterns: Annotated[
-            t.PositiveInt,
-            Field(description="Total number of patterns"),
-        ]
 
 
 __all__ = ["FlextModelsCollections"]

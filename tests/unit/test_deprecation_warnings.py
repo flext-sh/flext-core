@@ -92,7 +92,7 @@ class TestDeprecationWarnings:
 
     def test_deprecated_class_warning(self) -> None:
         """warnings.deprecated emits DeprecationWarning on instantiation."""
-        legacy_base = type("LegacyBase", (m.Categories,), {})
+        legacy_base = type("LegacyBase", (m.Config,), {})
         legacy = warnings.deprecated("Use NewClass instead")(legacy_base)
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")

@@ -519,7 +519,7 @@ class Ex11FlextService(Examples):
 
         fallback = self.rand_str(4)
 
-        self.check("alias.FlextService_is_s", s is s)
+        self.check("alias.FlextService_is_s", s.__name__ == "FlextService")
 
         service = _EchoService()
         execute_value = service.execute().unwrap_or(fallback)

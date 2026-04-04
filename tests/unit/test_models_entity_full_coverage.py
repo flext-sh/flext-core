@@ -17,7 +17,6 @@ from tests import c, m, t, u
 
 def test_entity_comparable_map_and_bulk_validation_paths() -> None:
     assert c.UNKNOWN_ERROR
-    assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(t.ConfigMap({"k": 1}), t.ConfigMap)
     assert u.to_str(1) == "1"
