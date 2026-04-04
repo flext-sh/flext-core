@@ -76,8 +76,12 @@ if _t.TYPE_CHECKING:
     from flext_core._models.generic import FlextGenericModels
 
     handler = _flext_core__models_handler
-    import flext_core._models.service as _flext_core__models_service
+    import flext_core._models.registry as _flext_core__models_registry
     from flext_core._models.handler import FlextModelsHandler
+
+    registry = _flext_core__models_registry
+    import flext_core._models.service as _flext_core__models_service
+    from flext_core._models.registry import FlextModelsRegistry
 
     service = _flext_core__models_service
     import flext_core._models.settings as _flext_core__models_settings
@@ -103,6 +107,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "FlextModelsErrors": "flext_core._models.errors",
         "FlextModelsExceptionParams": "flext_core._models.exception_params",
         "FlextModelsHandler": "flext_core._models.handler",
+        "FlextModelsRegistry": "flext_core._models.registry",
         "FlextModelsService": "flext_core._models.service",
         "_context": "flext_core._models._context",
         "base": "flext_core._models.base",
@@ -119,6 +124,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "exception_params": "flext_core._models.exception_params",
         "generic": "flext_core._models.generic",
         "handler": "flext_core._models.handler",
+        "registry": "flext_core._models.registry",
         "service": "flext_core._models.service",
         "settings": "flext_core._models.settings",
     },
@@ -146,6 +152,7 @@ __all__ = [
     "FlextModelsErrors",
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
+    "FlextModelsRegistry",
     "FlextModelsService",
     "_context",
     "base",
@@ -162,6 +169,7 @@ __all__ = [
     "exception_params",
     "generic",
     "handler",
+    "registry",
     "service",
     "settings",
 ]

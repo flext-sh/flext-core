@@ -128,8 +128,9 @@ class FlextLogger(FlextRuntime):
         @override
         def flush(self) -> None:
             """Flush stream (best effort)."""
-            if hasattr(self.stream, "flush") and callable(self.stream.flush):
-                self.stream.flush()
+            with suppress(OSError, ValueError):
+                if hasattr(self.stream, "flush") and callable(self.stream.flush):
+                    self.stream.flush()
 
         def shutdown(self) -> None:
             """Stop worker thread and flush remaining messages."""

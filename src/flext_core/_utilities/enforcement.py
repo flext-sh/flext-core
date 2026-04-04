@@ -458,29 +458,16 @@ class FlextUtilitiesEnforcement:
                 "best practices",
             )
 
+        FlextUtilitiesEnforcement._run_namespace_checks(target, "constants")
+
     # ------------------------------------------------------------------ #
     # Protocols layer enforcement                                         #
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def check_protocols_inner_classes(target: type) -> Sequence[str]:
-        """Inner classes in protocol facades should be Protocol subclasses."""
-        errors: MutableSequence[str] = []
-        own_dict = vars(target)
-        for name, value in own_dict.items():
-            if not isinstance(value, type):
-                continue
-            if name.startswith("_"):
-                continue
-            if issubclass(value, Protocol):
-                continue
-            if isinstance(value, EnumType):
-                continue
-            errors.append(
-                f"{target.__qualname__}.{name}: inner class must be a Protocol subclass. "
-                f"Use class {name}(Protocol): ... with @runtime_checkable.",
-            )
-        return errors
+    def check_protocols_inner_classes(_target: type) -> Sequence[str]:
+        """Namespace-holder inner classes are allowed on protocol facades."""
+        return []
 
     @staticmethod
     def check_protocols_runtime_checkable(target: type) -> Sequence[str]:
@@ -527,6 +514,8 @@ class FlextUtilitiesEnforcement:
                 config_errors,
                 "best practices",
             )
+
+        FlextUtilitiesEnforcement._run_namespace_checks(target, "protocols")
 
     # ------------------------------------------------------------------ #
     # Types layer enforcement                                             #
@@ -656,4 +645,192 @@ class FlextUtilitiesEnforcement:
                 "Utilities",
                 config_errors,
                 "best practices",
+            )
+
+        FlextUtilitiesEnforcement._run_namespace_checks(target, "utilities")
+
+    # ------------------------------------------------------------------ #
+    # MRO Namespace enforcement                                           #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _to_pascal_case(snake: str) -> str:
+        """Convert snake_case to PascalCase: 'db_oracle' → 'DbOracle'."""
+        return "".join(part.capitalize() for part in snake.split("_") if part)
+
+    @staticmethod
+    def _derive_project_prefix(target: type) -> str | None:
+        """Derive expected class name prefix from module path."""
+        module = getattr(target, "__module__", "") or ""
+        package = module.split(".")[0] if module else ""
+        if not package:
+            return None
+        for pkg, prefix in _ec.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES:
+            if package == pkg:
+                return prefix
+        if package == "tests":
+            for base in target.__bases__:
+                base_mod = getattr(base, "__module__", "") or ""
+                base_pkg = base_mod.split(".")[0] if base_mod else ""
+                if base_pkg.startswith("flext") and base.__name__.startswith("Flext"):
+                    parent = base.__name__
+                    for suffix, _layer in _ec.ENFORCEMENT_NAMESPACE_LAYER_MAP:
+                        if parent.endswith(suffix):
+                            return parent[: -len(suffix)] + "Test"
+                    return parent + "Test"
+            return None
+        if package.startswith("flext_"):
+            suffix = package[len("flext_") :]
+            return "Flext" + FlextUtilitiesEnforcement._to_pascal_case(suffix)
+        return FlextUtilitiesEnforcement._to_pascal_case(package)
+
+    @staticmethod
+    def _derive_expected_namespace(target: type) -> str | None:
+        """Derive expected inner namespace class name. No exemptions."""
+        module = getattr(target, "__module__", "") or ""
+        package = module.split(".")[0] if module else ""
+        if not package:
+            return None
+        if package == "flext":
+            return "Root"
+        if package == "tests":
+            return None
+        if package.startswith("flext_"):
+            suffix = package[len("flext_") :]
+            return FlextUtilitiesEnforcement._to_pascal_case(suffix)
+        return FlextUtilitiesEnforcement._to_pascal_case(package)
+
+    @staticmethod
+    def _detect_layer(target: type) -> str | None:
+        """Detect layer from class name suffix."""
+        name = target.__name__
+        for suffix, layer in _ec.ENFORCEMENT_NAMESPACE_LAYER_MAP:
+            if name.endswith(suffix):
+                return layer
+        return None
+
+    @staticmethod
+    def _is_namespace_exempt(target: type) -> bool:
+        """Check namespace exemption. Does NOT skip test modules."""
+        if getattr(target, "_flext_enforcement_exempt", False):
+            return True
+        if target.__name__ in _ec.ENFORCEMENT_NAMESPACE_FACADE_ROOTS:
+            return True
+        return target.__name__ in _ec.ENFORCEMENT_INFRASTRUCTURE_BASES
+
+    @staticmethod
+    def _emit_namespace(qualname: str, layer: str, errors: Sequence[str]) -> None:
+        """Emit namespace violation warning or TypeError."""
+        mode = _ec.ENFORCEMENT_NAMESPACE_MODE
+        if mode == "off":
+            return
+        msg = (
+            f"\n{qualname} violates FLEXT {layer} namespace rules:\n"
+            + "\n".join(f"  - {e}" for e in errors)
+            + "\n\nFix: See AGENTS.md § Facades & Namespaces."
+            + "\nExempt: _flext_enforcement_exempt: ClassVar[bool] = True"
+        )
+        warnings.warn(msg, UserWarning, stacklevel=5)
+        if mode == "strict":
+            raise TypeError(msg)
+
+    @staticmethod
+    def check_class_prefix(target: type) -> Sequence[str]:
+        """Validate class name starts with expected project prefix."""
+        if target.__name__ in _ec.ENFORCEMENT_NAMESPACE_FACADE_ROOTS:
+            return []
+        if target.__name__ in _ec.ENFORCEMENT_INFRASTRUCTURE_BASES:
+            return []
+        prefix = FlextUtilitiesEnforcement._derive_project_prefix(target)
+        if prefix is None:
+            return []
+        if not target.__name__.startswith(prefix):
+            module = getattr(target, "__module__", "") or ""
+            package = module.split(".")[0] if module else "unknown"
+            return [
+                (
+                    f'Class "{target.__name__}" expected prefix "{prefix}" '
+                    f'(derived from package "{package}").'
+                ),
+            ]
+        return []
+
+    @staticmethod
+    def check_inner_namespace(target: type) -> Sequence[str]:
+        """Validate inner namespace class names match project."""
+        expected = FlextUtilitiesEnforcement._derive_expected_namespace(target)
+        if expected is None:
+            return []
+        errors: MutableSequence[str] = []
+        for name, value in vars(target).items():
+            if not isinstance(value, type):
+                continue
+            if name.startswith("_"):
+                continue
+            if isinstance(value, EnumType):
+                continue
+            if name != expected:
+                errors.append(
+                    f'Inner class "{name}" must be named "{expected}" '
+                    f"(matches project namespace).",
+                )
+        return errors
+
+    @staticmethod
+    def check_cross_layer_strenum(target: type, layer: str) -> Sequence[str]:
+        """Detect StrEnum/IntEnum in wrong layer — should be in constants."""
+        if layer in _ec.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS:
+            return []
+        errors: MutableSequence[str] = []
+        for name, value in vars(target).items():
+            if not isinstance(value, type):
+                continue
+            if name.startswith("_"):
+                continue
+            if isinstance(value, EnumType):
+                errors.append(
+                    f'StrEnum "{name}" must be in constants (c.*), not {layer}.',
+                )
+        return errors
+
+    @staticmethod
+    def check_cross_layer_protocol(target: type, layer: str) -> Sequence[str]:
+        """Detect Protocol in wrong layer — should be in protocols."""
+        if layer in _ec.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS:
+            return []
+        errors: MutableSequence[str] = []
+        for name, value in vars(target).items():
+            if not isinstance(value, type):
+                continue
+            if name.startswith("_"):
+                continue
+            if isinstance(value, EnumType):
+                continue
+            if issubclass(value, Protocol):
+                errors.append(
+                    f'Protocol "{name}" must be in protocols (p.*), not {layer}.',
+                )
+        return errors
+
+    @staticmethod
+    def _run_namespace_checks(target: type, layer: str) -> None:
+        """Run all namespace checks for a given layer."""
+        if _ec.ENFORCEMENT_NAMESPACE_MODE == "off":
+            return
+        if FlextUtilitiesEnforcement._is_namespace_exempt(target):
+            return
+        errors: MutableSequence[str] = []
+        errors.extend(FlextUtilitiesEnforcement.check_class_prefix(target))
+        errors.extend(FlextUtilitiesEnforcement.check_inner_namespace(target))
+        errors.extend(
+            FlextUtilitiesEnforcement.check_cross_layer_strenum(target, layer),
+        )
+        errors.extend(
+            FlextUtilitiesEnforcement.check_cross_layer_protocol(target, layer),
+        )
+        if errors:
+            FlextUtilitiesEnforcement._emit_namespace(
+                target.__qualname__,
+                layer,
+                errors,
             )

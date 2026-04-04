@@ -127,3 +127,44 @@ class FlextConstantsEnforcement:
         "__class_getitem__",
     })
     """Methods exempt from static/classmethod enforcement on utilities."""
+
+    # --- MRO Namespace enforcement ---
+
+    ENFORCEMENT_NAMESPACE_MODE: Final[str] = "warn"
+    """Separate mode for namespace checks: "strict" / "warn" / "off"."""
+
+    ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES: Final[tuple[tuple[str, str], ...]] = (
+        ("flext_core", "Flext"),
+        ("flext", "FlextRoot"),
+    )
+    """Package→prefix overrides. flext_core→Flext, flext→FlextRoot."""
+
+    ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset({
+        "FlextConstants",
+        "FlextProtocols",
+        "FlextTypes",
+        "FlextUtilities",
+        "FlextModels",
+        "FlextModelsBase",
+        "EnforcedModel",
+    })
+    """Root facade class names — skip namespace prefix check on these."""
+
+    ENFORCEMENT_NAMESPACE_LAYER_MAP: Final[tuple[tuple[str, str], ...]] = (
+        ("Constants", "constants"),
+        ("Models", "models"),
+        ("Protocols", "protocols"),
+        ("Types", "types"),
+        ("Utilities", "utilities"),
+    )
+    """Class name suffix → layer name mapping for cross-layer detection."""
+
+    ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS: Final[frozenset[str]] = frozenset({
+        "constants",
+    })
+    """Layers where StrEnum inner classes are allowed."""
+
+    ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS: Final[frozenset[str]] = frozenset({
+        "protocols",
+    })
+    """Layers where Protocol inner classes are allowed."""
