@@ -1,0 +1,43 @@
+tests/unit/test_enforcement.py
+  f05ae18fcd8f171f 22,32,339-341,401-403,433-435,479-481,492-494,498,501-502
+pyproject.toml
+  f05ae18fcd8f171f 35
+src/flext_core/_utilities/beartype_engine.py
+  f05ae18fcd8f171f 1-87
+src/flext_core/utilities.py
+  f05ae18fcd8f171f 35,61
+src/flext_core/protocols.py
+  f05ae18fcd8f171f 20,33
+src/flext_core/models.py
+  f05ae18fcd8f171f 34,55
+src/flext_core/_models/namespace.py
+  f05ae18fcd8f171f 1-53
+src/flext_core/typings.py
+  f05ae18fcd8f171f 33,44
+src/flext_core/_utilities/enforcement.py
+  f05ae18fcd8f171f 461,573,655-656,707,761,837,839-840,842,844-846,852-853,855-861,863,865-874,877-889,893,896-900,902-903,906
+src/flext_core/constants.py
+  f05ae18fcd8f171f 21,35
+src/flext_core/_constants/enforcement.py
+  f05ae18fcd8f171f 149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "646039dac7d3ac75c9ff94949f99641c4293126f",
+  "prompts": {
+    "f05ae18fcd8f171f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b1bbb82-6621-405d-a638-e11b8325fb7a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 267,
+      "total_deletions": 105,
+      "accepted_lines": 229,
+      "overriden_lines": 1
+    }
+  }
+}
