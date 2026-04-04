@@ -6,7 +6,7 @@ and runtime conditions. This is the main entry point for guard functionality.
 
 from __future__ import annotations
 
-from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
+from flext_core import FlextUtilitiesGuardsEnsure
 
 
 class FlextUtilitiesGuards(FlextUtilitiesGuardsEnsure):

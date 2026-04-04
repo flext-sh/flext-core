@@ -19,10 +19,12 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core.typings import FlextTypes as t
+from flext_core import (
+    FlextModelsBase,
+    FlextUtilitiesDomain,
+    FlextUtilitiesGenerators,
+    t,
+)
 
 
 class FlextGenericModels:

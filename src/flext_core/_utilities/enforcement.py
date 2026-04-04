@@ -12,14 +12,13 @@ from __future__ import annotations
 
 import inspect
 import warnings
-from collections.abc import Mapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, MutableSet, Sequence
 from enum import EnumType
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+from flext_core import FlextConstantsEnforcement as c, FlextUtilitiesBeartypeEngine
 
 
 class FlextUtilitiesEnforcement:
@@ -469,18 +468,51 @@ class FlextUtilitiesEnforcement:
         ]
 
     @staticmethod
+    def _iter_protocol_mro_inner_types(target: type) -> Sequence[tuple[str, type]]:
+        """Return public inner classes inherited through protocol namespace MRO."""
+        inherited: MutableSequence[tuple[str, type]] = []
+        seen: MutableSet[str] = set()
+        for base in target.__mro__[1:]:
+            if base is object:
+                continue
+            for name, value in FlextUtilitiesEnforcement._iter_protocol_inner_types(
+                base
+            ):
+                if name in seen:
+                    continue
+                seen.add(name)
+                inherited.append((name, value))
+        return inherited
+
+    @staticmethod
+    def _iter_protocol_effective_inner_types(
+        target: type,
+    ) -> Sequence[tuple[str, type]]:
+        """Return direct inner classes or inherited protocol members for MRO holders."""
+        direct_inner_types = FlextUtilitiesEnforcement._iter_protocol_inner_types(
+            target
+        )
+        if direct_inner_types:
+            return direct_inner_types
+        return FlextUtilitiesEnforcement._iter_protocol_mro_inner_types(target)
+
+    @staticmethod
     def _is_protocol_namespace_holder(target: type) -> bool:
         """Return True when target is a container for nested protocol classes."""
-        return any(
-            isinstance(value, type) and not name.startswith("__")
-            for name, value in vars(target).items()
+        return bool(
+            FlextUtilitiesEnforcement._iter_protocol_effective_inner_types(target),
         )
 
     @staticmethod
     def _check_protocol_inner_classes(target: type, *, path: str) -> Sequence[str]:
         """Validate nested protocol classes recursively."""
         errors: MutableSequence[str] = []
-        for name, value in FlextUtilitiesEnforcement._iter_protocol_inner_types(target):
+        for (
+            name,
+            value,
+        ) in FlextUtilitiesEnforcement._iter_protocol_effective_inner_types(
+            target,
+        ):
             nested_path = f"{path}.{name}"
             if FlextUtilitiesEnforcement._is_protocol_class(value):
                 errors.extend(

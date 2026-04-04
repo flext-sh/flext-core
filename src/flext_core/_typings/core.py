@@ -60,10 +60,10 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         | Pattern[str]
         | type
     )
-    type JsonValue = (
+    type RecursiveValue = (
         FlextTypingBase.Primitives
-        | Sequence[FlextTypesCore.JsonValue]
-        | Mapping[str, FlextTypesCore.JsonValue]
+        | Sequence[FlextTypesCore.RecursiveValue]
+        | Mapping[str, FlextTypesCore.RecursiveValue]
         | None
     )
     type FileContent = (
@@ -81,8 +81,8 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
         str,
         FlextTypesCore.OptionalContainerValue,
     ]
-    type JsonMapping = Mapping[str, FlextTypesCore.JsonValue]
-    type JsonList = Sequence[FlextTypesCore.JsonValue]
+    type JsonMapping = Mapping[str, FlextTypesCore.RecursiveValue]
+    type JsonList = Sequence[FlextTypesCore.RecursiveValue]
     type GeneralValueMapping = Mapping[str, FlextTypesCore.GeneralValueType]
 
     type JsonObject = ContainerValueMapping

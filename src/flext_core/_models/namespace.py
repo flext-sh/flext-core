@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core import FlextConstantsEnforcement as c, FlextUtilitiesEnforcement
 
 
 class FlextModelsNamespace:
