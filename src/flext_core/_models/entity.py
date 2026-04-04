@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
-from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
@@ -55,16 +54,13 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        updated_at: datetime | None = Field(
-            default=None,
-            description="Timestamp of last update, set in model_post_init",
-        )
         domain_events: Annotated[
             MutableSequence[FlextModelsDomainEvent.Entry],
             Field(
+                default_factory=list,
                 description="List of uncommitted domain events for event sourcing",
             ),
-        ] = Field(default_factory=list)
+        ]
 
         @override
         def __eq__(self, other: object) -> bool:
@@ -117,7 +113,9 @@ class FlextModelsEntity:
                 return r[FlextModelsDomainEvent.Entry].fail(
                     f"Cannot add event: would exceed max events limit of {c.HTTP_STATUS_MIN}",
                 )
-            data_map = FlextModelsDomainEvent.to_config_map(data)
+            data_map = FlextModelsDomainEvent.ComparableConfigMap(
+                root=dict(FlextRuntime.normalize_domain_event_data(data)),
+            )
             event = FlextModelsDomainEvent.Entry(
                 event_type=event_type,
                 aggregate_id=self.unique_id,
@@ -170,7 +168,9 @@ class FlextModelsEntity:
                 event = FlextModelsDomainEvent.Entry(
                     event_type=event_type,
                     aggregate_id=self.unique_id,
-                    data=FlextModelsDomainEvent.to_config_map(data),
+                    data=FlextModelsDomainEvent.ComparableConfigMap(
+                        root=dict(FlextRuntime.normalize_domain_event_data(data)),
+                    ),
                 )
                 self.domain_events.append(event)
                 created_events.append(event)
@@ -200,7 +200,7 @@ class FlextModelsEntity:
             """Post-initialization hook to set updated_at timestamp."""
             self.updated_at = FlextRuntime.generate_datetime_utc()
 
-    class Value(FlextModelsBase.FrozenStrictModel):
+    class Value(FlextModelsBase.ContractModel):
         """Base class for value objects - immutable and compared by value."""
 
         @override

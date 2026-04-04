@@ -340,7 +340,7 @@ class TestFlextProtocols:
         ]
         for attr in expected:
             tm.that(
-                attr in getattr(p.Settings, "__protocol_attrs__", set())
+                attr in getattr(p.Settings, "__protocol_attrs__", ())
                 or attr in getattr(p.Settings, "__annotations__", {}),
                 eq=True,
                 msg=f"p.Settings must define {attr}",
@@ -433,7 +433,7 @@ class TestFlextProtocols:
         """p.TextStream defines mode, name, encoding, write, flush."""
         for attr in ("mode", "name", "encoding", "write", "flush"):
             tm.that(
-                attr in getattr(p.TextStream, "__protocol_attrs__", set())
+                attr in getattr(p.TextStream, "__protocol_attrs__", ())
                 or attr in getattr(p.TextStream, "__annotations__", {}),
                 eq=True,
                 msg=f"p.TextStream must define {attr}",
@@ -495,25 +495,6 @@ class TestFlextProtocols:
         # Passing a non-protocol type should return False, not raise.
         result = p.check_protocol_compliance("hello", int)
         tm.that(result, eq=False)
-
-    def test_validate_protocol_compliance_passes(self) -> None:
-        """validate_protocol_compliance does not raise for conforming class."""
-
-        class _Flusher:
-            def flush(self) -> None:
-                pass
-
-        # Should not raise
-        p.validate_protocol_compliance(_Flusher, p.Flushable, "_Flusher")
-
-    def test_validate_protocol_compliance_raises(self) -> None:
-        """validate_protocol_compliance raises TypeError for non-conforming class."""
-
-        class _Empty:
-            pass
-
-        with pytest.raises(TypeError, match="does not implement protocol"):
-            p.validate_protocol_compliance(_Empty, p.Flushable, "_Empty")
 
     # ------------------------------------------------------------------
     # 7. Structural conformance with custom implementations

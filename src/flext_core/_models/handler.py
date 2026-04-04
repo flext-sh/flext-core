@@ -418,8 +418,12 @@ class FlextModelsHandler:
     class ContextStack(FlextModelsBase.ArbitraryTypesModel):
         """Manages a stack of ExecutionContext instances for CQRS handler pipelines."""
 
+        @staticmethod
+        def _default_stack() -> MutableSequence[FlextModelsHandler.ExecutionContext]:
+            return []
+
         _stack: MutableSequence[FlextModelsHandler.ExecutionContext] = PrivateAttr(
-            default_factory=list,
+            default_factory=_default_stack,
         )
 
         def current_context(self) -> FlextModelsHandler.ExecutionContext | None:

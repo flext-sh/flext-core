@@ -13,13 +13,13 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextRuntime, m, t
+from flext_core import FlextRuntime, t
 
 
 class FlextUtilitiesConversion:
     """Utilities for value conversion operations."""
 
-    _V: ClassVar[type[m.Validators]] = m.Validators
+    _V: ClassVar[type[t]] = t
 
     @staticmethod
     def join(

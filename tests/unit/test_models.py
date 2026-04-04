@@ -838,14 +838,29 @@ class TestModels:
         assert "CreateUser" in reg.event_types
 
     def test_batch_processing_config_model(self) -> None:
-        """Test BatchProcessingConfig model — source has recursion bug in validate_cross_fields."""
-        with pytest.raises(RecursionError) as exc_info:
-            _ = m.BatchProcessingConfig(
-                batch_size=100,
-                continue_on_error=True,
-                data_items=[1, 2, 3],
-            )
-        assert exc_info.value is not None
+        """Test BatchProcessingConfig model normalizes worker count safely."""
+        cfg = m.BatchProcessingConfig(
+            batch_size=3,
+            max_workers=10,
+            continue_on_error=True,
+            data_items=[1, 2, 3],
+        )
+        assert cfg.batch_size == 3
+        assert cfg.max_workers == 3
+
+    def test_batch_processing_config_validate_batch_from_mappings(self) -> None:
+        batch = m.BatchProcessingConfig.validate_batch([
+            {
+                "batch_size": 2,
+                "max_workers": 1,
+                "timeout_per_item": 1.0,
+                "continue_on_error": True,
+                "data_items": ["a", "b"],
+            }
+        ])
+        assert len(batch) == 1
+        assert isinstance(batch[0], m.BatchProcessingConfig)
+        assert batch[0].batch_size == 2
 
     def test_handler_execution_config_model(self) -> None:
         """Test HandlerExecutionConfig model with correct fields."""

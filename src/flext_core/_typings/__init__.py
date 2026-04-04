@@ -10,7 +10,11 @@ import typing as _t
 from flext_core.lazy import install_lazy_exports
 
 if _t.TYPE_CHECKING:
+    import flext_core._typings.annotateds as _flext_core__typings_annotateds
+
+    annotateds = _flext_core__typings_annotateds
     import flext_core._typings.base as _flext_core__typings_base
+    from flext_core._typings.annotateds import FlextTypesAnnotateds
 
     base = _flext_core__typings_base
     import flext_core._typings.containers as _flext_core__typings_containers
@@ -45,15 +49,21 @@ if _t.TYPE_CHECKING:
     )
 
     services = _flext_core__typings_services
-    import flext_core._typings.validation as _flext_core__typings_validation
+    import flext_core._typings.typeadapters as _flext_core__typings_typeadapters
     from flext_core._typings.services import FlextTypesServices
+
+    typeadapters = _flext_core__typings_typeadapters
+    import flext_core._typings.validation as _flext_core__typings_validation
+    from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
     validation = _flext_core__typings_validation
     from flext_core._typings.validation import FlextTypesValidation
 _LAZY_IMPORTS = {
     "EnumT": "flext_core._typings.generics",
+    "FlextTypesAnnotateds": "flext_core._typings.annotateds",
     "FlextTypesCore": "flext_core._typings.core",
     "FlextTypesServices": "flext_core._typings.services",
+    "FlextTypesTypeAdapters": "flext_core._typings.typeadapters",
     "FlextTypesValidation": "flext_core._typings.validation",
     "FlextTypingBase": "flext_core._typings.base",
     "FlextTypingContainers": "flext_core._typings.containers",
@@ -71,19 +81,23 @@ _LAZY_IMPORTS = {
     "T_co": "flext_core._typings.generics",
     "T_contra": "flext_core._typings.generics",
     "U": "flext_core._typings.generics",
+    "annotateds": "flext_core._typings.annotateds",
     "base": "flext_core._typings.base",
     "containers": "flext_core._typings.containers",
     "core": "flext_core._typings.core",
     "generics": "flext_core._typings.generics",
     "services": "flext_core._typings.services",
+    "typeadapters": "flext_core._typings.typeadapters",
     "validation": "flext_core._typings.validation",
 }
 
 __all__ = [
     "TV",
     "EnumT",
+    "FlextTypesAnnotateds",
     "FlextTypesCore",
     "FlextTypesServices",
+    "FlextTypesTypeAdapters",
     "FlextTypesValidation",
     "FlextTypingBase",
     "FlextTypingContainers",
@@ -100,11 +114,13 @@ __all__ = [
     "T_co",
     "T_contra",
     "U",
+    "annotateds",
     "base",
     "containers",
     "core",
     "generics",
     "services",
+    "typeadapters",
     "validation",
 ]
 

@@ -13,14 +13,14 @@ from . import _models_impl as test_unit_models
 
 
 class TestModelsBaseFullCoverage:
-    class _FrozenValue(m.FrozenStrictModel):
+    class _FrozenValue(m.ContractModel):
         name: str
         count: int
 
-    class _Identifiable(m.IdentifiableMixin):
+    class _Identifiable(m.FlexibleModel, m.IdentifiableMixin):
         pass
 
-    class _Timestampable(m.TimestampableMixin):
+    class _Timestampable(m.FlexibleModel, m.TimestampableMixin):
         pass
 
     def test_metadata_attributes_accepts_none(self) -> None:

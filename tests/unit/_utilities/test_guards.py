@@ -10,9 +10,8 @@ from typing import cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import r
 from flext_tests import tm
-from tests import m, t, u
+from tests import m, r, t, u
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -10,7 +10,7 @@ from typing import Annotated, override
 import pytest
 from pydantic import Field, ValidationError, field_validator
 
-from flext_core import FlextModelsCqrs
+from flext_core import FlextModelsCqrs, FlextRuntime
 from flext_tests import tm
 from tests import m, t
 
@@ -242,7 +242,16 @@ class TestCoverageModels:
             DepositCommand(account_id="ACC-001", amount=-50.0, command_id="cmd-test-4")
 
     def test_query_creation(self) -> None:
-        assert GetUserQuery._resolve_pagination_class() is FlextModelsCqrs.Pagination
+        assert (
+            FlextRuntime.resolve_nested_model_class(
+                module_name=GetUserQuery.__module__,
+                qualname=GetUserQuery.__qualname__,
+                models_module_name="flext_core.models",
+                attribute_name="Pagination",
+                fallback=FlextModelsCqrs.Pagination,
+            )
+            is FlextModelsCqrs.Pagination
+        )
         query = GetUserQuery(
             filters=t.Dict(root={"user_id": "USER-001"}),
             query_type="get_user",

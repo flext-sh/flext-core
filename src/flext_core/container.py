@@ -21,18 +21,16 @@ from typing import Self, TypeIs, overload, override
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
 
-from flext_core import (
-    FlextContext,
-    FlextDispatcher,
-    FlextLogger,
-    FlextSettings,
-    c,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core.constants import c
+from flext_core.context import FlextContext
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.loggings import FlextLogger
+from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.settings import FlextSettings
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 def _is_service_of_type[T](value: object, cls: type[T]) -> TypeIs[T]:

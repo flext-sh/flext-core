@@ -13,371 +13,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Mapping
 from datetime import UTC, datetime
-from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import (
     AfterValidator,
     BaseModel,
     ConfigDict,
-    Discriminator,
     Field,
-    TypeAdapter,
     field_serializer,
     field_validator,
     model_validator,
 )
 
-from flext_core import FlextRuntime, c, t
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core import FlextRuntime, FlextUtilitiesEnforcement, c, t
 
 
 class FlextModelsBase:
     """Container for base model classes - Tier 0, 100% standalone."""
-
-    @staticmethod
-    def _ensure_utc_datetime(v: datetime | None) -> datetime | None:
-        if v is not None and v.tzinfo is None:
-            return v.replace(tzinfo=UTC)
-        return v
-
-    class Validators:
-        """Pydantic v2 validators - single namespace for all field validators."""
-
-        _tags_adapter: ClassVar[TypeAdapter[t.StrSequence] | None] = None
-        _list_adapter: ClassVar[TypeAdapter[t.FlatContainerList] | None] = None
-        _strict_string_adapter: ClassVar[
-            TypeAdapter[Annotated[str, Field(strict=True)]] | None
-        ] = None
-        _metadata_map_adapter: ClassVar[
-            TypeAdapter[Mapping[str, t.MetadataValue]] | None
-        ] = None
-        _config_adapter: ClassVar[TypeAdapter[t.FlatContainerMapping] | None] = None
-        _dict_container_adapter: ClassVar[
-            TypeAdapter[t.FlatContainerMapping] | None
-        ] = None
-        _list_container_adapter: ClassVar[TypeAdapter[t.FlatContainerList] | None] = (
-            None
-        )
-        _tuple_container_adapter: ClassVar[
-            TypeAdapter[tuple[t.Container, ...]] | None
-        ] = None
-        _primitives_adapter: ClassVar[TypeAdapter[t.Primitives] | None] = None
-        _dict_str_metadata_adapter: ClassVar[TypeAdapter[t.ContainerMapping] | None] = (
-            None
-        )
-        _list_serializable_adapter: ClassVar[
-            TypeAdapter[Sequence[t.Serializable]] | None
-        ] = None
-        _tuple_serializable_adapter: ClassVar[
-            TypeAdapter[tuple[t.Serializable, ...]] | None
-        ] = None
-        _set_container_adapter: ClassVar[TypeAdapter[set[t.Container]] | None] = None
-        _set_str_adapter: ClassVar[TypeAdapter[set[str]] | None] = None
-        _set_scalar_adapter: ClassVar[TypeAdapter[set[t.Scalar]] | None] = None
-        _sortable_dict_adapter: ClassVar[
-            TypeAdapter[Mapping[t.SortableObjectType, t.Serializable | None]] | None
-        ] = None
-        _strict_json_list_adapter: ClassVar[
-            TypeAdapter[Sequence[t.StrictValue]] | None
-        ] = None
-        _strict_json_scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
-        _scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
-        _float_adapter: ClassVar[TypeAdapter[t.FloatValue] | None] = None
-        _str_adapter: ClassVar[TypeAdapter[t.TextValue] | None] = None
-        _str_list_adapter: ClassVar[TypeAdapter[t.StrSequence] | None] = None
-        _str_or_bytes_adapter: ClassVar[TypeAdapter[t.TextOrBinaryContent] | None] = (
-            None
-        )
-        _enum_type_adapter: ClassVar[TypeAdapter[type[StrEnum]] | None] = None
-        _serializable_adapter: ClassVar[TypeAdapter[t.Serializable] | None] = None
-        _metadata_json_dict_adapter: ClassVar[
-            TypeAdapter[Mapping[str, t.Primitives]] | None
-        ] = None
-        _flat_metadata_dict_adapter: ClassVar[
-            TypeAdapter[Mapping[str, t.Primitives]] | None
-        ] = None
-        _structlog_processor_adapter: ClassVar[
-            TypeAdapter[Callable[..., t.Container]] | None
-        ] = None
-
-        @classmethod
-        def config_adapter(cls) -> TypeAdapter[t.FlatContainerMapping]:
-            """Lazy-load config TypeAdapter on first access."""
-            if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(t.FlatContainerMapping)
-            return cls._config_adapter
-
-        @classmethod
-        def list_adapter(cls) -> TypeAdapter[t.FlatContainerList]:
-            """Lazy-load list TypeAdapter on first access."""
-            if cls._list_adapter is None:
-                cls._list_adapter = TypeAdapter(t.FlatContainerList)
-            return cls._list_adapter
-
-        @classmethod
-        def metadata_map_adapter(
-            cls,
-        ) -> TypeAdapter[Mapping[str, t.MetadataValue]]:
-            """Lazy-load metadata map TypeAdapter on first access."""
-            if cls._metadata_map_adapter is None:
-                cls._metadata_map_adapter = TypeAdapter(Mapping[str, t.MetadataValue])
-            return cls._metadata_map_adapter
-
-        @classmethod
-        def strict_string_adapter(
-            cls,
-        ) -> TypeAdapter[Annotated[str, Field(strict=True)]]:
-            """Lazy-load strict string TypeAdapter on first access."""
-            if cls._strict_string_adapter is None:
-                cls._strict_string_adapter = TypeAdapter(
-                    Annotated[str, Field(strict=True)],
-                )
-            return cls._strict_string_adapter
-
-        @classmethod
-        def tags_adapter(cls) -> TypeAdapter[t.StrSequence]:
-            """Lazy-load tags TypeAdapter on first access."""
-            if cls._tags_adapter is None:
-                cls._tags_adapter = TypeAdapter(t.StrSequence)
-            return cls._tags_adapter
-
-        @classmethod
-        def dict_container_adapter(cls) -> TypeAdapter[t.FlatContainerMapping]:
-            """Lazy-load Mapping[str, Container] TypeAdapter on first access."""
-            if cls._dict_container_adapter is None:
-                cls._dict_container_adapter = TypeAdapter(t.FlatContainerMapping)
-            return cls._dict_container_adapter
-
-        @classmethod
-        def list_container_adapter(cls) -> TypeAdapter[t.FlatContainerList]:
-            """Lazy-load t.FlatContainerList TypeAdapter on first access."""
-            if cls._list_container_adapter is None:
-                cls._list_container_adapter = TypeAdapter(t.FlatContainerList)
-            return cls._list_container_adapter
-
-        @classmethod
-        def tuple_container_adapter(cls) -> TypeAdapter[tuple[t.Container, ...]]:
-            """Lazy-load tuple[Container, ...] TypeAdapter on first access."""
-            if cls._tuple_container_adapter is None:
-                cls._tuple_container_adapter = TypeAdapter(tuple[t.Container, ...])
-            return cls._tuple_container_adapter
-
-        @classmethod
-        def primitives_adapter(cls) -> TypeAdapter[t.Primitives]:
-            """Lazy-load Primitives TypeAdapter on first access."""
-            if cls._primitives_adapter is None:
-                cls._primitives_adapter = TypeAdapter(t.Primitives)
-            return cls._primitives_adapter
-
-        @classmethod
-        def dict_str_metadata_adapter(
-            cls,
-        ) -> TypeAdapter[t.ContainerMapping]:
-            if cls._dict_str_metadata_adapter is None:
-                cls._dict_str_metadata_adapter = TypeAdapter(
-                    t.ContainerMapping,
-                )
-            return cls._dict_str_metadata_adapter
-
-        @classmethod
-        def list_serializable_adapter(cls) -> TypeAdapter[Sequence[t.Serializable]]:
-            if cls._list_serializable_adapter is None:
-                cls._list_serializable_adapter = TypeAdapter(Sequence[t.Serializable])
-            return cls._list_serializable_adapter
-
-        @classmethod
-        def tuple_serializable_adapter(cls) -> TypeAdapter[tuple[t.Serializable, ...]]:
-            if cls._tuple_serializable_adapter is None:
-                cls._tuple_serializable_adapter = TypeAdapter(
-                    tuple[t.Serializable, ...],
-                )
-            return cls._tuple_serializable_adapter
-
-        @classmethod
-        def set_container_adapter(cls) -> TypeAdapter[set[t.Container]]:
-            if cls._set_container_adapter is None:
-                cls._set_container_adapter = TypeAdapter(set[t.Container])
-            return cls._set_container_adapter
-
-        @classmethod
-        def set_str_adapter(cls) -> TypeAdapter[set[str]]:
-            if cls._set_str_adapter is None:
-                cls._set_str_adapter = TypeAdapter(set[str])
-            return cls._set_str_adapter
-
-        @classmethod
-        def set_scalar_adapter(cls) -> TypeAdapter[set[t.Scalar]]:
-            if cls._set_scalar_adapter is None:
-                cls._set_scalar_adapter = TypeAdapter(set[t.Scalar])
-            return cls._set_scalar_adapter
-
-        @classmethod
-        def sortable_dict_adapter(
-            cls,
-        ) -> TypeAdapter[Mapping[t.SortableObjectType, t.Serializable | None]]:
-            if cls._sortable_dict_adapter is None:
-                cls._sortable_dict_adapter = TypeAdapter(
-                    Mapping[t.SortableObjectType, t.Serializable | None],
-                )
-            return cls._sortable_dict_adapter
-
-        @classmethod
-        def strict_json_list_adapter(
-            cls,
-        ) -> TypeAdapter[Sequence[t.StrictValue]]:
-            if cls._strict_json_list_adapter is None:
-                cls._strict_json_list_adapter = TypeAdapter(Sequence[t.StrictValue])
-            return cls._strict_json_list_adapter
-
-        @classmethod
-        def strict_json_scalar_adapter(cls) -> TypeAdapter[t.Scalar]:
-            if cls._strict_json_scalar_adapter is None:
-                cls._strict_json_scalar_adapter = TypeAdapter(t.Scalar)
-            return cls._strict_json_scalar_adapter
-
-        @classmethod
-        def scalar_adapter(cls) -> TypeAdapter[t.Scalar]:
-            if cls._scalar_adapter is None:
-                cls._scalar_adapter = TypeAdapter(t.Scalar)
-            return cls._scalar_adapter
-
-        @classmethod
-        def float_adapter(cls) -> TypeAdapter[t.FloatValue]:
-            if cls._float_adapter is None:
-                cls._float_adapter = TypeAdapter(t.FloatValue)
-            return cls._float_adapter
-
-        @classmethod
-        def str_adapter(cls) -> TypeAdapter[t.TextValue]:
-            if cls._str_adapter is None:
-                cls._str_adapter = TypeAdapter(t.TextValue)
-            return cls._str_adapter
-
-        @classmethod
-        def str_list_adapter(cls) -> TypeAdapter[t.StrSequence]:
-            if cls._str_list_adapter is None:
-                cls._str_list_adapter = TypeAdapter(t.StrSequence)
-            return cls._str_list_adapter
-
-        @classmethod
-        def str_or_bytes_adapter(cls) -> TypeAdapter[t.TextOrBinaryContent]:
-            if cls._str_or_bytes_adapter is None:
-                cls._str_or_bytes_adapter = TypeAdapter(t.TextOrBinaryContent)
-            return cls._str_or_bytes_adapter
-
-        @classmethod
-        def enum_type_adapter(cls) -> TypeAdapter[type[StrEnum]]:
-            if cls._enum_type_adapter is None:
-                cls._enum_type_adapter = TypeAdapter(type[StrEnum])
-            return cls._enum_type_adapter
-
-        @classmethod
-        def serializable_adapter(cls) -> TypeAdapter[t.Serializable]:
-            if cls._serializable_adapter is None:
-                cls._serializable_adapter = TypeAdapter(t.Serializable)
-            return cls._serializable_adapter
-
-        @classmethod
-        def metadata_json_dict_adapter(
-            cls,
-        ) -> TypeAdapter[Mapping[str, t.Primitives]]:
-            if cls._metadata_json_dict_adapter is None:
-                cls._metadata_json_dict_adapter = TypeAdapter(
-                    Mapping[str, t.Primitives],
-                )
-            return cls._metadata_json_dict_adapter
-
-        @classmethod
-        def flat_metadata_dict_adapter(
-            cls,
-        ) -> TypeAdapter[Mapping[str, t.Primitives]]:
-            if cls._flat_metadata_dict_adapter is None:
-                cls._flat_metadata_dict_adapter = TypeAdapter(
-                    Mapping[str, t.Primitives],
-                )
-            return cls._flat_metadata_dict_adapter
-
-        @classmethod
-        def structlog_processor_adapter(
-            cls,
-        ) -> TypeAdapter[Callable[..., t.Container]]:
-            if cls._structlog_processor_adapter is None:
-                cls._structlog_processor_adapter = TypeAdapter(
-                    Callable[..., t.Container],
-                )
-            return cls._structlog_processor_adapter
-
-        @staticmethod
-        def ensure_utc_datetime(v: datetime | None) -> datetime | None:
-            """Ensure datetime is UTC timezone."""
-            return FlextModelsBase._ensure_utc_datetime(v)
-
-        @staticmethod
-        def normalize_to_list(v: t.ValueOrModel) -> t.FlatContainerList:
-            """Normalize value to list format."""
-            try:
-                return FlextModelsBase.Validators.list_adapter().validate_python(v)
-            except (TypeError, ValueError):
-                if FlextRuntime.is_scalar(v):
-                    return [v]
-                return [str(v)]
-
-        @staticmethod
-        def strip_whitespace(v: str) -> str:
-            """Strip leading and trailing whitespace from string."""
-            return v.strip()
-
-        @staticmethod
-        def validate_config_dict(
-            v: t.ValueOrModel,
-        ) -> t.FlatContainerMapping:
-            """Validate configuration dictionary structure."""
-            try:
-                normalized = (
-                    FlextModelsBase.Validators.config_adapter().validate_python(v)
-                )
-            except (TypeError, ValueError) as exc:
-                msg = "Configuration must be a dictionary"
-                raise TypeError(msg) from exc
-            out: t.MutableFlatContainerMapping = {}
-            for key, item in normalized.items():
-                if key.startswith("_"):
-                    msg = f"Keys starting with '_' are reserved: {key}"
-                    raise ValueError(msg)
-                out[key] = item
-            return out
-
-        @staticmethod
-        def validate_tags_list(v: t.ValueOrModel) -> t.StrSequence:
-            """Validate and normalize tags list."""
-            try:
-                raw_tags: t.FlatContainerList = (
-                    FlextModelsBase.Validators.list_adapter().validate_python(v)
-                )
-            except (TypeError, ValueError) as exc:
-                msg = "Tags must be a list"
-                raise TypeError(msg) from exc
-            normalized: MutableSequence[str] = []
-            seen: set[str] = set()
-            for tag in raw_tags:
-                try:
-                    clean_tag = (
-                        FlextModelsBase.Validators
-                        .strict_string_adapter()
-                        .validate_python(tag)
-                        .strip()
-                        .lower()
-                    )
-                except (TypeError, ValueError) as exc:
-                    msg = "Tag must be string"
-                    raise TypeError(msg) from exc
-                if clean_tag and clean_tag not in seen:
-                    normalized.append(clean_tag)
-                    seen.add(clean_tag)
-            return normalized
 
     class EnforcedModel(BaseModel):
         """Base model that enforces architectural rules on subclasses."""
@@ -388,62 +42,66 @@ class FlextModelsBase:
             super().__pydantic_init_subclass__(**kwargs)
             FlextUtilitiesEnforcement.run(cls)
 
-    class DomainModel(EnforcedModel):
-        """Reusable strict model preset for validated domain boundaries."""
+    class ManagedModel(EnforcedModel):
+        """Shared preset for assignment validation with forbidden extra fields."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
             validate_assignment=True,
             extra=c.EXTRA_FORBID,
-            validate_default=True,
+        )
+
+    class EnumManagedModel(ManagedModel):
+        """Shared preset for managed models that serialize enum values."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             use_enum_values=True,
+        )
+
+    class NormalizedModel(EnumManagedModel):
+        """Shared preset for managed models with whitespace normalization."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             str_strip_whitespace=True,
         )
 
-    class FrozenDomainModel(DomainModel):
+    class StrictManagedModel(NormalizedModel):
+        """Shared preset for strict managed validation boundaries."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            strict=True,
+            validate_default=True,
+        )
+
+    class StrictModel(StrictManagedModel):
+        """Reusable strict model preset for validated domain boundaries."""
+
+    class FrozenModel(StrictModel):
         """Immutable strict domain model preset."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-    class ArbitraryTypesModel(EnforcedModel):
+    class ArbitraryTypesModel(EnumManagedModel):
         """Base model with arbitrary types support."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
-            extra=c.EXTRA_FORBID,
             arbitrary_types_allowed=True,
-            use_enum_values=True,
         )
 
-    class StrictBoundaryModel(EnforcedModel):
+    class StrictBoundaryModel(FrozenModel):
         """Strict boundary model for API/external boundaries."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
-            validate_assignment=True,
-            extra="forbid",
-            str_strip_whitespace=True,
-            use_enum_values=True,
-            frozen=True,
-        )
-
-    class FlexibleInternalModel(EnforcedModel):
+    class FlexibleInternalModel(NormalizedModel):
         """Flexible internal model for domain logic."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
             extra="ignore",
-            str_strip_whitespace=True,
-            use_enum_values=True,
         )
 
-    class ImmutableValueModel(EnforcedModel):
+    class ImmutableValueModel(ManagedModel):
         """Immutable value model for value objects."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             frozen=True,
-            validate_assignment=True,
-            extra="forbid",
         )
 
     class TaggedModel(EnforcedModel):
@@ -452,24 +110,21 @@ class FlextModelsBase:
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
         tag: ClassVar[str]
 
-    class DynamicConfigModel(EnforcedModel):
+    class FlexibleModel(ArbitraryTypesModel):
         """Model for dynamic configuration - allows extra fields."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
-            extra="allow",
-            arbitrary_types_allowed=True,
-            use_enum_values=True,
+            extra="ignore",
         )
 
-    class DynamicDomainModel(DynamicConfigModel):
+    class DynamicModel(FlexibleModel):
         """Dynamic domain model preset with string whitespace normalization."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             str_strip_whitespace=True,
         )
 
-    class FrozenDynamicDomainModel(DynamicDomainModel):
+    class FrozenDynamicModel(DynamicModel):
         """Immutable dynamic domain model preset."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
@@ -567,9 +222,7 @@ class FlextModelsBase:
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
                     raise ValueError(msg)
-            return FlextModelsBase.Validators.metadata_map_adapter().validate_python(
-                result,
-            )
+            return t.metadata_map_adapter().validate_python(result)
 
     class CommandMessage(BaseModel):
         """Command message with discriminated union support."""
@@ -617,10 +270,7 @@ class FlextModelsBase:
             ),
         ] = None
 
-    MessageUnion = Annotated[
-        CommandMessage | QueryMessage | EventMessage,
-        Discriminator("message_type"),
-    ]
+    MessageUnion = t.MessageUnion[CommandMessage, QueryMessage, EventMessage]
 
     class SuccessResult(BaseModel):
         """Success result for discriminated union."""
@@ -656,10 +306,7 @@ class FlextModelsBase:
         ] = Field(default_factory=list)
         partial_success_rate: t.Percentage
 
-    OperationResult = Annotated[
-        SuccessResult | FailureResult | PartialResult,
-        Discriminator("result_type"),
-    ]
+    OperationResult = t.OperationResult[SuccessResult, FailureResult, PartialResult]
 
     class ValidOutcome(BaseModel):
         """Valid validation outcome."""
@@ -688,30 +335,25 @@ class FlextModelsBase:
         warnings: t.StrSequence
         validation_time_ms: float
 
-    ValidationOutcome = Annotated[
-        ValidOutcome | InvalidOutcome | WarningOutcome,
-        Discriminator("outcome_type"),
+    ValidationOutcome = t.ValidationOutcome[
+        ValidOutcome,
+        InvalidOutcome,
+        WarningOutcome,
     ]
 
-    class FrozenStrictModel(EnforcedModel):
+    class ContractModel(StrictModel):
         """Immutable base model with strict validation."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
             validate_return=True,
-            validate_default=True,
-            strict=True,
-            str_strip_whitespace=True,
-            use_enum_values=True,
             arbitrary_types_allowed=True,
-            extra=c.EXTRA_FORBID,
             ser_json_timedelta=c.SERIALIZATION_ISO8601,
             ser_json_bytes=c.SERIALIZATION_BASE64,
             hide_input_in_errors=True,
             frozen=True,
         )
 
-    class FrozenValueModel(FrozenStrictModel):
+    class FrozenValueModel(ContractModel):
         """Value model with equality/hash by value."""
 
         @override
@@ -724,14 +366,24 @@ class FlextModelsBase:
             data = self.model_dump()
             return hash(tuple(sorted(((k, str(v)) for k, v in data.items()))))
 
-    class IdentifiableMixin(BaseModel):
-        """Mixin for unique identifiers."""
+    class MutableConfiguredMixin:
+        """Shared preset for mutable mixins with assignment validation."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
             validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+    class NormalizedMutableConfiguredMixin(MutableConfiguredMixin):
+        """Shared preset for mutable mixins with whitespace normalization."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
             str_strip_whitespace=True,
         )
+
+    class IdentifiableMixin(NormalizedMutableConfiguredMixin):
+        """Mixin for unique identifiers."""
+
         unique_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -744,16 +396,12 @@ class FlextModelsBase:
             """Regenerate the unique_id with a new UUID."""
             self.unique_id = str(uuid.uuid4())
 
-    class TimestampableMixin(BaseModel):
+    class TimestampableMixin(MutableConfiguredMixin):
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
-            validate_assignment=True,
-        )
         created_at: Annotated[
             datetime,
-            AfterValidator(lambda v: FlextModelsBase._ensure_utc_datetime(v)),
+            AfterValidator(lambda v: FlextRuntime.ensure_utc_datetime(v)),
             Field(
                 description="Creation timestamp (UTC)",
                 frozen=True,
@@ -761,7 +409,7 @@ class FlextModelsBase:
         ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime | None,
-            AfterValidator(lambda v: FlextModelsBase._ensure_utc_datetime(v)),
+            AfterValidator(lambda v: FlextRuntime.ensure_utc_datetime(v)),
             Field(default=None, description="Last update timestamp (UTC)"),
         ] = None
 
@@ -782,13 +430,9 @@ class FlextModelsBase:
                 raise ValueError(msg)
             return self
 
-    class VersionableMixin(BaseModel):
+    class VersionableMixin(MutableConfiguredMixin):
         """Mixin for versioning with optimistic locking."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
-            validate_assignment=True,
-        )
         version: Annotated[
             t.NonNegativeInt,
             Field(

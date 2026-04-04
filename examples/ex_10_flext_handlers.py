@@ -54,8 +54,6 @@ class _DemoHandler(FlextHandlers[_Message, str]):
 
     @override
     def validate_message(self, data: _Message) -> r[bool]:
-        if data is None:
-            return r[bool].fail("Message cannot be None")
         if data.text == "bad":
             return r[bool].fail("blocked")
         return r[bool].ok(True)
@@ -208,7 +206,7 @@ class Ex10FlextHandlers(Examples):
         except NotImplementedError as exc:
             pattern_value = f"{type(exc).__name__}:{exc}"
         self.check("handle.not_implemented_pattern", pattern_value)
-        handler = _DemoHandler()
+        handler: FlextHandlers[_Message, str] = _DemoHandler()
         self.check("handler.handler_name", handler.handler_name)
         self.check("handler.name_matches", bool(handler.handler_name))
         self.check("handler.mode", handler.mode.value)
@@ -235,15 +233,17 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.expected", handler.can_handle(_Message))
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
-        execute_value = handler.execute(_Message(text=payload_text)).unwrap_or("-")
+        execute_result: r[str] = handler.execute(_Message(text=payload_text))
+        execute_value = execute_result.unwrap_or("-")
         self.check("execute.success.value", payload_text in str(execute_value))
         self.check(
             "execute.validation_failure",
             handler.execute(_Message(text="bad")).error,
         )
-        dispatch_value = handler.dispatch_message(
+        dispatch_result: r[str] = handler.dispatch_message(
             _Message(text=dispatch_text),
-        ).unwrap_or("-")
+        )
+        dispatch_value = dispatch_result.unwrap_or("-")
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
             "dispatch.mode_mismatch",

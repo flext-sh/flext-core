@@ -8,6 +8,7 @@ from types import ModuleType
 import pytest
 from pydantic import TypeAdapter
 
+from flext_core import FlextRuntime
 from tests import c, m
 
 
@@ -32,13 +33,31 @@ def test_query_resolve_pagination_wrapper_and_fallback(
     mock_module: ModuleType = ModuleType("flext_core.models")
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
-    assert Wrapper.Query._resolve_pagination_class() is Wrapper.Pagination
+    assert (
+        FlextRuntime.resolve_nested_model_class(
+            module_name=Wrapper.Query.__module__,
+            qualname=Wrapper.Query.__qualname__,
+            models_module_name="flext_core.models",
+            attribute_name="Pagination",
+            fallback=m.Pagination,
+        )
+        is Wrapper.Pagination
+    )
     monkeypatch.setitem(
         sys.modules,
         "flext_core.models",
         ModuleType("flext_core.models"),
     )
-    assert Wrapper.Query._resolve_pagination_class() is m.Pagination
+    assert (
+        FlextRuntime.resolve_nested_model_class(
+            module_name=Wrapper.Query.__module__,
+            qualname=Wrapper.Query.__qualname__,
+            models_module_name="flext_core.models",
+            attribute_name="Pagination",
+            fallback=m.Pagination,
+        )
+        is m.Pagination
+    )
 
 
 def test_query_validate_pagination_dict_and_default() -> None:
@@ -78,7 +97,16 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
     mock_module = ModuleType("flext_core.models")
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
-    assert Wrapper.Inner.Query._resolve_pagination_class() is m.Pagination
+    assert (
+        FlextRuntime.resolve_nested_model_class(
+            module_name=Wrapper.Inner.Query.__module__,
+            qualname=Wrapper.Inner.Query.__qualname__,
+            models_module_name="flext_core.models",
+            attribute_name="Pagination",
+            fallback=m.Pagination,
+        )
+        is m.Pagination
+    )
     parsed = m.Query.model_validate({
         "pagination": {"page": 2, "size": 10},
         "filters": {},

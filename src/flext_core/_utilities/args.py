@@ -10,17 +10,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 from enum import StrEnum
-from typing import ClassVar
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import m, r, t
+from flext_core import r, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for automatic args/kwargs parsing."""
-
-    _V: ClassVar[type[m.Validators]] = m.Validators
 
     @staticmethod
     def parse_kwargs[E: StrEnum](

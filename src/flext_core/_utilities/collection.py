@@ -18,7 +18,7 @@ from collections.abc import (
 from enum import StrEnum
 from typing import ClassVar, overload
 
-from flext_core import FlextUtilitiesGuardsTypeCore, T, U, m, r, t
+from flext_core import FlextUtilitiesGuardsTypeCore, T, U, r, t
 
 
 class FlextUtilitiesCollection:
@@ -30,7 +30,7 @@ class FlextUtilitiesCollection:
     ) -> t.Serializable:
         """Validate via Pydantic adapter, falling back to str on any error."""
         try:
-            return m.Validators.serializable_adapter().validate_python(value)
+            return t.serializable_adapter().validate_python(value)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError):
             result: t.Serializable = str(value)
             return result
@@ -59,7 +59,7 @@ class FlextUtilitiesCollection:
     def _normalize_mapping_items[T](
         data: t.ValueOrModel,
     ) -> Sequence[tuple[str, t.NormalizedValue]]:
-        normalized_mapping = m.Validators.dict_str_metadata_adapter().validate_python(
+        normalized_mapping = t.dict_str_metadata_adapter().validate_python(
             data,
         )
         return list(normalized_mapping.items())
@@ -121,7 +121,7 @@ class FlextUtilitiesCollection:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
             normalized_items_result = r[t.FlatContainerList].create_from_callable(
-                lambda: m.Validators.list_container_adapter().validate_python(data),
+                lambda: t.flat_container_list_adapter().validate_python(data),
             )
             if normalized_items_result.is_failure:
                 msg = f"Expected sequence, got {data.__class__.__name__}"

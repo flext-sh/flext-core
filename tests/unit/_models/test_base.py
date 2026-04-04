@@ -15,7 +15,7 @@ import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_tests import tm
-from tests import c, m, t
+from tests import c, m, t, u
 
 
 class TestFlextModelsBase:
@@ -86,180 +86,125 @@ class TestFlextModelsBase:
         with pytest.raises(ValidationError):
             m.Metadata.model_validate({"unknown_field": "nope"})
 
-    # ── Validators ────────────────────────────────────────────
+    # ── Runtime/TypeAdapters ─────────────────────────────────
 
-    def test_validators_ensure_utc_datetime_naive(self) -> None:
+    def test_runtime_ensure_utc_datetime_naive(self) -> None:
         naive = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC).replace(tzinfo=None)
-        result = m.Validators.ensure_utc_datetime(naive)
+        result = u.ensure_utc_datetime(naive)
         tm.that(result, none=False)
         tm.that(cast("datetime", result).tzinfo, eq=UTC)
 
-    def test_validators_ensure_utc_datetime_none(self) -> None:
-        result = m.Validators.ensure_utc_datetime(None)
+    def test_runtime_ensure_utc_datetime_none(self) -> None:
+        result = u.ensure_utc_datetime(None)
         tm.that(result, none=True)
 
-    def test_validators_ensure_utc_datetime_already_utc(self) -> None:
+    def test_runtime_ensure_utc_datetime_already_utc(self) -> None:
         aware = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC)
-        result = m.Validators.ensure_utc_datetime(aware)
+        result = u.ensure_utc_datetime(aware)
         tm.that(result, eq=aware)
-
-    def test_validators_normalize_to_list_scalar(self) -> None:
-        result = m.Validators.normalize_to_list("hello")
-        tm.that(result, is_=list)
-        tm.that("hello" in result, eq=True)
-
-    def test_validators_normalize_to_list_already_list(self) -> None:
-        result = m.Validators.normalize_to_list([1, 2, 3])
-        tm.that(result, eq=[1, 2, 3])
-
-    def test_validators_strip_whitespace(self) -> None:
-        result = m.Validators.strip_whitespace("  hello  ")
-        tm.that(result, eq="hello")
-
-    def test_validators_validate_config_dict_valid(self) -> None:
-        result = m.Validators.validate_config_dict({"key": "value"})
-        tm.that(result, eq={"key": "value"})
-
-    def test_validators_validate_config_dict_rejects_reserved_keys(self) -> None:
-        with pytest.raises(ValueError, match="Keys starting with '_' are reserved"):
-            m.Validators.validate_config_dict({"_internal": 1})
-
-    def test_validators_validate_config_dict_rejects_non_dict(self) -> None:
-        with pytest.raises(TypeError, match="Configuration must be a dictionary"):
-            m.Validators.validate_config_dict("not-a-dict")
-
-    def test_validators_validate_tags_list_normalizes(self) -> None:
-        result = m.Validators.validate_tags_list(["  Hello ", "WORLD", "hello"])
-        tm.that(result, eq=["hello", "world"])
-
-    def test_validators_validate_tags_list_rejects_non_list(self) -> None:
-        with pytest.raises(TypeError, match="Tags must be a list"):
-            m.Validators.validate_tags_list("not-a-list")
-
-    def test_validators_validate_tags_list_rejects_non_string_items(self) -> None:
-        with pytest.raises(TypeError, match="Tag must be string"):
-            m.Validators.validate_tags_list([123])
-
-    def test_validators_validate_tags_deduplicates(self) -> None:
-        result = m.Validators.validate_tags_list(["a", "A", "b", "B"])
-        tm.that(result, eq=["a", "b"])
-
-    def test_validators_validate_tags_strips_empty(self) -> None:
-        result = m.Validators.validate_tags_list(["valid", "  ", ""])
-        tm.that(result, eq=["valid"])
 
     # ── TypeAdapter lazy loaders ──────────────────────────────
 
-    def test_validators_tags_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.tags_adapter()
+    def test_typeadapters_str_sequence_adapter_returns_adapter(self) -> None:
+        adapter = t.str_sequence_adapter()
         assert adapter is not None
 
-    def test_validators_config_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.config_adapter()
+    def test_typeadapters_flat_container_mapping_adapter_returns_adapter(self) -> None:
+        adapter = t.flat_container_mapping_adapter()
         assert adapter is not None
 
-    def test_validators_list_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.list_adapter()
+    def test_typeadapters_flat_container_list_adapter_returns_adapter(self) -> None:
+        adapter = t.flat_container_list_adapter()
         assert adapter is not None
 
-    def test_validators_metadata_map_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.metadata_map_adapter()
+    def test_typeadapters_metadata_map_adapter_returns_adapter(self) -> None:
+        adapter = t.metadata_map_adapter()
         assert adapter is not None
 
-    def test_validators_strict_string_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.strict_string_adapter()
+    def test_typeadapters_strict_string_adapter_returns_adapter(self) -> None:
+        adapter = t.strict_string_adapter()
         assert adapter is not None
 
-    def test_validators_scalar_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.scalar_adapter()
+    def test_typeadapters_bool_adapter_returns_adapter(self) -> None:
+        adapter = t.bool_adapter()
         assert adapter is not None
 
-    def test_validators_float_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.float_adapter()
+    def test_typeadapters_int_adapter_returns_adapter(self) -> None:
+        adapter = t.int_adapter()
         assert adapter is not None
 
-    def test_validators_str_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.str_adapter()
+    def test_typeadapters_scalar_adapter_returns_adapter(self) -> None:
+        adapter = t.scalar_adapter()
         assert adapter is not None
 
-    def test_validators_str_list_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.str_list_adapter()
+    def test_typeadapters_float_adapter_returns_adapter(self) -> None:
+        adapter = t.float_adapter()
         assert adapter is not None
 
-    def test_validators_str_or_bytes_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.str_or_bytes_adapter()
+    def test_typeadapters_str_adapter_returns_adapter(self) -> None:
+        adapter = t.str_adapter()
         assert adapter is not None
 
-    def test_validators_primitives_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.primitives_adapter()
+    def test_typeadapters_str_or_bytes_adapter_returns_adapter(self) -> None:
+        adapter = t.str_or_bytes_adapter()
         assert adapter is not None
 
-    def test_validators_dict_container_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.dict_container_adapter()
+    def test_typeadapters_primitives_adapter_returns_adapter(self) -> None:
+        adapter = t.primitives_adapter()
         assert adapter is not None
 
-    def test_validators_list_container_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.list_container_adapter()
+    def test_typeadapters_tuple_container_adapter_returns_adapter(self) -> None:
+        adapter = t.tuple_container_adapter()
         assert adapter is not None
 
-    def test_validators_tuple_container_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.tuple_container_adapter()
+    def test_typeadapters_set_container_adapter_returns_adapter(self) -> None:
+        adapter = t.set_container_adapter()
         assert adapter is not None
 
-    def test_validators_set_container_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.set_container_adapter()
+    def test_typeadapters_set_str_adapter_returns_adapter(self) -> None:
+        adapter = t.set_str_adapter()
         assert adapter is not None
 
-    def test_validators_set_str_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.set_str_adapter()
+    def test_typeadapters_set_scalar_adapter_returns_adapter(self) -> None:
+        adapter = t.set_scalar_adapter()
         assert adapter is not None
 
-    def test_validators_set_scalar_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.set_scalar_adapter()
+    def test_typeadapters_serializable_adapter_returns_adapter(self) -> None:
+        adapter = t.serializable_adapter()
         assert adapter is not None
 
-    def test_validators_serializable_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.serializable_adapter()
+    def test_typeadapters_enum_type_adapter_returns_adapter(self) -> None:
+        adapter = t.enum_type_adapter()
         assert adapter is not None
 
-    def test_validators_enum_type_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.enum_type_adapter()
+    def test_typeadapters_dict_str_metadata_adapter_returns_adapter(self) -> None:
+        adapter = t.dict_str_metadata_adapter()
         assert adapter is not None
 
-    def test_validators_dict_str_metadata_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.dict_str_metadata_adapter()
+    def test_typeadapters_list_serializable_adapter_returns_adapter(self) -> None:
+        adapter = t.list_serializable_adapter()
         assert adapter is not None
 
-    def test_validators_list_serializable_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.list_serializable_adapter()
+    def test_typeadapters_tuple_serializable_adapter_returns_adapter(self) -> None:
+        adapter = t.tuple_serializable_adapter()
         assert adapter is not None
 
-    def test_validators_tuple_serializable_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.tuple_serializable_adapter()
+    def test_typeadapters_sortable_dict_adapter_returns_adapter(self) -> None:
+        adapter = t.sortable_dict_adapter()
         assert adapter is not None
 
-    def test_validators_sortable_dict_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.sortable_dict_adapter()
+    def test_typeadapters_strict_json_list_adapter_returns_adapter(self) -> None:
+        adapter = t.strict_json_list_adapter()
         assert adapter is not None
 
-    def test_validators_strict_json_list_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.strict_json_list_adapter()
+    def test_typeadapters_primitive_metadata_mapping_adapter_returns_adapter(
+        self,
+    ) -> None:
+        adapter = t.primitive_metadata_mapping_adapter()
         assert adapter is not None
 
-    def test_validators_strict_json_scalar_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.strict_json_scalar_adapter()
-        assert adapter is not None
-
-    def test_validators_metadata_json_dict_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.metadata_json_dict_adapter()
-        assert adapter is not None
-
-    def test_validators_flat_metadata_dict_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.flat_metadata_dict_adapter()
-        assert adapter is not None
-
-    def test_validators_structlog_processor_adapter_returns_adapter(self) -> None:
-        adapter = m.Validators.structlog_processor_adapter()
+    def test_typeadapters_structlog_processor_adapter_returns_adapter(self) -> None:
+        adapter = t.structlog_processor_adapter()
         assert adapter is not None
 
     # ── ArbitraryTypesModel ───────────────────────────────────
@@ -270,8 +215,8 @@ class TestFlextModelsBase:
         tm.that(cfg.get("extra"), eq="forbid")
         tm.that(cfg.get("validate_assignment"), eq=True)
 
-    def test_domain_model_config(self) -> None:
-        cfg = m.DomainModel.model_config
+    def test_strict_model_config(self) -> None:
+        cfg = m.StrictModel.model_config
         tm.that(cfg.get("strict"), eq=True)
         tm.that(cfg.get("validate_assignment"), eq=True)
         tm.that(cfg.get("validate_default"), eq=True)
@@ -286,6 +231,7 @@ class TestFlextModelsBase:
         tm.that(cfg.get("frozen"), eq=True)
         tm.that(cfg.get("extra"), eq="forbid")
         tm.that(cfg.get("str_strip_whitespace"), eq=True)
+        tm.that(cfg.get("validate_default"), eq=True)
 
     # ── FlexibleInternalModel ─────────────────────────────────
 
@@ -314,13 +260,15 @@ class TestFlextModelsBase:
         with pytest.raises(ValidationError):
             _Imm.model_validate({"x": 1, "y": 2})
 
-    # ── DynamicConfigModel ────────────────────────────────────
+    # ── FlexibleModel ────────────────────────────────────────
 
-    def test_dynamic_config_model_allows_extra(self) -> None:
-        class _Dyn(m.DynamicConfigModel):
+    def test_flexible_model_allows_extra(self) -> None:
+        class _Dyn(m.FlexibleModel):
             base: str = "ok"
 
         inst = _Dyn.model_validate({"base": "ok", "custom": "val"})
+        tm.that(_Dyn.model_config.get("arbitrary_types_allowed"), eq=True)
+        tm.that(_Dyn.model_config.get("validate_assignment"), eq=True)
         tm.that(inst.base, eq="ok")
 
         extra = inst.model_extra
@@ -335,17 +283,19 @@ class TestFlextModelsBase:
         cfg = m.TaggedModel.model_config
         tm.that(cfg.get("extra"), eq="forbid")
 
-    # ── FrozenStrictModel ─────────────────────────────────────
+    # ── ContractModel ────────────────────────────────────────
 
-    def test_frozen_strict_model_config(self) -> None:
-        cfg = m.FrozenStrictModel.model_config
+    def test_contract_model_config(self) -> None:
+        cfg = m.ContractModel.model_config
         tm.that(cfg.get("frozen"), eq=True)
         tm.that(cfg.get("strict"), eq=True)
+        tm.that(cfg.get("validate_assignment"), eq=True)
+        tm.that(cfg.get("validate_default"), eq=True)
         tm.that(cfg.get("hide_input_in_errors"), eq=True)
         tm.that(cfg.get("extra"), eq="forbid")
 
-    def test_frozen_strict_model_is_immutable(self) -> None:
-        class _Strict(m.FrozenStrictModel):
+    def test_contract_model_is_immutable(self) -> None:
+        class _Strict(m.ContractModel):
             val: int
 
         inst = _Strict(val=10)
@@ -403,7 +353,7 @@ class TestFlextModelsBase:
     # ── IdentifiableMixin ─────────────────────────────────────
 
     def test_identifiable_generates_uuid(self) -> None:
-        class _Id(m.IdentifiableMixin):
+        class _Id(m.FlexibleModel, m.IdentifiableMixin):
             pass
 
         inst = _Id()
@@ -411,7 +361,7 @@ class TestFlextModelsBase:
         tm.that(len(inst.unique_id) > 0, eq=True)
 
     def test_identifiable_unique_ids_differ(self) -> None:
-        class _Id(m.IdentifiableMixin):
+        class _Id(m.FlexibleModel, m.IdentifiableMixin):
             pass
 
         a = _Id()
@@ -419,7 +369,7 @@ class TestFlextModelsBase:
         tm.that(a.unique_id != b.unique_id, eq=True)
 
     def test_identifiable_regenerate_id(self) -> None:
-        class _Id(m.IdentifiableMixin):
+        class _Id(m.FlexibleModel, m.IdentifiableMixin):
             pass
 
         inst = _Id()
@@ -428,14 +378,14 @@ class TestFlextModelsBase:
         tm.that(inst.unique_id != old_id, eq=True)
 
     def test_identifiable_rejects_empty_id(self) -> None:
-        class _Id(m.IdentifiableMixin):
+        class _Id(m.FlexibleModel, m.IdentifiableMixin):
             pass
 
         with pytest.raises(ValidationError, match="at least 1 character"):
             _Id(unique_id="   ")
 
     def test_identifiable_accepts_custom_id(self) -> None:
-        class _Id(m.IdentifiableMixin):
+        class _Id(m.FlexibleModel, m.IdentifiableMixin):
             pass
 
         inst = _Id(unique_id="custom-123")
@@ -444,7 +394,7 @@ class TestFlextModelsBase:
     # ── TimestampableMixin ────────────────────────────────────
 
     def test_timestampable_defaults(self) -> None:
-        class _Ts(m.TimestampableMixin):
+        class _Ts(m.FlexibleModel, m.TimestampableMixin):
             pass
 
         inst = _Ts()
@@ -452,7 +402,7 @@ class TestFlextModelsBase:
         tm.that(inst.updated_at, none=True)
 
     def test_timestampable_naive_datetime_gets_utc(self) -> None:
-        class _Ts(m.TimestampableMixin):
+        class _Ts(m.FlexibleModel, m.TimestampableMixin):
             pass
 
         naive = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC).replace(tzinfo=None)
@@ -460,7 +410,7 @@ class TestFlextModelsBase:
         tm.that(inst.created_at.tzinfo, eq=UTC)
 
     def test_timestampable_update_timestamp(self) -> None:
-        class _Ts(m.TimestampableMixin):
+        class _Ts(m.FlexibleModel, m.TimestampableMixin):
             pass
 
         inst = _Ts()
@@ -472,7 +422,7 @@ class TestFlextModelsBase:
             tm.that(updated.tzinfo, eq=UTC)
 
     def test_timestampable_updated_before_created_rejected(self) -> None:
-        class _Ts(m.TimestampableMixin):
+        class _Ts(m.FlexibleModel, m.TimestampableMixin):
             pass
 
         now = datetime.now(UTC)
@@ -484,7 +434,7 @@ class TestFlextModelsBase:
             _Ts(created_at=now, updated_at=past)
 
     def test_timestampable_json_serialization(self) -> None:
-        class _Ts(m.TimestampableMixin):
+        class _Ts(m.FlexibleModel, m.TimestampableMixin):
             pass
 
         now = datetime.now(UTC)
@@ -494,7 +444,7 @@ class TestFlextModelsBase:
         tm.that(dumped["updated_at"], is_=str)
 
     def test_timestampable_json_serialization_none_updated(self) -> None:
-        class _Ts(m.TimestampableMixin):
+        class _Ts(m.FlexibleModel, m.TimestampableMixin):
             pass
 
         inst = _Ts()
@@ -504,14 +454,14 @@ class TestFlextModelsBase:
     # ── VersionableMixin ──────────────────────────────────────
 
     def test_versionable_default(self) -> None:
-        class _V(m.VersionableMixin):
+        class _V(m.FlexibleModel, m.VersionableMixin):
             pass
 
         inst = _V()
         tm.that(inst.version, eq=c.DEFAULT_RETRY_DELAY_SECONDS)
 
     def test_versionable_increment(self) -> None:
-        class _V(m.VersionableMixin):
+        class _V(m.FlexibleModel, m.VersionableMixin):
             pass
 
         inst = _V()
@@ -520,7 +470,7 @@ class TestFlextModelsBase:
         tm.that(inst.version, eq=original + 1)
 
     def test_versionable_below_minimum_rejected(self) -> None:
-        class _V(m.VersionableMixin):
+        class _V(m.FlexibleModel, m.VersionableMixin):
             pass
 
         with pytest.raises(ValidationError, match="below minimum"):
@@ -529,7 +479,7 @@ class TestFlextModelsBase:
     # ── RetryConfigurationMixin ───────────────────────────────
 
     def test_retry_config_defaults(self) -> None:
-        class _Rc(m.RetryConfigurationMixin):
+        class _Rc(m.FlexibleModel, m.RetryConfigurationMixin):
             pass
 
         inst = _Rc()
@@ -538,14 +488,14 @@ class TestFlextModelsBase:
         tm.that(inst.max_delay_seconds, eq=c.DEFAULT_MAX_DELAY_SECONDS)
 
     def test_retry_config_alias(self) -> None:
-        class _Rc(m.RetryConfigurationMixin):
+        class _Rc(m.FlexibleModel, m.RetryConfigurationMixin):
             pass
 
         inst = _Rc.model_validate({"max_attempts": 5})
         tm.that(inst.max_retries, eq=5)
 
     def test_retry_config_custom_values(self) -> None:
-        class _Rc(m.RetryConfigurationMixin):
+        class _Rc(m.FlexibleModel, m.RetryConfigurationMixin):
             pass
 
         inst = _Rc(max_retries=10, initial_delay_seconds=2.0, max_delay_seconds=120.0)
@@ -988,21 +938,23 @@ class TestFlextModelsBase:
     @pytest.mark.parametrize(
         "adapter_name",
         [
-            "tags_adapter",
-            "config_adapter",
-            "list_adapter",
+            "str_sequence_adapter",
+            "flat_container_mapping_adapter",
+            "flat_container_list_adapter",
             "metadata_map_adapter",
             "strict_string_adapter",
+            "bool_adapter",
+            "int_adapter",
             "scalar_adapter",
             "float_adapter",
             "str_adapter",
-            "str_list_adapter",
             "primitives_adapter",
             "serializable_adapter",
+            "primitive_metadata_mapping_adapter",
         ],
     )
     def test_adapter_idempotent(self, adapter_name: str) -> None:
-        getter = getattr(m.Validators, adapter_name)
+        getter = getattr(t, adapter_name)
         first = getter()
         second = getter()
         tm.that(first is second, eq=True)

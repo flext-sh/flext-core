@@ -50,7 +50,7 @@ class FlextModelsService:
             Field(description="Dependency injection container for service resolution."),
         ]
 
-    class TraceContext(FlextModelsBase.FrozenStrictModel):
+    class TraceContext(FlextModelsBase.ContractModel):
         """Trace context for distributed tracing."""
 
         trace_id: Annotated[
@@ -78,7 +78,7 @@ class FlextModelsService:
         ] = None
 
     class ServiceRetryConfiguration(
-        FlextModelsBase.FrozenStrictModel,
+        FlextModelsBase.ContractModel,
         FlextModelsBase.RetryConfigurationMixin,
     ):
         """Retry configuration for operations."""
@@ -100,16 +100,16 @@ class FlextModelsService:
             ),
         ] = True
 
-    class ServiceParameters(FlextModelsBase.DynamicConfigModel):
+    class ServiceParameters(FlextModelsBase.FlexibleInternalModel):
         """Dynamic parameters for service methods - allows extra fields."""
 
-    class ServiceFilters(FlextModelsBase.DynamicConfigModel):
+    class ServiceFilters(FlextModelsBase.FlexibleInternalModel):
         """Filter criteria for queries - allows extra fields."""
 
-    class ServiceData(FlextModelsBase.DynamicConfigModel):
+    class ServiceData(FlextModelsBase.FlexibleInternalModel):
         """Operation data model - allows extra fields."""
 
-    class ServiceContext(FlextModelsBase.DynamicConfigModel):
+    class ServiceContext(FlextModelsBase.FlexibleInternalModel):
         """Service execution context - allows extra fields."""
 
     class DomainServiceExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
@@ -123,20 +123,14 @@ class FlextModelsService:
             t.NonEmptyStr,
             Field(description="Method to execute"),
         ]
-        parameters: Annotated[
-            FlextModelsService.ServiceParameters | None,
-            Field(
-                default=None,
-                description="Dynamic parameters passed to the service method.",
-            ),
-        ] = None
-        context: Annotated[
-            FlextModelsService.TraceContext | None,
-            Field(
-                default=None,
-                description="Trace context for distributed tracing of this execution.",
-            ),
-        ] = None
+        parameters: FlextModelsService.ServiceParameters | None = Field(
+            default=None,
+            description="Dynamic parameters passed to the service method.",
+        )
+        context: FlextModelsService.TraceContext | None = Field(
+            default=None,
+            description="Trace context for distributed tracing of this execution.",
+        )
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
@@ -180,13 +174,10 @@ class FlextModelsService:
                 examples=["create_user", "sync_records"],
             ),
         ]
-        parameters: Annotated[
-            FlextModelsService.ServiceParameters | None,
-            Field(
-                default=None,
-                description="Dynamic parameters for this batch operation.",
-            ),
-        ] = None
+        parameters: FlextModelsService.ServiceParameters | None = Field(
+            default=None,
+            description="Dynamic parameters for this batch operation.",
+        )
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -202,18 +193,16 @@ class FlextModelsService:
             t.NonEmptyStr,
             Field(description="Target service name for the batch request."),
         ]
-        operations: Annotated[
-            Sequence[FlextModelsService.BatchOperation],
-            Field(
-                min_length=c.DEFAULT_RETRY_DELAY_SECONDS,
-                max_length=c.DEFAULT_SIZE,
-                description="Ordered batch operations to execute for the target service.",
-                title="Batch Operations",
-                examples=[
-                    [{"operation_name": "validate"}, {"operation_name": "persist"}],
-                ],
-            ),
-        ] = Field(default_factory=lambda: list[FlextModelsService.BatchOperation]())
+        operations: Sequence[FlextModelsService.BatchOperation] = Field(
+            default_factory=lambda: list[FlextModelsService.BatchOperation](),
+            min_length=c.DEFAULT_RETRY_DELAY_SECONDS,
+            max_length=c.DEFAULT_SIZE,
+            description="Ordered batch operations to execute for the target service.",
+            title="Batch Operations",
+            examples=[
+                [{"operation_name": "validate"}, {"operation_name": "persist"}],
+            ],
+        )
         parallel_execution: Annotated[
             bool,
             Field(
@@ -278,13 +267,10 @@ class FlextModelsService:
                 examples=[["service_name", "handler_mode"]],
             ),
         ] = Field(default_factory=list)
-        filters: Annotated[
-            FlextModelsService.ServiceFilters | None,
-            Field(
-                default=None,
-                description="Optional filter criteria to narrow the metrics query.",
-            ),
-        ] = None
+        filters: FlextModelsService.ServiceFilters | None = Field(
+            default=None,
+            description="Optional filter criteria to narrow the metrics query.",
+        )
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -338,20 +324,14 @@ class FlextModelsService:
                 examples=["get", "create", "update", "delete"],
             ),
         ] = c.Action.GET
-        data: Annotated[
-            FlextModelsService.ServiceData | None,
-            Field(
-                default=None,
-                description="Payload data for create or update operations.",
-            ),
-        ] = None
-        filters: Annotated[
-            FlextModelsService.ServiceFilters | None,
-            Field(
-                default=None,
-                description="Optional filter criteria to narrow resource selection.",
-            ),
-        ] = None
+        data: FlextModelsService.ServiceData | None = Field(
+            default=None,
+            description="Payload data for create or update operations.",
+        )
+        filters: FlextModelsService.ServiceFilters | None = Field(
+            default=None,
+            description="Optional filter criteria to narrow resource selection.",
+        )
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -369,21 +349,18 @@ class FlextModelsService:
         user: Annotated[t.NonEmptyStr, Field(description="User identifier")]
         action: Annotated[t.NonEmptyStr, Field(description="Requested action")]
         allowed: Annotated[bool, Field(description="Whether access is allowed")]
-        permissions: Annotated[
-            t.StrSequence,
-            Field(description="Granted permissions"),
-        ] = Field(default_factory=list)
-        denied_permissions: Annotated[
-            t.StrSequence,
-            Field(description="Denied permissions"),
-        ] = Field(default_factory=list)
-        context: Annotated[
-            FlextModelsService.ServiceContext | None,
-            Field(
-                default=None,
-                description="Additional execution context for the ACL evaluation.",
-            ),
-        ] = None
+        permissions: t.StrSequence = Field(
+            default_factory=list,
+            description="Granted permissions",
+        )
+        denied_permissions: t.StrSequence = Field(
+            default_factory=list,
+            description="Denied permissions",
+        )
+        context: FlextModelsService.ServiceContext | None = Field(
+            default=None,
+            description="Additional execution context for the ACL evaluation.",
+        )
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -409,20 +386,14 @@ class FlextModelsService:
             ],
             Field(description="Callable operation returning result"),
         ]
-        arguments: Annotated[
-            FlextModelsService.ServiceParameters | None,
-            Field(
-                default=None,
-                description="Positional arguments passed to the operation callable.",
-            ),
-        ] = None
-        keyword_arguments: Annotated[
-            FlextModelsService.ServiceParameters | None,
-            Field(
-                default=None,
-                description="Keyword arguments passed to the operation callable.",
-            ),
-        ] = None
+        arguments: FlextModelsService.ServiceParameters | None = Field(
+            default=None,
+            description="Positional arguments passed to the operation callable.",
+        )
+        keyword_arguments: FlextModelsService.ServiceParameters | None = Field(
+            default=None,
+            description="Keyword arguments passed to the operation callable.",
+        )
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
@@ -431,13 +402,10 @@ class FlextModelsService:
                 description="Timeout from FlextSettings (Config has priority over Constants)",
             ),
         ] = c.DEFAULT_TIMEOUT_SECONDS
-        retry_config: Annotated[
-            FlextModelsService.ServiceRetryConfiguration | None,
-            Field(
-                default=None,
-                description="Retry configuration for the operation execution.",
-            ),
-        ] = None
+        retry_config: FlextModelsService.ServiceRetryConfiguration | None = Field(
+            default=None,
+            description="Retry configuration for the operation execution.",
+        )
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -453,151 +421,94 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
-        config_type: Annotated[
-            type[BaseSettings] | None,
-            Field(
-                default=None,
-                description="Settings class used to load runtime configuration.",
-            ),
-        ] = None
-        config_overrides: Annotated[
-            t.ScalarMapping | None,
-            Field(
-                default=None,
-                description="Key-value overrides applied on top of the loaded configuration.",
-            ),
-        ] = None
-        context: Annotated[
-            p.Context | None,
-            Field(
-                default=None,
-                description="Pre-built execution context to inject into the runtime.",
-            ),
-        ] = None
-        subproject: Annotated[
-            str | None,
-            Field(
-                default=None,
-                description="Subproject name used to scope configuration and wiring.",
-            ),
-        ] = None
-        services: Annotated[
-            Mapping[str, t.RegisterableService] | None,
-            Field(
-                default=None,
-                description="Named services to register in the dependency container.",
-            ),
-        ] = None
-        factories: Annotated[
-            Mapping[str, t.FactoryCallable] | None,
-            Field(
-                default=None,
-                description="Named factory callables to register in the dependency container.",
-            ),
-        ] = None
-        resources: Annotated[
-            Mapping[str, t.ResourceCallable] | None,
-            Field(
-                default=None,
-                description="Named lifecycle resources to register in the dependency container.",
-            ),
-        ] = None
-        container_overrides: Annotated[
-            t.ScalarMapping | None,
-            Field(
-                default=None,
-                description="Provider overrides applied to the dependency container.",
-            ),
-        ] = None
-        wire_modules: Annotated[
-            Sequence[ModuleType | str] | None,
-            Field(
-                default=None,
-                description="Modules to wire for dependency-injector resolution.",
-            ),
-        ] = None
-        wire_packages: Annotated[
-            t.StrSequence | None,
-            Field(
-                default=None,
-                description="Package names to consider for dependency wiring.",
-            ),
-        ] = None
-        wire_classes: Annotated[
-            Sequence[type] | None,
-            Field(
-                default=None,
-                description="Classes whose modules are wired for dependency resolution.",
-            ),
-        ] = None
+        config_type: type[BaseSettings] | None = Field(
+            default=None,
+            description="Settings class used to load runtime configuration.",
+        )
+        config_overrides: t.ScalarMapping | None = Field(
+            default=None,
+            description="Key-value overrides applied on top of the loaded configuration.",
+        )
+        context: p.Context | None = Field(
+            default=None,
+            description="Pre-built execution context to inject into the runtime.",
+        )
+        subproject: str | None = Field(
+            default=None,
+            description="Subproject name used to scope configuration and wiring.",
+        )
+        services: Mapping[str, t.RegisterableService] | None = Field(
+            default=None,
+            description="Named services to register in the dependency container.",
+        )
+        factories: Mapping[str, t.FactoryCallable] | None = Field(
+            default=None,
+            description="Named factory callables to register in the dependency container.",
+        )
+        resources: Mapping[str, t.ResourceCallable] | None = Field(
+            default=None,
+            description="Named lifecycle resources to register in the dependency container.",
+        )
+        container_overrides: t.ScalarMapping | None = Field(
+            default=None,
+            description="Provider overrides applied to the dependency container.",
+        )
+        wire_modules: Sequence[ModuleType | str] | None = Field(
+            default=None,
+            description="Modules to wire for dependency-injector resolution.",
+        )
+        wire_packages: t.StrSequence | None = Field(
+            default=None,
+            description="Package names to consider for dependency wiring.",
+        )
+        wire_classes: Sequence[type] | None = Field(
+            default=None,
+            description="Classes whose modules are wired for dependency resolution.",
+        )
 
     class DependencyContainerCreationOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""
 
-        config: Annotated[
-            t.ConfigMap | None,
-            Field(
-                default=None,
-                title="Configuration",
-                description="Optional configuration mapping bound to dependency container providers.",
-            ),
-        ] = None
-        services: Annotated[
-            Mapping[str, t.RegisterableService] | None,
-            Field(
-                default=None,
-                title="Services",
-                description="Object providers registered before optional wiring.",
-            ),
-        ] = None
-        factories: Annotated[
-            Mapping[str, t.FactoryCallable] | None,
-            Field(
-                default=None,
-                title="Factories",
-                description="Factory providers registered with singleton/factory semantics.",
-            ),
-        ] = None
-        resources: Annotated[
-            Mapping[str, t.ResourceCallable] | None,
-            Field(
-                default=None,
-                title="Resources",
-                description="Lifecycle resource providers registered before wiring.",
-            ),
-        ] = None
-        wire_modules: Annotated[
-            Sequence[ModuleType] | None,
-            Field(
-                default=None,
-                title="Wire Modules",
-                description="Modules wired for dependency-injector @inject resolution.",
-            ),
-        ] = None
-        wire_packages: Annotated[
-            t.StrSequence | None,
-            Field(
-                default=None,
-                title="Wire Packages",
-                description="Package names considered for dependency wiring.",
-            ),
-        ] = None
-        wire_classes: Annotated[
-            Sequence[type] | None,
-            Field(
-                default=None,
-                title="Wire Classes",
-                description="Classes whose modules are wired for dependency resolution.",
-            ),
-        ] = None
-        factory_cache: Annotated[
-            bool,
-            Field(
-                default=True,
-                title="Factory Cache",
-                description="Whether registered factories use singleton caching semantics.",
-            ),
-        ] = True
+        config: t.ConfigMap | None = Field(
+            default=None,
+            title="Configuration",
+            description="Optional configuration mapping bound to dependency container providers.",
+        )
+        services: Mapping[str, t.RegisterableService] | None = Field(
+            default=None,
+            title="Services",
+            description="Object providers registered before optional wiring.",
+        )
+        factories: Mapping[str, t.FactoryCallable] | None = Field(
+            default=None,
+            title="Factories",
+            description="Factory providers registered with singleton/factory semantics.",
+        )
+        resources: Mapping[str, t.ResourceCallable] | None = Field(
+            default=None,
+            title="Resources",
+            description="Lifecycle resource providers registered before wiring.",
+        )
+        wire_modules: Sequence[ModuleType] | None = Field(
+            default=None,
+            title="Wire Modules",
+            description="Modules wired for dependency-injector @inject resolution.",
+        )
+        wire_packages: t.StrSequence | None = Field(
+            default=None,
+            title="Wire Packages",
+            description="Package names considered for dependency wiring.",
+        )
+        wire_classes: Sequence[type] | None = Field(
+            default=None,
+            title="Wire Classes",
+            description="Classes whose modules are wired for dependency resolution.",
+        )
+        factory_cache: bool = Field(
+            default=True,
+            title="Factory Cache",
+            description="Whether registered factories use singleton caching semantics.",
+        )
 
 
 FlextRuntime.DependencyIntegration.ContainerCreationOptionsModel = (

@@ -37,10 +37,8 @@ class FlextModelsContextData:
             out: t.ContainerMapping = {}
             return out
         if FlextUtilitiesGuardsTypeCore.is_mapping(v):
-            validated = (
-                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
-                    v,
-                )
+            validated = t.dict_str_metadata_adapter().validate_python(
+                v,
             )
             return dict(validated)
         if FlextUtilitiesGuardsTypeModel.is_pydantic_model(v):
@@ -58,7 +56,7 @@ class FlextModelsContextData:
             return v
         if FlextUtilitiesGuardsTypeCore.is_mapping(v):
             return FlextModelsBase.Metadata.model_validate({
-                c.FIELD_ATTRIBUTES: FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
+                c.FIELD_ATTRIBUTES: t.dict_str_metadata_adapter().validate_python(
                     v,
                 ),
             })
@@ -168,7 +166,7 @@ class FlextModelsContextData:
                     for key, item_value in dumped_model.items()
                 }
             if FlextUtilitiesGuardsTypeCore.is_mapping(normalized):
-                normalized_map = FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
+                normalized_map = t.dict_str_metadata_adapter().validate_python(
                     normalized,
                 )
                 return {

@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, ClassVar, TypeIs
+from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
@@ -25,31 +25,6 @@ from flext_core import FlextModelsBase, c, p, t
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    @staticmethod
-    def _generate_datetime_utc() -> datetime:
-        return datetime.now(UTC)
-
-    @staticmethod
-    def _is_metadata_instance(
-        v: t.MetadataInput,
-    ) -> TypeIs[FlextModelsBase.Metadata]:
-        return isinstance(v, FlextModelsBase.Metadata)
-
-    @staticmethod
-    def _normalize_metadata(value: t.MetadataInput) -> FlextModelsBase.Metadata:
-        if value is None:
-            return FlextModelsBase.Metadata.model_validate({
-                c.FIELD_ATTRIBUTES: {},
-            })
-        if FlextModelsContainer._is_metadata_instance(value):
-            return value
-        if not isinstance(value, Mapping):
-            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {value.__class__.__name__}"
-            raise TypeError(msg)
-        return FlextModelsBase.Metadata.model_validate({
-            c.FIELD_ATTRIBUTES: dict(value),
-        })
-
     class _MetadataValidatorMixin:
         """Mixin to provide metadata field coercion/normalization for models."""
 
@@ -57,7 +32,21 @@ class FlextModelsContainer:
         @classmethod
         def validate_metadata(cls, v: t.MetadataInput) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
-            return FlextModelsContainer._normalize_metadata(v)
+            if v is None:
+                return FlextModelsBase.Metadata.model_validate({
+                    c.FIELD_ATTRIBUTES: {},
+                })
+            if isinstance(v, FlextModelsBase.Metadata):
+                return v
+            if not isinstance(v, Mapping):
+                msg = (
+                    "metadata must be None, dict, or FlextModelsBase.Metadata, got "
+                    f"{v.__class__.__name__}"
+                )
+                raise TypeError(msg)
+            return FlextModelsBase.Metadata.model_validate({
+                c.FIELD_ATTRIBUTES: dict(v),
+            })
 
     class ServiceRegistration(
         _MetadataValidatorMixin,
@@ -86,7 +75,7 @@ class FlextModelsContainer:
             Field(
                 description="UTC timestamp when service was registered",
             ),
-        ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         metadata: Annotated[
             FlextModelsBase.Metadata | t.ConfigMap | None,
             Field(
@@ -208,7 +197,7 @@ class FlextModelsContainer:
             Field(
                 description="UTC timestamp when factory was registered",
             ),
-        ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         is_singleton: Annotated[
             bool,
             Field(
@@ -266,7 +255,7 @@ class FlextModelsContainer:
             Field(
                 description="UTC timestamp when resource was registered",
             ),
-        ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         metadata: Annotated[
             FlextModelsBase.Metadata | t.ConfigMap | None,
             Field(

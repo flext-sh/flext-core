@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypeIs
+from typing import TypeIs, cast
 
 from pydantic import BaseModel
 
@@ -43,7 +43,9 @@ class FlextUtilitiesGuardsTypeModel:
         return isinstance(
             value,
             Mapping,
-        ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
+        ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(
+            cast("Mapping[str, t.Container]", value)
+        )
 
     @staticmethod
     def is_configuration_mapping(
@@ -53,7 +55,9 @@ class FlextUtilitiesGuardsTypeModel:
         if not isinstance(value, (t.ConfigMap, t.Dict, Mapping)):
             return False
         candidate: Mapping[str, t.ValueOrModel] = (
-            value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
+            value.root
+            if isinstance(value, (t.ConfigMap, t.Dict))
+            else cast("Mapping[str, t.ValueOrModel]", value)
         )
         for item_value in candidate.values():
             if isinstance(

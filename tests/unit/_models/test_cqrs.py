@@ -17,7 +17,7 @@ import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_tests import tm
-from tests import c, m, t
+from tests import c, m, t, u
 
 
 class TestFlextModelsCqrs:
@@ -218,6 +218,16 @@ class TestFlextModelsCqrs:
         tm.that(pag.page, eq=7)
         tm.that(pag.size, eq=30)
 
+    def test_query_validate_pagination_from_t_dict(self) -> None:
+        parsed = m.Query.model_validate({
+            "pagination": t.Dict(root={"page": 5, "size": 12}),
+            "filters": {},
+        })
+        tm.that(parsed.pagination, is_=m.Pagination)
+        pag = cast("m.Pagination", parsed.pagination)
+        tm.that(pag.page, eq=5)
+        tm.that(pag.size, eq=12)
+
     def test_query_resolve_pagination_wrapper(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -234,7 +244,13 @@ class TestFlextModelsCqrs:
         setattr(mock_module, "Wrapper", Wrapper)
         monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
         tm.that(
-            Wrapper.Query._resolve_pagination_class(),
+            u.resolve_nested_model_class(
+                module_name=Wrapper.Query.__module__,
+                qualname=Wrapper.Query.__qualname__,
+                models_module_name="flext_core.models",
+                attribute_name="Pagination",
+                fallback=m.Pagination,
+            ),
             eq=Wrapper.Pagination,
         )
 
@@ -252,7 +268,16 @@ class TestFlextModelsCqrs:
             "flext_core.models",
             ModuleType("flext_core.models"),
         )
-        tm.that(Wrapper.Query._resolve_pagination_class(), eq=m.Pagination)
+        tm.that(
+            u.resolve_nested_model_class(
+                module_name=Wrapper.Query.__module__,
+                qualname=Wrapper.Query.__qualname__,
+                models_module_name="flext_core.models",
+                attribute_name="Pagination",
+                fallback=m.Pagination,
+            ),
+            eq=m.Pagination,
+        )
 
     def test_query_resolve_pagination_deeper_nesting(
         self, monkeypatch: pytest.MonkeyPatch
@@ -267,7 +292,16 @@ class TestFlextModelsCqrs:
         mock_module = ModuleType("flext_core.models")
         setattr(mock_module, "Wrapper", Wrapper)
         monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
-        tm.that(Wrapper.Inner.Query._resolve_pagination_class(), eq=m.Pagination)
+        tm.that(
+            u.resolve_nested_model_class(
+                module_name=Wrapper.Inner.Query.__module__,
+                qualname=Wrapper.Inner.Query.__qualname__,
+                models_module_name="flext_core.models",
+                attribute_name="Pagination",
+                fallback=m.Pagination,
+            ),
+            eq=m.Pagination,
+        )
 
     def test_query_filters_default_empty(self) -> None:
         query = m.Query()

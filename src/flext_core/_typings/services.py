@@ -92,7 +92,7 @@ class FlextTypesServices:
         FlextTypesServices.ScalarOrModel
         | Callable[..., FlextTypesServices.ScalarOrModel]
     )
-    type LoggerFactory = Callable[[], p.Logger] | p.Logger | None
+    type LoggerFactory = Callable[..., p.OutputLogger] | None
     type StructlogProcessor = Callable[
         ...,
         FlextTypingBase.RecursiveContainerMapping,

@@ -4,7 +4,7 @@ TIER 1: Uses Tier 0 modules (constants, typings) and base models.
 
 This module provides generic models organized by business function:
 - Value Objects: Immutable data compared by value (FrozenValueModel)
-- Snapshots: State captured at a specific moment (FrozenStrictModel)
+- Snapshots: State captured at a specific moment (ContractModel)
 - Progress Trackers: Mutable accumulators during operations (ArbitraryTypesModel)
 
 All downstream projects (flext-cli, flext-ldif, flext-ldap, flext-oud-mig)
@@ -101,7 +101,7 @@ class FlextGenericModels:
             Field(default=None, description="Timeout override seconds"),
         ] = None
 
-    class Service(FlextModelsBase.FrozenStrictModel):
+    class Service(FlextModelsBase.ContractModel):
         """Snapshot of service state.
 
         Used by: FlextService.get_info(), monitoring, health checks.
@@ -159,7 +159,7 @@ class FlextGenericModels:
             ),
         ] = Field(default_factory=t.Dict)
 
-    class Configuration(FlextModelsBase.FrozenStrictModel):
+    class Configuration(FlextModelsBase.ContractModel):
         """Configuration snapshot.
 
         Used by: CLI config info, debug, auditing.
@@ -203,7 +203,7 @@ class FlextGenericModels:
             ),
         ] = Field(default_factory=t.Dict)
 
-    class Health(FlextModelsBase.FrozenStrictModel):
+    class Health(FlextModelsBase.ContractModel):
         """Health check result.
 
         Used by: /health endpoints, monitoring, alerting.

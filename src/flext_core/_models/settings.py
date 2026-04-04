@@ -17,8 +17,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    TypeAdapter,
-    ValidationError,
     field_validator,
     model_validator,
 )
@@ -31,7 +29,6 @@ from flext_core import (
     FlextRuntime,
     c,
     p,
-    r,
     t,
 )
 
@@ -250,10 +247,6 @@ class FlextModelsConfig:
     class BatchProcessingConfig(FlextModelsCollections.Config):
         """Enhanced batch processing configuration."""
 
-        _batch_list_adapter: ClassVar[
-            TypeAdapter[Sequence[FlextModelsConfig.BatchProcessingConfig]] | None
-        ] = None
-
         batch_size: Annotated[
             t.PositiveInt,
             Field(
@@ -295,39 +288,17 @@ class FlextModelsConfig:
         ] = Field(default_factory=list)
 
         @classmethod
-        def _batch_adapter(
-            cls,
-        ) -> TypeAdapter[Sequence[FlextModelsConfig.BatchProcessingConfig]]:
-            if cls._batch_list_adapter is None:
-                cls._batch_list_adapter = TypeAdapter(
-                    Sequence[FlextModelsConfig.BatchProcessingConfig],
-                )
-            return cls._batch_list_adapter
-
-        @classmethod
         def validate_batch(
             cls,
             models: Sequence[t.ValueOrModel],
         ) -> Sequence[FlextModelsConfig.BatchProcessingConfig]:
-            batch_result = r[
-                Sequence[FlextModelsConfig.BatchProcessingConfig]
-            ].create_from_callable(lambda: cls._batch_adapter().validate_python(models))
-            if batch_result.is_success:
-                return batch_result.value
-            exc = getattr(batch_result, "_exception", None)
-            if isinstance(exc, ValidationError):
-                item_errors = [
-                    f"{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"
-                    for err in exc.errors()
-                ]
-                msg = f"Batch validation failed: {'; '.join(item_errors)}"
-                raise TypeError(msg)
-            raise ValueError(batch_result.error or "Batch validation failed")
+            return FlextRuntime.validate_model_sequence(models, cls)
 
         @model_validator(mode="after")
         def validate_cross_fields(self) -> Self:
             adjusted_workers = min(self.max_workers, self.batch_size)
-            self.max_workers = adjusted_workers
+            if adjusted_workers != self.max_workers:
+                self.max_workers = adjusted_workers
             return self
 
     class HandlerExecutionConfig(FlextModelsCollections.Config):
@@ -569,7 +540,7 @@ class FlextModelsConfig:
             ),
         ] = None
         logger_factory: Annotated[
-            Callable[..., p.Logger] | None,
+            Callable[..., p.OutputLogger] | None,
             Field(
                 default=None,
                 description="Custom logger factory for structlog",
@@ -580,6 +551,13 @@ class FlextModelsConfig:
             Field(
                 default=True,
                 description="Cache logger on first use (performance optimization)",
+            ),
+        ] = True
+        async_logging: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Enable asynchronous buffered logging backend",
             ),
         ] = True
 

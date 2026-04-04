@@ -30,12 +30,16 @@ from flext_core import (
     TV_co,
     U,
 )
+from flext_core._typings.annotateds import FlextTypesAnnotateds
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
 
 class FlextTypes(
+    FlextTypesAnnotateds,
     FlextTypesCore,
     FlextTypesServices,
     FlextTypesValidation,
+    FlextTypesTypeAdapters,
 ):
     """Type system foundation for FLEXT ecosystem.
 

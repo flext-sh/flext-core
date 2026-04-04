@@ -78,28 +78,6 @@ class FlextProtocolsBase:
         except TypeError:
             return False
 
-    @classmethod
-    def validate_protocol_compliance(
-        cls,
-        target_cls: type,
-        protocol: type,
-        class_name: str,
-    ) -> None:
-        """Validate that a class implements all required protocol members.
-
-        Uses @runtime_checkable Protocol — no custom introspection needed.
-        """
-        try:
-            compliant = issubclass(target_cls, protocol)
-        except TypeError:
-            compliant = False
-        if not compliant:
-            protocol_name = (
-                protocol.__name__ if hasattr(protocol, "__name__") else str(protocol)
-            )
-            msg = f"Class '{class_name}' does not implement protocol '{protocol_name}'"
-            raise TypeError(msg)
-
     @runtime_checkable
     class Executable(Base, Protocol):
         """Protocol for objects that can be executed and report service info."""

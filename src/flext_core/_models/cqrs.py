@@ -9,16 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
-from types import ModuleType
 from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import (
     BaseModel,
     ConfigDict,
-    Discriminator,
     Field,
-    TypeAdapter,
     computed_field,
     field_validator,
 )
@@ -128,9 +124,6 @@ class FlextModelsCqrs:
             },
         )
         tag: ClassVar[Literal["query"]] = "query"
-        _pagination_input_adapter: ClassVar[
-            TypeAdapter[BaseModel | t.Dict | t.ScalarMapping | None] | None
-        ] = None
         message_type: Annotated[
             Literal["query"],
             Field(
@@ -179,52 +172,6 @@ class FlextModelsCqrs:
             """Event type identifier (always None for queries)."""
             return None
 
-        @classmethod
-        def _resolve_pagination_class(
-            cls: type[FlextModelsCqrs.Query],
-        ) -> type[BaseModel]:
-            """Resolve correct Pagination class based on context."""
-            if cls.__module__ != "flext_core.models" or "." not in cls.__qualname__:
-                return FlextModelsCqrs.Pagination
-            parts = cls.__qualname__.split(".")
-            models_module = sys.modules.get("flext_core.models")
-            min_qualname_parts = 2
-            if not models_module or len(parts) < min_qualname_parts:
-                return FlextModelsCqrs.Pagination
-            obj: p.Base | BaseModel | type | ModuleType | None = (
-                models_module.__dict__.get(parts[0])
-            )
-            for part in parts[1:-1]:
-                if obj is None:
-                    break
-                if isinstance(obj, ModuleType):
-                    obj = obj.__dict__.get(part)
-                    continue
-                if isinstance(obj, type):
-                    obj = obj.__dict__.get(part)
-                    continue
-                obj = None
-            if isinstance(obj, type):
-                pagination_cls_attr = obj.__dict__.get("Pagination")
-                if (
-                    pagination_cls_attr is not None
-                    and isinstance(pagination_cls_attr, type)
-                    and issubclass(pagination_cls_attr, FlextModelsCqrs.Pagination)
-                ):
-                    result_cls: type[FlextModelsCqrs.Pagination] = pagination_cls_attr
-                    return result_cls
-            return FlextModelsCqrs.Pagination
-
-        @classmethod
-        def _pagination_adapter(
-            cls,
-        ) -> TypeAdapter[BaseModel | t.Dict | t.ScalarMapping | None]:
-            if cls._pagination_input_adapter is None:
-                cls._pagination_input_adapter = TypeAdapter(
-                    FlextModelsCqrs.Pagination | t.Dict | t.ScalarMapping | None,
-                )
-            return cls._pagination_input_adapter
-
         @field_validator("pagination", mode="before")
         @classmethod
         def validate_pagination(
@@ -232,18 +179,18 @@ class FlextModelsCqrs:
             v: BaseModel | t.Dict | t.ScalarMapping | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
-            pagination_cls = cls._resolve_pagination_class()
-            parsed_input = cls._pagination_adapter().validate_python(v)
-            if parsed_input is None:
+            pagination_cls = FlextRuntime.resolve_nested_model_class(
+                module_name=cls.__module__,
+                qualname=cls.__qualname__,
+                models_module_name="flext_core.models",
+                attribute_name="Pagination",
+                fallback=FlextModelsCqrs.Pagination,
+            )
+            normalized_input = FlextRuntime.normalize_model_input_mapping(v)
+            if normalized_input is None:
                 return pagination_cls()
             validate_result = r[BaseModel].create_from_callable(
-                lambda: (
-                    pagination_cls.model_validate(parsed_input.root)
-                    if isinstance(parsed_input, t.Dict)
-                    else pagination_cls.model_validate(parsed_input.model_dump())
-                    if isinstance(parsed_input, FlextModelsCqrs.Pagination)
-                    else pagination_cls.model_validate(dict(parsed_input))
-                ),
+                lambda: pagination_cls.model_validate(normalized_input),
             )
             if validate_result.is_failure:
                 return pagination_cls()
@@ -464,10 +411,7 @@ class FlextModelsCqrs:
             ),
         ] = Field(default_factory=t.Dict)
 
-    type FlextMessage = Annotated[
-        Command | Query | Event,
-        Discriminator("message_type"),
-    ]
+    type FlextMessage = t.MessageUnion[Command, Query, Event]
 
     @staticmethod
     def parse_message(

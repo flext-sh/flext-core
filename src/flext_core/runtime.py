@@ -45,7 +45,7 @@ from typing import (
 import orjson
 import structlog
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 from structlog.types import Processor as _StructlogProcessor
@@ -54,15 +54,7 @@ from flext_core import T, c, p, t
 
 
 class FlextRuntime:
-    """Expose structlog, DI providers, and validation helpers to higher layers.
-
-    **ARCHITECTURE LAYER 0.5** - Integration Bridge with minimal dependencies
-
-    Provides runtime utilities that consume patterns from c and expose
-    external library APIs to higher-level modules, maintaining proper dependency
-    hierarchy while eliminating code duplication. Implements structural typing via
-    p (duck typing through method signatures, no inheritance required).
-    """
+    """Expose structlog, DI providers, and validation helpers to higher layers."""
 
     _structlog_configured: ClassVar[bool] = False
     _runtime_logger: ClassVar[p.Logger | None] = None
@@ -97,16 +89,12 @@ class FlextRuntime:
         def __init__(self, stream: typing.TextIO) -> None:
             super().__init__()
             self.stream = stream
-            self._stream_mode: str = getattr(stream, "mode", "w")
-            self._stream_name: str = getattr(stream, "name", "<async-log-writer>")
-            self._stream_encoding: str = str(
-                getattr(stream, "encoding", c.DEFAULT_ENCODING)
+            self._encoding: str = str(
+                getattr(self.stream, "encoding", c.DEFAULT_ENCODING)
             )
-            self._stream_errors: str | None = getattr(stream, "errors", None)
-            self._stream_newlines: str | tuple[str, ...] | None = getattr(
-                stream,
-                "newlines",
-                None,
+            self._errors: str | None = getattr(self.stream, "errors", None)
+            self._newlines: str | tuple[str, ...] | None = getattr(
+                self.stream, "newlines", None
             )
             self.queue: queue.Queue[str | None] = queue.Queue(
                 maxsize=c.MAX_ITEMS,
@@ -124,13 +112,21 @@ class FlextRuntime:
         @property
         def _writer_log(self) -> p.Logger:
             """Logger for async log writer."""
-            if getattr(self, "_writer_logger", None) is None:
-                self._writer_logger = structlog.get_logger(__name__)
             logger = self._writer_logger
             if logger is None:
                 logger = structlog.get_logger(__name__)
                 self._writer_logger = logger
             return logger
+
+        @property
+        def mode(self) -> str:
+            """Expose text stream mode for TextIO compatibility."""
+            return str(getattr(self.stream, "mode", "w"))
+
+        @property
+        def name(self) -> str:
+            """Expose text stream name for TextIO compatibility."""
+            return str(getattr(self.stream, "name", "<async-log-writer>"))
 
         @property
         def buffer(self) -> typing.BinaryIO:
@@ -148,8 +144,10 @@ class FlextRuntime:
         @override
         def flush(self) -> None:
             """Flush stream (best effort)."""
-            with contextlib.suppress(OSError, ValueError):
+            try:
                 self.stream.flush()
+            except (OSError, ValueError):
+                return
 
         def shutdown(self) -> None:
             """Stop worker thread and flush remaining messages."""
@@ -195,19 +193,7 @@ class FlextRuntime:
 
     @classmethod
     def ensure_structlog_configured(cls) -> None:
-        """Ensure structlog is configured (called automatically on first use).
-
-        This method provides lazy configuration of structlog. It checks if structlog
-        has already been configured, and if not, configures it with default settings.
-        This ensures structlog is ready for use without requiring explicit configuration
-        at application startup.
-
-        Example:
-            >>> # Automatic configuration on first logger creation
-            >>> logger = FlextLogger.create_module_logger(__name__)
-            >>> # structlog is now configured automatically
-
-        """
+        """Ensure structlog is configured (called automatically on first use)."""
         if not cls._structlog_configured:
             cls.configure_structlog()
             cls._structlog_configured = True
@@ -225,20 +211,6 @@ class FlextRuntime:
     @staticmethod
     def create_instance[T](class_type: type[T]) -> T:
         """Type-safe factory for creating instances via object.__new__.
-
-        Business Rule: Creates instances using object.__new__() for type-safe
-        instantiation without calling __init__. Validates instance type after creation
-        to ensure type safety. This pattern eliminates the need for type: ignore comments
-        when using object.__new__() directly. Used by factory patterns throughout FLEXT
-        for creating instances without side effects from __init__.
-
-        Audit Implication: Instance creation is validated at runtime, ensuring type
-        safety for audit trails. All instances are verified to be of expected type
-        before being returned. Used by dependency injection and factory patterns.
-
-        This helper function properly types object.__new__() calls, eliminating
-        the need for type: ignore comments. Use this instead of direct object.__new__()
-        calls in factory patterns.
 
         Args:
             class_type: The class to instantiate
@@ -279,6 +251,13 @@ class FlextRuntime:
         return isinstance(value, t.SCALAR_TYPES)
 
     @staticmethod
+    def ensure_utc_datetime(value: datetime | None) -> datetime | None:
+        """Attach UTC timezone to naive datetimes while preserving None."""
+        if value is not None and value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value
+
+    @staticmethod
     def dependency_containers() -> ModuleType:
         """Return the dependency-injector containers module."""
         return containers
@@ -311,11 +290,6 @@ class FlextRuntime:
     ) -> tuple[t.GenericTypeArgument | type, ...]:
         """Extract generic type arguments from a type hint.
 
-        Business Rule: Extracts generic type arguments from type hints using
-        typing.get_args() for standard generics, and mapping for type
-        aliases. Returns empty tuple if no arguments found or on error. Used for
-        type introspection and generic type analysis.
-
         Args:
             type_hint: Type hint to extract args from
 
@@ -341,12 +315,9 @@ class FlextRuntime:
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return ()
 
-    @staticmethod
-    def get_logger(name: str | None = None) -> p.Logger:
+    @classmethod
+    def get_logger(cls, name: str | None = None) -> p.Logger:
         """Get structlog logger instance - same structure/config used by FlextLogger.
-
-        Returns the exact same structlog logger instance that FlextLogger uses internally.
-        This ensures consistent logging structure across the entire FLEXT ecosystem.
 
         Args:
             name: Logger name (module name). Defaults to __name__ of caller.
@@ -359,6 +330,7 @@ class FlextRuntime:
             This method returns the base logger before context binding.
 
         """
+        cls.ensure_structlog_configured()
         if name is None:
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -432,14 +404,6 @@ class FlextRuntime:
     def is_sequence_type(type_hint: t.TypeHintSpecifier) -> bool:
         """Check if type hint represents a sequence type (list, tuple, etc.).
 
-        Business Rule: Checks if type hint represents a sequence type using
-        typing.get_origin() and structural class checks. Supports both standard
-        generics and type aliases. Returns False on error for safe type checking.
-
-        Audit Implication: Sequence type checking enables audit trail completeness
-        by providing type information for sequence types. All type checking is
-        safe and never raises exceptions.
-
         Args:
             type_hint: Type hint to check
 
@@ -502,15 +466,6 @@ class FlextRuntime:
     def is_valid_json(value: t.RuntimeData) -> TypeIs[str]:
         """Type guard to check if value is valid JSON string.
 
-        Business Rule: Validates JSON strings using Pydantic v2 TypeAdapter for parsing.
-        Returns TypeIs[str] for type narrowing in conditional blocks.
-        Catches ValidationError for safe validation. Used for
-        validating JSON payloads before deserialization.
-
-        Audit Implication: JSON validation ensures audit trail completeness by
-        validating JSON payloads before storage. All JSON strings are validated
-        before being used in audit systems.
-
         Args:
             value: Value to check
 
@@ -561,6 +516,147 @@ class FlextRuntime:
             normalized = FlextRuntime.normalize_to_container(item)
             result[key] = FlextRuntime._to_plain_container(normalized)
         return result
+
+    @staticmethod
+    def resolve_nested_model_class[TModel: BaseModel](
+        *,
+        module_name: str,
+        qualname: str,
+        models_module_name: str,
+        attribute_name: str,
+        fallback: type[TModel],
+    ) -> type[TModel]:
+        """Resolve a nested override model class from a facade module path."""
+        min_qualname_parts = 2
+        if module_name != models_module_name or "." not in qualname:
+            return fallback
+        parts = qualname.split(".")
+        models_module = sys.modules.get(models_module_name)
+        if not isinstance(models_module, ModuleType) or len(parts) < min_qualname_parts:
+            return fallback
+        obj: object | None = models_module.__dict__.get(parts[0])
+        for part in parts[1:-1]:
+            if isinstance(obj, ModuleType):
+                obj = obj.__dict__.get(part)
+                continue
+            if isinstance(obj, type):
+                obj = obj.__dict__.get(part)
+                continue
+            obj = None
+            break
+        if not isinstance(obj, type):
+            return fallback
+        resolved_attr = obj.__dict__.get(attribute_name)
+        if isinstance(resolved_attr, type) and issubclass(resolved_attr, fallback):
+            return resolved_attr
+        return fallback
+
+    @staticmethod
+    def normalize_model_input_mapping(
+        value: BaseModel | t.Dict | t.ScalarMapping | None,
+    ) -> Mapping[str, t.ValueOrModel] | None:
+        """Normalize model-like input to a plain mapping."""
+        if value is None:
+            return None
+        if isinstance(value, t.Dict):
+            return dict(value.root)
+        if isinstance(value, BaseModel):
+            return value.model_dump()
+        return dict(value)
+
+    @staticmethod
+    def validate_model_sequence[TModel: BaseModel](
+        values: Sequence[t.ValueOrModel],
+        model_cls: type[TModel],
+    ) -> Sequence[TModel]:
+        """Validate a heterogeneous input sequence into one Pydantic model type."""
+        validated_items: list[TModel] = []
+        item_errors: list[str] = []
+        for index, value in enumerate(values):
+            try:
+                if isinstance(value, model_cls):
+                    validated_items.append(value)
+                elif isinstance(value, BaseModel):
+                    validated_items.append(model_cls.model_validate(value.model_dump()))
+                elif isinstance(value, Mapping):
+                    validated_items.append(model_cls.model_validate(dict(value)))
+                else:
+                    validated_items.append(model_cls.model_validate(value))
+            except ValidationError as exc:
+                item_errors.extend(
+                    f"{index}.{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"
+                    for err in exc.errors()
+                )
+        if item_errors:
+            msg = f"Batch validation failed: {'; '.join(item_errors)}"
+            raise TypeError(msg)
+        return validated_items
+
+    @classmethod
+    def normalize_metadata_input(cls, value: t.MetadataInput) -> p.Metadata:
+        """Normalize metadata input into the bound metadata model."""
+        metadata_cls = typing.cast("type[BaseModel]", cls._require_metadata_model())
+        if value is None:
+            return typing.cast(
+                "p.Metadata",
+                metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}}),
+            )
+        if isinstance(value, metadata_cls):
+            return typing.cast("p.Metadata", value)
+        if not isinstance(value, Mapping):
+            msg = (
+                "metadata must be None, dict, or bound metadata model, got "
+                f"{value.__class__.__name__}"
+            )
+            raise TypeError(msg)
+        return typing.cast(
+            "p.Metadata",
+            metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)}),
+        )
+
+    @staticmethod
+    def normalize_recursive_metadata_value(
+        item: t.MetadataOrValue | None,
+    ) -> t.RecursiveContainer:
+        """Normalize metadata-like values while preserving recursive shape."""
+        if item is None:
+            return None
+        if isinstance(item, (bool, str, int, float, datetime)):
+            return item
+        if isinstance(item, Mapping):
+            normalized_map: t.MutableContainerMapping = {}
+            for key, value in item.items():
+                normalized_map[str(key)] = (
+                    FlextRuntime.normalize_recursive_metadata_value(
+                        value if FlextRuntime.is_scalar(value) else str(value)
+                    )
+                )
+            return normalized_map
+        if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
+            return [
+                FlextRuntime.normalize_recursive_metadata_value(
+                    value if FlextRuntime.is_scalar(value) else str(value)
+                )
+                for value in item
+            ]
+        return str(item)
+
+    @staticmethod
+    def normalize_domain_event_data(
+        value: t.ValueOrModel | Mapping[str, t.ValueOrModel] | None,
+    ) -> Mapping[str, t.RecursiveContainer]:
+        """Normalize domain event payloads into comparable plain mappings."""
+        if value is None:
+            return {}
+        if not isinstance(value, (t.ConfigMap, Mapping)):
+            msg = "Domain event data must be a dictionary or None"
+            raise TypeError(msg)
+        raw_source = value.root if isinstance(value, t.ConfigMap) else value
+        typed_source = t.dict_str_metadata_adapter().validate_python(raw_source)
+        return {
+            str(key): FlextRuntime.normalize_recursive_metadata_value(item)
+            for key, item in typed_source.items()
+        }
 
     @staticmethod
     def normalize_to_container(
@@ -677,15 +773,6 @@ class FlextRuntime:
     ) -> t.ValueOrModel | None:
         """Safe attribute access without raising AttributeError.
 
-        Business Rule: Accesses runtime data attributes safely using getattr() with
-        default value. Never raises AttributeError, always returns default if
-        attribute doesn't exist. Used for safe introspection of arbitrary objects
-        without type checking.
-
-        Audit Implication: Safe attribute access ensures audit trail completeness
-        by preventing AttributeError exceptions during runtime data introspection. All
-        attribute access is safe and logged appropriately.
-
         Args:
             obj: Object to get attribute from
             attr: Attribute name
@@ -703,15 +790,7 @@ class FlextRuntime:
         return structlog
 
     class DependencyIntegration:
-        """Centralize dependency-injector wiring with provider helpers.
-
-        This bridge keeps dependency-injector usage confined to L1 while
-        exposing a narrow API for higher layers. Factories and configuration
-        providers are materialized here to avoid duplicate dictionaries or
-        direct imports of ``dependency_injector`` outside the runtime module.
-        A small DeclarativeContainer captures config/resources so L3 callers
-        never import dependency-injector directly.
-        """
+        """Centralize dependency-injector wiring with provider helpers."""
 
         class DynamicContainerWithConfig(containers.DynamicContainer):
             """Dynamic container with declared configuration provider."""
@@ -864,17 +943,7 @@ class FlextRuntime:
             containers.DynamicContainer,
             containers.DynamicContainer,
         ]:
-            """Create a DeclarativeContainer bridged to dynamic modules.
-
-            Returns a tuple with the declarative bridge plus dynamic containers
-            for services and resources. The bridge isolates dependency-injector
-            usage to L1/L2 while allowing higher layers to work only with
-            FlextContainer's APIs. The declarative bridge exposes ``config``,
-            ``services``, and ``resources`` providers, plus ``Provide``/``inject``
-            helpers re-exported by the runtime. See
-            :class:`DependencyIntegration.BridgeContainer` for attributes
-            available to wire modules, classes, and functions.
-            """
+            """Create a DeclarativeContainer bridged to dynamic modules."""
             bridge = cls.BridgeContainer()
             service_module = containers.DynamicContainer()
             resource_module = containers.DynamicContainer()
@@ -986,17 +1055,7 @@ class FlextRuntime:
             packages: t.StrSequence | None = None,
             classes: Sequence[type] | None = None,
         ) -> None:
-            """Wire modules or packages to a DeclarativeContainer or DynamicContainer for @inject usage.
-
-            Accepts both DeclarativeContainer and DynamicContainer since dependency-injector's
-            wiring.wire() accepts any container type that implements the container protocol.
-
-            Note: packages parameter is accepted for API compatibility but not used internally.
-            wiring.wire's packages parameter expects Iterable[Module] (module objects),
-            but we accept t.StrSequence (package names). The actual wiring is handled by modules parameter.
-            For now, we pass None for packages when it's a t.StrSequence to avoid type errors.
-            The actual wiring will be handled by modules parameter.
-            """
+            """Wire modules or packages to a DeclarativeContainer or DynamicContainer for @inject usage."""
             modules_to_wire: MutableSequence[ModuleType] = list(modules or [])
             if classes:
                 for target_class in classes:
@@ -1018,14 +1077,14 @@ class FlextRuntime:
         console_renderer: bool,
         additional_processors: Sequence[t.StructlogProcessor] | None,
         wrapper_class_factory: Callable[[], type[p.Logger]] | None,
-        logger_factory: Callable[[], p.Logger] | None,
+        logger_factory: t.LoggerFactory,
         cache_logger_on_first_use: bool,
     ) -> tuple[
         int,
         bool,
         Sequence[t.StructlogProcessor] | None,
         Callable[[], type[p.Logger]] | None,
-        Callable[[], p.Logger] | None,
+        t.LoggerFactory,
         bool,
         bool,
     ]:
@@ -1096,15 +1155,38 @@ class FlextRuntime:
     def _resolve_logger_factory(
         cls,
         *,
-        logger_factory: Callable[[], p.Logger] | None,
+        logger_factory: t.LoggerFactory,
         async_logging: bool,
     ) -> t.LoggerFactory | None:
-        """Resolve the logger factory, setting up async writer if needed."""
+        """Resolve the logger factory, enabling async output when requested."""
         if logger_factory is not None:
             return logger_factory
-        if async_logging and cls._async_writer is None:
-            cls._async_writer = cls._AsyncLogWriter(sys.stdout)
+        if async_logging:
+            try:
+                print_logger_factory = structlog.PrintLoggerFactory
+            except AttributeError:
+                pass
+            else:
+                if callable(print_logger_factory):
+                    return cls._build_async_logger_factory(print_logger_factory)
+            try:
+                write_logger_factory = structlog.WriteLoggerFactory
+            except AttributeError:
+                pass
+            else:
+                if callable(write_logger_factory):
+                    return cls._build_async_logger_factory(write_logger_factory)
         return None
+
+    @classmethod
+    def _build_async_logger_factory(
+        cls,
+        factory_builder: Callable[..., t.LoggerFactory],
+    ) -> t.LoggerFactory:
+        """Build a structlog logger factory bound to the shared async writer."""
+        if cls._async_writer is None:
+            cls._async_writer = cls._AsyncLogWriter(sys.stdout)
+        return factory_builder(file=cls._async_writer)
 
     @classmethod
     def configure_structlog(
@@ -1115,7 +1197,7 @@ class FlextRuntime:
         console_renderer: bool = True,
         additional_processors: Sequence[t.StructlogProcessor] | None = None,
         wrapper_class_factory: Callable[[], type[p.Logger]] | None = None,
-        logger_factory: Callable[[], p.Logger] | None = None,
+        logger_factory: t.LoggerFactory = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -1184,39 +1266,10 @@ class FlextRuntime:
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
-        **USE ONLY when CLI params override config defaults.**
-
-        For initial configuration, use configure_structlog().
-        This method forces reconfiguration,
-        allowing CLI parameters to override the initial configuration.
-
-        **Layer 2 Responsibility (flext-cli MODIFIER)**:
-        - flext-core: Uses configure_structlog() for initial setup
-        - flext-cli: Uses reconfigure_structlog() to override via CLI params
-        - Applications: Inherit automatically, zero manual code
-
         Args:
             log_level: Numeric log level to reconfigure
             console_renderer: Use console renderer vs JSON
             additional_processors: Extra processors to add
-
-        Example:
-            ```python
-            # CLI override: User passed --debug flag (use runtime aliases)
-            from flext_core import c
-            from flext_core import FlextRuntime
-
-            FlextRuntime.reconfigure_structlog(
-                log_level=c.LogLevel.DEBUG.value,
-                console_renderer=True,
-            )
-            ```
-
-        Notes:
-            - Resets structlog state completely
-            - Resets FLEXT configuration flags
-            - Calls configure_structlog() with fresh state
-            - Safe to call multiple times
 
         """
         module = structlog
@@ -1262,13 +1315,6 @@ class FlextRuntime:
     ) -> t.ScalarMapping:
         """Filter context variables based on log level.
 
-        Removes context variables that are restricted to specific log levels
-        when the current log level doesn't match.
-
-        This processor handles level-prefixed context variables created by
-        FlextLogger.bind_context_for_level() and removes them from logs that
-        don't meet the required log level.
-
         Args:
             _logger: Logger instance (unused, required by structlog protocol)
             method_name: Log method name ('debug', 'info', 'warning', 'error', etc.)
@@ -1276,20 +1322,6 @@ class FlextRuntime:
 
         Returns:
             Filtered event dictionary
-
-        Example:
-            Context bound with:
-            >>> FlextLogger.bind_context_for_level("DEBUG", config=config_dict)
-            >>> FlextLogger.bind_context_for_level("ERROR", stack_trace=trace)
-
-            Results in:
-            - DEBUG logs: include config
-            - INFO logs: exclude config
-            - ERROR logs: include stack_trace
-            - INFO logs: exclude stack_trace
-
-        Note:
-            Log level hierarchy: DEBUG < INFO < WARNING < ERROR < CRITICAL
 
         """
         level_hierarchy = {
@@ -1320,33 +1352,7 @@ class FlextRuntime:
         return filtered_dict
 
     class Integration:
-        """Application-layer integration helpers using structlog directly (Layer 0.5).
-
-        **DESIGN**: These methods use structlog directly without importing from
-        higher layers (FlextContext, FlextLogger), avoiding all circular imports.
-
-        **USAGE**: Opt-in helpers for application/service layer to integrate
-        foundation components with context tracking.
-
-        **CORRECT USAGE** (Application Layer):
-            ```python
-            from flext_core import FlextContainer
-            from flext_core import FlextRuntime
-
-            container = FlextContainer.get_global()
-            result = container.get("database")
-
-            # Opt-in integration at application layer
-            FlextRuntime.Integration.track_service_resolution(
-                "database", resolved=result.is_success
-            )
-            ```
-
-        **NOTES**:
-            - Uses structlog directly (single source of truth for context)
-            - No imports from Infrastructure layer (context.py, loggings.py)
-            - Pure Layer 0.5 implementation
-        """
+        """Application-layer integration helpers using structlog directly (Layer 0.5)."""
 
         @staticmethod
         def setup_service_infrastructure(

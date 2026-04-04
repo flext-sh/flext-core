@@ -17,7 +17,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_tests import tm
-from tests import c, m, t
+from tests import c, m, t, u
 
 
 class TestFlextModelsEntity:
@@ -44,19 +44,19 @@ class TestFlextModelsEntity:
         tm.that(event.data.root, eq={"key": "value", "count": "42"})
 
     def test_domain_event_entry_validates_dict_data(self) -> None:
-        event = m.Entry(
-            event_type="evt",
-            aggregate_id="agg-1",
-            data={"status": "active"},
-        )
+        event = m.Entry.model_validate({
+            "event_type": "evt",
+            "aggregate_id": "agg-1",
+            "data": {"status": "active"},
+        })
         tm.that(event.data.root, eq={"status": "active"})
 
     def test_domain_event_entry_none_data_becomes_empty(self) -> None:
-        event = m.Entry(
-            event_type="evt",
-            aggregate_id="agg-1",
-            data=None,
-        )
+        event = m.Entry.model_validate({
+            "event_type": "evt",
+            "aggregate_id": "agg-1",
+            "data": None,
+        })
         tm.that(event.data.root, eq={})
 
     def test_domain_event_entry_rejects_non_dict_data(self) -> None:
@@ -92,19 +92,18 @@ class TestFlextModelsEntity:
         other = m.ComparableConfigMap(root={"x": "y"})
         tm.that(cfg == other, eq=True)
 
-    # ── to_config_map helper ──────────────────────────────────
+    # ── u.normalize_domain_event_data ─────────────
 
     def test_to_config_map_none_returns_empty(self) -> None:
-        result = m.to_config_map(None)
-        tm.that(result.root, eq={})
+        result = u.normalize_domain_event_data(None)
+        tm.that(result, eq={})
 
     def test_to_config_map_with_data(self) -> None:
         data = t.ConfigMap(root={"key": "val"})
-        result = m.to_config_map(data)
-        tm.that(result.root, eq={"key": "val"})
-        tm.that(result, is_=m.ComparableConfigMap)
+        result = u.normalize_domain_event_data(data)
+        tm.that(result, eq={"key": "val"})
 
-    # ── metadata_to_normalized ────────────────────────────────
+    # ── u.normalize_recursive_metadata_value ───────
 
     @pytest.mark.parametrize(
         ("input_val", "expected"),
@@ -122,20 +121,20 @@ class TestFlextModelsEntity:
         input_val: t.MetadataOrValue | None,
         expected: t.RecursiveContainer,
     ) -> None:
-        result = m.metadata_to_normalized(input_val)
+        result = u.normalize_recursive_metadata_value(input_val)
         tm.that(result, eq=expected)
 
     def test_metadata_to_normalized_mapping(self) -> None:
-        result = m.metadata_to_normalized({"k": "v"})
+        result = u.normalize_recursive_metadata_value({"k": "v"})
         tm.that(result, eq={"k": "v"})
 
     def test_metadata_to_normalized_sequence(self) -> None:
-        result = m.metadata_to_normalized(["a", "b"])
+        result = u.normalize_recursive_metadata_value(["a", "b"])
         tm.that(result, eq=["a", "b"])
 
     def test_metadata_to_normalized_datetime(self) -> None:
         now = datetime.now(UTC)
-        result = m.metadata_to_normalized(now)
+        result = u.normalize_recursive_metadata_value(now)
         tm.that(result, eq=now)
 
     # ── Entity creation ───────────────────────────────────────

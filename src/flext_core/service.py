@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
-from typing import Annotated, ClassVar, override
+from typing import ClassVar, cast, override
 
 from pydantic import (
     ConfigDict,
@@ -60,41 +60,69 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type | None = None
-    config_overrides: Annotated[
-        t.ContainerMapping | None,
-        Field(default=None, exclude=True),
-    ] = None
-    initial_context: p.Context | None = None
-    subproject: Annotated[str | None, Field(default=None, exclude=True)] = None
-    services: Annotated[
-        Mapping[str, t.RegisterableService] | None,
-        Field(default=None, exclude=True),
-    ] = None
-    factories: Annotated[
-        Mapping[str, t.FactoryCallable] | None,
-        Field(default=None, exclude=True),
-    ] = None
-    resources: Annotated[
-        Mapping[str, t.ResourceCallable] | None,
-        Field(default=None, exclude=True),
-    ] = None
-    container_overrides: Annotated[
-        t.ScalarMapping | None,
-        Field(default=None, exclude=True),
-    ] = None
-    wire_modules: Annotated[
-        Sequence[ModuleType] | None,
-        Field(default=None, exclude=True),
-    ] = None
-    wire_packages: Annotated[
-        t.StrSequence | None,
-        Field(default=None, exclude=True),
-    ] = None
-    wire_classes: Annotated[
-        Sequence[type] | None,
-        Field(default=None, exclude=True),
-    ] = None
+    config_type: type | None = Field(
+        default=None,
+        exclude=True,
+        description="Settings class used to load runtime configuration.",
+    )
+    config_overrides: t.ContainerMapping | None = Field(
+        default=None,
+        exclude=True,
+        description="Key-value overrides applied on top of the loaded configuration.",
+    )
+    initial_context: p.Context | None = Field(
+        default=None,
+        exclude=True,
+        description="Initial execution context to inject into the runtime.",
+    )
+    subproject: str | None = Field(
+        default=None,
+        exclude=True,
+        description="Subproject name used to scope configuration and wiring.",
+    )
+    services: Mapping[str, t.RegisterableService] | None = Field(
+        default=None,
+        exclude=True,
+        description="Named services to register in the dependency container.",
+    )
+    factories: Mapping[str, t.FactoryCallable] | None = Field(
+        default=None,
+        exclude=True,
+        description="Named factory callables to register in the dependency container.",
+    )
+    resources: Mapping[str, t.ResourceCallable] | None = Field(
+        default=None,
+        exclude=True,
+        description="Named lifecycle resources to register in the dependency container.",
+    )
+    container_overrides: t.ScalarMapping | None = Field(
+        default=None,
+        exclude=True,
+        description="Provider overrides applied to the dependency container.",
+    )
+    wire_modules: Sequence[ModuleType] | None = Field(
+        default=None,
+        exclude=True,
+        description="Modules to wire for dependency-injector resolution.",
+    )
+    wire_packages: t.StrSequence | None = Field(
+        default=None,
+        exclude=True,
+        description="Package names to consider for dependency wiring.",
+    )
+    wire_classes: Sequence[type] | None = Field(
+        default=None,
+        exclude=True,
+        description="Classes whose modules are wired for dependency resolution.",
+    )
+
+    _context: p.Context | None = PrivateAttr(default=None)
+    _config: p.Settings | None = PrivateAttr(default=None)
+    _container: p.Container | None = PrivateAttr(default=None)
+    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
+    _discovered_handlers: Sequence[tuple[str, m.DecoratorConfig]] = PrivateAttr(
+        default_factory=tuple,
+    )
 
     # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
@@ -140,14 +168,6 @@ class FlextService[
             error_msg = "Service execution returned None value"
             raise e.BaseError(error_msg)
         raise e.BaseError(execution_result.error or "Service execution failed")
-
-    _context: p.Context | None = PrivateAttr(default=None)
-    _config: p.Settings | None = PrivateAttr(default=None)
-    _container: p.Container | None = PrivateAttr(default=None)
-    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _discovered_handlers: Sequence[tuple[str, m.DecoratorConfig]] = PrivateAttr(
-        default_factory=lambda: (),
-    )
 
     @property
     @override
@@ -198,7 +218,7 @@ class FlextService[
             is_settings = False
 
         if is_settings and config_type_raw is not None:
-            config_type_val = config_type_raw
+            config_type_val = cast("type[FlextSettings]", config_type_raw)
         else:
             config_type_val = config_type
         ctx_raw = self.initial_context or (

@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from datetime import datetime
+import typing
+from collections.abc import Mapping
 from typing import Annotated, override
 
 from pydantic import Field, field_validator
@@ -37,124 +37,22 @@ class FlextModelsDomainEvent:
         def __eq__(self, other: object) -> bool:
             if isinstance(other, dict):
                 return self.root == other
-            if isinstance(other, Mapping) and isinstance(other, Mapping):
-                typed_other = FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
-                    other,
-                )
+            if isinstance(other, Mapping):
                 other_mapping = t.ConfigMap(
-                    root={
-                        key: FlextModelsDomainEvent.metadata_to_normalized(value)
-                        for key, value in typed_other.items()
-                    },
+                    root=dict(
+                        FlextRuntime.normalize_domain_event_data(
+                            typing.cast("Mapping[str, t.ValueOrModel]", other)
+                        )
+                    ),
                 ).root
                 return self.root == other_mapping
             return super().__eq__(other)
 
         __hash__ = t.ConfigMap.__hash__
 
-    @staticmethod
-    def metadata_to_normalized(
-        item: t.MetadataOrValue | None,
-    ) -> t.RecursiveContainer:
-        if item is None:
-            return None
-        if isinstance(item, bool):
-            return item
-        if isinstance(item, str):
-            return item
-        if isinstance(item, int):
-            return item
-        if isinstance(item, float):
-            return item
-        if isinstance(item, datetime):
-            return item
-        if isinstance(item, Mapping):
-            normalized_map: t.MutableContainerMapping = {}
-            for key, value in item.items():
-                normalized_map[str(key)] = (
-                    FlextModelsDomainEvent.metadata_to_normalized(
-                        value if FlextRuntime.is_scalar(value) else str(value),
-                    )
-                )
-            return normalized_map
-        if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
-            return [
-                FlextModelsDomainEvent.metadata_to_normalized(
-                    value if FlextRuntime.is_scalar(value) else str(value),
-                )
-                for value in item
-            ]
-        return str(item)
-
-    @staticmethod
-    def _normalize_event_data(
-        value: t.ValueOrModel,
-    ) -> FlextModelsDomainEvent.ComparableConfigMap:
-        """BeforeValidator: normalize event data to FlextModelsDomainEvent.ComparableConfigMap."""
-        if isinstance(value, FlextModelsDomainEvent.ComparableConfigMap):
-            return value
-        if isinstance(value, t.ConfigMap):
-            return FlextModelsDomainEvent.ComparableConfigMap(root=dict(value))
-        if isinstance(value, dict):
-            typed_value = (
-                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
-                    value,
-                )
-            )
-            intermediate = t.ConfigMap(
-                root={
-                    key: FlextModelsDomainEvent.metadata_to_normalized(item)
-                    for key, item in typed_value.items()
-                },
-            )
-            return FlextModelsDomainEvent.ComparableConfigMap(root=intermediate.root)
-        if isinstance(value, Mapping):
-            typed_mapping = (
-                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
-                    value,
-                )
-            )
-            intermediate = t.ConfigMap(
-                root={
-                    key: FlextModelsDomainEvent.metadata_to_normalized(item)
-                    for key, item in typed_mapping.items()
-                },
-            )
-            return FlextModelsDomainEvent.ComparableConfigMap(root=intermediate.root)
-        if value is None:
-            return FlextModelsDomainEvent.ComparableConfigMap(root={})
-        msg = "Domain event data must be a dictionary or None"
-        raise TypeError(msg)
-
-    @staticmethod
-    def to_config_map(
-        data: t.ConfigMap | Mapping[str, t.MetadataOrValue | None] | None,
-    ) -> FlextModelsDomainEvent.ComparableConfigMap:
-        """Convert optional ConfigMap to a comparable variant."""
-        if not data:
-            return FlextModelsDomainEvent.ComparableConfigMap(root={})
-        if isinstance(data, Mapping):
-            typed_data = (
-                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
-                    data,
-                )
-            )
-            return FlextModelsDomainEvent.ComparableConfigMap(
-                root={
-                    str(key): FlextModelsDomainEvent.metadata_to_normalized(value)
-                    for key, value in typed_data.items()
-                },
-            )
-        return FlextModelsDomainEvent.ComparableConfigMap(
-            root={
-                str(key): (value if FlextRuntime.is_primitive(value) else str(value))
-                for key, value in data.items()
-            },
-        )
-
     class Entry(
-        FlextModelsBase.TimestampedModel,
         FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.TimestampedModel,
     ):
         """Base class for domain events."""
 
@@ -187,7 +85,11 @@ class FlextModelsDomainEvent:
             cls,
             value: t.ValueOrModel,
         ) -> FlextModelsDomainEvent.ComparableConfigMap:
-            return FlextModelsDomainEvent._normalize_event_data(value)
+            if isinstance(value, FlextModelsDomainEvent.ComparableConfigMap):
+                return value
+            return FlextModelsDomainEvent.ComparableConfigMap(
+                root=dict(FlextRuntime.normalize_domain_event_data(value)),
+            )
 
     # Canonical alias: tests use m.DomainEvent, which resolves to Entry
     DomainEvent = Entry

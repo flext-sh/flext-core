@@ -192,7 +192,7 @@ class FlextExceptions:
         if value is None:
             return None
         try:
-            return m.Validators.dict_str_metadata_adapter().validate_python(value)
+            return t.dict_str_metadata_adapter().validate_python(value)
         except PydanticValidationError:
             return None
 
@@ -216,7 +216,7 @@ class FlextExceptions:
         if u.is_pydantic_model(value):
             dumped_candidate = value.model_dump()
             try:
-                dumped_map = m.Validators.dict_str_metadata_adapter().validate_python(
+                dumped_map = t.dict_str_metadata_adapter().validate_python(
                     dumped_candidate,
                 )
             except PydanticValidationError:

@@ -873,9 +873,91 @@ def test_configure_structlog_print_logger_factory_fallback(
         },
     )()
     u.configure_structlog(config=cast("BaseModel", cfg))
-    # After refactoring, PrintLoggerFactory lookups were removed (dead code).
-    # The async_logging path now only initializes _AsyncLogWriter without probing.
     tm.that(module.print_calls, gte=0)
+
+
+def test_configure_structlog_async_logging_uses_print_logger_factory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    configured_has_logger_factory: MutableSequence[bool] = []
+    factory_streams: MutableSequence[io.TextIOBase] = []
+
+    class AsyncModule:
+        def __init__(self) -> None:
+            def _merge_contextvars(*_args: t.Scalar) -> t.ConfigurationMapping:
+                return {}
+
+            def _add_log_level(*_args: t.Scalar) -> t.ConfigurationMapping:
+                return {}
+
+            def _time_stamper(**_kwargs: t.Scalar) -> t.Scalar:
+                return ""
+
+            def _console_renderer(**_kwargs: t.Scalar) -> t.Scalar:
+                return ""
+
+            self.contextvars = type(
+                "Ctx",
+                (),
+                {"merge_contextvars": staticmethod(_merge_contextvars)},
+            )
+            self.processors = type(
+                "Processors",
+                (),
+                {
+                    "add_log_level": staticmethod(_add_log_level),
+                    "TimeStamper": staticmethod(_time_stamper),
+                    "StackInfoRenderer": staticmethod(lambda: ""),
+                    "JSONRenderer": staticmethod(lambda: ""),
+                },
+            )
+            self.dev = type(
+                "Dev",
+                (),
+                {"ConsoleRenderer": staticmethod(_console_renderer)},
+            )
+            self.PrintLoggerFactory = self._build_print_logger_factory()
+
+        @staticmethod
+        def _build_print_logger_factory() -> Callable[..., Callable[..., t.Scalar]]:
+            def _print_logger_factory(
+                *,
+                file: io.TextIOBase,
+            ) -> Callable[..., t.Scalar]:
+                factory_streams.append(file)
+
+                def _factory(*_args: t.Scalar) -> t.Scalar:
+                    return ""
+
+                return _factory
+
+            return _print_logger_factory
+
+        def make_filtering_bound_logger(
+            self,
+            level: int,
+        ) -> type[t.ConfigurationMapping]:
+            _ = level
+            return dict
+
+        def configure(self, **kwargs: t.Scalar) -> None:
+            configured_has_logger_factory.append(callable(kwargs.get("logger_factory")))
+
+    module = AsyncModule()
+    monkeypatch.setattr(runtime_module, "structlog", module)
+    u.configure_structlog(config=None)
+    tm.that(u._async_writer is not None, eq=True)
+    tm.that(bool(factory_streams), eq=True)
+    tm.that(factory_streams[0] is u._async_writer, eq=True)
+    tm.that(bool(configured_has_logger_factory), eq=True)
+    tm.that(configured_has_logger_factory[0], eq=True)
+
+
+def test_get_logger_auto_configures_structlog() -> None:
+    logger = u.get_logger("tests.runtime.auto")
+    _ = logger
+    tm.that(u._structlog_configured, eq=True)
+    tm.that(u._async_writer is not None, eq=True)
 
 
 def test_dependency_integration_and_wiring_paths() -> None:

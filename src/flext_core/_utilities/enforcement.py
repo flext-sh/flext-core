@@ -114,7 +114,7 @@ class FlextUtilitiesEnforcement:
             return [
                 (
                     f'model_config extra="{extra}" not allowed. '
-                    f"Use DynamicConfigModel or FlexibleInternalModel."
+                    f"Use FlexibleModel or FlexibleInternalModel."
                 ),
             ]
         return []
