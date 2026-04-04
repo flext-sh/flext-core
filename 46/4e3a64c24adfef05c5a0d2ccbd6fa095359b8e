@@ -1,0 +1,29 @@
+src/flext_core/_models/handler.py
+  f05ae18fcd8f171f 124-125
+tests/unit/test_enforcement.py
+  f05ae18fcd8f171f 23-31,33-39,41-50
+src/flext_core/_constants/enforcement.py
+  f05ae18fcd8f171f 31,34
+src/flext_core/_utilities/enforcement.py
+  f05ae18fcd8f171f 12,15,51-70,145-171,173-176,178-237,252,255-259,266-268,277,289-296,305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "464e3a64c24adfef05c5a0d2ccbd6fa095359b8e",
+  "prompts": {
+    "f05ae18fcd8f171f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b1bbb82-6621-405d-a638-e11b8325fb7a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 179,
+      "total_deletions": 18,
+      "accepted_lines": 167,
+      "overriden_lines": 4
+    }
+  }
+}
