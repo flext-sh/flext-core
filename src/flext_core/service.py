@@ -168,7 +168,7 @@ class FlextService[
             # Pyright widens generic computed_field returns to the bound in
             # whole-project mode; the cached result contract is already
             # parameterized as p.Result[TDomainResult] at this boundary.
-            return cast("TDomainResult", result_value)
+            return result_value
         raise e.BaseError(execution_result.error or "Service execution failed")
 
     @staticmethod
