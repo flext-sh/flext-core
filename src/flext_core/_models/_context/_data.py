@@ -17,7 +17,7 @@ from pydantic import (
 )
 
 from flext_core import (
-    FlextModelFoundation,
+    FlextModelsBase,
     FlextRuntime,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
@@ -37,8 +37,10 @@ class FlextModelsContextData:
             out: t.ContainerMapping = {}
             return out
         if FlextUtilitiesGuardsTypeCore.is_mapping(v):
-            validated = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                v,
+            validated = (
+                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
+                    v,
+                )
             )
             return dict(validated)
         if FlextUtilitiesGuardsTypeModel.is_pydantic_model(v):
@@ -52,11 +54,11 @@ class FlextModelsContextData:
     ) -> t.ValueOrModel | None:
         if v is None:
             return None
-        if isinstance(v, FlextModelFoundation.Metadata):
+        if isinstance(v, FlextModelsBase.Metadata):
             return v
         if FlextUtilitiesGuardsTypeCore.is_mapping(v):
-            return FlextModelFoundation.Metadata.model_validate({
-                c.FIELD_ATTRIBUTES: FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+            return FlextModelsBase.Metadata.model_validate({
+                c.FIELD_ATTRIBUTES: FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
                     v,
                 ),
             })
@@ -77,7 +79,7 @@ class FlextModelsContextData:
             if v is None:
                 empty: t.ContainerMapping = {}
                 return empty
-            if isinstance(v, FlextModelFoundation.Metadata):
+            if isinstance(v, FlextModelsBase.Metadata):
                 normalized_metadata: Mapping[str, t.ValueOrModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
@@ -103,7 +105,7 @@ class FlextModelsContextData:
             return dict(working_value)
 
     class ContextData(
-        SerializableDataValidatorMixin, FlextModelFoundation.FlexibleInternalModel
+        SerializableDataValidatorMixin, FlextModelsBase.FlexibleInternalModel
     ):
         """Lightweight container for initializing context state."""
 
@@ -114,7 +116,7 @@ class FlextModelsContextData:
             ),
         ] = Field(default_factory=t.Dict)
         metadata: Annotated[
-            FlextModelFoundation.Metadata | t.Dict | None,
+            FlextModelsBase.Metadata | t.Dict | None,
             BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),
@@ -166,7 +168,7 @@ class FlextModelsContextData:
                     for key, item_value in dumped_model.items()
                 }
             if FlextUtilitiesGuardsTypeCore.is_mapping(normalized):
-                normalized_map = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                normalized_map = FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
                     normalized,
                 )
                 return {

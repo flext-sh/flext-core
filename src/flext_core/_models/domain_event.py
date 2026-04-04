@@ -17,7 +17,7 @@ from typing import Annotated, override
 from pydantic import Field, field_validator
 
 from flext_core import (
-    FlextModelFoundation,
+    FlextModelsBase,
     FlextRuntime,
     t,
 )
@@ -38,7 +38,7 @@ class FlextModelsDomainEvent:
             if isinstance(other, dict):
                 return self.root == other
             if isinstance(other, Mapping) and isinstance(other, Mapping):
-                typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                typed_other = FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
                     other,
                 )
                 other_mapping = t.ConfigMap(
@@ -96,8 +96,10 @@ class FlextModelsDomainEvent:
         if isinstance(value, t.ConfigMap):
             return FlextModelsDomainEvent.ComparableConfigMap(root=dict(value))
         if isinstance(value, dict):
-            typed_value = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                value,
+            typed_value = (
+                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
+                    value,
+                )
             )
             intermediate = t.ConfigMap(
                 root={
@@ -107,8 +109,10 @@ class FlextModelsDomainEvent:
             )
             return FlextModelsDomainEvent.ComparableConfigMap(root=intermediate.root)
         if isinstance(value, Mapping):
-            typed_mapping = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                value,
+            typed_mapping = (
+                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
+                    value,
+                )
             )
             intermediate = t.ConfigMap(
                 root={
@@ -130,8 +134,10 @@ class FlextModelsDomainEvent:
         if not data:
             return FlextModelsDomainEvent.ComparableConfigMap(root={})
         if isinstance(data, Mapping):
-            typed_data = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
-                data,
+            typed_data = (
+                FlextModelsBase.Validators.dict_str_metadata_adapter().validate_python(
+                    data,
+                )
             )
             return FlextModelsDomainEvent.ComparableConfigMap(
                 root={
@@ -147,8 +153,8 @@ class FlextModelsDomainEvent:
         )
 
     class Entry(
-        FlextModelFoundation.TimestampedModel,
-        FlextModelFoundation.IdentifiableMixin,
+        FlextModelsBase.TimestampedModel,
+        FlextModelsBase.IdentifiableMixin,
     ):
         """Base class for domain events."""
 

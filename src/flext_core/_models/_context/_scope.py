@@ -11,13 +11,13 @@ from typing import Annotated
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import FlextModelFoundation, FlextModelsContextData, c, t
+from flext_core import FlextModelsBase, FlextModelsContextData, c, t
 
 
 class FlextModelsContextScope:
     """Namespace for context scope and statistics models."""
 
-    class ContextScopeData(FlextModelFoundation.ArbitraryTypesModel):
+    class ContextScopeData(FlextModelsBase.ArbitraryTypesModel):
         """Scope-specific data container for context management."""
 
         scope_name: Annotated[
@@ -39,7 +39,7 @@ class FlextModelsContextScope:
             Field(description="Scope metadata"),
         ] = Field(default_factory=dict)
 
-    class ContextStatistics(FlextModelFoundation.ArbitraryTypesModel):
+    class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
         """Statistics tracking for context operations."""
 
         sets: Annotated[

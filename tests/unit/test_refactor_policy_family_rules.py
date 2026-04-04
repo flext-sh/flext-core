@@ -7,7 +7,7 @@ from tests import u
 
 def test_models_family_blocks_utilities_target() -> None:
     ok, violation = u.Infra.validate_class_nesting_entry({
-        "loose_name": "FlextModelFoundation",
+        "loose_name": "FlextModelsBase",
         "current_file": "flext-core/src/flext_core/_models/base.py",
         "target_namespace": "FlextUtilities",
     })

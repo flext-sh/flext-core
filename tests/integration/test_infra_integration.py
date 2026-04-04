@@ -47,7 +47,7 @@ class TestInfraIntegration:
         workspace_root.mkdir()
         (workspace_root / ".git").mkdir()
         detector = FlextInfraWorkspaceDetector()
-        orchestrator = FlextInfraOrchestratorService()
+        orchestrator = FlextInfraOrchestratorService(verb="test")
         assert detector is not None
         assert orchestrator is not None
         assert isinstance(detector, FlextInfraWorkspaceDetector)

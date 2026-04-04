@@ -24,7 +24,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from flext_core import FlextModelFoundation, c, t
+from flext_core import FlextModelsBase, c, t
 
 
 class FlextGenericModels:
@@ -36,7 +36,7 @@ class FlextGenericModels:
     - Progress: Mutable accumulators during operations
     """
 
-    class OperationContext(FlextModelFoundation.FrozenValueModel):
+    class OperationContext(FlextModelsBase.FrozenValueModel):
         """Immutable context of an operation.
 
         Used by: all projects
@@ -101,7 +101,7 @@ class FlextGenericModels:
             Field(default=None, description="Timeout override seconds"),
         ] = None
 
-    class Service(FlextModelFoundation.FrozenStrictModel):
+    class Service(FlextModelsBase.FrozenStrictModel):
         """Snapshot of service state.
 
         Used by: FlextService.get_info(), monitoring, health checks.
@@ -159,7 +159,7 @@ class FlextGenericModels:
             ),
         ] = Field(default_factory=t.Dict)
 
-    class Configuration(FlextModelFoundation.FrozenStrictModel):
+    class Configuration(FlextModelsBase.FrozenStrictModel):
         """Configuration snapshot.
 
         Used by: CLI config info, debug, auditing.
@@ -203,7 +203,7 @@ class FlextGenericModels:
             ),
         ] = Field(default_factory=t.Dict)
 
-    class Health(FlextModelFoundation.FrozenStrictModel):
+    class Health(FlextModelsBase.FrozenStrictModel):
         """Health check result.
 
         Used by: /health endpoints, monitoring, alerting.
@@ -269,7 +269,7 @@ class FlextGenericModels:
             return 0.0
         return numerator / denominator
 
-    class Operation(FlextModelFoundation.ArbitraryTypesModel):
+    class Operation(FlextModelsBase.ArbitraryTypesModel):
         """Progress tracking for ongoing operations.
 
         Used by: batch operations, migrations, sync, data processing.
@@ -362,7 +362,7 @@ class FlextGenericModels:
             """Update the last update timestamp."""
             self.last_update = datetime.now(UTC)
 
-    class Conversion(FlextModelFoundation.ArbitraryTypesModel):
+    class Conversion(FlextModelsBase.ArbitraryTypesModel):
         """Conversion progress tracking with error reporting.
 
         Used by: flext-ldif conversion, data transformations, ETL.

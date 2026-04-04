@@ -20,7 +20,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, RootModel
 
-from flext_core import FlextModelFoundation, t
+from flext_core import FlextModelsBase, t
 
 type _ScalarOrModel = t.Container | BaseModel
 type _ValidatorCallable = Callable[[_ScalarOrModel | None], _ScalarOrModel | None]
@@ -79,7 +79,7 @@ class FlextModelsContainers:
             ),
         ] = Field(default_factory=dict)
 
-    class BatchResultDict(FlextModelFoundation.ArbitraryTypesModel):
+    class BatchResultDict(FlextModelsBase.ArbitraryTypesModel):
         """Result payload model for batch operation outputs."""
 
         results: Annotated[

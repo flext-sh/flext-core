@@ -23,7 +23,7 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextModelFoundation, FlextRuntime, c, p, r, t
+from flext_core import FlextModelsBase, FlextRuntime, c, p, r, t
 
 
 class FlextModelsCqrs:
@@ -34,7 +34,7 @@ class FlextModelsCqrs:
     directly via FlextModelsCqrs.*
     """
 
-    class Command(FlextModelFoundation.ArbitraryTypesModel):
+    class Command(FlextModelsBase.ArbitraryTypesModel):
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
@@ -79,7 +79,7 @@ class FlextModelsCqrs:
             """Query type identifier (always None for commands)."""
             return None
 
-    class Pagination(FlextModelFoundation.FlexibleInternalModel):
+    class Pagination(FlextModelsBase.FlexibleInternalModel):
         """Pagination model for query results."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -118,7 +118,7 @@ class FlextModelsCqrs:
             """Calculate offset from page and size."""
             return (self.page - 1) * self.size
 
-    class Query(FlextModelFoundation.ArbitraryTypesModel):
+    class Query(FlextModelsBase.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -249,7 +249,7 @@ class FlextModelsCqrs:
                 return pagination_cls()
             return validate_result.value
 
-    class Bus(FlextModelFoundation.ArbitraryTypesModel):
+    class Bus(FlextModelsBase.ArbitraryTypesModel):
         """Dispatcher configuration model for CQRS routing."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -293,7 +293,7 @@ class FlextModelsCqrs:
             ),
         ] = c.DEFAULT_DISPATCHER_PATH
 
-    class Handler(FlextModelFoundation.ArbitraryTypesModel):
+    class Handler(FlextModelsBase.ArbitraryTypesModel):
         """Handler configuration model with Builder pattern support."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -339,7 +339,7 @@ class FlextModelsCqrs:
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
-            FlextModelFoundation.Metadata | None,
+            FlextModelsBase.Metadata | None,
             Field(
                 default=None,
                 description="Handler metadata (Pydantic model)",
@@ -389,7 +389,7 @@ class FlextModelsCqrs:
                 self._data.root["handler_id"] = handler_id
                 return self
 
-            def with_metadata(self, metadata: FlextModelFoundation.Metadata) -> Self:
+            def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
                 self._data.root[c.FIELD_METADATA] = metadata
                 return self
@@ -409,7 +409,7 @@ class FlextModelsCqrs:
                 self._data.root["command_timeout"] = timeout
                 return self
 
-    class Event(FlextModelFoundation.ArbitraryTypesModel):
+    class Event(FlextModelsBase.ArbitraryTypesModel):
         """Event model for CQRS event operations.
 
         Events represent domain events that occur as a result of command execution.
@@ -478,7 +478,7 @@ class FlextModelsCqrs:
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)
 
-    class HandlerBatchRegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
+    class HandlerBatchRegistrationResult(FlextModelsBase.ArbitraryTypesModel):
         """Result of batch handler registration."""
 
         status: Annotated[

@@ -1,6 +1,6 @@
 """Tests for base Pydantic models via FlextModels facade.
 
-Covers FlextModelFoundation classes: Metadata, Validators, model config variants,
+Covers FlextModelsBase classes: Metadata, Validators, model config variants,
 FrozenValueModel, IdentifiableMixin, TimestampableMixin, VersionableMixin,
 RetryConfigurationMixin, messages, results, and validation outcomes.
 """
@@ -269,6 +269,14 @@ class TestFlextModelsBase:
         tm.that(cfg.get("arbitrary_types_allowed"), eq=True)
         tm.that(cfg.get("extra"), eq="forbid")
         tm.that(cfg.get("validate_assignment"), eq=True)
+
+    def test_strict_validating_model_config(self) -> None:
+        cfg = m.StrictValidatingModel.model_config
+        tm.that(cfg.get("strict"), eq=True)
+        tm.that(cfg.get("validate_assignment"), eq=True)
+        tm.that(cfg.get("validate_default"), eq=True)
+        tm.that(cfg.get("extra"), eq="forbid")
+        tm.that(cfg.get("str_strip_whitespace"), eq=True)
 
     # ── StrictBoundaryModel ───────────────────────────────────
 
@@ -897,8 +905,12 @@ class TestFlextModelsBase:
         msg_data: dict[str, str],
         expected_type: str,
     ) -> None:
-        adapter = TypeAdapter(m.MessageUnion)
-        msg = adapter.validate_python(msg_data)
+        adapter: TypeAdapter[m.CommandMessage | m.QueryMessage | m.EventMessage] = (
+            TypeAdapter(m.MessageUnion)
+        )
+        msg: m.CommandMessage | m.QueryMessage | m.EventMessage = (
+            adapter.validate_python(msg_data)
+        )
         tm.that(msg.message_type, eq=expected_type)
 
     # ── Parametrized: operation result discriminators ─────────
@@ -924,8 +936,12 @@ class TestFlextModelsBase:
         result_data: dict[str, str | float],
         expected_type: str,
     ) -> None:
-        adapter = TypeAdapter(m.OperationResult)
-        result = adapter.validate_python(result_data)
+        adapter: TypeAdapter[m.SuccessResult | m.FailureResult | m.PartialResult] = (
+            TypeAdapter(m.OperationResult)
+        )
+        result: m.SuccessResult | m.FailureResult | m.PartialResult = (
+            adapter.validate_python(result_data)
+        )
         tm.that(result.result_type, eq=expected_type)
 
     # ── Parametrized: validation outcome discriminators ───────
@@ -959,8 +975,12 @@ class TestFlextModelsBase:
         outcome_data: dict[str, str | float | list[str]],
         expected_type: str,
     ) -> None:
-        adapter = TypeAdapter(m.ValidationOutcome)
-        outcome = adapter.validate_python(outcome_data)
+        adapter: TypeAdapter[m.ValidOutcome | m.InvalidOutcome | m.WarningOutcome] = (
+            TypeAdapter(m.ValidationOutcome)
+        )
+        outcome: m.ValidOutcome | m.InvalidOutcome | m.WarningOutcome = (
+            adapter.validate_python(outcome_data)
+        )
         tm.that(outcome.outcome_type, eq=expected_type)
 
     # ── Parametrized: adapter idempotency (cached) ────────────

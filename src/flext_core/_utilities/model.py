@@ -13,11 +13,11 @@ from collections.abc import Mapping
 from pydantic import BaseModel, Field
 
 from flext_core import FlextUtilitiesGuards, r, t
-from flext_core._models.base import FlextModelFoundation
+from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.args import FlextUtilitiesArgs
 
 
-class ModelDumpOptions(FlextModelFoundation.FlexibleInternalModel):
+class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
     """Options controlling Pydantic model_dump() serialization behavior."""
 
     by_alias: bool | None = Field(

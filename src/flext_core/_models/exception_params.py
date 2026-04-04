@@ -14,13 +14,13 @@ from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextModelFoundation, t
+from flext_core import FlextModelsBase, t
 
 
 class FlextModelsExceptionParams:
     """Validated parameter models for the FLEXT exception hierarchy."""
 
-    class ParamsModel(FlextModelFoundation.ArbitraryTypesModel):
+    class ParamsModel(FlextModelsBase.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(

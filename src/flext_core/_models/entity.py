@@ -1,7 +1,7 @@
 """Entity and DDD patterns for FLEXT ecosystem.
 
 TIER 1: Uses base.py (Tier 0) + constants, typings, protocols, runtime only.
-Imports FlextModelFoundation and adds only DDD-specific data classes.
+Imports FlextModelsBase and adds only DDD-specific data classes.
 
 The DomainEvent is defined in domain_event.py and imported here to
 avoid Pydantic forward-reference issues with nested class annotations.
@@ -20,7 +20,7 @@ from typing import Annotated, ClassVar, Self, override
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 from flext_core import (
-    FlextModelFoundation,
+    FlextModelsBase,
     FlextModelsDomainEvent,
     FlextRuntime,
     c,
@@ -34,16 +34,16 @@ class FlextModelsEntity:
     """Entity and DDD pattern container class.
 
     This class acts as a namespace container for Entity and related DDD patterns.
-    Uses FlextModelFoundation for all base classes (Tier 0).
+    Uses FlextModelsBase for all base classes (Tier 0).
 
     DomainEvent is imported from FlextModelsDomainEvent to break
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
     class Entity(
-        FlextModelFoundation.TimestampedModel,
-        FlextModelFoundation.IdentifiableMixin,
-        FlextModelFoundation.VersionableMixin,
+        FlextModelsBase.TimestampedModel,
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.VersionableMixin,
     ):
         """Entity implementation - base class for domain entities with identity.
 
@@ -200,7 +200,7 @@ class FlextModelsEntity:
             """Post-initialization hook to set updated_at timestamp."""
             self.updated_at = FlextRuntime.generate_datetime_utc()
 
-    class Value(FlextModelFoundation.FrozenStrictModel):
+    class Value(FlextModelsBase.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""
 
         @override

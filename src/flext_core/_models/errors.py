@@ -10,13 +10,13 @@ from typing import Annotated, override
 
 from pydantic import Field
 
-from flext_core import FlextModelFoundation, c, t
+from flext_core import FlextModelsBase, c, t
 
 
 class FlextModelsErrors:
     """Error models for structured error handling (Layer 2)."""
 
-    class Error(FlextModelFoundation.ArbitraryTypesModel):
+    class Error(FlextModelsBase.ArbitraryTypesModel):
         """Structured error with domain, code, and metadata.
 
         Replaces free-form error strings with structured error objects for

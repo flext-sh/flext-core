@@ -19,7 +19,7 @@ from typing import Annotated, ClassVar, TypeIs
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
-from flext_core import FlextModelFoundation, c, p, t
+from flext_core import FlextModelsBase, c, p, t
 
 
 class FlextModelsContainer:
@@ -32,21 +32,21 @@ class FlextModelsContainer:
     @staticmethod
     def _is_metadata_instance(
         v: t.MetadataInput,
-    ) -> TypeIs[FlextModelFoundation.Metadata]:
-        return isinstance(v, FlextModelFoundation.Metadata)
+    ) -> TypeIs[FlextModelsBase.Metadata]:
+        return isinstance(v, FlextModelsBase.Metadata)
 
     @staticmethod
-    def _normalize_metadata(value: t.MetadataInput) -> FlextModelFoundation.Metadata:
+    def _normalize_metadata(value: t.MetadataInput) -> FlextModelsBase.Metadata:
         if value is None:
-            return FlextModelFoundation.Metadata.model_validate({
+            return FlextModelsBase.Metadata.model_validate({
                 c.FIELD_ATTRIBUTES: {},
             })
         if FlextModelsContainer._is_metadata_instance(value):
             return value
         if not isinstance(value, Mapping):
-            msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
+            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {value.__class__.__name__}"
             raise TypeError(msg)
-        return FlextModelFoundation.Metadata.model_validate({
+        return FlextModelsBase.Metadata.model_validate({
             c.FIELD_ATTRIBUTES: dict(value),
         })
 
@@ -55,13 +55,13 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
+        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return FlextModelsContainer._normalize_metadata(v)
 
     class ServiceRegistration(
         _MetadataValidatorMixin,
-        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelsBase.ArbitraryTypesModel,
     ):
         """Model for service registry entries.
 
@@ -88,7 +88,7 @@ class FlextModelsContainer:
             ),
         ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
         metadata: Annotated[
-            FlextModelFoundation.Metadata | t.ConfigMap | None,
+            FlextModelsBase.Metadata | t.ConfigMap | None,
             Field(
                 default=None,
                 description="Additional service metadata (JSON-serializable)",
@@ -183,7 +183,7 @@ class FlextModelsContainer:
 
     class FactoryRegistration(
         _MetadataValidatorMixin,
-        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelsBase.ArbitraryTypesModel,
     ):
         """Model for factory registry entries.
 
@@ -225,7 +225,7 @@ class FlextModelsContainer:
             ),
         ] = None
         metadata: Annotated[
-            FlextModelFoundation.Metadata | t.ConfigMap | None,
+            FlextModelsBase.Metadata | t.ConfigMap | None,
             Field(
                 default=None,
                 description="Additional factory metadata (JSON-serializable)",
@@ -241,7 +241,7 @@ class FlextModelsContainer:
 
     class ResourceRegistration(
         _MetadataValidatorMixin,
-        FlextModelFoundation.ArbitraryTypesModel,
+        FlextModelsBase.ArbitraryTypesModel,
     ):
         """Model for lifecycle-managed resource registrations.
 
@@ -268,14 +268,14 @@ class FlextModelsContainer:
             ),
         ] = Field(default_factory=lambda: FlextModelsContainer._generate_datetime_utc())
         metadata: Annotated[
-            FlextModelFoundation.Metadata | t.ConfigMap | None,
+            FlextModelsBase.Metadata | t.ConfigMap | None,
             Field(
                 default=None,
                 description="Additional resource metadata (JSON-serializable)",
             ),
         ] = None
 
-    class ContainerConfig(FlextModelFoundation.FlexibleInternalModel):
+    class ContainerConfig(FlextModelsBase.FlexibleInternalModel):
         """Model for container configuration.
 
         Replaces: t.ConfigMap for container configuration storage.
@@ -334,7 +334,7 @@ class FlextModelsContainer:
             ),
         ] = True
 
-    class ServiceRegistrationSpec(FlextModelFoundation.ArbitraryTypesModel):
+    class ServiceRegistrationSpec(FlextModelsBase.ArbitraryTypesModel):
         """Bootstrap specification for container registration.
 
         Holds pre-registered services, factories, resources, and configuration.
@@ -396,7 +396,7 @@ class FlextModelsContainer:
             description="Container configuration model controlling DI behavior.",
         )
 
-    class FactoryDecoratorConfig(FlextModelFoundation.ImmutableValueModel):
+    class FactoryDecoratorConfig(FlextModelsBase.ImmutableValueModel):
         """Configuration extracted from @d.factory() decorator.
 
         Used by factory discovery to auto-register factories with FlextContainer.

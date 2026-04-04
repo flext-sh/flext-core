@@ -11,13 +11,13 @@ from typing import Annotated, Self
 
 from pydantic import BeforeValidator, Field, model_validator
 
-from flext_core import FlextModelFoundation, FlextModelsContextData, c, t
+from flext_core import FlextModelsBase, FlextModelsContextData, c, t
 
 
 class FlextModelsContextMetadata:
     """Namespace for context metadata models."""
 
-    class ContextMetadata(FlextModelFoundation.FlexibleInternalModel):
+    class ContextMetadata(FlextModelsBase.FlexibleInternalModel):
         """Metadata storage for context objects with full tracing support."""
 
         user_id: Annotated[
@@ -85,7 +85,7 @@ class FlextModelsContextMetadata:
             msg = "Context must have get() and set() methods"
             raise ValueError(msg)
 
-    class ContextDomainData(FlextModelFoundation.FlexibleInternalModel):
+    class ContextDomainData(FlextModelsBase.FlexibleInternalModel):
         """Domain-specific context data storage."""
 
         domain_name: Annotated[

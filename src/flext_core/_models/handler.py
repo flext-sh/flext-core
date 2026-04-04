@@ -23,7 +23,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextModelFoundation, c, p, r, t
+from flext_core import FlextModelsBase, c, p, r, t
 
 
 class FlextModelsHandler:
@@ -33,7 +33,7 @@ class FlextModelsHandler:
     All nested classes are accessed via FlextModels.Handler.* in the main models.py.
     """
 
-    class Registration(FlextModelFoundation.ArbitraryTypesModel):
+    class Registration(FlextModelsBase.ArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
         name: Annotated[
@@ -70,7 +70,7 @@ class FlextModelsHandler:
                 raise TypeError(msg)
             return self
 
-    class RegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
+    class RegistrationResult(FlextModelsBase.ArbitraryTypesModel):
         """Result of a handler registration operation.
 
         Provides structured feedback on the outcome of a handler registration,
@@ -122,7 +122,7 @@ class FlextModelsHandler:
                 case _:
                     raise KeyError(key)
 
-    class RegistrationRequest(FlextModelFoundation.ArbitraryTypesModel):
+    class RegistrationRequest(FlextModelsBase.ArbitraryTypesModel):
         """Request model for dynamic handler registration.
 
         Strictly typed model for handler registration parameters, replacing
@@ -157,7 +157,7 @@ class FlextModelsHandler:
             ),
         ] = None
 
-    class RegistrationDetails(FlextModelFoundation.ArbitraryTypesModel):
+    class RegistrationDetails(FlextModelsBase.ArbitraryTypesModel):
         """Registration details for handler registration tracking.
 
         Tracks metadata about handler registrations in the CQRS system,
@@ -223,7 +223,7 @@ class FlextModelsHandler:
             ),
         ] = c.CommonStatus.RUNNING
 
-    class ExecutionContext(FlextModelFoundation.ArbitraryTypesModel):
+    class ExecutionContext(FlextModelsBase.ArbitraryTypesModel):
         """Handler execution context for tracking handler performance and state.
 
         Provides timing and metrics tracking for handler executions in the
@@ -380,7 +380,7 @@ class FlextModelsHandler:
             """
             self._start_time = time.time()
 
-    class MetricsTracker(FlextModelFoundation.ArbitraryTypesModel):
+    class MetricsTracker(FlextModelsBase.ArbitraryTypesModel):
         """Tracks handler execution metrics via ExecutionContext.
 
         Delegates metric storage to an internal ExecutionContext instance,
@@ -415,7 +415,7 @@ class FlextModelsHandler:
             self._context.set_metrics_state(t.Dict(root=current))
             return r[bool].ok(True)
 
-    class ContextStack(FlextModelFoundation.ArbitraryTypesModel):
+    class ContextStack(FlextModelsBase.ArbitraryTypesModel):
         """Manages a stack of ExecutionContext instances for CQRS handler pipelines."""
 
         _stack: MutableSequence[FlextModelsHandler.ExecutionContext] = PrivateAttr(
@@ -471,7 +471,7 @@ class FlextModelsHandler:
             self._stack.append(execution_ctx)
             return r[bool].ok(True)
 
-    class DecoratorConfig(FlextModelFoundation.ArbitraryTypesModel):
+    class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator.
 
         Used by handler discovery to auto-register handlers with FlextDispatcher.

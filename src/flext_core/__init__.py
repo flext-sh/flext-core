@@ -51,7 +51,7 @@ if _t.TYPE_CHECKING:
     import flext_core._protocols as _flext_core__protocols
     from flext_core._models import (
         FlextGenericModels,
-        FlextModelFoundation,
+        FlextModelsBase,
         FlextModelsCollections,
         FlextModelsConfig,
         FlextModelsContainer,
@@ -351,8 +351,8 @@ __all__ = [
     "FlextHandlers",
     "FlextLogger",
     "FlextMixins",
-    "FlextModelFoundation",
     "FlextModels",
+    "FlextModelsBase",
     "FlextModelsCollections",
     "FlextModelsConfig",
     "FlextModelsContainer",

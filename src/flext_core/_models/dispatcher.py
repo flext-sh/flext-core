@@ -16,13 +16,13 @@ from typing import Annotated, override
 
 from pydantic import Field, PrivateAttr
 
-from flext_core import FlextModelFoundation, c, r, t
+from flext_core import FlextModelsBase, c, r, t
 
 
 class FlextModelsDispatcher:
     """Dispatcher infrastructure models."""
 
-    class TimeoutEnforcer(FlextModelFoundation.ArbitraryTypesModel):
+    class TimeoutEnforcer(FlextModelsBase.ArbitraryTypesModel):
         """Manage timeout enforcement and dispatcher thread-pool execution."""
 
         use_timeout_executor: Annotated[
@@ -100,7 +100,7 @@ class FlextModelsDispatcher:
             """
             return self.use_timeout_executor
 
-    class CircuitBreakerStateRecord(FlextModelFoundation.FlexibleInternalModel):
+    class CircuitBreakerStateRecord(FlextModelsBase.FlexibleInternalModel):
         """Per-message-type circuit breaker state."""
 
         state: Annotated[
@@ -153,7 +153,7 @@ class FlextModelsDispatcher:
             ),
         ] = 0
 
-    class CircuitBreakerManager(FlextModelFoundation.ArbitraryTypesModel):
+    class CircuitBreakerManager(FlextModelsBase.ArbitraryTypesModel):
         """Manage per-message circuit breaker state for dispatcher executions.
 
         Handles state transitions (CLOSED -> OPEN -> HALF_OPEN -> CLOSED) with
@@ -371,7 +371,7 @@ class FlextModelsDispatcher:
             elif new_state == c.CircuitBreakerState.HALF_OPEN:
                 rec.success_count = 0
 
-    class RateWindow(FlextModelFoundation.FlexibleInternalModel):
+    class RateWindow(FlextModelsBase.FlexibleInternalModel):
         """Per-message-type rate limit window state."""
 
         window_start: Annotated[
@@ -389,7 +389,7 @@ class FlextModelsDispatcher:
             ),
         ] = 0
 
-    class RateLimiterManager(FlextModelFoundation.ArbitraryTypesModel):
+    class RateLimiterManager(FlextModelsBase.ArbitraryTypesModel):
         """Enforce per-message rate limits with a sliding window algorithm."""
 
         max_requests: Annotated[
@@ -476,7 +476,7 @@ class FlextModelsDispatcher:
             jittered = base_delay * (1.0 + variance)
             return max(0.0, jittered)
 
-    class RetryPolicy(FlextModelFoundation.ArbitraryTypesModel):
+    class RetryPolicy(FlextModelsBase.ArbitraryTypesModel):
         """Coordinate retry attempts with configurable backoff for dispatcher steps."""
 
         max_attempts: Annotated[

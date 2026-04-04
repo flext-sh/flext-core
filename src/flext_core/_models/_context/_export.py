@@ -16,7 +16,7 @@ from pydantic import (
 )
 
 from flext_core import (
-    FlextModelFoundation,
+    FlextModelsBase,
     FlextModelsContextData,
     FlextModelsEntity,
     t,
@@ -39,7 +39,7 @@ class FlextModelsContextExport:
             ),
         ] = Field(default_factory=dict)
         metadata: Annotated[
-            FlextModelFoundation.Metadata | t.Dict | None,
+            FlextModelsBase.Metadata | t.Dict | None,
             BeforeValidator(
                 lambda v: FlextModelsContextData.normalize_metadata_before(v),
             ),

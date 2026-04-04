@@ -14,7 +14,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_core import FlextModelFoundation, t
+from flext_core import FlextModelsBase, t
 
 
 class FlextModelsCollections:
@@ -95,8 +95,7 @@ class FlextModelsCollections:
         def _aggregate_dumped_models(
             cls,
             items: Sequence[
-                FlextModelFoundation.ArbitraryTypesModel
-                | FlextModelFoundation.FrozenValueModel
+                FlextModelsBase.ArbitraryTypesModel | FlextModelsBase.FrozenValueModel
             ],
         ) -> Mapping[str, t.MetadataValue]:
             if not items:
@@ -109,7 +108,7 @@ class FlextModelsCollections:
                 key: value for key, value in aggregated.items() if value is not None
             }
 
-    class Categories(FlextModelFoundation.ArbitraryTypesModel):
+    class Categories(FlextModelsBase.ArbitraryTypesModel):
         """Generic categorized collection with dynamic categories.
 
         Provides type-safe storage for items organized by category names.
@@ -189,7 +188,7 @@ class FlextModelsCollections:
         def to_mapping(self) -> Mapping[str, Sequence[t.MetadataValue]]:
             return {key: list(entries) for key, entries in self.categories.items()}
 
-    class Statistics(_MetadataAggregateMixin, FlextModelFoundation.FrozenValueModel):
+    class Statistics(_MetadataAggregateMixin, FlextModelsBase.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
@@ -208,7 +207,7 @@ class FlextModelsCollections:
         def from_mapping(cls, data: Mapping[str, t.MetadataValue]) -> Self:
             return cls.model_validate(dict(data))
 
-    class Rules(FlextModelFoundation.ArbitraryTypesModel):
+    class Rules(FlextModelsBase.ArbitraryTypesModel):
         """Base for rules models (mutable)."""
 
         @classmethod
@@ -220,7 +219,7 @@ class FlextModelsCollections:
                 base = base.model_copy(update=other.model_dump())
             return base
 
-    class Results(_MetadataAggregateMixin, FlextModelFoundation.ArbitraryTypesModel):
+    class Results(_MetadataAggregateMixin, FlextModelsBase.ArbitraryTypesModel):
         """Base for results models (mutable)."""
 
         @classmethod
@@ -244,7 +243,7 @@ class FlextModelsCollections:
                 base = base.model_copy(update=other.model_dump())
             return base
 
-    class Options(_MetadataAggregateMixin, FlextModelFoundation.ArbitraryTypesModel):
+    class Options(_MetadataAggregateMixin, FlextModelsBase.ArbitraryTypesModel):
         """Base for options models (mutable)."""
 
         @classmethod
@@ -265,7 +264,7 @@ class FlextModelsCollections:
         def merge(self, *options: Self) -> Self:
             return self.__class__.merge_options(self, *options)
 
-    class Config(FlextModelFoundation.ArbitraryTypesModel):
+    class Config(FlextModelsBase.ArbitraryTypesModel):
         """Base for configuration models - mutable Pydantic v2 model.
 
         Non-frozen models are not hashable by design.
@@ -313,7 +312,7 @@ class FlextModelsCollections:
         def with_updates(self, **updates: t.MetadataValue) -> Self:
             return self.model_copy(update=updates)
 
-    class ParseOptions(FlextModelFoundation.ArbitraryTypesModel):
+    class ParseOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for string parsing operations."""
 
         strip: Annotated[
@@ -338,7 +337,7 @@ class FlextModelsCollections:
             ),
         ] = None
 
-    class CollectionBatchSpec(FlextModelFoundation.ArbitraryTypesModel):
+    class CollectionBatchSpec(FlextModelsBase.ArbitraryTypesModel):
         """Batch processing options for collection operations."""
 
         size: Annotated[
@@ -398,7 +397,7 @@ class FlextModelsCollections:
             ),
         ] = False
 
-    class GuardCheckSpec(FlextModelFoundation.ArbitraryTypesModel):
+    class GuardCheckSpec(FlextModelsBase.ArbitraryTypesModel):
         """Specification for guard conditions used in collection filters."""
 
         eq: Annotated[
@@ -530,7 +529,7 @@ class FlextModelsCollections:
             ),
         ] = None
 
-    class PatternApplicationParams(FlextModelFoundation.ArbitraryTypesModel):
+    class PatternApplicationParams(FlextModelsBase.ArbitraryTypesModel):
         """Parameters for regex pattern application."""
 
         text: Annotated[str, Field(description="Text to apply pattern to")]

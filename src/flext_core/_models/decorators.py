@@ -14,7 +14,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextModelFoundation, t
+from flext_core import FlextModelsBase, t
 
 
 class FlextModelsDecorators:
@@ -24,7 +24,7 @@ class FlextModelsDecorators:
     All nested classes are accessed via FlextModels.Decorator.* in the main models.py.
     """
 
-    class TimeoutConfig(FlextModelFoundation.ArbitraryTypesModel):
+    class TimeoutConfig(FlextModelsBase.ArbitraryTypesModel):
         """Timeout decorator configuration with validation.
 
         Validates timeout duration and optional error code for timeout handling.

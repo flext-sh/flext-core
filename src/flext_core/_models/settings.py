@@ -25,7 +25,7 @@ from pydantic import (
 from pydantic_settings import BaseSettings
 
 from flext_core import (
-    FlextModelFoundation,
+    FlextModelsBase,
     FlextModelsCollections,
     FlextModelsExceptionParams,
     FlextRuntime,
@@ -43,7 +43,7 @@ class FlextModelsConfig:
     All nested classes are accessed via FlextModels.Config.* in the main models.py.
     """
 
-    class AutoConfig(FlextModelFoundation.ArbitraryTypesModel):
+    class AutoConfig(FlextModelsBase.ArbitraryTypesModel):
         """Automatic settings wrapper for BaseSettings classes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -73,7 +73,7 @@ class FlextModelsConfig:
         def create_config(self) -> BaseSettings:
             return self.config_class()
 
-    class ProcessingRequest(FlextModelFoundation.ArbitraryTypesModel):
+    class ProcessingRequest(FlextModelsBase.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -148,8 +148,8 @@ class FlextModelsConfig:
             )
 
     class RetryConfiguration(
-        FlextModelFoundation.ArbitraryTypesModel,
-        FlextModelFoundation.RetryConfigurationMixin,
+        FlextModelsBase.ArbitraryTypesModel,
+        FlextModelsBase.RetryConfigurationMixin,
     ):
         """Retry configuration with advanced validation."""
 
@@ -200,7 +200,7 @@ class FlextModelsConfig:
                 raise ValueError(msg)
             return self
 
-    class ValidationConfiguration(FlextModelFoundation.ArbitraryTypesModel):
+    class ValidationConfiguration(FlextModelsBase.ArbitraryTypesModel):
         """Validation configuration."""
 
         max_validation_errors: Annotated[
@@ -634,7 +634,7 @@ class FlextModelsConfig:
         """
 
         metadata: Annotated[
-            FlextModelFoundation.Metadata | None,
+            FlextModelsBase.Metadata | None,
             Field(
                 default=None,
                 description="Optional execution context metadata (Pydantic model)",
@@ -784,7 +784,7 @@ class FlextModelsConfig:
             Field(default=None, description="Correlation ID for distributed tracing"),
         ] = None
         metadata: Annotated[
-            FlextModelFoundation.Metadata | None,
+            FlextModelsBase.Metadata | None,
             Field(default=None, description="Additional metadata (Pydantic model)"),
         ] = None
         auto_log: Annotated[
@@ -820,7 +820,7 @@ class FlextModelsConfig:
             Field(default=None, description="Error code for categorization"),
         ] = None
         error_data: Annotated[
-            FlextModelFoundation.Metadata | None,
+            FlextModelsBase.Metadata | None,
             Field(default=None, description="Additional error data (Pydantic model)"),
         ] = None
 
@@ -903,7 +903,7 @@ class FlextModelsConfig:
             Field(default=None, description="Additional context for error"),
         ] = None
         metadata: Annotated[
-            FlextModelFoundation.Metadata | Mapping[str, t.ValueOrModel] | None,
+            FlextModelsBase.Metadata | Mapping[str, t.ValueOrModel] | None,
             Field(default=None, description="Metadata for error"),
         ] = None
 
@@ -1016,7 +1016,7 @@ class FlextModelsConfig:
             Field(default=False, description="Whether to track performance metrics"),
         ] = False
 
-    class RetryLoopConfig(FlextModelFoundation.ArbitraryTypesModel):
+    class RetryLoopConfig(FlextModelsBase.ArbitraryTypesModel):
         """Configuration for retry loop execution (Pydantic v2).
 
         Reduces parameter count for _execute_retry_loop from 8 to 3 params.
@@ -1066,7 +1066,7 @@ class FlextModelsConfig:
             ),
         ] = c.DEFAULT_BACKOFF_STRATEGY
 
-    class DispatcherConfig(FlextModelFoundation.ArbitraryTypesModel):
+    class DispatcherConfig(FlextModelsBase.ArbitraryTypesModel):
         """Configuration for message dispatcher.
 
         Replaces legacy dispatcher config mapping from typings.py.

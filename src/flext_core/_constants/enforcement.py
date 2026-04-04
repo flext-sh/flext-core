@@ -1,6 +1,6 @@
 """Enforcement constants for Pydantic v2 runtime governance.
 
-Constants used by FlextModelFoundation.Enforcement to validate
+Constants used by FlextModelsBase.Enforcement to validate
 class definitions at import time. Accessed via c.ENFORCEMENT_*.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

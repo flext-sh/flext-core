@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from flext_core import (
     FlextGenericModels,
-    FlextModelFoundation,
+    FlextModelsBase,
     FlextModelsCollections,
     FlextModelsConfig,
     FlextModelsContainer,
@@ -33,7 +33,7 @@ from flext_core import (
 
 
 class FlextModels(
-    FlextModelFoundation,
+    FlextModelsBase,
     FlextModelsCollections,
     FlextModelsContainer,
     FlextModelsContainers,

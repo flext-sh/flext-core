@@ -17,7 +17,7 @@ from typing import Annotated, Self
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextModelFoundation, FlextRuntime, c, p, t
+from flext_core import FlextModelsBase, FlextRuntime, c, p, t
 
 
 class FlextModelsService:
@@ -27,7 +27,7 @@ class FlextModelsService:
     All nested classes are accessed via FlextModels.Service.* in the main models.py.
     """
 
-    class ServiceRuntime(FlextModelFoundation.ArbitraryTypesModel):
+    class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
         """Runtime triple (config, context, container) for services.
 
         Represents the core service runtime with configuration, context,
@@ -50,7 +50,7 @@ class FlextModelsService:
             Field(description="Dependency injection container for service resolution."),
         ]
 
-    class TraceContext(FlextModelFoundation.FrozenStrictModel):
+    class TraceContext(FlextModelsBase.FrozenStrictModel):
         """Trace context for distributed tracing."""
 
         trace_id: Annotated[
@@ -78,8 +78,8 @@ class FlextModelsService:
         ] = None
 
     class ServiceRetryConfiguration(
-        FlextModelFoundation.FrozenStrictModel,
-        FlextModelFoundation.RetryConfigurationMixin,
+        FlextModelsBase.FrozenStrictModel,
+        FlextModelsBase.RetryConfigurationMixin,
     ):
         """Retry configuration for operations."""
 
@@ -100,19 +100,19 @@ class FlextModelsService:
             ),
         ] = True
 
-    class ServiceParameters(FlextModelFoundation.DynamicConfigModel):
+    class ServiceParameters(FlextModelsBase.DynamicConfigModel):
         """Dynamic parameters for service methods - allows extra fields."""
 
-    class ServiceFilters(FlextModelFoundation.DynamicConfigModel):
+    class ServiceFilters(FlextModelsBase.DynamicConfigModel):
         """Filter criteria for queries - allows extra fields."""
 
-    class ServiceData(FlextModelFoundation.DynamicConfigModel):
+    class ServiceData(FlextModelsBase.DynamicConfigModel):
         """Operation data model - allows extra fields."""
 
-    class ServiceContext(FlextModelFoundation.DynamicConfigModel):
+    class ServiceContext(FlextModelsBase.DynamicConfigModel):
         """Service execution context - allows extra fields."""
 
-    class DomainServiceExecutionRequest(FlextModelFoundation.ArbitraryTypesModel):
+    class DomainServiceExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""
 
         service_name: Annotated[
@@ -169,7 +169,7 @@ class FlextModelsService:
                 self.context = FlextModelsService.TraceContext()
             return self
 
-    class BatchOperation(FlextModelFoundation.ArbitraryTypesModel):
+    class BatchOperation(FlextModelsBase.ArbitraryTypesModel):
         """Single operation in a batch."""
 
         operation_name: Annotated[
@@ -195,7 +195,7 @@ class FlextModelsService:
                 self.parameters = FlextModelsService.ServiceParameters()
             return self
 
-    class DomainServiceBatchRequest(FlextModelFoundation.ArbitraryTypesModel):
+    class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service batch request."""
 
         service_name: Annotated[
@@ -243,7 +243,7 @@ class FlextModelsService:
             ),
         ] = c.DEFAULT_TIMEOUT_SECONDS
 
-    class DomainServiceMetricsRequest(FlextModelFoundation.ArbitraryTypesModel):
+    class DomainServiceMetricsRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service metrics request."""
 
         service_name: Annotated[
@@ -293,7 +293,7 @@ class FlextModelsService:
                 self.filters = FlextModelsService.ServiceFilters()
             return self
 
-    class DomainServiceResourceRequest(FlextModelFoundation.ArbitraryTypesModel):
+    class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service resource request."""
 
         service_name: Annotated[
@@ -362,7 +362,7 @@ class FlextModelsService:
                 self.filters = FlextModelsService.ServiceFilters()
             return self
 
-    class AclResponse(FlextModelFoundation.ArbitraryTypesModel):
+    class AclResponse(FlextModelsBase.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
 
         resource: Annotated[t.NonEmptyStr, Field(description="Resource identifier")]
@@ -392,7 +392,7 @@ class FlextModelsService:
                 self.context = FlextModelsService.ServiceContext()
             return self
 
-    class OperationExecutionRequest(FlextModelFoundation.ArbitraryTypesModel):
+    class OperationExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
         """Operation execution request."""
 
         operation_name: Annotated[
@@ -450,7 +450,7 @@ class FlextModelsService:
                 self.retry_config = FlextModelsService.ServiceRetryConfiguration()
             return self
 
-    class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
+    class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
         config_type: Annotated[
@@ -531,7 +531,7 @@ class FlextModelsService:
             ),
         ] = None
 
-    class DependencyContainerCreationOptions(FlextModelFoundation.ArbitraryTypesModel):
+    class DependencyContainerCreationOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""
 
         config: Annotated[

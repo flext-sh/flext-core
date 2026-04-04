@@ -25,7 +25,7 @@ if _t.TYPE_CHECKING:
 
     base = _flext_core__models_base
     import flext_core._models.collections as _flext_core__models_collections
-    from flext_core._models.base import FlextModelFoundation
+    from flext_core._models.base import FlextModelsBase
 
     collections = _flext_core__models_collections
     import flext_core._models.container as _flext_core__models_container
@@ -89,7 +89,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     ("flext_core._models._context",),
     {
         "FlextGenericModels": "flext_core._models.generic",
-        "FlextModelFoundation": "flext_core._models.base",
+        "FlextModelsBase": "flext_core._models.base",
         "FlextModelsCollections": "flext_core._models.collections",
         "FlextModelsConfig": "flext_core._models.settings",
         "FlextModelsContainer": "flext_core._models.container",
@@ -126,7 +126,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
 
 __all__ = [
     "FlextGenericModels",
-    "FlextModelFoundation",
+    "FlextModelsBase",
     "FlextModelsCollections",
     "FlextModelsConfig",
     "FlextModelsContainer",

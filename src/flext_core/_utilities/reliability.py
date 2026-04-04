@@ -17,7 +17,7 @@ from collections.abc import Callable
 from pydantic import Field
 
 from flext_core import t
-from flext_core._models.base import FlextModelFoundation
+from flext_core._models.base import FlextModelsBase
 from flext_core._protocols.logging import FlextProtocolsLogging
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core.constants import FlextConstants as c
@@ -25,7 +25,7 @@ from flext_core.result import FlextResult as r
 from flext_core.runtime import FlextRuntime
 
 
-class RetryOptions(FlextModelFoundation.FlexibleInternalModel):
+class RetryOptions(FlextModelsBase.FlexibleInternalModel):
     """Configuration options for retry logic."""
 
     max_attempts: int | None = Field(

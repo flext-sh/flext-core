@@ -3,7 +3,7 @@
 TIER 0: Uses only stdlib, pydantic, and Tier 0 modules (constants, typings).
 
 This module provides the fundamental base classes for all Pydantic models
-in the FLEXT ecosystem. All classes are nested inside FlextModelFoundation
+in the FLEXT ecosystem. All classes are nested inside FlextModelsBase
 following the namespace pattern.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -34,7 +34,7 @@ from flext_core import FlextRuntime, c, t
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
-class FlextModelFoundation:
+class FlextModelsBase:
     """Container for base model classes - Tier 0, 100% standalone."""
 
     @staticmethod
@@ -313,13 +313,13 @@ class FlextModelFoundation:
         @staticmethod
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:
             """Ensure datetime is UTC timezone."""
-            return FlextModelFoundation._ensure_utc_datetime(v)
+            return FlextModelsBase._ensure_utc_datetime(v)
 
         @staticmethod
         def normalize_to_list(v: t.ValueOrModel) -> t.FlatContainerList:
             """Normalize value to list format."""
             try:
-                return FlextModelFoundation.Validators.list_adapter().validate_python(v)
+                return FlextModelsBase.Validators.list_adapter().validate_python(v)
             except (TypeError, ValueError):
                 if FlextRuntime.is_scalar(v):
                     return [v]
@@ -337,7 +337,7 @@ class FlextModelFoundation:
             """Validate configuration dictionary structure."""
             try:
                 normalized = (
-                    FlextModelFoundation.Validators.config_adapter().validate_python(v)
+                    FlextModelsBase.Validators.config_adapter().validate_python(v)
                 )
             except (TypeError, ValueError) as exc:
                 msg = "Configuration must be a dictionary"
@@ -355,7 +355,7 @@ class FlextModelFoundation:
             """Validate and normalize tags list."""
             try:
                 raw_tags: t.FlatContainerList = (
-                    FlextModelFoundation.Validators.list_adapter().validate_python(v)
+                    FlextModelsBase.Validators.list_adapter().validate_python(v)
                 )
             except (TypeError, ValueError) as exc:
                 msg = "Tags must be a list"
@@ -365,7 +365,7 @@ class FlextModelFoundation:
             for tag in raw_tags:
                 try:
                     clean_tag = (
-                        FlextModelFoundation.Validators
+                        FlextModelsBase.Validators
                         .strict_string_adapter()
                         .validate_python(tag)
                         .strip()
@@ -379,7 +379,33 @@ class FlextModelFoundation:
                     seen.add(clean_tag)
             return normalized
 
-    class ArbitraryTypesModel(BaseModel):
+    class EnforcedModel(BaseModel):
+        """Base model that enforces architectural rules on subclasses."""
+
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
+
+    class StrictValidatingModel(EnforcedModel):
+        """Reusable strict model preset for validated domain boundaries."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            strict=True,
+            validate_assignment=True,
+            extra=c.EXTRA_FORBID,
+            validate_default=True,
+            use_enum_values=True,
+            str_strip_whitespace=True,
+        )
+
+    class FrozenValidatingModel(StrictValidatingModel):
+        """Immutable strict validating model preset."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    class ArbitraryTypesModel(EnforcedModel):
         """Base model with arbitrary types support."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -389,13 +415,7 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
-        @classmethod
-        @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
-            FlextUtilitiesEnforcement.run(cls)
-
-    class StrictBoundaryModel(BaseModel):
+    class StrictBoundaryModel(EnforcedModel):
         """Strict boundary model for API/external boundaries."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -407,13 +427,7 @@ class FlextModelFoundation:
             frozen=True,
         )
 
-        @classmethod
-        @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
-            FlextUtilitiesEnforcement.run(cls)
-
-    class FlexibleInternalModel(BaseModel):
+    class FlexibleInternalModel(EnforcedModel):
         """Flexible internal model for domain logic."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -423,13 +437,7 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
-        @classmethod
-        @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
-            FlextUtilitiesEnforcement.run(cls)
-
-    class ImmutableValueModel(BaseModel):
+    class ImmutableValueModel(EnforcedModel):
         """Immutable value model for value objects."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -438,25 +446,13 @@ class FlextModelFoundation:
             extra="forbid",
         )
 
-        @classmethod
-        @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
-            FlextUtilitiesEnforcement.run(cls)
-
-    class TaggedModel(BaseModel):
+    class TaggedModel(EnforcedModel):
         """Base pattern for tagged discriminated unions."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
         tag: ClassVar[str]
 
-        @classmethod
-        @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
-            FlextUtilitiesEnforcement.run(cls)
-
-    class DynamicConfigModel(BaseModel):
+    class DynamicConfigModel(EnforcedModel):
         """Model for dynamic configuration - allows extra fields."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -466,11 +462,17 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
-        @classmethod
-        @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
-            FlextUtilitiesEnforcement.run(cls)
+    class StrippedDynamicConfigModel(DynamicConfigModel):
+        """Dynamic config model preset with string whitespace normalization."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            str_strip_whitespace=True,
+        )
+
+    class FrozenDynamicConfigModel(StrippedDynamicConfigModel):
+        """Immutable dynamic config model preset."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     class Metadata(BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
@@ -565,10 +567,8 @@ class FlextModelFoundation:
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
                     raise ValueError(msg)
-            return (
-                FlextModelFoundation.Validators.metadata_map_adapter().validate_python(
-                    result,
-                )
+            return FlextModelsBase.Validators.metadata_map_adapter().validate_python(
+                result,
             )
 
     class CommandMessage(BaseModel):
@@ -641,7 +641,7 @@ class FlextModelFoundation:
         result_type: Literal["failure"] = "failure"
         error: str
         error_code: str | None = None
-        error_data: FlextModelFoundation.Metadata | None = None
+        error_data: FlextModelsBase.Metadata | None = None
 
     class PartialResult(BaseModel):
         """Partial result for discriminated union."""
@@ -693,7 +693,7 @@ class FlextModelFoundation:
         Discriminator("outcome_type"),
     ]
 
-    class FrozenStrictModel(BaseModel):
+    class FrozenStrictModel(EnforcedModel):
         """Immutable base model with strict validation."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -710,12 +710,6 @@ class FlextModelFoundation:
             hide_input_in_errors=True,
             frozen=True,
         )
-
-        @classmethod
-        @override
-        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
-            FlextUtilitiesEnforcement.run(cls)
 
     class FrozenValueModel(FrozenStrictModel):
         """Value model with equality/hash by value."""
@@ -759,7 +753,7 @@ class FlextModelFoundation:
         )
         created_at: Annotated[
             datetime,
-            AfterValidator(lambda v: FlextModelFoundation._ensure_utc_datetime(v)),
+            AfterValidator(lambda v: FlextModelsBase._ensure_utc_datetime(v)),
             Field(
                 description="Creation timestamp (UTC)",
                 frozen=True,
@@ -767,7 +761,7 @@ class FlextModelFoundation:
         ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime | None,
-            AfterValidator(lambda v: FlextModelFoundation._ensure_utc_datetime(v)),
+            AfterValidator(lambda v: FlextModelsBase._ensure_utc_datetime(v)),
             Field(default=None, description="Last update timestamp (UTC)"),
         ] = None
 
@@ -847,4 +841,4 @@ class FlextModelFoundation:
         """Model with timestamp fields."""
 
 
-__all__ = ["FlextModelFoundation"]
+__all__ = ["FlextModelsBase"]
