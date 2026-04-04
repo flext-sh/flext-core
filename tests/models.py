@@ -156,8 +156,14 @@ class FlextCoreTestModels(FlextTestsModels, FlextInfraModels):
         class NoSetattr:
             """Object without __setattr__."""
 
-        class ParseOptions(FlextTestsModels.ParseOptions):
-            """Parse options - real inheritance."""
+        class ParseOptions(BaseModel):
+            """Test-local parse options after production model removal."""
+
+            model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+            strip: bool = True
+            remove_empty: bool = True
+            validator: Callable[[str], bool] | None = None
 
         class ParseDelimitedCase(BaseModel):
             """Test case for parse_delimited method."""
@@ -171,7 +177,7 @@ class FlextCoreTestModels(FlextTestsModels, FlextInfraModels):
             delimiter: str
             expected: t.StrSequence | None = None
             expected_error: str | None = None
-            options: FlextTestsModels.ParseOptions | None = None
+            options: BaseModel | None = None
             strip: bool = True
             remove_empty: bool = True
             validator: Callable[[str], bool] | None = None

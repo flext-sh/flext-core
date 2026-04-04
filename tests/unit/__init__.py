@@ -231,15 +231,27 @@ if _t.TYPE_CHECKING:
         test_circuit_breaker_transitions_and_metrics,
         test_rate_limiter_blocks_then_recovers,
         test_rate_limiter_jitter_application,
-        test_retry_policy_behavior,
     )
 
     test_dispatcher_timeout_coverage_100 = (
         _tests_unit_test_dispatcher_timeout_coverage_100
     )
-    import tests.unit.test_entity_coverage as _tests_unit_test_entity_coverage
+    import tests.unit.test_enforcement as _tests_unit_test_enforcement
     from tests.unit.test_dispatcher_timeout_coverage_100 import (
         TestDispatcherTimeoutCoverage100,
+    )
+
+    test_enforcement = _tests_unit_test_enforcement
+    import tests.unit.test_entity_coverage as _tests_unit_test_entity_coverage
+    from tests.unit.test_enforcement import (
+        TestBaseModelCoverage,
+        TestCheckExtraPolicy,
+        TestCheckFieldDescriptions,
+        TestCheckNoAny,
+        TestCheckNoBareCollections,
+        TestCheckNoV1Patterns,
+        TestEnforcementMode,
+        TestExemptions,
     )
 
     test_entity_coverage = _tests_unit_test_entity_coverage
@@ -769,7 +781,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "SimpleObj": "tests.unit.test_utilities_mapper_coverage_100",
         "SingletonClassForTest": "tests.unit._models_impl",
         "TMessage": "tests.unit.test_utilities_type_checker_coverage_100",
+        "TestBaseModelCoverage": "tests.unit.test_enforcement",
         "TestCaseMap": "tests.unit._models_impl",
+        "TestCheckExtraPolicy": "tests.unit.test_enforcement",
+        "TestCheckFieldDescriptions": "tests.unit.test_enforcement",
+        "TestCheckNoAny": "tests.unit.test_enforcement",
+        "TestCheckNoBareCollections": "tests.unit.test_enforcement",
+        "TestCheckNoV1Patterns": "tests.unit.test_enforcement",
         "TestCollectionUtilitiesCoverage": "tests.unit.test_collection_utilities_coverage_100",
         "TestContainerFullCoverage": "tests.unit.test_container_full_coverage",
         "TestContext100Coverage": "tests.unit.test_context_coverage_100",
@@ -786,9 +804,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestDispatcherFullCoverage": "tests.unit.test_dispatcher_full_coverage",
         "TestDispatcherMinimal": "tests.unit.test_dispatcher_minimal",
         "TestDispatcherTimeoutCoverage100": "tests.unit.test_dispatcher_timeout_coverage_100",
+        "TestEnforcementMode": "tests.unit.test_enforcement",
         "TestEntityCoverageEdgeCases": "tests.unit.test_entity_coverage",
         "TestEnumUtilitiesCoverage": "tests.unit.test_enum_utilities_coverage_100",
         "TestExceptionsHypothesis": "tests.unit.test_exceptions",
+        "TestExemptions": "tests.unit.test_enforcement",
         "TestFlextConstants": "tests.unit.test_constants_new",
         "TestFlextContainer": "tests.unit.test_container",
         "TestFlextContext": "tests.unit.test_context",
@@ -973,6 +993,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_dispatcher_minimal": "tests.unit.test_dispatcher_minimal",
         "test_dispatcher_reliability": "tests.unit.test_dispatcher_reliability",
         "test_dispatcher_timeout_coverage_100": "tests.unit.test_dispatcher_timeout_coverage_100",
+        "test_enforcement": "tests.unit.test_enforcement",
         "test_ensure_trace_context_dict_conversion_paths": "tests.unit.test_runtime_full_coverage",
         "test_entity_comparable_map_and_bulk_validation_paths": "tests.unit.test_models_entity_full_coverage",
         "test_entity_coverage": "tests.unit.test_entity_coverage",
@@ -1075,7 +1096,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_result_exception_carrying": "tests.unit.test_result_exception_carrying",
         "test_result_full_coverage": "tests.unit.test_result_full_coverage",
         "test_result_property_raises_on_failure": "tests.unit.test_service_additional",
-        "test_retry_policy_behavior": "tests.unit.test_dispatcher_reliability",
         "test_reuse_existing_runtime_coverage_branches": "tests.unit.test_runtime_full_coverage",
         "test_reuse_existing_runtime_scenarios": "tests.unit.test_runtime_full_coverage",
         "test_runtime": "tests.unit.test_runtime",
@@ -1162,7 +1182,13 @@ __all__ = [
     "SimpleObj",
     "SingletonClassForTest",
     "TMessage",
+    "TestBaseModelCoverage",
     "TestCaseMap",
+    "TestCheckExtraPolicy",
+    "TestCheckFieldDescriptions",
+    "TestCheckNoAny",
+    "TestCheckNoBareCollections",
+    "TestCheckNoV1Patterns",
     "TestCollectionUtilitiesCoverage",
     "TestContainerFullCoverage",
     "TestContext100Coverage",
@@ -1180,9 +1206,11 @@ __all__ = [
     "TestDispatcherMinimal",
     "TestDispatcherTimeoutCoverage100",
     "TestDocker",
+    "TestEnforcementMode",
     "TestEntityCoverageEdgeCases",
     "TestEnumUtilitiesCoverage",
     "TestExceptionsHypothesis",
+    "TestExemptions",
     "TestFlextConstants",
     "TestFlextContainer",
     "TestFlextContext",
@@ -1383,6 +1411,7 @@ __all__ = [
     "test_dispatcher_timeout_coverage_100",
     "test_docker",
     "test_domains",
+    "test_enforcement",
     "test_ensure_trace_context_dict_conversion_paths",
     "test_entity",
     "test_entity_comparable_map_and_bulk_validation_paths",
@@ -1492,7 +1521,6 @@ __all__ = [
     "test_result_exception_carrying",
     "test_result_full_coverage",
     "test_result_property_raises_on_failure",
-    "test_retry_policy_behavior",
     "test_reuse_existing_runtime_coverage_branches",
     "test_reuse_existing_runtime_scenarios",
     "test_runtime",
