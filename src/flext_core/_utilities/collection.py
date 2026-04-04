@@ -25,8 +25,8 @@ class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
     @staticmethod
-    def _safe_validate_serializable(
-        value: t.Serializable | t.RecursiveContainer,
+    def _safe_validate_serializable[T](
+        value: t.ValueOrModel,
     ) -> t.Serializable:
         """Validate via Pydantic adapter, falling back to str on any error."""
         try:
@@ -36,12 +36,12 @@ class FlextUtilitiesCollection:
             return result
 
     @staticmethod
-    def _normalize_unknown_value(value: t.RecursiveContainer) -> t.RecursiveContainer:
+    def _normalize_unknown_value[T](value: t.ValueOrModel) -> t.NormalizedValue:
         validated = FlextUtilitiesCollection._safe_validate_serializable(value)
         if FlextUtilitiesGuardsTypeCore.is_scalar(validated):
             return validated
         if isinstance(validated, list):
-            normalized_items: t.ContainerList = [
+            normalized_items: t.MutableContainerList = [
                 FlextUtilitiesCollection._normalize_unknown_value(item)
                 for item in validated
             ]
@@ -56,16 +56,16 @@ class FlextUtilitiesCollection:
         return str(validated)
 
     @staticmethod
-    def _normalize_mapping_items(
-        data: t.RecursiveContainer,
-    ) -> Sequence[tuple[str, t.RecursiveContainer]]:
+    def _normalize_mapping_items[T](
+        data: t.ValueOrModel,
+    ) -> Sequence[tuple[str, t.NormalizedValue]]:
         normalized_mapping = m.Validators.dict_str_metadata_adapter().validate_python(
             data,
         )
         return list(normalized_mapping.items())
 
     @staticmethod
-    def _is_empty_value(value: t.RecursiveContainer) -> bool:
+    def _is_empty_value[T](value: t.ValueOrModel) -> bool:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True
@@ -78,10 +78,10 @@ class FlextUtilitiesCollection:
         return False
 
     @staticmethod
-    def _merge_deep_single_key(
+    def _merge_deep_single_key[T](
         result: t.MutableContainerMapping,
         key: str,
-        value: t.RecursiveContainer,
+        value: t.NormalizedValue,
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -97,17 +97,17 @@ class FlextUtilitiesCollection:
             )
             if merged.is_success:
                 result[key] = merged.value
-                return r[bool].ok(value=True)
+                return r[bool].ok(True)
             return r[bool].fail(
                 f"Failed to merge nested dict for key {key}: {merged.error}",
             )
         result[key] = value
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     @staticmethod
     def coerce_list_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[t.RecursiveContainer], Sequence[E]]:
+    ) -> Callable[[t.ValueOrModel], Sequence[E]]:
         """Create validator that coerces list values to a StrEnum type.
 
         Raises:
@@ -116,7 +116,7 @@ class FlextUtilitiesCollection:
 
         """
 
-        def validator(data: t.RecursiveContainer) -> Sequence[E]:
+        def validator(data: t.ValueOrModel) -> Sequence[E]:
             if isinstance(data, str):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
@@ -244,16 +244,6 @@ class FlextUtilitiesCollection:
                 return {k: mapper(v) for k, v in filtered.items()}
             return filtered
         return [item for item in items if predicate(item)]
-
-    @staticmethod
-    def filter_dict(
-        items: Mapping[str, t.RecursiveContainer],
-        predicate: Callable[[str, t.RecursiveContainer], bool],
-    ) -> MutableMapping[str, t.RecursiveContainer]:
-        """Filter a dictionary by evaluating both keys and values."""
-        if not FlextUtilitiesGuardsTypeCore.is_mapping(items):
-            return {}
-        return {k: v for k, v in items.items() if predicate(k, v)}
 
     @staticmethod
     def find(

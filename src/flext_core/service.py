@@ -479,7 +479,7 @@ class FlextService[
             ...         return r[bool].ok(True)
 
         """
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
 
 s = FlextService

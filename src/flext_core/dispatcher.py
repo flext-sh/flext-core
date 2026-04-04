@@ -116,7 +116,7 @@ class FlextDispatcher:
         if isinstance(event, Sequence):
             for e in event:
                 _ = self.publish(e)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         route_name = u.get_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
@@ -130,10 +130,10 @@ class FlextDispatcher:
             ) and all(existing_handler != auto_h for existing_handler, _ in handlers):
                 handlers.append((auto_h, resolved_handler))
         if not handlers:
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         for _, resolved_handler in handlers:
             _ = self._execute_handler(resolved_handler, event, route_name)
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def register_handler(
         self,
@@ -189,7 +189,7 @@ class FlextDispatcher:
                     "Registered auto-discovery handler",
                     handler=str(handler),
                 )
-                return r[bool].ok(value=True)
+                return r[bool].ok(True)
             return r[bool].fail(
                 "Handler must expose message_type, event_type, or can_handle",
             )
@@ -202,7 +202,7 @@ class FlextDispatcher:
         else:
             self._handlers[route_name] = (handler, resolved_handler)
             self._logger.info("Registered handler", route=route_name)
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def _execute_handler(
         self,

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import override
+from typing import Annotated, override
 
 from pydantic import Field, field_validator
 
@@ -157,8 +157,16 @@ class FlextModelsDomainEvent:
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
         )
-        event_type: t.NonEmptyStr
-        aggregate_id: t.NonEmptyStr
+        event_type: Annotated[
+            t.NonEmptyStr,
+            Field(description="Domain event type identifier for subscriber routing."),
+        ]
+        aggregate_id: Annotated[
+            t.NonEmptyStr,
+            Field(
+                description="Identifier of the aggregate root that produced this event."
+            ),
+        ]
         data: FlextModelsDomainEvent.ComparableConfigMap = Field(
             validate_default=True,
             description="Event data container",

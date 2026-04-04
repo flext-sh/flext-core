@@ -10,9 +10,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_tests import tm
 from tests import t, u
 
-type ScalarValue = t.Scalar
-type NormalizedValue = t.NormalizedValue
-
 
 class TestUtilitiesTypeGuardsCoverage100:
     class TypeGuardScenario(BaseModel):
@@ -23,7 +20,7 @@ class TestUtilitiesTypeGuardsCoverage100:
             arbitrary_types_allowed=True,
         )
         name: str
-        value: Annotated[ScalarValue, Field(default="")]
+        value: Annotated[t.Scalar, Field(default="")]
         expected_result: bool = True
 
     class NormalizeScenario(BaseModel):
@@ -34,9 +31,9 @@ class TestUtilitiesTypeGuardsCoverage100:
             arbitrary_types_allowed=True,
         )
         name: str
-        value: Annotated[ScalarValue, Field(default="")]
+        value: Annotated[t.Scalar, Field(default="")]
         expected_type: type = str
-        expected_value: ScalarValue | None = None
+        expected_value: t.Scalar | None = None
 
     IS_STRING_NON_EMPTY: ClassVar[Sequence[TypeGuardScenario]] = [
         TypeGuardScenario(name="non_empty_string", value="test", expected_result=True),
@@ -144,9 +141,9 @@ class TestUtilitiesTypeGuardsCoverage100:
     @pytest.mark.parametrize("scenario", IS_LIST_NON_EMPTY, ids=lambda s: s.name)
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
         if scenario.value == "has_items":
-            value: NormalizedValue = [1, 2, 3]
+            value: t.NormalizedValue = [1, 2, 3]
         elif scenario.value == "empty":
-            value = cast("NormalizedValue", [])
+            value = cast("t.NormalizedValue", [])
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         else:
@@ -208,7 +205,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
-        test_list: Sequence[NormalizedValue] = [[1, 2], [3, 4]]
+        test_list: Sequence[t.NormalizedValue] = [[1, 2], [3, 4]]
         result = u.normalize_to_metadata(cast("t.RuntimeData", test_list))
         tm.that(result, is_=list)
 
@@ -218,7 +215,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        test_list: Sequence[NormalizedValue] = [
+        test_list: Sequence[t.NormalizedValue] = [
             "string",
             42,
             True,
@@ -234,7 +231,7 @@ class TestUtilitiesTypeGuardsCoverage100:
         tm.that(result, is_=list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        test_dict: Mapping[str, NormalizedValue] = {
+        test_dict: Mapping[str, t.NormalizedValue] = {
             "str": "value",
             "int": 42,
             "nested_dict": {"inner": "value"},

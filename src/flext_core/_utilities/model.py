@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core import FlextUtilitiesGuards, r, t
 from flext_core._models.base import FlextModelFoundation
@@ -18,12 +18,26 @@ from flext_core._utilities.args import FlextUtilitiesArgs
 
 
 class ModelDumpOptions(FlextModelFoundation.FlexibleInternalModel):
-    by_alias: bool | None = None
-    exclude_none: bool | None = None
-    exclude_unset: bool | None = None
-    exclude_defaults: bool | None = None
-    include: set[str] | None = None
-    exclude: set[str] | None = None
+    """Options controlling Pydantic model_dump() serialization behavior."""
+
+    by_alias: bool | None = Field(
+        default=None, description="Serialize using field aliases"
+    )
+    exclude_none: bool | None = Field(
+        default=None, description="Exclude None-valued fields"
+    )
+    exclude_unset: bool | None = Field(
+        default=None, description="Exclude fields not explicitly set"
+    )
+    exclude_defaults: bool | None = Field(
+        default=None, description="Exclude fields matching defaults"
+    )
+    include: set[str] | None = Field(
+        default=None, description="Whitelist of field names to include"
+    )
+    exclude: set[str] | None = Field(
+        default=None, description="Blacklist of field names to exclude"
+    )
 
 
 class FlextUtilitiesModel:
@@ -45,7 +59,7 @@ class FlextUtilitiesModel:
     def dump(
         model: BaseModel,
         options: ModelDumpOptions | None = None,
-        **kwargs: object,
+        **kwargs: t.ValueOrModel,
     ) -> t.ScalarMapping:
         """Unified Pydantic serialization with options.
 

@@ -138,7 +138,7 @@ class FlextUtilitiesConfiguration:
                 return r[bool].fail(
                     register_result.error or "Factory registration failed",
                 )
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Factory registration failed for {name}: {e}")
 

@@ -8,6 +8,7 @@ from typing import cast, override
 import pytest
 
 from flext_core import FlextUtilitiesParser, r
+from flext_core._utilities.parser import ParseOptions
 from flext_tests import tm
 from tests import t, u
 from tests.unit import _models_impl as test_unit_models
@@ -94,35 +95,52 @@ class TestUtilitiesParserFullCoverage:
         )
         tm.ok(enum_ci)
         tm.ok(enum_value)
-        primitive_float = parser._parse_try_primitive("2.2", float, 0.0, None, "")
-        primitive_str = parser._parse_try_primitive(5, str, "x", None, "")
-        tm.ok(primitive_float)
-        tm.ok(primitive_str)
+        primitive_float = parser._parse_try_primitive(
+            "2.2",
+            float,
+            default=0.0,
+            field_name="",
+        )
+        primitive_str = parser._parse_try_primitive(
+            5,
+            str,
+            default="x",
+            field_name="",
+        )
+        tm.that(primitive_float, eq=2.2)
+        tm.that(primitive_str, eq="5")
         monkeypatch.setattr(
             FlextUtilitiesParser,
             "_coerce_to_float",
             staticmethod(self._raise_value_error_float),
         )
-        failed_float = parser._parse_try_primitive("x", float, 1.2, None, "field: ")
-        tm.fail(failed_float)
+        failed_float = parser._parse_try_primitive(
+            "x",
+            float,
+            default=1.2,
+            field_name="field: ",
+        )
+        tm.that(failed_float, none=True)
         monkeypatch.setattr(
             FlextUtilitiesParser,
             "_coerce_to_bool",
             staticmethod(self._raise_type_error_bool),
         )
-        failed_bool = parser._parse_try_primitive("x", bool, True, None, "field: ")
-        tm.fail(failed_bool)
+        failed_bool = parser._parse_try_primitive(
+            "x",
+            bool,
+            default=True,
+            field_name="field: ",
+        )
+        tm.that(failed_bool, none=True)
 
-        class _DefaultBox:
-            pass
-
+        opts: ParseOptions[int] = ParseOptions[int](default_factory=lambda: 9)
         parsed = parser.parse(
             "x",
             int,
-            default=cast("int", cast("t.NormalizedValue", _DefaultBox())),
-            default_factory=lambda: 9,
+            options=opts,
         )
-        tm.ok(parsed)
+        tm.that(parsed, eq=9)
 
     def test_parser_norm_branches(self) -> None:
         parser = u()
@@ -179,15 +197,25 @@ class TestUtilitiesParserFullCoverage:
             "_coerce_to_int",
             staticmethod(self._raise_value_error_int),
         )
-        failed_int = parser._parse_try_primitive("x", int, 1, None, "field: ")
-        tm.fail(failed_int)
+        failed_int = parser._parse_try_primitive(
+            "x",
+            int,
+            default=1,
+            field_name="field: ",
+        )
+        tm.that(failed_int, none=True)
         monkeypatch.setattr(
             FlextUtilitiesParser,
             "_coerce_to_str",
             staticmethod(self._raise_type_error_str),
         )
-        failed_str = parser._parse_try_primitive("x", str, "d", None, "field: ")
-        tm.fail(failed_str)
+        failed_str = parser._parse_try_primitive(
+            "x",
+            str,
+            default="d",
+            field_name="field: ",
+        )
+        tm.that(failed_str, eq="x")
         tm.that(
             parser.norm_in("a", t.ConfigMap(root={"A": "1"}), case="lower"),
             eq=True,

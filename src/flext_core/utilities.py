@@ -32,6 +32,7 @@ from flext_core import (
     FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
 )
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
 class FlextUtilities(
@@ -45,6 +46,7 @@ class FlextUtilities(
     FlextUtilitiesConversion,
     FlextUtilitiesDiscovery,
     FlextUtilitiesDomain,
+    FlextUtilitiesEnforcement,
     FlextUtilitiesEnum,
     FlextUtilitiesFileOps,
     FlextUtilitiesGenerators,

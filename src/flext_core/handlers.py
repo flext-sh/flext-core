@@ -414,7 +414,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         handler_name_raw = ctx.get("handler_name", c.IDENTIFIER_UNKNOWN)
         handler_name = (
             str(handler_name_raw)
@@ -446,12 +446,12 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handler_mode=handler_mode_literal,
         )
         self._stack.append(execution_ctx)
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def record_metric(self, name: str, value: t.MetadataAttributeValue) -> r[bool]:
         """Record a metric value in the current handler state."""
         self._metrics[name] = value
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def validate_message(self, data: MessageT_contra) -> r[bool]:
         """Validate input data using extensible validation pipeline.
@@ -482,7 +482,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
         if data is None:
             return r[bool].fail("Message cannot be None")
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def _record_execution_metrics(
         self,
@@ -680,5 +680,5 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return sorted(handlers, key=lambda x: (-x[2].priority, x[0]))
 
 
-h: type[FlextHandlers[object, object]] = FlextHandlers
+h: type[FlextHandlers[t.ValueOrModel, t.ValueOrModel]] = FlextHandlers
 __all__ = ["FlextHandlers", "h"]

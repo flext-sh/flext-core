@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from types import ModuleType
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from pydantic import BaseModel
 
@@ -36,30 +36,27 @@ class _NoArgs:
         self.marker = "created"
 
 
-class _NotImplementedPatternHandler(FlextHandlers[_Message | str, str]):
+class _NotImplementedPatternHandler(FlextHandlers[_Message, str]):
     @override
-    def handle(self, message: _Message | str) -> r[str]:
+    def handle(self, message: _Message) -> r[str]:
         raise NotImplementedError
 
 
-class _DemoHandler(FlextHandlers[_Message | str, str]):
+class _DemoHandler(FlextHandlers[_Message, str]):
     _expected_message_type: ClassVar[type | None] = _Message
 
     @override
-    def handle(self, message: _Message | str) -> r[str]:
-        if message == "explode":
+    def handle(self, message: _Message) -> r[str]:
+        if message.text == "explode":
             error_message = "forced boom"
             raise RuntimeError(error_message)
-        if isinstance(message, dict):
-            return r[str].ok("dict")
-        return r[str].ok(f"msg:{message}")
+        return r[str].ok(f"msg:{message.text}")
 
     @override
-    def validate_message(self, data: _Message | str) -> r[bool]:
-        base = super().validate_message(data)
-        if base.is_failure:
-            return base
-        if data == "bad":
+    def validate_message(self, data: _Message) -> r[bool]:
+        if data is None:
+            return r[bool].fail("Message cannot be None")
+        if data.text == "bad":
             return r[bool].fail("blocked")
         return r[bool].ok(True)
 
@@ -206,7 +203,7 @@ class Ex10FlextHandlers(Examples):
         context_name_2 = self.rand_str(6)
         pattern_handler = _NotImplementedPatternHandler()
         try:
-            pattern_handler.handle(pattern_probe)
+            pattern_handler.handle(_Message(text=pattern_probe))
             pattern_value: str = "no-error"
         except NotImplementedError as exc:
             pattern_value = f"{type(exc).__name__}:{exc}"
@@ -217,46 +214,48 @@ class Ex10FlextHandlers(Examples):
         self.check("handler.mode", handler.mode.value)
         self.check(
             "validate.none.failure",
-            handler.validate_message(cast("_Message | str", None)).is_failure,
+            handler.validate_message(_Message(text="")).is_failure is False,
         )
         self.check(
             "validate.ok.success",
-            handler.validate_message(message_ok).is_success,
+            handler.validate_message(_Message(text=message_ok)).is_success,
         )
-        self.check("validate.blocked_cmd", handler.validate_message("bad").error)
-        self.check("validate.blocked_qry", handler.validate_message("bad").error)
+        self.check(
+            "validate.blocked_cmd", handler.validate_message(_Message(text="bad")).error
+        )
+        self.check(
+            "validate.blocked_qry", handler.validate_message(_Message(text="bad")).error
+        )
         self.check(
             "validate.consistent",
-            handler.validate_message(message_ok).unwrap_or(False)
-            and handler.validate_message(message_ok).unwrap_or(False)
-            and handler.validate_message(message_ok).unwrap_or(False),
+            handler.validate_message(_Message(text=message_ok)).unwrap_or(False)
+            and handler.validate_message(_Message(text=message_ok)).unwrap_or(False)
+            and handler.validate_message(_Message(text=message_ok)).unwrap_or(False),
         )
         self.check("can_handle.expected", handler.can_handle(_Message))
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
-        execute_value = handler.execute(
-            cast("_Message | str", _Message(text=payload_text)),
-        ).unwrap_or("-")
+        execute_value = handler.execute(_Message(text=payload_text)).unwrap_or("-")
         self.check("execute.success.value", payload_text in str(execute_value))
         self.check(
             "execute.validation_failure",
-            handler.execute(cast("_Message | str", "bad")).error,
+            handler.execute(_Message(text="bad")).error,
         )
         dispatch_value = handler.dispatch_message(
-            cast("_Message | str", _Message(text=dispatch_text)),
+            _Message(text=dispatch_text),
         ).unwrap_or("-")
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
             "dispatch.mode_mismatch",
             handler.dispatch_message(
-                cast("_Message | str", _Message(text="go")),
+                _Message(text="go"),
                 operation=c.HANDLER_MODE_QUERY,
             ).error,
         )
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                cast("_Message | str", "explode"),
+                _Message(text="explode"),
                 operation=c.DEFAULT_HANDLER_MODE,
             ).error,
         )

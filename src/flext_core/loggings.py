@@ -205,7 +205,7 @@ class FlextLogger(u, p.Logger):
                 merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
             u.structlog().contextvars.bind_contextvars(**context)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
 
@@ -256,7 +256,7 @@ class FlextLogger(u, p.Logger):
             }
             cls._level_contexts[level_normalized].update(normalized_context)
             u.structlog().contextvars.bind_contextvars(**prefixed_context)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
@@ -292,7 +292,7 @@ class FlextLogger(u, p.Logger):
         try:
             normalized_context = cls._to_container_context(context)
             u.structlog().contextvars.bind_contextvars(**normalized_context)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to bind global context: {exc}")
 
@@ -327,7 +327,7 @@ class FlextLogger(u, p.Logger):
                 if keys:
                     u.structlog().contextvars.unbind_contextvars(*keys)
                 cls._scoped_contexts[scope].clear()
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
 
@@ -433,7 +433,7 @@ class FlextLogger(u, p.Logger):
         try:
             unbind_keys: t.StrSequence = [str(key) for key in keys]
             u.structlog().contextvars.unbind_contextvars(*unbind_keys)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to unbind global context: {exc}")
 
@@ -748,7 +748,7 @@ class FlextLogger(u, p.Logger):
                 *filtered_args,
                 **FlextLogger._to_scalar_context(context_dict.root),
             )
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("exception", exc)
             return r[bool].fail(f"Exception logging failed: {exc}")
@@ -809,7 +809,7 @@ class FlextLogger(u, p.Logger):
                 formatted_message,
                 **FlextLogger._to_scalar_context(kwargs),
             )
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("trace", exc)
             return r[bool].fail(f"Trace logging failed: {exc}")
@@ -885,7 +885,7 @@ class FlextLogger(u, p.Logger):
             level_str = level_raw.lower()
             scalar_context = FlextLogger._to_scalar_context(context)
             getattr(self.logger, level_str)(event, **scalar_context)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Logging failed: {e}")
 

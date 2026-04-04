@@ -17,6 +17,7 @@ from flext_core import (
     FlextConstantsSettings,
     FlextConstantsValidation,
 )
+from flext_core._constants.enforcement import FlextConstantsEnforcement
 
 
 class FlextConstants(
@@ -29,6 +30,7 @@ class FlextConstants(
     FlextConstantsErrors,
     FlextConstantsInfrastructure,
     FlextConstantsMixins,
+    FlextConstantsEnforcement,
 ):
     """Centralized constants for the FLEXT ecosystem (Layer 0).
 

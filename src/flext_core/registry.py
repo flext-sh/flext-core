@@ -207,7 +207,7 @@ class FlextRegistry(s[bool]):
         """
         if not self._dispatcher:
             return r[bool].fail("Dispatcher not configured")
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def get_plugin(
         self,
@@ -322,7 +322,7 @@ class FlextRegistry(s[bool]):
             )
         try:
             _ = self.container.register(name, service)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except ValueError as e:
             error_str = str(e)
             return r[bool].fail(error_str)
@@ -464,16 +464,16 @@ class FlextRegistry(s[bool]):
         key = f"{category}::{name}"
         if scope == "instance":
             if key in self._registered_keys:
-                return r[bool].ok(value=True)
+                return r[bool].ok(True)
             self.container.register(key, plugin)
             self._registered_keys.add(key)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         cls = type(self)
         if key in cls._class_registered_keys:
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         cls._class_plugin_storage[key] = plugin
         cls._class_registered_keys.add(key)
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def unregister_plugin(
         self,
@@ -497,13 +497,13 @@ class FlextRegistry(s[bool]):
             if key not in self._registered_keys:
                 return r[bool].fail(f"{category} '{name}' not registered")
             self._registered_keys.discard(key)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         cls = type(self)
         if key not in cls._class_registered_keys:
             return r[bool].fail(f"{category} '{name}' not registered")
         del cls._class_plugin_storage[key]
         cls._class_registered_keys.discard(key)
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def _add_successful_registration(
         self,

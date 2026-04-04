@@ -103,13 +103,55 @@ class FlextModelsDispatcher:
     class CircuitBreakerStateRecord(FlextModelFoundation.FlexibleInternalModel):
         """Per-message-type circuit breaker state."""
 
-        state: str = c.CircuitBreakerState.CLOSED
-        failures: t.NonNegativeInt = 0
-        success_count: t.NonNegativeInt = 0
-        opened_at: t.NonNegativeFloat = 0.0
-        recovery_successes: t.NonNegativeInt = 0
-        recovery_failures: t.NonNegativeInt = 0
-        total_successes: t.NonNegativeInt = 0
+        state: Annotated[
+            str,
+            Field(
+                default=c.CircuitBreakerState.CLOSED,
+                description="Current circuit breaker state (CLOSED, OPEN, or HALF_OPEN).",
+            ),
+        ] = c.CircuitBreakerState.CLOSED
+        failures: Annotated[
+            t.NonNegativeInt,
+            Field(
+                default=0,
+                description="Consecutive failure count since last reset.",
+            ),
+        ] = 0
+        success_count: Annotated[
+            t.NonNegativeInt,
+            Field(
+                default=0,
+                description="Consecutive success count during half-open recovery.",
+            ),
+        ] = 0
+        opened_at: Annotated[
+            t.NonNegativeFloat,
+            Field(
+                default=0.0,
+                description="Epoch timestamp when the circuit was opened.",
+            ),
+        ] = 0.0
+        recovery_successes: Annotated[
+            t.NonNegativeInt,
+            Field(
+                default=0,
+                description="Total successful recovery transitions from half-open to closed.",
+            ),
+        ] = 0
+        recovery_failures: Annotated[
+            t.NonNegativeInt,
+            Field(
+                default=0,
+                description="Total failed recovery attempts that re-opened the circuit.",
+            ),
+        ] = 0
+        total_successes: Annotated[
+            t.NonNegativeInt,
+            Field(
+                default=0,
+                description="Cumulative successful dispatches tracked for metrics.",
+            ),
+        ] = 0
 
     class CircuitBreakerManager(FlextModelFoundation.ArbitraryTypesModel):
         """Manage per-message circuit breaker state for dispatcher executions.
@@ -184,7 +226,7 @@ class FlextModelsDispatcher:
                         },
                     ),
                 )
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
 
         def cleanup(self) -> None:
             """Clear all state."""
@@ -332,8 +374,20 @@ class FlextModelsDispatcher:
     class RateWindow(FlextModelFoundation.FlexibleInternalModel):
         """Per-message-type rate limit window state."""
 
-        window_start: t.NonNegativeFloat = 0.0
-        count: t.NonNegativeInt = 0
+        window_start: Annotated[
+            t.NonNegativeFloat,
+            Field(
+                default=0.0,
+                description="Epoch timestamp marking the start of the current rate window.",
+            ),
+        ] = 0.0
+        count: Annotated[
+            t.NonNegativeInt,
+            Field(
+                default=0,
+                description="Number of requests recorded in the current rate window.",
+            ),
+        ] = 0
 
     class RateLimiterManager(FlextModelFoundation.ArbitraryTypesModel):
         """Enforce per-message rate limits with a sliding window algorithm."""
@@ -394,7 +448,7 @@ class FlextModelsDispatcher:
                     ),
                 )
             window.count += 1
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
 
         def cleanup(self) -> None:
             """Clear all rate limit windows."""

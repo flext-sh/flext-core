@@ -413,7 +413,7 @@ class FlextModelsHandler:
             current = dict(state.root)
             current[name] = value
             self._context.set_metrics_state(t.Dict(root=current))
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
 
     class ContextStack(FlextModelFoundation.ArbitraryTypesModel):
         """Manages a stack of ExecutionContext instances for CQRS handler pipelines."""
@@ -445,7 +445,7 @@ class FlextModelsHandler:
             """Push an execution context or mapping onto the context stack."""
             if isinstance(ctx, FlextModelsHandler.ExecutionContext):
                 self._stack.append(ctx)
-                return r[bool].ok(value=True)
+                return r[bool].ok(True)
             ctx_mapping: t.ScalarMapping = {str(k): v for k, v in ctx.items()}
             handler_name: str = str(
                 ctx_mapping.get("handler_name", c.IDENTIFIER_UNKNOWN),
@@ -469,7 +469,7 @@ class FlextModelsHandler:
                 handler_mode=handler_mode_literal,
             )
             self._stack.append(execution_ctx)
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
 
     class DecoratorConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator.

@@ -421,63 +421,22 @@ venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ "src" ]
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportPrivateImportUsage = "none"
 reportPrivateUsage = "error"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUntypedBaseClass = "none"
-reportUnusedImport = "none"
 root = "src"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
-reportArgumentType = "none"
-reportAttributeAccessIssue = "none"
-reportPrivateImportUsage = "none"
 reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
 root = "tests"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
-reportArgumentType = "none"
-reportAttributeAccessIssue = "none"
-reportPrivateImportUsage = "none"
 reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
 root = "examples"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [ ".", "src" ]
-reportArgumentType = "none"
-reportAttributeAccessIssue = "none"
-reportPrivateImportUsage = "none"
 reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
 root = "scripts"
 
 # [MANAGED] pytest

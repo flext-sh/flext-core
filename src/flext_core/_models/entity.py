@@ -60,11 +60,11 @@ class FlextModelsEntity:
             description="Timestamp of last update, set in model_post_init",
         )
         domain_events: Annotated[
-            list[FlextModelsDomainEvent.Entry],
+            MutableSequence[FlextModelsDomainEvent.Entry],
             Field(
                 description="List of uncommitted domain events for event sourcing",
             ),
-        ] = Field(default_factory=lambda: list[FlextModelsDomainEvent.Entry]())
+        ] = Field(default_factory=list)
 
         @override
         def __eq__(self, other: object) -> bool:

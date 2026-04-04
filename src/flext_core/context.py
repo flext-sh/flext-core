@@ -327,7 +327,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             (str, int, float, bool, list, dict, t.ConfigMap),
         ):
             return r[bool].fail("Value must be serializable")
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def clear(self) -> None:
         """Clear all data from the context including metadata.
@@ -807,7 +807,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             for key in scope_dict:
                 if not key:
                     return r[bool].fail("Invalid key found in context")
-        return r[bool].ok(value=True)
+        return r[bool].ok(True)
 
     def values(self) -> t.ContainerList:
         """Get all values in the context.
@@ -942,7 +942,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
     def _set_bulk(self, data: t.ConfigMap, scope: str) -> r[bool]:
         """Set multiple values in the context from a ConfigMap."""
         if not data:
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -954,7 +954,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 c.OPERATION_SET,
                 t.ConfigMap(root={c.DIR_DATA: t.ConfigMap(root=data.root)}),
             )
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except TypeError as e:
             return r[bool].fail(str(e))
 
@@ -1001,7 +1001,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
                 c.OPERATION_SET,
                 t.ConfigMap(root={"key": key, "value": value}),
             )
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         except TypeError as e:
             return r[bool].fail(str(e))
 
@@ -1249,7 +1249,7 @@ class FlextContext(m.ArbitraryTypesModel, u):
             try:
                 # Type ignoring register until Pydantic vs arbitrary type unification is complete
                 _ = container.register(service_name, service)
-                return r[bool].ok(value=True)
+                return r[bool].ok(True)
             except ValueError as e:
                 return r[bool].fail(str(e))
 

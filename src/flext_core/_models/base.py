@@ -31,6 +31,7 @@ from pydantic import (
 )
 
 from flext_core import FlextRuntime, c, t
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
 class FlextModelFoundation:
@@ -388,6 +389,12 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
+
     class StrictBoundaryModel(BaseModel):
         """Strict boundary model for API/external boundaries."""
 
@@ -400,6 +407,12 @@ class FlextModelFoundation:
             frozen=True,
         )
 
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
+
     class FlexibleInternalModel(BaseModel):
         """Flexible internal model for domain logic."""
 
@@ -410,6 +423,12 @@ class FlextModelFoundation:
             use_enum_values=True,
         )
 
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
+
     class ImmutableValueModel(BaseModel):
         """Immutable value model for value objects."""
 
@@ -419,11 +438,23 @@ class FlextModelFoundation:
             extra="forbid",
         )
 
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
+
     class TaggedModel(BaseModel):
         """Base pattern for tagged discriminated unions."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
         tag: ClassVar[str]
+
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
 
     class DynamicConfigModel(BaseModel):
         """Model for dynamic configuration - allows extra fields."""
@@ -434,6 +465,12 @@ class FlextModelFoundation:
             arbitrary_types_allowed=True,
             use_enum_values=True,
         )
+
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
 
     class Metadata(BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
@@ -673,6 +710,12 @@ class FlextModelFoundation:
             hide_input_in_errors=True,
             frozen=True,
         )
+
+        @classmethod
+        @override
+        def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
+            super().__pydantic_init_subclass__(**kwargs)
+            FlextUtilitiesEnforcement.run(cls)
 
     class FrozenValueModel(FrozenStrictModel):
         """Value model with equality/hash by value."""

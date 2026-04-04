@@ -354,7 +354,7 @@ class FlextModelsContainer:
                 title="Config",
                 description="Settings instance bound to the container runtime.",
             ),
-        ] = None
+        ]
         context: Annotated[
             p.Context | None,
             SkipValidation,
@@ -363,57 +363,38 @@ class FlextModelsContainer:
                 title="Context",
                 description="Execution context attached to the container.",
             ),
-        ] = None
-        services: Annotated[
-            Mapping[str, FlextModelsContainer.ServiceRegistration] | None,
-            SkipValidation,
-            Field(
-                default=None,
-                title="Services",
-                description="Pre-registered service instances for bootstrap.",
-            ),
-        ] = None
-        factories: Annotated[
-            Mapping[str, FlextModelsContainer.FactoryRegistration] | None,
-            SkipValidation,
+        ]
+        services: Mapping[str, FlextModelsContainer.ServiceRegistration] | None = Field(
+            default=None,
+            title="Services",
+            description="Pre-registered service instances for bootstrap.",
+        )
+        factories: Mapping[str, FlextModelsContainer.FactoryRegistration] | None = (
             Field(
                 default=None,
                 title="Factories",
                 description="Pre-registered factory callables for bootstrap.",
-            ),
-        ] = None
-        resources: Annotated[
-            Mapping[str, FlextModelsContainer.ResourceRegistration] | None,
-            SkipValidation,
+            )
+        )
+        resources: Mapping[str, FlextModelsContainer.ResourceRegistration] | None = (
             Field(
                 default=None,
                 title="Resources",
                 description="Pre-registered resource factories for bootstrap.",
-            ),
-        ] = None
-        user_overrides: Annotated[
-            t.ConfigMap
-            | Mapping[
-                str,
-                t.ConfigMap | t.ScalarList | t.Scalar,
-            ]
-            | None,
-            SkipValidation,
-            Field(
-                default=None,
-                title="User Overrides",
-                description="User-level configuration overrides applied after defaults.",
-            ),
-        ] = None
-        container_config: Annotated[
-            FlextModelsContainer.ContainerConfig | None,
-            SkipValidation,
-            Field(
-                default=None,
-                title="Container Config",
-                description="Container configuration model controlling DI behavior.",
-            ),
-        ] = None
+            )
+        )
+        user_overrides: (
+            t.ConfigMap | Mapping[str, t.ConfigMap | t.ScalarList | t.Scalar] | None
+        ) = Field(
+            default=None,
+            title="User Overrides",
+            description="User-level configuration overrides applied after defaults.",
+        )
+        container_config: FlextModelsContainer.ContainerConfig | None = Field(
+            default=None,
+            title="Container Config",
+            description="Container configuration model controlling DI behavior.",
+        )
 
     class FactoryDecoratorConfig(FlextModelFoundation.ImmutableValueModel):
         """Configuration extracted from @d.factory() decorator.

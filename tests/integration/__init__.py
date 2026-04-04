@@ -13,40 +13,22 @@ if _t.TYPE_CHECKING:
     import tests.integration.patterns as _tests_integration_patterns
 
     patterns = _tests_integration_patterns
-    import tests.integration.patterns.test_advanced_patterns as _tests_integration_patterns_test_advanced_patterns
-
-    test_advanced_patterns = _tests_integration_patterns_test_advanced_patterns
-    import tests.integration.patterns.test_architectural_patterns as _tests_integration_patterns_test_architectural_patterns
-    from tests.integration.patterns.test_advanced_patterns import (
-        TestAdvancedPatterns,
-        TestFunction,
-    )
-
-    test_architectural_patterns = (
-        _tests_integration_patterns_test_architectural_patterns
-    )
-    import tests.integration.patterns.test_patterns_commands as _tests_integration_patterns_test_patterns_commands
-    from tests.integration.patterns.test_architectural_patterns import (
-        TestArchitecturalPatterns,
-    )
-
-    test_patterns_commands = _tests_integration_patterns_test_patterns_commands
-    import tests.integration.patterns.test_patterns_logging as _tests_integration_patterns_test_patterns_logging
-    from tests.integration.patterns.test_patterns_commands import TestPatternsCommands
-
-    test_patterns_logging = _tests_integration_patterns_test_patterns_logging
-    import tests.integration.patterns.test_patterns_testing as _tests_integration_patterns_test_patterns_testing
-    from tests.integration.patterns.test_patterns_logging import (
-        EXPECTED_BULK_SIZE,
-        TestPatternsLogging,
-    )
-
-    test_patterns_testing = _tests_integration_patterns_test_patterns_testing
     import tests.integration.test_architecture as _tests_integration_test_architecture
-    from tests.integration.patterns.test_patterns_testing import (
+    from tests.integration.patterns import (
+        EXPECTED_BULK_SIZE,
         P,
         R,
+        TestAdvancedPatterns,
+        TestArchitecturalPatterns,
+        TestFunction,
+        TestPatternsCommands,
+        TestPatternsLogging,
         TestPatternsTesting,
+        test_advanced_patterns,
+        test_architectural_patterns,
+        test_patterns_commands,
+        test_patterns_logging,
+        test_patterns_testing,
     )
 
     test_architecture = _tests_integration_test_architecture

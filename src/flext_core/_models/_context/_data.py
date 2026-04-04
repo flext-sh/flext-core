@@ -7,19 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, ClassVar
+from typing import Annotated
 
 from pydantic import (
     BaseModel,
     BeforeValidator,
-    ConfigDict,
     Field,
     field_validator,
 )
 
 from flext_core import (
     FlextModelFoundation,
-    FlextModelsEntity,
     FlextRuntime,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
@@ -104,7 +102,9 @@ class FlextModelsContextData:
             FlextModelsContextData.ContextData.check_json_serializable(working_value)
             return dict(working_value)
 
-    class ContextData(SerializableDataValidatorMixin, FlextModelsEntity.Value):
+    class ContextData(
+        SerializableDataValidatorMixin, FlextModelFoundation.FlexibleInternalModel
+    ):
         """Lightweight container for initializing context state."""
 
         data: Annotated[
@@ -123,7 +123,6 @@ class FlextModelsContextData:
                 description="Context metadata (creation info, source, etc.)",
             ),
         ] = None
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_IGNORE)
 
         @classmethod
         def check_json_serializable(cls, obj: t.ValueOrModel, path: str = "") -> None:

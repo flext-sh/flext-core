@@ -15,7 +15,7 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 from flext_core import FlextUtilitiesGuards, m, p, r, t
 from flext_core._models.base import FlextModelFoundation
@@ -23,12 +23,26 @@ from flext_core._utilities.args import FlextUtilitiesArgs
 
 
 class ParseOptions[T](FlextModelFoundation.FlexibleInternalModel):
-    strict: bool | None = None
-    coerce: bool | None = None
-    case_insensitive: bool | None = None
-    default: T | None = None
-    default_factory: Callable[[], T] | None = None
-    field_name: str | None = None
+    """Options controlling parsing behavior for string-to-type conversion."""
+
+    strict: bool | None = Field(
+        default=None, description="Reject coercions; fail on type mismatch"
+    )
+    coerce: bool | None = Field(
+        default=None, description="Enable implicit type coercion"
+    )
+    case_insensitive: bool | None = Field(
+        default=None, description="Normalize case before parsing"
+    )
+    default: T | None = Field(
+        default=None, description="Fallback value when parsing fails"
+    )
+    default_factory: Callable[[], T] | None = Field(
+        default=None, description="Factory producing fallback value"
+    )
+    field_name: str | None = Field(
+        default=None, description="Source field name for error context"
+    )
 
 
 class FlextUtilitiesParser:
@@ -49,7 +63,7 @@ class FlextUtilitiesParser:
                 case="lower",
             )
             if normalized_val in {"true", "1", "yes", "on"}:
-                return r[bool].ok(value=True)
+                return r[bool].ok(True)
             if normalized_val in {"false", "0", "no", "off"}:
                 return r[bool].ok(False)
             return r[bool].fail(f"Cannot coerce '{value}' to bool")
@@ -184,7 +198,7 @@ class FlextUtilitiesParser:
         fp = f"{opts.field_name}: " if opts.field_name else ""
         if not issubclass(target, StrEnum):
             msg = f"{fp}Target is not a StrEnum. Enum mode cannot be used here."
-            raise ValueError(
+            raise TypeError(
                 msg,
             )
         target_name = target.__name__
@@ -194,7 +208,7 @@ class FlextUtilitiesParser:
                 opts.default_factory,
                 f"{fp}Value is None",
             ).unwrap()
-        value_str = FlextUtilitiesParser._coerce_to_str(value)
+        value_str = FlextUtilitiesParser._coerce_to_str(value).unwrap()
         found: T | None = None
         for member in target:
             member_val = getattr(member, "value", None)
@@ -229,7 +243,7 @@ class FlextUtilitiesParser:
         fp = f"{opts.field_name}: " if opts.field_name else ""
         if not issubclass(target, BaseModel):
             msg = f"{fp}Target is not a BaseModel"
-            raise ValueError(msg)
+            raise TypeError(msg)
         if value is None:
             return FlextUtilitiesParser._parse_with_default(
                 opts.default,
@@ -263,12 +277,45 @@ class FlextUtilitiesParser:
                 opts.default_factory,
                 f"{fp}Value is None",
             ).unwrap()
+        if target is str:
+            if isinstance(value, str):
+                return typing.cast("T", value)
+            try:
+                coerced = FlextUtilitiesParser._coerce_to_str(value)
+            except (TypeError, ValueError):
+                return None
+            return typing.cast(
+                "T | None", coerced.value if coerced.is_success else None
+            )
+        if target is int:
+            try:
+                coerced = FlextUtilitiesParser._coerce_to_int(value)
+            except (TypeError, ValueError):
+                return None
+            return typing.cast(
+                "T | None", coerced.value if coerced.is_success else None
+            )
+        if target is float:
+            try:
+                coerced = FlextUtilitiesParser._coerce_to_float(value)
+            except (TypeError, ValueError):
+                return None
+            return typing.cast(
+                "T | None", coerced.value if coerced.is_success else None
+            )
+        if target is bool:
+            try:
+                coerced = FlextUtilitiesParser._coerce_to_bool(value)
+            except (TypeError, ValueError):
+                return None
+            return typing.cast(
+                "T | None", coerced.value if coerced.is_success else None
+            )
         if target in {int, float, str, bool}:
             try:
                 adapter = TypeAdapter(target)
-                parsed_value = adapter.validate_python(value)
-                if isinstance(parsed_value, target):
-                    return parsed_value
+                validated: T = adapter.validate_python(value)
+                return validated
             except ValidationError:
                 pass
         return None
@@ -372,8 +419,11 @@ class FlextUtilitiesParser:
         )
         if prim is not None:
             return prim
-        msg = f"{fp}Failed to parse '{value}' as {target.__name__}"
-        raise TypeError(msg)
+        return FlextUtilitiesParser._parse_with_default(
+            opts.default,
+            opts.default_factory,
+            f"{fp}Failed to parse '{value}' as {target.__name__}",
+        ).unwrap()
 
     @staticmethod
     @r.safe
@@ -407,10 +457,18 @@ class FlextUtilitiesParser:
                 )
                 return res2.unwrap()
             case tgt if FlextUtilitiesParser._is_primitive_type(tgt):
-                res3 = FlextUtilitiesParser._parse_dispatch_primitive(
-                    value, target, options=opts, **kwargs
+                prim = FlextUtilitiesParser._parse_try_primitive(
+                    value,
+                    target,
+                    options=opts,
                 )
-                return res3.unwrap()
+                if prim is not None:
+                    return prim
+                return FlextUtilitiesParser._parse_with_default(
+                    opts.default,
+                    opts.default_factory,
+                    f"{fp}Failed to parse '{value}' as {target.__name__}",
+                ).unwrap()
             case _:
                 return FlextUtilitiesParser._parse_try_direct(
                     value, target, options=opts, **kwargs

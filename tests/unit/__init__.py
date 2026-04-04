@@ -13,27 +13,19 @@ if _t.TYPE_CHECKING:
     import tests.unit._models as _tests_unit__models
 
     _models = _tests_unit__models
-    import tests.unit._models.test_base as _tests_unit__models_test_base
-
-    test_base = _tests_unit__models_test_base
-    import tests.unit._models.test_cqrs as _tests_unit__models_test_cqrs
-    from tests.unit._models.test_base import TestFlextModelsBase
-
-    test_cqrs = _tests_unit__models_test_cqrs
-    import tests.unit._models.test_entity as _tests_unit__models_test_entity
-    from tests.unit._models.test_cqrs import TestFlextModelsCqrs
-
-    test_entity = _tests_unit__models_test_entity
-    import tests.unit._models.test_errors as _tests_unit__models_test_errors
-    from tests.unit._models.test_entity import TestFlextModelsEntity
-
-    test_errors = _tests_unit__models_test_errors
-    import tests.unit._models.test_exception_params as _tests_unit__models_test_exception_params
-    from tests.unit._models.test_errors import TestFlextModelsErrors
-
-    test_exception_params = _tests_unit__models_test_exception_params
     import tests.unit._models_impl as _tests_unit__models_impl
-    from tests.unit._models.test_exception_params import TestFlextModelsExceptionParams
+    from tests.unit._models import (
+        TestFlextModelsBase,
+        TestFlextModelsCqrs,
+        TestFlextModelsEntity,
+        TestFlextModelsErrors,
+        TestFlextModelsExceptionParams,
+        test_base,
+        test_cqrs,
+        test_entity,
+        test_errors,
+        test_exception_params,
+    )
 
     _models_impl = _tests_unit__models_impl
     import tests.unit._utilities as _tests_unit__utilities
@@ -68,15 +60,13 @@ if _t.TYPE_CHECKING:
     )
 
     _utilities = _tests_unit__utilities
-    import tests.unit._utilities.test_guards as _tests_unit__utilities_test_guards
-
-    test_guards = _tests_unit__utilities_test_guards
-    import tests.unit._utilities.test_mapper as _tests_unit__utilities_test_mapper
-    from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
-
-    test_mapper = _tests_unit__utilities_test_mapper
     import tests.unit.conftest_infra as _tests_unit_conftest_infra
-    from tests.unit._utilities.test_mapper import TestFlextUtilitiesMapper
+    from tests.unit._utilities import (
+        TestFlextUtilitiesGuards,
+        TestFlextUtilitiesMapper,
+        test_guards,
+        test_mapper,
+    )
 
     conftest_infra = _tests_unit_conftest_infra
     import tests.unit.contracts as _tests_unit_contracts
@@ -96,31 +86,22 @@ if _t.TYPE_CHECKING:
     )
 
     contracts = _tests_unit_contracts
-    import tests.unit.contracts.text_contract as _tests_unit_contracts_text_contract
-
-    text_contract = _tests_unit_contracts_text_contract
     import tests.unit.flext_tests as _tests_unit_flext_tests
-    from tests.unit.contracts.text_contract import TextUtilityContract
+    from tests.unit.contracts import TextUtilityContract, text_contract
 
     flext_tests = _tests_unit_flext_tests
-    import tests.unit.flext_tests.test_docker as _tests_unit_flext_tests_test_docker
-
-    test_docker = _tests_unit_flext_tests_test_docker
-    import tests.unit.flext_tests.test_domains as _tests_unit_flext_tests_test_domains
-    from tests.unit.flext_tests.test_docker import TestDocker
-
-    test_domains = _tests_unit_flext_tests_test_domains
-    import tests.unit.flext_tests.test_files as _tests_unit_flext_tests_test_files
-    from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
-
-    test_files = _tests_unit_flext_tests_test_files
-    import tests.unit.flext_tests.test_matchers as _tests_unit_flext_tests_test_matchers
-    from tests.unit.flext_tests.test_files import TestFlextTestsFiles
-
-    test_matchers = _tests_unit_flext_tests_test_matchers
     import tests.unit.protocols as _tests_unit_protocols
-    from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
-    from tests.unit.flext_tests.test_utilities import TestUtilities
+    from tests.unit.flext_tests import (
+        TestDocker,
+        TestFlextTestsDomains,
+        TestFlextTestsFiles,
+        TestFlextTestsMatchers,
+        TestUtilities,
+        test_docker,
+        test_domains,
+        test_files,
+        test_matchers,
+    )
 
     protocols = _tests_unit_protocols
     import tests.unit.test_args_coverage_100 as _tests_unit_test_args_coverage_100
@@ -655,7 +636,6 @@ if _t.TYPE_CHECKING:
     import tests.unit.test_utilities_guards_full_coverage as _tests_unit_test_utilities_guards_full_coverage
     from tests.unit.test_utilities_generators_full_coverage import (
         TestUtilitiesGeneratorsFullCoverage,
-        generators_module,
     )
 
     test_utilities_guards_full_coverage = (
@@ -686,7 +666,6 @@ if _t.TYPE_CHECKING:
         SimpleObj,
         TestuMapperAccessors,
         TestuMapperAdvanced,
-        TestuMapperBuild,
         TestuMapperConversions,
         TestuMapperExtract,
         TestuMapperUtils,
@@ -703,23 +682,10 @@ if _t.TYPE_CHECKING:
         BadMapping,
         BadString,
         ExplodingLenList,
-        UtilitiesMapperFullCoverageNamespace,
         mapper,
         test_bad_string_and_bad_bool_raise_value_error,
-        test_build_apply_transform_and_process_error_paths,
-        test_convert_default_fallback_matrix,
-        test_convert_sequence_branch_returns_tuple,
         test_extract_array_index_helpers,
         test_extract_error_paths_and_prop_accessor,
-        test_extract_field_value_and_ensure_variants,
-        test_filter_map_normalize_convert_helpers,
-        test_general_value_helpers_and_logger,
-        test_group_sort_unique_slice_chunk_branches,
-        test_narrow_to_string_keyed_dict_and_mapping_paths,
-        test_take_and_as_branches,
-        test_transform_and_deep_eq_branches,
-        test_transform_option_extract_and_step_helpers,
-        test_type_guards_and_narrowing_failures,
     )
 
     test_utilities_parser_full_coverage = (
@@ -876,14 +842,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestuDomain": "tests.unit.test_utilities_domain",
         "TestuMapperAccessors": "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperAdvanced": "tests.unit.test_utilities_mapper_coverage_100",
-        "TestuMapperBuild": "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperConversions": "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperExtract": "tests.unit.test_utilities_mapper_coverage_100",
         "TestuMapperUtils": "tests.unit.test_utilities_mapper_coverage_100",
         "TestuTypeChecker": "tests.unit.test_utilities_type_checker_coverage_100",
         "UtilitiesCacheCoverage100Namespace": "tests.unit.test_utilities_cache_coverage_100",
         "UtilitiesMapperCoverage100Namespace": "tests.unit.test_utilities_mapper_coverage_100",
-        "UtilitiesMapperFullCoverageNamespace": "tests.unit.test_utilities_mapper_full_coverage",
         "_BadCopyModel": "tests.unit._models_impl",
         "_BrokenDumpModel": "tests.unit._models_impl",
         "_Cfg": "tests.unit._models_impl",
@@ -914,7 +878,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "d": ("flext_core.decorators", "FlextDecorators"),
         "e": ("flext_core.exceptions", "FlextExceptions"),
         "flext_tests": "tests.unit.flext_tests",
-        "generators_module": "tests.unit.test_utilities_generators_full_coverage",
         "h": ("flext_core.handlers", "FlextHandlers"),
         "infra_git": "tests.unit.conftest_infra",
         "infra_git_repo": "tests.unit.conftest_infra",
@@ -944,7 +907,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_async_log_writer_paths": "tests.unit.test_runtime_full_coverage",
         "test_async_log_writer_shutdown_with_full_queue": "tests.unit.test_runtime_full_coverage",
         "test_bad_string_and_bad_bool_raise_value_error": "tests.unit.test_utilities_mapper_full_coverage",
-        "test_build_apply_transform_and_process_error_paths": "tests.unit.test_utilities_mapper_full_coverage",
         "test_canonical_aliases_are_available": "tests.unit.test_models_generic_full_coverage",
         "test_centralize_pydantic_cli_outputs_extended_metrics": "tests.unit.test_refactor_cli_models_workflow",
         "test_chk_exercises_missed_branches": "tests.unit.test_utilities_guards_full_coverage",
@@ -982,8 +944,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_conversion_add_skipped_skip_reason_upsert_paths": "tests.unit.test_models_generic_full_coverage",
         "test_conversion_add_warning_metadata_append_paths": "tests.unit.test_models_generic_full_coverage",
         "test_conversion_start_and_complete_methods": "tests.unit.test_models_generic_full_coverage",
-        "test_convert_default_fallback_matrix": "tests.unit.test_utilities_mapper_full_coverage",
-        "test_convert_sequence_branch_returns_tuple": "tests.unit.test_utilities_mapper_full_coverage",
         "test_coverage_context": "tests.unit.test_coverage_context",
         "test_coverage_exceptions": "tests.unit.test_coverage_exceptions",
         "test_coverage_loggings": "tests.unit.test_coverage_loggings",
@@ -1019,15 +979,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_export_paths_with_metadata_and_statistics": "tests.unit.test_context_full_coverage",
         "test_extract_array_index_helpers": "tests.unit.test_utilities_mapper_full_coverage",
         "test_extract_error_paths_and_prop_accessor": "tests.unit.test_utilities_mapper_full_coverage",
-        "test_extract_field_value_and_ensure_variants": "tests.unit.test_utilities_mapper_full_coverage",
-        "test_filter_map_normalize_convert_helpers": "tests.unit.test_utilities_mapper_full_coverage",
         "test_flext_message_type_alias_adapter": "tests.unit.test_models_cqrs_full_coverage",
         "test_flow_through_short_circuits_on_failure": "tests.unit.test_result_additional",
         "test_from_validation_and_to_model_paths": "tests.unit.test_result_full_coverage",
-        "test_general_value_helpers_and_logger": "tests.unit.test_utilities_mapper_full_coverage",
         "test_get_logger_none_name_paths": "tests.unit.test_runtime_full_coverage",
         "test_get_plugin_and_register_metadata_and_list_items_exception": "tests.unit.test_registry_full_coverage",
-        "test_group_sort_unique_slice_chunk_branches": "tests.unit.test_utilities_mapper_full_coverage",
         "test_guard_in_has_empty_none_helpers": "tests.unit.test_utilities_guards_full_coverage",
         "test_guard_instance_attribute_access_warnings": "tests.unit.test_utilities_guards_full_coverage",
         "test_guards_bool_identity_branch_via_isinstance_fallback": "tests.unit.test_utilities_guards_full_coverage",
@@ -1086,7 +1042,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_namespace_validator": "tests.unit.test_namespace_validator",
         "test_narrow_contextvar_exception_branch": "tests.unit.test_context_full_coverage",
         "test_narrow_contextvar_invalid_inputs": "tests.unit.test_context_full_coverage",
-        "test_narrow_to_string_keyed_dict_and_mapping_paths": "tests.unit.test_utilities_mapper_full_coverage",
         "test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage": "tests.unit.test_transformer_nested_class_propagation",
         "test_nested_class_propagation_updates_import_annotations_and_calls": "tests.unit.test_transformer_nested_class_propagation",
         "test_non_empty_and_normalize_branches": "tests.unit.test_utilities_guards_full_coverage",
@@ -1142,14 +1097,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_structlog_proxy_context_var_get_set_reset_paths": "tests.unit.test_models_context_full_coverage",
         "test_summary_error_paths_and_bindings_failures": "tests.unit.test_registry_full_coverage",
         "test_summary_properties_and_subclass_storage_reset": "tests.unit.test_registry_full_coverage",
-        "test_take_and_as_branches": "tests.unit.test_utilities_mapper_full_coverage",
         "test_to_general_value_dict_removed": "tests.unit.test_models_context_full_coverage",
-        "test_transform_and_deep_eq_branches": "tests.unit.test_utilities_mapper_full_coverage",
-        "test_transform_option_extract_and_step_helpers": "tests.unit.test_utilities_mapper_full_coverage",
         "test_transformer_class_nesting": "tests.unit.test_transformer_class_nesting",
         "test_transformer_helper_consolidation": "tests.unit.test_transformer_helper_consolidation",
         "test_transformer_nested_class_propagation": "tests.unit.test_transformer_nested_class_propagation",
-        "test_type_guards_and_narrowing_failures": "tests.unit.test_utilities_mapper_full_coverage",
         "test_type_guards_result": "tests.unit.test_result_full_coverage",
         "test_typings_full_coverage": "tests.unit.test_typings_full_coverage",
         "test_typings_new": "tests.unit.test_typings_new",
@@ -1294,7 +1245,6 @@ __all__ = [
     "TestuDomain",
     "TestuMapperAccessors",
     "TestuMapperAdvanced",
-    "TestuMapperBuild",
     "TestuMapperConversions",
     "TestuMapperExtract",
     "TestuMapperUtils",
@@ -1302,7 +1252,6 @@ __all__ = [
     "TextUtilityContract",
     "UtilitiesCacheCoverage100Namespace",
     "UtilitiesMapperCoverage100Namespace",
-    "UtilitiesMapperFullCoverageNamespace",
     "_BadCopyModel",
     "_BrokenDumpModel",
     "_Cfg",
@@ -1333,7 +1282,6 @@ __all__ = [
     "d",
     "e",
     "flext_tests",
-    "generators_module",
     "h",
     "infra_git",
     "infra_git_repo",
@@ -1364,7 +1312,6 @@ __all__ = [
     "test_async_log_writer_shutdown_with_full_queue",
     "test_bad_string_and_bad_bool_raise_value_error",
     "test_base",
-    "test_build_apply_transform_and_process_error_paths",
     "test_canonical_aliases_are_available",
     "test_centralize_pydantic_cli_outputs_extended_metrics",
     "test_chk_exercises_missed_branches",
@@ -1402,8 +1349,6 @@ __all__ = [
     "test_conversion_add_skipped_skip_reason_upsert_paths",
     "test_conversion_add_warning_metadata_append_paths",
     "test_conversion_start_and_complete_methods",
-    "test_convert_default_fallback_matrix",
-    "test_convert_sequence_branch_returns_tuple",
     "test_coverage_context",
     "test_coverage_exceptions",
     "test_coverage_loggings",
@@ -1445,16 +1390,12 @@ __all__ = [
     "test_export_paths_with_metadata_and_statistics",
     "test_extract_array_index_helpers",
     "test_extract_error_paths_and_prop_accessor",
-    "test_extract_field_value_and_ensure_variants",
     "test_files",
-    "test_filter_map_normalize_convert_helpers",
     "test_flext_message_type_alias_adapter",
     "test_flow_through_short_circuits_on_failure",
     "test_from_validation_and_to_model_paths",
-    "test_general_value_helpers_and_logger",
     "test_get_logger_none_name_paths",
     "test_get_plugin_and_register_metadata_and_list_items_exception",
-    "test_group_sort_unique_slice_chunk_branches",
     "test_guard_in_has_empty_none_helpers",
     "test_guard_instance_attribute_access_warnings",
     "test_guards",
@@ -1516,7 +1457,6 @@ __all__ = [
     "test_namespace_validator",
     "test_narrow_contextvar_exception_branch",
     "test_narrow_contextvar_invalid_inputs",
-    "test_narrow_to_string_keyed_dict_and_mapping_paths",
     "test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage",
     "test_nested_class_propagation_updates_import_annotations_and_calls",
     "test_non_empty_and_normalize_branches",
@@ -1572,14 +1512,10 @@ __all__ = [
     "test_structlog_proxy_context_var_get_set_reset_paths",
     "test_summary_error_paths_and_bindings_failures",
     "test_summary_properties_and_subclass_storage_reset",
-    "test_take_and_as_branches",
     "test_to_general_value_dict_removed",
-    "test_transform_and_deep_eq_branches",
-    "test_transform_option_extract_and_step_helpers",
     "test_transformer_class_nesting",
     "test_transformer_helper_consolidation",
     "test_transformer_nested_class_propagation",
-    "test_type_guards_and_narrowing_failures",
     "test_type_guards_result",
     "test_typings_full_coverage",
     "test_typings_new",

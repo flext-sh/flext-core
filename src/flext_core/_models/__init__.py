@@ -14,12 +14,14 @@ if _t.TYPE_CHECKING:
 
     _context = _flext_core__models__context
     import flext_core._models.base as _flext_core__models_base
-    from flext_core._models._context._data import FlextModelsContextData
-    from flext_core._models._context._export import FlextModelsContextExport
-    from flext_core._models._context._metadata import FlextModelsContextMetadata
-    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
-    from flext_core._models._context._scope import FlextModelsContextScope
-    from flext_core._models._context._tokens import FlextModelsContextTokens
+    from flext_core._models._context import (
+        FlextModelsContextData,
+        FlextModelsContextExport,
+        FlextModelsContextMetadata,
+        FlextModelsContextProxyVar,
+        FlextModelsContextScope,
+        FlextModelsContextTokens,
+    )
 
     base = _flext_core__models_base
     import flext_core._models.collections as _flext_core__models_collections

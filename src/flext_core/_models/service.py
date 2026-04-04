@@ -35,9 +35,20 @@ class FlextModelsService:
         registry) should be used directly - not through FlextService.
         """
 
-        config: p.Settings
-        context: p.Context
-        container: p.Container
+        config: Annotated[
+            p.Settings,
+            Field(description="Service configuration settings for runtime behavior."),
+        ]
+        context: Annotated[
+            p.Context,
+            Field(
+                description="Execution context carrying correlation and tracing metadata."
+            ),
+        ]
+        container: Annotated[
+            p.Container,
+            Field(description="Dependency injection container for service resolution."),
+        ]
 
     class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""
@@ -58,7 +69,13 @@ class FlextModelsService:
                 examples=["9fd8d2fd-a4bc-4b15-9e8a-47f6c7dd6a11"],
             ),
         ] = Field(default_factory=lambda: str(uuid.uuid4()))
-        parent_span_id: t.NonEmptyStr | None = None
+        parent_span_id: Annotated[
+            t.NonEmptyStr | None,
+            Field(
+                default=None,
+                description="Parent span identifier linking this span to its caller in the trace.",
+            ),
+        ] = None
 
     class ServiceRetryConfiguration(
         FlextModelFoundation.FrozenStrictModel,
@@ -75,7 +92,13 @@ class FlextModelsService:
                 examples=[2.0],
             ),
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
-        retry_on_timeout: bool = True
+        retry_on_timeout: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to retry the operation when a timeout occurs.",
+            ),
+        ] = True
 
     class ServiceParameters(FlextModelFoundation.DynamicConfigModel):
         """Dynamic parameters for service methods - allows extra fields."""
@@ -100,8 +123,20 @@ class FlextModelsService:
             t.NonEmptyStr,
             Field(description="Method to execute"),
         ]
-        parameters: FlextModelsService.ServiceParameters | None = None
-        context: FlextModelsService.TraceContext | None = None
+        parameters: Annotated[
+            FlextModelsService.ServiceParameters | None,
+            Field(
+                default=None,
+                description="Dynamic parameters passed to the service method.",
+            ),
+        ] = None
+        context: Annotated[
+            FlextModelsService.TraceContext | None,
+            Field(
+                default=None,
+                description="Trace context for distributed tracing of this execution.",
+            ),
+        ] = None
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
@@ -110,8 +145,20 @@ class FlextModelsService:
                 description="Timeout from FlextSettings (Config has priority over Constants)",
             ),
         ] = c.DEFAULT_TIMEOUT_SECONDS
-        execution: bool = False
-        enable_validation: bool = True
+        execution: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether to actually execute the service method or only validate.",
+            ),
+        ] = False
+        enable_validation: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to run input validation before executing the request.",
+            ),
+        ] = True
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -133,7 +180,13 @@ class FlextModelsService:
                 examples=["create_user", "sync_records"],
             ),
         ]
-        parameters: FlextModelsService.ServiceParameters | None = None
+        parameters: Annotated[
+            FlextModelsService.ServiceParameters | None,
+            Field(
+                default=None,
+                description="Dynamic parameters for this batch operation.",
+            ),
+        ] = None
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -145,7 +198,10 @@ class FlextModelsService:
     class DomainServiceBatchRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service batch request."""
 
-        service_name: t.NonEmptyStr
+        service_name: Annotated[
+            t.NonEmptyStr,
+            Field(description="Target service name for the batch request."),
+        ]
         operations: Annotated[
             Sequence[FlextModelsService.BatchOperation],
             Field(
@@ -158,8 +214,20 @@ class FlextModelsService:
                 ],
             ),
         ] = Field(default_factory=lambda: list[FlextModelsService.BatchOperation]())
-        parallel_execution: bool = False
-        stop_on_error: bool = True
+        parallel_execution: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether to execute batch operations in parallel.",
+            ),
+        ] = False
+        stop_on_error: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to stop the batch on the first operation failure.",
+            ),
+        ] = True
         batch_size: Annotated[
             int,
             Field(
@@ -178,12 +246,21 @@ class FlextModelsService:
     class DomainServiceMetricsRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service metrics request."""
 
-        service_name: t.NonEmptyStr
+        service_name: Annotated[
+            t.NonEmptyStr,
+            Field(description="Target service name for metrics collection."),
+        ]
         metric_types: t.StrSequence = Field(
             default_factory=lambda: [*c.DEFAULT_METRIC_CATEGORIES],
             description="Types of metrics to collect",
         )
-        time_range_seconds: t.PositiveInt = c.MAX_TIMEOUT_SECONDS
+        time_range_seconds: Annotated[
+            t.PositiveInt,
+            Field(
+                default=c.MAX_TIMEOUT_SECONDS,
+                description="Time window in seconds over which to aggregate metrics.",
+            ),
+        ] = c.MAX_TIMEOUT_SECONDS
         aggregation: Annotated[
             str,
             Field(
@@ -201,7 +278,13 @@ class FlextModelsService:
                 examples=[["service_name", "handler_mode"]],
             ),
         ] = Field(default_factory=list)
-        filters: FlextModelsService.ServiceFilters | None = None
+        filters: Annotated[
+            FlextModelsService.ServiceFilters | None,
+            Field(
+                default=None,
+                description="Optional filter criteria to narrow the metrics query.",
+            ),
+        ] = None
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -213,7 +296,13 @@ class FlextModelsService:
     class DomainServiceResourceRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Domain service resource request."""
 
-        service_name: t.NonEmptyStr = c.DEFAULT_SERVICE_NAME
+        service_name: Annotated[
+            t.NonEmptyStr,
+            Field(
+                default=c.DEFAULT_SERVICE_NAME,
+                description="Target service name owning the resource.",
+            ),
+        ] = c.DEFAULT_SERVICE_NAME
         resource_type: Annotated[
             str,
             Field(
@@ -224,7 +313,13 @@ class FlextModelsService:
                 examples=["user", "invoice", "job"],
             ),
         ] = c.DEFAULT_RESOURCE_TYPE
-        resource_id: str | None = None
+        resource_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Identifier of the specific resource to operate on.",
+            ),
+        ] = None
         resource_limit: Annotated[
             t.PositiveInt,
             Field(
@@ -243,8 +338,20 @@ class FlextModelsService:
                 examples=["get", "create", "update", "delete"],
             ),
         ] = c.Action.GET
-        data: FlextModelsService.ServiceData | None = None
-        filters: FlextModelsService.ServiceFilters | None = None
+        data: Annotated[
+            FlextModelsService.ServiceData | None,
+            Field(
+                default=None,
+                description="Payload data for create or update operations.",
+            ),
+        ] = None
+        filters: Annotated[
+            FlextModelsService.ServiceFilters | None,
+            Field(
+                default=None,
+                description="Optional filter criteria to narrow resource selection.",
+            ),
+        ] = None
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -270,7 +377,13 @@ class FlextModelsService:
             t.StrSequence,
             Field(description="Denied permissions"),
         ] = Field(default_factory=list)
-        context: FlextModelsService.ServiceContext | None = None
+        context: Annotated[
+            FlextModelsService.ServiceContext | None,
+            Field(
+                default=None,
+                description="Additional execution context for the ACL evaluation.",
+            ),
+        ] = None
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -296,8 +409,20 @@ class FlextModelsService:
             ],
             Field(description="Callable operation returning result"),
         ]
-        arguments: FlextModelsService.ServiceParameters | None = None
-        keyword_arguments: FlextModelsService.ServiceParameters | None = None
+        arguments: Annotated[
+            FlextModelsService.ServiceParameters | None,
+            Field(
+                default=None,
+                description="Positional arguments passed to the operation callable.",
+            ),
+        ] = None
+        keyword_arguments: Annotated[
+            FlextModelsService.ServiceParameters | None,
+            Field(
+                default=None,
+                description="Keyword arguments passed to the operation callable.",
+            ),
+        ] = None
         timeout_seconds: Annotated[
             t.PositiveFloat,
             Field(
@@ -306,7 +431,13 @@ class FlextModelsService:
                 description="Timeout from FlextSettings (Config has priority over Constants)",
             ),
         ] = c.DEFAULT_TIMEOUT_SECONDS
-        retry_config: FlextModelsService.ServiceRetryConfiguration | None = None
+        retry_config: Annotated[
+            FlextModelsService.ServiceRetryConfiguration | None,
+            Field(
+                default=None,
+                description="Retry configuration for the operation execution.",
+            ),
+        ] = None
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -322,17 +453,83 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
-        config_type: type[BaseSettings] | None = None
-        config_overrides: t.ScalarMapping | None = None
-        context: p.Context | None = None
-        subproject: str | None = None
-        services: Mapping[str, t.RegisterableService] | None = None
-        factories: Mapping[str, t.FactoryCallable] | None = None
-        resources: Mapping[str, t.ResourceCallable] | None = None
-        container_overrides: t.ScalarMapping | None = None
-        wire_modules: Sequence[ModuleType | str] | None = None
-        wire_packages: t.StrSequence | None = None
-        wire_classes: Sequence[type] | None = None
+        config_type: Annotated[
+            type[BaseSettings] | None,
+            Field(
+                default=None,
+                description="Settings class used to load runtime configuration.",
+            ),
+        ] = None
+        config_overrides: Annotated[
+            t.ScalarMapping | None,
+            Field(
+                default=None,
+                description="Key-value overrides applied on top of the loaded configuration.",
+            ),
+        ] = None
+        context: Annotated[
+            p.Context | None,
+            Field(
+                default=None,
+                description="Pre-built execution context to inject into the runtime.",
+            ),
+        ] = None
+        subproject: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Subproject name used to scope configuration and wiring.",
+            ),
+        ] = None
+        services: Annotated[
+            Mapping[str, t.RegisterableService] | None,
+            Field(
+                default=None,
+                description="Named services to register in the dependency container.",
+            ),
+        ] = None
+        factories: Annotated[
+            Mapping[str, t.FactoryCallable] | None,
+            Field(
+                default=None,
+                description="Named factory callables to register in the dependency container.",
+            ),
+        ] = None
+        resources: Annotated[
+            Mapping[str, t.ResourceCallable] | None,
+            Field(
+                default=None,
+                description="Named lifecycle resources to register in the dependency container.",
+            ),
+        ] = None
+        container_overrides: Annotated[
+            t.ScalarMapping | None,
+            Field(
+                default=None,
+                description="Provider overrides applied to the dependency container.",
+            ),
+        ] = None
+        wire_modules: Annotated[
+            Sequence[ModuleType | str] | None,
+            Field(
+                default=None,
+                description="Modules to wire for dependency-injector resolution.",
+            ),
+        ] = None
+        wire_packages: Annotated[
+            t.StrSequence | None,
+            Field(
+                default=None,
+                description="Package names to consider for dependency wiring.",
+            ),
+        ] = None
+        wire_classes: Annotated[
+            Sequence[type] | None,
+            Field(
+                default=None,
+                description="Classes whose modules are wired for dependency resolution.",
+            ),
+        ] = None
 
     class DependencyContainerCreationOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options used to create and populate dependency container instances."""

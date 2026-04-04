@@ -44,7 +44,13 @@ class FlextModelsExceptionParams:
                 examples=["email"],
             ),
         ]
-        value: t.Scalar | None = None
+        value: Annotated[
+            t.Scalar | None,
+            Field(
+                default=None,
+                description="Rejected input value that triggered the validation error.",
+            ),
+        ] = None
 
     class ConfigurationErrorParams(ParamsModel):
         """Validated params for ConfigurationError."""

@@ -1,8 +1,8 @@
 """Tests for FlextUtilitiesMapper via the u facade.
 
-Source: flext_core._utilities.mapper (~1479 LOC)
-Covers: extract, map_get, map_dict_keys, filter_dict, build DSL,
-        transform, take, agg, deep_eq, ensure_str, narrow_to_container, prop.
+Source: flext_core._utilities.mapper
+Covers: extract, map_get, map_dict_keys,
+        transform, take, agg, deep_eq, normalize_to_container, prop.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import math
 from collections import OrderedDict
 from collections.abc import Mapping
 from typing import Annotated, cast
@@ -37,32 +36,6 @@ class _User(BaseModel):
 class _Item(BaseModel):
     label: Annotated[str, Field(description="Item label")]
     value: Annotated[int, Field(description="Item value")]
-
-
-class _DoubleOp:
-    """Callable that doubles numeric values."""
-
-    def __call__(self, value: t.RecursiveContainer) -> t.RecursiveContainer:
-        if isinstance(value, (int, float)):
-            return value * 2
-        return value
-
-
-class _GtTwoOp:
-    """Callable predicate: value > 2."""
-
-    def __call__(self, value: t.RecursiveContainer) -> bool:
-        if isinstance(value, (int, float)):
-            return value > 2
-        return False
-
-
-class _FailingOp:
-    """Callable that always raises."""
-
-    def __call__(self, value: t.RecursiveContainer) -> t.RecursiveContainer:
-        msg = "boom"
-        raise RuntimeError(msg)
 
 
 class TestFlextUtilitiesMapper:
@@ -181,22 +154,6 @@ class TestFlextUtilitiesMapper:
         mapped = tm.ok(result)
         tm.that(mapped, keys=["new"])
 
-    # ── filter_dict ────────────────────────────────────────────────
-
-    def test_filter_dict_by_value(self) -> None:
-        source: t.ContainerMapping = {"a": 1, "b": 2, "c": 3}
-        result = u.filter_dict(source, lambda _k, v: isinstance(v, int) and v > 1)
-        tm.that(result, eq={"b": 2, "c": 3})
-
-    def test_filter_dict_by_key(self) -> None:
-        source: t.ContainerMapping = {"keep": 1, "drop": 2}
-        result = u.filter_dict(source, lambda k, _v: k == "keep")
-        tm.that(result, eq={"keep": 1})
-
-    def test_filter_dict_empty_source(self) -> None:
-        result = u.filter_dict({}, lambda _k, _v: True)
-        tm.that(result, eq={})
-
     # ── deep_eq ────────────────────────────────────────────────────
 
     def test_deep_eq_identical(self) -> None:
@@ -237,28 +194,6 @@ class TestFlextUtilitiesMapper:
         a: t.ContainerMapping = {"x": None}
         b: t.ContainerMapping = {"x": 1}
         tm.that(u.deep_eq(a, b), eq=False)
-
-    # ── ensure_str ─────────────────────────────────────────────────
-
-    @pytest.mark.parametrize(
-        ("value", "default", "expected"),
-        [
-            ("hello", "", "hello"),
-            (42, "", "42"),
-            (None, "fallback", "fallback"),
-            (None, "", ""),
-            (math.pi, "", "3.14"),
-            (True, "", "True"),
-        ],
-        ids=["string", "int", "none-fallback", "none-empty", "float", "bool"],
-    )
-    def test_ensure_str(
-        self,
-        value: t.NormalizedValue,
-        default: str,
-        expected: str,
-    ) -> None:
-        tm.that(u.ensure_str(value, default), eq=expected)
 
     # ── narrow_to_container ────────────────────────────────────────
 
@@ -335,6 +270,7 @@ class TestFlextUtilitiesMapper:
         data: t.ContainerMapping = {"a": 1, "b": 2, "c": 3}
         taken = u.take(data, 2)
         tm.that(taken, is_=dict)
+        assert isinstance(taken, Mapping)
         tm.that(len(taken), eq=2)
 
     def test_take_non_collection_returns_default(self) -> None:
@@ -369,262 +305,6 @@ class TestFlextUtilitiesMapper:
     def test_agg_pydantic_model(self) -> None:
         items = [_Item(label="a", value=5), _Item(label="b", value=15)]
         tm.that(u.agg(items, "value"), eq=20)
-
-    # ── build DSL: ensure ──────────────────────────────────────────
-
-    def test_build_no_ops_returns_value(self) -> None:
-        result = u.build("hello")
-        tm.that(result, eq="hello")
-
-    def test_build_ensure_str(self) -> None:
-        result = u.build(42, ops={"ensure": "str"})
-        tm.that(result, eq="42")
-
-    def test_build_ensure_str_none(self) -> None:
-        result = u.build(None, ops={"ensure": "str"})
-        tm.that(result, eq="")
-
-    def test_build_ensure_list(self) -> None:
-        result = u.build("single", ops={"ensure": "list"})
-        tm.that(result, eq=["single"])
-
-    def test_build_ensure_list_passthrough(self) -> None:
-        result = u.build([1, 2], ops={"ensure": "list"})
-        tm.that(result, eq=[1, 2])
-
-    def test_build_ensure_str_list(self) -> None:
-        result = u.build([1, 2], ops={"ensure": "str_list"})
-        tm.that(result, eq=["1", "2"])
-
-    def test_build_ensure_dict(self) -> None:
-        result = u.build({"a": 1}, ops={"ensure": "dict"})
-        tm.that(result, is_=dict)
-
-    def test_build_ensure_dict_non_mapping(self) -> None:
-        result = u.build("not_dict", ops={"ensure": "dict"})
-        tm.that(result, is_=dict)
-
-    # ── build DSL: filter ──────────────────────────────────────────
-
-    def test_build_filter_list(self) -> None:
-        gt_two = _GtTwoOp()
-        result = u.build([1, 2, 3, 4], ops={"filter": gt_two})
-        tm.that(result, eq=[3, 4])
-
-    def test_build_filter_scalar_pass(self) -> None:
-        gt_two = _GtTwoOp()
-        result = u.build(5, ops={"filter": gt_two})
-        tm.that(result, eq=5)
-
-    def test_build_filter_scalar_fail(self) -> None:
-        gt_two = _GtTwoOp()
-        result = u.build(1, ops={"filter": gt_two}, default="gone")
-        tm.that(result, eq="gone")
-
-    # ── build DSL: map ─────────────────────────────────────────────
-
-    def test_build_map_list(self) -> None:
-        double = _DoubleOp()
-        result = u.build([1, 2, 3], ops={"map": double})
-        tm.that(result, eq=[2, 4, 6])
-
-    def test_build_map_dict_values(self) -> None:
-        double = _DoubleOp()
-        result = u.build({"a": 1, "b": 2}, ops={"map": double})
-        tm.that(result, kv={"a": 2, "b": 4})
-
-    def test_build_map_scalar(self) -> None:
-        double = _DoubleOp()
-        result = u.build(5, ops={"map": double})
-        tm.that(result, eq=10)
-
-    # ── build DSL: normalize ───────────────────────────────────────
-
-    def test_build_normalize_lower(self) -> None:
-        result = u.build("HELLO", ops={"normalize": "lower"})
-        tm.that(result, eq="hello")
-
-    def test_build_normalize_upper(self) -> None:
-        result = u.build("hello", ops={"normalize": "upper"})
-        tm.that(result, eq="HELLO")
-
-    def test_build_normalize_list(self) -> None:
-        result = u.build(["Hello", "World"], ops={"normalize": "lower"})
-        tm.that(result, eq=["hello", "world"])
-
-    def test_build_normalize_non_string_passthrough(self) -> None:
-        result = u.build(42, ops={"normalize": "lower"})
-        tm.that(result, eq=42)
-
-    # ── build DSL: convert ─────────────────────────────────────────
-
-    def test_build_convert_to_int(self) -> None:
-        result = u.build("42", ops=cast("t.ContainerMapping", {"convert": int}))
-        tm.that(result, eq=42)
-
-    def test_build_convert_list(self) -> None:
-        result = u.build(
-            ["1", "2", "3"], ops=cast("t.ContainerMapping", {"convert": int})
-        )
-        tm.that(result, eq=[1, 2, 3])
-
-    def test_build_convert_failure_uses_default(self) -> None:
-        result = u.build(
-            "not_a_number",
-            ops=cast("t.ContainerMapping", {"convert": int, "convert_default": -1}),
-        )
-        tm.that(result, eq=-1)
-
-    def test_build_convert_auto_default_int(self) -> None:
-        result = u.build("bad", ops=cast("t.ContainerMapping", {"convert": int}))
-        tm.that(result, eq=0)
-
-    # ── build DSL: sort ────────────────────────────────────────────
-
-    def test_build_sort_true(self) -> None:
-        result = u.build([3, 1, 2], ops={"sort": True})
-        tm.that(result, eq=[1, 2, 3])
-
-    def test_build_sort_by_field_name(self) -> None:
-        items: t.ContainerList = [{"name": "bob"}, {"name": "alice"}]
-        result = u.build(items, ops={"sort": "name"})
-        tm.that(result, is_=list)
-        first = result[0] if isinstance(result, list) else None
-        tm.that(first, kv={"name": "alice"})
-
-    def test_build_sort_non_list_passthrough(self) -> None:
-        result = u.build("string", ops={"sort": True})
-        tm.that(result, eq="string")
-
-    # ── build DSL: unique ──────────────────────────────────────────
-
-    def test_build_unique(self) -> None:
-        result = u.build([1, 2, 2, 3, 1], ops={"unique": True})
-        tm.that(result, eq=[1, 2, 3])
-
-    def test_build_unique_preserves_order(self) -> None:
-        result = u.build(["b", "a", "b", "c"], ops={"unique": True})
-        tm.that(result, eq=["b", "a", "c"])
-
-    def test_build_unique_false_noop(self) -> None:
-        result = u.build([1, 1, 2], ops={"unique": False})
-        tm.that(result, eq=[1, 1, 2])
-
-    # ── build DSL: slice ───────────────────────────────────────────
-
-    def test_build_slice(self) -> None:
-        result = u.build([10, 20, 30, 40, 50], ops={"slice": (1, 3)})
-        tm.that(result, eq=[20, 30])
-
-    def test_build_slice_non_list_passthrough(self) -> None:
-        result = u.build("hello", ops={"slice": (0, 2)})
-        tm.that(result, eq="hello")
-
-    # ── build DSL: chunk ───────────────────────────────────────────
-
-    def test_build_chunk(self) -> None:
-        result = u.build([1, 2, 3, 4, 5], ops={"chunk": 2})
-        tm.that(result, eq=[[1, 2], [3, 4], [5]])
-
-    def test_build_chunk_exact(self) -> None:
-        result = u.build([1, 2, 3, 4], ops={"chunk": 2})
-        tm.that(result, eq=[[1, 2], [3, 4]])
-
-    def test_build_chunk_invalid_size(self) -> None:
-        result = u.build([1, 2, 3], ops={"chunk": 0})
-        tm.that(result, eq=[1, 2, 3])
-
-    def test_build_chunk_non_list_passthrough(self) -> None:
-        result = u.build("hello", ops={"chunk": 2})
-        tm.that(result, eq="hello")
-
-    # ── build DSL: group ───────────────────────────────────────────
-
-    def test_build_group_by_field(self) -> None:
-        items: t.ContainerList = [
-            {"type": "a", "v": 1},
-            {"type": "b", "v": 2},
-            {"type": "a", "v": 3},
-        ]
-        result = u.build(items, ops={"group": "type"})
-        tm.that(result, is_=dict)
-        tm.that(result, keys=["a", "b"])
-
-    def test_build_group_by_callable(self) -> None:
-        class _LenGrouper:
-            def __call__(self, value: t.RecursiveContainer) -> int:
-                return len(value) if isinstance(value, str) else 0
-
-        result = u.build(["hi", "hey", "yo"], ops={"group": _LenGrouper()})
-        tm.that(result, is_=dict)
-
-    def test_build_group_non_list_passthrough(self) -> None:
-        result = u.build("string", ops={"group": "field"})
-        tm.that(result, eq="string")
-
-    # ── build DSL: process ─────────────────────────────────────────
-
-    def test_build_process(self) -> None:
-        double = _DoubleOp()
-        result = u.build([1, 2, 3], ops={"process": double})
-        tm.that(result, eq=[2, 4, 6])
-
-    def test_build_process_error_stop(self) -> None:
-        failing = _FailingOp()
-        result = u.build(
-            [1, 2], ops={"process": failing}, default="safe", on_error="stop"
-        )
-        tm.that(result, eq="safe")
-
-    def test_build_process_error_continue(self) -> None:
-        failing = _FailingOp()
-        result = u.build([1, 2], ops={"process": failing}, on_error="continue")
-        tm.that(result, eq=[1, 2])
-
-    # ── build DSL: transform (dict ops) ────────────────────────────
-
-    def test_build_transform_strip_none(self) -> None:
-        data: t.ContainerMapping = {"a": 1, "b": None, "c": 3}
-        result = u.build(data, ops={"transform": {"strip_none": True}})
-        tm.that(result, eq={"a": 1, "c": 3})
-
-    def test_build_transform_strip_empty(self) -> None:
-        data: t.ContainerMapping = {
-            "a": 1,
-            "b": "",
-            "c": cast("t.ContainerList", []),
-            "d": cast("t.ContainerMapping", {}),
-            "e": None,
-        }
-        result = u.build(data, ops={"transform": {"strip_empty": True}})
-        tm.that(result, eq={"a": 1})
-
-    def test_build_transform_map_keys(self) -> None:
-        data: t.ContainerMapping = {"old": "v1"}
-        result = u.build(data, ops={"transform": {"map_keys": {"old": "new"}}})
-        tm.that(result, kv={"new": "v1"})
-
-    def test_build_transform_non_mapping_passthrough(self) -> None:
-        result = u.build("string", ops={"transform": {"strip_none": True}})
-        tm.that(result, eq="string")
-
-    # ── build DSL: pipeline composition ────────────────────────────
-
-    def test_build_pipeline_ensure_map_filter(self) -> None:
-        double = _DoubleOp()
-        gt_two = _GtTwoOp()
-        result = u.build(
-            [1, 2, 3, 4],
-            ops={"ensure": "list", "map": double, "filter": gt_two},
-        )
-        tm.that(result, eq=[6, 8])
-
-    def test_build_pipeline_sort_unique_slice(self) -> None:
-        result = u.build(
-            [3, 1, 2, 3, 1, 4],
-            ops={"unique": True, "sort": True, "slice": (0, 3)},
-        )
-        tm.that(result, eq=[1, 2, 3])
 
     # ── transform (top-level static) ───────────────────────────────
 
@@ -670,18 +350,6 @@ class TestFlextUtilitiesMapper:
         result = u.extract({}, "any", default="fallback")
         tm.ok(result, eq="fallback")
 
-    def test_build_empty_list_chunk(self) -> None:
-        result = u.build([], ops={"chunk": 3})
-        tm.that(result, eq=[])
-
-    def test_build_empty_list_unique(self) -> None:
-        result = u.build([], ops={"unique": True})
-        tm.that(result, eq=[])
-
-    def test_build_empty_list_sort(self) -> None:
-        result = u.build([], ops={"sort": True})
-        tm.that(result, eq=[])
-
     def test_deep_eq_empty_dicts(self) -> None:
         tm.that(u.deep_eq({}, {}), eq=True)
 
@@ -689,25 +357,6 @@ class TestFlextUtilitiesMapper:
         a: t.ContainerMapping = {"x": cast("t.ContainerMapping", {"y": None})}
         b: t.ContainerMapping = {"x": cast("t.ContainerMapping", {"y": None})}
         tm.that(u.deep_eq(a, b), eq=True)
-
-    @pytest.mark.parametrize(
-        ("input_val", "ops", "expected"),
-        [
-            (None, {"ensure": "str"}, ""),
-            (None, {"ensure": "list"}, []),
-            (42, None, 42),
-            ("hello", {"normalize": "upper"}, "HELLO"),
-        ],
-        ids=["none-to-str", "none-to-list", "no-ops", "normalize-upper"],
-    )
-    def test_build_parametrized(
-        self,
-        input_val: t.NormalizedValue,
-        ops: t.ContainerMapping | None,
-        expected: t.NormalizedValue,
-    ) -> None:
-        result = u.build(input_val, ops=ops)
-        tm.that(result, eq=expected)
 
     @pytest.mark.parametrize(
         ("data", "path", "expected"),
@@ -726,47 +375,6 @@ class TestFlextUtilitiesMapper:
         expected: t.NormalizedValue,
     ) -> None:
         tm.ok(u.extract(data, path), eq=expected)
-
-    # ── sort with callable key ─────────────────────────────────────
-
-    def test_build_sort_with_callable(self) -> None:
-        class _Negator:
-            def __call__(self, value: t.RecursiveContainer) -> t.RecursiveContainer:
-                return -value if isinstance(value, (int, float)) else value
-
-        result = u.build([3, 1, 2], ops={"sort": _Negator()})
-        tm.that(result, eq=[3, 2, 1])
-
-    # ── build with tuple input (narrowed to list) ──────────────────
-
-    def test_build_tuple_narrowed_to_list(self) -> None:
-        """Tuples are narrowed to lists by narrow_to_container."""
-        result = u.build((1, 2, 2, 3), ops={"unique": True})
-        tm.that(result, is_=list)
-        tm.that(result, eq=[1, 2, 3])
-
-    # ── ensure with defaults ───────────────────────────────────────
-
-    def test_build_ensure_list_from_none(self) -> None:
-        result = u.build(None, ops={"ensure": "list"})
-        tm.that(result, eq=[])
-
-    def test_build_ensure_str_list_from_scalar(self) -> None:
-        result = u.build(42, ops={"ensure": "str_list"})
-        tm.that(result, eq=["42"])
-
-    def test_build_ensure_dict_returns_default_for_scalar(self) -> None:
-        result = u.build(42, ops={"ensure": "dict"})
-        tm.that(result, is_=dict)
-        tm.that(result, eq={})
-
-    # ── filter dict within build ───────────────────────────────────
-
-    def test_build_filter_dict(self) -> None:
-        gt_two = _GtTwoOp()
-        data: t.ContainerMapping = {"a": 1, "b": 3, "c": 5}
-        result = u.build(data, ops={"filter": gt_two})
-        tm.that(result, eq={"b": 3, "c": 5})
 
     # ── map_get from object with attribute ─────────────────────────
 

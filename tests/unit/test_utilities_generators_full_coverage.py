@@ -14,8 +14,6 @@ from flext_core import _utilities
 from tests import u
 from tests.unit import _models_impl as test_unit_models
 
-generators_module = _utilities.generators
-
 
 class TestUtilitiesGeneratorsFullCoverage:
     def test_enrich_and_ensure_trace_context_branches(
@@ -71,7 +69,7 @@ class TestUtilitiesGeneratorsFullCoverage:
                 _ = tz
                 return fixed_ts
 
-        monkeypatch.setattr(generators_module, "datetime", _FixedDatetime)
+        monkeypatch.setattr(_utilities.generators, "datetime", _FixedDatetime)
         custom = u.generate(
             kind="command",
             include_timestamp=True,

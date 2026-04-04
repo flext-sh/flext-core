@@ -45,8 +45,12 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
 
     domain = _flext_core__utilities_domain
-    import flext_core._utilities.enum as _flext_core__utilities_enum
+    import flext_core._utilities.enforcement as _flext_core__utilities_enforcement
     from flext_core._utilities.domain import FlextUtilitiesDomain
+
+    enforcement = _flext_core__utilities_enforcement
+    import flext_core._utilities.enum as _flext_core__utilities_enum
+    from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
     enum = _flext_core__utilities_enum
     import flext_core._utilities.file_ops as _flext_core__utilities_file_ops
@@ -118,6 +122,7 @@ _LAZY_IMPORTS = {
     "FlextUtilitiesConversion": "flext_core._utilities.conversion",
     "FlextUtilitiesDiscovery": "flext_core._utilities.discovery",
     "FlextUtilitiesDomain": "flext_core._utilities.domain",
+    "FlextUtilitiesEnforcement": "flext_core._utilities.enforcement",
     "FlextUtilitiesEnum": "flext_core._utilities.enum",
     "FlextUtilitiesFileOps": "flext_core._utilities.file_ops",
     "FlextUtilitiesGenerators": "flext_core._utilities.generators",
@@ -142,6 +147,7 @@ _LAZY_IMPORTS = {
     "conversion": "flext_core._utilities.conversion",
     "discovery": "flext_core._utilities.discovery",
     "domain": "flext_core._utilities.domain",
+    "enforcement": "flext_core._utilities.enforcement",
     "enum": "flext_core._utilities.enum",
     "file_ops": "flext_core._utilities.file_ops",
     "generators": "flext_core._utilities.generators",
@@ -169,6 +175,7 @@ __all__ = [
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",
+    "FlextUtilitiesEnforcement",
     "FlextUtilitiesEnum",
     "FlextUtilitiesFileOps",
     "FlextUtilitiesGenerators",
@@ -193,6 +200,7 @@ __all__ = [
     "conversion",
     "discovery",
     "domain",
+    "enforcement",
     "enum",
     "file_ops",
     "generators",

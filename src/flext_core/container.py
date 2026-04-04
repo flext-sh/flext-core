@@ -1108,7 +1108,7 @@ class FlextContainer(p.Container):
         if hasattr(self._di_resources, name):
             delattr(self._di_resources, name)
         if removed:
-            return r[bool].ok(value=True)
+            return r[bool].ok(True)
         return r[bool].fail(f"Service '{name}' not found")
 
     @override

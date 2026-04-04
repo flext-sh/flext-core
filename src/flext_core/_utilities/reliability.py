@@ -14,6 +14,8 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
+from pydantic import Field
+
 from flext_core import t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._protocols.logging import FlextProtocolsLogging
@@ -26,11 +28,21 @@ from flext_core.runtime import FlextRuntime
 class RetryOptions(FlextModelFoundation.FlexibleInternalModel):
     """Configuration options for retry logic."""
 
-    max_attempts: int | None = None
-    delay: float | None = None
-    delay_seconds: float | None = None
-    backoff_multiplier: float | None = None
-    retry_on: tuple[type[Exception], ...] | None = None
+    max_attempts: int | None = Field(
+        default=None, description="Maximum number of retry attempts"
+    )
+    delay: float | None = Field(
+        default=None, description="Initial delay between retries in seconds"
+    )
+    delay_seconds: float | None = Field(
+        default=None, description="Alias for delay in seconds"
+    )
+    backoff_multiplier: float | None = Field(
+        default=None, description="Multiplier for exponential backoff"
+    )
+    retry_on: tuple[type[Exception], ...] | None = Field(
+        default=None, description="Exception types to retry on"
+    )
 
 
 class FlextUtilitiesReliability:

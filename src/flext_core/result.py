@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from types import TracebackType
 from typing import Annotated, ClassVar, Self, TypeIs, cast, overload, override
 
@@ -206,7 +206,7 @@ class FlextResult[T](BaseModel):
     @classmethod
     def _validate_model[UModel: BaseModel](
         cls,
-        data: t.ScalarMapping | BaseModel,
+        data: Mapping[str, t.ValueOrModel] | BaseModel,
         model: type[UModel],
         *,
         failure_prefix: str,
@@ -314,7 +314,7 @@ class FlextResult[T](BaseModel):
     @classmethod
     def from_validation[ModelT: BaseModel](
         cls: type[FlextResult[ModelT]],
-        data: t.ScalarMapping | BaseModel,
+        data: Mapping[str, t.ValueOrModel] | BaseModel,
         model: type[ModelT],
     ) -> FlextResult[ModelT]:
         """Create result from Pydantic validation.

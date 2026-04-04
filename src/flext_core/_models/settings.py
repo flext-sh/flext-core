@@ -119,7 +119,13 @@ class FlextModelsConfig:
                 description="Maximum retry attempts from c (Constants default)",
             ),
         ] = c.MAX_RETRY_ATTEMPTS
-        enable_validation: bool = True
+        enable_validation: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to run input validation before processing the request.",
+            ),
+        ] = True
 
         @field_validator("context", mode="before")
         @classmethod
@@ -158,7 +164,13 @@ class FlextModelsConfig:
                 description="Maximum retry attempts from c (Constants default)",
             ),
         ] = c.MAX_RETRY_ATTEMPTS
-        exponential_backoff: bool = True
+        exponential_backoff: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to use exponential backoff between retry attempts.",
+            ),
+        ] = True
         backoff_multiplier: Annotated[
             t.BackoffMultiplier,
             Field(
@@ -199,8 +211,20 @@ class FlextModelsConfig:
                 description="Maximum validation errors",
             ),
         ] = c.DEFAULT_PAGE_SIZE
-        validate_on_assignment: bool = True
-        validate_on_read: bool = False
+        validate_on_assignment: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to re-validate field values on assignment.",
+            ),
+        ] = True
+        validate_on_read: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether to validate field values when read.",
+            ),
+        ] = False
         custom_validators: Annotated[
             Sequence[p.ValidatorSpec],
             Field(
@@ -253,7 +277,13 @@ class FlextModelsConfig:
                 description="Timeout per item (Config has priority over Constants)",
             ),
         ] = c.DEFAULT_TIMEOUT_SECONDS
-        continue_on_error: bool = True
+        continue_on_error: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to continue processing remaining items after an error.",
+            ),
+        ] = True
         data_items: Annotated[
             Sequence[t.ValueOrModel],
             Field(
@@ -336,7 +366,13 @@ class FlextModelsConfig:
                 description="Timeout in seconds (default from constants)",
             ),
         ] = c.DEFAULT_TIMEOUT_SECONDS
-        retry_on_failure: bool = True
+        retry_on_failure: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to retry the handler execution on failure.",
+            ),
+        ] = True
         max_retries: Annotated[
             t.NonNegativeInt,
             Field(
@@ -1004,13 +1040,10 @@ class FlextModelsConfig:
                 description="Keyword arguments for function",
             ),
         ] = Field(default_factory=t.ConfigMap)
-        retry_config: Annotated[
-            FlextModelsConfig.RetryConfiguration | None,
-            Field(
-                default=None,
-                description="Retry configuration (takes priority over individual params)",
-            ),
-        ] = None
+        retry_config: FlextModelsConfig.RetryConfiguration | None = Field(
+            default=None,
+            description="Retry configuration (takes priority over individual params)",
+        )
         attempts: Annotated[
             t.PositiveInt,
             Field(

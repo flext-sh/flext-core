@@ -75,14 +75,6 @@ class UtilitiesMapperCoverage100Namespace:
         def __call__(self, value: float | bool | str) -> int:
             return int(value)
 
-    _DOUBLE_OP = _DoubleOp()
-    _GT_TWO_OP = _GreaterThanTwoOp()
-    _TIMES_TEN_OP = _TimesTenOp()
-    _PLUS_FIVE_OP = _PlusFiveOp()
-    _GROUP_LEN_OP = _GroupLenOp()
-    _GET_KEY_A_OP = _GetKeyAOp()
-    _INT_CONVERT_OP = _IntConvertOp()
-
     class TestuMapperExtract:
         """Tests for u.extract."""
 
@@ -187,6 +179,7 @@ class UtilitiesMapperCoverage100Namespace:
             d: Mapping[str, t.Container] = {"a": 1, "b": 2, "c": 3}
             taken = u.take(d, 2)
             tm.that(taken, is_=dict)
+            assert isinstance(taken, Mapping)
             tm.that(len(taken), eq=2)
             assert "a" in taken and "b" in taken
 
@@ -212,11 +205,10 @@ class UtilitiesMapperCoverage100Namespace:
                 return value.isoformat()
             return cast("t.NormalizedValue", value)
 
-        def test_ensure_str(self) -> None:
-            """Test ensure_str."""
+        def test_to_str(self) -> None:
+            """Test to_str."""
             tm.that(u.to_str("s"), eq="s")
             tm.that(u.to_str(1), eq="1")
-            tm.that(u.ensure_str(None, "def"), eq="def")
 
         def test_convert_to_json_value(self) -> None:
             obj = SimpleObj(name="test", value=1)
@@ -271,61 +263,6 @@ class UtilitiesMapperCoverage100Namespace:
                 res[0]["a"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
             )
 
-    class TestuMapperBuild:
-        """Tests for u build/construct/fields."""
-
-        def test_build_pipeline(self) -> None:
-            """Test build pipeline."""
-            ops = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {
-                    "ensure": "list",
-                    "map": _DOUBLE_OP,
-                    "filter": _GT_TWO_OP,
-                },
-            )
-            res = u.build([1, 2, 3, 4], ops=ops)
-            tm.that(res, eq=[6, 8])
-
-        def test_build_all_ops(self) -> None:
-            """Test all build operations."""
-            input_data: t.ContainerList = [1, 2, 1, 3, 4]
-            ops = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {
-                    "ensure": "list",
-                    "filter": _GT_TWO_OP,
-                    "map": _TIMES_TEN_OP,
-                    "process": _PLUS_FIVE_OP,
-                    "sort": True,
-                    "unique": True,
-                    "slice": (0, 2),
-                },
-            )
-            res = u.build(input_data, ops=ops)
-            tm.that(res, eq=[35, 45])
-
-        def test_build_normalize(self) -> None:
-            """Test build normalize."""
-            ops = {"normalize": "lower"}
-            res = u.build(["A", "b"], ops=ops)
-            tm.that(res, eq=["a", "b"])
-
-        def test_build_group(self) -> None:
-            """Test build group - keys are converted to strings for ConfigurationDict."""
-            ops = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {"group": _GROUP_LEN_OP},
-            )
-            res = u.build(["cat", "dog", "ant"], ops=ops)
-            tm.that(res, eq={"3": ["cat", "dog", "ant"]})
-
-        def test_build_chunk(self) -> None:
-            """Test build chunk."""
-            ops = {"chunk": 2}
-            res = u.build([1, 2, 3, 4], ops=ops)
-            tm.that(res, eq=[[1, 2], [3, 4]])
-
     class TestuMapperAdvanced:
         """Advanced tests for u to reach 100% coverage."""
 
@@ -339,68 +276,16 @@ class UtilitiesMapperCoverage100Namespace:
             tm.that(u.extract(obj, "a").value, eq=1)
             tm.that(u.extract(obj, "b", default=2).value, eq=2)
 
-        def test_convert_exception(self) -> None:
-            """Test build convert exception handling."""
-            ops = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {
-                    "convert": _INT_CONVERT_OP,
-                    "convert_default": 0,
-                },
-            )
-            res = u.build("invalid", ops=ops)
-            tm.that(res, eq=0)
-            ops_default = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {
-                    "convert": _INT_CONVERT_OP,
-                    "convert_default": 10,
-                },
-            )
-            res = u.build("invalid", ops=ops_default)
-            tm.that(res, eq=10)
-
-        def test_transform_options(self) -> None:
-            """Test build transform options."""
+        def test_transform_via_static(self) -> None:
+            """Test transform via static method."""
             data: t.ContainerMapping = {"a": "UPPER", "b": None, "c": ""}
-            ops = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {
-                    "transform": {
-                        "normalize": True,
-                        "strip_none": True,
-                        "strip_empty": True,
-                    },
-                },
+            result = u.transform(
+                data,
+                strip_none=True,
+                strip_empty=True,
             )
-            res = u.build(data, ops=ops)
-            tm.that(res, eq={"a": "UPPER"})
-
-        def test_build_sort_complex(self) -> None:
-            """Test build sort with callable and string."""
-            data: t.ContainerList = [{"a": 2}, {"a": 1}]
-            ops_sort = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {"sort": "a"},
-            )
-            res = u.build(data, ops=ops_sort)
-            assert isinstance(res, list) and res
-            assert isinstance(res[0], dict) and res[0].get("a") == 1
-            ops_getter = cast(
-                "Mapping[str, t.NormalizedValue | t.MapperCallable]",
-                {
-                    "sort": _GET_KEY_A_OP,
-                },
-            )
-            res = u.build(data, ops=ops_getter)
-            assert isinstance(res, list) and res
-            assert isinstance(res[0], dict) and res[0].get("a") == 1
-
-        def test_build_unique(self) -> None:
-            """Test build unique."""
-            data: t.ContainerList = [1, 2, 1, 3]
-            res = u.build(data, ops={"unique": True})
-            tm.that(res, eq=[1, 2, 3])
+            mapped = tm.ok(result)
+            tm.that(mapped, eq={"a": "UPPER"})
 
         def test_agg_branches(self) -> None:
             """Test agg branches."""
@@ -410,23 +295,8 @@ class UtilitiesMapperCoverage100Namespace:
 
 
 SimpleObj = UtilitiesMapperCoverage100Namespace.SimpleObj
-_DoubleOp = UtilitiesMapperCoverage100Namespace._DoubleOp
-_GreaterThanTwoOp = UtilitiesMapperCoverage100Namespace._GreaterThanTwoOp
-_TimesTenOp = UtilitiesMapperCoverage100Namespace._TimesTenOp
-_PlusFiveOp = UtilitiesMapperCoverage100Namespace._PlusFiveOp
-_GroupLenOp = UtilitiesMapperCoverage100Namespace._GroupLenOp
-_GetKeyAOp = UtilitiesMapperCoverage100Namespace._GetKeyAOp
-_IntConvertOp = UtilitiesMapperCoverage100Namespace._IntConvertOp
-_DOUBLE_OP = UtilitiesMapperCoverage100Namespace._DOUBLE_OP
-_GT_TWO_OP = UtilitiesMapperCoverage100Namespace._GT_TWO_OP
-_TIMES_TEN_OP = UtilitiesMapperCoverage100Namespace._TIMES_TEN_OP
-_PLUS_FIVE_OP = UtilitiesMapperCoverage100Namespace._PLUS_FIVE_OP
-_GROUP_LEN_OP = UtilitiesMapperCoverage100Namespace._GROUP_LEN_OP
-_GET_KEY_A_OP = UtilitiesMapperCoverage100Namespace._GET_KEY_A_OP
-_INT_CONVERT_OP = UtilitiesMapperCoverage100Namespace._INT_CONVERT_OP
 TestuMapperExtract = UtilitiesMapperCoverage100Namespace.TestuMapperExtract
 TestuMapperAccessors = UtilitiesMapperCoverage100Namespace.TestuMapperAccessors
 TestuMapperUtils = UtilitiesMapperCoverage100Namespace.TestuMapperUtils
 TestuMapperConversions = UtilitiesMapperCoverage100Namespace.TestuMapperConversions
-TestuMapperBuild = UtilitiesMapperCoverage100Namespace.TestuMapperBuild
 TestuMapperAdvanced = UtilitiesMapperCoverage100Namespace.TestuMapperAdvanced

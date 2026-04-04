@@ -61,7 +61,13 @@ class FlextModelsCqrs:
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"))
-        issuer_id: t.NonEmptyStr | None = None
+        issuer_id: Annotated[
+            t.NonEmptyStr | None,
+            Field(
+                default=None,
+                description="Identity of the principal that issued this command.",
+            ),
+        ] = None
 
         @property
         def event_type(self) -> str | None:
@@ -141,14 +147,12 @@ class FlextModelsCqrs:
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
         ] = Field(default_factory=t.Dict)
-        pagination: Annotated[
-            FlextModelsCqrs.Pagination | t.Dict,
-            Field(
-                description="Pagination settings controlling page number and page size for query results.",
-                title="Pagination",
-                examples=[{"page": 1, "size": 50}],
-            ),
-        ] = Field(default_factory=t.Dict)
+        pagination: FlextModelsCqrs.Pagination | t.Dict = Field(
+            default_factory=t.Dict,
+            description="Pagination settings controlling page number and page size for query results.",
+            title="Pagination",
+            examples=[{"page": 1, "size": 50}],
+        )
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -157,7 +161,13 @@ class FlextModelsCqrs:
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
         ] = Field(default_factory=lambda: FlextRuntime.generate_prefixed_id("query"))
-        query_type: str | None = None
+        query_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Query type identifier for dispatcher routing.",
+            ),
+        ] = None
 
         @property
         def command_type(self) -> str | None:
@@ -471,9 +481,22 @@ class FlextModelsCqrs:
     class HandlerBatchRegistrationResult(FlextModelFoundation.ArbitraryTypesModel):
         """Result of batch handler registration."""
 
-        status: str
-        count: int
-        handlers: t.StrSequence
+        status: Annotated[
+            str,
+            Field(description="Overall result status of the batch registration."),
+        ]
+        count: Annotated[
+            int,
+            Field(
+                description="Number of handlers successfully registered in this batch."
+            ),
+        ]
+        handlers: Annotated[
+            t.StrSequence,
+            Field(
+                description="Names of the handlers included in the batch registration."
+            ),
+        ]
 
 
 __all__ = ["FlextModelsCqrs"]
