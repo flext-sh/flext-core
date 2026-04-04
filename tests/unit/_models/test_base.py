@@ -270,8 +270,8 @@ class TestFlextModelsBase:
         tm.that(cfg.get("extra"), eq="forbid")
         tm.that(cfg.get("validate_assignment"), eq=True)
 
-    def test_strict_validating_model_config(self) -> None:
-        cfg = m.StrictValidatingModel.model_config
+    def test_domain_model_config(self) -> None:
+        cfg = m.DomainModel.model_config
         tm.that(cfg.get("strict"), eq=True)
         tm.that(cfg.get("validate_assignment"), eq=True)
         tm.that(cfg.get("validate_default"), eq=True)

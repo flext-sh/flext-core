@@ -388,7 +388,7 @@ class FlextModelsBase:
             super().__pydantic_init_subclass__(**kwargs)
             FlextUtilitiesEnforcement.run(cls)
 
-    class StrictValidatingModel(EnforcedModel):
+    class DomainModel(EnforcedModel):
         """Reusable strict model preset for validated domain boundaries."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -400,8 +400,8 @@ class FlextModelsBase:
             str_strip_whitespace=True,
         )
 
-    class FrozenValidatingModel(StrictValidatingModel):
-        """Immutable strict validating model preset."""
+    class FrozenDomainModel(DomainModel):
+        """Immutable strict domain model preset."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
@@ -462,15 +462,15 @@ class FlextModelsBase:
             use_enum_values=True,
         )
 
-    class StrippedDynamicConfigModel(DynamicConfigModel):
-        """Dynamic config model preset with string whitespace normalization."""
+    class DynamicDomainModel(DynamicConfigModel):
+        """Dynamic domain model preset with string whitespace normalization."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             str_strip_whitespace=True,
         )
 
-    class FrozenDynamicConfigModel(StrippedDynamicConfigModel):
-        """Immutable dynamic config model preset."""
+    class FrozenDynamicDomainModel(DynamicDomainModel):
+        """Immutable dynamic domain model preset."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
