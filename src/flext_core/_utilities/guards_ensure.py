@@ -6,7 +6,10 @@ import re
 from collections.abc import Callable, Iterable, Mapping, Sized
 from typing import ClassVar
 
-from flext_core import FlextUtilitiesGuardsType, m, r, t
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+from flext_core.result import FlextResult as r
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
@@ -55,7 +58,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def _check_string_ops(
         value: str,
-        guard_spec: m.GuardCheckSpec,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
         """Check string-specific operations (match, starts, ends, contains)."""
         if guard_spec.match is not None and not re.search(guard_spec.match, value):
@@ -84,12 +87,14 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def chk(
         value: t.RecursiveContainer,
-        spec: m.GuardCheckSpec | None = None,
+        spec: FlextModelsCollections.GuardCheckSpec | None = None,
         **criteria: t.GuardInput,
     ) -> bool:
-        guard_spec = spec if spec is not None else m.GuardCheckSpec()
+        guard_spec = (
+            spec if spec is not None else FlextModelsCollections.GuardCheckSpec()
+        )
         if criteria:
-            criteria_spec = m.GuardCheckSpec.model_validate(
+            criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
                 criteria,
             )
             guard_spec = guard_spec.model_copy(update=criteria_spec.model_dump())

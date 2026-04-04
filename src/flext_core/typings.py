@@ -13,8 +13,11 @@ from pydantic import BaseModel
 from flext_core import (
     TV,
     EnumT,
+    FlextModelsNamespace,
+    FlextTypesAnnotateds,
     FlextTypesCore,
     FlextTypesServices,
+    FlextTypesTypeAdapters,
     FlextTypesValidation,
     MessageT_contra,
     P,
@@ -30,9 +33,6 @@ from flext_core import (
     TV_co,
     U,
 )
-from flext_core._models.namespace import FlextModelsNamespace
-from flext_core._typings.annotateds import FlextTypesAnnotateds
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
 
 class FlextTypes(

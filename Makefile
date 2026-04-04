@@ -34,16 +34,16 @@ base.mk: Makefile
 	@echo "==> Resolving base.mk for $(PROJECT_NAME)..."
 	@if [ -d "$(BOOTSTRAP_VENV)" ] && $(BOOTSTRAP_PYTHON) -c 'import flext_infra' 2>/dev/null; then \
 		$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
-			--project-name $(PROJECT_NAME) --output $@; \
+			--projects-name $(PROJECT_NAME) --output $@; \
 	elif $(PYTHON_CMD) -c 'import flext_infra' 2>/dev/null; then \
 		$(PYTHON_CMD) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
-			--project-name $(PROJECT_NAME) --output $@; \
+			--projects-name $(PROJECT_NAME) --output $@; \
 	else \
 		echo "==> flext-infra not found. Bootstrapping standalone environment..."; \
 		$(MAKE) _bootstrap-venv; \
 		$(BOOTSTRAP_PIP) install -q flext-infra; \
 		$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
-			--project-name $(PROJECT_NAME) --output $@; \
+			--projects-name $(PROJECT_NAME) --output $@; \
 	fi
 	@test -s $@ || { echo "ERROR: base.mk generation failed"; rm -f $@; exit 1; }
 	@echo "==> base.mk generated. Restarting make..."
@@ -80,7 +80,7 @@ setup: venv ## Full standalone setup (venv + dependencies + base.mk)
 		$(BOOTSTRAP_VENV)/bin/poetry run pre-commit install; \
 	fi
 	@$(BOOTSTRAP_PYTHON) -m flext_infra $(FLEXT_INFRA_BASEMK_GROUP) generate \
-		--project-name $(PROJECT_NAME) --output base.mk
+		--projects-name $(PROJECT_NAME) --output base.mk
 	@echo "==> Setup complete. All 'make' verbs now available."
 
 help: ## Show available commands

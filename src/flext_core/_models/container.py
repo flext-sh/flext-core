@@ -24,8 +24,7 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import FlextModelsBase, c, p, t
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextModelsBase, FlextRuntime, c, p, t
 
 
 class FlextModelsContainer:

@@ -74,7 +74,16 @@ class FlextUtilitiesArgs:
         """
         if not kwargs and allow_empty:
             kwargs = {}
-        return r[M].from_validation(kwargs, model_cls)
+        try:
+            return r[M].ok(model_cls.model_validate(kwargs))
+        except (
+            ValidationError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+        ) as exc:
+            return r[M].fail(f"Validation failed: {exc}", exception=exc)
 
     @staticmethod
     def resolve_options[M: BaseModel](

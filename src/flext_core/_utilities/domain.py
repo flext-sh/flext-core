@@ -10,26 +10,36 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel
-
-from flext_core import FlextUtilitiesGuardsTypeCore, c, t
+from flext_core._constants.mixins import FlextConstantsMixins as c
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.guards import FlextUtilitiesGuards as u
+from flext_core.protocols import FlextProtocols as p
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @staticmethod
-    def same_type(obj_a: object, obj_b: object) -> bool:
+    def same_type(obj_a: t.RuntimeData, obj_b: t.RuntimeData) -> bool:
         """Exact-type identity comparison (no MRO traversal).
 
         Returns True only when both objects are the exact same concrete type.
         """
-        return type(obj_a) is type(obj_b)
+        return obj_a.__class__ is obj_b.__class__
+
+    @staticmethod
+    def _normalize_aggregated_metadata_value(
+        value: t.ValueOrModel,
+    ) -> t.MetadataValue | None:
+        """Convert dumped model values into canonical metadata values."""
+        return FlextModelsCollections.normalize_aggregated_metadata_value(value)
 
     @staticmethod
     def _get_obj_dict(obj: t.RuntimeData) -> Mapping[str, t.RecursiveContainer] | None:
@@ -56,11 +66,11 @@ class FlextUtilitiesDomain:
 
         Returns True if both entities have same type and ID.
         """
-        if FlextUtilitiesGuardsTypeCore.is_scalar(entity_a):
+        if u.is_scalar(entity_a):
             return False
         if isinstance(entity_a, (Sequence, Mapping)):
             return False
-        if FlextUtilitiesGuardsTypeCore.is_scalar(entity_b):
+        if u.is_scalar(entity_b):
             return False
         if isinstance(entity_b, (Sequence, Mapping)):
             return False
@@ -79,9 +89,9 @@ class FlextUtilitiesDomain:
 
         Returns True if same type and all attributes equal.
         """
-        if FlextUtilitiesGuardsTypeCore.is_scalar(obj_a):
+        if u.is_scalar(obj_a):
             return obj_a == obj_b
-        if FlextUtilitiesGuardsTypeCore.is_scalar(obj_b):
+        if u.is_scalar(obj_b):
             return False
         if hasattr(obj_a, "__iter__") and not hasattr(obj_a, "model_dump"):
             return obj_a == obj_b
@@ -89,7 +99,7 @@ class FlextUtilitiesDomain:
             return obj_a == obj_b
         if not FlextUtilitiesDomain.same_type(obj_b, obj_a):
             return False
-        if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):
+        if isinstance(obj_a, m.EnforcedModel) and isinstance(obj_b, m.EnforcedModel):
             return obj_a.model_dump() == obj_b.model_dump()
         dict_a = FlextUtilitiesDomain._get_obj_dict(obj_a)
         dict_b = FlextUtilitiesDomain._get_obj_dict(obj_b)
@@ -103,7 +113,7 @@ class FlextUtilitiesDomain:
         id_attr: str = c.FIELD_ID,
     ) -> int:
         """Hash entity by ID + type. Falls back to identity hash if ID missing."""
-        if FlextUtilitiesGuardsTypeCore.is_scalar(entity):
+        if u.is_scalar(entity):
             return hash(entity)
         entity_id = getattr(entity, id_attr, None)
         if entity_id is None:
@@ -113,9 +123,9 @@ class FlextUtilitiesDomain:
     @staticmethod
     def hash_value_object_by_value(obj: t.RuntimeData) -> int:
         """Hash value object by all attributes. Falls back to repr hash."""
-        if FlextUtilitiesGuardsTypeCore.is_scalar(obj):
+        if u.is_scalar(obj):
             return hash(obj)
-        if isinstance(obj, BaseModel):
+        if isinstance(obj, m.EnforcedModel):
             data = obj.model_dump()
             return hash(tuple(sorted((str(k), str(v)) for k, v in data.items())))
         if hasattr(obj, "__iter__"):
@@ -123,7 +133,7 @@ class FlextUtilitiesDomain:
         obj_dict = FlextUtilitiesDomain._get_obj_dict(obj)
         if obj_dict is None:
             return hash(repr(obj))
-        items: Sequence[tuple[str, t.RecursiveContainer]] = [
+        items: Sequence[t.Pair[str, t.RecursiveContainer]] = [
             (str(k), FlextUtilitiesDomain._to_hashable(v))
             for k, v in sorted(obj_dict.items())
         ]
@@ -143,18 +153,14 @@ class FlextUtilitiesDomain:
             for key, value in item.items():
                 normalized_map[str(key)] = (
                     FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                        value
-                        if FlextUtilitiesGuardsTypeCore.is_scalar(value)
-                        else str(value)
+                        value if u.is_scalar(value) else str(value)
                     )
                 )
             return normalized_map
         if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
             return [
                 FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                    value
-                    if FlextUtilitiesGuardsTypeCore.is_scalar(value)
-                    else str(value)
+                    value if u.is_scalar(value) else str(value)
                 )
                 for value in item
             ]
@@ -185,43 +191,11 @@ class FlextUtilitiesDomain:
         value: t.MetadataValue | None,
     ) -> t.MetadataValue | None:
         """Resolve metadata conflicts using stable aggregation rules."""
-        non_none: Sequence[t.MetadataValue] = [
-            item for item in (existing, value) if item is not None
-        ]
-        if not non_none:
-            return None
-        first_val = non_none[0]
-        if isinstance(first_val, bool):
-            return non_none[-1]
-        if isinstance(first_val, (int, float)) and not isinstance(first_val, bool):
-            numeric_values: Sequence[t.Numeric] = [
-                item
-                for item in non_none
-                if isinstance(item, (int, float)) and not isinstance(item, bool)
-            ]
-            return sum(numeric_values) if numeric_values else non_none[-1]
-        if isinstance(first_val, list):
-            combined: MutableSequence[t.Scalar] = []
-            for item in non_none:
-                if isinstance(item, list):
-                    combined.extend(item)
-            return combined
-        if isinstance(first_val, Mapping):
-            merged: MutableMapping[str, t.Scalar | t.ScalarList] = {}
-            for item in non_none:
-                if isinstance(item, Mapping):
-                    for key, nested_value in item.items():
-                        if isinstance(
-                            nested_value,
-                            (str, int, float, bool, datetime, list),
-                        ):
-                            merged[str(key)] = nested_value
-            return merged
-        return non_none[-1]
+        return FlextModelsCollections.aggregate_metadata_values(existing, value)
 
     @staticmethod
     def aggregate_dumped_models[
-        TModel: BaseModel,
+        TModel: p.HasModelDump,
     ](
         items: Sequence[TModel],
     ) -> Mapping[str, t.MetadataValue]:
@@ -231,9 +205,12 @@ class FlextUtilitiesDomain:
         aggregated: MutableMapping[str, t.MetadataValue | None] = {}
         for item in items:
             for key, value in item.model_dump().items():
-                aggregated[key] = FlextUtilitiesDomain.aggregate_metadata_values(
+                normalized_value = (
+                    FlextModelsCollections.normalize_aggregated_metadata_value(value)
+                )
+                aggregated[key] = FlextModelsCollections.aggregate_metadata_values(
                     aggregated.get(key),
-                    value,
+                    normalized_value,
                 )
         return {key: value for key, value in aggregated.items() if value is not None}
 

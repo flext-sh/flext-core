@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import ClassVar, override
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextModelsDomainEvent, FlextSettings, m, r, t
+from flext_core import FlextSettings, m, p, r, t
 
 
 class Ex11HandlerLikeService(FlextSettings):
@@ -60,11 +61,17 @@ class Ex11ProcessorProtocolBad(m.Value):
 class Ex11CommandBusStub(m.Value):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
-    def dispatch(self, message: m.Command) -> r[str]:
-        return r[str].ok(str(message))
+    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+        return r[t.RuntimeAtomic].ok(str(message))
 
-    def publish(self, _event: FlextModelsDomainEvent.Entry) -> None:
-        return
+    def publish(self, _event: p.Routable | Sequence[p.Routable]) -> r[bool]:
+        return r[bool].ok(True)
 
-    def register_handler(self, _handler: m.Value) -> r[bool]:
+    def register_handler(
+        self,
+        _handler: t.HandlerLike,
+        *,
+        is_event: bool = False,
+    ) -> r[bool]:
+        del is_event
         return r[bool].ok(True)

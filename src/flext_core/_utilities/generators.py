@@ -15,7 +15,9 @@ import string
 import uuid
 from datetime import UTC, datetime
 
-from flext_core import c, r, t
+from flext_core.constants import FlextConstants as c
+from flext_core.result import FlextResult as r
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGenerators:

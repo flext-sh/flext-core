@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 if TYPE_CHECKING:
-    from flext_core._models.base import FlextModelsBase
-    from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.registry import FlextModelsRegistry
+    from flext_core import FlextModelsBase, FlextModelsHandler, FlextModelsRegistry
 
 
 class FlextProtocolsRegistry:

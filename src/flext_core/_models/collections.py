@@ -8,17 +8,125 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextModelsBase, t
-from flext_core._utilities.domain import FlextUtilitiesDomain
 
 
 class FlextModelsCollections:
     """Collection models container class."""
+
+    @staticmethod
+    def normalize_aggregated_metadata_value(
+        value: t.ValueOrModel,
+    ) -> t.MetadataValue | None:
+        """Convert dumped model values into canonical metadata values."""
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool, datetime)):
+            return value
+        if isinstance(value, Mapping):
+            normalized_map: MutableMapping[str, t.Scalar | t.ScalarList] = {}
+            for key, item in value.items():
+                if isinstance(item, (str, int, float, bool, datetime)):
+                    normalized_map[str(key)] = item
+                    continue
+                if isinstance(item, Sequence) and not isinstance(
+                    item,
+                    (str, bytes, bytearray),
+                ):
+                    normalized_items: MutableSequence[t.Scalar] = []
+                    for nested_item in item:
+                        normalized_items.append(
+                            nested_item
+                            if isinstance(
+                                nested_item,
+                                (str, int, float, bool, datetime),
+                            )
+                            else str(nested_item)
+                        )
+                    normalized_map[str(key)] = normalized_items
+                    continue
+                normalized_map[str(key)] = str(item)
+            return normalized_map
+        if isinstance(value, Sequence) and not isinstance(
+            value,
+            (str, bytes, bytearray),
+        ):
+            normalized_sequence: MutableSequence[t.Scalar] = []
+            for item in value:
+                normalized_sequence.append(
+                    item
+                    if isinstance(item, (str, int, float, bool, datetime))
+                    else str(item)
+                )
+            return normalized_sequence
+        return str(value)
+
+    @staticmethod
+    def aggregate_metadata_values(
+        existing: t.MetadataValue | None,
+        value: t.MetadataValue | None,
+    ) -> t.MetadataValue | None:
+        """Resolve metadata conflicts using stable aggregation rules."""
+        non_none: Sequence[t.MetadataValue] = [
+            item for item in (existing, value) if item is not None
+        ]
+        if not non_none:
+            return None
+        first_val = non_none[0]
+        if isinstance(first_val, bool):
+            return non_none[-1]
+        if isinstance(first_val, (int, float)) and not isinstance(first_val, bool):
+            numeric_values: Sequence[t.Numeric] = [
+                item
+                for item in non_none
+                if isinstance(item, (int, float)) and not isinstance(item, bool)
+            ]
+            return sum(numeric_values) if numeric_values else non_none[-1]
+        if isinstance(first_val, list):
+            combined: MutableSequence[t.Scalar] = []
+            for item in non_none:
+                if isinstance(item, list):
+                    combined.extend(item)
+            return combined
+        if isinstance(first_val, Mapping):
+            merged: MutableMapping[str, t.Scalar | t.ScalarList] = {}
+            for item in non_none:
+                if isinstance(item, Mapping):
+                    for key, nested_value in item.items():
+                        if isinstance(
+                            nested_value,
+                            (str, int, float, bool, datetime, list),
+                        ):
+                            merged[str(key)] = nested_value
+            return merged
+        return non_none[-1]
+
+    @staticmethod
+    def aggregate_dumped_models[
+        TModel: FlextModelsBase.EnforcedModel,
+    ](
+        items: Sequence[TModel],
+    ) -> Mapping[str, t.MetadataValue]:
+        """Aggregate dumped model fields into one comparable metadata mapping."""
+        if not items:
+            return {}
+        aggregated: MutableMapping[str, t.MetadataValue | None] = {}
+        for item in items:
+            for key, value in item.model_dump().items():
+                normalized_value = (
+                    FlextModelsCollections.normalize_aggregated_metadata_value(value)
+                )
+                aggregated[key] = FlextModelsCollections.aggregate_metadata_values(
+                    aggregated.get(key),
+                    normalized_value,
+                )
+        return {key: value for key, value in aggregated.items() if value is not None}
 
     class Statistics(FlextModelsBase.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
@@ -33,7 +141,7 @@ class FlextModelsCollections:
             Combines statistics by summing numerics, concatenating lists,
             merging mappings, and keeping last value for other types.
             """
-            return FlextUtilitiesDomain.aggregate_dumped_models(stats_list)
+            return FlextModelsCollections.aggregate_dumped_models(stats_list)
 
         @classmethod
         def from_mapping(cls, data: Mapping[str, t.MetadataValue]) -> Self:
@@ -61,7 +169,7 @@ class FlextModelsCollections:
             result: MutableMapping[str, t.MetadataValue | None] = {}
             for opt in options:
                 for key, value in opt.model_dump().items():
-                    result[key] = FlextUtilitiesDomain.aggregate_metadata_values(
+                    result[key] = FlextModelsCollections.aggregate_metadata_values(
                         result.get(key),
                         value,
                     )

@@ -106,8 +106,21 @@ if _t.TYPE_CHECKING:
     from tests.unit.protocols import FlextUnitTestProtocols, FlextUnitTestProtocols as p
 
     test_args_coverage_100 = _tests_unit_test_args_coverage_100
-    import tests.unit.test_collection_utilities_coverage_100 as _tests_unit_test_collection_utilities_coverage_100
+    import tests.unit.test_beartype_engine as _tests_unit_test_beartype_engine
     from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
+
+    test_beartype_engine = _tests_unit_test_beartype_engine
+    import tests.unit.test_collection_utilities_coverage_100 as _tests_unit_test_collection_utilities_coverage_100
+    from tests.unit.test_beartype_engine import (
+        TestAliasContainsAny,
+        TestBeartypeClawCompatibility,
+        TestBeartypeConf,
+        TestContainsAny,
+        TestCountUnionMembers,
+        TestFacadeAccessibility,
+        TestForbiddenCollectionOrigin,
+        TestIsStrNoneUnion,
+    )
 
     test_collection_utilities_coverage_100 = (
         _tests_unit_test_collection_utilities_coverage_100
@@ -784,8 +797,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "SimpleObj": "tests.unit.test_utilities_mapper_coverage_100",
         "SingletonClassForTest": "tests.unit._models_impl",
         "TMessage": "tests.unit.test_utilities_type_checker_coverage_100",
+        "TestAliasContainsAny": "tests.unit.test_beartype_engine",
         "TestAllLayerIntegration": "tests.unit.test_enforcement",
         "TestBaseModelCoverage": "tests.unit.test_enforcement",
+        "TestBeartypeClawCompatibility": "tests.unit.test_beartype_engine",
+        "TestBeartypeConf": "tests.unit.test_beartype_engine",
         "TestCaseMap": "tests.unit._models_impl",
         "TestCheckExtraPolicy": "tests.unit.test_enforcement",
         "TestCheckFieldDescriptions": "tests.unit.test_enforcement",
@@ -795,7 +811,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestCollectionUtilitiesCoverage": "tests.unit.test_collection_utilities_coverage_100",
         "TestConstantsEnforcement": "tests.unit.test_enforcement",
         "TestContainerFullCoverage": "tests.unit.test_container_full_coverage",
+        "TestContainsAny": "tests.unit.test_beartype_engine",
         "TestContext100Coverage": "tests.unit.test_context_coverage_100",
+        "TestCountUnionMembers": "tests.unit.test_beartype_engine",
         "TestCoverageContext": "tests.unit.test_coverage_context",
         "TestCoverageExceptions": "tests.unit.test_coverage_exceptions",
         "TestCoverageLoggings": "tests.unit.test_coverage_loggings",
@@ -814,6 +832,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestEnumUtilitiesCoverage": "tests.unit.test_enum_utilities_coverage_100",
         "TestExceptionsHypothesis": "tests.unit.test_exceptions",
         "TestExemptions": "tests.unit.test_enforcement",
+        "TestFacadeAccessibility": "tests.unit.test_beartype_engine",
         "TestFlextConstants": "tests.unit.test_constants_new",
         "TestFlextContainer": "tests.unit.test_container",
         "TestFlextContext": "tests.unit.test_context",
@@ -833,9 +852,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestFlextUtilitiesConfiguration": "tests.unit.test_utilities_configuration_coverage_100",
         "TestFlextUtilitiesReliability": "tests.unit.test_utilities_reliability",
         "TestFlextVersion": "tests.unit.test_version",
+        "TestForbiddenCollectionOrigin": "tests.unit.test_beartype_engine",
         "TestHandlerDecoratorDiscovery": "tests.unit.test_handler_decorator_discovery",
         "TestHandlersFullCoverage": "tests.unit.test_handlers_full_coverage",
         "TestHelperConsolidationTransformer": "tests.unit.test_transformer_helper_consolidation",
+        "TestIsStrNoneUnion": "tests.unit.test_beartype_engine",
         "TestLoggingsErrorPaths": "tests.unit.test_loggings_error_paths_coverage",
         "TestLoggingsStrictReturns": "tests.unit.test_loggings_strict_returns",
         "TestMixinsFullCoverage": "tests.unit.test_mixins_full_coverage",
@@ -937,6 +958,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_async_log_writer_paths": "tests.unit.test_runtime_full_coverage",
         "test_async_log_writer_shutdown_with_full_queue": "tests.unit.test_runtime_full_coverage",
         "test_bad_string_and_bad_bool_raise_value_error": "tests.unit.test_utilities_mapper_full_coverage",
+        "test_beartype_engine": "tests.unit.test_beartype_engine",
         "test_canonical_aliases_are_available": "tests.unit.test_models_generic_full_coverage",
         "test_centralize_pydantic_cli_outputs_extended_metrics": "tests.unit.test_refactor_cli_models_workflow",
         "test_chk_exercises_missed_branches": "tests.unit.test_utilities_guards_full_coverage",
@@ -1190,8 +1212,11 @@ __all__ = [
     "SimpleObj",
     "SingletonClassForTest",
     "TMessage",
+    "TestAliasContainsAny",
     "TestAllLayerIntegration",
     "TestBaseModelCoverage",
+    "TestBeartypeClawCompatibility",
+    "TestBeartypeConf",
     "TestCaseMap",
     "TestCheckExtraPolicy",
     "TestCheckFieldDescriptions",
@@ -1201,7 +1226,9 @@ __all__ = [
     "TestCollectionUtilitiesCoverage",
     "TestConstantsEnforcement",
     "TestContainerFullCoverage",
+    "TestContainsAny",
     "TestContext100Coverage",
+    "TestCountUnionMembers",
     "TestCoverageContext",
     "TestCoverageExceptions",
     "TestCoverageLoggings",
@@ -1221,6 +1248,7 @@ __all__ = [
     "TestEnumUtilitiesCoverage",
     "TestExceptionsHypothesis",
     "TestExemptions",
+    "TestFacadeAccessibility",
     "TestFlextConstants",
     "TestFlextContainer",
     "TestFlextContext",
@@ -1249,9 +1277,11 @@ __all__ = [
     "TestFlextUtilitiesMapper",
     "TestFlextUtilitiesReliability",
     "TestFlextVersion",
+    "TestForbiddenCollectionOrigin",
     "TestHandlerDecoratorDiscovery",
     "TestHandlersFullCoverage",
     "TestHelperConsolidationTransformer",
+    "TestIsStrNoneUnion",
     "TestLoggingsErrorPaths",
     "TestLoggingsStrictReturns",
     "TestMixinsFullCoverage",
@@ -1356,6 +1386,7 @@ __all__ = [
     "test_async_log_writer_shutdown_with_full_queue",
     "test_bad_string_and_bad_bool_raise_value_error",
     "test_base",
+    "test_beartype_engine",
     "test_canonical_aliases_are_available",
     "test_centralize_pydantic_cli_outputs_extended_metrics",
     "test_chk_exercises_missed_branches",

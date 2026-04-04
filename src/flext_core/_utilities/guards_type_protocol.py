@@ -11,9 +11,12 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TypeIs
 
-from pydantic import BaseModel
-
-from flext_core import c, p, t
+from flext_core._constants.mixins import FlextConstantsMixins as c_mixins
+from flext_core._constants.platform import FlextConstantsPlatform as c_platform
+from flext_core._constants.validation import FlextConstantsValidation as c_validation
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core.protocols import FlextProtocols as p
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGuardsTypeProtocol:
@@ -32,8 +35,8 @@ class FlextUtilitiesGuardsTypeProtocol:
         """Get cached mapping of protocol names to type check predicates."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
-                c.DIR_CONFIG: lambda v: isinstance(v, p.Settings),
-                c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
+                c_platform.DIR_CONFIG: lambda v: isinstance(v, p.Settings),
+                c_mixins.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
                 "command_bus": lambda v: (
                     hasattr(v, "dispatch")
@@ -54,8 +57,8 @@ class FlextUtilitiesGuardsTypeProtocol:
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
-                    p.Settings: c.DIR_CONFIG,
-                    p.Context: c.FIELD_CONTEXT,
+                    p.Settings: c_platform.DIR_CONFIG,
+                    p.Context: c_mixins.FIELD_CONTEXT,
                     p.Container: "container",
                     p.Dispatcher: "command_bus",
                     p.Handler: "handler",
@@ -118,17 +121,20 @@ class FlextUtilitiesGuardsTypeProtocol:
         value: t.GuardInput,
     ) -> TypeIs[t.RegisterableService]:
         """Narrow value to DI-registerable service (primitives, models, callables, etc.)."""
-        return (
-            value is None
-            or isinstance(value, (str, int, float, bool, BaseModel, Path, Mapping))
-            or callable(value)
-            or (
-                isinstance(value, Sequence)
-                and (not isinstance(value, (str, bytes, bytearray)))
-            )
-            or FlextUtilitiesGuardsTypeProtocol.is_context(value)
-            or hasattr(value, "__dict__")
-            or bool(hasattr(value, "bind") and hasattr(value, "info"))
+        if value is None:
+            return True
+        if isinstance(value, (str, int, float, bool, Path, Mapping)):
+            return True
+        if isinstance(value, Sequence):
+            return not isinstance(value, (str, bytes, bytearray))
+        if FlextUtilitiesGuardsTypeModel.is_pydantic_model(value):
+            return True
+        if callable(value):
+            return True
+        if FlextUtilitiesGuardsTypeProtocol.is_context(value):
+            return True
+        return hasattr(value, "__dict__") or bool(
+            hasattr(value, "bind") and hasattr(value, "info")
         )
 
     _STRING_TYPE_CHECKS: Mapping[str, Callable[[t.GuardInput], bool]] = {
@@ -186,7 +192,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def _check_protocol(value: t.GuardInput, name: str) -> bool:
         """Check if value implements a named protocol."""
-        if name == c.FIELD_CONTEXT:
+        if name == c_mixins.FIELD_CONTEXT:
             return FlextUtilitiesGuardsTypeProtocol.is_context(value)
         try:
             return FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()[name](value)
@@ -213,13 +219,13 @@ class FlextUtilitiesGuardsTypeProtocol:
                     value,
                     type_name,
                 )
-            if type_name in c.STRING_METHOD_MAP:
+            if type_name in c_validation.STRING_METHOD_MAP:
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",
                     "list_non_empty",
                 }:
-                    if isinstance(value, BaseModel):
+                    if FlextUtilitiesGuardsTypeModel.is_pydantic_model(value):
                         return False
                     return FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
                         type_name,
@@ -268,7 +274,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         }
 
     @staticmethod
-    def is_handler(obj: p.Base | BaseModel) -> bool:
+    def is_handler(obj: t.ProtocolSubject) -> bool:
         """Check if obj satisfies p.Handle protocol with validate capability."""
         return isinstance(obj, p.Handle) and callable(
             getattr(obj, "validate", None),

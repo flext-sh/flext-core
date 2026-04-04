@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as _ec
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
@@ -30,7 +30,7 @@ class FlextModelsNamespace:
         """Enforce namespace governance on every facade subclass."""
         super().__init_subclass__(**kwargs)
 
-        if _ec.ENFORCEMENT_NAMESPACE_MODE == "off":
+        if c.ENFORCEMENT_NAMESPACE_MODE == "off":
             return
 
         layer = FlextUtilitiesEnforcement.detect_layer(cls)
@@ -48,6 +48,8 @@ class FlextModelsNamespace:
                 FlextUtilitiesEnforcement.run_utilities(cls)
             case "models":
                 FlextUtilitiesEnforcement.run_namespace_checks(cls, "models")
+            case _:
+                return
 
 
 __all__ = ["FlextModelsNamespace"]

@@ -28,10 +28,10 @@ from flext_core import (
     FlextModelsErrors,
     FlextModelsExceptionParams,
     FlextModelsHandler,
+    FlextModelsNamespace,
     FlextModelsRegistry,
     FlextModelsService,
 )
-from flext_core._models.namespace import FlextModelsNamespace
 
 
 class FlextModels(

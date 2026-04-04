@@ -11,14 +11,104 @@ from datetime import date, time
 from enum import Enum
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import TYPE_CHECKING, TypeAliasType
+from typing import TYPE_CHECKING, Protocol, TypeAliasType, runtime_checkable
 
 from pydantic import BaseModel
 
 from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
-    from flext_core import FlextDispatcher, m, p
+    from flext_core import m, p
+else:
+
+    class _RuntimeProtocolsNamespace:
+        @runtime_checkable
+        class DispatchMessage(Protocol):
+            pass
+
+        @runtime_checkable
+        class Handle(Protocol):
+            pass
+
+        @runtime_checkable
+        class Execute(Protocol):
+            pass
+
+        @runtime_checkable
+        class AutoDiscoverableHandler(Protocol):
+            pass
+
+        @runtime_checkable
+        class Routable(Protocol):
+            pass
+
+        @runtime_checkable
+        class OutputLogger(Protocol):
+            pass
+
+        @runtime_checkable
+        class Logger(OutputLogger, Protocol):
+            pass
+
+        @runtime_checkable
+        class Settings(Protocol):
+            pass
+
+        @runtime_checkable
+        class Context(Protocol):
+            pass
+
+        @runtime_checkable
+        class Dispatcher(Protocol):
+            pass
+
+        @runtime_checkable
+        class Flushable(Protocol):
+            pass
+
+        @runtime_checkable
+        class DispatchableService(Protocol):
+            pass
+
+        @runtime_checkable
+        class SuccessCheckable(Protocol):
+            pass
+
+        @runtime_checkable
+        class StructuredError(Protocol):
+            pass
+
+        @runtime_checkable
+        class ErrorDomainProtocol(Protocol):
+            pass
+
+        @runtime_checkable
+        class Configurable(Protocol):
+            pass
+
+        @runtime_checkable
+        class Result[T_co](Protocol):
+            pass
+
+        @runtime_checkable
+        class ProviderLike[T_co](Protocol):
+            pass
+
+    class _RuntimeModelsNamespace:
+        class ContainerConfig(BaseModel):
+            pass
+
+        class ServiceRegistration(BaseModel):
+            pass
+
+        class FactoryRegistration(BaseModel):
+            pass
+
+        class ResourceRegistration(BaseModel):
+            pass
+
+    p = _RuntimeProtocolsNamespace
+    m = _RuntimeModelsNamespace
 
 
 class FlextTypesServices:
@@ -56,6 +146,14 @@ class FlextTypesServices:
     )
     type MetadataOrValue = MetadataValue | FlextTypingBase.RecursiveContainer
     type MetadataAttributeValue = MetadataValue
+    type ModelInput = (
+        FlextTypingBase.RecursiveContainer
+        | BaseModel
+        | Mapping[
+            str,
+            FlextTypesServices.ValueOrModel,
+        ]
+    )
     type ConfigModelInput = BaseModel | FlextTypingContainers.ConfigMap
     type MetadataInput = (
         BaseModel
@@ -79,6 +177,12 @@ class FlextTypesServices:
         ...,
         BaseModel | FlextTypesServices.RuntimeAtomic | None,
     ]
+    type RoutedHandlerCallable = Callable[
+        [p.Routable],
+        FlextTypesServices.RuntimeAtomic
+        | p.Result[FlextTypesServices.RuntimeAtomic]
+        | None,
+    ]
     type RegisteredHandler = tuple[
         FlextTypesServices.HandlerProtocolVariant,
         FlextTypesServices.ResolvedHandlerCallable,
@@ -93,10 +197,16 @@ class FlextTypesServices:
         | Callable[..., FlextTypesServices.ScalarOrModel]
     )
     type LoggerFactory = Callable[..., p.OutputLogger] | None
+    type LoggerWrapperFactory = Callable[[], type[p.Logger]]
     type StructlogProcessor = Callable[
         ...,
         FlextTypingBase.RecursiveContainerMapping,
     ]
+    type ContextHookCallable = Callable[
+        [FlextTypingBase.Scalar],
+        FlextTypesServices.ValueOrModel | None,
+    ]
+    type ContextHookMap = Mapping[str, Sequence[ContextHookCallable]]
 
     type SortableObjectType = str | int | float
     type TypeHintSpecifier = (
@@ -127,6 +237,9 @@ class FlextTypesServices:
         MutableMapping[str, FlextTypingBase.Scalar],
     ]
     type ServiceMap = Mapping[str, RegisterableService]
+    type FactoryMap = Mapping[str, FactoryCallable]
+    type ResourceMap = Mapping[str, ResourceCallable]
+    type SettingsClass = type[p.Settings]
     type LazyScalar = FlextTypingBase.Scalar | bytes | date | time
     type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
     type ModuleExportValue = FlextTypingBase.Container | bytes | date | time
@@ -137,6 +250,9 @@ class FlextTypesServices:
         | type[BaseException | Enum]
         | Callable[..., ModuleExportValue | LazyCollection | None]
     )
+    type LazyGetattr = Callable[[str], ModuleExport]
+    type LazyDir = Callable[[], list[str]]
+    type LazyNamespaceValue = ModuleExport | Sequence[str] | LazyGetattr | LazyDir
 
     type ValidatorCallable = Callable[[ScalarOrModel | None], ScalarOrModel | None]
 
@@ -167,7 +283,6 @@ class FlextTypesServices:
         | p.Context
         | p.Settings
         | p.Dispatcher
-        | FlextDispatcher
         | p.Result[RuntimeAtomic]
         | None
     )

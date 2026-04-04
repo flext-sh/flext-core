@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
@@ -30,15 +30,36 @@ class FlextProtocolsBase:
         in typings.py, preventing circular dependencies.
         """
 
-        def model_dump(self, **kwargs: t.Container) -> Mapping[str, t.ValueOrModel]:
+        def model_dump(
+            self,
+            *,
+            mode: str = "python",
+            include: t.IncEx | None = None,
+            exclude: t.IncEx | None = None,
+            context: t.ValueOrModel | t.ContainerMapping | None = None,
+            by_alias: bool | None = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            exclude_computed_fields: bool = False,
+            round_trip: bool = False,
+            warnings: bool | str = True,
+            fallback: Callable[[t.ValueOrModel], t.ValueOrModel] | None = None,
+            serialize_as_any: bool = False,
+        ) -> Mapping[str, t.ValueOrModel]:
             """Dump model to dictionary."""
             ...
 
         @classmethod
         def model_validate(
             cls,
-            obj: t.ValueOrModel,
-            **kwargs: t.Container,
+            obj: t.ModelInput,
+            *,
+            strict: bool | None = None,
+            from_attributes: bool | None = None,
+            context: t.ValueOrModel | t.ContainerMapping | None = None,
+            by_alias: bool | None = None,
+            by_name: bool | None = None,
         ) -> Self:
             """Validate a canonical value-or-model input against the model."""
             ...

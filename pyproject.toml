@@ -32,7 +32,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "beartype>=0.22.9",
+  "beartype @ git+https://github.com/beartype/beartype.git@ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71",
   "cachetools>=5.3",
   "dependency-injector>=4.41",
   "docker>=7.1,<8",

@@ -12,7 +12,10 @@ from __future__ import annotations
 
 from flext_core import (
     FlextLogger,
+    FlextModelsNamespace,
     FlextUtilitiesArgs,
+    FlextUtilitiesBeartypeConf,
+    FlextUtilitiesBeartypeEngine,
     FlextUtilitiesCache,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
@@ -21,6 +24,7 @@ from flext_core import (
     FlextUtilitiesConversion,
     FlextUtilitiesDiscovery,
     FlextUtilitiesDomain,
+    FlextUtilitiesEnforcement,
     FlextUtilitiesEnum,
     FlextUtilitiesFileOps,
     FlextUtilitiesGenerators,
@@ -32,13 +36,13 @@ from flext_core import (
     FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
 )
-from flext_core._models.namespace import FlextModelsNamespace
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
 class FlextUtilities(
     FlextLogger,
     FlextUtilitiesArgs,
+    FlextUtilitiesBeartypeConf,
+    FlextUtilitiesBeartypeEngine,
     FlextUtilitiesCache,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,

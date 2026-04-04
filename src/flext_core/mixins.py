@@ -253,9 +253,9 @@ class FlextMixins(m.ArbitraryTypesModel):
         config_type_raw = getattr(self, "config_type", None)
         overrides: t.ContainerMapping | None = None
         initial_ctx: p.Context | None = None
-        bootstrap_services: Mapping[str, t.RegisterableService] | None = None
-        bootstrap_factories: Mapping[str, t.FactoryCallable] | None = None
-        bootstrap_resources: Mapping[str, t.ResourceCallable] | None = None
+        bootstrap_services: t.ServiceMap | None = None
+        bootstrap_factories: t.FactoryMap | None = None
+        bootstrap_resources: t.ResourceMap | None = None
         bootstrap_wire_modules: Sequence[ModuleType] | None = None
         bootstrap_wire_packages: t.StrSequence | None = None
         bootstrap_wire_classes: Sequence[type] | None = None

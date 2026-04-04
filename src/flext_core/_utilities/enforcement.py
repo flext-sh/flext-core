@@ -2,7 +2,7 @@
 
 Static methods called from __pydantic_init_subclass__ hooks on FLEXT
 base model classes and __init_subclass__ on facade classes.
-Constants come from _ec.ENFORCEMENT_* via MRO.
+Constants come from c.ENFORCEMENT_* via MRO.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,23 +11,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-import typing
 import warnings
 from collections.abc import Mapping, MutableSequence, Sequence
 from enum import EnumType
-from typing import Protocol, get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as _ec
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
 
 
 class FlextUtilitiesEnforcement:
     """Pydantic v2 enforcement check utilities.
 
     All methods are static — called from __pydantic_init_subclass__
-    on FLEXT base models. Uses _ec.ENFORCEMENT_* constants exclusively.
+    on FLEXT base models. Uses c.ENFORCEMENT_* constants exclusively.
     """
 
     @staticmethod
@@ -35,10 +34,10 @@ class FlextUtilitiesEnforcement:
         """Check if a class is exempt from enforcement."""
         if getattr(model_type, "_flext_enforcement_exempt", False):
             return True
-        if model_type.__name__ in _ec.ENFORCEMENT_INFRASTRUCTURE_BASES:
+        if model_type.__name__ in c.ENFORCEMENT_INFRASTRUCTURE_BASES:
             return True
         module = getattr(model_type, "__module__", "") or ""
-        return any(frag in module for frag in _ec.ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS)
+        return any(frag in module for frag in c.ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS)
 
     @staticmethod
     def own_fields(model_type: type[BaseModel]) -> Mapping[str, FieldInfo]:
@@ -54,42 +53,36 @@ class FlextUtilitiesEnforcement:
     def check_no_any(
         own: Mapping[str, FieldInfo],
     ) -> Sequence[str]:
-        """Reject Any in field annotations — use t.* contracts."""
+        """Reject Any in field annotations — recursive via beartype.door."""
         errors: MutableSequence[str] = []
         for name, info in own.items():
-            annotation = info.annotation
-            if annotation is typing.Any:
+            if FlextUtilitiesBeartypeEngine.contains_any(info.annotation):
                 errors.append(
-                    f'Field "{name}": Any is FORBIDDEN. Use a t.* type contract.',
+                    f'Field "{name}": Any is FORBIDDEN (detected recursively). '
+                    f"Use a t.* type contract.",
                 )
-                continue
-            for arg in get_args(annotation):
-                if arg is typing.Any:
-                    errors.append(
-                        f'Field "{name}": Any in type args FORBIDDEN. Use t.* contracts.',
-                    )
-                    break
         return errors
 
     @staticmethod
     def check_no_bare_collections(
         own: Mapping[str, FieldInfo],
     ) -> Sequence[str]:
-        """Reject dict/list/set as field annotation origins."""
+        """Reject dict/list/set as field annotation origins via beartype engine."""
         replacements: Mapping[str, str] = dict(
-            _ec.ENFORCEMENT_COLLECTION_REPLACEMENTS,
+            c.ENFORCEMENT_COLLECTION_REPLACEMENTS,
         )
         errors: MutableSequence[str] = []
         for name, info in own.items():
-            origin = get_origin(info.annotation)
-            if (
-                origin is not None
-                and origin.__name__ in _ec.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
-            ):
-                fix = replacements.get(origin.__name__, str(origin))
+            is_forbidden, origin_name = (
+                FlextUtilitiesBeartypeEngine.has_forbidden_collection_origin(
+                    info.annotation,
+                    c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
+                )
+            )
+            if is_forbidden:
+                fix = replacements.get(origin_name, origin_name)
                 errors.append(
-                    f'Field "{name}": bare {origin.__name__}[...] FORBIDDEN. '
-                    f"Use {fix}.",
+                    f'Field "{name}": bare {origin_name}[...] FORBIDDEN. Use {fix}.',
                 )
         return errors
 
@@ -125,7 +118,7 @@ class FlextUtilitiesEnforcement:
     def check_extra_policy(model_type: type[BaseModel]) -> Sequence[str]:
         """Require extra='forbid' unless inheriting from relaxed base."""
         for base in model_type.__mro__:
-            if base.__name__ in _ec.ENFORCEMENT_RELAXED_EXTRA_BASES:
+            if base.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES:
                 return []
         extra = model_type.model_config.get("extra")
         if extra is None:
@@ -161,23 +154,12 @@ class FlextUtilitiesEnforcement:
     def check_no_str_none_with_empty_default(
         own: Mapping[str, FieldInfo],
     ) -> Sequence[str]:
-        """Reject str | None with default='' — use str with default='' instead."""
+        """Reject str | None with default='' via beartype engine."""
         errors: MutableSequence[str] = []
         for name, info in own.items():
-            origin = get_origin(info.annotation)
-            if origin is not None:
+            if not FlextUtilitiesBeartypeEngine.is_str_none_union(info.annotation):
                 continue
-            args = get_args(info.annotation)
-            if not args:
-                continue
-            has_str = str in args
-            has_none = type(None) in args
-            if (
-                has_str
-                and has_none
-                and isinstance(info.default, str)
-                and not info.default
-            ):
+            if isinstance(info.default, str) and not info.default:
                 errors.append(
                     f'Field "{name}": str | None with default="" is wrong. '
                     f'Use str with default="" (None has no business meaning here).',
@@ -212,8 +194,13 @@ class FlextUtilitiesEnforcement:
         errors: MutableSequence[str] = []
         for name, info in own.items():
             default = info.default
-            if isinstance(default, (list, dict, set)) and len(default) == 0:
-                type_name = type(default).__name__
+            if isinstance(default, (list, dict, set)) and not default:
+                if isinstance(default, list):
+                    type_name = "list"
+                elif isinstance(default, dict):
+                    type_name = "dict"
+                else:
+                    type_name = "set"
                 errors.append(
                     f'Field "{name}": mutable default {type_name}() is FORBIDDEN. '
                     f"Use Field(default_factory={type_name}).",
@@ -224,16 +211,14 @@ class FlextUtilitiesEnforcement:
     def check_no_inline_union_types(
         own: Mapping[str, FieldInfo],
     ) -> Sequence[str]:
-        """Flag complex inline union types that should be t.* aliases."""
+        """Flag complex inline union types via beartype engine."""
         errors: MutableSequence[str] = []
+        max_inline_union = 2
         for name, info in own.items():
-            args = get_args(info.annotation)
-            # Count non-None union members
-            real_args = [a for a in args if a is not type(None)]
-            max_inline_union = 2
-            if len(real_args) > max_inline_union:
+            count = FlextUtilitiesBeartypeEngine.count_union_members(info.annotation)
+            if count > max_inline_union:
                 errors.append(
-                    f'Field "{name}": complex inline union with {len(real_args)}+ types. '
+                    f'Field "{name}": complex inline union with {count}+ types. '
                     f"Centralize as a t.* type alias in typings.py.",
                 )
         return errors
@@ -244,7 +229,7 @@ class FlextUtilitiesEnforcement:
 
         Called from __pydantic_init_subclass__ on FLEXT base models.
         """
-        mode = _ec.ENFORCEMENT_MODE
+        mode = c.ENFORCEMENT_MODE
         if mode == "off":
             return
         if FlextUtilitiesEnforcement.is_exempt(model_type):
@@ -319,7 +304,7 @@ class FlextUtilitiesEnforcement:
         if getattr(target, "_flext_enforcement_exempt", False):
             return True
         module = getattr(target, "__module__", "") or ""
-        return any(frag in module for frag in _ec.ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS)
+        return any(frag in module for frag in c.ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS)
 
     @staticmethod
     def _emit(
@@ -329,7 +314,7 @@ class FlextUtilitiesEnforcement:
         severity: str,
     ) -> None:
         """Emit enforcement violation as warning and optionally TypeError."""
-        mode = _ec.ENFORCEMENT_MODE
+        mode = c.ENFORCEMENT_MODE
         msg = (
             f"\n{qualname} violates FLEXT {layer} {severity} rules:\n"
             + "\n".join(f"  - {e}" for e in errors)
@@ -349,7 +334,7 @@ class FlextUtilitiesEnforcement:
         """Return True if name/value looks like a constant attribute."""
         if name.startswith("_"):
             return False
-        if name in _ec.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
+        if name in c.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
             return False
         if isinstance(value, (type, classmethod, staticmethod, property)):
             return False
@@ -364,7 +349,12 @@ class FlextUtilitiesEnforcement:
             if not FlextUtilitiesEnforcement._is_constant_attr(name, value):
                 continue
             if isinstance(value, (list, dict, set)):
-                type_name = type(value).__name__
+                if isinstance(value, list):
+                    type_name = "list"
+                elif isinstance(value, dict):
+                    type_name = "dict"
+                else:
+                    type_name = "set"
                 errors.append(
                     f"{target.__qualname__}.{name}: mutable {type_name} FORBIDDEN. "
                     f"Use frozenset, tuple, or MappingProxyType.",
@@ -423,7 +413,7 @@ class FlextUtilitiesEnforcement:
 
         Called from FlextConstants.__init_subclass__ on facade.
         """
-        mode = _ec.ENFORCEMENT_MODE
+        mode = c.ENFORCEMENT_MODE
         if mode == "off":
             return
         if FlextUtilitiesEnforcement._is_layer_exempt(target):
@@ -467,7 +457,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def _is_protocol_class(target: type) -> bool:
         """Return True when target is a Protocol subclass."""
-        return issubclass(target, Protocol)
+        return bool(getattr(target, "_is_protocol", False))
 
     @staticmethod
     def _iter_protocol_inner_types(target: type) -> Sequence[tuple[str, type]]:
@@ -548,7 +538,7 @@ class FlextUtilitiesEnforcement:
 
         Called from FlextProtocols.__init_subclass__ on facade.
         """
-        mode = _ec.ENFORCEMENT_MODE
+        mode = c.ENFORCEMENT_MODE
         if mode == "off":
             return
         if FlextUtilitiesEnforcement._is_layer_exempt(target):
@@ -578,16 +568,15 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def check_types_no_any_in_aliases(target: type) -> Sequence[str]:
-        """PEP 695 type aliases must not reference Any."""
+        """PEP 695 type aliases must not reference Any — via beartype.door."""
         errors: MutableSequence[str] = []
-        own_dict = vars(target)
-        for name, value in own_dict.items():
+        for name, value in vars(target).items():
             if name.startswith("_"):
                 continue
-            if not hasattr(value, "__value__"):
+            alias_value = getattr(value, "__value__", None)
+            if alias_value is None:
                 continue
-            alias_str = str(value)
-            if "Any" in alias_str:
+            if FlextUtilitiesBeartypeEngine.alias_contains_any(alias_value):
                 errors.append(
                     f"{target.__qualname__}.{name}: Any in type alias FORBIDDEN. "
                     f"Use t.* contracts.",
@@ -620,7 +609,7 @@ class FlextUtilitiesEnforcement:
 
         Called from FlextTypes.__init_subclass__ on facade.
         """
-        mode = _ec.ENFORCEMENT_MODE
+        mode = c.ENFORCEMENT_MODE
         if mode == "off":
             return
         if FlextUtilitiesEnforcement._is_layer_exempt(target):
@@ -663,7 +652,7 @@ class FlextUtilitiesEnforcement:
         """Public methods on utility classes must be static or classmethod."""
         errors: MutableSequence[str] = []
         own_dict = vars(target)
-        exempt = _ec.ENFORCEMENT_UTILITIES_EXEMPT_METHODS
+        exempt = c.ENFORCEMENT_UTILITIES_EXEMPT_METHODS
         for name, value in own_dict.items():
             if name.startswith("_") and name not in exempt:
                 continue
@@ -685,7 +674,7 @@ class FlextUtilitiesEnforcement:
 
         Called from FlextUtilities.__init_subclass__ on facade.
         """
-        mode = _ec.ENFORCEMENT_MODE
+        mode = c.ENFORCEMENT_MODE
         if mode == "off":
             return
         if FlextUtilitiesEnforcement._is_layer_exempt(target):
@@ -722,7 +711,7 @@ class FlextUtilitiesEnforcement:
         package = module.split(".")[0] if module else ""
         if not package:
             return None
-        for pkg, prefix in _ec.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES:
+        for pkg, prefix in c.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES:
             if package == pkg:
                 return prefix
         if package == "tests":
@@ -731,7 +720,7 @@ class FlextUtilitiesEnforcement:
                 base_pkg = base_mod.split(".")[0] if base_mod else ""
                 if base_pkg.startswith("flext") and base.__name__.startswith("Flext"):
                     parent = base.__name__
-                    for suffix, _layer in _ec.ENFORCEMENT_NAMESPACE_LAYER_MAP:
+                    for suffix, _layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:
                         if parent.endswith(suffix):
                             return parent[: -len(suffix)] + "Test"
                     return parent + "Test"
@@ -761,7 +750,7 @@ class FlextUtilitiesEnforcement:
     def detect_layer(target: type) -> str | None:
         """Detect layer from class name suffix."""
         name = target.__name__
-        for suffix, layer in _ec.ENFORCEMENT_NAMESPACE_LAYER_MAP:
+        for suffix, layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:
             if name.endswith(suffix):
                 return layer
         return None
@@ -771,14 +760,14 @@ class FlextUtilitiesEnforcement:
         """Check namespace exemption. Does NOT skip test modules."""
         if getattr(target, "_flext_enforcement_exempt", False):
             return True
-        if target.__name__ in _ec.ENFORCEMENT_NAMESPACE_FACADE_ROOTS:
+        if target.__name__ in c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS:
             return True
-        return target.__name__ in _ec.ENFORCEMENT_INFRASTRUCTURE_BASES
+        return target.__name__ in c.ENFORCEMENT_INFRASTRUCTURE_BASES
 
     @staticmethod
     def _emit_namespace(qualname: str, layer: str, errors: Sequence[str]) -> None:
         """Emit namespace violation warning or TypeError."""
-        mode = _ec.ENFORCEMENT_NAMESPACE_MODE
+        mode = c.ENFORCEMENT_NAMESPACE_MODE
         if mode == "off":
             return
         msg = (
@@ -794,9 +783,9 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_class_prefix(target: type) -> Sequence[str]:
         """Validate class name starts with expected project prefix."""
-        if target.__name__ in _ec.ENFORCEMENT_NAMESPACE_FACADE_ROOTS:
+        if target.__name__ in c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS:
             return []
-        if target.__name__ in _ec.ENFORCEMENT_INFRASTRUCTURE_BASES:
+        if target.__name__ in c.ENFORCEMENT_INFRASTRUCTURE_BASES:
             return []
         prefix = FlextUtilitiesEnforcement._derive_project_prefix(target)
         if prefix is None:
@@ -841,8 +830,8 @@ class FlextUtilitiesEnforcement:
     ) -> Sequence[str]:
         """Recursively scan inner classes for StrEnum/Protocol in wrong layers."""
         errors: MutableSequence[str] = []
-        check_strenum = layer not in _ec.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS
-        check_protocol = layer not in _ec.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS
+        check_strenum = layer not in c.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS
+        check_protocol = layer not in c.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS
 
         for name, value in vars(target).items():
             if not isinstance(value, type):
@@ -858,7 +847,7 @@ class FlextUtilitiesEnforcement:
                     )
                 continue
 
-            if check_protocol and issubclass(value, Protocol):
+            if check_protocol and FlextUtilitiesEnforcement._is_protocol_class(value):
                 errors.append(
                     f'Protocol "{full}" must be in protocols (p.*), not {layer}.',
                 )
@@ -877,7 +866,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_cross_layer_strenum(target: type, layer: str) -> Sequence[str]:
         """Detect StrEnum/IntEnum in wrong layer — recursive scan."""
-        if layer in _ec.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS:
+        if layer in c.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS:
             return []
         return [
             e
@@ -891,7 +880,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def check_cross_layer_protocol(target: type, layer: str) -> Sequence[str]:
         """Detect Protocol in wrong layer — recursive scan."""
-        if layer in _ec.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS:
+        if layer in c.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS:
             return []
         return [
             e
@@ -905,7 +894,7 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def run_namespace_checks(target: type, layer: str) -> None:
         """Run all namespace checks for a given layer."""
-        if _ec.ENFORCEMENT_NAMESPACE_MODE == "off":
+        if c.ENFORCEMENT_NAMESPACE_MODE == "off":
             return
         if FlextUtilitiesEnforcement._is_namespace_exempt(target):
             return

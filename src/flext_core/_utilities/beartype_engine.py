@@ -1,7 +1,7 @@
-"""beartype.door-powered annotation inspection engine.
+"""Annotation inspection engine for enforcement checks.
 
-Replaces hand-rolled get_origin/get_args/is typing.Any inspection with
-beartype's recursive TypeHint walker. Used by enforcement.py checks.
+Provides recursive inspection helpers for type annotations used by
+enforcement.py checks.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,37 +14,33 @@ from typing import get_args
 
 
 class FlextUtilitiesBeartypeEngine:
-    """beartype.door annotation inspection utilities.
+    """Annotation inspection utilities.
 
     All methods are static — called from enforcement check methods.
-    Provides robust recursive annotation analysis via TypeHint.
+    Provides recursive annotation analysis via ``get_args`` walking.
     """
 
     @staticmethod
-    def contains_any(hint: object) -> bool:
+    def contains_any(hint: object | None) -> bool:
         """Recursively detect Any anywhere in a type hint.
 
-        Uses TypeHint.is_ignorable (catches Any, object at top level)
-        then walks children for nested Any (e.g., Mapping[str, Any]).
+        Catches Any and object at the top level, then walks nested args
+        recursively (for example Mapping[str, Any]).
         """
-        from beartype.door import TypeHint
-
         if hint is typing.Any:
             return True
-        try:
-            th = TypeHint(hint)
-        except Exception:
-            return False
-        if th.is_ignorable:
+        if hint is object:
             return True
-        return any(
-            FlextUtilitiesBeartypeEngine.contains_any(child)
-            for child in th
-        )
+        for arg in get_args(hint):
+            if arg is typing.Any:
+                return True
+            if FlextUtilitiesBeartypeEngine.contains_any(arg):
+                return True
+        return False
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: object,
+        hint: object | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         """Detect dict[...]/list[...]/set[...] as annotation origin.
@@ -59,7 +55,7 @@ class FlextUtilitiesBeartypeEngine:
         return False, ""
 
     @staticmethod
-    def count_union_members(hint: object) -> int:
+    def count_union_members(hint: object | None) -> int:
         """Count non-None members in a union type."""
         args = get_args(hint)
         if not args:
@@ -67,7 +63,7 @@ class FlextUtilitiesBeartypeEngine:
         return sum(1 for a in args if a is not type(None))
 
     @staticmethod
-    def is_str_none_union(hint: object) -> bool:
+    def is_str_none_union(hint: object | None) -> bool:
         """Detect str | None union pattern."""
         args = get_args(hint)
         if not args:
@@ -75,11 +71,11 @@ class FlextUtilitiesBeartypeEngine:
         return str in args and type(None) in args
 
     @staticmethod
-    def alias_contains_any(alias_value: object) -> bool:
+    def alias_contains_any(alias_value: object | None) -> bool:
         """Check PEP 695 type alias __value__ for Any references.
 
-        Unwraps alias.__value__ and walks via TypeHint.
-        Falls back to string inspection for recursive aliases.
+        Walks recursively through the alias value and falls back to string
+        inspection for recursive aliases.
         """
         try:
             return FlextUtilitiesBeartypeEngine.contains_any(alias_value)

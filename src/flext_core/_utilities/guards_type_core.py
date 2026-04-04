@@ -15,7 +15,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, TypeIs
 
-from flext_core import t
+from flext_core.typings import FlextTypes as t
 
 
 class FlextUtilitiesGuardsTypeCore:

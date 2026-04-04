@@ -400,7 +400,10 @@ class TestFlextModelsExceptionParams:
             "attribute-access",
         ],
     )
-    def test_all_params_reject_extra_fields(self, model_cls: type) -> None:
+    def test_all_params_reject_extra_fields(
+        self,
+        model_cls: type[m.ParamsModel],
+    ) -> None:
         with pytest.raises(ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
 

@@ -11,14 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 
 from flext_core import FlextLogger, c, p, r, t, u
-
-type DispatcherResolvedCallable = Callable[
-    [p.Routable],
-    t.RuntimeAtomic | p.Result[t.RuntimeAtomic] | None,
-]
 
 
 class FlextDispatcher:
@@ -33,17 +28,17 @@ class FlextDispatcher:
         super().__init__()
         self._logger = FlextLogger.get_logger(__name__)
         self._handlers: t.RegistryDict[
-            tuple[t.HandlerProtocolVariant, DispatcherResolvedCallable]
+            tuple[t.HandlerProtocolVariant, t.RoutedHandlerCallable]
         ] = {}
         self._auto_handlers: MutableSequence[
             tuple[
                 t.HandlerProtocolVariant,
-                DispatcherResolvedCallable,
+                t.RoutedHandlerCallable,
                 tuple[t.MessageTypeSpecifier, ...],
             ]
         ] = []
         self._event_subscribers: t.RegistryDict[
-            MutableSequence[tuple[t.HandlerProtocolVariant, DispatcherResolvedCallable]]
+            MutableSequence[tuple[t.HandlerProtocolVariant, t.RoutedHandlerCallable]]
         ] = {}
 
     def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
@@ -157,7 +152,7 @@ class FlextDispatcher:
         accepted_message_types: tuple[t.MessageTypeSpecifier, ...] = tuple(
             u.compute_accepted_message_types(handler.__class__),
         )
-        resolved_handler: DispatcherResolvedCallable
+        resolved_handler: t.RoutedHandlerCallable
         match handler:
             case p.DispatchMessage():
                 resolved_handler = handler.dispatch_message
@@ -206,7 +201,7 @@ class FlextDispatcher:
 
     def _execute_handler(
         self,
-        resolved_handler: DispatcherResolvedCallable,
+        resolved_handler: t.RoutedHandlerCallable,
         message: p.Routable,
         route_name: str,
     ) -> r[t.RuntimeAtomic]:

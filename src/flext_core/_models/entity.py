@@ -18,10 +18,17 @@ from typing import Annotated, ClassVar, Self, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
-from flext_core import FlextUtilitiesDomain, FlextUtilitiesGenerators, c, p, r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.domain_event import FlextModelsDomainEvent
-from flext_core.loggings import FlextLogger
+from flext_core import (
+    FlextLogger,
+    FlextModelsBase,
+    FlextModelsDomainEvent,
+    FlextUtilitiesDomain,
+    FlextUtilitiesGenerators,
+    c,
+    p,
+    r,
+    t,
+)
 
 
 class FlextModelsEntity:
@@ -173,7 +180,9 @@ class FlextModelsEntity:
                 created_events.append(event)
             return r[Sequence[FlextModelsDomainEvent.Entry]].ok(created_events)
 
-        def clear_domain_events(self: Self) -> Sequence[FlextModelsDomainEvent.Entry]:
+        def clear_domain_events(
+            self: Self,
+        ) -> Sequence[FlextModelsDomainEvent.Entry]:
             """Clear and return domain events."""
             events = list(self.domain_events)
             self.domain_events.clear()

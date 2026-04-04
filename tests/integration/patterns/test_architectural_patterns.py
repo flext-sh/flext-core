@@ -12,12 +12,11 @@ from __future__ import annotations
 
 import time
 from collections.abc import MutableMapping, MutableSequence
-from typing import Annotated, Self  # noqa: F401
+from typing import Self
 
 import pytest
-from pydantic import BeforeValidator  # noqa: F401
 
-from flext_core import FlextModelsDomainEvent, FlextUtilitiesDomain, r  # noqa: F401
+from flext_core import FlextModelsDomainEvent, r
 from tests import c, t
 from tests.test_utils import assertion_helpers
 

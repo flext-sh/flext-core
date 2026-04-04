@@ -12,17 +12,6 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
     import flext_core._constants as _flext_core__constants
-    from flext_core.__version__ import (
-        FlextVersion,
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
-    )
 
     _constants = _flext_core__constants
     import flext_core._models as _flext_core__models
@@ -65,6 +54,7 @@ if _t.TYPE_CHECKING:
         FlextModelsErrors,
         FlextModelsExceptionParams,
         FlextModelsHandler,
+        FlextModelsNamespace,
         FlextModelsRegistry,
         FlextModelsService,
         collections,
@@ -74,6 +64,7 @@ if _t.TYPE_CHECKING:
         exception_params,
         generic,
         handler,
+        namespace,
     )
     from flext_core._models._context import (
         FlextModelsContextData,
@@ -136,6 +127,8 @@ if _t.TYPE_CHECKING:
     import flext_core.constants as _flext_core_constants
     from flext_core._utilities import (
         FlextUtilitiesArgs,
+        FlextUtilitiesBeartypeConf,
+        FlextUtilitiesBeartypeEngine,
         FlextUtilitiesCache,
         FlextUtilitiesChecker,
         FlextUtilitiesCollection,
@@ -160,7 +153,10 @@ if _t.TYPE_CHECKING:
         FlextUtilitiesReliability,
         FlextUtilitiesResultHelpers,
         FlextUtilitiesText,
+        ParseOptions,
         args,
+        beartype_conf,
+        beartype_engine,
         cache,
         checker,
         collection,
@@ -377,6 +373,7 @@ __all__ = [
     "FlextModelsErrors",
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
+    "FlextModelsNamespace",
     "FlextModelsRegistry",
     "FlextModelsService",
     "FlextProtocols",
@@ -404,6 +401,8 @@ __all__ = [
     "FlextTypingContainers",
     "FlextUtilities",
     "FlextUtilitiesArgs",
+    "FlextUtilitiesBeartypeConf",
+    "FlextUtilitiesBeartypeEngine",
     "FlextUtilitiesCache",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
@@ -431,6 +430,7 @@ __all__ = [
     "FlextVersion",
     "MessageT_contra",
     "P",
+    "ParseOptions",
     "R",
     "ResultT",
     "T",
@@ -458,6 +458,8 @@ __all__ = [
     "annotateds",
     "args",
     "base",
+    "beartype_conf",
+    "beartype_engine",
     "c",
     "cache",
     "checker",
@@ -507,6 +509,7 @@ __all__ = [
     "mixins",
     "model",
     "models",
+    "namespace",
     "p",
     "parser",
     "platform",

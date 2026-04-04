@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Protocol, runtime_checkable
 
-from pydantic import BaseModel
-
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 
@@ -38,12 +36,7 @@ class FlextProtocolsHandler:
         def dispatch_message(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> (
-            FlextProtocolsResult.Result[t.RuntimeAtomic]
-            | t.Container
-            | BaseModel
-            | None
-        ): ...
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None: ...
 
     @runtime_checkable
     class Handle(Protocol):
@@ -52,12 +45,7 @@ class FlextProtocolsHandler:
         def handle(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> (
-            FlextProtocolsResult.Result[t.RuntimeAtomic]
-            | t.Container
-            | BaseModel
-            | None
-        ): ...
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None: ...
 
     @runtime_checkable
     class Execute(Protocol):
@@ -66,12 +54,7 @@ class FlextProtocolsHandler:
         def execute(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> (
-            FlextProtocolsResult.Result[t.RuntimeAtomic]
-            | t.Container
-            | BaseModel
-            | None
-        ): ...
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic] | t.RuntimeAtomic | None: ...
 
     @runtime_checkable
     class _MessageBusBase(Protocol):
@@ -96,7 +79,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]: ...
+        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):

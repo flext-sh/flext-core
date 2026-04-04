@@ -12,9 +12,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import Field, TypeAdapter
 
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.core import FlextTypesCore
-from flext_core._typings.services import FlextTypesServices
+from flext_core import FlextTypesCore, FlextTypesServices, FlextTypingBase
 
 
 class FlextTypesTypeAdapters:

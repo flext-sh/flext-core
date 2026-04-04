@@ -19,6 +19,13 @@ from flext_tests import tm
 from tests import c, t, u
 
 
+def _constant_case_id(case: t.Container | t.VariadicTuple[t.Container]) -> str:
+    if isinstance(case, tuple) and case:
+        first_item = case[0]
+        return first_item if isinstance(first_item, str) else str(first_item)
+    return str(case)
+
+
 class TestFlextConstants:
     """Production constants accessed through the c.* facade."""
 
@@ -71,7 +78,7 @@ class TestFlextConstants:
             ("MAX_TIMEOUT_SECONDS_PERFORMANCE", 600),
             ("DEFAULT_HOUR_IN_SECONDS", 3600),
         ],
-        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+        ids=_constant_case_id,
     )
     def test_base_constant_values(
         self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
@@ -291,7 +298,7 @@ class TestFlextConstants:
                 {"ACTIVE": "active", "INACTIVE": "inactive"},
             ),
         ],
-        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+        ids=_constant_case_id,
     )
     def test_cqrs_enum_members(
         self,
@@ -424,7 +431,7 @@ class TestFlextConstants:
                 },
             ),
         ],
-        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+        ids=_constant_case_id,
     )
     def test_validation_enum_members(
         self,
@@ -626,7 +633,7 @@ class TestFlextConstants:
     def test_platform_circuit_breaker_state_enum(self) -> None:
         """CircuitBreakerState has closed/open/half_open members."""
         cls = c.CircuitBreakerState
-        tm.that(issubclass(cls, StrEnum), eq=True)
+        tm.that(StrEnum in cls.__mro__, eq=True)
         tm.that(str(cls.CLOSED), eq="closed")
         tm.that(str(cls.OPEN), eq="open")
         tm.that(str(cls.HALF_OPEN), eq="half_open")
@@ -694,7 +701,7 @@ class TestFlextConstants:
                 ["no_colon_here", "too:many:colons"],
             ),
         ],
-        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+        ids=_constant_case_id,
     )
     def test_platform_regex_patterns(
         self,
@@ -761,7 +768,7 @@ class TestFlextConstants:
 
     def test_domain_level_hierarchy_is_mapping_proxy(self) -> None:
         """LEVEL_HIERARCHY is an immutable MappingProxyType with correct numeric values."""
-        tm.that(isinstance(c.LEVEL_HIERARCHY, MappingProxyType), eq=True)
+        tm.that(c.LEVEL_HIERARCHY.__class__, eq=MappingProxyType)
         tm.that(c.LEVEL_HIERARCHY["debug"], eq=10)
         tm.that(c.LEVEL_HIERARCHY["info"], eq=20)
         tm.that(c.LEVEL_HIERARCHY["warning"], eq=30)
@@ -804,7 +811,7 @@ class TestFlextConstants:
                 },
             ),
         ],
-        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+        ids=_constant_case_id,
     )
     def test_domain_enum_members(
         self,
@@ -813,7 +820,7 @@ class TestFlextConstants:
     ) -> None:
         """Domain StrEnum classes have all expected members."""
         cls = getattr(c, enum_cls)
-        tm.that(issubclass(cls, StrEnum), eq=True)
+        tm.that(StrEnum in cls.__mro__, eq=True)
         for name, value in members.items():
             tm.that(str(cls[name]), eq=value)
         tm.that(len(cls), eq=len(members))
@@ -825,7 +832,7 @@ class TestFlextConstants:
     def test_errors_error_domain_enum(self) -> None:
         """ErrorDomain has all seven categories with uppercase values."""
         cls = c.ErrorDomain
-        tm.that(issubclass(cls, StrEnum), eq=True)
+        tm.that(StrEnum in cls.__mro__, eq=True)
         expected = {
             "VALIDATION": "VALIDATION",
             "NETWORK": "NETWORK",
@@ -919,7 +926,7 @@ class TestFlextConstants:
                 },
             ),
         ],
-        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+        ids=_constant_case_id,
     )
     def test_settings_enum_members(
         self,
@@ -1049,7 +1056,7 @@ class TestFlextConstants:
                 },
             ),
         ],
-        ids=lambda pair: pair[0] if isinstance(pair, tuple) else str(pair),
+        ids=_constant_case_id,
     )
     def test_mixins_bool_enum_members(
         self,

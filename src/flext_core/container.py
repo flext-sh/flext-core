@@ -15,25 +15,31 @@ import inspect
 import sys
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from functools import partial
 from types import FrameType, ModuleType
-from typing import Self, TypeIs, overload, override
+from typing import Self, TypeIs, cast, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
 
-from flext_core.constants import c
-from flext_core.context import FlextContext
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.loggings import FlextLogger
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.settings import FlextSettings
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import (
+    FlextContext,
+    FlextDispatcher,
+    FlextLogger,
+    FlextSettings,
+    c,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 
-def _is_service_of_type[T](value: object, cls: type[T]) -> TypeIs[T]:
+def _is_service_of_type[T: t.RegisterableService](
+    value: t.RegisterableService,
+    cls: type[T],
+) -> TypeIs[T]:
     """TypeIs guard that narrows an object to T for pyright."""
     return isinstance(value, cls)
 
@@ -399,7 +405,7 @@ class FlextContainer(p.Container):
         func_ref: t.FactoryCallable,
         name: str,
         config: m.FactoryDecoratorConfig,
-    ) -> Callable[[], t.RegisterableService]:
+    ) -> t.FactoryCallable:
         """Build a closure that invokes factory with validation on return type."""
 
         def factory_wrapper(
@@ -543,10 +549,13 @@ class FlextContainer(p.Container):
         return FlextLogger.create_module_logger(module_name or c.DEFAULT_LOGGER_MODULE)
 
     @staticmethod
-    def _narrow_service[T](service: object, cls: type[T]) -> r[T]:
+    def _narrow_service[T: t.RegisterableService](
+        service: t.RegisterableService,
+        cls: type[T],
+    ) -> r[T]:
         """Narrow a service object to a concrete type T via TypeIs."""
         if _is_service_of_type(service, cls):
-            return r[T].ok(service)
+            return r[T].ok(cast("T", service))
         type_name = cls.__name__ if hasattr(cls, "__name__") else "Unknown"
         return r[T].fail(f"Service is not of type {type_name}")
 
@@ -597,9 +606,7 @@ class FlextContainer(p.Container):
         if name in self._factories:
             try:
                 factory_registration = self._factories[name]
-                factory_callable: Callable[[], t.RegisterableService] = (
-                    factory_registration.factory
-                )
+                factory_callable: t.FactoryCallable = factory_registration.factory
                 resolved = factory_callable()
                 if type_cls is not None:
                     return self._narrow_service(resolved, type_cls)
@@ -609,9 +616,7 @@ class FlextContainer(p.Container):
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
-                resource_callable: Callable[[], t.RegisterableService] = (
-                    resource_registration.factory
-                )
+                resource_callable: t.ResourceCallable = resource_registration.factory
                 resolved = resource_callable()
                 if not u.is_registerable_service(resolved):
                     return r[t.RegisterableService].fail(
@@ -712,10 +717,7 @@ class FlextContainer(p.Container):
                 overrides_root = dict(user_overrides.root)
             else:
                 for ok, ov in user_overrides.items():
-                    if isinstance(
-                        ov,
-                        (*t.CONTAINER_TYPES, BaseModel),
-                    ):
+                    if isinstance(ov, (*t.CONTAINER_TYPES, BaseModel)):
                         overrides_root[ok] = ov
                     elif isinstance(ov, Sequence):
                         overrides_root[ok] = list(ov)
@@ -756,7 +758,7 @@ class FlextContainer(p.Container):
         Args:
             name: Unique key for the registration.
             impl: Concrete instance or callable used for registration.
-                Must be a canonical registerable service (primitives, BaseModel, callable,
+                Must be a canonical registerable service (primitives, Pydantic model, callable,
                 sequence, or mapping).
 
         Returns:
@@ -1074,18 +1076,16 @@ class FlextContainer(p.Container):
             if config_class is None:
                 continue
             config_class_non_null: type[BaseModel] = config_class
-
-            def _create_namespace_config(
-                ns: str = namespace,
-                config_cls: type[BaseModel] = config_class_non_null,
-            ) -> BaseModel:
-                """Factory for creating namespace config instance."""
-                return FlextSettings.get_global().get_namespace(ns, config_cls)
+            namespace_factory: t.FactoryCallable = partial(
+                FlextSettings.get_global().get_namespace,
+                namespace,
+                config_class_non_null,
+            )
 
             if not self.has_service(factory_name):
                 self.register(
                     factory_name,
-                    _create_namespace_config,
+                    namespace_factory,
                     kind=c.CONTAINER_KIND_FACTORY,
                 )
 

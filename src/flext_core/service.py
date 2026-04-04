@@ -80,17 +80,17 @@ class FlextService[
         exclude=True,
         description="Subproject name used to scope configuration and wiring.",
     )
-    services: Mapping[str, t.RegisterableService] | None = Field(
+    services: t.ServiceMap | None = Field(
         default=None,
         exclude=True,
         description="Named services to register in the dependency container.",
     )
-    factories: Mapping[str, t.FactoryCallable] | None = Field(
+    factories: t.FactoryMap | None = Field(
         default=None,
         exclude=True,
         description="Named factory callables to register in the dependency container.",
     )
-    resources: Mapping[str, t.ResourceCallable] | None = Field(
+    resources: t.ResourceMap | None = Field(
         default=None,
         exclude=True,
         description="Named lifecycle resources to register in the dependency container.",
@@ -125,7 +125,7 @@ class FlextService[
     )
 
     # --- Internal State ---
-    _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
+    _execution_result: p.Result[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
     def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
@@ -159,15 +159,30 @@ class FlextService[
     @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
-        if self._execution_result is None:
-            self._execution_result = self.execute()
-        execution_result: r[TDomainResult] = self._execution_result
+        execution_result = FlextService._get_execution_result(self)
         if execution_result.is_success:
-            if execution_result.value is not None:
-                return execution_result.value
-            error_msg = "Service execution returned None value"
-            raise e.BaseError(error_msg)
+            result_value = execution_result.value
+            if result_value is None:
+                error_msg = "Service execution returned None value"
+                raise e.BaseError(error_msg)
+            # Pyright widens generic computed_field returns to the bound in
+            # whole-project mode; the cached result contract is already
+            # parameterized as p.Result[TDomainResult] at this boundary.
+            return cast("TDomainResult", result_value)
         raise e.BaseError(execution_result.error or "Service execution failed")
+
+    @staticmethod
+    def _get_execution_result[
+        TResult: t.ValueOrModel | Sequence[t.ValueOrModel],
+    ](
+        service: FlextService[TResult],
+    ) -> p.Result[TResult]:
+        """Return cached execution result or execute the service once."""
+        execution_result = service._execution_result
+        if execution_result is None:
+            execution_result = service.execute()
+            service._execution_result = execution_result
+        return execution_result
 
     @property
     @override
@@ -407,8 +422,8 @@ class FlextService[
     @classmethod
     def _normalize_scoped_services(
         cls,
-        services: Mapping[str, t.RegisterableService] | None,
-    ) -> Mapping[str, t.RegisterableService] | None:
+        services: t.ServiceMap | None,
+    ) -> t.ServiceMap | None:
         """Normalize and validate scoped services using Pydantic model."""
         if services is None:
             return None

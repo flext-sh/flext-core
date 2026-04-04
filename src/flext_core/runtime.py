@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import inspect
 import sys
-import typing
 from collections.abc import (
     Callable,
     Mapping,
@@ -29,15 +28,21 @@ from pathlib import Path
 from types import ModuleType
 from typing import (
     ClassVar,
+    cast,
 )
 
 import orjson
 from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel, ValidationError
 
-from flext_core import T, c, p, t
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core import (
+    FlextUtilitiesGenerators,
+    FlextUtilitiesGuardsTypeCore,
+    T,
+    c,
+    p,
+    t,
+)
 
 
 class FlextRuntime:
@@ -346,23 +351,21 @@ class FlextRuntime:
     @classmethod
     def normalize_metadata_input(cls, value: t.MetadataInput) -> p.Metadata:
         """Normalize metadata input into the bound metadata model."""
-        metadata_cls = typing.cast("type[BaseModel]", cls._require_metadata_model())
+        metadata_cls = cast("type[BaseModel]", cls._require_metadata_model())
         if value is None:
-            return typing.cast(
-                "p.Metadata",
-                metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}}),
+            return cast(
+                "p.Metadata", metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}})
             )
         if isinstance(value, metadata_cls):
-            return typing.cast("p.Metadata", value)
+            return cast("p.Metadata", value)
         if not isinstance(value, Mapping):
             msg = (
                 "metadata must be None, dict, or bound metadata model, got "
                 f"{value.__class__.__name__}"
             )
             raise TypeError(msg)
-        return typing.cast(
-            "p.Metadata",
-            metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)}),
+        return cast(
+            "p.Metadata", metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)})
         )
 
     @staticmethod

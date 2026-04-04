@@ -12,42 +12,63 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from datetime import date, datetime, time
+from datetime import date, time
 from enum import Enum
 from types import ModuleType
-from typing import Protocol
+from typing import Protocol, runtime_checkable
+
+from pydantic import TypeAdapter, ValidationError
 
 # INFRASTRUCTURE EXCEPTION: lazy_getattr and cleanup_submodule_namespace MUST remain
 # module-level functions. They are imported directly by all auto-generated __init__.py
 # files for PEP 562 lazy loading. Moving them into a class would break the lazy import
 # mechanism across the entire package hierarchy.
 
-type LazyScalar = str | int | float | bool | bytes | date | datetime | time
-type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
-type LazyCallable = Callable[..., LazyScalar | LazyCollection | None]
 type LazyImportEntry = str | Sequence[str]
 type LazyImportMap = Mapping[str, LazyImportEntry]
-type LazyGetattr = Callable[[str], LazyExport]
-type LazyDir = Callable[[], list[str]]
-type LazyExport = (
-    type[BaseException | Enum] | LazyScalar | LazyCollection | ModuleType | LazyCallable
+type LazyScalar = str | int | float | bool | bytes | date | time
+type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
+type LazyModuleExportValue = LazyScalar
+type LazyModuleExport = (
+    LazyModuleExportValue
+    | LazyCollection
+    | ModuleType
+    | type[BaseException | Enum]
+    | Callable[..., LazyModuleExportValue | LazyCollection | None]
 )
+type LazyGetattr = Callable[[str], LazyModuleExport]
+type LazyDir = Callable[[], list[str]]
+type LazyNamespaceValue = LazyModuleExport | Sequence[str] | LazyGetattr | LazyDir
 
 _IMPORT_MODULE = importlib.import_module
 _MODULE_CACHE: dict[str, ModuleType] = {}
 _CHILD_LAZY_IMPORTS_CACHE: dict[str, LazyImportMap] = {}
 _CHILD_MERGE_CACHE: dict[tuple[str, ...], dict[str, LazyImportEntry]] = {}
+_LAZY_IMPORT_MAP_ADAPTER = TypeAdapter(dict[str, LazyImportEntry])
 
 
+@runtime_checkable
 class LazyNamespace(Protocol):
     """Mutable namespace for generated module globals."""
 
     def __setitem__(
         self,
         key: str,
-        value: LazyExport | Sequence[str] | LazyGetattr | LazyDir,
+        value: LazyNamespaceValue,
         /,
     ) -> None: ...
+
+
+def _validate_lazy_import_map(
+    raw_lazy_imports: LazyImportMap | Mapping[str, LazyImportEntry] | None,
+    module_path: str,
+) -> dict[str, LazyImportEntry]:
+    """Validate and normalize a child module _LAZY_IMPORTS mapping."""
+    try:
+        return _LAZY_IMPORT_MAP_ADAPTER.validate_python(raw_lazy_imports)
+    except ValidationError as exc:
+        msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
+        raise TypeError(msg) from exc
 
 
 def _load_module(module_path: str) -> ModuleType:
@@ -100,7 +121,7 @@ def lazy_getattr(
     lazy_imports: LazyImportMap,
     module_globals: LazyNamespace,
     module_name: str,
-) -> LazyExport:
+) -> LazyModuleExport:
     """Lazy-load a module attribute on first access (PEP 562)."""
     entry = lazy_imports.get(name)
     if entry is None:
@@ -129,7 +150,7 @@ def lazy_getattr(
         return module
 
     try:
-        value: LazyExport = getattr(module, attr_name)
+        value: LazyModuleExport = getattr(module, attr_name)
     except AttributeError:
         module_basename = module_path.rsplit(".", maxsplit=1)[-1]
         if isinstance(entry, str) and module_basename == name:
@@ -176,12 +197,12 @@ def _load_child_lazy_imports(module_path: str) -> LazyImportMap:
         return cached_lazy_imports
 
     child_module = _load_module(module_path)
-    child_lazy_imports = getattr(child_module, "_LAZY_IMPORTS", None)
-    if child_lazy_imports is None or not isinstance(child_lazy_imports, Mapping):
-        msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
-        raise AttributeError(msg)
-    _CHILD_LAZY_IMPORTS_CACHE[module_path] = child_lazy_imports
-    return child_lazy_imports
+    module_dict = vars(child_module)
+    child_lazy_imports = module_dict.get("_LAZY_IMPORTS")
+    validated_lazy_imports = _validate_lazy_import_map(child_lazy_imports, module_path)
+
+    _CHILD_LAZY_IMPORTS_CACHE[module_path] = validated_lazy_imports
+    return validated_lazy_imports
 
 
 def merge_lazy_imports(
@@ -225,10 +246,16 @@ def install_lazy_exports(
     directly from ``lazy_imports``. Callers that need extra eager names may
     pass only those extras. Legacy callers that still pass the complete export
     list remain compatible.
+
+    beartype.claw activation is intentionally not installed here. Recent
+    validation shows synthetic packages with Pydantic models and
+    runtime-checkable Protocols now work, but flext-core still breaks on
+    project-specific PEP 695 aliases in ``flext_core._typings.services`` and
+    lazy-layer Protocol hints such as ``LazyNamespace``.
     """
     export_names = _derive_export_names(lazy_imports, all_exports)
 
-    def _getattr(name: str) -> LazyExport:
+    def _getattr(name: str) -> LazyModuleExport:
         return lazy_getattr(name, lazy_imports, module_globals, module_name)
 
     def _dir() -> list[str]:

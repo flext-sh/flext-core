@@ -7,8 +7,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextUtilitiesParser, r
-from flext_core._utilities.parser import ParseOptions
+from flext_core import FlextUtilitiesParser, ParseOptions, r
 from flext_tests import tm
 from tests import t, u
 from tests.unit import _models_impl as test_unit_models

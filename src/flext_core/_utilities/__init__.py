@@ -13,8 +13,16 @@ if _t.TYPE_CHECKING:
     import flext_core._utilities.args as _flext_core__utilities_args
 
     args = _flext_core__utilities_args
-    import flext_core._utilities.cache as _flext_core__utilities_cache
+    import flext_core._utilities.beartype_conf as _flext_core__utilities_beartype_conf
     from flext_core._utilities.args import FlextUtilitiesArgs
+
+    beartype_conf = _flext_core__utilities_beartype_conf
+    import flext_core._utilities.beartype_engine as _flext_core__utilities_beartype_engine
+    from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+
+    beartype_engine = _flext_core__utilities_beartype_engine
+    import flext_core._utilities.cache as _flext_core__utilities_cache
+    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
 
     cache = _flext_core__utilities_cache
     import flext_core._utilities.checker as _flext_core__utilities_checker
@@ -100,7 +108,7 @@ if _t.TYPE_CHECKING:
 
     parser = _flext_core__utilities_parser
     import flext_core._utilities.reliability as _flext_core__utilities_reliability
-    from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.parser import FlextUtilitiesParser, ParseOptions
 
     reliability = _flext_core__utilities_reliability
     import flext_core._utilities.result_helpers as _flext_core__utilities_result_helpers
@@ -114,6 +122,8 @@ if _t.TYPE_CHECKING:
     from flext_core._utilities.text import FlextUtilitiesText
 _LAZY_IMPORTS = {
     "FlextUtilitiesArgs": "flext_core._utilities.args",
+    "FlextUtilitiesBeartypeConf": "flext_core._utilities.beartype_conf",
+    "FlextUtilitiesBeartypeEngine": "flext_core._utilities.beartype_engine",
     "FlextUtilitiesCache": "flext_core._utilities.cache",
     "FlextUtilitiesChecker": "flext_core._utilities.checker",
     "FlextUtilitiesCollection": "flext_core._utilities.collection",
@@ -138,7 +148,10 @@ _LAZY_IMPORTS = {
     "FlextUtilitiesReliability": "flext_core._utilities.reliability",
     "FlextUtilitiesResultHelpers": "flext_core._utilities.result_helpers",
     "FlextUtilitiesText": "flext_core._utilities.text",
+    "ParseOptions": "flext_core._utilities.parser",
     "args": "flext_core._utilities.args",
+    "beartype_conf": "flext_core._utilities.beartype_conf",
+    "beartype_engine": "flext_core._utilities.beartype_engine",
     "cache": "flext_core._utilities.cache",
     "checker": "flext_core._utilities.checker",
     "collection": "flext_core._utilities.collection",
@@ -167,6 +180,8 @@ _LAZY_IMPORTS = {
 
 __all__ = [
     "FlextUtilitiesArgs",
+    "FlextUtilitiesBeartypeConf",
+    "FlextUtilitiesBeartypeEngine",
     "FlextUtilitiesCache",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
@@ -191,7 +206,10 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
+    "ParseOptions",
     "args",
+    "beartype_conf",
+    "beartype_engine",
     "cache",
     "checker",
     "collection",

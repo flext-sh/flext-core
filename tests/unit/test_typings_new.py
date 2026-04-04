@@ -131,15 +131,30 @@ class TestFlextTypes:
 
     def test_generic_type_vars_exist(self) -> None:
         """All generic TypeVars and ParamSpec are importable."""
-        tm.that(T is not None, eq=True)
-        tm.that(U is not None, eq=True)
-        tm.that(R is not None, eq=True)
-        tm.that(P is not None, eq=True)
-        tm.that(ResultT is not None, eq=True)
-        tm.that(T_co is not None, eq=True)
-        tm.that(T_contra is not None, eq=True)
-        tm.that(T_Model is not None, eq=True)
-        tm.that(T_Settings is not None, eq=True)
+        tm.that(
+            (
+                T.__name__,
+                U.__name__,
+                R.__name__,
+                P.__name__,
+                ResultT.__name__,
+                T_co.__name__,
+                T_contra.__name__,
+                T_Model.__name__,
+                T_Settings.__name__,
+            ),
+            eq=(
+                "T",
+                "U",
+                "R",
+                "P",
+                "ResultT",
+                "T_co",
+                "T_contra",
+                "T_Model",
+                "T_Settings",
+            ),
+        )
 
     def test_typevar_names(self) -> None:
         """TypeVars have correct __name__ attributes."""
@@ -159,7 +174,7 @@ class TestFlextTypes:
 
     def test_paramspec_is_paramspec(self) -> None:
         """P is a ParamSpec, not a TypeVar."""
-        tm.that(isinstance(P, ParamSpec), eq=True)
+        assert type(P).__name__ == ParamSpec.__name__
 
     def test_t_model_bound(self) -> None:
         """T_Model is bound to BaseModel."""
@@ -530,23 +545,23 @@ class TestFlextTypes:
 
     def test_flexttypes_inherits_base(self) -> None:
         """FlextTypes inherits from FlextTypingBase through MRO."""
-        tm.that(issubclass(FlextTypes, FlextTypingBase), eq=True)
+        tm.that(FlextTypingBase in FlextTypes.__mro__, eq=True)
 
     def test_flexttypes_inherits_containers(self) -> None:
         """FlextTypes inherits from FlextTypingContainers through MRO."""
-        tm.that(issubclass(FlextTypes, FlextTypingContainers), eq=True)
+        tm.that(FlextTypingContainers in FlextTypes.__mro__, eq=True)
 
     def test_flexttypes_inherits_core(self) -> None:
         """FlextTypes inherits from FlextTypesCore through MRO."""
-        tm.that(issubclass(FlextTypes, FlextTypesCore), eq=True)
+        tm.that(FlextTypesCore in FlextTypes.__mro__, eq=True)
 
     def test_flexttypes_inherits_services(self) -> None:
         """FlextTypes inherits from FlextTypesServices through MRO."""
-        tm.that(issubclass(FlextTypes, FlextTypesServices), eq=True)
+        tm.that(FlextTypesServices in FlextTypes.__mro__, eq=True)
 
     def test_flexttypes_inherits_validation(self) -> None:
         """FlextTypes inherits from FlextTypesValidation through MRO."""
-        tm.that(issubclass(FlextTypes, FlextTypesValidation), eq=True)
+        tm.that(FlextTypesValidation in FlextTypes.__mro__, eq=True)
 
     # -- Generic tuple aliases --
 

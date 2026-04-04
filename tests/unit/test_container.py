@@ -351,9 +351,12 @@ class TestFlextContainer:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         _ = container.register(scenario.name, scenario.service)
-        typed_result: p.Result[t.RegisterableService] = container.get(
-            scenario.name,
-            type_cls=scenario.expected_type,
+        typed_result = cast(
+            "p.Result[t.RegisterableService]",
+            container.get(
+                scenario.name,
+                type_cls=scenario.expected_type,
+            ),
         )
         if scenario.should_pass:
             _ = u.Tests.Result.assert_success(typed_result)
@@ -373,16 +376,20 @@ class TestFlextContainer:
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result: p.Result[dict[str, t.NormalizedValue]] = clean_container.get(
-            "string_service",
-            type_cls=dict,
+        result = cast(
+            "p.Result[t.ContainerMapping]",
+            clean_container.get(
+                "string_service",
+                type_cls=dict,
+            ),
         )
         _ = u.Tests.Result.assert_failure(result)
 
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result: p.Result[dict[str, t.NormalizedValue]] = clean_container.get(
-            "nonexistent", type_cls=dict
+        result = cast(
+            "p.Result[t.ContainerMapping]",
+            clean_container.get("nonexistent", type_cls=dict),
         )
         u.Tests.Result.assert_result_failure_with_error(
             result,

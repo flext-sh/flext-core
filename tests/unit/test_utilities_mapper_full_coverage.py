@@ -272,6 +272,27 @@ def _negative(value: int) -> bool:
     return value < 0
 
 
+_PYRIGHT_USED_HELPERS = (
+    _BadIter,
+    _extract_field_obj,
+    _take_obj,
+    _build_apply_convert_obj,
+    _extract_transform_options_obj,
+    _build_apply_sort_obj,
+    _build_apply_unique_obj,
+    _build_apply_slice_obj,
+    _build_apply_group_obj,
+    _transform_obj,
+    _map_dict_keys_obj,
+    _parse_int,
+    _plus_one,
+    _times_two,
+    _raise_value_error,
+    _normalize_not_dict,
+    _negative,
+)
+
+
 def test_bad_string_and_bad_bool_raise_value_error() -> None:
     with pytest.raises(ValueError, match="cannot stringify"):
         _ = str(BadString())

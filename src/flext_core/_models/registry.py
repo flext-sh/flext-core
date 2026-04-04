@@ -11,9 +11,7 @@ from typing import Annotated
 
 from pydantic import Field, computed_field
 
-from flext_core import t
-from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.handler import FlextModelsHandler
+from flext_core import FlextModelsEntity, FlextModelsHandler, t
 
 
 class FlextModelsRegistry:

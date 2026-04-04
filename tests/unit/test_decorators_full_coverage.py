@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable, MutableSequence
+from collections.abc import MutableSequence
 from types import SimpleNamespace
 from typing import Annotated, ClassVar, cast
 
@@ -87,19 +87,16 @@ class TestDecoratorsFullCoverage:
     ) -> None:
         fake_logger = self._FakeLogger()
 
-        def _resolve_logger(
-            _args: tuple[t.NormalizedValue, ...],
-            _func: Callable[..., t.NormalizedValue],
-        ) -> TestDecoratorsFullCoverage._FakeLogger:
-            return fake_logger
-
         def _bind_operation_context(**_kwargs: t.Scalar) -> str:
             return "cid-1"
 
         def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
             return None
 
-        monkeypatch.setattr(d, "_resolve_logger", _resolve_logger)
+        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+            return fake_logger
+
+        monkeypatch.setattr("flext_core.decorators.FlextLogger", _logger_factory)
         monkeypatch.setattr(d, "_bind_operation_context", _bind_operation_context)
         monkeypatch.setattr(d, "_clear_operation_scope", _clear_operation_scope)
 
@@ -130,10 +127,7 @@ class TestDecoratorsFullCoverage:
         def _handle_retry_exhaustion(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
-        def _resolve_logger(
-            _args: tuple[t.NormalizedValue, ...],
-            _func: Callable[..., t.NormalizedValue],
-        ) -> TestDecoratorsFullCoverage._FakeLogger:
+        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return TestDecoratorsFullCoverage._FakeLogger()
 
         monkeypatch.setattr(
@@ -145,8 +139,8 @@ class TestDecoratorsFullCoverage:
             _handle_retry_exhaustion,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._resolve_logger",
-            _resolve_logger,
+            "flext_core.decorators.FlextLogger",
+            _logger_factory,
         )
 
         @d.retry(max_attempts=1, error_code="X")
@@ -164,7 +158,7 @@ class TestDecoratorsFullCoverage:
         def target() -> None:
             return None
 
-        tm.that(d._resolve_logger((owner,), target) is logger, eq=True)
+        tm.that(d._resolve_logger(owner, func=target) is logger, eq=True)
 
     def test_execute_retry_loop_covers_default_linear_and_never_ran(
         self,
@@ -392,12 +386,6 @@ class TestDecoratorsFullCoverage:
         tm.that(fn(), eq="ok")
         tm.that(ensure_calls, eq=[1])
 
-        def _resolve_logger(
-            _args: tuple[t.NormalizedValue, ...],
-            _func: Callable[..., t.NormalizedValue],
-        ) -> TestDecoratorsFullCoverage._FakeLogger:
-            return fake_logger
-
         def _bind_global_context(**_kwargs: t.Scalar) -> r[bool]:
             return r[bool].fail("bind", error_code="B")
 
@@ -410,18 +398,12 @@ class TestDecoratorsFullCoverage:
         def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
             return None
 
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._resolve_logger",
-            _resolve_logger,
-        )
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger.bind_global_context",
-            _bind_global_context,
-        )
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger.unbind_global_context",
-            _unbind_global_context,
-        )
+        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+            return fake_logger
+
+        setattr(_logger_factory, "bind_global_context", _bind_global_context)
+        setattr(_logger_factory, "unbind_global_context", _unbind_global_context)
+        monkeypatch.setattr("flext_core.decorators.FlextLogger", _logger_factory)
 
         @d.with_context(service="svc")
         def with_ctx() -> str:
@@ -455,22 +437,16 @@ class TestDecoratorsFullCoverage:
     ) -> None:
         fake_logger = self._FakeLogger()
 
-        def _resolve_logger(
-            _args: tuple[t.NormalizedValue, ...],
-            _func: Callable[..., t.NormalizedValue],
-        ) -> TestDecoratorsFullCoverage._FakeLogger:
-            return fake_logger
-
         def _bind_operation_context(**_kwargs: t.Scalar) -> str:
             return "cid-perf"
 
         def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
             return None
 
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._resolve_logger",
-            _resolve_logger,
-        )
+        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+            return fake_logger
+
+        monkeypatch.setattr("flext_core.decorators.FlextLogger", _logger_factory)
         monkeypatch.setattr(
             "flext_core.decorators.FlextDecorators._bind_operation_context",
             _bind_operation_context,
@@ -514,19 +490,13 @@ class TestDecoratorsFullCoverage:
         tm.fail(fail_result)
         fake_logger = self._FakeLogger()
 
-        def _resolve_logger(
-            _args: tuple[t.NormalizedValue, ...],
-            _func: Callable[..., t.NormalizedValue],
-        ) -> TestDecoratorsFullCoverage._FakeLogger:
-            return fake_logger
-
         def _execute_retry_loop(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
             return "done"
 
-        monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._resolve_logger",
-            _resolve_logger,
-        )
+        def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
+            return fake_logger
+
+        monkeypatch.setattr("flext_core.decorators.FlextLogger", _logger_factory)
         monkeypatch.setattr(
             "flext_core.decorators.FlextDecorators._execute_retry_loop",
             _execute_retry_loop,

@@ -20,17 +20,17 @@ from pydantic import Field
 from flext_core import (
     FlextConstants,
     FlextModels,
+    FlextModelsNamespace,
     FlextProtocols,
     FlextTypes,
     FlextUtilities,
+    FlextUtilitiesEnforcement,
     c,
     m,
     p,
     t,
     u,
 )
-from flext_core._models.namespace import FlextModelsNamespace
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
 class TestCheckNoAny:

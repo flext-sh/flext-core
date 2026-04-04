@@ -48,8 +48,10 @@ class Ex05FlextMixins(Examples):
             """Handle data and return result."""
             return r[str].ok(str(message))
 
-    class HandlerBad:
+    class HandlerBad(m.Value):
         """Non-handler for negative ``is_handler`` check."""
+
+        marker: str = "bad"
 
     class GoodProcessor(m.Value):
         """Processor satisfying ``p.HasModelDump`` + process + validate."""

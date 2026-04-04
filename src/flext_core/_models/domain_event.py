@@ -16,63 +16,7 @@ from typing import Annotated, override
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import (
-    FlextModelsBase,
-    FlextUtilitiesDomain,
-    t,
-)
-
-
-class _ComparableConfigMap(t.ConfigMap):
-    """ConfigMap with equality support for domain event data."""
-
-    @override
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, dict):
-            return self.root == other
-        if isinstance(other, Mapping):
-            other_mapping = t.ConfigMap(
-                root=dict(
-                    FlextUtilitiesDomain.normalize_domain_event_data(
-                        typing.cast("Mapping[str, t.ValueOrModel]", other)
-                    )
-                ),
-            ).root
-            return self.root == other_mapping
-        return super().__eq__(other)
-
-    __hash__ = t.ConfigMap.__hash__
-
-
-class _Entry(
-    FlextModelsBase.IdentifiableMixin,
-    FlextModelsBase.TimestampedModel,
-):
-    """Base class for domain events."""
-
-    message_type: str = Field(
-        default="event",
-        frozen=True,
-        description="Message type discriminator for union routing - always 'event'",
-    )
-    event_type: Annotated[
-        t.NonEmptyStr,
-        Field(description="Domain event type identifier for subscriber routing."),
-    ]
-    aggregate_id: Annotated[
-        t.NonEmptyStr,
-        Field(description="Identifier of the aggregate root that produced this event."),
-    ]
-    data: Annotated[
-        _ComparableConfigMap,
-        BeforeValidator(FlextUtilitiesDomain.normalize_domain_event_data),
-    ] = Field(
-        validate_default=True,
-        description="Event data container",
-        default_factory=lambda: _ComparableConfigMap(
-            root={},
-        ),
-    )
+from flext_core import FlextModelsBase, FlextUtilitiesDomain, t
 
 
 class FlextModelsDomainEvent:
@@ -82,10 +26,59 @@ class FlextModelsDomainEvent:
     Split into its own module so Entity can import without forward references.
     """
 
-    ComparableConfigMap = _ComparableConfigMap
-    Entry = _Entry
-    # Canonical alias: tests use m.DomainEvent, which resolves to Entry
-    DomainEvent = _Entry
+    class ComparableConfigMap(t.ConfigMap):
+        """ConfigMap with equality support for domain event data."""
+
+        @override
+        def __eq__(self, other: object) -> bool:
+            if isinstance(other, dict):
+                return self.root == other
+            if isinstance(other, Mapping):
+                other_mapping = FlextModelsDomainEvent.ComparableConfigMap(
+                    root=dict(
+                        FlextUtilitiesDomain.normalize_domain_event_data(
+                            typing.cast("Mapping[str, t.ValueOrModel]", other)
+                        )
+                    ),
+                ).root
+                return self.root == other_mapping
+            return super().__eq__(other)
+
+        __hash__ = t.ConfigMap.__hash__
+
+    class Entry(
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.TimestampedModel,
+    ):
+        """Base class for domain events."""
+
+        message_type: str = Field(
+            default="event",
+            frozen=True,
+            description="Message type discriminator for union routing - always 'event'",
+        )
+        event_type: Annotated[
+            t.NonEmptyStr,
+            Field(description="Domain event type identifier for subscriber routing."),
+        ]
+        aggregate_id: Annotated[
+            t.NonEmptyStr,
+            Field(
+                description="Identifier of the aggregate root that produced this event."
+            ),
+        ]
+        data: Annotated[
+            FlextModelsDomainEvent.ComparableConfigMap,
+            BeforeValidator(FlextUtilitiesDomain.normalize_domain_event_data),
+        ] = Field(
+            validate_default=True,
+            description="Event data container",
+            default_factory=lambda: FlextModelsDomainEvent.ComparableConfigMap(
+                root={},
+            ),
+        )
+
+    DomainEvent = Entry
 
 
 __all__ = ["FlextModelsDomainEvent"]

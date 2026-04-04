@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from itertools import starmap
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -307,32 +308,26 @@ class FlextUtilitiesMapper:
         fallback: t.RuntimeAtomic | t.RecursiveContainer = (
             default if default is not None else ""
         )
-        raw_value: t.RuntimeAtomic | None = None
         match data:
             case dict() | Mapping():
                 if key not in data:
                     return fallback
-                raw_value = FlextRuntime.normalize_to_container(data[key])
+                return FlextRuntime.normalize_to_container(data[key])
             case t.ConfigMap() | t.Dict():
                 if key not in data.root:
                     return fallback
-                raw_value = FlextRuntime.normalize_to_container(data.root[key])
+                return FlextRuntime.normalize_to_container(data.root[key])
             case _ if hasattr(data, key):
                 return FlextRuntime.normalize_to_container(getattr(data, key))
             case _:
                 return fallback
-        return (
-            FlextRuntime.normalize_to_container(raw_value)
-            if raw_value is not None
-            else fallback
-        )
 
     @staticmethod
     def _get_numeric_field(
         item: BaseModel | Mapping[str, t.RecursiveContainer],
         field_name: str,
     ) -> t.Numeric | None:
-        """Extract a numeric field value from a BaseModel or Mapping-like object."""
+        """Extract a numeric field value from a model or mapping-like object."""
         if isinstance(item, BaseModel):
             val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
             return val_raw if isinstance(val_raw, (int, float)) else None
@@ -353,13 +348,19 @@ class FlextUtilitiesMapper:
                 field(item) for item in items_list
             ]
         else:
-            numeric_values = [
-                val
-                for item in items_list
-                if isinstance(item, (BaseModel, Mapping))
-                and (val := FlextUtilitiesMapper._get_numeric_field(item, field))
-                is not None
-            ]
+            numeric_values = []
+            for item in items_list:
+                if isinstance(item, BaseModel):
+                    field_value = FlextUtilitiesMapper._get_numeric_field(item, field)
+                elif isinstance(item, Mapping):
+                    field_value = FlextUtilitiesMapper._get_numeric_field(
+                        cast("Mapping[str, t.RecursiveContainer]", item),
+                        field,
+                    )
+                else:
+                    continue
+                if field_value is not None:
+                    numeric_values.append(field_value)
         agg_fn: Callable[[Sequence[t.Numeric]], t.Numeric] = (
             fn if fn is not None else sum
         )

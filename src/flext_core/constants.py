@@ -10,15 +10,15 @@ from flext_core import (
     FlextConstantsBase,
     FlextConstantsCqrs,
     FlextConstantsDomain,
+    FlextConstantsEnforcement,
     FlextConstantsErrors,
     FlextConstantsInfrastructure,
     FlextConstantsMixins,
     FlextConstantsPlatform,
     FlextConstantsSettings,
     FlextConstantsValidation,
+    FlextModelsNamespace,
 )
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._models.namespace import FlextModelsNamespace
 
 
 class FlextConstants(

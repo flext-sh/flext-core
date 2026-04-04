@@ -26,6 +26,9 @@ class _NoModelDump:
     """Object without model_dump — should fail is_pydantic_model."""
 
 
+_PYRIGHT_USED_CLASSES = (_NoModelDump,)
+
+
 def _always_true(_v: t.GuardInput) -> bool:
     return True
 

@@ -490,4 +490,4 @@ class FlextUtilitiesParser:
                 )
 
 
-__all__ = ["FlextUtilitiesParser"]
+__all__ = ["FlextUtilitiesParser", "ParseOptions"]

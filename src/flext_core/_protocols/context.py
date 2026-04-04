@@ -15,7 +15,7 @@ from pydantic_settings import BaseSettings
 from flext_core import FlextProtocolsResult, t
 
 if TYPE_CHECKING:
-    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core import FlextModelsContextExport
 
 
 class FlextProtocolsContext:

@@ -14,7 +14,6 @@ from __future__ import annotations
 import contextvars
 import time
 from collections.abc import (
-    Callable,
     Generator,
     Mapping,
     MutableMapping,
@@ -66,10 +65,7 @@ class FlextContext(m.ArbitraryTypesModel):
         return value
 
     @staticmethod
-    def _empty_hooks() -> Mapping[
-        str,
-        Sequence[Callable[[t.Scalar], t.ValueOrModel | None]],
-    ]:
+    def _empty_hooks() -> t.ContextHookMap:
         return {}
 
     initial_data: Annotated[
@@ -130,10 +126,8 @@ class FlextContext(m.ArbitraryTypesModel):
             return empty_err
 
     _metadata: m.Metadata = PrivateAttr()
-    _hooks: Mapping[str, Sequence[Callable[[t.Scalar], t.ValueOrModel | None]]] = (
-        PrivateAttr(
-            default_factory=_empty_hooks,
-        )
+    _hooks: t.ContextHookMap = PrivateAttr(
+        default_factory=_empty_hooks,
     )
     _statistics: m.ContextStatistics = PrivateAttr(
         default_factory=lambda: m.ContextStatistics(),
@@ -164,9 +158,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     ),
                 )
         self._metadata = m.Metadata()
-        self._hooks: Mapping[
-            str, Sequence[Callable[[t.Scalar], t.ValueOrModel | None]]
-        ] = {}
+        self._hooks = {}
         self._statistics = m.ContextStatistics()
         self._active = True
         self._suspended = False

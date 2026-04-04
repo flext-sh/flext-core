@@ -16,11 +16,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from flext_core import r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.args import FlextUtilitiesArgs
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core import (
+    FlextModelsBase,
+    FlextUtilitiesArgs,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    r,
+    t,
+)
 
 
 class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):

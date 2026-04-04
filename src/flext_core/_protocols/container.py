@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import Protocol, Self, overload, runtime_checkable
 
@@ -72,7 +72,7 @@ class FlextProtocolsContainer:
         @classmethod
         def model_validate(
             cls,
-            obj: object,
+            obj: t.ModelInput,
         ) -> FlextProtocolsContainer.ContainerCreationOptions:
             """Validate arbitrary input into container creation options."""
             ...
@@ -144,8 +144,8 @@ class FlextProtocolsContainer:
             context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
             services: Mapping[str, t.RegisterableService] | None = None,
-            factories: Mapping[str, Callable[..., t.RegisterableService]] | None = None,
-            resources: Mapping[str, Callable[..., t.RegisterableService]] | None = None,
+            factories: t.FactoryMap | None = None,
+            resources: t.ResourceMap | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...

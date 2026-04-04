@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 from types import TracebackType
 from typing import Annotated, ClassVar, Self, TypeIs, cast, overload, override
 
@@ -188,10 +188,9 @@ class FlextResult[T](BaseModel):
             exception=source.exception,
         )
 
-    @classmethod
+    @staticmethod
     def _validate_model[UModel: BaseModel](
-        cls,
-        data: Mapping[str, t.ValueOrModel] | BaseModel,
+        data: t.ModelInput,
         model: type[UModel],
         *,
         failure_prefix: str,
@@ -207,7 +206,7 @@ class FlextResult[T](BaseModel):
             Exception,
         ) as e:
             return FlextResult[UModel].fail(
-                f"{failure_prefix}: {cls._model_error_message(e)}",
+                f"{failure_prefix}: {FlextResult._model_error_message(e)}",
                 exception=e,
             )
 
@@ -290,10 +289,9 @@ class FlextResult[T](BaseModel):
         result._exception = exception
         return result
 
-    @classmethod
+    @staticmethod
     def from_validation[ModelT: BaseModel](
-        cls: type[FlextResult[ModelT]],
-        data: Mapping[str, t.ValueOrModel] | BaseModel,
+        data: t.ModelInput,
         model: type[ModelT],
     ) -> FlextResult[ModelT]:
         """Create result from Pydantic validation.
@@ -310,7 +308,11 @@ class FlextResult[T](BaseModel):
                 validation errors.
 
         """
-        return cls._validate_model(data, model, failure_prefix="Validation failed")
+        return FlextResult._validate_model(
+            data,
+            model,
+            failure_prefix="Validation failed",
+        )
 
     @classmethod
     def ok(cls, value: T) -> Self:
@@ -389,12 +391,16 @@ class FlextResult[T](BaseModel):
         return str(error)
 
     @staticmethod
-    def is_failure_result(value: object) -> TypeIs[p.Result[t.RecursiveContainer]]:
+    def is_failure_result(
+        value: t.ProtocolSubject,
+    ) -> TypeIs[p.Result[t.RecursiveContainer]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, p.Result) and value.is_failure
 
     @staticmethod
-    def is_success_result(value: object) -> TypeIs[p.Result[t.RecursiveContainer]]:
+    def is_success_result(
+        value: t.ProtocolSubject,
+    ) -> TypeIs[p.Result[t.RecursiveContainer]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, p.Result) and value.is_success
 
@@ -722,7 +728,8 @@ class FlextResult[T](BaseModel):
                 exception=self.exception,
             )
         try:
-            return FlextResult[U].ok(model.model_validate(self.value))
+            validation_input = cast("t.ModelInput", self.value)
+            return FlextResult[U].ok(model.model_validate(validation_input))
         except (
             ValidationError,
             ValueError,

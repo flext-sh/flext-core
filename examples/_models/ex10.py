@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import ClassVar
 
 from pydantic import ConfigDict
 
-from flext_core import FlextModelsDomainEvent, m, r, t
+from flext_core import m, p, r, t
 
 
 class Ex10Message(m.Command):
@@ -80,11 +81,18 @@ class Ex10ServiceStub(m.Value):
 class Ex10CommandBusStub(m.Value):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
 
-    def dispatch(self, message: m.Command) -> r[str]:
-        return r[str].ok(str(message))
+    def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
+        return r[t.RuntimeAtomic].ok(str(message))
 
-    def publish(self, event: FlextModelsDomainEvent.Entry) -> None:
+    def publish(self, event: p.Routable | Sequence[p.Routable]) -> r[bool]:
         del event
+        return r[bool].ok(True)
 
-    def register_handler(self, _handler: m.Value) -> r[bool]:
+    def register_handler(
+        self,
+        _handler: t.HandlerLike,
+        *,
+        is_event: bool = False,
+    ) -> r[bool]:
+        del is_event
         return r[bool].ok(True)

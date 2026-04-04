@@ -20,8 +20,6 @@ from functools import wraps
 from pathlib import Path
 from typing import Literal, NoReturn, Protocol, TypeIs, overload
 
-from pydantic import BaseModel
-
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -47,6 +45,22 @@ class FlextDecorators:
     components. All decorators are designed to integrate seamlessly with
     r, FlextContext, FlextLogger, and FlextContainer.
     """
+
+    @staticmethod
+    def _resolve_logger(
+        first_arg: p.Logger | t.RuntimeAtomic | None = None,
+        *,
+        func: Callable[..., t.RuntimeAtomic | None] | None = None,
+    ) -> p.Logger:
+        """Resolve the logger associated with the decorated call."""
+        if isinstance(first_arg, p.Logger):
+            return first_arg
+        if hasattr(first_arg, "logger"):
+            logger_value = getattr(first_arg, "logger", None)
+            if isinstance(logger_value, p.Logger):
+                return logger_value
+        module_name = func.__module__ if func is not None else __name__
+        return FlextLogger(module_name)
 
     @staticmethod
     def deprecated(message: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
@@ -137,7 +151,15 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger = FlextDecorators._resolve_logger(tuple(args), func)
+                first_arg = args[0] if args else None
+                if isinstance(first_arg, p.Logger):
+                    logger = first_arg
+                elif isinstance(
+                    first_arg, p.Model
+                ) and FlextDecorators._has_flext_logger(first_arg):
+                    logger = first_arg.logger
+                else:
+                    logger = FlextLogger(func.__module__)
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -284,7 +306,15 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(tuple(args), func)
+                first_arg = args[0] if args else None
+                if isinstance(first_arg, p.Logger):
+                    logger = first_arg
+                elif isinstance(
+                    first_arg, p.Model
+                ) and FlextDecorators._has_flext_logger(first_arg):
+                    logger = first_arg.logger
+                else:
+                    logger = FlextLogger(func.__module__)
                 retry_config = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
                     "initial_delay_seconds": delay,
@@ -293,8 +323,24 @@ class FlextDecorators:
                     "retry_on_status_codes": [],
                 })
                 try:
-                    retry_args = FlextDecorators._normalize_retry_args(args)
-                    retry_kwargs = FlextDecorators._normalize_retry_kwargs(kwargs)
+                    retry_args: tuple[t.ValueOrModel, ...] = tuple(
+                        str(a.model_dump())
+                        if isinstance(a, p.Model)
+                        else u.normalize_to_container(a)
+                        if isinstance(a, (str, int, float, bool, datetime, Path))
+                        else str(a)
+                        if a is not None
+                        else ""
+                        for a in args
+                    )
+                    retry_kwargs: MutableMapping[str, t.ValueOrModel] = {}
+                    for key, value in kwargs.items():
+                        if isinstance(value, p.Model):
+                            retry_kwargs[str(key)] = str(value.model_dump())
+                        elif isinstance(value, (str, int, float, bool, datetime, Path)):
+                            retry_kwargs[str(key)] = u.normalize_to_container(value)
+                        elif value is not None:
+                            retry_kwargs[str(key)] = str(value)
                     retry_result = FlextDecorators._execute_retry_loop(
                         func,
                         retry_args,
@@ -335,7 +381,7 @@ class FlextDecorators:
 
         logger: p.Logger
 
-    type _LoggerCarrier = _HasLogger | FlextLogger | t.Container | BaseModel
+    type _LoggerCarrier = _HasLogger | FlextLogger | t.RuntimeAtomic | p.Model
 
     @staticmethod
     def _bind_operation_context(
@@ -619,33 +665,6 @@ class FlextDecorators:
         return kw
 
     @staticmethod
-    def _normalize_retry_args(
-        args: tuple[object, ...],
-    ) -> tuple[t.ValueOrModel, ...]:
-        """Normalize positional args for retry loop consumption."""
-        return tuple(
-            u.normalize_to_container(a)
-            if isinstance(a, (str, int, float, bool, datetime, Path, BaseModel))
-            else str(a)
-            if a is not None
-            else ""
-            for a in args
-        )
-
-    @staticmethod
-    def _normalize_retry_kwargs(
-        kwargs: Mapping[str, object],
-    ) -> MutableMapping[str, t.ValueOrModel]:
-        """Normalize keyword args for retry loop consumption."""
-        result: MutableMapping[str, t.ValueOrModel] = {}
-        for key, value in kwargs.items():
-            if isinstance(value, (str, int, float, bool, datetime, Path, BaseModel)):
-                result[str(key)] = u.normalize_to_container(value)
-            elif value is not None:
-                result[str(key)] = str(value)
-        return result
-
-    @staticmethod
     def _raise_timeout(
         func_name: str,
         max_duration: float,
@@ -683,25 +702,6 @@ class FlextDecorators:
         if isinstance(candidate, p.Logger):
             return candidate
         return None
-
-    @staticmethod
-    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> p.Logger:
-        """Resolve logger from first argument or create module logger.
-
-        Returns:
-            p.Logger instance (protocol-typed for flexibility)
-
-        """
-        first_arg = args[0] if args else None
-        if isinstance(first_arg, p.Logger):
-            return first_arg
-        if (
-            isinstance(first_arg, BaseModel)
-            and u.is_pydantic_model(first_arg)
-            and FlextDecorators._has_flext_logger(first_arg)
-        ):
-            return first_arg.logger
-        return FlextLogger(func.__module__)
 
     @overload
     @staticmethod
@@ -901,7 +901,15 @@ class FlextDecorators:
                 op_name: str = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger = FlextDecorators._resolve_logger(tuple(args), func)
+                first_arg = args[0] if args else None
+                if isinstance(first_arg, p.Logger):
+                    logger = first_arg
+                elif isinstance(
+                    first_arg, p.Model
+                ) and FlextDecorators._has_flext_logger(first_arg):
+                    logger = first_arg.logger
+                else:
+                    logger = FlextLogger(func.__module__)
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -950,7 +958,15 @@ class FlextDecorators:
 
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(tuple(args), func)
+                first_arg = args[0] if args else None
+                if isinstance(first_arg, p.Logger):
+                    logger = first_arg
+                elif isinstance(
+                    first_arg, p.Model
+                ) and FlextDecorators._has_flext_logger(first_arg):
+                    logger = first_arg.logger
+                else:
+                    logger = FlextLogger(func.__module__)
                 try:
                     if context_vars:
                         filtered_vars: t.FlatContainerMapping = {
