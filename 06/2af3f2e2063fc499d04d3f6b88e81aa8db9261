@@ -1,0 +1,33 @@
+src/flext_core/utilities.py
+  f05ae18fcd8f171f 44-45
+src/flext_core/_utilities/beartype_engine.py
+  f05ae18fcd8f171f 34-39
+tests/unit/test_beartype_engine.py
+  f05ae18fcd8f171f 1-11,15-16,18-21,23-60,62-68,70-126,128-130,132-134,136-142,144-155,157-163,165-167,169-171,173-259
+src/flext_core/_utilities/enforcement.py
+  f05ae18fcd8f171f 56,61-62,70,78,81-83,157,214,216,219,221,571,573,576-577
+src/flext_core/lazy.py
+  f05ae18fcd8f171f 249
+src/flext_core/_utilities/beartype_conf.py
+  f05ae18fcd8f171f 1-13,15-34,37,39-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "062af3f2e2063fc499d04d3f6b88e81aa8db9261",
+  "prompts": {
+    "f05ae18fcd8f171f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b1bbb82-6621-405d-a638-e11b8325fb7a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 419,
+      "total_deletions": 104,
+      "accepted_lines": 315,
+      "overriden_lines": 24
+    }
+  }
+}
