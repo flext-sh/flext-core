@@ -1,0 +1,35 @@
+tests/integration/test_refactor_nesting_file.py
+  f05ae18fcd8f171f 36,41-43,47-48,50-52,58,63-66
+src/flext_core/context.py
+  f05ae18fcd8f171f 32
+src/flext_core/mixins.py
+  f05ae18fcd8f171f 45
+tests/unit/test_enforcement.py
+  f05ae18fcd8f171f 1-76,78-192
+tests/unit/test_refactor_policy_family_rules.py
+  f05ae18fcd8f171f 16,25-27,38,49,60,71
+src/flext_core/_models/generic.py
+  f05ae18fcd8f171f 28
+tests/integration/patterns/test_architectural_patterns.py
+  f05ae18fcd8f171f 11-12,15,20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "90178e36848f68dfdbd91af54868801696a82f9c",
+  "prompts": {
+    "f05ae18fcd8f171f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b1bbb82-6621-405d-a638-e11b8325fb7a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 324,
+      "total_deletions": 143,
+      "accepted_lines": 222,
+      "overriden_lines": 1
+    }
+  }
+}
