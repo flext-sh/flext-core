@@ -32,6 +32,7 @@ from flext_core import (
     FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
 )
+from flext_core._models.namespace import FlextModelsNamespace
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
@@ -57,6 +58,7 @@ class FlextUtilities(
     FlextUtilitiesReliability,
     FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
+    FlextModelsNamespace,
 ):
     """Unified facade for all FLEXT utility functionality.
 
@@ -65,11 +67,6 @@ class FlextUtilities(
     u.warn_once, etc. No subdivided namespaces (no u.* at call sites).
     Subprojects use their project u. Aliases/namespaces: MRO registration protocol only.
     """
-
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Enforce utilities governance on subclasses."""
-        super().__init_subclass__(**kwargs)
-        FlextUtilitiesEnforcement.run_utilities(cls)
 
 
 u = FlextUtilities

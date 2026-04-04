@@ -31,6 +31,7 @@ from flext_core import (
     FlextModelsRegistry,
     FlextModelsService,
 )
+from flext_core._models.namespace import FlextModelsNamespace
 
 
 class FlextModels(
@@ -51,6 +52,7 @@ class FlextModels(
     FlextModelsService,
     FlextModelsConfig,
     FlextModelsExceptionParams,
+    FlextModelsNamespace,
 ):
     """Facade that groups DDD building blocks for CQRS-ready domains.
 

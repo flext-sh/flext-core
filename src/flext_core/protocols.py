@@ -17,7 +17,7 @@ from flext_core import (
     FlextProtocolsResult,
     FlextProtocolsService,
 )
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core._models.namespace import FlextModelsNamespace
 
 
 class FlextProtocols(
@@ -30,13 +30,9 @@ class FlextProtocols(
     FlextProtocolsHandler,
     FlextProtocolsLogging,
     FlextProtocolsRegistry,
+    FlextModelsNamespace,
 ):
     """Runtime-checkable structural typing protocols for FLEXT framework."""
-
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Enforce protocols governance on subclasses."""
-        super().__init_subclass__(**kwargs)
-        FlextUtilitiesEnforcement.run_protocols(cls)
 
 
 p = FlextProtocols

@@ -458,32 +458,87 @@ class FlextUtilitiesEnforcement:
                 "best practices",
             )
 
-        FlextUtilitiesEnforcement._run_namespace_checks(target, "constants")
+        FlextUtilitiesEnforcement.run_namespace_checks(target, "constants")
 
     # ------------------------------------------------------------------ #
     # Protocols layer enforcement                                         #
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def check_protocols_inner_classes(_target: type) -> Sequence[str]:
-        """Namespace-holder inner classes are allowed on protocol facades."""
-        return []
+    def _is_protocol_class(target: type) -> bool:
+        """Return True when target is a Protocol subclass."""
+        return issubclass(target, Protocol)
+
+    @staticmethod
+    def _iter_protocol_inner_types(target: type) -> Sequence[tuple[str, type]]:
+        """Return public inner classes defined directly on target."""
+        return [
+            (name, value)
+            for name, value in vars(target).items()
+            if isinstance(value, type) and not name.startswith("_")
+        ]
+
+    @staticmethod
+    def _is_protocol_namespace_holder(target: type) -> bool:
+        """Return True when target is a container for nested protocol classes."""
+        return any(
+            isinstance(value, type) and not name.startswith("__")
+            for name, value in vars(target).items()
+        )
+
+    @staticmethod
+    def _check_protocol_inner_classes(target: type, *, path: str) -> Sequence[str]:
+        """Validate nested protocol classes recursively."""
+        errors: MutableSequence[str] = []
+        for name, value in FlextUtilitiesEnforcement._iter_protocol_inner_types(target):
+            nested_path = f"{path}.{name}"
+            if FlextUtilitiesEnforcement._is_protocol_class(value):
+                errors.extend(
+                    FlextUtilitiesEnforcement._check_protocol_inner_classes(
+                        value,
+                        path=nested_path,
+                    ),
+                )
+                continue
+            if FlextUtilitiesEnforcement._is_protocol_namespace_holder(value):
+                errors.extend(
+                    FlextUtilitiesEnforcement._check_protocol_inner_classes(
+                        value,
+                        path=nested_path,
+                    ),
+                )
+                continue
+            errors.append(
+                f"{nested_path}: inner class must be a Protocol subclass or a namespace holder.",
+            )
+        return errors
+
+    @staticmethod
+    def check_protocols_inner_classes(target: type) -> Sequence[str]:
+        """Allow namespace-holder classes while validating nested protocols."""
+        return FlextUtilitiesEnforcement._check_protocol_inner_classes(
+            target,
+            path=target.__qualname__,
+        )
 
     @staticmethod
     def check_protocols_runtime_checkable(target: type) -> Sequence[str]:
         """Protocol inner classes must be @runtime_checkable."""
         errors: MutableSequence[str] = []
-        own_dict = vars(target)
-        for name, value in own_dict.items():
-            if not isinstance(value, type):
+        for name, value in FlextUtilitiesEnforcement._iter_protocol_inner_types(target):
+            nested_path = f"{target.__qualname__}.{name}"
+            if FlextUtilitiesEnforcement._is_protocol_class(value):
+                if not getattr(value, "_is_runtime_protocol", False):
+                    errors.append(
+                        f"{nested_path}: Protocol must be @runtime_checkable.",
+                    )
+                errors.extend(
+                    FlextUtilitiesEnforcement.check_protocols_runtime_checkable(value),
+                )
                 continue
-            if name.startswith("_"):
-                continue
-            if not issubclass(value, Protocol):
-                continue
-            if not getattr(value, "_is_runtime_protocol", False):
-                errors.append(
-                    f"{target.__qualname__}.{name}: Protocol must be @runtime_checkable.",
+            if FlextUtilitiesEnforcement._is_protocol_namespace_holder(value):
+                errors.extend(
+                    FlextUtilitiesEnforcement.check_protocols_runtime_checkable(value),
                 )
         return errors
 
@@ -515,7 +570,7 @@ class FlextUtilitiesEnforcement:
                 "best practices",
             )
 
-        FlextUtilitiesEnforcement._run_namespace_checks(target, "protocols")
+        FlextUtilitiesEnforcement.run_namespace_checks(target, "protocols")
 
     # ------------------------------------------------------------------ #
     # Types layer enforcement                                             #
@@ -597,6 +652,8 @@ class FlextUtilitiesEnforcement:
                 "best practices",
             )
 
+        FlextUtilitiesEnforcement.run_namespace_checks(target, "types")
+
     # ------------------------------------------------------------------ #
     # Utilities layer enforcement                                         #
     # ------------------------------------------------------------------ #
@@ -647,7 +704,7 @@ class FlextUtilitiesEnforcement:
                 "best practices",
             )
 
-        FlextUtilitiesEnforcement._run_namespace_checks(target, "utilities")
+        FlextUtilitiesEnforcement.run_namespace_checks(target, "utilities")
 
     # ------------------------------------------------------------------ #
     # MRO Namespace enforcement                                           #
@@ -701,7 +758,7 @@ class FlextUtilitiesEnforcement:
         return FlextUtilitiesEnforcement._to_pascal_case(package)
 
     @staticmethod
-    def _detect_layer(target: type) -> str | None:
+    def detect_layer(target: type) -> str | None:
         """Detect layer from class name suffix."""
         name = target.__name__
         for suffix, layer in _ec.ENFORCEMENT_NAMESPACE_LAYER_MAP:
@@ -777,43 +834,76 @@ class FlextUtilitiesEnforcement:
         return errors
 
     @staticmethod
-    def check_cross_layer_strenum(target: type, layer: str) -> Sequence[str]:
-        """Detect StrEnum/IntEnum in wrong layer — should be in constants."""
-        if layer in _ec.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS:
-            return []
+    def _scan_cross_layer_recursive(
+        target: type,
+        layer: str,
+        path: str = "",
+    ) -> Sequence[str]:
+        """Recursively scan inner classes for StrEnum/Protocol in wrong layers."""
         errors: MutableSequence[str] = []
+        check_strenum = layer not in _ec.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS
+        check_protocol = layer not in _ec.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS
+
         for name, value in vars(target).items():
             if not isinstance(value, type):
                 continue
             if name.startswith("_"):
                 continue
+            full = f"{path}.{name}" if path else name
+
             if isinstance(value, EnumType):
+                if check_strenum:
+                    errors.append(
+                        f'StrEnum "{full}" must be in constants (c.*), not {layer}.',
+                    )
+                continue
+
+            if check_protocol and issubclass(value, Protocol):
                 errors.append(
-                    f'StrEnum "{name}" must be in constants (c.*), not {layer}.',
+                    f'Protocol "{full}" must be in protocols (p.*), not {layer}.',
                 )
+                continue
+
+            # Recurse into inner namespace classes
+            errors.extend(
+                FlextUtilitiesEnforcement._scan_cross_layer_recursive(
+                    value,
+                    layer,
+                    full,
+                ),
+            )
         return errors
+
+    @staticmethod
+    def check_cross_layer_strenum(target: type, layer: str) -> Sequence[str]:
+        """Detect StrEnum/IntEnum in wrong layer — recursive scan."""
+        if layer in _ec.ENFORCEMENT_NAMESPACE_STRENUM_ALLOWED_LAYERS:
+            return []
+        return [
+            e
+            for e in FlextUtilitiesEnforcement._scan_cross_layer_recursive(
+                target,
+                layer,
+            )
+            if "StrEnum" in e
+        ]
 
     @staticmethod
     def check_cross_layer_protocol(target: type, layer: str) -> Sequence[str]:
-        """Detect Protocol in wrong layer — should be in protocols."""
+        """Detect Protocol in wrong layer — recursive scan."""
         if layer in _ec.ENFORCEMENT_NAMESPACE_PROTOCOL_ALLOWED_LAYERS:
             return []
-        errors: MutableSequence[str] = []
-        for name, value in vars(target).items():
-            if not isinstance(value, type):
-                continue
-            if name.startswith("_"):
-                continue
-            if isinstance(value, EnumType):
-                continue
-            if issubclass(value, Protocol):
-                errors.append(
-                    f'Protocol "{name}" must be in protocols (p.*), not {layer}.',
-                )
-        return errors
+        return [
+            e
+            for e in FlextUtilitiesEnforcement._scan_cross_layer_recursive(
+                target,
+                layer,
+            )
+            if "Protocol" in e
+        ]
 
     @staticmethod
-    def _run_namespace_checks(target: type, layer: str) -> None:
+    def run_namespace_checks(target: type, layer: str) -> None:
         """Run all namespace checks for a given layer."""
         if _ec.ENFORCEMENT_NAMESPACE_MODE == "off":
             return

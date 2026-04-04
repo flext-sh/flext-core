@@ -32,6 +32,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
+  "beartype>=0.22.9",
   "cachetools>=5.3",
   "dependency-injector>=4.41",
   "docker>=7.1,<8",

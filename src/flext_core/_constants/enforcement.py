@@ -146,6 +146,7 @@ class FlextConstantsEnforcement:
         "FlextUtilities",
         "FlextModels",
         "FlextModelsBase",
+        "FlextModelsNamespace",
         "EnforcedModel",
     })
     """Root facade class names — skip namespace prefix check on these."""

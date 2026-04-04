@@ -19,6 +19,7 @@ from pydantic import Field
 
 from flext_core import (
     FlextConstants,
+    FlextModels,
     FlextProtocols,
     FlextTypes,
     FlextUtilities,
@@ -28,6 +29,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core._models.namespace import FlextModelsNamespace
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 
 
@@ -334,9 +336,9 @@ class TestConstantsEnforcement:
         assert len(errors) == 1
         assert "Inner" in errors[0]
 
-    def test_facade_has_init_subclass(self) -> None:
-        """FlextConstants facade has __init_subclass__ hook."""
-        assert "__init_subclass__" in vars(FlextConstants)
+    def test_facade_has_enforced_namespace(self) -> None:
+        """FlextConstants facade inherits FlextModelsNamespace."""
+        assert issubclass(FlextConstants, FlextModelsNamespace)
 
     def test_enforcement_constants_accessible(self) -> None:
         """New enforcement constants accessible via c.*."""
@@ -396,9 +398,9 @@ class TestProtocolsEnforcement:
         errors = FlextUtilitiesEnforcement.check_protocols_runtime_checkable(_P)
         assert len(errors) == 0
 
-    def test_facade_has_init_subclass(self) -> None:
-        """FlextProtocols facade has __init_subclass__ hook."""
-        assert "__init_subclass__" in vars(FlextProtocols)
+    def test_facade_has_enforced_namespace(self) -> None:
+        """FlextProtocols facade inherits FlextModelsNamespace."""
+        assert issubclass(FlextProtocols, FlextModelsNamespace)
 
 
 # ------------------------------------------------------------------ #
@@ -428,9 +430,9 @@ class TestTypesEnforcement:
         errors = FlextUtilitiesEnforcement.check_types_no_any_in_aliases(_T)
         assert len(errors) == 0
 
-    def test_facade_has_init_subclass(self) -> None:
-        """FlextTypes facade has __init_subclass__ hook."""
-        assert "__init_subclass__" in vars(FlextTypes)
+    def test_facade_has_enforced_namespace(self) -> None:
+        """FlextTypes facade inherits FlextModelsNamespace."""
+        assert issubclass(FlextTypes, FlextModelsNamespace)
 
 
 # ------------------------------------------------------------------ #
@@ -474,9 +476,9 @@ class TestUtilitiesEnforcement:
         errors = FlextUtilitiesEnforcement.check_utilities_method_types(_U)
         assert len(errors) == 0
 
-    def test_facade_has_init_subclass(self) -> None:
-        """FlextUtilities facade has __init_subclass__ hook."""
-        assert "__init_subclass__" in vars(FlextUtilities)
+    def test_facade_has_enforced_namespace(self) -> None:
+        """FlextUtilities facade inherits FlextModelsNamespace."""
+        assert issubclass(FlextUtilities, FlextModelsNamespace)
 
 
 # ------------------------------------------------------------------ #
@@ -487,11 +489,17 @@ class TestUtilitiesEnforcement:
 class TestAllLayerIntegration:
     """Verify all facades fire enforcement on subclasses."""
 
-    def test_all_facades_have_hooks(self) -> None:
-        """All 4 facade classes have __init_subclass__."""
-        for facade in (FlextConstants, FlextProtocols, FlextTypes, FlextUtilities):
-            assert "__init_subclass__" in vars(facade), (
-                f"{facade.__name__} missing __init_subclass__"
+    def test_all_facades_inherit_enforced_namespace(self) -> None:
+        """All 5 facade classes inherit FlextModelsNamespace."""
+        for facade in (
+            FlextConstants,
+            FlextProtocols,
+            FlextTypes,
+            FlextUtilities,
+            FlextModels,
+        ):
+            assert issubclass(facade, FlextModelsNamespace), (
+                f"{facade.__name__} missing FlextModelsNamespace in MRO"
             )
 
     def test_downstream_projects_load_cleanly(self) -> None:
