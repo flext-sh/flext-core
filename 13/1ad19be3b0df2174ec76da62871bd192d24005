@@ -1,0 +1,47 @@
+src/flext_core/_constants/enforcement.py
+  f05ae18fcd8f171f 18
+src/flext_core/_utilities/model.py
+  f05ae18fcd8f171f 13,21-40
+src/flext_core/_models/exception_params.py
+  f05ae18fcd8f171f 47-53
+src/flext_core/_models/container.py
+  f05ae18fcd8f171f 367,386,388,393
+src/flext_core/_models/settings.py
+  f05ae18fcd8f171f 122-128,167-173,214-227,280-286,369-375,1043-1046
+src/flext_core/_models/domain_event.py
+  f05ae18fcd8f171f 15,160-169
+src/flext_core/_utilities/reliability.py
+  f05ae18fcd8f171f 17-18,31-45
+src/flext_core/utilities.py
+  f05ae18fcd8f171f 35,49
+src/flext_core/_models/dispatcher.py
+  f05ae18fcd8f171f 106-154,377-390
+src/flext_core/_models/service.py
+  f05ae18fcd8f171f 38-51,72-78,95-101,126-139,148-161,183-189,201-204,217-230,249-252,257-263,281-287,299-305,316-322,341-354,380-386,412-425,434-440,456-532
+src/flext_core/_models/_context/_data.py
+  f05ae18fcd8f171f 106
+src/flext_core/_utilities/parser.py
+  f05ae18fcd8f171f 18,26-45
+src/flext_core/_models/cqrs.py
+  f05ae18fcd8f171f 64-70,150-155,164-170,484-499
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "131ad19be3b0df2174ec76da62871bd192d24005",
+  "prompts": {
+    "f05ae18fcd8f171f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8b1bbb82-6621-405d-a638-e11b8325fb7a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 457,
+      "total_deletions": 156,
+      "accepted_lines": 462,
+      "overriden_lines": 2
+    }
+  }
+}
