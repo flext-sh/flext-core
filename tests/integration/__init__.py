@@ -10,8 +10,8 @@ import typing as _t
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
-
     import tests.integration.patterns as _tests_integration_patterns
+
     patterns = _tests_integration_patterns
     import tests.integration.test_architecture as _tests_integration_test_architecture
     from tests.integration.patterns import (
@@ -30,46 +30,60 @@ if _t.TYPE_CHECKING:
         test_patterns_logging,
         test_patterns_testing,
     )
+
     test_architecture = _tests_integration_test_architecture
     import tests.integration.test_config_integration as _tests_integration_test_config_integration
     from tests.integration.test_architecture import TestAutomatedArchitecture
+
     test_config_integration = _tests_integration_test_config_integration
     import tests.integration.test_infra_integration as _tests_integration_test_infra_integration
     from tests.integration.test_config_integration import (
         TestFlextSettingsSingletonIntegration,
     )
+
     test_infra_integration = _tests_integration_test_infra_integration
     import tests.integration.test_integration as _tests_integration_test_integration
     from tests.integration.test_infra_integration import TestInfraIntegration
+
     test_integration = _tests_integration_test_integration
     import tests.integration.test_migration_validation as _tests_integration_test_migration_validation
     from tests.integration.test_integration import TestLibraryIntegration
+
     test_migration_validation = _tests_integration_test_migration_validation
     import tests.integration.test_refactor_nesting_file as _tests_integration_test_refactor_nesting_file
     from tests.integration.test_migration_validation import TestMigrationValidation
+
     test_refactor_nesting_file = _tests_integration_test_refactor_nesting_file
     import tests.integration.test_refactor_nesting_idempotency as _tests_integration_test_refactor_nesting_idempotency
     from tests.integration.test_refactor_nesting_file import (
         pytestmark,
         test_class_nesting_refactor_single_file_end_to_end,
     )
-    test_refactor_nesting_idempotency = _tests_integration_test_refactor_nesting_idempotency
+
+    test_refactor_nesting_idempotency = (
+        _tests_integration_test_refactor_nesting_idempotency
+    )
     import tests.integration.test_refactor_nesting_project as _tests_integration_test_refactor_nesting_project
     from tests.integration.test_refactor_nesting_idempotency import TestIdempotency
+
     test_refactor_nesting_project = _tests_integration_test_refactor_nesting_project
     import tests.integration.test_refactor_nesting_workspace as _tests_integration_test_refactor_nesting_workspace
     from tests.integration.test_refactor_nesting_project import TestProjectLevelRefactor
+
     test_refactor_nesting_workspace = _tests_integration_test_refactor_nesting_workspace
     import tests.integration.test_refactor_policy_mro as _tests_integration_test_refactor_policy_mro
     from tests.integration.test_refactor_nesting_workspace import (
         TestWorkspaceLevelRefactor,
     )
+
     test_refactor_policy_mro = _tests_integration_test_refactor_policy_mro
     import tests.integration.test_service as _tests_integration_test_service
     from tests.integration.test_refactor_policy_mro import TestRefactorPolicyMRO
+
     test_service = _tests_integration_test_service
     import tests.integration.test_system as _tests_integration_test_system
     from tests.integration.test_service import TestService
+
     test_system = _tests_integration_test_system
     from flext_core.constants import FlextConstants as c
     from flext_core.decorators import FlextDecorators as d
@@ -84,9 +98,7 @@ if _t.TYPE_CHECKING:
     from flext_core.utilities import FlextUtilities as u
     from tests.integration.test_system import TestCompleteFlextSystemIntegration
 _LAZY_IMPORTS = merge_lazy_imports(
-    (
-        "tests.integration.patterns",
-    ),
+    ("tests.integration.patterns",),
     {
         "TestAutomatedArchitecture": "tests.integration.test_architecture",
         "TestCompleteFlextSystemIntegration": "tests.integration.test_system",
