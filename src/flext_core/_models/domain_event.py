@@ -34,7 +34,7 @@ class FlextModelsDomainEvent:
             if isinstance(other, dict):
                 return self.root == other
             if isinstance(other, Mapping):
-                other_mapping = FlextModelsDomainEvent.ComparableConfigMap(
+                other_mapping = type(self)(
                     root=dict(
                         FlextUtilitiesDomain.normalize_domain_event_data(
                             typing.cast("Mapping[str, t.ValueOrModel]", other)
@@ -68,7 +68,7 @@ class FlextModelsDomainEvent:
             ),
         ]
         data: Annotated[
-            FlextModelsDomainEvent.ComparableConfigMap,
+            t.ConfigMap,
             BeforeValidator(FlextUtilitiesDomain.normalize_domain_event_data),
         ] = Field(
             validate_default=True,

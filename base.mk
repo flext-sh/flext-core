@@ -179,12 +179,18 @@ _preflight: ## Preflight: sync base.mk and enforce venv contract
 	$(Q)$(AUTO_SYNC_BASE_AND_SCRIPTS)
 	$(Q)$(ENFORCE_WORKSPACE_VENV)
 
-PROJECT_INFRA_ROOT := $(POETRY) run python -m flext_infra
-PROJECT_INFRA_CHECK := env -u PYTHONPATH -u MYPYPATH FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) check
-PROJECT_INFRA_DEPS := $(PROJECT_INFRA_ROOT) deps
-PROJECT_INFRA_DOCS := env -u PYTHONPATH -u MYPYPATH $(VENV_PYTHON) -m flext_infra docs
-PROJECT_INFRA_GITHUB := env -u PYTHONPATH -u MYPYPATH $(VENV_PYTHON) -m flext_infra github
-PROJECT_INFRA_VALIDATE := $(VENV_PYTHON) -m flext_infra validate
+PROJECT_INFRA_HOME := $(WORKSPACE_ROOT)/flext-infra
+ifeq ($(wildcard $(PROJECT_INFRA_HOME)/src/flext_infra),)
+PROJECT_INFRA_HOME := $(PROJECT_ROOT)
+endif
+PROJECT_INFRA_SRC := $(PROJECT_INFRA_HOME)/src
+PROJECT_INFRA_BOOT := env -u MYPYPATH PYTHONPATH="$(PROJECT_INFRA_SRC)" $(POETRY) run python -m flext_infra
+PROJECT_INFRA_ROOT := env -u MYPYPATH PYTHONPATH="$(PROJECT_INFRA_SRC)" $(VENV_PYTHON) -m flext_infra
+PROJECT_INFRA_CHECK := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) check
+PROJECT_INFRA_DEPS := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_BOOT) deps
+PROJECT_INFRA_DOCS := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) docs
+PROJECT_INFRA_GITHUB := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) github
+PROJECT_INFRA_VALIDATE := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) validate
 
 help: ## Show commands
 	$(Q)echo "================================================"
@@ -368,7 +374,7 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 			if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 				project_key="."; \
 			fi; \
-			$(PROJECT_INFRA_CHECK) run --gates "$$python_gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",) || exit $$?; \
+			$(PROJECT_INFRA_CHECK) run --gates "$$python_gates" --reports-dir "$(CURDIR)/.reports/check" --projects "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",) || exit $$?; \
 		fi; \
 		exit 0; \
 	fi
@@ -423,7 +429,7 @@ check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,
 	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
-	$(PROJECT_INFRA_CHECK) run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",); \
+	$(PROJECT_INFRA_CHECK) run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --projects "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",); \
 	exit $$?
 
 scan: ## Run all security checks
@@ -439,7 +445,7 @@ scan: ## Run all security checks
 		--workspace "$(WORKSPACE_ROOT)" \
 		--gates "security" \
 		--reports-dir "$(CURDIR)/.reports/scan" \
-		--project "$$project_key"; \
+		--projects "$$project_key"; \
 	exit $$?
 
 fmt: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)

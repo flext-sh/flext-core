@@ -85,7 +85,6 @@ class TestFlextTypes:
         "GeneralValueType",
         "OptionalContainerValue",
         "ConstantValue",
-        "JsonValue",
         "FileContent",
         "JsonMapping",
         "JsonList",

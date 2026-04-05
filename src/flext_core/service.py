@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 from pydantic import (
     ConfigDict,
@@ -159,29 +159,25 @@ class FlextService[
     @property
     def result(self) -> TDomainResult:
         """Get the execution result, raising exception on failure."""
-        execution_result = FlextService._get_execution_result(self)
-        if execution_result.is_success:
-            result_value = execution_result.value
-            if result_value is None:
-                error_msg = "Service execution returned None value"
-                raise e.BaseError(error_msg)
-            # Pyright widens generic computed_field returns to the bound in
-            # whole-project mode; the cached result contract is already
-            # parameterized as p.Result[TDomainResult] at this boundary.
-            return result_value
-        raise e.BaseError(execution_result.error or "Service execution failed")
+        return self._unwrap_execution_result(self._get_execution_result())
 
     @staticmethod
-    def _get_execution_result[
+    def _unwrap_execution_result[
         TResult: t.ValueOrModel | Sequence[t.ValueOrModel],
     ](
-        service: FlextService[TResult],
-    ) -> p.Result[TResult]:
+        execution_result: p.Result[TResult],
+    ) -> TResult:
+        """Unwrap one successful execution result with the original generic type."""
+        if execution_result.is_failure:
+            raise e.BaseError(execution_result.error or "Service execution failed")
+        return execution_result.unwrap()
+
+    def _get_execution_result(self) -> p.Result[TDomainResult]:
         """Return cached execution result or execute the service once."""
-        execution_result = service._execution_result
+        execution_result = self._execution_result
         if execution_result is None:
-            execution_result = service.execute()
-            service._execution_result = execution_result
+            execution_result = self.execute()
+            self._execution_result = execution_result
         return execution_result
 
     @property
@@ -219,23 +215,21 @@ class FlextService[
     def _create_initial_runtime(self) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
         bootstrap_opts = self._runtime_bootstrap_options()
-        config_type = self._get_service_config_type()
+        config_type_val: type[FlextSettings] = self._get_service_config_type()
         config_type_raw = self.config_type or (
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
-        config_type_val: type[FlextSettings | p.Settings | BaseSettings]
-        try:
-            is_settings = config_type_raw is not None and issubclass(
-                config_type_raw,
-                FlextSettings,
-            )
-        except TypeError:
-            is_settings = False
-
-        if is_settings and config_type_raw is not None:
-            config_type_val = cast("type[FlextSettings]", config_type_raw)
-        else:
-            config_type_val = config_type
+        config_type_override: type[BaseSettings] | None = (
+            config_type_raw
+            if isinstance(config_type_raw, type)
+            and issubclass(config_type_raw, BaseSettings)
+            else None
+        )
+        if config_type_override is not None and issubclass(
+            config_type_override,
+            FlextSettings,
+        ):
+            config_type_val = config_type_override
         ctx_raw = self.initial_context or (
             bootstrap_opts.context if bootstrap_opts is not None else None
         )
@@ -272,13 +266,7 @@ class FlextService[
         wire_classes = self.wire_classes or (
             bootstrap_opts.wire_classes if bootstrap_opts is not None else None
         )
-        try:
-            is_flext_settings = issubclass(config_type_val, FlextSettings)
-        except TypeError:
-            is_flext_settings = False
-        config_type_for_options: (
-            type[FlextSettings | p.Settings | BaseSettings] | None
-        ) = config_type_val if is_flext_settings else None
+        config_type_for_options: type[BaseSettings] | None = config_type_val
         config_overrides_scalar: t.ScalarMapping | None = None
         if config_overrides is not None:
             normalized_overrides: t.ScalarMapping = {
@@ -406,14 +394,14 @@ class FlextService[
         )
 
     @classmethod
-    def _get_service_config_type(cls) -> type[p.Settings]:
+    def _get_service_config_type(cls) -> type[FlextSettings]:
         """Get the config type for this service class.
 
         Services can override this method to specify their specific config type.
         Defaults to FlextSettings for generic services.
 
         Returns:
-            type[p.Settings]: The config class to use for this service
+            type[FlextSettings]: The config class to use for this service
 
         """
         return FlextSettings
