@@ -1,46 +1,24 @@
-# FLEXT-Core Documentation Index
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-<!-- TOC START -->
-- [Quick Navigation](#quick-navigation)
-- [Repository Structure (docs)](#repository-structure-docs)
-- [Notes on Accuracy and Duplication](#notes-on-accuracy-and-duplication)
-<!-- TOC END -->
+# flext-core Documentation
 
-**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+- Version: `0.12.0-dev`
+- Project class: `platform`
+- Package: `flext_core`
+- Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 
-Concise navigation for FLEXT-Core reference materials. All documents follow the repository documentation standards and PEP 8/257 guidance.
+This project portal is generated from `pyproject.toml`, package exports, and real docstrings.
 
-## Quick Navigation
+## Start Here
 
-- **Onboarding:** `quick-start.md`
-- **Architecture overview:** `architecture/overview.md`
-- **CQRS architecture:** `architecture/cqrs.md`
-- **Clean architecture details:** `architecture/clean-architecture.md`
-- **API reference by layer:** `api-reference/` (foundation, domain, application, infrastructure)
-- **Guides:** `guides/` covering railway-oriented programming, DI, DDD, configuration, error handling, testing, and troubleshooting
-- **Service patterns:** `guides/service-patterns.md`
-- **Standards:** `standards/` for development, documentation, and templates
-- **Contributing:** `development/contributing.md`
+- [Guides](guides/README.md)
+- [API Reference](api-reference/README.md)
+- [Generated API Overview](api-reference/generated/overview.md)
+- [Generated Module Index](api-reference/generated/modules/index.md)
 
-## Repository Structure (docs)
+## Public Surface Summary
 
-```
-docs/
-├── INDEX.md              # This file
-├── quick-start.md        # Five-minute introduction
-├── api-reference/        # Layered API reference
-├── architecture/         # System and pattern descriptions
-├── development/          # Contribution workflow
-├── guides/               # How-to guides and patterns
-├── improvements/         # Audit and quality reports
-└── standards/            # Coding and documentation standards
-```
-
-## Notes on Accuracy and Duplication
-
-- Prefer linking to authoritative guides instead of repeating the same content across files.
-- Align terminology with the dispatcher-centric CQRS architecture: `FlextDispatcher`, handler registry, middleware, and domain-event publishing.
-- Update dates and version references only when `pyproject.toml` changes to avoid drift.
-
-```
-```
+- Primary facades: `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions` (+13 more)
+- Alias namespaces: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
+- Public symbol exports: `20`
+- Exported module shortcuts: `constants`, `container`, `context`, `decorators`, `dispatcher`, `exceptions` (+13 more)
