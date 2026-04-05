@@ -14,16 +14,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, MutableMapping
-from typing import Annotated, ClassVar, Self
+from collections.abc import Callable, Mapping, MutableMapping
+from typing import Annotated, ClassVar, Self, override
 
 from pydantic import (
     Field,
     PrivateAttr,
     computed_field,
+    field_validator,
     model_validator,
 )
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    EnvSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 import flext_core
 from flext_core import (
@@ -54,6 +60,7 @@ class FlextSettings(BaseSettings):
 
     _instances: ClassVar[MutableMapping[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
+    _singleton_enabled: ClassVar[bool] = True
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix=c.ENV_PREFIX,
@@ -65,7 +72,42 @@ class FlextSettings(BaseSettings):
         validate_assignment=True,
     )
 
-    app_name: Annotated[str, Field(default="flext", description="Application name")]
+    @classmethod
+    @override
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Auto-discover parent env prefixes from MRO for fallback resolution.
+
+        Uses Pydantic's built-in env_settings for the leaf class, then adds
+        parent env prefixes as fallback sources in MRO order.
+        Priority: init > leaf env_prefix > parent env_prefixes (MRO order) > dotenv > secrets.
+        """
+        sources: list[PydanticBaseSettingsSource] = [init_settings, env_settings]
+        leaf_prefix = cls.model_config.get("env_prefix", "")
+        for parent in cls.__mro__:
+            cfg: Mapping[str, t.Container] | None = getattr(
+                parent, "model_config", None
+            )
+            if not isinstance(cfg, Mapping):
+                continue
+            raw_prefix = cfg.get("env_prefix", "")
+            parent_prefix = str(raw_prefix) if raw_prefix else ""
+            if parent_prefix and parent_prefix != leaf_prefix:
+                sources.append(
+                    EnvSettingsSource(settings_cls, env_prefix=parent_prefix),
+                )
+        sources.extend([dotenv_settings, file_secret_settings])
+        return tuple(sources)
+
+    app_name: Annotated[
+        str, Field(default=c.DEFAULT_APP_NAME, description="Application name")
+    ]
     version: Annotated[
         str,
         Field(default=flext_core.__version__, description="Application version"),
@@ -202,6 +244,8 @@ class FlextSettings(BaseSettings):
         We override __new__ to implement singleton pattern while allowing
         kwargs to be passed for testing and configuration via model_validate.
         """
+        if not cls._singleton_enabled:
+            return super().__new__(cls)
         base_class = cls
         if base_class not in cls._instances:
             with cls._lock:
@@ -272,7 +316,6 @@ class FlextSettings(BaseSettings):
     @classmethod
     def get_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
-        u.normalize_env_log_level()
         if overrides is None:
             return cls()
         if cls is FlextSettings:
@@ -321,6 +364,12 @@ class FlextSettings(BaseSettings):
             msg = "DI provider not initialized"
             raise RuntimeError(msg)
         return provider
+
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def _normalize_log_level(cls, v: str) -> str:
+        """Normalize log level to uppercase before enum validation."""
+        return v.upper()
 
     @model_validator(mode="after")
     def _validate_configuration(self) -> Self:

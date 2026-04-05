@@ -14,6 +14,7 @@ import inspect
 import warnings
 from collections.abc import Mapping, MutableSequence, MutableSet, Sequence
 from enum import EnumType
+from pathlib import Path
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -734,7 +735,23 @@ class FlextUtilitiesEnforcement:
     @staticmethod
     def _to_pascal_case(snake: str) -> str:
         """Convert snake_case to PascalCase: 'db_oracle' → 'DbOracle'."""
-        return "".join(part.capitalize() for part in snake.split("_") if part)
+        normalized = snake.replace("-", "_")
+        return "".join(part.capitalize() for part in normalized.split("_") if part)
+
+    @staticmethod
+    def _derive_prefix_from_path(target: type) -> str | None:
+        """Derive project prefix from source file path (e.g., flext-core → FlextCore)."""
+        try:
+            src = inspect.getfile(target)
+        except (TypeError, OSError):
+            return None
+        for parent in Path(src).parents:
+            if (parent / "pyproject.toml").exists() and parent.name.startswith(
+                "flext-"
+            ):
+                slug = parent.name.removeprefix("flext-")
+                return "Flext" + FlextUtilitiesEnforcement._to_pascal_case(slug)
+        return None
 
     @staticmethod
     def _derive_project_prefix(target: type) -> str | None:
@@ -746,16 +763,28 @@ class FlextUtilitiesEnforcement:
         for pkg, prefix in c.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES:
             if package == pkg:
                 return prefix
-        if package == "tests":
+        package_suffix_map: Mapping[str, str] = {
+            "tests": "Test",
+            "examples": "Examples",
+        }
+        if package in package_suffix_map:
+            pkg_suffix = package_suffix_map[package]
+            project_prefix = FlextUtilitiesEnforcement._derive_prefix_from_path(target)
+            if project_prefix is not None:
+                return project_prefix + pkg_suffix
             for base in target.__bases__:
                 base_mod = getattr(base, "__module__", "") or ""
                 base_pkg = base_mod.split(".")[0] if base_mod else ""
-                if base_pkg.startswith("flext") and base.__name__.startswith("Flext"):
+                if (
+                    base_pkg.startswith("flext")
+                    and base_pkg != "flext_tests"
+                    and base.__name__.startswith("Flext")
+                ):
                     parent = base.__name__
                     for suffix, _layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:
                         if parent.endswith(suffix):
-                            return parent[: -len(suffix)] + "Test"
-                    return parent + "Test"
+                            return parent[: -len(suffix)] + pkg_suffix
+                    return parent + pkg_suffix
             return None
         if package.startswith("flext_"):
             suffix = package[len("flext_") :]
@@ -771,8 +800,13 @@ class FlextUtilitiesEnforcement:
             return None
         if package == "flext":
             return "Root"
+        if package == "examples":
+            return "Examples"
         if package == "tests":
-            return None
+            project_prefix = FlextUtilitiesEnforcement._derive_prefix_from_path(target)
+            if project_prefix is not None:
+                return project_prefix.removeprefix("Flext")
+            return "Tests"
         if package.startswith("flext_"):
             suffix = package[len("flext_") :]
             return FlextUtilitiesEnforcement._to_pascal_case(suffix)
@@ -839,6 +873,16 @@ class FlextUtilitiesEnforcement:
         expected = FlextUtilitiesEnforcement._derive_expected_namespace(target)
         if expected is None:
             return []
+        module = getattr(target, "__module__", "") or ""
+        package = module.split(".")[0] if module else ""
+        inherited_names: frozenset[str] = frozenset()
+        if package in {"tests", "examples"}:
+            inherited_names = frozenset(
+                name
+                for base in target.__bases__
+                for name in vars(base)
+                if isinstance(getattr(base, name, None), type)
+            )
         errors: MutableSequence[str] = []
         for name, value in vars(target).items():
             if not isinstance(value, type):
@@ -846,6 +890,8 @@ class FlextUtilitiesEnforcement:
             if name.startswith("_"):
                 continue
             if isinstance(value, EnumType):
+                continue
+            if name in inherited_names:
                 continue
             if name != expected:
                 errors.append(

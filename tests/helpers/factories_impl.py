@@ -316,17 +316,17 @@ class FailingServiceAutoFactory:
 class ServiceTestCaseFactory:
     """Factory for m.Core.ServiceTestCase."""
 
-    _service_types: ClassVar[Sequence[m.Core.ServiceTestType]] = [
-        m.Core.ServiceTestType.GET_USER,
-        m.Core.ServiceTestType.VALIDATE,
-        m.Core.ServiceTestType.FAIL,
+    _service_types: ClassVar[Sequence[c.Core.ServiceTestType]] = [
+        c.Core.ServiceTestType.GET_USER,
+        c.Core.ServiceTestType.VALIDATE,
+        c.Core.ServiceTestType.FAIL,
     ]
     _type_index: ClassVar[int] = 0
     _words: ClassVar[t.StrSequence] = ["test", "sample", "example", "demo", "data"]
     _word_index: ClassVar[int] = 0
 
     @classmethod
-    def _next_type(cls) -> m.Core.ServiceTestType:
+    def _next_type(cls) -> c.Core.ServiceTestType:
         """Get next service type from rotation."""
         service_type = cls._service_types[cls._type_index % len(cls._service_types)]
         cls._type_index += 1
@@ -343,7 +343,7 @@ class ServiceTestCaseFactory:
     def build(
         cls,
         *,
-        service_type: m.Core.ServiceTestType | None = None,
+        service_type: c.Core.ServiceTestType | None = None,
         input_value: str | None = None,
         expected_success: bool = True,
         expected_error: str | None = None,
@@ -384,15 +384,15 @@ class ServiceFactoryRegistry:
 
     _factories: ClassVar[
         Mapping[
-            m.Core.ServiceTestType,
+            c.Core.ServiceTestType,
             type[
                 GetUserServiceFactory | ValidatingServiceFactory | FailingServiceFactory
             ],
         ]
     ] = {
-        m.Core.ServiceTestType.GET_USER: GetUserServiceFactory,
-        m.Core.ServiceTestType.VALIDATE: ValidatingServiceFactory,
-        m.Core.ServiceTestType.FAIL: FailingServiceFactory,
+        c.Core.ServiceTestType.GET_USER: GetUserServiceFactory,
+        c.Core.ServiceTestType.VALIDATE: ValidatingServiceFactory,
+        c.Core.ServiceTestType.FAIL: FailingServiceFactory,
     }
 
     @classmethod
@@ -403,14 +403,14 @@ class ServiceFactoryRegistry:
         """Create appropriate service based on case type using pattern matching."""
         service: s[m.Tests.User] | s[str]
         match case.service_type:
-            case m.Core.ServiceTestType.GET_USER:
+            case c.Core.ServiceTestType.GET_USER:
                 service = GetUserServiceFactory.build(user_id=case.input_value)
-            case m.Core.ServiceTestType.VALIDATE:
+            case c.Core.ServiceTestType.VALIDATE:
                 service = ValidatingServiceFactory.build(
                     value_input=case.input_value,
                     min_length=case.extra_param,
                 )
-            case m.Core.ServiceTestType.FAIL:
+            case c.Core.ServiceTestType.FAIL:
                 service = FailingServiceFactory.build(error_message=case.input_value)
             case _:
                 msg = f"Unsupported service type: {case.service_type}"
@@ -428,7 +428,7 @@ class TestDataGenerators:
         """Generate successful user service test cases."""
         return [
             m.Core.ServiceTestCase(
-                service_type=m.Core.ServiceTestType.GET_USER,
+                service_type=c.Core.ServiceTestType.GET_USER,
                 input_value=str(i * 100 + 1),
                 description=f"Valid user ID {i}",
             )
@@ -442,14 +442,14 @@ class TestDataGenerators:
         """Generate successful validation test cases."""
         return [
             m.Core.ServiceTestCase(
-                service_type=m.Core.ServiceTestType.VALIDATE,
+                service_type=c.Core.ServiceTestType.VALIDATE,
                 input_value=f"value_{i}",
                 description=f"Valid input {i}",
             )
             for i in range(1, num_cases + 1)
         ] + [
             m.Core.ServiceTestCase(
-                service_type=m.Core.ServiceTestType.VALIDATE,
+                service_type=c.Core.ServiceTestType.VALIDATE,
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
@@ -461,14 +461,14 @@ class TestDataGenerators:
         """Generate validation failure test cases."""
         return [
             m.Core.ServiceTestCase(
-                service_type=m.Core.ServiceTestType.VALIDATE,
+                service_type=c.Core.ServiceTestType.VALIDATE,
                 input_value="ab",
                 expected_success=False,
                 expected_error="must be at least 3 characters",
                 description="Too short input",
             ),
             m.Core.ServiceTestCase(
-                service_type=m.Core.ServiceTestType.VALIDATE,
+                service_type=c.Core.ServiceTestType.VALIDATE,
                 input_value="x",
                 expected_success=False,
                 expected_error="must be at least 5 characters",

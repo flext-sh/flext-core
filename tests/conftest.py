@@ -19,11 +19,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, r
+from flext_core import FlextContainer, FlextContext, r
 from tests import (
     TestHelperScenarios,
     t,
 )
+
+pytest_plugins = ["flext_tests.conftest_plugin"]
 
 setattr(builtins, "t", t)
 
@@ -79,19 +81,6 @@ def clean_container() -> FlextContainer:
     container = FlextContainer()
     container.clear_all()
     return container
-
-
-@pytest.fixture(autouse=True)
-def reset_global_container() -> Generator[None]:
-    """Reset the global FlextContainer and FlextSettings instances after each test.
-
-    This fixture ensures test isolation by clearing the global singletons
-    that persist across tests. Without this, tests interfere with each other
-    due to shared global state.
-    """
-    yield
-    FlextContainer.reset_for_testing()
-    FlextSettings.reset_for_testing()
 
 
 @pytest.fixture

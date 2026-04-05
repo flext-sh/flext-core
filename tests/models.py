@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from enum import StrEnum, unique
 from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -43,14 +42,6 @@ class FlextCoreTestModels(FlextTestsModels, FlextInfraModels):
 
     class Core:
         """flext-core-specific test models namespace."""
-
-        @unique
-        class ServiceTestType(StrEnum):
-            """Service test type enum for test scenarios."""
-
-            GET_USER = "get_user"
-            VALIDATE = "validate"
-            FAIL = "fail"
 
         class User(FlextTestsModels.Entity):
             """Shared user model for tests."""

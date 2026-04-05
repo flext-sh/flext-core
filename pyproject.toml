@@ -385,6 +385,7 @@ exclude = [
   "**/site-packages/**",
   "**/venv",
   "**/venv/**",
+  ".sisyphus",
   ".venv",
 ]
 extraPaths = [

@@ -157,17 +157,6 @@ class FlextUtilitiesConfiguration:
         return log_level
 
     @staticmethod
-    def normalize_env_log_level() -> None:
-        """Normalize FLEXT_LOG_LEVEL environment variable to uppercase.
-
-        Ensures case-insensitive env var values are uppercased before
-        Pydantic reads them (Pydantic enums are case-sensitive).
-        """
-        log_level = os.environ.get("FLEXT_LOG_LEVEL")
-        if log_level and log_level.islower():
-            os.environ["FLEXT_LOG_LEVEL"] = log_level.upper()
-
-    @staticmethod
     def validate_database_url_scheme(url: str) -> None:
         """Validate database URL scheme is postgresql://, mysql://, or sqlite://."""
         if url and not url.startswith(("postgresql://", "mysql://", "sqlite://")):

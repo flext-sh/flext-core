@@ -16,6 +16,7 @@ from typing import ClassVar, Final, Protocol, runtime_checkable
 
 import pytest
 from pydantic import Field
+from pydantic.warnings import PydanticDeprecatedSince20
 
 from flext_core import (
     FlextConstants,
@@ -115,14 +116,15 @@ class TestCheckNoV1Patterns:
 
     def test_v1_config_class_detected(self) -> None:
         """Class Config inside model is flagged."""
+        with pytest.warns(PydanticDeprecatedSince20):
 
-        class _M(m.ArbitraryTypesModel):
-            _flext_enforcement_exempt: ClassVar[bool] = True
+            class _M(m.ArbitraryTypesModel):
+                _flext_enforcement_exempt: ClassVar[bool] = True
 
-            class Config:
-                extra = "forbid"
+                class Config:
+                    extra = "forbid"
 
-            name: str = Field(default="x", description="d")
+                name: str = Field(default="x", description="d")
 
         errors = FlextUtilitiesEnforcement.check_no_v1_patterns(_M)
         assert len(errors) == 1
@@ -211,6 +213,14 @@ class TestEnforcementMode:
         assert hasattr(c, "ENFORCEMENT_RELAXED_EXTRA_BASES")
         assert hasattr(c, "ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS")
         assert hasattr(c, "ENFORCEMENT_COLLECTION_REPLACEMENTS")
+
+
+class TestNamespacePrefixDerivation:
+    """Verify namespace prefix derivation normalizes project slugs."""
+
+    def test_to_pascal_case_accepts_hyphenated_slug(self) -> None:
+        """Hyphenated project slugs must normalize to a valid PascalCase prefix."""
+        assert FlextUtilitiesEnforcement._to_pascal_case("db-oracle") == "DbOracle"
 
 
 class TestBaseModelCoverage:
