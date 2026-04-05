@@ -1,0 +1,25 @@
+src/flext_core/settings.py
+  cdd262d4e064dc50 17,94,97-101,103
+src/flext_core/_utilities/enforcement.py
+  cdd262d4e064dc50 742-754,772-774,806-808
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "0c3480745ed854cfadd3990f57eb926b81c8168a",
+  "prompts": {
+    "cdd262d4e064dc50": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb50d2f6-2887-49fd-99be-f714814b3981",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 20,
+      "accepted_lines": 29,
+      "overriden_lines": 0
+    }
+  }
+}
