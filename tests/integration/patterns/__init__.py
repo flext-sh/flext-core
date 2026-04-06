@@ -57,22 +57,43 @@ if _t.TYPE_CHECKING:
         pytestmark,
     )
 _LAZY_IMPORTS = {
-    "EXPECTED_BULK_SIZE": "tests.integration.patterns.test_patterns_logging",
-    "P": "tests.integration.patterns.test_patterns_testing",
-    "R": "tests.integration.patterns.test_patterns_testing",
-    "TestAdvancedPatterns": "tests.integration.patterns.test_advanced_patterns",
-    "TestArchitecturalPatterns": "tests.integration.patterns.test_architectural_patterns",
-    "TestFunction": "tests.integration.patterns.test_advanced_patterns",
-    "TestPatternsCommands": "tests.integration.patterns.test_patterns_commands",
-    "TestPatternsLogging": "tests.integration.patterns.test_patterns_logging",
-    "TestPatternsTesting": "tests.integration.patterns.test_patterns_testing",
+    "EXPECTED_BULK_SIZE": (
+        "tests.integration.patterns.test_patterns_logging",
+        "EXPECTED_BULK_SIZE",
+    ),
+    "P": ("tests.integration.patterns.test_patterns_testing", "P"),
+    "R": ("tests.integration.patterns.test_patterns_testing", "R"),
+    "TestAdvancedPatterns": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestAdvancedPatterns",
+    ),
+    "TestArchitecturalPatterns": (
+        "tests.integration.patterns.test_architectural_patterns",
+        "TestArchitecturalPatterns",
+    ),
+    "TestFunction": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestFunction",
+    ),
+    "TestPatternsCommands": (
+        "tests.integration.patterns.test_patterns_commands",
+        "TestPatternsCommands",
+    ),
+    "TestPatternsLogging": (
+        "tests.integration.patterns.test_patterns_logging",
+        "TestPatternsLogging",
+    ),
+    "TestPatternsTesting": (
+        "tests.integration.patterns.test_patterns_testing",
+        "TestPatternsTesting",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
     "p": ("flext_core.protocols", "FlextProtocols"),
-    "pytestmark": "tests.integration.patterns.test_patterns_testing",
+    "pytestmark": ("tests.integration.patterns.test_patterns_testing", "pytestmark"),
     "r": ("flext_core.result", "FlextResult"),
     "s": ("flext_core.service", "FlextService"),
     "t": ("flext_core.typings", "FlextTypes"),

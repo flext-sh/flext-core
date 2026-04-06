@@ -42,11 +42,17 @@ if _t.TYPE_CHECKING:
     from flext_core.utilities import FlextUtilities as u
     from tests.unit.flext_tests.test_utilities import TestUtilities
 _LAZY_IMPORTS = {
-    "TestDocker": "tests.unit.flext_tests.test_docker",
-    "TestFlextTestsDomains": "tests.unit.flext_tests.test_domains",
-    "TestFlextTestsFiles": "tests.unit.flext_tests.test_files",
-    "TestFlextTestsMatchers": "tests.unit.flext_tests.test_matchers",
-    "TestUtilities": "tests.unit.flext_tests.test_utilities",
+    "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
+    "TestFlextTestsDomains": (
+        "tests.unit.flext_tests.test_domains",
+        "TestFlextTestsDomains",
+    ),
+    "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
+    "TestFlextTestsMatchers": (
+        "tests.unit.flext_tests.test_matchers",
+        "TestFlextTestsMatchers",
+    ),
+    "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),

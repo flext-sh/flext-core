@@ -27,10 +27,16 @@ if _t.TYPE_CHECKING:
     test_exception_params = _tests_unit__models_test_exception_params
     from tests.unit._models.test_exception_params import TestFlextModelsExceptionParams
 _LAZY_IMPORTS = {
-    "TestFlextModelsBase": "tests.unit._models.test_base",
-    "TestFlextModelsCqrs": "tests.unit._models.test_cqrs",
-    "TestFlextModelsEntity": "tests.unit._models.test_entity",
-    "TestFlextModelsExceptionParams": "tests.unit._models.test_exception_params",
+    "TestFlextModelsBase": ("tests.unit._models.test_base", "TestFlextModelsBase"),
+    "TestFlextModelsCqrs": ("tests.unit._models.test_cqrs", "TestFlextModelsCqrs"),
+    "TestFlextModelsEntity": (
+        "tests.unit._models.test_entity",
+        "TestFlextModelsEntity",
+    ),
+    "TestFlextModelsExceptionParams": (
+        "tests.unit._models.test_exception_params",
+        "TestFlextModelsExceptionParams",
+    ),
     "test_base": "tests.unit._models.test_base",
     "test_cqrs": "tests.unit._models.test_cqrs",
     "test_entity": "tests.unit._models.test_entity",

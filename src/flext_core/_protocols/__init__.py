@@ -47,15 +47,21 @@ if _t.TYPE_CHECKING:
     service = _flext_core__protocols_service
     from flext_core._protocols.service import FlextProtocolsService
 _LAZY_IMPORTS = {
-    "FlextProtocolsBase": "flext_core._protocols.base",
-    "FlextProtocolsConfig": "flext_core._protocols.config",
-    "FlextProtocolsContainer": "flext_core._protocols.container",
-    "FlextProtocolsContext": "flext_core._protocols.context",
-    "FlextProtocolsHandler": "flext_core._protocols.handler",
-    "FlextProtocolsLogging": "flext_core._protocols.logging",
-    "FlextProtocolsRegistry": "flext_core._protocols.registry",
-    "FlextProtocolsResult": "flext_core._protocols.result",
-    "FlextProtocolsService": "flext_core._protocols.service",
+    "FlextProtocolsBase": ("flext_core._protocols.base", "FlextProtocolsBase"),
+    "FlextProtocolsConfig": ("flext_core._protocols.config", "FlextProtocolsConfig"),
+    "FlextProtocolsContainer": (
+        "flext_core._protocols.container",
+        "FlextProtocolsContainer",
+    ),
+    "FlextProtocolsContext": ("flext_core._protocols.context", "FlextProtocolsContext"),
+    "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
+    "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
+    "FlextProtocolsRegistry": (
+        "flext_core._protocols.registry",
+        "FlextProtocolsRegistry",
+    ),
+    "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
+    "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
     "base": "flext_core._protocols.base",
     "config": "flext_core._protocols.config",
     "container": "flext_core._protocols.container",

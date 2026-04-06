@@ -51,16 +51,31 @@ if _t.TYPE_CHECKING:
     validation = _flext_core__constants_validation
     from flext_core._constants.validation import FlextConstantsValidation
 _LAZY_IMPORTS = {
-    "FlextConstantsBase": "flext_core._constants.base",
-    "FlextConstantsCqrs": "flext_core._constants.cqrs",
-    "FlextConstantsDomain": "flext_core._constants.domain",
-    "FlextConstantsEnforcement": "flext_core._constants.enforcement",
-    "FlextConstantsErrors": "flext_core._constants.errors",
-    "FlextConstantsInfrastructure": "flext_core._constants.infrastructure",
-    "FlextConstantsMixins": "flext_core._constants.mixins",
-    "FlextConstantsPlatform": "flext_core._constants.platform",
-    "FlextConstantsSettings": "flext_core._constants.settings",
-    "FlextConstantsValidation": "flext_core._constants.validation",
+    "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
+    "FlextConstantsCqrs": ("flext_core._constants.cqrs", "FlextConstantsCqrs"),
+    "FlextConstantsDomain": ("flext_core._constants.domain", "FlextConstantsDomain"),
+    "FlextConstantsEnforcement": (
+        "flext_core._constants.enforcement",
+        "FlextConstantsEnforcement",
+    ),
+    "FlextConstantsErrors": ("flext_core._constants.errors", "FlextConstantsErrors"),
+    "FlextConstantsInfrastructure": (
+        "flext_core._constants.infrastructure",
+        "FlextConstantsInfrastructure",
+    ),
+    "FlextConstantsMixins": ("flext_core._constants.mixins", "FlextConstantsMixins"),
+    "FlextConstantsPlatform": (
+        "flext_core._constants.platform",
+        "FlextConstantsPlatform",
+    ),
+    "FlextConstantsSettings": (
+        "flext_core._constants.settings",
+        "FlextConstantsSettings",
+    ),
+    "FlextConstantsValidation": (
+        "flext_core._constants.validation",
+        "FlextConstantsValidation",
+    ),
     "base": "flext_core._constants.base",
     "cqrs": "flext_core._constants.cqrs",
     "domain": "flext_core._constants.domain",

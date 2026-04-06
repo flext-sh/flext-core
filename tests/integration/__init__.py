@@ -100,17 +100,47 @@ if _t.TYPE_CHECKING:
 _LAZY_IMPORTS = merge_lazy_imports(
     ("tests.integration.patterns",),
     {
-        "TestAutomatedArchitecture": "tests.integration.test_architecture",
-        "TestCompleteFlextSystemIntegration": "tests.integration.test_system",
-        "TestFlextSettingsSingletonIntegration": "tests.integration.test_config_integration",
-        "TestIdempotency": "tests.integration.test_refactor_nesting_idempotency",
-        "TestInfraIntegration": "tests.integration.test_infra_integration",
-        "TestLibraryIntegration": "tests.integration.test_integration",
-        "TestMigrationValidation": "tests.integration.test_migration_validation",
-        "TestProjectLevelRefactor": "tests.integration.test_refactor_nesting_project",
-        "TestRefactorPolicyMRO": "tests.integration.test_refactor_policy_mro",
-        "TestService": "tests.integration.test_service",
-        "TestWorkspaceLevelRefactor": "tests.integration.test_refactor_nesting_workspace",
+        "TestAutomatedArchitecture": (
+            "tests.integration.test_architecture",
+            "TestAutomatedArchitecture",
+        ),
+        "TestCompleteFlextSystemIntegration": (
+            "tests.integration.test_system",
+            "TestCompleteFlextSystemIntegration",
+        ),
+        "TestFlextSettingsSingletonIntegration": (
+            "tests.integration.test_config_integration",
+            "TestFlextSettingsSingletonIntegration",
+        ),
+        "TestIdempotency": (
+            "tests.integration.test_refactor_nesting_idempotency",
+            "TestIdempotency",
+        ),
+        "TestInfraIntegration": (
+            "tests.integration.test_infra_integration",
+            "TestInfraIntegration",
+        ),
+        "TestLibraryIntegration": (
+            "tests.integration.test_integration",
+            "TestLibraryIntegration",
+        ),
+        "TestMigrationValidation": (
+            "tests.integration.test_migration_validation",
+            "TestMigrationValidation",
+        ),
+        "TestProjectLevelRefactor": (
+            "tests.integration.test_refactor_nesting_project",
+            "TestProjectLevelRefactor",
+        ),
+        "TestRefactorPolicyMRO": (
+            "tests.integration.test_refactor_policy_mro",
+            "TestRefactorPolicyMRO",
+        ),
+        "TestService": ("tests.integration.test_service", "TestService"),
+        "TestWorkspaceLevelRefactor": (
+            "tests.integration.test_refactor_nesting_workspace",
+            "TestWorkspaceLevelRefactor",
+        ),
         "c": ("flext_core.constants", "FlextConstants"),
         "d": ("flext_core.decorators", "FlextDecorators"),
         "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -118,12 +148,15 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "m": ("flext_core.models", "FlextModels"),
         "p": ("flext_core.protocols", "FlextProtocols"),
         "patterns": "tests.integration.patterns",
-        "pytestmark": "tests.integration.test_refactor_nesting_file",
+        "pytestmark": ("tests.integration.test_refactor_nesting_file", "pytestmark"),
         "r": ("flext_core.result", "FlextResult"),
         "s": ("flext_core.service", "FlextService"),
         "t": ("flext_core.typings", "FlextTypes"),
         "test_architecture": "tests.integration.test_architecture",
-        "test_class_nesting_refactor_single_file_end_to_end": "tests.integration.test_refactor_nesting_file",
+        "test_class_nesting_refactor_single_file_end_to_end": (
+            "tests.integration.test_refactor_nesting_file",
+            "test_class_nesting_refactor_single_file_end_to_end",
+        ),
         "test_config_integration": "tests.integration.test_config_integration",
         "test_infra_integration": "tests.integration.test_infra_integration",
         "test_integration": "tests.integration.test_integration",

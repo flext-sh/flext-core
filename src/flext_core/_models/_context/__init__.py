@@ -35,12 +35,30 @@ if _t.TYPE_CHECKING:
     _tokens = _flext_core__models__context__tokens
     from flext_core._models._context._tokens import FlextModelsContextTokens
 _LAZY_IMPORTS = {
-    "FlextModelsContextData": "flext_core._models._context._data",
-    "FlextModelsContextExport": "flext_core._models._context._export",
-    "FlextModelsContextMetadata": "flext_core._models._context._metadata",
-    "FlextModelsContextProxyVar": "flext_core._models._context._proxy_var",
-    "FlextModelsContextScope": "flext_core._models._context._scope",
-    "FlextModelsContextTokens": "flext_core._models._context._tokens",
+    "FlextModelsContextData": (
+        "flext_core._models._context._data",
+        "FlextModelsContextData",
+    ),
+    "FlextModelsContextExport": (
+        "flext_core._models._context._export",
+        "FlextModelsContextExport",
+    ),
+    "FlextModelsContextMetadata": (
+        "flext_core._models._context._metadata",
+        "FlextModelsContextMetadata",
+    ),
+    "FlextModelsContextProxyVar": (
+        "flext_core._models._context._proxy_var",
+        "FlextModelsContextProxyVar",
+    ),
+    "FlextModelsContextScope": (
+        "flext_core._models._context._scope",
+        "FlextModelsContextScope",
+    ),
+    "FlextModelsContextTokens": (
+        "flext_core._models._context._tokens",
+        "FlextModelsContextTokens",
+    ),
     "_data": "flext_core._models._context._data",
     "_export": "flext_core._models._context._export",
     "_metadata": "flext_core._models._context._metadata",

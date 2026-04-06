@@ -26,7 +26,10 @@ if _t.TYPE_CHECKING:
     from flext_core.utilities import FlextUtilities as u
     from tests.unit.contracts.text_contract import TextUtilityContract
 _LAZY_IMPORTS = {
-    "TextUtilityContract": "tests.unit.contracts.text_contract",
+    "TextUtilityContract": (
+        "tests.unit.contracts.text_contract",
+        "TextUtilityContract",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),

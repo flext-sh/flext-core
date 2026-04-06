@@ -41,13 +41,22 @@ if _t.TYPE_CHECKING:
         TestPerformanceBenchmarks,
     )
 _LAZY_IMPORTS = {
-    "TestContainerMemory": "tests.benchmark.test_container_memory",
-    "TestContainerPerformance": "tests.benchmark.test_container_performance",
-    "TestPerformanceBenchmarks": "tests.benchmark.test_refactor_nesting_performance",
+    "TestContainerMemory": (
+        "tests.benchmark.test_container_memory",
+        "TestContainerMemory",
+    ),
+    "TestContainerPerformance": (
+        "tests.benchmark.test_container_performance",
+        "TestContainerPerformance",
+    ),
+    "TestPerformanceBenchmarks": (
+        "tests.benchmark.test_refactor_nesting_performance",
+        "TestPerformanceBenchmarks",
+    ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
-    "get_memory_usage": "tests.benchmark.test_container_memory",
+    "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
     "h": ("flext_core.handlers", "FlextHandlers"),
     "m": ("flext_core.models", "FlextModels"),
     "p": ("flext_core.protocols", "FlextProtocols"),

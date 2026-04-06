@@ -19,8 +19,14 @@ if _t.TYPE_CHECKING:
     test_mapper = _tests_unit__utilities_test_mapper
     from tests.unit._utilities.test_mapper import TestFlextUtilitiesMapper
 _LAZY_IMPORTS = {
-    "TestFlextUtilitiesGuards": "tests.unit._utilities.test_guards",
-    "TestFlextUtilitiesMapper": "tests.unit._utilities.test_mapper",
+    "TestFlextUtilitiesGuards": (
+        "tests.unit._utilities.test_guards",
+        "TestFlextUtilitiesGuards",
+    ),
+    "TestFlextUtilitiesMapper": (
+        "tests.unit._utilities.test_mapper",
+        "TestFlextUtilitiesMapper",
+    ),
     "test_guards": "tests.unit._utilities.test_guards",
     "test_mapper": "tests.unit._utilities.test_mapper",
 }
