@@ -182,7 +182,7 @@ class TestDiServicesAccess:
                 app_name = self.config.app_name
                 tm.that(app_name, eq="service_app", msg="Config must be accessible")
                 logger_result = self.container.get("logger")
-                _ = u.Tests.Result.assert_success(logger_result)
+                _ = u.Tests.assert_success(logger_result)
                 logger = logger_result.value
                 assert logger is not None, "Logger must be accessible via DI"
                 assert hasattr(logger, "info") and callable(getattr(logger, "info")), (

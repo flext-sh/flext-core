@@ -60,7 +60,7 @@ class TestDIIncremental:
         _ = container.register("test_service", "test_value")
         tm.that(container.has_service("test_service"), eq=True)
         resolved = container.get("test_service")
-        u.Tests.Result.assert_success_with_value(resolved, "test_value")
+        u.Tests.assert_success_with_value(resolved, "test_value")
 
     def test_create_layered_bridge_with_config(self) -> None:
         """Test create_layered_bridge with real configuration."""
@@ -520,8 +520,8 @@ class TestDIIncremental:
         scoped2 = container.scoped(services={"service": "value2"})
         result1 = scoped1.get("service", type_cls=str)
         result2 = scoped2.get("service", type_cls=str)
-        value1: str = u.Tests.Result.assert_success(result1)
-        value2: str = u.Tests.Result.assert_success(result2)
+        value1: str = u.Tests.assert_success(result1)
+        value2: str = u.Tests.assert_success(result2)
         tm.that(value1, is_=str)
         tm.that(value2, is_=str)
         tm.that(value1, eq="value1")

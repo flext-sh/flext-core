@@ -29,14 +29,14 @@ class TestContext100Coverage:
         context.set("test_key", "test_value").value
         context.remove("test_key")
         result = context.get("test_key")
-        _ = u.Tests.Result.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
 
     def test_remove_nonexistent_key(self) -> None:
         """Test remove with nonexistent key (idempotent)."""
         context = FlextContext()
         context.remove("nonexistent_key")
         result = context.get("nonexistent_key")
-        _ = u.Tests.Result.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
 
     def test_clear_removes_all_data(self) -> None:
         """Test clear removes all data."""
@@ -46,8 +46,8 @@ class TestContext100Coverage:
         context.clear()
         result1 = context.get("key1")
         result2 = context.get("key2")
-        _ = u.Tests.Result.assert_failure(result1)
-        _ = u.Tests.Result.assert_failure(result2)
+        _ = u.Tests.assert_failure(result1)
+        _ = u.Tests.assert_failure(result2)
 
     def test_merge_with_dict(self) -> None:
         """Test merge with dictionary."""
@@ -61,8 +61,8 @@ class TestContext100Coverage:
         tm.that(merged, is_=FlextContext)
         result2 = merged.get("key2")
         result3 = merged.get("key3")
-        _ = u.Tests.Result.assert_success(result2)
-        _ = u.Tests.Result.assert_success(result3)
+        _ = u.Tests.assert_success(result2)
+        _ = u.Tests.assert_success(result3)
 
     def test_merge_with_context(self) -> None:
         """Test merge with another context preserves current context when payload is invalid."""
@@ -74,8 +74,8 @@ class TestContext100Coverage:
         tm.that(merged, is_=FlextContext)
         result1 = merged.get("key1")
         result2 = merged.get("key2")
-        _ = u.Tests.Result.assert_success(result1)
-        _ = u.Tests.Result.assert_success(result2)
+        _ = u.Tests.assert_success(result1)
+        _ = u.Tests.assert_success(result2)
 
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
@@ -84,11 +84,11 @@ class TestContext100Coverage:
         cloned = context1.clone()
         tm.that(cloned, is_=FlextContext)
         result = cloned.get("key1")
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(str(result.value), eq="value1")
         context1.set("key1", "modified").value
         cloned_result = cloned.get("key1")
-        _ = u.Tests.Result.assert_success(cloned_result)
+        _ = u.Tests.assert_success(cloned_result)
         tm.that(str(cloned_result.value), eq="value1")
 
     def test_validate_success(self) -> None:
@@ -96,7 +96,7 @@ class TestContext100Coverage:
         context = FlextContext()
         context.set("key1", "value1").value
         result = context.validate_context()
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
 
     def test_export_returns_dict(self) -> None:
         """Test export returns dictionary with scoped data."""

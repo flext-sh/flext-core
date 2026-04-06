@@ -176,19 +176,19 @@ class TestFlextUtilitiesArgs:
             scenario = scenarios[scenario_name]
             result = u.parse_kwargs(scenario.kwargs.root, scenario.enum_fields)
             if scenario.expected_success:
-                _ = u.Tests.Result.assert_success(result)
+                _ = u.Tests.assert_success(result)
                 parsed = result.value
                 if scenario.expected_status:
                     tm.that(parsed["status"], eq=scenario.expected_status)
             else:
-                _ = u.Tests.Result.assert_failure(result)
+                _ = u.Tests.assert_failure(result)
 
         def test_parse_kwargs_invalid_enum_value(self) -> None:
             """Test parse_kwargs with invalid enum value."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_parse_kwargs_scenarios()
             scenario = scenarios["invalid_enum_value"]
             result = u.parse_kwargs(scenario.kwargs.root, scenario.enum_fields)
-            u.Tests.Result.assert_failure_with_error(
+            u.Tests.assert_failure_with_error(
                 result,
                 expected_error=scenario.expected_error,
             )

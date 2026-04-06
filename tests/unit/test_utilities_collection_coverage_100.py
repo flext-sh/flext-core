@@ -922,7 +922,7 @@ class TestUtilitiesCollectionCoverage:
         validator = u.coerce_list_validator(scenario.enum_cls)
         if scenario.expected_success:
             result = validator(scenario.value)
-            u.Tests.Assertions.assert_result_matches_expected(result, list)
+            assert isinstance(result, list)
             if scenario.expected_count is not None:
                 tm.that(len(result), eq=scenario.expected_count)
             for val in result:

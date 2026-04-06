@@ -241,7 +241,7 @@ class TestFlextDecorators:
 
             result = successful_operation()
             assert isinstance(result, r)
-            u.Tests.Result.assert_success_with_value(result, "success")
+            u.Tests.assert_success_with_value(result, "success")
         elif test_case.operation == self.DecoratorOperationType.RAILWAY_EXCEPTION:
 
             @d.railway(error_code="CUSTOM_ERROR")
@@ -251,7 +251,7 @@ class TestFlextDecorators:
 
             result = failing_operation()
             assert isinstance(result, r)
-            _ = u.Tests.Result.assert_failure(result)
+            _ = u.Tests.assert_failure(result)
             assert result.error is not None
             assert "Operation failed" in result.error
 
@@ -344,7 +344,7 @@ class TestFlextDecorators:
 
             result = operation()
             assert isinstance(result, r)
-            _ = u.Tests.Result.assert_success(result)
+            _ = u.Tests.assert_success(result)
 
     def test_railway_with_existing_result(self) -> None:
         @d.railway()
@@ -352,7 +352,7 @@ class TestFlextDecorators:
             return r[str].ok("already_wrapped")
 
         result = returns_result()
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value.value == "already_wrapped"
 
     def test_retry_with_class_logger(self) -> None:
@@ -376,7 +376,7 @@ class TestFlextDecorators:
 
         result = stacked_operation()
         assert isinstance(result, r)
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
 
     def test_integration_retry_with_railway(self) -> None:
         attempts = 0
@@ -393,7 +393,7 @@ class TestFlextDecorators:
 
         result = flaky_with_railway()
         assert isinstance(result, r)
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert attempts == 2
 
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))

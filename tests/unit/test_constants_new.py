@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum
 from re import Pattern
 from types import MappingProxyType
@@ -16,7 +17,7 @@ from types import MappingProxyType
 import pytest
 
 from flext_tests import tm
-from tests import c, t, u
+from tests import c, t
 
 
 def _constant_case_id(case: t.Container | t.VariadicTuple[t.Container]) -> str:
@@ -81,7 +82,7 @@ class TestFlextConstants:
         ids=_constant_case_id,
     )
     def test_base_constant_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """Base constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -124,7 +125,7 @@ class TestFlextConstants:
         ],
     )
     def test_cqrs_constant_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """CQRS constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -349,7 +350,7 @@ class TestFlextConstants:
         ],
     )
     def test_validation_numeric_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """Validation numeric constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -500,7 +501,7 @@ class TestFlextConstants:
         ],
     )
     def test_infrastructure_constant_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """Infrastructure constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -625,7 +626,7 @@ class TestFlextConstants:
         ],
     )
     def test_platform_constant_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """Platform constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -710,7 +711,8 @@ class TestFlextConstants:
         invalid: list[str],
     ) -> None:
         """Platform regex patterns correctly match/reject inputs."""
-        compiled: Pattern[str] = u.Tests.ConstantsHelpers.compile_pattern(pattern_attr)
+        pattern_value = getattr(c.Platform, pattern_attr)
+        compiled: Pattern[str] = re.compile(pattern_value)
         for case in valid:
             tm.that(
                 compiled.match(case) is not None,
@@ -756,7 +758,7 @@ class TestFlextConstants:
         ],
     )
     def test_domain_constant_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """Domain constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -880,7 +882,7 @@ class TestFlextConstants:
         ],
     )
     def test_settings_constant_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """Settings constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -1013,7 +1015,7 @@ class TestFlextConstants:
         ],
     )
     def test_mixins_constant_values(
-        self, attr: str, expected: t.Tests.Matcher.MatcherKwargValue
+        self, attr: str, expected: t.Tests.MatcherKwargValue
     ) -> None:
         """Mixins constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)

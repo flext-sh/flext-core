@@ -15,13 +15,13 @@ class TestCoverageContext:
     """Coverage tests for currently supported FlextContext APIs."""
 
     def test_new_correlation_context(self) -> None:
-        u.Tests.ContextHelpers.clear_context()
+        u.Tests.clear_context()
         with FlextContext.Correlation.new_correlation() as correlation_id:
             tm.that(correlation_id, is_=str)
             tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
 
     def test_new_correlation_with_explicit_id(self) -> None:
-        u.Tests.ContextHelpers.clear_context()
+        u.Tests.clear_context()
         explicit_id = "explicit-corr-789"
         with FlextContext.Correlation.new_correlation(
             correlation_id=explicit_id,
@@ -35,7 +35,7 @@ class TestCoverageContext:
         test_service_obj = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value is test_service_obj, eq=True)
 
     def test_register_service(self) -> None:
@@ -43,7 +43,7 @@ class TestCoverageContext:
         FlextContext.set_container(container)
         service_obj = {"name": "test_service", "version": "1.0"}
         result = FlextContext.Service.register_service("my_service", service_obj)
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
 
     def test_get_nonexistent_service(self) -> None:
         container = FlextContainer(_context=FlextContext())
@@ -52,7 +52,7 @@ class TestCoverageContext:
         _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_timed_operation_context(self) -> None:
-        u.Tests.ContextHelpers.clear_context()
+        u.Tests.clear_context()
         with FlextContext.Performance.timed_operation("database_query") as metadata:
             tm.that(metadata, has="start_time")
             tm.that(metadata, has="operation_name")
@@ -72,7 +72,7 @@ class TestCoverageContext:
         tm.that(duration_float, lt=0.1)
 
     def test_timed_operation_duration_calculation(self) -> None:
-        u.Tests.ContextHelpers.clear_context()
+        u.Tests.clear_context()
         expected_sleep = 0.05
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
             start_time = metadata.get("start_time")
@@ -92,12 +92,12 @@ class TestCoverageContext:
         tm.that(metadata["operation_name"], eq="slow_operation")
 
     def test_ensure_correlation_id_creates_if_missing(self) -> None:
-        u.Tests.ContextHelpers.clear_context()
+        u.Tests.clear_context()
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
         tm.that(correlation_id, is_=str)
 
     def test_ensure_correlation_id_uses_existing(self) -> None:
-        u.Tests.ContextHelpers.clear_context()
+        u.Tests.clear_context()
         existing_id = "existing_corr_789"
         FlextContext.Correlation.set_correlation_id(existing_id)
         correlation_id = FlextContext.Utilities.ensure_correlation_id()

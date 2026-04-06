@@ -75,7 +75,7 @@ class _BrokenDumpModel(BaseModel):
     value: int = 1
 
     @override
-    def __getattribute__(self, name: str) -> t.Tests.Matcher.PredicateSpec | None:
+    def __getattribute__(self, name: str) -> t.Tests.PredicateSpec | None:
         if name == "model_dump":
 
             def _broken_dump(

@@ -184,7 +184,7 @@ class TestEnumUtilitiesCoverage:
             tm.ok(result)
             tm.that(result.value, eq=scenario.expected_status)
         else:
-            _ = u.Tests.Result.assert_failure(result)
+            _ = u.Tests.assert_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None

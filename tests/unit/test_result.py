@@ -217,20 +217,20 @@ class Testr:
         if not isinstance(value, str):
             pytest.fail("Expected string scenario value")
         if op_type == self.ResultOperationType.CREATION_SUCCESS:
-            creation_result: r[str] = u.Tests.GenericHelpers.create_result_from_value(
+            creation_result: r[str] = u.Tests.create_result_from_value(
                 value,
                 error_on_none="Value cannot be None",
             )
-            u.Tests.Result.assert_success_with_value(creation_result, value)
+            u.Tests.assert_success_with_value(creation_result, value)
         elif op_type == self.ResultOperationType.CREATION_FAILURE:
-            failure_result_raw = u.Tests.Result.create_failure_result(str(value))
+            failure_result_raw = u.Tests.create_failure_result(str(value))
             failure_result: r[str] = failure_result_raw
-            u.Tests.Result.assert_failure_with_error(failure_result, str(value))
+            u.Tests.assert_failure_with_error(failure_result, str(value))
         elif op_type == self.ResultOperationType.UNWRAP_OR:
             if is_success:
-                unwrap_result: r[str] = u.Tests.Result.create_success_result(value)
+                unwrap_result: r[str] = u.Tests.create_success_result(value)
             else:
-                failure_raw = u.Tests.Result.create_failure_result(str(value))
+                failure_raw = u.Tests.create_failure_result(str(value))
                 unwrap_result = failure_raw
             default = "default"
             tm.that(
@@ -240,39 +240,39 @@ class Testr:
         elif op_type == self.ResultOperationType.MAP:
             map_result: r[str] = r[str].fail(str(value))
             mapped = map_result.map(lambda x: str(x) * 2)
-            u.Tests.Result.assert_failure_with_error(mapped, str(value))
+            u.Tests.assert_failure_with_error(mapped, str(value))
         elif op_type == self.ResultOperationType.FLAT_MAP:
-            failure_raw = u.Tests.Result.create_failure_result(str(value))
+            failure_raw = u.Tests.create_failure_result(str(value))
             flat_map_result: r[str] = failure_raw
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
-            u.Tests.Result.assert_failure_with_error(flat_mapped, str(value))
+            u.Tests.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == self.ResultOperationType.ALT:
             if is_success:
-                result_alt: r[str] = u.Tests.Result.create_success_result(value)
+                result_alt: r[str] = u.Tests.create_success_result(value)
             else:
-                failure_raw = u.Tests.Result.create_failure_result(str(value))
+                failure_raw = u.Tests.create_failure_result(str(value))
                 result_alt = failure_raw
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if is_success:
-                u.Tests.Result.assert_success_with_value(alt_result, value)
+                u.Tests.assert_success_with_value(alt_result, value)
             else:
                 error_str_alt: str = f"alt_{value}"
-                u.Tests.Result.assert_failure_with_error(alt_result, error_str_alt)
+                u.Tests.assert_failure_with_error(alt_result, error_str_alt)
         elif op_type == self.ResultOperationType.LASH:
             lash_result_base: r[str] = (
                 r[str].ok(str(value)) if is_success else r[str].fail(str(value))
             )
             lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
             if is_success:
-                u.Tests.Result.assert_success_with_value(lash_result, str(value))
+                u.Tests.assert_success_with_value(lash_result, str(value))
             else:
                 expected = f"recovered_{value}"
-                u.Tests.Result.assert_success_with_value(lash_result, expected)
+                u.Tests.assert_success_with_value(lash_result, expected)
         elif op_type == self.ResultOperationType.OR_OPERATOR:
             if is_success:
-                result_or: r[str] = u.Tests.Result.create_success_result(value)
+                result_or: r[str] = u.Tests.create_success_result(value)
             else:
-                failure_raw = u.Tests.Result.create_failure_result(str(value))
+                failure_raw = u.Tests.create_failure_result(str(value))
                 result_or = failure_raw
             default = "default"
             tm.that(result_or | default, eq=value if is_success else default)
@@ -293,23 +293,23 @@ class Testr:
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             mapped = result.map(lambda x: x * 2)
-            u.Tests.Result.assert_success_with_value(mapped, value * 2)
+            u.Tests.assert_success_with_value(mapped, value * 2)
         elif op_type == self.ResultOperationType.FLAT_MAP:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             flat_mapped = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             expected = f"value_{value}"
-            u.Tests.Result.assert_success_with_value(flat_mapped, expected)
+            u.Tests.assert_success_with_value(flat_mapped, expected)
         elif op_type == self.ResultOperationType.FILTER:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
             if is_success:
-                u.Tests.Result.assert_success_with_value(filtered, value)
+                u.Tests.assert_success_with_value(filtered, value)
             else:
-                _ = u.Tests.Result.assert_failure(filtered)
+                _ = u.Tests.assert_failure(filtered)
         elif op_type == self.ResultOperationType.RAILWAY_COMPOSITION:
             if not isinstance(value, int):
                 pytest.fail("Expected integer scenario value")
@@ -318,22 +318,22 @@ class Testr:
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
             result_list: Sequence[r[str]] = [res1.map(str), res2.map(str), res3]
-            u.Tests.GenericHelpers.assert_result_chain(
+            u.Tests.assert_result_chain(
                 result_list,
                 expected_success_count=3,
                 expected_failure_count=0,
                 first_failure_index=None,
             )
-            u.Tests.Result.assert_success_with_value(res3, expected)
+            u.Tests.assert_success_with_value(res3, expected)
 
     @pytest.mark.parametrize("scenario", BOOL_SCENARIOS, ids=lambda s: s.name)
     def test_result_bool_operations(self, scenario: ResultScenario) -> None:
         """Test r with boolean values across all scenarios."""
         if scenario.operation_type == self.ResultOperationType.BOOL_CONVERSION:
             result = (
-                u.Tests.Result.create_success_result("value")
+                u.Tests.create_success_result("value")
                 if scenario.value
-                else u.Tests.Result.create_failure_result("generic_error")
+                else u.Tests.create_failure_result("generic_error")
             )
             tm.that(bool(result), eq=bool(scenario.value))
 
@@ -344,7 +344,7 @@ class Testr:
         """
         results: MutableSequence[r[int]] = []
         initial_value = 5
-        res1 = u.Tests.GenericHelpers.create_result_from_value(
+        res1 = u.Tests.create_result_from_value(
             initial_value,
             error_on_none="Initial value cannot be None",
         )
@@ -353,13 +353,13 @@ class Testr:
         results.append(res2)
         res3 = res2.map(lambda x: x + 10)
         results.append(res3)
-        u.Tests.GenericHelpers.assert_result_chain(
+        u.Tests.assert_result_chain(
             results,
             expected_success_count=3,
             expected_failure_count=0,
             first_failure_index=None,
         )
-        u.Tests.Result.assert_success_with_value(res3, 20)
+        u.Tests.assert_success_with_value(res3, 20)
 
     def test_result_chain_failure_behavior(self) -> None:
         """Test result chain with failure - real behavior and limits."""
@@ -372,12 +372,12 @@ class Testr:
             lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2),
         )
         results.append(res3)
-        u.Tests.Result.assert_success_with_value(res3, 10)
+        u.Tests.assert_success_with_value(res3, 10)
         res4 = res3.flat_map(
             lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x),
         )
         results.append(res4)
-        u.Tests.GenericHelpers.assert_result_chain(
+        u.Tests.assert_result_chain(
             results,
             expected_success_count=4,
             expected_failure_count=0,
@@ -391,7 +391,7 @@ class Testr:
         success_values: t.ContainerList = ["value1", "value2", "value3"]
         failure_errors: t.StrSequence = ["error1", "error2"]
         error_codes: Sequence[str | None] = ["CODE1", None]
-        cases = u.Tests.GenericHelpers.create_parametrized_cases(
+        cases = u.Tests.create_parametrized_cases(
             success_values,
             failure_errors,
             error_codes=error_codes,
@@ -399,27 +399,27 @@ class Testr:
         tm.that(len(cases), eq=5)
         for i, (result, is_success, _value, error) in enumerate(cases[:3]):
             tm.that(is_success, eq=True)
-            u.Tests.Result.assert_success_with_value(result, success_values[i])
+            u.Tests.assert_success_with_value(result, success_values[i])
             tm.that(error, none=True)
         for i, (result, is_success, _value, error) in enumerate(cases[3:]):
             tm.that(not is_success, eq=True)
-            _ = u.Tests.Result.assert_failure(result)
+            _ = u.Tests.assert_failure(result)
             tm.that(error, eq=failure_errors[i])
 
     def test_result_none_handling_limits(self) -> None:
         """Test None handling limits using generic helper."""
-        result1: r[str] = u.Tests.GenericHelpers.create_result_from_value(
+        result1: r[str] = u.Tests.create_result_from_value(
             None,
             default_on_none="default_value",
         )
-        u.Tests.Result.assert_success_with_value(result1, "default_value")
-        result2: r[str | None] = u.Tests.GenericHelpers.create_result_from_value(
+        u.Tests.assert_success_with_value(result1, "default_value")
+        result2: r[str | None] = u.Tests.create_result_from_value(
             None,
             error_on_none="Value is None",
         )
-        u.Tests.Result.assert_failure_with_error(result2, "Value is None")
-        result3 = u.Tests.GenericHelpers.create_result_from_value("actual_value")
-        u.Tests.Result.assert_success_with_value(result3, "actual_value")
+        u.Tests.assert_failure_with_error(result2, "Value is None")
+        result3 = u.Tests.create_result_from_value("actual_value")
+        u.Tests.assert_success_with_value(result3, "actual_value")
 
     def test_safe_decorator(self) -> None:
         """Test safe decorator wraps function in try/except."""

@@ -349,7 +349,7 @@ class TestFlextTestsFiles:
         content: t.ConfigMap = t.ConfigMap(root={"key": "value", "number": 42})
         path = manager.create(content, "config.json")
         assert path.exists()
-        data = json.loads(path.read_text())
+        data = u.Cli.json_read(path).unwrap_or({})
         assert data == content.root
 
     def test_create_yaml_auto_detect_from_extension(self, tmp_path: Path) -> None:
@@ -383,7 +383,7 @@ class TestFlextTestsFiles:
     def test_create_explicit_format(self, tmp_path: Path) -> None:
         """Test create() with explicit format override."""
         manager = tf(base_dir=tmp_path)
-        path = manager.create(b"raw bytes", "data.dat", fmt=c.Tests.Files.Format.BIN)
+        path = manager.create(b"raw bytes", "data.dat", fmt=c.Tests.Format.BIN)
         assert path.exists()
         assert path.read_bytes() == b"raw bytes"
 
@@ -422,7 +422,7 @@ class TestFlextTestsFiles:
     def test_read_binary_file(self, tmp_path: Path) -> None:
         """Test read() returns bytes content for .bin files."""
         manager = tf(base_dir=tmp_path)
-        path = manager.create(b"\x00\x01\x02", "data.bin", fmt=c.Tests.Files.Format.BIN)
+        path = manager.create(b"\x00\x01\x02", "data.bin", fmt=c.Tests.Format.BIN)
         result = manager.read(path)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == b"\x00\x01\x02"
@@ -481,8 +481,8 @@ class TestFlextTestsFiles:
     def test_read_explicit_format(self, tmp_path: Path) -> None:
         """Test read() with explicit format override."""
         manager = tf(base_dir=tmp_path)
-        path = manager.create("plain text", "data.dat", fmt=c.Tests.Files.Format.TEXT)
-        result = manager.read(path, fmt=c.Tests.Files.Format.TEXT)
+        path = manager.create("plain text", "data.dat", fmt=c.Tests.Format.TEXT)
+        result = manager.read(path, fmt=c.Tests.Format.TEXT)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "plain text"
 
@@ -509,7 +509,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("12345", "file1.txt")
         path2 = manager.create("abcde", "file2.txt")
-        result = manager.compare(path1, path2, mode=c.Tests.Files.CompareMode.SIZE)
+        result = manager.compare(path1, path2, mode=c.Tests.CompareMode.SIZE)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -518,7 +518,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("short", "file1.txt")
         path2 = manager.create("much longer content", "file2.txt")
-        result = manager.compare(path1, path2, mode=c.Tests.Files.CompareMode.SIZE)
+        result = manager.compare(path1, path2, mode=c.Tests.CompareMode.SIZE)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
@@ -527,7 +527,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("identical", "file1.txt")
         path2 = manager.create("identical", "file2.txt")
-        result = manager.compare(path1, path2, mode=c.Tests.Files.CompareMode.HASH)
+        result = manager.compare(path1, path2, mode=c.Tests.CompareMode.HASH)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -536,7 +536,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("line1\nline2\nline3", "file1.txt")
         path2 = manager.create("line1\nline2\nline3", "file2.txt")
-        result = manager.compare(path1, path2, mode=c.Tests.Files.CompareMode.LINES)
+        result = manager.compare(path1, path2, mode=c.Tests.CompareMode.LINES)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -545,7 +545,7 @@ class TestFlextTestsFiles:
         manager = tf(base_dir=tmp_path)
         path1 = manager.create("line1\nline2\nline3", "file1.txt")
         path2 = manager.create("a\nb\nc", "file2.txt")
-        result = manager.compare(path1, path2, mode=c.Tests.Files.CompareMode.LINES)
+        result = manager.compare(path1, path2, mode=c.Tests.CompareMode.LINES)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
@@ -671,7 +671,7 @@ class TestFlextTestsFiles:
         content = t.ConfigMap(root={"key": "value"})
         with tf.files({"config": content}) as paths:
             assert paths["config"].suffix == ".json"
-            data = json.loads(paths["config"].read_text())
+            data = u.Cli.json_read(paths["config"]).unwrap_or({})
             assert data == content.root
 
     def test_files_context_manager_mixed_types(self) -> None:
@@ -682,7 +682,7 @@ class TestFlextTestsFiles:
             "csv": [["a", "b"], ["1", "2"]],
         }) as paths:
             assert paths["text"].read_text() == "plain text"
-            assert json.loads(paths["json"].read_text()) == {"key": "value"}
+            assert u.Cli.json_read(paths["json"]).unwrap_or({}) == {"key": "value"}
             assert len(paths["csv"].read_text().strip().split("\n")) == 2
 
     def test_files_context_manager_custom_extension(self) -> None:
@@ -732,7 +732,7 @@ class TestFlextTestsFiles:
             encoding="utf-8",
             is_empty=False,
             first_line="#!/usr/bin/env python",
-            fmt=c.Tests.Files.Format.TEXT,
+            fmt=c.Tests.Format.TEXT,
             is_valid=True,
             created=now,
             modified=now,
@@ -969,7 +969,7 @@ class TestFlextTestsFiles:
         assert batch_result.success_count == 2
         config1 = tmp_path / "config1.json"
         assert config1.exists()
-        assert json.loads(config1.read_text())["key"] == "value1"
+        assert u.Cli.json_read(config1).unwrap_or({})["key"] == "value1"
 
     def test_batch_on_error_collect(self, tmp_path: Path) -> None:
         """Test batch with on_error='collect' continues on failures."""
@@ -979,7 +979,7 @@ class TestFlextTestsFiles:
         result = manager.batch_files(
             {"valid.txt": "content"},
             directory=tmp_path,
-            on_error=c.Tests.Files.ErrorMode.COLLECT,
+            on_error=c.Tests.ErrorMode.COLLECT,
         )
         _ = assertion_helpers.assert_flext_result_success(result)
         batch_result = result.value
@@ -1010,7 +1010,7 @@ class TestFlextTestsFiles:
         """Test create_in() for dict content (JSON)."""
         path = tf.create_in(t.ConfigMap(root={"key": "value"}), "config.json", tmp_path)
         assert path.exists()
-        content = json.loads(path.read_text())
+        content = u.Cli.json_read(path).unwrap_or({})
         assert content == {"key": "value"}
 
     def test_create_in_yaml_content(self, tmp_path: Path) -> None:
@@ -1034,7 +1034,7 @@ class TestFlextTestsFiles:
         user = UserModel(name="Alice", age=30)
         path = tf.create_in(user, "user.json", tmp_path)
         assert path.exists()
-        content = json.loads(path.read_text())
+        content = u.Cli.json_read(path).unwrap_or({})
         assert content == {"name": "Alice", "age": 30}
 
     def test_create_in_format_detection(self, tmp_path: Path) -> None:
@@ -1045,7 +1045,7 @@ class TestFlextTestsFiles:
             tmp_path,
         )
         assert path1.exists()
-        assert json.loads(path1.read_text()) == {"key": "value"}
+        assert u.Cli.json_read(path1).unwrap_or({}) == {"key": "value"}
         path2 = tf.create_in(
             t.ConfigMap(root={"key": "value"}),
             "config.yaml",
@@ -1063,13 +1063,13 @@ class TestFlextTestsFiles:
         result = r[t.ConfigMap].ok(t.ConfigMap(root={"status": "success"}))
         path = tf.create_in(result, "result.json", tmp_path)
         assert path.exists()
-        content = json.loads(path.read_text())
+        content = u.Cli.json_read(path).unwrap_or({})
         assert content == {"status": "success"}
 
     def test_create_in_custom_format(self, tmp_path: Path) -> None:
         """Test create_in() with explicit format override."""
         path = tf.create_in(
-            b"binary data", "data.dat", tmp_path, fmt=c.Tests.Files.Format.BIN
+            b"binary data", "data.dat", tmp_path, fmt=c.Tests.Format.BIN
         )
         assert path.exists()
         assert path.read_bytes() == b"binary data"

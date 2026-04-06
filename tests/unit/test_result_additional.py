@@ -64,14 +64,14 @@ def test_create_from_callable_and_repr() -> None:
     """Exercise callable None/exception branches and repr formatting."""
     none_callable: Callable[[], int] = cast("Callable[[], int]", lambda: None)
     none_result = r[int].create_from_callable(none_callable)
-    _ = u.Tests.Result.assert_failure(none_result)
+    _ = u.Tests.assert_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
     error_callable: Callable[[], int] = cast(
         "Callable[[], int]",
         lambda: (_ for _ in ()).throw(ValueError("test error")),
     )
     error_result = r[int].create_from_callable(error_callable)
-    _ = u.Tests.Result.assert_failure(error_result)
+    _ = u.Tests.assert_failure(error_result)
     assert "test error" in (error_result.error or "")
     success_result = r[int].create_from_callable(lambda: 7)
     assert repr(success_result) == "r[T].ok(7)"
@@ -95,5 +95,5 @@ def test_with_resource_cleanup_runs() -> None:
         cleanup_calls.append("ran")
 
     result = r[str].with_resource(factory, op, cleanup)
-    u.Tests.Result.assert_success_with_value(result, "done")
+    u.Tests.assert_success_with_value(result, "done")
     assert cleanup_calls == ["ran"]

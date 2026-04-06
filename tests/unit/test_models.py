@@ -442,7 +442,7 @@ class TestModels:
             "test_event",
             t.ConfigMap(root={"data": "value"}),
         )
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(
             len(entity.domain_events),
             eq=1,
@@ -480,7 +480,7 @@ class TestModels:
 
         entity = TestEntity(name="test", domain_events=[])
         result = entity.add_domain_event("", t.ConfigMap(root={"data": "value"}))
-        _ = u.Tests.Result.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         tm.that(result.error, none=False, msg="Failure result must have error message")
         if result.error is not None:
             tm.that(
@@ -492,7 +492,7 @@ class TestModels:
             "valid",
             t.ConfigMap(root={"string": "value", "number": 42}),
         )
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(
             len(entity.domain_events),
             eq=1,
@@ -559,7 +559,7 @@ class TestModels:
         assert hasattr(aggregate, "_invariants")
         assert isinstance(aggregate._invariants, list)
         result = aggregate.add_domain_event("test", t.ConfigMap(root={"data": "value"}))
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
 
     def test_aggregate_root_invariants(self) -> None:
         """Test AggregateRoot invariant checking."""
@@ -654,7 +654,7 @@ class TestModels:
         _ = aggregate.add_domain_event("event2", t.ConfigMap(root={"data": "value2"}))
         assert len(aggregate.domain_events) == 2
         result = aggregate.mark_events_as_committed()
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert not aggregate.domain_events
         committed_events = result.value
         assert len(committed_events) == 2
@@ -667,7 +667,7 @@ class TestModels:
 
         aggregate = TestAggregate(name="test", domain_events=[])
         result = aggregate.mark_events_as_committed()
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         committed_events = result.value
         assert not committed_events
 
@@ -684,7 +684,7 @@ class TestModels:
             ("event3", t.ConfigMap(root={"data": "value3"})),
         ]
         result = aggregate.add_domain_events_bulk(events)
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert len(aggregate.domain_events) == 3
         assert all(
             aggregate.domain_events[i].event_type == f"event{i + 1}" for i in range(3)
@@ -698,10 +698,10 @@ class TestModels:
 
         aggregate = TestAggregate(name="test", domain_events=[])
         result = aggregate.add_domain_events_bulk([])
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         invalid_empty_name = [("", t.ConfigMap(root={"data": "value"}))]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
-        _ = u.Tests.Result.assert_failure(result)
+        _ = u.Tests.assert_failure(result)
         assert (
             result.error is not None and "name must be non-empty string" in result.error
         )
@@ -719,7 +719,7 @@ class TestModels:
             for i in range(max_events + 1)
         ]
         result = aggregate.add_domain_events_bulk(events)
-        error = u.Tests.Result.assert_failure(result)
+        error = u.Tests.assert_failure(result)
         assert "would exceed max events" in error
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
@@ -742,7 +742,7 @@ class TestModels:
             "user_action",
             t.ConfigMap(root={"event_type": "test_event", "key": "value"}),
         )
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
         assert aggregate.handler_called is True
         assert aggregate.handler_data == {"event_type": "test_event", "key": "value"}
 
@@ -764,7 +764,7 @@ class TestModels:
             "failing_event",
             t.ConfigMap(root={"data": "value"}),
         )
-        _ = u.Tests.Result.assert_success(result)
+        _ = u.Tests.assert_success(result)
 
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""

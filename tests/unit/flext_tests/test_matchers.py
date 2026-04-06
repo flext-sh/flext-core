@@ -121,22 +121,22 @@ class TestFlextTestsMatchers:
 
     def test_assert_valid_email_passes(self) -> None:
         """Test tm.that() with email pattern match."""
-        tm.that("test@example.com", match=c.Tests.Matcher.EMAIL_PATTERN)
+        tm.that("test@example.com", match=c.Tests.EMAIL_PATTERN)
 
     def test_assert_valid_email_fails(self) -> None:
         """Test tm.that() with invalid email."""
         with pytest.raises(AssertionError, match="Assertion failed"):
-            tm.that("invalid-email", match=c.Tests.Matcher.EMAIL_PATTERN)
+            tm.that("invalid-email", match=c.Tests.EMAIL_PATTERN)
 
     def test_assert_valid_email_edge_cases(self) -> None:
         """Test tm.that() with various email edge cases."""
         valid_emails = ["user.name@domain.co.uk", "test+tag@example.com", "a@b.co"]
         invalid_emails = ["invalid", "@example.com", "test@", "test.example.com"]
         for email in valid_emails:
-            tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
+            tm.that(email, match=c.Tests.EMAIL_PATTERN)
         for email in invalid_emails:
             with pytest.raises(AssertionError):
-                tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
+                tm.that(email, match=c.Tests.EMAIL_PATTERN)
 
     def test_assert_config_valid_passes(self) -> None:
         """Test tm.that() with keys parameter for config validation."""

@@ -34,10 +34,10 @@ from tests import c, m, p, t, u
 def _create_entities_batch(
     names: t.StrSequence,
     values: Sequence[t.Tests.Testobject],
-    entity_class: p.Tests.EntityFactory[m.Core.DomainTestEntity],
+    entity_class: type[m.Core.DomainTestEntity],
     remove_ids: Sequence[bool] | None = None,
 ) -> r[Sequence[m.Core.DomainTestEntity]]:
-    return FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+    return FlextTestsUtilities.Tests.create_test_entities_batch(
         names=names,
         values=values,
         entity_class=entity_class,
@@ -48,9 +48,9 @@ def _create_entities_batch(
 def _create_entity(
     name: str,
     value: t.Tests.Testobject,
-    entity_class: p.Tests.EntityFactory[m.Core.DomainTestEntity],
+    entity_class: type[m.Core.DomainTestEntity],
 ) -> m.Core.DomainTestEntity:
-    return FlextTestsUtilities.Tests.DomainHelpers.create_test_entity_instance(
+    return FlextTestsUtilities.Tests.create_test_entity_instance(
         name=name,
         value=value,
         entity_class=entity_class,
@@ -62,7 +62,7 @@ def _create_value_object(
     count: int,
     value_class: p.Tests.ValueFactory[m.Core.DomainTestValue],
 ) -> m.Core.DomainTestValue:
-    return FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
+    return FlextTestsUtilities.Tests.create_test_value_object_instance(
         data=data,
         count=count,
         value_class=value_class,
@@ -74,7 +74,7 @@ def _create_value_objects_batch(
     count_list: Sequence[int],
     value_class: p.Tests.ValueFactory[m.Core.DomainTestValue],
 ) -> Sequence[m.Core.DomainTestValue]:
-    return FlextTestsUtilities.Tests.DomainHelpers.create_test_value_objects_batch(
+    return FlextTestsUtilities.Tests.create_test_value_objects_batch(
         data_list=data_list,
         count_list=count_list,
         value_class=value_class,
@@ -201,35 +201,35 @@ def create_compare_entities_cases() -> Sequence[test_unit_models.TestCaseMap]:
     return cast(
         "Sequence[test_unit_models.TestCaseMap]",
         [
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="same_id",
                 input_data=_as_payload_map(input_data_same_id),
                 expected_result=True,
                 id_attr="unique_id",
             ),
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="different_id",
                 input_data=_as_payload_map(input_data_different_id),
                 expected_result=False,
                 id_attr="unique_id",
             ),
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="different_type",
                 input_data=_as_payload_map(input_data_different_type),
                 expected_result=False,
                 id_attr="unique_id",
             ),
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="no_id",
                 input_data=_as_payload_map(input_data_no_id),
                 expected_result=False,
                 id_attr="unique_id",
             ),
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="custom_id_attr",
                 input_data=_as_payload_map(input_data_custom),
@@ -272,21 +272,21 @@ def create_hash_entity_cases() -> Sequence[test_unit_models.TestCaseMap]:
     return cast(
         "Sequence[test_unit_models.TestCaseMap]",
         [
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="hash_entity_by_id",
                 description="with_id",
                 input_data=_as_payload_map(input_data_with_id),
                 expected_result=_as_test_payload(int),
                 id_attr="unique_id",
             ),
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="hash_entity_by_id",
                 description="no_id",
                 input_data=_as_payload_map(input_data_no_id),
                 expected_result=_as_test_payload(int),
                 id_attr="unique_id",
             ),
-            u.Tests.TestCaseHelpers.create_operation_test_case(
+            u.Tests.create_operation_test_case(
                 operation="hash_entity_by_id",
                 description="custom_id_attr",
                 input_data=_as_payload_map(input_data_custom),
@@ -320,8 +320,8 @@ def create_compare_value_objects_cases() -> Sequence[test_unit_models.TestCaseMa
     )
     simple1 = m.Core.SimpleValue(c.Core.TestDomain.VALUE_DATA_TEST)
     simple2 = m.Core.SimpleValue(c.Core.TestDomain.VALUE_DATA_TEST)
-    bad1 = u.Tests.BadObjects.BadModelDump()
-    bad2 = u.Tests.BadObjects.BadModelDump()
+    bad1 = u.Tests.BadModelDump()
+    bad2 = u.Tests.BadModelDump()
     no_dict1 = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
     no_dict2 = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
     input_data_list: Sequence[test_unit_models.InputPayloadMap] = cast(
@@ -337,7 +337,7 @@ def create_compare_value_objects_cases() -> Sequence[test_unit_models.TestCaseMa
     )
     return cast(
         "Sequence[test_unit_models.TestCaseMap]",
-        u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+        u.Tests.create_batch_operation_test_cases(
             operation="compare_value_objects_by_value",
             descriptions=[
                 "same_values",
@@ -361,7 +361,7 @@ def create_hash_value_object_cases() -> Sequence[test_unit_models.TestCaseMap]:
         value_class=m.Core.DomainTestValue,
     )
     simple_obj = m.Core.SimpleValue(c.Core.TestDomain.VALUE_DATA_TEST)
-    bad_obj = u.Tests.BadObjects.BadModelDump()
+    bad_obj = u.Tests.BadModelDump()
     complex_items_list: t.StrSequence = list(c.Core.TestDomain.COMPLEX_ITEMS)
     complex_obj = m.Core.ComplexValue(
         c.Core.TestDomain.VALUE_DATA_TEST,
@@ -380,7 +380,7 @@ def create_hash_value_object_cases() -> Sequence[test_unit_models.TestCaseMap]:
     )
     return cast(
         "Sequence[test_unit_models.TestCaseMap]",
-        u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+        u.Tests.create_batch_operation_test_cases(
             operation="hash_value_object_by_value",
             descriptions=[
                 "with_model_dump",
@@ -414,14 +414,12 @@ class TestuDomain:
         test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test compare_entities_by_id using u."""
-        operation_result = (
-            FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-                id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
-            )
+        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
+            id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
-        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+        u.Tests.execute_and_assert_operation_result(
             lambda: operation_result,
             test_case,
         )
@@ -433,12 +431,10 @@ class TestuDomain:
     )
     def test_hash_entity_by_id(self, test_case: test_unit_models.TestCaseMap) -> None:
         """Test hash_entity_by_id using u."""
-        operation_result = (
-            FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-                id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
-            )
+        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
+            id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
         expected = test_case.get("expected_result")
         if isinstance(expected, type):
@@ -458,11 +454,9 @@ class TestuDomain:
         test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test compare_value_objects_by_value using u."""
-        operation_result = (
-            FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-            )
+        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
         )
         expected = test_case.get("expected_result")
         if isinstance(expected, type):
@@ -484,11 +478,9 @@ class TestuDomain:
         test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test hash_value_object_by_value using u."""
-        operation_result = (
-            FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
-                _require_payload_str(test_case["operation"]),
-                _require_payload_mapping(test_case["input_data"]),
-            )
+        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+            _require_payload_str(test_case["operation"]),
+            _require_payload_mapping(test_case["input_data"]),
         )
         assert isinstance(operation_result, int), (
             f"Expected int, got {type(operation_result)}: {operation_result}"

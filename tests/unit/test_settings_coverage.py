@@ -61,9 +61,9 @@ class TestFlextSettingsCoverage:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         config = t.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
-        config_path = files.create(config, "config.yaml", fmt=c.Tests.Files.Format.YAML)
+        config_path = files.create(config, "config.yaml", fmt=c.Tests.Format.YAML)
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt=c.Tests.Files.Format.YAML)
+        read_result = files.read(config_path, fmt=c.Tests.Format.YAML)
         tm.ok(read_result)
         tm.that(read_result.value, is_=t.ConfigMap)
         if isinstance(read_result.value, t.ConfigMap):
@@ -75,11 +75,9 @@ class TestFlextSettingsCoverage:
         payload = t.ConfigMap(
             root={"name": "flext-core", "workers": 4, "enabled": True},
         )
-        config_path = files.create(
-            payload, "config.json", fmt=c.Tests.Files.Format.JSON
-        )
+        config_path = files.create(payload, "config.json", fmt=c.Tests.Format.JSON)
         tm.that(config_path.exists(), eq=True)
-        read_result = files.read(config_path, fmt=c.Tests.Files.Format.JSON)
+        read_result = files.read(config_path, fmt=c.Tests.Format.JSON)
         tm.ok(read_result)
         tm.that(read_result.value, is_=t.ConfigMap)
         if isinstance(read_result.value, t.ConfigMap):
@@ -92,10 +90,10 @@ class TestFlextSettingsCoverage:
         files_cls: type[tf] = tf
         files = files_cls(base_dir=tmp_path)
         first = files.create(
-            t.ConfigMap(root={"x": 1}), "a.json", fmt=c.Tests.Files.Format.JSON
+            t.ConfigMap(root={"x": 1}), "a.json", fmt=c.Tests.Format.JSON
         )
         second = files.create(
-            t.ConfigMap(root={"x": 1}), "b.json", fmt=c.Tests.Files.Format.JSON
+            t.ConfigMap(root={"x": 1}), "b.json", fmt=c.Tests.Format.JSON
         )
         result = files.compare(first, second)
         tm.ok(result)
@@ -136,7 +134,7 @@ class TestFlextSettingsCoverage:
     def test_apply_override_benchmark(self) -> None:
         settings_obj = FlextSettings.get_global()
         keys = ["debug", "trace", "max_workers"]
-        formatter = u.Tests.Factory.format_operation
+        formatter = u.Tests.format_operation
         tm.that(callable(formatter), eq=True)
         start = perf_counter()
         for idx in range(400):

@@ -27,22 +27,22 @@ class TestDocker:
     """Test suite for flext_tests.docker module."""
 
     def test_container_status_values(self) -> None:
-        """Test c.Tests.Docker.ContainerStatus enum values."""
-        assert c.Tests.Docker.ContainerStatus.RUNNING.value == "running"
-        assert c.Tests.Docker.ContainerStatus.STOPPED.value == "stopped"
-        assert c.Tests.Docker.ContainerStatus.NOT_FOUND.value == "not_found"
-        assert c.Tests.Docker.ContainerStatus.ERROR.value == "error"
+        """Test c.Tests.ContainerStatus enum values."""
+        assert c.Tests.ContainerStatus.RUNNING.value == "running"
+        assert c.Tests.ContainerStatus.STOPPED.value == "stopped"
+        assert c.Tests.ContainerStatus.NOT_FOUND.value == "not_found"
+        assert c.Tests.ContainerStatus.ERROR.value == "error"
 
     def test_container_info_creation(self) -> None:
         """Test tk.ContainerInfo creation with required fields."""
         info = tk.ContainerInfo(
             name="test_container",
-            status=c.Tests.Docker.ContainerStatus.RUNNING,
+            status=c.Tests.ContainerStatus.RUNNING,
             ports={"8080/tcp": "8080"},
             image="nginx:latest",
         )
         assert info.name == "test_container"
-        assert info.status == c.Tests.Docker.ContainerStatus.RUNNING.value
+        assert info.status == c.Tests.ContainerStatus.RUNNING.value
         assert info.ports == {"8080/tcp": "8080"}
         assert info.image == "nginx:latest"
         assert not info.container_id
@@ -51,7 +51,7 @@ class TestDocker:
         """Test tk.ContainerInfo with container_id."""
         info = tk.ContainerInfo(
             name="test_container",
-            status=c.Tests.Docker.ContainerStatus.RUNNING,
+            status=c.Tests.ContainerStatus.RUNNING,
             ports={},
             image="nginx:latest",
             container_id="abc123",
