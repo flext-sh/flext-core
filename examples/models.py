@@ -60,11 +60,12 @@ from examples import (
     SharedHandle,
     SharedPerson,
 )
+from flext_core import FlextModels
 
 from ._models import Ex03Email, Ex03Money, Ex03Order, Ex03OrderItem, Ex03User
 
 
-class FlextCoreExampleModels:
+class FlextCoreExampleModels(FlextModels):
     """Facade namespace for all shared example models."""
 
     class Ex00:
