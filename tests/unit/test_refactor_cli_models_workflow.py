@@ -26,7 +26,7 @@ def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> Non
     cli_args = [
         "centralize-pydantic",
         f"--workspace={workspace!s}",
-        "--no-apply",
+        "--dry-run",
         "--normalize-remaining",
     ]
     with redirect_stdout(buffer):
@@ -55,7 +55,7 @@ def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
     cli_args = [
         "ultrawork-models",
         f"--workspace={workspace!s}",
-        "--no-apply",
+        "--dry-run",
         "--normalize-remaining",
     ]
     with redirect_stdout(buffer):
@@ -87,7 +87,7 @@ def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
     cli_args = [
         "namespace-enforce",
         f"--workspace={workspace!s}",
-        "--no-apply",
+        "--dry-run",
     ]
     with redirect_stdout(buffer):
         result = FlextInfraCli().main(["refactor"] + cli_args)

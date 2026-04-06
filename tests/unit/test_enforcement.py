@@ -142,7 +142,7 @@ class TestCheckFieldDescriptions:
             name: str = "test"
 
         own = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own)
+        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own=own)
         assert len(errors) == 1
         assert "description" in errors[0]
 
@@ -154,7 +154,7 @@ class TestCheckFieldDescriptions:
             name: str = Field(default="test", description="A name")
 
         own = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own)
+        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own=own)
         assert len(errors) == 0
 
 
