@@ -141,8 +141,8 @@ class TestCheckFieldDescriptions:
             _flext_enforcement_exempt: ClassVar[bool] = True
             name: str = "test"
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_field_descriptions(fields)
+        own = FlextUtilitiesEnforcement.own_fields(_M)
+        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own)
         assert len(errors) == 1
         assert "description" in errors[0]
 
@@ -153,8 +153,8 @@ class TestCheckFieldDescriptions:
             _flext_enforcement_exempt: ClassVar[bool] = True
             name: str = Field(default="test", description="A name")
 
-        fields = FlextUtilitiesEnforcement.own_fields(_M)
-        errors = FlextUtilitiesEnforcement.check_field_descriptions(fields)
+        own = FlextUtilitiesEnforcement.own_fields(_M)
+        errors = FlextUtilitiesEnforcement.check_field_descriptions(_M, own)
         assert len(errors) == 0
 
 
