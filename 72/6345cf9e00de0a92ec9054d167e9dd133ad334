@@ -1,0 +1,27 @@
+tests/constants.py
+  a47ee9c33c2a5631 39,41-42,44-45,319-322,324-326,328,330-332,335-337,340-342,345-347,350-352,355-357,360-362,365-367,370-372,375-377,380-382,384
+tests/fixtures/namespace_validator/rule2_composite_type_loose.py
+  a47ee9c33c2a5631 7
+tests/fixtures/namespace_validator/typings.py
+  a47ee9c33c2a5631 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "726345cf9e00de0a92ec9054d167e9dd133ad334",
+  "prompts": {
+    "a47ee9c33c2a5631": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "66e4e489-6769-4d5d-9802-7c8727b157bd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 2,
+      "accepted_lines": 49,
+      "overriden_lines": 14
+    }
+  }
+}
