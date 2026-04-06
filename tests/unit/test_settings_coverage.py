@@ -134,12 +134,10 @@ class TestFlextSettingsCoverage:
     def test_apply_override_benchmark(self) -> None:
         settings_obj = FlextSettings.get_global()
         keys = ["debug", "trace", "max_workers"]
-        formatter = u.Tests.format_operation
-        tm.that(callable(formatter), eq=True)
         start = perf_counter()
         for idx in range(400):
             key = keys[idx % len(keys)]
-            value = True if key in {"debug", "trace"} else len(str(formatter("w", idx)))
+            value = True if key in {"debug", "trace"} else len(f"w-{idx}")
             tm.that(settings_obj.apply_override(key, value), eq=True)
             _ = settings_obj.effective_log_level
         tm.that(perf_counter() - start, gte=0.0)

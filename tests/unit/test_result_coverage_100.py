@@ -108,7 +108,10 @@ class TestrCoverage:
         result: r[str] = r[str].fail("Error", error_data=error_data)
         self._ResultAssertions.assert_failure(result)
         tm.fail(
-            result, data=cast("t.Tests.Testobject", {"status": "failed", "count": 5})
+            result,
+            data=cast(
+                "t.Tests.TestobjectSerializable", {"status": "failed", "count": 5}
+            ),
         )
 
     def test_value_property_on_success(self) -> None:

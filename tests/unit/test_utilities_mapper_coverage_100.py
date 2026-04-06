@@ -218,7 +218,8 @@ class UtilitiesMapperCoverage100Namespace:
                 res[key] = self._to_json_safe(val)
             assert "obj" in res
             tm.that(
-                res["obj"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
+                res["obj"],
+                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
             )
 
         def test_convert_to_json_safe(self) -> None:
@@ -235,7 +236,8 @@ class UtilitiesMapperCoverage100Namespace:
                 res[key] = self._to_json_safe(val)
 
             tm.that(
-                res["obj"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
+                res["obj"],
+                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
             )
             tm.that(res["path"], eq="/tmp/example")
             tm.that(res["when"], eq="2026-03-12T10:30:45+00:00")
@@ -246,7 +248,8 @@ class UtilitiesMapperCoverage100Namespace:
             for key, val in d.items():
                 res[key] = self._to_json_safe(val)
             tm.that(
-                res["a"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
+                res["a"],
+                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
             )
 
         def test_convert_list_to_json(self) -> None:
@@ -260,7 +263,8 @@ class UtilitiesMapperCoverage100Namespace:
                     item_dict[key] = self._to_json_safe(val)
                 res.append(item_dict)
             tm.that(
-                res[0]["a"], eq=cast("t.Tests.Testobject", {"name": "test", "value": 1})
+                res[0]["a"],
+                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
             )
 
     class TestuMapperAdvanced:

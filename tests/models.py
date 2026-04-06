@@ -19,12 +19,12 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_cli import m as _cli_m
+from flext_cli import m
 from flext_tests import FlextTestsModels
 from tests import t
 
 
-class FlextCoreTestModels(FlextTestsModels, _cli_m):
+class FlextCoreTestModels(FlextTestsModels, m):
     """Models for flext-core tests - uses composition with FlextTestsModels.
 
     Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextTestsModels

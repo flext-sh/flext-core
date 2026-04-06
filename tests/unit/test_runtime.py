@@ -115,16 +115,7 @@ class TestFlextRuntime:
             | Sequence[ModuleType]
             | None
         ) = None
-        expected_result: (
-            t.NormalizedValue
-            | type[t.NormalizedValue]
-            | tuple[type[t.NormalizedValue], ...]
-            | ModuleType
-            | GenericAlias
-            | Mapping[str, Callable[[], t.NormalizedValue]]
-            | Sequence[ModuleType]
-            | None
-        ) = None
+        expected_result: bool | str | tuple[type, ...] | ModuleType | None = None
         should_reset_config: bool = False
 
     class RuntimeScenarios:

@@ -510,11 +510,11 @@ class TestAllLayerIntegration:
 
     def test_downstream_projects_load_cleanly(self) -> None:
         """Flext-core facades load without any violations."""
-        assert c.__name__ == "FlextConstants"
-        assert m.__name__ == "FlextModels"
-        assert p.__name__ == "FlextProtocols"
-        assert t.__name__ == "FlextTypes"
-        assert u.__name__ == "FlextUtilities"
+        assert c.__name__ == "FlextCoreTestConstants"
+        assert m.__name__ == "FlextCoreTestModels"
+        assert p.__name__ == "FlextCoreTestProtocols"
+        assert t.__name__ == "FlextCoreTestTypes"
+        assert u.__name__ == "FlextCoreTestUtilities"
 
     def test_exempt_flag_works_across_layers(self) -> None:
         """_flext_enforcement_exempt disables layer checks."""

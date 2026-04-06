@@ -33,7 +33,7 @@ from tests import c, m, p, t, u
 
 def _create_entities_batch(
     names: t.StrSequence,
-    values: Sequence[t.Tests.Testobject],
+    values: Sequence[t.Tests.TestobjectSerializable],
     entity_class: Callable[..., m.Core.DomainTestEntity],
     remove_ids: Sequence[bool] | None = None,
 ) -> r[Sequence[m.Core.DomainTestEntity]]:
@@ -47,7 +47,7 @@ def _create_entities_batch(
 
 def _create_entity(
     name: str,
-    value: t.Tests.Testobject,
+    value: t.Tests.TestobjectSerializable,
     entity_class: Callable[..., m.Core.DomainTestEntity],
 ) -> m.Core.DomainTestEntity:
     return FlextTestsUtilities.Tests.create_test_entity_instance(
@@ -87,8 +87,8 @@ from . import _models_impl as test_unit_models
 def _build_domain_test_entity(
     *,
     name: str,
-    value: t.Tests.Testobject,
-    **_kwargs: t.Tests.Testobject,
+    value: t.Tests.TestobjectSerializable,
+    **_kwargs: t.Tests.TestobjectSerializable,
 ) -> m.Core.DomainTestEntity:
     return m.Core.DomainTestEntity(
         name=name,
@@ -97,7 +97,7 @@ def _build_domain_test_entity(
     )
 
 
-def _convert_to_general_value(obj: t.Tests.Testobject) -> t.NormalizedValue:
+def _convert_to_general_value(obj: t.Tests.TestobjectSerializable) -> t.NormalizedValue:
     """Convert test object to NormalizedValue (handles Pydantic models).
 
     Args:
@@ -118,7 +118,7 @@ def _convert_to_general_value(obj: t.Tests.Testobject) -> t.NormalizedValue:
     return str(obj)
 
 
-def _require_payload_str(value: t.Tests.Testobject) -> str:
+def _require_payload_str(value: t.Tests.TestobjectSerializable) -> str:
     if isinstance(value, str):
         return value
     msg = f"Expected str payload, got {type(value).__name__}"
@@ -126,8 +126,8 @@ def _require_payload_str(value: t.Tests.Testobject) -> str:
 
 
 def _require_payload_mapping(
-    value: t.Tests.Testobject,
-) -> Mapping[str, t.Tests.Testobject]:
+    value: t.Tests.TestobjectSerializable,
+) -> Mapping[str, t.Tests.TestobjectSerializable]:
     if isinstance(value, Mapping):
         return value
     msg = f"Expected mapping payload, got {type(value).__name__}"
@@ -136,13 +136,13 @@ def _require_payload_mapping(
 
 def _as_test_payload(
     value: type[t.Primitives],
-) -> t.Tests.Testobject:
+) -> t.Tests.TestobjectSerializable:
     return value
 
 
 def _as_payload_map(
     value: test_unit_models.InputPayloadMap,
-) -> Mapping[str, t.Tests.Testobject]:
+) -> Mapping[str, t.Tests.TestobjectSerializable]:
     return value
 
 

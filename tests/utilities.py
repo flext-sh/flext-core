@@ -139,7 +139,7 @@ class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
                 """Create t.NormalizedValue that fails on str()."""
                 return FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject()
 
-            class BadDict(UserDict[str, t.Tests.Testobject]):
+            class BadDict(UserDict[str, t.Tests.TestobjectSerializable]):
                 """Dict that raises on get()."""
 
                 @override
@@ -149,11 +149,11 @@ class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
                     msg = "Bad dict get"
                     raise RuntimeError(msg)
 
-            class BadList(UserList[t.Tests.Testobject]):
+            class BadList(UserList[t.Tests.TestobjectSerializable]):
                 """List that raises on iteration."""
 
                 @override
-                def __iter__(self) -> Iterator[t.Tests.Testobject]:
+                def __iter__(self) -> Iterator[t.Tests.TestobjectSerializable]:
                     """Raise error on iteration."""
                     msg = "Bad list iteration"
                     raise RuntimeError(msg)
@@ -161,10 +161,10 @@ class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                model_dump: Callable[[], Mapping[str, t.Tests.Testobject]] = (
-                    staticmethod(
-                        lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
-                    )
+                model_dump: Callable[
+                    [], Mapping[str, t.Tests.TestobjectSerializable]
+                ] = staticmethod(
+                    lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
                 )
 
             class BadConfig:

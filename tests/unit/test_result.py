@@ -749,7 +749,8 @@ class Testr:
             on_failure=lambda e: {"status": 400, "error": e},
         )
         tm.that(
-            response, eq=cast("t.Tests.Testobject", {"status": 200, "data": "hello"})
+            response,
+            eq=cast("t.Tests.TestobjectSerializable", {"status": 200, "data": "hello"}),
         )
 
     @given(x=st.integers(min_value=-1000, max_value=1000))

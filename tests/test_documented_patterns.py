@@ -16,8 +16,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import FlextExceptions, FlextService, r
 from tests import p, t
 
-from ._models import EmailResponse
 from .test_utils import assertion_helpers
+
+
+class EmailResponse(BaseModel):
+    """Email response model."""
+
+    status: str
+    message_id: str
 
 
 class TestDocumentedPatterns:

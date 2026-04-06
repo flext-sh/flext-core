@@ -16,27 +16,27 @@ from flext_tests import tm
 from tests import c, r, t
 
 
-def _is_string(value: t.Tests.Testobject) -> bool:
+def _is_string(value: t.Tests.TestobjectSerializable) -> bool:
     return isinstance(value, str)
 
 
-def _is_string_or_bytes(value: t.Tests.Testobject) -> bool:
+def _is_string_or_bytes(value: t.Tests.TestobjectSerializable) -> bool:
     return isinstance(value, str | bytes)
 
 
-def _is_positive(value: t.Tests.Testobject) -> bool:
+def _is_positive(value: t.Tests.TestobjectSerializable) -> bool:
     return isinstance(value, int) and value > 0
 
 
-def _is_negative(value: t.Tests.Testobject) -> bool:
+def _is_negative(value: t.Tests.TestobjectSerializable) -> bool:
     return isinstance(value, int) and value < 0
 
 
-def _greater_than_zero(value: t.Tests.Testobject) -> bool:
+def _greater_than_zero(value: t.Tests.TestobjectSerializable) -> bool:
     return isinstance(value, int) and value > 0
 
 
-def _greater_than_two(value: t.Tests.Testobject) -> bool:
+def _greater_than_two(value: t.Tests.TestobjectSerializable) -> bool:
     return isinstance(value, int) and value > 2
 
 
@@ -238,22 +238,26 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
-        data: Mapping[str, t.Tests.Testobject] = {"user": {"name": "John", "age": 30}}
-        result = r[t.Tests.Testobject].ok(data)
+        data: Mapping[str, t.Tests.TestobjectSerializable] = {
+            "user": {"name": "John", "age": 30}
+        }
+        result = r[t.Tests.TestobjectSerializable].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
-        data: Mapping[str, t.Tests.Testobject] = {"user": {"email": "test@example.com"}}
-        result = r[t.Tests.Testobject].ok(data)
+        data: Mapping[str, t.Tests.TestobjectSerializable] = {
+            "user": {"email": "test@example.com"}
+        }
+        result = r[t.Tests.TestobjectSerializable].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
-        data: Mapping[str, t.Tests.Testobject] = {"user": {"name": "John"}}
-        result = r[t.Tests.Testobject].ok(data)
+        data: Mapping[str, t.Tests.TestobjectSerializable] = {"user": {"name": "John"}}
+        result = r[t.Tests.TestobjectSerializable].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         assert value == "John"
 
