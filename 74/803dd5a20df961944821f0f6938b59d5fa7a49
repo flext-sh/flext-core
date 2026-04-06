@@ -1,0 +1,29 @@
+tests/unit/test_enforcement.py
+  ed06264c3f07e70f 513-517
+tests/unit/test_runtime.py
+  ed06264c3f07e70f 118
+tests/test_documented_patterns.py
+  ed06264c3f07e70f 22-26
+tests/unit/test_settings_coverage.py
+  ed06264c3f07e70f 140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "74803dd5a20df961944821f0f6938b59d5fa7a49",
+  "prompts": {
+    "ed06264c3f07e70f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d3c479ce-c75f-432e-8929-7a3082f1d8a3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 20,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    }
+  }
+}
