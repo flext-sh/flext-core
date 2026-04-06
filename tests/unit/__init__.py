@@ -58,28 +58,12 @@ if _t.TYPE_CHECKING:
     )
 
     _utilities = _tests_unit__utilities
-    import tests.unit.conftest_infra as _tests_unit_conftest_infra
+    import tests.unit.contracts as _tests_unit_contracts
     from tests.unit._utilities import (
         TestFlextUtilitiesGuards,
         TestFlextUtilitiesMapper,
         test_guards,
         test_mapper,
-    )
-
-    conftest_infra = _tests_unit_conftest_infra
-    import tests.unit.contracts as _tests_unit_contracts
-    from tests.unit.conftest_infra import (
-        infra_git,
-        infra_git_repo,
-        infra_io,
-        infra_path,
-        infra_patterns,
-        infra_reporting,
-        infra_safe_command_output,
-        infra_selection,
-        infra_subprocess,
-        infra_test_workspace,
-        infra_toml,
     )
 
     contracts = _tests_unit_contracts
@@ -365,7 +349,7 @@ if _t.TYPE_CHECKING:
     )
 
     test_models_generic_full_coverage = _tests_unit_test_models_generic_full_coverage
-    import tests.unit.test_namespace_validator as _tests_unit_test_namespace_validator
+    import tests.unit.test_protocols_new as _tests_unit_test_protocols_new
     from tests.unit.test_models_generic_full_coverage import (
         test_canonical_aliases_are_available,
         test_conversion_add_converted_and_error_metadata_append_paths,
@@ -375,62 +359,9 @@ if _t.TYPE_CHECKING:
         test_operation_progress_start_operation_sets_runtime_fields,
     )
 
-    test_namespace_validator = _tests_unit_test_namespace_validator
-    import tests.unit.test_protocols_new as _tests_unit_test_protocols_new
-    from tests.unit.test_namespace_validator import TestFlextInfraNamespaceValidator
-
     test_protocols_new = _tests_unit_test_protocols_new
-    import tests.unit.test_refactor_cli_models_workflow as _tests_unit_test_refactor_cli_models_workflow
-    from tests.unit.test_protocols_new import TestFlextProtocols
-
-    test_refactor_cli_models_workflow = _tests_unit_test_refactor_cli_models_workflow
-    import tests.unit.test_refactor_migrate_to_class_mro as _tests_unit_test_refactor_migrate_to_class_mro
-    from tests.unit.test_refactor_cli_models_workflow import (
-        test_centralize_pydantic_cli_outputs_extended_metrics,
-        test_namespace_enforce_cli_fails_on_manual_protocol_violation,
-        test_ultrawork_models_cli_runs_dry_run_copy,
-    )
-
-    test_refactor_migrate_to_class_mro = _tests_unit_test_refactor_migrate_to_class_mro
-    import tests.unit.test_refactor_namespace_enforcer as _tests_unit_test_refactor_namespace_enforcer
-    from tests.unit.test_refactor_migrate_to_class_mro import (
-        test_discover_project_roots_without_nested_git_dirs,
-        test_migrate_protocols_rewrites_references_with_p_alias,
-        test_migrate_to_mro_inlines_alias_constant_into_constants_class,
-        test_migrate_to_mro_moves_constant_and_rewrites_reference,
-        test_migrate_to_mro_moves_manual_uppercase_assignment,
-        test_migrate_to_mro_normalizes_facade_alias_to_c,
-        test_migrate_to_mro_rejects_unknown_target,
-        test_migrate_typings_rewrites_references_with_t_alias,
-        test_refactor_utilities_iter_python_files_includes_examples_and_scripts,
-    )
-
-    test_refactor_namespace_enforcer = _tests_unit_test_refactor_namespace_enforcer
-    import tests.unit.test_refactor_policy_family_rules as _tests_unit_test_refactor_policy_family_rules
-    from tests.unit.test_refactor_namespace_enforcer import (
-        test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring,
-        test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future,
-        test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file,
-        test_namespace_enforcer_creates_missing_facades_and_rewrites_imports,
-        test_namespace_enforcer_detects_cyclic_imports_in_tests_directory,
-        test_namespace_enforcer_detects_internal_private_imports,
-        test_namespace_enforcer_detects_manual_protocol_outside_canonical_files,
-        test_namespace_enforcer_detects_manual_typings_and_compat_aliases,
-        test_namespace_enforcer_detects_missing_runtime_alias_outside_src,
-        test_namespace_enforcer_does_not_rewrite_indented_import_aliases,
-        test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks,
-    )
-
-    test_refactor_policy_family_rules = _tests_unit_test_refactor_policy_family_rules
     import tests.unit.test_registry as _tests_unit_test_registry
-    from tests.unit.test_refactor_policy_family_rules import (
-        test_decorators_family_blocks_dispatcher_target,
-        test_dispatcher_family_blocks_models_target,
-        test_helper_consolidation_is_prechecked,
-        test_models_family_blocks_utilities_target,
-        test_runtime_family_blocks_non_runtime_target,
-        test_utilities_family_allows_utilities_target,
-    )
+    from tests.unit.test_protocols_new import TestFlextProtocols
 
     test_registry = _tests_unit_test_registry
     import tests.unit.test_registry_full_coverage as _tests_unit_test_registry_full_coverage
@@ -542,33 +473,8 @@ if _t.TYPE_CHECKING:
     from tests.unit.test_service_coverage_100 import TestService100Coverage
 
     test_settings_coverage = _tests_unit_test_settings_coverage
-    import tests.unit.test_transformer_class_nesting as _tests_unit_test_transformer_class_nesting
-    from tests.unit.test_settings_coverage import TestFlextSettingsCoverage
-
-    test_transformer_class_nesting = _tests_unit_test_transformer_class_nesting
-    import tests.unit.test_transformer_helper_consolidation as _tests_unit_test_transformer_helper_consolidation
-    from tests.unit.test_transformer_class_nesting import (
-        test_class_nesting_appends_to_existing_namespace_and_removes_pass,
-        test_class_nesting_keeps_unmapped_top_level_classes,
-        test_class_nesting_moves_top_level_class_into_new_namespace,
-    )
-
-    test_transformer_helper_consolidation = (
-        _tests_unit_test_transformer_helper_consolidation
-    )
-    import tests.unit.test_transformer_nested_class_propagation as _tests_unit_test_transformer_nested_class_propagation
-    from tests.unit.test_transformer_helper_consolidation import (
-        TestHelperConsolidationTransformer,
-    )
-
-    test_transformer_nested_class_propagation = (
-        _tests_unit_test_transformer_nested_class_propagation
-    )
     import tests.unit.test_typings_full_coverage as _tests_unit_test_typings_full_coverage
-    from tests.unit.test_transformer_nested_class_propagation import (
-        test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage,
-        test_nested_class_propagation_updates_import_annotations_and_calls,
-    )
+    from tests.unit.test_settings_coverage import TestFlextSettingsCoverage
 
     test_typings_full_coverage = _tests_unit_test_typings_full_coverage
     import tests.unit.test_typings_new as _tests_unit_test_typings_new
@@ -928,10 +834,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestFlextContext": ("tests.unit.test_context", "TestFlextContext"),
         "TestFlextDecorators": ("tests.unit.test_decorators", "TestFlextDecorators"),
         "TestFlextHandlers": ("tests.unit.test_handlers", "TestFlextHandlers"),
-        "TestFlextInfraNamespaceValidator": (
-            "tests.unit.test_namespace_validator",
-            "TestFlextInfraNamespaceValidator",
-        ),
         "TestFlextMixinsNestedClasses": (
             "tests.unit.test_mixins",
             "TestFlextMixinsNestedClasses",
@@ -977,10 +879,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "TestHandlersFullCoverage": (
             "tests.unit.test_handlers_full_coverage",
             "TestHandlersFullCoverage",
-        ),
-        "TestHelperConsolidationTransformer": (
-            "tests.unit.test_transformer_helper_consolidation",
-            "TestHelperConsolidationTransformer",
         ),
         "TestIsStrNoneUnion": ("tests.unit.test_beartype_engine", "TestIsStrNoneUnion"),
         "TestLoggingsErrorPaths": (
@@ -1146,7 +1044,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "_models_impl": "tests.unit._models_impl",
         "_utilities": "tests.unit._utilities",
         "c": ("flext_core.constants", "FlextConstants"),
-        "conftest_infra": "tests.unit.conftest_infra",
         "contracts": "tests.unit.contracts",
         "create_compare_entities_cases": (
             "tests.unit.test_utilities_domain",
@@ -1168,20 +1065,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "e": ("flext_core.exceptions", "FlextExceptions"),
         "flext_tests": "tests.unit.flext_tests",
         "h": ("flext_core.handlers", "FlextHandlers"),
-        "infra_git": ("tests.unit.conftest_infra", "infra_git"),
-        "infra_git_repo": ("tests.unit.conftest_infra", "infra_git_repo"),
-        "infra_io": ("tests.unit.conftest_infra", "infra_io"),
-        "infra_path": ("tests.unit.conftest_infra", "infra_path"),
-        "infra_patterns": ("tests.unit.conftest_infra", "infra_patterns"),
-        "infra_reporting": ("tests.unit.conftest_infra", "infra_reporting"),
-        "infra_safe_command_output": (
-            "tests.unit.conftest_infra",
-            "infra_safe_command_output",
-        ),
-        "infra_selection": ("tests.unit.conftest_infra", "infra_selection"),
-        "infra_subprocess": ("tests.unit.conftest_infra", "infra_subprocess"),
-        "infra_test_workspace": ("tests.unit.conftest_infra", "infra_test_workspace"),
-        "infra_toml": ("tests.unit.conftest_infra", "infra_toml"),
         "inject": ("tests.unit.test_di_incremental", "inject"),
         "m": ("flext_core.models", "FlextModels"),
         "mapper": ("tests.unit.test_utilities_mapper_full_coverage", "mapper"),
@@ -1221,10 +1104,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "tests.unit.test_models_generic_full_coverage",
             "test_canonical_aliases_are_available",
         ),
-        "test_centralize_pydantic_cli_outputs_extended_metrics": (
-            "tests.unit.test_refactor_cli_models_workflow",
-            "test_centralize_pydantic_cli_outputs_extended_metrics",
-        ),
         "test_chk_exercises_missed_branches": (
             "tests.unit.test_utilities_guards_full_coverage",
             "test_chk_exercises_missed_branches",
@@ -1236,18 +1115,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_circuit_breaker_transitions_and_metrics": (
             "tests.unit.test_dispatcher_reliability",
             "test_circuit_breaker_transitions_and_metrics",
-        ),
-        "test_class_nesting_appends_to_existing_namespace_and_removes_pass": (
-            "tests.unit.test_transformer_class_nesting",
-            "test_class_nesting_appends_to_existing_namespace_and_removes_pass",
-        ),
-        "test_class_nesting_keeps_unmapped_top_level_classes": (
-            "tests.unit.test_transformer_class_nesting",
-            "test_class_nesting_keeps_unmapped_top_level_classes",
-        ),
-        "test_class_nesting_moves_top_level_class_into_new_namespace": (
-            "tests.unit.test_transformer_class_nesting",
-            "test_class_nesting_moves_top_level_class_into_new_namespace",
         ),
         "test_clear_keys_values_items_and_validate_branches": (
             "tests.unit.test_context_full_coverage",
@@ -1369,10 +1236,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         ),
         "test_decorators": "tests.unit.test_decorators",
         "test_decorators_discovery_full_coverage": "tests.unit.test_decorators_discovery_full_coverage",
-        "test_decorators_family_blocks_dispatcher_target": (
-            "tests.unit.test_refactor_policy_family_rules",
-            "test_decorators_family_blocks_dispatcher_target",
-        ),
         "test_decorators_full_coverage": "tests.unit.test_decorators_full_coverage",
         "test_dependency_integration_and_wiring_paths": (
             "tests.unit.test_runtime_full_coverage",
@@ -1385,15 +1248,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_deprecation_warnings": "tests.unit.test_deprecation_warnings",
         "test_di_incremental": "tests.unit.test_di_incremental",
         "test_di_services_access": "tests.unit.test_di_services_access",
-        "test_discover_project_roots_without_nested_git_dirs": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_discover_project_roots_without_nested_git_dirs",
-        ),
         "test_dispatcher_di": "tests.unit.test_dispatcher_di",
-        "test_dispatcher_family_blocks_models_target": (
-            "tests.unit.test_refactor_policy_family_rules",
-            "test_dispatcher_family_blocks_models_target",
-        ),
         "test_dispatcher_full_coverage": "tests.unit.test_dispatcher_full_coverage",
         "test_dispatcher_minimal": "tests.unit.test_dispatcher_minimal",
         "test_dispatcher_reliability": "tests.unit.test_dispatcher_reliability",
@@ -1485,10 +1340,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_handler_decorator_discovery": "tests.unit.test_handler_decorator_discovery",
         "test_handlers": "tests.unit.test_handlers",
         "test_handlers_full_coverage": "tests.unit.test_handlers_full_coverage",
-        "test_helper_consolidation_is_prechecked": (
-            "tests.unit.test_refactor_policy_family_rules",
-            "test_helper_consolidation_is_prechecked",
-        ),
         "test_inactive_and_none_value_paths": (
             "tests.unit.test_context_full_coverage",
             "test_inactive_and_none_value_paths",
@@ -1528,34 +1379,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "tests.unit.test_result_full_coverage",
             "test_map_flat_map_and_then_paths",
         ),
-        "test_migrate_protocols_rewrites_references_with_p_alias": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_migrate_protocols_rewrites_references_with_p_alias",
-        ),
-        "test_migrate_to_mro_inlines_alias_constant_into_constants_class": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_migrate_to_mro_inlines_alias_constant_into_constants_class",
-        ),
-        "test_migrate_to_mro_moves_constant_and_rewrites_reference": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_migrate_to_mro_moves_constant_and_rewrites_reference",
-        ),
-        "test_migrate_to_mro_moves_manual_uppercase_assignment": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_migrate_to_mro_moves_manual_uppercase_assignment",
-        ),
-        "test_migrate_to_mro_normalizes_facade_alias_to_c": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_migrate_to_mro_normalizes_facade_alias_to_c",
-        ),
-        "test_migrate_to_mro_rejects_unknown_target": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_migrate_to_mro_rejects_unknown_target",
-        ),
-        "test_migrate_typings_rewrites_references_with_t_alias": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_migrate_typings_rewrites_references_with_t_alias",
-        ),
         "test_mixins": "tests.unit.test_mixins",
         "test_mixins_full_coverage": "tests.unit.test_mixins_full_coverage",
         "test_model_helpers_remaining_paths": (
@@ -1572,60 +1395,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_models_context_full_coverage": "tests.unit.test_models_context_full_coverage",
         "test_models_cqrs_full_coverage": "tests.unit.test_models_cqrs_full_coverage",
         "test_models_entity_full_coverage": "tests.unit.test_models_entity_full_coverage",
-        "test_models_family_blocks_utilities_target": (
-            "tests.unit.test_refactor_policy_family_rules",
-            "test_models_family_blocks_utilities_target",
-        ),
         "test_models_generic_full_coverage": "tests.unit.test_models_generic_full_coverage",
-        "test_namespace_enforce_cli_fails_on_manual_protocol_violation": (
-            "tests.unit.test_refactor_cli_models_workflow",
-            "test_namespace_enforce_cli_fails_on_manual_protocol_violation",
-        ),
-        "test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring",
-        ),
-        "test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future",
-        ),
-        "test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file",
-        ),
-        "test_namespace_enforcer_creates_missing_facades_and_rewrites_imports": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_creates_missing_facades_and_rewrites_imports",
-        ),
-        "test_namespace_enforcer_detects_cyclic_imports_in_tests_directory": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_detects_cyclic_imports_in_tests_directory",
-        ),
-        "test_namespace_enforcer_detects_internal_private_imports": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_detects_internal_private_imports",
-        ),
-        "test_namespace_enforcer_detects_manual_protocol_outside_canonical_files": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_detects_manual_protocol_outside_canonical_files",
-        ),
-        "test_namespace_enforcer_detects_manual_typings_and_compat_aliases": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_detects_manual_typings_and_compat_aliases",
-        ),
-        "test_namespace_enforcer_detects_missing_runtime_alias_outside_src": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_detects_missing_runtime_alias_outside_src",
-        ),
-        "test_namespace_enforcer_does_not_rewrite_indented_import_aliases": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_does_not_rewrite_indented_import_aliases",
-        ),
-        "test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks": (
-            "tests.unit.test_refactor_namespace_enforcer",
-            "test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks",
-        ),
-        "test_namespace_validator": "tests.unit.test_namespace_validator",
         "test_narrow_contextvar_exception_branch": (
             "tests.unit.test_context_full_coverage",
             "test_narrow_contextvar_exception_branch",
@@ -1633,14 +1403,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_narrow_contextvar_invalid_inputs": (
             "tests.unit.test_context_full_coverage",
             "test_narrow_contextvar_invalid_inputs",
-        ),
-        "test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage": (
-            "tests.unit.test_transformer_nested_class_propagation",
-            "test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage",
-        ),
-        "test_nested_class_propagation_updates_import_annotations_and_calls": (
-            "tests.unit.test_transformer_nested_class_propagation",
-            "test_nested_class_propagation_updates_import_annotations_and_calls",
         ),
         "test_non_empty_and_normalize_branches": (
             "tests.unit.test_utilities_guards_full_coverage",
@@ -1695,14 +1457,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "tests.unit.test_result_full_coverage",
             "test_recover_tap_and_tap_error_paths",
         ),
-        "test_refactor_cli_models_workflow": "tests.unit.test_refactor_cli_models_workflow",
-        "test_refactor_migrate_to_class_mro": "tests.unit.test_refactor_migrate_to_class_mro",
-        "test_refactor_namespace_enforcer": "tests.unit.test_refactor_namespace_enforcer",
-        "test_refactor_policy_family_rules": "tests.unit.test_refactor_policy_family_rules",
-        "test_refactor_utilities_iter_python_files_includes_examples_and_scripts": (
-            "tests.unit.test_refactor_migrate_to_class_mro",
-            "test_refactor_utilities_iter_python_files_includes_examples_and_scripts",
-        ),
         "test_registry": "tests.unit.test_registry",
         "test_registry_full_coverage": "tests.unit.test_registry_full_coverage",
         "test_result": "tests.unit.test_result",
@@ -1727,10 +1481,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_runtime_create_instance_failure_branch": (
             "tests.unit.test_runtime_full_coverage",
             "test_runtime_create_instance_failure_branch",
-        ),
-        "test_runtime_family_blocks_non_runtime_target": (
-            "tests.unit.test_refactor_policy_family_rules",
-            "test_runtime_family_blocks_non_runtime_target",
         ),
         "test_runtime_full_coverage": "tests.unit.test_runtime_full_coverage",
         "test_runtime_integration_tracking_paths": (
@@ -1794,19 +1544,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "tests.unit.test_models_context_full_coverage",
             "test_to_general_value_dict_removed",
         ),
-        "test_transformer_class_nesting": "tests.unit.test_transformer_class_nesting",
-        "test_transformer_helper_consolidation": "tests.unit.test_transformer_helper_consolidation",
-        "test_transformer_nested_class_propagation": "tests.unit.test_transformer_nested_class_propagation",
         "test_type_guards_result": (
             "tests.unit.test_result_full_coverage",
             "test_type_guards_result",
         ),
         "test_typings_full_coverage": "tests.unit.test_typings_full_coverage",
         "test_typings_new": "tests.unit.test_typings_new",
-        "test_ultrawork_models_cli_runs_dry_run_copy": (
-            "tests.unit.test_refactor_cli_models_workflow",
-            "test_ultrawork_models_cli_runs_dry_run_copy",
-        ),
         "test_update_statistics_remove_hook_and_clone_false_result": (
             "tests.unit.test_context_full_coverage",
             "test_update_statistics_remove_hook_and_clone_false_result",
@@ -1823,10 +1566,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_utilities_domain": "tests.unit.test_utilities_domain",
         "test_utilities_domain_full_coverage": "tests.unit.test_utilities_domain_full_coverage",
         "test_utilities_enum_full_coverage": "tests.unit.test_utilities_enum_full_coverage",
-        "test_utilities_family_allows_utilities_target": (
-            "tests.unit.test_refactor_policy_family_rules",
-            "test_utilities_family_allows_utilities_target",
-        ),
         "test_utilities_generators_full_coverage": "tests.unit.test_utilities_generators_full_coverage",
         "test_utilities_guards_full_coverage": "tests.unit.test_utilities_guards_full_coverage",
         "test_utilities_mapper_coverage_100": "tests.unit.test_utilities_mapper_coverage_100",
@@ -1920,7 +1659,6 @@ __all__ = [
     "TestFlextContext",
     "TestFlextDecorators",
     "TestFlextHandlers",
-    "TestFlextInfraNamespaceValidator",
     "TestFlextMixinsNestedClasses",
     "TestFlextModelsBase",
     "TestFlextModelsCollectionsCoverage100",
@@ -1946,7 +1684,6 @@ __all__ = [
     "TestForbiddenCollectionOrigin",
     "TestHandlerDecoratorDiscovery",
     "TestHandlersFullCoverage",
-    "TestHelperConsolidationTransformer",
     "TestIsStrNoneUnion",
     "TestLoggingsErrorPaths",
     "TestLoggingsStrictReturns",
@@ -2014,7 +1751,6 @@ __all__ = [
     "_models_impl",
     "_utilities",
     "c",
-    "conftest_infra",
     "contracts",
     "create_compare_entities_cases",
     "create_compare_value_objects_cases",
@@ -2024,17 +1760,6 @@ __all__ = [
     "e",
     "flext_tests",
     "h",
-    "infra_git",
-    "infra_git_repo",
-    "infra_io",
-    "infra_path",
-    "infra_patterns",
-    "infra_reporting",
-    "infra_safe_command_output",
-    "infra_selection",
-    "infra_subprocess",
-    "infra_test_workspace",
-    "infra_toml",
     "inject",
     "m",
     "mapper",
@@ -2054,13 +1779,9 @@ __all__ = [
     "test_base",
     "test_beartype_engine",
     "test_canonical_aliases_are_available",
-    "test_centralize_pydantic_cli_outputs_extended_metrics",
     "test_chk_exercises_missed_branches",
     "test_circuit_breaker_half_open_and_rate_limiter_accessors",
     "test_circuit_breaker_transitions_and_metrics",
-    "test_class_nesting_appends_to_existing_namespace_and_removes_pass",
-    "test_class_nesting_keeps_unmapped_top_level_classes",
-    "test_class_nesting_moves_top_level_class_into_new_namespace",
     "test_clear_keys_values_items_and_validate_branches",
     "test_collection_utilities_coverage_100",
     "test_collections_coverage_100",
@@ -2104,16 +1825,13 @@ __all__ = [
     "test_create_overloads_and_auto_correlation",
     "test_decorators",
     "test_decorators_discovery_full_coverage",
-    "test_decorators_family_blocks_dispatcher_target",
     "test_decorators_full_coverage",
     "test_dependency_integration_and_wiring_paths",
     "test_dependency_registration_duplicate_guards",
     "test_deprecation_warnings",
     "test_di_incremental",
     "test_di_services_access",
-    "test_discover_project_roots_without_nested_git_dirs",
     "test_dispatcher_di",
-    "test_dispatcher_family_blocks_models_target",
     "test_dispatcher_full_coverage",
     "test_dispatcher_minimal",
     "test_dispatcher_reliability",
@@ -2151,7 +1869,6 @@ __all__ = [
     "test_handler_decorator_discovery",
     "test_handlers",
     "test_handlers_full_coverage",
-    "test_helper_consolidation_is_prechecked",
     "test_inactive_and_none_value_paths",
     "test_init_fallback_and_lazy_returns_result_property",
     "test_is_container_negative_paths_and_callable",
@@ -2166,13 +1883,6 @@ __all__ = [
     "test_map_flat_map_and_then_paths",
     "test_mapper",
     "test_matchers",
-    "test_migrate_protocols_rewrites_references_with_p_alias",
-    "test_migrate_to_mro_inlines_alias_constant_into_constants_class",
-    "test_migrate_to_mro_moves_constant_and_rewrites_reference",
-    "test_migrate_to_mro_moves_manual_uppercase_assignment",
-    "test_migrate_to_mro_normalizes_facade_alias_to_c",
-    "test_migrate_to_mro_rejects_unknown_target",
-    "test_migrate_typings_rewrites_references_with_t_alias",
     "test_mixins",
     "test_mixins_full_coverage",
     "test_model_helpers_remaining_paths",
@@ -2183,25 +1893,9 @@ __all__ = [
     "test_models_context_full_coverage",
     "test_models_cqrs_full_coverage",
     "test_models_entity_full_coverage",
-    "test_models_family_blocks_utilities_target",
     "test_models_generic_full_coverage",
-    "test_namespace_enforce_cli_fails_on_manual_protocol_violation",
-    "test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring",
-    "test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future",
-    "test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file",
-    "test_namespace_enforcer_creates_missing_facades_and_rewrites_imports",
-    "test_namespace_enforcer_detects_cyclic_imports_in_tests_directory",
-    "test_namespace_enforcer_detects_internal_private_imports",
-    "test_namespace_enforcer_detects_manual_protocol_outside_canonical_files",
-    "test_namespace_enforcer_detects_manual_typings_and_compat_aliases",
-    "test_namespace_enforcer_detects_missing_runtime_alias_outside_src",
-    "test_namespace_enforcer_does_not_rewrite_indented_import_aliases",
-    "test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks",
-    "test_namespace_validator",
     "test_narrow_contextvar_exception_branch",
     "test_narrow_contextvar_invalid_inputs",
-    "test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage",
-    "test_nested_class_propagation_updates_import_annotations_and_calls",
     "test_non_empty_and_normalize_branches",
     "test_normalization_edge_branches",
     "test_normalize_to_container_alias_removal_path",
@@ -2216,11 +1910,6 @@ __all__ = [
     "test_rate_limiter_jitter_application",
     "test_reconfigure_and_reset_state_paths",
     "test_recover_tap_and_tap_error_paths",
-    "test_refactor_cli_models_workflow",
-    "test_refactor_migrate_to_class_mro",
-    "test_refactor_namespace_enforcer",
-    "test_refactor_policy_family_rules",
-    "test_refactor_utilities_iter_python_files_includes_examples_and_scripts",
     "test_registry",
     "test_registry_full_coverage",
     "test_result",
@@ -2234,7 +1923,6 @@ __all__ = [
     "test_runtime",
     "test_runtime_coverage_100",
     "test_runtime_create_instance_failure_branch",
-    "test_runtime_family_blocks_non_runtime_target",
     "test_runtime_full_coverage",
     "test_runtime_integration_tracking_paths",
     "test_runtime_misc_remaining_paths",
@@ -2255,13 +1943,9 @@ __all__ = [
     "test_summary_error_paths_and_bindings_failures",
     "test_summary_properties_and_subclass_storage_reset",
     "test_to_general_value_dict_removed",
-    "test_transformer_class_nesting",
-    "test_transformer_helper_consolidation",
-    "test_transformer_nested_class_propagation",
     "test_type_guards_result",
     "test_typings_full_coverage",
     "test_typings_new",
-    "test_ultrawork_models_cli_runs_dry_run_copy",
     "test_update_statistics_remove_hook_and_clone_false_result",
     "test_utilities",
     "test_utilities_cache_coverage_100",
@@ -2275,7 +1959,6 @@ __all__ = [
     "test_utilities_domain",
     "test_utilities_domain_full_coverage",
     "test_utilities_enum_full_coverage",
-    "test_utilities_family_allows_utilities_target",
     "test_utilities_generators_full_coverage",
     "test_utilities_guards_full_coverage",
     "test_utilities_mapper_coverage_100",

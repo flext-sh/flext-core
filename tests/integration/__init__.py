@@ -36,14 +36,10 @@ if _t.TYPE_CHECKING:
     from tests.integration.test_architecture import TestAutomatedArchitecture
 
     test_config_integration = _tests_integration_test_config_integration
-    import tests.integration.test_infra_integration as _tests_integration_test_infra_integration
+    import tests.integration.test_integration as _tests_integration_test_integration
     from tests.integration.test_config_integration import (
         TestFlextSettingsSingletonIntegration,
     )
-
-    test_infra_integration = _tests_integration_test_infra_integration
-    import tests.integration.test_integration as _tests_integration_test_integration
-    from tests.integration.test_infra_integration import TestInfraIntegration
 
     test_integration = _tests_integration_test_integration
     import tests.integration.test_migration_validation as _tests_integration_test_migration_validation
@@ -116,10 +112,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "tests.integration.test_refactor_nesting_idempotency",
             "TestIdempotency",
         ),
-        "TestInfraIntegration": (
-            "tests.integration.test_infra_integration",
-            "TestInfraIntegration",
-        ),
         "TestLibraryIntegration": (
             "tests.integration.test_integration",
             "TestLibraryIntegration",
@@ -158,7 +150,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "test_class_nesting_refactor_single_file_end_to_end",
         ),
         "test_config_integration": "tests.integration.test_config_integration",
-        "test_infra_integration": "tests.integration.test_infra_integration",
         "test_integration": "tests.integration.test_integration",
         "test_migration_validation": "tests.integration.test_migration_validation",
         "test_refactor_nesting_file": "tests.integration.test_refactor_nesting_file",
@@ -190,7 +181,6 @@ __all__ = [
     "TestFlextSettingsSingletonIntegration",
     "TestFunction",
     "TestIdempotency",
-    "TestInfraIntegration",
     "TestLibraryIntegration",
     "TestMigrationValidation",
     "TestPatternsCommands",
@@ -216,7 +206,6 @@ __all__ = [
     "test_architecture",
     "test_class_nesting_refactor_single_file_end_to_end",
     "test_config_integration",
-    "test_infra_integration",
     "test_integration",
     "test_migration_validation",
     "test_patterns_commands",

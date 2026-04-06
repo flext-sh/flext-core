@@ -18,8 +18,6 @@ from flext_core import (
     FlextLogger,
     FlextRegistry,
     FlextSettings,
-    T,
-    T_co,
     d,
     e,
     h,
@@ -29,10 +27,6 @@ from flext_core import (
     x,
 )
 from tests import m, t
-
-FlextTestResult = r[T]
-FlextTestResultCo = r[T_co]
-type StandardTestCase = m.Core.StandardTestCaseModel
 
 
 class TestUtils:

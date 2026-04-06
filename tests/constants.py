@@ -18,12 +18,12 @@ from typing import Annotated, ClassVar, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_infra import FlextInfraConstants
+from flext_cli import FlextCliConstants
 from flext_tests import FlextTestsConstants
 from tests import t
 
 
-class FlextCoreTestConstants(FlextTestsConstants, FlextInfraConstants):
+class FlextCoreTestConstants(FlextTestsConstants, FlextCliConstants):
     """Constants for flext-core tests - extends FlextTestsConstants.
 
     Architecture layer: Layer 0 foundation constants with flext-core test extensions.
