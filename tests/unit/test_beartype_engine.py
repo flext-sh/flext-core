@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import subprocess
 import sys
 import textwrap
 import typing
@@ -19,7 +18,8 @@ from pathlib import Path
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core import FlextUtilitiesBeartypeConf, FlextUtilitiesBeartypeEngine as be, u
+from flext_core import FlextUtilitiesBeartypeConf, FlextUtilitiesBeartypeEngine as be
+from tests import m, u
 
 # ------------------------------------------------------------------ #
 # contains_any                                                        #
@@ -268,14 +268,18 @@ class TestBeartypeClawCompatibility:
     """Verify current beartype.claw compatibility boundaries."""
 
     @staticmethod
-    def _run_python(script: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+    def _run_python(script: str, cwd: Path) -> m.Cli.CommandOutput:
         """Run a Python snippet in a subprocess and capture text output."""
-        return subprocess.run(
+        result = u.Cli.run_raw(
             [sys.executable, "-c", script],
-            capture_output=True,
             cwd=cwd,
-            text=True,
-            check=False,
+        )
+        if result.is_success:
+            return result.value
+        return m.Cli.CommandOutput(
+            stdout="",
+            stderr=result.error or "python snippet execution failed",
+            exit_code=1,
         )
 
     def test_claw_supports_pydantic_and_runtime_protocols(
@@ -350,7 +354,7 @@ class TestBeartypeClawCompatibility:
             cwd=Path(__file__).resolve().parents[2],
         )
 
-        assert result.returncode == 0, result.stderr
+        assert result.exit_code == 0, result.stderr
         assert "pkgprobe_ok" in result.stdout
 
     def test_claw_supports_recursive_aliases_in_synthetic_package(
@@ -397,7 +401,7 @@ class TestBeartypeClawCompatibility:
             cwd=Path(__file__).resolve().parents[2],
         )
 
-        assert result.returncode == 0, result.stderr
+        assert result.exit_code == 0, result.stderr
         assert "aliasprobe_ok x" in result.stdout
 
     def test_claw_current_config_imports_flext_core(self) -> None:
@@ -420,7 +424,7 @@ class TestBeartypeClawCompatibility:
         )
 
         combined_output = result.stdout + result.stderr
-        assert result.returncode == 0, combined_output
+        assert result.exit_code == 0, combined_output
         assert "unexpected_success True" in combined_output
         assert "GuardInput" not in combined_output
         assert "unquoted relative forward reference 'p'" not in combined_output
@@ -448,6 +452,6 @@ class TestBeartypeClawCompatibility:
         )
 
         combined_output = result.stdout + result.stderr
-        assert result.returncode != 0
+        assert result.exit_code != 0
         assert "PydanticSchemaGenerationError" in combined_output
         assert "RecursiveContainerMapping" in combined_output

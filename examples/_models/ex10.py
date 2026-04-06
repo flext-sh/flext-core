@@ -7,7 +7,8 @@ from typing import ClassVar
 
 from pydantic import ConfigDict
 
-from flext_core import m, p, r, t
+from examples import p, t
+from flext_core import m, r
 
 
 class Ex10Message(m.Command):

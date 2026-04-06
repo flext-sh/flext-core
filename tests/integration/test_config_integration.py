@@ -23,9 +23,8 @@ from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_cli import u
 from flext_core import FlextContainer, FlextLogger, FlextSettings
-from tests import c, p, t
+from tests import c, p, t, u
 
 
 class TestFlextSettingsSingletonIntegration:

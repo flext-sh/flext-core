@@ -20,12 +20,6 @@ if _t.TYPE_CHECKING:
     )
 
     test_container_performance = _tests_benchmark_test_container_performance
-    import tests.benchmark.test_refactor_nesting_performance as _tests_benchmark_test_refactor_nesting_performance
-    from tests.benchmark.test_container_performance import TestContainerPerformance
-
-    test_refactor_nesting_performance = (
-        _tests_benchmark_test_refactor_nesting_performance
-    )
     from flext_core.constants import FlextConstants as c
     from flext_core.decorators import FlextDecorators as d
     from flext_core.exceptions import FlextExceptions as e
@@ -37,9 +31,7 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from tests.benchmark.test_refactor_nesting_performance import (
-        TestPerformanceBenchmarks,
-    )
+    from tests.benchmark.test_container_performance import TestContainerPerformance
 _LAZY_IMPORTS = {
     "TestContainerMemory": (
         "tests.benchmark.test_container_memory",
@@ -48,10 +40,6 @@ _LAZY_IMPORTS = {
     "TestContainerPerformance": (
         "tests.benchmark.test_container_performance",
         "TestContainerPerformance",
-    ),
-    "TestPerformanceBenchmarks": (
-        "tests.benchmark.test_refactor_nesting_performance",
-        "TestPerformanceBenchmarks",
     ),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
@@ -65,7 +53,6 @@ _LAZY_IMPORTS = {
     "t": ("flext_core.typings", "FlextTypes"),
     "test_container_memory": "tests.benchmark.test_container_memory",
     "test_container_performance": "tests.benchmark.test_container_performance",
-    "test_refactor_nesting_performance": "tests.benchmark.test_refactor_nesting_performance",
     "u": ("flext_core.utilities", "FlextUtilities"),
     "x": ("flext_core.mixins", "FlextMixins"),
 }
@@ -73,7 +60,6 @@ _LAZY_IMPORTS = {
 __all__ = [
     "TestContainerMemory",
     "TestContainerPerformance",
-    "TestPerformanceBenchmarks",
     "c",
     "d",
     "e",
@@ -86,7 +72,6 @@ __all__ = [
     "t",
     "test_container_memory",
     "test_container_performance",
-    "test_refactor_nesting_performance",
     "u",
     "x",
 ]

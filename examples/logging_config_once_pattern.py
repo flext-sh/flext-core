@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import c, r, s, t
+from examples import c, t
+from flext_core import r, s
 
 
 class DatabaseService(s[t.ConfigMap]):

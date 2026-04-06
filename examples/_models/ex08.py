@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from flext_core import c, m
+from examples import c
+from flext_core import m
 
 
 class Ex08User(m.Entity):

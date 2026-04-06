@@ -6,8 +6,8 @@ from typing import override
 
 from pydantic import BaseModel
 
-from examples import Examples
-from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, t, u
+from examples import Examples, c, m, t, u
+from flext_core import FlextDispatcher, FlextRegistry, h, r
 
 
 class _CommandA(m.Command):

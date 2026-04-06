@@ -12,18 +12,11 @@ from examples import (
     Ex11EntityStub as _EntityStub,
     Ex11Payload as _Payload,
     Examples,
-)
-from flext_core import (
-    FlextContext,
-    FlextLogger,
-    FlextSettings,
-    e,
     m,
-    r,
-    s,
     t,
     u,
 )
+from flext_core import FlextContext, FlextLogger, FlextSettings, e, r, s
 
 
 class _EchoService(s[str]):

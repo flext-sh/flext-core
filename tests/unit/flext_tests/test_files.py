@@ -15,9 +15,8 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
-from flext_cli import u
 from flext_tests import tf
-from tests import assertion_helpers, c, m, r, t
+from tests import assertion_helpers, c, m, r, t, u
 
 
 class TestFlextTestsFiles:

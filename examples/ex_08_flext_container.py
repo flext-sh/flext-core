@@ -6,8 +6,8 @@ import sys
 from types import ModuleType
 from typing import override
 
-from examples import Examples
-from flext_core import FlextContainer, FlextContext, c, r, t, u
+from examples import Examples, c, t, u
+from flext_core import FlextContainer, FlextContext, r
 
 
 class _WireProbe:

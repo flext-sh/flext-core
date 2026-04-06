@@ -32,9 +32,9 @@ import structlog
 from dependency_injector import containers, providers
 from hypothesis import given, strategies as st
 
-from flext_core import FlextContainer, FlextContext, u
+from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
-from tests import c, m, p, s, t, x
+from tests import c, m, p, s, t, u, x
 
 
 class TestFlextRuntime:

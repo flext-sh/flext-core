@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pydantic import Field, field_validator
 
-from flext_core import c, m, r
+from examples import c
+from flext_core import m, r
 
 
 class Ex00UserProfile(m.Entity):

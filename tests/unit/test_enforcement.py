@@ -26,12 +26,8 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
     FlextUtilitiesEnforcement,
-    c,
-    m,
-    p,
-    t,
-    u,
 )
+from tests import c, m, p, t, u
 
 
 class TestCheckNoAny:

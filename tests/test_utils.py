@@ -23,10 +23,9 @@ from flext_core import (
     h,
     r,
     s,
-    u,
     x,
 )
-from tests import m, t
+from tests import m, t, u
 
 
 class TestUtils:

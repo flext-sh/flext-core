@@ -38,7 +38,8 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict
 
-from flext_core import m, r, t
+from examples import m, t
+from flext_core import r
 
 
 class Examples:

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pydantic import Field, field_validator
 
-from flext_core import FlextSettings, c
+from examples import c
+from flext_core import FlextSettings
 
 
 class ExConfigAppConfig(FlextSettings):

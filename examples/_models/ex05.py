@@ -7,7 +7,8 @@ from typing import ClassVar, override
 
 from pydantic import ConfigDict, Field, field_validator
 
-from flext_core import m, t
+from examples import t
+from flext_core import m
 
 
 @unique

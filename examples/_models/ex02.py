@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from flext_core import FlextSettings, c, m, r, t
+from examples import c, t
+from flext_core import FlextSettings, m, r
 
 
 class Ex02TestConfig(FlextSettings):

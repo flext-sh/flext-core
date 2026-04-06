@@ -19,9 +19,8 @@ from pathlib import Path
 import pytest
 from docker import DockerClient
 
-from flext_cli import u
 from flext_tests import tk
-from tests import assertion_helpers, c, r
+from tests import assertion_helpers, c, r, u
 
 
 class TestDocker:
