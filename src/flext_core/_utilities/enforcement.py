@@ -15,6 +15,7 @@ import warnings
 from collections.abc import Mapping, MutableSequence, MutableSet, Sequence
 from enum import EnumType
 from pathlib import Path
+from typing import Annotated, get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -101,14 +102,29 @@ class FlextUtilitiesEnforcement:
 
     @staticmethod
     def check_field_descriptions(
+        model_type: type[BaseModel],
         own: Mapping[str, FieldInfo],
     ) -> Sequence[str]:
         """Require Field(description=...) on all public fields."""
         errors: MutableSequence[str] = []
+        raw_annotation_map = vars(model_type).get("__annotations__", {})
+        resolved_annotations = inspect.get_annotations(model_type, eval_str=False)
         for name, info in own.items():
             if name.startswith("_"):
                 continue
-            if not info.description:
+            description = info.description
+            if not description:
+                raw_annotation = raw_annotation_map.get(name)
+                if isinstance(raw_annotation, str) and "description=" in raw_annotation:
+                    description = raw_annotation
+            if not description:
+                annotation = resolved_annotations.get(name)
+                if get_origin(annotation) is Annotated:
+                    for metadata in get_args(annotation)[1:]:
+                        if isinstance(metadata, FieldInfo) and metadata.description:
+                            description = metadata.description
+                            break
+            if not description:
                 errors.append(
                     f'Field "{name}": Field() must include description="...".',
                 )
@@ -269,7 +285,7 @@ class FlextUtilitiesEnforcement:
         # CONFIGURABLE checks
         config_errors: MutableSequence[str] = []
         config_errors.extend(
-            FlextUtilitiesEnforcement.check_field_descriptions(fields),
+            FlextUtilitiesEnforcement.check_field_descriptions(model_type, fields),
         )
         config_errors.extend(
             FlextUtilitiesEnforcement.check_extra_policy(model_type),
