@@ -1,0 +1,25 @@
+tests/unit/test_utilities_domain.py
+  a47ee9c33c2a5631 23,37,51
+tests/unit/test_constants_new.py
+  a47ee9c33c2a5631 19,715
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "732e582e5dde84fe288bb26ce27bdd2d6f8a4c30",
+  "prompts": {
+    "a47ee9c33c2a5631": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "66e4e489-6769-4d5d-9802-7c8727b157bd",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 95,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
