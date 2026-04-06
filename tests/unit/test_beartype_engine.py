@@ -342,8 +342,8 @@ class TestBeartypeClawCompatibility:
                 import sys
 
                 sys.path.insert(0, {str(tmp_path)!r})
-                import pkgprobe.models  # noqa: F401
-                import pkgprobe.protocols  # noqa: F401
+                import pkgprobe.models
+                import pkgprobe.protocols
                 print("pkgprobe_ok")
                 """
             ),
