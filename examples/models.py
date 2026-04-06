@@ -60,7 +60,7 @@ from examples import (
     SharedHandle,
     SharedPerson,
 )
-from flext_core import FlextModels
+from flext_core.models import FlextModels
 
 from ._models import Ex03Email, Ex03Money, Ex03Order, Ex03OrderItem, Ex03User
 

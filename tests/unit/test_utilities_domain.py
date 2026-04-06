@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import cast
 
 import pytest
@@ -34,7 +34,7 @@ from tests import c, m, p, t, u
 def _create_entities_batch(
     names: t.StrSequence,
     values: Sequence[t.Tests.Testobject],
-    entity_class: type[m.Core.DomainTestEntity],
+    entity_class: Callable[..., m.Core.DomainTestEntity],
     remove_ids: Sequence[bool] | None = None,
 ) -> r[Sequence[m.Core.DomainTestEntity]]:
     return FlextTestsUtilities.Tests.create_test_entities_batch(
@@ -48,7 +48,7 @@ def _create_entities_batch(
 def _create_entity(
     name: str,
     value: t.Tests.Testobject,
-    entity_class: type[m.Core.DomainTestEntity],
+    entity_class: Callable[..., m.Core.DomainTestEntity],
 ) -> m.Core.DomainTestEntity:
     return FlextTestsUtilities.Tests.create_test_entity_instance(
         name=name,

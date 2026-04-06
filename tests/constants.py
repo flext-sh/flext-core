@@ -18,12 +18,12 @@ from typing import Annotated, ClassVar, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_cli import FlextCliConstants
+from flext_cli import c as _cli_c
 from flext_tests import FlextTestsConstants
 from tests import t
 
 
-class FlextCoreTestConstants(FlextTestsConstants, FlextCliConstants):
+class FlextCoreTestConstants(FlextTestsConstants, _cli_c):
     """Constants for flext-core tests - extends FlextTestsConstants.
 
     Architecture layer: Layer 0 foundation constants with flext-core test extensions.
@@ -35,13 +35,6 @@ class FlextCoreTestConstants(FlextTestsConstants, FlextCliConstants):
     - Only flext-core-specific constants allowed (not generic for other projects)
     - All generic constants come from FlextTestsConstants
     """
-
-    # Platform namespace for tests (delegates to production FlextConstantsPlatform)
-    Platform = (
-        FlextCliConstants.Platform
-        if hasattr(FlextCliConstants, "Platform")
-        else type("Platform", (), {})
-    )
 
     class Core:
         """flext-core-specific test namespaces."""
@@ -315,72 +308,6 @@ class FlextCoreTestConstants(FlextTestsConstants, FlextCliConstants):
             OutputFormat = FlextTestsConstants.OutputFormat
             Mode = FlextTestsConstants.Mode
             RegistrationStatus = FlextTestsConstants.RegistrationStatus
-
-        class Platform:
-            """Platform constants - delegates to production FlextConstantsPlatform."""
-
-            # Import CircuitBreakerState from production constants
-            CircuitBreakerState = (
-                FlextCliConstants.Platform.CircuitBreakerState
-                if hasattr(FlextCliConstants, "Platform")
-                else None
-            )
-            # Import all PATTERN_* constants from production
-            PATTERN_EMAIL = (
-                FlextCliConstants.PATTERN_EMAIL
-                if hasattr(FlextCliConstants, "PATTERN_EMAIL")
-                else None
-            )
-            PATTERN_URL = (
-                FlextCliConstants.PATTERN_URL
-                if hasattr(FlextCliConstants, "PATTERN_URL")
-                else None
-            )
-            PATTERN_PHONE_NUMBER = (
-                FlextCliConstants.PATTERN_PHONE_NUMBER
-                if hasattr(FlextCliConstants, "PATTERN_PHONE_NUMBER")
-                else None
-            )
-            PATTERN_UUID = (
-                FlextCliConstants.PATTERN_UUID
-                if hasattr(FlextCliConstants, "PATTERN_UUID")
-                else None
-            )
-            PATTERN_PATH = (
-                FlextCliConstants.PATTERN_PATH
-                if hasattr(FlextCliConstants, "PATTERN_PATH")
-                else None
-            )
-            PATTERN_IDENTIFIER = (
-                FlextCliConstants.PATTERN_IDENTIFIER
-                if hasattr(FlextCliConstants, "PATTERN_IDENTIFIER")
-                else None
-            )
-            PATTERN_IDENTIFIER_WITH_UNDERSCORE = (
-                FlextCliConstants.PATTERN_IDENTIFIER_WITH_UNDERSCORE
-                if hasattr(FlextCliConstants, "PATTERN_IDENTIFIER_WITH_UNDERSCORE")
-                else None
-            )
-            PATTERN_SIMPLE_IDENTIFIER = (
-                FlextCliConstants.PATTERN_SIMPLE_IDENTIFIER
-                if hasattr(FlextCliConstants, "PATTERN_SIMPLE_IDENTIFIER")
-                else None
-            )
-            PATTERN_MODULE_PATH = (
-                FlextCliConstants.PATTERN_MODULE_PATH
-                if hasattr(FlextCliConstants, "PATTERN_MODULE_PATH")
-                else None
-            )
-            PATTERN_ISO8601_TIMESTAMP = (
-                FlextCliConstants.PATTERN_ISO8601_TIMESTAMP
-                if hasattr(FlextCliConstants, "PATTERN_ISO8601_TIMESTAMP")
-                else None
-            )
-            PATTERN_DN_STRING = (
-                FlextCliConstants.PATTERN_DN_STRING
-                if hasattr(FlextCliConstants, "PATTERN_DN_STRING")
-                else None
-            )
 
         @unique
         class StatusEnum(StrEnum):

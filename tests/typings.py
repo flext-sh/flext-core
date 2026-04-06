@@ -15,12 +15,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_cli import FlextCliTypes
+from flext_cli import t as _cli_t
 from flext_core import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
 
-class FlextCoreTestTypes(FlextTestsTypes, FlextCliTypes):
+class FlextCoreTestTypes(FlextTestsTypes, _cli_t):
     """Type system foundation for flext-core tests - extends FlextTestsTypes.
 
     Architecture: Extends FlextTestsTypes with flext-core-specific type definitions.

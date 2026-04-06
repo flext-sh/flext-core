@@ -16,6 +16,7 @@ from types import MappingProxyType
 
 import pytest
 
+from flext_cli import FlextCliConstants
 from flext_tests import tm
 from tests import c, t
 
@@ -711,7 +712,7 @@ class TestFlextConstants:
         invalid: list[str],
     ) -> None:
         """Platform regex patterns correctly match/reject inputs."""
-        pattern_value = getattr(c.Platform, pattern_attr)
+        pattern_value = getattr(FlextCliConstants, pattern_attr)
         compiled: Pattern[str] = re.compile(pattern_value)
         for case in valid:
             tm.that(
