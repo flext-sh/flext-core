@@ -128,7 +128,7 @@ endif
 # === CACHE ===
 LINT_CACHE_DIR := .lint-cache
 CACHE_TIMEOUT := 300
-BASE_INFRA_WORKSPACE := env -u MYPYPATH PYTHONPATH="$(WORKSPACE_ROOT)/flext-infra/src" $(VENV_PYTHON) -m flext_infra workspace
+BASE_INFRA_WORKSPACE := env -u MYPYPATH PYTHONPATH="$(WORKSPACE_ROOT)/flext-infra/src" $(if $(wildcard $(VENV_PYTHON)),$(VENV_PYTHON),python) -m flext_infra workspace
 
 $(LINT_CACHE_DIR):
 	$(Q)mkdir -p $(LINT_CACHE_DIR)
