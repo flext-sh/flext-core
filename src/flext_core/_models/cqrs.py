@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Literal, Self
+from typing import Annotated, ClassVar, Literal
 
 from pydantic import (
     BaseModel,
@@ -211,7 +211,7 @@ class FlextModelsCqrs:
             return validate_result.value
 
     class Handler(FlextModelsBase.ArbitraryTypesModel):
-        """Handler configuration model with Builder pattern support."""
+        """Handler configuration model."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
@@ -262,72 +262,6 @@ class FlextModelsCqrs:
                 description="Handler metadata (Pydantic model)",
             ),
         ] = None
-
-        class Builder:
-            """Builder pattern for Handler (reduces 8 params to fluent API).
-
-            Example:
-                config = (Handler.Builder(handler_type=c.HandlerType.COMMAND)
-                         .with_name("MyHandler")
-                         .with_timeout(30)
-                         .build())
-
-            """
-
-            def __init__(self, handler_type: c.HandlerType) -> None:
-                """Initialize builder with required handler_type."""
-                super().__init__()
-                handler_short_id = FlextUtilitiesGenerators.generate_prefixed_id(
-                    "",
-                    length=8,
-                )
-                self._data: t.Dict = t.Dict(
-                    root={
-                        "handler_type": handler_type,
-                        c.FIELD_HANDLER_MODE: c.DEFAULT_HANDLER_MODE
-                        if handler_type == c.HandlerType.COMMAND
-                        else c.HANDLER_MODE_QUERY,
-                        "handler_id": f"{handler_type}_handler_{handler_short_id}",
-                        "handler_name": f"{handler_type.title()} Handler",
-                        "command_timeout": c.DEFAULT_MAX_COMMAND_RETRIES,
-                        "max_command_retries": c.DEFAULT_MAX_COMMAND_RETRIES,
-                        c.FIELD_METADATA: None,
-                    },
-                )
-
-            def build(self) -> FlextModelsCqrs.Handler:
-                """Build and validate Handler instance."""
-                return FlextModelsCqrs.Handler.model_validate(self._data.root)
-
-            def merge_config(self, config: t.ConfigMap) -> Self:
-                """Merge additional config (fluent API)."""
-                self._data.root.update(config.root)
-                return self
-
-            def with_id(self, handler_id: str) -> Self:
-                """Set handler ID (fluent API)."""
-                self._data.root["handler_id"] = handler_id
-                return self
-
-            def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
-                """Set metadata (fluent API - Pydantic model)."""
-                self._data.root[c.FIELD_METADATA] = metadata
-                return self
-
-            def with_name(self, handler_name: str) -> Self:
-                """Set handler name (fluent API)."""
-                self._data.root["handler_name"] = handler_name
-                return self
-
-            def with_retries(self, max_retries: int) -> Self:
-                """Set max retries (fluent API)."""
-                self._data.root["max_command_retries"] = max_retries
-                return self
-
-            def with_timeout(self, timeout: int) -> Self:
-                """Set command timeout (fluent API)."""
-                self._data.root["command_timeout"] = timeout
-                return self
 
     class Event(FlextModelsBase.ArbitraryTypesModel):
         """Event model for CQRS event operations.

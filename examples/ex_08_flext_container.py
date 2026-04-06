@@ -307,7 +307,7 @@ class Ex08FlextContainer(Examples):
         self.check("list_services.contains.resource", resource_name in service_list)
 
     def _exercise_singleton_and_creation(self) -> FlextContainer:
-        """Exercise get_global/create/builder creation and singleton semantics."""
+        """Exercise get_global/create entrypoints and singleton semantics."""
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
         root_context = FlextContext()
@@ -318,12 +318,8 @@ class Ex08FlextContainer(Examples):
         self.check("get_global.same_instance", root is FlextContainer.get_global())
         created_false = FlextContainer.create(auto_register_factories=False)
         created_true = FlextContainer.create(auto_register_factories=True)
-        builder_false = FlextContainer.Builder.create(auto_register_factories=False)
-        builder_true = FlextContainer.Builder.create(auto_register_factories=True)
         self.check("create.false.same_instance", created_false is root)
         self.check("create.true.same_instance", created_true is root)
-        self.check("builder.create.false.same_instance", builder_false is root)
-        self.check("builder.create.true.same_instance", builder_true is root)
         random_ok_val = self.rand_int(1, 1000)
         self.check(
             "result.ok.roundtrip",

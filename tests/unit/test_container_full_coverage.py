@@ -163,8 +163,8 @@ class TestContainerFullCoverage:
     def _namespace_config_none(_namespace: str) -> None:
         return None
 
-    def test_builder(self) -> None:
-        tm.that(FlextContainer.Builder.create(), is_=p.Container)
+    def test_create(self) -> None:
+        tm.that(FlextContainer.create(), is_=p.Container)
 
     def test_create_auto_register_factories_path(
         self,

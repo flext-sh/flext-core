@@ -435,67 +435,42 @@ class TestFlextModelsCqrs:
         tm.that(restored.handler_id, eq="h-rt")
         tm.that(restored.handler_type, eq=c.HandlerType.QUERY)
 
-    # ── Handler.Builder ────────────────────────────────────────
+    def test_handler_direct_custom_fields(self) -> None:
+        handler = m.Handler(
+            handler_id="custom-id",
+            handler_name="MyHandler",
+            command_timeout=30,
+            max_command_retries=5,
+        )
+        tm.that(handler.handler_id, eq="custom-id")
+        tm.that(handler.handler_name, eq="MyHandler")
+        tm.that(handler.command_timeout, eq=30)
+        tm.that(handler.max_command_retries, eq=5)
 
-    def test_builder_basic_build(self) -> None:
-        handler = m.Handler.Builder(c.HandlerType.COMMAND).build()
-        tm.that(handler.handler_type, eq=c.HandlerType.COMMAND)
-        tm.that(handler.handler_id, has="command_handler_")
-        tm.that(handler.handler_name, eq="Command Handler")
-
-    def test_builder_query_type(self) -> None:
-        handler = m.Handler.Builder(c.HandlerType.QUERY).build()
+    def test_handler_query_mode_can_be_passed_directly(self) -> None:
+        handler = m.Handler(
+            handler_id="query-1",
+            handler_name="QueryHandler",
+            handler_type=c.HandlerType.QUERY,
+            handler_mode=c.HandlerType.QUERY,
+        )
         tm.that(handler.handler_type, eq=c.HandlerType.QUERY)
         tm.that(handler.handler_mode, eq=c.HANDLER_MODE_QUERY)
 
-    def test_builder_with_name(self) -> None:
-        handler = (
-            m.Handler.Builder(c.HandlerType.COMMAND).with_name("MyHandler").build()
-        )
-        tm.that(handler.handler_name, eq="MyHandler")
-
-    def test_builder_with_id(self) -> None:
-        handler = m.Handler.Builder(c.HandlerType.COMMAND).with_id("custom-id").build()
-        tm.that(handler.handler_id, eq="custom-id")
-
-    def test_builder_with_timeout(self) -> None:
-        handler = m.Handler.Builder(c.HandlerType.COMMAND).with_timeout(30).build()
-        tm.that(handler.command_timeout, eq=30)
-
-    def test_builder_with_retries(self) -> None:
-        handler = m.Handler.Builder(c.HandlerType.COMMAND).with_retries(5).build()
-        tm.that(handler.max_command_retries, eq=5)
-
-    def test_builder_with_metadata(self) -> None:
-        meta = m.Metadata(version="3.0.0")
-        handler = m.Handler.Builder(c.HandlerType.COMMAND).with_metadata(meta).build()
+    def test_handler_model_validate_accepts_metadata_mapping(self) -> None:
+        handler = m.Handler.model_validate({
+            "handler_id": "merged-1",
+            "handler_name": "Merged",
+            "command_timeout": 60,
+            "max_command_retries": 3,
+            "metadata": {"version": "3.0.0"},
+        })
+        tm.that(handler.handler_name, eq="Merged")
+        tm.that(handler.command_timeout, eq=60)
+        tm.that(handler.max_command_retries, eq=3)
         tm.that(handler.metadata, none=False)
         if handler.metadata is not None:
             tm.that(handler.metadata.version, eq="3.0.0")
-
-    def test_builder_fluent_chaining(self) -> None:
-        handler = (
-            m.Handler
-            .Builder(c.HandlerType.COMMAND)
-            .with_name("Chained")
-            .with_id("chain-1")
-            .with_timeout(60)
-            .with_retries(3)
-            .build()
-        )
-        tm.that(handler.handler_name, eq="Chained")
-        tm.that(handler.handler_id, eq="chain-1")
-        tm.that(handler.command_timeout, eq=60)
-        tm.that(handler.max_command_retries, eq=3)
-
-    def test_builder_merge_config(self) -> None:
-        handler = (
-            m.Handler
-            .Builder(c.HandlerType.COMMAND)
-            .merge_config(t.ConfigMap(root={"handler_name": "Merged"}))
-            .build()
-        )
-        tm.that(handler.handler_name, eq="Merged")
 
     # ── FlextMessage discriminated union ───────────────────────
 

@@ -24,8 +24,12 @@ if _t.TYPE_CHECKING:
     )
 
     base = _flext_core__models_base
-    import flext_core._models.collections as _flext_core__models_collections
+    import flext_core._models.builder as _flext_core__models_builder
     from flext_core._models.base import FlextModelsBase
+
+    builder = _flext_core__models_builder
+    import flext_core._models.collections as _flext_core__models_collections
+    from flext_core._models.builder import FlextModelsBuilder
 
     collections = _flext_core__models_collections
     import flext_core._models.container as _flext_core__models_container
@@ -98,6 +102,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
     {
         "FlextGenericModels": "flext_core._models.generic",
         "FlextModelsBase": "flext_core._models.base",
+        "FlextModelsBuilder": "flext_core._models.builder",
         "FlextModelsCollections": "flext_core._models.collections",
         "FlextModelsConfig": "flext_core._models.settings",
         "FlextModelsContainer": "flext_core._models.container",
@@ -116,6 +121,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "FlextModelsService": "flext_core._models.service",
         "_context": "flext_core._models._context",
         "base": "flext_core._models.base",
+        "builder": "flext_core._models.builder",
         "collections": "flext_core._models.collections",
         "container": "flext_core._models.container",
         "containers": "flext_core._models.containers",
@@ -139,6 +145,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
 __all__ = [
     "FlextGenericModels",
     "FlextModelsBase",
+    "FlextModelsBuilder",
     "FlextModelsCollections",
     "FlextModelsConfig",
     "FlextModelsContainer",
@@ -163,6 +170,7 @@ __all__ = [
     "FlextModelsService",
     "_context",
     "base",
+    "builder",
     "collections",
     "container",
     "containers",

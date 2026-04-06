@@ -1129,34 +1129,5 @@ class FlextContainer(p.Container):
         """Get default configuration instance."""
         return FlextSettings.get_global()
 
-    class Builder:
-        """Builder utility for creating FlextContainer instances.
-
-        Provides convenient access to FlextContainer.create() method for
-        creating container instances with optional factory auto-registration.
-        """
-
-        @classmethod
-        def create(cls, *, auto_register_factories: bool = False) -> FlextContainer:
-            """Create a new FlextContainer instance.
-
-            Args:
-                auto_register_factories: If True, scan calling module for
-                    @factory() decorated functions and auto-register them.
-                    Default: False.
-
-            Returns:
-                FlextContainer instance.
-
-            Example:
-                >>> container = FlextContainer.Builder.create(
-                ...     auto_register_factories=True
-                ... )
-
-            """
-            return FlextContainer.create(
-                auto_register_factories=auto_register_factories,
-            )
-
 
 __all__ = ["FlextContainer"]

@@ -32,10 +32,12 @@ from flext_core import (
     FlextModelsRegistry,
     FlextModelsService,
 )
+from flext_core._models.builder import FlextModelsBuilder
 
 
 class FlextModels(
     FlextModelsBase,
+    FlextModelsBuilder,
     FlextModelsCollections,
     FlextModelsContainer,
     FlextModelsContainers,
