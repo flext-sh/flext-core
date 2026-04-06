@@ -78,7 +78,6 @@ if _t.TYPE_CHECKING:
         infra_safe_command_output,
         infra_selection,
         infra_subprocess,
-        infra_templates,
         infra_test_workspace,
         infra_toml,
     )
@@ -1181,7 +1180,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         ),
         "infra_selection": ("tests.unit.conftest_infra", "infra_selection"),
         "infra_subprocess": ("tests.unit.conftest_infra", "infra_subprocess"),
-        "infra_templates": ("tests.unit.conftest_infra", "infra_templates"),
         "infra_test_workspace": ("tests.unit.conftest_infra", "infra_test_workspace"),
         "infra_toml": ("tests.unit.conftest_infra", "infra_toml"),
         "inject": ("tests.unit.test_di_incremental", "inject"),
@@ -2035,7 +2033,6 @@ __all__ = [
     "infra_safe_command_output",
     "infra_selection",
     "infra_subprocess",
-    "infra_templates",
     "infra_test_workspace",
     "infra_toml",
     "inject",

@@ -75,6 +75,7 @@ dev = [
   "django-stubs>=5.2.2",
   "factory-boy>=3.3.1",
   "faker>=37.4",
+  "flext-cli",
   "flext-infra",
   "flext-tests",
   "hypothesis>=6.125",
@@ -172,6 +173,7 @@ omit = [
 # [MANAGED] deptry
 [tool.deptry]
 known_first_party = [
+  "flext_cli",
   "flext_core",
   "flext_infra",
   "flext_tests",
@@ -577,11 +579,7 @@ select = [
 
 combine-as-imports = true
 force-single-line = false
-known-first-party = [
-  "flext_core",
-  "flext_infra",
-  "flext_tests",
-]
+known-first-party = [ "flext_cli", "flext_core", "flext_infra", "flext_tests" ]
 split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]

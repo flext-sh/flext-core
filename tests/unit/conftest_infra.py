@@ -12,7 +12,6 @@ from flext_infra import (
     FlextInfraUtilitiesReporting,
     FlextInfraUtilitiesSelection,
     FlextInfraUtilitiesSubprocess,
-    FlextInfraUtilitiesTemplates,
     FlextInfraUtilitiesToml,
 )
 
@@ -69,11 +68,6 @@ def infra_selection() -> FlextInfraUtilitiesSelection:
 @pytest.fixture
 def infra_reporting() -> FlextInfraUtilitiesReporting:
     return FlextInfraUtilitiesReporting()
-
-
-@pytest.fixture
-def infra_templates() -> FlextInfraUtilitiesTemplates:
-    return FlextInfraUtilitiesTemplates()
 
 
 @pytest.fixture

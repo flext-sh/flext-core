@@ -15,16 +15,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 import os
 import threading
 from collections.abc import Mapping, MutableSequence, Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from flext_cli import FlextCliUtilities
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_cli import u
 from flext_core import FlextContainer, FlextLogger, FlextSettings
 from tests import c, p, t
 
@@ -72,10 +71,9 @@ class TestFlextSettingsSingletonIntegration:
             """Create temporary config file."""
             file_path = temp_dir / f"test_config.{self.file_format}"
             if self.file_format == "json":
-                with Path(file_path).open("w", encoding="utf-8") as f:
-                    json.dump(self.config_data, f, indent=2)
+                u.Cli.json_write(file_path, self.config_data)
             elif self.file_format == "yaml":
-                FlextCliUtilities.Cli.yaml_dump(file_path, self.config_data)
+                u.Cli.yaml_dump(file_path, self.config_data)
             elif self.file_format == "toml":
                 content = "\n".join(
                     (f"{k} = {v!r}" for k, v in self.config_data.items()),
@@ -247,11 +245,10 @@ class TestFlextSettingsSingletonIntegration:
                 "cache_enabled": False,
             }
             config_file_path = temp_directory / "config.json"
-            config_file_path.write_text(json.dumps(config_data), encoding="utf-8")
+            u.Cli.json_write(config_file_path, config_data)
             assert config_file_path.exists()
-            assert config_file_path.read_text(encoding="utf-8") == json.dumps(
-                config_data,
-            )
+            loaded = u.Cli.json_read(config_file_path).unwrap_or({})
+            assert loaded == config_data
             config = FlextSettings.get_global()
             assert config.app_name is not None
             assert config.log_level is not None
@@ -281,9 +278,9 @@ class TestFlextSettingsSingletonIntegration:
                 "command_timeout": 60,
                 "validation_strict_mode": True,
             }
-            FlextCliUtilities.Cli.yaml_dump(config_file, config_data)
+            u.Cli.yaml_dump(config_file, config_data)
             assert config_file.exists()
-            loaded_data = FlextCliUtilities.Cli.yaml_parse(
+            loaded_data = u.Cli.yaml_parse(
                 config_file.read_text(encoding="utf-8"),
             ).unwrap_or({})
             assert loaded_data == config_data
@@ -314,10 +311,9 @@ class TestFlextSettingsSingletonIntegration:
                 "port": 3000,
             }
             json_file = temp_directory / "config.json"
-            with json_file.open("w", encoding="utf-8") as f:
-                json.dump(json_config, f)
+            u.Cli.json_write(json_file, json_config)
             assert json_file.exists()
-            assert json.loads(json_file.read_text(encoding="utf-8")) == json_config
+            assert u.Cli.json_read(json_file).unwrap_or({}) == json_config
             env_file = temp_directory / ".env"
             env_file.write_text(
                 "FLEXT_APP_NAME=from-env\nFLEXT_HOST=env-host\n",
