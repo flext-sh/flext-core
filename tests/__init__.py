@@ -159,7 +159,7 @@ if _t.TYPE_CHECKING:
 
     test_documented_patterns = _tests_test_documented_patterns
     import tests.test_service_result_property as _tests_test_service_result_property
-    from tests.test_documented_patterns import TestDocumentedPatterns
+    from tests.test_documented_patterns import EmailResponse, TestDocumentedPatterns
 
     test_service_result_property = _tests_test_service_result_property
     import tests.test_utils as _tests_test_utils
@@ -578,6 +578,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "tests.fixtures.namespace_validator.rule1_loose_constant",
             "DEFAULT_TIMEOUT",
         ),
+        "EmailResponse": ("tests.test_documented_patterns", "EmailResponse"),
         "FlextCoreTestConstants": ("tests.constants", "FlextCoreTestConstants"),
         "FlextCoreTestModels": ("tests.models", "FlextCoreTestModels"),
         "FlextCoreTestProtocols": ("tests.protocols", "FlextCoreTestProtocols"),
@@ -717,6 +718,7 @@ __all__ = [
     "CacheTestModel",
     "ComplexModel",
     "ConfigModelForTest",
+    "EmailResponse",
     "ExplodingLenList",
     "FailingService",
     "FailingServiceAuto",
