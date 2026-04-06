@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core._models.base import FlextModelsBase
+from flext_core import FlextModelsBase
 
 
 class FlextModelsBuilder:
