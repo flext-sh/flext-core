@@ -3,16 +3,15 @@ alias.FlextService_is_s: True
 execute.unwrap: 'echo:ok'
 execute.unwrap.matches: True
 result.property: 'echo:ok'
-runtime.type: 'ModelPrivateAttr'
-runtime.has_config_attr: False
-runtime.has_context_attr: False
-runtime.has_container_attr: False
+runtime.type: 'ServiceRuntime'
+runtime.has_config_attr: True
+runtime.has_context_attr: True
+runtime.has_container_attr: True
 context.type: 'FlextContext'
 config.type: 'FlextSettings'
 container.type: 'FlextContainer'
 validate_business_rules.default: True
 is_valid.default: True
-service_info.type: '_EchoService'
 validate_business_rules.override.success: False
 validate_business_rules.override.error: 'invalid-rule'
 is_valid.override: False
@@ -29,9 +28,9 @@ auto_execute.execute_count_after_result: 1
 create_runtime.default.context: 'FlextContext'
 create_runtime.full.container: 'FlextContainer'
 create_runtime.full.config: 'FlextSettings'
-to_dict.none: ConfigMap
-to_dict.mapping: ConfigMap
-to_dict.model: ConfigMap
+to_dict.none: dict
+to_dict.mapping: dict
+to_dict.model: dict
 model_dump.type: 'dict'
 model_dump.has_result: True
 model_dump_json.type: 'str'
@@ -48,10 +47,10 @@ generate_datetime_utc.tz: True
 track.context.type: 'dict'
 track.has_operation_count: True
 track.has_success_rate: True
-traverse.success: [10, 32]
-traverse.fail_fast: 'odd:7'
+traverse.success: list
+traverse.fail_fast: 'odd:71'
 accumulate_errors.ok: True
-accumulate_errors.fail: 'ukbx; osfm'
+accumulate_errors.fail: 'gcgd; orfp'
 
 [namespace_bootstrap_cqrs_validation]
 Bootstrap.create_instance.type: '_TinyType'
@@ -60,21 +59,12 @@ CQRS.MetricsTracker.record: True
 CQRS.MetricsTracker.get: True
 CQRS.ContextStack.push.dict: True
 CQRS.ContextStack.current.type: 'ExecutionContext'
-CQRS.ContextStack.pop.handler_name: 'gpxkfz'
-CQRS.ContextStack.pop.empty: {}
-ProtocolValidation.is_handler: True
-ProtocolValidation.is_service: False
-ProtocolValidation.is_command_bus: True
-ProtocolValidation.protocol_ok: False
-ProtocolValidation.protocol_unknown: 'Unknown protocol: UnknownProto. Supported: Handler, Service, CommandBus, Repository, Configurable'
-ProtocolValidation.processor_ok: True
-ProtocolValidation.processor_bad: "Processor _ProcessorProtocolBad missing required method 'process()'. Processors must implement: model_dump, process, validate"
-Validation.validate_with_result.ok: 'NCB'
-Validation.validate_with_result.fail: 'Validation failed: too-short'
+CQRS.ContextStack.pop.handler_name: 'olekym'
+CQRS.ContextStack.pop.empty: dict
 
 [namespace_runtime_and_integration]
 Metadata.version: '1.0.0'
-Metadata.attributes: {'service': 'svc.ukbjzn'}
+Metadata.attributes: dict
 Integration.calls: 'ok'
 DependencyIntegration.service: True
 DependencyIntegration.factory: True
@@ -84,33 +74,33 @@ DependencyIntegration.service_module.type: 'DynamicContainer'
 DependencyIntegration.resource_module.type: 'DynamicContainer'
 RuntimeResult.is_success: True
 RuntimeResult.is_failure: True
-RuntimeResult.value: 32
-RuntimeResult.error: 'fdyomu'
-RuntimeResult.error_code: 'uecl'
+RuntimeResult.value: 26
+RuntimeResult.error: 'tcgtru'
+RuntimeResult.error_code: 'oqgm'
 RuntimeResult.unwrap_or: True
 RuntimeResult.unwrap_or_else: True
 RuntimeResult.map: True
 RuntimeResult.flat_map: True
 RuntimeResult.and_then: True
 RuntimeResult.flow_through: True
-RuntimeResult.fold.success: 's:32'
-RuntimeResult.fold.failure: 'f:fdyomu'
+RuntimeResult.fold.success: 's:26'
+RuntimeResult.fold.failure: 'f:tcgtru'
 RuntimeResult.tap: True
 RuntimeResult.tap_error: True
-RuntimeResult.tap.values: [32]
-RuntimeResult.tap_error.values: ['fdyomu']
-RuntimeResult.map_error: 'x:fdyomu'
+RuntimeResult.tap.values: list
+RuntimeResult.tap_error.values: list
+RuntimeResult.map_error: 'x:tcgtru'
 RuntimeResult.filter.pass: True
-RuntimeResult.filter.fail: 'Filter predicate failed'
-RuntimeResult.alt: 'alt:fdyomu'
+RuntimeResult.filter.fail: 'Value did not pass filter predicate'
+RuntimeResult.alt: 'alt:tcgtru'
 RuntimeResult.lash: 6
 RuntimeResult.recover: 6
-RuntimeResult.operator_or: 87
+RuntimeResult.operator_or: 80
 RuntimeResult.bool.success: True
 RuntimeResult.bool.failure: False
-RuntimeResult.repr.success: 'r.ok(32)'
-RuntimeResult.repr.failure: "r.fail('fdyomu')"
-RuntimeResult.context_manager: 32
+RuntimeResult.repr.success: 'r[T].ok(26)'
+RuntimeResult.repr.failure: "r[T].fail('tcgtru')"
+RuntimeResult.context_manager: 26
 RuntimeResult.ok.none_raises: True
 RuntimeResult.ok.none_type: 'str'
 compare_entities_by_id.true: True

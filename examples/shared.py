@@ -38,7 +38,8 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict
 
-from examples import m, t
+from examples import t
+from examples._models import SharedHandle, SharedPerson
 from flext_core import r
 
 
@@ -187,18 +188,13 @@ class Examples:
         _ = expected_path.write_text(actual, encoding="utf-8")
         _ = sys.stdout.write(f"GENERATED: {expected_path.name} ({checks} checks)\n")
 
-    class Person(m.Value):
+    class Person(SharedPerson):
         """Tiny Pydantic model used across several examples."""
 
-        name: str
-        age: int
-
-    class Handle(m.Value):
+    class Handle(SharedHandle):
         """Tiny model used to exercise ``with_resource``."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
-        value: int
-        cleaned: bool = False
 
     @staticmethod
     def bind_probe(result_obj: r[int], delta: int) -> int | str:

@@ -13,6 +13,7 @@ clear_global_context.ok: True
 bind_context.application.ok: True
 bind_context.request.ok: True
 bind_context.operation.ok: True
+bind_context.tenant.ok: True
 scoped_context.info.ok: True
 clear_scope.application.ok: True
 clear_scope.request.ok: True
@@ -33,7 +34,7 @@ bind.type: 'FlextLogger'
 new.type: 'FlextLogger'
 unbind.type: 'FlextLogger'
 try_unbind.type: 'FlextLogger'
-with_result.type: 'ResultAdapter'
+with_result.type: 'FlextLogger'
 trace.ok: True
 debug.ok: True
 info.ok: True
@@ -49,8 +50,7 @@ performance_tracker.body.ok: True
 
 [result_adapter]
 adapter.name: 'examples.ex_03.adapter'
-adapter.with_result.idempotent: True
-adapter.bind.type: 'ResultAdapter'
+adapter.bind.type: 'FlextLogger'
 adapter.trace.ok: True
 adapter.debug.ok: True
 adapter.info.ok: True

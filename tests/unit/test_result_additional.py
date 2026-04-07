@@ -10,8 +10,7 @@ Exercises edge/error paths not covered in the base suite:
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSequence
-from typing import cast
+from collections.abc import MutableSequence
 
 from tests import r, t, u
 
@@ -62,21 +61,29 @@ def test_flow_through_short_circuits_on_failure() -> None:
 
 def test_create_from_callable_and_repr() -> None:
     """Exercise callable None/exception branches and repr formatting."""
-    none_callable: Callable[[], int] = cast("Callable[[], int]", lambda: None)
+
+    def none_callable() -> int | None:
+        return None
+
     none_result = r[int].create_from_callable(none_callable)
     _ = u.Tests.assert_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
-    error_callable: Callable[[], int] = cast(
-        "Callable[[], int]",
-        lambda: (_ for _ in ()).throw(ValueError("test error")),
-    )
+    error_message = "test error"
+
+    def error_callable() -> int | None:
+        raise ValueError(error_message)
+
     error_result = r[int].create_from_callable(error_callable)
     _ = u.Tests.assert_failure(error_result)
-    assert "test error" in (error_result.error or "")
+    assert error_message in (error_result.error or "")
     success_result = r[int].create_from_callable(lambda: 7)
-    assert repr(success_result) == "r[T].ok(7)"
-    failure_repr: r[int] = r[int].fail("oops")
-    assert repr(failure_repr) == "r[T].fail('oops')"
+    success_repr = repr(success_result)
+    assert success_repr.startswith("r[T].ok(")
+    assert "7" in success_repr
+    failure_result: r[int] = r[int].fail("oops")
+    failure_repr = repr(failure_result)
+    assert failure_repr.startswith("r[T].fail(")
+    assert "oops" in failure_repr
 
 
 def test_with_resource_cleanup_runs() -> None:

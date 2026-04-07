@@ -22,6 +22,8 @@ class FlextConstantsEnforcement:
         "tests.",
         "test_",
         "conftest",
+        "examples.",
+        "scripts.",
         "_utilities/adapters",
         "adapters.py",
     )

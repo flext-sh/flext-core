@@ -220,14 +220,14 @@ class FlextDispatcher:
                         else None,
                     )
                 value: t.RuntimeAtomic | None = raw_output.value
-                if not u.is_container(value):
+                if not u.is_container(value) and not u.is_pydantic_model(value):
                     return dispatch_result.fail(
                         "Handler returned non-container value in success result",
                     )
                 return dispatch_result.ok(value)
             if raw_output is None:
                 return dispatch_result.fail("Handler returned None")
-            if not u.is_container(raw_output):
+            if not u.is_container(raw_output) and not u.is_pydantic_model(raw_output):
                 return dispatch_result.fail("Handler returned non-container value")
             return dispatch_result.ok(raw_output)
         except (

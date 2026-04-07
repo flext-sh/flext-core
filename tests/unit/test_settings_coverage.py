@@ -8,7 +8,7 @@ from time import perf_counter
 
 import pytest
 from hypothesis import given, settings, strategies as st
-from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextSettings
 from flext_tests import tf, tm
@@ -36,13 +36,18 @@ class TestFlextSettingsCoverage:
         tm.that(scoped.max_workers, eq=99)
 
     def test_register_namespace_and_get_namespace(self) -> None:
-        class DemoNamespace(BaseSettings):
+        class DemoNamespace(FlextSettings):
+            model_config = SettingsConfigDict(
+                env_prefix="FLEXT_DEMO_",
+                extra="ignore",
+            )
             enabled: bool = True
 
         namespace = f"ns_{u.generate('ulid', length=6)}"
         FlextSettings.register_namespace(namespace, DemoNamespace)
         settings_obj = FlextSettings.get_global()
         ns_cfg = settings_obj.get_namespace(namespace, DemoNamespace)
+        tm.that(ns_cfg, is_=DemoNamespace)
         tm.that(ns_cfg.enabled, eq=True)
 
     def test_effective_log_level_property(self) -> None:

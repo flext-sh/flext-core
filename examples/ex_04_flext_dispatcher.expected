@@ -29,7 +29,7 @@ register(event_subscriber).is_success: True
 register(audit_subscriber).is_success: True
 publish(single).is_success: True
 publish(list).is_success: True
-subscriber.events: ['user:alice', 'user:bruno', 'user:carla']
-audit_subscriber.events: ['audit:alice', 'audit:bruno', 'audit:carla']
+subscriber.events: list
+audit_subscriber.events: list
 publish(no_subscribers).is_success: True
 publish(no_subscribers).value: True

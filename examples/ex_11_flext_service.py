@@ -67,6 +67,7 @@ class _DeclarativeService(s[str]):
     _execute_count: int = PrivateAttr(default=0)
 
     def __init__(self) -> None:
+        super().__init__()
         if self.auto_execute:
             self._execution_result = self.execute()
 

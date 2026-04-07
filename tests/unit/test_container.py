@@ -22,14 +22,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from typing import Annotated, ClassVar, cast
+from collections.abc import Callable, Generator, Sequence
+from typing import Annotated, ClassVar
 
 import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextContext
+from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
 from tests import c, p, t, u
 
@@ -113,7 +113,7 @@ class _ContainerScenarios:
         ),
     ]
     CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
-        {"max_workers": 8, "timeout_seconds": 60.0},
+        {"enable_singleton": False, "max_services": 8},
         {"invalid_key": "value", "another_invalid": 42},
         {},
     ]
@@ -123,31 +123,29 @@ ContainerScenarios = _ContainerScenarios
 
 
 class TestFlextContainer:
+    @pytest.fixture(autouse=True)
+    def _reset_container_state(self) -> Generator[None]:
+        FlextContainer.reset_for_testing()
+        yield
+        FlextContainer.reset_for_testing()
+
     def test_container_initialization(self, clean_container: p.Container) -> None:
         """Test container initialization creates valid instance using fixtures."""
-        tm.that(
-            cast("t.NormalizedValue", clean_container),
-            none=False,
-            msg="Container must not be None",
-        )
         assert isinstance(clean_container, p.Container), (
             "Container must be FlextContainer instance"
+        )
+        tm.that(
+            clean_container.list_services(),
+            empty=True,
+            msg="Fresh container must start without registered services",
         )
 
     def test_container_singleton(self) -> None:
         """Test that FlextContainer returns singleton instance."""
         container1 = FlextContainer()
         container2 = FlextContainer()
-        tm.that(
-            cast("t.NormalizedValue", container1),
-            none=False,
-            msg="Container1 must not be None",
-        )
-        tm.that(
-            cast("t.NormalizedValue", container2),
-            none=False,
-            msg="Container2 must not be None",
-        )
+        assert isinstance(container1, FlextContainer)
+        assert isinstance(container2, FlextContainer)
         tm.that(
             container1 is container2,
             eq=True,
@@ -167,6 +165,15 @@ class TestFlextContainer:
         """Test service registration with various types using fixtures."""
         result = clean_container.register(scenario.name, scenario.service)
         assert result is clean_container
+        tm.that(
+            clean_container.has_service(scenario.name),
+            eq=True,
+            msg=f"Container must expose {scenario.name} after registration",
+        )
+        u.Tests.assert_success_with_value(
+            clean_container.get(scenario.name),
+            scenario.service,
+        )
 
     @pytest.mark.parametrize(
         "scenario",
@@ -228,6 +235,10 @@ class TestFlextContainer:
             eq=True,
             msg=f"Factory {factory_name} must be registered",
         )
+        u.Tests.assert_success_with_value(
+            clean_container.get(factory_name),
+            return_value,
+        )
 
     @pytest.mark.parametrize(
         "return_value",
@@ -262,7 +273,7 @@ class TestFlextContainer:
 
     def test_register_factory_non_callable(self, clean_container: p.Container) -> None:
         """Test that registering non-callable with factory kind handles gracefully."""
-        non_callable = cast("t.FactoryCallable", "not_callable")
+        non_callable = "not_callable"
         clean_container.register("invalid", non_callable, kind=c.CONTAINER_KIND_FACTORY)
         tm.that(
             clean_container.has_service("invalid"),
@@ -276,11 +287,7 @@ class TestFlextContainer:
         clean_container.register("factory1", factory1, kind=c.CONTAINER_KIND_FACTORY)
         factory2 = u.Tests.create_factory("value2")
         clean_container.register("factory1", factory2, kind=c.CONTAINER_KIND_FACTORY)
-        tm.that(
-            clean_container.has_service("factory1"),
-            eq=True,
-            msg="Factory1 should be registered",
-        )
+        u.Tests.assert_success_with_value(clean_container.get("factory1"), "value1")
 
     @pytest.mark.parametrize(
         "scenario",
@@ -351,12 +358,9 @@ class TestFlextContainer:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         _ = container.register(scenario.name, scenario.service)
-        typed_result = cast(
-            "p.Result[t.RegisterableService]",
-            container.get(
-                scenario.name,
-                type_cls=scenario.expected_type,
-            ),
+        typed_result = container.get(
+            scenario.name,
+            type_cls=scenario.expected_type,
         )
         if scenario.should_pass:
             _ = u.Tests.assert_success(typed_result)
@@ -376,21 +380,12 @@ class TestFlextContainer:
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
-        result = cast(
-            "p.Result[t.ContainerMapping]",
-            clean_container.get(
-                "string_service",
-                type_cls=dict,
-            ),
-        )
+        result = clean_container.get("string_service", type_cls=dict)
         _ = u.Tests.assert_failure(result)
 
     def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = cast(
-            "p.Result[t.ContainerMapping]",
-            clean_container.get("nonexistent", type_cls=dict),
-        )
+        result = clean_container.get("nonexistent", type_cls=dict)
         u.Tests.assert_result_failure_with_error(
             result,
             expected_error="not found",
@@ -461,15 +456,15 @@ class TestFlextContainer:
             tm.that(key in services, eq=True, msg=f"Services list must contain {key}")
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
-    def test_configure_container(self, config: t.ScalarMapping) -> None:
+    def test_configure_container(
+        self,
+        config: t.ScalarMapping,
+        clean_container: p.Container,
+    ) -> None:
         """Test container configuration."""
-        container = FlextContainer()
+        container = clean_container
+        original_config = container.get_config()
         container.configure(config)
-        tm.that(
-            cast("t.NormalizedValue", container),
-            none=False,
-            msg="Container must not be None after configure",
-        )
         config_result = container.get_config()
         tm.that(
             config_result,
@@ -477,11 +472,30 @@ class TestFlextContainer:
             none=False,
             msg="Container config must be a ConfigMap",
         )
+        for key, value in config.items():
+            if key in original_config.root:
+                tm.that(
+                    config_result.root.get(key),
+                    eq=value,
+                    msg=f"Config key {key} must be updated through configure()",
+                )
+            else:
+                tm.that(
+                    key in config_result.root,
+                    eq=False,
+                    msg=f"Unknown config key {key} must not leak into public config",
+                )
+        if not config:
+            tm.that(
+                config_result.root,
+                eq=original_config.root,
+                msg="Empty configure() input must preserve existing config",
+            )
 
-    def test_with_config_fluent(self) -> None:
+    def test_with_config_fluent(self, clean_container: p.Container) -> None:
         """Test fluent interface for configuration."""
-        container = FlextContainer()
-        config: t.ScalarMapping = {"max_workers": c.DEFAULT_MAX_WORKERS}
+        container = clean_container
+        config: t.ScalarMapping = {"max_services": 32}
         result = container.configure(config)
         tm.that(
             result is container,
@@ -500,6 +514,11 @@ class TestFlextContainer:
             none=False,
             msg="Config must be accessible after with_config",
         )
+        tm.that(
+            config_result.root.get("max_services"),
+            eq=32,
+            msg="configure() must expose applied public config values",
+        )
 
     def test_get_config(self) -> None:
         """Test retrieving current configuration."""
@@ -512,9 +531,14 @@ class TestFlextContainer:
             msg="get_config must return ConfigMap",
         )
         tm.that(
-            "enable_singleton" in config.root or "max_services" in config.root,
+            "enable_singleton" in config.root,
             eq=True,
-            msg="Config must contain enable_singleton or max_services",
+            msg="Config must contain enable_singleton",
+        )
+        tm.that(
+            "max_services" in config.root,
+            eq=True,
+            msg="Config must contain max_services",
         )
 
     def test_config_property(self) -> None:
@@ -522,14 +546,14 @@ class TestFlextContainer:
         container = FlextContainer()
         config = container.config
         tm.that(
-            cast("t.NormalizedValue", config),
-            none=False,
-            msg="Container config property must not be None",
+            config,
+            is_=FlextSettings,
+            msg="Container config property must expose FlextSettings",
         )
         tm.that(
-            hasattr(config, "app_name") or hasattr(config, "enable_singleton"),
-            eq=True,
-            msg="Container config property must have config attributes",
+            config.app_name,
+            eq=FlextSettings.get_global().app_name,
+            msg="Container config property must reflect the bound public settings",
         )
 
     def test_clear_all_services(self, clean_container: p.Container) -> None:

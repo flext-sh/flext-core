@@ -6,8 +6,9 @@ from collections.abc import Callable
 from typing import cast
 
 import pytest
+from pydantic import Field
 
-from flext_core import FlextDispatcher, r
+from flext_core import FlextDispatcher, FlextModelsCqrs, r
 from tests import m, p, t
 
 
@@ -21,6 +22,7 @@ class TestDispatcherFullCoverage:
     class _SampleQuery(m.Query):
         """Refined sample query."""
 
+        pagination: FlextModelsCqrs.Pagination | t.Dict = Field(default_factory=t.Dict)
         query_type: str | None = "sample_query"
 
     class _SampleEvent(m.Event):
@@ -170,6 +172,19 @@ class TestDispatcherFullCoverage:
         assert dispatcher.dispatch(
             self._SampleCommand(payload="p", command_id="cmd-p"),
         ).is_success
+
+    def test_query_handler_can_return_config_map(
+        self,
+        dispatcher: FlextDispatcher,
+    ) -> None:
+        """Dispatch should preserve BaseModel payloads allowed by the protocol."""
+        registration = dispatcher.register_handler(self._QueryHandler())
+        assert registration.is_success
+        query = self._SampleQuery(query_id="query-1")
+        result = dispatcher.dispatch(query)
+        assert result.is_success
+        assert isinstance(result.value, t.ConfigMap)
+        assert result.value.root["result"] == "data"
 
     def test_callable_registration_with_attribute(
         self,

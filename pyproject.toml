@@ -2,24 +2,16 @@
 # Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
 # Run `make mod` to regenerate all managed pyproject sections.
 # Sections with [CUSTOM] are project-specific extension points.
-
 # [MANAGED] build system
 [build-system]
 build-backend = "hatchling.build"
 requires = [ "hatchling" ]
 
 [dependency-groups]
-dev = [
-  "types-defusedxml (>=0.7.0.20250822)",
-  "vulture (>=2.15)",
-]
+dev = [ "types-defusedxml (>=0.7.0.20250822)", "vulture (>=2.15)" ]
 
 # [CUSTOM] project metadata
 [project]
-
-# [CUSTOM] poetry - flext-core ships only the core package
-
-authors = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Pydantic :: 2",
@@ -56,12 +48,18 @@ dependencies = [
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 keywords = [ "clean-architecture", "ddd", "enterprise", "flext", "modern", "solid" ]
 license = "MIT"
-maintainers = [ {email = "team@flext.sh", name = "FLEXT Team"} ]
 name = "flext-core"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-urls = {Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core"}
 version = "0.12.0-dev"
+
+[[project.authors]]
+email = "team@flext.sh"
+name = "FLEXT Team"
+
+[[project.maintainers]]
+email = "team@flext.sh"
+name = "FLEXT Team"
 
 # [MANAGED] consolidated development dependencies
 [project.optional-dependencies]
@@ -146,6 +144,11 @@ dev = [
   "vulture>=2.13",
 ]
 
+[project.urls]
+Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
+Homepage = "https://github.com/flext-sh/flext-core"
+Repository = "https://github.com/flext-sh/flext-core"
+
 [tool.bandit]
 exclude_dirs = [ "tests" ]
 severity = "MEDIUM"
@@ -165,18 +168,11 @@ show_missing = true
 skip_covered = false
 
 [tool.coverage.run]
-omit = [
-  "*/dependency_injector/providers.pyx",
-]
+omit = [ "*/dependency_injector/providers.pyx" ]
 
 # [MANAGED] deptry
 [tool.deptry]
-known_first_party = [
-  "flext_cli",
-  "flext_core",
-  "flext_infra",
-  "flext_tests",
-]
+known_first_party = [ "flext_cli", "flext_core", "flext_infra", "flext_tests" ]
 pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.flext.docs]
@@ -200,20 +196,12 @@ ignore-property-decorators = true
 
 # [MANAGED] mypy
 [tool.mypy]
-disable_error_code = [
-  "assignment",
-  "attr-defined",
-  "call-arg",
-  "name-defined",
-  "prop-decorator",
-]
+disable_error_code = [ "assignment", "attr-defined", "call-arg", "name-defined", "prop-decorator" ]
 explicit_package_bases = true
 ignore_missing_imports = true
 mypy_path = [ ".", "../typings", "src" ]
 namespace_packages = true
-plugins = [
-  "pydantic.mypy",
-]
+plugins = [ "pydantic.mypy" ]
 python_version = "3.13"
 
 [[tool.mypy.overrides]]
@@ -269,22 +257,15 @@ project-excludes = [
   "typings/**",
   "vendor/**",
 ]
-project-includes = [
-  "examples/**/*.py*",
-  "src/**/*.py*",
-  "tests/**/*.py*",
-]
+project-includes = [ "examples/**/*.py*", "src/**/*.py*", "tests/**/*.py*" ]
 python-version = "3.13"
 search-path = [
-  "examples",
-  "scripts",
+  ".",
   "src",
-  "tests",
 ]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
-
 abstract-method-call = false
 annotation-mismatch = true
 bad-argument-count = true
@@ -390,15 +371,8 @@ exclude = [
   ".sisyphus",
   ".venv",
 ]
-extraPaths = [
-  ".",
-  "../typings",
-  "src",
-]
-ignore = [
-  "**/*.pyi",
-  "../typings",
-]
+extraPaths = [ ".", "../typings", "src" ]
+ignore = [ "**/*.pyi", "../typings" ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportCallIssue = "none"
@@ -500,11 +474,7 @@ line-length = 88
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = [
-  "examples",
-  "src",
-  "tests",
-]
+src = [ "examples", "src", "tests" ]
 target-version = "py313"
 
 [tool.ruff.format]
@@ -568,12 +538,9 @@ ignore = [
   "UP040",
   "W293",
 ]
-select = [
-  "ALL",
-]
+select = [ "ALL" ]
 
 [tool.ruff.lint.isort]
-
 combine-as-imports = true
 force-single-line = false
 known-first-party = [ "flext_cli", "flext_core", "flext_infra", "flext_tests" ]
@@ -581,19 +548,10 @@ split-on-trailing-comma = true
 
 [tool.ruff.lint.per-file-ignores]
 
-"**/.vulture_whitelist.py" = [
-  "ALL",
-]
-"**/*_pb2*.py" = [
-  "ALL",
-]
+"**/.vulture_whitelist.py" = [ "ALL" ]
+"**/*_pb2*.py" = [ "ALL" ]
 "**/*dispatcher*" = [  ]
-"**/*docs*" = [
-  "INP001",
-  "S404",
-  "S603",
-  "T201",
-]
+"**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
 "**/*examples*" = [
   "ANN401",
   "C901",
@@ -613,42 +571,14 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
-"**/*exceptions*" = [
-  "A001",
-  "S105",
-  "SLF001",
-]
+"**/*exceptions*" = [ "A001", "S105", "SLF001" ]
 "**/*handlers*" = [  ]
-"**/*instrumentation*" = [
-  "C901",
-  "FBT001",
-  "SLF001",
-]
-"**/*loggings*" = [
-  "PLR0904",
-  "PLW0603",
-]
-"**/*middleware*" = [
-  "ANN401",
-  "FBT001",
-  "FBT002",
-  "PLC2801",
-  "S107",
-]
-"**/*models*" = [
-  "ANN401",
-  "FBT001",
-  "PLC2701",
-  "PLR0206",
-  "PLW0603",
-]
-"**/*oracle*" = [
-  "DTZ007",
-]
-"**/*result*" = [
-  "PLC2701",
-  "SLF001",
-]
+"**/*instrumentation*" = [ "C901", "FBT001", "SLF001" ]
+"**/*loggings*" = [ "PLR0904", "PLW0603" ]
+"**/*middleware*" = [ "ANN401", "FBT001", "FBT002", "PLC2801", "S107" ]
+"**/*models*" = [ "ANN401", "FBT001", "PLC2701", "PLR0206", "PLW0603" ]
+"**/*oracle*" = [ "DTZ007" ]
+"**/*result*" = [ "PLC2701", "SLF001" ]
 "**/*runtime*" = [  ]
 "**/*scripts*" = [
   "EXE001",
@@ -666,17 +596,8 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
-"**/*service*" = [
-  "N815",
-  "PLC2801",
-  "S404",
-  "S603",
-  "SLF001",
-]
-"**/*subprocess_utils*" = [
-  "S404",
-  "S603",
-]
+"**/*service*" = [ "N815", "PLC2801", "S404", "S603", "SLF001" ]
+"**/*subprocess_utils*" = [ "S404", "S603" ]
 "**/*tests*" = [
   "ANN001",
   "ANN002",
@@ -752,17 +673,8 @@ split-on-trailing-comma = true
   "TRY003",
   "TRY004",
 ]
-"**/*typings*" = [
-  "ANN401",
-]
-"**/*utilities*" = [
-  "C901",
-  "E402",
-  "PLC2801",
-  "PLW1510",
-  "S404",
-  "S603",
-]
+"**/*typings*" = [ "ANN401" ]
+"**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
 "**/__init__.py" = [
   "A004",
   "ANN401",
@@ -778,115 +690,34 @@ split-on-trailing-comma = true
   "TC004",
 ]
 "**/_constants/*.py" = [ "S105" ]
-"**/_utilities/parser.py" = [
-  "ARG004",
-  "FBT001",
-]
-"**/alert_manager*.py" = [
-  "S310",
-]
-"**/config.py" = [
-  "ANN401",
-  "FBT001",
-  "SLF001",
-]
-"**/constants.py" = [
-  "S105",
-]
-"**/container.py" = [
-  "ANN401",
-  "SLF001",
-]
+"**/_utilities/parser.py" = [ "ARG004", "FBT001" ]
+"**/alert_manager*.py" = [ "S310" ]
+"**/config.py" = [ "ANN401", "FBT001", "SLF001" ]
+"**/constants.py" = [ "S105" ]
+"**/container.py" = [ "ANN401", "SLF001" ]
 "**/context.py" = [  ]
-"**/external_command*.py" = [
-  "S404",
-  "S603",
-]
-"**/file_tools.py" = [
-  "D102",
-]
-"**/managers.py" = [
-  "S105",
-]
-"**/models.py" = [
-  "PLC0415",
-  "PLC2801",
-  "S102",
-  "S105",
-]
-"**/orchestrator*.py" = [
-  "S404",
-  "S603",
-]
-"**/output.py" = [
-  "FBT001",
-]
-"**/plugins/*.py" = [
-  "FBT001",
-  "FBT002",
-  "S404",
-  "S603",
-  "S607",
-  "TID252",
-]
-"**/protocol_impls/*.py" = [
-  "SLF001",
-]
-"**/providers/*.py" = [
-  "S106",
-  "S107",
-]
-"**/services/prompts.py" = [
-  "D102",
-  "D107",
-]
-"**/settings.py" = [
-  "ANN401",
-  "PLC0415",
-  "S105",
-]
-"**/singer/*.py" = [
-  "S404",
-  "S603",
-]
-"**/tools/*.py" = [
-  "FBT001",
-  "FBT002",
-  "N802",
-  "S404",
-  "S603",
-  "S607",
-  "T201",
-]
-"**/tools/**/*.py" = [
-  "FBT001",
-  "FBT002",
-  "N802",
-  "S404",
-  "S603",
-  "S607",
-  "T201",
-]
-"**/typings.py" = [
-  "RUF036",
-]
-"**/workspace/*.py" = [
-  "PLC0415",
-  "S404",
-  "S603",
-  "S607",
-]
+"**/external_command*.py" = [ "S404", "S603" ]
+"**/file_tools.py" = [ "D102" ]
+"**/managers.py" = [ "S105" ]
+"**/models.py" = [ "PLC0415", "PLC2801", "S102", "S105" ]
+"**/orchestrator*.py" = [ "S404", "S603" ]
+"**/output.py" = [ "FBT001" ]
+"**/plugins/*.py" = [ "FBT001", "FBT002", "S404", "S603", "S607", "TID252" ]
+"**/protocol_impls/*.py" = [ "SLF001" ]
+"**/providers/*.py" = [ "S106", "S107" ]
+"**/services/prompts.py" = [ "D102", "D107" ]
+"**/settings.py" = [ "ANN401", "PLC0415", "S105" ]
+"**/singer/*.py" = [ "S404", "S603" ]
+"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
+"**/tools/**/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
+"**/typings.py" = [ "RUF036" ]
+"**/workspace/*.py" = [ "PLC0415", "S404", "S603", "S607" ]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]
 all = true
 in_place = true
-sort_first = [
-  "build-system",
-  "dependency-groups",
-  "project",
-  "tool",
-]
+sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
 # [MANAGED] yamlfix
 [tool.yamlfix]

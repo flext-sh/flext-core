@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import Field, field_validator
 
 from examples import c
-from flext_core import FlextSettings
+from flext_core import FlextSettings, t
 
 
 class ExConfigAppConfig(FlextSettings):
@@ -22,7 +22,7 @@ class ExConfigAppConfig(FlextSettings):
 
     @field_validator("database_url", mode="before")
     @classmethod
-    def normalize_database_url(cls, value: object) -> str:
+    def normalize_database_url(cls, value: t.RuntimeData) -> str:
         """Normalize and validate database URL."""
         if not isinstance(value, str):
             msg = "Database URL must be text"

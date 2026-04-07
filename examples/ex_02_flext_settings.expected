@@ -1,8 +1,8 @@
 [singleton_and_global]
 constructor.singleton_identity: True
 get_global.identity: True
-_reset_instance.recreates_singleton: True
-reset_global_instance.recreates_global: True
+reset_for_testing.recreates_singleton: True
+reset_for_testing.recreates_global: True
 subclass.singleton_identity: True
 
 [configuration_fields_and_validation]

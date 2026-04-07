@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import Field, field_validator
 
 from examples import c
-from flext_core import m, r
+from flext_core import m, r, t
 
 
 class Ex00UserProfile(m.Entity):
@@ -30,7 +30,7 @@ class Ex00UserInput(m.Value):
 
     @field_validator("name", "email", mode="before")
     @classmethod
-    def validate_non_empty_text(cls, value: object) -> str:
+    def validate_non_empty_text(cls, value: t.RuntimeData) -> str:
         """Validate text input."""
         if not isinstance(value, str):
             msg = "Expected text input"

@@ -158,8 +158,15 @@ if _t.TYPE_CHECKING:
     from tests.protocols import FlextCoreTestProtocols, FlextCoreTestProtocols as p
 
     test_documented_patterns = _tests_test_documented_patterns
-    import tests.test_service_result_property as _tests_test_service_result_property
+    import tests.test_examples_execution as _tests_test_examples_execution
     from tests.test_documented_patterns import EmailResponse, TestDocumentedPatterns
+
+    test_examples_execution = _tests_test_examples_execution
+    import tests.test_service_result_property as _tests_test_service_result_property
+    from tests.test_examples_execution import (
+        REPO_ROOT,
+        test_public_example_scripts_match_golden_files,
+    )
 
     test_service_result_property = _tests_test_service_result_property
     import tests.test_utils as _tests_test_utils
@@ -610,6 +617,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "MAX_RETRIES",
         ),
         "MAX_VALUE": ("tests.fixtures.namespace_validator.rule0_no_class", "MAX_VALUE"),
+        "REPO_ROOT": ("tests.test_examples_execution", "REPO_ROOT"),
         "RandomConstants": (
             "tests.fixtures.namespace_validator.rule0_wrong_prefix",
             "RandomConstants",
@@ -681,6 +689,11 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "test_context": ("tests.conftest", "test_context"),
         "test_data_factory": ("tests.test_utils", "test_data_factory"),
         "test_documented_patterns": "tests.test_documented_patterns",
+        "test_examples_execution": "tests.test_examples_execution",
+        "test_public_example_scripts_match_golden_files": (
+            "tests.test_examples_execution",
+            "test_public_example_scripts_match_golden_files",
+        ),
         "test_service_result_property": "tests.test_service_result_property",
         "test_utils": "tests.test_utils",
         "typings": "tests.typings",
@@ -710,6 +723,7 @@ __all__ = [
     "MAX_RETRIES",
     "MAX_VALUE",
     "NORMALIZE_COMPONENT_SCENARIOS",
+    "REPO_ROOT",
     "AttrObject",
     "BadBool",
     "BadConfigForTest",
@@ -1061,6 +1075,7 @@ __all__ = [
     "test_entity_comparable_map_and_bulk_validation_paths",
     "test_entity_coverage",
     "test_enum_utilities_coverage_100",
+    "test_examples_execution",
     "test_exception_params",
     "test_exceptions",
     "test_execute_and_register_handler_failure_paths",
@@ -1126,6 +1141,7 @@ __all__ = [
     "test_patterns_testing",
     "test_protocol_and_simple_guard_helpers",
     "test_protocols_new",
+    "test_public_example_scripts_match_golden_files",
     "test_query_resolve_pagination_wrapper_and_fallback",
     "test_query_validate_pagination_dict_and_default",
     "test_rate_limiter_blocks_then_recovers",

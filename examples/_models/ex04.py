@@ -2,42 +2,53 @@
 
 from __future__ import annotations
 
-from flext_core import m
+from pydantic import Field
+
+from flext_core import m, t
+from flext_core.models import FlextModelsCqrs
 
 
 class Ex04CreateUser(m.Command):
     """Command to create a new user in example 04."""
 
+    command_type: str = "ex04_create_user"
     username: str
 
 
 class Ex04GetUser(m.Query):
     """Query to get a user record by username in example 04."""
 
+    pagination: FlextModelsCqrs.Pagination | t.Dict = Field(default_factory=t.Dict)
+    query_type: str = "ex04_get_user"
     username: str
 
 
 class Ex04DeleteUser(m.Command):
     """Command to delete a user in example 04."""
 
+    command_type: str = "ex04_delete_user"
     username: str
 
 
 class Ex04FailingDelete(m.Command):
     """Command deliberately fails to demonstrate error handling in example 04."""
 
+    command_type: str = "ex04_failing_delete"
     username: str
 
 
 class Ex04AutoCommand(m.Command):
+    command_type: str = "ex04_auto_command"
     payload: str
 
 
 class Ex04Ping(m.Command):
+    command_type: str = "ex04_ping"
     value: str
 
 
 class Ex04UnknownQuery(m.Query):
+    query_type: str = "ex04_unknown_query"
     payload: str
 
 
