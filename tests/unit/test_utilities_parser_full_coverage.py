@@ -9,7 +9,7 @@ import pytest
 
 from flext_core import FlextUtilitiesParser, ParseOptions, r
 from flext_tests import tm
-from tests import _models_impl as test_unit_models, t, u
+from tests import _models_impl, t, u
 
 
 class TestUtilitiesParserFullCoverage:
@@ -64,7 +64,7 @@ class TestUtilitiesParserFullCoverage:
         )
         model_result = parser._parse_model(
             cast("t.NormalizedValue", {"name": "ok", "count": 2, "payload": "obj"}),
-            test_unit_models._Model,
+            _models_impl._Model,
             "field: ",
             strict=False,
         )
