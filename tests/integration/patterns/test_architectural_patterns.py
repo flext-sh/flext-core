@@ -17,8 +17,7 @@ from typing import Self
 import pytest
 
 from flext_core import FlextModelsDomainEvent, r
-from tests import c, t
-from tests.test_utils import assertion_helpers
+from tests import assertion_helpers, c, t
 
 
 class _UserCreatedEvent(FlextModelsDomainEvent.Entry):

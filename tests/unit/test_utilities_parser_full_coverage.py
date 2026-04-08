@@ -9,8 +9,7 @@ import pytest
 
 from flext_core import FlextUtilitiesParser, ParseOptions, r
 from flext_tests import tm
-from tests import t, u
-from tests.unit import _models_impl as test_unit_models
+from tests import _models_impl as test_unit_models, t, u
 
 
 class TestUtilitiesParserFullCoverage:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tests.protocols import FlextCoreTestProtocols
+from tests import FlextCoreTestProtocols
 
 
 class FlextUnitTestProtocols(FlextCoreTestProtocols):

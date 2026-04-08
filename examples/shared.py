@@ -38,8 +38,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict
 
-from examples import t
-from examples._models import SharedHandle, SharedPerson
+from examples import SharedHandle, SharedPerson, t
 from flext_core import r
 
 

@@ -9,8 +9,7 @@ from typing import cast
 
 import pytest
 
-from tests import p, r, t, u
-from tests.unit import _models_impl as test_unit_models
+from tests import _models_impl as test_unit_models, p, r, t, u
 
 
 class TestUtilitiesConfigurationFullCoverage:

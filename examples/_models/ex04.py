@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from flext_core import m, t
-from flext_core.models import FlextModelsCqrs
+from flext_core import FlextModelsCqrs, m, t
 
 
 class Ex04CreateUser(m.Command):

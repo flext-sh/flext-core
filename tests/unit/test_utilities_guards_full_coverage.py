@@ -12,8 +12,7 @@ from pydantic import BaseModel
 from pydantic_core import ValidationError
 
 from flext_tests import tm
-from tests import c, m, r, t, u
-from tests.unit import _models_impl as test_unit_models
+from tests import _models_impl as test_unit_models, c, m, r, t, u
 
 
 def _is_type_obj(

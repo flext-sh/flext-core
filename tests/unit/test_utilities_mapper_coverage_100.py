@@ -21,8 +21,7 @@ from typing import Annotated, cast
 from pydantic import BaseModel, Field
 
 from flext_tests import tm
-from tests import assertion_helpers, t, u
-from tests.unit import _models_impl as test_unit_models
+from tests import _models_impl as test_unit_models, assertion_helpers, t, u
 
 
 class UtilitiesMapperCoverage100Namespace:
