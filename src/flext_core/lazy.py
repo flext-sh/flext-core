@@ -71,6 +71,34 @@ def _validate_lazy_import_map(
         raise TypeError(msg) from exc
 
 
+def _normalize_lazy_import_entry(
+    module_path: str,
+    entry: LazyImportEntry,
+) -> LazyImportEntry:
+    """Resolve relative lazy-import targets against the current module."""
+    if isinstance(entry, str):
+        return f"{module_path}{entry}" if entry.startswith(".") else entry
+    target_module, attr_name = entry
+    resolved_module = (
+        f"{module_path}{target_module}"
+        if target_module.startswith(".")
+        else target_module
+    )
+    return (resolved_module, attr_name)
+
+
+def _normalize_lazy_import_map(
+    module_path: str,
+    raw_lazy_imports: LazyImportMap | Mapping[str, LazyImportEntry] | None,
+) -> dict[str, LazyImportEntry]:
+    """Validate a lazy-import mapping and resolve relative module targets."""
+    validated_lazy_imports = _validate_lazy_import_map(raw_lazy_imports, module_path)
+    return {
+        name: _normalize_lazy_import_entry(module_path, entry)
+        for name, entry in validated_lazy_imports.items()
+    }
+
+
 def _load_module(module_path: str) -> ModuleType:
     """Load a module using a small fast-path cache before importlib."""
     cached_module = _MODULE_CACHE.get(module_path)
@@ -199,7 +227,9 @@ def _load_child_lazy_imports(module_path: str) -> LazyImportMap:
     child_module = _load_module(module_path)
     module_dict = vars(child_module)
     child_lazy_imports = module_dict.get("_LAZY_IMPORTS")
-    validated_lazy_imports = _validate_lazy_import_map(child_lazy_imports, module_path)
+    validated_lazy_imports = _normalize_lazy_import_map(
+        child_module.__name__, child_lazy_imports
+    )
 
     _CHILD_LAZY_IMPORTS_CACHE[module_path] = validated_lazy_imports
     return validated_lazy_imports
@@ -255,6 +285,7 @@ def install_lazy_exports(
     project-specific PEP 695 aliases in ``flext_core._typings.services`` and
     lazy-layer Protocol hints such as ``LazyNamespace``.
     """
+    lazy_imports = _normalize_lazy_import_map(module_name, lazy_imports)
     export_names = _derive_export_names(lazy_imports, all_exports)
 
     def _getattr(name: str) -> LazyModuleExport:
