@@ -96,8 +96,6 @@ if _t.TYPE_CHECKING:
     _typings = _flext_core__typings
     import flext_core._utilities as _flext_core__utilities
     from flext_core._typings import (
-        TV,
-        EnumT,
         FlextTypesAnnotateds,
         FlextTypesCore,
         FlextTypesServices,
@@ -105,6 +103,14 @@ if _t.TYPE_CHECKING:
         FlextTypesValidation,
         FlextTypingBase,
         FlextTypingContainers,
+        annotateds,
+        core,
+        services,
+        typeadapters,
+    )
+    from flext_core.typings import (
+        TV,
+        EnumT,
         MessageT_contra,
         P,
         R,
@@ -118,11 +124,6 @@ if _t.TYPE_CHECKING:
         TRuntime,
         TV_co,
         U,
-        annotateds,
-        core,
-        generics,
-        services,
-        typeadapters,
     )
 
     _utilities = _flext_core__utilities
@@ -500,7 +501,6 @@ __all__ = [
     "file_ops",
     "generators",
     "generic",
-    "generics",
     "guards",
     "guards_ensure",
     "guards_type",

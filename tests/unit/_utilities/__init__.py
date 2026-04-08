@@ -17,15 +17,10 @@ if _t.TYPE_CHECKING:
     from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
 
     test_mapper = _tests_unit__utilities_test_mapper
-    from tests.unit._utilities.test_mapper import TestFlextUtilitiesMapper
 _LAZY_IMPORTS = {
     "TestFlextUtilitiesGuards": (
         "tests.unit._utilities.test_guards",
         "TestFlextUtilitiesGuards",
-    ),
-    "TestFlextUtilitiesMapper": (
-        "tests.unit._utilities.test_mapper",
-        "TestFlextUtilitiesMapper",
     ),
     "test_guards": "tests.unit._utilities.test_guards",
     "test_mapper": "tests.unit._utilities.test_mapper",
@@ -33,7 +28,6 @@ _LAZY_IMPORTS = {
 
 __all__ = [
     "TestFlextUtilitiesGuards",
-    "TestFlextUtilitiesMapper",
     "test_guards",
     "test_mapper",
 ]
