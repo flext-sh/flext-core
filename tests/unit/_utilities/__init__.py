@@ -1,8 +1,4 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make gen
-#
-"""Utilities package."""
-
+# AUTO-GENERATED FILE — Regenerate with: make gen
 from __future__ import annotations
 
 from flext_core.lazy import install_lazy_exports

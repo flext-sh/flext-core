@@ -1,6 +1,4 @@
-# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
-# Regenerate with: make gen
-#
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Examples package."""
 
 from __future__ import annotations
