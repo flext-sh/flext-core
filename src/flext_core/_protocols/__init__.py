@@ -23,15 +23,6 @@ _LAZY_IMPORTS = {
     ),
     "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
     "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
-    "base": "flext_core._protocols.base",
-    "config": "flext_core._protocols.config",
-    "container": "flext_core._protocols.container",
-    "context": "flext_core._protocols.context",
-    "handler": "flext_core._protocols.handler",
-    "logging": "flext_core._protocols.logging",
-    "registry": "flext_core._protocols.registry",
-    "result": "flext_core._protocols.result",
-    "service": "flext_core._protocols.service",
 }
 
 

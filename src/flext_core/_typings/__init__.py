@@ -21,13 +21,6 @@ _LAZY_IMPORTS = {
         "flext_core._typings.containers",
         "FlextTypingContainers",
     ),
-    "annotateds": "flext_core._typings.annotateds",
-    "base": "flext_core._typings.base",
-    "containers": "flext_core._typings.containers",
-    "core": "flext_core._typings.core",
-    "services": "flext_core._typings.services",
-    "typeadapters": "flext_core._typings.typeadapters",
-    "validation": "flext_core._typings.validation",
 }
 
 

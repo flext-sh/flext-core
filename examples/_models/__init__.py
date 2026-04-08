@@ -72,20 +72,6 @@ _LAZY_IMPORTS = {
     "ExConfigAppConfig": ("examples._models.exconfig", "ExConfigAppConfig"),
     "SharedHandle": ("examples._models.shared", "SharedHandle"),
     "SharedPerson": ("examples._models.shared", "SharedPerson"),
-    "ex00": "examples._models.ex00",
-    "ex01": "examples._models.ex01",
-    "ex02": "examples._models.ex02",
-    "ex03": "examples._models.ex03",
-    "ex04": "examples._models.ex04",
-    "ex05": "examples._models.ex05",
-    "ex07": "examples._models.ex07",
-    "ex08": "examples._models.ex08",
-    "ex10": "examples._models.ex10",
-    "ex11": "examples._models.ex11",
-    "ex12": "examples._models.ex12",
-    "ex14": "examples._models.ex14",
-    "exconfig": "examples._models.exconfig",
-    "shared": "examples._models.shared",
 }
 
 

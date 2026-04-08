@@ -12,8 +12,6 @@ _LAZY_IMPORTS = {
         "tests.unit._utilities.test_guards",
         "TestFlextUtilitiesGuards",
     ),
-    "test_guards": "tests.unit._utilities.test_guards",
-    "test_mapper": "tests.unit._utilities.test_mapper",
 }
 
 

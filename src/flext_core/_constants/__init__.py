@@ -33,16 +33,6 @@ _LAZY_IMPORTS = {
         "flext_core._constants.validation",
         "FlextConstantsValidation",
     ),
-    "base": "flext_core._constants.base",
-    "cqrs": "flext_core._constants.cqrs",
-    "domain": "flext_core._constants.domain",
-    "enforcement": "flext_core._constants.enforcement",
-    "errors": "flext_core._constants.errors",
-    "infrastructure": "flext_core._constants.infrastructure",
-    "mixins": "flext_core._constants.mixins",
-    "platform": "flext_core._constants.platform",
-    "settings": "flext_core._constants.settings",
-    "validation": "flext_core._constants.validation",
 }
 
 
