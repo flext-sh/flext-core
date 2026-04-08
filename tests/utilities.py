@@ -17,12 +17,12 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator, Mapping
 from typing import Never, override
 
-from flext_cli import u as _cli_u
+from flext_cli import u
 from flext_tests import FlextTestsUtilities, tm
 from tests import r, t
 
 
-class TestsFlextCoreUtilities(FlextTestsUtilities, _cli_u):
+class TestsFlextCoreUtilities(FlextTestsUtilities, u):
     """Utilities for flext-core tests - extends TestsFlextUtilities.
 
     Architecture: Extends TestsFlextUtilities with flext-core-specific utility

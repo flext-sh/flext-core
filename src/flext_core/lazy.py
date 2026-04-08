@@ -239,13 +239,15 @@ def install_lazy_exports(
     module_globals: LazyNamespace,
     lazy_imports: LazyImportMap,
     all_exports: Sequence[str] | None = None,
+    *,
+    publish_all: bool = True,
 ) -> None:
     """Install PEP 562 lazy loading into a module's namespace.
 
-    When ``all_exports`` is omitted, ``__all__`` and ``__dir__`` are derived
-    directly from ``lazy_imports``. Callers that need extra eager names may
-    pass only those extras. Legacy callers that still pass the complete export
-    list remain compatible.
+    When ``all_exports`` is omitted, ``__dir__`` is derived directly from
+    ``lazy_imports``. By default ``__all__`` mirrors the same export set, but
+    callers may disable that publication for non-root package ``__init__.py``
+    files with ``publish_all=False``.
 
     beartype.claw activation is intentionally not installed here. Recent
     validation shows synthetic packages with Pydantic models and
@@ -263,7 +265,10 @@ def install_lazy_exports(
 
     module_globals["__getattr__"] = _getattr
     module_globals["__dir__"] = _dir
-    module_globals["__all__"] = export_names
+    if publish_all:
+        module_globals["__all__"] = export_names
+    else:
+        module_globals.pop("__all__", None)
     cleanup_submodule_namespace(module_name, lazy_imports)
 
 
