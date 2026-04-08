@@ -97,14 +97,14 @@ if _t.TYPE_CHECKING:
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
-    ("examples._models",),
+    ("._models",),
     {
-        "ExamplesFlextCoreModels": ("examples.models", "ExamplesFlextCoreModels"),
+        "ExamplesFlextCoreModels": ".models",
         "c": ("flext_core.constants", "FlextConstants"),
         "d": ("flext_core.decorators", "FlextDecorators"),
         "e": ("flext_core.exceptions", "FlextExceptions"),
         "h": ("flext_core.handlers", "FlextHandlers"),
-        "m": ("examples.models", "ExamplesFlextCoreModels"),
+        "m": (".models", "ExamplesFlextCoreModels"),
         "p": ("flext_core.protocols", "FlextProtocols"),
         "r": ("flext_core.result", "FlextResult"),
         "s": ("flext_core.service", "FlextService"),
@@ -112,14 +112,17 @@ _LAZY_IMPORTS = merge_lazy_imports(
         "u": ("flext_core.utilities", "FlextUtilities"),
         "x": ("flext_core.mixins", "FlextMixins"),
     },
+    exclude_names=(
+        "cleanup_submodule_namespace",
+        "install_lazy_exports",
+        "lazy_getattr",
+        "logger",
+        "merge_lazy_imports",
+        "output",
+        "output_reporting",
+    ),
+    module_name=__name__,
 )
-_ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
-_ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
-_ = _LAZY_IMPORTS.pop("lazy_getattr", None)
-_ = _LAZY_IMPORTS.pop("logger", None)
-_ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
-_ = _LAZY_IMPORTS.pop("output", None)
-_ = _LAZY_IMPORTS.pop("output_reporting", None)
 
 __all__ = [
     "Ex00UserInput",

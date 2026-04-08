@@ -30,37 +30,40 @@ if _t.TYPE_CHECKING:
     from tests.unit.protocols import TestsFlextUnitProtocols
     from tests.utilities import TestsFlextCoreUtilities, TestsFlextCoreUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
-    ("tests.unit",),
+    (".unit",),
     {
-        "T": ("tests.typings", "T"),
-        "T_co": ("tests.typings", "T_co"),
-        "T_contra": ("tests.typings", "T_contra"),
-        "TestsFlextCoreConstants": ("tests.constants", "TestsFlextCoreConstants"),
-        "TestsFlextCoreModels": ("tests.models", "TestsFlextCoreModels"),
-        "TestsFlextCoreProtocols": ("tests.protocols", "TestsFlextCoreProtocols"),
-        "TestsFlextCoreServiceBase": ("tests.base", "TestsFlextCoreServiceBase"),
-        "TestsFlextCoreTypes": ("tests.typings", "TestsFlextCoreTypes"),
-        "TestsFlextCoreUtilities": ("tests.utilities", "TestsFlextCoreUtilities"),
-        "c": ("tests.constants", "TestsFlextCoreConstants"),
+        "T": ".typings",
+        "T_co": ".typings",
+        "T_contra": ".typings",
+        "TestsFlextCoreConstants": ".constants",
+        "TestsFlextCoreModels": ".models",
+        "TestsFlextCoreProtocols": ".protocols",
+        "TestsFlextCoreServiceBase": ".base",
+        "TestsFlextCoreTypes": ".typings",
+        "TestsFlextCoreUtilities": ".utilities",
+        "c": (".constants", "TestsFlextCoreConstants"),
         "d": ("flext_core.decorators", "FlextDecorators"),
         "e": ("flext_core.exceptions", "FlextExceptions"),
         "h": ("flext_core.handlers", "FlextHandlers"),
-        "m": ("tests.models", "TestsFlextCoreModels"),
-        "p": ("tests.protocols", "TestsFlextCoreProtocols"),
+        "m": (".models", "TestsFlextCoreModels"),
+        "p": (".protocols", "TestsFlextCoreProtocols"),
         "r": ("flext_core.result", "FlextResult"),
-        "s": ("tests.base", "TestsFlextCoreServiceBase"),
-        "t": ("tests.typings", "TestsFlextCoreTypes"),
-        "u": ("tests.utilities", "TestsFlextCoreUtilities"),
+        "s": (".base", "TestsFlextCoreServiceBase"),
+        "t": (".typings", "TestsFlextCoreTypes"),
+        "u": (".utilities", "TestsFlextCoreUtilities"),
         "x": ("flext_core.mixins", "FlextMixins"),
     },
+    exclude_names=(
+        "cleanup_submodule_namespace",
+        "install_lazy_exports",
+        "lazy_getattr",
+        "logger",
+        "merge_lazy_imports",
+        "output",
+        "output_reporting",
+    ),
+    module_name=__name__,
 )
-_ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
-_ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
-_ = _LAZY_IMPORTS.pop("lazy_getattr", None)
-_ = _LAZY_IMPORTS.pop("logger", None)
-_ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
-_ = _LAZY_IMPORTS.pop("output", None)
-_ = _LAZY_IMPORTS.pop("output_reporting", None)
 
 __all__ = [
     "T",

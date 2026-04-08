@@ -8,30 +8,12 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextModelsContextData": (
-        "flext_core._models._context._data",
-        "FlextModelsContextData",
-    ),
-    "FlextModelsContextExport": (
-        "flext_core._models._context._export",
-        "FlextModelsContextExport",
-    ),
-    "FlextModelsContextMetadata": (
-        "flext_core._models._context._metadata",
-        "FlextModelsContextMetadata",
-    ),
-    "FlextModelsContextProxyVar": (
-        "flext_core._models._context._proxy_var",
-        "FlextModelsContextProxyVar",
-    ),
-    "FlextModelsContextScope": (
-        "flext_core._models._context._scope",
-        "FlextModelsContextScope",
-    ),
-    "FlextModelsContextTokens": (
-        "flext_core._models._context._tokens",
-        "FlextModelsContextTokens",
-    ),
+    "FlextModelsContextData": "._data",
+    "FlextModelsContextExport": "._export",
+    "FlextModelsContextMetadata": "._metadata",
+    "FlextModelsContextProxyVar": "._proxy_var",
+    "FlextModelsContextScope": "._scope",
+    "FlextModelsContextTokens": "._tokens",
 }
 
 

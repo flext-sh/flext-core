@@ -8,19 +8,13 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextTypesAnnotateds": ("flext_core._typings.annotateds", "FlextTypesAnnotateds"),
-    "FlextTypesCore": ("flext_core._typings.core", "FlextTypesCore"),
-    "FlextTypesServices": ("flext_core._typings.services", "FlextTypesServices"),
-    "FlextTypesTypeAdapters": (
-        "flext_core._typings.typeadapters",
-        "FlextTypesTypeAdapters",
-    ),
-    "FlextTypesValidation": ("flext_core._typings.validation", "FlextTypesValidation"),
-    "FlextTypingBase": ("flext_core._typings.base", "FlextTypingBase"),
-    "FlextTypingContainers": (
-        "flext_core._typings.containers",
-        "FlextTypingContainers",
-    ),
+    "FlextTypesAnnotateds": ".annotateds",
+    "FlextTypesCore": ".core",
+    "FlextTypesServices": ".services",
+    "FlextTypesTypeAdapters": ".typeadapters",
+    "FlextTypesValidation": ".validation",
+    "FlextTypingBase": ".base",
+    "FlextTypingContainers": ".containers",
 }
 
 

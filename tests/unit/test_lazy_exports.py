@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports
+import sys
+from types import ModuleType
+
+import pytest
+
+from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 
 class TestInstallLazyExports:
@@ -38,3 +43,79 @@ class TestInstallLazyExports:
         dir_fn = module_globals["__dir__"]
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
+
+    def test_relative_lazy_targets_resolve(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Relative lazy targets are normalized against the installing module."""
+        package_name = "test_lazy_pkg_relative"
+        alpha_module_name = f"{package_name}.alpha"
+        alpha_module = ModuleType(alpha_module_name)
+
+        class Alpha:
+            pass
+
+        setattr(alpha_module, "Alpha", Alpha)
+        monkeypatch.setitem(sys.modules, package_name, ModuleType(package_name))
+        monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
+
+        module_globals: dict[str, object] = {}
+        install_lazy_exports(
+            package_name,
+            module_globals,
+            {"Alpha": (".alpha", "Alpha")},
+        )
+
+        getattr_fn = module_globals["__getattr__"]
+        assert callable(getattr_fn)
+        assert getattr_fn("Alpha") is Alpha
+
+
+class TestMergeLazyImports:
+    """Verify merged child maps normalize relative lazy targets."""
+
+    def test_child_relative_targets_are_normalized(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Merged child lazy maps expand relative targets to absolute module paths."""
+        child_package_name = "test_lazy_pkg_merge.child"
+        alpha_module_name = f"{child_package_name}.alpha"
+
+        child_package = ModuleType(child_package_name)
+        setattr(child_package, "_LAZY_IMPORTS", {"Alpha": (".alpha", "Alpha")})
+        alpha_module = ModuleType(alpha_module_name)
+
+        class Alpha:
+            pass
+
+        setattr(alpha_module, "Alpha", Alpha)
+        monkeypatch.setitem(sys.modules, child_package_name, child_package)
+        monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
+
+        merged = merge_lazy_imports((child_package_name,), {})
+        assert merged["Alpha"] == (alpha_module_name, "Alpha")
+
+    def test_relative_child_package_paths_are_normalized(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Relative child package paths expand against the parent module name."""
+        parent_package_name = "test_lazy_pkg_parent"
+        child_package_name = f"{parent_package_name}.child"
+        alpha_module_name = f"{child_package_name}.alpha"
+
+        child_package = ModuleType(child_package_name)
+        setattr(child_package, "_LAZY_IMPORTS", {"Alpha": (".alpha", "Alpha")})
+        alpha_module = ModuleType(alpha_module_name)
+
+        class Alpha:
+            pass
+
+        setattr(alpha_module, "Alpha", Alpha)
+        monkeypatch.setitem(sys.modules, child_package_name, child_package)
+        monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
+
+        merged = merge_lazy_imports((".child",), {}, module_name=parent_package_name)
+        assert merged["Alpha"] == (alpha_module_name, "Alpha")

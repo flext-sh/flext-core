@@ -99,6 +99,19 @@ def _normalize_lazy_import_map(
     }
 
 
+def _normalize_child_module_path(
+    module_name: str | None,
+    child_module_path: str,
+) -> str:
+    """Resolve a relative child package path against the parent module."""
+    if child_module_path.startswith("."):
+        if not module_name:
+            msg = "relative child module paths require module_name"
+            raise ValueError(msg)
+        return f"{module_name}{child_module_path}"
+    return child_module_path
+
+
 def _load_module(module_path: str) -> ModuleType:
     """Load a module using a small fast-path cache before importlib."""
     cached_module = _MODULE_CACHE.get(module_path)
@@ -238,6 +251,9 @@ def _load_child_lazy_imports(module_path: str) -> LazyImportMap:
 def merge_lazy_imports(
     child_module_paths: Sequence[str],
     local_lazy_imports: LazyImportMap,
+    *,
+    exclude_names: Sequence[str] = (),
+    module_name: str | None = None,
 ) -> dict[str, LazyImportEntry]:
     """Merge child package lazy maps with local entries using cached children.
 
@@ -246,7 +262,10 @@ def merge_lazy_imports(
     packages can intentionally override earlier class exports. Local module
     entries still override merged child entries explicitly.
     """
-    child_paths_key = tuple(child_module_paths)
+    child_paths_key = tuple(
+        _normalize_child_module_path(module_name, child_module_path)
+        for child_module_path in child_module_paths
+    )
     cached_children: dict[str, LazyImportEntry] | None = _CHILD_MERGE_CACHE.get(
         child_paths_key
     )
@@ -261,6 +280,8 @@ def merge_lazy_imports(
 
     merged_lazy_imports = dict(cached_children)
     merged_lazy_imports.update(local_lazy_imports)
+    for name in exclude_names:
+        merged_lazy_imports.pop(name, None)
     return merged_lazy_imports
 
 

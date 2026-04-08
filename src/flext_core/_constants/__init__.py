@@ -8,31 +8,16 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "FlextConstantsBase": ("flext_core._constants.base", "FlextConstantsBase"),
-    "FlextConstantsCqrs": ("flext_core._constants.cqrs", "FlextConstantsCqrs"),
-    "FlextConstantsDomain": ("flext_core._constants.domain", "FlextConstantsDomain"),
-    "FlextConstantsEnforcement": (
-        "flext_core._constants.enforcement",
-        "FlextConstantsEnforcement",
-    ),
-    "FlextConstantsErrors": ("flext_core._constants.errors", "FlextConstantsErrors"),
-    "FlextConstantsInfrastructure": (
-        "flext_core._constants.infrastructure",
-        "FlextConstantsInfrastructure",
-    ),
-    "FlextConstantsMixins": ("flext_core._constants.mixins", "FlextConstantsMixins"),
-    "FlextConstantsPlatform": (
-        "flext_core._constants.platform",
-        "FlextConstantsPlatform",
-    ),
-    "FlextConstantsSettings": (
-        "flext_core._constants.settings",
-        "FlextConstantsSettings",
-    ),
-    "FlextConstantsValidation": (
-        "flext_core._constants.validation",
-        "FlextConstantsValidation",
-    ),
+    "FlextConstantsBase": ".base",
+    "FlextConstantsCqrs": ".cqrs",
+    "FlextConstantsDomain": ".domain",
+    "FlextConstantsEnforcement": ".enforcement",
+    "FlextConstantsErrors": ".errors",
+    "FlextConstantsInfrastructure": ".infrastructure",
+    "FlextConstantsMixins": ".mixins",
+    "FlextConstantsPlatform": ".platform",
+    "FlextConstantsSettings": ".settings",
+    "FlextConstantsValidation": ".validation",
 }
 
 
