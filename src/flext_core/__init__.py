@@ -11,32 +11,6 @@ from flext_core.__version__ import *
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
-    from flext_core import (
-        _constants,
-        _models,
-        _protocols,
-        _typings,
-        _utilities,
-        constants,
-        container,
-        context,
-        decorators,
-        dispatcher,
-        exceptions,
-        handlers,
-        lazy,
-        loggings,
-        mixins,
-        models,
-        protocols,
-        registry,
-        result,
-        runtime,
-        service,
-        settings,
-        typings,
-        utilities,
-    )
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain

@@ -10,24 +10,6 @@ import typing as _t
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
-    from examples import (
-        _models,
-        ex_01_flext_result,
-        ex_02_flext_settings,
-        ex_03_flext_logger,
-        ex_04_flext_dispatcher,
-        ex_05_flext_mixins,
-        ex_06_flext_context,
-        ex_07_flext_exceptions,
-        ex_08_flext_container,
-        ex_09_flext_decorators,
-        ex_10_flext_handlers,
-        ex_11_flext_service,
-        ex_12_flext_registry,
-        logging_config_once_pattern,
-        models,
-        shared,
-    )
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,

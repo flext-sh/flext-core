@@ -10,24 +10,13 @@ from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 _LAZY_IMPORTS = merge_lazy_imports(
     ("tests.integration.patterns",),
     {
-        "c": ("flext_core.constants", "FlextConstants"),
-        "d": ("flext_core.decorators", "FlextDecorators"),
-        "e": ("flext_core.exceptions", "FlextExceptions"),
-        "h": ("flext_core.handlers", "FlextHandlers"),
-        "m": ("flext_core.models", "FlextModels"),
-        "p": ("flext_core.protocols", "FlextProtocols"),
         "patterns": "tests.integration.patterns",
-        "r": ("flext_core.result", "FlextResult"),
-        "s": ("flext_core.service", "FlextService"),
-        "t": ("flext_core.typings", "FlextTypes"),
         "test_architecture": "tests.integration.test_architecture",
         "test_config_integration": "tests.integration.test_config_integration",
         "test_integration": "tests.integration.test_integration",
         "test_migration_validation": "tests.integration.test_migration_validation",
         "test_service": "tests.integration.test_service",
         "test_system": "tests.integration.test_system",
-        "u": ("flext_core.utilities", "FlextUtilities"),
-        "x": ("flext_core.mixins", "FlextMixins"),
     },
 )
 _ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)

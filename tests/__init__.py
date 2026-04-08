@@ -15,23 +15,6 @@ if _t.TYPE_CHECKING:
     from flext_core.handlers import FlextHandlers as h
     from flext_core.mixins import FlextMixins as x
     from flext_core.result import FlextResult as r
-    from tests import (
-        base,
-        benchmark,
-        conftest,
-        constants,
-        helpers,
-        integration,
-        models,
-        protocols,
-        test_documented_patterns,
-        test_examples_execution,
-        test_service_result_property,
-        test_utils,
-        typings,
-        unit,
-        utilities,
-    )
     from tests.base import TestsFlextCoreServiceBase, TestsFlextCoreServiceBase as s
     from tests.constants import TestsFlextCoreConstants, TestsFlextCoreConstants as c
     from tests.models import TestsFlextCoreModels, TestsFlextCoreModels as m

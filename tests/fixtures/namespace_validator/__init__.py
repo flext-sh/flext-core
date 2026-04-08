@@ -8,13 +8,6 @@ from __future__ import annotations
 from flext_core.lazy import install_lazy_exports
 
 _LAZY_IMPORTS = {
-    "c": ("flext_core.constants", "FlextConstants"),
-    "d": ("flext_core.decorators", "FlextDecorators"),
-    "e": ("flext_core.exceptions", "FlextExceptions"),
-    "h": ("flext_core.handlers", "FlextHandlers"),
-    "m": ("flext_core.models", "FlextModels"),
-    "p": ("flext_core.protocols", "FlextProtocols"),
-    "r": ("flext_core.result", "FlextResult"),
     "rule0_loose_items": "tests.fixtures.namespace_validator.rule0_loose_items",
     "rule0_multiple_classes": "tests.fixtures.namespace_validator.rule0_multiple_classes",
     "rule0_no_class": "tests.fixtures.namespace_validator.rule0_no_class",
@@ -30,11 +23,7 @@ _LAZY_IMPORTS = {
     "rule2_typevar_in_class": "tests.fixtures.namespace_validator.rule2_typevar_in_class",
     "rule2_typevar_wrong_module": "tests.fixtures.namespace_validator.rule2_typevar_wrong_module",
     "rule2_valid_types": "tests.fixtures.namespace_validator.rule2_valid_types",
-    "s": ("flext_core.service", "FlextService"),
-    "t": ("flext_core.typings", "FlextTypes"),
     "typings": "tests.fixtures.namespace_validator.typings",
-    "u": ("flext_core.utilities", "FlextUtilities"),
-    "x": ("flext_core.mixins", "FlextMixins"),
 }
 
 
