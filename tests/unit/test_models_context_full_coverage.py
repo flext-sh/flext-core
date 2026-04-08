@@ -13,10 +13,6 @@ from flext_core import FlextModelsContextProxyVar
 from flext_tests import tm
 from tests import m, t
 
-_StructlogProxyContextVar = FlextModelsContextProxyVar.StructlogProxyContextVar
-
-_normalize_to_mapping = m.normalize_to_mapping
-
 
 class _ModelWithNoCallableDump:
     model_dump = "bad"
@@ -29,7 +25,10 @@ def test_to_general_value_dict_removed() -> None:
 
 def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
     structlog.contextvars.clear_contextvars()
-    proxy = _StructlogProxyContextVar("proxy_key", default="def")
+    proxy = FlextModelsContextProxyVar.StructlogProxyContextVar(
+        "proxy_key",
+        default="def",
+    )
     tm.that(proxy.get(), eq="def")
     token = proxy.set("abc")
     tm.that(proxy.get(), eq="abc")
@@ -52,7 +51,10 @@ def test_structlog_proxy_context_var_get_set_reset_paths() -> None:
 def test_structlog_proxy_context_var_default_when_key_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    proxy = _StructlogProxyContextVar("missing_key", default="d")
+    proxy = FlextModelsContextProxyVar.StructlogProxyContextVar(
+        "missing_key",
+        default="d",
+    )
 
     monkeypatch.setattr(
         _proxy_var_mod.structlog.contextvars,
@@ -199,18 +201,18 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
 
 
 def test_context_export_statistics_validator_and_computed_fields() -> None:
-    stats_none = _normalize_to_mapping(None)
+    stats_none = m.normalize_to_mapping(None)
     tm.that(stats_none, eq={})
-    stats_dict = _normalize_to_mapping({"a": 1})
+    stats_dict = m.normalize_to_mapping({"a": 1})
     tm.that(stats_dict, eq={"a": 1})
 
     class StatsModel(BaseModel):
         a: int = 1
 
-    stats_model = _normalize_to_mapping(StatsModel())
+    stats_model = m.normalize_to_mapping(StatsModel())
     tm.that(stats_model, eq={"a": 1})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.ValueOrModel", "x"))
+        _ = m.normalize_to_mapping(cast("t.ValueOrModel", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
     total_items = cast("int", exported.total_data_items)
     tm.that(total_items, eq=1)
@@ -223,22 +225,22 @@ def test_scope_data_validators_and_errors() -> None:
     class ScopeModel(BaseModel):
         a: int = 1
 
-    result_none = _normalize_to_mapping(None)
+    result_none = m.normalize_to_mapping(None)
     tm.that(result_none, eq={})
-    result_dict = _normalize_to_mapping({"a": 1})
+    result_dict = m.normalize_to_mapping({"a": 1})
     tm.that(result_dict, eq={"a": 1})
-    result_scope = _normalize_to_mapping(ScopeModel())
+    result_scope = m.normalize_to_mapping(ScopeModel())
     tm.that(result_scope, eq={"a": 1})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.ValueOrModel", 123))
-    result_none2 = _normalize_to_mapping(None)
+        _ = m.normalize_to_mapping(cast("t.ValueOrModel", 123))
+    result_none2 = m.normalize_to_mapping(None)
     tm.that(result_none2, eq={})
-    result_dict2 = _normalize_to_mapping({"a": 1})
+    result_dict2 = m.normalize_to_mapping({"a": 1})
     tm.that(result_dict2, eq={"a": 1})
-    result_scope2 = _normalize_to_mapping(ScopeModel())
+    result_scope2 = m.normalize_to_mapping(ScopeModel())
     tm.that(result_scope2, eq={"a": 1})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.ValueOrModel", 123))
+        _ = m.normalize_to_mapping(cast("t.ValueOrModel", 123))
 
 
 def test_statistics_and_custom_fields_validators() -> None:
@@ -246,22 +248,22 @@ def test_statistics_and_custom_fields_validators() -> None:
     class Payload(BaseModel):
         p: int = 2
 
-    result_x1 = _normalize_to_mapping({"x": 1})
+    result_x1 = m.normalize_to_mapping({"x": 1})
     tm.that(result_x1, eq={"x": 1})
-    result_payload1 = _normalize_to_mapping(Payload())
+    result_payload1 = m.normalize_to_mapping(Payload())
     tm.that(result_payload1, eq={"p": 2})
-    result_none1 = _normalize_to_mapping(None)
+    result_none1 = m.normalize_to_mapping(None)
     tm.that(result_none1, eq={})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.ValueOrModel", "bad"))
-    result_x2 = _normalize_to_mapping({"x": 1})
+        _ = m.normalize_to_mapping(cast("t.ValueOrModel", "bad"))
+    result_x2 = m.normalize_to_mapping({"x": 1})
     tm.that(result_x2, eq={"x": 1})
-    result_payload2 = _normalize_to_mapping(Payload())
+    result_payload2 = m.normalize_to_mapping(Payload())
     tm.that(result_payload2, eq={"p": 2})
-    result_none2 = _normalize_to_mapping(None)
+    result_none2 = m.normalize_to_mapping(None)
     tm.that(result_none2, eq={})
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("t.ValueOrModel", "bad"))
+        _ = m.normalize_to_mapping(cast("t.ValueOrModel", "bad"))
 
 
 def test_context_data_metadata_normalizer_removed() -> None:

@@ -38,9 +38,9 @@ class FlextTypingBase:
         | None
     )
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
-    type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
+    type MutableMappingKV[KeyT, ValueT] = dict[KeyT, ValueT]
     type SequenceOf[ItemT] = Sequence[ItemT]
-    type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
+    type MutableSequenceOf[ItemT] = list[ItemT]
     type ContainerMapping = RecursiveContainerMapping
     type ContainerList = RecursiveContainerList
     type MutableContainerMapping = MutableRecursiveContainerMapping
@@ -135,5 +135,18 @@ class FlextTypingBase:
 
     type Pair[LeftT, RightT] = tuple[LeftT, RightT]
     type Triple[FirstT, SecondT, ThirdT] = tuple[FirstT, SecondT, ThirdT]
+    type Quad[FirstT, SecondT, ThirdT, FourthT] = tuple[
+        FirstT,
+        SecondT,
+        ThirdT,
+        FourthT,
+    ]
+    type Quint[FirstT, SecondT, ThirdT, FourthT, FifthT] = tuple[
+        FirstT,
+        SecondT,
+        ThirdT,
+        FourthT,
+        FifthT,
+    ]
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
     type IntPair = Pair[int, int]
