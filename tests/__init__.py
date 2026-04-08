@@ -10,50 +10,32 @@ import typing as _t
 from flext_core.lazy import install_lazy_exports, merge_lazy_imports
 
 if _t.TYPE_CHECKING:
-    import tests.base as _tests_base
-
-    base = _tests_base
-    import tests.benchmark as _tests_benchmark
+    from flext_core.decorators import FlextDecorators as d
+    from flext_core.exceptions import FlextExceptions as e
+    from flext_core.handlers import FlextHandlers as h
+    from flext_core.mixins import FlextMixins as x
+    from flext_core.result import FlextResult as r
+    from tests import (
+        base,
+        benchmark,
+        conftest,
+        constants,
+        helpers,
+        integration,
+        models,
+        protocols,
+        test_documented_patterns,
+        test_examples_execution,
+        test_service_result_property,
+        test_utils,
+        typings,
+        unit,
+        utilities,
+    )
     from tests.base import TestsFlextCoreServiceBase, TestsFlextCoreServiceBase as s
-
-    benchmark = _tests_benchmark
-    import tests.conftest as _tests_conftest
-
-    conftest = _tests_conftest
-    import tests.constants as _tests_constants
-
-    constants = _tests_constants
-    import tests.helpers as _tests_helpers
     from tests.constants import TestsFlextCoreConstants, TestsFlextCoreConstants as c
-
-    helpers = _tests_helpers
-    import tests.integration as _tests_integration
-
-    integration = _tests_integration
-    import tests.models as _tests_models
-
-    models = _tests_models
-    import tests.protocols as _tests_protocols
     from tests.models import TestsFlextCoreModels, TestsFlextCoreModels as m
-
-    protocols = _tests_protocols
-    import tests.test_documented_patterns as _tests_test_documented_patterns
     from tests.protocols import TestsFlextCoreProtocols, TestsFlextCoreProtocols as p
-
-    test_documented_patterns = _tests_test_documented_patterns
-    import tests.test_examples_execution as _tests_test_examples_execution
-
-    test_examples_execution = _tests_test_examples_execution
-    import tests.test_service_result_property as _tests_test_service_result_property
-
-    test_service_result_property = _tests_test_service_result_property
-    import tests.test_utils as _tests_test_utils
-
-    test_utils = _tests_test_utils
-    import tests.typings as _tests_typings
-
-    typings = _tests_typings
-    import tests.unit as _tests_unit
     from tests.typings import (
         T,
         T_co,
@@ -61,18 +43,8 @@ if _t.TYPE_CHECKING:
         TestsFlextCoreTypes,
         TestsFlextCoreTypes as t,
     )
-
-    unit = _tests_unit
-    import tests.utilities as _tests_utilities
-    from tests.unit import TestsFlextUnitProtocols
-    from tests.unit._utilities import TestFlextUtilitiesGuards
-
-    utilities = _tests_utilities
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
-    from flext_core.result import FlextResult as r
+    from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
+    from tests.unit.protocols import TestsFlextUnitProtocols
     from tests.utilities import TestsFlextCoreUtilities, TestsFlextCoreUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     (
