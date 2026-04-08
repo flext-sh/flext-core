@@ -20,7 +20,9 @@ class TestInstallLazyExports:
         )
 
         assert "__all__" not in module_globals
-        assert module_globals["__dir__"]() == ["Alpha"]
+        dir_fn = module_globals["__dir__"]
+        assert callable(dir_fn)
+        assert dir_fn() == ["Alpha"]
 
     def test_publish_all_enabled_keeps_all(self) -> None:
         """Root packages still publish __all__ by default."""
@@ -33,4 +35,6 @@ class TestInstallLazyExports:
         )
 
         assert module_globals["__all__"] == ("Alpha",)
-        assert module_globals["__dir__"]() == ["Alpha"]
+        dir_fn = module_globals["__dir__"]
+        assert callable(dir_fn)
+        assert dir_fn() == ["Alpha"]

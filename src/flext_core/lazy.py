@@ -267,8 +267,6 @@ def install_lazy_exports(
     module_globals["__dir__"] = _dir
     if publish_all:
         module_globals["__all__"] = export_names
-    else:
-        module_globals.pop("__all__", None)
     cleanup_submodule_namespace(module_name, lazy_imports)
 
 
