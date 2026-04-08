@@ -3,31 +3,37 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._context",),
-    {
-        "FlextGenericModels": ".generic",
-        "FlextModelsBase": ".base",
-        "FlextModelsBuilder": ".builder",
-        "FlextModelsCollections": ".collections",
-        "FlextModelsConfig": ".settings",
-        "FlextModelsContainer": ".container",
-        "FlextModelsContainers": ".containers",
-        "FlextModelsContext": ".context",
-        "FlextModelsCqrs": ".cqrs",
-        "FlextModelsDecorators": ".decorators",
-        "FlextModelsDispatcher": ".dispatcher",
-        "FlextModelsDomainEvent": ".domain_event",
-        "FlextModelsEntity": ".entity",
-        "FlextModelsErrors": ".errors",
-        "FlextModelsExceptionParams": ".exception_params",
-        "FlextModelsHandler": ".handler",
-        "FlextModelsNamespace": ".namespace",
-        "FlextModelsRegistry": ".registry",
-        "FlextModelsService": ".service",
-    },
+    build_lazy_import_map(
+        {
+            ".base": ("FlextModelsBase",),
+            ".builder": ("FlextModelsBuilder",),
+            ".collections": ("FlextModelsCollections",),
+            ".container": ("FlextModelsContainer",),
+            ".containers": ("FlextModelsContainers",),
+            ".context": ("FlextModelsContext",),
+            ".cqrs": ("FlextModelsCqrs",),
+            ".decorators": ("FlextModelsDecorators",),
+            ".dispatcher": ("FlextModelsDispatcher",),
+            ".domain_event": ("FlextModelsDomainEvent",),
+            ".entity": ("FlextModelsEntity",),
+            ".errors": ("FlextModelsErrors",),
+            ".exception_params": ("FlextModelsExceptionParams",),
+            ".generic": ("FlextGenericModels",),
+            ".handler": ("FlextModelsHandler",),
+            ".namespace": ("FlextModelsNamespace",),
+            ".registry": ("FlextModelsRegistry",),
+            ".service": ("FlextModelsService",),
+            ".settings": ("FlextModelsConfig",),
+        },
+    ),
     exclude_names=(
         "cleanup_submodule_namespace",
         "install_lazy_exports",

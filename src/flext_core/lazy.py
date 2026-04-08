@@ -26,6 +26,8 @@ from pydantic import TypeAdapter, ValidationError
 
 type LazyImportEntry = str | Sequence[str]
 type LazyImportMap = Mapping[str, LazyImportEntry]
+type LazyImportModuleGroups = Mapping[str, Sequence[str]]
+type LazyImportAliasGroups = Mapping[str, Sequence[tuple[str, str]]]
 type LazyScalar = str | int | float | bool | bytes | date | time
 type LazyCollection = Mapping[str, LazyScalar] | Sequence[LazyScalar]
 type LazyModuleExportValue = LazyScalar
@@ -57,6 +59,38 @@ class LazyNamespace(Protocol):
         value: LazyNamespaceValue,
         /,
     ) -> None: ...
+
+
+def build_lazy_import_map(
+    module_groups: LazyImportModuleGroups | None = None,
+    *,
+    alias_groups: LazyImportAliasGroups | None = None,
+    sort_keys: bool = True,
+) -> dict[str, LazyImportEntry]:
+    """Build a flat lazy-import mapping from compact grouped declarations.
+
+    Args:
+        module_groups: Mapping of module paths to export names. Each export is mapped
+            to the module path directly (same-name import).
+        alias_groups: Mapping of module paths to (export_name, attr_name) pairs. Each
+            export is mapped to a (module_path, attr_name) tuple for renamed exports.
+        sort_keys: Whether to sort the resulting mapping keys for deterministic export
+            ordering.
+
+    Returns:
+        A dict suitable for ``install_lazy_exports``.
+
+    """
+    out: dict[str, LazyImportEntry] = {}
+    for module_path, export_names in (module_groups or {}).items():
+        for export_name in export_names:
+            out[export_name] = module_path
+    for module_path, pairs in (alias_groups or {}).items():
+        for export_name, attr_name in pairs:
+            out[export_name] = (module_path, attr_name)
+    if not sort_keys:
+        return out
+    return {name: out[name] for name in sorted(out)}
 
 
 def _validate_lazy_import_map(
@@ -323,6 +357,7 @@ def install_lazy_exports(
 
 
 __all__ = (
+    "build_lazy_import_map",
     "cleanup_submodule_namespace",
     "install_lazy_exports",
     "lazy_getattr",

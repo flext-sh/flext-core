@@ -5,7 +5,11 @@ from __future__ import annotations
 
 import typing as _t
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
 if _t.TYPE_CHECKING:
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
@@ -96,20 +100,24 @@ if _t.TYPE_CHECKING:
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._models",),
-    {
-        "ExamplesFlextCoreModels": ".models",
-        "c": ("flext_core.constants", "FlextConstants"),
-        "d": ("flext_core.decorators", "FlextDecorators"),
-        "e": ("flext_core.exceptions", "FlextExceptions"),
-        "h": ("flext_core.handlers", "FlextHandlers"),
-        "m": (".models", "ExamplesFlextCoreModels"),
-        "p": ("flext_core.protocols", "FlextProtocols"),
-        "r": ("flext_core.result", "FlextResult"),
-        "s": ("flext_core.service", "FlextService"),
-        "t": ("flext_core.typings", "FlextTypes"),
-        "u": ("flext_core.utilities", "FlextUtilities"),
-        "x": ("flext_core.mixins", "FlextMixins"),
-    },
+    build_lazy_import_map(
+        {
+            ".models": ("ExamplesFlextCoreModels",),
+        },
+        alias_groups={
+            ".models": (("m", "ExamplesFlextCoreModels"),),
+            "flext_core.constants": (("c", "FlextConstants"),),
+            "flext_core.decorators": (("d", "FlextDecorators"),),
+            "flext_core.exceptions": (("e", "FlextExceptions"),),
+            "flext_core.handlers": (("h", "FlextHandlers"),),
+            "flext_core.mixins": (("x", "FlextMixins"),),
+            "flext_core.protocols": (("p", "FlextProtocols"),),
+            "flext_core.result": (("r", "FlextResult"),),
+            "flext_core.service": (("s", "FlextService"),),
+            "flext_core.typings": (("t", "FlextTypes"),),
+            "flext_core.utilities": (("u", "FlextUtilities"),),
+        },
+    ),
     exclude_names=(
         "cleanup_submodule_namespace",
         "install_lazy_exports",

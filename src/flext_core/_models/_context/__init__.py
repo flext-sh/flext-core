@@ -3,16 +3,18 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-_LAZY_IMPORTS = {
-    "FlextModelsContextData": "._data",
-    "FlextModelsContextExport": "._export",
-    "FlextModelsContextMetadata": "._metadata",
-    "FlextModelsContextProxyVar": "._proxy_var",
-    "FlextModelsContextScope": "._scope",
-    "FlextModelsContextTokens": "._tokens",
-}
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        "._data": ("FlextModelsContextData",),
+        "._export": ("FlextModelsContextExport",),
+        "._metadata": ("FlextModelsContextMetadata",),
+        "._proxy_var": ("FlextModelsContextProxyVar",),
+        "._scope": ("FlextModelsContextScope",),
+        "._tokens": ("FlextModelsContextTokens",),
+    },
+)
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)

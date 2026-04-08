@@ -3,14 +3,22 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports, merge_lazy_imports
+from flext_core.lazy import (
+    build_lazy_import_map,
+    install_lazy_exports,
+    merge_lazy_imports,
+)
 
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._utilities",),
-    {
-        "TestsFlextUnitProtocols": ".protocols",
-        "p": ".protocols",
-    },
+    build_lazy_import_map(
+        {
+            ".protocols": (
+                "TestsFlextUnitProtocols",
+                "p",
+            ),
+        },
+    ),
     exclude_names=(
         "cleanup_submodule_namespace",
         "install_lazy_exports",

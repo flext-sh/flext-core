@@ -3,37 +3,39 @@
 
 from __future__ import annotations
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-_LAZY_IMPORTS = {
-    "FlextUtilitiesArgs": ".args",
-    "FlextUtilitiesBeartypeConf": ".beartype_conf",
-    "FlextUtilitiesBeartypeEngine": ".beartype_engine",
-    "FlextUtilitiesCache": ".cache",
-    "FlextUtilitiesChecker": ".checker",
-    "FlextUtilitiesCollection": ".collection",
-    "FlextUtilitiesConfiguration": ".configuration",
-    "FlextUtilitiesContext": ".context",
-    "FlextUtilitiesConversion": ".conversion",
-    "FlextUtilitiesDiscovery": ".discovery",
-    "FlextUtilitiesDomain": ".domain",
-    "FlextUtilitiesEnforcement": ".enforcement",
-    "FlextUtilitiesEnum": ".enum",
-    "FlextUtilitiesFileOps": ".file_ops",
-    "FlextUtilitiesGenerators": ".generators",
-    "FlextUtilitiesGuards": ".guards",
-    "FlextUtilitiesGuardsEnsure": ".guards_ensure",
-    "FlextUtilitiesGuardsType": ".guards_type",
-    "FlextUtilitiesGuardsTypeCore": ".guards_type_core",
-    "FlextUtilitiesGuardsTypeModel": ".guards_type_model",
-    "FlextUtilitiesGuardsTypeProtocol": ".guards_type_protocol",
-    "FlextUtilitiesMapper": ".mapper",
-    "FlextUtilitiesModel": ".model",
-    "FlextUtilitiesParser": ".parser",
-    "FlextUtilitiesReliability": ".reliability",
-    "FlextUtilitiesResultHelpers": ".result_helpers",
-    "FlextUtilitiesText": ".text",
-}
+_LAZY_IMPORTS = build_lazy_import_map(
+    {
+        ".args": ("FlextUtilitiesArgs",),
+        ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
+        ".beartype_engine": ("FlextUtilitiesBeartypeEngine",),
+        ".cache": ("FlextUtilitiesCache",),
+        ".checker": ("FlextUtilitiesChecker",),
+        ".collection": ("FlextUtilitiesCollection",),
+        ".configuration": ("FlextUtilitiesConfiguration",),
+        ".context": ("FlextUtilitiesContext",),
+        ".conversion": ("FlextUtilitiesConversion",),
+        ".discovery": ("FlextUtilitiesDiscovery",),
+        ".domain": ("FlextUtilitiesDomain",),
+        ".enforcement": ("FlextUtilitiesEnforcement",),
+        ".enum": ("FlextUtilitiesEnum",),
+        ".file_ops": ("FlextUtilitiesFileOps",),
+        ".generators": ("FlextUtilitiesGenerators",),
+        ".guards": ("FlextUtilitiesGuards",),
+        ".guards_ensure": ("FlextUtilitiesGuardsEnsure",),
+        ".guards_type": ("FlextUtilitiesGuardsType",),
+        ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
+        ".guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
+        ".guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
+        ".mapper": ("FlextUtilitiesMapper",),
+        ".model": ("FlextUtilitiesModel",),
+        ".parser": ("FlextUtilitiesParser",),
+        ".reliability": ("FlextUtilitiesReliability",),
+        ".result_helpers": ("FlextUtilitiesResultHelpers",),
+        ".text": ("FlextUtilitiesText",),
+    },
+)
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
