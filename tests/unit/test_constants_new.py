@@ -1,6 +1,6 @@
 """Tests for c - production constants facade.
 
-Tests all constant groups through the `c` facade (FlextCoreTestConstants -> c MRO).
+Tests all constant groups through the `c` facade (TestsFlextCoreConstants -> c MRO).
 Covers: base, cqrs, validation, infrastructure, platform, domain, errors, settings, mixins.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

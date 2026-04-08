@@ -765,6 +765,8 @@ class FlextUtilitiesEnforcement:
             if (parent / "pyproject.toml").exists() and parent.name.startswith(
                 "flext-"
             ):
+                if parent.name == "flext-core":
+                    return "Flext"
                 slug = parent.name.removeprefix("flext-")
                 return "Flext" + FlextUtilitiesEnforcement._to_pascal_case(slug)
         return None
@@ -779,15 +781,16 @@ class FlextUtilitiesEnforcement:
         for pkg, prefix in c.ENFORCEMENT_NAMESPACE_SPECIAL_PREFIXES:
             if package == pkg:
                 return prefix
-        package_suffix_map: Mapping[str, str] = {
-            "tests": "Test",
+        package_surface_map: Mapping[str, str] = {
+            "tests": "Tests",
             "examples": "Examples",
+            "scripts": "Scripts",
         }
-        if package in package_suffix_map:
-            pkg_suffix = package_suffix_map[package]
+        if package in package_surface_map:
+            surface_prefix = package_surface_map[package]
             project_prefix = FlextUtilitiesEnforcement._derive_prefix_from_path(target)
             if project_prefix is not None:
-                return project_prefix + pkg_suffix
+                return surface_prefix + project_prefix
             for base in target.__bases__:
                 base_mod = getattr(base, "__module__", "") or ""
                 base_pkg = base_mod.split(".")[0] if base_mod else ""
@@ -799,8 +802,8 @@ class FlextUtilitiesEnforcement:
                     parent = base.__name__
                     for suffix, _layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:
                         if parent.endswith(suffix):
-                            return parent[: -len(suffix)] + pkg_suffix
-                    return parent + pkg_suffix
+                            return surface_prefix + parent[: -len(suffix)]
+                    return surface_prefix + parent
             return None
         if package.startswith("flext_"):
             suffix = package[len("flext_") :]

@@ -218,6 +218,15 @@ class TestNamespacePrefixDerivation:
         """Hyphenated project slugs must normalize to a valid PascalCase prefix."""
         assert FlextUtilitiesEnforcement._to_pascal_case("db-oracle") == "DbOracle"
 
+    def test_flext_core_uses_flext_prefix(self) -> None:
+        """flext-core is the canonical exception and keeps the Flext prefix."""
+        assert (
+            FlextUtilitiesEnforcement._derive_prefix_from_path(
+                FlextUtilitiesEnforcement,
+            )
+            == "Flext"
+        )
+
 
 class TestBaseModelCoverage:
     """Verify all base models have enforcement hooks."""
@@ -510,11 +519,11 @@ class TestAllLayerIntegration:
 
     def test_downstream_projects_load_cleanly(self) -> None:
         """Flext-core facades load without any violations."""
-        assert c.__name__ == "FlextCoreTestConstants"
-        assert m.__name__ == "FlextCoreTestModels"
-        assert p.__name__ == "FlextCoreTestProtocols"
-        assert t.__name__ == "FlextCoreTestTypes"
-        assert u.__name__ == "FlextCoreTestUtilities"
+        assert c.__name__ == "TestsFlextCoreConstants"
+        assert m.__name__ == "TestsFlextCoreModels"
+        assert p.__name__ == "TestsFlextCoreProtocols"
+        assert t.__name__ == "TestsFlextCoreTypes"
+        assert u.__name__ == "TestsFlextCoreUtilities"
 
     def test_exempt_flag_works_across_layers(self) -> None:
         """_flext_enforcement_exempt disables layer checks."""

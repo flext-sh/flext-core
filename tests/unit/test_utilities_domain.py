@@ -414,7 +414,7 @@ class TestuDomain:
         test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test compare_entities_by_id using u."""
-        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+        operation_result = TestsFlextUtilities.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
@@ -431,7 +431,7 @@ class TestuDomain:
     )
     def test_hash_entity_by_id(self, test_case: test_unit_models.TestCaseMap) -> None:
         """Test hash_entity_by_id using u."""
-        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+        operation_result = TestsFlextUtilities.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
@@ -454,7 +454,7 @@ class TestuDomain:
         test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test compare_value_objects_by_value using u."""
-        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+        operation_result = TestsFlextUtilities.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
@@ -478,7 +478,7 @@ class TestuDomain:
         test_case: test_unit_models.TestCaseMap,
     ) -> None:
         """Test hash_value_object_by_value using u."""
-        operation_result = FlextTestsUtilities.Tests.execute_domain_operation(
+        operation_result = TestsFlextUtilities.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )

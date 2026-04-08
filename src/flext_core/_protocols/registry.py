@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 if TYPE_CHECKING:
-    from flext_core import FlextModelsBase, FlextModelsHandler, FlextModelsRegistry
+    from flext_core import m
 
 
 class FlextProtocolsRegistry:
@@ -30,7 +30,7 @@ class FlextProtocolsRegistry:
             self,
             name: str,
             service: t.RegistrablePlugin,
-            metadata: t.ConfigMap | FlextModelsBase.Metadata | None = None,
+            metadata: t.ConfigMap | m.Metadata | None = None,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a service component with optional metadata."""
             ...
@@ -38,22 +38,22 @@ class FlextProtocolsRegistry:
         def register_handler(
             self,
             handler: t.HandlerLike,
-            _metadata: t.ConfigMap | FlextModelsBase.Metadata | None = None,
-        ) -> FlextProtocolsResult.Result[FlextModelsHandler.RegistrationDetails]:
+            _metadata: t.ConfigMap | m.Metadata | None = None,
+        ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
         def register_handlers(
             self,
             handlers: Sequence[t.HandlerLike],
-        ) -> FlextProtocolsResult.Result[FlextModelsRegistry.RegistrySummary]:
+        ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
             self,
             bindings: Mapping[t.RegistryBindingKey, t.HandlerLike],
-        ) -> FlextProtocolsResult.Result[FlextModelsRegistry.RegistrySummary]:
+        ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...
 

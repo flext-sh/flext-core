@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from flext_core import t
 
 if TYPE_CHECKING:
-    from flext_core import FlextProtocolsResult
+    from flext_core import p
 
 
 class FlextProtocolsBase:
@@ -87,7 +87,7 @@ class FlextProtocolsBase:
     class Executable(Base, Protocol):
         """Protocol for objects that can be executed and report service info."""
 
-        def execute(self) -> FlextProtocolsResult.Result[t.RuntimeAtomic]: ...
+        def execute(self) -> p.Result[t.RuntimeAtomic]: ...
 
         def get_service_info(self) -> t.FlatContainerMapping: ...
 

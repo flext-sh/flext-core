@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
 from pydantic_settings import BaseSettings
 
-from flext_core import FlextProtocolsResult, t
+from flext_core import t
 
 if TYPE_CHECKING:
-    from flext_core import FlextModelsContextExport
+    from flext_core import m, p
 
 
 class FlextProtocolsContext:
@@ -29,7 +29,7 @@ class FlextProtocolsContext:
             self,
             key: str,
             scope: str = ...,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
+        ) -> p.Result[t.RuntimeAtomic]:
             """Get a context value by key and scope."""
             ...
 
@@ -60,7 +60,7 @@ class FlextProtocolsContext:
             value: t.RuntimeAtomic,
             *,
             scope: str = ...,
-        ) -> FlextProtocolsResult.Result[bool]: ...
+        ) -> p.Result[bool]: ...
 
         @overload
         def set(
@@ -69,7 +69,7 @@ class FlextProtocolsContext:
             value: None = ...,
             *,
             scope: str = ...,
-        ) -> FlextProtocolsResult.Result[bool]: ...
+        ) -> p.Result[bool]: ...
 
         def set(
             self,
@@ -77,7 +77,7 @@ class FlextProtocolsContext:
             value: t.RuntimeAtomic | None = ...,
             *,
             scope: str = ...,
-        ) -> FlextProtocolsResult.Result[bool]:
+        ) -> p.Result[bool]:
             """Set a context value or bulk-set from ConfigMap."""
             ...
 
@@ -104,7 +104,7 @@ class FlextProtocolsContext:
             """Merge another context or mapping into this one."""
             ...
 
-        def validate_context(self) -> FlextProtocolsResult.Result[bool]:
+        def validate_context(self) -> p.Result[bool]:
             """Validate context state consistency."""
             ...
 
@@ -118,7 +118,7 @@ class FlextProtocolsContext:
             include_statistics: bool = ...,
             include_metadata: bool = ...,
             as_dict: bool = ...,
-        ) -> FlextModelsContextExport.ContextExport | t.ContainerMapping:
+        ) -> m.ContextExport | t.ContainerMapping:
             """Export context state as the canonical context export model or dict."""
             ...
 
@@ -129,7 +129,7 @@ class FlextProtocolsContext:
         def get_metadata(
             self,
             key: str,
-        ) -> FlextProtocolsResult.Result[t.RuntimeAtomic]:
+        ) -> p.Result[t.RuntimeAtomic]:
             """Get a metadata value by key."""
             ...
 

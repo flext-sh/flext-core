@@ -10,19 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import (
-    Callable,
     ItemsView,
     Mapping,
     ValuesView,
 )
 from typing import Annotated
 
-from pydantic import BaseModel, Field, RootModel
+from pydantic import Field, RootModel
 
 from flext_core import t
-
-type _ScalarOrModel = t.Container | BaseModel
-type _ValidatorCallable = Callable[[_ScalarOrModel | None], _ScalarOrModel | None]
 
 
 class FlextModelsContainers:
@@ -33,7 +29,7 @@ class FlextModelsContainers:
     Access via ``t.ConfigMap``, ``t.Dict``, etc.
     """
 
-    class ValidatorCallable(RootModel[_ValidatorCallable]):
+    class ValidatorCallable(RootModel[t.ValidatorCallable]):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
         root: Annotated[
@@ -49,7 +45,7 @@ class FlextModelsContainers:
             """Execute validator."""
             return self.root(value)
 
-    class _RootValidatorMapModel(RootModel[Mapping[str, _ValidatorCallable]]):
+    class _RootValidatorMapModel(RootModel[Mapping[str, t.ValidatorCallable]]):
         """Shared API for validator map containers."""
 
         def items(self) -> ItemsView[str, t.ValidatorCallable]:

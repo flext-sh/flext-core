@@ -7,7 +7,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextUtilitiesParser, ParseOptions, r
+from flext_core import FlextUtilitiesParser, r
 from flext_tests import tm
 from tests import _models_impl, t, u
 
@@ -132,7 +132,7 @@ class TestUtilitiesParserFullCoverage:
         )
         tm.that(failed_bool, none=True)
 
-        opts: ParseOptions[int] = ParseOptions[int](default_factory=lambda: 9)
+        opts: u.ParseOptions[int] = u.ParseOptions[int](default_factory=lambda: 9)
         parsed = parser.parse(
             "x",
             int,

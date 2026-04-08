@@ -1,11 +1,11 @@
 """Type system foundation for flext-core tests.
 
-Provides FlextCoreTestTypes, extending FlextTestsTypes with flext-core-specific types.
+Provides TestsFlextCoreTypes, extending TestsFlextTypes with flext-core-specific types.
 All generic test types come from flext_tests, only flext-core-specific additions here.
 
 Architecture:
-- FlextTestsTypes (flext_tests) = Generic types for all FLEXT projects
-- FlextCoreTestTypes (tests/) = flext-core-specific types extending FlextTestsTypes
+- TestsFlextTypes (flext_tests) = Generic types for all FLEXT projects
+- TestsFlextCoreTypes (tests/) = flext-core-specific types extending TestsFlextTypes
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,22 +20,22 @@ from flext_core import T, T_co, T_contra
 from flext_tests import FlextTestsTypes
 
 
-class FlextCoreTestTypes(FlextTestsTypes, t):
-    """Type system foundation for flext-core tests - extends FlextTestsTypes.
+class TestsFlextCoreTypes(FlextTestsTypes, t):
+    """Type system foundation for flext-core tests - extends TestsFlextTypes.
 
-    Architecture: Extends FlextTestsTypes with flext-core-specific type definitions.
-    All generic types from FlextTestsTypes are available through inheritance.
+    Architecture: Extends TestsFlextTypes with flext-core-specific type definitions.
+    All generic types from TestsFlextTypes are available through inheritance.
 
     Rules:
-    - NEVER redeclare types from FlextTestsTypes
+    - NEVER redeclare types from TestsFlextTypes
     - Only flext-core-specific types allowed (not generic for other projects)
-    - All generic types come from FlextTestsTypes
+    - All generic types come from TestsFlextTypes
     """
 
     class Core:
         """Flext-core-specific type definitions for testing.
 
-        Uses composition of FlextTestsTypes for type safety and consistency.
+        Uses composition of TestsFlextTypes for type safety and consistency.
         Only defines types that are truly flext-core-specific.
         """
 
@@ -51,6 +51,6 @@ class FlextCoreTestTypes(FlextTestsTypes, t):
         "Handler configuration mapping specific to flext-core handlers."
 
 
-t = FlextCoreTestTypes
+t = TestsFlextCoreTypes
 
-__all__ = ["FlextCoreTestTypes", "T", "T_co", "T_contra", "t"]
+__all__ = ["T", "T_co", "T_contra", "TestsFlextCoreTypes", "t"]

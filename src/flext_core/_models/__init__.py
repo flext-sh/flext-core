@@ -168,6 +168,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
 _ = _LAZY_IMPORTS.pop("cleanup_submodule_namespace", None)
 _ = _LAZY_IMPORTS.pop("install_lazy_exports", None)
 _ = _LAZY_IMPORTS.pop("lazy_getattr", None)
+_ = _LAZY_IMPORTS.pop("logger", None)
 _ = _LAZY_IMPORTS.pop("merge_lazy_imports", None)
 _ = _LAZY_IMPORTS.pop("output", None)
 _ = _LAZY_IMPORTS.pop("output_reporting", None)

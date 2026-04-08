@@ -20,37 +20,36 @@ from flext_core import (
     FlextModelsBase,
     FlextUtilitiesArgs,
     FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesGuardsTypeModel,
+    T_Model,
     r,
     t,
 )
 
 
-class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
-    """Options controlling Pydantic model_dump() serialization behavior."""
-
-    by_alias: bool | None = Field(
-        default=None, description="Serialize using field aliases"
-    )
-    exclude_none: bool | None = Field(
-        default=None, description="Exclude None-valued fields"
-    )
-    exclude_unset: bool | None = Field(
-        default=None, description="Exclude fields not explicitly set"
-    )
-    exclude_defaults: bool | None = Field(
-        default=None, description="Exclude fields matching defaults"
-    )
-    include: set[str] | None = Field(
-        default=None, description="Whitelist of field names to include"
-    )
-    exclude: set[str] | None = Field(
-        default=None, description="Blacklist of field names to exclude"
-    )
-
-
 class FlextUtilitiesModel:
     """Utilities for Pydantic model initialization."""
+
+    class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
+        """Options controlling Pydantic model_dump() serialization behavior."""
+
+        by_alias: bool | None = Field(
+            default=None, description="Serialize using field aliases"
+        )
+        exclude_none: bool | None = Field(
+            default=None, description="Exclude None-valued fields"
+        )
+        exclude_unset: bool | None = Field(
+            default=None, description="Exclude fields not explicitly set"
+        )
+        exclude_defaults: bool | None = Field(
+            default=None, description="Exclude fields matching defaults"
+        )
+        include: set[str] | None = Field(
+            default=None, description="Whitelist of field names to include"
+        )
+        exclude: set[str] | None = Field(
+            default=None, description="Blacklist of field names to exclude"
+        )
 
     @staticmethod
     def safe_get_attribute(
@@ -65,12 +64,11 @@ class FlextUtilitiesModel:
     def _normalize_model_input(
         data: BaseModel | Mapping[str, t.ValueOrModel] | t.ConfigMap,
     ) -> Mapping[str, t.ValueOrModel]:
-        if isinstance(
-            data,
-            BaseModel,
-        ) and FlextUtilitiesGuardsTypeModel.is_pydantic_model(data):
+        if isinstance(data, BaseModel):
             root_value = getattr(data, "root", None)
-            if FlextUtilitiesGuardsTypeCore.is_mapping(root_value):
+            if isinstance(
+                root_value, Mapping
+            ) and FlextUtilitiesGuardsTypeCore.is_mapping(root_value):
                 return {str(key): value for key, value in root_value.items()}
             dumped = data.model_dump()
             return {str(key): value for key, value in dumped.items()}
@@ -79,7 +77,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def dump(
         model: BaseModel,
-        options: ModelDumpOptions | None = None,
+        options: FlextUtilitiesModel.ModelDumpOptions | None = None,
         **kwargs: t.ValueOrModel,
     ) -> t.ScalarMapping:
         """Unified Pydantic serialization with options.
@@ -96,19 +94,21 @@ class FlextUtilitiesModel:
 
         """
         opts = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, ModelDumpOptions
-        ).unwrap_or(ModelDumpOptions())
+            options,
+            kwargs,
+            FlextUtilitiesModel.ModelDumpOptions,
+        ).unwrap_or(FlextUtilitiesModel.ModelDumpOptions())
         opts_dict = opts.model_dump(exclude_none=True)
         return model.model_dump(**opts_dict)
 
     @classmethod
-    def load[M: BaseModel](
+    def load(
         cls,
-        model_cls: type[M],
+        model_cls: type[T_Model],
         data: BaseModel | Mapping[str, t.ValueOrModel] | t.ConfigMap,
-    ) -> r[M]:
+    ) -> r[T_Model]:
         """Load a model from a mapping-like input using Pydantic validation."""
-        return r[M].create_from_callable(
+        return r[T_Model].create_from_callable(
             lambda: model_cls.model_validate(cls._normalize_model_input(data)),
         )
 

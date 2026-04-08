@@ -7,7 +7,7 @@ from flext_core import FlextModels
 from ._models import SharedHandle, SharedPerson
 
 
-class FlextCoreExamplesModels(FlextModels):
+class ExamplesFlextCoreModels(FlextModels):
     """Public examples model facade extending flext-core models."""
 
     class Examples:
@@ -20,8 +20,6 @@ class FlextCoreExamplesModels(FlextModels):
             """Shared resource-handle model used by public examples."""
 
 
-m = FlextCoreExamplesModels
-Person = FlextCoreExamplesModels.Examples.Person
-Handle = FlextCoreExamplesModels.Examples.Handle
+m = ExamplesFlextCoreModels
 
-__all__ = ["FlextCoreExamplesModels", "Handle", "Person", "m"]
+__all__ = ["ExamplesFlextCoreModels", "m"]

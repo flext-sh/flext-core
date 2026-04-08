@@ -26,28 +26,27 @@ from flext_core import (
 )
 
 
-class RetryOptions(FlextModelsBase.FlexibleInternalModel):
-    """Configuration options for retry logic."""
-
-    max_attempts: int | None = Field(
-        default=None, description="Maximum number of retry attempts"
-    )
-    delay: float | None = Field(
-        default=None, description="Initial delay between retries in seconds"
-    )
-    delay_seconds: float | None = Field(
-        default=None, description="Alias for delay in seconds"
-    )
-    backoff_multiplier: float | None = Field(
-        default=None, description="Multiplier for exponential backoff"
-    )
-    retry_on: tuple[type[Exception], ...] | None = Field(
-        default=None, description="Exception types to retry on"
-    )
-
-
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
+
+    class RetryOptions(FlextModelsBase.FlexibleInternalModel):
+        """Configuration options for retry logic."""
+
+        max_attempts: int | None = Field(
+            default=None, description="Maximum number of retry attempts"
+        )
+        delay: float | None = Field(
+            default=None, description="Initial delay between retries in seconds"
+        )
+        delay_seconds: float | None = Field(
+            default=None, description="Alias for delay in seconds"
+        )
+        backoff_multiplier: float | None = Field(
+            default=None, description="Multiplier for exponential backoff"
+        )
+        retry_on: tuple[type[Exception], ...] | None = Field(
+            default=None, description="Exception types to retry on"
+        )
 
     _RETRIABLE_ERROR_PATTERNS: tuple[str, ...] = (
         "Temporary failure",
@@ -171,7 +170,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def retry[TResult](
         operation: Callable[[], r[TResult]],
-        options: RetryOptions | None = None,
+        options: FlextUtilitiesReliability.RetryOptions | None = None,
         **kwargs: t.ValueOrModel,
     ) -> r[TResult]:
         """Execute an operation with retry logic using railway patterns.
@@ -187,7 +186,11 @@ class FlextUtilitiesReliability:
         Fast fail: explicit default values instead of 'or' fallback.
 
         """
-        opts_res = FlextUtilitiesArgs.resolve_options(options, kwargs, RetryOptions)
+        opts_res = FlextUtilitiesArgs.resolve_options(
+            options,
+            kwargs,
+            FlextUtilitiesReliability.RetryOptions,
+        )
         if opts_res.is_failure:
             return r[TResult].fail(opts_res.error)
         opts = opts_res.value

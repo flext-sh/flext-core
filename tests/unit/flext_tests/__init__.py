@@ -14,19 +14,15 @@ if _t.TYPE_CHECKING:
 
     test_docker = _tests_unit_flext_tests_test_docker
     import tests.unit.flext_tests.test_domains as _tests_unit_flext_tests_test_domains
-    from tests.unit.flext_tests.test_docker import TestDocker
 
     test_domains = _tests_unit_flext_tests_test_domains
     import tests.unit.flext_tests.test_files as _tests_unit_flext_tests_test_files
-    from tests.unit.flext_tests.test_domains import TestFlextTestsDomains
 
     test_files = _tests_unit_flext_tests_test_files
     import tests.unit.flext_tests.test_matchers as _tests_unit_flext_tests_test_matchers
-    from tests.unit.flext_tests.test_files import TestFlextTestsFiles
 
     test_matchers = _tests_unit_flext_tests_test_matchers
     import tests.unit.flext_tests.test_utilities as _tests_unit_flext_tests_test_utilities
-    from tests.unit.flext_tests.test_matchers import TestFlextTestsMatchers
 
     test_utilities = _tests_unit_flext_tests_test_utilities
     from flext_core.constants import FlextConstants as c
@@ -40,19 +36,7 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService as s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
-    from tests.unit.flext_tests.test_utilities import TestUtilities
 _LAZY_IMPORTS = {
-    "TestDocker": ("tests.unit.flext_tests.test_docker", "TestDocker"),
-    "TestFlextTestsDomains": (
-        "tests.unit.flext_tests.test_domains",
-        "TestFlextTestsDomains",
-    ),
-    "TestFlextTestsFiles": ("tests.unit.flext_tests.test_files", "TestFlextTestsFiles"),
-    "TestFlextTestsMatchers": (
-        "tests.unit.flext_tests.test_matchers",
-        "TestFlextTestsMatchers",
-    ),
-    "TestUtilities": ("tests.unit.flext_tests.test_utilities", "TestUtilities"),
     "c": ("flext_core.constants", "FlextConstants"),
     "d": ("flext_core.decorators", "FlextDecorators"),
     "e": ("flext_core.exceptions", "FlextExceptions"),
@@ -72,11 +56,6 @@ _LAZY_IMPORTS = {
 }
 
 __all__ = [
-    "TestDocker",
-    "TestFlextTestsDomains",
-    "TestFlextTestsFiles",
-    "TestFlextTestsMatchers",
-    "TestUtilities",
     "c",
     "d",
     "e",

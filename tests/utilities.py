@@ -1,11 +1,11 @@
 """Utilities for flext-core tests.
 
-Provides FlextCoreTestUtilities, extending FlextTestsUtilities with flext-core-specific
+Provides TestsFlextCoreUtilities, extending TestsFlextUtilities with flext-core-specific
 utilities. All generic test utilities come from flext_tests.
 
 Architecture:
-- FlextTestsUtilities (flext_tests) = Generic utilities for all FLEXT projects
-- FlextCoreTestUtilities (tests/) = flext-core-specific utilities extending FlextTestsUtilities
+- TestsFlextUtilities (flext_tests) = Generic utilities for all FLEXT projects
+- TestsFlextCoreUtilities (tests/) = flext-core-specific utilities extending TestsFlextUtilities
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,17 +22,17 @@ from flext_tests import FlextTestsUtilities, tm
 from tests import r, t
 
 
-class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
-    """Utilities for flext-core tests - extends FlextTestsUtilities.
+class TestsFlextCoreUtilities(FlextTestsUtilities, _cli_u):
+    """Utilities for flext-core tests - extends TestsFlextUtilities.
 
-    Architecture: Extends FlextTestsUtilities with flext-core-specific utility
-    definitions. All generic utilities from FlextTestsUtilities are available
+    Architecture: Extends TestsFlextUtilities with flext-core-specific utility
+    definitions. All generic utilities from TestsFlextUtilities are available
     through inheritance.
 
     Rules:
-    - NEVER redeclare utilities from FlextTestsUtilities
+    - NEVER redeclare utilities from TestsFlextUtilities
     - Only flext-core-specific utilities allowed
-    - All generic utilities come from FlextTestsUtilities
+    - All generic utilities come from TestsFlextUtilities
     """
 
     class Core:
@@ -98,10 +98,10 @@ class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
 
             @staticmethod
             def create_for_split() -> (
-                FlextCoreTestUtilities.Core.CoreBadObjects.BadSplitString
+                TestsFlextCoreUtilities.Core.CoreBadObjects.BadSplitString
             ):
                 """Create t.NormalizedValue that fails on split()."""
-                return FlextCoreTestUtilities.Core.CoreBadObjects.BadSplitString()
+                return TestsFlextCoreUtilities.Core.CoreBadObjects.BadSplitString()
 
             class BadIndexString:
                 """String-like t.NormalizedValue that raises on indexing."""
@@ -118,10 +118,10 @@ class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
 
             @staticmethod
             def create_for_index() -> (
-                FlextCoreTestUtilities.Core.CoreBadObjects.BadIndexString
+                TestsFlextCoreUtilities.Core.CoreBadObjects.BadIndexString
             ):
                 """Create t.NormalizedValue that fails on indexing."""
-                return FlextCoreTestUtilities.Core.CoreBadObjects.BadIndexString()
+                return TestsFlextCoreUtilities.Core.CoreBadObjects.BadIndexString()
 
             class BadStrObject:
                 """Object that raises on str() conversion."""
@@ -134,10 +134,10 @@ class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
 
             @staticmethod
             def create_for_str() -> (
-                FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject
+                TestsFlextCoreUtilities.Core.CoreBadObjects.BadStrObject
             ):
                 """Create t.NormalizedValue that fails on str()."""
-                return FlextCoreTestUtilities.Core.CoreBadObjects.BadStrObject()
+                return TestsFlextCoreUtilities.Core.CoreBadObjects.BadStrObject()
 
             class BadDict(UserDict[str, t.Tests.TestobjectSerializable]):
                 """Dict that raises on get()."""
@@ -240,6 +240,6 @@ class FlextCoreTestUtilities(FlextTestsUtilities, _cli_u):
                 )
 
 
-u = FlextCoreTestUtilities
+u = TestsFlextCoreUtilities
 
-__all__ = ["FlextCoreTestUtilities", "u"]
+__all__ = ["TestsFlextCoreUtilities", "u"]

@@ -108,7 +108,7 @@ if _t.TYPE_CHECKING:
 
     parser = _flext_core__utilities_parser
     import flext_core._utilities.reliability as _flext_core__utilities_reliability
-    from flext_core._utilities.parser import FlextUtilitiesParser, ParseOptions
+    from flext_core._utilities.parser import FlextUtilitiesParser
 
     reliability = _flext_core__utilities_reliability
     import flext_core._utilities.result_helpers as _flext_core__utilities_result_helpers
@@ -196,7 +196,6 @@ _LAZY_IMPORTS = {
         "FlextUtilitiesResultHelpers",
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
-    "ParseOptions": ("flext_core._utilities.parser", "ParseOptions"),
     "args": "flext_core._utilities.args",
     "beartype_conf": "flext_core._utilities.beartype_conf",
     "beartype_engine": "flext_core._utilities.beartype_engine",
@@ -254,7 +253,6 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
-    "ParseOptions",
     "args",
     "beartype_conf",
     "beartype_engine",

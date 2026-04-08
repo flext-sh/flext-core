@@ -27,29 +27,6 @@ from flext_core import (
 )
 
 
-class ParseOptions[T](m.FlexibleInternalModel):
-    """Options controlling parsing behavior for string-to-type conversion."""
-
-    strict: bool | None = Field(
-        default=None, description="Reject coercions; fail on type mismatch"
-    )
-    coerce: bool | None = Field(
-        default=None, description="Enable implicit type coercion"
-    )
-    case_insensitive: bool | None = Field(
-        default=None, description="Normalize case before parsing"
-    )
-    default: T | None = Field(
-        default=None, description="Fallback value when parsing fails"
-    )
-    default_factory: Callable[[], T] | None = Field(
-        default=None, description="Factory producing fallback value"
-    )
-    field_name: str | None = Field(
-        default=None, description="Source field name for error context"
-    )
-
-
 class FlextUtilitiesParser:
     """Parse delimited and structured strings with predictable results.
 
@@ -58,6 +35,34 @@ class FlextUtilitiesParser:
     parsing logic in dispatcher pipelines without manual error handling.
 
     """
+
+    class ParseOptions[T](m.FlexibleInternalModel):
+        """Options controlling parsing behavior for string-to-type conversion."""
+
+        strict: bool | None = Field(
+            default=None,
+            description="Reject coercions; fail on type mismatch",
+        )
+        coerce: bool | None = Field(
+            default=None,
+            description="Enable implicit type coercion",
+        )
+        case_insensitive: bool | None = Field(
+            default=None,
+            description="Normalize case before parsing",
+        )
+        default: T | None = Field(
+            default=None,
+            description="Fallback value when parsing fails",
+        )
+        default_factory: Callable[[], T] | None = Field(
+            default=None,
+            description="Factory producing fallback value",
+        )
+        field_name: str | None = Field(
+            default=None,
+            description="Source field name for error context",
+        )
 
     @staticmethod
     def _coerce_to_bool[T](value: t.ValueOrModel) -> r[bool]:
@@ -154,12 +159,14 @@ class FlextUtilitiesParser:
     def _parse_try_direct[T](
         value: t.ValueOrModel,
         target: type[T],
-        options: ParseOptions[T] | None = None,
+        options: FlextUtilitiesParser.ParseOptions[T] | None = None,
         **kwargs: t.ValueOrModel,
     ) -> T:
         """Helper: Try direct type call."""
         opts = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, ParseOptions[T]
+            options,
+            kwargs,
+            FlextUtilitiesParser.ParseOptions[T],
         ).unwrap()
         default = opts.default
         default_factory = opts.default_factory
@@ -193,12 +200,14 @@ class FlextUtilitiesParser:
     def _parse_try_enum[T](
         value: t.ValueOrModel,
         target: type[T],
-        options: ParseOptions[T] | None = None,
+        options: FlextUtilitiesParser.ParseOptions[T] | None = None,
         **kwargs: t.ValueOrModel,
     ) -> T:
         """Helper: Try enum parsing, raise ValueError if not enum or invalid."""
         opts = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, ParseOptions[T]
+            options,
+            kwargs,
+            FlextUtilitiesParser.ParseOptions[T],
         ).unwrap()
         fp = f"{opts.field_name}: " if opts.field_name else ""
         if not issubclass(target, StrEnum):
@@ -238,12 +247,14 @@ class FlextUtilitiesParser:
     def _parse_try_model[T](
         value: t.ValueOrModel,
         target: type[T],
-        options: ParseOptions[T] | None = None,
+        options: FlextUtilitiesParser.ParseOptions[T] | None = None,
         **kwargs: t.ValueOrModel,
     ) -> T:
         """Helper: Try model parsing, raise ValueError if not model or invalid."""
         opts = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, ParseOptions[T]
+            options,
+            kwargs,
+            FlextUtilitiesParser.ParseOptions[T],
         ).unwrap()
         fp = f"{opts.field_name}: " if opts.field_name else ""
         if not issubclass(target, BaseModel):
@@ -268,12 +279,14 @@ class FlextUtilitiesParser:
     def _parse_try_primitive[T](
         value: t.ValueOrModel,
         target: type[T],
-        options: ParseOptions[T] | None = None,
+        options: FlextUtilitiesParser.ParseOptions[T] | None = None,
         **kwargs: t.ValueOrModel,
     ) -> T | None:
         """Helper function for type primitive parsing fallback."""
         opts = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, ParseOptions[T]
+            options,
+            kwargs,
+            FlextUtilitiesParser.ParseOptions[T],
         ).unwrap()
         fp = f"{opts.field_name}: " if opts.field_name else ""
         if value is None:
@@ -419,12 +432,14 @@ class FlextUtilitiesParser:
     def _parse_dispatch_primitive[T](
         value: t.ValueOrModel,
         target: type[T],
-        options: ParseOptions[T] | None = None,
+        options: FlextUtilitiesParser.ParseOptions[T] | None = None,
         **kwargs: t.ValueOrModel,
     ) -> T:
         """Dispatch primitive coercion with validation."""
         opts = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, ParseOptions[T]
+            options,
+            kwargs,
+            FlextUtilitiesParser.ParseOptions[T],
         ).unwrap()
         fp = f"{opts.field_name}: " if opts.field_name else ""
         prim = FlextUtilitiesParser._parse_try_primitive(
@@ -445,12 +460,14 @@ class FlextUtilitiesParser:
     def parse[T](
         value: t.ValueOrModel,
         target: type[T],
-        options: ParseOptions[T] | None = None,
+        options: FlextUtilitiesParser.ParseOptions[T] | None = None,
         **kwargs: t.ValueOrModel,
     ) -> T:
         """Universal type parser supporting enums, models, and primitives."""
         opts = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, ParseOptions[T]
+            options,
+            kwargs,
+            FlextUtilitiesParser.ParseOptions[T],
         ).unwrap()
         fp = f"{opts.field_name}: " if opts.field_name else ""
         if value is None:
@@ -490,4 +507,4 @@ class FlextUtilitiesParser:
                 )
 
 
-__all__ = ["FlextUtilitiesParser", "ParseOptions"]
+__all__ = ["FlextUtilitiesParser"]

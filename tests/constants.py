@@ -1,11 +1,11 @@
 """Constants for flext-core tests.
 
-Provides FlextCoreTestConstants, extending FlextTestsConstants with flext-core-specific
+Provides TestsFlextCoreConstants, extending FlextTestsConstants with flext-core-specific
 constants. All generic test constants come from flext_tests.
 
 Architecture:
 - FlextTestsConstants (flext_tests) = Generic constants for all FLEXT projects
-- FlextCoreTestConstants (tests/) = flext-core-specific constants extending FlextTestsConstants
+- TestsFlextCoreConstants (tests/) = flext-core-specific constants extending FlextTestsConstants
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,12 +18,12 @@ from typing import Annotated, ClassVar, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_cli import c as _cli_c
+from flext_cli import c
 from flext_tests import FlextTestsConstants
 from tests import t
 
 
-class FlextCoreTestConstants(FlextTestsConstants, _cli_c):
+class TestsFlextCoreConstants(FlextTestsConstants, c):
     """Constants for flext-core tests - extends FlextTestsConstants.
 
     Architecture layer: Layer 0 foundation constants with flext-core test extensions.
@@ -591,6 +591,6 @@ class FlextCoreTestConstants(FlextTestsConstants, _cli_c):
                 ] = 100
 
 
-c = FlextCoreTestConstants
+c = TestsFlextCoreConstants
 
-__all__ = ["FlextCoreTestConstants", "c"]
+__all__ = ["TestsFlextCoreConstants", "c"]

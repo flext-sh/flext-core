@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from tests import FlextCoreTestProtocols
+from tests import TestsFlextCoreProtocols
 
 
-class FlextUnitTestProtocols(FlextCoreTestProtocols):
-    """Unit test protocols — inherits full MRO from FlextCoreTestProtocols."""
+class TestsFlextUnitProtocols(TestsFlextCoreProtocols):
+    """Unit test protocols — inherits full MRO from TestsFlextCoreProtocols."""
 
 
-p = FlextUnitTestProtocols
-__all__ = ["FlextUnitTestProtocols", "p"]
+p = TestsFlextUnitProtocols
+__all__ = ["TestsFlextUnitProtocols", "p"]

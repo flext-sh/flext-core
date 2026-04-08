@@ -11,7 +11,7 @@ from datetime import date, time
 from enum import Enum
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import TYPE_CHECKING, Protocol, TypeAliasType, runtime_checkable
+from typing import TYPE_CHECKING, TypeAliasType
 
 from pydantic import BaseModel
 
@@ -19,96 +19,6 @@ from flext_core import FlextTypingBase, FlextTypingContainers
 
 if TYPE_CHECKING:
     from flext_core import m, p
-else:
-
-    class _RuntimeProtocolsNamespace:
-        @runtime_checkable
-        class DispatchMessage(Protocol):
-            pass
-
-        @runtime_checkable
-        class Handle(Protocol):
-            pass
-
-        @runtime_checkable
-        class Execute(Protocol):
-            pass
-
-        @runtime_checkable
-        class AutoDiscoverableHandler(Protocol):
-            pass
-
-        @runtime_checkable
-        class Routable(Protocol):
-            pass
-
-        @runtime_checkable
-        class OutputLogger(Protocol):
-            pass
-
-        @runtime_checkable
-        class Logger(OutputLogger, Protocol):
-            pass
-
-        @runtime_checkable
-        class Settings(Protocol):
-            pass
-
-        @runtime_checkable
-        class Context(Protocol):
-            pass
-
-        @runtime_checkable
-        class Dispatcher(Protocol):
-            pass
-
-        @runtime_checkable
-        class Flushable(Protocol):
-            pass
-
-        @runtime_checkable
-        class DispatchableService(Protocol):
-            pass
-
-        @runtime_checkable
-        class SuccessCheckable(Protocol):
-            pass
-
-        @runtime_checkable
-        class StructuredError(Protocol):
-            pass
-
-        @runtime_checkable
-        class ErrorDomainProtocol(Protocol):
-            pass
-
-        @runtime_checkable
-        class Configurable(Protocol):
-            pass
-
-        @runtime_checkable
-        class Result[T_co](Protocol):
-            pass
-
-        @runtime_checkable
-        class ProviderLike[T_co](Protocol):
-            pass
-
-    class _RuntimeModelsNamespace:
-        class ContainerConfig(BaseModel):
-            pass
-
-        class ServiceRegistration(BaseModel):
-            pass
-
-        class FactoryRegistration(BaseModel):
-            pass
-
-        class ResourceRegistration(BaseModel):
-            pass
-
-    p = _RuntimeProtocolsNamespace
-    m = _RuntimeModelsNamespace
 
 
 class FlextTypesServices:

@@ -1,12 +1,12 @@
 """Models for flext-core tests.
 
-Provides FlextCoreTestModels using composition with FlextTestsModels and FlextTestsModels.
+Provides TestsFlextCoreModels using composition with TestsFlextModels and TestsFlextModels.
 All generic test models come from flext_tests.
 
 Architecture:
-- FlextTestsModels (flext_tests) = Generic models for all FLEXT projects
-- FlextTestsModels (flext_core) = Core domain models
-- FlextCoreTestModels (tests/) = flext-core-specific models using composition
+- TestsFlextModels (flext_tests) = Generic models for all FLEXT projects
+- TestsFlextModels (flext_core) = Core domain models
+- TestsFlextCoreModels (tests/) = flext-core-specific models using composition
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,20 +24,20 @@ from flext_tests import FlextTestsModels
 from tests import t
 
 
-class FlextCoreTestModels(FlextTestsModels, m):
-    """Models for flext-core tests - uses composition with FlextTestsModels.
+class TestsFlextCoreModels(FlextTestsModels, m):
+    """Models for flext-core tests - uses composition with TestsFlextModels.
 
-    Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextTestsModels
+    Architecture: Uses composition (not inheritance) with TestsFlextModels and TestsFlextModels
     for flext-core-specific model definitions.
 
     Access patterns:
-    - FlextCoreTestModels.Tests.* = flext_tests test models (via inheritance)
-    - FlextCoreTestModels.Core.* = flext-core-specific test models
-    - FlextCoreTestModels.Entity, .Value, etc. = FlextTestsModels domain models (via inheritance)
+    - TestsFlextCoreModels.Tests.* = flext_tests test models (via inheritance)
+    - TestsFlextCoreModels.Core.* = flext-core-specific test models
+    - TestsFlextCoreModels.Entity, .Value, etc. = TestsFlextModels domain models (via inheritance)
 
     Rules:
     - flext-core-specific models go in Core namespace
-    - Generic models accessed via FlextTestsModels.Tests namespace
+    - Generic models accessed via TestsFlextModels.Tests namespace
     """
 
     class Core:
@@ -96,7 +96,7 @@ class FlextCoreTestModels(FlextTestsModels, m):
                 self.data = data
 
         class ComplexValue:
-            """FlextTestsModels.Value t.NormalizedValue with non-hashable attributes."""
+            """TestsFlextModels.Value t.NormalizedValue with non-hashable attributes."""
 
             def __init__(self, data: str, items: t.StrSequence) -> None:
                 """Initialize complex value with non-hashable items."""
@@ -241,7 +241,7 @@ class FlextCoreTestModels(FlextTestsModels, m):
             expected_success: bool = True
             error_contains: str | None = None
 
-        class UtilityEntityModel(FlextTestsModels.Entity):
+        class UtilityEntityModel(TestsFlextModels.Entity):
             """Shared entity model for generic test fixtures."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -249,7 +249,7 @@ class FlextCoreTestModels(FlextTestsModels, m):
             name: str
             value: t.ContainerValue
 
-        class UtilityValueModel(FlextTestsModels.Value):
+        class UtilityValueModel(TestsFlextModels.Value):
             """Shared value model for generic test fixtures."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
@@ -305,7 +305,7 @@ class FlextCoreTestModels(FlextTestsModels, m):
             email: str
             environment: str
             version: str
-            nested_data: Mapping[str, FlextCoreTestModels.Core.NestedDataDict]
+            nested_data: Mapping[str, TestsFlextCoreModels.Core.NestedDataDict]
 
         class FixtureCaseDict(BaseModel):
             """Individual test case configuration."""
@@ -349,7 +349,7 @@ class FlextCoreTestModels(FlextTestsModels, m):
             suite_name: str
             scenario_count: int
             tags: t.StrSequence
-            setup_data: Mapping[str, FlextCoreTestModels.Core.SetupDataDict]
+            setup_data: Mapping[str, TestsFlextCoreModels.Core.SetupDataDict]
 
         class UserDataFixtureDict(BaseModel):
             """User fixture data."""
@@ -374,8 +374,8 @@ class FlextCoreTestModels(FlextTestsModels, m):
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
-            user: Mapping[str, FlextCoreTestModels.Core.UserDataFixtureDict]
-            request: Mapping[str, FlextCoreTestModels.Core.RequestDataFixtureDict]
+            user: Mapping[str, TestsFlextCoreModels.Core.UserDataFixtureDict]
+            request: Mapping[str, TestsFlextCoreModels.Core.RequestDataFixtureDict]
 
         class UserProfileDict(BaseModel):
             """User profile for property-based testing."""
@@ -431,7 +431,7 @@ class FlextCoreTestModels(FlextTestsModels, m):
 
             event_type: str
             timestamp: str
-            payload: Mapping[str, FlextCoreTestModels.Core.AsyncPayloadDict]
+            payload: Mapping[str, TestsFlextCoreModels.Core.AsyncPayloadDict]
 
         class UserPayloadDict(BaseModel):
             """User command payload."""
@@ -455,7 +455,7 @@ class FlextCoreTestModels(FlextTestsModels, m):
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
             target_user_id: str
-            updates: Mapping[str, FlextCoreTestModels.Core.UpdateFieldDict]
+            updates: Mapping[str, TestsFlextCoreModels.Core.UpdateFieldDict]
 
         class UserDataDict(BaseModel):
             """User data response."""
@@ -486,9 +486,9 @@ class FlextCoreTestModels(FlextTestsModels, m):
             email: str = ""
 
 
-m = FlextCoreTestModels
+m = TestsFlextCoreModels
 
 __all__ = [
-    "FlextCoreTestModels",
+    "TestsFlextCoreModels",
     "m",
 ]
