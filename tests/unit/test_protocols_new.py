@@ -189,12 +189,12 @@ class TestFlextProtocols:
     # ------------------------------------------------------------------
 
     def test_flext_result_satisfies_success_checkable(self) -> None:
-        """FlextResult (via r[T]) satisfies p.SuccessCheckable."""
+        """R (via r[T]) satisfies p.SuccessCheckable."""
         result = _as_protocol_subject(r[str].ok("hello"))
         tm.that(u.check_protocol_compliance(result, p.SuccessCheckable), eq=True)
 
     def test_flext_result_satisfies_has_model_dump(self) -> None:
-        """FlextResult satisfies p.HasModelDump (it's a BaseModel)."""
+        """R satisfies p.HasModelDump (it's a BaseModel)."""
         result = _as_protocol_subject(r[str].ok("hello"))
         tm.that(u.check_protocol_compliance(result, p.HasModelDump), eq=True)
 
@@ -731,11 +731,11 @@ class TestFlextProtocols:
         tm.that(hasattr(p, "Registry"), eq=True, msg="p.Registry from registry group")
 
     # ------------------------------------------------------------------
-    # 9. FlextResult satisfies Result protocol properties
+    # 9. r satisfies Result protocol properties
     # ------------------------------------------------------------------
 
     def test_flext_result_ok_properties(self) -> None:
-        """FlextResult success exposes expected Result protocol properties."""
+        """R success exposes expected Result protocol properties."""
         result = r[str].ok("hello")
         tm.that(result.is_success, eq=True)
         tm.that(result.is_failure, eq=False)
@@ -746,7 +746,7 @@ class TestFlextProtocols:
         tm.that(bool(result), eq=True)
 
     def test_flext_result_fail_properties(self) -> None:
-        """FlextResult failure exposes expected Result protocol properties."""
+        """R failure exposes expected Result protocol properties."""
         result = r[str].fail("something broke")
         tm.that(result.is_success, eq=False)
         tm.that(result.is_failure, eq=True)
@@ -754,7 +754,7 @@ class TestFlextProtocols:
         tm.that(bool(result), eq=False)
 
     def test_flext_result_context_manager(self) -> None:
-        """FlextResult supports context manager protocol (__enter__/__exit__)."""
+        """R supports context manager protocol (__enter__/__exit__)."""
         result = r[str].ok("ctx")
         with result as ctx:
             tm.that(ctx.value, eq="ctx")

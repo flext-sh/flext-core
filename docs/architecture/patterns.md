@@ -89,7 +89,7 @@ if logger_result.is_success:
 **Pattern:** Model business logic with Entities, Value Objects, and Services.
 
 ```python
-from flext_core import FlextModels, FlextService, r
+from flext_core import FlextModels, s, r
 
 
 # Value Object - immutable, compared by value
@@ -106,7 +106,7 @@ class Order(FlextModels.Entity):
 
 
 # Service - encapsulates business logic
-class OrderService(FlextService):
+class OrderService(s):
     def place_order(self, customer_id: str, items: list) -> r[Order]:
         # Business logic here
         pass
@@ -170,7 +170,7 @@ result = dispatcher.dispatch(CreateUserCommand("Alice", "alice@example.com"))
 **Pattern:** Use domain events for decoupled communication.
 
 ```python
-from flext_core import FlextModels, FlextService
+from flext_core import FlextModels, s
 
 
 class UserCreatedEvent:
@@ -179,7 +179,7 @@ class UserCreatedEvent:
         self.email = email
 
 
-class UserService(FlextService):
+class UserService(s):
     def create_user(self, name: str, email: str) -> r[User]:
         user = User(id="new", name=name, email=email)
 
@@ -233,7 +233,7 @@ class PostgresUserRepository(UserRepository):
 
 
 # Domain doesn't know about implementation
-class UserService(FlextService):
+class UserService(s):
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
@@ -349,15 +349,15 @@ else:
 **Pattern:** Chain middleware for cross-cutting concerns.
 
 ```python
-from flext_core import FlextDecorators
+from flext_core import d
 from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
 
 
-@FlextDecorators.retry(attempts=2)
-@FlextDecorators.timeout(seconds=3)
-@FlextDecorators.with_correlation
+@d.retry(attempts=2)
+@d.timeout(seconds=3)
+@d.with_correlation
 def guarded_handler(message):
     logger.info("processing", message=type(message).__name__)
     return handle(message)

@@ -13,10 +13,8 @@ from typing import Annotated, ClassVar, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, FlextService, r
-from tests import p, t
-
-from .test_utils import assertion_helpers
+from flext_core import e, r, s
+from tests import p, t, u
 
 
 class EmailResponse(BaseModel):
@@ -147,7 +145,7 @@ class TestDocumentedPatterns:
         def execute_v2_pipeline(self) -> TestDocumentedPatterns.User | str:
             if not self.user_ids:
                 msg = "No user IDs provided"
-                raise FlextExceptions.BaseError(msg)
+                raise e.BaseError(msg)
             user_result = TestDocumentedPatterns.make(
                 TestDocumentedPatterns.GetUserService,
                 user_id=self.user_ids[0],
@@ -213,7 +211,7 @@ class TestDocumentedPatterns:
                 ("square", 1, t.ConfigMap(root={"operation": "square", "result": 1})),
             ]
 
-    class GetUserService(FlextService[User]):
+    class GetUserService(s[User]):
         """Service to get user."""
 
         user_id: str = ""
@@ -230,7 +228,7 @@ class TestDocumentedPatterns:
                 ),
             )
 
-    class SendEmailService(FlextService[EmailResponse]):
+    class SendEmailService(s[EmailResponse]):
         """Service to send email."""
 
         to: str = ""
@@ -244,7 +242,7 @@ class TestDocumentedPatterns:
                 EmailResponse(status="sent", message_id=f"msg-{self.to}"),
             )
 
-    class ValidationService(FlextService[t.ConfigMap]):
+    class ValidationService(s[t.ConfigMap]):
         """Service to validate values."""
 
         value: int = 0
@@ -259,7 +257,7 @@ class TestDocumentedPatterns:
                 t.ConfigMap(root={"valid": True, "value": self.value}),
             )
 
-    class MultiOperationService(FlextService[t.ConfigMap]):
+    class MultiOperationService(s[t.ConfigMap]):
         """Service for multiple operations."""
 
         operation: str = ""
@@ -307,7 +305,7 @@ class TestDocumentedPatterns:
         service_case = self.ServiceTestCase(user_id=user_id, description=description)
         service = service_case.create_user_service()
         result = service.execute()
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         user = result.value
         assert isinstance(user, self.User)
         assert user.unique_id == service_case.user_id
@@ -324,7 +322,7 @@ class TestDocumentedPatterns:
         )
         service = service_case.create_user_service()
         result = service.execute()
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
         error_msg = result.error
         assert error_msg is not None
         expected = service_case.expected_error
@@ -362,7 +360,7 @@ class TestDocumentedPatterns:
             expected_error=expected_error,
             description=description,
         )
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+        with pytest.raises(e.BaseError) as exc_info:
             service_case.create_user_service().result
         error_str = str(exc_info.value).lower()
         assert service_case.expected_error is not None
@@ -373,7 +371,7 @@ class TestDocumentedPatterns:
         user_id, description = case
         service_case = self.ServiceTestCase(user_id=user_id, description=description)
         result = service_case.create_user_service().execute()
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         user = result.value
         assert isinstance(user, self.User)
         assert user.unique_id == service_case.user_id
@@ -391,7 +389,7 @@ class TestDocumentedPatterns:
             description=description,
         )
         result = railway_case.execute_v1_pipeline()
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         if "get_status" in railway_case.operations:
             assert result.value == "sent"
         elif "get_email" in railway_case.operations:
@@ -418,7 +416,7 @@ class TestDocumentedPatterns:
             .execute()
             .map(lambda u: u.email)
         )
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         assert result.value == "user123@example.com"
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
@@ -476,7 +474,7 @@ class TestDocumentedPatterns:
             .execute()
             .filter(self.value_lt_100)
         )
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
 
     def test_monadic_complex_pipeline(self) -> None:
         pipeline = (
@@ -503,11 +501,11 @@ class TestDocumentedPatterns:
             assert isinstance(user_result_raw, self.User)
             user_result = user_result_raw
             assert user_result.unique_id == "123"
-        except FlextExceptions.BaseError:
+        except e.BaseError:
             pytest.fail("Should not raise")
 
     def test_error_handling_try_except_v2_property_failure(self) -> None:
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+        with pytest.raises(e.BaseError) as exc_info:
             self.make(self.GetUserService, user_id="invalid").result
         assert "not found" in str(exc_info.value).lower()
 
@@ -517,7 +515,7 @@ class TestDocumentedPatterns:
             assert isinstance(user_result_raw, self.User)
             user_result = user_result_raw
             email = user_result.email
-        except FlextExceptions.BaseError:
+        except e.BaseError:
             email = "fallback@example.com"
         assert email == "user123@example.com"
 
@@ -561,7 +559,7 @@ class TestDocumentedPatterns:
         assert result["result"] == expected["result"]
 
     def test_multiple_operations_invalid(self) -> None:
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+        with pytest.raises(e.BaseError) as exc_info:
             self.make(self.MultiOperationService, operation="invalid", value=5).result
         assert "Unknown operation" in str(exc_info.value)
 
@@ -609,7 +607,7 @@ class TestDocumentedPatterns:
         )
         assert v2_pipeline.is_success
 
-        class CustomService(FlextService[TestDocumentedPatterns.User]):
+        class CustomService(s[TestDocumentedPatterns.User]):
             user_id: str = ""
 
             @override

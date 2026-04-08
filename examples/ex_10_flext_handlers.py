@@ -8,8 +8,9 @@ from typing import ClassVar, override
 
 from pydantic import BaseModel
 
-from examples import Ex10ProtocolHandler, Examples, c, m, t, u
-from flext_core import FlextHandlers, FlextLogger, e, h, r
+from examples import Ex10ProtocolHandler, c, m, t, u
+from examples.shared import Examples
+from flext_core import FlextLogger, e, h, r
 
 
 class _Message(m.Command):
@@ -33,13 +34,13 @@ class _NoArgs:
         self.marker = "created"
 
 
-class _NotImplementedPatternHandler(FlextHandlers[_Message, str]):
+class _NotImplementedPatternHandler(h[_Message, str]):
     @override
     def handle(self, message: _Message) -> r[str]:
         raise NotImplementedError
 
 
-class _DemoHandler(FlextHandlers[_Message, str]):
+class _DemoHandler(h[_Message, str]):
     _expected_message_type: ClassVar[type | None] = _Message
 
     @override

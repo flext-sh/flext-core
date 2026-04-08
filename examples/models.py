@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
+from examples._models.shared import SharedHandle, SharedPerson
 from flext_core import FlextModels
-
-from ._models import SharedHandle, SharedPerson
 
 
 class ExamplesFlextCoreModels(FlextModels):

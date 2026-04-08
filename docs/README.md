@@ -63,7 +63,7 @@ PY
 1. **Railway-oriented programming (`r`)** — express success/failure without exceptions and chain operations with `map`/`flat_map`.
 1. **Dependency injection (`FlextContainer`)** — register and resolve shared collaborators explicitly; avoid implicit globals.
 1. **CQRS dispatcher (`FlextDispatcher`)** — route commands, queries, and domain events through handler registries with optional middleware.
-1. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `r`.
+1. **Domain-driven design (`FlextModels`, `s`)** — model entities/values and encapsulate domain services that return `r`.
 1. **Layered dependency-injector bridge** — isolate dependency-injector usage to the runtime/container while handlers use `provide`/`inject` only.
 
 ## Style Expectations

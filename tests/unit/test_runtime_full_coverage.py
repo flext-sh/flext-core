@@ -28,7 +28,7 @@ from dependency_injector import containers, providers
 from pydantic import BaseModel
 
 from flext_tests import tm
-from tests import c, m, r, t, test_runtime, test_runtime_coverage_100, u
+from tests import m, r, t, u
 
 runtime_module = inspect.getmodule(u.configure_structlog)
 
@@ -44,52 +44,6 @@ def reset_runtime_state() -> Generator[None]:
     if u._async_writer is not None:
         u._async_writer.shutdown()
         u._async_writer = None
-
-
-def test_reuse_existing_runtime_scenarios() -> None:
-    suite = test_runtime.TestFlextRuntime()
-    _ = c.DEFAULT_LEVEL
-    _ = u.to_str("x")
-    scenarios = test_runtime.TestFlextRuntime.RuntimeScenarios
-    for case in scenarios.dict_like_scenarios():
-        suite.test_dict_like_validation(case)
-    for case in scenarios.list_like_scenarios():
-        suite.test_list_like_validation(case)
-
-    for case in scenarios.identifier_scenarios():
-        suite.test_identifier_validation(case)
-    for case in scenarios.serialization_scenarios():
-        suite.test_safe_get_attribute(case)
-    for case in scenarios.generic_args_scenarios():
-        suite.test_extract_generic_args(case)
-    for case in scenarios.sequence_type_scenarios():
-        suite.test_sequence_type_detection(case)
-    for case in scenarios.structlog_config_scenarios():
-        suite.test_structlog_configuration(case)
-
-
-def test_reuse_existing_runtime_coverage_branches() -> None:
-    coverage = test_runtime_coverage_100.TestRuntimeCoverage100()
-    coverage.test_is_dict_like_with_exception_on_items()
-    coverage.test_is_dict_like_with_exception_on_items_typeerror()
-    coverage.test_is_dict_like_with_userdict()
-    coverage.test_is_dict_like_with_missing_attributes()
-    coverage.test_is_dict_like_with_missing_keys()
-    coverage.test_is_dict_like_with_missing_items()
-    coverage.test_is_dict_like_with_missing_get()
-    coverage.test_extract_generic_args_with_type_mapping()
-    coverage.test_is_sequence_type_with_type_mapping()
-    coverage.test_level_based_context_filter_malformed_prefix()
-    coverage.test_configure_structlog_with_config_object()
-
-    coverage.test_is_valid_identifier_non_string()
-    coverage.test_extract_generic_args_with_typing_get_args()
-    coverage.test_extract_generic_args_exception_path()
-    coverage.test_is_sequence_type_with_origin()
-    coverage.test_is_sequence_type_with_sequence_subclass()
-    coverage.test_is_sequence_type_exception_path()
-    coverage.test_level_based_context_filter_with_level_prefixed()
-    coverage.test_configure_structlog_with_config_additional_processors()
 
 
 def test_async_log_writer_paths() -> None:

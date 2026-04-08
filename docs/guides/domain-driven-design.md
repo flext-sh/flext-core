@@ -805,7 +805,7 @@ else:
 Commands represent requests to **change state**. They always return `r`:
 
 ```python
-from flext_core import FlextModels, r, FlextService
+from flext_core import FlextModels, r, s
 from dataclasses import dataclass
 
 
@@ -829,7 +829,7 @@ class DeleteUserCommand:
 
 
 # Command handler in service
-class UserCommandService(FlextService):
+class UserCommandService(s):
     """Handles all user write operations."""
 
     def handle_create_user(self, cmd: CreateUserCommand) -> r[dict]:
@@ -873,7 +873,7 @@ class UserCommandService(FlextService):
 Queries represent requests to **retrieve data**. They return `r`:
 
 ```python
-from flext_core import FlextService, r
+from flext_core import s, r
 
 
 # Query definitions
@@ -894,7 +894,7 @@ class SearchUsersQuery:
 
 
 # Query handler in service
-class UserQueryService(FlextService):
+class UserQueryService(s):
     """Handles all user read operations."""
 
     def __init__(self, user_repository):
@@ -1074,7 +1074,7 @@ def add_to_cart(cart, item):
 
 ## See Also
 
-- Service Patterns - Domain services with FlextService
+- Service Patterns - Domain services with s
 - Dependency Injection Advanced - Service composition patterns
 - Railway-Oriented Programming - Result composition with r
 - Error Handling Guide - Domain error handling patterns

@@ -342,7 +342,7 @@ from flext_core import FlextSettings  # result is lower than config
 Layer 0: FlextConstants, t, p (no imports from other layers)
 Layer 0.5: u (imports Layer 0 only)
 Layer 1: r, FlextContainer (imports Layer 0, 0.5 only)
-Layer 2: FlextModels, FlextService (imports Layer 0-1 only)
+Layer 2: FlextModels, s (imports Layer 0-1 only)
 Layer 3: h, FlextDispatcher (imports Layer 0-2 only)
 Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 ```

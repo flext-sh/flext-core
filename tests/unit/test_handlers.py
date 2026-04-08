@@ -8,11 +8,9 @@ import pytest
 from hypothesis import given, strategies as st
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextExceptions, FlextHandlers, h, r, x
+from flext_core import e, h, r, x
 from flext_tests import tm
 from tests import c, m, t, u
-
-from ..test_utils import assertion_helpers
 
 
 class TestFlextHandlers:
@@ -386,7 +384,7 @@ class TestFlextHandlers:
         def invalid_handler(message: t.Scalar) -> t.Scalar:
             return f"invalid_{message}"
 
-        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
+        with pytest.raises(e.ValidationError) as exc_info:
             h.create_from_callable(
                 invalid_handler,
                 handler_name="invalid_handler",
@@ -458,7 +456,7 @@ class TestFlextHandlers:
         )
         handler = self.ValidationTestHandler(config=config)
         result = handler.validate_message(message)
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
 
     def test_handlers_record_metric(self) -> None:
         config = u.Tests.create_handler_config(
@@ -555,7 +553,7 @@ class TestFlextHandlers:
     @given(st.text(min_size=1))
     def test_create_from_callable_hypothesis(self, handler_name: str) -> None:
         """Property: create_from_callable works with any non-empty name."""
-        handler = FlextHandlers.create_from_callable(
+        handler = h.create_from_callable(
             handler_callable=lambda value: str(value),
             handler_name=handler_name,
         )

@@ -21,7 +21,7 @@ from typing import Annotated, cast
 from pydantic import BaseModel, Field
 
 from flext_tests import tm
-from tests import _models_impl as test_unit_models, assertion_helpers, t, u
+from tests import m, t, u
 
 
 class UtilitiesMapperCoverage100Namespace:
@@ -81,67 +81,67 @@ class UtilitiesMapperCoverage100Namespace:
             """Test simple dict extraction."""
             data = {"a": 1, "b": 2}
             result = u.extract(data, "a")
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq=1)
 
         def test_extract_dict_nested(self) -> None:
             """Test nested dict extraction."""
             data = {"a": {"b": {"c": 3}}}
             result = u.extract(data, "a.b.c")
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq=3)
 
         def test_extract_object(self) -> None:
             """Test t.NormalizedValue attribute extraction."""
             obj = SimpleObj(name="test", value=42)
             result = u.extract(obj, "name")
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq="test")
 
         def test_extract_model(self) -> None:
             """Test Pydantic model extraction."""
-            model = test_unit_models.ComplexModel(
+            model = m.Core.Unit.ComplexModel(
                 id=1,
                 data={"key": "val"},
                 items=["a", "b"],
             )
             result = u.extract(model, "data.key")
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq="val")
 
         def test_extract_array_index(self) -> None:
             """Test array indexing."""
             data: t.ContainerMapping = {"items": [1, 2, 3]}
             result = u.extract(data, "items[1]")
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq=2)
 
         def test_extract_array_index_nested(self) -> None:
             """Test nested array indexing."""
             data: t.ContainerMapping = {"users": [{"name": "alice"}, {"name": "bob"}]}
             result = u.extract(data, "users[1].name")
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq="bob")
 
         def test_extract_missing_default(self) -> None:
             """Test missing key with default."""
             data = {"a": 1}
             result = u.extract(data, "b", default=10)
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq=10)
 
         def test_extract_missing_required(self) -> None:
             """Test missing key required."""
             data = {"a": 1}
             result = u.extract(data, "b", required=True)
-            _ = assertion_helpers.assert_flext_result_failure(result)
+            _ = u.Tests.assert_failure(result)
             assert "not found" in str(result.error)
 
         def test_extract_array_index_error(self) -> None:
             """Test invalid array index."""
             data: t.ContainerMapping = {"items": [1]}
             result = u.extract(data, "items[5]", required=True)
-            _ = assertion_helpers.assert_flext_result_failure(result)
+            _ = u.Tests.assert_failure(result)
             msg = str(result.error)
             assert any(x in msg for x in ["out of range", "Invalid index", "not found"])
 
@@ -149,7 +149,7 @@ class UtilitiesMapperCoverage100Namespace:
             """Test extraction when intermediate path is None."""
             data: Mapping[str, None] = {"a": None}
             result = u.extract(data, "a.b", default="defs")
-            _ = assertion_helpers.assert_flext_result_success(result)
+            _ = u.Tests.assert_success(result)
             tm.that(result.value, eq="defs")
             result_req = u.extract(data, "a.b", required=True)
             tm.fail(result_req)

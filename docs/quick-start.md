@@ -158,10 +158,10 @@ else:
 ### Use Case 2: Service with Dependency Injection
 
 ```python
-from flext_core import FlextService, r, FlextContainer
+from flext_core import s, r, FlextContainer
 
 
-class EmailService(FlextService):
+class EmailService(s):
     """Example service."""
 
     def send_welcome_email(self, email: str) -> r[str]:
@@ -190,7 +190,7 @@ if service_result.is_success:
 
 ```python
 from pydantic import Field
-from flext_core import FlextModels, FlextService, r
+from flext_core import FlextModels, s, r
 
 
 class OrderItem(m.Value):
@@ -209,7 +209,7 @@ class Order(FlextModels.Entity):
     customer_id: str
 
 
-class OrderService(FlextService):
+class OrderService(s):
     """Service with business logic."""
 
     def create_order(self, customer_id: str, items: Sequence[dict]) -> r[Order]:
@@ -249,14 +249,14 @@ else:
 Route commands through the dispatcher to keep orchestration and side effects consistent:
 
 ```python
-from flext_core import FlextDispatcher, FlextRegistry, r, FlextService
+from flext_core import FlextDispatcher, FlextRegistry, r, s
 
 
-class CreateUser(FlextService.Command):
+class CreateUser(s.Command):
     """Command payload for creating users."""
 
 
-class UserService(FlextService):
+class UserService(s):
     """Domain service implementing the command handler."""
 
     def handle_create_user(self, command: CreateUser) -> r[str]:

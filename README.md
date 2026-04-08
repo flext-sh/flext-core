@@ -25,7 +25,7 @@ Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
 - **Railway-Oriented Programming**: handling errors as values using `r[T, E]`, eliminating unexpected exceptions in business logic.
 - **Dependency Injection**: A lightweight, type-safe DI container (`FlextContainer`) with scoped services and bridge integration.
 - **CQRS Dispatcher**: A strictly typed `FlextDispatcher` for routing commands, queries, and events to their respective handlers.
-- **Domain-Driven Design**: Base classes (`FlextModels`, `FlextService`) and mixins for rich domain modeling.
+- **Domain-Driven Design**: Base classes (`FlextModels`, `s`) and mixins for rich domain modeling.
 - **Protocol-Based Architecture**: Extensive use of Python `` for loose coupling and improved testability.
 - **Infrastructure Helpers**: Built-in support for structured logging, configuration management, and context propagation.
 
@@ -71,7 +71,7 @@ else:
 Manage your application's dependencies cleanly using `FlextContainer` and `u`.
 
 ```python
-from flext_core import FlextContainer, Provide, inject, FlextService
+from flext_core import FlextContainer, Provide, inject, s
 
 # 1. Register a service
 container = FlextContainer.get_global()
@@ -85,7 +85,7 @@ def get_user(user_id: str, db=Provide["db_client"]):
 
 
 # 3. Inject into Services
-class UserService(FlextService):
+class UserService(s):
     def get_user(self, user_id: str):
         # Access container directly via self.container
         db = self.container.get("db_client").unwrap()

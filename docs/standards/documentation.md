@@ -174,8 +174,8 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextContext,
-    FlextDecorators,
-    FlextExceptions,
+    d,
+    e,
     h,
     FlextLogger,
     x,
@@ -184,7 +184,7 @@ from flext_core import (
     FlextRegistry,
     r,  # Only this one!
     u,
-    FlextService,
+    s,
     t,
     u,
 )

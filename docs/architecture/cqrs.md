@@ -2,7 +2,7 @@
 
 <!-- TOC START -->
 - [Overview](#overview)
-- [FlextHandlers](#flexthandlers)
+- [h](#flexthandlers)
   - [Current Implementation (V1)](#current-implementation-v1)
   - [Execution Pipeline](#execution-pipeline)
   - [Handler Configuration](#handler-configuration)
@@ -12,11 +12,11 @@
   - [Reliability Patterns](#reliability-patterns)
   - [Dispatch Flow](#dispatch-flow)
   - [Handler Registration](#handler-registration)
-- [Integration with FlextService](#integration-with-flextservice)
+- [Integration with s](#integration-with-flextservice)
 - [Modernization Roadmap - Phase Overview](#modernization-roadmap-phase-overview)
   - [Current State (V1) - Phase Overview](#current-state-v1-phase-overview)
   - [Planned Phases](#planned-phases)
-  - [Phase 1: FlextMixins.CQRS](#phase-1-flextmixinscqrs)
+  - [Phase 1: x.CQRS](#phase-1-flextmixinscqrs)
   - [Phase 2: Dispatcher DI](#phase-2-dispatcher-di)
 - [Handler Patterns](#handler-patterns)
   - [V1 Handler (Current Production)](#v1-handler-current-production)
@@ -60,11 +60,11 @@ ______________________________________________________________________
 
 FLEXT-Core implements CQRS through two primary components:
 
-- **`FlextHandlers`** (`handlers.py`) – Base class for message handlers
+- **`h`** (`handlers.py`) – Base class for message handlers
 - **`FlextDispatcher`** (`dispatcher.py`) – Orchestration and routing
 
 Both components follow railway-oriented programming with `r` and
-integrate with the infrastructure provided by `FlextMixins`.
+integrate with the infrastructure provided by `x`.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -73,31 +73,31 @@ integrate with the infrastructure provided by `FlextMixins`.
 │  ├── Reliability patterns (circuit breaker, retry, timeout)     │
 │  └── Context propagation and observability                      │
 ├─────────────────────────────────────────────────────────────────┤
-│                    FlextHandlers (L3)                           │
+│                    h (L3)                           │
 │  ├── Message validation pipeline                                │
 │  ├── Execute → Validate → Handle flow                           │
 │  └── Metrics and context tracking                               │
 ├─────────────────────────────────────────────────────────────────┤
-│                    FlextService (L2.5)                          │
+│                    s (L2.5)                          │
 │  └── Domain services called by handlers                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ______________________________________________________________________
 
-## FlextHandlers
+## h
 
 ### Current Implementation (V1)
 
-Handlers derive from `FlextHandlers[MessageT, ResultT]` and implement the
+Handlers derive from `h[MessageT, ResultT]` and implement the
 abstract `handle()` method:
 
 ```python
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import r
 
 
-class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+class CreateUserHandler(h[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
         # Business logic
         user = User(name=command.name, email=command.email)
@@ -150,7 +150,7 @@ metrics = handler.get_metrics()
 handler.pop_context()
 ```
 
-> **TODO(handlers.py::FlextHandlers):** Migrate to `FlextMixins.CQRS` utilities
+> **TODO(handlers.py::h):** Migrate to `x.CQRS` utilities
 > for metrics and context once Phase 1 of CQRS modernization lands. See
 > Modernization Roadmap.
 
@@ -217,12 +217,12 @@ dispatcher.register_event(UserCreatedEvent, handler)
 
 ______________________________________________________________________
 
-## Integration with FlextService
+## Integration with s
 
 Handlers orchestrate while services execute domain logic:
 
 ```python
-class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+class CreateUserHandler(h[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
         # Handler orchestrates
         validation_result = ValidateEmailService(email=command.email).execute()
@@ -246,8 +246,8 @@ ______________________________________________________________________
 
 | Component       | Issue                            | Impact                |
 | --------------- | -------------------------------- | --------------------- |
-| FlextHandlers   | Manual `_metrics` dict           | Code duplication      |
-| FlextHandlers   | Manual `_context_stack`          | Not using FlextMixins |
+| h   | Manual `_metrics` dict           | Code duplication      |
+| h   | Manual `_context_stack`          | Not using x |
 | FlextDispatcher | Managers hardcoded in `__init__` | No DI, hard to test   |
 
 ### Planned Phases
@@ -255,18 +255,18 @@ ______________________________________________________________________
 | Phase | Focus                             | Status      | Target   |
 | ----- | --------------------------------- | ----------- | -------- |
 | 0     | Document current stack            | ✅ Complete | Nov 2025 |
-| 1     | `FlextMixins.CQRS` for metrics    | 🔴 Pending  | Dec 2025 |
+| 1     | `x.CQRS` for metrics    | 🔴 Pending  | Dec 2025 |
 | 2     | Dispatcher DI via FlextContainer  | 🔴 Pending  | Jan 2026 |
 | 3     | Promote mixins to default usage   | 🔴 Pending  | Feb 2026 |
 | 4     | Align with `r.and_then` | 🔴 Pending  | Mar 2026 |
 | 5     | Zero-ceremony handler scaffolding | 🔴 Pending  | Apr 2026 |
 
-### Phase 1: FlextMixins.CQRS
+### Phase 1: x.CQRS
 
 Proposed nested class in `mixins.py`:
 
 ```python
-class FlextMixins:
+class x:
     class CQRS:
         class MetricsTracker:
             def record(self, key: str, value: float) -> None: ...
@@ -299,7 +299,7 @@ ______________________________________________________________________
 The current handler pattern uses manual metrics and context management:
 
 ```python
-class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
+class UpdateUserHandler(h[UpdateUserCommand, UserDto]):
     def handle(self, command: UpdateUserCommand) -> r[UserDto]:
         # Manual metrics tracking
         self._metrics["commands_processed"] = (
@@ -319,15 +319,15 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 
 ### V2 Handler (Target - Phase 3+)
 
-The target pattern uses `FlextMixins` infrastructure automatically:
+The target pattern uses `x` infrastructure automatically:
 
 ```python
-class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
+class UpdateUserHandler(h[UpdateUserCommand, UserDto]):
     def handle(self, command: UpdateUserCommand) -> r[UserDto]:
-        # Automatic metrics via FlextMixins.CQRS
+        # Automatic metrics via x.CQRS
         self.cqrs_metrics.record("commands_processed", 1)
 
-        # Automatic tracking via FlextMixins
+        # Automatic tracking via x
         with self.track("handle_update_user"):
             result = self._process(command)
 
@@ -336,7 +336,7 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 
 ### Migration Path
 
-1. **Phase 1:** Add `cqrs_metrics` and `cqrs_context` properties to `FlextMixins.CQRS`
+1. **Phase 1:** Add `cqrs_metrics` and `cqrs_context` properties to `x.CQRS`
 1. **Phase 2:** Deprecate `record_metric()`, `push_context()`, `pop_context()` with warnings
 1. **Phase 3:** Update all handlers to use new patterns
 1. **Phase 4:** Remove deprecated methods in v3.0
@@ -349,8 +349,8 @@ ______________________________________________________________________
 
 | Aspecto                   | V1 (Atual)                                | V2 (Target)                              |
 | ------------------------- | ----------------------------------------- | ---------------------------------------- |
-| **Métricas**              | `self._metrics` manual (50+ linhas)       | `self.cqrs_metrics` via FlextMixins.CQRS |
-| **Contexto**              | `self._context_stack` manual (30+ linhas) | `self.context` via FlextMixins.CQRS      |
+| **Métricas**              | `self._metrics` manual (50+ linhas)       | `self.cqrs_metrics` via x.CQRS |
+| **Contexto**              | `self._context_stack` manual (30+ linhas) | `self.context` via x.CQRS      |
 | **Logging**               | Inconsistente, pouco usado                | `self.logger` automático                 |
 | **Tracking**              | Manual ou inexistente                     | `self.track()` automático                |
 | **Managers (Dispatcher)** | Hardcoded (700+ linhas)                   | Injetados via FlextContainer             |
@@ -362,7 +362,7 @@ ______________________________________________________________________
 ```
 V1 (Atual)           V2 Integration         V2 Complete
     │                      │                      │
-    │  Manual metrics      │  FlextMixins.CQRS    │  Full observability
+    │  Manual metrics      │  x.CQRS    │  Full observability
     │  Manual context      │  DI        │  Auto-discovery
     │  Hardcoded managers  │  Protocol-based      │  Zero ceremony
 ────┼──────────────────────┼──────────────────────┼─────────────────→
@@ -372,7 +372,7 @@ V1 (Atual)           V2 Integration         V2 Complete
 
 ### Problems Addressed
 
-**FlextHandlers (Tier 3.1):**
+**h (Tier 3.1):**
 
 - ❌ **50+ linhas** de métricas manuais (`self._metrics` dict)
 - ❌ **30+ linhas** de contexto manual (`self._context_stack` list)
@@ -397,7 +397,7 @@ V1 (Atual)           V2 Integration         V2 Complete
 
 ### Solution Strategy
 
-**FlextMixins.CQRS (Phase 1):**
+**x.CQRS (Phase 1):**
 
 1. Extract metrics to `self.cqrs_metrics`
 1. Extract context to `self.context`
@@ -427,7 +427,7 @@ ______________________________________________________________________
 
 | Item                                                                     | Phase   | Description                                     | Reference                    |
 | ------------------------------------------------------------------------ | ------- | ----------------------------------------------- | ---------------------------- |
-| Migrate handlers to `self.logger`, `self.track`, and `self.cqrs_metrics` | Phase 3 | Replace manual metrics/context with FlextMixins | `handlers.py`                |
+| Migrate handlers to `self.logger`, `self.track`, and `self.cqrs_metrics` | Phase 3 | Replace manual metrics/context with x | `handlers.py`                |
 | Force dispatcher construction via container                              | Phase 2 | Once all call sites migrate                     | `dispatcher.py`              |
 | Update `_dispatcher.reliability` to use `r.and_then`           | Phase 4 | Naming parity                                   | `_dispatcher/reliability.py` |
 | Scaffolding CLI for zero-ceremony handlers                               | Phase 5 | Automatic handler generation                    | CLI tools                    |
@@ -441,7 +441,7 @@ ______________________________________________________________________
 ```
 tests/
 ├── unit/
-│   ├── test_handlers.py           # FlextHandlers unit tests
+│   ├── test_handlers.py           # h unit tests
 │   ├── test_dispatcher.py         # FlextDispatcher unit tests
 │   └── test_managers/
 │       ├── test_circuit_breaker.py
@@ -482,7 +482,7 @@ Target metrics for CQRS components:
 
 | Metric                   | Current | Target V2 | Target V3 |
 | ------------------------ | ------- | --------- | --------- |
-| Lines in FlextHandlers   | ~604    | ~500      | ~400      |
+| Lines in h   | ~604    | ~500      | ~400      |
 | Lines in FlextDispatcher | ~1200   | ~900      | ~700      |
 | Code duplication %       | ~30%    | ~15%      | ~5%       |
 | Coverage handlers.py     | 65%     | 85%       | 95%       |

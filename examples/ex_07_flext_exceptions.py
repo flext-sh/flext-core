@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import Examples, c, m, t
+from examples import c, m, t
+from examples.shared import Examples
 from flext_core import e, r
 
 
@@ -14,7 +15,7 @@ class Ex07FlextExceptions(Examples):
     @override
     def exercise(self) -> None:
         self.section("imports")
-        self.check("import.e_is_FlextExceptions", e.__name__ == "FlextExceptions")
+        self.check("import.e_is_FlextExceptions", e.__name__ == "e")
         self.check("import.r_ok", r[str].ok("ok").is_success)
         self.check("import.constant", c.UNKNOWN_ERROR)
         try:

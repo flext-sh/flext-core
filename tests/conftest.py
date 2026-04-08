@@ -20,10 +20,8 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextContext, r
-from tests import (
-    TestHelperScenarios,
-    t,
-)
+from tests import t
+from tests.helpers.scenarios import TestHelperScenarios
 
 pytest_plugins = ["flext_tests.conftest_plugin"]
 

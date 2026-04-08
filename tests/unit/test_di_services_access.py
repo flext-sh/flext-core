@@ -29,7 +29,7 @@ from flext_core import (
     FlextSettings,
 )
 from flext_tests import tm
-from tests import assertion_helpers, p, r, s, t, u
+from tests import p, r, s, t, u
 
 
 class TestDiServicesAccess:
@@ -43,7 +43,7 @@ class TestDiServicesAccess:
         assert isinstance(config1, p.Settings)
 
     def test_config_via_service_runtime(self) -> None:
-        """Test FlextSettings accessible via FlextService._create_runtime."""
+        """Test FlextSettings accessible via s._create_runtime."""
         runtime = s._create_runtime(config_overrides={"app_name": "test_app"})
         assert runtime.config is not None
         assert isinstance(runtime.config, p.Settings)
@@ -122,7 +122,7 @@ class TestDiServicesAccess:
         assert isinstance(context, p.Context)
 
     def test_context_via_service_runtime(self) -> None:
-        """Test FlextContext accessible via FlextService._create_runtime."""
+        """Test FlextContext accessible via s._create_runtime."""
         custom_context = FlextContext.create()
         runtime = s._create_runtime(context=custom_context)
         assert runtime.context is not None
@@ -163,7 +163,7 @@ class TestDiServicesAccess:
         assert isinstance(runtime.container, p.Container)
 
     def test_services_in_service_class(self) -> None:
-        """Test services accessible in FlextService subclass."""
+        """Test services accessible in s subclass."""
         FlextContainer.reset_for_testing()
 
         class ServiceWithDI(s[str]):
@@ -192,7 +192,7 @@ class TestDiServicesAccess:
 
         service = ServiceWithDI()
         result = service.execute()
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         assert "app: service_app" in result.value
 
     def test_services_injection_combined(self) -> None:

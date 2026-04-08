@@ -1,6 +1,6 @@
-"""Tests for FlextService .result property (V2 zero-ceremony pattern).
+"""Tests for s .result property (V2 zero-ceremony pattern).
 
-Module: flext_core.service.FlextService[T]
+Module: flext_core.service.s[T]
 Scope: .result property, V2 pattern, V1 backward compatibility, property behavior
 Pattern: Railway-Oriented, zero-ceremony result access with exception handling
 
@@ -20,15 +20,14 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextExceptions, r
-from tests import m
+from flext_core import e, r
+from tests import m, u
 
 from .helpers.factories import TestHelperFactories
-from .test_utils import assertion_helpers
 
 
 class TestServiceResultProperty:
-    """Unified test suite for FlextService .result property.
+    """Unified test suite for s .result property.
 
     Tests cover:
     - V2 zero-ceremony pattern (.result property)
@@ -77,7 +76,7 @@ class TestServiceResultProperty:
         """V2: Validation failure raises exception."""
         service = TestHelperFactories.ServiceTestCases.create_service(case)
         assert isinstance(service, TestHelperFactories.ValidatingService)
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+        with pytest.raises(e.BaseError) as exc_info:
             _ = service.result
         assert case.expected_error and case.expected_error in str(exc_info.value)
 
@@ -86,7 +85,7 @@ class TestServiceResultProperty:
         service = TestHelperFactories.FailingService.model_construct(
             error_message="Test error",
         )
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+        with pytest.raises(e.BaseError) as exc_info:
             _ = service.result
         assert "Test error" in str(exc_info.value)
 
@@ -127,7 +126,7 @@ class TestServiceResultProperty:
         assert isinstance(service, TestHelperFactories.GetUserService)
         result = service.execute()
         assert isinstance(result, r)
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         user = result.value
         assert isinstance(user, TestHelperFactories.User)
         assert user.id == case.input_value
@@ -139,7 +138,7 @@ class TestServiceResultProperty:
         )
         result = service.execute()
         assert isinstance(result, r)
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
         assert "Test failure" in str(result.error)
 
     @pytest.mark.parametrize("case", TestHelperFactories.ServiceTestCases.USER_SUCCESS)
@@ -157,7 +156,7 @@ class TestServiceResultProperty:
             .map(lambda name: str(name).upper())
             .map(lambda name: f"Hello, {name}!")
         )
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         greeting = result.value
         assert greeting == f"Hello, USER {case.input_value}!"
 
@@ -235,11 +234,11 @@ class TestServiceResultProperty:
         ).result
         assert isinstance(validation_result, str)
         assert validation_result == "EDGE"
-        with pytest.raises(FlextExceptions.BaseError):
+        with pytest.raises(e.BaseError):
             TestHelperFactories.FailingService.model_construct(error_message="").result
         service = TestHelperFactories.FailingService.model_construct(
             error_message="fail",
         )
         assert isinstance(service.execute(), r)
-        with pytest.raises(FlextExceptions.BaseError):
+        with pytest.raises(e.BaseError):
             _ = service.result

@@ -49,7 +49,7 @@ This document outlines the development standards, patterns, and quality requirem
 - ✅ **Railway Pattern Foundation**: r[T] with .data/.value compatibility
 - ✅ **Dependency Injection**: FlextContainer.get_global() with type safety
 - ✅ **Domain Models**: FlextModels.Entity/Value/AggregateRoot for DDD patterns
-- ✅ **Service Architecture**: FlextService with Pydantic Generic[T] base
+- ✅ **Service Architecture**: s with Pydantic Generic[T] base
 - ✅ **Type Safety**: Complete type annotations for ecosystem-wide consistency
 - ✅ **Zero Breaking Changes**: Maintain API compatibility across versions
 - ✅ **Evidence-Based Quality**: 79% coverage proven stable, targeting 85% for 1.0.0
@@ -112,7 +112,7 @@ Inner layers know NOTHING about outer layers.
 1. **Domain Layer** (Foundation Only):
 
    - FlextModels - DDD patterns
-   - FlextService - Domain services
+   - s - Domain services
    - x - Reusable behaviors
 
 1. **Application Layer** (Foundation + Domain):
@@ -139,7 +139,7 @@ src/flext_core/
 ├── typings.py          # Type system (t)
 ├── constants.py        # Constants (FlextConstants)
 ├── models.py           # DDD base classes (FlextModels)
-├── service.py          # Domain service base (FlextService)
+├── service.py          # Domain service base (s)
 ├── dispatcher.py      # Command/query dispatcher
 ├── config.py          # Configuration (FlextSettings)
 ├── loggings.py        # Logging (FlextLogger)
@@ -150,7 +150,7 @@ src/flext_core/
 
 ```python
 # ✅ CORRECT - Direct imports (import only what you need)
-from flext_core import r, FlextService, FlextModels
+from flext_core import r, s, FlextModels
 
 # ❌ WRONG - Star imports in production
 from flext_core import *
@@ -277,7 +277,7 @@ def create_user(name: str, email: str) -> User:
 
 ```python
 # ✅ CORRECT - Use global container
-class UserService(FlextService):
+class UserService(s):
     def __init__(self) -> None:
         super().__init__()
         self.container = FlextContainer.get_global()

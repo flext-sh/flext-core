@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from pydantic_core import ValidationError
 
 from flext_tests import tm
-from tests import _models_impl as test_unit_models, c, m, r, t, u
+from tests import c, m, r, t, u
 
 
 def _is_type_obj(
@@ -138,7 +138,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
         u.is_pydantic_model(
             cast(
                 "t.NormalizedValue",
-                test_unit_models._Model.model_validate({"value": 1}),
+                m.Core.Unit._Model.model_validate({"value": 1}),
             ),
         ),
         eq=True,

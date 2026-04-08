@@ -30,7 +30,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
 from flext_tests import tm
-from tests import assertion_helpers, t, u
+from tests import t, u
 
 
 @unique
@@ -429,7 +429,7 @@ class Testr:
 
         divide_wrapped = r.safe(divide)
         result: r[int] = divide_wrapped(10, 2)
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=5)
         result_fail: r[int] = divide_wrapped(10, 0)
         tm.fail(result_fail)
@@ -496,7 +496,7 @@ class Testr:
         """Test traverse maps over sequence successfully."""
         items = [1, 2, 3]
         result = r.traverse(items, lambda x: r[int].ok(x * 2))
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=[2, 4, 6])
 
     def test_traverse_failure(self) -> None:
@@ -506,7 +506,7 @@ class Testr:
             items,
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
         tm.that(result.error, eq="error")
 
     def test_accumulate_errors_all_success(self) -> None:
@@ -533,7 +533,7 @@ class Testr:
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
             fail_fast=True,
         )
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
         tm.that(result.error, eq="error")
 
     def test_traverse_fail_fast_false(self) -> None:
@@ -544,7 +544,7 @@ class Testr:
             lambda x: r[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
             fail_fast=False,
         )
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
         tm.that(result.error, none=False)
         tm.that(str(result.error), has="error_2")
         tm.that(str(result.error), has="error_3")
@@ -567,7 +567,7 @@ class Testr:
             resource.clear()
 
         result: r[str] = r[str].with_resource(factory, op, cleanup)
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq="success")
         tm.that(len(resource_created), eq=1)
         tm.that(len(resource_cleaned), eq=1)
@@ -671,7 +671,7 @@ class Testr:
             return "success"
 
         result = r.create_from_callable(func)
-        _ = assertion_helpers.assert_flext_result_success(result)
+        _ = u.Tests.assert_success(result)
         tm.that(result.value, eq="success")
 
     def test_create_from_callable_none(self) -> None:
@@ -681,7 +681,7 @@ class Testr:
             return None
 
         result = r.create_from_callable(func)
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
         error_msg = result.error
         tm.that(error_msg, none=False)
         tm.that(error_msg, has="Callable returned None")
@@ -694,7 +694,7 @@ class Testr:
             raise ValueError(error_msg)
 
         result = r.create_from_callable(func)
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
         error_msg = result.error
         tm.that(error_msg, none=False)
         tm.that(error_msg, has="Callable failed")

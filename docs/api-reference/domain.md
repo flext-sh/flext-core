@@ -3,7 +3,7 @@
 <!-- TOC START -->
 - [Domain Models](#domain-models)
   - [FlextModels — DDD Base Classes {#flextmodels}](#flextmodels-ddd-base-classes-flextmodels)
-  - [FlextService — Service Base](#flextservice-service-base)
+  - [s — Service Base](#flextservice-service-base)
 - [Verification Commands](#verification-commands)
 <!-- TOC END -->
 
@@ -70,27 +70,27 @@ class Order(m.AggregateRoot):
         return r[bool].ok(True)
 ```
 
-### FlextService — Service Base
+### s — Service Base
 
 Base class for domain services that encapsulate business logic, domain events, and CQRS handlers.
 
 ```python
-from flext_core import FlextDispatcher, FlextRegistry, FlextService, r
+from flext_core import FlextDispatcher, FlextRegistry, s, r
 
 
-class CreateUser(FlextService.Command):
+class CreateUser(s.Command):
     """Command payload for creating a user."""
 
     email: str
 
 
-class UserCreated(FlextService.Event):
+class UserCreated(s.Event):
     """Domain event emitted after a user is created."""
 
     user_id: str
 
 
-class UserService(FlextService[str]):
+class UserService(s[str]):
     """Domain service with command and event handlers."""
 
     def handle_create_user(self, command: CreateUser) -> r[str]:

@@ -22,9 +22,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_cli import m
 from flext_tests import FlextTestsModels
 from tests import t
+from tests.unit import _models_impl as unit_models_impl
 
 
-class TestsFlextCoreModels(FlextTestsModels, m):
+class TestsFlextCoreModels(m, FlextTestsModels):
     """Models for flext-core tests - uses composition with TestsFlextModels.
 
     Architecture: Uses composition (not inheritance) with TestsFlextModels and TestsFlextModels
@@ -43,7 +44,9 @@ class TestsFlextCoreModels(FlextTestsModels, m):
     class Core:
         """flext-core-specific test models namespace."""
 
-        class User(FlextTestsModels.Entity):
+        Unit = unit_models_impl
+
+        class User(m.Entity):
             """Shared user model for tests."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -65,7 +68,7 @@ class TestsFlextCoreModels(FlextTestsModels, m):
             extra_param: int = 3
             description: str = ""
 
-        class DomainTestEntity(FlextTestsModels.Entity):
+        class DomainTestEntity(m.Entity):
             """Test entity for domain tests."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -73,7 +76,7 @@ class TestsFlextCoreModels(FlextTestsModels, m):
             name: str
             value: t.ContainerValue
 
-        class DomainTestValue(FlextTestsModels.Value):
+        class DomainTestValue(m.Value):
             """Test value t.NormalizedValue for domain tests."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
@@ -241,7 +244,7 @@ class TestsFlextCoreModels(FlextTestsModels, m):
             expected_success: bool = True
             error_contains: str | None = None
 
-        class UtilityEntityModel(TestsFlextModels.Entity):
+        class UtilityEntityModel(m.Entity):
             """Shared entity model for generic test fixtures."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=False)
@@ -249,7 +252,7 @@ class TestsFlextCoreModels(FlextTestsModels, m):
             name: str
             value: t.ContainerValue
 
-        class UtilityValueModel(TestsFlextModels.Value):
+        class UtilityValueModel(m.Value):
             """Shared value model for generic test fixtures."""
 
             model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)

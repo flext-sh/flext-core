@@ -88,19 +88,19 @@ ______________________________________________________________________
 $ grep -n "r\[" src/flext_core/*.py | wc -l
 1121
 
-# Limited exception usage - only FlextExceptions types
+# Limited exception usage - only e types
 $ grep -n "raise.*Error" src/flext_core/models.py | head -5
-943:    raise FlextExceptions.ValidationError(
-1029:   raise FlextExceptions.ValidationError(
-1121:   raise FlextExceptions.TypeError(
-1160:   raise FlextExceptions.ValidationError(
-1258:   raise FlextExceptions.ValidationError(
+943:    raise e.ValidationError(
+1029:   raise e.ValidationError(
+1121:   raise e.TypeError(
+1160:   raise e.ValidationError(
+1258:   raise e.ValidationError(
 ```
 
 **Verification**: ✅ ACCURATE
 
 - r used 1,121 times throughout codebase
-- Exceptions only used for invariant violations (FlextExceptions types)
+- Exceptions only used for invariant violations (e types)
 - Railway pattern is the dominant error handling approach
 
 **Example from result.py:313**:

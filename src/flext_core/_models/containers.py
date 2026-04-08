@@ -18,7 +18,7 @@ from typing import Annotated
 
 from pydantic import Field, RootModel
 
-from flext_core import t
+from flext_core.typings import FlextTypes
 
 
 class FlextModelsContainers:
@@ -29,11 +29,11 @@ class FlextModelsContainers:
     Access via ``t.ConfigMap``, ``t.Dict``, etc.
     """
 
-    class ValidatorCallable(RootModel[t.ValidatorCallable]):
+    class ValidatorCallable(RootModel[FlextTypes.ValidatorCallable]):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
         root: Annotated[
-            t.ValidatorCallable,
+            FlextTypes.ValidatorCallable,
             Field(
                 title="Validator Callable",
                 description="Callable that validates or transforms one scalar/model input value.",
@@ -41,23 +41,26 @@ class FlextModelsContainers:
             ),
         ]
 
-        def __call__(self, value: t.ScalarOrModel | None) -> t.ScalarOrModel | None:
+        def __call__(
+            self,
+            value: FlextTypes.ScalarOrModel | None,
+        ) -> FlextTypes.ScalarOrModel | None:
             """Execute validator."""
             return self.root(value)
 
-    class _RootValidatorMapModel(RootModel[Mapping[str, t.ValidatorCallable]]):
+    class _RootValidatorMapModel(RootModel[Mapping[str, FlextTypes.ValidatorCallable]]):
         """Shared API for validator map containers."""
 
-        def items(self) -> ItemsView[str, t.ValidatorCallable]:
+        def items(self) -> ItemsView[str, FlextTypes.ValidatorCallable]:
             """Get validator items."""
-            validated: Mapping[str, t.ValidatorCallable] = {
+            validated: Mapping[str, FlextTypes.ValidatorCallable] = {
                 key: value for key, value in self.root.items() if callable(value)
             }
             return validated.items()
 
-        def values(self) -> ValuesView[t.ValidatorCallable]:
+        def values(self) -> ValuesView[FlextTypes.ValidatorCallable]:
             """Get validator values."""
-            validated: Mapping[str, t.ValidatorCallable] = {
+            validated: Mapping[str, FlextTypes.ValidatorCallable] = {
                 key: value for key, value in self.root.items() if callable(value)
             }
             return validated.values()
@@ -66,7 +69,7 @@ class FlextModelsContainers:
         """Map of field validators."""
 
         root: Annotated[
-            Mapping[str, t.ValidatorCallable],
+            Mapping[str, FlextTypes.ValidatorCallable],
             Field(
                 title="Field Validator Map",
                 description="Field-level validators keyed by field name.",

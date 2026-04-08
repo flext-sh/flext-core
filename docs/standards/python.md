@@ -245,7 +245,7 @@ This module provides:
 - User-related exceptions
 """
 
-from flext_core import FlextModels, FlextService
+from flext_core import FlextModels, s
 
 
 class User(FlextModels.Entity):

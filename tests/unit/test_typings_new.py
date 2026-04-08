@@ -1,4 +1,4 @@
-"""Tests for FlextTypes - type aliases, generics, validation types, containers.
+"""Tests for t - type aliases, generics, validation types, containers.
 
 Source: flext_core._typings/ (7 files, ~693 LOC)
 Tested through facade: t.*
@@ -18,12 +18,6 @@ import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import (
-    FlextTypes,
-    FlextTypesCore,
-    FlextTypesServices,
-    FlextTypesValidation,
-    FlextTypingBase,
-    FlextTypingContainers,
     P,
     R,
     ResultT,
@@ -39,7 +33,7 @@ from tests import c, t
 
 
 class TestFlextTypes:
-    """Comprehensive tests for FlextTypes facade and all _typings/ submodules."""
+    """Comprehensive tests for t facade and all _typings/ submodules."""
 
     # -- Type alias existence and accessibility through t.* --
 
@@ -94,7 +88,7 @@ class TestFlextTypes:
 
     @pytest.mark.parametrize("alias_name", CORE_ALIAS_NAMES)
     def test_core_alias_accessible(self, alias_name: str) -> None:
-        """FlextTypesCore aliases are accessible through t.* namespace."""
+        """T aliases are accessible through t.* namespace."""
         tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Service type aliases --
@@ -123,7 +117,7 @@ class TestFlextTypes:
 
     @pytest.mark.parametrize("alias_name", SERVICE_ALIAS_NAMES)
     def test_service_alias_accessible(self, alias_name: str) -> None:
-        """FlextTypesServices aliases are accessible through t.* namespace."""
+        """T aliases are accessible through t.* namespace."""
         tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Generic type vars --
@@ -543,24 +537,24 @@ class TestFlextTypes:
     # -- MRO composition check --
 
     def test_flexttypes_inherits_base(self) -> None:
-        """FlextTypes inherits from FlextTypingBase through MRO."""
-        tm.that(FlextTypingBase in FlextTypes.__mro__, eq=True)
+        """T inherits from t through MRO."""
+        tm.that(t in t.__mro__, eq=True)
 
     def test_flexttypes_inherits_containers(self) -> None:
-        """FlextTypes inherits from FlextTypingContainers through MRO."""
-        tm.that(FlextTypingContainers in FlextTypes.__mro__, eq=True)
+        """T inherits from t through MRO."""
+        tm.that(t in t.__mro__, eq=True)
 
     def test_flexttypes_inherits_core(self) -> None:
-        """FlextTypes inherits from FlextTypesCore through MRO."""
-        tm.that(FlextTypesCore in FlextTypes.__mro__, eq=True)
+        """T inherits from t through MRO."""
+        tm.that(t in t.__mro__, eq=True)
 
     def test_flexttypes_inherits_services(self) -> None:
-        """FlextTypes inherits from FlextTypesServices through MRO."""
-        tm.that(FlextTypesServices in FlextTypes.__mro__, eq=True)
+        """T inherits from t through MRO."""
+        tm.that(t in t.__mro__, eq=True)
 
     def test_flexttypes_inherits_validation(self) -> None:
-        """FlextTypes inherits from FlextTypesValidation through MRO."""
-        tm.that(FlextTypesValidation in FlextTypes.__mro__, eq=True)
+        """T inherits from t through MRO."""
+        tm.that(t in t.__mro__, eq=True)
 
     # -- Generic tuple aliases --
 

@@ -9,12 +9,12 @@ from typing import cast, override
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, FlextHandlers, h, r
+from flext_core import e, h, r
 from tests import c, m, t
 
 
 class TestHandlersFullCoverage:
-    class _Handler(FlextHandlers[t.Scalar, t.Container]):
+    class _Handler(h[t.Scalar, t.Container]):
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
@@ -43,13 +43,10 @@ class TestHandlersFullCoverage:
             return r[bool].ok(True)
 
     def test_handler_type_literal_and_invalid(self) -> None:
-        assert (
-            FlextHandlers._handler_type_to_literal(c.HandlerType.OPERATION)
-            == "operation"
-        )
-        assert FlextHandlers._handler_type_to_literal(c.HandlerType.SAGA) == "saga"
+        assert h._handler_type_to_literal(c.HandlerType.OPERATION) == "operation"
+        assert h._handler_type_to_literal(c.HandlerType.SAGA) == "saga"
         with pytest.raises(ValueError, match="Unsupported handler type"):
-            FlextHandlers._handler_type_to_literal(cast("c.HandlerType", "bad"))
+            h._handler_type_to_literal(cast("c.HandlerType", "bad"))
 
     def test_invalid_handler_mode_init_raises(self) -> None:
         invalid_config = m.Handler.model_construct(
@@ -62,7 +59,7 @@ class TestHandlersFullCoverage:
             metadata=None,
         )
         with pytest.raises(
-            FlextExceptions.ValidationError,
+            e.ValidationError,
             match="Invalid handler mode",
         ):
             self._Handler(config=invalid_config)

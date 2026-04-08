@@ -19,7 +19,7 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions` (+13 more)
+- Primary facades: `FlextConstants`, `FlextContainer`, `FlextContext`, `d`, `FlextDispatcher`, `e` (+13 more)
 - Generated module pages: `19`
 
 - [Back to project docs](../index.md)

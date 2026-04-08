@@ -17,7 +17,7 @@ from typing import Self
 import pytest
 
 from flext_core import FlextModelsDomainEvent, r
-from tests import assertion_helpers, c, t
+from tests import c, t, u
 
 
 class _UserCreatedEvent(FlextModelsDomainEvent.Entry):
@@ -169,7 +169,7 @@ class TestArchitecturalPatterns:
                 f"entity_{i}",
                 t.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
             )
-            assertion_helpers.assert_flext_result_success(
+            u.Tests.assert_success(
                 result,
                 f"Save operation {i} should succeed",
             )

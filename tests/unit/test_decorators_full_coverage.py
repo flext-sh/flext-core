@@ -131,11 +131,11 @@ class TestDecoratorsFullCoverage:
             return TestDecoratorsFullCoverage._FakeLogger()
 
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._execute_retry_loop",
+            "flext_core.decorators.d._execute_retry_loop",
             _execute_retry_loop,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._handle_retry_exhaustion",
+            "flext_core.decorators.d._handle_retry_exhaustion",
             _handle_retry_exhaustion,
         )
         monkeypatch.setattr(
@@ -411,11 +411,11 @@ class TestDecoratorsFullCoverage:
 
         tm.that(with_ctx(), eq="ctx")
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._bind_operation_context",
+            "flext_core.decorators.d._bind_operation_context",
             _bind_operation_context,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._clear_operation_scope",
+            "flext_core.decorators.d._clear_operation_scope",
             _clear_operation_scope,
         )
 
@@ -448,11 +448,11 @@ class TestDecoratorsFullCoverage:
 
         monkeypatch.setattr("flext_core.decorators.FlextLogger", _logger_factory)
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._bind_operation_context",
+            "flext_core.decorators.d._bind_operation_context",
             _bind_operation_context,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._clear_operation_scope",
+            "flext_core.decorators.d._clear_operation_scope",
             _clear_operation_scope,
         )
 
@@ -498,7 +498,7 @@ class TestDecoratorsFullCoverage:
 
         monkeypatch.setattr("flext_core.decorators.FlextLogger", _logger_factory)
         monkeypatch.setattr(
-            "flext_core.decorators.FlextDecorators._execute_retry_loop",
+            "flext_core.decorators.d._execute_retry_loop",
             _execute_retry_loop,
         )
 

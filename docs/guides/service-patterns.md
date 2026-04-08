@@ -34,7 +34,7 @@
 **Pydantic:** 2.x\
 **Status:** V1 stable; V2 patterns under validation
 
-This guide describes FlextService usage patterns and the evolution from
+This guide describes s usage patterns and the evolution from
 explicit execution (V1) to zero-ceremony patterns (V2).
 
 ## Canonical Rules
@@ -47,15 +47,15 @@ ______________________________________________________________________
 
 ## Overview
 
-`FlextService[T]` is the foundation for domain services in FLEXT-Core. A service
+`s[T]` is the foundation for domain services in FLEXT-Core. A service
 is essentially a **Pydantic model with an `execute()` method** that returns
 `r[T]`.
 
 ```python
-from flext_core import FlextService, r
+from flext_core import s, r
 
 
-class CreateUserService(FlextService[User]):
+class CreateUserService(s[User]):
     name: str
     email: str
 
@@ -110,7 +110,7 @@ The property pattern provides a shorthand:
 try:
     user = CreateUserService(name="Alice", email="alice@example.com").result
     print(f"Created user: {user.name}")
-except FlextExceptions.BaseError as e:
+except e.BaseError as e:
     print(f"Error: {e}")
 ```
 
@@ -128,7 +128,7 @@ except FlextExceptions.BaseError as e:
 The auto-execution pattern returns the value directly on instantiation:
 
 ```python
-class AutoUserService(FlextService[User]):
+class AutoUserService(s[User]):
     auto_execute: ClassVar[bool] = True  # Opt-in
     name: str
     email: str
@@ -153,7 +153,7 @@ ______________________________________________________________________
 
 ## Infrastructure Properties
 
-FlextService inherits from `FlextMixins`, providing automatic access to
+s inherits from `x`, providing automatic access to
 infrastructure:
 
 | Property         | Type             | Description                    |
@@ -168,17 +168,17 @@ All properties are **lazy-loaded** – no overhead if unused.
 ### Example with Infrastructure
 
 ```python
-class ProcessOrderService(FlextService[Order]):
+class ProcessOrderService(s[Order]):
     order_id: str
 
     def execute(self) -> r[Order]:
-        # Logging (via FlextMixins)
+        # Logging (via x)
         self.logger.info(f"Processing order {self.order_id}")
 
-        # Configuration (via FlextMixins)
+        # Configuration (via x)
         max_retries = self.config.max_retry_attempts
 
-        # Dependency resolution (via FlextMixins)
+        # Dependency resolution (via x)
         repo_result = self.container.get("order_repository")
         if repo_result.is_failure:
             return r[Order].fail("Repository unavailable")
@@ -215,7 +215,7 @@ Create services dynamically:
 def create_notification_service(
     channel: str,
     message: str,
-) -> FlextService[bool]:
+) -> s[bool]:
     match channel:
         case "email":
             return EmailNotificationService(message=message)
@@ -237,11 +237,11 @@ ______________________________________________________________________
 Services are called by CQRS handlers for domain operations:
 
 ```python
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_core import r
 
 
-class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+class CreateUserHandler(h[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
         # Handler orchestrates, service executes
         return CreateUserService(
@@ -306,7 +306,7 @@ else:
 # After (V2 Property)
 try:
     value = MyService(param="value").result
-except FlextExceptions.BaseError as e:
+except e.BaseError as e:
     handle_error(str(e))
 ```
 
@@ -341,7 +341,7 @@ ______________________________________________________________________
 1. **Dependency Injection**: See Advanced DI for service composition
 1. **Railway Patterns**: Review Railway-Oriented Programming for result composition
 1. **Error Handling**: Check Error Handling Guide for comprehensive error patterns
-1. **API Reference**: Review FlextService API for complete API
+1. **API Reference**: Review s API for complete API
 
 ## See Also
 
@@ -349,7 +349,7 @@ ______________________________________________________________________
 - Dependency Injection Advanced - Service composition with DI
 - Railway-Oriented Programming - Result composition patterns
 - Error Handling Guide - Comprehensive error handling
-- API Reference: FlextService - Complete service API
+- API Reference: s - Complete service API
 - **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ## References

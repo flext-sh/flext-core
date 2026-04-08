@@ -8,8 +8,6 @@ from flext_core import FlextContainer, FlextContext
 from flext_tests import tm
 from tests import m, t, u
 
-from ..test_utils import assertion_helpers
-
 
 class TestCoverageContext:
     """Coverage tests for currently supported FlextContext APIs."""
@@ -49,7 +47,7 @@ class TestCoverageContext:
         container = FlextContainer(_context=FlextContext())
         FlextContext.set_container(container)
         result = FlextContext.Service.get_service("nonexistent_service_xyz")
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        _ = u.Tests.assert_failure(result)
 
     def test_timed_operation_context(self) -> None:
         u.Tests.clear_context()

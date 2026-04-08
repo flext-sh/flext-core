@@ -16,7 +16,6 @@ from typing import override
 
 from flext_tests import tm
 from tests import (
-    assertion_helpers,
     c,
     t,
     u,
@@ -35,7 +34,7 @@ class TestUtilitiesDataMapper:
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
         result = u.map_dict_keys(source_raw, mapping)
-        mapped = assertion_helpers.assert_flext_result_success(result)
+        mapped = u.Tests.assert_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2}
 
     def test_keep_unmapped_true(self) -> None:
@@ -47,7 +46,7 @@ class TestUtilitiesDataMapper:
             mapping,
             keep_unmapped=True,
         )
-        mapped = assertion_helpers.assert_flext_result_success(result)
+        mapped = u.Tests.assert_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
 
     def test_keep_unmapped_false(self) -> None:
@@ -59,7 +58,7 @@ class TestUtilitiesDataMapper:
             mapping,
             keep_unmapped=False,
         )
-        mapped = assertion_helpers.assert_flext_result_success(result)
+        mapped = u.Tests.assert_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1}
 
     def test_map_dict_keys_exception_handling(self) -> None:

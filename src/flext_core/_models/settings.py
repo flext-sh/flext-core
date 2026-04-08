@@ -1,6 +1,6 @@
 """Configuration patterns extracted from FlextModels.
 
-This module contains the FlextModelsConfig class with all configuration-related patterns
+This module contains the FlextModelsSettings class with all configuration-related patterns
 as nested classes. It should NOT be imported directly - use FlextModels.Config instead.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -27,7 +27,7 @@ from flext_core import (
 )
 
 
-class FlextModelsConfig:
+class FlextModelsSettings:
     """Configuration pattern container class.
 
     This class acts as a namespace container for configuration patterns.
@@ -129,4 +129,4 @@ class FlextModelsConfig:
     "Domain model configuration defaults.\n\n    Moved from FlextConstants.DOMAIN_MODEL_CONFIG because\n    constants.py cannot import ConfigDict from pydantic.\n\n    Use m.DOMAIN_MODEL_CONFIG instead of c.DOMAIN_MODEL_CONFIG.\n    "
 
 
-__all__ = ["FlextModelsConfig"]
+__all__ = ["FlextModelsSettings"]

@@ -12,7 +12,7 @@ from typing import Protocol, Self, overload, runtime_checkable
 
 from flext_core import (
     FlextProtocolsBase,
-    FlextProtocolsConfig,
+    FlextProtocolsSettings,
     FlextProtocolsContext,
     FlextProtocolsResult,
     t,
@@ -78,15 +78,15 @@ class FlextProtocolsContainer:
             ...
 
     @runtime_checkable
-    class Container(FlextProtocolsConfig.Configurable, Protocol):
+    class Container(FlextProtocolsSettings.Configurable, Protocol):
         """Dependency injection container protocol.
 
-        Extends FlextProtocolsConfig.Configurable to allow container configuration.
-        Implements configure() method from FlextProtocolsConfig.Configurable protocol.
+        Extends FlextProtocolsSettings.Configurable to allow container configuration.
+        Implements configure() method from FlextProtocolsSettings.Configurable protocol.
         """
 
         @property
-        def config(self) -> FlextProtocolsConfig.Settings:
+        def config(self) -> FlextProtocolsSettings.Settings:
             """Configuration bound to the container."""
             ...
 
@@ -140,7 +140,7 @@ class FlextProtocolsContainer:
         def scoped(
             self,
             *,
-            config: FlextProtocolsConfig.Settings | None = None,
+            config: FlextProtocolsSettings.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
             services: Mapping[str, t.RegisterableService] | None = None,

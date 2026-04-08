@@ -435,7 +435,7 @@ Need decoupled communication between domain objects without direct references.
 Use domain events (emitted from aggregates, published by infrastructure) for cross-aggregate communication.
 
 ```python
-class OrderService(FlextService):
+class OrderService(s):
     def place_order(self, order: Order) -> r[Order]:
         # Business logic
         order.place()

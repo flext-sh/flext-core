@@ -12,7 +12,7 @@ You are responsible for applying and reinforcing the dependency-injector-based p
 Architectural context
 - L0.5 (runtime bridge): `flext_core.runtime.u` is the single surface to access providers/containers/wiring (Provide, inject) and configuration helpers. Expand capabilities only by exposing new helpers here.
 - L1 (DI integration): `u.DependencyIntegration` owns the declarative container, typed providers (Singleton/Factory/Resource), and `providers.Configuration` for defaults/overrides. Adjustments must preserve the public API exported in `flext_core.__init__`.
-- L1.5 (service runtime bootstrap): `u.create_service_runtime` (inherited by `FlextService`) materializes config/context/container in one call with optional overrides, registrations, and wiring. Prefer overriding `FlextService._runtime_bootstrap_options` to pass parameters instead of duplicating setup logic.
+- L1.5 (service runtime bootstrap): `u.create_service_runtime` (inherited by `s`) materializes config/context/container in one call with optional overrides, registrations, and wiring. Prefer overriding `s._runtime_bootstrap_options` to pass parameters instead of duplicating setup logic.
 - L2 (container): `FlextContainer` uses the bridge providers to register services, factories, and resources with generics, cloning them for scopes without manual dictionaries. The public API stays in `register`, `register_factory`, `register_resource`, `resolve`, `create_scope`, `configure`, etc.
 - L3 (handlers/dispatcher): handlers are wired via `wire_modules`, and @inject/Provide decorators are re-exported by the runtime. Do not import dependency-injector directly in L3.
 
@@ -20,7 +20,7 @@ Implementation rules
 - Prefer `providers.Resource` for external clients (DB/HTTP/queues), guaranteeing teardown/close and removing manual lifecycle boilerplate.
 - Use `providers.Configuration` to synchronize defaults/overrides validated by `FlextSettings`; avoid manual merges and preserve override precedence.
 - Prefer the parameterized `DependencyIntegration.create_container` helper when instantiating DI containers directly; it can bind configuration, register providers, and wire modules in one call, with caching controlled via parameters.
-- Service classes should reuse the runtime automation by overriding `_runtime_bootstrap_options` on `FlextService` to feed parameters into `u.create_service_runtime` (config overrides, service/factory/resource seeding, wiring targets). Avoid duplicating container/context/config creation in constructors.
+- Service classes should reuse the runtime automation by overriding `_runtime_bootstrap_options` on `s` to feed parameters into `u.create_service_runtime` (config overrides, service/factory/resource seeding, wiring targets). Avoid duplicating container/context/config creation in constructors.
 - Registrations must use typed providers (Generic[T]) to keep type-safety; avoid extra casts.
 - When changing caching/lifecycles, preserve existing configuration and the public ABI (parameters and returns exposed to consumers).
 - Any new DI surface must be exposed via the bridge/runtime or existing facades, never by direct dependency-injector imports in upper layers.

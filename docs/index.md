@@ -18,7 +18,7 @@ This project portal is generated from `pyproject.toml`, package exports, and rea
 
 ## Public Surface Summary
 
-- Primary facades: `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions` (+13 more)
+- Primary facades: `FlextConstants`, `FlextContainer`, `FlextContext`, `d`, `FlextDispatcher`, `e` (+13 more)
 - Alias namespaces: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `20`
 - Exported module shortcuts: `constants`, `container`, `context`, `decorators`, `dispatcher`, `exceptions` (+13 more)

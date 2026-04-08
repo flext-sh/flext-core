@@ -4,7 +4,7 @@
 - [FlextDispatcher - Unified CQRS Dispatcher](#flextdispatcher-unified-cqrs-dispatcher)
 - [h - CQRS Handler Base](#h-cqrs-handler-base)
 - [FlextRegistry - Handler Registration Utilities](#flextregistry-handler-registration-utilities)
-- [FlextDecorators - Cross-Cutting Concerns](#flextdecorators-cross-cutting-concerns)
+- [d - Cross-Cutting Concerns](#flextdecorators-cross-cutting-concerns)
 - [Quick Start Checklist](#quick-start-checklist)
 - [Verification Commands](#verification-commands)
 <!-- TOC END -->
@@ -17,7 +17,7 @@ Canonical architecture context:
 - `docs/architecture/overview.md`
 - `docs/architecture/cqrs.md`
 
-Primary components in this layer: `FlextDispatcher`, `h`, `FlextRegistry`, and `FlextDecorators`.
+Primary components in this layer: `FlextDispatcher`, `h`, `FlextRegistry`, and `d`.
 
 ## FlextDispatcher - Unified CQRS Dispatcher
 
@@ -102,18 +102,18 @@ summary = registry.register_handlers([
 - Returns `r` objects describing successes and skips
 - Designed to pair with `FlextDispatcher` for execution
 
-## FlextDecorators - Cross-Cutting Concerns
+## d - Cross-Cutting Concerns
 
-`FlextDecorators` packages common cross-cutting behaviors so handlers stay focused on business logic.
+`d` packages common cross-cutting behaviors so handlers stay focused on business logic.
 
 ```python
-from flext_core import FlextDecorators
+from flext_core import d
 from flext_core import r
 
 
-@FlextDecorators.retry(attempts=3)
-@FlextDecorators.timeout(seconds=2)
-@FlextDecorators.inject
+@d.retry(attempts=3)
+@d.timeout(seconds=2)
+@d.inject
 def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
     logger.info("creating user", user=cmd.name)
     return r[bool].ok(True)
@@ -129,7 +129,7 @@ def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
 
 1. Define command/query messages and corresponding handlers inheriting `h`.
 1. Register handlers with `FlextDispatcher` or via `FlextRegistry` batch helpers.
-1. Apply `FlextDecorators` for retries, timeouts, context propagation, or DI.
+1. Apply `d` for retries, timeouts, context propagation, or DI.
 1. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `r` outputs.
 
 ## Verification Commands

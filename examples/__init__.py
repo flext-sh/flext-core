@@ -89,13 +89,13 @@ if _t.TYPE_CHECKING:
     from examples._models.shared import SharedHandle, SharedPerson
     from examples.models import ExamplesFlextCoreModels, ExamplesFlextCoreModels as m
     from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import FlextDecorators as d
-    from flext_core.exceptions import FlextExceptions as e
-    from flext_core.handlers import FlextHandlers as h
-    from flext_core.mixins import FlextMixins as x
+    from flext_core.decorators import d
+    from flext_core.exceptions import e
+    from flext_core.handlers import h
+    from flext_core.mixins import x
     from flext_core.protocols import FlextProtocols as p
-    from flext_core.result import FlextResult as r
-    from flext_core.service import FlextService as s
+    from flext_core.result import r
+    from flext_core.service import s
     from flext_core.typings import FlextTypes as t
     from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
@@ -103,17 +103,17 @@ _LAZY_IMPORTS = merge_lazy_imports(
     build_lazy_import_map(
         {
             ".models": ("ExamplesFlextCoreModels",),
+            "flext_core.decorators": ("d",),
+            "flext_core.exceptions": ("e",),
+            "flext_core.handlers": ("h",),
+            "flext_core.mixins": ("x",),
+            "flext_core.result": ("r",),
+            "flext_core.service": ("s",),
         },
         alias_groups={
             ".models": (("m", "ExamplesFlextCoreModels"),),
             "flext_core.constants": (("c", "FlextConstants"),),
-            "flext_core.decorators": (("d", "FlextDecorators"),),
-            "flext_core.exceptions": (("e", "FlextExceptions"),),
-            "flext_core.handlers": (("h", "FlextHandlers"),),
-            "flext_core.mixins": (("x", "FlextMixins"),),
             "flext_core.protocols": (("p", "FlextProtocols"),),
-            "flext_core.result": (("r", "FlextResult"),),
-            "flext_core.service": (("s", "FlextService"),),
             "flext_core.typings": (("t", "FlextTypes"),),
             "flext_core.utilities": (("u", "FlextUtilities"),),
         },

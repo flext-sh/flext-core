@@ -201,7 +201,7 @@ class TestsCore:
         assert service.model_config.get("validate_assignment") is True
 
     def test_service_immutability(self) -> None:
-        """Test service mutability (frozen removed for compatibility with FlextMixins)."""
+        """Test service mutability (frozen removed for compatibility with x)."""
         service = self.UserService()
         assert (
             service.model_config.get("frozen") is None

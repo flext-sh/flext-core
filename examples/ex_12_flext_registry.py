@@ -6,7 +6,8 @@ from typing import override
 
 from pydantic import BaseModel
 
-from examples import Examples, c, m, t, u
+from examples import c, m, t, u
+from examples.shared import Examples
 from flext_core import FlextDispatcher, FlextRegistry, h, r
 
 

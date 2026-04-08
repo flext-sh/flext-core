@@ -11,9 +11,7 @@ from typing import cast
 
 from flext_core import r
 from flext_tests import tm
-from tests import t
-
-from ._models_impl import _ErrorsModel, _PlainErrorModel, _TargetModel
+from tests import m, t
 
 
 class _ValidationLikeError(ValueError):
@@ -86,22 +84,22 @@ def test_recover_tap_and_tap_error_paths() -> None:
 
 
 def test_from_validation_and_to_model_paths() -> None:
-    success_result = r[_TargetModel].from_validation(
+    success_result = r[m.Core.Unit._TargetModel].from_validation(
         {"value": 10},
-        _TargetModel,
+        m.Core.Unit._TargetModel,
     )
     tm.ok(success_result)
     tm.that(success_result.value.value, eq=10)
-    err_result = r[_ErrorsModel].from_validation(
+    err_result = r[m.Core.Unit._ErrorsModel].from_validation(
         {"value": "x"},
-        _ErrorsModel,
+        m.Core.Unit._ErrorsModel,
     )
     tm.fail(err_result)
     tm.that((err_result.error or ""), has="Validation failed")
     tm.that((err_result.error or ""), has="bad value")
-    plain_result = r[_PlainErrorModel].from_validation(
+    plain_result = r[m.Core.Unit._PlainErrorModel].from_validation(
         {"value": "x"},
-        _PlainErrorModel,
+        m.Core.Unit._PlainErrorModel,
     )
     tm.fail(plain_result)
     tm.that((plain_result.error or ""), has="plain boom")
@@ -109,7 +107,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[t.IntMapping]
         .fail("already failed")
         .to_model(
-            _TargetModel,
+            m.Core.Unit._TargetModel,
         )
     )
     tm.fail(failure_to_model)
@@ -118,7 +116,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[t.IntMapping]
         .ok({"value": 9})
         .to_model(
-            _TargetModel,
+            m.Core.Unit._TargetModel,
         )
     )
     tm.ok(success_to_model)
@@ -127,7 +125,7 @@ def test_from_validation_and_to_model_paths() -> None:
         r[t.StrMapping]
         .ok({"value": "bad"})
         .to_model(
-            _TargetModel,
+            m.Core.Unit._TargetModel,
         )
     )
     tm.fail(invalid_to_model)

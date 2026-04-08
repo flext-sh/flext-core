@@ -11,11 +11,11 @@ from pydantic import PrivateAttr
 from examples import (
     Ex11EntityStub as _EntityStub,
     Ex11Payload as _Payload,
-    Examples,
     m,
     t,
     u,
 )
+from examples.shared import Examples
 from flext_core import FlextContext, FlextLogger, FlextSettings, e, r, s
 
 
@@ -513,7 +513,7 @@ class Ex11FlextService(Examples):
 
         fallback = self.rand_str(4)
 
-        self.check("alias.FlextService_is_s", s.__name__ == "FlextService")
+        self.check("alias.FlextService_is_s", s.__name__ == "s")
 
         service = _EchoService()
         execute_value = service.execute().unwrap_or(fallback)

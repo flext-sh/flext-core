@@ -33,17 +33,17 @@ ______________________________________________________________________
 
 ### foundation.md (Layers 0, 0.5, 1)
 
-- **Strengths**: Clear coverage of `FlextConstants`, `t`, `p`, `r`, `FlextContainer`, and `FlextExceptions` with minimal imports.
+- **Strengths**: Clear coverage of `FlextConstants`, `t`, `p`, `r`, `FlextContainer`, and `e` with minimal imports.
 - **Gaps**: Add a short example for `r.map_error`/`flat_map`, confirm constants/types examples point to active symbols, and include a one-liner showing the alias import pattern (`from flext_core import u, t, c, m, p, r, e, d, s, x, h`).
 
 ### domain.md (Layer 2)
 
-- **Strengths**: Entity/Value/AggregateRoot patterns reference the correct `m.Value` base. `FlextService` examples compile with current signatures.
+- **Strengths**: Entity/Value/AggregateRoot patterns reference the correct `m.Value` base. `s` examples compile with current signatures.
 - **Gaps**: Document `x` and `u` helpers that appear in `mixins.py` and `_utilities/validation.py`.
 
 ### application.md (Layer 3)
 
-- **Strengths**: Now centered on `FlextDispatcher`, `h`, `FlextRegistry`, and `FlextDecorators` with lean import lists and working dispatcher snippets.
+- **Strengths**: Now centered on `FlextDispatcher`, `h`, `FlextRegistry`, and `d` with lean import lists and working dispatcher snippets.
 - **Gaps**: Call out dispatcher reliability settings (`DispatcherConfig`), caching defaults, and decorator composition (e.g., `@retry` + `@timeout`).
 - **Action**: Remove any straggling references to the retired `FlextBus` and to non-existent `FlextProcessors` modules.
 

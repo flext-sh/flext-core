@@ -11,7 +11,7 @@
 - [Layer 1: Foundation (Core Primitives)](#layer-1-foundation-core-primitives)
   - [r[T] — Railway-Oriented Programming {#flextresult}](#rt-railway-oriented-programming-flextresult)
   - [FlextContainer — Dependency Injection {#flextcontainer}](#flextcontainer-dependency-injection-flextcontainer)
-  - [FlextExceptions — Exception Hierarchy](#flextexceptions-exception-hierarchy)
+  - [e — Exception Hierarchy](#flextexceptions-exception-hierarchy)
 - [Short Alias Reference](#short-alias-reference)
 - [Related Documentation](#related-documentation)
 - [Verification Commands](#verification-commands)
@@ -29,7 +29,7 @@ Canonical references:
 
 - **Layer 0** — Pure constants, typing helpers, and runtime protocols with zero dependencies.
 - **Layer 0.5** — Runtime bridge that adapts external libraries without importing application or domain code.
-- **Layer 1** — Core primitives (`r`, `FlextContainer`, `FlextExceptions`) that Domain and Application layers rely on.
+- **Layer 1** — Core primitives (`r`, `FlextContainer`, `e`) that Domain and Application layers rely on.
 
 See the Architecture Overview for the full layering model.
 
@@ -124,7 +124,7 @@ if logger_result.is_success:
     logger.info("Application started")
 ```
 
-### FlextExceptions — Exception Hierarchy
+### e — Exception Hierarchy
 
 Structured exception types with contextual metadata for infrastructure concerns.
 
@@ -155,11 +155,11 @@ from flext_core import c  # FlextConstants alias
 from flext_core import m  # FlextModels alias
 from flext_core import p  # FlextProtocols alias
 from flext_core import u  # FlextUtilities alias
-from flext_core import e  # FlextExceptions alias
+from flext_core import e  # e alias
 from flext_core import x  # FlextContext alias (via mixins)
-from flext_core import s  # FlextService alias
-from flext_core import d  # FlextDecorators alias
-from flext_core import h  # FlextHandlers alias
+from flext_core import s  # s alias
+from flext_core import d  # d alias
+from flext_core import h  # h alias
 ```
 
 **Usage Examples**:
@@ -200,11 +200,11 @@ if u.chk().eq(value, expected):
 | `m`   | `FlextModels`     | `models`     | Domain models (Entity, Value, AggregateRoot) |
 | `p`   | `FlextProtocols`  | `protocols`  | Runtime-checkable protocols                  |
 | `u`   | `FlextUtilities`  | `utilities`  | General-purpose utility functions            |
-| `e`   | `FlextExceptions` | `exceptions` | Exception hierarchy                          |
-| `x`   | `FlextMixins`     | `mixins`     | Reusable mixin behaviors (context access)    |
-| `s`   | `FlextService`    | `service`    | Domain service base class                    |
-| `d`   | `FlextDecorators` | `decorators` | Cross-cutting decorators                     |
-| `h`   | `FlextHandlers`   | `handlers`   | CQRS handler base class                      |
+| `e`   | `e` | `exceptions` | Exception hierarchy                          |
+| `x`   | `x`     | `mixins`     | Reusable mixin behaviors (context access)    |
+| `s`   | `s`    | `service`    | Domain service base class                    |
+| `d`   | `d` | `decorators` | Cross-cutting decorators                     |
+| `h`   | `h`   | `handlers`   | CQRS handler base class                      |
 
 See the Type System Guidelines in the main README for detailed usage patterns.
 

@@ -1,4 +1,4 @@
-"""FlextProtocolsConfig - configuration protocols.
+"""FlextProtocolsSettings - configuration protocols.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,7 +11,7 @@ from typing import Protocol, Self, runtime_checkable
 from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
 
 
-class FlextProtocolsConfig:
+class FlextProtocolsSettings:
     """Protocols for configurable components and settings."""
 
     @runtime_checkable
@@ -77,4 +77,4 @@ class FlextProtocolsConfig:
             ...
 
 
-__all__ = ["FlextProtocolsConfig"]
+__all__ = ["FlextProtocolsSettings"]

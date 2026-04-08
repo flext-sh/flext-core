@@ -991,7 +991,7 @@ else:
 ### See Also
 
 - Dependency Injection Advanced - Dispatcher reliability settings
-- API Reference: FlextDecorators
+- API Reference: d
 - Service Patterns - Service-level decorator usage
 
 ## Best Practices
@@ -1113,7 +1113,7 @@ except Exception:
 - Error Handling Best Practices - Comprehensive error handling patterns
 - Service Patterns - Railway pattern in domain services
 - API Reference: r - Complete API documentation
-- API Reference: FlextDecorators - Decorator composition patterns
+- API Reference: d - Decorator composition patterns
 - **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ______________________________________________________________________

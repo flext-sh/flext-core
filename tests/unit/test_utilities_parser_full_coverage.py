@@ -7,9 +7,8 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextUtilitiesParser, r
 from flext_tests import tm
-from tests import _models_impl, t, u
+from tests import m, r, t, u
 
 
 class TestUtilitiesParserFullCoverage:
@@ -64,7 +63,7 @@ class TestUtilitiesParserFullCoverage:
         )
         model_result = parser._parse_model(
             cast("t.NormalizedValue", {"name": "ok", "count": 2, "payload": "obj"}),
-            _models_impl._Model,
+            m.Core.Unit._Model,
             "field: ",
             strict=False,
         )
@@ -108,7 +107,7 @@ class TestUtilitiesParserFullCoverage:
         tm.that(primitive_float, eq=2.2)
         tm.that(primitive_str, eq="5")
         monkeypatch.setattr(
-            FlextUtilitiesParser,
+            u,
             "_coerce_to_float",
             staticmethod(self._raise_value_error_float),
         )
@@ -120,7 +119,7 @@ class TestUtilitiesParserFullCoverage:
         )
         tm.that(failed_float, none=True)
         monkeypatch.setattr(
-            FlextUtilitiesParser,
+            u,
             "_coerce_to_bool",
             staticmethod(self._raise_type_error_bool),
         )
@@ -191,7 +190,7 @@ class TestUtilitiesParserFullCoverage:
         )
         tm.ok(enum_by_member_value)
         monkeypatch.setattr(
-            FlextUtilitiesParser,
+            u,
             "_coerce_to_int",
             staticmethod(self._raise_value_error_int),
         )
@@ -203,7 +202,7 @@ class TestUtilitiesParserFullCoverage:
         )
         tm.that(failed_int, none=True)
         monkeypatch.setattr(
-            FlextUtilitiesParser,
+            u,
             "_coerce_to_str",
             staticmethod(self._raise_type_error_str),
         )

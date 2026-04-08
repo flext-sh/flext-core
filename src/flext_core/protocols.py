@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import (
     FlextModelsNamespace,
     FlextProtocolsBase,
-    FlextProtocolsConfig,
+    FlextProtocolsSettings,
     FlextProtocolsContainer,
     FlextProtocolsContext,
     FlextProtocolsHandler,
@@ -24,7 +24,7 @@ class FlextProtocols(
     FlextProtocolsBase,
     FlextProtocolsContext,
     FlextProtocolsResult,
-    FlextProtocolsConfig,
+    FlextProtocolsSettings,
     FlextProtocolsContainer,
     FlextProtocolsService,
     FlextProtocolsHandler,

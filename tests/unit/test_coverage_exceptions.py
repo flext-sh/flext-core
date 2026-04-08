@@ -7,9 +7,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import tm
-from tests import c, e, r, t
-
-from ..test_utils import assertion_helpers
+from tests import c, e, r, t, u
 
 
 class TestCoverageExceptions:
@@ -220,7 +218,7 @@ class TestCoverageExceptions:
             raise e.ValidationError(error_msg, field="email")
         except e.ValidationError as err:
             result = r[bool].fail(str(err))
-            _ = assertion_helpers.assert_flext_result_failure(result)
+            _ = u.Tests.assert_failure(result)
             tm.fail(result, has="Test error")
 
     def test_exception_in_railway_pattern(self) -> None:
@@ -244,7 +242,7 @@ class TestCoverageExceptions:
             )
         except e.ValidationError as err:
             result = r[bool].fail(f"Error in user creation: {err}")
-            _ = assertion_helpers.assert_flext_result_failure(result)
+            _ = u.Tests.assert_failure(result)
             tm.that(result.error, ne=None)
             if result.error is not None:
                 tm.that(result.error, has="Validation failed")
@@ -381,8 +379,8 @@ class TestCoverageExceptions:
         tm.that(metrics["total_exceptions"], eq=3)
         raw_counts = metrics.root.get("exception_counts")
         exception_counts = cast("t.IntMapping", raw_counts)
-        tm.that(exception_counts.get("FlextExceptions.ValidationError"), eq=2)
-        tm.that(exception_counts.get("FlextExceptions.ConfigurationError"), eq=1)
+        tm.that(exception_counts.get("e.ValidationError"), eq=2)
+        tm.that(exception_counts.get("e.ConfigurationError"), eq=1)
         tm.that(metrics["unique_exception_types"], eq=2)
 
     def test_clear_metrics(self) -> None:

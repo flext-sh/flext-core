@@ -31,7 +31,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".namespace": ("FlextModelsNamespace",),
             ".registry": ("FlextModelsRegistry",),
             ".service": ("FlextModelsService",),
-            ".settings": ("FlextModelsConfig",),
+            ".settings": ("FlextModelsSettings",),
         },
     ),
     exclude_names=(

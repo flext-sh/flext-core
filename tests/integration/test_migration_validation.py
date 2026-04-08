@@ -26,18 +26,18 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextDispatcher,
-    FlextExceptions,
-    FlextHandlers,
     FlextLogger,
-    FlextMixins,
     FlextModels,
     FlextProtocols,
     FlextRegistry,
-    FlextService,
     FlextSettings,
     FlextTypes,
     FlextUtilities,
+    e,
+    h,
     r,
+    s,
+    x,
 )
 from tests import p, t
 
@@ -97,10 +97,10 @@ class TestMigrationValidation:
         assert service.name == "test"
 
     def test_service_base_class_extension(self) -> None:
-        """Verify FlextService extension pattern continues working."""
+        """Verify s extension pattern continues working."""
 
-        class UserService(FlextService[None]):
-            """User service extending FlextService."""
+        class UserService(s[None]):
+            """User service extending s."""
 
             _logger: p.Logger = PrivateAttr(
                 default_factory=lambda: FlextLogger(__name__),
@@ -112,7 +112,7 @@ class TestMigrationValidation:
 
             @override
             def execute(self, **_kwargs: t.Scalar) -> r[None]:
-                """Execute method required by FlextService abstract class."""
+                """Execute method required by s abstract class."""
                 return r[None].ok(None)
 
             def create_user(
@@ -146,15 +146,15 @@ class TestMigrationValidation:
         assert r is not None
         assert FlextContainer is not None
         assert FlextModels is not None
-        assert FlextService is not None
+        assert s is not None
         assert FlextLogger is not None
         assert FlextSettings is not None
         assert FlextConstants is not None
         assert FlextContext is not None
         assert FlextDispatcher is not None
-        assert FlextExceptions is not None
-        assert FlextHandlers is not None
-        assert FlextMixins is not None
+        assert e is not None
+        assert h is not None
+        assert x is not None
         assert FlextProtocols is not None
         assert FlextRegistry is not None
         assert FlextTypes is not None
