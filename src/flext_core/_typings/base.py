@@ -20,6 +20,7 @@ class FlextTypingBase:
     type Primitives = str | Numeric | bool
     type Scalar = Primitives | datetime
     type Container = Scalar | Path
+    type OpaqueValue = object
     type RecursiveContainerMapping = Mapping[str, FlextTypingBase.RecursiveContainer]
     type RecursiveContainerList = Sequence[FlextTypingBase.RecursiveContainer]
     type MutableRecursiveContainerMapping = MutableMapping[
@@ -36,6 +37,10 @@ class FlextTypingBase:
         | tuple[FlextTypingBase.RecursiveContainer, ...]
         | None
     )
+    type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
+    type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
+    type SequenceOf[ItemT] = Sequence[ItemT]
+    type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
     type ContainerMapping = RecursiveContainerMapping
     type ContainerList = RecursiveContainerList
     type MutableContainerMapping = MutableRecursiveContainerMapping
