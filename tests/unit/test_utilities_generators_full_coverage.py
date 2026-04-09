@@ -10,7 +10,7 @@ from datetime import UTC, datetime, tzinfo
 
 import pytest
 
-from flext_core import _utilities
+from flext_core._utilities import generators as generators_utils
 from tests import m, u
 
 
@@ -68,7 +68,7 @@ class TestUtilitiesGeneratorsFullCoverage:
                 _ = tz
                 return fixed_ts
 
-        monkeypatch.setattr(_utilities.generators, "datetime", _FixedDatetime)
+        monkeypatch.setattr(generators_utils, "datetime", _FixedDatetime)
         custom = u.generate(
             kind="command",
             include_timestamp=True,

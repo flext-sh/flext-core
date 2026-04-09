@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from typing import Annotated, ClassVar, cast, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 from hypothesis import given, strategies as st
@@ -14,35 +14,39 @@ from tests import c, m, t, u
 
 
 class TestFlextHandlers:
-    class ConcreteTestHandler(h[str, str]):
+    class ConcreteTestHandler(h):
         """Test handler for string messages."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
         @override
-        def handle(self, message: str) -> r[str]:
-            return r[str].ok(f"processed_{message}")
+        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            if not isinstance(message, str):
+                return r[t.ValueOrModel].fail("Unexpected message type")
+            return r[t.ValueOrModel].ok(f"processed_{message}")
 
-    class ValidationTestHandler(h[t.ValueOrModel, str]):
+    class ValidationTestHandler(h):
         """Test handler for validation."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
         @override
-        def handle(self, message: t.ValueOrModel) -> r[str]:
-            return r[str].ok(f"processed_{message}")
+        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            return r[t.ValueOrModel].ok(f"processed_{message}")
 
-    class FailingTestHandler(h[str, str]):
+    class FailingTestHandler(h):
         """Test handler that fails."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
         @override
-        def handle(self, message: str) -> r[str]:
-            return r[str].fail(f"Handler failed for: {message}")
+        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            if not isinstance(message, str):
+                return r[t.ValueOrModel].fail("Unexpected message type")
+            return r[t.ValueOrModel].fail(f"Handler failed for: {message}")
 
     class HandlerTypeScenario(m.Value):
         """Scenario for handler types."""
@@ -146,13 +150,15 @@ class TestFlextHandlers:
         assert hasattr(handler._execution_context, "handler_name")
 
     def test_handlers_different_types(self) -> None:
-        class IntHandler(h[int, str]):
+        class IntHandler(h):
             def __init__(self, *, config: m.Handler | None = None) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: int) -> r[str]:
-                return r[str].ok(f"processed_{message}")
+            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+                if not isinstance(message, int):
+                    return r[t.ValueOrModel].fail("Unexpected message type")
+                return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Tests.create_handler_config(
             "test_handler_10",
@@ -215,14 +221,16 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h[t.MutableContainerMapping, str]):
+        class DictHandler(h):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: t.ContainerMapping) -> r[str]:
-                return r[str].ok(f"processed_{message}")
+            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+                if not isinstance(message, dict):
+                    return r[t.ValueOrModel].fail("Unexpected message type")
+                return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Tests.create_handler_config(
             "test_pipeline_dict_command_id",
@@ -231,13 +239,10 @@ class TestFlextHandlers:
             handler_mode=c.HandlerType.COMMAND,
         )
         handler = DictHandler(config=config)
-        dict_message = cast(
-            "t.MutableContainerMapping",
-            {
-                "command_id": "cmd_123",
-                "data": "test_data",
-            },
-        )
+        dict_message: t.MutableContainerMapping = {
+            "command_id": "cmd_123",
+            "data": "test_data",
+        }
         result = handler._run_pipeline(dict_message, operation="command")
         _ = u.Tests.assert_success(result)
 
@@ -256,19 +261,21 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_cannot_handle_message_type(self) -> None:
-        class RestrictiveHandler(h[str, str]):
+        class RestrictiveHandler(h):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def can_handle(self, message_type: type[str]) -> bool:
+            def can_handle(self, message_type: type) -> bool:
                 _ = message_type
                 return False
 
             @override
-            def handle(self, message: str) -> r[str]:
-                return r[str].ok(f"processed_{message}")
+            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+                if not isinstance(message, str):
+                    return r[t.ValueOrModel].fail("Unexpected message type")
+                return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Tests.create_handler_config(
             "test_pipeline_cannot_handle",
@@ -284,19 +291,21 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_validation_failure(self) -> None:
-        class ValidationFailingHandler(h[str, str]):
+        class ValidationFailingHandler(h):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def validate_message(self, data: str) -> r[bool]:
+            def validate_message(self, data: t.ValueOrModel) -> r[bool]:
                 _ = data
                 return r[bool].fail("Validation failed for test")
 
             @override
-            def handle(self, message: str) -> r[str]:
-                return r[str].ok(f"processed_{message}")
+            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+                if not isinstance(message, str):
+                    return r[t.ValueOrModel].fail("Unexpected message type")
+                return r[t.ValueOrModel].ok(f"processed_{message}")
 
         config = u.Tests.create_handler_config(
             "test_pipeline_validation_failure",
@@ -312,13 +321,13 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_handler_exception(self) -> None:
-        class ExceptionHandler(h[str, str]):
+        class ExceptionHandler(h):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: str) -> r[str]:
+            def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
                 _ = message
                 msg = "Test exception in handler"
                 raise ValueError(msg)

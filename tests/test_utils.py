@@ -15,6 +15,7 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextDispatcher,
+    FlextHandlers,
     FlextLogger,
     FlextRegistry,
     FlextSettings,
@@ -200,7 +201,7 @@ class TestUtils:
 
         @staticmethod
         def create_test_handlers_instance() -> type[
-            h[t.NormalizedValue, t.NormalizedValue]
+            FlextHandlers[t.ValueOrModel, t.ValueOrModel]
         ]:
             """Create test handlers fixture."""
             return h

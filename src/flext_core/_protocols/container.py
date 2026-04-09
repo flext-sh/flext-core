@@ -12,9 +12,9 @@ from typing import Protocol, Self, overload, runtime_checkable
 
 from flext_core import (
     FlextProtocolsBase,
-    FlextProtocolsSettings,
     FlextProtocolsContext,
     FlextProtocolsResult,
+    FlextProtocolsSettings,
     t,
 )
 

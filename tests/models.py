@@ -25,7 +25,7 @@ from tests import t
 from tests.unit import _models_impl as unit_models_impl
 
 
-class TestsFlextCoreModels(m, FlextTestsModels):
+class TestsFlextCoreModels(FlextTestsModels):
     """Models for flext-core tests - uses composition with TestsFlextModels.
 
     Architecture: Uses composition (not inheritance) with TestsFlextModels and TestsFlextModels

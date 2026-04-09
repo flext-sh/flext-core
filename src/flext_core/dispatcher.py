@@ -34,7 +34,7 @@ class FlextDispatcher:
             tuple[
                 t.HandlerProtocolVariant,
                 t.RoutedHandlerCallable,
-                tuple[t.MessageTypeSpecifier, ...],
+                tuple[t.TypeHintSpecifier, ...],
             ]
         ] = []
         self._event_subscribers: t.RegistryDict[
@@ -149,7 +149,7 @@ class FlextDispatcher:
 
         """
         route_name: str | None = None
-        accepted_message_types: tuple[t.MessageTypeSpecifier, ...] = tuple(
+        accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
             u.compute_accepted_message_types(handler.__class__),
         )
         resolved_handler: t.RoutedHandlerCallable
@@ -171,8 +171,10 @@ class FlextDispatcher:
             with contextlib.suppress(TypeError, ValueError):
                 route_name = u.get_message_route(handler_message_type)
         if route_name is None and accepted_message_types:
-            with contextlib.suppress(TypeError, ValueError):
-                route_name = u.get_message_route(accepted_message_types[0])
+            first_accepted = accepted_message_types[0]
+            if isinstance(first_accepted, (str, type)):
+                with contextlib.suppress(TypeError, ValueError):
+                    route_name = u.get_message_route(first_accepted)
         if route_name is None:
             if isinstance(handler, p.AutoDiscoverableHandler):
                 self._auto_handlers.append((

@@ -22,12 +22,13 @@ from __future__ import annotations
 
 from collections import UserDict as BaseUserDict
 from collections.abc import MutableMapping
-from typing import TypeVar, cast, get_origin, override
+from typing import TypeVar, get_origin, override
 
 import pytest
 
+from flext_core import FlextHandlers
 from flext_tests import tm
-from tests import h, r, t, u
+from tests import r, t, u
 
 TMessage = TypeVar("TMessage")
 
@@ -43,19 +44,17 @@ class TestuTypeChecker:
         return value
 
     @staticmethod
-    def _message_type(
-        value: type[t.ContainerMapping | int | str],
-    ) -> t.MessageTypeSpecifier:
-        return cast("t.MessageTypeSpecifier", value)
+    def _message_type(value: t.MessageTypeSpecifier) -> t.MessageTypeSpecifier:
+        return value
 
-    class StringHandler(h[str, str]):
+    class StringHandler(FlextHandlers[str, str]):
         """Handler for string messages."""
 
         @override
         def handle(self, message: str) -> r[str]:
             return r[str].ok(f"Processed: {message}")
 
-    class IntHandler(h[int, int]):
+    class IntHandler(FlextHandlers[int, int]):
         """Handler for integer messages."""
 
         @override
@@ -63,7 +62,7 @@ class TestuTypeChecker:
             return r[int].ok(message * 2)
 
     class DictHandler(
-        h[
+        FlextHandlers[
             t.MutableContainerMapping,
             t.MutableContainerMapping,
         ],
@@ -78,7 +77,7 @@ class TestuTypeChecker:
             result: t.MutableContainerMapping = {"processed": True, **message}
             return r[t.MutableContainerMapping].ok(result)
 
-    class ObjectHandler(h[t.NormalizedValue, t.Container]):
+    class ObjectHandler(FlextHandlers[t.NormalizedValue, t.Container]):
         """Handler for t.NormalizedValue messages."""
 
         @override
@@ -122,16 +121,16 @@ class TestuTypeChecker:
         """Test compute_accepted_message_types extracts from generic base."""
         types = u.compute_accepted_message_types(self.StringHandler)
         tm.that(len(types), eq=1)
-        tm.that(types[0], eq=str)
+        assert types[0] == str
         types = u.compute_accepted_message_types(self.IntHandler)
         tm.that(len(types), eq=1)
-        tm.that(types[0], eq=int)
+        assert types[0] == int
 
     def test_compute_accepted_message_types_from_explicit(self) -> None:
         """Test compute_accepted_message_types extracts from explicit annotation."""
         types = u.compute_accepted_message_types(self.ExplicitTypeHandler)
         tm.that(len(types), eq=1)
-        tm.that(types[0], eq=str)
+        assert types[0] == str
 
     def test_compute_accepted_message_types_no_handle_method(self) -> None:
         """Test compute_accepted_message_types returns empty for class without handle."""
@@ -157,7 +156,7 @@ class TestuTypeChecker:
         """Test compute_accepted_message_types with t.NormalizedValue handler (universal)."""
         types = u.compute_accepted_message_types(self.ObjectHandler)
         tm.that(len(types), eq=1)
-        tm.that(types[0], eq=t.NormalizedValue)
+        assert types[0] == t.NormalizedValue
 
     def test_can_handle_message_type_exact_match(self) -> None:
         """Test can_handle_message_type with exact type match."""
@@ -167,9 +166,7 @@ class TestuTypeChecker:
 
     def test_can_handle_message_type_object_accepts_all(self) -> None:
         """Test can_handle_message_type with t.NormalizedValue type (universal)."""
-        accepted: tuple[t.MessageTypeSpecifier, ...] = (
-            cast("t.MessageTypeSpecifier", t.NormalizedValue),
-        )
+        accepted: tuple[t.TypeHintSpecifier, ...] = (t.NormalizedValue,)
         tm.that(u.can_handle_message_type(accepted, str), eq=True)
         tm.that(u.can_handle_message_type(accepted, int), eq=True)
         tm.that(u.can_handle_message_type(accepted, dict), eq=True)
@@ -206,10 +203,7 @@ class TestuTypeChecker:
 
     def test_evaluate_type_compatibility_object_accepts_all(self) -> None:
         """Test _evaluate_type_compatibility with t.NormalizedValue type."""
-        object_type: t.TypeHintSpecifier = cast(
-            "t.TypeOriginSpecifier",
-            t.NormalizedValue,
-        )
+        object_type: t.TypeHintSpecifier = t.NormalizedValue
         tm.that(u._evaluate_type_compatibility(object_type, str), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, int), eq=True)
         tm.that(u._evaluate_type_compatibility(object_type, dict), eq=True)
@@ -237,10 +231,7 @@ class TestuTypeChecker:
 
     def test_check_object_type_compatibility_object_type(self) -> None:
         """Test _check_object_type_compatibility with t.NormalizedValue type."""
-        object_type: t.TypeHintSpecifier = cast(
-            "t.TypeOriginSpecifier",
-            t.NormalizedValue,
-        )
+        object_type: t.TypeHintSpecifier = t.NormalizedValue
         result = u._check_object_type_compatibility(object_type)
         tm.that(result, eq=True)
 
@@ -282,10 +273,10 @@ class TestuTypeChecker:
         """Test _extract_generic_message_types with h base."""
         types = u._extract_generic_message_types(self.StringHandler)
         tm.that(len(types), eq=1)
-        tm.that(types[0], eq=str)
+        assert types[0] == str
         types = u._extract_generic_message_types(self.IntHandler)
         tm.that(len(types), eq=1)
-        tm.that(types[0], eq=int)
+        assert types[0] == int
 
     def test_extract_generic_message_types_no_flext_handlers(self) -> None:
         """Test _extract_generic_message_types without h base."""
@@ -307,7 +298,7 @@ class TestuTypeChecker:
             self.ExplicitTypeHandler,
         )
         tm.ok(message_type_result)
-        tm.that(message_type_result.value, eq=str)
+        assert message_type_result.value == str
 
     def test_extract_message_type_from_handle_no_handle_method(self) -> None:
         """Test _extract_message_type_from_handle without handle method."""
@@ -391,8 +382,8 @@ class TestuTypeChecker:
         class Derived(Base):
             """Derived class."""
 
-        base_type: t.TypeHintSpecifier = cast("t.TypeOriginSpecifier", Base)
-        derived_type: t.TypeHintSpecifier = cast("t.TypeOriginSpecifier", Derived)
+        base_type: t.TypeHintSpecifier = Base
+        derived_type: t.TypeHintSpecifier = Derived
         result = u._handle_type_or_origin_check(
             base_type,
             derived_type,
@@ -419,10 +410,7 @@ class TestuTypeChecker:
     def test_handle_instance_check_type_error(self) -> None:
         """Test _handle_instance_check handles TypeError gracefully."""
         custom_type = type("CustomType", (), {})
-        custom_type_spec: t.TypeHintSpecifier = cast(
-            "t.TypeOriginSpecifier",
-            custom_type,
-        )
+        custom_type_spec: t.TypeHintSpecifier = custom_type
         result = u._handle_instance_check(custom_type_spec, custom_type_spec)
         tm.that(result, is_=bool)
 
@@ -434,10 +422,7 @@ class TestuTypeChecker:
     def test_boundary_none_message_type(self) -> None:
         """Test boundary case: None as message type."""
         accepted = (str,)
-        result = u.can_handle_message_type(
-            accepted,
-            cast("str | type", None),
-        )
+        result = u.can_handle_message_type(accepted, None)  # type: ignore[arg-type]  # Boundary coverage.
         tm.that(result, is_=bool)
 
     def test_boundary_string_type_specifier(self) -> None:

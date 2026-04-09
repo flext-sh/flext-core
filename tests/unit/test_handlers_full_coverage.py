@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from types import ModuleType
-from typing import cast, override
+from typing import override
 
 import pytest
 from pydantic import BaseModel
@@ -14,22 +13,22 @@ from tests import c, m, t
 
 
 class TestHandlersFullCoverage:
-    class _Handler(h[t.Scalar, t.Container]):
+    class _Handler(h):
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
         @override
-        def handle(self, message: t.Scalar) -> r[t.Container]:
+        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             if isinstance(message, (str, int, float, bool)):
-                return r[t.Container].ok(message)
-            return r[t.Container].fail("unsupported message")
+                return r[t.ValueOrModel].ok(message)
+            return r[t.ValueOrModel].fail("unsupported message")
 
     class _QueryHandler(_Handler):
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 
         @override
-        def validate_message(self, data: t.Scalar) -> r[bool]:
+        def validate_message(self, data: t.ValueOrModel) -> r[bool]:
             _ = data
             return r[bool].ok(True)
 
@@ -38,22 +37,26 @@ class TestHandlersFullCoverage:
             super().__init__(config=config)
 
         @override
-        def validate_message(self, data: t.Scalar) -> r[bool]:
+        def validate_message(self, data: t.ValueOrModel) -> r[bool]:
             _ = data
             return r[bool].ok(True)
 
     def test_handler_type_literal_and_invalid(self) -> None:
         assert h._handler_type_to_literal(c.HandlerType.OPERATION) == "operation"
         assert h._handler_type_to_literal(c.HandlerType.SAGA) == "saga"
+        original_literals = h._HANDLER_TYPE_LITERALS
+        h._HANDLER_TYPE_LITERALS = {}
         with pytest.raises(ValueError, match="Unsupported handler type"):
-            h._handler_type_to_literal(cast("c.HandlerType", "bad"))
+            h._handler_type_to_literal(c.HandlerType.OPERATION)
+        h._HANDLER_TYPE_LITERALS = original_literals
 
     def test_invalid_handler_mode_init_raises(self) -> None:
         invalid_config = m.Handler.model_construct(
             handler_id="h1",
             handler_name="bad",
             handler_type=c.HandlerType.COMMAND,
-            handler_mode=cast("c.HandlerType", "invalid"),
+            # type: ignore[arg-type]  # Intentionally invalid to cover FlextHandlers.__init__ guard.
+            handler_mode="invalid",
             command_timeout=10,
             max_command_retries=1,
             metadata=None,
@@ -83,10 +86,10 @@ class TestHandlersFullCoverage:
         str_mode_handler = h.create_from_callable(lambda msg: msg, mode="event")
         assert str_mode_handler.mode == c.HandlerType.EVENT
         invalid_general = h.create_from_callable(lambda msg: msg)
-        invalid_general_result = invalid_general.handle(cast("t.Scalar", "{1, 2, 3}"))
+        invalid_general_result = invalid_general.handle("{1, 2, 3}")
         assert invalid_general_result.is_success
         assert invalid_general_result.value == "{1, 2, 3}"
-        tuple_result = invalid_general.handle(cast("t.Scalar", "('x', 'y')"))
+        tuple_result = invalid_general.handle("('x', 'y')")
         assert tuple_result.is_success
 
     def test_run_pipeline_query_and_event_paths(self) -> None:
@@ -98,12 +101,8 @@ class TestHandlersFullCoverage:
                 handler_mode=c.HandlerType.QUERY,
             ),
         )
-        query_message: t.Scalar = "query"
-        query_pipeline = cast(
-            "Callable[[t.Scalar, str], r[t.Container]]",
-            qh._run_pipeline,
-        )
-        qr = query_pipeline(
+        query_message: t.ValueOrModel = "query"
+        qr = qh._run_pipeline(
             query_message,
             c.HANDLER_MODE_QUERY,
         )
@@ -116,12 +115,8 @@ class TestHandlersFullCoverage:
                 handler_mode=c.HandlerType.EVENT,
             ),
         )
-        event_message: t.Scalar = "event"
-        event_pipeline = cast(
-            "Callable[[t.Scalar, str], r[t.Container]]",
-            eh._run_pipeline,
-        )
-        er = event_pipeline(
+        event_message: t.ValueOrModel = "event"
+        er = eh._run_pipeline(
             event_message,
             c.HandlerType.EVENT.value,
         )

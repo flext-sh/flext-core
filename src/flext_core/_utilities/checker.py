@@ -113,9 +113,9 @@ class FlextUtilitiesChecker:
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> Sequence[t.MessageTypeSpecifier]:
+    ) -> Sequence[t.TypeHintSpecifier]:
         """Extract message types from generic base annotations."""
-        message_types: MutableSequence[t.MessageTypeSpecifier] = []
+        message_types: MutableSequence[t.TypeHintSpecifier] = []
         raw_bases: t.GuardInput = getattr(
             handler_class,
             "__orig_bases__",
@@ -149,27 +149,27 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_handle(
         cls,
         handler_class: type,
-    ) -> r[t.MessageTypeSpecifier]:
+    ) -> r[t.TypeHintSpecifier]:
         """Extract message type from handle method annotations when generics are absent."""
         if not hasattr(handler_class, c.METHOD_HANDLE):
-            return r[t.MessageTypeSpecifier].fail("Handler has no handle method")
+            return r[t.TypeHintSpecifier].fail("Handler has no handle method")
         handle_method_raw: t.GuardInput = getattr(handler_class, c.METHOD_HANDLE, None)
         if not cls._is_module_export_callable(handle_method_raw):
-            return r[t.MessageTypeSpecifier].fail(
+            return r[t.TypeHintSpecifier].fail(
                 "Handler handle attribute is not callable",
             )
         handle_method: Callable[..., t.ModuleExport] = handle_method_raw
         signature_result = cls._get_method_signature(handle_method)
         if signature_result.is_failure:
             signature_error = signature_result.error or "Invalid handle signature"
-            return r[t.MessageTypeSpecifier].fail(signature_error)
+            return r[t.TypeHintSpecifier].fail(signature_error)
         signature = signature_result.unwrap()
         type_hints = cls._get_type_hints_safe(handle_method, handler_class)
         for name, parameter in signature.parameters.items():
             if name == "self":
                 continue
             return cls._extract_message_type_from_parameter(parameter, type_hints, name)
-        return r[t.MessageTypeSpecifier].fail("No message parameter found in handle")
+        return r[t.TypeHintSpecifier].fail("No message parameter found in handle")
 
     @classmethod
     def _extract_message_type_from_parameter(
@@ -177,25 +177,25 @@ class FlextUtilitiesChecker:
         parameter: inspect.Parameter,
         type_hints: Mapping[str, t.TypeHintSpecifier | None],
         param_name: str,
-    ) -> r[t.MessageTypeSpecifier]:
+    ) -> r[t.TypeHintSpecifier]:
         """Extract message type from parameter hints or signature annotation."""
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
-                return r[t.MessageTypeSpecifier].fail("Type hint is None")
+                return r[t.TypeHintSpecifier].fail("Type hint is None")
             if isinstance(hint, str):
-                return r[t.MessageTypeSpecifier].ok(hint)
+                return r[t.TypeHintSpecifier].ok(hint)
             if isinstance(hint, type):
-                return r[t.MessageTypeSpecifier].ok(hint)
-            return r[t.MessageTypeSpecifier].ok(str(hint))
+                return r[t.TypeHintSpecifier].ok(hint)
+            return r[t.TypeHintSpecifier].ok(str(hint))
         annotation = parameter.annotation
         if annotation is not inspect.Signature.empty:
             if isinstance(annotation, str):
-                return r[t.MessageTypeSpecifier].ok(annotation)
+                return r[t.TypeHintSpecifier].ok(annotation)
             if isinstance(annotation, type):
-                return r[t.MessageTypeSpecifier].ok(annotation)
-            return r[t.MessageTypeSpecifier].ok(str(annotation))
-        return r[t.MessageTypeSpecifier].fail(
+                return r[t.TypeHintSpecifier].ok(annotation)
+            return r[t.TypeHintSpecifier].ok(str(annotation))
+        return r[t.TypeHintSpecifier].fail(
             "No annotation or type hint for parameter",
         )
 
@@ -264,7 +264,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def can_handle_message_type(
         cls,
-        accepted_types: tuple[t.MessageTypeSpecifier, ...],
+        accepted_types: tuple[t.TypeHintSpecifier, ...],
         message_type: t.MessageTypeSpecifier,
     ) -> bool:
         """Check if handler can process this message type."""
@@ -279,9 +279,9 @@ class FlextUtilitiesChecker:
     def compute_accepted_message_types(
         cls,
         handler_class: type,
-    ) -> tuple[t.MessageTypeSpecifier, ...]:
+    ) -> tuple[t.TypeHintSpecifier, ...]:
         """Compute message types accepted by a handler using cached introspection."""
-        message_types: MutableSequence[t.MessageTypeSpecifier] = []
+        message_types: MutableSequence[t.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
         message_types.extend(generic_types)
         if not message_types:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, Sequence
 from enum import StrEnum, unique
-from typing import Annotated, ClassVar, cast, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 from hypothesis import given, settings, strategies as st
@@ -66,14 +66,14 @@ class TestFlextRegistry:
             ),
         ] = False
 
-    class ConcreteTestHandler(h[t.NormalizedValue, t.NormalizedValue]):
+    class ConcreteTestHandler(h):
         """Test handler for registry."""
 
         @override
-        def handle(self, message: t.NormalizedValue) -> r[t.NormalizedValue]:
-            return r[t.NormalizedValue].ok(f"processed_{message}")
+        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
+            return r[t.ValueOrModel].ok(f"processed_{message}")
 
-        def __call__(self, message: t.NormalizedValue) -> r[t.NormalizedValue]:
+        def __call__(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             return self.handle(message)
 
     _HANDLER_REGISTRATION: ClassVar[Sequence[TestFlextRegistry.RegistryTestCase]] = [
@@ -261,9 +261,7 @@ class TestFlextRegistry:
     ) -> None:
         registry = u.Tests.create_test_registry()
         if test_case.handler_count == 0:
-            result = registry.register_handler(
-                cast("t.HandlerLike", cast("t.NormalizedValue", None)),
-            )
+            result = registry.register_handler(None)  # type: ignore[arg-type]  # Runtime guard coverage.
         else:
             handler = self.ConcreteTestHandler()
             result = registry.register_handler(handler)
@@ -366,7 +364,7 @@ class TestFlextRegistry:
         registry = u.Tests.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(
-                cast("t.HandlerLike", cast("t.NormalizedValue", None)),
+                None,  # type: ignore[arg-type]  # Runtime guard coverage.
             )
             _ = u.Tests.assert_failure(result)
             u.Tests.assert_failure_with_error(

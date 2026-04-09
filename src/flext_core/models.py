@@ -17,7 +17,6 @@ from flext_core import (
     FlextModelsBase,
     FlextModelsBuilder,
     FlextModelsCollections,
-    FlextModelsSettings,
     FlextModelsContainer,
     FlextModelsContainers,
     FlextModelsContext,
@@ -32,6 +31,7 @@ from flext_core import (
     FlextModelsNamespace,
     FlextModelsRegistry,
     FlextModelsService,
+    FlextModelsSettings,
 )
 
 

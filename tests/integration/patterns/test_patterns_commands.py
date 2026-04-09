@@ -8,12 +8,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
-from typing import cast, override
+from typing import override
 
 from pydantic import Field
 
-from flext_core import h, r
-from tests import c, m, t
+from tests import c, h, m, r, t
 
 
 class TestPatternsCommands:
@@ -93,12 +92,7 @@ class TestPatternsCommands:
             """Fail validation intentionally."""
             return r[bool].fail("This command always fails")
 
-    class CreateUserCommandHandler(
-        h[
-            "TestPatternsCommands.CreateUserCommand",
-            t.MutableContainerMapping,
-        ],
-    ):
+    class CreateUserCommandHandler(h):
         """Test handler for CreateUserCommand."""
 
         created_users: MutableSequence[t.ContainerMapping] = Field(
@@ -130,40 +124,37 @@ class TestPatternsCommands:
         @override
         def validate_message(
             self,
-            data: TestPatternsCommands.CreateUserCommand,
+            data: t.ValueOrModel,
         ) -> r[bool]:
             """Validate command using command's validate_command method."""
-            if type(data).__name__ != "CreateUserCommand":
+            if not isinstance(data, TestPatternsCommands.CreateUserCommand):
                 return r[bool].fail("Cannot handle this command type")
             return data.validate_command()
 
         @override
         def handle(
             self,
-            message: TestPatternsCommands.CreateUserCommand,
-        ) -> r[t.MutableContainerMapping]:
+            message: t.ValueOrModel,
+        ) -> r[t.ValueOrModel]:
             """Handle the create user command."""
+            if not isinstance(message, TestPatternsCommands.CreateUserCommand):
+                return r[t.ValueOrModel].fail("Cannot handle this command type")
             user_data: t.MutableContainerMapping = {
                 "id": f"user_{len(self.created_users) + 1}",
                 "username": message.username,
                 "email": message.email,
             }
             self.created_users.append(dict(user_data))
-            return r[t.MutableContainerMapping].ok(user_data)
+            return r[t.ValueOrModel].ok(user_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.CreateUserCommand,
-        ) -> r[t.MutableContainerMapping]:
+        ) -> r[t.ValueOrModel]:
             """Handle the create user command (alias for handle)."""
             return self.handle(command)
 
-    class UpdateUserCommandHandler(
-        h[
-            "TestPatternsCommands.UpdateUserCommand",
-            t.MutableContainerMapping,
-        ],
-    ):
+    class UpdateUserCommandHandler(h):
         """Test handler for UpdateUserCommand."""
 
         def __init__(self) -> None:
@@ -194,19 +185,21 @@ class TestPatternsCommands:
         @override
         def validate_message(
             self,
-            data: TestPatternsCommands.UpdateUserCommand,
+            data: t.ValueOrModel,
         ) -> r[bool]:
             """Validate command using command's validate_command method."""
-            if type(data).__name__ != "UpdateUserCommand":
+            if not isinstance(data, TestPatternsCommands.UpdateUserCommand):
                 return r[bool].fail("Cannot handle this command type")
             return data.validate_command()
 
         @override
         def handle(
             self,
-            message: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[t.MutableContainerMapping]:
+            message: t.ValueOrModel,
+        ) -> r[t.ValueOrModel]:
             """Handle the update user command."""
+            if not isinstance(message, TestPatternsCommands.UpdateUserCommand):
+                return r[t.ValueOrModel].fail("Cannot handle this command type")
             if message.target_user_id not in self.updated_users:
                 self.updated_users[message.target_user_id] = {}
             user_updates = self.updated_users[message.target_user_id]
@@ -216,21 +209,16 @@ class TestPatternsCommands:
                 "target_user_id": message.target_user_id,
                 "updated_fields": list(message.updates.keys()),
             }
-            return r[t.MutableContainerMapping].ok(result_data)
+            return r[t.ValueOrModel].ok(result_data)
 
         def handle_command(
             self,
             command: TestPatternsCommands.UpdateUserCommand,
-        ) -> r[t.MutableContainerMapping]:
+        ) -> r[t.ValueOrModel]:
             """Handle the update user command (alias for handle)."""
             return self.handle(command)
 
-    class FailingCommandHandler(
-        h[
-            "TestPatternsCommands.FailingCommand",
-            bool,
-        ],
-    ):
+    class FailingCommandHandler(h):
         """Test handler that always fails."""
 
         def get_command_type(self) -> str:
@@ -248,25 +236,27 @@ class TestPatternsCommands:
         @override
         def validate_message(
             self,
-            data: TestPatternsCommands.FailingCommand,
+            data: t.ValueOrModel,
         ) -> r[bool]:
             """Validate command using command's validate_command method."""
-            if type(data).__name__ != "FailingCommand":
+            if not isinstance(data, TestPatternsCommands.FailingCommand):
                 return r[bool].fail("Cannot handle this command type")
             return data.validate_command()
 
         @override
-        def handle(self, message: TestPatternsCommands.FailingCommand) -> r[bool]:
+        def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             """Fail to handle command intentionally."""
+            if not isinstance(message, TestPatternsCommands.FailingCommand):
+                return r[t.ValueOrModel].fail("Cannot handle this command type")
             error_msg = (
                 f"Handler processing failed for command: {message.__class__.__name__}"
             )
-            return r[bool].fail(error_msg)
+            return r[t.ValueOrModel].fail(error_msg)
 
         def handle_command(
             self,
             command: TestPatternsCommands.FailingCommand,
-        ) -> r[bool]:
+        ) -> r[t.ValueOrModel]:
             """Fail to handle command intentionally (alias for handle)."""
             return self.handle(command)
 
@@ -410,30 +400,21 @@ class TestPatternsCommands:
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
-        handler: h[
-            TestPatternsCommands.CreateUserCommand,
-            t.MutableContainerMapping,
-        ] = self.CreateUserCommandHandler()
+        handler = self.CreateUserCommandHandler()
         if handler.can_handle(self.UpdateUserCommand):
             msg = f"Expected False, got {handler.can_handle(self.UpdateUserCommand)}"
             raise AssertionError(msg)
 
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command t.NormalizedValue."""
-        handler: h[
-            TestPatternsCommands.CreateUserCommand,
-            t.MutableContainerMapping,
-        ] = self.CreateUserCommandHandler()
+        handler = self.CreateUserCommandHandler()
         if handler.can_handle(str):
             msg = f"Expected False, got {handler.can_handle(str)}"
             raise AssertionError(msg)
 
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""
-        handler: h[
-            TestPatternsCommands.CreateUserCommand,
-            t.MutableContainerMapping,
-        ] = self.CreateUserCommandHandler()
+        handler = self.CreateUserCommandHandler()
         command = self._create_user_command(
             username="john",
             email="john@example.com",
@@ -443,12 +424,16 @@ class TestPatternsCommands:
             msg = f"Expected True, got {result.is_success}"
             raise AssertionError(msg)
         assert result.value is not None
-        if (result.value or {})["username"] != "john":
-            msg = f"Expected {'john'}, got {(result.value or {})['username']}"
+        value = result.value
+        if not isinstance(value, dict):
+            msg = f"Expected dict, got {type(value).__name__}"
             raise AssertionError(msg)
-        assert (result.value or {})["email"] == "john@example.com"
-        if "id" not in result.value:
-            msg = f"Expected {'id'} in {result.value}"
+        if value.get("username") != "john":
+            msg = f"Expected {'john'}, got {value.get('username')}"
+            raise AssertionError(msg)
+        assert value.get("email") == "john@example.com"
+        if "id" not in value:
+            msg = f"Expected {'id'} in {value}"
             raise AssertionError(msg)
 
     def test_process_command_success(self) -> None:
@@ -468,10 +453,7 @@ class TestPatternsCommands:
 
     def test_process_command_validation_failure(self) -> None:
         """Test processing with command validation failure."""
-        handler: h[
-            TestPatternsCommands.CreateUserCommand,
-            t.MutableContainerMapping,
-        ] = self.CreateUserCommandHandler()
+        handler = self.CreateUserCommandHandler()
         command = self._create_user_command(username="", email="invalid")
         result = handler.execute(command)
         if not result.is_failure:
@@ -490,7 +472,7 @@ class TestPatternsCommands:
             updates={"name": "test"},
         )
         result = self.CreateUserCommandHandler().validate_message(
-            cast("TestPatternsCommands.CreateUserCommand", wrong_command),
+            wrong_command,
         )
         if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
