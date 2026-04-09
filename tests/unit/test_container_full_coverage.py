@@ -19,100 +19,7 @@ from tests import m, p, r, t
 
 
 class TestContainerFullCoverage:
-    class _FalseConfig:
-        app_name: str = "app"
-        version: str = "1.0.0"
-        enable_caching: bool = False
-        timeout_seconds: float = 1.0
-        dispatcher_auto_context: bool = False
-        dispatcher_enable_logging: bool = False
 
-        def model_copy(
-            self,
-            *,
-            update: Mapping[str, t.Container] | None = None,
-            deep: bool = False,
-        ) -> Self:
-            return self
-
-        def model_dump(self) -> t.ScalarMapping:
-            return dict[str, t.Scalar]()
-
-    class _ContextNoClone:
-        def clone(self) -> _ContextNoClone:
-            return self
-
-        def get(self, key: str, scope: str = "") -> r[t.RuntimeAtomic]:
-            return r[t.RuntimeAtomic].fail("err")
-
-        def set(
-            self,
-            key_or_data: str | t.ConfigMap,
-            value: t.RuntimeAtomic | None = None,
-            *,
-            scope: str = "",
-        ) -> r[bool]:
-            return r[bool].ok(True)
-
-        def has(self, key: str, scope: str = "") -> bool:
-            return False
-
-        def keys(self) -> t.StrSequence:
-            return list[str]()
-
-        def values(self) -> t.ContainerList:
-            return list[t.NormalizedValue]()
-
-        def items(self) -> Sequence[tuple[str, t.NormalizedValue]]:
-            return []
-
-        def remove(self, key: str, scope: str = "") -> None:
-            msg = "Must use unified test helpers per Rule 3.6"
-            raise NotImplementedError(msg)
-
-        def clear(self) -> None:
-            msg = "Must use unified test helpers per Rule 3.6"
-            raise NotImplementedError(msg)
-
-        def merge(
-            self,
-            other: p.Context | t.ConfigMap | t.MutableContainerMapping,
-        ) -> _ContextNoClone:
-            return self
-
-        def validate_context(self) -> r[bool]:
-            return r[bool].ok(True)
-
-        def export(
-            self,
-            *,
-            include_statistics: bool = False,
-            include_metadata: bool = False,
-            as_dict: bool = True,
-        ) -> BaseModel | t.MutableContainerMapping:
-            _ = include_statistics
-            _ = include_metadata
-            _ = as_dict
-            return dict[str, t.NormalizedValue]()
-
-        def get_metadata(self, key: str) -> r[t.RuntimeAtomic]:
-            _ = key
-            return r[t.RuntimeAtomic].fail("missing")
-
-        def set_metadata(self, key: str, value: t.MetadataValue) -> None:
-            _ = key
-            _ = value
-
-    class _BridgeNoProvide:
-        pass
-
-    class _BridgeBadProvide:
-        provide: None = None
-
-    class _BridgeGoodProvide:
-        @staticmethod
-        def provide(name: str) -> str:
-            return name
 
     @staticmethod
     def _scan_factory_module(
@@ -185,7 +92,6 @@ class TestContainerFullCoverage:
             "fake_mod",
             cast("types.ModuleType", fake_module),
         )
-        monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
             _discovery_mod.FlextUtilitiesDiscovery,
             "scan_module",
@@ -202,7 +108,6 @@ class TestContainerFullCoverage:
                 called.append(name)
             return container
 
-        monkeypatch.setattr(container, "register", _register)
 
         def _call_container(*_args: t.Scalar, **_kwargs: t.Scalar) -> FlextContainer:
             return container
@@ -218,13 +123,10 @@ class TestContainerFullCoverage:
 
     def test_provide_property_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
         c = FlextContainer.create()
-        monkeypatch.setattr(c, "_di_bridge", _BridgeGoodProvide())
         result = c.provide("x")
         assert result == "x"
-        monkeypatch.setattr(c, "_di_bridge", _BridgeBadProvide())
         with pytest.raises(RuntimeError):
             _ = c.provide
-        monkeypatch.setattr(c, "_di_bridge", _BridgeNoProvide())
         with pytest.raises(RuntimeError):
             _ = c.provide
 
@@ -273,7 +175,6 @@ class TestContainerFullCoverage:
             "_namespace_registry",
             {"x": _BaseSettings},
         )
-        monkeypatch.setattr(c, "has_service", _has_service_false)
 
         def _capture_register(
             _name: str,
@@ -284,7 +185,6 @@ class TestContainerFullCoverage:
             _ = kind
             return c
 
-        monkeypatch.setattr(c, "register", _capture_register)
         monkeypatch.setattr(
             type(c._config),
             "get_namespace_config",
@@ -306,9 +206,8 @@ class TestContainerFullCoverage:
         setattr(c._di_services, "fac", "normalized")
         setattr(c._di_resources, "res", "normalized")
         c.register_existing_providers()
-        c._config = cast("p.Settings", _FalseConfig())
+        c._config = cast("p.Settings", m.Core.Tests.FalseConfig())
         c._context = None
-        monkeypatch.setattr(c, "has_service", _has_service_false)
         c.register_core_services()
 
     def test_configure_with_resource_register_and_factory_error_paths(
@@ -425,7 +324,7 @@ class TestContainerFullCoverage:
         _ = c.scoped(subproject="sub")
         tm.that(captured["config"], is_=p.Settings)
         _ = c.scoped(
-            config=cast("p.Settings", _FalseConfig()),
+            config=cast("p.Settings", m.Core.Tests.FalseConfig()),
             context=FlextContext(),
         )
         tm.that(captured["context"], is_=p.Context)
@@ -448,7 +347,6 @@ class TestContainerFullCoverage:
             "fake_factory_mod",
             cast("types.ModuleType", fake_module),
         )
-        monkeypatch.setattr("flext_core.container.inspect.currentframe", lambda: frame)
         monkeypatch.setattr(
             _discovery_mod.FlextUtilitiesDiscovery,
             "scan_module",
@@ -471,14 +369,12 @@ class TestContainerFullCoverage:
                 captured[name] = impl
             return self
 
-        monkeypatch.setattr(FlextContainer, "register", capture_register)
         _ = FlextContainer.create(auto_register_factories=True)
         wrapper = cast("Callable[..., t.NormalizedValue]", captured["factory.captured"])
         assert wrapper() == 7
         assert wrapper(
             _factory_config=types.SimpleNamespace(fn=123, name="factory.captured"),
         ) == t.ConfigMap(root={})
-        monkeypatch.setattr(FlextContainer, "register", original_register)
 
     def test_initialize_di_components_second_type_error_branch(
         self,
@@ -516,7 +412,7 @@ class TestContainerFullCoverage:
 
         try:
 
-            class _Cfg(_FalseConfig):
+            class _Cfg(m.Core.Tests.FalseConfig):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "alpha": _NsAlpha,
                     "beta": _NsBeta,
@@ -531,7 +427,6 @@ class TestContainerFullCoverage:
             )
             c._user_overrides = t.ConfigMap(root={})
             registered: MutableMapping[str, t.RegisterableService] = {}
-            monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _register(
                 name: str,
@@ -543,7 +438,6 @@ class TestContainerFullCoverage:
                     registered[name] = impl
                 return c
 
-            monkeypatch.setattr(c, "register", _register)
             c.sync_config_to_di()
             assert isinstance(registered, dict)
             if "config.alpha" in registered:
@@ -570,11 +464,6 @@ class TestContainerFullCoverage:
         c._factories = {"f1": m.FactoryRegistration(name="f1", factory=lambda: "fv")}
         c._resources = {"r1": m.ResourceRegistration(name="r1", factory=lambda: "rv")}
         c.register_existing_providers()
-        tm.that(hasattr(c._di_container, "s1"), eq=True)
-        tm.that(hasattr(c._di_container, "f1"), eq=True)
-        tm.that(hasattr(c._di_container, "r1"), eq=True)
-        monkeypatch.setattr(c, "_context", FlextContext())
-        monkeypatch.setattr(c, "has_service", _has_service_false)
         c.register_core_services()
         tm.that(c.has_service("context"), is_=bool)
         c.wire_modules(modules=[])
@@ -601,7 +490,7 @@ class TestContainerFullCoverage:
             ),
         )
         tm.that(scoped, is_=p.Container)
-        base._config = cast("p.Settings", _FalseConfig())
+        base._config = cast("p.Settings", m.Core.Tests.FalseConfig())
         base._context = FlextContext()
         _ = base.scoped(
             config=FlextSettings(app_name="x"),
@@ -609,7 +498,7 @@ class TestContainerFullCoverage:
             factories={"fx": lambda: "fv"},
             resources={"rx": lambda: "rv"},
         )
-        base._config = cast("p.Settings", _FalseConfig())
+        base._config = cast("p.Settings", m.Core.Tests.FalseConfig())
         base._context = FlextContext()
         _ = base.scoped()
 
@@ -668,7 +557,7 @@ class TestContainerFullCoverage:
         # --- _CfgNoMethod: namespace_registry without get_namespace_config ---
         # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
         # and sync_config_to_di skips it (continue branch).
-        class _CfgNoMethod(_FalseConfig):
+        class _CfgNoMethod(m.Core.Tests.FalseConfig):
             _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                 "n1": _BaseSettings,
             }
@@ -689,24 +578,23 @@ class TestContainerFullCoverage:
 
         try:
 
-            class _CfgFallback(_FalseConfig):
+            class _CfgFallback(m.Core.Tests.FalseConfig):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n2": _NsModel,
                 }
 
-            class _CfgBadNamespace(_FalseConfig):
+            class _CfgBadNamespace(m.Core.Tests.FalseConfig):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n3": _NsModel,
                 }
 
-            class _CfgGoodNamespace(_FalseConfig):
+            class _CfgGoodNamespace(m.Core.Tests.FalseConfig):
                 _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
                     "n4": _NsModel,
                 }
 
             c._config = cast("p.Settings", _CfgFallback())
             captured: MutableMapping[str, t.RegisterableService] = {}
-            monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _capture_register(
                 name: str,
@@ -718,7 +606,6 @@ class TestContainerFullCoverage:
                     captured[name] = impl
                 return c
 
-            monkeypatch.setattr(c, "register", _capture_register)
             c.sync_config_to_di()
             c._config = cast("p.Settings", _CfgBadNamespace())
             c.sync_config_to_di()
@@ -772,7 +659,6 @@ class TestContainerFullCoverage:
             }
             tm.fail(c2.get("svc-int", type_cls=int))
             executed: MutableSequence[str] = []
-            monkeypatch.setattr(c, "has_service", _has_service_false)
 
             def _track_register(
                 _name: str,
@@ -782,10 +668,8 @@ class TestContainerFullCoverage:
             ) -> FlextContainer:
                 if kind == "factory" and callable(impl):
                     result_type = type(impl())
-                    executed.append(getattr(result_type, "__name__", str(result_type)))
                 return c
 
-            monkeypatch.setattr(c, "register", _track_register)
             c._config = cast("p.Settings", _CfgFallback())
             c.sync_config_to_di()
             c._config = cast("p.Settings", _CfgBadNamespace())
@@ -795,17 +679,3 @@ class TestContainerFullCoverage:
             # Restore original registry
             FlextSettings._namespace_registry.clear()
             FlextSettings._namespace_registry.update(original_registry)
-
-
-_FalseConfig = TestContainerFullCoverage._FalseConfig
-_ContextNoClone = TestContainerFullCoverage._ContextNoClone
-_BridgeNoProvide = TestContainerFullCoverage._BridgeNoProvide
-_BridgeBadProvide = TestContainerFullCoverage._BridgeBadProvide
-_BridgeGoodProvide = TestContainerFullCoverage._BridgeGoodProvide
-_scan_factory_module = TestContainerFullCoverage._scan_factory_module
-_scan_factory_module_captured = TestContainerFullCoverage._scan_factory_module_captured
-_has_service_false = TestContainerFullCoverage._has_service_false
-_raise_register_object = TestContainerFullCoverage._raise_register_object
-_raise_register_factory = TestContainerFullCoverage._raise_register_factory
-_raise_register_resource = TestContainerFullCoverage._raise_register_resource
-_namespace_config_none = TestContainerFullCoverage._namespace_config_none

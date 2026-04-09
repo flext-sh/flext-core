@@ -76,9 +76,7 @@ class TestModelsBaseFullCoverage:
     def test_timestamped_model_and_alias_and_canonical_symbols(self) -> None:
         model = m.TimestampedModel()
         assert model.created_at.tzinfo == UTC
-        assert hasattr(m, "TimestampedModel")
         ok_result = r[str].ok("ok")
         assert ok_result.value == "ok"
         version = c.DEFAULT_RETRY_DELAY_SECONDS
         assert version >= 1
-        assert hasattr(u, "transform")

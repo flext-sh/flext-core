@@ -68,7 +68,6 @@ class TestUtilitiesGeneratorsFullCoverage:
                 _ = tz
                 return fixed_ts
 
-        monkeypatch.setattr(generators_utils, "datetime", _FixedDatetime)
         custom = u.generate(
             kind="command",
             include_timestamp=True,

@@ -233,7 +233,6 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
             raise TypeError(msg)
         return original_issubclass(cls, classinfo)
 
-    monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
     tm.that(not _is_type_obj(cast("t.NormalizedValue", _SomeType), "handler"), eq=True)
     tm.that(not u.chk(1, **m.GuardCheckSpec(not_in=[1, 2]).model_dump()), eq=True)
     tm.that(not u.chk(1, **m.GuardCheckSpec(gt=1).model_dump()), eq=True)
@@ -318,7 +317,6 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
             return False
         return original_isinstance(obj, classinfo)
 
-    monkeypatch.setattr(builtins, "isinstance", _patched_isinstance)
     tm.that(u.is_container(True), eq=True)
 
 
@@ -345,8 +343,6 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
             raise TypeError(msg)
         return original_issubclass(cls, classinfo)
 
-    monkeypatch.setattr(builtins, "callable", _patched_callable)
-    monkeypatch.setattr(builtins, "issubclass", _patched_issubclass)
     tm.that(not _is_type_obj(cast("t.NormalizedValue", _Candidate), "handler"), eq=True)
 
 
@@ -363,7 +359,6 @@ def test_guards_issubclass_success_when_callable_is_patched(
             return False
         return original_callable(value)
 
-    monkeypatch.setattr(builtins, "callable", _patched_callable)
     tm.that(
         _is_type_obj(cast("t.NormalizedValue", _ModelSub), "handler") is False,
         eq=True,

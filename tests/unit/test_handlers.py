@@ -147,7 +147,6 @@ class TestFlextHandlers:
         )
         handler = self.ConcreteTestHandler(config=config)
         assert handler._execution_context is not None
-        assert hasattr(handler._execution_context, "handler_name")
 
     def test_handlers_different_types(self) -> None:
         class IntHandler(h[t.ValueOrModel, t.ValueOrModel]):

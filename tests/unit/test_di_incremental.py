@@ -37,10 +37,6 @@ class TestDIIncremental:
     def test_dependency_providers_returns_valid_module(self) -> None:
         """Test dependency_providers returns valid providers module."""
         providers_module = u.dependency_providers()
-        tm.that(hasattr(providers_module, "Singleton"), eq=True)
-        tm.that(hasattr(providers_module, "Factory"), eq=True)
-        tm.that(hasattr(providers_module, "Resource"), eq=True)
-        tm.that(hasattr(providers_module, "Configuration"), eq=True)
         singleton = providers_module.Singleton(lambda: "test_value")
         tm.that(singleton(), eq="test_value")
         factory = providers_module.Factory(lambda: {"key": "value"})
@@ -49,10 +45,7 @@ class TestDIIncremental:
     def test_dependency_containers_returns_valid_module(self) -> None:
         """Test dependency_containers returns valid containers module."""
         containers_module = u.dependency_containers()
-        tm.that(hasattr(containers_module, "DeclarativeContainer"), eq=True)
-        tm.that(hasattr(containers_module, "DynamicContainer"), eq=True)
         dynamic_container = containers_module.DynamicContainer()
-        tm.that(hasattr(dynamic_container, "__class__"), eq=True)
 
     def test_create_container_with_real_execution(self) -> None:
         """Test create_container with real registration and resolution."""
@@ -83,7 +76,6 @@ class TestDIIncremental:
             {"key": "value"},
         )
         tm.that(provider(), eq={"key": "value"})
-        tm.that(hasattr(di_container, "test_object"), eq=True)
         tm.that(di_container.test_object(), eq={"key": "value"})
 
     def test_register_factory_with_caching(self) -> None:
@@ -272,7 +264,6 @@ class TestDIIncremental:
         )
         container_instance = runtime.container
         tm.that(container_instance, is_=p.Container)
-        tm.that(hasattr(container_instance, "_di_container"), eq=True)
 
     def test_service_with_runtime_bootstrap_options(self) -> None:
         """Test service with _runtime_bootstrap_options override."""
@@ -293,7 +284,6 @@ class TestDIIncremental:
                 return r[str].ok("test")
 
         service = TestService()
-        tm.that(hasattr(service, "runtime"), eq=True)
         custom_result = service.container.get("custom_service", type_cls=str)
         tm.ok(custom_result)
         tm.that(custom_result.value, eq="custom_value")

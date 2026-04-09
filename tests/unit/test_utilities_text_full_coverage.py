@@ -21,7 +21,6 @@ class TestUtilitiesTextFullCoverage(u.Core.Tests.Contract):
         """Logger property returns a structlog logger instance."""
         logger = FlextLogger().logger
         assert logger is not None
-        assert hasattr(logger, "info")
 
     @pytest.mark.parametrize(
         ("value", "message"),

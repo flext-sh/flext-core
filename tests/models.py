@@ -344,6 +344,7 @@ class TestsFlextCoreModels(m):
                 """Object without __dict__, using __slots__."""
 
                 __slots__ = ("value",)
+                value: int
 
                 def __init__(self, value: int) -> None:
                     """Initialize t.NormalizedValue without __dict__."""
@@ -352,7 +353,7 @@ class TestsFlextCoreModels(m):
                 @override
                 def __repr__(self) -> str:
                     """Return string representation."""
-                    return f"NoDict({getattr(self, 'value', None)})"
+                    return f"NoDict(value={self.value})"
 
             class MutableObj:
                 """Mutable t.NormalizedValue for immutability testing."""
@@ -923,6 +924,25 @@ class TestsFlextCoreModels(m):
                     ),
                 ] = None
 
+
+            class FalseConfig:
+                app_name: str = "app"
+                version: str = "1.0.0"
+                enable_caching: bool = False
+                timeout_seconds: float = 1.0
+                dispatcher_auto_context: bool = False
+                dispatcher_enable_logging: bool = False
+
+                def model_copy(
+                    self,
+                    *,
+                    update: Mapping[str, t.Container] | None = None,
+                    deep: bool = False,
+                ) -> Self:
+                    return self
+
+                def model_dump(self) -> t.ScalarMapping:
+                    return dict[str, t.Scalar]()
 
 m = TestsFlextCoreModels
 

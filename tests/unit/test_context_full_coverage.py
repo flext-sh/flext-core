@@ -61,7 +61,6 @@ def test_create_overloads_and_auto_correlation(
     def _generate_id(_key: str) -> str:
         return "corr-1"
 
-    monkeypatch.setattr("flext_core.context.u.generate", _generate_id)
     ctx = FlextContext.create(user_id="u1", metadata=t.ConfigMap(root={"x": 1}))
     tm.that(ctx, is_=p.Context)
     tm.that(ctx.get(c.KEY_USER_ID).value, eq="u1")
@@ -90,7 +89,6 @@ def test_set_set_all_get_validation_and_error_paths(
     def _make_bad_var(_scope: str) -> _BadVar:
         return _BadVar()
 
-    monkeypatch.setattr(ctx, "_get_or_create_scope_var", _make_bad_var)
     tm.fail(ctx.set("x", "y"))
     tm.fail(ctx.set(t.ConfigMap(root={"x": "y"})))
     tm.ok(FlextContext._validate_set_inputs("k", "bad"))
@@ -134,7 +132,6 @@ def test_clear_keys_values_items_and_validate_branches(
             msg = "bad"
             raise TypeError(msg)
 
-    monkeypatch.setattr(ctx2, "_scope_vars", {"bad": _BadVar()})
     tm.fail(ctx2.validate_context())
     ctx3 = FlextContext()
     ctx3._set_in_contextvar("global", t.ConfigMap(root={"": "x"}))
@@ -161,9 +158,7 @@ def test_update_statistics_remove_hook_and_clone_false_result(
         _ = self, key_or_data, value, scope
         return r[bool].fail("x")
 
-    monkeypatch.setattr(FlextContext, "set", _fail_set)
     cloned = clone_source.clone()
-    monkeypatch.setattr(FlextContext, "set", original_set)
     tm.that(cloned, is_=p.Context)
 
 

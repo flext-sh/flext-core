@@ -699,6 +699,5 @@ class TestAdvancedPatterns:
     def test_test_pattern_marking(self) -> None:
         """Test test pattern marking functionality."""
         test_func = self.test_mock_scenario_pattern
-        assert hasattr(test_func, "_test_pattern")
         pattern_value = getattr(test_func, "_test_pattern", None)
         assert pattern_value == "mock_scenario"

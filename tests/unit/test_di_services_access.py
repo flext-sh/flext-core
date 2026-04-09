@@ -83,16 +83,12 @@ class TestDiServicesAccess:
         """Test accessing logger via u.structlog()."""
         structlog_module = u.structlog()
         assert structlog_module is not None
-        assert hasattr(structlog_module, "get_logger")
-        assert hasattr(structlog_module, "configure")
 
     def test_logger_factory_method(self) -> None:
         """Test FlextLogger.create_module_logger."""
         logger = FlextLogger.create_module_logger("test_service")
         assert logger is not None
         assert isinstance(logger, p.Logger)
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
 
     def test_logger_registration_in_container(self) -> None:
         """Test registering FlextLogger in container for DI."""
@@ -185,9 +181,6 @@ class TestDiServicesAccess:
                 _ = u.Core.Tests.assert_success(logger_result)
                 logger = logger_result.value
                 assert logger is not None, "Logger must be accessible via DI"
-                assert hasattr(logger, "info") and callable(getattr(logger, "info")), (
-                    "Logger must be accessible via DI"
-                )
                 return r[str].ok(f"app: {app_name}")
 
         service = ServiceWithDI()

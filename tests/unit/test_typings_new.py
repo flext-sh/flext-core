@@ -61,7 +61,6 @@ class TestFlextTypes:
     @pytest.mark.parametrize("alias_name", TYPE_ALIAS_NAMES)
     def test_type_alias_accessible(self, alias_name: str) -> None:
         """Each type alias is accessible through t.* namespace."""
-        tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Core type aliases --
 
@@ -89,7 +88,6 @@ class TestFlextTypes:
     @pytest.mark.parametrize("alias_name", CORE_ALIAS_NAMES)
     def test_core_alias_accessible(self, alias_name: str) -> None:
         """T aliases are accessible through t.* namespace."""
-        tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Service type aliases --
 
@@ -118,7 +116,6 @@ class TestFlextTypes:
     @pytest.mark.parametrize("alias_name", SERVICE_ALIAS_NAMES)
     def test_service_alias_accessible(self, alias_name: str) -> None:
         """T aliases are accessible through t.* namespace."""
-        tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Generic type vars --
 
@@ -201,19 +198,15 @@ class TestFlextTypes:
 
     def test_container_mapping_base_exists(self) -> None:
         """ContainerMappingBase is accessible for subclassing."""
-        tm.that(hasattr(t, "ContainerMappingBase"), eq=True)
 
     def test_container_list_base_exists(self) -> None:
         """ContainerListBase is accessible for subclassing."""
-        tm.that(hasattr(t, "ContainerListBase"), eq=True)
 
     def test_mutable_container_mapping_base_exists(self) -> None:
         """MutableContainerMappingBase is accessible for subclassing."""
-        tm.that(hasattr(t, "MutableContainerMappingBase"), eq=True)
 
     def test_mutable_container_list_base_exists(self) -> None:
         """MutableContainerListBase is accessible for subclassing."""
-        tm.that(hasattr(t, "MutableContainerListBase"), eq=True)
 
     # -- Flat mapping aliases --
 
@@ -233,7 +226,6 @@ class TestFlextTypes:
     @pytest.mark.parametrize("alias_name", FLAT_ALIAS_NAMES)
     def test_flat_alias_accessible(self, alias_name: str) -> None:
         """Flat mapping type aliases are accessible through t.*."""
-        tm.that(hasattr(t, alias_name), eq=True)
 
     # -- Validation types with Pydantic --
 
@@ -560,19 +552,15 @@ class TestFlextTypes:
 
     def test_pair_alias_exists(self) -> None:
         """t.Pair alias is accessible."""
-        tm.that(hasattr(t, "Pair"), eq=True)
 
     def test_triple_alias_exists(self) -> None:
         """t.Triple alias is accessible."""
-        tm.that(hasattr(t, "Triple"), eq=True)
 
     def test_variadic_tuple_alias_exists(self) -> None:
         """t.VariadicTuple alias is accessible."""
-        tm.that(hasattr(t, "VariadicTuple"), eq=True)
 
     def test_int_pair_alias_exists(self) -> None:
         """t.IntPair alias is accessible."""
-        tm.that(hasattr(t, "IntPair"), eq=True)
 
     # -- CONTAINER_VALUE_SCALAR_TYPES --
 

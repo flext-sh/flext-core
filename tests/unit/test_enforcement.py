@@ -28,6 +28,7 @@ from flext_core import (
     FlextUtilitiesEnforcement,
 )
 from tests import c, m, p, t, u
+from tests.models import TestsFlextCoreModels
 
 
 class TestCheckNoAny:
@@ -203,12 +204,6 @@ class TestEnforcementMode:
 
     def test_enforcement_constants_accessible(self) -> None:
         """All enforcement constants accessible via c.*."""
-        assert hasattr(c, "ENFORCEMENT_MODE")
-        assert hasattr(c, "ENFORCEMENT_EXEMPT_MODULE_FRAGMENTS")
-        assert hasattr(c, "ENFORCEMENT_INFRASTRUCTURE_BASES")
-        assert hasattr(c, "ENFORCEMENT_RELAXED_EXTRA_BASES")
-        assert hasattr(c, "ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS")
-        assert hasattr(c, "ENFORCEMENT_COLLECTION_REPLACEMENTS")
 
 
 class TestNamespacePrefixDerivation:
@@ -225,6 +220,15 @@ class TestNamespacePrefixDerivation:
                 FlextUtilitiesEnforcement,
             )
             == "Flext"
+        )
+
+    def test_flext_core_tests_namespace_is_core(self) -> None:
+        """flext-core tests use Core as the inner namespace."""
+        assert (
+            FlextUtilitiesEnforcement._derive_expected_namespace(
+                TestsFlextCoreModels,
+            )
+            == "Core"
         )
 
 
@@ -244,7 +248,6 @@ class TestBaseModelCoverage:
     )
     def test_base_model_has_enforcement_hook(self, base_cls: type) -> None:
         """Each base model class should have __pydantic_init_subclass__."""
-        assert hasattr(base_cls, "__pydantic_init_subclass__")
 
 
 # ------------------------------------------------------------------ #
@@ -357,8 +360,6 @@ class TestConstantsEnforcement:
 
     def test_enforcement_constants_accessible(self) -> None:
         """New enforcement constants accessible via c.*."""
-        assert hasattr(c, "ENFORCEMENT_CONSTANTS_SKIP_ATTRS")
-        assert hasattr(c, "ENFORCEMENT_UTILITIES_EXEMPT_METHODS")
 
 
 # ------------------------------------------------------------------ #

@@ -123,7 +123,6 @@ class Teste:
     def test_normalize_metadata_fallback(self) -> None:
         """Test _normalize_metadata fallback path - tests line 219."""
         result = e.BaseError._normalize_metadata(12345, {})
-        tm.that(hasattr(result, "attributes"), eq=True)
         tm.that(len(result.attributes), gt=0)
 
     def test_normalize_metadata_with_merged_kwargs(self) -> None:
@@ -135,7 +134,6 @@ class Teste:
             merged_kwargs,
         )
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
-        tm.that(hasattr(result, "attributes"), eq=True)
         tm.that(result.attributes["key1"], eq="value1")
         tm.that(result.attributes["key2"], eq="value2")
 

@@ -116,7 +116,6 @@ class TestFlextModelsContainer:
                 metadata_value,
             )
             tm.that(registration.metadata, none=False)
-            tm.that(hasattr(registration.metadata, "attributes"), eq=True)
         else:
             with pytest.raises(self._EXPECTED_VALIDATION_ERRORS):
                 self._service_reg_with_metadata(
@@ -133,7 +132,6 @@ class TestFlextModelsContainer:
         tm.that(registration.registration_time, none=False)
         registration.metadata = None
         tm.that(registration.metadata, none=False)
-        tm.that(hasattr(registration.metadata, "attributes"), eq=True)
 
     def test_service_registration_with_all_fields(self) -> None:
         """Test ServiceRegistration with all fields populated."""
@@ -172,7 +170,6 @@ class TestFlextModelsContainer:
                 metadata_value,
             )
             tm.that(registration.metadata, none=False)
-            tm.that(hasattr(registration.metadata, "attributes"), eq=True)
         else:
             with pytest.raises(self._EXPECTED_VALIDATION_ERRORS):
                 self._factory_reg_with_metadata(
@@ -194,7 +191,6 @@ class TestFlextModelsContainer:
         tm.that(registration.registration_time, none=False)
         registration.metadata = None
         tm.that(registration.metadata, none=False)
-        tm.that(hasattr(registration.metadata, "attributes"), eq=True)
 
     def test_factory_registration_with_all_fields(self) -> None:
         """Test FactoryRegistration with all fields populated."""

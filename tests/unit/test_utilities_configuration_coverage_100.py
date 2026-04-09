@@ -1,133 +1,126 @@
 from __future__ import annotations
 
-from enum import StrEnum, unique
-from typing import Annotated, ClassVar
+import logging
+from pathlib import Path
 
 import pytest
-from pydantic import BaseModel, Field
 
-from flext_tests import tm
-from tests import m, p, t
+from flext_core import FlextContainer
+from tests import c, u
 
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 
 class TestFlextUtilitiesConfiguration:
-    class Assertions:
-        """Helper for value assertions."""
+    def test_get_log_level_from_config_uses_default_constant(self) -> None:
+        expected = getattr(logging, c.DEFAULT_LEVEL.upper(), logging.INFO)
+        assert u.get_log_level_from_config() == expected
 
-        @staticmethod
-        def that(
-            value: t.Core.Tests.TestobjectSerializable,
-            *,
-            eq: t.Core.Tests.TestobjectSerializable = None,
-            none: bool | None = None,
-            contains: str | None = None,
-        ) -> None:
-            if eq is not None:
-                tm.that(value, eq=eq)
-            if none is True:
-                tm.that(value, eq=None)
-            if none is False:
-                tm.that(value, none=False)
-            if contains is not None:
-                assert isinstance(value, str)
-                tm.that(value, has=contains)
+    def test_resolve_env_file_prefers_existing_env_override(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        env_file = tmp_path / "custom.env"
+        env_file.write_text("APP_NAME=test\n", encoding="utf-8")
+        monkeypatch.setenv(c.ENV_FILE_ENV_VAR, str(env_file))
+        assert u.resolve_env_file() == str(env_file.resolve())
 
-    class ResultAssertions:
-        """Helper for result assertions."""
+    def test_resolve_env_file_returns_override_when_target_missing(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        missing = tmp_path / "missing.env"
+        monkeypatch.setenv(c.ENV_FILE_ENV_VAR, str(missing))
+        assert u.resolve_env_file() == str(missing)
 
-        @staticmethod
-        def assert_success_with_value[T: t.NormalizedValue](
-            result: p.Result[T],
-            expected: T,
-        ) -> None:
-            tm.that(getattr(result, "is_success"), eq=True)
-            tm.that(getattr(result, "value"), eq=expected)
+    def test_resolve_env_file_uses_default_file_in_cwd(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        default_env = tmp_path / c.ENV_FILE_DEFAULT
+        default_env.write_text("APP_NAME=test\n", encoding="utf-8")
+        monkeypatch.delenv(c.ENV_FILE_ENV_VAR, raising=False)
+        monkeypatch.chdir(tmp_path)
+        assert u.resolve_env_file() == str(default_env.resolve())
 
-        @staticmethod
-        def assert_success[T](result: p.Result[T]) -> None:
-            tm.that(getattr(result, "is_success"), eq=True)
+    def test_resolve_env_file_returns_default_name_when_missing(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        monkeypatch.delenv(c.ENV_FILE_ENV_VAR, raising=False)
+        monkeypatch.chdir(tmp_path)
+        assert u.resolve_env_file() == c.ENV_FILE_DEFAULT
 
-        @staticmethod
-        def assert_failure[T](result: p.Result[T]) -> None:
-            tm.that(getattr(result, "is_failure"), eq=True)
+    def test_register_factory_registers_real_container_service(self) -> None:
+        container = FlextContainer()
+        register_result = u.register_factory(
+            container,
+            "unit_test_factory",
+            lambda: "factory-value",
+        )
+        assert register_result.is_success
+        resolved = container.get("unit_test_factory")
+        assert resolved.is_success
+        assert resolved.value == "factory-value"
 
-    class OptionsModelForTest(m.Value):
-        """Test options model with format, indent, and sort_keys."""
+    def test_resolve_effective_log_level_prioritizes_trace(self) -> None:
+        assert (
+            u.resolve_effective_log_level(
+                trace=True,
+                debug=False,
+                log_level=c.LogLevel.WARNING,
+            )
+            == c.LogLevel.DEBUG
+        )
 
-        format: str = "json"
-        indent: int = 2
-        sort_keys: bool = False
+    def test_resolve_effective_log_level_promotes_debug_to_info(self) -> None:
+        assert (
+            u.resolve_effective_log_level(
+                trace=False,
+                debug=True,
+                log_level=c.LogLevel.ERROR,
+            )
+            == c.LogLevel.INFO
+        )
 
-    class StrictOptionsForTest(m.Value):
-        """Test options with strict value range."""
+    def test_resolve_effective_log_level_keeps_explicit_level(self) -> None:
+        assert (
+            u.resolve_effective_log_level(
+                trace=False,
+                debug=False,
+                log_level=c.LogLevel.ERROR,
+            )
+            == c.LogLevel.ERROR
+        )
 
-        value: Annotated[int, Field(ge=0, le=100)]
+    @pytest.mark.parametrize(
+        ("url"),
+        [
+            pytest.param("postgresql://localhost/db", id="postgresql"),
+            pytest.param("mysql://localhost/db", id="mysql"),
+            pytest.param("sqlite:///tmp/test.db", id="sqlite"),
+            pytest.param("", id="empty"),
+        ],
+    )
+    def test_validate_database_url_scheme_accepts_supported_urls(
+        self,
+        url: str,
+    ) -> None:
+        u.validate_database_url_scheme(url)
 
-    class DataclassConfigForTest(BaseModel):
-        """Test config with name and value."""
+    def test_validate_database_url_scheme_rejects_invalid_scheme(self) -> None:
+        with pytest.raises(ValueError, match="Invalid database URL scheme"):
+            u.validate_database_url_scheme("oracle://localhost/db")
 
-        name: Annotated[str, Field(description="Config t.NormalizedValue name")]
-        value: Annotated[
-            int,
-            Field(default=42, description="Config t.NormalizedValue value"),
-        ] = 42
+    def test_validate_trace_requires_debug_accepts_valid_combinations(self) -> None:
+        u.validate_trace_requires_debug(trace=False, debug=False)
+        u.validate_trace_requires_debug(trace=False, debug=True)
+        u.validate_trace_requires_debug(trace=True, debug=True)
 
-    class SingletonWithoutGetGlobalForTest:
-        """Singleton without get_global method."""
-
-        def __init__(self) -> None:
-            self.value = "test"
-
-    class BadSingletonForTest:
-        """Singleton with non-callable get_global."""
-
-        get_global = "not callable"
-
-    class SingletonWithoutModelDumpForTest:
-        """Singleton without model_dump method."""
-
-        _instance: ClassVar[
-            TestFlextUtilitiesConfiguration.SingletonWithoutModelDumpForTest | None
-        ] = None
-
-        @classmethod
-        def get_global(
-            cls,
-        ) -> TestFlextUtilitiesConfiguration.SingletonWithoutModelDumpForTest:
-            if cls._instance is None:
-                cls._instance = cls()
-            return cls._instance
-
-    class ConfigWithoutModelConfigForTest:
-        """Config without model_config attribute."""
-
-        def __init__(self) -> None:
-            msg = "Must use unified test helpers per Rule 3.6"
-            raise NotImplementedError(msg)
-
-    class FailingOptionsForTest(m.Value):
-        """Test options that fail validation."""
-
-        value: str = "test"
-
-    @unique
-    class ParameterNames(StrEnum):
-        """Parameter names enumeration."""
-
-        NAME = "name"
-        TIMEOUT = "timeout"
-        ENABLED = "enabled"
-        VALUE = "value"
-        MISSING = "missing"
-        FORMAT = "format"
-        INDENT = "indent"
-        SORT_KEYS = "sort_keys"
-
-    def _create_test_dict(self) -> t.ContainerMapping:
-        return {
-            self.ParameterNames.NAME.value: "test",
-            self.ParameterNames.TIMEOUT.value: 60,
-            self.ParameterNames.ENABLED.value: True,
-        }
+    def test_validate_trace_requires_debug_rejects_trace_without_debug(self) -> None:
+        with pytest.raises(ValueError, match="Trace mode requires debug mode"):
+            u.validate_trace_requires_debug(trace=True, debug=False)

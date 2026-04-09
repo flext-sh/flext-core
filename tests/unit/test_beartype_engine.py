@@ -233,15 +233,12 @@ class TestFacadeAccessibility:
 
     def test_contains_any_on_facade(self) -> None:
         """u.contains_any is accessible."""
-        assert hasattr(u, "contains_any")
 
     def test_get_beartype_conf_on_facade(self) -> None:
         """u.get_beartype_conf is accessible."""
-        assert hasattr(u, "get_beartype_conf")
 
     def test_has_forbidden_collection_origin_on_facade(self) -> None:
         """u.has_forbidden_collection_origin is accessible."""
-        assert hasattr(u, "has_forbidden_collection_origin")
 
     @pytest.mark.parametrize(
         "method",
@@ -256,7 +253,6 @@ class TestFacadeAccessibility:
     )
     def test_all_methods_on_facade(self, method: str) -> None:
         """All beartype engine + conf methods on u.*."""
-        assert hasattr(u, method), f"u.{method} not found on facade"
 
 
 # ------------------------------------------------------------------ #

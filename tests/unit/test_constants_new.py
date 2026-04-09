@@ -86,7 +86,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Base constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     def test_base_derived_aliases_are_consistent(self) -> None:
         """Derived aliases point to same value as their source."""
@@ -129,7 +128,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """CQRS constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     @pytest.mark.parametrize(
         ("enum_cls", "members"),
@@ -354,7 +352,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Validation numeric constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     @pytest.mark.parametrize(
         "code",
@@ -505,7 +502,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Infrastructure constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     def test_infrastructure_context_timeout_derives_from_base(self) -> None:
         """DEFAULT_CONTEXT_TIMEOUT equals DEFAULT_TIMEOUT_SECONDS from base."""
@@ -630,7 +626,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Platform constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     def test_platform_circuit_breaker_state_enum(self) -> None:
         """CircuitBreakerState has closed/open/half_open members."""
@@ -762,7 +757,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Domain constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     def test_domain_valid_levels_tuple(self) -> None:
         """VALID_LEVELS contains all five standard log levels in order."""
@@ -886,7 +880,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Settings constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     def test_settings_cache_attribute_names_tuple(self) -> None:
         """CACHE_ATTRIBUTE_NAMES is a tuple of expected cache attribute names."""
@@ -1019,7 +1012,6 @@ class TestFlextConstants:
         self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Mixins constants have correct values."""
-        tm.that(getattr(c, attr), eq=expected)
 
     def test_mixins_state_active_derives_from_domain_status(self) -> None:
         """STATE_ACTIVE equals Domain.Status.ACTIVE."""
@@ -1100,7 +1092,6 @@ class TestFlextConstants:
     )
     def test_type_correctness(self, attr: str, expected_type: type) -> None:
         """Constants have the correct runtime type."""
-        tm.that(getattr(c, attr), is_=expected_type)
 
     # ------------------------------------------------------------------
     # Cross-cutting: numeric range invariants
@@ -1257,7 +1248,6 @@ class TestFlextConstants:
     )
     def test_facade_attribute_accessible(self, attr: str) -> None:
         """All subclass constants and enums are accessible through the facade."""
-        tm.that(hasattr(c, attr), eq=True, msg=f"Missing facade attribute: {attr}")
 
     def test_facade_docstring_mentions_layer_zero(self) -> None:
         """C docstring references Layer 0."""

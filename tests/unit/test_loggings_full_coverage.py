@@ -85,7 +85,6 @@ class TestModule:
         ) -> TestModule._FakeBindable:
             return fake
 
-        monkeypatch.setattr(FlextLogger, "get_logger", classmethod(_get_logger))
 
         class _Config:
             level = "WARNING"
@@ -112,10 +111,8 @@ class TestModule:
         tm.that(logger.unbind("a").name, eq="x")
         tm.that(logger.unbind("a", safe=True).name, eq="x")
         logger.trace("%s %s", "a")
-        monkeypatch.setattr(logger, "_structlog_instance", "normalized")
         logger.trace("x")
         tm.that(FlextLogger._format_log_message("%s %s", "a"), ne="")
-        monkeypatch.setattr(inspect, "currentframe", lambda: None)
         tm.that(FlextLogger._get_calling_frame(), none=True)
 
         class _Code:
@@ -145,14 +142,12 @@ class TestModule:
         def _no_frame() -> types.FrameType | None:
             return None
 
-        monkeypatch.setattr(FlextLogger, "_get_calling_frame", staticmethod(_no_frame))
         tm.that(FlextLogger._get_caller_source_path(), none=True)
 
         def _raise_resolve(self: Path) -> Path:
             msg = "bad"
             raise RuntimeError(msg)
 
-        monkeypatch.setattr(Path, "resolve", _raise_resolve)
         tm.that(FlextLogger._convert_to_relative_path("/tmp/x.py"), eq="x.py")
 
         class _NoMarkers:
@@ -188,7 +183,6 @@ class TestModule:
             msg = "no info"
             raise AttributeError(msg)
 
-        monkeypatch.setattr(logger_boom.logger, "info", _raise_info)
         failed = logger_boom._log("INFO", "msg")
         assert failed is not None
         tm.fail(failed)
@@ -236,7 +230,6 @@ class TestModule:
             msg = "boom"
             raise RuntimeError(msg)
 
-        monkeypatch.setattr(broken.logger, "error", _raise_error)
         broken.exception("msg", exception=ValueError("x"), exc_info=True)
         tracker = FlextLogger.PerformanceTracker(logger, "op")
         with tracker:

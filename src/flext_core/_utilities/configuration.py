@@ -132,12 +132,13 @@ class FlextUtilitiesConfiguration:
         try:
             _ = _cache
             register_result = container.register(name, factory, kind="factory")
-            if not isinstance(register_result, p.Result):
-                return r[bool].fail("Factory registration failed")
-            if register_result.is_failure:
+            if isinstance(register_result, p.Result) and register_result.is_failure:
                 return r[bool].fail(
                     register_result.error or "Factory registration failed",
                 )
+            resolved = container.get(name)
+            if resolved.is_failure:
+                return r[bool].fail(resolved.error or "Factory registration failed")
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Factory registration failed for {name}: {e}")

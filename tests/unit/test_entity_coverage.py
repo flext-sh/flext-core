@@ -31,7 +31,6 @@ class TestEntityCoverageEdgeCases:
         entity = TestEntity(unique_id="test-id", name="test")
         logger = entity.logger
         assert logger is not None
-        assert hasattr(logger, "info") or hasattr(logger, "debug")
 
     def test_uncommitted_events_property(self) -> None:
         """uncommitted_events returns list(domain_events) (line 110)."""

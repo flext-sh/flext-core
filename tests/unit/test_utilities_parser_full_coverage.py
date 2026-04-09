@@ -67,7 +67,6 @@ class TestUtilitiesParserFullCoverage:
             "field: ",
             strict=False,
         )
-        tm.that(hasattr(model_result, "is_success"), eq=True)
         tm.fail(parser._coerce_to_int([]))
         tm.fail(parser._coerce_to_float("bad"))
         tm.fail(parser._coerce_to_bool("maybe"))

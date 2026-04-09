@@ -241,7 +241,6 @@ class TestFlextModelsBase:
 
         inst = _Flex.model_validate({"name": "a", "extra_field": "ignored"})
         tm.that(inst.name, eq="a")
-        tm.that(hasattr(inst, "extra_field"), eq=False)
 
     # ── ImmutableValueModel ───────────────────────────────────
 

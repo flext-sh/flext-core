@@ -213,10 +213,6 @@ class UtilitiesCacheCoverage100Namespace:
             """Test logger property returns structlog logger."""
             cache = u()
             logger = cache.logger
-            assert hasattr(logger, "info")
-            assert hasattr(logger, "debug")
-            assert hasattr(logger, "warning")
-            assert hasattr(logger, "error")
 
     class TestuCacheNormalizeComponent:
         """Test FlextUtilitiesCache.normalize_component."""

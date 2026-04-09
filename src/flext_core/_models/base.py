@@ -37,6 +37,11 @@ class FlextModelsBase:
         """Base model that enforces architectural rules on subclasses."""
 
         @classmethod
+        def with_defaults(cls, **overrides: t.Container) -> Self:
+            """Build model from its declared defaults plus explicit overrides."""
+            return cls.model_validate(overrides)
+
+        @classmethod
         @override
         def __pydantic_init_subclass__(cls, **kwargs: t.Container) -> None:
             super().__pydantic_init_subclass__(**kwargs)

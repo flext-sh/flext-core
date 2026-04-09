@@ -108,7 +108,6 @@ class TestServiceResultProperty:
         """V2: Property is lazily evaluated (executes only when accessed)."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
         assert isinstance(service, u.Core.Tests.GetUserService)
-        assert hasattr(service, "result")
         user_raw = service.result
         assert isinstance(user_raw, m.Core.Tests.User)
         user = user_raw
@@ -187,7 +186,6 @@ class TestServiceResultProperty:
         """Verify .result is a Pydantic computed_field."""
         service = u.Core.Tests.ServiceTestCases.create_service(case)
         assert isinstance(service, u.Core.Tests.GetUserService)
-        assert hasattr(service, "result")
         user_raw = service.result
         assert isinstance(user_raw, m.Core.Tests.User)
         user = user_raw
@@ -216,7 +214,6 @@ class TestServiceResultProperty:
         assert isinstance(user1, m.Core.Tests.User)
         assert isinstance(user2, m.Core.Tests.User)
         assert user1.id == user2.id
-        assert hasattr(service, "result")
         dump = service.model_dump(exclude={"access", "runtime"})
         assert isinstance(dump, dict)
         assert "user_id" in dump

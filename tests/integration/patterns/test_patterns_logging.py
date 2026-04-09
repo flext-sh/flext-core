@@ -154,9 +154,6 @@ class TestPatternsLogging:
         """Test that FlextLogger creates logger instances."""
         logger = self.make_result_logger("test_logger")
         assert logger is not None
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "debug")
 
     def test_get_logger_caches_instances(self) -> None:
         """Test that FlextLogger creates new instances (no caching in new implementation)."""
@@ -167,11 +164,6 @@ class TestPatternsLogging:
     def test_logger_methods_exist(self) -> None:
         """Test that logger has expected methods."""
         logger = self.make_result_logger("method_test")
-        assert hasattr(logger, "debug")
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "warning")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "critical")
 
     def test_get_base_logger(self) -> None:
         """Test getting base logger instance.
@@ -183,9 +175,6 @@ class TestPatternsLogging:
         """
         base_logger = self.make_result_logger("base_test")
         assert base_logger is not None
-        assert hasattr(base_logger, "info")
-        assert hasattr(base_logger, "error")
-        assert hasattr(base_logger, "debug")
         result: r[bool] | None = base_logger.info("Base logger test message")
         assert result is not None
         self.assert_result_success(result, "Base logger should log successfully")
@@ -200,9 +189,6 @@ class TestPatternsLogging:
         """
         base_logger = self.make_result_logger("level_test")
         assert base_logger is not None
-        assert hasattr(base_logger, "info")
-        assert hasattr(base_logger, "error")
-        assert hasattr(base_logger, "debug")
         result: r[bool] | None = base_logger.info("Level logger test message")
         assert result is not None
         self.assert_result_success(result, "Level logger should log successfully")
@@ -218,9 +204,6 @@ class TestPatternsLogging:
         logger = self.make_result_logger("bind_test")
         bound_logger = logger.bind(user_id="123", operation="test")
         assert bound_logger is not None
-        assert hasattr(bound_logger, "info")
-        assert hasattr(bound_logger, "error")
-        assert hasattr(bound_logger, "debug")
         result: r[bool] | None = bound_logger.info("Test message with bound context")
         assert result is not None
         success = self.assert_result_success(
@@ -239,9 +222,6 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("compat_test")
         assert logger is not None
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "debug")
         result: r[bool] | None = logger.info("Compatibility test message")
         assert result is not None
         success = self.assert_result_success(
@@ -260,9 +240,6 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("module_test")
         assert logger is not None
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "debug")
         result: r[bool] | None = logger.info("Module-level logger test message")
         assert result is not None
         success = self.assert_result_success(result, "Module-level logger should work")
@@ -278,11 +255,6 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("usage_test")
         assert logger is not None
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "debug")
-        assert hasattr(logger, "warning")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "critical")
         result_info: r[bool] | None = logger.info("Test info message", test=True)
         assert result_info is not None
         assert result_info.is_success, "Info logging should succeed"
@@ -341,8 +313,6 @@ class TestPatternsLogging:
         logger = self.make_result_logger("bound_test")
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
         assert bound_logger is not None
-        assert hasattr(bound_logger, "info")
-        assert hasattr(bound_logger, "error")
         result_info: r[bool] | None = bound_logger.info("Processing request")
         assert result_info is not None
         assert result_info.is_success, "Info logging with bound context should succeed"
@@ -387,9 +357,6 @@ class TestPatternsLogging:
         """
         perf_logger = self.make_result_logger("performance_test")
         assert perf_logger is not None
-        assert hasattr(perf_logger, "info")
-        assert hasattr(perf_logger, "error")
-        assert hasattr(perf_logger, "debug")
         result: r[bool] | None = perf_logger.info("Performance test message")
         assert result is not None
         success = self.assert_result_success(

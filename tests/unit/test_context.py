@@ -503,8 +503,6 @@ class TestFlextContext:
         service_instance = {"service": "instance"}
         FlextContext.Service.register_service("test-service", service_instance)
         result = FlextContext.Service.get_service("test-service")
-        tm.that(hasattr(result, "is_success"), eq=True)
-        tm.that(hasattr(result, "value"), eq=True)
 
     def test_service_context_manager(self) -> None:
         """Test Service.service_context context manager."""
@@ -624,17 +622,14 @@ class TestFlextContext:
 
     def test_context_variables_correlation(self) -> None:
         """Test Variables inner class Correlation access."""
-        tm.that(hasattr(FlextContext.Variables, "Correlation"), eq=True)
         tm.that(FlextContext.Variables.Correlation, none=False)
 
     def test_context_variables_service(self) -> None:
         """Test Variables inner class Service access."""
-        tm.that(hasattr(FlextContext.Variables, "Service"), eq=True)
         tm.that(FlextContext.Variables.Service, none=False)
 
     def test_context_variables_request(self) -> None:
         """Test Variables inner class Request access."""
-        tm.that(hasattr(FlextContext.Variables, "Request"), eq=True)
         tm.that(FlextContext.Variables.Request, none=False)
 
     def test_context_export_empty(self, test_context: FlextContext) -> None:

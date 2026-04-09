@@ -173,7 +173,6 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
             ),
         ]
 
-    monkeypatch.setattr(h.Discovery, "scan_module", staticmethod(fake_scan))
     monkeypatch.setattr(
         FlextRegistry,
         "register_handler",

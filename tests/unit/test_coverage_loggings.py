@@ -151,9 +151,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        tm.that(hasattr(logger, "trace"), eq=True)
         result = assert_log_result_success(logger.trace("Test trace message"))
-        tm.that(hasattr(result, "is_success"), eq=True)
 
     def test_debug_logging(self) -> None:
         """Test debug level logging.
@@ -165,9 +163,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        tm.that(hasattr(logger, "debug"), eq=True)
         result = assert_log_result_success(logger.debug("Test debug message"))
-        tm.that(hasattr(result, "is_success"), eq=True)
 
     def test_debug_with_context(self) -> None:
         """Test debug logging with context.
@@ -194,9 +190,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        tm.that(hasattr(logger, "info"), eq=True)
         result = assert_log_result_success(logger.info("Test info message"))
-        tm.that(hasattr(result, "value"), eq=True)
 
     def test_info_with_context(self) -> None:
         """Test info logging with context.
@@ -222,9 +216,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        tm.that(hasattr(logger, "warning"), eq=True)
         result = assert_log_result_success(logger.warning("Test warning message"))
-        tm.that(hasattr(result, "is_success"), eq=True)
 
     def test_warning_with_context(self) -> None:
         """Test warning logging with context.
@@ -250,9 +242,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        tm.that(hasattr(logger, "error"), eq=True)
         result = assert_log_result_success(logger.error("Test error message"))
-        tm.that(hasattr(result, "is_success"), eq=True)
 
     def test_error_with_context(self) -> None:
         """Test error logging with context.
@@ -278,9 +268,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        tm.that(hasattr(logger, "critical"), eq=True)
         result = assert_log_result_success(logger.critical("Test critical message"))
-        tm.that(hasattr(result, "is_success"), eq=True)
 
     def test_critical_with_context(self) -> None:
         """Test critical logging with context.
@@ -334,7 +322,6 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        tm.that(hasattr(logger, "exception"), eq=True)
         msg = "Test error"
         exception_obj: ValueError | None = None
         try:

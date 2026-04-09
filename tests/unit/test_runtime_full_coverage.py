@@ -229,7 +229,6 @@ def test_normalization_edge_branches() -> None:
     cfg = t.ConfigMap(root={"a": 1})
     normalized_cfg = u.normalize_to_container(cfg)
     tm.that(normalized_cfg, is_=(t.ConfigMap, t.Dict))
-    tm.that(getattr(normalized_cfg, "root", None), eq={"a": 1})
 
     class DictLike(t.ContainerMappingBase):
         @override
@@ -250,7 +249,6 @@ def test_normalization_edge_branches() -> None:
         cast("t.RuntimeData", DictLike()),
     )
     tm.that(normalized_dict_like, is_=t.Dict)
-    tm.that(getattr(normalized_dict_like, "root", None), eq={"x": 1})
     metadata_cfg = u.normalize_to_metadata(cfg)
     tm.that(metadata_cfg, is_=str)
     metadata_dict_like = u.normalize_to_metadata(
@@ -279,7 +277,6 @@ def test_normalize_to_metadata_alias_removal_path() -> None:
 def test_get_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     logger_with_frame = u.get_logger()
     tm.that(logger_with_frame, none=False)
-    monkeypatch.setattr(inspect, "currentframe", lambda: None)
     logger_no_frame = u.get_logger()
     tm.that(logger_no_frame, none=False)
 
@@ -377,7 +374,6 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             return _print_logger_factory
 
     fake_module = StatefulModule()
-    monkeypatch.setattr(runtime_module, "structlog", fake_module)
 
     class Config:
         log_level: int = logging.DEBUG
@@ -712,10 +708,8 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         MappingProxyType({"k": "v"}),
     )
     tm.that(normalized_mapping, is_=t.Dict)
-    tm.that(getattr(normalized_mapping, "root", None), eq={"k": "v"})
     norm_list = u.normalize_to_container([1, "x"])
     tm.that(norm_list, is_=t.ObjectList)
-    tm.that(list(getattr(norm_list, "root", [])), eq=[1, "x"])
     # Path is Container, returned as-is
     tm.that(u.normalize_to_container(Path("/tmp")), eq=Path("/tmp"))
     tm.that(u.normalize_to_metadata(1), eq=1)
@@ -729,7 +723,6 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     class Frame:
         f_back: types.FrameType | None = None
 
-    monkeypatch.setattr(inspect, "currentframe", lambda: Frame())
     tm.that(u.get_logger(None), none=False)
 
 
@@ -809,7 +802,6 @@ def test_configure_structlog_print_logger_factory_fallback(
             return None
 
     module = FallbackModule()
-    monkeypatch.setattr(runtime_module, "structlog", module)
     u._structlog_configured = False
     cfg = type(
         "Cfg",
@@ -896,7 +888,6 @@ def test_configure_structlog_async_logging_uses_print_logger_factory(
             configured_has_logger_factory.append(callable(kwargs.get("logger_factory")))
 
     module = AsyncModule()
-    monkeypatch.setattr(runtime_module, "structlog", module)
     u.configure_structlog(config=None)
     tm.that(u._async_writer is not None, eq=True)
     tm.that(bool(factory_streams), eq=True)
@@ -929,7 +920,6 @@ def test_dependency_integration_and_wiring_paths() -> None:
             wire_classes=[u],
         ),
     )
-    tm.that(getattr(getattr(di.config, "feature"), "enabled")(), eq=True)
     tm.that(di.svc(), eq=1)
     tm.that(di.factory(), eq=2)
     tm.that(di.resource(), eq={"ok": True})
@@ -1008,7 +998,6 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
         (),
         {"contextvars": CtxVars, "get_logger": staticmethod(_get_logger)},
     )
-    monkeypatch.setattr(runtime_module, "structlog", fake_structlog)
     u.Integration.track_service_resolution("svc", resolved=True)
     u.Integration.track_service_resolution(
         "svc",

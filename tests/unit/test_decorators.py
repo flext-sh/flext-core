@@ -357,7 +357,6 @@ class TestFlextDecorators:
 
     def test_retry_with_class_logger(self) -> None:
         service = self.ServiceWithLogger()
-        assert hasattr(service, "logger")
         assert service.logger is not None
 
         @d.retry(max_attempts=2, delay_seconds=0.001)

@@ -192,10 +192,6 @@ class TestFlextSettingsSingletonIntegration:
         assert config1 is config2
         assert config2 is config3
         assert id(config1) == id(config2) == id(config3)
-        assert hasattr(config1, "app_name")
-        assert hasattr(config1, "log_level")
-        assert hasattr(config1, "cache_ttl")
-        assert hasattr(config1, "max_workers")
 
     def test_config_in_flext_container(self) -> None:
         """Test that FlextContainer uses the global config singleton."""

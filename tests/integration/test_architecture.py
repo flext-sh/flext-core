@@ -50,10 +50,6 @@ class TestAutomatedArchitecture:
         func = getattr(tv, validator)
         result = func(_SRC)
         tm.ok(result)
-        tm.that(hasattr(result.value, "passed"), eq=True)
-        tm.that(hasattr(result.value, "violations"), eq=True)
-        tm.that(hasattr(result.value, "validator_name"), eq=True)
-        tm.that(hasattr(result.value, "files_scanned"), eq=True)
 
     def test_full_validation(self) -> None:
         result = tv.all(_SRC, pyproject_path=_PYPROJECT)

@@ -246,9 +246,7 @@ class TestModels:
 
     def test_models_domain_events(self) -> None:
         """Test domain events functionality on Entity base class."""
-        assert hasattr(m.Entity, "add_domain_event")
         assert callable(m.Entity.add_domain_event)
-        assert hasattr(m.Entity, "clear_domain_events")
         assert callable(m.Entity.clear_domain_events)
         assert "domain_events" in m.Entity.model_fields
 
@@ -556,7 +554,6 @@ class TestModels:
         assert all(
             hasattr(aggregate, attr) for attr in ["unique_id", "version", "created_at"]
         )
-        assert hasattr(aggregate, "_invariants")
         assert isinstance(aggregate._invariants, list)
         result = aggregate.add_domain_event("test", t.ConfigMap(root={"data": "value"}))
         _ = u.Core.Tests.assert_success(result)
@@ -637,7 +634,6 @@ class TestModels:
             pagination=m.Pagination(),
             query_id="q-test-1",
         )
-        assert hasattr(query, "query_id")
         assert query.query_id is not None
         assert query.query_type == "find_users"
         assert getattr(query.filters, "root", query.filters) == {"active": "true"}

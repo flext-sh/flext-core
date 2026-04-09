@@ -31,8 +31,6 @@ class TestResultExceptionCarrying:
         tm.that(result.error, eq=error_msg)
         tm.that(result.exception, none=True)
         result_as_obj = result
-        tm.that(hasattr(result_as_obj, "is_success"), eq=True)
-        tm.that(hasattr(result_as_obj, "is_failure"), eq=True)
 
     def test_fail_with_exception(self) -> None:
         error_msg = "Division by zero"

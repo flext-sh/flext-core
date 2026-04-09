@@ -824,7 +824,8 @@ class FlextUtilitiesEnforcement:
         if package == "tests":
             project_prefix = FlextUtilitiesEnforcement._derive_prefix_from_path(target)
             if project_prefix is not None:
-                return project_prefix.removeprefix("Flext")
+                namespace = project_prefix.removeprefix("Flext")
+                return namespace or "Core"
             return "Tests"
         if package.startswith("flext_"):
             suffix = package[len("flext_") :]

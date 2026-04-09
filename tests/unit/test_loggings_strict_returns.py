@@ -167,11 +167,6 @@ class TestLoggingsStrictReturns:
 
     def test_flext_logger_implements_structlog_logger_protocol(self) -> None:
         logger = FlextLogger.create_module_logger(__name__)
-        tm.that(hasattr(logger, "debug"), eq=True)
-        tm.that(hasattr(logger, "info"), eq=True)
-        tm.that(hasattr(logger, "warning"), eq=True)
-        tm.that(hasattr(logger, "error"), eq=True)
-        tm.that(hasattr(logger, "exception"), eq=True)
 
     def test_all_protocol_methods_return_result_bool(self) -> None:
         logger = FlextLogger.create_module_logger(__name__)

@@ -116,7 +116,6 @@ class TestTEMPLATECategory:
         )
 
         # Verify entity was processed correctly
-        assert hasattr(processed_entity, "unique_id")
         assert processed_entity.unique_id == "integration-test"
 
     def test_template_business_rules_validation(self) -> None:

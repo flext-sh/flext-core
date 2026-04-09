@@ -22,7 +22,6 @@ class TestUtilitiesDomainFullCoverage:
         domain_util = u()
         logger = domain_util.logger
         assert logger is not None
-        assert hasattr(logger, "info")
 
     def test_hash_with_hashable_non_primitive(self) -> None:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""

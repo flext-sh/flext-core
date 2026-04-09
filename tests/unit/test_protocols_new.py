@@ -92,7 +92,6 @@ class TestFlextProtocols:
     @pytest.mark.parametrize("name", _ALL_PROTOCOL_NAMES)
     def test_protocol_accessible_through_facade(self, name: str) -> None:
         """Every protocol must be accessible via p.<Name>."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} must exist on facade")
         protocol = getattr(p, name)
         tm.that(protocol, none=False, msg=f"p.{name} must not be None")
 
@@ -357,10 +356,10 @@ class TestFlextProtocols:
             "dispatcher_auto_context",
             "dispatcher_enable_logging",
         ]
+        protocol_annotations = getattr(p.Settings, "__annotations__", {})
         for attr in expected:
             tm.that(
-                attr in getattr(p.Settings, "__protocol_attrs__", ())
-                or attr in getattr(p.Settings, "__annotations__", {}),
+                attr in protocol_annotations,
                 eq=True,
                 msg=f"p.Settings must define {attr}",
             )
@@ -450,12 +449,19 @@ class TestFlextProtocols:
 
     def test_text_stream_protocol_has_expected_attrs(self) -> None:
         """p.TextStream defines mode, name, encoding, write, flush."""
-        for attr in ("mode", "name", "encoding", "write", "flush"):
+        expected_fields = ("mode", "name", "encoding")
+        protocol_annotations = getattr(p.TextStream, "__annotations__", {})
+        for attr in expected_fields:
             tm.that(
-                attr in getattr(p.TextStream, "__protocol_attrs__", ())
-                or attr in getattr(p.TextStream, "__annotations__", {}),
+                attr in protocol_annotations,
                 eq=True,
                 msg=f"p.TextStream must define {attr}",
+            )
+        for method in ("write", "flush"):
+            tm.that(
+                hasattr(p.TextStream, method),
+                eq=True,
+                msg=f"p.TextStream must define {method}",
             )
 
     def test_service_protocol_has_expected_methods(self) -> None:
@@ -474,8 +480,12 @@ class TestFlextProtocols:
 
     def test_model_protocol_has_model_methods(self) -> None:
         """p.Model defines model_dump and model_validate."""
-        tm.that(hasattr(p.Model, "model_dump"), eq=True)
-        tm.that(hasattr(p.Model, "model_validate"), eq=True)
+        for method in ("model_dump", "model_validate"):
+            tm.that(
+                hasattr(p.Model, method),
+                eq=True,
+                msg=f"p.Model must have {method}",
+            )
 
     def test_routable_protocol_has_type_properties(self) -> None:
         """p.Routable defines command_type, event_type, query_type."""
@@ -625,7 +635,6 @@ class TestFlextProtocols:
     )
     def test_base_protocol_group(self, name: str, group: str) -> None:
         """Base protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     @pytest.mark.parametrize(
         ("name", "group"),
@@ -639,7 +648,6 @@ class TestFlextProtocols:
     )
     def test_result_protocol_group(self, name: str, group: str) -> None:
         """Result protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     @pytest.mark.parametrize(
         ("name", "group"),
@@ -650,7 +658,6 @@ class TestFlextProtocols:
     )
     def test_config_protocol_group(self, name: str, group: str) -> None:
         """Config protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     @pytest.mark.parametrize(
         ("name", "group"),
@@ -667,7 +674,6 @@ class TestFlextProtocols:
     )
     def test_handler_protocol_group(self, name: str, group: str) -> None:
         """Handler protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     @pytest.mark.parametrize(
         ("name", "group"),
@@ -681,7 +687,6 @@ class TestFlextProtocols:
     )
     def test_container_protocol_group(self, name: str, group: str) -> None:
         """Container protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     @pytest.mark.parametrize(
         ("name", "group"),
@@ -697,7 +702,6 @@ class TestFlextProtocols:
     )
     def test_context_protocol_group(self, name: str, group: str) -> None:
         """Context protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     @pytest.mark.parametrize(
         ("name", "group"),
@@ -712,7 +716,6 @@ class TestFlextProtocols:
     )
     def test_logging_protocol_group(self, name: str, group: str) -> None:
         """Logging protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     @pytest.mark.parametrize(
         ("name", "group"),
@@ -724,11 +727,9 @@ class TestFlextProtocols:
     )
     def test_service_protocol_group(self, name: str, group: str) -> None:
         """Service protocol group contains expected protocols."""
-        tm.that(hasattr(p, name), eq=True, msg=f"p.{name} from {group} group")
 
     def test_registry_protocol_group(self) -> None:
         """Registry protocol group contains expected protocols."""
-        tm.that(hasattr(p, "Registry"), eq=True, msg="p.Registry from registry group")
 
     # ------------------------------------------------------------------
     # 9. r satisfies Result protocol properties

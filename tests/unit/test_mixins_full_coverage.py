@@ -198,7 +198,6 @@ class TestMixinsFullCoverage:
         tm.that(runtime_container.wired, none=False)
         with service.track("op") as metrics:
             cast("t.MutableContainerMapping", metrics)["duration_ms"] = 2.0
-        tm.that(hasattr(service, "_operation_stats"), eq=True)
         tm.that(service._operation_stats, has="op")
         try:
             with service.track("op_fail"):
