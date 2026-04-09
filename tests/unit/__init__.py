@@ -12,12 +12,7 @@ from flext_core.lazy import (
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._utilities",),
     build_lazy_import_map(
-        {
-            ".protocols": (
-                "TestsFlextUnitProtocols",
-                "p",
-            ),
-        },
+        {},
     ),
     exclude_names=(
         "cleanup_submodule_namespace",

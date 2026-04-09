@@ -182,7 +182,7 @@ class TestDiServicesAccess:
                 app_name = self.config.app_name
                 tm.that(app_name, eq="service_app", msg="Config must be accessible")
                 logger_result = self.container.get("logger")
-                _ = u.Tests.assert_success(logger_result)
+                _ = u.Core.Tests.assert_success(logger_result)
                 logger = logger_result.value
                 assert logger is not None, "Logger must be accessible via DI"
                 assert hasattr(logger, "info") and callable(getattr(logger, "info")), (
@@ -192,7 +192,7 @@ class TestDiServicesAccess:
 
         service = ServiceWithDI()
         result = service.execute()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert "app: service_app" in result.value
 
     def test_services_injection_combined(self) -> None:

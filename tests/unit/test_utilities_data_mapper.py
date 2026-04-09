@@ -30,15 +30,15 @@ class TestUtilitiesDataMapper:
             raise RuntimeError(msg)
 
     def test_basic_key_mapping(self) -> None:
-        mc = c.Core.Mapper
+        mc = c.Core.Tests.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
         result = u.map_dict_keys(source_raw, mapping)
-        mapped = u.Tests.assert_success(result)
+        mapped = u.Core.Tests.assert_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2}
 
     def test_keep_unmapped_true(self) -> None:
-        mc = c.Core.Mapper
+        mc = c.Core.Tests.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
         result = u.map_dict_keys(
@@ -46,11 +46,11 @@ class TestUtilitiesDataMapper:
             mapping,
             keep_unmapped=True,
         )
-        mapped = u.Tests.assert_success(result)
+        mapped = u.Core.Tests.assert_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
 
     def test_keep_unmapped_false(self) -> None:
-        mc = c.Core.Mapper
+        mc = c.Core.Tests.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
         result = u.map_dict_keys(
@@ -58,7 +58,7 @@ class TestUtilitiesDataMapper:
             mapping,
             keep_unmapped=False,
         )
-        mapped = u.Tests.assert_success(result)
+        mapped = u.Core.Tests.assert_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1}
 
     def test_map_dict_keys_exception_handling(self) -> None:

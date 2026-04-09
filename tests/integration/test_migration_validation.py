@@ -22,24 +22,25 @@ from typing import override
 from pydantic import BaseModel as PydanticBaseModel, PrivateAttr
 
 from flext_core import (
-    FlextConstants,
     FlextContainer,
     FlextContext,
     FlextDispatcher,
     FlextLogger,
-    FlextModels,
-    FlextProtocols,
     FlextRegistry,
     FlextSettings,
-    FlextTypes,
-    FlextUtilities,
+)
+from tests import (
+    c,
     e,
     h,
+    m,
+    p,
     r,
     s,
+    t,
+    u,
     x,
 )
-from tests import p, t
 
 
 class TestMigrationValidation:
@@ -145,20 +146,20 @@ class TestMigrationValidation:
         """Verify all guaranteed stable APIs from API_STABILITY.md are accessible."""
         assert r is not None
         assert FlextContainer is not None
-        assert FlextModels is not None
+        assert m is not None
         assert s is not None
         assert FlextLogger is not None
         assert FlextSettings is not None
-        assert FlextConstants is not None
+        assert c is not None
         assert FlextContext is not None
         assert FlextDispatcher is not None
         assert e is not None
         assert h is not None
         assert x is not None
-        assert FlextProtocols is not None
+        assert p is not None
         assert FlextRegistry is not None
-        assert FlextTypes is not None
-        assert FlextUtilities is not None
+        assert t is not None
+        assert u is not None
 
     def test_flext_result_all_methods(self) -> None:
         """Verify all r methods work correctly."""

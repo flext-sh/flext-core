@@ -299,7 +299,7 @@ class Testu(TextUtilityContract):
             return r[str].ok("success")
 
         result: r[str] = u.retry(op, max_attempts=3)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         tm.that(result.value, eq="success")
 
     def test_reliability_retry_eventual_success(self) -> None:
@@ -310,7 +310,7 @@ class Testu(TextUtilityContract):
             max_attempts=3,
             delay_seconds=0.01,
         )
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         tm.that(attempt_count[0], gte=2)
 
     def test_type_checker_object_accepts_all(self) -> None:

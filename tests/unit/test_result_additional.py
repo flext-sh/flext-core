@@ -66,7 +66,7 @@ def test_create_from_callable_and_repr() -> None:
         return None
 
     none_result = r[int].create_from_callable(none_callable)
-    _ = u.Tests.assert_failure(none_result)
+    _ = u.Core.Tests.assert_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
     error_message = "test error"
 
@@ -74,7 +74,7 @@ def test_create_from_callable_and_repr() -> None:
         raise ValueError(error_message)
 
     error_result = r[int].create_from_callable(error_callable)
-    _ = u.Tests.assert_failure(error_result)
+    _ = u.Core.Tests.assert_failure(error_result)
     assert error_message in (error_result.error or "")
     success_result = r[int].create_from_callable(lambda: 7)
     success_repr = repr(success_result)
@@ -102,5 +102,5 @@ def test_with_resource_cleanup_runs() -> None:
         cleanup_calls.append("ran")
 
     result = r[str].with_resource(factory, op, cleanup)
-    u.Tests.assert_success_with_value(result, "done")
+    u.Core.Tests.assert_success_with_value(result, "done")
     assert cleanup_calls == ["ran"]

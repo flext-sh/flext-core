@@ -259,7 +259,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(None)  # type: ignore[arg-type]  # Runtime guard coverage.
         else:
@@ -268,11 +268,11 @@ class TestFlextRegistry:
             if test_case.duplicate_registration:
                 result = registry.register_handler(handler)
         if test_case.should_succeed:
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
         else:
-            _ = u.Tests.assert_failure(result)
+            _ = u.Core.Tests.assert_failure(result)
             if test_case.error_pattern:
-                u.Tests.assert_failure_with_error(
+                u.Core.Tests.assert_failure_with_error(
                     result,
                     test_case.error_pattern,
                 )
@@ -282,7 +282,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         handlers = self._create_handlers(test_case.handler_count)
         if test_case.duplicate_registration and handlers:
             registry.register_handlers(handlers)
@@ -290,9 +290,9 @@ class TestFlextRegistry:
         else:
             result = registry.register_handlers(handlers)
         _ = (
-            u.Tests.assert_success(result)
+            u.Core.Tests.assert_success(result)
             if test_case.should_succeed
-            else u.Tests.assert_failure(result)
+            else u.Core.Tests.assert_failure(result)
         )
         assert isinstance(result.value, m.RegistrySummary)
 
@@ -301,7 +301,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         handlers = self._create_handlers(test_case.handler_count)
         if test_case.duplicate_registration and handlers:
             registry.register_handlers(handlers)
@@ -309,9 +309,9 @@ class TestFlextRegistry:
         else:
             result = registry.register_handlers(handlers)
         _ = (
-            u.Tests.assert_success(result)
+            u.Core.Tests.assert_success(result)
             if test_case.should_succeed
-            else u.Tests.assert_failure(result)
+            else u.Core.Tests.assert_failure(result)
         )
         assert result.value is not None
 
@@ -320,7 +320,7 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         handlers = self._create_handlers(test_case.handler_count)
         if test_case.duplicate_registration and handlers:
             registry.register_handlers(handlers)
@@ -328,9 +328,9 @@ class TestFlextRegistry:
         else:
             result = registry.register_handlers(handlers)
         _ = (
-            u.Tests.assert_success(result)
+            u.Core.Tests.assert_success(result)
             if test_case.should_succeed
-            else u.Tests.assert_failure(result)
+            else u.Core.Tests.assert_failure(result)
         )
         assert result.value is not None
 
@@ -361,32 +361,32 @@ class TestFlextRegistry:
         self,
         test_case: TestFlextRegistry.RegistryTestCase,
     ) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 None,  # type: ignore[arg-type]  # Runtime guard coverage.
             )
-            _ = u.Tests.assert_failure(result)
-            u.Tests.assert_failure_with_error(
+            _ = u.Core.Tests.assert_failure(result)
+            u.Core.Tests.assert_failure_with_error(
                 result,
                 "Handler must be callable",
             )
         else:
             handler = self.ConcreteTestHandler()
             result = registry.register_handler(handler)
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             assert isinstance(result.value, m.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         assert registry is not None
         assert isinstance(registry, FlextRegistry)
 
     def test_registry_with_dispatcher(self) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         handler = self.ConcreteTestHandler()
         result = registry.register_handler(handler)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert isinstance(result.value, m.RegistrationDetails)
 
     @pytest.mark.parametrize(
@@ -404,7 +404,7 @@ class TestFlextRegistry:
         mode: str | None,
         expected: str,
     ) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         assert registry._get_handler_mode(mode or "") == expected
 
     @pytest.mark.parametrize(
@@ -422,7 +422,7 @@ class TestFlextRegistry:
         status: str,
         expected: c.CommonStatus,
     ) -> None:
-        registry = u.Tests.create_test_registry()
+        registry = u.Core.Tests.create_test_registry()
         assert registry._get_status(status) == expected
 
     @given(

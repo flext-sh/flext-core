@@ -55,7 +55,7 @@ class TestFlextUtilitiesReliability:
             max_attempts=self.Constants.MAX_ATTEMPTS_VALID,
             delay_seconds=0.0,
         )
-        u.Tests.assert_success_with_value(result, self.Constants.SUCCESS_VALUE)
+        u.Core.Tests.assert_success_with_value(result, self.Constants.SUCCESS_VALUE)
         assert len(attempts) == 2
 
     def test_retry_validation_error(self) -> None:
@@ -64,5 +64,5 @@ class TestFlextUtilitiesReliability:
             lambda: r[int].fail("fail"),
             max_attempts=self.Constants.MAX_ATTEMPTS_INVALID,
         )
-        _ = u.Tests.assert_failure(result)
+        _ = u.Core.Tests.assert_failure(result)
         assert "Max attempts must be at least" in (result.error or "")

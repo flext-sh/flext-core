@@ -96,7 +96,7 @@ class TestUtilitiesConfigurationFullCoverage:
         assert u._try_get_from_model_dump(
             cast(
                 "p.HasModelDump",
-                cast("t.NormalizedValue", m.Core.Unit._DumpErrorModel()),
+                cast("t.NormalizedValue", m.Core.Tests._DumpErrorModel()),
             ),
             "missing",
         ) == (False, None)

@@ -106,7 +106,9 @@ class TestsFlextCoreServiceBase(s[T]):
         """Centralized factories for test handlers."""
 
         @staticmethod
-        def _to_container(value: t.Tests.TestobjectSerializable) -> t.Container | None:
+        def _to_container(
+            value: t.Core.Tests.TestobjectSerializable,
+        ) -> t.Container | None:
             if value is None:
                 return None
             if isinstance(value, (str, int, float, bool, datetime, Path)):
@@ -323,4 +325,5 @@ class TestsFlextCoreServiceBase(s[T]):
             )
 
 
-__all__ = ["TestsFlextCoreServiceBase"]
+s = TestsFlextCoreServiceBase
+__all__ = ["TestsFlextCoreServiceBase", "s"]

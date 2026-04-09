@@ -236,12 +236,12 @@ class TestCollectionUtilitiesCoverage:
         for scenario in self._parse_sequence_scenarios():
             result = u.parse_sequence(self.Status, scenario.values)
             if scenario.expected_success:
-                _ = u.Tests.assert_success(result)
+                _ = u.Core.Tests.assert_success(result)
                 parsed = result.value
                 tm.that(len(parsed), eq=scenario.expected_count)
                 tm.that(parsed, is_=(list, tuple))
             else:
-                _ = u.Tests.assert_failure(result)
+                _ = u.Core.Tests.assert_failure(result)
                 error_msg = result.error
                 assert error_msg is not None and scenario.expected_error is not None
                 tm.that(error_msg, has=scenario.expected_error)

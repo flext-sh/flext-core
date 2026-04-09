@@ -15,8 +15,7 @@ from typing import Annotated, override
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
-from tests import m, p, r, s, t, u
-from tests.conftest import FunctionalExternalService
+from tests import FunctionalExternalService, m, p, r, s, t, u
 
 
 class TestService:
@@ -293,7 +292,7 @@ class TestService:
         """
         user_service = self.UserQueryService()
         result = user_service.execute()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value is True
 
     @pytest.mark.integration
@@ -307,7 +306,7 @@ class TestService:
         user_service = self.UserQueryService()
         user_id = "test_user_123"
         result = user_service.get_user(user_id)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == f"User {user_id}"
@@ -335,7 +334,7 @@ class TestService:
         )
         user_service.set_user_data(user_id, custom_user)
         result = user_service.get_user(user_id)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == "Custom User"
@@ -352,7 +351,7 @@ class TestService:
         user_service = self.UserQueryService()
         user_service.set_failure_mode(should_fail=True)
         result = user_service.execute()
-        _ = u.Tests.assert_failure(result)
+        _ = u.Core.Tests.assert_failure(result)
         assert result.error == "User service unavailable"
 
     @pytest.mark.integration
@@ -368,7 +367,7 @@ class TestService:
         """
         notification_service = self.NotificationService()
         result = notification_service.execute()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value == "sent"
 
     @pytest.mark.integration
@@ -382,7 +381,7 @@ class TestService:
         notification_service = self.NotificationService()
         email = "test@example.com"
         result = notification_service.send(email)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value == "sent"
         assert email in notification_service.sent_notifications
         assert notification_service.call_count == 1
@@ -401,7 +400,7 @@ class TestService:
         notification_service = self.NotificationService()
         notification_service.set_failure_mode(should_fail=True)
         result = notification_service.send("test@example.com")
-        _ = u.Tests.assert_failure(result)
+        _ = u.Core.Tests.assert_failure(result)
         assert result.error == "Notification service unavailable"
 
     @pytest.mark.integration
@@ -414,7 +413,7 @@ class TestService:
         """
         lifecycle_service = self.LifecycleService()
         result = lifecycle_service.execute()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value == "ready"
         assert lifecycle_service.initialized is False
 
@@ -438,7 +437,7 @@ class TestService:
             temp_dir=str(temp_directory),
         )
         result = lifecycle_service.initialize(service_config)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value == "initialized"
         assert lifecycle_service.initialized is True
         assert lifecycle_service.service_config is not None
@@ -490,7 +489,7 @@ class TestService:
         )
         _ = lifecycle_service.initialize(service_config)
         result = lifecycle_service.shutdown()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value == "shutdown"
         assert lifecycle_service.shutdown_called is True
         assert lifecycle_service.health_check() is False

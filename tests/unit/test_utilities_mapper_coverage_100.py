@@ -81,67 +81,67 @@ class UtilitiesMapperCoverage100Namespace:
             """Test simple dict extraction."""
             data = {"a": 1, "b": 2}
             result = u.extract(data, "a")
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq=1)
 
         def test_extract_dict_nested(self) -> None:
             """Test nested dict extraction."""
             data = {"a": {"b": {"c": 3}}}
             result = u.extract(data, "a.b.c")
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq=3)
 
         def test_extract_object(self) -> None:
             """Test t.NormalizedValue attribute extraction."""
             obj = SimpleObj(name="test", value=42)
             result = u.extract(obj, "name")
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq="test")
 
         def test_extract_model(self) -> None:
             """Test Pydantic model extraction."""
-            model = m.Core.Unit.ComplexModel(
+            model = m.Core.Tests.ComplexModel(
                 id=1,
                 data={"key": "val"},
                 items=["a", "b"],
             )
             result = u.extract(model, "data.key")
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq="val")
 
         def test_extract_array_index(self) -> None:
             """Test array indexing."""
             data: t.ContainerMapping = {"items": [1, 2, 3]}
             result = u.extract(data, "items[1]")
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq=2)
 
         def test_extract_array_index_nested(self) -> None:
             """Test nested array indexing."""
             data: t.ContainerMapping = {"users": [{"name": "alice"}, {"name": "bob"}]}
             result = u.extract(data, "users[1].name")
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq="bob")
 
         def test_extract_missing_default(self) -> None:
             """Test missing key with default."""
             data = {"a": 1}
             result = u.extract(data, "b", default=10)
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq=10)
 
         def test_extract_missing_required(self) -> None:
             """Test missing key required."""
             data = {"a": 1}
             result = u.extract(data, "b", required=True)
-            _ = u.Tests.assert_failure(result)
+            _ = u.Core.Tests.assert_failure(result)
             assert "not found" in str(result.error)
 
         def test_extract_array_index_error(self) -> None:
             """Test invalid array index."""
             data: t.ContainerMapping = {"items": [1]}
             result = u.extract(data, "items[5]", required=True)
-            _ = u.Tests.assert_failure(result)
+            _ = u.Core.Tests.assert_failure(result)
             msg = str(result.error)
             assert any(x in msg for x in ["out of range", "Invalid index", "not found"])
 
@@ -149,7 +149,7 @@ class UtilitiesMapperCoverage100Namespace:
             """Test extraction when intermediate path is None."""
             data: Mapping[str, None] = {"a": None}
             result = u.extract(data, "a.b", default="defs")
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, eq="defs")
             result_req = u.extract(data, "a.b", required=True)
             tm.fail(result_req)
@@ -218,7 +218,10 @@ class UtilitiesMapperCoverage100Namespace:
             assert "obj" in res
             tm.that(
                 res["obj"],
-                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
+                eq=cast(
+                    "t.Core.Tests.TestobjectSerializable",
+                    {"name": "test", "value": 1},
+                ),
             )
 
         def test_convert_to_json_safe(self) -> None:
@@ -236,7 +239,10 @@ class UtilitiesMapperCoverage100Namespace:
 
             tm.that(
                 res["obj"],
-                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
+                eq=cast(
+                    "t.Core.Tests.TestobjectSerializable",
+                    {"name": "test", "value": 1},
+                ),
             )
             tm.that(res["path"], eq="/tmp/example")
             tm.that(res["when"], eq="2026-03-12T10:30:45+00:00")
@@ -248,7 +254,10 @@ class UtilitiesMapperCoverage100Namespace:
                 res[key] = self._to_json_safe(val)
             tm.that(
                 res["a"],
-                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
+                eq=cast(
+                    "t.Core.Tests.TestobjectSerializable",
+                    {"name": "test", "value": 1},
+                ),
             )
 
         def test_convert_list_to_json(self) -> None:
@@ -263,7 +272,10 @@ class UtilitiesMapperCoverage100Namespace:
                 res.append(item_dict)
             tm.that(
                 res[0]["a"],
-                eq=cast("t.Tests.TestobjectSerializable", {"name": "test", "value": 1}),
+                eq=cast(
+                    "t.Core.Tests.TestobjectSerializable",
+                    {"name": "test", "value": 1},
+                ),
             )
 
     class TestuMapperAdvanced:

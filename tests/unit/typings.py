@@ -4,9 +4,9 @@ from collections.abc import Mapping, MutableSequence
 
 from tests import t
 
-type TestCaseMap = Mapping[str, t.Tests.TestobjectSerializable]
+type TestCaseMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
 
-type InputPayloadMap = Mapping[str, t.Tests.TestobjectSerializable]
+type InputPayloadMap = Mapping[str, t.Core.Tests.TestobjectSerializable]
 
 type SampleValue = t.Primitives | None
 

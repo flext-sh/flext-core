@@ -31,11 +31,11 @@ from tests import c, m, p, r, t, u
 
 def _create_entities_batch(
     names: t.StrSequence,
-    values: Sequence[t.Tests.TestobjectSerializable],
-    entity_class: Callable[..., m.Core.DomainTestEntity],
+    values: Sequence[t.Core.Tests.TestobjectSerializable],
+    entity_class: Callable[..., m.Core.Tests.DomainTestEntity],
     remove_ids: Sequence[bool] | None = None,
-) -> r[Sequence[m.Core.DomainTestEntity]]:
-    return u.Tests.create_test_entities_batch(
+) -> r[Sequence[m.Core.Tests.DomainTestEntity]]:
+    return u.Core.Tests.create_test_entities_batch(
         names=names,
         values=values,
         entity_class=entity_class,
@@ -45,10 +45,10 @@ def _create_entities_batch(
 
 def _create_entity(
     name: str,
-    value: t.Tests.TestobjectSerializable,
-    entity_class: Callable[..., m.Core.DomainTestEntity],
-) -> m.Core.DomainTestEntity:
-    return u.Tests.create_test_entity_instance(
+    value: t.Core.Tests.TestobjectSerializable,
+    entity_class: Callable[..., m.Core.Tests.DomainTestEntity],
+) -> m.Core.Tests.DomainTestEntity:
+    return u.Core.Tests.create_test_entity_instance(
         name=name,
         value=value,
         entity_class=entity_class,
@@ -58,9 +58,9 @@ def _create_entity(
 def _create_value_object(
     data: str,
     count: int,
-    value_class: p.Tests.ValueFactory[m.Core.DomainTestValue],
-) -> m.Core.DomainTestValue:
-    return u.Tests.create_test_value_object_instance(
+    value_class: p.Core.Tests.ValueFactory[m.Core.Tests.DomainTestValue],
+) -> m.Core.Tests.DomainTestValue:
+    return u.Core.Tests.create_test_value_object_instance(
         data=data,
         count=count,
         value_class=value_class,
@@ -70,9 +70,9 @@ def _create_value_object(
 def _create_value_objects_batch(
     data_list: t.StrSequence,
     count_list: Sequence[int],
-    value_class: p.Tests.ValueFactory[m.Core.DomainTestValue],
-) -> Sequence[m.Core.DomainTestValue]:
-    return u.Tests.create_test_value_objects_batch(
+    value_class: p.Core.Tests.ValueFactory[m.Core.Tests.DomainTestValue],
+) -> Sequence[m.Core.Tests.DomainTestValue]:
+    return u.Core.Tests.create_test_value_objects_batch(
         data_list=data_list,
         count_list=count_list,
         value_class=value_class,
@@ -82,17 +82,19 @@ def _create_value_objects_batch(
 def _build_domain_test_entity(
     *,
     name: str,
-    value: t.Tests.TestobjectSerializable,
-    **_kwargs: t.Tests.TestobjectSerializable,
-) -> m.Core.DomainTestEntity:
-    return m.Core.DomainTestEntity(
+    value: t.Core.Tests.TestobjectSerializable,
+    **_kwargs: t.Core.Tests.TestobjectSerializable,
+) -> m.Core.Tests.DomainTestEntity:
+    return m.Core.Tests.DomainTestEntity(
         name=name,
         value=cast("int", value),
         domain_events=[],
     )
 
 
-def _convert_to_general_value(obj: t.Tests.TestobjectSerializable) -> t.NormalizedValue:
+def _convert_to_general_value(
+    obj: t.Core.Tests.TestobjectSerializable,
+) -> t.NormalizedValue:
     """Convert test object to NormalizedValue (handles Pydantic models).
 
     Args:
@@ -113,7 +115,7 @@ def _convert_to_general_value(obj: t.Tests.TestobjectSerializable) -> t.Normaliz
     return str(obj)
 
 
-def _require_payload_str(value: t.Tests.TestobjectSerializable) -> str:
+def _require_payload_str(value: t.Core.Tests.TestobjectSerializable) -> str:
     if isinstance(value, str):
         return value
     msg = f"Expected str payload, got {type(value).__name__}"
@@ -121,8 +123,8 @@ def _require_payload_str(value: t.Tests.TestobjectSerializable) -> str:
 
 
 def _require_payload_mapping(
-    value: t.Tests.TestobjectSerializable,
-) -> Mapping[str, t.Tests.TestobjectSerializable]:
+    value: t.Core.Tests.TestobjectSerializable,
+) -> Mapping[str, t.Core.Tests.TestobjectSerializable]:
     if isinstance(value, Mapping):
         return value
     msg = f"Expected mapping payload, got {type(value).__name__}"
@@ -131,100 +133,102 @@ def _require_payload_mapping(
 
 def _as_test_payload(
     value: type[t.Primitives],
-) -> t.Tests.TestobjectSerializable:
+) -> t.Core.Tests.TestobjectSerializable:
     return value
 
 
 def _as_payload_map(
-    value: m.Core.Unit.InputPayloadMap,
-) -> Mapping[str, t.Tests.TestobjectSerializable]:
+    value: m.Core.Tests.InputPayloadMap,
+) -> Mapping[str, t.Core.Tests.TestobjectSerializable]:
     return value
 
 
-def create_compare_entities_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
+def create_compare_entities_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     """Create test cases for entity comparison using constants."""
-    entities_result: r[Sequence[m.Core.DomainTestEntity]] = _create_entities_batch(
-        names=[
-            c.Core.TestDomain.ENTITY_NAME_ALICE,
-            c.Core.TestDomain.ENTITY_NAME_BOB,
-            c.Core.TestDomain.ENTITY_NAME_ALICE,
-        ],
-        values=[
-            c.Core.TestDomain.ENTITY_VALUE_10,
-            c.Core.TestDomain.ENTITY_VALUE_20,
-            c.Core.TestDomain.ENTITY_VALUE_10,
-        ],
-        entity_class=_build_domain_test_entity,
-        remove_ids=[False, False, True],
+    entities_result: r[Sequence[m.Core.Tests.DomainTestEntity]] = (
+        _create_entities_batch(
+            names=[
+                c.Core.Tests.TestDomain.ENTITY_NAME_ALICE,
+                c.Core.Tests.TestDomain.ENTITY_NAME_BOB,
+                c.Core.Tests.TestDomain.ENTITY_NAME_ALICE,
+            ],
+            values=[
+                c.Core.Tests.TestDomain.ENTITY_VALUE_10,
+                c.Core.Tests.TestDomain.ENTITY_VALUE_20,
+                c.Core.Tests.TestDomain.ENTITY_VALUE_10,
+            ],
+            entity_class=_build_domain_test_entity,
+            remove_ids=[False, False, True],
+        )
     )
     assert entities_result.is_success, (
         f"Failed to create entities: {entities_result.error}"
     )
-    entities: Sequence[m.Core.DomainTestEntity] = entities_result.value
+    entities: Sequence[m.Core.Tests.DomainTestEntity] = entities_result.value
     assert isinstance(entities, list)
-    alice_entity: m.Core.DomainTestEntity
-    bob_entity: m.Core.DomainTestEntity
-    alice_no_id: m.Core.DomainTestEntity
+    alice_entity: m.Core.Tests.DomainTestEntity
+    bob_entity: m.Core.Tests.DomainTestEntity
+    alice_no_id: m.Core.Tests.DomainTestEntity
     alice_entity, bob_entity, alice_no_id = entities
-    value_obj: m.Core.DomainTestValue = _create_value_object(
-        data=c.Core.TestDomain.VALUE_DATA_TEST,
-        count=c.Core.TestDomain.VALUE_COUNT_5,
-        value_class=m.Core.DomainTestValue,
+    value_obj: m.Core.Tests.DomainTestValue = _create_value_object(
+        data=c.Core.Tests.TestDomain.VALUE_DATA_TEST,
+        count=c.Core.Tests.TestDomain.VALUE_COUNT_5,
+        value_class=m.Core.Tests.DomainTestValue,
     )
-    custom1 = m.Core.CustomEntity(c.Core.TestDomain.CUSTOM_ID_1)
-    custom2 = m.Core.CustomEntity(c.Core.TestDomain.CUSTOM_ID_1)
-    input_data_same_id: m.Core.Unit.InputPayloadMap = {
+    custom1 = m.Core.Tests.CustomEntity(c.Core.Tests.TestDomain.CUSTOM_ID_1)
+    custom2 = m.Core.Tests.CustomEntity(c.Core.Tests.TestDomain.CUSTOM_ID_1)
+    input_data_same_id: m.Core.Tests.InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": alice_entity,
     }
-    input_data_different_id: m.Core.Unit.InputPayloadMap = {
+    input_data_different_id: m.Core.Tests.InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": bob_entity,
     }
-    input_data_different_type: m.Core.Unit.InputPayloadMap = {
+    input_data_different_type: m.Core.Tests.InputPayloadMap = {
         "entity_a": alice_entity,
         "entity_b": value_obj,
     }
-    input_data_no_id: m.Core.Unit.InputPayloadMap = {
+    input_data_no_id: m.Core.Tests.InputPayloadMap = {
         "entity_a": alice_no_id,
         "entity_b": bob_entity,
     }
-    input_data_custom: m.Core.Unit.InputPayloadMap = cast(
-        "m.Core.Unit.InputPayloadMap",
+    input_data_custom: m.Core.Tests.InputPayloadMap = cast(
+        "m.Core.Tests.InputPayloadMap",
         {"entity_a": custom1, "entity_b": custom2},
     )
     return cast(
-        "Sequence[m.Core.Unit.TestCaseMap]",
+        "Sequence[m.Core.Tests.TestCaseMap]",
         [
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="same_id",
                 input_data=_as_payload_map(input_data_same_id),
                 expected_result=True,
                 id_attr="unique_id",
             ),
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="different_id",
                 input_data=_as_payload_map(input_data_different_id),
                 expected_result=False,
                 id_attr="unique_id",
             ),
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="different_type",
                 input_data=_as_payload_map(input_data_different_type),
                 expected_result=False,
                 id_attr="unique_id",
             ),
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="no_id",
                 input_data=_as_payload_map(input_data_no_id),
                 expected_result=False,
                 id_attr="unique_id",
             ),
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="compare_entities_by_id",
                 description="custom_id_attr",
                 input_data=_as_payload_map(input_data_custom),
@@ -235,53 +239,55 @@ def create_compare_entities_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
     )
 
 
-def create_hash_entity_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
+def create_hash_entity_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     """Create test cases for entity hashing using constants."""
-    entities_result: r[Sequence[m.Core.DomainTestEntity]] = _create_entities_batch(
-        names=[
-            c.Core.TestDomain.ENTITY_NAME_ALICE,
-            c.Core.TestDomain.ENTITY_NAME_ALICE,
-        ],
-        values=[
-            c.Core.TestDomain.ENTITY_VALUE_10,
-            c.Core.TestDomain.ENTITY_VALUE_10,
-        ],
-        entity_class=_build_domain_test_entity,
-        remove_ids=[False, True],
+    entities_result: r[Sequence[m.Core.Tests.DomainTestEntity]] = (
+        _create_entities_batch(
+            names=[
+                c.Core.Tests.TestDomain.ENTITY_NAME_ALICE,
+                c.Core.Tests.TestDomain.ENTITY_NAME_ALICE,
+            ],
+            values=[
+                c.Core.Tests.TestDomain.ENTITY_VALUE_10,
+                c.Core.Tests.TestDomain.ENTITY_VALUE_10,
+            ],
+            entity_class=_build_domain_test_entity,
+            remove_ids=[False, True],
+        )
     )
     assert entities_result.is_success, (
         f"Failed to create entities: {entities_result.error}"
     )
-    entities: Sequence[m.Core.DomainTestEntity] = entities_result.value
+    entities: Sequence[m.Core.Tests.DomainTestEntity] = entities_result.value
     assert isinstance(entities, list)
-    alice_entity: m.Core.DomainTestEntity
-    alice_no_id: m.Core.DomainTestEntity
+    alice_entity: m.Core.Tests.DomainTestEntity
+    alice_no_id: m.Core.Tests.DomainTestEntity
     alice_entity, alice_no_id = entities
-    custom = m.Core.CustomEntity(c.Core.TestDomain.CUSTOM_ID_1)
-    input_data_with_id: m.Core.Unit.InputPayloadMap = {"entity": alice_entity}
-    input_data_no_id: m.Core.Unit.InputPayloadMap = {"entity": alice_no_id}
-    input_data_custom: m.Core.Unit.InputPayloadMap = cast(
-        "m.Core.Unit.InputPayloadMap",
+    custom = m.Core.Tests.CustomEntity(c.Core.Tests.TestDomain.CUSTOM_ID_1)
+    input_data_with_id: m.Core.Tests.InputPayloadMap = {"entity": alice_entity}
+    input_data_no_id: m.Core.Tests.InputPayloadMap = {"entity": alice_no_id}
+    input_data_custom: m.Core.Tests.InputPayloadMap = cast(
+        "m.Core.Tests.InputPayloadMap",
         {"entity": custom},
     )
     return cast(
-        "Sequence[m.Core.Unit.TestCaseMap]",
+        "Sequence[m.Core.Tests.TestCaseMap]",
         [
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="hash_entity_by_id",
                 description="with_id",
                 input_data=_as_payload_map(input_data_with_id),
                 expected_result=_as_test_payload(int),
                 id_attr="unique_id",
             ),
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="hash_entity_by_id",
                 description="no_id",
                 input_data=_as_payload_map(input_data_no_id),
                 expected_result=_as_test_payload(int),
                 id_attr="unique_id",
             ),
-            u.Tests.create_operation_test_case(
+            u.Core.Tests.create_operation_test_case(
                 operation="hash_entity_by_id",
                 description="custom_id_attr",
                 input_data=_as_payload_map(input_data_custom),
@@ -292,35 +298,35 @@ def create_hash_entity_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
     )
 
 
-def create_compare_value_objects_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
+def create_compare_value_objects_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     """Create test cases for value t.NormalizedValue comparison using constants."""
-    value_objs: Sequence[m.Core.DomainTestValue] = _create_value_objects_batch(
+    value_objs: Sequence[m.Core.Tests.DomainTestValue] = _create_value_objects_batch(
         data_list=[
-            c.Core.TestDomain.VALUE_DATA_TEST,
-            c.Core.TestDomain.VALUE_DATA_TEST,
+            c.Core.Tests.TestDomain.VALUE_DATA_TEST,
+            c.Core.Tests.TestDomain.VALUE_DATA_TEST,
         ],
         count_list=[
-            c.Core.TestDomain.VALUE_COUNT_5,
-            c.Core.TestDomain.VALUE_COUNT_10,
+            c.Core.Tests.TestDomain.VALUE_COUNT_5,
+            c.Core.Tests.TestDomain.VALUE_COUNT_10,
         ],
-        value_class=m.Core.DomainTestValue,
+        value_class=m.Core.Tests.DomainTestValue,
     )
-    value1: m.Core.DomainTestValue
-    value2: m.Core.DomainTestValue
+    value1: m.Core.Tests.DomainTestValue
+    value2: m.Core.Tests.DomainTestValue
     value1, value2 = value_objs
-    alice_entity: m.Core.DomainTestEntity = _create_entity(
-        name=c.Core.TestDomain.ENTITY_NAME_ALICE,
-        value=c.Core.TestDomain.ENTITY_VALUE_10,
+    alice_entity: m.Core.Tests.DomainTestEntity = _create_entity(
+        name=c.Core.Tests.TestDomain.ENTITY_NAME_ALICE,
+        value=c.Core.Tests.TestDomain.ENTITY_VALUE_10,
         entity_class=_build_domain_test_entity,
     )
-    simple1 = m.Core.SimpleValue(c.Core.TestDomain.VALUE_DATA_TEST)
-    simple2 = m.Core.SimpleValue(c.Core.TestDomain.VALUE_DATA_TEST)
-    bad1 = u.Tests.BadModelDump()
-    bad2 = u.Tests.BadModelDump()
-    no_dict1 = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
-    no_dict2 = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
-    input_data_list: Sequence[m.Core.Unit.InputPayloadMap] = cast(
-        "Sequence[m.Core.Unit.InputPayloadMap]",
+    simple1 = m.Core.Tests.SimpleValue(c.Core.Tests.TestDomain.VALUE_DATA_TEST)
+    simple2 = m.Core.Tests.SimpleValue(c.Core.Tests.TestDomain.VALUE_DATA_TEST)
+    bad1 = u.Core.Tests.BadModelDump()
+    bad2 = u.Core.Tests.BadModelDump()
+    no_dict1 = m.Core.Tests.NoDict(c.Core.Tests.TestDomain.VALUE_COUNT_5)
+    no_dict2 = m.Core.Tests.NoDict(c.Core.Tests.TestDomain.VALUE_COUNT_5)
+    input_data_list: Sequence[m.Core.Tests.InputPayloadMap] = cast(
+        "Sequence[m.Core.Tests.InputPayloadMap]",
         [
             {"obj_a": value1, "obj_b": value1},
             {"obj_a": value1, "obj_b": value2},
@@ -331,8 +337,8 @@ def create_compare_value_objects_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
         ],
     )
     return cast(
-        "Sequence[m.Core.Unit.TestCaseMap]",
-        u.Tests.create_batch_operation_test_cases(
+        "Sequence[m.Core.Tests.TestCaseMap]",
+        u.Core.Tests.create_batch_operation_test_cases(
             operation="compare_value_objects_by_value",
             descriptions=[
                 "same_values",
@@ -348,23 +354,23 @@ def create_compare_value_objects_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
     )
 
 
-def create_hash_value_object_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
+def create_hash_value_object_cases() -> Sequence[m.Core.Tests.TestCaseMap]:
     """Create test cases for value t.NormalizedValue hashing using constants."""
-    value_obj: m.Core.DomainTestValue = _create_value_object(
-        data=c.Core.TestDomain.VALUE_DATA_TEST,
-        count=c.Core.TestDomain.VALUE_COUNT_5,
-        value_class=m.Core.DomainTestValue,
+    value_obj: m.Core.Tests.DomainTestValue = _create_value_object(
+        data=c.Core.Tests.TestDomain.VALUE_DATA_TEST,
+        count=c.Core.Tests.TestDomain.VALUE_COUNT_5,
+        value_class=m.Core.Tests.DomainTestValue,
     )
-    simple_obj = m.Core.SimpleValue(c.Core.TestDomain.VALUE_DATA_TEST)
-    bad_obj = u.Tests.BadModelDump()
-    complex_items_list: t.StrSequence = list(c.Core.TestDomain.COMPLEX_ITEMS)
-    complex_obj = m.Core.ComplexValue(
-        c.Core.TestDomain.VALUE_DATA_TEST,
+    simple_obj = m.Core.Tests.SimpleValue(c.Core.Tests.TestDomain.VALUE_DATA_TEST)
+    bad_obj = u.Core.Tests.BadModelDump()
+    complex_items_list: t.StrSequence = list(c.Core.Tests.TestDomain.COMPLEX_ITEMS)
+    complex_obj = m.Core.Tests.ComplexValue(
+        c.Core.Tests.TestDomain.VALUE_DATA_TEST,
         complex_items_list,
     )
-    no_dict_obj = m.Core.NoDict(c.Core.TestDomain.VALUE_COUNT_5)
-    input_data_list_hash: Sequence[m.Core.Unit.InputPayloadMap] = cast(
-        "Sequence[m.Core.Unit.InputPayloadMap]",
+    no_dict_obj = m.Core.Tests.NoDict(c.Core.Tests.TestDomain.VALUE_COUNT_5)
+    input_data_list_hash: Sequence[m.Core.Tests.InputPayloadMap] = cast(
+        "Sequence[m.Core.Tests.InputPayloadMap]",
         [
             {"obj": value_obj},
             {"obj": simple_obj},
@@ -374,8 +380,8 @@ def create_hash_value_object_cases() -> Sequence[m.Core.Unit.TestCaseMap]:
         ],
     )
     return cast(
-        "Sequence[m.Core.Unit.TestCaseMap]",
-        u.Tests.create_batch_operation_test_cases(
+        "Sequence[m.Core.Tests.TestCaseMap]",
+        u.Core.Tests.create_batch_operation_test_cases(
             operation="hash_value_object_by_value",
             descriptions=[
                 "with_model_dump",
@@ -406,15 +412,15 @@ class TestuDomain:
     )
     def test_compare_entities_by_id(
         self,
-        test_case: m.Core.Unit.TestCaseMap,
+        test_case: m.Core.Tests.TestCaseMap,
     ) -> None:
         """Test compare_entities_by_id using u."""
-        operation_result = u.Tests.execute_domain_operation(
+        operation_result = u.Core.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
-        u.Tests.execute_and_assert_operation_result(
+        u.Core.Tests.execute_and_assert_operation_result(
             lambda: operation_result,
             test_case,
         )
@@ -424,9 +430,9 @@ class TestuDomain:
         create_hash_entity_cases(),
         ids=lambda case: f"hash_entity_{case['description']}",
     )
-    def test_hash_entity_by_id(self, test_case: m.Core.Unit.TestCaseMap) -> None:
+    def test_hash_entity_by_id(self, test_case: m.Core.Tests.TestCaseMap) -> None:
         """Test hash_entity_by_id using u."""
-        operation_result = u.Tests.execute_domain_operation(
+        operation_result = u.Core.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
@@ -446,10 +452,10 @@ class TestuDomain:
     )
     def test_compare_value_objects_by_value(
         self,
-        test_case: m.Core.Unit.TestCaseMap,
+        test_case: m.Core.Tests.TestCaseMap,
     ) -> None:
         """Test compare_value_objects_by_value using u."""
-        operation_result = u.Tests.execute_domain_operation(
+        operation_result = u.Core.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
@@ -470,10 +476,10 @@ class TestuDomain:
     )
     def test_hash_value_object_by_value(
         self,
-        test_case: m.Core.Unit.TestCaseMap,
+        test_case: m.Core.Tests.TestCaseMap,
     ) -> None:
         """Test hash_value_object_by_value using u."""
-        operation_result = u.Tests.execute_domain_operation(
+        operation_result = u.Core.Tests.execute_domain_operation(
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )

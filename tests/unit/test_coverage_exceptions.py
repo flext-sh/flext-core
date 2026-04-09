@@ -218,7 +218,7 @@ class TestCoverageExceptions:
             raise e.ValidationError(error_msg, field="email")
         except e.ValidationError as err:
             result = r[bool].fail(str(err))
-            _ = u.Tests.assert_failure(result)
+            _ = u.Core.Tests.assert_failure(result)
             tm.fail(result, has="Test error")
 
     def test_exception_in_railway_pattern(self) -> None:
@@ -242,7 +242,7 @@ class TestCoverageExceptions:
             )
         except e.ValidationError as err:
             result = r[bool].fail(f"Error in user creation: {err}")
-            _ = u.Tests.assert_failure(result)
+            _ = u.Core.Tests.assert_failure(result)
             tm.that(result.error, ne=None)
             if result.error is not None:
                 tm.that(result.error, has="Validation failed")

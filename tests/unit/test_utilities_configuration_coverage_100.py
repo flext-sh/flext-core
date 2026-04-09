@@ -18,9 +18,9 @@ class TestFlextUtilitiesConfiguration:
 
         @staticmethod
         def that(
-            value: t.Tests.TestobjectSerializable,
+            value: t.Core.Tests.TestobjectSerializable,
             *,
-            eq: t.Tests.TestobjectSerializable = None,
+            eq: t.Core.Tests.TestobjectSerializable = None,
             none: bool | None = None,
             contains: str | None = None,
         ) -> None:

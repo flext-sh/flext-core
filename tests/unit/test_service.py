@@ -218,13 +218,13 @@ class TestsCore:
 
         service = ConcreteService()
         result = service.execute()
-        u.Tests.assert_success_with_value(result, "test_value")
+        u.Core.Tests.assert_success_with_value(result, "test_value")
 
     def test_basic_execution(self) -> None:
         """Test basic service execution returns expected type."""
         service = self.UserService()
         result = service.execute()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         data = result.value
         assert isinstance(data, self.UserData)
         assert data.user_id == 1
@@ -239,21 +239,21 @@ class TestsCore:
         """Test default business rules validation."""
         service = self.UserService()
         result = service.validate_business_rules()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test custom business rules validation success."""
         service = self.ComplexService()
         service.name = "test"
         result = service.validate_business_rules()
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test custom business rules validation failure."""
         service = self.ComplexService()
         service.name = ""
         result = service.validate_business_rules()
-        u.Tests.assert_failure_with_error(result, "Missing value")
+        u.Core.Tests.assert_failure_with_error(result, "Missing value")
 
     def test_service_validation_using_generic_helpers(self) -> None:
         """Test service validation using generic helpers - real behavior."""
@@ -261,7 +261,7 @@ class TestsCore:
         service.name = "test"
         service.amount = 10
         service.enabled = True
-        validation_result = u.Tests.validate_model_attributes(
+        validation_result = u.Core.Tests.validate_model_attributes(
             cast("p.Model", service),
             required_attrs=["name", "amount", "enabled"],
             optional_attrs=["validate_business_rules"],
@@ -274,13 +274,13 @@ class TestsCore:
         service.name = ""
         service.amount = -1
         service.enabled = False
-        validation_result = u.Tests.validate_model_attributes(
+        validation_result = u.Core.Tests.validate_model_attributes(
             cast("p.Model", service),
             required_attrs=["name"],
         )
-        _ = u.Tests.assert_success(validation_result)
+        _ = u.Core.Tests.assert_success(validation_result)
         business_result = service.validate_business_rules()
-        _ = u.Tests.assert_failure(business_result)
+        _ = u.Core.Tests.assert_failure(business_result)
 
     @given(st.text(min_size=1))
     def test_execute_hypothesis(self, value: str) -> None:

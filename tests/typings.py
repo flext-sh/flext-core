@@ -15,12 +15,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_cli import t
 from flext_core import T, T_co, T_contra
-from flext_tests import FlextTestsTypes
+from flext_tests import t
 
 
-class TestsFlextCoreTypes(FlextTestsTypes, t):
+class TestsFlextCoreTypes(t):
     """Type system foundation for flext-core tests - extends TestsFlextTypes.
 
     Architecture: Extends TestsFlextTypes with flext-core-specific type definitions.
@@ -39,16 +38,23 @@ class TestsFlextCoreTypes(FlextTestsTypes, t):
         Only defines types that are truly flext-core-specific.
         """
 
-        type ServiceConfigMapping = Mapping[
-            str,
-            FlextTestsTypes.ContainerValue | MutableSequence[str],
-        ]
-        "Service configuration mapping specific to flext-core services."
-        type HandlerConfigMapping = Mapping[
-            str,
-            FlextTestsTypes.ContainerValue | MutableSequence[str],
-        ]
-        "Handler configuration mapping specific to flext-core handlers."
+        class Tests(t.Tests):
+            """flext-core test types namespace."""
+
+            type ServiceConfigMapping = Mapping[
+                str,
+                t.ContainerValue | MutableSequence[str],
+            ]
+            "Service configuration mapping specific to flext-core services."
+            type HandlerConfigMapping = Mapping[
+                str,
+                t.ContainerValue | MutableSequence[str],
+            ]
+            "Handler configuration mapping specific to flext-core handlers."
+
+            type TestCaseMap = Mapping[str, t.Tests.TestobjectSerializable]
+
+            type InputPayloadMap = Mapping[str, t.Tests.TestobjectSerializable]
 
 
 t = TestsFlextCoreTypes

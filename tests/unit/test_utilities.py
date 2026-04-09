@@ -262,7 +262,7 @@ class Testu(TextUtilityContract):
             quick_success,
             max_attempts=c.MAX_RETRY_ATTEMPTS,
         )
-        u.Tests.assert_success_with_value(result, "success")
+        u.Core.Tests.assert_success_with_value(result, "success")
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
@@ -279,7 +279,7 @@ class Testu(TextUtilityContract):
             max_attempts=5,
             delay_seconds=c.DEFAULT_RETRY_DELAY_SECONDS,
         )
-        u.Tests.assert_success_with_value(result, "Success")
+        u.Core.Tests.assert_success_with_value(result, "Success")
         assert call_count[0] >= 3
 
     def test_string_conversion_edge_cases(self) -> None:

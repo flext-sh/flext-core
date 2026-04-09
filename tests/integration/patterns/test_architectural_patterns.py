@@ -169,7 +169,7 @@ class TestArchitecturalPatterns:
                 f"entity_{i}",
                 t.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
             )
-            u.Tests.assert_success(
+            u.Core.Tests.assert_success(
                 result,
                 f"Save operation {i} should succeed",
             )

@@ -138,7 +138,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
         u.is_pydantic_model(
             cast(
                 "t.NormalizedValue",
-                m.Core.Unit._Model.model_validate({"value": 1}),
+                m.Core.Tests._Model.model_validate({"value": 1}),
             ),
         ),
         eq=True,

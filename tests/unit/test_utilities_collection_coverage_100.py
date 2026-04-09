@@ -877,14 +877,14 @@ class TestUtilitiesCollectionCoverage:
         """Test parse_sequence with various scenarios."""
         result = u.parse_sequence(scenario.enum_cls, scenario.values)
         if scenario.expected_success:
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             tm.that(result.value, none=False)
             if scenario.expected_count is not None:
                 tm.that(len(result.value), eq=scenario.expected_count)
             for val in result.value:
                 tm.that(val, is_=scenario.enum_cls)
         else:
-            _ = u.Tests.assert_failure(result)
+            _ = u.Core.Tests.assert_failure(result)
             tm.that(result.error, none=False)
             if scenario.error_contains:
                 tm.that(result.error, has=scenario.error_contains)
@@ -892,7 +892,7 @@ class TestUtilitiesCollectionCoverage:
     def test_parse_sequence_with_custom_enum(self) -> None:
         """Test parse_sequence with custom enum class."""
         result = u.parse_sequence(FixturePriority, ["low", "medium", "high"])
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         tm.that(result.value, none=False)
         tm.that(len(result.value), eq=3)
         tm.that(all(isinstance(v, FixturePriority) for v in result.value), eq=True)
@@ -903,7 +903,7 @@ class TestUtilitiesCollectionCoverage:
             FixtureStatus,
             ["active", "invalid1", "invalid2"],
         )
-        _ = u.Tests.assert_failure(result)
+        _ = u.Core.Tests.assert_failure(result)
         tm.that(result.error, none=False)
         tm.that(result.error, has="Invalid")
         error_message = result.error or ""
@@ -1021,11 +1021,11 @@ class TestUtilitiesCollectionCoverage:
             exclude_keys=scenario.exclude_keys,
         )
         if scenario.expected_failure:
-            _ = u.Tests.assert_failure(result)
+            _ = u.Core.Tests.assert_failure(result)
             if scenario.error_contains:
                 tm.that(str(result.error), has=scenario.error_contains)
         else:
-            _ = u.Tests.assert_success(result)
+            _ = u.Core.Tests.assert_success(result)
             assert result.value == scenario.expected_result
 
     def test_merge_deep(self) -> None:
@@ -1033,7 +1033,7 @@ class TestUtilitiesCollectionCoverage:
         base_data: t.ContainerMapping = {"a": 1, "b": {"x": 1}}
         other_data: t.ContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
@@ -1043,7 +1043,7 @@ class TestUtilitiesCollectionCoverage:
         base_data: t.ContainerMapping = {"a": 1, "b": {"x": 1}}
         other_data: t.ContainerMapping = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base_data, other_data, strategy="override")
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)

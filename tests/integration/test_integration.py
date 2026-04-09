@@ -9,10 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextContainer, __version__, r
-from tests import p, t, u
-
-from ..conftest import FunctionalExternalService
+from flext_core import FlextContainer, __version__
+from tests import FunctionalExternalService, p, r, t, u
 
 pytestmark = [pytest.mark.integration]
 
@@ -43,7 +41,7 @@ class TestLibraryIntegration:
         """
         test_value = str(sample_data["string"])
         result = r[str].ok(test_value)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert result.value == test_value
         entity_id = u.generate()
         assert isinstance(entity_id, str)
@@ -98,7 +96,7 @@ class TestLibraryIntegration:
         """Test entity ID used in r."""
         entity_id = u.generate()
         result = r[str].ok(entity_id)
-        _ = u.Tests.assert_success(result)
+        _ = u.Core.Tests.assert_success(result)
         assert isinstance(result.value, str)
         assert len(result.value) == 36
         assert result.value.count("-") == 4

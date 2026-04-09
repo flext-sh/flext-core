@@ -83,7 +83,7 @@ class TestFlextConstants:
         ids=_constant_case_id,
     )
     def test_base_constant_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Base constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -126,7 +126,7 @@ class TestFlextConstants:
         ],
     )
     def test_cqrs_constant_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """CQRS constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -351,7 +351,7 @@ class TestFlextConstants:
         ],
     )
     def test_validation_numeric_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Validation numeric constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -502,7 +502,7 @@ class TestFlextConstants:
         ],
     )
     def test_infrastructure_constant_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Infrastructure constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -627,7 +627,7 @@ class TestFlextConstants:
         ],
     )
     def test_platform_constant_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Platform constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -759,7 +759,7 @@ class TestFlextConstants:
         ],
     )
     def test_domain_constant_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Domain constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -883,7 +883,7 @@ class TestFlextConstants:
         ],
     )
     def test_settings_constant_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Settings constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)
@@ -1016,7 +1016,7 @@ class TestFlextConstants:
         ],
     )
     def test_mixins_constant_values(
-        self, attr: str, expected: t.Tests.MatcherKwargValue
+        self, attr: str, expected: t.Core.Tests.MatcherKwargValue
     ) -> None:
         """Mixins constants have correct values."""
         tm.that(getattr(c, attr), eq=expected)

@@ -110,7 +110,8 @@ class TestrCoverage:
         tm.fail(
             result,
             data=cast(
-                "t.Tests.TestobjectSerializable", {"status": "failed", "count": 5}
+                "t.Core.Tests.TestobjectSerializable",
+                {"status": "failed", "count": 5},
             ),
         )
 

@@ -32,7 +32,7 @@ class TestAdvancedPatterns:
     class MockScenario:
         """Mock scenario t.NormalizedValue for testing purposes."""
 
-        def __init__(self, name: str, data: m.Core.MockScenarioData) -> None:
+        def __init__(self, name: str, data: m.Core.Tests.MockScenarioData) -> None:
             """Initialize mockscenario:."""
             super().__init__()
             self.name = name
@@ -165,7 +165,7 @@ class TestAdvancedPatterns:
             then_converted: t.ConfigurationMapping = {
                 key: convert_dict_value(value) for key, value in then_mapped.items()
             }
-            scenario_data = m.Core.MockScenarioData.model_validate(
+            scenario_data = m.Core.Tests.MockScenarioData.model_validate(
                 obj={
                     "given": given_converted,
                     "when": when_converted,
@@ -278,9 +278,9 @@ class TestAdvancedPatterns:
             """Initialize parameterizedtestbuilder:."""
             super().__init__()
             self.test_name = test_name
-            self._cases: MutableSequence[m.Core.FixtureCaseDict] = []
-            self._success_cases: MutableSequence[m.Core.FixtureCaseDict] = []
-            self._failure_cases: MutableSequence[m.Core.FixtureCaseDict] = []
+            self._cases: MutableSequence[m.Core.Tests.FixtureCaseDict] = []
+            self._success_cases: MutableSequence[m.Core.Tests.FixtureCaseDict] = []
+            self._failure_cases: MutableSequence[m.Core.Tests.FixtureCaseDict] = []
 
         def add_case(
             self,
@@ -292,12 +292,12 @@ class TestAdvancedPatterns:
                 ParameterizedTestBuilder: Self for method chaining.
 
             """
-            self._cases.append(m.Core.FixtureCaseDict.model_validate(obj=kwargs))
+            self._cases.append(m.Core.Tests.FixtureCaseDict.model_validate(obj=kwargs))
             return self
 
         def add_success_cases(
             self,
-            cases: Sequence[m.Core.FixtureCaseDict],
+            cases: Sequence[m.Core.Tests.FixtureCaseDict],
         ) -> TestAdvancedPatterns.ParameterizedTestBuilder:
             """add_success_cases method.
 
@@ -310,7 +310,7 @@ class TestAdvancedPatterns:
 
         def add_failure_cases(
             self,
-            cases: Sequence[m.Core.FixtureCaseDict],
+            cases: Sequence[m.Core.Tests.FixtureCaseDict],
         ) -> TestAdvancedPatterns.ParameterizedTestBuilder:
             """add_failure_cases method.
 
@@ -321,7 +321,7 @@ class TestAdvancedPatterns:
             self._failure_cases.extend(cases)
             return self
 
-        def build(self) -> Sequence[m.Core.FixtureCaseDict]:
+        def build(self) -> Sequence[m.Core.Tests.FixtureCaseDict]:
             """Build method.
 
             Returns:
@@ -529,13 +529,13 @@ class TestAdvancedPatterns:
             self
             .ParameterizedTestBuilder("email_validation")
             .add_success_cases([
-                m.Core.FixtureCaseDict.model_validate(
+                m.Core.Tests.FixtureCaseDict.model_validate(
                     obj={
                         "email": "valid@example.com",
                         "input": "valid@example.com",
                     },
                 ),
-                m.Core.FixtureCaseDict.model_validate(
+                m.Core.Tests.FixtureCaseDict.model_validate(
                     obj={
                         "email": "user.name@domain.co.uk",
                         "input": "user.name@domain.co.uk",
@@ -543,13 +543,13 @@ class TestAdvancedPatterns:
                 ),
             ])
             .add_failure_cases([
-                m.Core.FixtureCaseDict.model_validate(
+                m.Core.Tests.FixtureCaseDict.model_validate(
                     obj={
                         "email": "invalid-email",
                         "input": "invalid-email",
                     },
                 ),
-                m.Core.FixtureCaseDict.model_validate(
+                m.Core.Tests.FixtureCaseDict.model_validate(
                     obj={
                         "email": "@domain.com",
                         "input": "@domain.com",
@@ -585,7 +585,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data = m.Core.MockScenarioData.model_validate(
+        scenario_data = m.Core.Tests.MockScenarioData.model_validate(
             obj={
                 "given": {"user": "authenticated"},
                 "when": {"action": "request_data"},

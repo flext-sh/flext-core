@@ -63,7 +63,7 @@ class TestUtilitiesParserFullCoverage:
         )
         model_result = parser._parse_model(
             cast("t.NormalizedValue", {"name": "ok", "count": 2, "payload": "obj"}),
-            m.Core.Unit._Model,
+            m.Core.Tests._Model,
             "field: ",
             strict=False,
         )

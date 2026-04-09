@@ -28,9 +28,9 @@ class TestPatternsCommands:
         username: str
         email: str
 
-        def get_payload(self) -> m.Core.UserPayloadDict:
+        def get_payload(self) -> m.Core.Tests.UserPayloadDict:
             """Get command payload."""
-            return m.Core.UserPayloadDict.model_validate(
+            return m.Core.Tests.UserPayloadDict.model_validate(
                 obj={
                     "username": self.username,
                     "email": self.email,
@@ -53,10 +53,10 @@ class TestPatternsCommands:
         target_user_id: str
         updates: t.ContainerMapping
 
-        def get_payload(self) -> m.Core.UpdatePayloadDict:
+        def get_payload(self) -> m.Core.Tests.UpdatePayloadDict:
             """Get command payload."""
-            typed_updates: Mapping[str, m.Core.UpdateFieldDict] = {
-                key: m.Core.UpdateFieldDict.model_validate(
+            typed_updates: Mapping[str, m.Core.Tests.UpdateFieldDict] = {
+                key: m.Core.Tests.UpdateFieldDict.model_validate(
                     obj={
                         "field_name": key,
                         "new_value": value
@@ -66,7 +66,7 @@ class TestPatternsCommands:
                 )
                 for key, value in self.updates.items()
             }
-            return m.Core.UpdatePayloadDict.model_validate(
+            return m.Core.Tests.UpdatePayloadDict.model_validate(
                 obj={
                     "target_user_id": self.target_user_id,
                     "updates": typed_updates,
@@ -84,9 +84,9 @@ class TestPatternsCommands:
     class FailingCommand(m.Command):
         """Test command that always fails validation."""
 
-        def get_payload(self) -> m.Core.CommandPayloadDict:
+        def get_payload(self) -> m.Core.Tests.CommandPayloadDict:
             """Get command payload."""
-            return m.Core.CommandPayloadDict.model_validate(obj={})
+            return m.Core.Tests.CommandPayloadDict.model_validate(obj={})
 
         def validate_command(self) -> r[bool]:
             """Fail validation intentionally."""

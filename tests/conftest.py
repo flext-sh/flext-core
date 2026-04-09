@@ -19,9 +19,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextContainer, FlextContext, r
-from tests import t
-from tests.helpers.scenarios import TestHelperScenarios
+from flext_core import FlextContainer, FlextContext
+from tests import r, t, u
 
 pytest_plugins = ["flext_tests.conftest_plugin"]
 
@@ -136,19 +135,19 @@ def flext_result_failure() -> r[str]:
 @pytest.fixture
 def validation_scenarios() -> type:
     """Access to all centralized validation scenarios."""
-    return TestHelperScenarios.ValidationScenarios
+    return u.Core.Tests.ValidationScenarios
 
 
 @pytest.fixture
 def parser_scenarios() -> type:
     """Access to all centralized parser scenarios."""
-    return TestHelperScenarios.ParserScenarios
+    return u.Core.Tests.ParserScenarios
 
 
 @pytest.fixture
 def reliability_scenarios() -> type:
     """Access to all centralized reliability scenarios."""
-    return TestHelperScenarios.ReliabilityScenarios
+    return u.Core.Tests.ReliabilityScenarios
 
 
 @pytest.fixture

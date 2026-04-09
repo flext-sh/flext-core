@@ -31,7 +31,7 @@ class TestUtilitiesGeneratorsFullCoverage:
             staticmethod(lambda: datetime(2026, 1, 1, tzinfo=UTC)),
         )
         enriched = u.ensure_trace_context(
-            m.Core.Unit._GoodModel(value=9),
+            m.Core.Tests._GoodModel(value=9),
             include_correlation_id=True,
             include_timestamp=True,
         )

@@ -17,7 +17,7 @@ if _t.TYPE_CHECKING:
     from flext_core.handlers import h
     from flext_core.mixins import x
     from flext_core.result import r
-    from tests.base import TestsFlextCoreServiceBase, TestsFlextCoreServiceBase as s
+    from tests.base import TestsFlextCoreServiceBase, s
     from tests.constants import TestsFlextCoreConstants, TestsFlextCoreConstants as c
     from tests.models import TestsFlextCoreModels, TestsFlextCoreModels as m
     from tests.protocols import TestsFlextCoreProtocols, TestsFlextCoreProtocols as p
@@ -29,13 +29,15 @@ if _t.TYPE_CHECKING:
         TestsFlextCoreTypes as t,
     )
     from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
-    from tests.unit.protocols import TestsFlextUnitProtocols
     from tests.utilities import TestsFlextCoreUtilities, TestsFlextCoreUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     (".unit",),
     build_lazy_import_map(
         {
-            ".base": ("TestsFlextCoreServiceBase",),
+            ".base": (
+                "TestsFlextCoreServiceBase",
+                "s",
+            ),
             ".constants": ("TestsFlextCoreConstants",),
             ".models": ("TestsFlextCoreModels",),
             ".protocols": ("TestsFlextCoreProtocols",),
@@ -53,7 +55,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "flext_core.result": ("r",),
         },
         alias_groups={
-            ".base": (("s", "TestsFlextCoreServiceBase"),),
             ".constants": (("c", "TestsFlextCoreConstants"),),
             ".models": (("m", "TestsFlextCoreModels"),),
             ".protocols": (("p", "TestsFlextCoreProtocols"),),
@@ -84,7 +85,6 @@ __all__ = [
     "TestsFlextCoreServiceBase",
     "TestsFlextCoreTypes",
     "TestsFlextCoreUtilities",
-    "TestsFlextUnitProtocols",
     "c",
     "d",
     "e",
