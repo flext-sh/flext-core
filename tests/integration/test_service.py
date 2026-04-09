@@ -15,7 +15,7 @@ from typing import Annotated, override
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
-from tests import FunctionalExternalService, m, p, r, s, t, u
+from tests import m, p, r, s, t, u
 
 
 class TestService:
@@ -575,7 +575,7 @@ class TestService:
     def test_service_with_external_service(
         self,
         clean_container: p.Container,
-        mock_external_service: FunctionalExternalService,
+        mock_external_service: u.Core.Tests.FunctionalExternalService,
     ) -> None:
         """Test service integration with external service.
 

@@ -680,6 +680,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return sorted(handlers, key=lambda x: (-x[2].priority, x[0]))
 
 
-h: type[FlextHandlers[t.ValueOrModel, t.ValueOrModel]] = FlextHandlers
+h = FlextHandlers
 
 __all__ = ["FlextHandlers", "h"]

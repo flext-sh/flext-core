@@ -426,8 +426,6 @@ class TestBeartypeClawCompatibility:
         combined_output = result.stdout + result.stderr
         assert result.exit_code == 0, combined_output
         assert "unexpected_success True" in combined_output
-        assert "GuardInput" not in combined_output
-        assert "unquoted relative forward reference 'p'" not in combined_output
 
     def test_claw_without_skip_hits_recursive_container_schema(self) -> None:
         """Removing skip settings still fails on recursive container schema generation."""

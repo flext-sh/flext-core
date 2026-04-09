@@ -67,7 +67,7 @@ class FlextProtocolsHandler:
 
         def register_handler(
             self,
-            handler: t.HandlerLike,
+            handler: t.HandlerProtocolVariant,
             *,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]: ...

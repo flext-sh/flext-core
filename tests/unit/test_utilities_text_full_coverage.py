@@ -14,10 +14,9 @@ from hypothesis import given, strategies as st
 
 from flext_core import FlextLogger
 from tests import u
-from tests.unit.contracts.text_contract import TextUtilityContract
 
 
-class TestUtilitiesTextFullCoverage(TextUtilityContract):
+class TestUtilitiesTextFullCoverage(u.Core.Tests.Contract):
     def test_logger_property_returns_logger(self) -> None:
         """Logger property returns a structlog logger instance."""
         logger = FlextLogger().logger
@@ -26,7 +25,7 @@ class TestUtilitiesTextFullCoverage(TextUtilityContract):
 
     @pytest.mark.parametrize(
         ("value", "message"),
-        TextUtilityContract.SAFE_STRING_INVALID_CASES,
+        u.Core.Tests.Contract.SAFE_STRING_INVALID_CASES,
     )
     def test_safe_string_invalid_values_raise(
         self,
@@ -39,7 +38,7 @@ class TestUtilitiesTextFullCoverage(TextUtilityContract):
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        TextUtilityContract.SAFE_STRING_VALID_CASES,
+        u.Core.Tests.Contract.SAFE_STRING_VALID_CASES,
     )
     def test_safe_string_valid_values_are_stripped(
         self,
@@ -54,7 +53,7 @@ class TestUtilitiesTextFullCoverage(TextUtilityContract):
         [
             pytest.param(name, expected, id=f"format-{index}")
             for index, (name, expected) in enumerate(
-                TextUtilityContract.FORMAT_APP_ID_CASES,
+                u.Core.Tests.Contract.FORMAT_APP_ID_CASES,
             )
         ],
     )

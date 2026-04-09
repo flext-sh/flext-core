@@ -21,7 +21,7 @@ from typing import Annotated, ClassVar, Never, override
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import m
-from tests import e, r, t, u
+from tests import t
 
 
 class TestsFlextCoreModels(m):
@@ -771,12 +771,6 @@ class TestsFlextCoreModels(m):
                     Field(default=3, description="Auxiliary numeric parameter"),
                 ] = 3
 
-                def create_user_service(self) -> u.Core.Tests.GetUserService:
-                    return u.Core.Tests.make(
-                        u.Core.Tests.GetUserService,
-                        user_id=self.user_id or self.input_value or "",
-                    )
-
             class RailwayTestCase(BaseModel):
                 """Test case for railway pattern."""
 
@@ -808,100 +802,6 @@ class TestsFlextCoreModels(m):
                         description="Human-readable railway test case description",
                     ),
                 ] = ""
-
-                def execute_v1_pipeline(
-                    self,
-                ) -> r[
-                    str
-                    | TestsFlextCoreModels.Core.Tests.User
-                    | TestsFlextCoreModels.Core.Tests.EmailResponse
-                ]:
-                    if not self.user_ids:
-                        return r[
-                            str
-                            | TestsFlextCoreModels.Core.Tests.User
-                            | TestsFlextCoreModels.Core.Tests.EmailResponse
-                        ].fail(
-                            "No user IDs provided",
-                        )
-                    user_result: r[TestsFlextCoreModels.Core.Tests.User] = (
-                        u.Core.Tests.make(
-                            u.Core.Tests.GetUserService,
-                            user_id=self.user_ids[0],
-                        ).execute()
-                    )
-                    result: r[
-                        TestsFlextCoreModels.Core.Tests.User
-                        | str
-                        | TestsFlextCoreModels.Core.Tests.EmailResponse
-                    ] = user_result.map(
-                        lambda user: user,
-                    )
-                    for op in self.operations:
-                        if op == "get_email":
-                            result = result.map(
-                                lambda user: (
-                                    user.email
-                                    if isinstance(
-                                        user,
-                                        TestsFlextCoreModels.Core.Tests.User,
-                                    )
-                                    else str(user)
-                                ),
-                            )
-                        elif op == "send_email":
-                            email_result: r[
-                                TestsFlextCoreModels.Core.Tests.EmailResponse
-                            ] = result.flat_map(
-                                lambda email: u.Core.Tests.make(
-                                    u.Core.Tests.SendEmailService,
-                                    to=str(email),
-                                    subject="Test",
-                                ).execute(),
-                            )
-                            result = email_result.map(lambda response: response)
-                        elif op == "get_status":
-                            result = result.map(
-                                lambda response: (
-                                    response.status
-                                    if isinstance(
-                                        response,
-                                        TestsFlextCoreModels.Core.Tests.EmailResponse,
-                                    )
-                                    else str(response)
-                                ),
-                            )
-                    return result
-
-                def execute_v2_pipeline(
-                    self,
-                ) -> TestsFlextCoreModels.Core.Tests.User | str:
-                    if not self.user_ids:
-                        msg = "No user IDs provided"
-                        raise e.BaseError(msg)
-                    user_result = u.Core.Tests.make(
-                        u.Core.Tests.GetUserService,
-                        user_id=self.user_ids[0],
-                    ).result
-                    user: TestsFlextCoreModels.Core.Tests.User | str = user_result
-                    for op in self.operations:
-                        if op == "get_email":
-                            user = (
-                                user.email
-                                if isinstance(
-                                    user, TestsFlextCoreModels.Core.Tests.User
-                                )
-                                else str(user)
-                            )
-                        elif op == "send_email":
-                            email_to = str(user) if not isinstance(user, str) else user
-                            response_obj: TestsFlextCoreModels.Core.Tests.EmailResponse = u.Core.Tests.make(
-                                u.Core.Tests.SendEmailService,
-                                to=email_to,
-                                subject="Test",
-                            ).result
-                            user = response_obj.status
-                    return user
 
             class ValidationScenario(BaseModel):
                 """Single scenario for validation testing."""

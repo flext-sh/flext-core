@@ -66,7 +66,7 @@ class TestFlextRegistry:
             ),
         ] = False
 
-    class ConcreteTestHandler(h):
+    class ConcreteTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for registry."""
 
         @override

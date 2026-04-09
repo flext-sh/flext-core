@@ -14,7 +14,7 @@ from tests import c, m, t, u
 
 
 class TestFlextHandlers:
-    class ConcreteTestHandler(h):
+    class ConcreteTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for string messages."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
@@ -26,7 +26,7 @@ class TestFlextHandlers:
                 return r[t.ValueOrModel].fail("Unexpected message type")
             return r[t.ValueOrModel].ok(f"processed_{message}")
 
-    class ValidationTestHandler(h):
+    class ValidationTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for validation."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
@@ -36,7 +36,7 @@ class TestFlextHandlers:
         def handle(self, message: t.ValueOrModel) -> r[t.ValueOrModel]:
             return r[t.ValueOrModel].ok(f"processed_{message}")
 
-    class FailingTestHandler(h):
+    class FailingTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler that fails."""
 
         def __init__(self, *, config: m.Handler | None = None) -> None:
@@ -150,7 +150,7 @@ class TestFlextHandlers:
         assert hasattr(handler._execution_context, "handler_name")
 
     def test_handlers_different_types(self) -> None:
-        class IntHandler(h):
+        class IntHandler(h[t.ValueOrModel, t.ValueOrModel]):
             def __init__(self, *, config: m.Handler | None = None) -> None:
                 super().__init__(config=config)
 
@@ -221,7 +221,7 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        class DictHandler(h):
+        class DictHandler(h[t.ValueOrModel, t.ValueOrModel]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
@@ -261,7 +261,7 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_cannot_handle_message_type(self) -> None:
-        class RestrictiveHandler(h):
+        class RestrictiveHandler(h[t.ValueOrModel, t.ValueOrModel]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
@@ -291,7 +291,7 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_validation_failure(self) -> None:
-        class ValidationFailingHandler(h):
+        class ValidationFailingHandler(h[t.ValueOrModel, t.ValueOrModel]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
@@ -321,7 +321,7 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_handler_exception(self) -> None:
-        class ExceptionHandler(h):
+        class ExceptionHandler(h[t.ValueOrModel, t.ValueOrModel]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)

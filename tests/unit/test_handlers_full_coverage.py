@@ -13,7 +13,7 @@ from tests import c, m, t
 
 
 class TestHandlersFullCoverage:
-    class _Handler(h):
+    class _Handler(h[t.ValueOrModel, t.ValueOrModel]):
         def __init__(self, *, config: m.Handler | None = None) -> None:
             super().__init__(config=config)
 

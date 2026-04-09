@@ -92,7 +92,7 @@ class TestPatternsCommands:
             """Fail validation intentionally."""
             return r[bool].fail("This command always fails")
 
-    class CreateUserCommandHandler(h):
+    class CreateUserCommandHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for CreateUserCommand."""
 
         created_users: MutableSequence[t.ContainerMapping] = Field(
@@ -154,7 +154,7 @@ class TestPatternsCommands:
             """Handle the create user command (alias for handle)."""
             return self.handle(command)
 
-    class UpdateUserCommandHandler(h):
+    class UpdateUserCommandHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler for UpdateUserCommand."""
 
         def __init__(self) -> None:
@@ -218,7 +218,7 @@ class TestPatternsCommands:
             """Handle the update user command (alias for handle)."""
             return self.handle(command)
 
-    class FailingCommandHandler(h):
+    class FailingCommandHandler(h[t.ValueOrModel, t.ValueOrModel]):
         """Test handler that always fails."""
 
         def get_command_type(self) -> str:

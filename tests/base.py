@@ -20,7 +20,6 @@ from typing import Annotated, ClassVar, TypeVar, override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextHandlers
 from flext_tests import s, td
 from tests import c, h, m, r, t
 
@@ -93,7 +92,7 @@ class TestsFlextCoreServiceBase(s[T]):
                 r[t.ValueOrModel],
             ]
             | None = None,
-        ) -> FlextHandlers[t.ValueOrModel, t.ValueOrModel]:
+        ) -> h[t.ValueOrModel, t.ValueOrModel]:
             """Create handler instance for this test case."""
             return TestsFlextCoreServiceBase.Handlers.create_test_handler(
                 handler_id=self.handler_id,
@@ -175,7 +174,7 @@ class TestsFlextCoreServiceBase(s[T]):
                 r[t.ValueOrModel],
             ]
             | None = None,
-        ) -> FlextHandlers[t.ValueOrModel, t.ValueOrModel]:
+        ) -> h[t.ValueOrModel, t.ValueOrModel]:
             """Factory for creating test handlers - reduces massive boilerplate.
 
             Args:
@@ -185,13 +184,11 @@ class TestsFlextCoreServiceBase(s[T]):
                 process_fn: Optional custom processing function
 
             Returns:
-                h instance ready for registration
+                handler instance ready for registration
 
             """
 
-            class DynamicTestHandler(
-                h,
-            ):
+            class DynamicTestHandler(h[t.ValueOrModel, t.ValueOrModel]):
                 """Dynamic test handler implementation."""
 
                 def __init__(self) -> None:
@@ -230,7 +227,7 @@ class TestsFlextCoreServiceBase(s[T]):
         def create_simple_handler(
             handler_id: str,
             result_value: t.Container = "test",
-        ) -> FlextHandlers[t.ValueOrModel, t.ValueOrModel]:
+        ) -> h[t.ValueOrModel, t.ValueOrModel]:
             """Create a simple handler that always returns the same value.
 
             Args:
@@ -260,7 +257,7 @@ class TestsFlextCoreServiceBase(s[T]):
         def create_failing_handler(
             handler_id: str,
             error_message: str = "Processing error",
-        ) -> FlextHandlers[t.ValueOrModel, t.ValueOrModel]:
+        ) -> h[t.ValueOrModel, t.ValueOrModel]:
             """Create a handler that always fails.
 
             Args:
@@ -292,7 +289,7 @@ class TestsFlextCoreServiceBase(s[T]):
         def create_transform_handler(
             handler_id: str,
             transform_fn: Callable[[t.ValueOrModel], t.ValueOrModel],
-        ) -> FlextHandlers[t.ValueOrModel, t.ValueOrModel]:
+        ) -> h[t.ValueOrModel, t.ValueOrModel]:
             """Create a handler that transforms messages.
 
             Args:
@@ -326,4 +323,5 @@ class TestsFlextCoreServiceBase(s[T]):
 
 
 s = TestsFlextCoreServiceBase
+
 __all__ = ["TestsFlextCoreServiceBase", "s"]

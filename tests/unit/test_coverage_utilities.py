@@ -29,10 +29,9 @@ import pytest
 
 from flext_tests import tm
 from tests import r, t, u
-from tests.unit.contracts.text_contract import TextUtilityContract
 
 
-class Testu(TextUtilityContract):
+class Testu(u.Core.Tests.Contract):
     """Unified test suite for u - ALL REAL FUNCTIONALITY."""
 
     @unique
@@ -260,7 +259,7 @@ class Testu(TextUtilityContract):
 
     @pytest.mark.parametrize(
         ("raw", "expected"),
-        TextUtilityContract.SAFE_STRING_VALID_CASES,
+        u.Core.Tests.Contract.SAFE_STRING_VALID_CASES,
     )
     def test_text_processor_safe_string_success(self, raw: str, expected: str) -> None:
         """Test safe string contract for valid values."""
@@ -268,7 +267,7 @@ class Testu(TextUtilityContract):
 
     @pytest.mark.parametrize(
         ("raw", "error_message"),
-        TextUtilityContract.SAFE_STRING_INVALID_CASES,
+        u.Core.Tests.Contract.SAFE_STRING_INVALID_CASES,
     )
     def test_text_processor_safe_string_failure(
         self,

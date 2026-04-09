@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextContainer, __version__
-from tests import FunctionalExternalService, p, r, t, u
+from tests import p, r, t, u
 
 pytestmark = [pytest.mark.integration]
 
@@ -59,7 +59,7 @@ class TestLibraryIntegration:
     def test_flext_result_with_container(
         self,
         clean_container: p.Container,
-        mock_external_service: FunctionalExternalService,
+        mock_external_service: u.Core.Tests.FunctionalExternalService,
     ) -> None:
         """Test r integration with DI container factory pattern.
 

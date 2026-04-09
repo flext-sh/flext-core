@@ -56,18 +56,6 @@ class _DemoHandler(h[_Message, str]):
             return r[bool].fail("blocked")
         return r[bool].ok(True)
 
-    @override
-    def execute(self, message: _Message) -> r[str]:
-        return super().execute(message)
-
-    @override
-    def dispatch_message(
-        self,
-        message: _Message,
-        operation: str = c.DEFAULT_HANDLER_MODE,
-    ) -> r[str]:
-        return super().dispatch_message(message, operation=operation)
-
 
 class Ex10FlextHandlers(Examples):
     """Exercise h public API."""

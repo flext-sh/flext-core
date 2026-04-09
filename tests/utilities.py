@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from itertools import count
 from typing import ClassVar, override
 
 from flext_tests import u
-from tests import c, m, r, s, t
+from tests import c, e, m, r, s, t
 
 
 class TestsFlextCoreUtilities(u):
@@ -90,6 +90,7 @@ class TestsFlextCoreUtilities(u):
                         return r[m.Core.Tests.User].fail("User not found")
                     return r[m.Core.Tests.User].ok(
                         m.Core.Tests.User(
+                            id=self.user_id,
                             unique_id=self.user_id,
                             name=f"User {self.user_id}",
                             email=f"user{self.user_id}@example.com",
@@ -178,6 +179,93 @@ class TestsFlextCoreUtilities(u):
                 for key, value in kwargs.items():
                     object.__setattr__(instance, key, value)
                 return instance
+
+            @staticmethod
+            def create_user_service(
+                case: m.Core.Tests.ServiceTestCase,
+            ) -> TestsFlextCoreUtilities.Core.Tests.GetUserService:
+                """Create a user service from a documented service case."""
+                return TestsFlextCoreUtilities.Core.Tests.make(
+                    TestsFlextCoreUtilities.Core.Tests.GetUserService,
+                    user_id=case.user_id or case.input_value or "",
+                )
+
+            @staticmethod
+            def execute_v1_pipeline(
+                case: m.Core.Tests.RailwayTestCase,
+            ) -> r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse]:
+                """Execute the documented V1 railway pipeline."""
+                if not case.user_ids:
+                    return r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse].fail(
+                        "No user IDs provided",
+                    )
+                user_result: r[m.Core.Tests.User] = (
+                    TestsFlextCoreUtilities.Core.Tests.make(
+                        TestsFlextCoreUtilities.Core.Tests.GetUserService,
+                        user_id=case.user_ids[0],
+                    ).execute()
+                )
+                result: r[str | m.Core.Tests.User | m.Core.Tests.EmailResponse] = (
+                    user_result.map(lambda user: user)
+                )
+                for operation in case.operations:
+                    if operation == "get_email":
+                        result = result.map(
+                            lambda user: (
+                                user.email
+                                if isinstance(user, m.Core.Tests.User)
+                                else str(user)
+                            ),
+                        )
+                    elif operation == "send_email":
+                        email_result: r[m.Core.Tests.EmailResponse] = result.flat_map(
+                            lambda email: TestsFlextCoreUtilities.Core.Tests.make(
+                                TestsFlextCoreUtilities.Core.Tests.SendEmailService,
+                                to=str(email),
+                                subject="Test",
+                            ).execute(),
+                        )
+                        result = email_result.map(lambda response: response)
+                    elif operation == "get_status":
+                        result = result.map(
+                            lambda response: (
+                                response.status
+                                if isinstance(response, m.Core.Tests.EmailResponse)
+                                else str(response)
+                            ),
+                        )
+                return result
+
+            @staticmethod
+            def execute_v2_pipeline(
+                case: m.Core.Tests.RailwayTestCase,
+            ) -> m.Core.Tests.User | str:
+                """Execute the documented V2 railway pipeline."""
+                if not case.user_ids:
+                    msg = "No user IDs provided"
+                    raise e.BaseError(msg)
+                user: m.Core.Tests.User | str = TestsFlextCoreUtilities.Core.Tests.make(
+                    TestsFlextCoreUtilities.Core.Tests.GetUserService,
+                    user_id=case.user_ids[0],
+                ).result
+                for operation in case.operations:
+                    if operation == "get_email":
+                        user = (
+                            user.email
+                            if isinstance(user, m.Core.Tests.User)
+                            else str(user)
+                        )
+                    elif operation == "send_email":
+                        email_to = user if isinstance(user, str) else str(user)
+                        response_obj: m.Core.Tests.EmailResponse = (
+                            TestsFlextCoreUtilities.Core.Tests.make(
+                                TestsFlextCoreUtilities.Core.Tests.SendEmailService,
+                                to=email_to,
+                                subject="Test",
+                            ).result
+                        )
+                        user = response_obj.status
+                return user
 
             class ValidationScenarios:
                 """Centralized validation scenarios - single source of truth."""
@@ -957,6 +1045,7 @@ class TestsFlextCoreUtilities(u):
                     )
                     return m.Core.Tests.User(
                         id=actual_user_id,
+                        unique_id=actual_user_id,
                         name=actual_name,
                         email=actual_email,
                         active=is_active,
@@ -1412,15 +1501,78 @@ class TestsFlextCoreUtilities(u):
                 TestsFlextCoreUtilities.Core.Tests.ValidatingServiceAutoFactory.reset()
                 TestsFlextCoreUtilities.Core.Tests.ServiceTestCaseFactory.reset()
 
+            class Contract:
+                """Shared contract for text utility behavior."""
+
+                SAFE_STRING_VALID_CASES: ClassVar[Sequence[tuple[str, str]]] = (
+                    c.Core.Tests.SAFE_STRING_VALID_CASES
+                )
+                SAFE_STRING_INVALID_CASES: ClassVar[
+                    Sequence[tuple[str | None, str]]
+                ] = c.Core.Tests.SAFE_STRING_INVALID_CASES
+                FORMAT_APP_ID_CASES: ClassVar[Sequence[tuple[str, str]]] = (
+                    c.Core.Tests.FORMAT_APP_ID_CASES
+                )
+
+                @staticmethod
+                def assert_safe_string_valid(raw: str, expected: str) -> None:
+                    """Assert safe string normalization for valid input."""
+                    assert u.safe_string(raw) == expected
+
+                @staticmethod
+                def assert_format_app_id(raw: str, expected: str) -> None:
+                    """Assert app id formatting behavior."""
+                    assert u.format_app_id(raw) == expected
+
             @staticmethod
             def assert_safe_string_valid(raw: str, expected: str) -> None:
                 """Assert safe string normalization for valid input."""
-                assert u.safe_string(raw) == expected
+                TestsFlextCoreUtilities.Core.Tests.Contract.assert_safe_string_valid(
+                    raw,
+                    expected,
+                )
 
             @staticmethod
             def assert_format_app_id(raw: str, expected: str) -> None:
                 """Assert app id formatting behavior."""
-                assert u.format_app_id(raw) == expected
+                TestsFlextCoreUtilities.Core.Tests.Contract.assert_format_app_id(
+                    raw,
+                    expected,
+                )
+
+            class FunctionalExternalService:
+                """Mock external service for integration testing.
+
+                Provides real functionality for testing service integration patterns
+                with dependency injection and result handling.
+                """
+
+                def __init__(self) -> None:
+                    """Initialize external service with empty state."""
+                    self.processed_items: MutableSequence[str] = []
+                    self.call_count = 0
+
+                def process(self, input_data: str) -> r[str]:
+                    """Process input data by prefixing with 'processed_'.
+
+                    Args:
+                        input_data: String to process
+
+                    Returns:
+                        r[str]: Processed result or failure
+
+                    """
+                    try:
+                        self.call_count += 1
+                        processed = f"processed_{input_data}"
+                        self.processed_items.append(processed)
+                        return r[str].ok(processed)
+                    except (ValueError, TypeError, RuntimeError) as e:
+                        return r[str].fail(f"Processing failed: {e}")
+
+                def get_call_count(self) -> int:
+                    """Get number of times process() was called."""
+                    return self.call_count
 
 
 u = TestsFlextCoreUtilities

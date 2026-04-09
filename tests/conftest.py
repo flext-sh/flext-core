@@ -6,12 +6,10 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-import builtins
 import math
 import tempfile
 from collections.abc import (
     Generator,
-    MutableSequence,
     Sequence,
 )
 from pathlib import Path
@@ -23,43 +21,6 @@ from flext_core import FlextContainer, FlextContext
 from tests import r, t, u
 
 pytest_plugins = ["flext_tests.conftest_plugin"]
-
-setattr(builtins, "t", t)
-
-
-class FunctionalExternalService:
-    """Mock external service for integration testing.
-
-    Provides real functionality for testing service integration patterns
-    with dependency injection and result handling.
-    """
-
-    def __init__(self) -> None:
-        """Initialize external service with empty state."""
-        self.processed_items: MutableSequence[str] = []
-        self.call_count = 0
-
-    def process(self, input_data: str) -> r[str]:
-        """Process input data by prefixing with 'processed_'.
-
-        Args:
-            input_data: String to process
-
-        Returns:
-            r[str]: Processed result or failure
-
-        """
-        try:
-            self.call_count += 1
-            processed = f"processed_{input_data}"
-            self.processed_items.append(processed)
-            return r[str].ok(processed)
-        except (ValueError, TypeError, RuntimeError) as e:
-            return r[str].fail(f"Processing failed: {e}")
-
-    def get_call_count(self) -> int:
-        """Get number of times process() was called."""
-        return self.call_count
 
 
 @pytest.fixture
@@ -81,9 +42,9 @@ def clean_container() -> FlextContainer:
 
 
 @pytest.fixture
-def mock_external_service() -> FunctionalExternalService:
+def mock_external_service() -> u.Core.Tests.FunctionalExternalService:
     """Provide mock external service for integration tests."""
-    return FunctionalExternalService()
+    return u.Core.Tests.FunctionalExternalService()
 
 
 @pytest.fixture

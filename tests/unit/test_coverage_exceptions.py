@@ -379,8 +379,10 @@ class TestCoverageExceptions:
         tm.that(metrics["total_exceptions"], eq=3)
         raw_counts = metrics.root.get("exception_counts")
         exception_counts = cast("t.IntMapping", raw_counts)
-        tm.that(exception_counts.get("e.ValidationError"), eq=2)
-        tm.that(exception_counts.get("e.ConfigurationError"), eq=1)
+        validation_key = e.ValidationError.__qualname__
+        configuration_key = e.ConfigurationError.__qualname__
+        tm.that(exception_counts.get(validation_key), eq=2)
+        tm.that(exception_counts.get(configuration_key), eq=1)
         tm.that(metrics["unique_exception_types"], eq=2)
 
     def test_clear_metrics(self) -> None:

@@ -16,7 +16,7 @@ from examples import (
     u,
 )
 from examples.shared import Examples
-from flext_core import FlextContext, FlextLogger, FlextSettings, e, r, s
+from flext_core import FlextContext, FlextLogger, FlextService, FlextSettings, e, r, s
 
 
 class _EchoService(s[str]):
@@ -513,7 +513,7 @@ class Ex11FlextService(Examples):
 
         fallback = self.rand_str(4)
 
-        self.check("alias.FlextService_is_s", s.__name__ == "s")
+        self.check("alias.FlextService_is_s", s is FlextService)
 
         service = _EchoService()
         execute_value = service.execute().unwrap_or(fallback)

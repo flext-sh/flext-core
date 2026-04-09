@@ -13,11 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextProtocols
-from flext_tests import FlextTestsProtocols
+from flext_tests import p
 
 
-class TestsFlextCoreProtocols(FlextTestsProtocols, FlextProtocols):
+class TestsFlextCoreProtocols(p):
     """Protocol definitions for flext-core tests - extends TestsFlextProtocols.
 
     Architecture: Extends TestsFlextProtocols with flext-core-specific protocol
@@ -33,7 +32,7 @@ class TestsFlextCoreProtocols(FlextTestsProtocols, FlextProtocols):
     class Core:
         """flext-core-specific protocol definitions namespace."""
 
-        class Tests(FlextTestsProtocols.Tests):
+        class Tests(p.Tests):
             """flext-core test protocols namespace."""
 
 

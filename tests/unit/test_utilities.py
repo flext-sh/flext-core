@@ -29,13 +29,11 @@ from hypothesis import given, strategies as st
 from flext_tests import tm
 from tests import c, r, t, u
 
-from .contracts.text_contract import TextUtilityContract
 
-
-class Testu(TextUtilityContract):
+class Testu(u.Core.Tests.Contract):
     """Unified test suite for u using flext_tests and c."""
 
-    class UtilityScenarios(TextUtilityContract):
+    class UtilityScenarios(u.Core.Tests.Contract):
         """Centralized utility test scenarios using c (FlextConstants)."""
 
         TYPE_GUARD_CASES: ClassVar[

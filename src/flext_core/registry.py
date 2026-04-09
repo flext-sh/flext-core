@@ -288,7 +288,7 @@ class FlextRegistry(s[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[t.RegistryBindingKey, t.HandlerLike],
+        bindings: Mapping[t.RegistryBindingKey, t.HandlerProtocolVariant],
     ) -> r[m.RegistrySummary]:
         """Register message-to-handler bindings.
 
@@ -317,7 +317,7 @@ class FlextRegistry(s[bool]):
 
     def register_handler(
         self,
-        handler: t.HandlerLike,
+        handler: t.HandlerProtocolVariant,
         _metadata: t.ConfigMap | m.Metadata | None = None,
     ) -> r[m.RegistrationDetails]:
         """Register a handler instance or callable.
@@ -344,7 +344,7 @@ class FlextRegistry(s[bool]):
 
         # Standard Dispatcher registration avoids passing name/metadata
         # as it discovers routes from the handler itself.
-        registration_handler: t.HandlerLike = handler
+        registration_handler: t.HandlerProtocolVariant = handler
         registration_result = self._dispatcher.register_handler(
             registration_handler,
             is_event=(handler_mode == c.HandlerType.EVENT),
@@ -366,7 +366,7 @@ class FlextRegistry(s[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[t.HandlerLike],
+        handlers: Sequence[t.HandlerProtocolVariant],
     ) -> r[m.RegistrySummary]:
         """Register multiple handlers in batch.
 

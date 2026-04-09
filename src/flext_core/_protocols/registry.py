@@ -37,7 +37,7 @@ class FlextProtocolsRegistry:
 
         def register_handler(
             self,
-            handler: t.HandlerLike,
+            handler: t.HandlerProtocolVariant,
             _metadata: t.ConfigMap | m.Metadata | None = None,
         ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
             """Register a handler instance or callable."""
@@ -45,14 +45,14 @@ class FlextProtocolsRegistry:
 
         def register_handlers(
             self,
-            handlers: Sequence[t.HandlerLike],
+            handlers: Sequence[t.HandlerProtocolVariant],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
             self,
-            bindings: Mapping[t.RegistryBindingKey, t.HandlerLike],
+            bindings: Mapping[t.RegistryBindingKey, t.HandlerProtocolVariant],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...

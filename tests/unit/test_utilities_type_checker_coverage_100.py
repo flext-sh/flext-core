@@ -26,7 +26,7 @@ from typing import TypeVar, get_origin, override
 
 import pytest
 
-from flext_core import FlextHandlers
+from flext_core import h
 from flext_tests import tm
 from tests import r, t, u
 
@@ -47,14 +47,14 @@ class TestuTypeChecker:
     def _message_type(value: t.MessageTypeSpecifier) -> t.MessageTypeSpecifier:
         return value
 
-    class StringHandler(FlextHandlers[str, str]):
+    class StringHandler(h[str, str]):
         """Handler for string messages."""
 
         @override
         def handle(self, message: str) -> r[str]:
             return r[str].ok(f"Processed: {message}")
 
-    class IntHandler(FlextHandlers[int, int]):
+    class IntHandler(h[int, int]):
         """Handler for integer messages."""
 
         @override
@@ -62,7 +62,7 @@ class TestuTypeChecker:
             return r[int].ok(message * 2)
 
     class DictHandler(
-        FlextHandlers[
+        h[
             t.MutableContainerMapping,
             t.MutableContainerMapping,
         ],
@@ -77,7 +77,7 @@ class TestuTypeChecker:
             result: t.MutableContainerMapping = {"processed": True, **message}
             return r[t.MutableContainerMapping].ok(result)
 
-    class ObjectHandler(FlextHandlers[t.NormalizedValue, t.Container]):
+    class ObjectHandler(h[t.NormalizedValue, t.Container]):
         """Handler for t.NormalizedValue messages."""
 
         @override
@@ -121,16 +121,16 @@ class TestuTypeChecker:
         """Test compute_accepted_message_types extracts from generic base."""
         types = u.compute_accepted_message_types(self.StringHandler)
         tm.that(len(types), eq=1)
-        assert types[0] == str
+        assert types[0] is str
         types = u.compute_accepted_message_types(self.IntHandler)
         tm.that(len(types), eq=1)
-        assert types[0] == int
+        assert types[0] is int
 
     def test_compute_accepted_message_types_from_explicit(self) -> None:
         """Test compute_accepted_message_types extracts from explicit annotation."""
         types = u.compute_accepted_message_types(self.ExplicitTypeHandler)
         tm.that(len(types), eq=1)
-        assert types[0] == str
+        assert types[0] is str
 
     def test_compute_accepted_message_types_no_handle_method(self) -> None:
         """Test compute_accepted_message_types returns empty for class without handle."""
@@ -273,10 +273,10 @@ class TestuTypeChecker:
         """Test _extract_generic_message_types with h base."""
         types = u._extract_generic_message_types(self.StringHandler)
         tm.that(len(types), eq=1)
-        assert types[0] == str
+        assert types[0] is str
         types = u._extract_generic_message_types(self.IntHandler)
         tm.that(len(types), eq=1)
-        assert types[0] == int
+        assert types[0] is int
 
     def test_extract_generic_message_types_no_flext_handlers(self) -> None:
         """Test _extract_generic_message_types without h base."""
@@ -298,7 +298,7 @@ class TestuTypeChecker:
             self.ExplicitTypeHandler,
         )
         tm.ok(message_type_result)
-        assert message_type_result.value == str
+        assert message_type_result.value is str
 
     def test_extract_message_type_from_handle_no_handle_method(self) -> None:
         """Test _extract_message_type_from_handle without handle method."""

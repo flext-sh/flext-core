@@ -33,7 +33,7 @@ from typing import (
 
 import orjson
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from flext_core import (
     FlextUtilitiesGenerators,
@@ -490,9 +490,25 @@ class FlextRuntime:
             services = providers.Object(containers.DynamicContainer())
             resources = providers.Object(containers.DynamicContainer())
 
+        class ContainerCreationOptions(BaseModel):
+            """Default validated options for dependency container creation."""
+
+            model_config: ClassVar[ConfigDict] = ConfigDict(
+                arbitrary_types_allowed=True,
+            )
+
+            config: t.ConfigMap | None = None
+            services: Mapping[str, t.RegisterableService] | None = None
+            factories: Mapping[str, t.FactoryCallable] | None = None
+            resources: Mapping[str, t.ResourceCallable] | None = None
+            wire_modules: Sequence[ModuleType] | None = None
+            wire_packages: t.StrSequence | None = None
+            wire_classes: Sequence[type] | None = None
+            factory_cache: bool = True
+
         ContainerCreationOptionsModel: ClassVar[
             p.ContainerCreationOptionsType | None
-        ] = None
+        ] = ContainerCreationOptions
 
         Provide = wiring.Provide
         inject = staticmethod(wiring.inject)

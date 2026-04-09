@@ -9,10 +9,10 @@ from typing import override
 import pytest
 
 from flext_core import FlextRegistry
-from tests import c, h, m, r, t
+from tests import c, h, m, p, r, t
 
 
-class _Handler(h):
+class _Handler(h[t.ValueOrModel, t.ValueOrModel]):
     """Test handler implementation."""
 
     @override
@@ -55,10 +55,11 @@ def test_summary_properties_and_subclass_storage_reset() -> None:
 def test_execute_and_register_handler_failure_paths() -> None:
     registry = FlextRegistry()
 
-    class _FalseyDispatcher:
+    class _FalseyDispatcher(p.Dispatcher):
         def __bool__(self) -> bool:
             return False
 
+        @override
         def publish(
             self,
             event: object | Sequence[object],
@@ -66,9 +67,10 @@ def test_execute_and_register_handler_failure_paths() -> None:
             _ = event
             return r[bool].ok(True)
 
+        @override
         def register_handler(
             self,
-            handler: t.HandlerLike,
+            handler: t.HandlerProtocolVariant,
             *,
             is_event: bool = False,
         ) -> r[bool]:
@@ -76,7 +78,8 @@ def test_execute_and_register_handler_failure_paths() -> None:
             _ = is_event
             return r[bool].ok(True)
 
-        def dispatch(self, message: object) -> r[t.RuntimeAtomic]:
+        @override
+        def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
             _ = message
             return r[t.RuntimeAtomic].fail("dispatcher-unconfigured")
 
@@ -84,24 +87,28 @@ def test_execute_and_register_handler_failure_paths() -> None:
     execute_result = registry.execute()
     assert execute_result.is_failure
 
-    class _FailDispatcher:
+    class _FailDispatcher(p.Dispatcher):
+        @override
         def publish(
             self,
-            event: object | Sequence[object],
+            event: p.Routable | Sequence[p.Routable],
         ) -> r[bool]:
             _ = event
             return r[bool].ok(True)
 
+        @override
         def register_handler(
             self,
-            handler: t.HandlerLike,
+            handler: t.HandlerProtocolVariant,
+            *,
             is_event: bool = False,
         ) -> r[bool]:
             _ = handler
             _ = is_event
             return r[bool].fail("dispatcher-fail")
 
-        def dispatch(self, message: object) -> r[t.RuntimeAtomic]:
+        @override
+        def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
             _ = message
             return r[t.RuntimeAtomic].fail("dispatcher-fail")
 
@@ -110,24 +117,28 @@ def test_execute_and_register_handler_failure_paths() -> None:
     assert reg_result.is_failure
     assert reg_result.error == "dispatcher-fail"
 
-    class _OkDispatcher:
+    class _OkDispatcher(p.Dispatcher):
+        @override
         def publish(
             self,
-            event: object | Sequence[object],
+            event: p.Routable | Sequence[p.Routable],
         ) -> r[bool]:
             _ = event
             return r[bool].ok(True)
 
+        @override
         def register_handler(
             self,
-            handler: t.HandlerLike,
+            handler: t.HandlerProtocolVariant,
+            *,
             is_event: bool = False,
         ) -> r[bool]:
             _ = handler
             _ = is_event
             return r[bool].ok(True)
 
-        def dispatch(self, message: object) -> r[t.RuntimeAtomic]:
+        @override
+        def dispatch(self, message: p.Routable) -> r[t.RuntimeAtomic]:
             _ = message
             return r[t.RuntimeAtomic].ok(True)
 

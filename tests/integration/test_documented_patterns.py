@@ -11,7 +11,7 @@ from typing import override
 
 import pytest
 
-from tests import e, p, r, s, t, u
+from tests import e, m, p, r, s, t, u
 
 
 class TestDocumentedPatterns:
@@ -20,25 +20,28 @@ class TestDocumentedPatterns:
     @pytest.mark.parametrize("case", u.Core.Tests.success_cases())
     def test_v1_explicit_success(self, case: tuple[str, str]) -> None:
         user_id, description = case
-        service_case = self.ServiceTestCase(user_id=user_id, description=description)
-        service = service_case.create_user_service()
+        service_case = m.Core.Tests.ServiceTestCase(
+            user_id=user_id,
+            description=description,
+        )
+        service = u.Core.Tests.create_user_service(service_case)
         result = service.execute()
         _ = u.Core.Tests.assert_success(result)
         user = result.value
-        assert isinstance(user, self.User)
+        assert isinstance(user, m.Core.Tests.User)
         assert user.unique_id == service_case.user_id
         assert user.name == f"User {service_case.user_id}"
 
     @pytest.mark.parametrize("case", u.Core.Tests.failure_cases())
     def test_v1_explicit_failure(self, case: tuple[str, str, str]) -> None:
         user_id, expected_error, description = case
-        service_case = self.ServiceTestCase(
+        service_case = m.Core.Tests.ServiceTestCase(
             user_id=user_id,
             expected_success=False,
             expected_error=expected_error,
             description=description,
         )
-        service = service_case.create_user_service()
+        service = u.Core.Tests.create_user_service(service_case)
         result = service.execute()
         _ = u.Core.Tests.assert_failure(result)
         error_msg = result.error
@@ -50,11 +53,14 @@ class TestDocumentedPatterns:
     @pytest.mark.parametrize("case", u.Core.Tests.success_cases())
     def test_v1_explicit_with_if_check(self, case: tuple[str, str]) -> None:
         user_id, description = case
-        service_case = self.ServiceTestCase(user_id=user_id, description=description)
-        result = service_case.create_user_service().execute()
+        service_case = m.Core.Tests.ServiceTestCase(
+            user_id=user_id,
+            description=description,
+        )
+        result = u.Core.Tests.create_user_service(service_case).execute()
         if result.is_success:
             user = result.value
-            assert isinstance(user, self.User)
+            assert isinstance(user, m.Core.Tests.User)
             assert user.unique_id == service_case.user_id
         else:
             pytest.fail("Should succeed")
@@ -62,9 +68,12 @@ class TestDocumentedPatterns:
     @pytest.mark.parametrize("case", u.Core.Tests.success_cases())
     def test_v2_property_success(self, case: tuple[str, str]) -> None:
         user_id, description = case
-        service_case = self.ServiceTestCase(user_id=user_id, description=description)
-        result_value = service_case.create_user_service().result
-        assert isinstance(result_value, self.User)
+        service_case = m.Core.Tests.ServiceTestCase(
+            user_id=user_id,
+            description=description,
+        )
+        result_value = u.Core.Tests.create_user_service(service_case).result
+        assert isinstance(result_value, m.Core.Tests.User)
         user = result_value
         assert user.unique_id == service_case.user_id
         assert user.name == f"User {service_case.user_id}"
@@ -72,14 +81,14 @@ class TestDocumentedPatterns:
     @pytest.mark.parametrize("case", u.Core.Tests.failure_cases())
     def test_v2_property_failure_raises(self, case: tuple[str, str, str]) -> None:
         user_id, expected_error, description = case
-        service_case = self.ServiceTestCase(
+        service_case = m.Core.Tests.ServiceTestCase(
             user_id=user_id,
             expected_success=False,
             expected_error=expected_error,
             description=description,
         )
         with pytest.raises(e.BaseError) as exc_info:
-            service_case.create_user_service().result
+            u.Core.Tests.create_user_service(service_case).result
         error_str = str(exc_info.value).lower()
         assert service_case.expected_error is not None
         assert service_case.expected_error in error_str
@@ -87,11 +96,14 @@ class TestDocumentedPatterns:
     @pytest.mark.parametrize("case", u.Core.Tests.success_cases())
     def test_v2_property_execute_still_available(self, case: tuple[str, str]) -> None:
         user_id, description = case
-        service_case = self.ServiceTestCase(user_id=user_id, description=description)
-        result = service_case.create_user_service().execute()
+        service_case = m.Core.Tests.ServiceTestCase(
+            user_id=user_id,
+            description=description,
+        )
+        result = u.Core.Tests.create_user_service(service_case).execute()
         _ = u.Core.Tests.assert_success(result)
         user = result.value
-        assert isinstance(user, self.User)
+        assert isinstance(user, m.Core.Tests.User)
         assert user.unique_id == service_case.user_id
 
     @pytest.mark.parametrize("case", u.Core.Tests.railway_success_cases())
@@ -100,13 +112,13 @@ class TestDocumentedPatterns:
         case: tuple[t.StrSequence, t.StrSequence, int, str],
     ) -> None:
         user_ids, operations, expected_pipeline_length, description = case
-        railway_case = self.RailwayTestCase(
+        railway_case = m.Core.Tests.RailwayTestCase(
             user_ids=user_ids,
             operations=operations,
             expected_pipeline_length=expected_pipeline_length,
             description=description,
         )
-        result = railway_case.execute_v1_pipeline()
+        result = u.Core.Tests.execute_v1_pipeline(railway_case)
         _ = u.Core.Tests.assert_success(result)
         if "get_status" in railway_case.operations:
             assert result.value == "sent"
@@ -116,7 +128,7 @@ class TestDocumentedPatterns:
             assert isinstance(email, str)
             assert "@" in email
         else:
-            assert isinstance(result.value, self.User)
+            assert isinstance(result.value, m.Core.Tests.User)
 
     @pytest.mark.parametrize("case", u.Core.Tests.railway_success_cases())
     def test_v2_property_can_use_execute_for_railway(
@@ -124,13 +136,16 @@ class TestDocumentedPatterns:
         case: tuple[t.StrSequence, t.StrSequence, int, str],
     ) -> None:
         _ = case
-        user_result_raw = self.make(self.GetUserService, user_id="123").result
-        assert isinstance(user_result_raw, self.User)
+        user_result_raw = u.Core.Tests.make(
+            u.Core.Tests.GetUserService,
+            user_id="123",
+        ).result
+        assert isinstance(user_result_raw, m.Core.Tests.User)
         user_result = user_result_raw
         assert user_result.unique_id == "123"
         result = (
-            self
-            .make(self.GetUserService, user_id="123")
+            u.Core.Tests
+            .make(u.Core.Tests.GetUserService, user_id="123")
             .execute()
             .map(lambda u: u.email)
         )
@@ -144,12 +159,12 @@ class TestDocumentedPatterns:
     ) -> None:
         _ = case
         pipeline = (
-            self
-            .make(self.GetUserService, user_id="456")
+            u.Core.Tests
+            .make(u.Core.Tests.GetUserService, user_id="456")
             .execute()
             .flat_map(
-                lambda user: self.make(
-                    self.SendEmailService,
+                lambda user: u.Core.Tests.make(
+                    u.Core.Tests.SendEmailService,
                     to=user.email,
                     subject="Hello",
                 ).execute(),
@@ -162,8 +177,8 @@ class TestDocumentedPatterns:
 
     def test_monadic_map(self) -> None:
         result = (
-            self
-            .make(self.GetUserService, user_id="123")
+            u.Core.Tests
+            .make(u.Core.Tests.GetUserService, user_id="123")
             .execute()
             .map(lambda user: user.name.upper())
         )
@@ -171,13 +186,13 @@ class TestDocumentedPatterns:
 
     def test_monadic_flat_map(self) -> None:
         pipeline = (
-            self
-            .make(self.GetUserService, user_id="123")
+            u.Core.Tests
+            .make(u.Core.Tests.GetUserService, user_id="123")
             .execute()
             .flat_map(lambda user: r[str].ok(user.email))
             .flat_map(
-                lambda email: self.make(
-                    self.SendEmailService,
+                lambda email: u.Core.Tests.make(
+                    u.Core.Tests.SendEmailService,
                     to=email,
                     subject="Test",
                 ).execute(),
@@ -187,23 +202,23 @@ class TestDocumentedPatterns:
 
     def test_monadic_filter(self) -> None:
         result = (
-            self
-            .make(self.ValidationService, value=50)
+            u.Core.Tests
+            .make(u.Core.Tests.ValidationService, value=50)
             .execute()
-            .filter(self.value_lt_100)
+            .filter(u.Core.Tests.value_lt_100)
         )
         _ = u.Core.Tests.assert_success(result)
 
     def test_monadic_complex_pipeline(self) -> None:
         pipeline = (
-            self
-            .make(self.GetUserService, user_id="123")
+            u.Core.Tests
+            .make(u.Core.Tests.GetUserService, user_id="123")
             .execute()
             .map(lambda user: user.email)
             .filter(lambda email: "@" in email)
             .flat_map(
-                lambda email: self.make(
-                    self.SendEmailService,
+                lambda email: u.Core.Tests.make(
+                    u.Core.Tests.SendEmailService,
                     to=email,
                     subject="Test",
                 ).execute(),
@@ -215,8 +230,11 @@ class TestDocumentedPatterns:
 
     def test_error_handling_try_except_v2_property(self) -> None:
         try:
-            user_result_raw = self.make(self.GetUserService, user_id="123").result
-            assert isinstance(user_result_raw, self.User)
+            user_result_raw = u.Core.Tests.make(
+                u.Core.Tests.GetUserService,
+                user_id="123",
+            ).result
+            assert isinstance(user_result_raw, m.Core.Tests.User)
             user_result = user_result_raw
             assert user_result.unique_id == "123"
         except e.BaseError:
@@ -224,13 +242,16 @@ class TestDocumentedPatterns:
 
     def test_error_handling_try_except_v2_property_failure(self) -> None:
         with pytest.raises(e.BaseError) as exc_info:
-            self.make(self.GetUserService, user_id="invalid").result
+            u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="invalid").result
         assert "not found" in str(exc_info.value).lower()
 
     def test_error_handling_graceful_degradation(self) -> None:
         try:
-            user_result_raw = self.make(self.GetUserService, user_id="123").result
-            assert isinstance(user_result_raw, self.User)
+            user_result_raw = u.Core.Tests.make(
+                u.Core.Tests.GetUserService,
+                user_id="123",
+            ).result
+            assert isinstance(user_result_raw, m.Core.Tests.User)
             user_result = user_result_raw
             email = user_result.email
         except e.BaseError:
@@ -238,22 +259,22 @@ class TestDocumentedPatterns:
         assert email == "user123@example.com"
 
     def test_infrastructure_config_automatic(self) -> None:
-        service = self.make(self.GetUserService, user_id="123")
+        service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
         assert service.config is not None
         assert isinstance(service.config, p.Settings)
 
     def test_infrastructure_logger_automatic(self) -> None:
-        service = self.make(self.GetUserService, user_id="123")
+        service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
         assert service.logger is not None
         assert isinstance(service.logger, p.Logger)
 
     def test_infrastructure_container_automatic(self) -> None:
-        service = self.make(self.GetUserService, user_id="123")
+        service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
         assert service.container is not None
         assert isinstance(service.container, p.Container)
 
     def test_infrastructure_lazy_initialization(self) -> None:
-        service = self.make(self.GetUserService, user_id="123")
+        service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
         config1 = service.config
         config2 = service.config
         assert config1 is config2
@@ -268,8 +289,8 @@ class TestDocumentedPatterns:
         value: int,
         expected: t.ConfigMap,
     ) -> None:
-        result: t.ConfigMap = self.make(
-            self.MultiOperationService,
+        result: t.ConfigMap = u.Core.Tests.make(
+            u.Core.Tests.MultiOperationService,
             operation=operation,
             value=value,
         ).result
@@ -278,18 +299,22 @@ class TestDocumentedPatterns:
 
     def test_multiple_operations_invalid(self) -> None:
         with pytest.raises(e.BaseError) as exc_info:
-            self.make(self.MultiOperationService, operation="invalid", value=5).result
+            u.Core.Tests.make(
+                u.Core.Tests.MultiOperationService,
+                operation="invalid",
+                value=5,
+            ).result
         assert "Unknown operation" in str(exc_info.value)
 
     def test_multiple_operations_with_railway(self) -> None:
         pipeline = (
-            self
-            .make(self.MultiOperationService, operation="double", value=5)
+            u.Core.Tests
+            .make(u.Core.Tests.MultiOperationService, operation="double", value=5)
             .execute()
             .map(operator.itemgetter("result"))
             .flat_map(
-                lambda result: self.make(
-                    self.MultiOperationService,
+                lambda result: u.Core.Tests.make(
+                    u.Core.Tests.MultiOperationService,
                     operation="square",
                     value=result,
                 ).execute(),
@@ -300,38 +325,44 @@ class TestDocumentedPatterns:
         assert pipeline.value == 100
 
     def test_v1_v2_property_interoperability(self) -> None:
-        v1_result = self.make(self.GetUserService, user_id="123").execute()
+        v1_result = u.Core.Tests.make(
+            u.Core.Tests.GetUserService,
+            user_id="123",
+        ).execute()
         assert v1_result.is_success
-        v2_user_raw = self.make(self.GetUserService, user_id="456").result
-        assert isinstance(v2_user_raw, self.User)
+        v2_user_raw = u.Core.Tests.make(
+            u.Core.Tests.GetUserService,
+            user_id="456",
+        ).result
+        assert isinstance(v2_user_raw, m.Core.Tests.User)
         v2_user_result = v2_user_raw
         assert v2_user_result.unique_id == "456"
-        assert isinstance(v1_result.value, self.User)
-        assert isinstance(v2_user_result, self.User)
+        assert isinstance(v1_result.value, m.Core.Tests.User)
+        assert isinstance(v2_user_result, m.Core.Tests.User)
 
     def test_railway_pattern_works_in_all_versions(self) -> None:
         v1_pipeline = (
-            self
-            .make(self.GetUserService, user_id="123")
+            u.Core.Tests
+            .make(u.Core.Tests.GetUserService, user_id="123")
             .execute()
             .map(lambda u: u.email)
         )
         assert v1_pipeline.is_success
         v2_pipeline = (
-            self
-            .make(self.GetUserService, user_id="456")
+            u.Core.Tests
+            .make(u.Core.Tests.GetUserService, user_id="456")
             .execute()
             .map(lambda u: u.email)
         )
         assert v2_pipeline.is_success
 
-        class CustomService(s[TestDocumentedPatterns.User]):
+        class CustomService(s[m.Core.Tests.User]):
             user_id: str = ""
 
             @override
-            def execute(self) -> r[TestDocumentedPatterns.User]:
-                return r[TestDocumentedPatterns.User].ok(
-                    TestDocumentedPatterns.User(
+            def execute(self) -> r[m.Core.Tests.User]:
+                return r[m.Core.Tests.User].ok(
+                    m.Core.Tests.User(
                         unique_id=self.user_id,
                         name="Test",
                         email="test@example.com",
@@ -339,17 +370,23 @@ class TestDocumentedPatterns:
                 )
 
         custom_pipeline = (
-            self.make(CustomService, user_id="789").execute().map(lambda u: u.email)
+            u.Core.Tests
+            .make(CustomService, user_id="789")
+            .execute()
+            .map(lambda u: u.email)
         )
         assert custom_pipeline.is_success
 
     def test_complete_real_world_scenario(self) -> None:
-        user_raw = self.make(self.GetUserService, user_id="123").result
-        assert isinstance(user_raw, self.User)
+        user_raw = u.Core.Tests.make(
+            u.Core.Tests.GetUserService,
+            user_id="123",
+        ).result
+        assert isinstance(user_raw, m.Core.Tests.User)
         user = user_raw
         email_result = (
-            self
-            .make(self.SendEmailService, to=user.email, subject="Welcome")
+            u.Core.Tests
+            .make(u.Core.Tests.SendEmailService, to=user.email, subject="Welcome")
             .execute()
             .filter(lambda response: response.status == "sent")
             .map(lambda response: response.message_id)
@@ -357,8 +394,8 @@ class TestDocumentedPatterns:
         assert email_result.is_success
         message_id: str = str(email_result.value)
         assert message_id.startswith("msg-")
-        calc_result: t.ConfigMap = self.make(
-            self.MultiOperationService,
+        calc_result: t.ConfigMap = u.Core.Tests.make(
+            u.Core.Tests.MultiOperationService,
             operation="double",
             value=10,
         ).result

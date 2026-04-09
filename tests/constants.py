@@ -1,11 +1,11 @@
 """Constants for flext-core tests.
 
-Provides TestsFlextCoreConstants, extending FlextTestsConstants with flext-core-specific
+Provides TestsFlextCoreConstants, extending c with flext-core-specific
 constants. All generic test constants come from flext_tests.
 
 Architecture:
-- FlextTestsConstants (flext_tests) = Generic constants for all FLEXT projects
-- TestsFlextCoreConstants (tests/) = flext-core-specific constants extending FlextTestsConstants
+- c (flext_tests) = Generic constants for all FLEXT projects
+- TestsFlextCoreConstants (tests/) = flext-core-specific constants extending c
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,28 +19,27 @@ from typing import Annotated, ClassVar, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants
-from flext_tests import FlextTestsConstants
+from flext_tests import c
 from tests import t
 
 
-class TestsFlextCoreConstants(FlextTestsConstants, FlextConstants):
-    """Constants for flext-core tests - extends FlextTestsConstants.
+class TestsFlextCoreConstants(c):
+    """Constants for flext-core tests - extends c.
 
     Architecture layer: Layer 0 foundation constants with flext-core test extensions.
-    Extends FlextTestsConstants with flext-core-specific constants.
-    All generic constants from FlextTestsConstants are available through inheritance.
+    Extends c with flext-core-specific constants.
+    All generic constants from c are available through inheritance.
 
     Rules:
-    - NEVER duplicate constants from FlextTestsConstants
+    - NEVER duplicate constants from c
     - Only flext-core-specific constants allowed (not generic for other projects)
-    - All generic constants come from FlextTestsConstants
+    - All generic constants come from c
     """
 
     class Core:
         """flext-core-specific test namespaces."""
 
-        class Tests(FlextTestsConstants.Tests):
+        class Tests(c.Tests):
             @unique
             class ServiceTestType(StrEnum):
                 """Service test type enum for test scenarios."""
@@ -264,54 +263,54 @@ class TestsFlextCoreConstants(FlextTestsConstants, FlextConstants):
                 ITERATION_COUNT: Final[int] = 1000
                 TEST_BATCH_SIZE: Final[int] = 10
 
-            class Exceptions(FlextTestsConstants):
+            class Exceptions(c):
                 """Exception handling configuration for tests."""
 
-                FailureLevel = FlextTestsConstants.FailureLevel
+                FailureLevel = c.FailureLevel
 
-            class Settings(FlextTestsConstants):
+            class Settings(c):
                 """Configuration defaults for tests."""
 
-                LogLevel = FlextTestsConstants.LogLevel
-                Environment = FlextTestsConstants.Environment
+                LogLevel = c.LogLevel
+                Environment = c.Environment
 
-            class Logging(FlextTestsConstants):
+            class Logging(c):
                 """Logging configuration for tests - real inheritance."""
 
-                ContextOperation = FlextTestsConstants.ContextOperation
+                ContextOperation = c.ContextOperation
 
-            class Domain(FlextTestsConstants):
+            class Domain(c):
                 """Domain-specific constants for tests."""
 
-                Status = FlextTestsConstants.Status
-                Currency = FlextTestsConstants.Currency
-                OrderStatus = FlextTestsConstants.OrderStatus
+                Status = c.Status
+                Currency = c.Currency
+                OrderStatus = c.OrderStatus
 
-            class Cqrs(FlextTestsConstants):
+            class Cqrs(c):
                 """CQRS pattern constants for tests."""
 
-                Status = FlextTestsConstants.Status
-                HandlerType = FlextTestsConstants.HandlerType
-                CommonStatus = FlextTestsConstants.CommonStatus
-                MetricType = FlextTestsConstants.MetricType
-                ProcessingMode = FlextTestsConstants.ProcessingMode
-                ProcessingPhase = FlextTestsConstants.ProcessingPhase
-                BindType = FlextTestsConstants.BindType
-                MergeStrategy = FlextTestsConstants.MergeStrategy
-                HealthStatus = FlextTestsConstants.HealthStatus
-                SpecialStatus = FlextTestsConstants.SpecialStatus
-                TokenType = FlextTestsConstants.TokenType
-                OperationStatus = FlextTestsConstants.OperationStatus
-                SerializationFormat = FlextTestsConstants.SerializationFormat
-                Compression = FlextTestsConstants.Compression
-                Aggregation = FlextTestsConstants.Aggregation
-                Action = FlextTestsConstants.Action
-                PersistenceLevel = FlextTestsConstants.PersistenceLevel
-                TargetFormat = FlextTestsConstants.TargetFormat
-                WarningLevel = FlextTestsConstants.WarningLevel
-                OutputFormat = FlextTestsConstants.OutputFormat
-                Mode = FlextTestsConstants.Mode
-                RegistrationStatus = FlextTestsConstants.RegistrationStatus
+                Status = c.Status
+                HandlerType = c.HandlerType
+                CommonStatus = c.CommonStatus
+                MetricType = c.MetricType
+                ProcessingMode = c.ProcessingMode
+                ProcessingPhase = c.ProcessingPhase
+                BindType = c.BindType
+                MergeStrategy = c.MergeStrategy
+                HealthStatus = c.HealthStatus
+                SpecialStatus = c.SpecialStatus
+                TokenType = c.TokenType
+                OperationStatus = c.OperationStatus
+                SerializationFormat = c.SerializationFormat
+                Compression = c.Compression
+                Aggregation = c.Aggregation
+                Action = c.Action
+                PersistenceLevel = c.PersistenceLevel
+                TargetFormat = c.TargetFormat
+                WarningLevel = c.WarningLevel
+                OutputFormat = c.OutputFormat
+                Mode = c.Mode
+                RegistrationStatus = c.RegistrationStatus
 
             @unique
             class StatusEnum(StrEnum):
