@@ -204,16 +204,14 @@ disable_error_code = [
   "name-defined",
   "prop-decorator",
 ]
+exclude = "^tests/fixtures(?:/|$)"
 explicit_package_bases = true
 ignore_missing_imports = true
 mypy_path = [ ".", "../typings", "src" ]
 namespace_packages = true
+overrides = [  ]
 plugins = [ "pydantic.mypy" ]
 python_version = "3.13"
-
-[[tool.mypy.overrides]]
-disable_error_code = [ "assignment" ]
-module = [ "tests.fixtures.*" ]
 
 [tool.poetry]
 
@@ -350,6 +348,8 @@ exclude = [
   "**/node_modules",
   "**/site-packages",
   "**/site-packages/**",
+  "**/tests/fixtures",
+  "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
   ".sisyphus",
@@ -455,6 +455,8 @@ exclude = [
   "dist",
   "htmlcov",
   "temp-backup",
+  "tests/fixtures",
+  "tests/fixtures/**",
   "typings",
   "vendor",
   "venv",

@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_tests import m
-from tests._models import TestsFlextCoreModelsMixins
+from tests import TestsFlextCoreModelsMixins
 
 
 class TestsFlextCoreModels(m):

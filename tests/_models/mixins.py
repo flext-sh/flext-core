@@ -7,7 +7,7 @@ from typing import Annotated, ClassVar, Never, Self, override
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import m
-from tests import TestsFlextCoreTypes as t
+from tests import t
 
 # Use `flext_tests` generic model base classes here to avoid a runtime circular import
 # through the tests package. `t` comes from tests.typings, which extends the generic test
