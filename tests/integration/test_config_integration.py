@@ -74,7 +74,7 @@ class TestFlextSettingsSingletonIntegration:
             elif self.file_format == "yaml":
                 u.Cli.yaml_dump(file_path, self.config_data)
             elif self.file_format == "toml":
-                content = "\n".join(
+                content = "".join(
                     (f"{k} = {v!r}" for k, v in self.config_data.items()),
                 )
                 _ = file_path.write_text(content)

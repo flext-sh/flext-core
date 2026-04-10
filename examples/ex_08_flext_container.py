@@ -6,8 +6,7 @@ import sys
 from types import ModuleType
 from typing import override
 
-from examples import c, t, u
-from examples.shared import Examples
+from examples import Examples, c, t, u
 from flext_core import FlextContainer, FlextContext, r
 
 

@@ -151,7 +151,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        result = assert_log_result_success(logger.trace("Test trace message"))
+        assert_log_result_success(logger.trace("Test trace message"))
 
     def test_debug_logging(self) -> None:
         """Test debug level logging.
@@ -163,7 +163,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        result = assert_log_result_success(logger.debug("Test debug message"))
+        assert_log_result_success(logger.debug("Test debug message"))
 
     def test_debug_with_context(self) -> None:
         """Test debug logging with context.
@@ -190,7 +190,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        result = assert_log_result_success(logger.info("Test info message"))
+        assert_log_result_success(logger.info("Test info message"))
 
     def test_info_with_context(self) -> None:
         """Test info logging with context.
@@ -216,7 +216,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        result = assert_log_result_success(logger.warning("Test warning message"))
+        assert_log_result_success(logger.warning("Test warning message"))
 
     def test_warning_with_context(self) -> None:
         """Test warning logging with context.
@@ -242,7 +242,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        result = assert_log_result_success(logger.error("Test error message"))
+        assert_log_result_success(logger.error("Test error message"))
 
     def test_error_with_context(self) -> None:
         """Test error logging with context.
@@ -268,7 +268,7 @@ class TestCoverageLoggings:
         """
         logger = make_result_logger("test")
         tm.that(logger, none=False)
-        result = assert_log_result_success(logger.critical("Test critical message"))
+        assert_log_result_success(logger.critical("Test critical message"))
 
     def test_critical_with_context(self) -> None:
         """Test critical logging with context.

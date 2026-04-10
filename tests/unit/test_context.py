@@ -502,7 +502,7 @@ class TestFlextContext:
         FlextContext.set_container(container)
         service_instance = {"service": "instance"}
         FlextContext.Service.register_service("test-service", service_instance)
-        result = FlextContext.Service.get_service("test-service")
+        FlextContext.Service.get_service("test-service")
 
     def test_service_context_manager(self) -> None:
         """Test Service.service_context context manager."""

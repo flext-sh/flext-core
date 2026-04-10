@@ -8,8 +8,7 @@ from typing import ClassVar, override
 
 from pydantic import BaseModel
 
-from examples import Ex10ProtocolHandler, c, m, t, u
-from examples.shared import Examples
+from examples import Ex10ProtocolHandler, Examples, c, m, t, u
 from flext_core import FlextLogger, e, h, r
 
 

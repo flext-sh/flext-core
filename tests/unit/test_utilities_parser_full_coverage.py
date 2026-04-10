@@ -61,7 +61,7 @@ class TestUtilitiesParserFullCoverage:
             parser._parse_result_error(r[int].ok(1), default="fallback"),
             eq="fallback",
         )
-        model_result = parser._parse_model(
+        parser._parse_model(
             cast("t.NormalizedValue", {"name": "ok", "count": 2, "payload": "obj"}),
             m.Core.Tests._Model,
             "field: ",

@@ -7,8 +7,7 @@ import sys
 from pathlib import Path
 from typing import override
 
-from examples import c, u
-from examples.shared import Examples
+from examples import Examples, c, u
 from flext_core import FlextSettings
 
 

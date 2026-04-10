@@ -16,6 +16,49 @@ class FlextProtocolsResult:
     """Protocols for railway result contracts and model dump shape."""
 
     @runtime_checkable
+    class ResultLike[T_co](Protocol):
+        """Minimal observable result contract for automatic narrowing."""
+
+        @property
+        def error(self) -> str | None:
+            """Error message (available on failure, None on success)."""
+            ...
+
+        @property
+        def error_code(self) -> str | None:
+            """Structured error code when available."""
+            ...
+
+        @property
+        def error_data(self) -> t.ConfigMap | None:
+            """Structured error metadata when available."""
+            ...
+
+        @property
+        def exception(self) -> BaseException | None:
+            """Captured exception when available."""
+            ...
+
+        @property
+        def is_failure(self) -> bool:
+            """Failure status (strict: not is_success)."""
+            ...
+
+        @property
+        def is_success(self) -> bool:
+            """Success status (strict: True only when operation succeeded)."""
+            ...
+
+        @property
+        def value(self) -> T_co:
+            """Result value (available on success, strictly typed as T)."""
+            ...
+
+        def unwrap(self) -> T_co:
+            """Unwrap success value (raises on failure)."""
+            ...
+
+    @runtime_checkable
     class Result[T_co](FlextProtocolsBase.Base, Protocol):
         """Observable result contract for structural interop across FLEXT.
 

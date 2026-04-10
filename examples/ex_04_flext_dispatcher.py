@@ -17,10 +17,10 @@ from examples import (
     Ex04Ping,
     Ex04UnknownQuery,
     Ex04UserCreated,
+    Examples,
     p,
     t,
 )
-from examples.shared import Examples
 from flext_core import FlextDispatcher, r
 
 

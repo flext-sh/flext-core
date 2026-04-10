@@ -887,7 +887,7 @@ def test_configure_structlog_async_logging_uses_print_logger_factory(
         def configure(self, **kwargs: t.Scalar) -> None:
             configured_has_logger_factory.append(callable(kwargs.get("logger_factory")))
 
-    module = AsyncModule()
+    AsyncModule()
     u.configure_structlog(config=None)
     tm.that(u._async_writer is not None, eq=True)
     tm.that(bool(factory_streams), eq=True)
@@ -993,7 +993,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
         def bind_contextvars(**_kwargs: t.Scalar) -> None:
             return None
 
-    fake_structlog = type(
+    type(
         "FakeStructlog",
         (),
         {"contextvars": CtxVars, "get_logger": staticmethod(_get_logger)},

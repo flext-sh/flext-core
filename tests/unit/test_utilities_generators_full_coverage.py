@@ -10,7 +10,6 @@ from datetime import UTC, datetime, tzinfo
 
 import pytest
 
-from flext_core._utilities import generators as generators_utils
 from tests import m, u
 
 

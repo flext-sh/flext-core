@@ -13,7 +13,14 @@ from collections.abc import Callable, MutableSequence, Sequence
 from types import TracebackType
 from typing import Annotated, ClassVar, Self, TypeIs, cast, overload, override
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    TypeAdapter,
+    ValidationError,
+)
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
@@ -158,26 +165,9 @@ class FlextResult[T](BaseModel):
         return self._result
 
     @classmethod
-    def _fail_like[S](
-        cls,
-        source: p.Result[S],
-        *,
-        default_error: str = "",
-    ) -> FlextResult[S]:
-        if source.is_success:
-            msg = "Cannot mirror failure from successful result"
-            raise ValueError(msg)
-        return FlextResult[S].fail(
-            source.error or default_error,
-            error_code=source.error_code,
-            error_data=source.error_data,
-            exception=source.exception,
-        )
-
-    @classmethod
     def _from_result_like[V](
         cls,
-        source: p.Result[V],
+        source: p.ResultLike[V],
     ) -> FlextResult[V]:
         if source.is_success:
             return FlextResult[V].ok(source.value)
@@ -330,6 +320,14 @@ class FlextResult[T](BaseModel):
         return result
 
     @classmethod
+    def from_result[V](
+        cls,
+        source: p.ResultLike[V],
+    ) -> FlextResult[V]:
+        """Normalize any structural FLEXT result into FlextResult."""
+        return FlextResult[V]._from_result_like(source)
+
+    @classmethod
     def traverse[V, U](
         cls,
         items: Sequence[V],
@@ -464,9 +462,9 @@ class FlextResult[T](BaseModel):
 
     def flat_map[U](
         self,
-        func: Callable[[T], FlextResult[U]],
+        func: Callable[[T], p.ResultLike[U]],
     ) -> FlextResult[U]:
-        """Chain operations returning FlextResult.
+        """Chain operations returning a structural FLEXT result.
 
         Applies func to the success value and returns the result directly.
         If this result is a failure, returns a new failure with the same error.
@@ -481,22 +479,14 @@ class FlextResult[T](BaseModel):
             result = r[int].ok(42).flat_map(lambda x: r[str].ok(str(x)))
 
         """
-        if self.is_success:
-            inner = func(self.value)
-            if inner.is_success:
-                return FlextResult[U].ok(inner.value)
+        if self.is_failure:
             return FlextResult[U].fail(
-                inner.error or "",
-                error_code=inner.error_code,
-                error_data=inner.error_data,
-                exception=inner.exception,
+                self.error or "",
+                error_code=self.error_code,
+                error_data=self.error_data,
+                exception=self.exception,
             )
-        return FlextResult[U].fail(
-            self.error or "",
-            error_code=self.error_code,
-            error_data=self.error_data,
-            exception=self.exception,
-        )
+        return FlextResult[U].from_result(func(self.value))
 
     def flow_through[U](
         self,
@@ -743,12 +733,44 @@ class FlextResult[T](BaseModel):
                 exception=e,
             )
 
+    def to_type[U](self, adapter: TypeAdapter[U]) -> FlextResult[U]:
+        """Convert successful value using a cached Pydantic v2 TypeAdapter."""
+        if self.is_failure:
+            return FlextResult[U].fail(
+                self.error or "",
+                error_code=self.error_code,
+                error_data=self.error_data,
+                exception=self.exception,
+            )
+        try:
+            return FlextResult[U].ok(adapter.validate_python(self.value))
+        except (
+            ValidationError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+            Exception,
+        ) as e:
+            return FlextResult[U].fail(
+                f"Type conversion failed: {self._model_error_message(e)}",
+                exception=e,
+            )
+
     def unwrap(self) -> T:
         """Unwrap the success value or raise RuntimeError."""
         if self.is_failure:
             msg = f"Cannot unwrap failed result: {self.error}"
             raise RuntimeError(msg)
         return self.value
+
+    def unwrap_model[U: BaseModel](self, model: type[U]) -> U:
+        """Unwrap successful value after Pydantic model conversion."""
+        return self.to_model(model).unwrap()
+
+    def unwrap_type[U](self, adapter: TypeAdapter[U]) -> U:
+        """Unwrap successful value after TypeAdapter conversion."""
+        return self.to_type(adapter).unwrap()
 
     def unwrap_or(self, default: T) -> T:
         """Return value if success, otherwise return default.

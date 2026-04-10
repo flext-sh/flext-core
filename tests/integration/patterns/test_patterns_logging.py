@@ -163,7 +163,7 @@ class TestPatternsLogging:
 
     def test_logger_methods_exist(self) -> None:
         """Test that logger has expected methods."""
-        logger = self.make_result_logger("method_test")
+        self.make_result_logger("method_test")
 
     def test_get_base_logger(self) -> None:
         """Test getting base logger instance.

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from examples._models.shared import SharedHandle, SharedPerson
+from examples import SharedHandle, SharedPerson
 from flext_core import FlextModels
 
 

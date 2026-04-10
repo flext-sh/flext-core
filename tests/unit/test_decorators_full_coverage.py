@@ -17,7 +17,7 @@ from flext_core import (
     FlextLogger,
 )
 from flext_tests import tm
-from tests import c, d, e, m, p, r, t, u
+from tests import d, e, m, p, r, t
 
 
 class TestDecoratorsFullCoverage:
@@ -95,7 +95,6 @@ class TestDecoratorsFullCoverage:
 
         def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
-
 
         @d.log_operation("boom", track_perf=True)
         def fn() -> None:
@@ -353,7 +352,7 @@ class TestDecoratorsFullCoverage:
             return dep + 2
 
         tm.that(fn_standard(), eq=43)
-        result = fn_railway()
+        fn_railway()
 
     def test_with_correlation_with_context_track_operation_and_factory(
         self,
@@ -420,7 +419,6 @@ class TestDecoratorsFullCoverage:
         @d.factory(name="svc.factory", singleton=True, lazy=False)
         def build(_value: BaseModel) -> BaseModel:
             return t.ConfigMap(root={"v": 7})
-
 
     def test_track_performance_success_and_failure_paths(
         self,

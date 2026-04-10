@@ -22,8 +22,6 @@ class TestHandlerDecoratorDiscovery:
                 _ = cmd
                 return r[str].ok("handled")
 
-        method = Service.handle_user
-
     def test_decorator_metadata_contains_command_type(self) -> None:
         class CreateCommand:
             pass

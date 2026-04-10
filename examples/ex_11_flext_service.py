@@ -11,11 +11,11 @@ from pydantic import PrivateAttr
 from examples import (
     Ex11EntityStub as _EntityStub,
     Ex11Payload as _Payload,
+    Examples,
     m,
     t,
     u,
 )
-from examples.shared import Examples
 from flext_core import FlextContext, FlextLogger, FlextService, FlextSettings, e, r, s
 
 

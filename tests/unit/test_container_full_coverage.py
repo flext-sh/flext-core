@@ -6,7 +6,7 @@ import sys
 import types
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from types import ModuleType
-from typing import ClassVar, Self, cast
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import BaseModel
@@ -15,12 +15,10 @@ from pydantic_settings import BaseSettings as _BaseSettings
 import flext_core._utilities.discovery as _discovery_mod
 from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
-from tests import m, p, r, t
+from tests import m, p, t
 
 
 class TestContainerFullCoverage:
-
-
     @staticmethod
     def _scan_factory_module(
         _module: ModuleType,
@@ -84,7 +82,7 @@ class TestContainerFullCoverage:
             return 1
 
         fake_module = types.SimpleNamespace(the_factory=factory)
-        frame = types.SimpleNamespace(
+        types.SimpleNamespace(
             f_back=types.SimpleNamespace(f_globals={"__name__": "fake_mod"}),
         )
         monkeypatch.setitem(
@@ -95,7 +93,7 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(
             _discovery_mod.FlextUtilitiesDiscovery,
             "scan_module",
-            _scan_factory_module,
+            self._scan_factory_module,
         )
 
         def _register(
@@ -107,7 +105,6 @@ class TestContainerFullCoverage:
             if kind == "factory":
                 called.append(name)
             return container
-
 
         def _call_container(*_args: t.Scalar, **_kwargs: t.Scalar) -> FlextContainer:
             return container
@@ -188,7 +185,7 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(
             type(c._config),
             "get_namespace_config",
-            staticmethod(_namespace_config_none),
+            staticmethod(self._namespace_config_none),
         )
         c.sync_config_to_di()
 
@@ -228,12 +225,12 @@ class TestContainerFullCoverage:
         tm.that(c._resources, has="res")
         monkeypatch.setattr(
             "flext_core.container.u.DependencyIntegration.register_object",
-            _raise_register_object,
+            self._raise_register_object,
         )
         c.register("x", "y")
         monkeypatch.setattr(
             "flext_core.container.u.DependencyIntegration.register_factory",
-            _raise_register_factory,
+            self._raise_register_factory,
         )
         c.register("x2", lambda: "v", kind="factory")
         setattr(c._di_resources, "dup", "normalized")
@@ -241,7 +238,7 @@ class TestContainerFullCoverage:
         del c._di_resources.dup
         monkeypatch.setattr(
             "flext_core.container.u.DependencyIntegration.register_resource",
-            _raise_register_resource,
+            self._raise_register_resource,
         )
         c.register("new", lambda: "v", kind="resource")
 
@@ -339,7 +336,7 @@ class TestContainerFullCoverage:
             return 7
 
         fake_module = types.SimpleNamespace(factory_fn=factory_fn)
-        frame = types.SimpleNamespace(
+        types.SimpleNamespace(
             f_back=types.SimpleNamespace(f_globals={"__name__": "fake_factory_mod"}),
         )
         monkeypatch.setitem(
@@ -350,9 +347,8 @@ class TestContainerFullCoverage:
         monkeypatch.setattr(
             _discovery_mod.FlextUtilitiesDiscovery,
             "scan_module",
-            _scan_factory_module_captured,
+            self._scan_factory_module_captured,
         )
-        original_register = FlextContainer.register
 
         def capture_register(
             self: FlextContainer,
@@ -667,7 +663,7 @@ class TestContainerFullCoverage:
                 kind: str = "service",
             ) -> FlextContainer:
                 if kind == "factory" and callable(impl):
-                    result_type = type(impl())
+                    type(impl())
                 return c
 
             c._config = cast("p.Settings", _CfgFallback())

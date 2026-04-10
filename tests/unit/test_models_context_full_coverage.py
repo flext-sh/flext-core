@@ -66,7 +66,7 @@ def test_structlog_proxy_context_var_default_when_key_missing(
 
 def test_context_data_normalize_and_json_checks() -> None:
     nested: t.NormalizedValue = cast("t.NormalizedValue", {"a": [{"b": 1}]})
-    normalized = m.ContextData.normalize_to_container(nested)
+    m.ContextData.normalize_to_container(nested)
     check_result = m.ContextData.check_json_serializable(
         cast("t.ValueOrModel", {"k": [1, "x"]}),
     )

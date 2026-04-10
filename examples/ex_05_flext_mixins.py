@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import override
 
-from examples import c, m, t, u
-from examples.shared import Examples
+from examples import Examples, c, m, t, u
 from flext_core import FlextLogger, FlextSettings, r, x
 
 

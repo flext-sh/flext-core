@@ -211,8 +211,7 @@ class UtilitiesCacheCoverage100Namespace:
 
         def test_logger_property(self) -> None:
             """Test logger property returns structlog logger."""
-            cache = u()
-            logger = cache.logger
+            u()
 
     class TestuCacheNormalizeComponent:
         """Test FlextUtilitiesCache.normalize_component."""

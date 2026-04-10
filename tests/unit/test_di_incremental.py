@@ -45,7 +45,7 @@ class TestDIIncremental:
     def test_dependency_containers_returns_valid_module(self) -> None:
         """Test dependency_containers returns valid containers module."""
         containers_module = u.dependency_containers()
-        dynamic_container = containers_module.DynamicContainer()
+        containers_module.DynamicContainer()
 
     def test_create_container_with_real_execution(self) -> None:
         """Test create_container with real registration and resolution."""

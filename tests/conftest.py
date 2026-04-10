@@ -211,7 +211,7 @@ def empty_strings() -> t.StrSequence:
 @pytest.fixture
 def whitespace_strings() -> t.StrSequence:
     """Whitespace-only strings for validation."""
-    return [" ", "   ", "\t", "\n", "  \t  \n  "]
+    return [" ", "   ", "\t", "\n", "  \t  "]
 
 
 @pytest.fixture

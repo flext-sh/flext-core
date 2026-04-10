@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import types
 from collections.abc import MutableSequence
 from pathlib import Path
@@ -84,7 +83,6 @@ class TestModule:
             _name: str | None = None,
         ) -> TestModule._FakeBindable:
             return fake
-
 
         class _Config:
             level = "WARNING"

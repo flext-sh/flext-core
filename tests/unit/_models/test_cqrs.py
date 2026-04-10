@@ -528,7 +528,7 @@ class TestFlextModelsCqrs:
         model_factory: Callable[[], BaseModel],
         expected_tag: str,
     ) -> None:
-        instance = model_factory()
+        model_factory()
 
     @pytest.mark.parametrize(
         ("model_factory", "has_command_type", "has_query_type", "has_event_type"),
@@ -553,8 +553,14 @@ class TestFlextModelsCqrs:
     ) -> None:
         instance = model_factory()
         if has_command_type:
+            tm.that(getattr(instance, "command_type", None), none=False)
         else:
+            tm.that(getattr(instance, "command_type", None), none=True)
         if has_event_type:
+            tm.that(getattr(instance, "event_type", None), none=False)
         else:
+            tm.that(getattr(instance, "event_type", None), none=True)
         if has_query_type:
+            tm.that(getattr(instance, "query_type", None), none=False)
         else:
+            tm.that(getattr(instance, "query_type", None), none=True)

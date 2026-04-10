@@ -166,7 +166,7 @@ class TestLoggingsStrictReturns:
         _ = logger.log("info", "test message")
 
     def test_flext_logger_implements_structlog_logger_protocol(self) -> None:
-        logger = FlextLogger.create_module_logger(__name__)
+        FlextLogger.create_module_logger(__name__)
 
     def test_all_protocol_methods_return_result_bool(self) -> None:
         logger = FlextLogger.create_module_logger(__name__)

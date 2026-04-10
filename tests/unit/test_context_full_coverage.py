@@ -147,7 +147,6 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     tm.that(ctx._statistics.operations[c.OPERATION_GET], eq=2)
     clone_source = FlextContext()
     _ = clone_source.set("a", "b")
-    original_set = FlextContext.set
 
     def _fail_set(
         self: FlextContext,

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core import T, r, t
+from flext_core import T, p, r, t
 
 
 class FlextUtilitiesResultHelpers:
@@ -66,6 +66,24 @@ class FlextUtilitiesResultHelpers:
         if default is not None:
             return r[T].ok(default)
         return r[T].fail(func_result.error or "Callable failed")
+
+    @staticmethod
+    def expect_success[TValue](
+        result: p.ResultLike[TValue],
+        *,
+        message: str | None = None,
+    ) -> TValue:
+        """Return the success payload or raise AssertionError.
+
+        Keeps call sites terse while preserving strong generic typing.
+        """
+        if result.is_failure:
+            if message is None:
+                error_message = str(result.error)
+            else:
+                error_message = f"{message}: {result.error}"
+            raise AssertionError(error_message)
+        return result.value
 
 
 __all__ = ["FlextUtilitiesResultHelpers"]
