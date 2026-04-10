@@ -128,9 +128,13 @@ class FlextLogger(FlextRuntime):
         @override
         def flush(self) -> None:
             """Flush stream (best effort)."""
-            with suppress(OSError, ValueError):
-                if hasattr(self.stream, "flush") and callable(self.stream.flush):
-                    self.stream.flush()
+            flush_fn = getattr(self.stream, "flush", None)
+            if flush_fn is None or not callable(flush_fn):
+                return
+            try:
+                flush_fn()
+            except (OSError, ValueError, TypeError, AttributeError):
+                return
 
         def shutdown(self) -> None:
             """Stop worker thread and flush remaining messages."""
@@ -894,7 +898,14 @@ class FlextLogger(FlextRuntime):
             if caller_frame is None:
                 return None
             filename = caller_frame.f_code.co_filename
-            file_path = FlextLogger._convert_to_relative_path(filename)
+            abs_path = Path(filename).resolve()
+            workspace_root = FlextLogger._find_workspace_root(abs_path)
+            if workspace_root is None:
+                return None
+            relative_path = abs_path.relative_to(workspace_root)
+            if relative_path.parts and relative_path.parts[0] == ".venv":
+                return None
+            file_path = str(relative_path)
             line_number = caller_frame.f_lineno + 1
             method_name = caller_frame.f_code.co_name
             class_name = FlextLogger._extract_class_name(caller_frame)

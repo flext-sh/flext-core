@@ -12,42 +12,34 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
+    from flext_core import T, T_co, T_contra
     from flext_core.decorators import d
     from flext_core.exceptions import e
     from flext_core.handlers import h
     from flext_core.mixins import x
     from flext_core.result import r
-    from tests.base import TestsFlextCoreServiceBase, s
+    from tests.base import TestsFlextCoreServiceBase, TestsFlextCoreServiceBase as s
     from tests.constants import TestsFlextCoreConstants, TestsFlextCoreConstants as c
     from tests.models import TestsFlextCoreModels, TestsFlextCoreModels as m
     from tests.protocols import TestsFlextCoreProtocols, TestsFlextCoreProtocols as p
-    from tests.typings import (
-        T,
-        T_co,
-        T_contra,
-        TestsFlextCoreTypes,
-        TestsFlextCoreTypes as t,
-    )
+    from tests.typings import TestsFlextCoreTypes, TestsFlextCoreTypes as t
     from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
     from tests.utilities import TestsFlextCoreUtilities, TestsFlextCoreUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     (".unit",),
     build_lazy_import_map(
         {
-            ".base": (
-                "TestsFlextCoreServiceBase",
-                "s",
-            ),
+            ".base": ("TestsFlextCoreServiceBase",),
             ".constants": ("TestsFlextCoreConstants",),
             ".models": ("TestsFlextCoreModels",),
             ".protocols": ("TestsFlextCoreProtocols",),
-            ".typings": (
+            ".typings": ("TestsFlextCoreTypes",),
+            ".utilities": ("TestsFlextCoreUtilities",),
+            "flext_core": (
                 "T",
                 "T_co",
                 "T_contra",
-                "TestsFlextCoreTypes",
             ),
-            ".utilities": ("TestsFlextCoreUtilities",),
             "flext_core.decorators": ("d",),
             "flext_core.exceptions": ("e",),
             "flext_core.handlers": ("h",),
@@ -55,6 +47,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             "flext_core.result": ("r",),
         },
         alias_groups={
+            ".base": (("s", "TestsFlextCoreServiceBase"),),
             ".constants": (("c", "TestsFlextCoreConstants"),),
             ".models": (("m", "TestsFlextCoreModels"),),
             ".protocols": (("p", "TestsFlextCoreProtocols"),),

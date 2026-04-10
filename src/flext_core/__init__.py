@@ -13,6 +13,8 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
+    from pydantic import BaseModel
+
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.domain import FlextConstantsDomain
@@ -112,7 +114,6 @@ if _t.TYPE_CHECKING:
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
         TV,
-        BaseModel,
         EnumT,
         FlextTypes,
         FlextTypes as t,
@@ -188,7 +189,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".settings": ("FlextSettings",),
             ".typings": (
-                "BaseModel",
                 "EnumT",
                 "FlextTypes",
                 "MessageT_contra",
@@ -207,6 +207,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "U",
             ),
             ".utilities": ("FlextUtilities",),
+            "pydantic": ("BaseModel",),
         },
         alias_groups={
             ".constants": (("c", "FlextConstants"),),

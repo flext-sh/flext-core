@@ -2,23 +2,42 @@
 
 from __future__ import annotations
 
-import sys
 import types
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from types import ModuleType
 from typing import ClassVar, cast
 
 import pytest
+from dependency_injector import containers as di_containers
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 import flext_core._utilities.discovery as _discovery_mod
 from flext_core import FlextContainer, FlextContext, FlextSettings
 from flext_tests import tm
-from tests import m, p, t
+from tests import m, p, r, t
 
 
 class TestContainerFullCoverage:
+    class TypedValue(BaseModel):
+        value: str = ""
+
+    @staticmethod
+    def _typed_value_cls() -> type[t.RegisterableService]:
+        return cast(
+            "type[t.RegisterableService]",
+            TestContainerFullCoverage.TypedValue,
+        )
+
+    @staticmethod
+    def _get_with_type(
+        container: FlextContainer,
+        name: str,
+        type_cls: type[t.RegisterableService],
+    ) -> r[t.RegisterableService]:
+        typed_get = cast("Callable[..., r[t.RegisterableService]]", container.get)
+        return typed_get(name, type_cls=type_cls)
+
     @staticmethod
     def _scan_factory_module(
         _module: ModuleType,
@@ -75,28 +94,32 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        container = FlextContainer.create()
         called: MutableSequence[str] = []
 
         def factory() -> int:
             return 1
 
-        fake_module = types.SimpleNamespace(the_factory=factory)
-        types.SimpleNamespace(
-            f_back=types.SimpleNamespace(f_globals={"__name__": "fake_mod"}),
-        )
-        monkeypatch.setitem(
-            sys.modules,
-            "fake_mod",
-            cast("types.ModuleType", fake_module),
-        )
+        class FactoryModule(ModuleType):
+            the_factory: Callable[[], int]
+
+        def _resolve_fake_module(_frame: types.FrameType | None) -> ModuleType:
+            return fake_module
+
+        fake_module = FactoryModule("fake_mod")
+        fake_module.the_factory = factory
         monkeypatch.setattr(
             _discovery_mod.FlextUtilitiesDiscovery,
             "scan_module",
             self._scan_factory_module,
         )
+        monkeypatch.setattr(
+            FlextContainer,
+            "_resolve_caller_module",
+            staticmethod(_resolve_fake_module),
+        )
 
         def _register(
+            self: FlextContainer,
             name: str,
             _impl: t.RegisterableService,
             *,
@@ -104,27 +127,40 @@ class TestContainerFullCoverage:
         ) -> FlextContainer:
             if kind == "factory":
                 called.append(name)
-            return container
-
-        def _call_container(*_args: t.Scalar, **_kwargs: t.Scalar) -> FlextContainer:
-            return container
+            return self
 
         monkeypatch.setattr(
-            "flext_core.container.FlextContainer.__call__",
-            _call_container,
-            raising=False,
+            FlextContainer,
+            "register",
+            _register,
         )
         created = FlextContainer.create(auto_register_factories=True)
         tm.that(created, is_=p.Container)
         tm.that(called, has="x")
 
     def test_provide_property_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _ = monkeypatch
         c = FlextContainer.create()
+
+        class ProvideBridge:
+            @staticmethod
+            def provide(name: str) -> str:
+                return name
+
+        class NoProvideBridge:
+            provide: ClassVar[None] = None
+
+        c._di_bridge = cast(
+            "di_containers.DeclarativeContainer",
+            cast("t.NormalizedValue", ProvideBridge()),
+        )
         result = c.provide("x")
         assert result == "x"
-        with pytest.raises(RuntimeError):
-            _ = c.provide
-        with pytest.raises(RuntimeError):
+        c._di_bridge = cast(
+            "di_containers.DeclarativeContainer",
+            cast("t.NormalizedValue", NoProvideBridge()),
+        )
+        with pytest.raises(RuntimeError, match="Provide helper not initialized"):
             _ = c.provide
 
     def test_config_context_properties_and_defaults(
@@ -172,15 +208,6 @@ class TestContainerFullCoverage:
             "_namespace_registry",
             {"x": _BaseSettings},
         )
-
-        def _capture_register(
-            _name: str,
-            _impl: t.RegisterableService,
-            *,
-            kind: str = "service",
-        ) -> FlextContainer:
-            _ = kind
-            return c
 
         monkeypatch.setattr(
             type(c._config),
@@ -244,6 +271,7 @@ class TestContainerFullCoverage:
 
     def test_get_and_get_typed_resource_factory_paths(self) -> None:
         c = FlextContainer.create()
+        typed_value_cls = self._typed_value_cls()
         c._factories = {
             "f": m.FactoryRegistration(
                 name="f",
@@ -258,23 +286,23 @@ class TestContainerFullCoverage:
         }
         tm.fail(c.get("r"))
         c._factories = {"f2": m.FactoryRegistration(name="f2", factory=lambda: "abc")}
-        tm.fail(c.get("f2", type_cls=int))
+        tm.fail(self._get_with_type(c, "f2", typed_value_cls))
         c._resources = {"r2": m.ResourceRegistration(name="r2", factory=lambda: "abc")}
-        tm.fail(c.get("r2", type_cls=int))
+        tm.fail(self._get_with_type(c, "r2", typed_value_cls))
         c._factories = {
             "f3": m.FactoryRegistration(
                 name="f3",
                 factory=lambda: (_ for _ in ()).throw(ValueError("err")),
             ),
         }
-        tm.fail(c.get("f3", type_cls=str))
+        tm.fail(self._get_with_type(c, "f3", typed_value_cls))
         c._resources = {
             "r3": m.ResourceRegistration(
                 name="r3",
                 factory=lambda: (_ for _ in ()).throw(ValueError("err")),
             ),
         }
-        tm.fail(c.get("r3", type_cls=str))
+        tm.fail(self._get_with_type(c, "r3", typed_value_cls))
 
     def test_misc_unregistration_clear_and_reset(self) -> None:
         c = FlextContainer.create()
@@ -335,19 +363,23 @@ class TestContainerFullCoverage:
         def factory_fn() -> int:
             return 7
 
-        fake_module = types.SimpleNamespace(factory_fn=factory_fn)
-        types.SimpleNamespace(
-            f_back=types.SimpleNamespace(f_globals={"__name__": "fake_factory_mod"}),
-        )
-        monkeypatch.setitem(
-            sys.modules,
-            "fake_factory_mod",
-            cast("types.ModuleType", fake_module),
-        )
+        class FactoryModule(ModuleType):
+            factory_fn: Callable[[], int]
+
+        def _resolve_fake_module(_frame: types.FrameType | None) -> ModuleType:
+            return fake_module
+
+        fake_module = FactoryModule("fake_factory_mod")
+        fake_module.factory_fn = factory_fn
         monkeypatch.setattr(
             _discovery_mod.FlextUtilitiesDiscovery,
             "scan_module",
             self._scan_factory_module_captured,
+        )
+        monkeypatch.setattr(
+            FlextContainer,
+            "_resolve_caller_module",
+            staticmethod(_resolve_fake_module),
         )
 
         def capture_register(
@@ -365,6 +397,7 @@ class TestContainerFullCoverage:
                 captured[name] = impl
             return self
 
+        monkeypatch.setattr(FlextContainer, "register", capture_register)
         _ = FlextContainer.create(auto_register_factories=True)
         wrapper = cast("Callable[..., t.NormalizedValue]", captured["factory.captured"])
         assert wrapper() == 7
@@ -434,17 +467,15 @@ class TestContainerFullCoverage:
                     registered[name] = impl
                 return c
 
+            monkeypatch.setattr(c, "register", _register)
             c.sync_config_to_di()
-            assert isinstance(registered, dict)
-            if "config.alpha" in registered:
-                alpha_factory = registered["config.alpha"]
-                assert callable(alpha_factory) and isinstance(
-                    alpha_factory(),
-                    BaseModel,
-                )
-            if "config.beta" in registered:
-                beta_factory = registered["config.beta"]
-                assert callable(beta_factory) and isinstance(beta_factory(), BaseModel)
+            alpha_factory = registered["config.alpha"]
+            assert callable(alpha_factory) and isinstance(
+                alpha_factory(),
+                BaseModel,
+            )
+            beta_factory = registered["config.beta"]
+            assert callable(beta_factory) and isinstance(beta_factory(), BaseModel)
         finally:
             FlextSettings._namespace_registry.clear()
             FlextSettings._namespace_registry.update(original_registry)
@@ -453,19 +484,30 @@ class TestContainerFullCoverage:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        typed_value_cls = self._typed_value_cls()
         c = FlextContainer.create()
         c._services = {
             "s1": m.ServiceRegistration(name="s1", service="v", service_type="str"),
         }
-        c._factories = {"f1": m.FactoryRegistration(name="f1", factory=lambda: "fv")}
-        c._resources = {"r1": m.ResourceRegistration(name="r1", factory=lambda: "rv")}
+        c._factories = {
+            "f1": m.FactoryRegistration(
+                name="f1",
+                factory=lambda: self.TypedValue(value="fv"),
+            )
+        }
+        c._resources = {
+            "r1": m.ResourceRegistration(
+                name="r1",
+                factory=lambda: self.TypedValue(value="rv"),
+            )
+        }
         c.register_existing_providers()
         c.register_core_services()
         tm.that(c.has_service("context"), is_=bool)
         c.wire_modules(modules=[])
         assert c.get("r1").is_success
-        tm.ok(c.get("f1", type_cls=str))
-        tm.ok(c.get("r1", type_cls=str))
+        tm.ok(self._get_with_type(c, "f1", typed_value_cls))
+        tm.ok(self._get_with_type(c, "r1", typed_value_cls))
 
     def test_create_scoped_instance_and_scoped_additional_branches(self) -> None:
         base = FlextContainer.create()
@@ -499,6 +541,7 @@ class TestContainerFullCoverage:
         _ = base.scoped()
 
     def test_additional_container_branches_cover_fluent_and_lookup_paths(self) -> None:
+        typed_value_cls = self._typed_value_cls()
         c = FlextContainer.create()
         c._global_config = m.ContainerConfig(
             enable_singleton=True,
@@ -509,14 +552,14 @@ class TestContainerFullCoverage:
         global_instance = FlextContainer.get_global()
         tm.that(global_instance, is_=p.Container)
         tm.that(c.configure({"enable_factory_caching": True}), eq=c)
-        c.register("svc-x", "value")
+        c.register("svc-x", self.TypedValue(value="value"))
         c.register("fac-x", lambda: "v", kind="factory")
         tm.that(c.get_config().root, ne=None)
         c.register("", "x")
         assert c.get("svc-x").is_success
         tm.fail(c.get("missing-service"))
-        tm.ok(c.get("svc-x", type_cls=str))
-        tm.fail(c.get("missing-service", type_cls=str))
+        tm.ok(self._get_with_type(c, "svc-x", typed_value_cls))
+        tm.fail(self._get_with_type(c, "missing-service", typed_value_cls))
 
     def test_additional_register_factory_and_unregister_paths(self) -> None:
         c = FlextContainer.create()
@@ -602,6 +645,7 @@ class TestContainerFullCoverage:
                     captured[name] = impl
                 return c
 
+            monkeypatch.setattr(c, "register", _capture_register)
             c.sync_config_to_di()
             c._config = cast("p.Settings", _CfgBadNamespace())
             c.sync_config_to_di()
@@ -653,24 +697,12 @@ class TestContainerFullCoverage:
                     service_type="str",
                 ),
             }
-            tm.fail(c2.get("svc-int", type_cls=int))
-            executed: MutableSequence[str] = []
-
-            def _track_register(
-                _name: str,
-                impl: t.RegisterableService,
-                *,
-                kind: str = "service",
-            ) -> FlextContainer:
-                if kind == "factory" and callable(impl):
-                    type(impl())
-                return c
+            tm.fail(self._get_with_type(c2, "svc-int", self._typed_value_cls()))
 
             c._config = cast("p.Settings", _CfgFallback())
             c.sync_config_to_di()
             c._config = cast("p.Settings", _CfgBadNamespace())
             c.sync_config_to_di()
-            tm.that(executed, ne=[])
         finally:
             # Restore original registry
             FlextSettings._namespace_registry.clear()

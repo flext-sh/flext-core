@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import Examples, c
+from examples import c
+from examples.shared import Examples
 from flext_core import FlextContainer, FlextLogger, r
 
 FlextLogger.configure_structlog()

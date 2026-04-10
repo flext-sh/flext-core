@@ -308,6 +308,7 @@ def test_dependency_registration_duplicate_guards() -> None:
 
 def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: MutableSequence[t.ConfigurationMapping] = []
+    assert runtime_module is not None
 
     class StatefulModule:
         def __init__(self) -> None:
@@ -374,6 +375,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             return _print_logger_factory
 
     fake_module = StatefulModule()
+    monkeypatch.setattr(runtime_module, "structlog", fake_module)
 
     class Config:
         log_level: int = logging.DEBUG
@@ -389,7 +391,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     _ = Config  # referenced for pyright
-    u.configure_structlog(config=None)
+    u.configure_structlog(config=cast("BaseModel", cast("t.NormalizedValue", Config())))
     tm.that(u.is_structlog_configured(), eq=True)
     tm.that(bool(calls), eq=True)
     u._structlog_configured = False
@@ -415,7 +417,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = False
 
     _ = ConfigNoAsync  # referenced for pyright
-    u.configure_structlog(config=None)
+    u.configure_structlog(
+        config=cast("BaseModel", cast("t.NormalizedValue", ConfigNoAsync())),
+    )
     tm.that(u._structlog_configured, eq=True)
     u._structlog_configured = False
     calls.clear()
@@ -433,7 +437,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         async_logging: bool = True
 
     _ = ConfigAsyncFallback  # referenced for pyright
-    u.configure_structlog(config=None)
+    u.configure_structlog(
+        config=cast("BaseModel", cast("t.NormalizedValue", ConfigAsyncFallback())),
+    )
     tm.that(u._structlog_configured, eq=True)
 
 
@@ -720,9 +726,6 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     tm.that(u.normalize_to_metadata(Path("/tmp")), eq=str(Path("/tmp")))
 
-    class Frame:
-        f_back: types.FrameType | None = None
-
     tm.that(u.get_logger(None), none=False)
 
 
@@ -825,6 +828,7 @@ def test_configure_structlog_async_logging_uses_print_logger_factory(
 ) -> None:
     configured_has_logger_factory: MutableSequence[bool] = []
     factory_streams: MutableSequence[io.TextIOBase] = []
+    assert runtime_module is not None
 
     class AsyncModule:
         def __init__(self) -> None:
@@ -887,7 +891,7 @@ def test_configure_structlog_async_logging_uses_print_logger_factory(
         def configure(self, **kwargs: t.Scalar) -> None:
             configured_has_logger_factory.append(callable(kwargs.get("logger_factory")))
 
-    AsyncModule()
+    monkeypatch.setattr(runtime_module, "structlog", AsyncModule())
     u.configure_structlog(config=None)
     tm.that(u._async_writer is not None, eq=True)
     tm.that(bool(factory_streams), eq=True)
@@ -973,6 +977,7 @@ def test_runtime_result_remaining_paths() -> None:
 
 def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     events: MutableSequence[tuple[str, t.ContainerMapping]] = []
+    assert runtime_module is not None
 
     class Logger:
         def info(self, message: str, **kwargs: t.Scalar) -> None:
@@ -993,11 +998,12 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
         def bind_contextvars(**_kwargs: t.Scalar) -> None:
             return None
 
-    type(
+    fake_structlog = type(
         "FakeStructlog",
         (),
         {"contextvars": CtxVars, "get_logger": staticmethod(_get_logger)},
-    )
+    )()
+    monkeypatch.setattr(runtime_module, "structlog", fake_structlog)
     u.Integration.track_service_resolution("svc", resolved=True)
     u.Integration.track_service_resolution(
         "svc",

@@ -5,7 +5,7 @@ from __future__ import annotations
 import types
 from collections.abc import MutableSequence
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, cast, override
 
 import pytest
 
@@ -72,18 +72,14 @@ class TestModule:
         def __init__(self) -> None:
             self.contextvars: TestModule._ContextVars = TestModule._ContextVars()
 
-    def test_loggings_instance_and_message_format_paths(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        fake = self._FakeBindable()
+    class _FailingInfoBindable(_FakeBindable):
+        @override
+        def info(self, message: str, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+            super().info(message, *args, **kwargs)
+            msg = "no info"
+            raise AttributeError(msg)
 
-        def _get_logger(
-            _cls: type[FlextLogger],
-            _name: str | None = None,
-        ) -> TestModule._FakeBindable:
-            return fake
-
+    def test_loggings_instance_and_message_format_paths(self) -> None:
         class _Config:
             level = "WARNING"
             service_name = "svc"
@@ -106,12 +102,13 @@ class TestModule:
         )
         tm.that(logger.name, eq="x")
         tm.that(logger.new(a=1).name, eq="x")
-        tm.that(logger.unbind("a").name, eq="x")
+        with pytest.raises(KeyError):
+            logger.unbind("a")
         tm.that(logger.unbind("a", safe=True).name, eq="x")
         logger.trace("%s %s", "a")
         logger.trace("x")
         tm.that(FlextLogger._format_log_message("%s %s", "a"), ne="")
-        tm.that(FlextLogger._get_calling_frame(), none=True)
+        tm.that(FlextLogger._get_calling_frame(), is_=types.FrameType)
 
         class _Code:
             co_qualname = "MyType.run"
@@ -127,24 +124,14 @@ class TestModule:
             none=True,
         )
 
-    def test_loggings_source_and_log_error_paths(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
+    def test_loggings_source_and_log_error_paths(self) -> None:
         fake = self._FakeBindable()
         logger = FlextLogger.create_bound_logger(
             "x",
             cast("p.Logger", cast("t.NormalizedValue", fake)),
         )
 
-        def _no_frame() -> types.FrameType | None:
-            return None
-
         tm.that(FlextLogger._get_caller_source_path(), none=True)
-
-        def _raise_resolve(self: Path) -> Path:
-            msg = "bad"
-            raise RuntimeError(msg)
 
         tm.that(FlextLogger._convert_to_relative_path("/tmp/x.py"), eq="x.py")
 
@@ -174,18 +161,14 @@ class TestModule:
         )
         logger_boom._structlog_instance = cast(
             "p.Logger",
-            cast("t.NormalizedValue", self._FakeBindable()),
+            cast("t.NormalizedValue", self._FailingInfoBindable()),
         )
-
-        def _raise_info(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
-            msg = "no info"
-            raise AttributeError(msg)
 
         failed = logger_boom._log("INFO", "msg")
         assert failed is not None
         tm.fail(failed)
-        logger.log("INFO", "message", k="v")
-        logger.warning("warn")
+        tm.ok(logger.log("INFO", "message", k="v"))
+        tm.ok(logger.warning("warn"))
 
     def test_loggings_exception_and_adapter_paths(
         self,
@@ -223,10 +206,6 @@ class TestModule:
             "x",
             cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable())),
         )
-
-        def _raise_error(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
-            msg = "boom"
-            raise RuntimeError(msg)
 
         broken.exception("msg", exception=ValueError("x"), exc_info=True)
         tracker = FlextLogger.PerformanceTracker(logger, "op")

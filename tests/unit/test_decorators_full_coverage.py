@@ -96,6 +96,19 @@ class TestDecoratorsFullCoverage:
         def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
+        monkeypatch.setattr(
+            "flext_core.decorators.FlextDecorators._bind_operation_context",
+            staticmethod(_bind_operation_context),
+        )
+        monkeypatch.setattr(
+            "flext_core.decorators.FlextDecorators._clear_operation_scope",
+            staticmethod(_clear_operation_scope),
+        )
+        monkeypatch.setattr(
+            "flext_core.decorators.FlextLogger",
+            _logger_factory,
+        )
+
         @d.log_operation("boom", track_perf=True)
         def fn() -> None:
             msg = "x"
@@ -165,6 +178,7 @@ class TestDecoratorsFullCoverage:
         def _sleep(_seconds: float) -> None:
             return None
 
+        monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
         calls = {"n": 0}
 
         def flaky(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
@@ -300,9 +314,6 @@ class TestDecoratorsFullCoverage:
         )
         fake_logger = self._FakeLogger()
 
-        def _is_dict_like(_value: t.Scalar) -> bool:
-            return False
-
         d._handle_log_result(
             result=r[bool].fail("x", error_code="E"),
             logger=cast("FlextLogger", fake_logger),
@@ -420,6 +431,8 @@ class TestDecoratorsFullCoverage:
         def build(_value: BaseModel) -> BaseModel:
             return t.ConfigMap(root={"v": 7})
 
+        tm.that(build(t.ConfigMap(root={"v": 1})), is_=t.ConfigMap)
+
     def test_track_performance_success_and_failure_paths(
         self,
         monkeypatch: pytest.MonkeyPatch,
@@ -435,6 +448,10 @@ class TestDecoratorsFullCoverage:
         def _logger_factory(_module: str) -> TestDecoratorsFullCoverage._FakeLogger:
             return fake_logger
 
+        monkeypatch.setattr(
+            "flext_core.decorators.FlextLogger",
+            _logger_factory,
+        )
         monkeypatch.setattr(
             "flext_core.decorators.d._bind_operation_context",
             _bind_operation_context,
@@ -488,6 +505,10 @@ class TestDecoratorsFullCoverage:
             "flext_core.decorators.d._execute_retry_loop",
             _execute_retry_loop,
         )
+        monkeypatch.setattr(
+            "flext_core.decorators.FlextLogger",
+            _logger_factory,
+        )
 
         @d.retry(max_attempts=1)
         def retry_fn() -> str:
@@ -504,6 +525,7 @@ class TestDecoratorsFullCoverage:
         def _sleep(_seconds: float) -> None:
             return None
 
+        monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
         calls = {"n": 0}
 
         def always_fails(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
