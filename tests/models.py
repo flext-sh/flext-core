@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_tests import m
-from tests import mixins
+from tests import TestsFlextCoreModelsMixins
 
 
 class TestsFlextCoreModels(m):
@@ -37,7 +37,7 @@ class TestsFlextCoreModels(m):
     class Core:
         """flext-core-specific test models namespace."""
 
-        class Tests(mixins.TestsFlextCoreModelsMixins):
+        class Tests(TestsFlextCoreModelsMixins):
             """flext-core test models namespace."""
 
 

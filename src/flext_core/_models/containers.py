@@ -18,7 +18,7 @@ from typing import Annotated
 
 from pydantic import Field, RootModel
 
-from flext_core import FlextTypesServices
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextModelsContainers:
