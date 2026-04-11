@@ -134,14 +134,21 @@ class FlextUtilitiesConfiguration:
             register_result = container.register(name, factory, kind="factory")
             if isinstance(register_result, p.Result) and register_result.failure:
                 return r[bool].fail(
-                    register_result.error or "Factory registration failed",
+                    register_result.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
                 )
             resolved = container.get(name)
             if resolved.failure:
-                return r[bool].fail(resolved.error or "Factory registration failed")
+                return r[bool].fail(
+                    resolved.error or c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
+                )
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Factory registration failed for {name}: {e}")
+            return r[bool].fail(
+                c.ERR_CONFIG_FACTORY_REGISTRATION_FAILED_FOR_NAME.format(
+                    name=name,
+                    error=str(e),
+                ),
+            )
 
     @staticmethod
     def resolve_effective_log_level(

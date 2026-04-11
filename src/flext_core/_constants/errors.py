@@ -13,6 +13,33 @@ from typing import Final, override
 class FlextConstantsErrors:
     """Error domain constants for structured error routing."""
 
+    _TEMPLATE_FAILED_WITH_ERROR: Final[str] = "Failed to {operation}: {error}"
+    _TEMPLATE_KEY_NOT_FOUND: Final[str] = "Key '{key}' not found"
+    _TEMPLATE_KEY_NOT_FOUND_AT_PATH: Final[str] = "Key '{key}' not found at '{path}'"
+    _TEMPLATE_FOUND_NONE: Final[str] = "found_none:{key}"
+    _TEMPLATE_INDEX_OUT_OF_RANGE: Final[str] = "Index {index} out of range"
+    _TEMPLATE_INVALID_INDEX: Final[str] = "Invalid index {index}"
+    ERR_TEMPLATE_FAILED_WITH_ERROR: Final[str] = _TEMPLATE_FAILED_WITH_ERROR
+    ERR_TEMPLATE_KEY_NOT_FOUND: Final[str] = _TEMPLATE_KEY_NOT_FOUND
+    ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH: Final[str] = _TEMPLATE_KEY_NOT_FOUND_AT_PATH
+    ERR_TEMPLATE_FOUND_NONE: Final[str] = _TEMPLATE_FOUND_NONE
+    ERR_TEMPLATE_INDEX_OUT_OF_RANGE: Final[str] = _TEMPLATE_INDEX_OUT_OF_RANGE
+    ERR_TEMPLATE_INVALID_INDEX: Final[str] = _TEMPLATE_INVALID_INDEX
+    ERR_TEMPLATE_MISSING_VALUE: Final[str] = (
+        "Template value '{key}' is required for template '{template}'"
+    )
+    ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE: Final[str] = (
+        "{message} and default is None"
+    )
+    ERR_TEMPLATE_ARRAY_ERROR_AT_KEY: Final[str] = "Array error at '{key}': {error}"
+    ERR_TEMPLATE_PATH_IS_NONE: Final[str] = "Path '{path}' is None"
+    ERR_TEMPLATE_EXTRACTED_VALUE_IS_NONE: Final[str] = "Extracted value is None"
+    ERR_TEMPLATE_EXTRACT_FAILED: Final[str] = "Extract failed: {error}"
+    ERR_TEMPLATE_FAILED_TO_MAP_DICT_KEYS: Final[str] = (
+        "Failed to map dict keys: {error}"
+    )
+    ERR_TEMPLATE_TRANSFORM_FAILED: Final[str] = "Transform failed: {error}"
+
     @unique
     class ErrorDomain(StrEnum):
         """Standard error domain categories for structured error routing.
@@ -76,9 +103,24 @@ class FlextConstantsErrors:
         "Handler must expose message_type, event_type, or can_handle"
     )
     ERR_DISPATCHER_NOT_CONFIGURED: Final[str] = "Dispatcher not configured"
+    ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY: Final[str] = (
+        "{category} name cannot be empty"
+    )
+    ERR_REGISTRY_VALIDATION_ERROR: Final[str] = "Validation error: {error}"
+    ERR_REGISTRY_PLUGIN_NOT_REGISTERED: Final[str] = (
+        "{category} '{name}' not registered"
+    )
     ERR_UNEXPECTED_MESSAGE_TYPE: Final[str] = "Unexpected message type"
+    ERR_SERVICE_TYPE_MISMATCH: Final[str] = "Service is not of type {type_name}"
+    ERR_SERVICE_NOT_FOUND: Final[str] = "Service '{name}' not found"
+    ERR_RESOURCE_UNSUPPORTED_RUNTIME_TYPE: Final[str] = (
+        "Resource '{name}' returned unsupported runtime type"
+    )
     ERR_RESULT_NOT_SCALAR_COMPATIBLE: Final[str] = (
         "Result must be compatible with Scalar"
+    )
+    ERR_RESULT_FILTER_PREDICATE_FAILED: Final[str] = (
+        "Value did not pass filter predicate"
     )
     ERR_RESULT_CANNOT_ACCESS_VALUE: Final[str] = (
         "Cannot access value of failed result: {error}"
@@ -95,7 +137,9 @@ class FlextConstantsErrors:
     ERR_CONTEXT_SINGLE_KEY_VALUE_REQUIRED: Final[str] = (
         "Value is required for single-key set"
     )
+    ERR_CONTEXT_METADATA_KEY_NOT_FOUND: Final[str] = "Metadata key '{key}' not found"
     ERR_VALIDATION_FAILED: Final[str] = "Validation failed"
+    ERR_VALIDATION_FAILED_WITH_ERROR: Final[str] = "Validation failed: {error}"
     ERR_GENERATOR_KIND_MISSING: Final[str] = "No kind provided for prefix resolution"
     ERR_DOMAIN_EVENT_NAME_REQUIRED: Final[str] = (
         "Domain event name must be a non-empty string"
@@ -121,7 +165,7 @@ class FlextConstantsErrors:
     )
     ERR_COLLECTION_NO_MATCHING_ITEM_FOUND: Final[str] = "No matching item found"
     ERR_MAPPER_NOT_A_SEQUENCE: Final[str] = "Not a sequence"
-    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = "found_none:index"
+    ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = _TEMPLATE_FOUND_NONE.format(key="index")
     ERR_INFRA_INVALID_HANDLER_MODE: Final[str] = (
         "handler_mode must be 'command' or 'query'"
     )
@@ -164,9 +208,13 @@ class FlextConstantsErrors:
     ERR_PARSER_TYPEADAPTER_RETURN_MISMATCH: Final[str] = (
         "{field_prefix}TypeAdapter returned {actual_type}, expected {target_type}"
     )
+    ERR_PARSER_EXPECTED_DICT_FOR_MODEL: Final[str] = (
+        "{field_prefix}Expected dict for model, got {type_name}"
+    )
     ERR_PARSER_CANNOT_PARSE_TO_TARGET: Final[str] = (
         "{field_prefix}Cannot parse {source_type} to {target_name}: {error}"
     )
+    ERR_PARSER_MODEL_PARSE_FAILED: Final[str] = "Model parse failed: {error}"
     ERR_PARSER_PARSE_FAILED_FOR_TARGET: Final[str] = (
         "{field_prefix}Failed to parse '{value}' as {target_name}"
     )
@@ -209,11 +257,19 @@ class FlextConstantsErrors:
     ERR_COLLECTION_INVALID_ENUM_VALUE: Final[str] = (
         "Invalid {enum_name} value: '{value}'"
     )
+    ERR_COLLECTION_EXPECTED_SEQUENCE: Final[str] = "Expected sequence, got {type_name}"
+    ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM: Final[str] = (
+        "Processing failed for item: {item}"
+    )
     ERR_COLLECTION_EXPECTED_STR_FOR_ENUM: Final[str] = (
         "Expected str for enum conversion, got {type_name}"
     )
     ERR_CONFIG_INVALID_DB_URL_SCHEME: Final[str] = "Invalid database URL scheme"
     ERR_CONFIG_TRACE_REQUIRES_DEBUG: Final[str] = "Trace mode requires debug mode"
+    ERR_CONFIG_FACTORY_REGISTRATION_FAILED: Final[str] = "Factory registration failed"
+    ERR_CONFIG_FACTORY_REGISTRATION_FAILED_FOR_NAME: Final[str] = (
+        "Factory registration failed for {name}: {error}"
+    )
 
     # --- Container / Runtime ---
     ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE: Final[str] = (
@@ -269,6 +325,9 @@ class FlextConstantsErrors:
     )
     ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT: Final[str] = (
         "Retry loop completed without success or exception"
+    )
+    ERR_RUNTIME_UNSUPPORTED_GENERATOR_KIND: Final[str] = (
+        "Unsupported generator kind: {kind}"
     )
     ERR_RUNTIME_CONTAINER_NOT_INITIALIZED: Final[str] = (
         "Container not initialized. Call FlextContext.configure_container(container) before using resolve_container()."

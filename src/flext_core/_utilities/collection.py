@@ -126,13 +126,17 @@ class FlextUtilitiesCollection:
 
         def validator(data: t.ValueOrModel) -> Sequence[E]:
             if isinstance(data, str):
-                msg = f"Expected sequence, got {data.__class__.__name__}"
+                msg = c.ERR_COLLECTION_EXPECTED_SEQUENCE.format(
+                    type_name=data.__class__.__name__,
+                )
                 raise TypeError(msg)
             normalized_items_result = r[t.FlatContainerList].create_from_callable(
                 lambda: t.flat_container_list_adapter().validate_python(data),
             )
             if normalized_items_result.failure:
-                msg = f"Expected sequence, got {data.__class__.__name__}"
+                msg = c.ERR_COLLECTION_EXPECTED_SEQUENCE.format(
+                    type_name=data.__class__.__name__,
+                )
                 raise TypeError(msg)
             normalized_items = normalized_items_result.value
             result: MutableSequence[E] = []
@@ -488,7 +492,9 @@ class FlextUtilitiesCollection:
             if process_result.failure:
                 if on_error == "skip":
                     continue
-                return r[Sequence[U]].fail(f"Processing failed for item: {item}")
+                return r[Sequence[U]].fail(
+                    c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(item=item),
+                )
             results.append(process_result.value)
         return r[Sequence[U]].ok(results)
 

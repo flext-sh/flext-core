@@ -160,6 +160,7 @@ class FlextProtocolsContext:
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options for service initialization."""
 
+        config: p.Settings | None
         config_type: type[BaseSettings] | None
         config_overrides: t.ScalarMapping | None
         context: FlextProtocolsContext.Context | None

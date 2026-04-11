@@ -27,6 +27,7 @@ from flext_core import (
     FlextLogger,
     FlextSettings,
     c,
+    e,
     m,
     p,
     r,
@@ -569,7 +570,16 @@ class FlextContainer(p.Container):
         if _is_service_of_type(service, cls):
             return r[T].ok(cast("T", service))
         type_name = cls.__name__ if hasattr(cls, "__name__") else "Unknown"
-        return r[T].fail(f"Service is not of type {type_name}")
+        params = m.TypeErrorParams(
+            expected_type=type_name, actual_type=type(service).__name__
+        )
+        return r[T].fail(
+            e.render_template(
+                "Service is not of type {type_name}",
+                type_name=type_name,
+                params=params,
+            ),
+        )
 
     @overload
     def get[T: t.RegisterableService](
@@ -623,8 +633,24 @@ class FlextContainer(p.Container):
                 if type_cls is not None:
                     return self._narrow_service(resolved, type_cls)
                 return r[t.RegisterableService].ok(resolved)
-            except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
-                return r[t.RegisterableService].fail(str(e))
+            except (
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                AttributeError,
+            ) as exc:
+                params = m.OperationErrorParams(
+                    operation="resolve factory service", reason=str(exc)
+                )
+                return r[t.RegisterableService].fail(
+                    e.render_error_template(
+                        c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                        operation="resolve factory service",
+                        error=exc,
+                        params=params,
+                    ),
+                )
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
@@ -632,14 +658,37 @@ class FlextContainer(p.Container):
                 resolved = resource_callable()
                 if not u.registerable_service(resolved):
                     return r[t.RegisterableService].fail(
-                        f"Resource '{name}' returned unsupported runtime type",
+                        c.ERR_RESOURCE_UNSUPPORTED_RUNTIME_TYPE.format(name=name),
                     )
                 if type_cls is not None:
                     return self._narrow_service(resolved, type_cls)
                 return r[t.RegisterableService].ok(resolved)
-            except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
-                return r[t.RegisterableService].fail(str(e))
-        return r[t.RegisterableService].fail(f"Service '{name}' not found")
+            except (
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                AttributeError,
+            ) as exc:
+                params = m.OperationErrorParams(
+                    operation="resolve resource service", reason=str(exc)
+                )
+                return r[t.RegisterableService].fail(
+                    e.render_error_template(
+                        c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                        operation="resolve resource service",
+                        error=exc,
+                        params=params,
+                    ),
+                )
+        params = m.NotFoundErrorParams(resource_type="service", resource_id=name)
+        return r[t.RegisterableService].fail(
+            e.render_template(
+                "Service '{name}' not found",
+                name=name,
+                params=params,
+            ),
+        )
 
     @override
     def resolve_config(self) -> t.ConfigMap:
@@ -1122,7 +1171,7 @@ class FlextContainer(p.Container):
             delattr(self._di_resources, name)
         if removed:
             return r[bool].ok(True)
-        return r[bool].fail(f"Service '{name}' not found")
+        return r[bool].fail(c.ERR_SERVICE_NOT_FOUND.format(name=name))
 
     @override
     def wire_modules(

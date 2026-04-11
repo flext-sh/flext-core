@@ -536,7 +536,9 @@ class FlextContext(m.ArbitraryTypesModel):
 
         """
         if key not in self._metadata.attributes:
-            return r[t.RuntimeAtomic].fail(f"Metadata key '{key}' not found")
+            return r[t.RuntimeAtomic].fail(
+                c.ERR_CONTEXT_METADATA_KEY_NOT_FOUND.format(key=key),
+            )
         raw_value: t.MetadataValue = self._metadata.attributes[key]
         normalized_value: t.RuntimeAtomic = u.normalize_to_container(
             raw_value,
@@ -1201,7 +1203,10 @@ class FlextContext(m.ArbitraryTypesModel):
                 if u.scalar(service_value):
                     return r[t.Scalar].ok(service_value)
                 return r[t.Scalar].ok(str(service_value))
-            return r[t.Scalar].fail(service_result.error or "Service not found")
+            return r[t.Scalar].fail(
+                service_result.error
+                or c.ERR_SERVICE_NOT_FOUND.format(name=service_name),
+            )
 
         @staticmethod
         def register_service(

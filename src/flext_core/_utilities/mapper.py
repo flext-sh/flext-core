@@ -22,6 +22,8 @@ from flext_core import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     c,
+    e,
+    m,
     p,
     r,
     t,
@@ -179,7 +181,9 @@ class FlextUtilitiesMapper:
     ) -> r[t.ValueOrModel]:
         """Wrap a raw value into a Result: fail on None, narrow containers, stringify rest."""
         if raw is None:
-            return r[t.ValueOrModel].fail(f"found_none:{key_part}")
+            return r[t.ValueOrModel].fail(
+                e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
+            )
         if FlextUtilitiesGuards.container(raw):
             return r[t.ValueOrModel].ok(raw)
         return r[t.ValueOrModel].ok(str(raw))
@@ -197,7 +201,13 @@ class FlextUtilitiesMapper:
                     mapping_obj[key_part],
                     key_part,
                 )
-            return r[t.ValueOrModel].fail(f"Key '{key_part}' not found in Mapping")
+            return r[t.ValueOrModel].fail(
+                e.render_template(
+                    c.ERR_TEMPLATE_KEY_NOT_FOUND,
+                    key=key_part,
+                )
+                + " in Mapping",
+            )
         if isinstance(current, (t.ConfigMap, t.Dict)):
             mapping_obj = current.root
             if key_part in mapping_obj:
@@ -205,7 +215,13 @@ class FlextUtilitiesMapper:
                     mapping_obj[key_part],
                     key_part,
                 )
-            return r[t.ValueOrModel].fail(f"Key '{key_part}' not found in Mapping")
+            return r[t.ValueOrModel].fail(
+                e.render_template(
+                    c.ERR_TEMPLATE_KEY_NOT_FOUND,
+                    key=key_part,
+                )
+                + " in Mapping",
+            )
         if hasattr(current, key_part):
             return FlextUtilitiesMapper._resolve_raw_value(
                 getattr(current, key_part),
@@ -221,9 +237,13 @@ class FlextUtilitiesMapper:
                 if key_part in model_dict:
                     val = model_dict[key_part]
                     if val is None:
-                        return r[t.ValueOrModel].fail(f"found_none:{key_part}")
+                        return r[t.ValueOrModel].fail(
+                            e.render_template(c.ERR_TEMPLATE_FOUND_NONE, key=key_part),
+                        )
                     return r[t.ValueOrModel].ok(val)
-        return r[t.ValueOrModel].fail(f"Key '{key_part}' not found")
+        return r[t.ValueOrModel].fail(
+            e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
+        )
 
     @staticmethod
     def _extract_handle_array_index(
@@ -246,9 +266,16 @@ class FlextUtilitiesMapper:
                 if item is None:
                     return r[t.ValueOrModel].fail(c.ERR_MAPPER_FOUND_NONE_INDEX)
                 return r[t.ValueOrModel].ok(item)
-            return r[t.ValueOrModel].fail(f"Index {int(array_match)} out of range")
+            return r[t.ValueOrModel].fail(
+                e.render_template(
+                    c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE,
+                    index=int(array_match),
+                ),
+            )
         except (ValueError, IndexError):
-            return r[t.ValueOrModel].fail(f"Invalid index {array_match}")
+            return r[t.ValueOrModel].fail(
+                e.render_template(c.ERR_TEMPLATE_INVALID_INDEX, index=array_match),
+            )
 
     @staticmethod
     def _extract_parse_array_index(part: str) -> tuple[str, str]:
@@ -432,7 +459,12 @@ class FlextUtilitiesMapper:
         if required:
             return r[t.ValueOrModel].fail(msg)
         if default is None:
-            return r[t.ValueOrModel].fail(f"{msg} and default is None")
+            return r[t.ValueOrModel].fail(
+                e.render_template(
+                    c.ERR_TEMPLATE_MESSAGE_AND_DEFAULT_IS_NONE,
+                    message=msg,
+                ),
+            )
         return r[t.ValueOrModel].ok(default)
 
     @staticmethod
@@ -455,7 +487,11 @@ class FlextUtilitiesMapper:
                 next_val: t.ValueOrModel = None
             else:
                 return None, FlextUtilitiesMapper._extract_fail_or_default(
-                    f"Key '{key_part}' not found at '{path_context}'",
+                    e.render_template(
+                        c.ERR_TEMPLATE_KEY_NOT_FOUND_AT_PATH,
+                        key=key_part,
+                        path=path_context,
+                    ),
                     default=default,
                     required=required,
                 )
@@ -479,7 +515,11 @@ class FlextUtilitiesMapper:
                     next_val = None
                 else:
                     return None, FlextUtilitiesMapper._extract_fail_or_default(
-                        f"Array error at '{key_part}': {index_result.error}",
+                        e.render_template(
+                            c.ERR_TEMPLATE_ARRAY_ERROR_AT_KEY,
+                            key=key_part,
+                            error=index_result.error,
+                        ),
                         default=default,
                         required=required,
                     )
@@ -519,7 +559,10 @@ class FlextUtilitiesMapper:
             for i, part in enumerate(parts):
                 if current is None:
                     return FlextUtilitiesMapper._extract_fail_or_default(
-                        f"Path '{separator.join(parts[:i])}' is None",
+                        e.render_template(
+                            c.ERR_TEMPLATE_PATH_IS_NONE,
+                            path=separator.join(parts[:i]),
+                        ),
                         default=default,
                         required=required,
                     )
@@ -535,15 +578,23 @@ class FlextUtilitiesMapper:
 
             if current is None:
                 return FlextUtilitiesMapper._extract_fail_or_default(
-                    "Extracted value is None",
+                    c.ERR_TEMPLATE_EXTRACTED_VALUE_IS_NONE,
                     default=default,
                     required=required,
                 )
             if FlextUtilitiesGuards.container(current):
                 return r[t.ValueOrModel].ok(current)
             return r[t.ValueOrModel].ok(str(current))
-        except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
-            return r[t.ValueOrModel].fail(f"Extract failed: {e}")
+        except (AttributeError, TypeError, ValueError, KeyError, IndexError) as exc:
+            params = m.OperationErrorParams(operation="extract", reason=str(exc))
+            return r[t.ValueOrModel].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_EXTRACT_FAILED,
+                    operation="extract",
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     # filter_dict removed (use collection.filter)
 
@@ -583,8 +634,16 @@ class FlextUtilitiesMapper:
 
         mapped_result = r[t.MutableContainerMapping].create_from_callable(_map_keys)
         return mapped_result.fold(
-            on_failure=lambda e: r[t.MutableContainerMapping].fail(
-                f"Failed to map dict keys: {e}",
+            on_failure=lambda exc: r[t.MutableContainerMapping].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_TO_MAP_DICT_KEYS,
+                    operation="map dict keys",
+                    error=exc,
+                    params=m.OperationErrorParams(
+                        operation="map dict keys",
+                        reason=str(exc),
+                    ),
+                ),
             ),
             on_success=lambda _: mapped_result,
         )
@@ -729,8 +788,18 @@ class FlextUtilitiesMapper:
             ),
         )
         return transform_result.fold(
-            on_failure=lambda e: r[t.MutableContainerMapping | t.ContainerMapping].fail(
-                f"Transform failed: {e}",
+            on_failure=lambda exc: r[
+                t.MutableContainerMapping | t.ContainerMapping
+            ].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_TRANSFORM_FAILED,
+                    operation="transform",
+                    error=exc,
+                    params=m.OperationErrorParams(
+                        operation="transform",
+                        reason=str(exc),
+                    ),
+                ),
             ),
             on_success=lambda _: transform_result,
         )

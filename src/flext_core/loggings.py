@@ -42,6 +42,8 @@ from flext_core import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     c,
+    e,
+    m,
     p,
     r,
     t,
@@ -639,7 +641,16 @@ class FlextLogger(FlextRuntime):
             cls.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
+            operation = f"bind context for scope '{scope}'"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     @classmethod
     def bind_context_for_level(cls, level: str, **context: t.RuntimeData) -> r[bool]:
@@ -671,8 +682,17 @@ class FlextLogger(FlextRuntime):
             cls._level_contexts[level_normalized].update(normalized_context)
             cls.structlog().contextvars.bind_contextvars(**prefixed_context)
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Failed to bind context for level {level}: {e}")
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            operation = f"bind context for level {level}"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     @classmethod
     def bind_global_context(cls, **context: t.RuntimeData) -> r[bool]:
@@ -690,7 +710,16 @@ class FlextLogger(FlextRuntime):
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to bind global context: {exc}")
+            operation = "bind global context"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     @classmethod
     def clear_scope(cls, scope: str) -> r[bool]:
@@ -711,7 +740,16 @@ class FlextLogger(FlextRuntime):
                 cls._scoped_contexts[scope].clear()
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
+            operation = f"clear scope '{scope}'"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     @classmethod
     def create_bound_logger(cls, name: str, bound_logger: p.Logger) -> Self:
@@ -794,7 +832,16 @@ class FlextLogger(FlextRuntime):
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
-            return r[bool].fail(f"Failed to unbind global context: {exc}")
+            operation = "unbind global context"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     @staticmethod
     def _convert_to_relative_path(filename: str) -> str:
@@ -1089,7 +1136,16 @@ class FlextLogger(FlextRuntime):
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("exception", exc)
-            return r[bool].fail(f"Exception logging failed: {exc}")
+            operation = "exception logging"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     def log(
         self,
@@ -1138,7 +1194,16 @@ class FlextLogger(FlextRuntime):
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("trace", exc)
-            return r[bool].fail(f"Trace logging failed: {exc}")
+            operation = "trace logging"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     def unbind(self, *keys: str, safe: bool = False) -> Self:
         """Unbind keys from logger - implements BindableLogger protocol."""
@@ -1202,8 +1267,17 @@ class FlextLogger(FlextRuntime):
             scalar_context = FlextLogger._to_scalar_context(context)
             getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Logging failed: {e}")
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            operation = "logging"
+            params = m.OperationErrorParams(operation=operation, reason=str(exc))
+            return r[bool].fail(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=exc,
+                    params=params,
+                ),
+            )
 
     def _log_standard_level(
         self,

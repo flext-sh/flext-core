@@ -34,6 +34,7 @@ from pydantic_settings import (
 import flext_core
 from flext_core import (
     c,
+    e,
     m,
     t,
     u,
@@ -558,17 +559,31 @@ class FlextSettings(BaseSettings):
         """
         config_class_raw = self._namespace_registry.get(namespace)
         if config_class_raw is None:
+            params = m.ConfigurationErrorParams(
+                config_key=namespace,
+                config_source="namespace_registry",
+            )
             raise ValueError(
-                c.ERR_SETTINGS_NAMESPACE_NOT_REGISTERED.format(namespace=namespace),
+                e.render_template(
+                    "Namespace '{namespace}' not registered",
+                    namespace=namespace,
+                    params=params,
+                ),
             )
         config_instance = config_class_raw()
         if isinstance(config_instance, config_type):
             return config_instance
+        params = m.TypeErrorParams(
+            expected_type=config_type.__name__,
+            actual_type=config_instance.__class__.__name__,
+        )
         raise TypeError(
-            c.ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH.format(
+            e.render_template(
+                "Namespace '{namespace}' config instance {instance_class} is not instance of {expected_type}",
                 namespace=namespace,
                 instance_class=config_instance.__class__.__name__,
                 expected_type=config_type.__name__,
+                params=params,
             ),
         )
 

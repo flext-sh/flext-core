@@ -15,23 +15,20 @@ from collections.abc import (
     Generator,
     Mapping,
     MutableMapping,
-    Sequence,
 )
 from contextlib import contextmanager
-from types import ModuleType
 from typing import (
     Annotated,
     ClassVar,
     Unpack,
 )
 
-from pydantic import ConfigDict, Field, PrivateAttr, ValidationError
+from pydantic import ConfigDict, Field, PrivateAttr
+from pydantic_settings import BaseSettings
 
 from flext_core import (
-    FlextContainer,
     FlextContext,
     FlextLogger,
-    FlextSettings,
     c,
     m,
     p,
@@ -93,6 +90,15 @@ class FlextMixins(m.ArbitraryTypesModel):
         Field(
             default=None,
             description="Configuration class to initialize the service.",
+        ),
+    ] = None
+    runtime_config: Annotated[
+        BaseSettings | None,
+        Field(
+            default=None,
+            alias="config",
+            exclude=True,
+            description="Pre-built settings instance used directly for the runtime.",
         ),
     ] = None
     config_overrides: Annotated[
@@ -248,72 +254,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         runtime = self._runtime if hasattr(self, "_runtime") else None
         if isinstance(runtime, m.ServiceRuntime):
             return runtime
-
-        options = FlextMixins._resolve_bootstrap_options(self)
-        config_type_raw = getattr(self, "config_type", None)
-        overrides: t.ContainerMapping | None = None
-        initial_ctx: p.Context | None = None
-        bootstrap_services: t.ServiceMap | None = None
-        bootstrap_factories: t.FactoryMap | None = None
-        bootstrap_resources: t.ResourceMap | None = None
-        bootstrap_wire_modules: Sequence[ModuleType] | None = None
-        bootstrap_wire_packages: t.StrSequence | None = None
-        bootstrap_wire_classes: Sequence[type] | None = None
-
-        if options:
-            config_type_raw, overrides, initial_ctx = (
-                options.config_type or config_type_raw,
-                options.config_overrides,
-                options.context,
-            )
-            bootstrap_services = u.filter_registerable_services(options.services)
-            bootstrap_factories = options.factories
-            bootstrap_resources = options.resources
-            bootstrap_wire_modules, bootstrap_wire_packages, bootstrap_wire_classes = (
-                u.resolve_wire_targets(
-                    options.wire_modules,
-                    options.wire_packages,
-                    options.wire_classes,
-                )
-            )
-
-        config_cls_typed: type[p.Settings] = (
-            config_type_raw if u.settings_type(config_type_raw) else FlextSettings
-        )
-        if overrides is None:
-            overrides = getattr(self, "config_overrides", None)
-        overrides_typed: t.ScalarMapping | None = (
-            {k: v for k, v in overrides.items() if u.scalar(v)}
-            if overrides is not None
-            else None
-        )
-        runtime_config: p.Settings = config_cls_typed.fetch_global(
-            overrides=overrides_typed,
-        )
-        if initial_ctx is None:
-            initial_ctx = getattr(self, "initial_context", None)
-        runtime_context: p.Context = (
-            initial_ctx if isinstance(initial_ctx, p.Context) else FlextContext.create()
-        )
-        runtime_container = FlextContainer.create().scoped(
-            config=runtime_config,
-            context=runtime_context,
-            services=bootstrap_services,
-            factories=bootstrap_factories,
-            resources=bootstrap_resources,
-        )
-        if bootstrap_wire_modules or bootstrap_wire_packages or bootstrap_wire_classes:
-            runtime_container.wire_modules(
-                modules=bootstrap_wire_modules,
-                packages=bootstrap_wire_packages,
-                classes=bootstrap_wire_classes,
-            )
-
-        self._runtime = m.ServiceRuntime(
-            container=runtime_container,
-            config=runtime_config,
-            context=runtime_context,
-        )
+        self._runtime = u.build_service_runtime(self)
         return self._runtime
 
     @staticmethod
@@ -322,29 +263,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     ) -> m.RuntimeBootstrapOptions | None:
         """Load and validate bootstrap options from the mixin consumer."""
         try:
-            options_raw: t.BootstrapInput = getattr(
-                instance,
-                "_runtime_bootstrap_options",
-                lambda: None,
-            )()
-            if options_raw is None:
-                return None
-            match options_raw:
-                case m.RuntimeBootstrapOptions():
-                    return options_raw
-                case dict() | Mapping():
-                    try:
-                        return m.RuntimeBootstrapOptions.model_validate(options_raw)
-                    except ValidationError:
-                        return None
-                case _:
-                    try:
-                        return m.RuntimeBootstrapOptions.model_validate(
-                            options_raw,
-                            from_attributes=True,
-                        )
-                    except ValidationError:
-                        return None
+            return u.resolve_runtime_options(instance)
         except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
             FlextLogger.create_module_logger(__name__).warning(
                 c.LOG_RUNTIME_BOOTSTRAP_OPTIONS_LOAD_FAILED,

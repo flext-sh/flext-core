@@ -417,14 +417,24 @@ class FlextRegistry(s[bool]):
 
         """
         if not name:
-            return r[bool].fail(f"{category} name cannot be empty")
+            return r[bool].fail(
+                c.ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY.format(
+                    category=category,
+                ),
+            )
         if validate:
             try:
                 validation_result = validate(plugin)
                 if validation_result.failure:
-                    return r[bool].fail(f"Validation failed: {validation_result.error}")
+                    return r[bool].fail(
+                        c.ERR_VALIDATION_FAILED_WITH_ERROR.format(
+                            error=validation_result.error,
+                        ),
+                    )
             except (TypeError, ValueError, RuntimeError) as exc:
-                return r[bool].fail(f"Validation error: {exc}")
+                return r[bool].fail(
+                    c.ERR_REGISTRY_VALIDATION_ERROR.format(error=str(exc)),
+                )
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
             if key in self._registered_keys:
@@ -462,12 +472,22 @@ class FlextRegistry(s[bool]):
         key = f"{category}::{name}"
         if scope == c.RegistrationScope.INSTANCE:
             if key not in self._registered_keys:
-                return r[bool].fail(f"{category} '{name}' not registered")
+                return r[bool].fail(
+                    c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED.format(
+                        category=category,
+                        name=name,
+                    ),
+                )
             self._registered_keys.discard(key)
             return r[bool].ok(True)
         cls = type(self)
         if key not in cls._class_registered_keys:
-            return r[bool].fail(f"{category} '{name}' not registered")
+            return r[bool].fail(
+                c.ERR_REGISTRY_PLUGIN_NOT_REGISTERED.format(
+                    category=category,
+                    name=name,
+                ),
+            )
         del cls._class_plugin_storage[key]
         cls._class_registered_keys.discard(key)
         return r[bool].ok(True)

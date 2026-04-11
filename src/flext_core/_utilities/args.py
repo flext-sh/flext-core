@@ -13,7 +13,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import r, t
+from flext_core import c, r, t
 
 
 class FlextUtilitiesArgs:
@@ -83,7 +83,10 @@ class FlextUtilitiesArgs:
             AttributeError,
             RuntimeError,
         ) as exc:
-            return r[M].fail(f"Validation failed: {exc}", exception=exc)
+            return r[M].fail(
+                c.ERR_VALIDATION_FAILED_WITH_ERROR.format(error=str(exc)),
+                exception=exc,
+            )
 
     @staticmethod
     def resolve_options[M: BaseModel](

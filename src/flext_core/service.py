@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import MutableMapping, Sequence
 from types import ModuleType
 from typing import ClassVar, override
 
@@ -22,11 +22,8 @@ from pydantic import (
     computed_field,
     field_validator,
 )
-from pydantic_settings import BaseSettings
 
 from flext_core import (
-    FlextContainer,
-    FlextContext,
     FlextSettings,
     c,
     e,
@@ -128,6 +125,40 @@ class FlextService[
     # --- Internal State ---
     _execution_result: p.Result[TDomainResult] | None = PrivateAttr(default=None)
 
+    def __init__(
+        self,
+        *,
+        config: p.Settings | None = None,
+        config_type: type | None = None,
+        config_overrides: t.ContainerMapping | None = None,
+        initial_context: p.Context | None = None,
+        subproject: str | None = None,
+        services: t.ServiceMap | None = None,
+        factories: t.FactoryMap | None = None,
+        resources: t.ResourceMap | None = None,
+        container_overrides: t.ScalarMapping | None = None,
+        wire_modules: Sequence[ModuleType] | None = None,
+        wire_packages: t.StrSequence | None = None,
+        wire_classes: Sequence[type] | None = None,
+        **data: object,
+    ) -> None:
+        """Canonical public bootstrap signature for all FLEXT services."""
+        super().__init__(
+            config=config,
+            config_type=config_type,
+            config_overrides=config_overrides,
+            initial_context=initial_context,
+            subproject=subproject,
+            services=services,
+            factories=factories,
+            resources=resources,
+            container_overrides=container_overrides,
+            wire_modules=wire_modules,
+            wire_packages=wire_packages,
+            wire_classes=wire_classes,
+            **data,
+        )
+
     @override
     def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
         """Post-initialization hook.
@@ -140,21 +171,19 @@ class FlextService[
         automatically discovered.
         """
         runtime = self._create_initial_runtime()
-        with FlextContext.create().Service.service_context(
+        with u.service_context_scope(
             self.__class__.__name__,
             runtime.config.version,
         ):
-            pass
-
-        self._context = runtime.context
-        self._config = runtime.config
-        self._container = runtime.container
-        self._runtime = runtime
-        self._discovered_handlers = (
-            h.Discovery.scan_class(self.__class__)
-            if h.Discovery.has_handlers(self.__class__)
-            else []
-        )
+            self._context = runtime.context
+            self._config = runtime.config
+            self._container = runtime.container
+            self._runtime = runtime
+            self._discovered_handlers = (
+                h.Discovery.scan_class(self.__class__)
+                if h.Discovery.has_handlers(self.__class__)
+                else []
+            )
 
     @computed_field(repr=False)
     @property
@@ -170,7 +199,17 @@ class FlextService[
     ) -> TResult:
         """Unwrap one successful execution result with the original generic type."""
         if execution_result.failure:
-            raise e.BaseError(execution_result.error or c.ERR_SERVICE_EXECUTION_FAILED)
+            operation = "service execution"
+            reason = execution_result.error or c.ERR_SERVICE_EXECUTION_FAILED
+            params = m.OperationErrorParams(operation=operation, reason=reason)
+            raise e.BaseError(
+                e.render_error_template(
+                    c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                    operation=operation,
+                    error=reason,
+                    params=params,
+                ),
+            )
         return execution_result.unwrap()
 
     def _get_execution_result(self) -> p.Result[TDomainResult]:
@@ -215,81 +254,7 @@ class FlextService[
 
     def _create_initial_runtime(self) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
-        bootstrap_opts = self._runtime_bootstrap_options()
-        config_type_val: type[FlextSettings] = self._get_service_config_type()
-        config_type_raw = self.config_type or (
-            bootstrap_opts.config_type if bootstrap_opts is not None else None
-        )
-        config_type_override: type[BaseSettings] | None = (
-            config_type_raw
-            if isinstance(config_type_raw, type)
-            and issubclass(config_type_raw, BaseSettings)
-            else None
-        )
-        if config_type_override is not None and issubclass(
-            config_type_override,
-            FlextSettings,
-        ):
-            config_type_val = config_type_override
-        ctx_raw = self.initial_context or (
-            bootstrap_opts.context if bootstrap_opts is not None else None
-        )
-        context_val: p.Context | None = ctx_raw if u.context(ctx_raw) else None
-        config_overrides = self.config_overrides or (
-            bootstrap_opts.config_overrides if bootstrap_opts is not None else None
-        )
-        subproject = self.subproject or (
-            bootstrap_opts.subproject if bootstrap_opts is not None else None
-        )
-        services = self.services or (
-            bootstrap_opts.services if bootstrap_opts is not None else None
-        )
-        factories = self.factories or (
-            bootstrap_opts.factories if bootstrap_opts is not None else None
-        )
-        resources = self.resources or (
-            bootstrap_opts.resources if bootstrap_opts is not None else None
-        )
-        container_overrides = self.container_overrides or (
-            bootstrap_opts.container_overrides if bootstrap_opts is not None else None
-        )
-        raw_wire_modules = self.wire_modules or (
-            bootstrap_opts.wire_modules if bootstrap_opts is not None else None
-        )
-        wire_modules: Sequence[ModuleType] | None = (
-            [mod for mod in raw_wire_modules if isinstance(mod, ModuleType)]
-            if raw_wire_modules is not None
-            else None
-        )
-        wire_packages = self.wire_packages or (
-            bootstrap_opts.wire_packages if bootstrap_opts is not None else None
-        )
-        wire_classes = self.wire_classes or (
-            bootstrap_opts.wire_classes if bootstrap_opts is not None else None
-        )
-        config_type_for_options: type[BaseSettings] | None = config_type_val
-        config_overrides_scalar: t.ScalarMapping | None = None
-        if config_overrides is not None:
-            normalized_overrides: t.ScalarMapping = {
-                key: value for key, value in config_overrides.items() if u.scalar(value)
-            }
-            config_overrides_scalar = normalized_overrides or None
-        runtime_options = m.RuntimeBootstrapOptions.model_validate({
-            "config_type": config_type_for_options,
-            "config_overrides": config_overrides_scalar,
-            "context": context_val,
-            "subproject": subproject,
-            "services": services,
-            "factories": factories,
-            "resources": resources,
-            "container_overrides": container_overrides,
-            "wire_modules": wire_modules,
-            "wire_packages": wire_packages,
-            "wire_classes": wire_classes,
-        })
-        return self._create_runtime(
-            runtime_options=runtime_options,
-        )
+        return u.build_service_runtime(self)
 
     @classmethod
     def _create_runtime(
@@ -320,77 +285,7 @@ class FlextService[
         This method is called by :meth:`_create_initial_runtime` which uses
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
-        base_options = (
-            runtime_options
-            if runtime_options is not None
-            else m.RuntimeBootstrapOptions()
-        )
-        if runtime_kwargs:
-            override_options = m.RuntimeBootstrapOptions.model_validate(runtime_kwargs)
-            overrides: Mapping[str, t.ValueOrModel] = {
-                field: getattr(override_options, field)
-                for field in m.RuntimeBootstrapOptions.model_fields
-                if getattr(override_options, field) is not None
-            }
-            runtime_options = base_options.model_copy(update=overrides)
-        else:
-            runtime_options = base_options
-        config_type = runtime_options.config_type
-        config_overrides = runtime_options.config_overrides
-        context = runtime_options.context
-        subproject = runtime_options.subproject
-        services = runtime_options.services
-        factories = runtime_options.factories
-        resources = runtime_options.resources
-        container_overrides = runtime_options.container_overrides
-        raw_wire_modules = runtime_options.wire_modules
-        wire_modules: Sequence[ModuleType] | None = (
-            [module for module in raw_wire_modules if isinstance(module, ModuleType)]
-            if raw_wire_modules is not None
-            else None
-        )
-        wire_packages = runtime_options.wire_packages
-        wire_classes = runtime_options.wire_classes
-        try:
-            cfg_is_settings = isinstance(config_type, type) and issubclass(
-                config_type,
-                FlextSettings,
-            )
-        except TypeError:
-            cfg_is_settings = False
-        config_cls: type[FlextSettings] = FlextSettings
-        if cfg_is_settings and isinstance(config_type, type):
-            try:
-                if issubclass(config_type, FlextSettings):
-                    config_cls = config_type
-            except TypeError:
-                pass
-        runtime_config = config_cls.model_validate(config_overrides or {})
-        runtime_context_input = (
-            context if context is not None else FlextContext.create()
-        )
-        runtime_config_typed = runtime_config
-        runtime_container = FlextContainer.create().scoped(
-            config=runtime_config_typed,
-            context=runtime_context_input,
-            subproject=subproject,
-            services=services,
-            factories=factories,
-            resources=resources,
-        )
-        if container_overrides:
-            runtime_container.configure(container_overrides)
-        if wire_modules or wire_packages or wire_classes:
-            runtime_container.wire_modules(
-                modules=wire_modules,
-                packages=wire_packages,
-                classes=wire_classes,
-            )
-        return m.ServiceRuntime(
-            config=runtime_config,
-            context=runtime_container.context,
-            container=runtime_container,
-        )
+        return u.build_service_runtime(runtime_options, **runtime_kwargs)
 
     @classmethod
     def _get_service_config_type(cls) -> type[FlextSettings]:

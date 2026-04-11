@@ -19,7 +19,14 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import c, m, t, u
+from flext_core import (
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    c,
+    m,
+    t,
+)
+from flext_core.runtime import FlextRuntime
 
 
 class FlextExceptions:
@@ -28,6 +35,77 @@ class FlextExceptions:
     Provides structured exceptions with error codes and correlation tracking
     for consistent error handling and logging.
     """
+
+    type TemplateValues = Mapping[str, t.MetadataOrValue | None] | t.ConfigMap
+
+    @staticmethod
+    def _template_values(
+        params: BaseModel | None,
+        values: TemplateValues,
+    ) -> t.ConfigMap:
+        """Build template substitution values using params data and field metadata."""
+        payload: t.ConfigMap = t.ConfigMap(root={})
+        if params is not None:
+            params_dump = params.model_dump(exclude_none=True)
+            for key, value in params_dump.items():
+                payload[str(key)] = FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(value)
+                )
+            for field_name, field_info in type(params).model_fields.items():
+                field_help = field_info.description or field_info.title
+                if field_help is not None:
+                    payload[f"{field_name}_description"] = field_help
+        for key, value in values.items():
+            payload[str(key)] = FlextRuntime.normalize_to_container(
+                FlextRuntime.normalize_to_metadata(value)
+            )
+        return payload
+
+    @staticmethod
+    def render_template(
+        template: str,
+        *,
+        params: BaseModel | None = None,
+        **values: t.MetadataOrValue | None,
+    ) -> str:
+        """Render a message template from params + explicit values.
+
+        Fail-fast: raises ValueError when any placeholder value is missing.
+        """
+        payload = e._template_values(params, values)
+        try:
+            return template.format_map(dict(payload))
+        except KeyError as exc:
+            missing_key = str(exc).strip("'")
+            raise ValueError(
+                c.ERR_TEMPLATE_MISSING_VALUE.format(
+                    key=missing_key,
+                    template=template,
+                ),
+            ) from exc
+
+    @staticmethod
+    def render_error_template(
+        template: str,
+        *,
+        operation: str | None = None,
+        error: Exception | str | None = None,
+        params: BaseModel | None = None,
+        **values: t.MetadataOrValue | None,
+    ) -> str:
+        """Render error template with canonical operation/error fields."""
+        payload: t.ConfigMap = t.ConfigMap(root={})
+        if operation is not None:
+            payload[c.HandlerType.OPERATION] = operation
+        if error is not None:
+            payload["error"] = str(error)
+        for key, value in values.items():
+            payload[str(key)] = value
+        payload_mapping = {
+            str(key): FlextRuntime.normalize_to_metadata(value)
+            for key, value in payload.items()
+        }
+        return e.render_template(template, params=params, **payload_mapping)
 
     @staticmethod
     def _build_context_map(
@@ -40,16 +118,16 @@ class FlextExceptions:
         context_map: t.ConfigMap = t.ConfigMap(root={})
         if context:
             context_map.update({
-                k: u.normalize_to_container(
-                    u.normalize_to_metadata(v),
+                k: FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(v)
                 )
                 for k, v in context.items()
                 if k not in excluded
             })
         if extra_kwargs:
             context_map.update({
-                k: u.normalize_to_container(
-                    u.normalize_to_metadata(v),
+                k: FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(v)
                 )
                 for k, v in extra_kwargs.items()
                 if k not in excluded
@@ -66,16 +144,16 @@ class FlextExceptions:
         param_map: t.ConfigMap = t.ConfigMap(root={})
         if context:
             param_map.update({
-                k: u.normalize_to_container(
-                    u.normalize_to_metadata(v),
+                k: FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(v)
                 )
                 for k, v in context.items()
                 if k in keys
             })
         if extra_kwargs:
             param_map.update({
-                k: u.normalize_to_container(
-                    u.normalize_to_metadata(v),
+                k: FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(v)
                 )
                 for k, v in extra_kwargs.items()
                 if k in keys
@@ -111,43 +189,45 @@ class FlextExceptions:
 
         """
         mutable_extra: MutableMapping[str, t.MetadataValue] = {
-            key: u.normalize_to_metadata(value) for key, value in extra_kwargs.items()
+            key: FlextRuntime.normalize_to_metadata(value)
+            for key, value in extra_kwargs.items()
         }
         preserved_metadata_raw = mutable_extra.pop(c.FIELD_METADATA, None)
         preserved_metadata = (
-            u.normalize_to_metadata(preserved_metadata_raw)
+            FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
             if preserved_metadata_raw is not None
             else None
         )
         correlation_id_raw = mutable_extra.pop(c.ContextKey.CORRELATION_ID, None)
         correlation_id_str = (
             e._safe_optional_str(correlation_id_raw)
-            if u.scalar(correlation_id_raw)
+            if FlextUtilitiesGuardsTypeCore.scalar(correlation_id_raw)
             else None
         )
         normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
-            key: u.normalize_to_metadata(value) for key, value in mutable_extra.items()
+            key: FlextRuntime.normalize_to_metadata(value)
+            for key, value in mutable_extra.items()
         }
         param_values: MutableMapping[str, t.ValueOrModel] = dict(
             e._build_param_map(context, normalized_extra_kwargs, keys=param_keys),
         )
         for key, val in named_params.items():
             if val is not None:
-                normalized_val = u.normalize_to_metadata(val)
+                normalized_val = FlextRuntime.normalize_to_metadata(val)
 
                 def to_normalized(value: t.MetadataValue) -> t.RecursiveContainer:
-                    if u.scalar(value):
+                    if FlextUtilitiesGuardsTypeCore.scalar(value):
                         return value
-                    if u.mapping(value):
+                    if FlextUtilitiesGuardsTypeCore.mapping(value):
                         return {
                             str(inner_key): to_normalized(
-                                u.normalize_to_metadata(inner_val),
+                                FlextRuntime.normalize_to_metadata(inner_val),
                             )
                             for inner_key, inner_val in value.items()
                         }
                     if isinstance(value, list):
                         return [
-                            to_normalized(u.normalize_to_metadata(inner_val))
+                            to_normalized(FlextRuntime.normalize_to_metadata(inner_val))
                             for inner_val in value
                         ]
                     return str(value)
@@ -166,8 +246,8 @@ class FlextExceptions:
         for key in param_keys:
             attr_val = getattr(resolved, key, None)
             if attr_val is not None:
-                error_context[key] = u.normalize_to_container(
-                    u.normalize_to_metadata(attr_val),
+                error_context[key] = FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(attr_val)
                 )
         return (resolved, error_context or None, preserved_metadata, correlation_id_str)
 
@@ -214,7 +294,7 @@ class FlextExceptions:
         except (PydanticValidationError, TypeError):
             pass
         dumped_map: Mapping[str, t.MetadataOrValue | None] | None = None
-        if u.pydantic_model(value):
+        if FlextUtilitiesGuardsTypeModel.pydantic_model(value):
             dumped_candidate = value.model_dump()
             try:
                 dumped_map = t.dict_str_metadata_adapter().validate_python(
@@ -226,11 +306,16 @@ class FlextExceptions:
             attrs_raw = dumped_map.get(c.FIELD_ATTRIBUTES)
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
-                attrs = {k: u.normalize_to_metadata(v) for k, v in attrs_map.items()}
+                attrs = {
+                    k: FlextRuntime.normalize_to_metadata(v)
+                    for k, v in attrs_map.items()
+                }
                 return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: attrs})
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
-            attrs = {k: u.normalize_to_metadata(v) for k, v in attrs_map.items()}
+            attrs = {
+                k: FlextRuntime.normalize_to_metadata(v) for k, v in attrs_map.items()
+            }
             return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: attrs})
         return None
 
@@ -286,22 +371,22 @@ class FlextExceptions:
             final_kwargs: t.ConfigMap = t.ConfigMap(root={})
             if merged_kwargs:
                 final_kwargs.update({
-                    k: u.normalize_to_container(
-                        u.normalize_to_metadata(v),
+                    k: FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v)
                     )
                     for k, v in merged_kwargs.items()
                 })
             if context:
                 final_kwargs.update({
-                    k: u.normalize_to_container(
-                        u.normalize_to_metadata(v),
+                    k: FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v)
                     )
                     for k, v in context.items()
                 })
             if extra_kwargs:
                 final_kwargs.update({
-                    k: u.normalize_to_container(
-                        u.normalize_to_metadata(v),
+                    k: FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(v)
                     )
                     for k, v in extra_kwargs.items()
                 })
@@ -354,11 +439,11 @@ class FlextExceptions:
                 combined_extra: MutableMapping[str, t.MetadataOrValue | None] = {}
                 if merged_kwargs:
                     combined_extra.update({
-                        key: u.normalize_to_metadata(value)
+                        key: FlextRuntime.normalize_to_metadata(value)
                         for key, value in merged_kwargs.items()
                     })
                 combined_extra.update({
-                    key: u.normalize_to_metadata(value)
+                    key: FlextRuntime.normalize_to_metadata(value)
                     for key, value in extra_kwargs.items()
                 })
                 self._init_declared_error(
@@ -398,7 +483,8 @@ class FlextExceptions:
             if metadata is None:
                 if merged_kwargs:
                     normalized_attrs = {
-                        k: u.normalize_to_metadata(v) for k, v in merged_kwargs.items()
+                        k: FlextRuntime.normalize_to_metadata(v)
+                        for k, v in merged_kwargs.items()
                     }
                     return m.Metadata.model_validate({
                         c.FIELD_ATTRIBUTES: normalized_attrs,
@@ -409,11 +495,11 @@ class FlextExceptions:
                 if not merged_kwargs:
                     return metadata_model
                 merged_attrs = {
-                    k: u.normalize_to_metadata(v)
+                    k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in metadata_model.attributes.items()
                 }
                 for k, v in merged_kwargs.items():
-                    merged_attrs[k] = u.normalize_to_metadata(v)
+                    merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
                 return m.Metadata.model_validate({
                     c.FIELD_ATTRIBUTES: merged_attrs,
                 })
@@ -435,13 +521,14 @@ class FlextExceptions:
             """Normalize metadata from dict-like recursive containers."""
             merged_attrs: MutableMapping[str, t.MetadataValue | None] = {}
             for k, v in metadata_dict.items():
-                merged_attrs[k] = u.normalize_to_metadata(v)
+                merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             if merged_kwargs:
                 for k, v in merged_kwargs.items():
-                    merged_attrs[k] = u.normalize_to_metadata(v)
+                    merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             return m.Metadata.model_validate({
                 c.FIELD_ATTRIBUTES: {
-                    k: u.normalize_to_metadata(v) for k, v in merged_attrs.items()
+                    k: FlextRuntime.normalize_to_metadata(v)
+                    for k, v in merged_attrs.items()
                 },
             })
 
@@ -495,7 +582,7 @@ class FlextExceptions:
             remaining_extra: MutableMapping[str, t.MetadataValue] = {}
             if extra_kwargs:
                 remaining_extra.update({
-                    key: u.normalize_to_metadata(value)
+                    key: FlextRuntime.normalize_to_metadata(value)
                     for key, value in extra_kwargs.items()
                 })
             resolved_named: MutableMapping[str, t.RuntimeData | None] = dict(
@@ -729,7 +816,7 @@ class FlextExceptions:
             """Initialize type error with type information."""
             preserved_metadata = extra_kwargs.pop(c.FIELD_METADATA, None)
             normalized_metadata = (
-                u.normalize_to_metadata(preserved_metadata)
+                FlextRuntime.normalize_to_metadata(preserved_metadata)
                 if preserved_metadata is not None
                 else None
             )
@@ -761,7 +848,7 @@ class FlextExceptions:
                 else m.TypeErrorParams.model_validate(param_values)
             )
             normalized_extra_kwargs: Mapping[str, t.MetadataValue] = {
-                key: u.normalize_to_metadata(value)
+                key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in extra_kwargs.items()
             }
             type_context = self._build_type_context(
@@ -881,8 +968,8 @@ class FlextExceptions:
         e._merge_metadata_into_context(error_context, metadata_obj)
         for k, v in kwargs.items():
             if k not in {c.ContextKey.CORRELATION_ID, c.FIELD_METADATA}:
-                error_context[k] = u.normalize_to_container(
-                    u.normalize_to_metadata(v),
+                error_context[k] = FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(v)
                 )
         return error_context
 
@@ -897,8 +984,8 @@ class FlextExceptions:
         error_context: t.ConfigMap = t.ConfigMap(root={})
         if context is not None:
             error_context.update({
-                k: u.normalize_to_container(
-                    u.normalize_to_metadata(v),
+                k: FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(v)
                 )
                 for k, v in context.items()
             })
@@ -928,7 +1015,7 @@ class FlextExceptions:
         context_payload: Mapping[str, t.MetadataValue] | None = None
         if error_context:
             context_payload = {
-                key: u.normalize_to_metadata(value)
+                key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in error_context.items()
             }
         corr_str: str = correlation_id if correlation_id is not None else ""
@@ -984,7 +1071,7 @@ class FlextExceptions:
         correlation_id_raw = kwargs.get(c.ContextKey.CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if u.scalar(correlation_id_raw)
+            if FlextUtilitiesGuardsTypeCore.scalar(correlation_id_raw)
             else None
         )
         metadata_raw = kwargs.get(c.FIELD_METADATA)
@@ -1014,15 +1101,15 @@ class FlextExceptions:
         metadata_model = e._safe_metadata(metadata_obj)
         if metadata_model is not None:
             for k, v in metadata_model.attributes.items():
-                context[k] = u.normalize_to_container(
-                    u.normalize_to_metadata(v),
+                context[k] = FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(v)
                 )
             return
         metadata_map = e._safe_config_map(metadata_obj)
         if metadata_map is not None:
             for k, metadata_value in metadata_map.items():
-                context[k] = u.normalize_to_container(
-                    u.normalize_to_metadata(metadata_value),
+                context[k] = FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(metadata_value)
                 )
 
     @staticmethod
@@ -1063,7 +1150,7 @@ class FlextExceptions:
         correlation_id_raw = merged_kwargs.get(c.ContextKey.CORRELATION_ID)
         correlation_id = (
             e._safe_optional_str(correlation_id_raw)
-            if u.scalar(correlation_id_raw)
+            if FlextUtilitiesGuardsTypeCore.scalar(correlation_id_raw)
             else None
         )
         auto_log_raw = merged_kwargs.get(field_auto_log)
@@ -1072,11 +1159,15 @@ class FlextExceptions:
             correlation_id,
             merged_kwargs.get(field_metadata),
             e._safe_bool(
-                auto_log_raw if u.scalar(auto_log_raw) else None,
+                auto_log_raw
+                if FlextUtilitiesGuardsTypeCore.scalar(auto_log_raw)
+                else None,
                 default=False,
             ),
             e._safe_bool(
-                auto_correlation_raw if u.scalar(auto_correlation_raw) else None,
+                auto_correlation_raw
+                if FlextUtilitiesGuardsTypeCore.scalar(auto_correlation_raw)
+                else None,
                 default=False,
             ),
             merged_kwargs.get(field_config),
@@ -1165,13 +1256,16 @@ class FlextExceptions:
         """Create exception by calling the class instance."""
         normalized_kwargs: t.ConfigMap = t.ConfigMap(root={})
         for k, v in kwargs.items():
-            normalized_kwargs[k] = u.normalize_to_container(
-                u.normalize_to_metadata(v),
+            normalized_kwargs[k] = FlextRuntime.normalize_to_container(
+                FlextRuntime.normalize_to_metadata(v)
             )
         return self.create(
             message,
             error_code,
-            **{k: u.normalize_to_metadata(v) for k, v in normalized_kwargs.items()},
+            **{
+                k: FlextRuntime.normalize_to_metadata(v)
+                for k, v in normalized_kwargs.items()
+            },
         )
 
     @classmethod

@@ -54,7 +54,9 @@ class FlextUtilitiesGenerators:
         }
         resolved_prefix = kind_prefix_map.get(kind)
         if resolved_prefix is None:
-            return r[str].fail(f"Unsupported generator kind: {kind}")
+            return r[str].fail(
+                c.ERR_RUNTIME_UNSUPPORTED_GENERATOR_KIND.format(kind=kind),
+            )
         return r[str].ok(resolved_prefix)
 
     @staticmethod

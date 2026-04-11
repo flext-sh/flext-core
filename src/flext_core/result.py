@@ -459,7 +459,7 @@ class FlextResult[T](BaseModel):
         if self.success and self.value is not None:
             if predicate(self.value):
                 return self
-            return FlextResult[T].fail("Value did not pass filter predicate")
+            return FlextResult[T].fail(c.ERR_RESULT_FILTER_PREDICATE_FAILED)
         return self
 
     def flat_map[U](

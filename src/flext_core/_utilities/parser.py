@@ -133,13 +133,18 @@ class FlextUtilitiesParser:
         """Parse Pydantic BaseModel. Returns None if not model."""
         if not FlextUtilitiesGuards.mapping(value):
             return r[TModel].fail(
-                f"{field_prefix}Expected dict for model, got {value.__class__.__name__}",
+                c.ERR_PARSER_EXPECTED_DICT_FOR_MODEL.format(
+                    field_prefix=field_prefix,
+                    type_name=value.__class__.__name__,
+                ),
             )
         value_dict_data: t.ContainerMapping = {str(k): v for k, v in value.items()}
         try:
             return r[TModel].ok(target.model_validate(value_dict_data, strict=strict))
         except (ValidationError, TypeError, ValueError) as exc:
-            return r[TModel].fail(f"Model parse failed: {exc}")
+            return r[TModel].fail(
+                c.ERR_PARSER_MODEL_PARSE_FAILED.format(error=str(exc)),
+            )
 
     _CASE_OPS: Mapping[str, Callable[[str], str]] = {
         c.ParserCase.LOWER.value: str.lower,

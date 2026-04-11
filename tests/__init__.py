@@ -12,7 +12,8 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_tests import d, e, h, r, s, td, tf, tk, tm, tv, x
+    from flext_core import d, e, h, r, s, x
+    from flext_tests import td, tf, tk, tm, tv
     from tests._constants.domain import TestsFlextCoreConstantsDomain
     from tests._constants.errors import TestsFlextCoreConstantsErrors
     from tests._constants.fixtures import TestsFlextCoreConstantsFixtures
@@ -68,18 +69,20 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreUtilities",
                 "u",
             ),
-            "flext_tests": (
+            "flext_core": (
                 "d",
                 "e",
                 "h",
                 "r",
                 "s",
+                "x",
+            ),
+            "flext_tests": (
                 "td",
                 "tf",
                 "tk",
                 "tm",
                 "tv",
-                "x",
             ),
         },
     ),

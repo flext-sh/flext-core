@@ -52,6 +52,10 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
+        config: p.Settings | None = Field(
+            default=None,
+            description="Pre-built settings instance used directly for the runtime.",
+        )
         config_type: type[BaseSettings] | None = Field(
             default=None,
             description="Settings class used to load runtime configuration.",
