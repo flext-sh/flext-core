@@ -250,7 +250,7 @@ class FlextContainer(p.Container):
            _ = container.register(
                "token_factory",
                lambda: {"token": "abc123"},
-               kind=c.CONTAINER_KIND_FACTORY,
+               kind=c.ContainerKind.FACTORY,
            )
 
 
@@ -397,7 +397,7 @@ class FlextContainer(p.Container):
             _ = instance.register(
                 factory_config.name,
                 wrapper,
-                kind=c.CONTAINER_KIND_FACTORY,
+                kind=c.ContainerKind.FACTORY,
             )
 
     @staticmethod
@@ -663,7 +663,7 @@ class FlextContainer(p.Container):
         self._di_services = service_module
         self._di_resources = resource_module
         self._di_container = di_container
-        config_attr = c.DIR_CONFIG
+        config_attr = c.Directory.CONFIG
         if not hasattr(bridge, config_attr):
             error_msg = "Bridge must have config provider"
             raise TypeError(error_msg)
@@ -746,7 +746,7 @@ class FlextContainer(p.Container):
         name: str,
         impl: t.RegisterableService,
         *,
-        kind: str = c.CONTAINER_KIND_SERVICE,
+        kind: str = c.ContainerKind.SERVICE,
     ) -> Self:
         """Register a service instance for dependency resolution.
 
@@ -770,7 +770,7 @@ class FlextContainer(p.Container):
         if not name:
             return self
         try:
-            if kind == c.CONTAINER_KIND_SERVICE:
+            if kind == c.ContainerKind.SERVICE:
                 if hasattr(self._di_services, name):
                     return self
                 service_impl: t.RegisterableService = impl
@@ -788,7 +788,7 @@ class FlextContainer(p.Container):
                 setattr(self._di_bridge, name, provider)
                 setattr(self._di_container, name, provider)
                 return self
-            if kind == c.CONTAINER_KIND_FACTORY:
+            if kind == c.ContainerKind.FACTORY:
                 if not u.is_factory(impl):
                     return self
                 if hasattr(self._di_services, name):
@@ -863,16 +863,16 @@ class FlextContainer(p.Container):
         Note: Uses has_service() which checks both dicts and DI container to avoid conflicts.
         """
         if (
-            not self.has_service(c.DIR_CONFIG)
+            not self.has_service(c.Directory.CONFIG)
             and self._config is not None
             and u.is_registerable_service(self._config)
         ):
-            _ = self.register(c.DIR_CONFIG, self._config)
-        if not self.has_service(c.SERVICE_NAME_LOGGER):
+            _ = self.register(c.Directory.CONFIG, self._config)
+        if not self.has_service(c.ServiceName.LOGGER):
             _ = self.register(
-                c.SERVICE_NAME_LOGGER,
+                c.ServiceName.LOGGER,
                 lambda: FlextLogger.create_module_logger(c.DEFAULT_LOGGER_MODULE),
-                kind=c.CONTAINER_KIND_FACTORY,
+                kind=c.ContainerKind.FACTORY,
             )
         if (
             not self.has_service(c.FIELD_CONTEXT)
@@ -880,13 +880,13 @@ class FlextContainer(p.Container):
             and u.is_registerable_service(self._context)
         ):
             _ = self.register(c.FIELD_CONTEXT, self._context)
-        if not self.has_service(c.SERVICE_NAME_COMMAND_BUS):
+        if not self.has_service(c.ServiceName.COMMAND_BUS):
             dispatcher = FlextDispatcher()
             dispatcher_candidate = dispatcher
             if not u.is_registerable_service(dispatcher_candidate):
                 return
             service_candidate: t.RegisterableService = dispatcher_candidate
-            dispatcher_name = c.SERVICE_NAME_COMMAND_BUS
+            dispatcher_name = c.ServiceName.COMMAND_BUS
             registration = m.ServiceRegistration(
                 name=dispatcher_name,
                 service=service_candidate,
@@ -1086,7 +1086,7 @@ class FlextContainer(p.Container):
                 self.register(
                     factory_name,
                     namespace_factory,
-                    kind=c.CONTAINER_KIND_FACTORY,
+                    kind=c.ContainerKind.FACTORY,
                 )
 
     def unregister(self, name: str) -> r[bool]:

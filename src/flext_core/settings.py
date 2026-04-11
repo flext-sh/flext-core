@@ -67,7 +67,7 @@ class FlextSettings(BaseSettings):
         env_file=u.resolve_env_file(),
         env_file_encoding=c.DEFAULT_ENCODING,
         case_sensitive=False,
-        extra=c.EXTRA_IGNORE,
+        extra=c.ExtraConfig.IGNORE,
         validate_assignment=True,
     )
 

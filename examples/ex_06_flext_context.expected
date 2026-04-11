@@ -13,7 +13,7 @@ items.count: 5
 merge.get: 'merged'
 clone.get: 'v1'
 validate.success: True
-get_metadata: 'meta_value'
+resolve_metadata: 'meta_value'
 export.min.type: 'ContextExport'
 export.full.type: 'ContextExport'
 iter_scope_vars: 'global,session,user'
@@ -21,11 +21,11 @@ clear.keys: 0
 
 [container_and_service]
 runtime.class: 'u'
-set_get_container.same: True
+configure_resolve_container.same: True
 raise.msg: 'boom'
 service.register.ok: True
-service.get.ok: 'svc'
-service.get.missing: True
+service.fetch.ok: 'svc'
+service.fetch.missing: True
 service_context.name: 'orders'
 service_context.version: '1.2.3'
 service_context.restored: True
@@ -51,10 +51,10 @@ alias.request_timestamp: 'StructlogProxyContextVar'
 alias.operation_name: 'StructlogProxyContextVar'
 alias.operation_start: 'StructlogProxyContextVar'
 alias.operation_metadata: 'StructlogProxyContextVar'
-correlation.get_set: 'cid-1'
+correlation.resolve_apply: 'cid-1'
 correlation.new.value: 'cid-2'
 correlation.new.current: 'cid-2'
-request.get_set: 'sync-users'
+request.resolve_apply: 'sync-users'
 timed_operation.has_start: True
 timed_operation.has_name: 'bulk-sync'
 serialization.has_correlation_key: True

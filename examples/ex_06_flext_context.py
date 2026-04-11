@@ -45,8 +45,11 @@ class Ex06FlextContext(Examples):
         self.check("merge.get", merged.get("k4").unwrap_or("missing"))
         self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
         self.check("validate.success", ctx.validate_context().success)
-        ctx.set_metadata("meta_key", "meta_value")
-        self.check("get_metadata", ctx.get_metadata("meta_key").unwrap_or("missing"))
+        ctx.apply_metadata("meta_key", "meta_value")
+        self.check(
+            "resolve_metadata",
+            ctx.resolve_metadata("meta_key").unwrap_or("missing"),
+        )
         exported_min = ctx.export(as_dict=False)
         exported_full = ctx.export(
             include_statistics=True,
@@ -63,8 +66,11 @@ class Ex06FlextContext(Examples):
         self.section("container_and_service")
         self.check("runtime.class", u.__name__)
         container = FlextContainer()
-        _ = FlextContext.set_container(container)
-        self.check("set_get_container.same", FlextContext.get_container() is container)
+        _ = FlextContext.configure_container(container)
+        self.check(
+            "configure_resolve_container.same",
+            FlextContext.resolve_container() is container,
+        )
         try:
             msg = "boom"
             raise ValueError(msg)
@@ -75,12 +81,12 @@ class Ex06FlextContext(Examples):
             FlextContext.Service.register_service("demo-service", "svc").success,
         )
         self.check(
-            "service.get.ok",
-            FlextContext.Service.get_service("demo-service").unwrap_or("missing"),
+            "service.fetch.ok",
+            FlextContext.Service.fetch_service("demo-service").unwrap_or("missing"),
         )
         self.check(
-            "service.get.missing",
-            FlextContext.Service.get_service("missing").failure,
+            "service.fetch.missing",
+            FlextContext.Service.fetch_service("missing").failure,
         )
         before_service_name = FlextContext.Variables.ServiceName.get()
         with FlextContext.Service.service_context("orders", version="1.2.3"):
@@ -171,10 +177,10 @@ class Ex06FlextContext(Examples):
             "alias.operation_metadata",
             type(FlextContext.Variables.OperationMetadata).__name__,
         )
-        FlextContext.Correlation.set_correlation_id("cid-1")
+        FlextContext.Correlation.apply_correlation_id("cid-1")
         self.check(
-            "correlation.get_set",
-            FlextContext.Correlation.get_correlation_id() or "",
+            "correlation.resolve_apply",
+            FlextContext.Correlation.resolve_correlation_id() or "",
         )
         with FlextContext.Correlation.new_correlation(
             "cid-2",
@@ -183,10 +189,13 @@ class Ex06FlextContext(Examples):
             self.check("correlation.new.value", corr_id)
             self.check(
                 "correlation.new.current",
-                FlextContext.Correlation.get_correlation_id() or "",
+                FlextContext.Correlation.resolve_correlation_id() or "",
             )
-        FlextContext.Request.set_operation_name("sync-users")
-        self.check("request.get_set", FlextContext.Request.get_operation_name() or "")
+        FlextContext.Request.apply_operation_name("sync-users")
+        self.check(
+            "request.resolve_apply",
+            FlextContext.Request.resolve_operation_name() or "",
+        )
         with FlextContext.Performance.timed_operation("bulk-sync") as op_meta:
             self.check(
                 "timed_operation.has_start",
@@ -196,7 +205,7 @@ class Ex06FlextContext(Examples):
                 "timed_operation.has_name",
                 op_meta.get(c.KEY_OPERATION_NAME) or "",
             )
-            full_context = FlextContext.Serialization.get_full_context()
+            full_context = FlextContext.Serialization.export_full_context()
             self.check(
                 "serialization.has_correlation_key",
                 c.KEY_CORRELATION_ID in full_context,
@@ -211,7 +220,7 @@ class Ex06FlextContext(Examples):
             c.METADATA_KEY_DURATION_SECONDS in op_meta,
         )
         FlextContext.Utilities.clear_context()
-        cleared_context = FlextContext.Serialization.get_full_context()
+        cleared_context = FlextContext.Serialization.export_full_context()
         self.check(
             "utilities.clear_context.correlation",
             cleared_context.get(c.KEY_CORRELATION_ID) or "",

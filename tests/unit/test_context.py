@@ -311,9 +311,9 @@ class TestFlextContext:
     def test_context_metadata(self, test_context: FlextContext) -> None:
         """Test context metadata."""
         context = test_context
-        context.set_metadata("created_at", "2025-01-01")
-        context.set_metadata("version", "1.0.0")
-        created_at_result = context.get_metadata("created_at")
+        context.apply_metadata("created_at", "2025-01-01")
+        context.apply_metadata("version", "1.0.0")
+        created_at_result = context.resolve_metadata("created_at")
         _ = u.Core.Tests.assert_success(created_at_result)
         tm.that(created_at_result.value, eq="2025-01-01")
         metadata = context._get_all_metadata()
@@ -467,7 +467,7 @@ class TestFlextContext:
     def test_context_get_metadata_nonexistent(self, test_context: FlextContext) -> None:
         """Test getting metadata that doesn't exist."""
         context = test_context
-        result = context.get_metadata("nonexistent_meta")
+        result = context.resolve_metadata("nonexistent_meta")
         _ = u.Core.Tests.assert_failure(result)
         tm.that(result.error, none=False)
 
@@ -477,7 +477,7 @@ class TestFlextContext:
     ) -> None:
         """Test getting metadata with default value."""
         context = test_context
-        result = context.get_metadata("nonexistent_meta")
+        result = context.resolve_metadata("nonexistent_meta")
         default_value = "default_value"
         value = result.map_or(default_value)
         tm.that(value, eq=default_value)
@@ -485,8 +485,8 @@ class TestFlextContext:
     def test_context_set_get_metadata(self, test_context: FlextContext) -> None:
         """Test setting and getting metadata."""
         context = test_context
-        context.set_metadata("meta_key", "meta_value")
-        result = context.get_metadata("meta_key")
+        context.apply_metadata("meta_key", "meta_value")
+        result = context.resolve_metadata("meta_key")
         _ = u.Core.Tests.assert_success(result)
         tm.that(result.value, eq="meta_value")
 
@@ -499,10 +499,10 @@ class TestFlextContext:
     def test_service_register_and_get_service(self) -> None:
         """Test Service.register_service and get_service."""
         container = FlextContainer(_context=FlextContext())
-        FlextContext.set_container(container)
+        FlextContext.configure_container(container)
         service_instance = {"service": "instance"}
         FlextContext.Service.register_service("test-service", service_instance)
-        FlextContext.Service.get_service("test-service")
+        FlextContext.Service.fetch_service("test-service")
 
     def test_service_context_manager(self) -> None:
         """Test Service.service_context context manager."""

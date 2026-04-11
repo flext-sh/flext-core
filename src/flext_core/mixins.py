@@ -110,13 +110,13 @@ class FlextMixins(m.ArbitraryTypesModel):
     @staticmethod
     def _clear_operation_context() -> None:
         """Clear operation scope context (preserves request/application scopes)."""
-        _ = FlextLogger.clear_scope(c.SCOPE_OPERATION)
-        FlextContext.Request.set_operation_name("")
+        _ = FlextLogger.clear_scope(c.ContextScope.OPERATION)
+        FlextContext.Request.apply_operation_name("")
 
     @staticmethod
     def _propagate_context(operation_name: str) -> None:
         """Propagate context for current operation using FlextContext."""
-        FlextContext.Request.set_operation_name(operation_name)
+        FlextContext.Request.apply_operation_name(operation_name)
         _ = FlextContext.Utilities.ensure_correlation_id()
 
     @staticmethod
@@ -165,7 +165,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                     for key, value in normal_data.root.items()
                 }
                 _ = FlextLogger.bind_context(
-                    c.SCOPE_OPERATION,
+                    c.ContextScope.OPERATION,
                     **normal_metadata_context,
                 )
 
@@ -232,7 +232,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         """Log service information ONCE at initialization (not bound to context)."""
         service_context: t.ConfigMap = t.ConfigMap(
             root={
-                c.KEY_SERVICE_NAME: self.__class__.__name__,
+                c.ContextKey.SERVICE_NAME: self.__class__.__name__,
                 "service_module": self.__class__.__module__,
                 **context_data,
             },
@@ -384,11 +384,11 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
         """Log message with automatic context data inclusion."""
-        correlation_id = FlextContext.Correlation.get_correlation_id()
-        operation_name = FlextContext.Request.get_operation_name()
+        correlation_id = FlextContext.Correlation.resolve_correlation_id()
+        operation_name = FlextContext.Request.resolve_operation_name()
         context_data: t.ConfigMap = t.ConfigMap(
             root={
-                c.KEY_CORRELATION_ID: u.normalize_to_container(
+                c.ContextKey.CORRELATION_ID: u.normalize_to_container(
                     correlation_id or "",
                 ),
                 c.HandlerType.OPERATION: u.normalize_to_container(

@@ -92,3 +92,19 @@ class FlextConstantsErrors:
     ERR_COLLECTION_NO_MATCHING_ITEM_FOUND: Final[str] = "No matching item found"
     ERR_MAPPER_NOT_A_SEQUENCE: Final[str] = "Not a sequence"
     ERR_MAPPER_FOUND_NONE_INDEX: Final[str] = "found_none:index"
+    ERR_INFRA_INVALID_HANDLER_MODE: Final[str] = (
+        "handler_mode must be 'command' or 'query'"
+    )
+    ERR_INFRA_HANDLER_REQUIRED: Final[str] = "handler cannot be None"
+    ERR_INFRA_MESSAGE_REQUIRED: Final[str] = "message cannot be None"
+    ERR_INFRA_TIMEOUT_POSITIVE: Final[str] = "timeout must be positive"
+    ERR_INFRA_INVALID_REGISTRATION_ID: Final[str] = (
+        "registration_id must be non-empty string"
+    )
+    ERR_INFRA_INVALID_REQUEST_ID: Final[str] = "request_id must be non-empty string"
+    ERR_MIXINS_EMPTY_OPERATION: Final[str] = "Operation name cannot be empty"
+    ERR_MIXINS_EMPTY_STATE: Final[str] = "State value cannot be empty"
+    ERR_MIXINS_EMPTY_FIELD_NAME: Final[str] = "Field name cannot be empty"
+    ERR_MIXINS_INVALID_ENCODING: Final[str] = "Invalid character encoding"
+    ERR_MIXINS_MISSING_TIMESTAMP: Final[str] = "Required timestamp fields missing"
+    ERR_MIXINS_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"

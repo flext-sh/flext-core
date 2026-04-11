@@ -211,25 +211,25 @@ class FlextLogger(FlextRuntime):
             return
         if config is not None:
             _level = getattr(config, "level", _level)
-            _service_name = getattr(config, c.KEY_SERVICE_NAME, _service_name)
+            _service_name = getattr(config, c.ContextKey.SERVICE_NAME, _service_name)
             _service_version = getattr(
                 config,
-                c.KEY_SERVICE_VERSION,
+                c.ContextKey.SERVICE_VERSION,
                 _service_version,
             )
             _correlation_id = getattr(
                 config,
-                c.KEY_CORRELATION_ID,
+                c.ContextKey.CORRELATION_ID,
                 _correlation_id,
             )
             _force_new = getattr(config, "force_new", _force_new)
         context: t.MutableStrMapping = {}
         if _service_name:
-            context[c.KEY_SERVICE_NAME] = _service_name
+            context[c.ContextKey.SERVICE_NAME] = _service_name
         if _service_version:
-            context[c.KEY_SERVICE_VERSION] = _service_version
+            context[c.ContextKey.SERVICE_VERSION] = _service_version
         if _correlation_id:
-            context[c.KEY_CORRELATION_ID] = _correlation_id
+            context[c.ContextKey.CORRELATION_ID] = _correlation_id
         base_logger = type(self).get_logger(resolved_name)
         self._structlog_instance = (
             base_logger.bind(**context) if context else base_logger
@@ -536,7 +536,7 @@ class FlextLogger(FlextRuntime):
         ) -> None:
             """Track domain event with context correlation."""
             context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get(c.KEY_CORRELATION_ID)
+            correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
             structlog.get_logger(__name__).info(
                 "Domain event emitted",
                 event_name=event_name,
@@ -554,7 +554,7 @@ class FlextLogger(FlextRuntime):
         ) -> None:
             """Track service resolution with context correlation."""
             context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get(c.KEY_CORRELATION_ID)
+            correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
             logger = structlog.get_logger(__name__)
             if resolved:
                 logger.info(
@@ -1225,7 +1225,7 @@ class FlextLogger(FlextRuntime):
             status = "success" if success else "failed"
             context: t.ConfigMap = t.ConfigMap(
                 root={
-                    c.METADATA_KEY_DURATION_SECONDS: elapsed,
+                    c.MetadataKey.DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,
                     c.FIELD_STATUS: status,
                 },

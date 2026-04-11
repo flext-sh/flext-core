@@ -400,9 +400,9 @@ class FlextDecorators:
             current_id = FlextContext.Variables.CorrelationId.get()
             if isinstance(current_id, str):
                 correlation_id = current_id
-        FlextContext.Request.set_operation_name(operation)
+        FlextContext.Request.apply_operation_name(operation)
         binding_result = FlextLogger.bind_context(
-            c.SCOPE_OPERATION,
+            c.ContextScope.OPERATION,
             operation=operation,
         )
         if binding_result.failure:
@@ -424,7 +424,7 @@ class FlextDecorators:
         operation: str,
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
-        clear_result = FlextLogger.clear_scope(c.SCOPE_OPERATION)
+        clear_result = FlextLogger.clear_scope(c.ContextScope.OPERATION)
         if clear_result.failure:
             FlextDecorators._handle_log_result(
                 result=clear_result,
@@ -474,7 +474,7 @@ class FlextDecorators:
         strategy = (
             c.DEFAULT_BACKOFF_STRATEGY
             if retry_config.exponential_backoff
-            else c.BACKOFF_STRATEGY_LINEAR
+            else c.BackoffStrategy.LINEAR
         )
         last_exception: Exception | None = None
         current_delay = delay
@@ -502,7 +502,7 @@ class FlextDecorators:
                 )
                 if strategy == c.DEFAULT_BACKOFF_STRATEGY:
                     current_delay *= 2
-                elif strategy == c.BACKOFF_STRATEGY_LINEAR:
+                elif strategy == c.BackoffStrategy.LINEAR:
                     current_delay += delay
                 if attempt == attempts:
                     break
@@ -633,11 +633,11 @@ class FlextDecorators:
             "success": True,
         }
         if correlation_id is not None:
-            extra[c.KEY_CORRELATION_ID] = correlation_id
+            extra[c.ContextKey.CORRELATION_ID] = correlation_id
         if track_perf:
             duration = time.perf_counter() - start_time
             extra["duration_ms"] = duration * c.DEFAULT_SIZE
-            extra[c.METADATA_KEY_DURATION_SECONDS] = duration
+            extra[c.MetadataKey.DURATION_SECONDS] = duration
         logger.debug("%s_completed", op_name, **extra)
 
     @staticmethod
@@ -659,10 +659,10 @@ class FlextDecorators:
             "operation": op_name,
         }
         if correlation_id is not None:
-            kw[c.KEY_CORRELATION_ID] = correlation_id
+            kw[c.ContextKey.CORRELATION_ID] = correlation_id
         if track_perf:
             kw["duration_ms"] = tracked_duration * c.DEFAULT_SIZE
-            kw[c.METADATA_KEY_DURATION_SECONDS] = tracked_duration
+            kw[c.MetadataKey.DURATION_SECONDS] = tracked_duration
         return kw
 
     @staticmethod

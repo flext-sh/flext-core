@@ -677,7 +677,7 @@ class FlextRuntime:
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
                 configured_container.config = configuration_provider
             else:
-                setattr(di_container, c.DIR_CONFIG, configuration_provider)
+                setattr(di_container, c.Directory.CONFIG, configuration_provider)
             return configuration_provider
 
         @staticmethod
@@ -813,8 +813,8 @@ class FlextRuntime:
             result["trace_id"] = cls.generate_id()
         if "span_id" not in result:
             result["span_id"] = cls.generate_id()
-        if include_correlation_id and c.KEY_CORRELATION_ID not in result:
-            result[c.KEY_CORRELATION_ID] = cls.generate_id()
+        if include_correlation_id and c.ContextKey.CORRELATION_ID not in result:
+            result[c.ContextKey.CORRELATION_ID] = cls.generate_id()
         if include_timestamp and "timestamp" not in result:
             result["timestamp"] = cls.generate_datetime_utc().isoformat()
         return result

@@ -55,18 +55,27 @@ class FlextConstantsPlatform:
     "Pattern for ISO 8601 timestamps (optional, allows empty string)."
     PATTERN_DN_STRING: Final[str] = "^(cn|ou|dc)=.*"
     "Pattern for LDAP DN strings (distinguished names)."
-    EXT_PYTHON: Final[str] = ".py"
-    EXT_YAML: Final[str] = ".yaml"
-    EXT_JSON: Final[str] = ".json"
-    EXT_TOML: Final[str] = ".toml"
-    EXT_XML: Final[str] = ".xml"
-    EXT_TXT: Final[str] = ".txt"
-    EXT_MD: Final[str] = ".md"
-    DIR_CONFIG: Final[str] = "config"
-    DIR_PLUGINS: Final[str] = "plugins"
-    DIR_LOGS: Final[str] = "logs"
-    DIR_DATA: Final[str] = "data"
-    DIR_TEMP: Final[str] = "temp"
+    @unique
+    class FileExtension(StrEnum):
+        """Standard file extension identifiers."""
+
+        PYTHON = ".py"
+        YAML = ".yaml"
+        JSON = ".json"
+        TOML = ".toml"
+        XML = ".xml"
+        TXT = ".txt"
+        MD = ".md"
+
+    @unique
+    class Directory(StrEnum):
+        """Standard directory name identifiers."""
+
+        CONFIG = "config"
+        PLUGINS = "plugins"
+        LOGS = "logs"
+        DATA = "data"
+        TEMP = "temp"
 
     DEFAULT_DB_POOL_SIZE: Final[int] = 10
     MIN_DB_POOL_SIZE: Final[int] = 1
@@ -110,11 +119,16 @@ class FlextConstantsPlatform:
     PLATFORM_DEFAULT_MAX_DELAY_SECONDS: Final[float] = 300.0
     "Default maximum delay in seconds for retry operations."
     RETRY_COUNT_MIN: Final[int] = 1
-    DEFAULT_BACKOFF_STRATEGY: Final[str] = "exponential"
-    BACKOFF_STRATEGY_EXPONENTIAL: Final[str] = "exponential"
-    "Exponential backoff strategy."
-    BACKOFF_STRATEGY_LINEAR: Final[str] = "linear"
-    "Linear backoff strategy."
+    @unique
+    class BackoffStrategy(StrEnum):
+        """Retry backoff strategy identifiers."""
+
+        EXPONENTIAL = "exponential"
+        "Exponential backoff: delay multiplies on each retry."
+        LINEAR = "linear"
+        "Linear backoff: fixed delay between retries."
+
+    DEFAULT_BACKOFF_STRATEGY: Final[str] = BackoffStrategy.EXPONENTIAL
     PLATFORM_DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
     DEFAULT_RECOVERY_TIMEOUT: Final[int] = (
         FlextConstantsBase.DEFAULT_RECOVERY_TIMEOUT_SECONDS

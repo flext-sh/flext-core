@@ -126,14 +126,14 @@ class FlextProtocolsContext:
     class ContextMetadataAccess(Protocol):
         """Context metadata read/write operations."""
 
-        def get_metadata(
+        def resolve_metadata(
             self,
             key: str,
         ) -> p.Result[t.RuntimeAtomic]:
             """Get a metadata value by key."""
             ...
 
-        def set_metadata(self, key: str, value: t.MetadataValue) -> None:
+        def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
             """Set a metadata value by key."""
             ...
 

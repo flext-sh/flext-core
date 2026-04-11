@@ -15,16 +15,21 @@ class FlextConstantsSettings:
 
     DEFAULT_ENCODING: Final[str] = "utf-8"
     "Default encoding for string operations."
-    SERIALIZATION_ISO8601: Final = "iso8601"
-    "ISO8601 format for datetime serialization."
-    SERIALIZATION_FLOAT: Final = "float"
-    "Float format for datetime serialization."
-    SERIALIZATION_BASE64: Final = "base64"
-    "Base64 format for bytes serialization."
-    SERIALIZATION_UTF8: Final = "utf8"
-    "UTF-8 format for bytes serialization."
-    SERIALIZATION_HEX: Final = "hex"
-    "Hex format for bytes serialization."
+    @unique
+    class Serialization(StrEnum):
+        """Datetime and bytes serialization format identifiers."""
+
+        ISO8601 = "iso8601"
+        "ISO 8601 format for datetime serialization."
+        FLOAT = "float"
+        "Float format for datetime serialization."
+        BASE64 = "base64"
+        "Base64 format for bytes serialization."
+        UTF8 = "utf8"
+        "UTF-8 format for bytes serialization."
+        HEX = "hex"
+        "Hex format for bytes serialization."
+
     LONG_UUID_LENGTH: Final[int] = 12
     SHORT_UUID_LENGTH: Final[int] = 8
     VERSION_MODULO: Final[int] = 100
@@ -80,12 +85,16 @@ class FlextConstantsSettings:
         TESTING = "testing"
         LOCAL = "local"
 
-    EXTRA_FORBID: Final = "forbid"
-    "Extra fields behavior: forbid unknown fields."
-    EXTRA_IGNORE: Final = "ignore"
-    "Extra fields behavior: ignore unknown fields."
-    EXTRA_ALLOW: Final = "allow"
-    "Extra fields behavior: allow unknown fields."
+    @unique
+    class ExtraConfig(StrEnum):
+        """Pydantic model_config extra= field behavior identifiers."""
+
+        FORBID = "forbid"
+        "Forbid extra fields (raises validation error)."
+        IGNORE = "ignore"
+        "Ignore extra fields silently."
+        ALLOW = "allow"
+        "Allow extra fields to pass through."
 
     JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
     CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12

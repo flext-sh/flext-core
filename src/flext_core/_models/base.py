@@ -52,7 +52,7 @@ class FlextModelsBase:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
-            extra=c.EXTRA_FORBID,
+            extra=c.ExtraConfig.FORBID,
         )
 
     class EnumManagedModel(ManagedModel):
@@ -138,7 +138,7 @@ class FlextModelsBase:
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra=c.EXTRA_FORBID,
+            extra=c.ExtraConfig.FORBID,
             frozen=True,
             validate_assignment=True,
             populate_by_name=True,
@@ -215,8 +215,8 @@ class FlextModelsBase:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_return=True,
             arbitrary_types_allowed=True,
-            ser_json_timedelta=c.SERIALIZATION_ISO8601,
-            ser_json_bytes=c.SERIALIZATION_BASE64,
+            ser_json_timedelta=c.Serialization.ISO8601,
+            ser_json_bytes=c.Serialization.BASE64,
             hide_input_in_errors=True,
             frozen=True,
         )

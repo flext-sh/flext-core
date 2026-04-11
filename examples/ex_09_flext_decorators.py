@@ -54,7 +54,7 @@ class Ex09FlextDecorators(Examples):
         )
         def combined_standard(*, service: str | None = None) -> str:
             """Use combined decorator without railway wrapping."""
-            op_name = FlextContext.Request.get_operation_name()
+            op_name = FlextContext.Request.resolve_operation_name()
             service_value = service if u.is_type(service, str) else "none"
             return f"{service_value}|{op_name}"
 
@@ -71,7 +71,7 @@ class Ex09FlextDecorators(Examples):
                 msg = self.rand_str(12)
                 raise ValueError(msg)
             service_value = service if u.is_type(service, str) else "none"
-            return f"{service_value}|{FlextContext.Request.get_operation_name()}"
+            return f"{service_value}|{FlextContext.Request.resolve_operation_name()}"
 
         std_result = combined_standard()
         rail_ok = combined_railway(True)
@@ -214,13 +214,13 @@ class Ex09FlextDecorators(Examples):
         @d.log_operation(named_operation)
         def log_named() -> str:
             """Return operation name from context when explicitly set."""
-            op_name = FlextContext.Request.get_operation_name()
+            op_name = FlextContext.Request.resolve_operation_name()
             return op_name if op_name is not None else "none"
 
         @d.log_operation(track_perf=True)
         def log_default_perf() -> str:
             """Return operation name from context using default function name."""
-            op_name = FlextContext.Request.get_operation_name()
+            op_name = FlextContext.Request.resolve_operation_name()
             return op_name if op_name is not None else "none"
 
         self.check("log_operation.named_matches", log_named() == named_operation)
@@ -346,8 +346,8 @@ class Ex09FlextDecorators(Examples):
         def tracked_with_correlation() -> tuple[str | None, str | None]:
             """Return operation and correlation while inside decorator scope."""
             return (
-                FlextContext.Request.get_operation_name(),
-                FlextContext.Correlation.get_correlation_id(),
+                FlextContext.Request.resolve_operation_name(),
+                FlextContext.Correlation.resolve_correlation_id(),
             )
 
         with_corr = tracked_with_correlation()
@@ -357,8 +357,8 @@ class Ex09FlextDecorators(Examples):
         def tracked_without_correlation() -> tuple[str | None, str | None]:
             """Return operation and correlation when correlation is not forced."""
             return (
-                FlextContext.Request.get_operation_name(),
-                FlextContext.Correlation.get_correlation_id(),
+                FlextContext.Request.resolve_operation_name(),
+                FlextContext.Correlation.resolve_correlation_id(),
             )
 
         without_corr = tracked_without_correlation()
@@ -381,12 +381,12 @@ class Ex09FlextDecorators(Examples):
         @d.log_operation(perf_operation_name)
         def perf_named(value: int) -> tuple[int, str | None]:
             """Return transformed value plus operation name from context."""
-            return (value * 2, FlextContext.Request.get_operation_name())
+            return (value * 2, FlextContext.Request.resolve_operation_name())
 
         @d.log_operation()
         def perf_default() -> str | None:
             """Return default operation name from context."""
-            return FlextContext.Request.get_operation_name()
+            return FlextContext.Request.resolve_operation_name()
 
         base_value = self.rand_int(1, 100)
         named_value, named_operation = perf_named(base_value)
@@ -446,7 +446,7 @@ class Ex09FlextDecorators(Examples):
         @d.with_correlation()
         def read_correlation() -> str | None:
             """Return correlation id ensured by decorator."""
-            return FlextContext.Correlation.get_correlation_id()
+            return FlextContext.Correlation.resolve_correlation_id()
 
         corr_id = read_correlation()
         self.check("with_correlation.created", corr_id is not None)

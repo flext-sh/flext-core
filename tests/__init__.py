@@ -17,10 +17,10 @@ if _t.TYPE_CHECKING:
         e,
         h,
         r,
-        reset_settings,
         s,
         settings,
-        settings_factory,
+    )
+    from flext_tests import (
         td,
         tf,
         tk,
@@ -89,14 +89,15 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "s",
                 "settings",
                 "settings_factory",
+                "x",
+            ),
+             "flext_tests": (
                 "td",
                 "tf",
                 "tk",
                 "tm",
                 "tv",
-                "x",
-            ),
-        },
+            ),       },
     ),
     exclude_names=(
         "cleanup_submodule_namespace",

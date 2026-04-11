@@ -16,7 +16,10 @@ class TestCoverageContext:
         u.Core.Tests.clear_context()
         with FlextContext.Correlation.new_correlation() as correlation_id:
             tm.that(correlation_id, is_=str)
-            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                eq=correlation_id,
+            )
 
     def test_new_correlation_with_explicit_id(self) -> None:
         u.Core.Tests.clear_context()
@@ -25,28 +28,31 @@ class TestCoverageContext:
             correlation_id=explicit_id,
         ) as correlation_id:
             tm.that(correlation_id, eq=explicit_id)
-            tm.that(FlextContext.Correlation.get_correlation_id(), eq=explicit_id)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                eq=explicit_id,
+            )
 
     def test_get_service_from_container(self) -> None:
         container = FlextContainer(_context=FlextContext())
-        FlextContext.set_container(container)
+        FlextContext.configure_container(container)
         test_service_obj = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
-        result = FlextContext.Service.get_service("test_service")
+        result = FlextContext.Service.fetch_service("test_service")
         _ = u.Core.Tests.assert_success(result)
         tm.that(result.value is test_service_obj, eq=True)
 
     def test_register_service(self) -> None:
         container = FlextContainer(_context=FlextContext())
-        FlextContext.set_container(container)
+        FlextContext.configure_container(container)
         service_obj = {"name": "test_service", "version": "1.0"}
         result = FlextContext.Service.register_service("my_service", service_obj)
         _ = u.Core.Tests.assert_success(result)
 
     def test_get_nonexistent_service(self) -> None:
         container = FlextContainer(_context=FlextContext())
-        FlextContext.set_container(container)
-        result = FlextContext.Service.get_service("nonexistent_service_xyz")
+        FlextContext.configure_container(container)
+        result = FlextContext.Service.fetch_service("nonexistent_service_xyz")
         _ = u.Core.Tests.assert_failure(result)
 
     def test_timed_operation_context(self) -> None:
@@ -97,7 +103,7 @@ class TestCoverageContext:
     def test_ensure_correlation_id_uses_existing(self) -> None:
         u.Core.Tests.clear_context()
         existing_id = "existing_corr_789"
-        FlextContext.Correlation.set_correlation_id(existing_id)
+        FlextContext.Correlation.apply_correlation_id(existing_id)
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
         tm.that(correlation_id, eq=existing_id)
 

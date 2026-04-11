@@ -1097,7 +1097,10 @@ class TestFlextRuntime:
             u.configure_structlog()
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             u.Integration.track_service_resolution("database", resolved=True)
-            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                eq=correlation_id,
+            )
         elif (
             test_case.operation
             == self.RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE
@@ -1109,7 +1112,10 @@ class TestFlextRuntime:
                 resolved=False,
                 error_message="Connection refused",
             )
-            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                eq=correlation_id,
+            )
         elif (
             test_case.operation
             == self.RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE
@@ -1121,7 +1127,10 @@ class TestFlextRuntime:
                 aggregate_id="user-123",
                 event_data=t.ConfigMap(root={"email": "test@example.com"}),
             )
-            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                eq=correlation_id,
+            )
         elif (
             test_case.operation
             == self.RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE
@@ -1132,7 +1141,10 @@ class TestFlextRuntime:
                 "SystemInitialized",
                 event_data=t.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
             )
-            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                eq=correlation_id,
+            )
         elif (
             test_case.operation
             == self.RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL
@@ -1145,7 +1157,10 @@ class TestFlextRuntime:
             )
             tm.that(FlextContext.Variables.ServiceName.get(), eq="test-service")
             tm.that(FlextContext.Variables.ServiceVersion.get(), eq="1.0.0")
-            tm.that(FlextContext.Correlation.get_correlation_id(), none=False)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                none=False,
+            )
         elif (
             test_case.operation
             == self.RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL
@@ -1156,7 +1171,10 @@ class TestFlextRuntime:
                 enable_context_correlation=True,
             )
             tm.that(FlextContext.Variables.ServiceName.get(), eq="minimal-service")
-            tm.that(FlextContext.Correlation.get_correlation_id(), none=False)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                none=False,
+            )
         elif (
             test_case.operation
             == self.RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION
@@ -1172,7 +1190,10 @@ class TestFlextRuntime:
                 FlextContext.Variables.ServiceName.get(),
                 eq="no-correlation-service",
             )
-            tm.that(FlextContext.Correlation.get_correlation_id(), none=True)
+            tm.that(
+                FlextContext.Correlation.resolve_correlation_id(),
+                none=True,
+            )
 
     @given(st.text())
     def test_hypothesis_identifier_guard_returns_bool(self, value: str) -> None:

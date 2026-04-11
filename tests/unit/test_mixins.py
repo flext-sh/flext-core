@@ -206,8 +206,8 @@ class TestFlextMixinsNestedClasses:
         elif (
             scenario.scenario_type == self.ServiceMixinScenarioType.CONTEXT_CORRELATION
         ):
-            FlextContext.Correlation.set_correlation_id("test-123")
-            assert FlextContext.Correlation.get_correlation_id() == "test-123"
+            FlextContext.Correlation.apply_correlation_id("test-123")
+            assert FlextContext.Correlation.resolve_correlation_id() == "test-123"
         elif (
             scenario.scenario_type == self.ServiceMixinScenarioType.LOGGING_WITH_CONTEXT
         ):

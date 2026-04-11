@@ -106,7 +106,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             if klass is FlextHandlers:
                 msg = f"{cls.__qualname__} must implement a handle() method"
                 raise TypeError(msg)
-            if c.METHOD_HANDLE in klass.__dict__:
+            if c.MethodName.HANDLE in klass.__dict__:
                 break
 
     @property
@@ -524,7 +524,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         )
         valid_operations = {
             c.DEFAULT_HANDLER_MODE,
-            c.HANDLER_MODE_QUERY,
+            c.HandlerMode.QUERY,
             c.HandlerType.EVENT.value,
         }
         if operation != handler_mode and operation in valid_operations:

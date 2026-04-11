@@ -182,7 +182,7 @@ class FlextRegistry(s[bool]):
 
         """
         key = f"{category}::{name}"
-        if scope == "instance":
+        if scope == c.RegistrationScope.INSTANCE:
             if key not in self._registered_keys:
                 available = [
                     k.split("::")[1]
@@ -228,7 +228,7 @@ class FlextRegistry(s[bool]):
 
         """
         keys = self._registered_keys
-        if scope == "class":
+        if scope == c.RegistrationScope.CLASS:
             keys = self._class_registered_keys
         plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
         return r[t.StrSequence].ok(plugins)

@@ -126,7 +126,7 @@ def test_update_statistics_remove_hook_and_clone_false_result() -> None:
 def test_export_paths_with_metadata_and_statistics() -> None:
     ctx = FlextContext()
     _ = ctx.set("k", "v")
-    ctx.set_metadata("mk", "mv")
+    ctx.apply_metadata("mk", "mv")
     exported_dict = ctx.export(
         include_statistics=True,
         include_metadata=True,
@@ -147,18 +147,18 @@ def test_export_paths_with_metadata_and_statistics() -> None:
 def test_container_and_service_domain_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     FlextContext._container = None
     with pytest.raises(RuntimeError):
-        FlextContext.get_container()
+        FlextContext.resolve_container()
     container = FlextContainer()
     container.clear_all()
-    FlextContext.set_container(container)
-    tm.that(FlextContext.get_container() is container, eq=True)
+    FlextContext.configure_container(container)
+    tm.that(FlextContext.resolve_container() is container, eq=True)
     container.register("obj", "x")
-    result = FlextContext.Service.get_service("obj")
+    result = FlextContext.Service.fetch_service("obj")
     tm.ok(result)
     tm.that(result.value, eq="x")
     tm.ok(FlextContext.Service.register_service("ok", "value"))
     tm.ok(FlextContext.Service.register_service("bad", "value"))
-    tm.fail(FlextContext.Service.get_service("missing"))
+    tm.fail(FlextContext.Service.fetch_service("missing"))
 
 
 def test_create_merges_metadata_dict_branch() -> None:
