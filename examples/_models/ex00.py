@@ -8,35 +8,37 @@ from examples import c
 from flext_core import m, r, t
 
 
-class Ex00UserProfile(m.Entity):
-    """User profile transport model."""
+class ExamplesFlextCoreModelsEx00:
+    """Example 00 model namespace."""
 
-    name: str = Field(min_length=1)
-    email: str = Field(min_length=1)
-    status: c.Status = c.Status.ACTIVE
+    class Ex00UserProfile(m.Entity):
+        """User profile transport model."""
 
-    def activate(self) -> r[None]:
-        """Activate user once."""
-        if self.status == c.Status.ACTIVE:
-            return r[None].fail("Already active")
-        return r[None].ok(None)
+        name: str = Field(min_length=1)
+        email: str = Field(min_length=1)
+        status: c.Status = c.Status.ACTIVE
 
+        def activate(self) -> r[None]:
+            """Activate user once."""
+            if self.status == c.Status.ACTIVE:
+                return r[None].fail("Already active")
+            return r[None].ok(None)
 
-class Ex00UserInput(m.Value):
-    """Raw user input model."""
+    class Ex00UserInput(m.Value):
+        """Raw user input model."""
 
-    name: str = Field(min_length=1)
-    email: str = Field(min_length=1)
+        name: str = Field(min_length=1)
+        email: str = Field(min_length=1)
 
-    @field_validator("name", "email", mode="before")
-    @classmethod
-    def validate_non_empty_text(cls, value: t.RuntimeData) -> str:
-        """Validate text input."""
-        if not isinstance(value, str):
-            msg = "Expected text input"
-            raise TypeError(msg)
-        normalized = value.strip()
-        if not normalized:
-            msg = "Text input cannot be empty"
-            raise ValueError(msg)
-        return normalized
+        @field_validator("name", "email", mode="before")
+        @classmethod
+        def validate_non_empty_text(cls, value: t.RuntimeData) -> str:
+            """Validate text input."""
+            if not isinstance(value, str):
+                msg = "Expected text input"
+                raise TypeError(msg)
+            normalized = value.strip()
+            if not normalized:
+                msg = "Text input cannot be empty"
+                raise ValueError(msg)
+            return normalized

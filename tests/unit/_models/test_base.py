@@ -18,7 +18,7 @@ from flext_tests import tm
 from tests import c, m, t, u
 
 
-class TestFlextModelsBase:
+class TestsFlextCoreModelsBase:
     """Tests for flext_core._models.base via the m facade."""
 
     # ── Metadata ──────────────────────────────────────────────

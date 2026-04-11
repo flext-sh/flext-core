@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from examples import SharedHandle, SharedPerson
-from flext_core import FlextModels
+from flext_core import FlextModels, c
 
 
 class ExamplesFlextCoreModels(FlextModels):
@@ -21,4 +21,4 @@ class ExamplesFlextCoreModels(FlextModels):
 
 m = ExamplesFlextCoreModels
 
-__all__ = ["ExamplesFlextCoreModels", "m"]
+__all__ = ["ExamplesFlextCoreModels", "c", "m"]

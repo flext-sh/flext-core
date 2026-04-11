@@ -12,14 +12,8 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
-    from examples._models.ex01 import (
-        Ex01DemonstrationResult,
-        Ex01InvalidPersonPayload,
-        Ex01RunDemonstrationCommand,
-        Ex01User,
-        Ex01ValidPersonPayload,
-    )
+    from examples._models.ex00 import ExamplesFlextCoreModelsEx00
+    from examples._models.ex01 import ExamplesFlextCoreModelsEx01
     from examples._models.ex02 import (
         Ex02CacheService,
         Ex02DatabaseService,
@@ -87,35 +81,19 @@ if _t.TYPE_CHECKING:
     )
     from examples._models.exconfig import ExConfigAppConfig
     from examples._models.shared import SharedHandle, SharedPerson
-    from examples.models import ExamplesFlextCoreModels, ExamplesFlextCoreModels as m
+    from examples.models import ExamplesFlextCoreModels, m
     from flext_core.constants import FlextConstants as c
-    from flext_core.decorators import d
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
-    from flext_core.protocols import FlextProtocols as p
-    from flext_core.result import r
-    from flext_core.service import s
-    from flext_core.typings import FlextTypes as t
-    from flext_core.utilities import FlextUtilities as u
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._models",),
     build_lazy_import_map(
         {
-            ".models": ("ExamplesFlextCoreModels",),
-            "flext_core.decorators": ("d",),
-            "flext_core.exceptions": ("e",),
-            "flext_core.handlers": ("h",),
-            "flext_core.mixins": ("x",),
-            "flext_core.result": ("r",),
-            "flext_core.service": ("s",),
+            ".models": (
+                "ExamplesFlextCoreModels",
+                "m",
+            ),
         },
         alias_groups={
-            ".models": (("m", "ExamplesFlextCoreModels"),),
             "flext_core.constants": (("c", "FlextConstants"),),
-            "flext_core.protocols": (("p", "FlextProtocols"),),
-            "flext_core.typings": (("t", "FlextTypes"),),
-            "flext_core.utilities": (("u", "FlextUtilities"),),
         },
     ),
     exclude_names=(
@@ -130,14 +108,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
     module_name=__name__,
 )
 
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+
 __all__ = [
-    "Ex00UserInput",
-    "Ex00UserProfile",
-    "Ex01DemonstrationResult",
-    "Ex01InvalidPersonPayload",
-    "Ex01RunDemonstrationCommand",
-    "Ex01User",
-    "Ex01ValidPersonPayload",
     "Ex02CacheService",
     "Ex02DatabaseService",
     "Ex02EmailService",
@@ -191,20 +165,10 @@ __all__ = [
     "Ex14UserDTO",
     "ExConfigAppConfig",
     "ExamplesFlextCoreModels",
+    "ExamplesFlextCoreModelsEx00",
+    "ExamplesFlextCoreModelsEx01",
     "SharedHandle",
     "SharedPerson",
     "c",
-    "d",
-    "e",
-    "h",
     "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "u",
-    "x",
 ]
-
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

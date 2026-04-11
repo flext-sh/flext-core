@@ -20,7 +20,7 @@ from flext_tests import tm
 from tests import c, m, t, u
 
 
-class TestFlextModelsCqrs:
+class TestsFlextCoreModelsCqrs:
     """Tests for flext_core._models.cqrs via the m facade."""
 
     # ── Command ────────────────────────────────────────────────

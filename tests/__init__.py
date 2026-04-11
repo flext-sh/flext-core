@@ -12,48 +12,61 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_core import T, T_co, T_contra
-    from flext_core.decorators import d
-    from flext_core.exceptions import e
-    from flext_core.handlers import h
-    from flext_core.mixins import x
-    from flext_core.result import r
-    from tests.constants import TestsFlextCoreConstants, TestsFlextCoreConstants as c
-    from tests.models import TestsFlextCoreModels, TestsFlextCoreModels as m
-    from tests.protocols import TestsFlextCoreProtocols, TestsFlextCoreProtocols as p
-    from tests.typings import TestsFlextCoreTypes, TestsFlextCoreTypes as t
+    from tests._constants.domain import TestsFlextCoreConstantsDomain
+    from tests._constants.errors import TestsFlextCoreConstantsErrors
+    from tests._constants.fixtures import TestsFlextCoreConstantsFixtures
+    from tests._constants.loggings import TestsFlextCoreConstantsLoggings
+    from tests._constants.other import TestsFlextCoreConstantsOther
+    from tests._constants.result import TestsFlextCoreConstantsResult
+    from tests._constants.services import TestsFlextCoreConstantsServices
+    from tests._constants.settings import TestsFlextCoreConstantsSettings
+    from tests._constants.strings import TestsFlextCoreConstantsStrings
+    from tests._models.mixins import TestsFlextCoreModelsMixins
+    from tests.constants import TestsFlextCoreConstants, c
+    from tests.models import TestsFlextCoreModels, m
+    from tests.protocols import TestsFlextCoreProtocols, p
+    from tests.typings import T, T_co, T_contra, TestsFlextCoreTypes, t
+    from tests.unit._models.test_base import TestsFlextCoreModelsBase
+    from tests.unit._models.test_cqrs import TestsFlextCoreModelsCqrs
+    from tests.unit._models.test_entity import TestFlextModelsEntity
+    from tests.unit._models.test_exception_params import TestFlextModelsExceptionParams
     from tests.unit._utilities.test_guards import TestFlextUtilitiesGuards
-    from tests.unit.base import (
-        TestsFlextCoreServiceBase,
-        TestsFlextCoreServiceBase as s,
-    )
-    from tests.utilities import TestsFlextCoreUtilities, TestsFlextCoreUtilities as u
+    from tests.unit._utilities.test_mapper import TestsFlextCoreUtilitiesMapper
+    from tests.unit.base import TestsFlextCoreServiceBase
+    from tests.utilities import TestsFlextCoreUtilities, u
 _LAZY_IMPORTS = merge_lazy_imports(
-    (".unit",),
+    (
+        "._constants",
+        "._models",
+        ".benchmark",
+        ".integration",
+        ".unit",
+    ),
     build_lazy_import_map(
         {
-            ".constants": ("TestsFlextCoreConstants",),
-            ".models": ("TestsFlextCoreModels",),
-            ".protocols": ("TestsFlextCoreProtocols",),
-            ".typings": ("TestsFlextCoreTypes",),
-            ".utilities": ("TestsFlextCoreUtilities",),
-            "flext_core": (
+            ".constants": (
+                "TestsFlextCoreConstants",
+                "c",
+            ),
+            ".models": (
+                "TestsFlextCoreModels",
+                "m",
+            ),
+            ".protocols": (
+                "TestsFlextCoreProtocols",
+                "p",
+            ),
+            ".typings": (
                 "T",
                 "T_co",
                 "T_contra",
+                "TestsFlextCoreTypes",
+                "t",
             ),
-            "flext_core.decorators": ("d",),
-            "flext_core.exceptions": ("e",),
-            "flext_core.handlers": ("h",),
-            "flext_core.mixins": ("x",),
-            "flext_core.result": ("r",),
-        },
-        alias_groups={
-            ".constants": (("c", "TestsFlextCoreConstants"),),
-            ".models": (("m", "TestsFlextCoreModels"),),
-            ".protocols": (("p", "TestsFlextCoreProtocols"),),
-            ".typings": (("t", "TestsFlextCoreTypes"),),
-            ".utilities": (("u", "TestsFlextCoreUtilities"),),
+            ".utilities": (
+                "TestsFlextCoreUtilities",
+                "u",
+            ),
         },
     ),
     exclude_names=(
@@ -68,29 +81,38 @@ _LAZY_IMPORTS = merge_lazy_imports(
     module_name=__name__,
 )
 
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
+
 __all__ = [
     "T",
     "T_co",
     "T_contra",
+    "TestFlextModelsEntity",
+    "TestFlextModelsExceptionParams",
     "TestFlextUtilitiesGuards",
     "TestsFlextCoreConstants",
+    "TestsFlextCoreConstantsDomain",
+    "TestsFlextCoreConstantsErrors",
+    "TestsFlextCoreConstantsFixtures",
+    "TestsFlextCoreConstantsLoggings",
+    "TestsFlextCoreConstantsOther",
+    "TestsFlextCoreConstantsResult",
+    "TestsFlextCoreConstantsServices",
+    "TestsFlextCoreConstantsSettings",
+    "TestsFlextCoreConstantsStrings",
     "TestsFlextCoreModels",
+    "TestsFlextCoreModelsBase",
+    "TestsFlextCoreModelsCqrs",
+    "TestsFlextCoreModelsMixins",
     "TestsFlextCoreProtocols",
     "TestsFlextCoreServiceBase",
     "TestsFlextCoreTypes",
     "TestsFlextCoreUtilities",
+    "TestsFlextCoreUtilitiesMapper",
     "c",
-    "d",
-    "e",
-    "h",
     "m",
     "p",
-    "r",
-    "s",
     "t",
     "u",
-    "x",
 ]
-
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

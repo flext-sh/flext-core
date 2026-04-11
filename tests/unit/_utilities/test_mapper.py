@@ -21,25 +21,24 @@ from flext_tests import tm
 from tests import t, u
 
 
-# ── Helper models ──────────────────────────────────────────────────
-class _Address(BaseModel):
-    city: Annotated[str, Field(description="City name")]
-    zip_code: Annotated[str, Field(description="Zip code")]
-
-
-class _User(BaseModel):
-    name: Annotated[str, Field(description="User name")]
-    age: Annotated[int, Field(description="User age")]
-    address: Annotated[_Address, Field(description="User address")]
-
-
-class _Item(BaseModel):
-    label: Annotated[str, Field(description="Item label")]
-    value: Annotated[int, Field(description="Item value")]
-
-
-class TestFlextUtilitiesMapper:
+class TestsFlextCoreUtilitiesMapper:
     """Tests for flext_core._utilities.mapper via the u facade."""
+
+    class Address(BaseModel):
+        city: Annotated[str, Field(description="City name")]
+        zip_code: Annotated[str, Field(description="Zip code")]
+
+    class User(BaseModel):
+        name: Annotated[str, Field(description="User name")]
+        age: Annotated[int, Field(description="User age")]
+        address: Annotated[
+            TestsFlextCoreUtilitiesMapper.Address,
+            Field(description="User address"),
+        ]
+
+    class Item(BaseModel):
+        label: Annotated[str, Field(description="Item label")]
+        value: Annotated[int, Field(description="Item value")]
 
     # ── extract: basic dict ────────────────────────────────────────
 
@@ -84,23 +83,23 @@ class TestFlextUtilitiesMapper:
     # ── extract: pydantic model ────────────────────────────────────
 
     def test_extract_from_model(self) -> None:
-        user = _User(
+        user = self.User(
             name="alice",
             age=30,
-            address=_Address(city="NYC", zip_code="10001"),
+            address=self.Address(city="NYC", zip_code="10001"),
         )
         tm.ok(u.extract(user, "name"), eq="alice")
 
     def test_extract_model_nested_dict(self) -> None:
         """Model with dict attribute - extract nested key."""
 
-        class _WithData(BaseModel):
+        class WithData(BaseModel):
             data: Annotated[
                 t.ContainerMapping,
                 Field(description="Data dict"),
             ] = {"key": "val"}
 
-        obj = _WithData()
+        obj = WithData()
         tm.ok(u.extract(obj, "data.key"), eq="val")
 
     # ── extract: None intermediate ─────────────────────────────────
@@ -215,7 +214,7 @@ class TestFlextUtilitiesMapper:
         tm.that(result, is_=list)
 
     def test_narrow_pydantic_model(self) -> None:
-        item = _Item(label="test", value=5)
+        item = self.Item(label="test", value=5)
         result = u.normalize_to_container(item)
         tm.that(result, is_=dict)
         tm.that(result, kv={"label": "test", "value": 5})
@@ -303,7 +302,7 @@ class TestFlextUtilitiesMapper:
         tm.that(u.agg(items, "v"), eq=0)
 
     def test_agg_pydantic_model(self) -> None:
-        items = [_Item(label="a", value=5), _Item(label="b", value=15)]
+        items = [self.Item(label="a", value=5), self.Item(label="b", value=15)]
         tm.that(u.agg(items, "value"), eq=20)
 
     # ── transform (top-level static) ───────────────────────────────
@@ -379,7 +378,7 @@ class TestFlextUtilitiesMapper:
     # ── map_get from object with attribute ─────────────────────────
 
     def test_map_get_from_object(self) -> None:
-        item = _Item(label="test", value=99)
+        item = self.Item(label="test", value=99)
         tm.that(u.map_get(item, "label"), eq="test")
 
     # ── deep_eq: list length mismatch ──────────────────────────────

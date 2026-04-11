@@ -7,17 +7,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
-        ".ex00": (
-            "Ex00UserInput",
-            "Ex00UserProfile",
-        ),
-        ".ex01": (
-            "Ex01DemonstrationResult",
-            "Ex01InvalidPersonPayload",
-            "Ex01RunDemonstrationCommand",
-            "Ex01User",
-            "Ex01ValidPersonPayload",
-        ),
+        ".ex00": ("ExamplesFlextCoreModelsEx00",),
+        ".ex01": ("ExamplesFlextCoreModelsEx01",),
         ".ex02": (
             "Ex02CacheService",
             "Ex02DatabaseService",
