@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import c, t, u
+from examples import c, m, t, u
 from examples.shared import Examples
 from flext_core import FlextContainer, FlextContext
 
@@ -72,8 +72,7 @@ class Ex06FlextContext(Examples):
             FlextContext.resolve_container() is container,
         )
         try:
-            msg = "boom"
-            raise ValueError(msg)
+            raise ValueError(m.Examples.ErrorMessages.BOOM)
         except ValueError as exc:
             self.check("raise.msg", str(exc))
         self.check(

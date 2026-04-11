@@ -209,17 +209,17 @@ class TestBeartypeConf:
 
     def test_warn_mode_conf(self) -> None:
         """Default mode (warn) produces UserWarning violation type."""
-        conf = FlextUtilitiesBeartypeConf.get_beartype_conf()
+        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
         assert conf.violation_type is UserWarning
 
     def test_warn_mode_strategy(self) -> None:
         """Default mode uses O1 strategy."""
-        conf = FlextUtilitiesBeartypeConf.get_beartype_conf()
+        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
         assert conf.strategy is BeartypeStrategy.O1
 
     def test_conf_is_beartype_conf(self) -> None:
         """Factory returns a proper BeartypeConf instance."""
-        conf = FlextUtilitiesBeartypeConf.get_beartype_conf()
+        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
         assert isinstance(conf, BeartypeConf)
 
 
@@ -234,8 +234,8 @@ class TestFacadeAccessibility:
     def test_contains_any_on_facade(self) -> None:
         """u.contains_any is accessible."""
 
-    def test_get_beartype_conf_on_facade(self) -> None:
-        """u.get_beartype_conf is accessible."""
+    def test_build_beartype_conf_on_facade(self) -> None:
+        """u.build_beartype_conf is accessible."""
 
     def test_has_forbidden_collection_origin_on_facade(self) -> None:
         """u.has_forbidden_collection_origin is accessible."""
@@ -248,7 +248,7 @@ class TestFacadeAccessibility:
             "count_union_members",
             "is_str_none_union",
             "alias_contains_any",
-            "get_beartype_conf",
+            "build_beartype_conf",
         ],
     )
     def test_all_methods_on_facade(self, method: str) -> None:
@@ -291,7 +291,7 @@ class TestBeartypeClawCompatibility:
                 from beartype.claw import beartype_this_package
                 from flext_core import FlextUtilitiesBeartypeConf
 
-                beartype_this_package(conf=FlextUtilitiesBeartypeConf.get_beartype_conf())
+                beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
                 """
             ).strip()
             + "\n",
@@ -366,7 +366,7 @@ class TestBeartypeClawCompatibility:
                 from beartype.claw import beartype_this_package
                 from flext_core import FlextUtilitiesBeartypeConf
 
-                beartype_this_package(conf=FlextUtilitiesBeartypeConf.get_beartype_conf())
+                beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
                 """
             ).strip()
             + "\n",
@@ -410,7 +410,7 @@ class TestBeartypeClawCompatibility:
 
                 beartype_package(
                     "flext_core",
-                    conf=FlextUtilitiesBeartypeConf.get_beartype_conf(),
+                    conf=FlextUtilitiesBeartypeConf.build_beartype_conf(),
                 )
                 import flext_core
                 print("unexpected_success", hasattr(flext_core, "u"))

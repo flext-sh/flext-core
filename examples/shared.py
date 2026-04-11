@@ -38,7 +38,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict
 
-from examples import SharedHandle, SharedPerson, t
+from examples import SharedHandle, SharedPerson, m, t
 from flext_core import r
 
 
@@ -79,11 +79,12 @@ class Examples:
         | MutableMapping[str, t.NormalizedValue | BaseModel],
     ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
-        self._results.append(f"{label}: {self.ser(value)}")
+        separator = m.Examples.LABEL_VALUE_SEPARATOR
+        self._results.append(f"{label}{separator}{self.ser(value)}")
 
     def exercise(self) -> None:
         """Override in subclasses to exercise the target class."""
-        msg = "Subclasses must implement exercise()"
+        msg = m.Examples.ErrorMessages.EXERCISE_NOT_IMPLEMENTED
         raise NotImplementedError(msg)
 
     def rand_bool(self) -> bool:
@@ -171,21 +172,45 @@ class Examples:
         actual = "\n".join(self._results).strip() + "\n"
         expected_path = self._caller.with_suffix(".expected")
         checks = sum(
-            1 for line in self._results if ": " in line and (not line.startswith("["))
+            1
+            for line in self._results
+            if m.Examples.RESULT_LINE_PATTERN.match(line) is not None
         )
         if expected_path.exists():
             expected = expected_path.read_text(encoding="utf-8")
             if actual == expected:
-                _ = sys.stdout.write(f"PASS: {self._caller.stem} ({checks} checks)\n")
+                pass_template = m.Examples.TEMPLATE_BY_KIND[m.Examples.OutputKind.PASS]
+                _ = sys.stdout.write(
+                    pass_template.format(
+                        kind=m.Examples.OutputKind.PASS,
+                        stem=self._caller.stem,
+                        checks=checks,
+                    ),
+                )
                 return
             actual_path = self._caller.with_suffix(".actual")
             _ = actual_path.write_text(actual, encoding="utf-8")
+            fail_template = m.Examples.TEMPLATE_BY_KIND[m.Examples.OutputKind.FAIL]
             _ = sys.stdout.write(
-                f"FAIL: {self._caller.stem} — diff {expected_path.name} {actual_path.name}\n",
+                fail_template.format(
+                    kind=m.Examples.OutputKind.FAIL,
+                    stem=self._caller.stem,
+                    expected_name=expected_path.name,
+                    actual_name=actual_path.name,
+                ),
             )
             sys.exit(1)
         _ = expected_path.write_text(actual, encoding="utf-8")
-        _ = sys.stdout.write(f"GENERATED: {expected_path.name} ({checks} checks)\n")
+        generated_template = m.Examples.TEMPLATE_BY_KIND[
+            m.Examples.OutputKind.GENERATED
+        ]
+        _ = sys.stdout.write(
+            generated_template.format(
+                kind=m.Examples.OutputKind.GENERATED,
+                expected_name=expected_path.name,
+                checks=checks,
+            ),
+        )
 
     class Person(SharedPerson):
         """Tiny Pydantic model used across several examples."""

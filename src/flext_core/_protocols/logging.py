@@ -133,8 +133,9 @@ class FlextProtocolsLogging:
             """Close connection."""
             ...
 
-        def get_connection_string(self) -> str:
-            """Get connection string."""
+        @property
+        def connection_string(self) -> str:
+            """Connection string."""
             ...
 
         def test_connection(self) -> FlextProtocolsResult.Result[bool]:
@@ -198,8 +199,8 @@ class FlextProtocolsLogging:
             """Remove attribute, returning self for chaining."""
             ...
 
-        def set_attribute(self, name: str, values: t.StrSequence) -> Self:
-            """Set attribute values, returning self for chaining."""
+        def update_attribute(self, name: str, values: t.StrSequence) -> Self:
+            """Update attribute values, returning self for chaining."""
             ...
 
         def to_dict(self) -> t.ScalarMapping:

@@ -154,10 +154,12 @@ class FlextUtilitiesChecker:
         """Extract message type from handle method annotations when generics are absent."""
         if not hasattr(handler_class, c.MethodName.HANDLE):
             return r[t.TypeHintSpecifier].fail(
-                c_errors.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD
+                c_errors.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD,
             )
         handle_method_raw: t.GuardInput = getattr(
-            handler_class, c.MethodName.HANDLE, None
+            handler_class,
+            c.MethodName.HANDLE,
+            None,
         )
         if not cls._is_module_export_callable(handle_method_raw):
             return r[t.TypeHintSpecifier].fail(
@@ -298,7 +300,7 @@ class FlextUtilitiesChecker:
         return tuple(message_types)
 
     @classmethod
-    def get_message_route(cls, msg: p.Routable | type[p.Routable] | str) -> str:
+    def resolve_message_route(cls, msg: p.Routable | type[p.Routable] | str) -> str:
         """Resolve route name from Routable attributes or string.
 
         Raises:

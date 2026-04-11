@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import c
+
 
 class FlextUtilitiesText:
     """Low-level text normalization helpers for CQRS utilities."""
@@ -45,12 +47,10 @@ class FlextUtilitiesText:
 
         """
         if text is None:
-            msg = "Text cannot be None. Use explicit empty string '' or handle None in calling code."
-            raise ValueError(msg)
+            raise ValueError(c.ERR_TEXT_NONE_NOT_ALLOWED)
         stripped = text.strip()
         if not stripped:
-            msg = "Text cannot be empty or whitespace-only. Use explicit non-empty string."
-            raise ValueError(msg)
+            raise ValueError(c.ERR_TEXT_EMPTY_NOT_ALLOWED)
         return stripped
 
     @staticmethod

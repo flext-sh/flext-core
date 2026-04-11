@@ -335,7 +335,7 @@ class FlextExceptions:
                 cls.__dict__.get(
                     "_default_error_code",
                     c.ErrorCode.UNKNOWN_ERROR,
-                )
+                ),
             )
 
             def _auto_init(
@@ -357,7 +357,7 @@ class FlextExceptions:
                     extra_kwargs=extra_kwargs,
                 )
 
-            setattr(cls, "__init__", _auto_init)
+            cls.__init__ = _auto_init
 
         @override
         def __str__(self) -> str:
@@ -470,8 +470,11 @@ class FlextExceptions:
             """Initialize a typed error: resolve params, call BaseError.__init__, assign attrs."""
             declared_params_cls = type(self)._params_cls
             if declared_params_cls is None:
-                msg = f"{type(self).__qualname__} is missing _params_cls"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_EXCEPTIONS_PARAMS_CLS_MISSING.format(
+                        class_name=type(self).__qualname__,
+                    ),
+                )
             declared_param_keys = (
                 param_keys if param_keys is not None else type(self)._param_keys
             )
@@ -1093,8 +1096,9 @@ class FlextExceptions:
             and (not kwargs)
             and (message.endswith("Error") or "_" in message)
         ):
-            msg = f"Unknown error type: {message}"
-            raise ValueError(msg)
+            raise ValueError(
+                c.ERR_EXCEPTIONS_UNKNOWN_ERROR_TYPE.format(message=message),
+            )
         if explicit_error_type is not None and error_code is not None:
             resolved_message = error_code
             resolved_error_code = None

@@ -7,6 +7,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 _LAZY_IMPORTS = build_lazy_import_map(
     {
+        ".errors": ("ExamplesFlextCoreModelsErrors",),
         ".ex00": ("ExamplesFlextCoreModelsEx00",),
         ".ex01": ("ExamplesFlextCoreModelsEx01",),
         ".ex02": (
@@ -81,6 +82,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
             "Ex14UserDTO",
         ),
         ".exconfig": ("ExConfigAppConfig",),
+        ".output": ("ExamplesFlextCoreModelsOutput",),
         ".shared": (
             "SharedHandle",
             "SharedPerson",

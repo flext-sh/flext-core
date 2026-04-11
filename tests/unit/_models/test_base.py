@@ -158,15 +158,15 @@ class TestsFlextCoreModelsBase:
         assert adapter is not None
 
     def test_typeadapters_set_container_adapter_returns_adapter(self) -> None:
-        adapter = t.set_container_adapter()
+        adapter = t.container_set_adapter()
         assert adapter is not None
 
     def test_typeadapters_set_str_adapter_returns_adapter(self) -> None:
-        adapter = t.set_str_adapter()
+        adapter = t.string_set_adapter()
         assert adapter is not None
 
     def test_typeadapters_set_scalar_adapter_returns_adapter(self) -> None:
-        adapter = t.set_scalar_adapter()
+        adapter = t.scalar_set_adapter()
         assert adapter is not None
 
     def test_typeadapters_serializable_adapter_returns_adapter(self) -> None:

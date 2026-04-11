@@ -25,7 +25,6 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextDispatcher,
-    FlextLogger,
     FlextRegistry,
     FlextSettings,
 )
@@ -148,7 +147,7 @@ class TestMigrationValidation:
         assert FlextContainer is not None
         assert m is not None
         assert s is not None
-        assert FlextLogger is not None
+        assert callable(u.create_module_logger)
         assert FlextSettings is not None
         assert c is not None
         assert FlextContext is not None

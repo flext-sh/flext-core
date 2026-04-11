@@ -332,7 +332,9 @@ class FlextRegistry(s[bool]):
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
         status_raw: t.RuntimeAtomic = getattr(
-            handler, c.FIELD_STATUS, c.CommonStatus.ACTIVE
+            handler,
+            c.FIELD_STATUS,
+            c.CommonStatus.ACTIVE,
         )
         status = self._get_status(status_raw)
         handler_mode_raw: t.RuntimeAtomic = getattr(

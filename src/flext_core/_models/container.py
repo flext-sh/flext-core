@@ -63,7 +63,7 @@ class FlextModelsContainer:
                 lambda value: FlextRuntime.validate_metadata_model_input(
                     value,
                     FlextModelsBase.Metadata,
-                )
+                ),
             ),
             Field(
                 default=None,
@@ -140,7 +140,7 @@ class FlextModelsContainer:
                 lambda value: FlextRuntime.validate_metadata_model_input(
                     value,
                     FlextModelsBase.Metadata,
-                )
+                ),
             ),
             Field(
                 default=None,
@@ -188,7 +188,7 @@ class FlextModelsContainer:
                 lambda value: FlextRuntime.validate_metadata_model_input(
                     value,
                     FlextModelsBase.Metadata,
-                )
+                ),
             ),
             Field(
                 default=None,

@@ -163,7 +163,7 @@ class Ex02FlextSettings(Examples):
         self.check("fetch_global.clone_same_values", cloned.app_name == base.app_name)
         self.check("fetch_global.clone_new_object", cloned is base)
         overridden = FlextSettings.fetch_global(
-            overrides={"app_name": "materialized", "timeout_seconds": 55.0}
+            overrides={"app_name": "materialized", "timeout_seconds": 55.0},
         )
         self.check("fetch_global.override.app_name", overridden.app_name)
         self.check("fetch_global.override.timeout_seconds", overridden.timeout_seconds)

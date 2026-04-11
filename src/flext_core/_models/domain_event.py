@@ -37,8 +37,8 @@ class FlextModelsDomainEvent:
                 other_mapping = type(self)(
                     root=dict(
                         FlextUtilitiesDomain.normalize_domain_event_data(
-                            typing.cast("Mapping[str, t.ValueOrModel]", other)
-                        )
+                            typing.cast("Mapping[str, t.ValueOrModel]", other),
+                        ),
                     ),
                 ).root
                 return self.root == other_mapping
@@ -64,7 +64,7 @@ class FlextModelsDomainEvent:
         aggregate_id: Annotated[
             t.NonEmptyStr,
             Field(
-                description="Identifier of the aggregate root that produced this event."
+                description="Identifier of the aggregate root that produced this event.",
             ),
         ]
         data: Annotated[

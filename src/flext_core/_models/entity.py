@@ -172,7 +172,7 @@ class FlextModelsEntity:
                     aggregate_id=self.unique_id,
                     data=FlextModelsDomainEvent.ComparableConfigMap(
                         root=dict(
-                            FlextUtilitiesDomain.normalize_domain_event_data(data)
+                            FlextUtilitiesDomain.normalize_domain_event_data(data),
                         ),
                     ),
                 )
@@ -229,21 +229,30 @@ class FlextModelsEntity:
             """Check all business invariants."""
             for invariant in self._invariants:
                 if not invariant():
-                    msg = f"Invariant violated: {invariant.__name__}"
-                    raise ValueError(msg)
+                    raise ValueError(
+                        c.ERR_ENTITY_INVARIANT_VIOLATED.format(
+                            invariant_name=invariant.__name__,
+                        ),
+                    )
 
         @model_validator(mode="after")
         def validate_aggregate_consistency(self) -> Self:
             invariant_result = r[None].ok(None).map(lambda _: self.check_invariants())
             if invariant_result.failure:
-                error_msg = invariant_result.error or "invariant check failed"
-                msg = f"Aggregate invariant violation: {error_msg}"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_ENTITY_AGGREGATE_INVARIANT_FAILURE.format(
+                        error=invariant_result.error or "invariant check failed",
+                    ),
+                )
             if len(self.domain_events) > c.HTTP_STATUS_MIN:
                 max_events = c.HTTP_STATUS_MIN
                 event_count = len(self.domain_events)
-                msg = f"Too many uncommitted domain events: {event_count} (max: {max_events})"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_ENTITY_TOO_MANY_DOMAIN_EVENTS.format(
+                        count=event_count,
+                        max=max_events,
+                    ),
+                )
             return self
 
 

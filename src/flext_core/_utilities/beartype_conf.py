@@ -17,7 +17,7 @@ from flext_core import c
 class FlextUtilitiesBeartypeConf:
     """Centralized beartype configuration for the FLEXT ecosystem.
 
-    All methods are static. Exposed via u.get_beartype_conf() for
+    All methods are static. Exposed via u.build_beartype_conf() for
     downstream projects to use in their beartype_this_package() calls.
     """
 
@@ -25,7 +25,7 @@ class FlextUtilitiesBeartypeConf:
     """Packages to skip in beartype.claw due to Pydantic recursive type conflicts."""
 
     @staticmethod
-    def get_beartype_conf() -> BeartypeConf:
+    def build_beartype_conf() -> BeartypeConf:
         """Build BeartypeConf matching current FLEXT enforcement mode.
 
         - "warn" -> violation_type=UserWarning (default)

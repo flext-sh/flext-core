@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from examples import Ex10ProtocolHandler, c, m, t, u
 from examples.shared import Examples
-from flext_core import FlextLogger, e, h, r
+from flext_core import e, h, r
 
 
 class _Message(m.Command):
@@ -45,9 +45,8 @@ class _DemoHandler(h[_Message, str]):
 
     @override
     def handle(self, message: _Message) -> r[str]:
-        if message.text == "explode":
-            error_message = "forced boom"
-            raise RuntimeError(error_message)
+        if message.text == m.Examples.TriggerTokens.EXPLODE:
+            raise RuntimeError(m.Examples.ErrorMessages.FORCED_BOOM)
         return r[str].ok(f"msg:{message.text}")
 
     @override
@@ -171,8 +170,8 @@ class Ex10FlextHandlers(Examples):
         def plain_function(_message: BaseModel) -> BaseModel:
             return _PayloadModel(text="plain")
 
-        setattr(module, "mod_handler", mod_handler)
-        setattr(module, "plain_function", plain_function)
+        module.mod_handler = mod_handler
+        module.plain_function = plain_function
         module_scan = h.Discovery.scan_module(module)
         self.check("scan_module.count", len(module_scan))
         self.check("scan_module.name", module_scan[0][0] if module_scan else "none")
@@ -255,7 +254,7 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                _Message(text="explode"),
+                _Message(text=m.Examples.TriggerTokens.EXPLODE),
                 operation=c.DEFAULT_HANDLER_MODE,
             ).error,
         )
@@ -377,18 +376,18 @@ class Ex10FlextHandlers(Examples):
         self.check("di.layered.resources", resources_mod.__class__.__name__)
         di.wire(di_container, modules=[])
         self.check("di.wire.noop", True)
-        FlextLogger.Integration.track_service_resolution(service_name, resolved=True)
-        FlextLogger.Integration.track_service_resolution(
+        u.Integration.track_service_resolution(service_name, resolved=True)
+        u.Integration.track_service_resolution(
             service_name,
             resolved=False,
             error_message=error_message,
         )
-        FlextLogger.Integration.track_domain_event(
+        u.Integration.track_domain_event(
             event_name,
             aggregate_id=aggregate_id,
             event_data=t.ConfigMap(root={self.rand_str(3): self.rand_int(1, 9)}),
         )
-        FlextLogger.Integration.setup_service_infrastructure(
+        u.Integration.setup_service_infrastructure(
             service_name=service_name,
             service_version=f"{self.rand_int(1, 9)}.{self.rand_int(0, 9)}.{self.rand_int(0, 9)}",
             enable_context_correlation=True,

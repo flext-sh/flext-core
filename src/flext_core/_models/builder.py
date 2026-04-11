@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
-from flext_core import FlextModelsBase
+from flext_core import FlextModelsBase, c
 
 
 class FlextModelsBuilder:
@@ -69,8 +69,7 @@ class FlextModelsBuilder:
 
             def _build_product(self, state: StateT) -> ProductT:
                 """Build one product from state. Subclasses must implement it."""
-                msg = "_build_product() must be implemented by builder subclasses"
-                raise NotImplementedError(msg)
+                raise NotImplementedError(c.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED)
 
             def build(self) -> ProductT:
                 """Build the final product from the current state."""

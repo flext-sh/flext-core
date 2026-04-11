@@ -156,7 +156,8 @@ class FlextDecorators:
                 if isinstance(first_arg, p.Logger):
                     logger = first_arg
                 elif isinstance(
-                    first_arg, p.Model
+                    first_arg,
+                    p.Model,
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:
@@ -311,7 +312,8 @@ class FlextDecorators:
                 if isinstance(first_arg, p.Logger):
                     logger = first_arg
                 elif isinstance(
-                    first_arg, p.Model
+                    first_arg,
+                    p.Model,
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:
@@ -401,7 +403,7 @@ class FlextDecorators:
             if isinstance(current_id, str):
                 correlation_id = current_id
         FlextContext.Request.apply_operation_name(operation)
-        binding_result = FlextLogger.bind_context(
+        binding_result = u.bind_context(
             c.ContextScope.OPERATION,
             operation=operation,
         )
@@ -424,7 +426,7 @@ class FlextDecorators:
         operation: str,
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
-        clear_result = FlextLogger.clear_scope(c.ContextScope.OPERATION)
+        clear_result = u.clear_scope(c.ContextScope.OPERATION)
         if clear_result.failure:
             FlextDecorators._handle_log_result(
                 result=clear_result,
@@ -906,7 +908,8 @@ class FlextDecorators:
                 if isinstance(first_arg, p.Logger):
                     logger = first_arg
                 elif isinstance(
-                    first_arg, p.Model
+                    first_arg,
+                    p.Model,
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:
@@ -963,7 +966,8 @@ class FlextDecorators:
                 if isinstance(first_arg, p.Logger):
                     logger = first_arg
                 elif isinstance(
-                    first_arg, p.Model
+                    first_arg,
+                    p.Model,
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:

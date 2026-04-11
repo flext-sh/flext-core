@@ -1,7 +1,7 @@
 [factory_methods]
-create_module_logger.type: 'FlextLogger'
+create_module_logger.type: 'FlextUtilities'
 fetch_logger.type: 'BoundLoggerLazyProxy'
-create_bound_logger.type: 'FlextLogger'
+create_bound_logger.type: 'FlextUtilities'
 
 [global_context]
 bind_global_context.ok: True
@@ -25,16 +25,16 @@ level.info.ok: True
 unbind_context_for_level.ok: True
 
 [container]
-for_container.type: 'FlextLogger'
+for_container.type: 'FlextUtilities'
 for_container.debug.ok: True
 with_container_context.info.ok: True
 
 [instance_methods]
-bind.type: 'FlextLogger'
-new.type: 'FlextLogger'
-unbind.type: 'FlextLogger'
-try_unbind.type: 'FlextLogger'
-with_result.type: 'FlextLogger'
+bind.type: 'FlextUtilities'
+new.type: 'FlextUtilities'
+unbind.type: 'FlextUtilities'
+try_unbind.type: 'FlextUtilities'
+with_result.type: 'FlextUtilities'
 trace.ok: True
 debug.ok: True
 info.ok: True
@@ -50,7 +50,7 @@ performance_tracker.body.ok: True
 
 [result_adapter]
 adapter.name: 'examples.ex_03.adapter'
-adapter.bind.type: 'FlextLogger'
+adapter.bind.type: 'FlextUtilities'
 adapter.trace.ok: True
 adapter.debug.ok: True
 adapter.info.ok: True

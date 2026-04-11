@@ -161,15 +161,13 @@ class FlextUtilitiesConfiguration:
     def validate_database_url_scheme(url: str) -> None:
         """Validate database URL scheme is postgresql://, mysql://, or sqlite://."""
         if url and not url.startswith(("postgresql://", "mysql://", "sqlite://")):
-            msg = "Invalid database URL scheme"
-            raise ValueError(msg)
+            raise ValueError(c.ERR_CONFIG_INVALID_DB_URL_SCHEME)
 
     @staticmethod
     def validate_trace_requires_debug(*, trace: bool, debug: bool) -> None:
         """Validate that trace mode requires debug mode."""
         if trace and not debug:
-            msg = "Trace mode requires debug mode"
-            raise ValueError(msg)
+            raise ValueError(c.ERR_CONFIG_TRACE_REQUIRES_DEBUG)
 
 
 __all__ = ["FlextUtilitiesConfiguration"]

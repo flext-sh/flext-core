@@ -142,13 +142,19 @@ class FlextUtilitiesCollection:
                 elif isinstance(v_raw, str):
                     enum_result = r[str].ok(v_raw).map(enum_cls)
                     if enum_result.failure:
-                        enum_name = getattr(enum_cls, "__name__", "Enum")
-                        msg = f"Invalid {enum_name} value: '{v_raw}'"
-                        raise ValueError(msg) from None
+                        raise ValueError(
+                            c.ERR_COLLECTION_INVALID_ENUM_VALUE.format(
+                                enum_name=getattr(enum_cls, "__name__", "Enum"),
+                                value=v_raw,
+                            ),
+                        ) from None
                     result.append(enum_result.value)
                 else:
-                    msg = f"Expected str for enum conversion, got {v_raw.__class__.__name__}"
-                    raise TypeError(msg)
+                    raise TypeError(
+                        c.ERR_COLLECTION_EXPECTED_STR_FOR_ENUM.format(
+                            type_name=v_raw.__class__.__name__,
+                        ),
+                    )
             return result
 
         return validator

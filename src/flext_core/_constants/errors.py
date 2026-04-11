@@ -109,3 +109,116 @@ class FlextConstantsErrors:
     ERR_MIXINS_MISSING_TIMESTAMP: Final[str] = "Required timestamp fields missing"
     ERR_MIXINS_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"
     ERR_SERVICE_REGISTRATION_FAILED: Final[str] = "Service registration failed"
+    ERR_TEXT_NONE_NOT_ALLOWED: Final[str] = (
+        "Text cannot be None. Use explicit empty string '' or handle None in calling code."
+    )
+    ERR_TEXT_EMPTY_NOT_ALLOWED: Final[str] = (
+        "Text cannot be empty or whitespace-only. Use explicit non-empty string."
+    )
+    ERR_PARSER_COERCE_BOOL_FAILED: Final[str] = "Cannot coerce '{value}' to bool"
+    ERR_PARSER_COERCE_FLOAT_FAILED: Final[str] = "Cannot coerce {type_name} to float"
+    ERR_PARSER_COERCE_INT_FAILED: Final[str] = "Cannot coerce {type_name} to int"
+    ERR_PARSER_TARGET_NOT_STRENUM: Final[str] = (
+        "{field_prefix}Target is not a StrEnum. Enum mode cannot be used here."
+    )
+    ERR_PARSER_CANNOT_PARSE_ENUM: Final[str] = (
+        "{field_prefix}Cannot parse '{value}' as {target_name} [options: {options}]"
+    )
+    ERR_PARSER_TARGET_NOT_BASEMODEL: Final[str] = (
+        "{field_prefix}Target is not a BaseModel"
+    )
+    ERR_PARSER_CANNOT_PARSE_SCALAR_TO_MODEL: Final[str] = (
+        "{field_prefix}Cannot parse scalar '{value}' into {target_name}"
+    )
+    ERR_PARSER_TYPEADAPTER_RETURN_MISMATCH: Final[str] = (
+        "{field_prefix}TypeAdapter returned {actual_type}, expected {target_type}"
+    )
+    ERR_PARSER_CANNOT_PARSE_TO_TARGET: Final[str] = (
+        "{field_prefix}Cannot parse {source_type} to {target_name}: {error}"
+    )
+    ERR_PARSER_PARSE_FAILED_FOR_TARGET: Final[str] = (
+        "{field_prefix}Failed to parse '{value}' as {target_name}"
+    )
+    ERR_PARSER_VALUE_IS_NONE: Final[str] = "{field_prefix}Value is None"
+
+    # --- Models ---
+    ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT: Final[str] = (
+        "updated_at cannot be before created_at"
+    )
+    ERR_MODEL_VERSION_BELOW_MINIMUM: Final[str] = (
+        "Version {version} is below minimum {minimum}"
+    )
+    ERR_MODEL_MAX_DELAY_LESS_THAN_INITIAL: Final[str] = (
+        "max_delay_seconds must be >= initial_delay_seconds"
+    )
+    ERR_ENTITY_INVARIANT_VIOLATED: Final[str] = "Invariant violated: {invariant_name}"
+    ERR_ENTITY_AGGREGATE_INVARIANT_FAILURE: Final[str] = (
+        "Aggregate invariant violation: {error}"
+    )
+    ERR_ENTITY_TOO_MANY_DOMAIN_EVENTS: Final[str] = (
+        "Too many uncommitted domain events: {count} (max: {max})"
+    )
+    ERR_CQRS_PARSE_MESSAGE_NOT_IMPLEMENTED: Final[str] = (
+        "parse_message must be implemented by subclasses"
+    )
+    ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED: Final[str] = (
+        "_build_product() must be implemented by builder subclasses"
+    )
+
+    # --- Context ---
+    ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING: Final[str] = (
+        "Cannot normalize {type_name} to Mapping"
+    )
+    ERR_CONTEXT_FIELD_MUST_HAVE_GET_SET: Final[str] = (
+        "Context must have get() and set() methods"
+    )
+
+    # --- Utilities ---
+    ERR_ENUM_INVALID_VALUE: Final[str] = "Invalid {enum_name}: {value}"
+    ERR_COLLECTION_INVALID_ENUM_VALUE: Final[str] = (
+        "Invalid {enum_name} value: '{value}'"
+    )
+    ERR_COLLECTION_EXPECTED_STR_FOR_ENUM: Final[str] = (
+        "Expected str for enum conversion, got {type_name}"
+    )
+    ERR_CONFIG_INVALID_DB_URL_SCHEME: Final[str] = "Invalid database URL scheme"
+    ERR_CONFIG_TRACE_REQUIRES_DEBUG: Final[str] = "Trace mode requires debug mode"
+
+    # --- Container / Runtime ---
+    ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE: Final[str] = (
+        "Factory '{name}' returned value that does not satisfy RegisterableService"
+        " protocol. Expected a canonical registerable service, protocol, or callable."
+    )
+    ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED: Final[str] = (
+        "Provider '{name}' is already registered"
+    )
+    ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED: Final[str] = (
+        "Keys starting with '_' are reserved: {key}"
+    )
+    ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE: Final[str] = (
+        "Service must be a RegisterableService type, got {type_name}"
+    )
+
+    # --- Exceptions / Error handling ---
+    ERR_EXCEPTIONS_PARAMS_CLS_MISSING: Final[str] = (
+        "{class_name} is missing _params_cls"
+    )
+    ERR_EXCEPTIONS_UNKNOWN_ERROR_TYPE: Final[str] = "Unknown error type: {message}"
+
+    # --- Handlers ---
+    ERR_HANDLER_UNSUPPORTED_TYPE: Final[str] = (
+        "Unsupported handler type: {handler_type}"
+    )
+
+    # --- Lazy loading ---
+    ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE: Final[str] = (
+        "relative child module paths require module_name"
+    )
+
+    # --- Settings ---
+    ERR_SETTINGS_NAMESPACE_NOT_REGISTERED: Final[str] = (
+        "Namespace '{namespace}' not registered"
+    )
+    ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH: Final[str] = (
+        "Namespace '{namespace}' config instance {instance_class} is not instance of {expected_type}"
+    )

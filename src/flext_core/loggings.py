@@ -72,7 +72,7 @@ class FlextLogger(FlextRuntime):
             self._stream_mode: str = str(getattr(stream, "mode", "w"))
             self._stream_name: str = str(getattr(stream, "name", "<async-log-writer>"))
             self._stream_encoding: str = str(
-                getattr(stream, "encoding", c.DEFAULT_ENCODING)
+                getattr(stream, "encoding", c.DEFAULT_ENCODING),
             )
             self._stream_errors: str | None = getattr(stream, "errors", None)
             self._stream_newlines: str | tuple[str, ...] | None = getattr(

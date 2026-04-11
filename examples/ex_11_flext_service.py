@@ -16,7 +16,7 @@ from examples import (
     u,
 )
 from examples.shared import Examples
-from flext_core import FlextContext, FlextLogger, FlextService, FlextSettings, e, r, s
+from flext_core import FlextContext, FlextService, FlextSettings, e, r, s
 
 
 class _EchoService(s[str]):
@@ -278,17 +278,17 @@ class Ex11FlextService(Examples):
         self.check("Metadata.attributes", metadata.attributes)
 
         # Integration namespace methods (return None)
-        FlextLogger.Integration.setup_service_infrastructure(
+        u.Integration.setup_service_infrastructure(
             service_name=service_name,
             service_version=service_version,
         )
-        FlextLogger.Integration.track_service_resolution(resolved_name, resolved=True)
-        FlextLogger.Integration.track_service_resolution(
+        u.Integration.track_service_resolution(resolved_name, resolved=True)
+        u.Integration.track_service_resolution(
             unresolved_name,
             resolved=False,
             error_message=unresolved_error,
         )
-        FlextLogger.Integration.track_domain_event(
+        u.Integration.track_domain_event(
             event_name=event_name,
             aggregate_id=aggregate_id,
             event_data=t.ConfigMap(root={event_key: event_value}),
@@ -303,7 +303,7 @@ class Ex11FlextService(Examples):
                 factories={"factory_item": lambda: factory_object},
                 resources={
                     "resource_item": lambda: t.ConfigMap(
-                        root={"value": resource_number}
+                        root={"value": resource_number},
                     ),
                 },
                 wire_modules=[sys.modules[__name__]],

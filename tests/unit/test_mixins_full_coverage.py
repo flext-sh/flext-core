@@ -10,7 +10,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextLogger, r, x
+from flext_core import r, x
 from flext_tests import tm
 from tests import m, p, t
 
@@ -288,8 +288,8 @@ class TestMixinsFullCoverage:
         class _Service(x):
             @override
             @classmethod
-            def _get_or_create_logger(cls) -> FlextLogger:
-                return cast("FlextLogger", cast("t.NormalizedValue", _LocalLogger()))
+            def _get_or_create_logger(cls) -> p.Logger:
+                return cast("p.Logger", cast("t.NormalizedValue", _LocalLogger()))
 
         service = _Service(
             config_type=None,
@@ -401,8 +401,8 @@ class TestMixinsFullCoverage:
         class _WarnService(x):
             @override
             @classmethod
-            def _get_or_create_logger(cls) -> FlextLogger:
-                return cast("FlextLogger", cast("t.NormalizedValue", _WarnLogger()))
+            def _get_or_create_logger(cls) -> p.Logger:
+                return cast("p.Logger", cast("t.NormalizedValue", _WarnLogger()))
 
         class _LoggerService(x):
             pass

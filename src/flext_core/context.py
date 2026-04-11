@@ -480,12 +480,12 @@ class FlextContext(m.ArbitraryTypesModel):
             >>> context = FlextContext()
             >>> context.set("key", "value")
             >>> result = context.get("key")
-            >>> if result.is_success:
+            >>> if result.success:
             ...     value = result.value  # "value"
             >>>
             >>> # Key not found - fast fail
             >>> result = context.get("nonexistent")
-            >>> assert result.is_failure
+            >>> assert result.failure
             >>>
             >>> # Use monadic operations for defaults
             >>> value = context.get("key").unwrap_or("default")
@@ -576,7 +576,7 @@ class FlextContext(m.ArbitraryTypesModel):
             item
             for ctx_var in self._scope_vars.values()
             for item in self._narrow_contextvar_to_configuration_dict(
-                ctx_var.get()
+                ctx_var.get(),
             ).items()
         ]
         return all_items
@@ -1225,7 +1225,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 ...     "logger",
                 ...     u.fetch_logger(__name__),
                 ... )
-                >>> if result.is_failure:
+                >>> if result.failure:
                 ...     print(f"Registration failed: {result.error}")
 
             """

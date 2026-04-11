@@ -136,7 +136,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         if FlextUtilitiesGuardsTypeProtocol.is_context(value):
             return True
         return hasattr(value, "__dict__") or bool(
-            hasattr(value, "bind") and hasattr(value, "info")
+            hasattr(value, "bind") and hasattr(value, "info"),
         )
 
     _STRING_TYPE_CHECKS: Mapping[str, Callable[[t.GuardInput], bool]] = {

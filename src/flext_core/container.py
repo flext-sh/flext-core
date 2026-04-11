@@ -604,7 +604,7 @@ class FlextContainer(p.Container):
             >>> container = FlextContainer()
             >>> container.register("logger", u.fetch_logger(__name__))
             >>> result = container.get("logger")
-            >>> if result.is_success and isinstance(result.value, FlextLogger):
+            >>> if result.success and isinstance(result.value, FlextLogger):
             ...     result.value.info("Resolved")
 
         """
@@ -810,8 +810,11 @@ class FlextContainer(p.Container):
                 def normalized_factory() -> t.RegisterableService:
                     raw_result = factory_fn()
                     if not u.is_registerable_service(raw_result):
-                        msg = f"Factory '{name}' returned value that does not satisfy RegisterableService protocol. Expected a canonical registerable service, protocol, or callable."
-                        raise ValueError(msg)
+                        raise ValueError(
+                            c.ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE.format(
+                                name=name,
+                            ),
+                        )
                     return raw_result
 
                 factory_reg = m.FactoryRegistration(

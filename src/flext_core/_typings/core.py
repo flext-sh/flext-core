@@ -74,7 +74,8 @@ class FlextTypesCore(FlextTypingBase, FlextTypingContainers):
     # Short aliases for high-frequency inline patterns (annotation-only, not base classes)
     type ContainerValueMapping = Mapping[str, FlextTypesCore.ContainerValue]
     type MutableContainerValueMapping = MutableMapping[
-        str, FlextTypesCore.ContainerValue
+        str,
+        FlextTypesCore.ContainerValue,
     ]
     type ContainerValueList = Sequence[FlextTypesCore.ContainerValue]
     type OptionalContainerValueMapping = Mapping[

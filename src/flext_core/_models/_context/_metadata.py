@@ -82,8 +82,7 @@ class FlextModelsContextMetadata:
                 return self
             if hasattr(context_field, "get") and hasattr(context_field, "set"):
                 return self
-            msg = "Context must have get() and set() methods"
-            raise ValueError(msg)
+            raise ValueError(c.ERR_CONTEXT_FIELD_MUST_HAVE_GET_SET)
 
     class ContextDomainData(FlextModelsBase.FlexibleInternalModel):
         """Domain-specific context data storage."""

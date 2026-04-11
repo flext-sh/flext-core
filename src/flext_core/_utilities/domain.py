@@ -155,14 +155,14 @@ class FlextUtilitiesDomain:
             for key, value in item.items():
                 normalized_map[str(key)] = (
                     FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                        value if u.is_scalar(value) else str(value)
+                        value if u.is_scalar(value) else str(value),
                     )
                 )
             return normalized_map
         if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
             return [
                 FlextUtilitiesDomain.normalize_recursive_metadata_value(
-                    value if u.is_scalar(value) else str(value)
+                    value if u.is_scalar(value) else str(value),
                 )
                 for value in item
             ]

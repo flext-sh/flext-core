@@ -108,7 +108,8 @@ class FlextUtilitiesMapper:
         """Apply strip empty step."""
         if strip_empty:
             return FlextUtilitiesCollection.filter(
-                result, lambda v: v not in ("", [], {}, None)
+                result,
+                lambda v: v not in ("", [], {}, None),
             )
         return result
 
@@ -193,22 +194,26 @@ class FlextUtilitiesMapper:
             mapping_obj: Mapping[str, t.ValueOrModel] = current
             if key_part in mapping_obj:
                 return FlextUtilitiesMapper._resolve_raw_value(
-                    mapping_obj[key_part], key_part
+                    mapping_obj[key_part],
+                    key_part,
                 )
             return r[t.ValueOrModel].fail(f"Key '{key_part}' not found in Mapping")
         if isinstance(current, (t.ConfigMap, t.Dict)):
             mapping_obj = current.root
             if key_part in mapping_obj:
                 return FlextUtilitiesMapper._resolve_raw_value(
-                    mapping_obj[key_part], key_part
+                    mapping_obj[key_part],
+                    key_part,
                 )
             return r[t.ValueOrModel].fail(f"Key '{key_part}' not found in Mapping")
         if hasattr(current, key_part):
             return FlextUtilitiesMapper._resolve_raw_value(
-                getattr(current, key_part), key_part
+                getattr(current, key_part),
+                key_part,
             )
         if isinstance(
-            current, BaseModel
+            current,
+            BaseModel,
         ) and FlextUtilitiesGuardsTypeModel.is_pydantic_model(current):
             model_dump_attr = current.model_dump
             if callable(model_dump_attr):
@@ -391,8 +396,9 @@ class FlextUtilitiesMapper:
                     return False
                 return all(
                     starmap(
-                        FlextUtilitiesMapper._deep_eq_values, zip(la, lb, strict=True)
-                    )
+                        FlextUtilitiesMapper._deep_eq_values,
+                        zip(la, lb, strict=True),
+                    ),
                 )
             case _:
                 return val_a == val_b
@@ -614,7 +620,7 @@ class FlextUtilitiesMapper:
         fallback: t.ValueOrModel | None = default
         match data_or_items:
             case Mapping() if FlextUtilitiesGuardsTypeModel.is_configuration_mapping(
-                data_or_items
+                data_or_items,
             ):
                 data: p.AccessibleData = data_or_items
             case BaseModel():
@@ -707,7 +713,7 @@ class FlextUtilitiesMapper:
     ) -> r[t.MutableContainerMapping | t.ContainerMapping]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
         coerced_source = FlextUtilitiesMapper._coerce_source_to_container_mapping(
-            source
+            source,
         )
         transform_result = r[
             t.MutableContainerMapping | t.ContainerMapping
@@ -724,7 +730,7 @@ class FlextUtilitiesMapper:
         )
         return transform_result.fold(
             on_failure=lambda e: r[t.MutableContainerMapping | t.ContainerMapping].fail(
-                f"Transform failed: {e}"
+                f"Transform failed: {e}",
             ),
             on_success=lambda _: transform_result,
         )

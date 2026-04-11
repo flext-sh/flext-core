@@ -65,7 +65,9 @@ class FlextModelsCqrs:
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id("cmd")
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
+                "cmd"
+            ),
         )
         issuer_id: Annotated[
             t.NonEmptyStr | None,
@@ -165,8 +167,8 @@ class FlextModelsCqrs:
             ),
         ] = Field(
             default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                "query"
-            )
+                "query",
+            ),
         )
         query_type: Annotated[
             str | None,
@@ -305,7 +307,9 @@ class FlextModelsCqrs:
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id("evt")
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
+                "evt"
+            ),
         )
         data: Annotated[
             t.Dict,
@@ -328,8 +332,7 @@ class FlextModelsCqrs:
     ) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
         _ = payload
-        msg = "parse_message must be implemented by subclasses"
-        raise NotImplementedError(msg)
+        raise NotImplementedError(c.ERR_CQRS_PARSE_MESSAGE_NOT_IMPLEMENTED)
 
 
 __all__ = ["FlextModelsCqrs"]

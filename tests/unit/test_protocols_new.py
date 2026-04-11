@@ -404,7 +404,7 @@ class TestFlextProtocols:
 
     def test_connection_protocol_has_expected_methods(self) -> None:
         """p.Connection defines connection lifecycle methods."""
-        for method in ("close_connection", "get_connection_string", "test_connection"):
+        for method in ("close_connection", "connection_string", "test_connection"):
             tm.that(
                 hasattr(p.Connection, method),
                 eq=True,
@@ -418,7 +418,7 @@ class TestFlextProtocols:
             "dn",
             "add_attribute",
             "remove_attribute",
-            "set_attribute",
+            "update_attribute",
             "to_dict",
             "to_ldif",
         ]
@@ -560,15 +560,15 @@ class TestFlextProtocols:
             def error_message(self) -> str | None:
                 return "Field X is required"
 
-            def is_error_domain(self, domain: str) -> bool:
+            def matches_error_domain(self, domain: str) -> bool:
                 return domain == "VALIDATION"
 
         instance = _StructErr()
         subject = _as_protocol_subject(instance)
         tm.that(u.check_protocol_compliance(subject, p.StructuredError), eq=True)
         tm.that(instance.error_domain, eq="VALIDATION")
-        tm.that(instance.is_error_domain("VALIDATION"), eq=True)
-        tm.that(instance.is_error_domain("NETWORK"), eq=False)
+        tm.that(instance.matches_error_domain("VALIDATION"), eq=True)
+        tm.that(instance.matches_error_domain("NETWORK"), eq=False)
 
     def test_error_domain_protocol_conformance(self) -> None:
         """Custom class with value/name attrs satisfies p.ErrorDomainProtocol."""

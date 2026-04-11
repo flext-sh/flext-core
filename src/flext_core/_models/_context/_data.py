@@ -43,7 +43,9 @@ class FlextModelsContextData:
             return dict(validated)
         if FlextUtilitiesGuardsTypeModel.is_pydantic_model(v):
             return v.model_dump()
-        msg = f"Cannot normalize {type(v)} to Mapping"
+        msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
+            type_name=type(v).__name__,
+        )
         raise ValueError(msg)
 
     @staticmethod
@@ -103,7 +105,8 @@ class FlextModelsContextData:
             return dict(working_value)
 
     class ContextData(
-        SerializableDataValidatorMixin, FlextModelsBase.FlexibleInternalModel
+        SerializableDataValidatorMixin,
+        FlextModelsBase.FlexibleInternalModel,
     ):
         """Lightweight container for initializing context state."""
 
@@ -193,7 +196,7 @@ class FlextModelsContextData:
             if FlextUtilitiesGuardsTypeModel.is_pydantic_model(val):
                 return val
             if FlextUtilitiesGuardsTypeCore.is_dict_like(
-                val
+                val,
             ) or FlextUtilitiesGuardsTypeCore.is_list_like(val):
                 return FlextRuntime.normalize_to_container(val)
             if hasattr(val, "__iter__"):

@@ -108,7 +108,7 @@ class FlextTypesTypeAdapters:
     ) -> TypeAdapter[FlextTypesServices.FlatContainerMapping]:
         if cls._flat_container_mapping_adapter is None:
             cls._flat_container_mapping_adapter = TypeAdapter(
-                FlextTypesServices.FlatContainerMapping
+                FlextTypesServices.FlatContainerMapping,
             )
         return cls._flat_container_mapping_adapter
 
@@ -118,7 +118,7 @@ class FlextTypesTypeAdapters:
     ) -> TypeAdapter[FlextTypingBase.FlatContainerList]:
         if cls._flat_container_list_adapter is None:
             cls._flat_container_list_adapter = TypeAdapter(
-                FlextTypingBase.FlatContainerList
+                FlextTypingBase.FlatContainerList,
             )
         return cls._flat_container_list_adapter
 
@@ -128,7 +128,7 @@ class FlextTypesTypeAdapters:
     ) -> TypeAdapter[tuple[FlextTypingBase.Container, ...]]:
         if cls._tuple_container_adapter is None:
             cls._tuple_container_adapter = TypeAdapter(
-                tuple[FlextTypingBase.Container, ...]
+                tuple[FlextTypingBase.Container, ...],
             )
         return cls._tuple_container_adapter
 
@@ -144,7 +144,7 @@ class FlextTypesTypeAdapters:
     ) -> TypeAdapter[FlextTypingBase.ContainerMapping]:
         if cls._dict_str_metadata_adapter is None:
             cls._dict_str_metadata_adapter = TypeAdapter(
-                FlextTypingBase.ContainerMapping
+                FlextTypingBase.ContainerMapping,
             )
         return cls._dict_str_metadata_adapter
 
@@ -154,7 +154,7 @@ class FlextTypesTypeAdapters:
     ) -> TypeAdapter[Sequence[FlextTypesCore.Serializable]]:
         if cls._list_serializable_adapter is None:
             cls._list_serializable_adapter = TypeAdapter(
-                Sequence[FlextTypesCore.Serializable]
+                Sequence[FlextTypesCore.Serializable],
             )
         return cls._list_serializable_adapter
 
@@ -164,12 +164,12 @@ class FlextTypesTypeAdapters:
     ) -> TypeAdapter[tuple[FlextTypesCore.Serializable, ...]]:
         if cls._tuple_serializable_adapter is None:
             cls._tuple_serializable_adapter = TypeAdapter(
-                tuple[FlextTypesCore.Serializable, ...]
+                tuple[FlextTypesCore.Serializable, ...],
             )
         return cls._tuple_serializable_adapter
 
     @classmethod
-    def set_container_adapter(
+    def container_set_adapter(
         cls,
     ) -> TypeAdapter[set[FlextTypingBase.Container]]:
         if cls._set_container_adapter is None:
@@ -177,13 +177,13 @@ class FlextTypesTypeAdapters:
         return cls._set_container_adapter
 
     @classmethod
-    def set_str_adapter(cls) -> TypeAdapter[set[str]]:
+    def string_set_adapter(cls) -> TypeAdapter[set[str]]:
         if cls._set_str_adapter is None:
             cls._set_str_adapter = TypeAdapter(set[str])
         return cls._set_str_adapter
 
     @classmethod
-    def set_scalar_adapter(
+    def scalar_set_adapter(
         cls,
     ) -> TypeAdapter[set[FlextTypingBase.Scalar]]:
         if cls._set_scalar_adapter is None:
@@ -195,7 +195,8 @@ class FlextTypesTypeAdapters:
         cls,
     ) -> TypeAdapter[
         Mapping[
-            FlextTypesServices.SortableObjectType, FlextTypesCore.Serializable | None
+            FlextTypesServices.SortableObjectType,
+            FlextTypesCore.Serializable | None,
         ]
     ]:
         if cls._sortable_dict_adapter is None:
@@ -213,7 +214,7 @@ class FlextTypesTypeAdapters:
     ) -> TypeAdapter[Sequence[FlextTypesServices.StrictValue]]:
         if cls._strict_json_list_adapter is None:
             cls._strict_json_list_adapter = TypeAdapter(
-                Sequence[FlextTypesServices.StrictValue]
+                Sequence[FlextTypesServices.StrictValue],
             )
         return cls._strict_json_list_adapter
 

@@ -113,8 +113,7 @@ class FlextModelsSettings:
         def validate_delay_consistency(self) -> Self:
             """Validate delay configuration consistency."""
             if self.max_delay_seconds < self.initial_delay_seconds:
-                msg = "max_delay_seconds must be >= initial_delay_seconds"
-                raise ValueError(msg)
+                raise ValueError(c.ERR_MODEL_MAX_DELAY_LESS_THAN_INITIAL)
             return self
 
     DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(

@@ -12,6 +12,7 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
+    from examples._models.errors import ExamplesFlextCoreModelsErrors
     from examples._models.ex00 import ExamplesFlextCoreModelsEx00
     from examples._models.ex01 import ExamplesFlextCoreModelsEx01
     from examples._models.ex02 import (
@@ -80,6 +81,7 @@ if _t.TYPE_CHECKING:
         Ex14UserDTO,
     )
     from examples._models.exconfig import ExConfigAppConfig
+    from examples._models.output import ExamplesFlextCoreModelsOutput
     from examples._models.shared import SharedHandle, SharedPerson
     from examples.models import ExamplesFlextCoreModels, c, m
     from flext_core import d, e, h, p, r, s, t, u, x
@@ -174,8 +176,10 @@ __all__ = [
     "Ex14UserDTO",
     "ExConfigAppConfig",
     "ExamplesFlextCoreModels",
+    "ExamplesFlextCoreModelsErrors",
     "ExamplesFlextCoreModelsEx00",
     "ExamplesFlextCoreModelsEx01",
+    "ExamplesFlextCoreModelsOutput",
     "SharedHandle",
     "SharedPerson",
     "c",

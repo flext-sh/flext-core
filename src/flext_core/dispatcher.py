@@ -52,7 +52,7 @@ class FlextDispatcher:
 
         """
         try:
-            route_name = u.get_message_route(message)
+            route_name = u.resolve_message_route(message)
         except (TypeError, ValueError) as e:
             return r[t.RuntimeAtomic].fail(
                 f"Dispatch failed: {e!s}",
@@ -112,7 +112,7 @@ class FlextDispatcher:
             for e in event:
                 _ = self.publish(e)
             return r[bool].ok(True)
-        route_name = u.get_message_route(event)
+        route_name = u.resolve_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
         for auto_h, resolved_handler, accepted in self._auto_handlers:
@@ -169,12 +169,12 @@ class FlextDispatcher:
             route_name = handler_message_type
         elif handler_message_type is not None:
             with contextlib.suppress(TypeError, ValueError):
-                route_name = u.get_message_route(handler_message_type)
+                route_name = u.resolve_message_route(handler_message_type)
         if route_name is None and accepted_message_types:
             first_accepted = accepted_message_types[0]
             if isinstance(first_accepted, (str, type)):
                 with contextlib.suppress(TypeError, ValueError):
-                    route_name = u.get_message_route(first_accepted)
+                    route_name = u.resolve_message_route(first_accepted)
         if route_name is None:
             if isinstance(handler, p.AutoDiscoverableHandler):
                 self._auto_handlers.append((

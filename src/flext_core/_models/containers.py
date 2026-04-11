@@ -49,7 +49,7 @@ class FlextModelsContainers:
             return self.root(value)
 
     class _RootValidatorMapModel(
-        RootModel[Mapping[str, FlextTypesServices.ValidatorCallable]]
+        RootModel[Mapping[str, FlextTypesServices.ValidatorCallable]],
     ):
         """Shared API for validator map containers."""
 

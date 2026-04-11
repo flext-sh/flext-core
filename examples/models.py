@@ -3,13 +3,22 @@
 from __future__ import annotations
 
 from examples import SharedHandle, SharedPerson
+from examples._models.errors import ExamplesFlextCoreModelsErrors
+from examples._models.output import ExamplesFlextCoreModelsOutput
 from flext_core import FlextModels, c
 
 
-class ExamplesFlextCoreModels(FlextModels):
+class ExamplesFlextCoreModels(
+    ExamplesFlextCoreModelsErrors,
+    ExamplesFlextCoreModelsOutput,
+    FlextModels,
+):
     """Public examples model facade extending flext-core models."""
 
-    class Examples:
+    class Examples(
+        ExamplesFlextCoreModelsErrors.Examples,
+        ExamplesFlextCoreModelsOutput.Examples,
+    ):
         """Examples namespace for shared example-domain models."""
 
         class Person(SharedPerson):

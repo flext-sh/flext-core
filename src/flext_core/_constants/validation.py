@@ -101,7 +101,44 @@ class FlextConstantsValidation:
         WARN = "warn"
         PERMISSIVE = "permissive"
 
+    @unique
+    class ParserCase(StrEnum):
+        """Supported parser normalization cases."""
+
+        LOWER = "lower"
+        UPPER = "upper"
+        TITLE = "title"
+
+    @unique
+    class ParserBooleanToken(StrEnum):
+        """Canonical string tokens accepted for boolean coercion."""
+
+        TRUE = "true"
+        ONE = "1"
+        YES = "yes"
+        ON = "on"
+        FALSE = "false"
+        ZERO = "0"
+        NO = "no"
+        OFF = "off"
+
     FAILURE_LEVEL_DEFAULT: Final[FailureLevel] = FailureLevel.PERMISSIVE
+    PARSER_BOOLEAN_TRUTHY: frozenset[str] = frozenset(
+        {
+            ParserBooleanToken.TRUE.value,
+            ParserBooleanToken.ONE.value,
+            ParserBooleanToken.YES.value,
+            ParserBooleanToken.ON.value,
+        },
+    )
+    PARSER_BOOLEAN_FALSY: frozenset[str] = frozenset(
+        {
+            ParserBooleanToken.FALSE.value,
+            ParserBooleanToken.ZERO.value,
+            ParserBooleanToken.NO.value,
+            ParserBooleanToken.OFF.value,
+        },
+    )
 
     STRING_METHOD_MAP: frozenset[str] = frozenset({
         "str",

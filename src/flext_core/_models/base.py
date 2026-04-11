@@ -294,8 +294,7 @@ class FlextModelsBase:
         def validate_timestamp_consistency(self) -> Self:
             """Validate timestamp consistency."""
             if self.updated_at is not None and self.updated_at < self.created_at:
-                msg = "updated_at cannot be before created_at"
-                raise ValueError(msg)
+                raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
             return self
 
     class VersionableMixin(MutableConfiguredMixin):
@@ -318,8 +317,12 @@ class FlextModelsBase:
         def validate_version_consistency(self) -> Self:
             """Ensure version consistency."""
             if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
-                msg = f"Version {self.version} is below minimum {c.DEFAULT_RETRY_DELAY_SECONDS}"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_MODEL_VERSION_BELOW_MINIMUM.format(
+                        version=self.version,
+                        minimum=c.DEFAULT_RETRY_DELAY_SECONDS,
+                    ),
+                )
             return self
 
     class RetryConfigurationMixin(BaseModel):

@@ -19,8 +19,7 @@ class Ex07FlextExceptions(Examples):
         self.check("import.r_ok", r[str].ok("ok").success)
         self.check("import.constant", c.ErrorCode.UNKNOWN_ERROR)
         try:
-            msg = "boom"
-            raise ValueError(msg)
+            raise ValueError(m.Examples.ErrorMessages.BOOM)
         except ValueError as exc:
             self.check("style.raise_msg", str(exc))
         self._exercise_base_error()
@@ -73,40 +72,55 @@ class Ex07FlextExceptions(Examples):
     def _exercise_specific_exceptions(self) -> None:
         self.section("subclasses")
         try:
-            msg = "invalid"
-            raise e.ValidationError(msg, field="email", value="bad")
+            raise e.ValidationError(
+                m.Examples.ErrorMessages.INVALID,
+                field="email",
+                value="bad",
+            )
         except e.ValidationError as exc:
             self.check("ValidationError.field", exc.field or "")
             self.check("ValidationError.value", str(exc.value or ""))
         try:
-            msg = "bad cfg"
-            raise e.ConfigurationError(msg, config_key="db.host", config_source="env")
+            raise e.ConfigurationError(
+                m.Examples.ErrorMessages.BAD_CFG,
+                config_key="db.host",
+                config_source="env",
+            )
         except e.ConfigurationError as exc:
             self.check("ConfigurationError.config_key", exc.config_key or "")
             self.check("ConfigurationError.config_source", exc.config_source or "")
         try:
-            msg = "down"
-            raise e.ConnectionError(msg, host="127.0.0.1", port=5432, timeout=3.5)
+            raise e.ConnectionError(
+                m.Examples.ErrorMessages.DOWN,
+                host="127.0.0.1",
+                port=5432,
+                timeout=3.5,
+            )
         except e.ConnectionError as exc:
             self.check("ConnectionError.host", exc.host or "")
             self.check("ConnectionError.port", exc.port or 0)
             self.check("ConnectionError.timeout", exc.timeout or 0.0)
         try:
-            msg = "late"
-            raise e.TimeoutError(msg, timeout_seconds=2.0, operation="sync")
+            raise e.TimeoutError(
+                m.Examples.ErrorMessages.LATE,
+                timeout_seconds=2.0,
+                operation="sync",
+            )
         except e.TimeoutError as exc:
             self.check("TimeoutError.timeout_seconds", exc.timeout_seconds or 0.0)
             self.check("TimeoutError.operation", exc.operation or "")
         try:
-            msg = "auth fail"
-            raise e.AuthenticationError(msg, auth_method="token", user_id="u-1")
+            raise e.AuthenticationError(
+                m.Examples.ErrorMessages.AUTH_FAIL,
+                auth_method="token",
+                user_id="u-1",
+            )
         except e.AuthenticationError as exc:
             self.check("AuthenticationError.auth_method", exc.auth_method or "")
             self.check("AuthenticationError.user_id", exc.user_id or "")
         try:
-            msg = "nope"
             raise e.AuthorizationError(
-                msg,
+                m.Examples.ErrorMessages.NOPE,
                 user_id="u-2",
                 resource="invoice:7",
                 permission="read",
@@ -116,15 +130,17 @@ class Ex07FlextExceptions(Examples):
             self.check("AuthorizationError.resource", exc.resource or "")
             self.check("AuthorizationError.permission", exc.permission or "")
         try:
-            msg = "missing"
-            raise e.NotFoundError(msg, resource_type="User", resource_id="404")
+            raise e.NotFoundError(
+                m.Examples.ErrorMessages.MISSING,
+                resource_type="User",
+                resource_id="404",
+            )
         except e.NotFoundError as exc:
             self.check("NotFoundError.resource_type", exc.resource_type or "")
             self.check("NotFoundError.resource_id", exc.resource_id or "")
         try:
-            msg = "conflict"
             raise e.ConflictError(
-                msg,
+                m.Examples.ErrorMessages.CONFLICT,
                 resource_type="User",
                 resource_id="13",
                 conflict_reason="duplicate",
@@ -134,16 +150,19 @@ class Ex07FlextExceptions(Examples):
             self.check("ConflictError.resource_id", exc.resource_id or "")
             self.check("ConflictError.conflict_reason", exc.conflict_reason or "")
         try:
-            msg = "slow down"
-            raise e.RateLimitError(msg, limit=100, window_seconds=60, retry_after=1.5)
+            raise e.RateLimitError(
+                m.Examples.ErrorMessages.SLOW_DOWN,
+                limit=100,
+                window_seconds=60,
+                retry_after=1.5,
+            )
         except e.RateLimitError as exc:
             self.check("RateLimitError.limit", exc.limit or 0)
             self.check("RateLimitError.window_seconds", exc.window_seconds or 0)
             self.check("RateLimitError.retry_after", exc.retry_after or 0.0)
         try:
-            msg = "open"
             raise e.CircuitBreakerError(
-                msg,
+                m.Examples.ErrorMessages.OPEN,
                 service_name="billing",
                 failure_count=5,
                 reset_timeout=30.0,
@@ -153,8 +172,11 @@ class Ex07FlextExceptions(Examples):
             self.check("CircuitBreakerError.failure_count", exc.failure_count or 0)
             self.check("CircuitBreakerError.reset_timeout", exc.reset_timeout or 0.0)
         try:
-            msg = "wrong type"
-            raise e.TypeError(msg, expected_type=str, actual_type=int)
+            raise e.TypeError(
+                m.Examples.ErrorMessages.WRONG_TYPE,
+                expected_type=str,
+                actual_type=int,
+            )
         except e.TypeError as exc:
             self.check(
                 "TypeError.expected_type",
@@ -165,15 +187,17 @@ class Ex07FlextExceptions(Examples):
                 exc.actual_type.__name__ if exc.actual_type else "",
             )
         try:
-            msg = "failed op"
-            raise e.OperationError(msg, operation="publish", reason="quota")
+            raise e.OperationError(
+                m.Examples.ErrorMessages.FAILED_OP,
+                operation="publish",
+                reason="quota",
+            )
         except e.OperationError as exc:
             self.check("OperationError.operation", exc.operation or "")
             self.check("OperationError.reason", exc.reason or "")
         try:
-            msg = "bad attr"
             raise e.AttributeAccessError(
-                msg,
+                m.Examples.ErrorMessages.BAD_ATTR,
                 attribute_name="secret",
                 attribute_context="UserModel",
             )

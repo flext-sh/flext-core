@@ -47,6 +47,9 @@ _MODULE_CACHE: dict[str, ModuleType] = {}
 _CHILD_LAZY_IMPORTS_CACHE: dict[str, LazyImportMap] = {}
 _CHILD_MERGE_CACHE: dict[tuple[str, ...], dict[str, LazyImportEntry]] = {}
 _LAZY_IMPORT_MAP_ADAPTER = TypeAdapter(dict[str, LazyImportEntry])
+_ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE = (
+    "relative lazy-import paths require a parent module name"
+)
 
 
 @runtime_checkable
@@ -140,8 +143,7 @@ def _normalize_child_module_path(
     """Resolve a relative child package path against the parent module."""
     if child_module_path.startswith("."):
         if not module_name:
-            msg = "relative child module paths require module_name"
-            raise ValueError(msg)
+            raise ValueError(_ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE)
         return f"{module_name}{child_module_path}"
     return child_module_path
 
@@ -275,7 +277,8 @@ def _load_child_lazy_imports(module_path: str) -> LazyImportMap:
     module_dict = vars(child_module)
     child_lazy_imports = module_dict.get("_LAZY_IMPORTS")
     validated_lazy_imports = _normalize_lazy_import_map(
-        child_module.__name__, child_lazy_imports
+        child_module.__name__,
+        child_lazy_imports,
     )
 
     _CHILD_LAZY_IMPORTS_CACHE[module_path] = validated_lazy_imports
@@ -301,7 +304,7 @@ def merge_lazy_imports(
         for child_module_path in child_module_paths
     )
     cached_children: dict[str, LazyImportEntry] | None = _CHILD_MERGE_CACHE.get(
-        child_paths_key
+        child_paths_key,
     )
     if cached_children is None:
         cached_children = {}

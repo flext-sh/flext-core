@@ -33,19 +33,24 @@ class FlextUtilitiesReliability:
         """Configuration options for retry logic."""
 
         max_attempts: int | None = Field(
-            default=None, description="Maximum number of retry attempts"
+            default=None,
+            description="Maximum number of retry attempts",
         )
         delay: float | None = Field(
-            default=None, description="Initial delay between retries in seconds"
+            default=None,
+            description="Initial delay between retries in seconds",
         )
         delay_seconds: float | None = Field(
-            default=None, description="Alias for delay in seconds"
+            default=None,
+            description="Alias for delay in seconds",
         )
         backoff_multiplier: float | None = Field(
-            default=None, description="Multiplier for exponential backoff"
+            default=None,
+            description="Multiplier for exponential backoff",
         )
         retry_on: tuple[type[Exception], ...] | None = Field(
-            default=None, description="Exception types to retry on"
+            default=None,
+            description="Exception types to retry on",
         )
 
     _RETRIABLE_ERROR_PATTERNS: tuple[str, ...] = (

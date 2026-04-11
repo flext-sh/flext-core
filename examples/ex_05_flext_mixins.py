@@ -7,7 +7,7 @@ from typing import override
 
 from examples import c, m, t, u
 from examples.shared import Examples
-from flext_core import FlextLogger, FlextSettings, r, x
+from flext_core import FlextSettings, r, x
 
 
 class Ex05FlextMixins(Examples):
@@ -20,8 +20,7 @@ class Ex05FlextMixins(Examples):
             """Run a tracked operation that raises internally."""
             try:
                 with self.track("demo_failure"):
-                    msg = "boom"
-                    raise ValueError(msg)
+                    raise ValueError(m.Examples.ErrorMessages.BOOM)
             except ValueError as exc:
                 return str(exc)
 
@@ -74,7 +73,7 @@ class Ex05FlextMixins(Examples):
     @override
     def exercise(self) -> None:
         """Run all scenarios and record deterministic golden output."""
-        FlextLogger.configure_structlog()
+        u.configure_structlog()
         service = self.DemoService()
         self._exercise_result_and_conversion()
         self._exercise_runtime_properties_and_tracking(service)

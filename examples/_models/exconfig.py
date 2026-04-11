@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import Field, field_validator
 
 from examples import c
+from examples._models.errors import ExamplesFlextCoreModelsErrors as _err
 from flext_core import FlextSettings, t
 
 
@@ -25,10 +26,8 @@ class ExConfigAppConfig(FlextSettings):
     def normalize_database_url(cls, value: t.RuntimeData) -> str:
         """Normalize and validate database URL."""
         if not isinstance(value, str):
-            msg = "Database URL must be text"
-            raise TypeError(msg)
+            raise TypeError(_err.Examples.ErrorMessages.DB_URL_MUST_BE_TEXT)
         normalized = value.strip()
         if not normalized:
-            msg = "Database URL cannot be empty"
-            raise ValueError(msg)
+            raise ValueError(_err.Examples.ErrorMessages.DB_URL_CANNOT_BE_EMPTY)
         return normalized

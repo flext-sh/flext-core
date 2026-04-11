@@ -100,7 +100,7 @@ class FlextTypingBase:
         """Concrete base for MutableMapping[str, RecursiveContainer] inheritance."""
 
     class MutableContainerListBase(
-        MutableSequence["FlextTypingBase.RecursiveContainer"]
+        MutableSequence["FlextTypingBase.RecursiveContainer"],
     ):
         """Concrete base for MutableSequence[RecursiveContainer] inheritance."""
 

@@ -493,7 +493,7 @@ class FlextUtilitiesEnforcement:
             if base is object:
                 continue
             for name, value in FlextUtilitiesEnforcement._iter_protocol_inner_types(
-                base
+                base,
             ):
                 if name in seen:
                     continue
@@ -507,7 +507,7 @@ class FlextUtilitiesEnforcement:
     ) -> Sequence[tuple[str, type]]:
         """Return direct inner classes or inherited protocol members for MRO holders."""
         direct_inner_types = FlextUtilitiesEnforcement._iter_protocol_inner_types(
-            target
+            target,
         )
         if direct_inner_types:
             return direct_inner_types
@@ -763,7 +763,7 @@ class FlextUtilitiesEnforcement:
             return None
         for parent in Path(src).parents:
             if (parent / "pyproject.toml").exists() and parent.name.startswith(
-                "flext-"
+                "flext-",
             ):
                 if parent.name == "flext-core":
                     return "Flext"

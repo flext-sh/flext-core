@@ -154,8 +154,8 @@ class FlextProtocolsResult:
             """Human-readable error message."""
             ...
 
-        def is_error_domain(self, domain: str) -> bool:
-            """Check if error belongs to a specific domain."""
+        def matches_error_domain(self, domain: str) -> bool:
+            """Whether the error belongs to a specific domain."""
             ...
 
     @runtime_checkable

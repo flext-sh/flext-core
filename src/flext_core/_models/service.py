@@ -41,7 +41,7 @@ class FlextModelsService:
         context: Annotated[
             p.Context,
             Field(
-                description="Execution context carrying correlation and tracing metadata."
+                description="Execution context carrying correlation and tracing metadata.",
             ),
         ]
         container: Annotated[

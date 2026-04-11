@@ -49,7 +49,7 @@ class FlextUtilitiesGuardsTypeModel:
             value,
             Mapping,
         ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(
-            cast("Mapping[str, t.Container]", value)
+            cast("Mapping[str, t.Container]", value),
         )
 
     @staticmethod

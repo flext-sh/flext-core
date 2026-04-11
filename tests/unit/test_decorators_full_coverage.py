@@ -254,7 +254,7 @@ class TestDecoratorsFullCoverage:
             return r[bool].fail("bind-fail", error_code="E_BIND")
 
         monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger.bind_context",
+            "flext_core.decorators.u.bind_context",
             _bind_context,
         )
         cid = d._bind_operation_context(
@@ -276,7 +276,7 @@ class TestDecoratorsFullCoverage:
             return r[bool].fail("clear-fail", error_code="E_CLR")
 
         monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger.clear_scope",
+            "flext_core.decorators.u.clear_scope",
             _clear_scope,
         )
         d._clear_operation_scope(
@@ -448,7 +448,7 @@ class TestDecoratorsFullCoverage:
             return fake_logger
 
         monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger",
+            "flext_core.decorators.u.fetch_logger",
             _logger_factory,
         )
         monkeypatch.setattr(
@@ -505,7 +505,7 @@ class TestDecoratorsFullCoverage:
             _execute_retry_loop,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger",
+            "flext_core.decorators.u.fetch_logger",
             _logger_factory,
         )
 

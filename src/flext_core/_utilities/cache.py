@@ -20,7 +20,8 @@ class FlextUtilitiesCache:
     ) -> t.RecursiveContainer:
         """Normalize a component recursively for consistent representation."""
         if isinstance(
-            component, BaseModel
+            component,
+            BaseModel,
         ) and FlextUtilitiesGuardsTypeModel.is_pydantic_model(component):
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)

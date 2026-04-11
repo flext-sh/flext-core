@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping, MutableMapping
 from enum import StrEnum
 from typing import ClassVar, TypeVar
 
-from flext_core import r, t
+from flext_core import c, r, t
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 
@@ -51,9 +51,12 @@ class FlextUtilitiesEnum:
                     return FlextUtilitiesEnum._parse(enum_cls, value)
                 except ValueError:
                     pass
-            enum_name = enum_cls.__name__
-            msg = f"Invalid {enum_name}: {value}"
-            raise ValueError(msg)
+            raise ValueError(
+                c.ERR_ENUM_INVALID_VALUE.format(
+                    enum_name=enum_cls.__name__,
+                    value=value,
+                ),
+            )
 
         return _coerce
 

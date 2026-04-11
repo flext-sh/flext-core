@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import Field, field_validator
 
 from examples import c
+from examples._models.errors import ExamplesFlextCoreModelsErrors as _err
 from flext_core import m, r, t
 
 
@@ -35,10 +36,8 @@ class ExamplesFlextCoreModelsEx00:
         def validate_non_empty_text(cls, value: t.RuntimeData) -> str:
             """Validate text input."""
             if not isinstance(value, str):
-                msg = "Expected text input"
-                raise TypeError(msg)
+                raise TypeError(_err.Examples.ErrorMessages.EXPECTED_TEXT_INPUT)
             normalized = value.strip()
             if not normalized:
-                msg = "Text input cannot be empty"
-                raise ValueError(msg)
+                raise ValueError(_err.Examples.ErrorMessages.TEXT_INPUT_CANNOT_BE_EMPTY)
             return normalized

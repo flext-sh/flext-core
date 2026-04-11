@@ -202,8 +202,9 @@ class FlextRuntime:
             raise TypeError(msg)
         for key in result:
             if key.startswith("_"):
-                msg = f"Keys starting with '_' are reserved: {key}"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
+                )
         return t.metadata_map_adapter().validate_python(result)
 
     @staticmethod
@@ -298,8 +299,11 @@ class FlextRuntime:
             return value
         if hasattr(value, "bind") and hasattr(value, "info"):
             return value
-        msg = f"Service must be a RegisterableService type, got {type(value).__name__}"
-        raise ValueError(msg)
+        raise ValueError(
+            c.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
+                type_name=type(value).__name__,
+            ),
+        )
 
     @staticmethod
     def validate_callable_input[TCallable](
@@ -356,7 +360,8 @@ class FlextRuntime:
         metadata_cls = cast("type[BaseModel]", cls._require_metadata_model())
         if value is None:
             return cast(
-                "p.Metadata", metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}})
+                "p.Metadata",
+                metadata_cls.model_validate({c.FIELD_ATTRIBUTES: {}}),
             )
         if isinstance(value, metadata_cls):
             return cast("p.Metadata", value)
@@ -367,7 +372,8 @@ class FlextRuntime:
             )
             raise TypeError(msg)
         return cast(
-            "p.Metadata", metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)})
+            "p.Metadata",
+            metadata_cls.model_validate({c.FIELD_ATTRIBUTES: dict(value)}),
         )
 
     @staticmethod
@@ -559,7 +565,7 @@ class FlextRuntime:
                             field: getattr(container_options, field)
                             for field in cls._OPTION_FIELDS
                         }
-                        | {"factory_cache": container_options.factory_cache}
+                        | {"factory_cache": container_options.factory_cache},
                     )
 
         @classmethod
@@ -705,8 +711,9 @@ class FlextRuntime:
 
             """
             if hasattr(di_container, name):
-                msg = f"Provider '{name}' is already registered"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
+                )
             provider: providers.Provider[T] = (
                 providers.Singleton(factory) if cache else providers.Factory(factory)
             )
@@ -726,8 +733,9 @@ class FlextRuntime:
 
             """
             if hasattr(di_container, name):
-                msg = f"Provider '{name}' is already registered"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
+                )
             provider: providers.Provider[T] = providers.Object(instance)
             setattr(di_container, name, provider)
             return provider
@@ -745,8 +753,9 @@ class FlextRuntime:
 
             """
             if hasattr(di_container, name):
-                msg = f"Provider '{name}' is already registered"
-                raise ValueError(msg)
+                raise ValueError(
+                    c.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name),
+                )
             provider: providers.Provider[T] = providers.Resource(factory)
             setattr(di_container, name, provider)
             return provider
@@ -799,7 +808,8 @@ class FlextRuntime:
             }
             context_dict = t.ConfigMap(root=parsed_context)
         elif not isinstance(
-            context, Mapping
+            context,
+            Mapping,
         ) and FlextUtilitiesGuardsTypeCore.is_scalar(context):
             context_dict = t.ConfigMap(root={})
         elif isinstance(context, BaseModel):

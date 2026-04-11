@@ -91,7 +91,9 @@ class FlextSettings(BaseSettings):
         leaf_prefix = cls.model_config.get("env_prefix", "")
         for parent in cls.__mro__:
             cfg: Mapping[str, t.Container] | None = getattr(
-                parent, "model_config", None
+                parent,
+                "model_config",
+                None,
             )
             if not isinstance(cfg, Mapping):
                 continue
@@ -105,7 +107,8 @@ class FlextSettings(BaseSettings):
         return tuple(sources)
 
     app_name: Annotated[
-        str, Field(default=c.DEFAULT_APP_NAME, description="Application name")
+        str,
+        Field(default=c.DEFAULT_APP_NAME, description="Application name"),
     ]
     version: Annotated[
         str,
@@ -555,13 +558,19 @@ class FlextSettings(BaseSettings):
         """
         config_class_raw = self._namespace_registry.get(namespace)
         if config_class_raw is None:
-            msg = f"Namespace '{namespace}' not registered"
-            raise ValueError(msg)
+            raise ValueError(
+                c.ERR_SETTINGS_NAMESPACE_NOT_REGISTERED.format(namespace=namespace),
+            )
         config_instance = config_class_raw()
         if isinstance(config_instance, config_type):
             return config_instance
-        msg = f"Namespace '{namespace}' config instance {config_instance.__class__.__name__} is not instance of {config_type.__name__}"
-        raise TypeError(msg)
+        raise TypeError(
+            c.ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH.format(
+                namespace=namespace,
+                instance_class=config_instance.__class__.__name__,
+                expected_type=config_type.__name__,
+            ),
+        )
 
 
 __all__ = ["FlextSettings"]

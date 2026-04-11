@@ -134,7 +134,8 @@ class FlextUtilitiesGenerators:
                 return FlextUtilitiesGenerators._generate_id()
             case (_, str() as pfx):
                 all_parts = FlextUtilitiesGenerators._build_parts_list(
-                    parts, include_timestamp=include_timestamp
+                    parts,
+                    include_timestamp=include_timestamp,
                 )
                 id_length = length if length is not None else c.SHORT_UUID_LENGTH
                 if separator != "_" or include_timestamp:

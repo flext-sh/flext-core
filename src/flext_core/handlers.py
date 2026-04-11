@@ -231,8 +231,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """Convert handler type to canonical HandlerType."""
         if handler_type in FlextHandlers._HANDLER_TYPE_LITERALS:
             return FlextHandlers._HANDLER_TYPE_LITERALS[handler_type]
-        msg = f"Unsupported handler type: {handler_type}"
-        raise ValueError(msg)
+        raise ValueError(
+            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
+        )
 
     @staticmethod
     def handler(
@@ -360,7 +361,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         Example:
             >>> handler = UserHandler()
             >>> result = handler.execute(UserCommand(user_id="123", action="create"))
-            >>> if result.is_success:
+            >>> if result.success:
             ...     print(f"Success: {result.value}")
             ... else:
             ...     print(f"Failed: {result.error}")
@@ -473,7 +474,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         Example:
             >>> handler = UserHandler()
             >>> result = handler.validate_message(invalid_data)
-            >>> if result.is_failure:
+            >>> if result.failure:
             ...     print(f"Validation error: {result.error}")
 
         Note: self is required for subclass override compatibility, even though

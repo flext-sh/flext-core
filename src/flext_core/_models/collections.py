@@ -47,7 +47,7 @@ class FlextModelsCollections:
                                 nested_item,
                                 (str, int, float, bool, datetime),
                             )
-                            else str(nested_item)
+                            else str(nested_item),
                         )
                     normalized_map[str(key)] = normalized_items
                     continue
@@ -62,7 +62,7 @@ class FlextModelsCollections:
                 normalized_sequence.append(
                     item
                     if isinstance(item, (str, int, float, bool, datetime))
-                    else str(item)
+                    else str(item),
                 )
             return normalized_sequence
         return str(value)

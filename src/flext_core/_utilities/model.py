@@ -34,22 +34,28 @@ class FlextUtilitiesModel:
         """Options controlling Pydantic model_dump() serialization behavior."""
 
         by_alias: bool | None = Field(
-            default=None, description="Serialize using field aliases"
+            default=None,
+            description="Serialize using field aliases",
         )
         exclude_none: bool | None = Field(
-            default=None, description="Exclude None-valued fields"
+            default=None,
+            description="Exclude None-valued fields",
         )
         exclude_unset: bool | None = Field(
-            default=None, description="Exclude fields not explicitly set"
+            default=None,
+            description="Exclude fields not explicitly set",
         )
         exclude_defaults: bool | None = Field(
-            default=None, description="Exclude fields matching defaults"
+            default=None,
+            description="Exclude fields matching defaults",
         )
         include: set[str] | None = Field(
-            default=None, description="Whitelist of field names to include"
+            default=None,
+            description="Whitelist of field names to include",
         )
         exclude: set[str] | None = Field(
-            default=None, description="Blacklist of field names to exclude"
+            default=None,
+            description="Blacklist of field names to exclude",
         )
 
     @staticmethod
@@ -68,7 +74,8 @@ class FlextUtilitiesModel:
         if isinstance(data, BaseModel):
             root_value = getattr(data, "root", None)
             if isinstance(
-                root_value, Mapping
+                root_value,
+                Mapping,
             ) and FlextUtilitiesGuardsTypeCore.is_mapping(root_value):
                 return {str(key): value for key, value in root_value.items()}
             dumped = data.model_dump()
