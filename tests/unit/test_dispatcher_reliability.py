@@ -20,20 +20,20 @@ def test_circuit_breaker_transitions_and_metrics() -> None:
     failure = cb.check_before_dispatch(message_type)
     tm.fail(failure)
     tm.that(failure.error_code, eq=c.OPERATION_ERROR)
-    tm.that(cb.is_open(message_type), eq=True)
+    tm.that(cb.resolve_open(message_type), eq=True)
     time.sleep(0.12)
     half_open = cb.check_before_dispatch(message_type)
     tm.ok(half_open)
-    tm.that(cb.get_state(message_type), eq=c.CircuitBreakerState.HALF_OPEN)
+    tm.that(cb.resolve_state(message_type), eq=c.CircuitBreakerState.HALF_OPEN)
     cb.record_success(message_type)
-    tm.that(cb.get_state(message_type), eq=c.CircuitBreakerState.CLOSED)
-    metrics = cb.get_metrics()
+    tm.that(cb.resolve_state(message_type), eq=c.CircuitBreakerState.CLOSED)
+    metrics = cb.metrics
     failures_val = metrics.get("failures")
     total_ops_val = metrics.get("total_operations")
     tm.that(isinstance(failures_val, int) and failures_val >= 1, eq=True)
     tm.that(isinstance(total_ops_val, int) and total_ops_val >= 1, eq=True)
     cb.cleanup()
-    tm.that(cb.get_state(message_type), eq=c.CircuitBreakerState.CLOSED)
+    tm.that(cb.resolve_state(message_type), eq=c.CircuitBreakerState.CLOSED)
 
 
 def test_rate_limiter_blocks_then_recovers() -> None:
@@ -64,8 +64,8 @@ def test_rate_limiter_jitter_application() -> None:
     tm.that(abs(u.apply_jitter(0.5, 0.0) - 0.5), lt=1e-9)
 
 
-def test_circuit_breaker_half_open_and_rate_limiter_accessors() -> None:
-    """Test transition_to_half_open, get_max_requests, get_window_seconds."""
+def test_circuit_breaker_half_open_and_rate_limiter_public_contract() -> None:
+    """Test transition_to_half_open and direct/public rate-limiter state access."""
     cb = FlextModelsDispatcher.CircuitBreakerManager(
         threshold=3,
         recovery_timeout=1.0,
@@ -73,7 +73,7 @@ def test_circuit_breaker_half_open_and_rate_limiter_accessors() -> None:
     )
     cb.transition_to_half_open("x")
     cb.record_failure("x")
-    assert cb.get_state("x") == c.CircuitBreakerState.OPEN
+    assert cb.resolve_state("x") == c.CircuitBreakerState.OPEN
     rl = FlextModelsDispatcher.RateLimiterManager(max_requests=1, window_seconds=1.5)
-    assert rl.get_max_requests() == 1
-    assert abs(rl.get_window_seconds() - 1.5) < 1e-9
+    assert rl.max_requests == 1
+    assert abs(rl.window_seconds - 1.5) < 1e-9

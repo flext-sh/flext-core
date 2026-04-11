@@ -142,10 +142,9 @@ class Ex05FlextMixins(Examples):
         self.section("cqrs_validation_protocols")
         tracker = m.MetricsTracker()
         self.check("metrics.record_metric", tracker.record_metric("hits", 3).success)
-        metrics_result = tracker.get_metrics()
-        self.check("metrics.get_metrics.success", metrics_result.success)
-        metrics_str: str = metrics_result.map(lambda value: str(value)).unwrap_or("{}")
-        self.check("metrics.get_metrics.value", metrics_str)
+        metrics_map = tracker.metrics
+        self.check("metrics.available", bool(metrics_map))
+        self.check("metrics.value", str(metrics_map))
         stack = m.ContextStack()
         self.check(
             "context_stack.push_context",

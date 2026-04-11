@@ -56,7 +56,7 @@ accumulate_errors.fail: 'gcgd; orfp'
 Bootstrap.create_instance.type: '_TinyType'
 Bootstrap.create_instance.init_called: False
 CQRS.MetricsTracker.record: True
-CQRS.MetricsTracker.get: True
+CQRS.MetricsTracker.metrics: True
 CQRS.ContextStack.push.dict: True
 CQRS.ContextStack.current.type: 'ExecutionContext'
 CQRS.ContextStack.pop.handler_name: 'olekym'

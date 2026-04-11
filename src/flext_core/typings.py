@@ -8,11 +8,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum
-from typing import ParamSpec, TypeVar
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings
 
 from flext_core._models.namespace import FlextModelsNamespace
 from flext_core._typings.annotateds import FlextTypesAnnotateds
@@ -20,6 +20,9 @@ from flext_core._typings.core import FlextTypesCore
 from flext_core._typings.services import FlextTypesServices
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 from flext_core._typings.validation import FlextTypesValidation
+
+if TYPE_CHECKING:
+    from flext_core.settings import FlextSettings
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -29,9 +32,13 @@ ResultT = TypeVar("ResultT")
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
+T_DomainResult = TypeVar(
+    "T_DomainResult",
+    bound=FlextTypesServices.ValueOrModel | Sequence[FlextTypesServices.ValueOrModel],
+)
 T_Model = TypeVar("T_Model", bound=BaseModel)
 T_Namespace = TypeVar("T_Namespace")
-T_Settings = TypeVar("T_Settings", bound=BaseSettings)
+T_Settings = TypeVar("T_Settings", bound="FlextSettings")
 TRuntime = TypeVar("TRuntime")
 TV = TypeVar("TV")
 TV_co = TypeVar("TV_co", covariant=True)
@@ -68,6 +75,7 @@ __all__ = [
     "T",
     "TRuntime",
     "TV_co",
+    "T_DomainResult",
     "T_Model",
     "T_Namespace",
     "T_Settings",

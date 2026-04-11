@@ -101,7 +101,7 @@ if _t.TYPE_CHECKING:
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
-    from flext_core.lazy import LazyNamespace
+    from flext_core.lazy import LazyNamespace, build_lazy_import_map
     from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
@@ -112,16 +112,22 @@ if _t.TYPE_CHECKING:
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
+        TV,
+        EnumT,
         FlextTypes,
+        MessageT_contra,
         P,
         R,
         ResultT,
         T,
         T_co,
         T_contra,
+        T_DomainResult,
         T_Model,
         T_Namespace,
         T_Settings,
+        TRuntime,
+        TV_co,
         U,
         t,
     )
@@ -165,7 +171,10 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextHandlers",
                 "h",
             ),
-            ".lazy": ("LazyNamespace",),
+            ".lazy": (
+                "LazyNamespace",
+                "build_lazy_import_map",
+            ),
             ".loggings": ("FlextLogger",),
             ".mixins": (
                 "FlextMixins",
@@ -191,11 +200,17 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".settings": ("FlextSettings",),
             ".typings": (
+                "EnumT",
                 "FlextTypes",
+                "MessageT_contra",
                 "P",
                 "R",
                 "ResultT",
                 "T",
+                "TRuntime",
+                "TV",
+                "TV_co",
+                "T_DomainResult",
                 "T_Model",
                 "T_Namespace",
                 "T_Settings",
@@ -226,6 +241,8 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__ = [
+    "TV",
+    "EnumT",
     "FlextConstants",
     "FlextConstantsBase",
     "FlextConstantsCqrs",
@@ -324,10 +341,14 @@ __all__ = [
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
     "LazyNamespace",
+    "MessageT_contra",
     "P",
     "R",
     "ResultT",
     "T",
+    "TRuntime",
+    "TV_co",
+    "T_DomainResult",
     "T_Model",
     "T_Namespace",
     "T_Settings",
@@ -342,6 +363,7 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
+    "build_lazy_import_map",
     "c",
     "d",
     "e",

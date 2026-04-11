@@ -12,16 +12,13 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_core import (
+    from flext_cli import (
         d,
         e,
         h,
         r,
-        s,
-        x,
-    )
-    from flext_tests import (
         reset_settings,
+        s,
         settings,
         settings_factory,
         td,
@@ -29,6 +26,7 @@ if _t.TYPE_CHECKING:
         tk,
         tm,
         tv,
+        x,
     )
     from tests._constants.domain import TestsFlextCoreConstantsDomain
     from tests._constants.errors import TestsFlextCoreConstantsErrors
@@ -82,16 +80,13 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreUtilities",
                 "u",
             ),
-            "flext_core": (
+            "flext_cli": (
                 "d",
                 "e",
                 "h",
                 "r",
-                "s",
-                "x",
-            ),
-            "flext_tests": (
                 "reset_settings",
+                "s",
                 "settings",
                 "settings_factory",
                 "td",
@@ -99,6 +94,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "tk",
                 "tm",
                 "tv",
+                "x",
             ),
         },
     ),

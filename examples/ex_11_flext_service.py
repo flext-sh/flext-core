@@ -216,9 +216,9 @@ class Ex11FlextService(Examples):
             "CQRS.MetricsTracker.record",
             metrics.record_metric(metric_key, metric_value).success,
         )
-        metrics_map = metrics.get_metrics().unwrap_or(t.ConfigMap(root={}))
+        metrics_map = metrics.metrics
         self.check(
-            "CQRS.MetricsTracker.get",
+            "CQRS.MetricsTracker.metrics",
             metrics_map.get(metric_key) == metric_value,
         )
 

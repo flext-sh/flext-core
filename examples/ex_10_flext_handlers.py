@@ -314,9 +314,9 @@ class Ex10FlextHandlers(Examples):
             "cqrs.record_metric",
             tracker.record_metric(hit_key, hit_value).success,
         )
-        metrics_map = tracker.get_metrics().unwrap_or(t.ConfigMap(root={}))
+        metrics_map = tracker.metrics
         metrics_val = metrics_map.get(hit_key, -1)
-        self.check("cqrs.get_metrics", metrics_val)
+        self.check("cqrs.metrics", metrics_val)
         stack = m.ContextStack()
         self.check(
             "cqrs.push_context.mapping",

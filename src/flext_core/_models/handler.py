@@ -191,7 +191,7 @@ class FlextModelsHandler:
             return self._metrics_state is not None and bool(self._metrics_state)
 
         @computed_field
-        def is_running(self) -> bool:
+        def running(self) -> bool:
             """Check if execution is currently running."""
             return self._start_time is not None
 
@@ -231,8 +231,8 @@ class FlextModelsHandler:
             self._start_time = None
             self._metrics_state = None
 
-        def set_metrics_state(self, state: t.Dict) -> None:
-            """Set metrics state."""
+        def apply_metrics_state(self, state: t.Dict) -> None:
+            """Apply metrics state to the execution context."""
             self._metrics_state = state
 
         def start_execution(self) -> None:
@@ -266,13 +266,15 @@ class FlextModelsHandler:
             ),
         )
 
-        def get_metrics(self) -> r[t.ConfigMap]:
-            """Return all recorded metrics as a ConfigMap result."""
+        @computed_field
+        @property
+        def metrics(self) -> t.ConfigMap:
+            """Return all recorded metrics as a ConfigMap."""
             raw_state = self._context.metrics_state
             state: t.Dict = (
                 raw_state if isinstance(raw_state, t.Dict) else t.Dict(root={})
             )
-            return r[t.ConfigMap].ok(t.ConfigMap(root=dict(state.root)))
+            return t.ConfigMap(root=dict(state.root))
 
         def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
             """Record a named metric value in the tracker."""
@@ -282,7 +284,7 @@ class FlextModelsHandler:
             )
             current = dict(state.root)
             current[name] = value
-            self._context.set_metrics_state(t.Dict(root=current))
+            self._context.apply_metrics_state(t.Dict(root=current))
             return r[bool].ok(True)
 
     class ContextStack(FlextModelsBase.ArbitraryTypesModel):

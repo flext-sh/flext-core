@@ -13,7 +13,7 @@ import concurrent.futures
 import time
 from typing import Annotated, override
 
-from pydantic import Field, PrivateAttr
+from pydantic import Field, PrivateAttr, computed_field
 
 from flext_core import FlextModelsBase, c, r, t
 
@@ -65,13 +65,10 @@ class FlextModelsDispatcher:
                 )
             return self._executor
 
-        def get_executor_status(self) -> t.ScalarMapping:
-            """Return executor status metadata for diagnostics and metrics.
-
-            Returns:
-                ConfigurationDict: Dictionary with executor status information.
-
-            """
+        @computed_field
+        @property
+        def executor_status(self) -> t.ScalarMapping:
+            """Return executor status metadata for diagnostics and metrics."""
             return {
                 "executor_active": self._executor is not None,
                 "executor_workers": self.executor_workers if self._executor else 0,
@@ -187,7 +184,7 @@ class FlextModelsDispatcher:
 
         def attempt_reset(self, message_type: str) -> None:
             """Attempt recovery if circuit is open."""
-            if self.is_open(message_type):
+            if self.resolve_open(message_type):
                 rec = self._breakers.setdefault(
                     message_type,
                     FlextModelsDispatcher.CircuitBreakerStateRecord(),
@@ -205,15 +202,15 @@ class FlextModelsDispatcher:
 
             """
             self.attempt_reset(message_type)
-            if self.is_open(message_type):
+            if self.resolve_open(message_type):
                 return r[bool].fail(
                     f"Circuit breaker is open for message type '{message_type}'",
                     error_code=c.OPERATION_ERROR,
                     error_data=t.ConfigMap(
                         root={
                             "message_type": message_type,
-                            "state": self.get_state(message_type),
-                            "failure_count": self.get_failure_count(message_type),
+                            "state": self.resolve_state(message_type),
+                            "failure_count": self.resolve_failure_count(message_type),
                         },
                     ),
                 )
@@ -223,7 +220,7 @@ class FlextModelsDispatcher:
             """Clear all state."""
             self._breakers.clear()
 
-        def get_failure_count(self, message_type: str) -> int:
+        def resolve_failure_count(self, message_type: str) -> int:
             """Get current failure count.
 
             Returns:
@@ -235,13 +232,10 @@ class FlextModelsDispatcher:
                 FlextModelsDispatcher.CircuitBreakerStateRecord(),
             ).failures
 
-        def get_metrics(self) -> t.ScalarMapping:
-            """Collect circuit breaker metrics, including recovery statistics.
-
-            Returns:
-                Dictionary containing circuit breaker metrics.
-
-            """
+        @computed_field
+        @property
+        def metrics(self) -> t.ScalarMapping:
+            """Collect circuit breaker metrics, including recovery statistics."""
             total_recovery_attempts = sum(
                 rec.recovery_successes + rec.recovery_failures
                 for rec in self._breakers.values()
@@ -279,7 +273,7 @@ class FlextModelsDispatcher:
                 "total_operations": total_operations,
             }
 
-        def get_state(self, message_type: str) -> str:
+        def resolve_state(self, message_type: str) -> str:
             """Get current state for message type.
 
             Returns:
@@ -291,18 +285,14 @@ class FlextModelsDispatcher:
                 FlextModelsDispatcher.CircuitBreakerStateRecord(),
             ).state
 
-        def get_threshold(self) -> int:
-            """Get circuit breaker threshold."""
-            return self.threshold
-
-        def is_open(self, message_type: str) -> bool:
+        def resolve_open(self, message_type: str) -> bool:
             """Check if circuit breaker is open for message type.
 
             Returns:
                 True if circuit breaker is open, False otherwise.
 
             """
-            return self.get_state(message_type) == c.CircuitBreakerState.OPEN
+            return self.resolve_state(message_type) == c.CircuitBreakerState.OPEN
 
         def record_failure(self, message_type: str) -> None:
             """Record failed operation and update state."""
@@ -334,13 +324,6 @@ class FlextModelsDispatcher:
                     self.transition_to_closed(message_type)
             elif rec.state == c.CircuitBreakerState.CLOSED:
                 rec.failures = 0
-
-        def set_state(self, message_type: str, state: str) -> None:
-            """Set state for message type."""
-            self._breakers.setdefault(
-                message_type,
-                FlextModelsDispatcher.CircuitBreakerStateRecord(),
-            ).state = state
 
         def transition_to_closed(self, message_type: str) -> None:
             """Transition to CLOSED state."""
@@ -462,14 +445,6 @@ class FlextModelsDispatcher:
         def cleanup(self) -> None:
             """Clear all rate limit windows."""
             self._windows.clear()
-
-        def get_max_requests(self) -> int:
-            """Get maximum requests per window."""
-            return self.max_requests
-
-        def get_window_seconds(self) -> float:
-            """Get rate limit window duration in seconds."""
-            return self.window_seconds
 
 
 __all__ = ["FlextModelsDispatcher"]

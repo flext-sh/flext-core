@@ -20,12 +20,12 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import T
+from flext_core import T_DomainResult
 from flext_tests import s, td
 from tests import c, h, m, r, t
 
 
-class TestsFlextCoreServiceBase(s[T]):
+class TestsFlextCoreServiceBase(s[T_DomainResult]):
     """Service base for flext-core tests - extends s.
 
     Architecture: Extends s with flext-core-specific service
@@ -39,7 +39,7 @@ class TestsFlextCoreServiceBase(s[T]):
     """
 
     @override
-    def execute(self) -> r[T]:
+    def execute(self) -> r[T_DomainResult]:
         """Execute domain service logic - must be implemented by subclasses."""
         msg = "Subclasses must implement execute()"
         raise NotImplementedError(msg)

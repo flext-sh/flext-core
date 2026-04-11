@@ -53,7 +53,7 @@ has_handlers_module.false: False
 [namespaces_and_mixins]
 bootstrap.create_instance: '_NoArgs'
 cqrs.record_metric: True
-cqrs.get_metrics: 5
+cqrs.metrics: 5
 cqrs.push_context.mapping: False
 cqrs.current_context: '-'
 cqrs.pop_context: '-'
