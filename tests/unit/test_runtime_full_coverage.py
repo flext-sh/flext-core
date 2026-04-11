@@ -274,10 +274,10 @@ def test_normalize_to_metadata_alias_removal_path() -> None:
     tm.that(result, none=False)
 
 
-def test_get_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    logger_with_frame = u.get_logger()
+def test_fetch_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
+    logger_with_frame = u.fetch_logger()
     tm.that(logger_with_frame, none=False)
-    logger_no_frame = u.get_logger()
+    logger_no_frame = u.fetch_logger()
     tm.that(logger_no_frame, none=False)
 
 
@@ -392,7 +392,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = Config  # referenced for pyright
     u.configure_structlog(config=cast("BaseModel", cast("t.NormalizedValue", Config())))
-    tm.that(u.is_structlog_configured(), eq=True)
+    tm.that(u.structlog_configured(), eq=True)
     tm.that(bool(calls), eq=True)
     u._structlog_configured = False
     calls.clear()
@@ -665,7 +665,7 @@ def test_model_support_and_hash_compare_paths() -> None:
 
 
 def test_config_bridge_and_trace_context_and_http_validation() -> None:
-    level = u.get_log_level_from_config()
+    level = u.resolve_log_level_from_config()
     tm.that(level, is_=int)
     trace_from_scalar = u.ensure_trace_context(
         1,
@@ -704,7 +704,7 @@ def test_runtime_result_alias_compatibility() -> None:
 def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     u._structlog_configured = False
     u.ensure_structlog_configured()
-    tm.that(u.is_structlog_configured(), eq=True)
+    tm.that(u.structlog_configured(), eq=True)
 
     class BasicModel(BaseModel):
         value: int = 1
@@ -726,7 +726,7 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     tm.that(u.normalize_to_metadata(Path("/tmp")), eq=str(Path("/tmp")))
 
-    tm.that(u.get_logger(None), none=False)
+    tm.that(u.fetch_logger(None), none=False)
 
 
 def test_runtime_module_accessors_and_metadata() -> None:
@@ -900,8 +900,8 @@ def test_configure_structlog_async_logging_uses_print_logger_factory(
     tm.that(configured_has_logger_factory[0], eq=True)
 
 
-def test_get_logger_auto_configures_structlog() -> None:
-    logger = u.get_logger("tests.runtime.auto")
+def test_fetch_logger_auto_configures_structlog() -> None:
+    logger = u.fetch_logger("tests.runtime.auto")
     _ = logger
     tm.that(u._structlog_configured, eq=True)
     tm.that(u._async_writer is not None, eq=True)

@@ -61,7 +61,7 @@ class FlextDecorators:
             if isinstance(logger_value, p.Logger):
                 return logger_value
         module_name = func.__module__ if func is not None else __name__
-        return FlextLogger(module_name)
+        return u.fetch_logger(module_name)
 
     @staticmethod
     def deprecated(message: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
@@ -160,7 +160,7 @@ class FlextDecorators:
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:
-                    logger = FlextLogger(func.__module__)
+                    logger = u.fetch_logger(func.__module__)
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -315,7 +315,7 @@ class FlextDecorators:
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:
-                    logger = FlextLogger(func.__module__)
+                    logger = u.fetch_logger(func.__module__)
                 retry_config = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
                     "initial_delay_seconds": delay,
@@ -547,7 +547,7 @@ class FlextDecorators:
             error_type=last_exception.__class__.__name__,
         )
         effective_error_code: str = (
-            _error_code if _error_code is not None else c.TIMEOUT_ERROR
+            _error_code if _error_code is not None else c.ErrorCode.TIMEOUT_ERROR.value
         )
         timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
         raise e.TimeoutError(
@@ -864,7 +864,7 @@ class FlextDecorators:
                             func.__name__,
                             max_duration,
                             duration,
-                            error_code=error_code or c.TIMEOUT_ERROR,
+                            error_code=error_code or c.ErrorCode.TIMEOUT_ERROR.value,
                             original_error=exc,
                         )
                     raise
@@ -910,7 +910,7 @@ class FlextDecorators:
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:
-                    logger = FlextLogger(func.__module__)
+                    logger = u.fetch_logger(func.__module__)
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -967,7 +967,7 @@ class FlextDecorators:
                 ) and FlextDecorators._has_flext_logger(first_arg):
                     logger = first_arg.logger
                 else:
-                    logger = FlextLogger(func.__module__)
+                    logger = u.fetch_logger(func.__module__)
                 try:
                     if context_vars:
                         filtered_vars: t.FlatContainerMapping = {

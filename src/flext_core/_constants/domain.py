@@ -61,6 +61,8 @@ class FlextConstantsDomain:
         UNBIND = "unbind"
         CLEAR = "clear"
         GET = "get"
+        REMOVE = "remove"
+        SET = "set"
 
     @unique
     class Status(StrEnum):

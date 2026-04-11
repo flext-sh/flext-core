@@ -1,6 +1,6 @@
 [factory_methods]
 create_module_logger.type: 'FlextLogger'
-get_logger.type: 'BoundLoggerLazyProxy'
+fetch_logger.type: 'BoundLoggerLazyProxy'
 create_bound_logger.type: 'FlextLogger'
 
 [global_context]

@@ -27,7 +27,7 @@ class Ex02FlextSettings(Examples):
         self._exercise_singleton_and_global()
         self._exercise_configuration_fields_and_validation()
         self._exercise_effective_log_level_and_override()
-        self._exercise_get_global_and_provider()
+        self._exercise_fetch_global_and_provider()
         self._exercise_resolve_env_file_and_auto_config()
         self._exercise_namespace_system()
         self._exercise_context_system()
@@ -59,13 +59,13 @@ class Ex02FlextSettings(Examples):
         first = FlextSettings()
         second = FlextSettings()
         self.check("constructor.singleton_identity", first is second)
-        global_instance = FlextSettings.get_global()
-        self.check("get_global.identity", global_instance is first)
+        global_instance = FlextSettings.fetch_global()
+        self.check("fetch_global.identity", global_instance is first)
         FlextSettings.reset_for_testing()
         third = FlextSettings()
         self.check("reset_for_testing.recreates_singleton", third is not first)
         FlextSettings.reset_for_testing()
-        fourth = FlextSettings.get_global()
+        fourth = FlextSettings.fetch_global()
         self.check("reset_for_testing.recreates_global", fourth is not third)
         self._TestConfig.reset_for_testing()
         test_a = self._TestConfig()
@@ -154,21 +154,21 @@ class Ex02FlextSettings(Examples):
         invalid_override = config.apply_override("does_not_exist", "x")
         self.check("apply_override.invalid_return", invalid_override)
 
-    def _exercise_get_global_and_provider(self) -> None:
-        """Exercise get_global and DI config provider."""
-        self.section("get_global_and_provider")
+    def _exercise_fetch_global_and_provider(self) -> None:
+        """Exercise fetch_global and DI config provider."""
+        self.section("fetch_global_and_provider")
         FlextSettings.reset_for_testing()
-        base = FlextSettings.get_global()
-        cloned = FlextSettings.get_global()
-        self.check("get_global.clone_same_values", cloned.app_name == base.app_name)
-        self.check("get_global.clone_new_object", cloned is base)
-        overridden = FlextSettings.get_global(
-            overrides={"app_name": "materialized", "timeout_seconds": 55.0},
+        base = FlextSettings.fetch_global()
+        cloned = FlextSettings.fetch_global()
+        self.check("fetch_global.clone_same_values", cloned.app_name == base.app_name)
+        self.check("fetch_global.clone_new_object", cloned is base)
+        overridden = FlextSettings.fetch_global(
+            overrides={"app_name": "materialized", "timeout_seconds": 55.0}
         )
-        self.check("get_global.override.app_name", overridden.app_name)
-        self.check("get_global.override.timeout_seconds", overridden.timeout_seconds)
-        provider = overridden.get_di_config_provider()
-        self.check("get_di_config_provider.type", type(provider).__name__)
+        self.check("fetch_global.override.app_name", overridden.app_name)
+        self.check("fetch_global.override.timeout_seconds", overridden.timeout_seconds)
+        provider = overridden.resolve_di_config_provider()
+        self.check("resolve_di_config_provider.type", type(provider).__name__)
 
     def _exercise_resolve_env_file_and_auto_config(self) -> None:
         """Exercise resolve_env_file and AutoConfig."""
@@ -211,11 +211,14 @@ class Ex02FlextSettings(Examples):
         FlextSettings.register_namespace("decorated_ns", _DecoratedNamespace)
         FlextSettings.register_namespace("registered_ns", _RegisteredNamespace)
         base = FlextSettings()
-        decorated_typed = base.get_namespace("decorated_ns", tc)
-        registered_typed = base.get_namespace("registered_ns", tc)
-        self.check("get_namespace.decorated.service_name", decorated_typed.service_name)
+        decorated_typed = base.fetch_namespace("decorated_ns", tc)
+        registered_typed = base.fetch_namespace("registered_ns", tc)
         self.check(
-            "get_namespace.registered.service_name",
+            "fetch_namespace.decorated.service_name",
+            decorated_typed.service_name,
+        )
+        self.check(
+            "fetch_namespace.registered.service_name",
             registered_typed.service_name,
         )
 

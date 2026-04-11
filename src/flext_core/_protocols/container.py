@@ -115,7 +115,7 @@ class FlextProtocolsContainer:
             type_cls: None = None,
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
-        def get_config(self) -> t.ConfigMap:
+        def resolve_config(self) -> t.ConfigMap:
             """Return the merged configuration exposed by this container."""
             ...
 

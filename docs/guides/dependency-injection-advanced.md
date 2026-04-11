@@ -124,7 +124,7 @@ from flext_core import FlextContainer, FlextLogger
 container = FlextContainer.get_global()
 
 # Create service instance
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 # Register it (wrapped in r)
 result = container.register("logger", logger)
@@ -248,7 +248,7 @@ def initialize_application() -> r[bool]:
         return register_result
 
     # Register logger
-    logger = FlextLogger(config.log_level)
+    logger = u.fetch_logger(config.log_level)
     logger_result = container.register("logger", logger)
     if logger_result.is_failure:
         return logger_result
@@ -467,7 +467,7 @@ container = FlextContainer.get_global()
 
 # Batch register multiple services (stops at first failure)
 result = container.batch_register([
-    ("logger", FlextLogger()),
+    ("logger", u.fetch_logger()),
     ("database", DatabaseService()),
     ("cache", CacheService()),
 ])
@@ -679,7 +679,7 @@ service = container.get("service").value  # May crash
 # ✅ CORRECT - Register during initialization
 def initialize():
     container = FlextContainer.get_global()
-    _ = container.register("logger", FlextLogger())
+    _ = container.register("logger", u.fetch_logger())
     _ = container.register("config", FlextSettings.load().value)
 
 

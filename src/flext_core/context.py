@@ -43,7 +43,7 @@ class FlextContext(m.ArbitraryTypesModel):
     - Serialization helpers for propagating context via headers or payloads
     """
 
-    _logger: ClassVar[p.Logger] = FlextLogger.get_logger(__name__)
+    _logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @staticmethod
     def _to_normalized(value: t.ValueOrModel) -> t.RecursiveContainer:
@@ -340,9 +340,9 @@ class FlextContext(m.ArbitraryTypesModel):
         self._metadata = m.Metadata()
         self._statistics.clears += 1
         operations = dict(self._statistics.operations)
-        clear_value = operations.get(c.OPERATION_CLEAR)
+        clear_value = operations.get(c.ContextOperation.CLEAR.value)
         if isinstance(clear_value, int):
-            operations[c.OPERATION_CLEAR] = clear_value + 1
+            operations[c.ContextOperation.CLEAR.value] = clear_value + 1
             self._statistics = self._statistics.model_copy(
                 update={"operations": operations},
             )
@@ -364,9 +364,9 @@ class FlextContext(m.ArbitraryTypesModel):
                     t.ConfigMap(root=dict(scope_dict)),
                     scope=scope_name,
                 )
-        cloned.set_all_metadata_for_clone(self._metadata.model_copy())
+        cloned._metadata = self._metadata.model_copy()
         statistics_copy: m.ContextStatistics = self._statistics.model_copy()
-        cloned.set_statistics_for_clone(statistics_copy)
+        cloned._statistics = statistics_copy
         return cloned
 
     def export(
@@ -499,7 +499,7 @@ class FlextContext(m.ArbitraryTypesModel):
                 f"Context key '{key}' not found in scope '{scope}'",
             )
         value = scope_data[key]
-        self._update_statistics(c.OPERATION_GET)
+        self._update_statistics(c.ContextOperation.GET.value)
         if value is None:
             return r[t.RuntimeAtomic].fail(
                 f"Context key '{key}' has None value in scope '{scope}'",
@@ -704,7 +704,7 @@ class FlextContext(m.ArbitraryTypesModel):
                     "Failed to validate context after removal",
                     exc_info=exc,
                 )
-            self._update_statistics(c.OPERATION_REMOVE)
+            self._update_statistics(c.ContextOperation.REMOVE.value)
 
     @overload
     def set(
@@ -755,10 +755,6 @@ class FlextContext(m.ArbitraryTypesModel):
             return self._set_bulk(key_or_data, scope)
         return self._set_single(key_or_data, value, scope)
 
-    def set_all_metadata_for_clone(self, metadata: m.Metadata) -> None:
-        """Set all metadata for the context (used internally for cloning)."""
-        self._metadata = metadata
-
     def apply_metadata(self, key: str, value: t.MetadataValue) -> None:
         """Set metadata for the context.
 
@@ -773,10 +769,6 @@ class FlextContext(m.ArbitraryTypesModel):
         self._metadata = self._metadata.model_copy(
             update={c.FIELD_ATTRIBUTES: updated_attributes},
         )
-
-    def set_statistics_for_clone(self, statistics: m.ContextStatistics) -> None:
-        """Set context statistics (used internally for cloning)."""
-        self._statistics = statistics
 
     def validate_context(self) -> r[bool]:
         """Validate the context data.
@@ -941,9 +933,9 @@ class FlextContext(m.ArbitraryTypesModel):
             updated = t.ConfigMap(root=dict(current))
             updated.update(data.root)
             _ = ctx_var.set(updated)
-            self._update_statistics(c.OPERATION_SET)
+            self._update_statistics(c.ContextOperation.SET.value)
             self._execute_hooks(
-                c.OPERATION_SET,
+                c.ContextOperation.SET.value,
                 t.ConfigMap(root={c.Directory.DATA: t.ConfigMap(root=data.root)}),
             )
             return r[bool].ok(True)
@@ -988,9 +980,9 @@ class FlextContext(m.ArbitraryTypesModel):
             updated[key] = value
             _ = ctx_var.set(updated)
             FlextContext._propagate_to_logger(key, value, scope)
-            self._update_statistics(c.OPERATION_SET)
+            self._update_statistics(c.ContextOperation.SET.value)
             self._execute_hooks(
-                c.OPERATION_SET,
+                c.ContextOperation.SET.value,
                 t.ConfigMap(root={"key": key, "value": value}),
             )
             return r[bool].ok(True)
@@ -1036,7 +1028,7 @@ class FlextContext(m.ArbitraryTypesModel):
 
         Example:
             >>> from flext_core import FlextContainer
-            >>> FlextContext.configure_container(FlextContainer.get_global())
+            >>> FlextContext.configure_container(FlextContainer.fetch_global())
             >>> container = FlextContext.resolve_container()
             >>> result = container.get("service_name")
 
@@ -1231,7 +1223,7 @@ class FlextContext(m.ArbitraryTypesModel):
             Example:
                 >>> result = FlextContext.Service.register_service(
                 ...     "logger",
-                ...     FlextLogger(__name__),
+                ...     u.fetch_logger(__name__),
                 ... )
                 >>> if result.is_failure:
                 ...     print(f"Registration failed: {result.error}")

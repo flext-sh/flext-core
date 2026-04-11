@@ -44,7 +44,7 @@ Structured logging with correlation metadata and DI-friendly construction.
 ```python
 from flext_core import FlextLogger
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 logger.info("Application started")
 
 with logger.context(operation="user_creation", user_id="user_123"):

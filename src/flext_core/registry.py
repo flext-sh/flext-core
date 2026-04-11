@@ -68,7 +68,7 @@ class FlextRegistry(s[bool]):
         if self.dispatcher is not None:
             self._dispatcher = self.dispatcher
         else:
-            container_value = FlextContainer.get_global().get("command_bus").unwrap()
+            container_value = FlextContainer.fetch_global().get("command_bus").unwrap()
             if isinstance(container_value, FlextDispatcher):
                 self._dispatcher = container_value
             else:
@@ -168,12 +168,12 @@ class FlextRegistry(s[bool]):
             return r[bool].fail(c.ERR_DISPATCHER_NOT_CONFIGURED)
         return r[bool].ok(True)
 
-    def get_plugin(
+    def fetch_plugin(
         self,
         category: str,
         name: str,
         *,
-        scope: str = "instance",
+        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
     ) -> r[t.RuntimeAtomic | None]:
         """Get a registered plugin by category and name.
 
@@ -216,7 +216,7 @@ class FlextRegistry(s[bool]):
         self,
         category: str,
         *,
-        scope: str = "instance",
+        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
     ) -> r[t.StrSequence]:
         """List all plugins in a category.
 

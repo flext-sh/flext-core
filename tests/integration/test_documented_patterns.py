@@ -266,7 +266,7 @@ class TestDocumentedPatterns:
     def test_infrastructure_logger_automatic(self) -> None:
         service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")
         assert service.logger is not None
-        assert isinstance(service.logger, p.Logger)
+        assert callable(getattr(service.logger, "bind", None))
 
     def test_infrastructure_container_automatic(self) -> None:
         service = u.Core.Tests.make(u.Core.Tests.GetUserService, user_id="123")

@@ -408,13 +408,13 @@ class TestFlextUtilitiesGuards:
     def test_is_settings_type_rejects_non_class(self) -> None:
         tm.that(u.is_settings_type("not a type"), eq=False)
 
-    def test_is_settings_type_rejects_class_without_get_global(self) -> None:
+    def test_is_settings_type_rejects_class_without_fetch_global(self) -> None:
         tm.that(u.is_settings_type(str), eq=False)
 
-    def test_is_settings_type_accepts_class_with_get_global(self) -> None:
+    def test_is_settings_type_accepts_class_with_fetch_global(self) -> None:
         class _FakeSettings:
             @staticmethod
-            def get_global() -> None:
+            def fetch_global() -> None:
                 pass
 
         tm.that(u.is_settings_type(_FakeSettings), eq=True)

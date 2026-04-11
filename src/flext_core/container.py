@@ -23,7 +23,6 @@ from dependency_injector import containers as di_containers, providers as di_pro
 from pydantic import BaseModel, ValidationError
 
 from flext_core import (
-    FlextContext,
     FlextDispatcher,
     FlextLogger,
     FlextSettings,
@@ -34,6 +33,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core.context import FlextContext
 
 
 def _is_service_of_type[T: t.RegisterableService](
@@ -216,19 +216,19 @@ class FlextContainer(p.Container):
         """Return the execution context bound to this container.
 
         The context must be provided during container initialization via the
-        registration specification in `__init__` or `get_global()`. If no
+        registration specification in `__init__` or `fetch_global()`. If no
         context was provided, this property will raise an error.
 
         Raises:
             RuntimeError: If context was not provided during initialization.
 
         Example:
-            >>> container = FlextContainer.get_global(context=my_context)
+            >>> container = FlextContainer.fetch_global(context=my_context)
             >>> ctx = container.context  # Returns the provided context
 
         """
         if not hasattr(self, "_context") or self._context is None:
-            error_msg = "Context not initialized. Provide context during container creation via FlextContainer(registration=m.ServiceRegistrationSpec(context=...)) or FlextContainer.get_global(context=...)"
+            error_msg = "Context not initialized. Provide context during container creation via FlextContainer(registration=m.ServiceRegistrationSpec(context=...)) or FlextContainer.fetch_global(context=...)"
             raise RuntimeError(error_msg)
         return self._context
 
@@ -246,7 +246,7 @@ class FlextContainer(p.Container):
 
            from flext_core import FlextContainer, inject
 
-           container = FlextContainer.get_global()
+           container = FlextContainer.fetch_global()
            _ = container.register(
                "token_factory",
                lambda: {"token": "abc123"},
@@ -437,7 +437,7 @@ class FlextContainer(p.Container):
         return factory_wrapper
 
     @classmethod
-    def get_global(
+    def fetch_global(
         cls,
         *,
         config: p.Settings | None = None,
@@ -532,7 +532,14 @@ class FlextContainer(p.Container):
         self.sync_config_to_di()
         return self
 
-    def create_module_logger(self, module_name: str | None = None) -> p.Logger:
+    def create_module_logger(
+        self,
+        module_name: str | None = None,
+        *,
+        service_name: str | None = None,
+        service_version: str | None = None,
+        correlation_id: str | None = None,
+    ) -> p.Logger:
         """Create a FlextLogger instance for the specified module.
 
         This method provides direct access to FlextLogger without going through
@@ -546,7 +553,12 @@ class FlextContainer(p.Container):
             A FlextLogger instance configured for the specified module.
 
         """
-        return FlextLogger.create_module_logger(module_name or c.DEFAULT_LOGGER_MODULE)
+        return FlextLogger.create_module_logger(
+            module_name or c.DEFAULT_LOGGER_MODULE,
+            service_name=service_name,
+            service_version=service_version,
+            correlation_id=correlation_id,
+        )
 
     @staticmethod
     def _narrow_service[T: t.RegisterableService](
@@ -590,7 +602,7 @@ class FlextContainer(p.Container):
 
         Example:
             >>> container = FlextContainer()
-            >>> container.register("logger", FlextLogger(__name__))
+            >>> container.register("logger", u.fetch_logger(__name__))
             >>> result = container.get("logger")
             >>> if result.is_success and isinstance(result.value, FlextLogger):
             ...     result.value.info("Resolved")
@@ -630,7 +642,7 @@ class FlextContainer(p.Container):
         return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
     @override
-    def get_config(self) -> t.ConfigMap:
+    def resolve_config(self) -> t.ConfigMap:
         """Return the merged configuration exposed by this container."""
         config_dict_raw = self._global_config.model_dump()
         return t.ConfigMap(
@@ -726,7 +738,7 @@ class FlextContainer(p.Container):
         user_overrides_map = t.ConfigMap(root=overrides_root)
         self._user_overrides = user_overrides_map
         config_instance: p.Settings = (
-            config if config is not None else FlextSettings.get_global()
+            config if config is not None else FlextSettings.fetch_global()
         )
         self._config = config_instance
         self._context = context
@@ -1072,12 +1084,12 @@ class FlextContainer(p.Container):
             return
         for namespace in namespaces:
             factory_name = f"config.{namespace}"
-            config_class = FlextSettings.get_namespace_config(namespace)
+            config_class = FlextSettings.resolve_namespace_config(namespace)
             if config_class is None:
                 continue
             config_class_non_null: type[BaseModel] = config_class
             namespace_factory: t.FactoryCallable = partial(
-                FlextSettings.get_global().get_namespace,
+                FlextSettings.fetch_global().fetch_namespace,
                 namespace,
                 config_class_non_null,
             )
@@ -1127,7 +1139,7 @@ class FlextContainer(p.Container):
 
     def _get_default_config(self) -> p.Settings:
         """Get default configuration instance."""
-        return FlextSettings.get_global()
+        return FlextSettings.fetch_global()
 
 
 __all__ = ["FlextContainer"]

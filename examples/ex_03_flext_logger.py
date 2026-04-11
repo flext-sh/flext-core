@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import c
+from examples import c, r, u
 from examples.shared import Examples
-from flext_core import FlextContainer, FlextLogger, r
+from flext_core import FlextContainer, FlextLogger
 
 FlextLogger.configure_structlog()
 
@@ -35,8 +35,8 @@ class Ex03FlextLogger(Examples):
         self.section("factory_methods")
         logger = FlextLogger.create_module_logger("examples.ex_03.factory")
         self.check("create_module_logger.type", type(logger).__name__)
-        raw = FlextLogger.get_logger("examples.ex_03.factory.raw")
-        self.check("get_logger.type", type(raw).__name__)
+        raw = u.fetch_logger("examples.ex_03.factory.raw")
+        self.check("fetch_logger.type", type(raw).__name__)
         wrapped = FlextLogger.create_bound_logger("examples.ex_03.factory.bound", raw)
         self.check("create_bound_logger.type", type(wrapped).__name__)
 
@@ -65,9 +65,9 @@ class Ex03FlextLogger(Examples):
         """Exercise scoped context management."""
         self.section("scoped_context")
         logger = FlextLogger.create_module_logger("examples.ex_03.scope")
-        application_scope = c.SCOPE_APPLICATION
-        request_scope = c.SCOPE_REQUEST
-        operation_scope = c.SCOPE_OPERATION
+        application_scope = c.ContextScope.APPLICATION
+        request_scope = c.ContextScope.REQUEST
+        operation_scope = c.ContextScope.OPERATION
         self.check(
             "bind_context.application.ok",
             FlextLogger.bind_context(application_scope, app="core").success,

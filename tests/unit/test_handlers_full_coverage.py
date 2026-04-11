@@ -104,7 +104,7 @@ class TestHandlersFullCoverage:
         query_message: t.ValueOrModel = "query"
         qr = qh._run_pipeline(
             query_message,
-            c.HANDLER_MODE_QUERY,
+            c.HandlerType.QUERY,
         )
         assert qr.success
         eh: TestHandlersFullCoverage._Handler = self._EventHandler(

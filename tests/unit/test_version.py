@@ -19,9 +19,9 @@ from flext_tests import tm
 class TestFlextVersion:
     """Test FlextVersion class methods and functionality with real validation."""
 
-    def test_get_version_string(self) -> None:
-        """Test get_version_string returns valid version string."""
-        version = FlextVersion.get_version_string()
+    def test_resolve_version_string(self) -> None:
+        """Test resolve_version_string returns valid version string."""
+        version = FlextVersion.resolve_version_string()
         tm.that(version, is_=str, none=False, empty=False)
         tm.that(
             version,
@@ -29,9 +29,9 @@ class TestFlextVersion:
             msg="Version must match semantic versioning",
         )
 
-    def test_get_version_info(self) -> None:
-        """Test get_version_info returns valid version tuple."""
-        version_info = FlextVersion.get_version_info()
+    def test_resolve_version_info(self) -> None:
+        """Test resolve_version_info returns valid version tuple."""
+        version_info = FlextVersion.resolve_version_info()
         tm.that(version_info, is_=(tuple, list), none=False, empty=False, len=(1, 10))
         tm.that(
             version_info[0],
@@ -56,15 +56,15 @@ class TestFlextVersion:
             (-1, 0, 0, True),
         ],
     )
-    def test_is_version_at_least(
+    def test_version_at_least(
         self,
         major: int,
         minor: int,
         patch: int,
         expected: bool | None,
     ) -> None:
-        """Test is_version_at_least with various version combinations."""
-        result = FlextVersion.is_version_at_least(major, minor, patch)
+        """Test version_at_least with various version combinations."""
+        result = FlextVersion.version_at_least(major, minor, patch)
         tm.that(result, is_=bool, none=False)
         if expected is not None:
             tm.that(
@@ -73,7 +73,7 @@ class TestFlextVersion:
                 msg=f"Version comparison failed for {major}.{minor}.{patch}",
             )
         else:
-            current_version_info = FlextVersion.get_version_info()
+            current_version_info = FlextVersion.resolve_version_info()
             current_major = (
                 current_version_info[0]
                 if isinstance(current_version_info[0], int)
@@ -92,9 +92,9 @@ class TestFlextVersion:
                     msg=f"Should be False for major {major} > current {current_major}",
                 )
 
-    def test_get_package_info(self) -> None:
-        """Test get_package_info returns complete package metadata dictionary."""
-        info = FlextVersion.get_package_info()
+    def test_resolve_package_info(self) -> None:
+        """Test resolve_package_info returns complete package metadata dictionary."""
+        info = FlextVersion.resolve_package_info()
         tm.that(info, is_=dict, none=False, empty=False)
         required_keys = [
             "name",
@@ -142,12 +142,12 @@ class TestFlextVersion:
         )
         tm.that(
             __version__,
-            eq=FlextVersion.get_version_string(),
+            eq=FlextVersion.resolve_version_string(),
             msg="Module export must match class method",
         )
         tm.that(
             __version_info__,
-            eq=FlextVersion.get_version_info(),
+            eq=FlextVersion.resolve_version_info(),
             msg="Module export must match class method",
         )
 
@@ -182,20 +182,20 @@ class TestFlextVersion:
     @pytest.mark.parametrize(
         "method_name",
         [
-            "get_version_string",
-            "get_version_info",
-            "get_package_info",
-            "is_version_at_least",
+            "resolve_version_string",
+            "resolve_version_info",
+            "resolve_package_info",
+            "version_at_least",
         ],
     )
     def test_methods_are_callable(self, method_name: str) -> None:
         """Test that all class methods are callable and return valid results."""
         method = getattr(FlextVersion, method_name)
         tm.that(callable(method), eq=True, msg=f"{method_name} must be callable")
-        if method_name == "is_version_at_least":
+        if method_name == "version_at_least":
             result = method(0, 0, 0)
             tm.that(result, is_=bool, none=False, msg=f"{method_name} must return bool")
-        elif method_name == "get_version_string":
+        elif method_name == "resolve_version_string":
             result = method()
             tm.that(
                 result,
@@ -204,13 +204,13 @@ class TestFlextVersion:
                 empty=False,
                 msg=f"{method_name} must return non-empty string",
             )
-        elif method_name == "get_version_info":
-            version_info = FlextVersion.get_version_info()
+        elif method_name == "resolve_version_info":
+            version_info = FlextVersion.resolve_version_info()
             assert isinstance(version_info, tuple), (
                 f"{method_name} must return non-empty tuple"
             )
             assert version_info, f"{method_name} must return non-empty tuple"
-        elif method_name == "get_package_info":
+        elif method_name == "resolve_package_info":
             result = method()
             tm.that(
                 result,

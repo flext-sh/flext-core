@@ -19,7 +19,7 @@ def test_circuit_breaker_transitions_and_metrics() -> None:
     cb.record_failure(message_type)
     failure = cb.check_before_dispatch(message_type)
     tm.fail(failure)
-    tm.that(failure.error_code, eq=c.OPERATION_ERROR)
+    tm.that(failure.error_code, eq=c.ErrorCode.OPERATION_ERROR.value)
     tm.that(cb.resolve_open(message_type), eq=True)
     time.sleep(0.12)
     half_open = cb.check_before_dispatch(message_type)
@@ -46,7 +46,7 @@ def test_rate_limiter_blocks_then_recovers() -> None:
     tm.ok(limiter.check_rate_limit(msg_type))
     blocked = limiter.check_rate_limit(msg_type)
     tm.fail(blocked)
-    tm.that(blocked.error_code, eq=c.OPERATION_ERROR)
+    tm.that(blocked.error_code, eq=c.ErrorCode.OPERATION_ERROR.value)
     tm.that(blocked.error_data, none=False)
     assert blocked.error_data is not None
     retry_after_val = blocked.error_data.get("retry_after")

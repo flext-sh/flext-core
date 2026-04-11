@@ -55,6 +55,7 @@ class FlextConstantsPlatform:
     "Pattern for ISO 8601 timestamps (optional, allows empty string)."
     PATTERN_DN_STRING: Final[str] = "^(cn|ou|dc)=.*"
     "Pattern for LDAP DN strings (distinguished names)."
+
     @unique
     class FileExtension(StrEnum):
         """Standard file extension identifiers."""
@@ -119,6 +120,7 @@ class FlextConstantsPlatform:
     PLATFORM_DEFAULT_MAX_DELAY_SECONDS: Final[float] = 300.0
     "Default maximum delay in seconds for retry operations."
     RETRY_COUNT_MIN: Final[int] = 1
+
     @unique
     class BackoffStrategy(StrEnum):
         """Retry backoff strategy identifiers."""

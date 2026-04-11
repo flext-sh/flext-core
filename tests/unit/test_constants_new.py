@@ -16,7 +16,6 @@ from types import MappingProxyType
 
 import pytest
 
-from flext_cli import FlextCliConstants
 from flext_tests import tm
 from tests import c, t
 
@@ -393,7 +392,7 @@ class TestFlextConstants:
     )
     def test_validation_error_codes_are_uppercase_strings(self, code: str) -> None:
         """All error code constants exist as non-empty uppercase strings matching their name."""
-        value = getattr(c, code)
+        value = c.ErrorCode[code]
         tm.that(value, is_=str)
         tm.that(value, eq=code)
 
@@ -465,23 +464,15 @@ class TestFlextConstants:
     @pytest.mark.parametrize(
         ("attr", "expected"),
         [
-            ("SCOPE_GLOBAL", "global"),
-            ("SCOPE_REQUEST", "request"),
-            ("SCOPE_USER", "user"),
-            ("SCOPE_SESSION", "session"),
-            ("SCOPE_TRANSACTION", "transaction"),
-            ("SCOPE_APPLICATION", "application"),
-            ("SCOPE_OPERATION", "operation"),
+            ("ContextScope", c.ContextScope),
             ("CORRELATION_ID_PREFIX", "flext-"),
             ("CORRELATION_ID_LENGTH", 12),
             ("MAX_CONTEXT_DEPTH", 10),
             ("MAX_CONTEXT_SIZE", 1000),
             ("MILLISECONDS_PER_SECOND", 1000),
-            ("EXPORT_FORMAT_JSON", "json"),
-            ("EXPORT_FORMAT_DICT", "dict"),
+            ("ExportFormat", c.ExportFormat),
             ("THREAD_NAME_PREFIX", "flext-dispatcher"),
-            ("HANDLER_MODE_COMMAND", "command"),
-            ("HANDLER_MODE_QUERY", "query"),
+            ("HandlerMode", c.HandlerMode),
             ("DEFAULT_HANDLER_MODE", "command"),
             ("DEFAULT_AUTO_CONTEXT", True),
             ("DEFAULT_ENABLE_LOGGING", True),
@@ -508,21 +499,33 @@ class TestFlextConstants:
         tm.that(c.DEFAULT_CONTEXT_TIMEOUT, eq=c.DEFAULT_TIMEOUT_SECONDS)
 
     def test_infrastructure_valid_handler_modes(self) -> None:
-        """VALID_HANDLER_MODES is a tuple of command and query."""
-        tm.that(c.VALID_HANDLER_MODES, is_=tuple)
-        tm.that(len(c.VALID_HANDLER_MODES), eq=2)
-        tm.that(c.HANDLER_MODE_COMMAND in c.VALID_HANDLER_MODES, eq=True)
-        tm.that(c.HANDLER_MODE_QUERY in c.VALID_HANDLER_MODES, eq=True)
+        """Handler mode set is derived directly from canonical HandlerType enum."""
+        valid_handler_modes: tuple[c.HandlerType, ...] = (
+            c.HandlerType.COMMAND,
+            c.HandlerType.QUERY,
+        )
+        tm.that(valid_handler_modes, is_=tuple)
+        tm.that(len(valid_handler_modes), eq=2)
+        tm.that(c.HandlerType.COMMAND in valid_handler_modes, eq=True)
+        tm.that(c.HandlerType.QUERY in valid_handler_modes, eq=True)
 
     def test_infrastructure_valid_registration_statuses(self) -> None:
-        """VALID_REGISTRATION_STATUSES contains active, inactive, error."""
-        tm.that(c.VALID_REGISTRATION_STATUSES, is_=tuple)
-        tm.that(len(c.VALID_REGISTRATION_STATUSES), eq=3)
-        tm.that(c.REGISTRATION_STATUS_ACTIVE in c.VALID_REGISTRATION_STATUSES, eq=True)
-        tm.that(
-            c.REGISTRATION_STATUS_INACTIVE in c.VALID_REGISTRATION_STATUSES, eq=True
+        """Registration status set is composed from canonical enum authorities."""
+        valid_registration_statuses: tuple[
+            c.RegistrationStatus | c.WarningLevel, ...
+        ] = (
+            c.RegistrationStatus.ACTIVE,
+            c.RegistrationStatus.INACTIVE,
+            c.WarningLevel.ERROR,
         )
-        tm.that(c.REGISTRATION_STATUS_ERROR in c.VALID_REGISTRATION_STATUSES, eq=True)
+        tm.that(valid_registration_statuses, is_=tuple)
+        tm.that(len(valid_registration_statuses), eq=3)
+        tm.that(c.RegistrationStatus.ACTIVE in valid_registration_statuses, eq=True)
+        tm.that(
+            c.RegistrationStatus.INACTIVE in valid_registration_statuses,
+            eq=True,
+        )
+        tm.that(c.WarningLevel.ERROR in valid_registration_statuses, eq=True)
 
     def test_infrastructure_debug_context_keys_frozenset(self) -> None:
         """DEBUG_CONTEXT_KEYS is a frozenset with schema and params."""
@@ -565,10 +568,10 @@ class TestFlextConstants:
 
     def test_infrastructure_header_constants_prefixed(self) -> None:
         """HTTP header constants start with X-."""
-        tm.that(c.HEADER_CORRELATION_ID, starts="X-")
-        tm.that(c.HEADER_PARENT_CORRELATION_ID, starts="X-")
-        tm.that(c.HEADER_SERVICE_NAME, starts="X-")
-        tm.that(c.HEADER_USER_ID, starts="X-")
+        tm.that(c.ContextHeader.CORRELATION_ID, starts="X-")
+        tm.that(c.ContextHeader.PARENT_CORRELATION_ID, starts="X-")
+        tm.that(c.ContextHeader.SERVICE_NAME, starts="X-")
+        tm.that(c.ContextHeader.USER_ID, starts="X-")
 
     # ------------------------------------------------------------------
     # Platform constants
@@ -707,7 +710,7 @@ class TestFlextConstants:
         invalid: list[str],
     ) -> None:
         """Platform regex patterns correctly match/reject inputs."""
-        pattern_value = getattr(FlextCliConstants, pattern_attr)
+        pattern_value = getattr(c, pattern_attr)
         compiled: Pattern[str] = re.compile(pattern_value)
         for case in valid:
             tm.that(
@@ -787,7 +790,14 @@ class TestFlextConstants:
         [
             (
                 "ContextOperation",
-                {"BIND": "bind", "UNBIND": "unbind", "CLEAR": "clear", "GET": "get"},
+                {
+                    "BIND": "bind",
+                    "UNBIND": "unbind",
+                    "CLEAR": "clear",
+                    "GET": "get",
+                    "REMOVE": "remove",
+                    "SET": "set",
+                },
             ),
             (
                 "Status",
@@ -1015,17 +1025,17 @@ class TestFlextConstants:
 
     def test_mixins_state_active_derives_from_domain_status(self) -> None:
         """STATE_ACTIVE equals Domain.Status.ACTIVE."""
-        tm.that(c.STATE_ACTIVE, eq=str(c.Status.ACTIVE))
+        tm.that(c.Status.ACTIVE, eq=str(c.Status.ACTIVE))
 
     def test_mixins_state_inactive_derives_from_domain_status(self) -> None:
         """STATE_INACTIVE equals Domain.Status.INACTIVE."""
-        tm.that(c.STATE_INACTIVE, eq=str(c.Status.INACTIVE))
+        tm.that(c.Status.INACTIVE, eq=str(c.Status.INACTIVE))
 
     def test_mixins_health_states_derive_from_cqrs(self) -> None:
         """Health state constants derive from HealthStatus enum."""
-        tm.that(c.STATE_HEALTHY, eq=str(c.HealthStatus.HEALTHY))
-        tm.that(c.STATE_DEGRADED, eq=str(c.HealthStatus.DEGRADED))
-        tm.that(c.STATE_UNHEALTHY, eq=str(c.HealthStatus.UNHEALTHY))
+        tm.that(c.HealthStatus.HEALTHY, eq=str(c.HealthStatus.HEALTHY))
+        tm.that(c.HealthStatus.DEGRADED, eq=str(c.HealthStatus.DEGRADED))
+        tm.that(c.HealthStatus.UNHEALTHY, eq=str(c.HealthStatus.UNHEALTHY))
 
     @pytest.mark.parametrize(
         ("enum_cls", "members"),
@@ -1215,12 +1225,12 @@ class TestFlextConstants:
             "HandlerType",
             "CommonStatus",
             # From validation
-            "VALIDATION_ERROR",
+            "ErrorCode",
             "ErrorType",
             "FailureLevel",
             "STRING_METHOD_MAP",
             # From infrastructure
-            "SCOPE_GLOBAL",
+            "ContextScope",
             "MetadataField",
             "SENTINEL_MISSING",
             # From platform

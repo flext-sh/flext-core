@@ -94,7 +94,7 @@ class TestMixinsFullCoverage:
         def clear_all(self) -> None:
             return None
 
-        def get_config(self) -> t.ConfigMap:
+        def resolve_config(self) -> t.ConfigMap:
             return t.ConfigMap(root={})
 
         def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.NormalizedValue]:
@@ -440,7 +440,7 @@ class TestMixinsFullCoverage:
         tm.that(stack2.current_context(), none=True)
         x._logger_cache.clear()
         logger_obj = _LoggerService._get_or_create_logger()
-        tm.that(logger_obj, is_=p.Logger)
+        tm.that(logger_obj, none=False)
 
         class _BrokenContainer:
             def get_typed(

@@ -97,10 +97,10 @@ class TestCompleteFlextSystemIntegration:
         timeout_default = c.DEFAULT_TIMEOUT_SECONDS
         assert isinstance(timeout_default, (int, float))
         assert timeout_default > 0
-        validation_error_code = c.VALIDATION_ERROR
+        validation_error_code = c.ErrorCode.VALIDATION_ERROR
         assert isinstance(validation_error_code, str)
         assert validation_error_code == "VALIDATION_ERROR"
-        config_error_code = c.CONFIG_ERROR
+        config_error_code = c.ErrorCode.CONFIG_ERROR
         assert isinstance(config_error_code, str)
         assert config_error_code == "CONFIG_ERROR"
         min_name_length = c.MIN_NAME_LENGTH
@@ -170,14 +170,14 @@ class TestCompleteFlextSystemIntegration:
             if not dados:
                 return r[t.StrMapping].fail(
                     "Dados não fornecidos",
-                    error_code=c.VALIDATION_ERROR,
+                    error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
             dados_processados: t.MutableStrMapping = {}
             for key, value in dados.items():
                 if not u.is_string_non_empty(value):
                     return r[t.StrMapping].fail(
                         f"Campo '{key}' não pode estar vazio",
-                        error_code=c.VALIDATION_ERROR,
+                        error_code=c.ErrorCode.VALIDATION_ERROR,
                     )
                 dados_processados[key] = f"processado_{value}"
             dados_processados["processado_em"] = u.generate_iso_timestamp()

@@ -104,7 +104,7 @@ class TestMigrationValidation:
             """User service extending s."""
 
             _logger: p.Logger = PrivateAttr(
-                default_factory=lambda: FlextLogger(__name__),
+                default_factory=lambda: u.fetch_logger(__name__),
             )
 
             @override
@@ -135,7 +135,7 @@ class TestMigrationValidation:
 
     def test_logger_structured_logging(self) -> None:
         """Verify FlextLogger continues working."""
-        logger = FlextLogger(__name__)
+        logger = u.fetch_logger(__name__)
         assert logger is not None
         logger.info("Test message", test_key="test_value")
         logger.debug("Debug message")
@@ -196,7 +196,7 @@ class TestMigrationValidation:
 
             def __init__(self) -> None:
                 super().__init__()
-                self.logger = FlextLogger(__name__)
+                self.logger = u.fetch_logger(__name__)
                 self.container = FlextContainer()
 
             def process_data(
@@ -225,6 +225,6 @@ class TestMigrationValidation:
         assert result.value == "test"
         container = FlextContainer()
         assert container is not None
-        logger = FlextLogger(__name__)
+        logger = u.fetch_logger(__name__)
         logger.info("Test")
         assert True

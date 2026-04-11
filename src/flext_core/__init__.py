@@ -101,7 +101,7 @@ if _t.TYPE_CHECKING:
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
-    from flext_core.lazy import LazyNamespace, build_lazy_import_map
+    from flext_core.lazy import build_lazy_import_map
     from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
@@ -113,6 +113,7 @@ if _t.TYPE_CHECKING:
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
         TV,
+        BaseModel,
         EnumT,
         FlextTypes,
         MessageT_contra,
@@ -171,10 +172,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextHandlers",
                 "h",
             ),
-            ".lazy": (
-                "LazyNamespace",
-                "build_lazy_import_map",
-            ),
+            ".lazy": ("build_lazy_import_map",),
             ".loggings": ("FlextLogger",),
             ".mixins": (
                 "FlextMixins",
@@ -200,6 +198,7 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".settings": ("FlextSettings",),
             ".typings": (
+                "BaseModel",
                 "EnumT",
                 "FlextTypes",
                 "MessageT_contra",
@@ -242,6 +241,7 @@ install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__ = [
     "TV",
+    "BaseModel",
     "EnumT",
     "FlextConstants",
     "FlextConstantsBase",
@@ -340,7 +340,6 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
-    "LazyNamespace",
     "MessageT_contra",
     "P",
     "R",

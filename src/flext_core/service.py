@@ -370,7 +370,7 @@ class FlextService[
         runtime_context_input = (
             context if context is not None else FlextContext.create()
         )
-        runtime_config_typed: p.Settings = runtime_config
+        runtime_config_typed = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=runtime_context_input,

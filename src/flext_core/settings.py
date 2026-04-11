@@ -67,7 +67,7 @@ class FlextSettings(BaseSettings):
         env_file=u.resolve_env_file(),
         env_file_encoding=c.DEFAULT_ENCODING,
         case_sensitive=False,
-        extra=c.ExtraConfig.IGNORE,
+        extra=c.ExtraConfig.IGNORE.value,
         validate_assignment=True,
     )
 
@@ -313,12 +313,12 @@ class FlextSettings(BaseSettings):
                 del cls._instances[instance_cls]
 
     @classmethod
-    def get_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
+    def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
         if overrides is None:
             return cls()
         if cls is FlextSettings:
-            global_config = cls.get_global()
+            global_config = cls.fetch_global()
             instance = global_config.model_copy(deep=True)
         else:
             instance = cls()
@@ -349,7 +349,7 @@ class FlextSettings(BaseSettings):
         setattr(self, key, value)
         return True
 
-    def get_di_config_provider(self) -> t.Scalar:
+    def resolve_di_config_provider(self) -> t.Scalar:
         """Get dependency injection provider for this config.
 
         Returns a providers.Singleton instance via the runtime bridge.
@@ -404,7 +404,7 @@ class FlextSettings(BaseSettings):
             return pydantic_private[name]
         namespace = name.lower()
         if namespace in {"core", "root", "settings"}:
-            return FlextSettings.get_global()
+            return FlextSettings.fetch_global()
         namespace_key = namespace
         config_class = self._namespace_registry.get(namespace_key)
         if config_class is None:
@@ -421,7 +421,7 @@ class FlextSettings(BaseSettings):
         if config_class is None:
             msg = f"Namespace '{name}' not registered"
             raise AttributeError(msg)
-        return self.get_namespace(namespace_key, config_class)
+        return self.fetch_namespace(namespace_key, config_class)
 
     @classmethod
     def for_context(cls, context_id: str, **overrides: t.Scalar) -> Self:
@@ -443,7 +443,7 @@ class FlextSettings(BaseSettings):
             ... )
 
         """
-        base = cls.get_global()
+        base = cls.fetch_global()
         context_overrides = cls._context_overrides.get(context_id, {})
         all_overrides = {**context_overrides, **overrides}
         if all_overrides:
@@ -451,7 +451,7 @@ class FlextSettings(BaseSettings):
         return base
 
     @classmethod
-    def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
+    def resolve_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
         """Internal namespace registry lookup."""
         return cls._namespace_registry.get(namespace)
 
@@ -525,7 +525,7 @@ class FlextSettings(BaseSettings):
 
         return decorator
 
-    def get_namespace(
+    def fetch_namespace(
         self,
         namespace: str,
         config_type: type[T_Namespace],

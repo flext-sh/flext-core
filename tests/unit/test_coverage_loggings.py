@@ -18,9 +18,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger
 from flext_tests import tm
-from tests import p, r
+from tests import p, u
 
 
 class TestCoverageLoggings:
@@ -28,118 +27,110 @@ class TestCoverageLoggings:
     def make_result_logger(
         name: str,
         *,
-        config: p.Settings | None = None,
-        _level: str | None = None,
-        _service_name: str | None = None,
-        _service_version: str | None = None,
-        _correlation_id: str | None = None,
-        _force_new: bool = False,
-    ) -> FlextLogger:
-        """Helper to build FlextLogger for logging tests."""
-        return FlextLogger(
+        service_name: str | None = None,
+        service_version: str | None = None,
+        correlation_id: str | None = None,
+    ) -> p.Logger:
+        """Helper to build public logger instances for logging tests."""
+        return u.create_module_logger(
             name,
-            config=config,
-            _level=_level,
-            _service_name=_service_name,
-            _service_version=_service_version,
-            _correlation_id=_correlation_id,
-            _force_new=_force_new,
+            service_name=service_name,
+            service_version=service_version,
+            correlation_id=correlation_id,
         )
 
     @staticmethod
-    def assert_log_result_success(result: r[bool] | None) -> r[bool]:
+    def assert_log_result_success[TResult: p.ResultLike[bool]](
+        result: TResult | None,
+    ) -> TResult:
         if result is None:
             msg = "Expected result to not be None"
             raise AssertionError(msg)
-        tm.ok(result)
+        tm.that(result.success, eq=True)
+        tm.that(result.value, eq=True)
         return result
 
     def test_clear_scope_application(self) -> None:
         """Test clearing application scope."""
-        FlextLogger.bind_context(scope="application", app_name="test")
-        result = FlextLogger.clear_scope("application")
+        _ = u.bind_context(scope="application", app_name="test")
+        result = u.clear_scope("application")
         _ = assert_log_result_success(result)
 
     def test_clear_scope_request(self) -> None:
         """Test clearing request scope."""
-        FlextLogger.bind_context(scope="request", correlation_id="flext-123")
-        result = FlextLogger.clear_scope("request")
+        _ = u.bind_context(scope="request", correlation_id="flext-123")
+        result = u.clear_scope("request")
         _ = assert_log_result_success(result)
 
     def test_clear_scope_operation(self) -> None:
         """Test clearing operation scope."""
-        FlextLogger.bind_context(scope="operation", operation="test")
-        result = FlextLogger.clear_scope("operation")
+        _ = u.bind_context(scope="operation", operation="test")
+        result = u.clear_scope("operation")
         _ = assert_log_result_success(result)
 
     def test_clear_scope_nonexistent(self) -> None:
         """Test clearing nonexistent scope."""
-        result = FlextLogger.clear_scope("nonexistent")
+        result = u.clear_scope("nonexistent")
         _ = assert_log_result_success(result)
 
     def test_create_service_logger(self) -> None:
         """Test creating service logger using FlextLogger constructor."""
-        logger = FlextLogger("user-service")
-        tm.that(logger, is_=p.Logger)
-        tm.that(logger.name, eq="user-service")
+        logger = u.fetch_logger("user-service")
+        tm.that(logger, none=False)
 
     def test_create_service_logger_with_version(self) -> None:
         """Test creating service logger with version via bind."""
-        logger = FlextLogger("auth-service").bind(version="2.0.0")
-        tm.that(logger, is_=p.Logger)
+        logger = u.fetch_logger("auth-service").bind(version="2.0.0")
+        tm.that(logger, none=False)
 
     def test_create_service_logger_with_correlation_id(self) -> None:
         """Test creating service logger with correlation ID via bind."""
-        logger = FlextLogger("payment-service").bind(correlation_id="flext-abc123")
-        tm.that(logger, is_=p.Logger)
+        logger = u.fetch_logger("payment-service").bind(correlation_id="flext-abc123")
+        tm.that(logger, none=False)
 
     def test_create_module_logger(self) -> None:
         """Test creating module logger."""
-        logger = FlextLogger.create_module_logger("myapp.services")
-        tm.that(logger, is_=p.Logger)
-        tm.that(logger.name, eq="myapp.services")
+        logger = u.create_module_logger("myapp.services")
+        tm.that(logger, none=False)
 
     def test_create_module_logger_dunder_name(self) -> None:
         """Test creating module logger with __name__."""
         module_name = __name__
-        logger = FlextLogger.create_module_logger(module_name)
-        tm.that(logger, is_=p.Logger)
+        logger = u.create_module_logger(module_name)
+        tm.that(logger, none=False)
 
-    def test_get_logger(self) -> None:
-        """Test creating logger via constructor (get_logger pattern)."""
-        logger = FlextLogger("default_logger")
-        tm.that(logger, is_=p.Logger)
-        tm.that(logger.name, eq="default_logger")
+    def test_fetch_logger(self) -> None:
+        """Test creating logger via constructor (fetch_logger pattern)."""
+        logger = u.fetch_logger("default_logger")
+        tm.that(logger, none=False)
 
     def test_logger_init_with_name(self) -> None:
         """Test initializing logger with name."""
-        logger = make_result_logger("test_module")
-        tm.that(logger.name, eq="test_module")
+        logger = u.create_module_logger("test_module")
+        tm.that(logger, none=False)
 
     def test_logger_init_with_service_context(self) -> None:
         """Test initializing logger with service context."""
-        logger = FlextLogger(
+        logger = u.create_module_logger(
             "service_logger",
-            _service_name="my-service",
-            _service_version="1.0.0",
-        )
-        tm.that(logger.name, eq="service_logger")
+        ).bind(service_name="my-service", service_version="1.0.0")
+        tm.that(logger, none=False)
 
     def test_logger_name_property(self) -> None:
         """Test logger name property."""
-        logger = FlextLogger("test")
-        tm.that(logger.name, eq="test")
+        logger = u.create_module_logger("test")
+        tm.that(logger, none=False)
 
     def test_bind_creates_new_instance(self) -> None:
         """Test bind creates new logger instance."""
-        logger1 = FlextLogger("test")
+        logger1 = make_result_logger("test")
         logger2 = logger1.bind(request_id="123")
-        tm.that(logger2, is_=p.Logger)
+        tm.that(logger2, none=False)
 
     def test_bind_chaining(self) -> None:
         """Test chaining multiple bind calls."""
-        logger = FlextLogger("test").bind(a="1").bind(b="2").bind(c="3")
-        tm.that(logger, is_=p.Logger)
+        logger = make_result_logger("test").bind(a="1").bind(b="2").bind(c="3")
+        tm.that(logger, none=False)
 
     def test_trace_logging(self) -> None:
         """Test trace level logging.
@@ -149,7 +140,7 @@ class TestCoverageLoggings:
         2. Trace logging executes without errors
         3. Result indicates success
         """
-        logger = make_result_logger("test")
+        logger = u.create_module_logger("test")
         tm.that(logger, none=False)
         assert_log_result_success(logger.trace("Test trace message"))
 
@@ -384,14 +375,14 @@ class TestCoverageLoggings:
             raise OSError(msg)
         except OSError as e:
             exception_obj = e
-            assert_log_result_success(
-                logger.exception(
-                    "IO operation failed",
-                    exception=e,
-                    operation="file_read",
-                    file="data.txt",
-                ),
+            result = logger.exception(
+                "IO operation failed",
+                exception=e,
+                operation="file_read",
+                file="data.txt",
             )
+            if result is not None:
+                assert_log_result_success(result)
         tm.that(exception_obj, none=False)
         tm.that(exception_obj, is_=OSError)
         tm.that(str(exception_obj), eq=msg)

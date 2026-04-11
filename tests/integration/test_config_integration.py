@@ -23,7 +23,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextLogger, FlextSettings
+from flext_core import FlextContainer, FlextSettings
 from tests import c, p, t, u
 
 
@@ -173,10 +173,10 @@ class TestFlextSettingsSingletonIntegration:
         container.clear_all()
 
     def test_singleton_pattern_with_factories(self) -> None:
-        """Test that FlextSettings.get_global() returns the same instance."""
-        config1 = FlextSettings.get_global()
-        config2 = FlextSettings.get_global()
-        config3 = FlextSettings.get_global()
+        """Test that FlextSettings.fetch_global() returns the same instance."""
+        config1 = FlextSettings.fetch_global()
+        config2 = FlextSettings.fetch_global()
+        config3 = FlextSettings.fetch_global()
         assert config1 is config2
         assert config2 is config3
         assert config1 is config3
@@ -185,17 +185,17 @@ class TestFlextSettingsSingletonIntegration:
         assert isinstance(config3, p.Settings)
 
     def test_singleton_pattern(self) -> None:
-        """Test that FlextSettings.get_global() returns the same instance."""
-        config1 = FlextSettings.get_global()
-        config2 = FlextSettings.get_global()
-        config3 = FlextSettings.get_global()
+        """Test that FlextSettings.fetch_global() returns the same instance."""
+        config1 = FlextSettings.fetch_global()
+        config2 = FlextSettings.fetch_global()
+        config3 = FlextSettings.fetch_global()
         assert config1 is config2
         assert config2 is config3
         assert id(config1) == id(config2) == id(config3)
 
     def test_config_in_flext_container(self) -> None:
         """Test that FlextContainer uses the global config singleton."""
-        global_config = FlextSettings.get_global()
+        global_config = FlextSettings.fetch_global()
         container = FlextContainer()
         config_result = container.get("config")
         if config_result.success:
@@ -211,7 +211,7 @@ class TestFlextSettingsSingletonIntegration:
         os.environ["FLEXT_TIMEOUT_SECONDS"] = "90"
         os.environ["FLEXT_DEBUG"] = "true"
         try:
-            config = FlextSettings.get_global()
+            config = FlextSettings.fetch_global()
             assert config.app_name == "test-app-from-env"
             assert config.log_level == "DEBUG"
             assert config.max_workers == 8
@@ -244,7 +244,7 @@ class TestFlextSettingsSingletonIntegration:
             assert config_file_path.exists()
             loaded = u.Cli.json_read(config_file_path).unwrap_or({})
             assert loaded == config_data
-            config = FlextSettings.get_global()
+            config = FlextSettings.fetch_global()
             assert config.app_name is not None
             assert config.log_level is not None
             assert config.max_workers is not None
@@ -279,7 +279,7 @@ class TestFlextSettingsSingletonIntegration:
                 config_file.read_text(encoding="utf-8"),
             ).unwrap_or({})
             assert loaded_data == config_data
-            config = FlextSettings.get_global()
+            config = FlextSettings.fetch_global()
             assert config.app_name is not None
             assert config.debug is not None
             assert config.timeout_seconds is not None
@@ -317,7 +317,7 @@ class TestFlextSettingsSingletonIntegration:
             assert env_file.exists()
             assert "FLEXT_APP_NAME=from-env" in env_file.read_text(encoding="utf-8")
             os.environ["FLEXT_APP_NAME"] = "from-env-var"
-            config = FlextSettings.get_global()
+            config = FlextSettings.fetch_global()
             assert config.app_name in {"from-env-var", "flext"}
             assert config.cache_ttl in {300, 600}
             assert config.max_retry_attempts in {3, 5}
@@ -330,13 +330,13 @@ class TestFlextSettingsSingletonIntegration:
         """Test that singleton is thread-safe."""
         configs: MutableSequence[FlextSettings] = []
 
-        def get_config() -> None:
-            config = FlextSettings.get_global()
+        def collect_config() -> None:
+            config = FlextSettings.fetch_global()
             configs.append(config)
 
         threads: MutableSequence[threading.Thread] = []
         for _ in range(10):
-            t = threading.Thread(target=get_config)
+            t = threading.Thread(target=collect_config)
             threads.append(t)
             t.start()
         for t in threads:
@@ -366,7 +366,7 @@ class TestFlextSettingsSingletonIntegration:
             "FLEXT_TIMEOUT_SECONDS": os.environ.pop("FLEXT_TIMEOUT_SECONDS", None),
         }
         try:
-            config_defaults = FlextSettings.get_global()
+            config_defaults = FlextSettings.fetch_global()
             assert config_defaults.app_name == "flext"
             assert config_defaults.log_level == "INFO"
             assert config_defaults.debug is False
@@ -378,7 +378,7 @@ class TestFlextSettingsSingletonIntegration:
             assert env_file.exists()
             assert env_file.read_text(encoding="utf-8") == env_content
             os.environ["FLEXT_ENV_FILE"] = str(env_file)
-            config_dotenv = FlextSettings.get_global()
+            config_dotenv = FlextSettings.fetch_global()
             assert config_dotenv.app_name in {"from-dotenv", "flext"}, (
                 f"Expected 'from-dotenv' or 'flext' (default), got '{config_dotenv.app_name}'"
             )
@@ -392,7 +392,7 @@ class TestFlextSettingsSingletonIntegration:
             os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
             os.environ["FLEXT_DEBUG"] = "false"
             os.environ["FLEXT_TIMEOUT_SECONDS"] = "90"
-            config_env = FlextSettings.get_global()
+            config_env = FlextSettings.fetch_global()
             assert config_env.app_name == "from-env-var"
             assert config_env.log_level == "DEBUG"
             assert config_env.debug is False
@@ -408,7 +408,7 @@ class TestFlextSettingsSingletonIntegration:
             assert config_explicit.log_level == "ERROR"
             assert config_explicit.debug is True
             assert config_explicit.timeout_seconds == 90
-            test_logger = FlextLogger("test_precedence")
+            test_logger = u.fetch_logger("test_precedence")
             assert test_logger is not None
             assert config_explicit.log_level == "ERROR"
             assert config_explicit.effective_log_level == c.LogLevel.INFO

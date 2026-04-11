@@ -11,7 +11,6 @@ import pytest
 from hypothesis import given, settings, strategies as st
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextLogger
 from tests import d, e, r, u
 
 
@@ -54,7 +53,7 @@ class TestFlextDecorators:
         """Service with logger for testing."""
 
         def __init__(self) -> None:
-            self.logger = FlextLogger(__name__)
+            self.logger = u.fetch_logger(__name__)
             self.attempts = 0
 
         def flaky_method(self) -> str:

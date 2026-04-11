@@ -7,9 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocolsBase, FlextProtocolsResult, t
+from flext_core import FlextProtocolsBase, FlextProtocolsResult, c, t
 
 if TYPE_CHECKING:
     from flext_core import m
@@ -68,7 +68,7 @@ class FlextProtocolsRegistry:
                 FlextProtocolsResult.Result[bool],
             ]
             | None = None,
-            scope: Literal["instance", "class"] = "instance",
+            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a plugin with optional validation."""
             ...
@@ -78,17 +78,17 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: Literal["instance", "class"] = "instance",
+            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[bool]:
             """Unregister a plugin."""
             ...
 
-        def get_plugin(
+        def fetch_plugin(
             self,
             category: str,
             name: str,
             *,
-            scope: str = "instance",
+            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[t.RuntimeAtomic | None]:
             """Get a registered plugin by category and name."""
             ...
@@ -97,7 +97,7 @@ class FlextProtocolsRegistry:
             self,
             category: str,
             *,
-            scope: str = "instance",
+            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[t.StrSequence]:
             """List all plugins in a category."""
             ...

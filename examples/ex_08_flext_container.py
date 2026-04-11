@@ -65,7 +65,7 @@ class Ex08FlextContainer(Examples):
             "max_services": configured_max_services,
             "enable_factory_caching": configured_factory_caching,
         })
-        config_map = container.get_config()
+        config_map = container.resolve_config()
         max_services = config_map["max_services"]
         enable_factory_caching = config_map["enable_factory_caching"]
         max_services_num = max_services if u.is_type(max_services, int) else -1
@@ -73,11 +73,11 @@ class Ex08FlextContainer(Examples):
             enable_factory_caching if u.is_type(enable_factory_caching, bool) else False
         )
         self.check(
-            "configure.get_config.max_services_matches",
+            "configure.resolve_config.max_services_matches",
             max_services_num == configured_max_services,
         )
         self.check(
-            "configure.get_config.enable_factory_caching_matches",
+            "configure.resolve_config.enable_factory_caching_matches",
             factory_cache_flag == configured_factory_caching,
         )
         self.check(
@@ -150,11 +150,11 @@ class Ex08FlextContainer(Examples):
         self.check("clear_all.count", len(container.list_services()))
         before_reset = root
         FlextContainer.reset_for_testing()
-        after_reset = FlextContainer.get_global(context=FlextContext())
+        after_reset = FlextContainer.fetch_global(context=FlextContext())
         self.check("reset_singleton.new_instance", before_reset is not after_reset)
         self.check(
-            "reset_singleton.get_global.same_after_reset",
-            after_reset is FlextContainer.get_global(),
+            "reset_singleton.fetch_global.same_after_reset",
+            after_reset is FlextContainer.fetch_global(),
         )
 
     def _exercise_registration_and_resolution(self, container: FlextContainer) -> None:
@@ -306,15 +306,18 @@ class Ex08FlextContainer(Examples):
         self.check("list_services.contains.resource", resource_name in service_list)
 
     def _exercise_singleton_and_creation(self) -> FlextContainer:
-        """Exercise get_global/create entrypoints and singleton semantics."""
+        """Exercise fetch_global/create entrypoints and singleton semantics."""
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
         root_context = FlextContext()
-        root = FlextContainer.get_global(context=root_context)
-        self.check("get_global.type", type(root).__name__)
-        self.check("get_global.context.type", type(root.context).__name__)
-        self.check("get_global.config.type", type(root.config).__name__)
-        self.check("get_global.same_instance", root is FlextContainer.get_global())
+        root = FlextContainer.fetch_global(context=root_context)
+        self.check("fetch_global.type", type(root).__name__)
+        self.check("fetch_global.context.type", type(root.context).__name__)
+        self.check("fetch_global.config.type", type(root.config).__name__)
+        self.check(
+            "fetch_global.same_instance",
+            root is FlextContainer.fetch_global(),
+        )
         created_false = FlextContainer.create(auto_register_factories=False)
         created_true = FlextContainer.create(auto_register_factories=True)
         self.check("create.false.same_instance", created_false is root)

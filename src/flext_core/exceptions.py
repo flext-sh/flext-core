@@ -1160,7 +1160,7 @@ class FlextExceptions:
         cls._exception_counts.clear()
 
     @classmethod
-    def get_metrics(cls) -> t.ConfigMap:
+    def resolve_metrics(cls) -> t.ConfigMap:
         """Get exception metrics and statistics."""
         total = sum(cls._exception_counts.values(), 0)
         exception_counts_list = [

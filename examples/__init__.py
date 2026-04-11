@@ -81,18 +81,18 @@ if _t.TYPE_CHECKING:
     )
     from examples._models.exconfig import ExConfigAppConfig
     from examples._models.shared import SharedHandle, SharedPerson
-    from examples.models import ExamplesFlextCoreModels, m
-    from flext_core import c, d, e, h, p, r, s, t, u, x
+    from examples.models import ExamplesFlextCoreModels, c, m
+    from flext_core import d, e, h, p, r, s, t, u, x
 _LAZY_IMPORTS = merge_lazy_imports(
     ("._models",),
     build_lazy_import_map(
         {
             ".models": (
                 "ExamplesFlextCoreModels",
+                "c",
                 "m",
             ),
             "flext_core": (
-                "c",
                 "d",
                 "e",
                 "h",

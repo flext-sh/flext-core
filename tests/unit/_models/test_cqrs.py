@@ -455,7 +455,7 @@ class TestsFlextCoreModelsCqrs:
             handler_mode=c.HandlerType.QUERY,
         )
         tm.that(handler.handler_type, eq=c.HandlerType.QUERY)
-        tm.that(handler.handler_mode, eq=c.HANDLER_MODE_QUERY)
+        tm.that(handler.handler_mode, eq=c.HandlerType.QUERY)
 
     def test_handler_model_validate_accepts_metadata_mapping(self) -> None:
         handler = m.Handler.model_validate({

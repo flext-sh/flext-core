@@ -392,7 +392,7 @@ class TestFlextProtocols:
             "register_bindings",
             "register_plugin",
             "unregister_plugin",
-            "get_plugin",
+            "fetch_plugin",
             "list_plugins",
         ]
         for method in expected:

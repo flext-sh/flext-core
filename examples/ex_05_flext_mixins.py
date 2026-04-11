@@ -131,7 +131,7 @@ class Ex05FlextMixins(Examples):
         self.check("logger.type", type(service.logger).__name__)
         self.check("context.type", type(service.context).__name__)
         self.check("config.type", type(service.config).__name__)
-        self.check("const.scope_operation", c.SCOPE_OPERATION)
+        self.check("const.scope_operation", c.ContextScope.OPERATION)
         success_metrics = service.run_track_success()
         failure_message = service.run_track_failure()
         self.check("track.success.metrics", success_metrics)

@@ -17,6 +17,14 @@ class FlextConstantsOutput:
     )
     LOG_REGISTERED_EVENT_SUBSCRIBER: Final[str] = "Registered event subscriber"
     LOG_REGISTERED_HANDLER: Final[str] = "Registered handler"
+    LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION: Final[str] = (
+        "Tracked operation raised expected exception"
+    )
+    LOG_SERVICE_INITIALIZED: Final[str] = "Service initialized"
+    LOG_RUNTIME_BOOTSTRAP_OPTIONS_LOAD_FAILED: Final[str] = (
+        "Failed to load runtime bootstrap options"
+    )
+    LOG_SERVICE_REGISTRATION_FAILED: Final[str] = "Service registration failed"
 
 
 __all__ = ["FlextConstantsOutput"]

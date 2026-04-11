@@ -41,7 +41,7 @@ class TestContainerMemory:
         """Benchmark memory usage of container singleton."""
         gc.collect()
         initial_memory = get_memory_usage()
-        FlextContainer.get_global()
+        FlextContainer.fetch_global()
         gc.collect()
         after_creation = get_memory_usage()
         _ = after_creation - initial_memory

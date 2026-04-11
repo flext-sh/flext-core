@@ -249,7 +249,7 @@ class Ex10FlextHandlers(Examples):
             "dispatch.mode_mismatch",
             handler.dispatch_message(
                 _Message(text="go"),
-                operation=c.HANDLER_MODE_QUERY,
+                operation=c.HandlerType.QUERY,
             ).error,
         )
         self.check(
@@ -542,7 +542,7 @@ class Ex10FlextHandlers(Examples):
                 "timestamp" in trace_context,
             ],
         )
-        self.check("runtime.get_log_level", u.get_log_level_from_config() >= 0)
+        self.check("runtime.resolve_log_level", u.resolve_log_level_from_config() >= 0)
         self.check("runtime.is_dict_like.true", u.is_dict_like({"a": 1}))
         self.check("runtime.is_dict_like.false", u.is_dict_like([1, 2]))
         self.check("runtime.is_list_like.true", u.is_list_like([1, 2]))

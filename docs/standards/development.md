@@ -285,7 +285,7 @@ class UserService(s):
 
     def _get_logger(self) -> FlextLogger:
         result = self.container.get("logger")
-        return result.value if result.is_success else FlextLogger(__name__)
+        return result.value if result.is_success else u.fetch_logger(__name__)
 
 
 # ❌ WRONG - Manual DI or no DI

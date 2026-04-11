@@ -13,7 +13,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import MutableSequence, Sequence
 
-from flext_core import FlextLogger, c, p, r, t, u
+from flext_core import c, p, r, t, u
 
 
 class FlextDispatcher:
@@ -26,7 +26,7 @@ class FlextDispatcher:
     def __init__(self) -> None:
         """Initialize dispatcher."""
         super().__init__()
-        self._logger = FlextLogger.get_logger(__name__)
+        self._logger = u.fetch_logger(__name__)
         self._handlers: t.RegistryDict[
             tuple[t.HandlerProtocolVariant, t.RoutedHandlerCallable]
         ] = {}
@@ -56,7 +56,7 @@ class FlextDispatcher:
         except (TypeError, ValueError) as e:
             return r[t.RuntimeAtomic].fail(
                 f"Dispatch failed: {e!s}",
-                error_code=c.COMMAND_PROCESSING_FAILED,
+                error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
             )
         handler_entry = self._handlers.get(route_name)
         if not handler_entry:
@@ -71,7 +71,7 @@ class FlextDispatcher:
         if not handler_entry:
             return r[t.RuntimeAtomic].fail(
                 f"No handler found for {route_name}",
-                error_code=c.COMMAND_HANDLER_NOT_FOUND,
+                error_code=c.ErrorCode.COMMAND_HANDLER_NOT_FOUND.value,
             )
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)
@@ -245,5 +245,5 @@ class FlextDispatcher:
             self._logger.exception("Handler execution failed", route=route_name)
             return dispatch_result.fail(
                 f"Handler execution failed: {exc}",
-                error_code=c.COMMAND_PROCESSING_FAILED,
+                error_code=c.ErrorCode.COMMAND_PROCESSING_FAILED.value,
             )

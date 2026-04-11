@@ -24,7 +24,7 @@ class TestFlextSettingsCoverage:
 
     def test_get_global_and_apply_override(self) -> None:
         with tm.scope(config={"debug": False}):
-            settings_obj = FlextSettings.get_global()
+            settings_obj = FlextSettings.fetch_global()
         tm.that(settings_obj, is_=FlextSettings)
         tm.that(settings_obj.apply_override("debug", True), eq=True)
         tm.that(settings_obj.debug, eq=True)
@@ -45,21 +45,21 @@ class TestFlextSettingsCoverage:
 
         namespace = f"ns_{u.generate('ulid', length=6)}"
         FlextSettings.register_namespace(namespace, DemoNamespace)
-        settings_obj = FlextSettings.get_global()
-        ns_cfg = settings_obj.get_namespace(namespace, DemoNamespace)
+        settings_obj = FlextSettings.fetch_global()
+        ns_cfg = settings_obj.fetch_namespace(namespace, DemoNamespace)
         tm.that(ns_cfg, is_=DemoNamespace)
         tm.that(ns_cfg.enabled, eq=True)
 
     def test_effective_log_level_property(self) -> None:
-        settings_obj = FlextSettings.get_global(
-            overrides={"debug": True, "trace": False},
+        settings_obj = FlextSettings.fetch_global(
+            overrides={"debug": True, "trace": False}
         )
         tm.that(settings_obj.effective_log_level, eq=c.LogLevel.INFO)
 
     def test_reset_for_testing_creates_new_instance(self) -> None:
-        first = FlextSettings.get_global()
+        first = FlextSettings.fetch_global()
         FlextSettings.reset_for_testing()
-        second = FlextSettings.get_global()
+        second = FlextSettings.fetch_global()
         tm.that(first is not second, eq=True)
 
     def test_create_and_read_config_file(self, tmp_path: Path) -> None:
@@ -129,7 +129,7 @@ class TestFlextSettingsCoverage:
         """Property: apply_override always returns bool."""
         key, value = pair
         FlextSettings.reset_for_testing()
-        settings_obj = FlextSettings.get_global()
+        settings_obj = FlextSettings.fetch_global()
         if key == "trace" and value is True:
             tm.that(settings_obj.apply_override("debug", True), eq=True)
         outcome = settings_obj.apply_override(key, value)
@@ -137,7 +137,7 @@ class TestFlextSettingsCoverage:
 
     @pytest.mark.performance
     def test_apply_override_benchmark(self) -> None:
-        settings_obj = FlextSettings.get_global()
+        settings_obj = FlextSettings.fetch_global()
         keys = ["debug", "trace", "max_workers"]
         start = perf_counter()
         for idx in range(400):

@@ -108,3 +108,4 @@ class FlextConstantsErrors:
     ERR_MIXINS_INVALID_ENCODING: Final[str] = "Invalid character encoding"
     ERR_MIXINS_MISSING_TIMESTAMP: Final[str] = "Required timestamp fields missing"
     ERR_MIXINS_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"
+    ERR_SERVICE_REGISTRATION_FAILED: Final[str] = "Service registration failed"

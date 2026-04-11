@@ -23,7 +23,7 @@ class TestEntityCoverageEdgeCases:
         assert entity.entity_id == entity.unique_id
 
     def test_logger_property(self) -> None:
-        """Logger property returns u.get_logger (line 87)."""
+        """Logger property returns u.fetch_logger (line 87)."""
 
         class TestEntity(m.Entity):
             name: str

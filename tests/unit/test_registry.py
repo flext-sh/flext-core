@@ -439,4 +439,4 @@ class TestFlextRegistry:
         category = "validators"
         plugin = "plugin_impl"
         tm.ok(registry.register_plugin(category, name, plugin), eq=True)
-        tm.ok(registry.get_plugin(category, name), none=False)
+        tm.ok(registry.fetch_plugin(category, name), none=False)

@@ -37,7 +37,7 @@ class FlextVersion:
     __url__ = _metadata.get("Home-Page", "")
 
     @classmethod
-    def get_package_info(cls) -> t.StrMapping:
+    def resolve_package_info(cls) -> t.StrMapping:
         """Get comprehensive package information dictionary.
 
         Returns:
@@ -55,7 +55,7 @@ class FlextVersion:
         }
 
     @classmethod
-    def get_version_info(cls) -> tuple[int | str, ...]:
+    def resolve_version_info(cls) -> tuple[int | str, ...]:
         """Get package version as comparison-friendly tuple.
 
         Args:
@@ -72,7 +72,7 @@ class FlextVersion:
         return cls.__version_info__
 
     @classmethod
-    def get_version_string(cls) -> str:
+    def resolve_version_string(cls) -> str:
         """Get package version as human-readable string.
 
         Args:
@@ -88,7 +88,7 @@ class FlextVersion:
         return cls.__version__
 
     @classmethod
-    def is_version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
+    def version_at_least(cls, major: int, minor: int = 0, patch: int = 0) -> bool:
         """Check if current version meets minimum version requirement.
 
         Args:

@@ -178,7 +178,7 @@ class TestsFlextCoreModelsMixins:
         timeout: int = 30
 
         @classmethod
-        def get_global(
+        def fetch_global(
             cls,
         ) -> TestsFlextCoreModelsMixins.SingletonClassForTest:
             """Get global singleton instance."""

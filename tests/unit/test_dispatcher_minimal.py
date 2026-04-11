@@ -119,7 +119,7 @@ class TestDispatcherMinimal:
         cmd = m.Command(command_type="UnknownRoute", command_id="cmd-unknown")
         result = dispatcher.dispatch(cmd)
         assert result.failure
-        assert result.error_code == c.COMMAND_HANDLER_NOT_FOUND
+        assert result.error_code == c.ErrorCode.COMMAND_HANDLER_NOT_FOUND.value
 
     def test_dispatch_handler_exception_returns_failure(self) -> None:
         """Handler that raises returns a failure result."""
@@ -129,7 +129,7 @@ class TestDispatcherMinimal:
         result = dispatcher.dispatch(cmd)
         assert result.failure
         assert "boom" in (result.error or "")
-        assert result.error_code == c.COMMAND_PROCESSING_FAILED
+        assert result.error_code == c.ErrorCode.COMMAND_PROCESSING_FAILED.value
 
     def test_dispatch_auto_discovery_handler(self) -> None:
         """Auto-discovery handler is found via can_handle fallback."""
@@ -148,7 +148,7 @@ class TestDispatcherMinimal:
         cmd = m.Command(command_type="EchoRoute", command_id="cmd-cleared")
         result = dispatcher.dispatch(cmd)
         assert result.failure
-        assert result.error_code == c.COMMAND_HANDLER_NOT_FOUND
+        assert result.error_code == c.ErrorCode.COMMAND_HANDLER_NOT_FOUND.value
 
     def test_publish_event_to_subscriber(self) -> None:
         """Published event is delivered to registered subscriber."""

@@ -16,10 +16,10 @@ import contextlib
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, override
 
+import structlog
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 from flext_core import (
-    FlextLogger,
     FlextModelsBase,
     FlextModelsDomainEvent,
     FlextUtilitiesDomain,
@@ -84,7 +84,7 @@ class FlextModelsEntity:
         @property
         def logger(self) -> p.Logger:
             """Get the shared structlog logger for entity instances."""
-            return FlextLogger.get_logger(__name__)
+            return structlog.get_logger(__name__)
 
         @computed_field
         @property

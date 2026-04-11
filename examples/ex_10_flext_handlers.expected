@@ -109,7 +109,7 @@ runtime.compare_value_objects.model: False
 runtime.hash_value_object: True
 runtime.ensure_trace_context.source: 'vhryd'
 runtime.ensure_trace_context.keys: [True, True, True, True]
-runtime.get_log_level: True
+runtime.resolve_log_level: True
 runtime.validate_http.success: [200, 404]
 runtime.validate_http.range_fail: 'Invalid HTTP status code: 99 (must be 100-599)'
 runtime.validate_http.type_fail: 'Invalid HTTP status code type: PosixPath'

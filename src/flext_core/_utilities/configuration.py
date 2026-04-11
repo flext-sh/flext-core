@@ -52,8 +52,8 @@ class FlextUtilitiesConfiguration:
         return (True, str(val))
 
     @staticmethod
-    def get_log_level_from_config() -> int:
-        """Get numeric log level from default constant."""
+    def resolve_log_level_from_config() -> int:
+        """Resolve numeric log level from default constant."""
         default_log_level = c.DEFAULT_LEVEL.upper()
         return getattr(logging, default_log_level, logging.INFO)
 

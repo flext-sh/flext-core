@@ -374,7 +374,7 @@ class TestCoverageExceptions:
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
         e.record_exception(e.ConfigurationError)
-        metrics = e.get_metrics()
+        metrics = e.resolve_metrics()
         tm.that(metrics["total_exceptions"], eq=3)
         raw_counts = metrics.root.get("exception_counts")
         exception_counts = cast("t.IntMapping", raw_counts)
@@ -387,9 +387,9 @@ class TestCoverageExceptions:
     def test_clear_metrics(self) -> None:
         e.clear_metrics()
         e.record_exception(e.ValidationError)
-        tm.that(e.get_metrics()["total_exceptions"], eq=1)
+        tm.that(e.resolve_metrics()["total_exceptions"], eq=1)
         e.clear_metrics()
-        tm.that(e.get_metrics()["total_exceptions"], eq=0)
+        tm.that(e.resolve_metrics()["total_exceptions"], eq=0)
 
     def test_exception_string_with_correlation_id(self) -> None:
         error = e.BaseError("Test", auto_correlation=True)

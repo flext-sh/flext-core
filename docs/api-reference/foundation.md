@@ -116,7 +116,7 @@ Lightweight DI container with explicit lifecycles that works cleanly with dispat
 from flext_core import FlextContainer, FlextLogger
 
 container = FlextContainer.get_global()
-container.register("logger", FlextLogger(__name__), singleton=True)
+container.register("logger", u.fetch_logger(__name__), singleton=True)
 
 logger_result = container.get("logger")
 if logger_result.is_success:

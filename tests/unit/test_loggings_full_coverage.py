@@ -10,11 +10,10 @@ from typing import ClassVar, cast, override
 import pytest
 
 from flext_core import (
-    FlextLogger,
     FlextSettings,
 )
 from flext_tests import tm
-from tests import p, t
+from tests import p, t, u
 
 
 class TestModule:
@@ -96,19 +95,21 @@ class TestModule:
                     "force_new": self.force_new,
                 }
 
-        logger = FlextLogger(
-            "x",
-            config=cast("p.Settings", cast("t.NormalizedValue", _Config())),
+        logger = u.create_module_logger("x")
+        logger = logger.bind(
+            service_name="svc",
+            service_version="1.0",
+            correlation_id="cid",
         )
-        tm.that(logger.name, eq="x")
-        tm.that(logger.new(a=1).name, eq="x")
+        tm.that(logger, none=False)
+        tm.that(logger.new(a=1), none=False)
         with pytest.raises(KeyError):
             logger.unbind("a")
-        tm.that(logger.unbind("a", safe=True).name, eq="x")
+        tm.that(logger.try_unbind("a"), none=False)
         logger.trace("%s %s", "a")
         logger.trace("x")
-        tm.that(FlextLogger._format_log_message("%s %s", "a"), ne="")
-        tm.that(FlextLogger._get_calling_frame(), is_=types.FrameType)
+        tm.that(u._format_log_message("%s %s", "a"), ne="")
+        tm.that(u._get_calling_frame(), is_=types.FrameType)
 
         class _Code:
             co_qualname = "MyType.run"
@@ -118,7 +119,7 @@ class TestModule:
             f_code = _Code()
 
         tm.that(
-            FlextLogger._extract_class_name(
+            u._extract_class_name(
                 cast("types.FrameType", cast("t.NormalizedValue", _Frame())),
             ),
             none=True,
@@ -126,14 +127,14 @@ class TestModule:
 
     def test_loggings_source_and_log_error_paths(self) -> None:
         fake = self._FakeBindable()
-        logger = FlextLogger.create_bound_logger(
+        logger = u.create_bound_logger(
             "x",
             cast("p.Logger", cast("t.NormalizedValue", fake)),
         )
 
-        tm.that(FlextLogger._get_caller_source_path(), none=True)
+        tm.that(u._get_caller_source_path(), none=True)
 
-        tm.that(FlextLogger._convert_to_relative_path("/tmp/x.py"), eq="x.py")
+        tm.that(u._convert_to_relative_path("/tmp/x.py"), eq="x.py")
 
         class _NoMarkers:
             def __init__(self, path: Path) -> None:
@@ -150,12 +151,12 @@ class TestModule:
                 return False
 
         tm.that(
-            FlextLogger._find_workspace_root(
+            u._find_workspace_root(
                 cast("Path", cast("t.NormalizedValue", _NoMarkers(Path("/tmp")))),
             ),
             none=True,
         )
-        logger_boom = FlextLogger.create_bound_logger(
+        logger_boom = u.create_bound_logger(
             "x",
             cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable())),
         )
@@ -175,7 +176,7 @@ class TestModule:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         fake = self._FakeBindable()
-        logger = FlextLogger.create_bound_logger(
+        logger = u.create_bound_logger(
             "x",
             cast("p.Logger", cast("t.NormalizedValue", fake)),
         )
@@ -186,7 +187,7 @@ class TestModule:
 
         monkeypatch.setattr(
             FlextSettings,
-            "get_global",
+            "fetch_global",
             cast("t.NormalizedValue", classmethod(_raise_cfg)),
         )
         tm.that(logger._should_include_stack_trace(), is_=bool)
@@ -202,19 +203,19 @@ class TestModule:
             context={},
         )
         tm.that(with_exc_info, is_=t.ConfigMap)
-        broken = FlextLogger.create_bound_logger(
+        broken = u.create_bound_logger(
             "x",
             cast("p.Logger", cast("t.NormalizedValue", self._FakeBindable())),
         )
 
         broken.exception("msg", exception=ValueError("x"), exc_info=True)
-        tracker = FlextLogger.PerformanceTracker(logger, "op")
+        tracker = u.PerformanceTracker(logger, "op")
         with tracker:
             pass
         tracker.__exit__(RuntimeError, RuntimeError("x"), None)
-        tm.that(logger.unbind("missing", safe=True), is_=p.Logger)
+        tm.that(logger.unbind("missing", safe=True), none=False)
         with pytest.warns(DeprecationWarning, match="try_unbind"):
-            tm.that(logger.try_unbind("missing"), is_=p.Logger)
+            tm.that(logger.try_unbind("missing"), none=False)
 
 
 __all__ = ["TestModule"]

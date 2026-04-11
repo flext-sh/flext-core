@@ -33,7 +33,7 @@ class TestCoverageContext:
                 eq=explicit_id,
             )
 
-    def test_get_service_from_container(self) -> None:
+    def test_fetch_service_from_container(self) -> None:
         container = FlextContainer(_context=FlextContext())
         FlextContext.configure_container(container)
         test_service_obj = "test_service_value"

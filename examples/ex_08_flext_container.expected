@@ -1,8 +1,8 @@
 [singleton_and_creation]
-get_global.type: 'FlextContainer'
-get_global.context.type: 'FlextContext'
-get_global.config.type: 'FlextSettings'
-get_global.same_instance: True
+fetch_global.type: 'FlextContainer'
+fetch_global.context.type: 'FlextContext'
+fetch_global.config.type: 'FlextSettings'
+fetch_global.same_instance: True
 create.false.same_instance: True
 create.true.same_instance: True
 builder.create.false.same_instance: True
@@ -53,8 +53,8 @@ with_service.returns_self: True
 with_factory.returns_self: True
 with_resource.returns_self: True
 with_config.returns_self: True
-configure.get_config.max_services_matches: True
-configure.get_config.enable_factory_caching_matches: True
+configure.resolve_config.max_services_matches: True
+configure.resolve_config.enable_factory_caching_matches: True
 with_service.get.value_matches: True
 with_factory.get.value_matches: True
 with_resource.get.value_matches: True
@@ -88,4 +88,4 @@ unregister.existing.success: True
 unregister.missing.failure: True
 clear_all.count: 0
 reset_singleton.new_instance: True
-reset_singleton.get_global.same_after_reset: True
+reset_singleton.fetch_global.same_after_reset: True

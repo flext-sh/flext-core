@@ -205,7 +205,7 @@ class FlextModelsDispatcher:
             if self.resolve_open(message_type):
                 return r[bool].fail(
                     f"Circuit breaker is open for message type '{message_type}'",
-                    error_code=c.OPERATION_ERROR,
+                    error_code=c.ErrorCode.OPERATION_ERROR.value,
                     error_data=t.ConfigMap(
                         root={
                             "message_type": message_type,
@@ -428,7 +428,7 @@ class FlextModelsDispatcher:
                 retry_after = max(0, int(self.window_seconds - elapsed))
                 return r[bool].fail(
                     f"Rate limit exceeded for message type '{message_type}'",
-                    error_code=c.OPERATION_ERROR,
+                    error_code=c.ErrorCode.OPERATION_ERROR.value,
                     error_data=t.ConfigMap(
                         root={
                             "message_type": message_type,

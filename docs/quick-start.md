@@ -78,7 +78,7 @@ from flext_core import FlextContainer, FlextLogger
 
 # Register services
 container = FlextContainer.get_global()
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 container.register("logger", logger, singleton=True)
 
 # Use services

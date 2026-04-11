@@ -12,15 +12,12 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from flext_cli import (
+    from flext_core import s, settings
+    from flext_tests import (
         d,
         e,
         h,
         r,
-        s,
-        settings,
-    )
-    from flext_tests import (
         td,
         tf,
         tk,
@@ -41,7 +38,7 @@ if _t.TYPE_CHECKING:
     from tests.constants import TestsFlextCoreConstants, c
     from tests.models import TestsFlextCoreModels, m
     from tests.protocols import TestsFlextCoreProtocols, p
-    from tests.typings import TestsFlextCoreTypes, t
+    from tests.typings import T, T_co, T_contra, TestsFlextCoreTypes, t
     from tests.unit._models.test_base import TestsFlextCoreModelsBase
     from tests.unit._models.test_cqrs import TestsFlextCoreModelsCqrs
     from tests.unit._models.test_entity import TestFlextModelsEntity
@@ -73,6 +70,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "p",
             ),
             ".typings": (
+                "T",
+                "T_co",
+                "T_contra",
                 "TestsFlextCoreTypes",
                 "t",
             ),
@@ -80,24 +80,23 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreUtilities",
                 "u",
             ),
-            "flext_cli": (
+            "flext_tests": (
                 "d",
                 "e",
                 "h",
                 "r",
-                "reset_settings",
-                "s",
-                "settings",
-                "settings_factory",
-                "x",
-            ),
-             "flext_tests": (
                 "td",
                 "tf",
                 "tk",
                 "tm",
                 "tv",
-            ),       },
+                "x",
+            ),
+            "flext_core": (
+                "s",
+                "settings",
+            ),
+        },
     ),
     exclude_names=(
         "cleanup_submodule_namespace",
@@ -115,6 +114,9 @@ _LAZY_IMPORTS = merge_lazy_imports(
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)
 
 __all__ = [
+    "T",
+    "T_co",
+    "T_contra",
     "TestFlextModelsEntity",
     "TestFlextModelsExceptionParams",
     "TestFlextUtilitiesGuards",
@@ -144,10 +146,8 @@ __all__ = [
     "m",
     "p",
     "r",
-    "reset_settings",
     "s",
     "settings",
-    "settings_factory",
     "t",
     "td",
     "tf",

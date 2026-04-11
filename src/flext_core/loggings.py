@@ -186,7 +186,7 @@ class FlextLogger(FlextRuntime):
             cls._structlog_configured = True
 
     @classmethod
-    def is_structlog_configured(cls) -> bool:
+    def structlog_configured(cls) -> bool:
         """Check if structlog has been configured."""
         return cls._structlog_configured
 
@@ -230,7 +230,7 @@ class FlextLogger(FlextRuntime):
             context[c.ContextKey.SERVICE_VERSION] = _service_version
         if _correlation_id:
             context[c.ContextKey.CORRELATION_ID] = _correlation_id
-        base_logger = type(self).get_logger(resolved_name)
+        base_logger = type(self).fetch_logger(resolved_name)
         self._structlog_instance = (
             base_logger.bind(**context) if context else base_logger
         )
@@ -249,7 +249,7 @@ class FlextLogger(FlextRuntime):
         """Wrapped structlog logger instance."""
         instance = self._structlog_instance
         if instance is None:
-            instance = type(self).get_logger(getattr(self, "name", __name__))
+            instance = type(self).fetch_logger(getattr(self, "name", __name__))
             self._structlog_instance = instance
         return instance
 
@@ -265,8 +265,8 @@ class FlextLogger(FlextRuntime):
         return structlog
 
     @classmethod
-    def get_logger(cls, name: str | None = None) -> p.Logger:
-        """Get structlog logger instance using shared FLEXT configuration."""
+    def fetch_logger(cls, name: str | None = None) -> p.Logger:
+        """Fetch structlog logger instance using shared FLEXT configuration."""
         cls.ensure_structlog_configured()
         if name is None:
             frame = inspect.currentframe()
@@ -571,8 +571,8 @@ class FlextLogger(FlextRuntime):
                 )
 
     @staticmethod
-    def get_log_level_from_config() -> int:
-        """Get log level from default constant."""
+    def resolve_log_level_from_config() -> int:
+        """Resolve log level from default constant."""
         default_log_level = c.DEFAULT_LEVEL.upper()
         return int(
             getattr(logging, default_log_level)
@@ -721,18 +721,36 @@ class FlextLogger(FlextRuntime):
         return cls(name, _bound_logger=bound_logger)
 
     @classmethod
-    def create_module_logger(cls, name: str = "flext") -> Self:
+    def create_module_logger(
+        cls,
+        name: str = "flext",
+        *,
+        config: p.Settings | None = None,
+        service_name: str | None = None,
+        service_version: str | None = None,
+        correlation_id: str | None = None,
+    ) -> Self:
         """Create a logger instance for a module.
 
         Args:
             name: Module name (typically __name__). Defaults to "flext".
+            config: Optional settings model used to seed logger context.
+            service_name: Optional service name bound at construction time.
+            service_version: Optional service version bound at construction time.
+            correlation_id: Optional correlation identifier bound at construction time.
 
         Returns:
             FlextLogger: Logger instance for the module
 
         """
         cls.ensure_structlog_configured()
-        return cls(name)
+        return cls(
+            name,
+            config=config,
+            _service_name=service_name,
+            _service_version=service_version,
+            _correlation_id=correlation_id,
+        )
 
     @classmethod
     def for_container(

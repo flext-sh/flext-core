@@ -119,16 +119,16 @@ class Ex12FlextRegistry(Examples):
         self.check("register_plugin.validated", plugin_validated.success)
         self.check("register_plugin.validate_fail", plugin_validate_fail.failure)
         self.check("register_plugin.validate_exc", plugin_validate_exc.failure)
-        plugin_get_ok = registry.get_plugin(plugin_ns, plugin_name_a)
-        plugin_get_missing = registry.get_plugin(plugin_ns, plugin_missing_name)
+        plugin_fetch_ok = registry.fetch_plugin(plugin_ns, plugin_name_a)
+        plugin_fetch_missing = registry.fetch_plugin(plugin_ns, plugin_missing_name)
         plugin_list = registry.list_plugins(plugin_ns)
         plugin_unreg_ok = registry.unregister_plugin(plugin_ns, plugin_name_a)
         plugin_unreg_missing = registry.unregister_plugin(
             plugin_ns,
             plugin_unreg_missing_name,
         )
-        self.check("get_plugin.ok", plugin_get_ok.unwrap_or("") == plugin_value_a)
-        self.check("get_plugin.missing", plugin_get_missing.failure)
+        self.check("fetch_plugin.ok", plugin_fetch_ok.unwrap_or("") == plugin_value_a)
+        self.check("fetch_plugin.missing", plugin_fetch_missing.failure)
         self.check("list_plugins.transports", sorted(plugin_list.unwrap_or([])))
         self.check("unregister_plugin.ok", plugin_unreg_ok.success)
         self.check("unregister_plugin.missing", plugin_unreg_missing.failure)
@@ -136,45 +136,49 @@ class Ex12FlextRegistry(Examples):
             class_ns,
             class_plugin_name,
             class_plugin_value,
-            scope="class",
+            scope=c.RegistrationScope.CLASS,
         )
         class_dup = registry.register_plugin(
             class_ns,
             class_plugin_name,
             class_plugin_value,
-            scope="class",
+            scope=c.RegistrationScope.CLASS,
         )
         class_empty = registry.register_plugin(
             class_ns,
             "",
             class_plugin_value,
-            scope="class",
+            scope=c.RegistrationScope.CLASS,
         )
-        class_get_ok = registry.get_plugin(class_ns, class_plugin_name, scope="class")
-        class_get_missing = registry.get_plugin(
+        class_fetch_ok = registry.fetch_plugin(
+            class_ns,
+            class_plugin_name,
+            scope=c.RegistrationScope.CLASS,
+        )
+        class_fetch_missing = registry.fetch_plugin(
             class_ns,
             class_missing_name,
-            scope="class",
+            scope=c.RegistrationScope.CLASS,
         )
-        class_list = registry.list_plugins(class_ns, scope="class")
+        class_list = registry.list_plugins(class_ns, scope=c.RegistrationScope.CLASS)
         class_unreg_ok = registry.unregister_plugin(
             class_ns,
             class_plugin_name,
-            scope="class",
+            scope=c.RegistrationScope.CLASS,
         )
         class_unreg_missing = registry.unregister_plugin(
             class_ns,
             class_unreg_missing_name,
-            scope="class",
+            scope=c.RegistrationScope.CLASS,
         )
         self.check("register_class_plugin.ok", class_ok.success)
         self.check("register_class_plugin.dup", class_dup.success)
         self.check("register_class_plugin.empty_name", class_empty.failure)
         self.check(
-            "get_class_plugin.ok",
-            class_get_ok.unwrap_or("") == class_plugin_value,
+            "fetch_class_plugin.ok",
+            class_fetch_ok.unwrap_or("") == class_plugin_value,
         )
-        self.check("get_class_plugin.missing", class_get_missing.failure)
+        self.check("fetch_class_plugin.missing", class_fetch_missing.failure)
         self.check("list_class_plugins.auth", class_list.unwrap_or([]))
         self.check("unregister_class_plugin.ok", class_unreg_ok.success)
         self.check("unregister_class_plugin.missing", class_unreg_missing.failure)

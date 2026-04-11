@@ -50,7 +50,7 @@ class FlextProtocolsSettings:
         "Enable logging in dispatcher operations."
 
         @classmethod
-        def get_global(
+        def fetch_global(
             cls,
             *,
             overrides: t.ScalarMapping | None = None,

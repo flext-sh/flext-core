@@ -175,7 +175,7 @@ class TestContainerFullCoverage:
         with pytest.raises(RuntimeError):
             _ = c.context
         monkeypatch.setattr(
-            "flext_core.container.FlextSettings.get_global",
+            "flext_core.container.FlextSettings.fetch_global",
             lambda: FlextSettings(),
         )
         tm.that(c._get_default_config(), is_=p.Settings)
@@ -211,7 +211,7 @@ class TestContainerFullCoverage:
 
         monkeypatch.setattr(
             type(c._config),
-            "get_namespace_config",
+            "resolve_namespace_config",
             staticmethod(self._namespace_config_none),
         )
         c.sync_config_to_di()
@@ -434,7 +434,7 @@ class TestContainerFullCoverage:
         class _NsBeta(_BaseSettings):
             v: str = "ok2"
 
-        # Register namespaces so FlextSettings.get_namespace_config() finds them.
+        # Register namespaces so FlextSettings.resolve_namespace_config() finds them.
         original_registry = dict(FlextSettings._namespace_registry)
         FlextSettings._namespace_registry["alpha"] = _NsAlpha
         FlextSettings._namespace_registry["beta"] = _NsBeta
@@ -549,12 +549,12 @@ class TestContainerFullCoverage:
             max_services=10,
             max_factories=10,
         )
-        global_instance = FlextContainer.get_global()
+        global_instance = FlextContainer.fetch_global()
         tm.that(global_instance, is_=p.Container)
         tm.that(c.configure({"enable_factory_caching": True}), eq=c)
         c.register("svc-x", self.TypedValue(value="value"))
         c.register("fac-x", lambda: "v", kind="factory")
-        tm.that(c.get_config().root, ne=None)
+        tm.that(c.resolve_config().root, ne=None)
         c.register("", "x")
         assert c.get("svc-x").success
         tm.fail(c.get("missing-service"))
@@ -593,8 +593,8 @@ class TestContainerFullCoverage:
         )
         c._user_overrides = t.ConfigMap(root={})
 
-        # --- _CfgNoMethod: namespace_registry without get_namespace_config ---
-        # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
+        # --- _CfgNoMethod: namespace_registry without resolve_namespace_config ---
+        # n1 is NOT registered in FlextSettings, so resolve_namespace_config returns None
         # and sync_config_to_di skips it (continue branch).
         class _CfgNoMethod(m.Core.Tests.FalseConfig):
             _namespace_registry: ClassVar[Mapping[str, type[_BaseSettings]]] = {
@@ -609,7 +609,7 @@ class TestContainerFullCoverage:
             v: str = "x"
 
         # Register namespaces in FlextSettings._namespace_registry so that
-        # sync_config_to_di -> FlextSettings.get_namespace_config() finds them.
+        # sync_config_to_di -> FlextSettings.resolve_namespace_config() finds them.
         original_registry = dict(FlextSettings._namespace_registry)
         FlextSettings._namespace_registry["n2"] = _NsModel
         FlextSettings._namespace_registry["n3"] = _NsModel

@@ -49,7 +49,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         default_factory=dict[str, t.ConfigMap],
     )
 
-    _logger_cache: ClassVar[MutableMapping[str, FlextLogger]] = {}
+    _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
@@ -83,7 +83,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
                 return cls._logger_cache[logger_name]
-        logger = FlextLogger(logger_name)
+        logger = u.fetch_logger(logger_name)
         with cls._cache_lock:
             cls._logger_cache[logger_name] = logger
         return logger
@@ -203,7 +203,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                     RuntimeError,
                 ) as exc:
                     self.logger.debug(
-                        "Tracked operation raised expected exception",
+                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION,
                         exc_info=exc,
                     )
                     stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
@@ -233,12 +233,12 @@ class FlextMixins(m.ArbitraryTypesModel):
         service_context: t.ConfigMap = t.ConfigMap(
             root={
                 c.ContextKey.SERVICE_NAME: self.__class__.__name__,
-                "service_module": self.__class__.__module__,
+                c.ContextKey.SERVICE_MODULE: self.__class__.__module__,
                 **context_data,
             },
         )
         self.logger.info(
-            "Service initialized",
+            c.LOG_SERVICE_INITIALIZED,
             return_result=False,
             **u.normalize_log_payload(service_context.root),
         )
@@ -287,7 +287,7 @@ class FlextMixins(m.ArbitraryTypesModel):
             if overrides is not None
             else None
         )
-        runtime_config: p.Settings = config_cls_typed.get_global(
+        runtime_config: p.Settings = config_cls_typed.fetch_global(
             overrides=overrides_typed,
         )
         if initial_ctx is None:
@@ -347,7 +347,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                         return None
         except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
             FlextLogger.create_module_logger(__name__).warning(
-                "Failed to load runtime bootstrap options",
+                c.LOG_RUNTIME_BOOTSTRAP_OPTIONS_LOAD_FAILED,
                 exc_info=exc,
             )
             return None
@@ -363,11 +363,12 @@ class FlextMixins(m.ArbitraryTypesModel):
         if register_result.failure:
             error_msg = register_result.error
             if error_msg is None:
-                error_msg = "Service registration failed"
+                error_msg = c.ERR_SERVICE_REGISTRATION_FAILED
             if "already registered" not in error_msg.lower():
                 self.logger.warning(
-                    f"Service registration failed: {register_result.error}",
+                    c.LOG_SERVICE_REGISTRATION_FAILED,
                     service_name=effective_service_name,
+                    error=register_result.error or c.ERR_SERVICE_REGISTRATION_FAILED,
                 )
 
     def _log_config_once(
@@ -391,7 +392,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                 c.ContextKey.CORRELATION_ID: u.normalize_to_container(
                     correlation_id or "",
                 ),
-                c.HandlerType.OPERATION: u.normalize_to_container(
+                c.ContextKey.OPERATION_NAME: u.normalize_to_container(
                     operation_name or "",
                 ),
                 **{k: u.normalize_to_container(v) for k, v in extra.items()},
@@ -415,7 +416,7 @@ class FlextMixins(m.ArbitraryTypesModel):
             _ = container.register(service_name, self)
             if was_registered or container.has_service(service_name):
                 return r[bool].ok(True)
-            msg = "Service registration failed"
+            msg = c.ERR_SERVICE_REGISTRATION_FAILED
             raise RuntimeError(msg)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
             return r[bool].fail(str(e))

@@ -111,6 +111,7 @@ class FlextConstantsInfrastructure:
         OPERATION_START_TIME = "operation_start_time"
         OPERATION_METADATA = "operation_metadata"
         REQUEST_TIMESTAMP = "request_timestamp"
+        SERVICE_MODULE = "service_module"
 
     @unique
     class ContextHeader(StrEnum):
@@ -158,14 +159,6 @@ class FlextConstantsInfrastructure:
         "Logger service registration name."
         COMMAND_BUS = "command_bus"
         "Command bus service registration name."
-
-    @unique
-    class RegistrationStatus(StrEnum):
-        """Handler registration lifecycle statuses."""
-
-        ACTIVE = "active"
-        INACTIVE = "inactive"
-        ERROR = "error"
 
     @unique
     class HandlerMode(StrEnum):

@@ -156,7 +156,9 @@ class FlextUtilitiesChecker:
             return r[t.TypeHintSpecifier].fail(
                 c_errors.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD
             )
-        handle_method_raw: t.GuardInput = getattr(handler_class, c.MethodName.HANDLE, None)
+        handle_method_raw: t.GuardInput = getattr(
+            handler_class, c.MethodName.HANDLE, None
+        )
         if not cls._is_module_export_callable(handle_method_raw):
             return r[t.TypeHintSpecifier].fail(
                 c_errors.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,

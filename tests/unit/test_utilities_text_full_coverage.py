@@ -12,14 +12,13 @@ from __future__ import annotations
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_core import FlextLogger
 from tests import u
 
 
 class TestUtilitiesTextFullCoverage(u.Core.Tests.Contract):
     def test_logger_property_returns_logger(self) -> None:
         """Logger property returns a structlog logger instance."""
-        logger = FlextLogger().logger
+        logger = u.fetch_logger()
         assert logger is not None
 
     @pytest.mark.parametrize(

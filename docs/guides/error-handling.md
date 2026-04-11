@@ -304,7 +304,7 @@ else:
 ```python
 from flext_core import r, FlextLogger
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 class UserRepository:
@@ -571,7 +571,7 @@ return r[str].fail("Invalid input")
 ```python
 from flext_core import r, FlextLogger
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 def api_handler(request) -> dict:
@@ -596,7 +596,7 @@ def process_request(request) -> r[dict]:
 ```python
 from flext_core import FlextLogger, r
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 def risky_operation() -> r[str]:

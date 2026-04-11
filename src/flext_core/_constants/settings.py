@@ -15,6 +15,7 @@ class FlextConstantsSettings:
 
     DEFAULT_ENCODING: Final[str] = "utf-8"
     "Default encoding for string operations."
+
     @unique
     class Serialization(StrEnum):
         """Datetime and bytes serialization format identifiers."""

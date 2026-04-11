@@ -320,14 +320,14 @@ class TestFlextSettings:
 
     def test_global_instance_management(self) -> None:
         """Test global instance management methods with singleton pattern."""
-        original_instance = FlextSettings.get_global()
+        original_instance = FlextSettings.fetch_global()
         try:
-            assert FlextSettings.get_global() is original_instance
+            assert FlextSettings.fetch_global() is original_instance
             FlextSettings.reset_for_testing()
             fresh_config = FlextSettings()
             assert fresh_config is not original_instance
             assert fresh_config.app_name == "flext"
-            assert FlextSettings.get_global() is fresh_config
+            assert FlextSettings.fetch_global() is fresh_config
         finally:
             FlextSettings.reset_for_testing()
 
@@ -421,7 +421,7 @@ class TestFlextSettings:
                 {"FLEXT_TIMEOUT_SECONDS": "60", "FLEXT_ENV_FILE": str(env_file)},
                 ["FLEXT_TIMEOUT_SECONDS", "FLEXT_ENV_FILE"],
             ):
-                config = FlextSettings.get_global(overrides={"timeout_seconds": 90})
+                config = FlextSettings.fetch_global(overrides={"timeout_seconds": 90})
                 assert config.timeout_seconds == 90
                 FlextSettings.reset_for_testing()
                 config_no_explicit = FlextSettings()
@@ -466,10 +466,10 @@ class TestFlextSettings:
                 assert config_no_debug.log_level == "ERROR"
                 assert config_no_debug.debug is False
 
-        def test_get_global(self) -> None:
-            """Test get_global returns singleton."""
-            instance1 = FlextSettings.get_global()
-            instance2 = FlextSettings.get_global()
+        def test_fetch_global(self) -> None:
+            """Test fetch_global returns singleton."""
+            instance1 = FlextSettings.fetch_global()
+            instance2 = FlextSettings.fetch_global()
             assert instance1 is instance2
 
         def test_config_with_all_fields(self) -> None:
@@ -489,9 +489,9 @@ class TestFlextSettings:
 
         def test_reset_instance(self) -> None:
             """Test _reset_instance method for testing purposes."""
-            config1 = FlextSettings.get_global()
+            config1 = FlextSettings.fetch_global()
             FlextSettings._reset_instance()
-            config2 = FlextSettings.get_global()
+            config2 = FlextSettings.fetch_global()
             assert config1 is not config2 or config1 is config2
 
         def test_singleton_type_check(self) -> None:
@@ -536,12 +536,12 @@ class TestFlextSettings:
             config = u.Core.Tests.create_test_config(debug=False, trace=False)
             assert config.effective_log_level == config.log_level
 
-        def test_get_di_config_provider(self) -> None:
-            """Test get_di_config_provider creates provider."""
+        def test_resolve_di_config_provider(self) -> None:
+            """Test resolve_di_config_provider creates provider."""
             config = u.Core.Tests.create_test_config()
-            provider = config.get_di_config_provider()
+            provider = config.resolve_di_config_provider()
             assert provider is not None
-            provider2 = config.get_di_config_provider()
+            provider2 = config.resolve_di_config_provider()
             assert provider is provider2
 
         def test_apply_override_invalid_key(self) -> None:
@@ -576,30 +576,30 @@ class TestFlextSettings:
             assert "test_register" in FlextSettings._namespace_registry
             del FlextSettings._namespace_registry["test_register"]
 
-        def test_get_namespace_not_found(self) -> None:
-            """Test get_namespace raises ValueError for unregistered namespace."""
+        def test_fetch_namespace_not_found(self) -> None:
+            """Test fetch_namespace raises ValueError for unregistered namespace."""
             config = u.Core.Tests.create_test_config()
             with pytest.raises(
                 ValueError,
                 match="Namespace 'nonexistent' not registered",
             ):
-                config.get_namespace("nonexistent", BaseSettings)
+                config.fetch_namespace("nonexistent", BaseSettings)
 
-        def test_get_namespace_type_mismatch(self) -> None:
-            """Test get_namespace raises TypeError for type mismatch."""
+        def test_fetch_namespace_type_mismatch(self) -> None:
+            """Test fetch_namespace raises TypeError for type mismatch."""
             FlextSettings.register_namespace("test_type", FlextSettings)
             config = u.Core.Tests.create_test_config()
             with pytest.raises(TypeError, match="is not instance"):
-                config.get_namespace("test_type", threading.Thread)
-            instance = config.get_namespace("test_type", BaseSettings)
+                config.fetch_namespace("test_type", threading.Thread)
+            instance = config.fetch_namespace("test_type", BaseSettings)
             assert isinstance(instance, p.Settings)
             del FlextSettings._namespace_registry["test_type"]
 
-        def test_get_namespace_found(self) -> None:
-            """Test get_namespace returns namespace config when registered."""
+        def test_fetch_namespace_found(self) -> None:
+            """Test fetch_namespace returns namespace config when registered."""
             FlextSettings.register_namespace("test_attr", FlextSettings)
             config = u.Core.Tests.create_test_config()
-            instance = config.get_namespace("test_attr", FlextSettings)
+            instance = config.fetch_namespace("test_attr", FlextSettings)
             assert isinstance(instance, p.Settings)
             del FlextSettings._namespace_registry["test_attr"]
 

@@ -1,6 +1,6 @@
 [singleton_and_global]
 constructor.singleton_identity: True
-get_global.identity: True
+fetch_global.identity: True
 reset_for_testing.recreates_singleton: True
 reset_for_testing.recreates_global: True
 subclass.singleton_identity: True
@@ -42,12 +42,12 @@ effective_log_level.debug: <LogLevel.INFO: 'INFO'>
 effective_log_level.trace: <LogLevel.DEBUG: 'DEBUG'>
 apply_override.invalid_return: False
 
-[get_global_and_provider]
-get_global.clone_same_values: True
-get_global.clone_new_object: True
-get_global.override.app_name: 'materialized'
-get_global.override.timeout_seconds: 55.0
-get_di_config_provider.type: 'Singleton'
+[fetch_global_and_provider]
+fetch_global.clone_same_values: True
+fetch_global.clone_new_object: True
+fetch_global.override.app_name: 'materialized'
+fetch_global.override.timeout_seconds: 55.0
+resolve_di_config_provider.type: 'Singleton'
 
 [resolve_env_file_and_auto_config]
 resolve_env_file.custom_path: '/home/marlonsc/flext/.venv/flext_settings_example.env'
@@ -55,8 +55,8 @@ AutoConfig.create_config.type: '_TestConfig'
 AutoConfig.create_config.service_name: 'test-service'
 
 [namespace_system]
-get_namespace.decorated.service_name: 'decorated'
-get_namespace.registered.service_name: 'registered'
+fetch_namespace.decorated.service_name: 'decorated'
+fetch_namespace.registered.service_name: 'registered'
 
 [context_system]
 register_context_overrides.service_name: 'worker-service'

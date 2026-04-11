@@ -37,7 +37,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         """Get cached mapping of protocol names to type check predicates."""
         if FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_specs_cache = MappingProxyType({
-                c_platform.DIR_CONFIG: lambda v: isinstance(v, p.Settings),
+                c_platform.Directory.CONFIG.value: lambda v: isinstance(v, p.Settings),
                 c_mixins.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
                 "container": lambda v: isinstance(v, p.Container),
                 "command_bus": lambda v: (
@@ -59,7 +59,7 @@ class FlextUtilitiesGuardsTypeProtocol:
         if FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache is None:
             FlextUtilitiesGuardsTypeProtocol._protocol_type_map_cache = (
                 MappingProxyType({
-                    p.Settings: c_platform.DIR_CONFIG,
+                    p.Settings: c_platform.Directory.CONFIG.value,
                     p.Context: c_mixins.FIELD_CONTEXT,
                     p.Container: "container",
                     p.Dispatcher: "command_bus",
@@ -257,9 +257,9 @@ class FlextUtilitiesGuardsTypeProtocol:
     def is_settings_type(
         candidate: type | t.GuardInput,
     ) -> TypeIs[type[p.Settings]]:
-        """Narrow candidate to Settings type with callable get_global."""
+        """Narrow candidate to Settings type with callable fetch_global."""
         return isinstance(candidate, type) and callable(
-            getattr(candidate, "get_global", None),
+            getattr(candidate, "fetch_global", None),
         )
 
     @staticmethod

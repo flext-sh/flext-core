@@ -221,7 +221,7 @@ def test_summary_error_paths_and_bindings_failures(
     assert raised.failure
 
 
-def test_get_plugin_and_register_metadata_and_list_items_exception(
+def test_fetch_plugin_and_register_metadata_and_list_items_exception(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     registry = FlextRegistry()
@@ -239,7 +239,7 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
         "get",
         _container_get_fail,
     )
-    missing = registry.get_plugin("cat", "name")
+    missing = registry.fetch_plugin("cat", "name")
     assert missing.failure
     metadata_result = registry.register(
         "svc",

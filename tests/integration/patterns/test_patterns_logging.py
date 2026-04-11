@@ -13,19 +13,21 @@ from collections.abc import Sequence
 
 import pytest
 
-from flext_core import FlextLogger, r
-from tests import t
+from tests import p, t, u
 
 EXPECTED_BULK_SIZE = 2
 
 
 class TestPatternsLogging:
     @staticmethod
-    def make_result_logger(name: str) -> FlextLogger:
-        return FlextLogger(name)
+    def make_result_logger(name: str) -> p.Logger:
+        return u.create_module_logger(name)
 
     @staticmethod
-    def assert_result_success(result: r[bool], context: str) -> bool:
+    def assert_result_success[TResult: p.ResultLike[bool]](
+        result: TResult,
+        context: str,
+    ) -> bool:
         assert result.success, f"{context}: Expected success, got {result.error!r}"
         return True
 
@@ -150,12 +152,12 @@ class TestPatternsLogging:
         logger = self.make_result_logger("test")
         assert logger is not None
 
-    def test_get_logger_creates_instance(self) -> None:
+    def test_fetch_logger_creates_instance(self) -> None:
         """Test that FlextLogger creates logger instances."""
         logger = self.make_result_logger("test_logger")
         assert logger is not None
 
-    def test_get_logger_caches_instances(self) -> None:
+    def test_fetch_logger_creates_distinct_instances(self) -> None:
         """Test that FlextLogger creates new instances (no caching in new implementation)."""
         logger1 = self.make_result_logger("cached_test")
         logger2 = self.make_result_logger("cached_test")
@@ -173,9 +175,9 @@ class TestPatternsLogging:
         2. Base logger has observability features
         3. Base logger can be used for logging
         """
-        base_logger = self.make_result_logger("base_test")
+        base_logger: p.Logger = self.make_result_logger("base_test")
         assert base_logger is not None
-        result: r[bool] | None = base_logger.info("Base logger test message")
+        result: p.Result[bool] | None = base_logger.info("Base logger test message")
         assert result is not None
         self.assert_result_success(result, "Base logger should log successfully")
 
@@ -189,7 +191,7 @@ class TestPatternsLogging:
         """
         base_logger = self.make_result_logger("level_test")
         assert base_logger is not None
-        result: r[bool] | None = base_logger.info("Level logger test message")
+        result: p.Result[bool] | None = base_logger.info("Level logger test message")
         assert result is not None
         self.assert_result_success(result, "Level logger should log successfully")
 
@@ -204,7 +206,9 @@ class TestPatternsLogging:
         logger = self.make_result_logger("bind_test")
         bound_logger = logger.bind(user_id="123", operation="test")
         assert bound_logger is not None
-        result: r[bool] | None = bound_logger.info("Test message with bound context")
+        result: p.Result[bool] | None = bound_logger.info(
+            "Test message with bound context"
+        )
         assert result is not None
         success = self.assert_result_success(
             result,
@@ -222,7 +226,7 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("compat_test")
         assert logger is not None
-        result: r[bool] | None = logger.info("Compatibility test message")
+        result: p.Result[bool] | None = logger.info("Compatibility test message")
         assert result is not None
         success = self.assert_result_success(
             result,
@@ -240,7 +244,7 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("module_test")
         assert logger is not None
-        result: r[bool] | None = logger.info("Module-level logger test message")
+        result: p.Result[bool] | None = logger.info("Module-level logger test message")
         assert result is not None
         success = self.assert_result_success(result, "Module-level logger should work")
         assert success is True
@@ -255,22 +259,26 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("usage_test")
         assert logger is not None
-        result_info: r[bool] | None = logger.info("Test info message", test=True)
+        result_info: p.Result[bool] | None = logger.info("Test info message", test=True)
         assert result_info is not None
         assert result_info.success, "Info logging should succeed"
-        result_debug: r[bool] | None = logger.debug("Test debug message", test=True)
+        result_debug: p.Result[bool] | None = logger.debug(
+            "Test debug message", test=True
+        )
         assert result_debug is not None
         assert result_debug.success, "Debug logging should succeed"
-        result_warning: r[bool] | None = logger.warning(
+        result_warning: p.Result[bool] | None = logger.warning(
             "Test warning message",
             test=True,
         )
         assert result_warning is not None
         assert result_warning.success, "Warning logging should succeed"
-        result_error: r[bool] | None = logger.error("Test error message", test=True)
+        result_error: p.Result[bool] | None = logger.error(
+            "Test error message", test=True
+        )
         assert result_error is not None
         assert result_error.success, "Error logging should succeed"
-        result_critical: r[bool] | None = logger.critical(
+        result_critical: p.Result[bool] | None = logger.critical(
             "Test critical message",
             test=True,
         )
@@ -287,14 +295,14 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("context_test")
         assert logger is not None
-        result_info: r[bool] | None = logger.info(
+        result_info: p.Result[bool] | None = logger.info(
             "User action",
             user_id="123",
             action="login",
         )
         assert result_info is not None
         assert result_info.success, "Info logging with context should succeed"
-        result_error: r[bool] | None = logger.error(
+        result_error: p.Result[bool] | None = logger.error(
             "Operation failed",
             error_code="E001",
             duration_ms=150.5,
@@ -313,10 +321,10 @@ class TestPatternsLogging:
         logger = self.make_result_logger("bound_test")
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
         assert bound_logger is not None
-        result_info: r[bool] | None = bound_logger.info("Processing request")
+        result_info: p.Result[bool] | None = bound_logger.info("Processing request")
         assert result_info is not None
         assert result_info.success, "Info logging with bound context should succeed"
-        result_error: r[bool] | None = bound_logger.error("Request failed")
+        result_error: p.Result[bool] | None = bound_logger.error("Request failed")
         assert result_error is not None
         assert result_error.success, "Error logging with bound context should succeed"
 
@@ -330,7 +338,7 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("context_mgr_test")
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
-        results: Sequence[r[bool] | None] = [
+        results: Sequence[p.Result[bool] | None] = [
             bound_logger.info("Starting batch process"),
             bound_logger.info("Processing item 1"),
             bound_logger.info("Processing item 2"),
@@ -355,14 +363,14 @@ class TestPatternsLogging:
         """
         perf_logger = self.make_result_logger("performance_test")
         assert perf_logger is not None
-        result: r[bool] | None = perf_logger.info("Performance test message")
+        result: p.Result[bool] | None = perf_logger.info("Performance test message")
         assert result is not None
         success = self.assert_result_success(
             result,
             "Performance logging should succeed",
         )
         assert success is True
-        result2: r[bool] | None = perf_logger.debug("Performance debug message")
+        result2: p.Result[bool] | None = perf_logger.debug("Performance debug message")
         assert result2 is not None
         assert result2.success, "Performance debug logging should succeed"
 
@@ -380,13 +388,13 @@ class TestPatternsLogging:
         assert parent_logger is not None
         assert child_logger is not None
         assert grandchild_logger is not None
-        result_parent: r[bool] | None = parent_logger.info("Parent log message")
+        result_parent: p.Result[bool] | None = parent_logger.info("Parent log message")
         assert result_parent is not None
         assert result_parent.success, "Parent logger should work"
-        result_child: r[bool] | None = child_logger.info("Child log message")
+        result_child: p.Result[bool] | None = child_logger.info("Child log message")
         assert result_child is not None
         assert result_child.success, "Child logger should work"
-        result_grandchild: r[bool] | None = grandchild_logger.info(
+        result_grandchild: p.Result[bool] | None = grandchild_logger.info(
             "Grandchild log message",
         )
         assert result_grandchild is not None
@@ -402,36 +410,38 @@ class TestPatternsLogging:
         """
         logger = self.make_result_logger("complex_test")
         bound_logger = logger.bind(operation="user_registration", request_id="req-789")
-        result_start: r[bool] | None = bound_logger.info("Starting user registration")
+        result_start: p.Result[bool] | None = bound_logger.info(
+            "Starting user registration"
+        )
         assert result_start is not None
         assert result_start.success, "Initial log should succeed"
         validation_logger = bound_logger.bind(
             step="validation",
             user_email="test@example.com",
         )
-        result_debug_val: r[bool] | None = validation_logger.debug(
+        result_debug_val: p.Result[bool] | None = validation_logger.debug(
             "Validating user input",
         )
         assert result_debug_val is not None
         assert result_debug_val.success, "Validation debug log should succeed"
-        result_info_val: r[bool] | None = validation_logger.info(
+        result_info_val: p.Result[bool] | None = validation_logger.info(
             "User input validation passed",
         )
         assert result_info_val is not None
         assert result_info_val.success, "Validation info log should succeed"
         database_logger = bound_logger.bind(step="database", table="users")
-        result_debug_db: r[bool] | None = database_logger.debug(
+        result_debug_db: p.Result[bool] | None = database_logger.debug(
             "Saving user to database",
         )
         assert result_debug_db is not None
         assert result_debug_db.success, "Database debug log should succeed"
-        result_info_db: r[bool] | None = database_logger.info(
+        result_info_db: p.Result[bool] | None = database_logger.info(
             "User saved successfully",
             user_id="user-456",
         )
         assert result_info_db is not None
         assert result_info_db.success, "Database info log should succeed"
-        result_complete: r[bool] | None = bound_logger.info(
+        result_complete: p.Result[bool] | None = bound_logger.info(
             "User registration completed",
         )
         assert result_complete is not None
@@ -451,7 +461,7 @@ class TestPatternsLogging:
         except ValueError as e:
             exception_type_name = type(e).__name__
             exception_message = str(e)
-            result: r[bool] | None = logger.exception(
+            result: p.Result[bool] | None = logger.exception(
                 "Operation failed with error",
                 error_type=exception_type_name,
                 error_message=exception_message,
@@ -486,7 +496,7 @@ class TestPatternsLogging:
         assert duration_ms < expected_duration_ms * 3, (
             f"Duration {duration_ms}ms should be < {expected_duration_ms * 3}ms (reasonable overhead)"
         )
-        result: r[bool] | None = logger.info(
+        result: p.Result[bool] | None = logger.info(
             "Operation completed",
             operation="test_work",
             duration_ms=duration_ms,

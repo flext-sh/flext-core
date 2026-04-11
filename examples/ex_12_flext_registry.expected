@@ -55,16 +55,16 @@ register_plugin.empty_name: True
 register_plugin.validated: True
 register_plugin.validate_fail: True
 register_plugin.validate_exc: True
-get_plugin.ok: True
-get_plugin.missing: True
+fetch_plugin.ok: True
+fetch_plugin.missing: True
 list_plugins.transports: ['hqpdto', 'rngqcl']
 unregister_plugin.ok: True
 unregister_plugin.missing: True
 register_class_plugin.ok: True
 register_class_plugin.dup: True
 register_class_plugin.empty_name: True
-get_class_plugin.ok: True
-get_class_plugin.missing: True
+fetch_class_plugin.ok: True
+fetch_class_plugin.missing: True
 list_class_plugins.auth: ['pffbqf']
 unregister_class_plugin.ok: True
 unregister_class_plugin.missing: True

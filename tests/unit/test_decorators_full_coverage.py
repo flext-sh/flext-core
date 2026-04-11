@@ -14,10 +14,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextLogger,
 )
 from flext_tests import tm
-from tests import d, e, m, p, r, t
+from tests import d, e, m, p, r, t, u
 
 
 class TestDecoratorsFullCoverage:
@@ -47,7 +46,7 @@ class TestDecoratorsFullCoverage:
 
     class _ObjWithLogger(BaseModel):
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
-        logger: Annotated[FlextLogger, Field(description="Logger instance holder")]
+        logger: Annotated[p.Logger, Field(description="Logger instance holder")]
 
     def test_deprecated_wrapper_emits_warning_and_returns_value(self) -> None:
         @d.deprecated("old API")
@@ -105,7 +104,7 @@ class TestDecoratorsFullCoverage:
             staticmethod(_clear_operation_scope),
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger",
+            "flext_core.decorators.u.fetch_logger",
             _logger_factory,
         )
 
@@ -148,7 +147,7 @@ class TestDecoratorsFullCoverage:
             _handle_retry_exhaustion,
         )
         monkeypatch.setattr(
-            "flext_core.decorators.FlextLogger",
+            "flext_core.decorators.u.fetch_logger",
             _logger_factory,
         )
 
@@ -161,7 +160,7 @@ class TestDecoratorsFullCoverage:
         tm.that(str(result), has="failed")
 
     def test_resolve_logger_prefers_logger_attribute(self) -> None:
-        logger = FlextLogger(__name__)
+        logger = u.create_module_logger(__name__)
         owner = self._ObjWithLogger(logger=logger)
 
         def target() -> None:
@@ -197,7 +196,7 @@ class TestDecoratorsFullCoverage:
             flaky,
             (),
             {},
-            cast("FlextLogger", fake_logger),
+            cast("p.Logger", fake_logger),
             retry_config=cfg,
         )
         tm.that(result_exc, is_=Exception)
@@ -218,7 +217,7 @@ class TestDecoratorsFullCoverage:
             lambda *_args, **_kwargs: "x",
             (),
             {},
-            cast("FlextLogger", fake_logger),
+            cast("p.Logger", fake_logger),
             retry_config=None,
         )
         tm.that(result_none, is_=RuntimeError)
@@ -241,7 +240,7 @@ class TestDecoratorsFullCoverage:
                 fn,
                 2,
                 None,
-                cast("FlextLogger", fake_logger),
+                cast("p.Logger", fake_logger),
             )
 
     def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
@@ -260,7 +259,7 @@ class TestDecoratorsFullCoverage:
         )
         cid = d._bind_operation_context(
             operation="op",
-            logger=cast("FlextLogger", fake_logger),
+            logger=cast("p.Logger", fake_logger),
             function_name="fn",
             ensure_correlation=False,
         )
@@ -281,19 +280,19 @@ class TestDecoratorsFullCoverage:
             _clear_scope,
         )
         d._clear_operation_scope(
-            logger=cast("FlextLogger", fake_logger),
+            logger=cast("p.Logger", fake_logger),
             function_name="fn",
             operation="op",
         )
         d._handle_log_result(
             result=r[bool].fail("x", error_code="E1"),
-            logger=cast("FlextLogger", fake_logger),
+            logger=cast("p.Logger", fake_logger),
             fallback_message="fallback",
             kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
         )
         d._handle_log_result(
             result=r[bool].fail("y", error_code="E2"),
-            logger=cast("FlextLogger", fake_logger),
+            logger=cast("p.Logger", fake_logger),
             fallback_message="fallback2",
             kwargs=t.ConfigMap(root={"extra": "not-a-dict"}),
         )
@@ -308,7 +307,7 @@ class TestDecoratorsFullCoverage:
 
         d._handle_log_result(
             result=r[bool].fail("x"),
-            logger=cast("FlextLogger", _NoFallback()),
+            logger=cast("p.Logger", _NoFallback()),
             fallback_message="m",
             kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
         )
@@ -316,7 +315,7 @@ class TestDecoratorsFullCoverage:
 
         d._handle_log_result(
             result=r[bool].fail("x", error_code="E"),
-            logger=cast("FlextLogger", fake_logger),
+            logger=cast("p.Logger", fake_logger),
             fallback_message="fallback",
             kwargs=t.ConfigMap(root={"extra": {"k": "v"}}),
         )
@@ -544,7 +543,7 @@ class TestDecoratorsFullCoverage:
             always_fails,
             (),
             {},
-            cast("FlextLogger", fake_logger),
+            cast("p.Logger", fake_logger),
             retry_config=cfg,
         )
         tm.that(result, is_=Exception)
@@ -559,7 +558,7 @@ class TestDecoratorsFullCoverage:
                 fn,
                 2,
                 "ERR",
-                cast("FlextLogger", fake_logger),
+                cast("p.Logger", fake_logger),
             )
 
     def test_timeout_additional_success_and_reraise_timeout_paths(self) -> None:

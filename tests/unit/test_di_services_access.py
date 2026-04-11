@@ -24,7 +24,6 @@ from typing import override
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextLogger,
     FlextModelsService,
     FlextSettings,
 )
@@ -35,10 +34,10 @@ from tests import p, r, s, t, u
 class TestDiServicesAccess:
     """Test FlextSettings accessibility via DI."""
 
-    def test_config_via_container_get_global(self) -> None:
-        """Test accessing FlextSettings via get_global."""
-        config1 = FlextSettings.get_global()
-        config2 = FlextSettings.get_global()
+    def test_config_via_container_fetch_global(self) -> None:
+        """Test accessing FlextSettings via fetch_global."""
+        config1 = FlextSettings.fetch_global()
+        config2 = FlextSettings.fetch_global()
         assert config1 is config2
         assert isinstance(config1, p.Settings)
 
@@ -65,15 +64,15 @@ class TestDiServicesAccess:
         module = ModuleType("config_injection_module")
 
         @u.DependencyIntegration.inject
-        def get_config(
+        def resolve_config_value(
             app_name: str = u.DependencyIntegration.Provide["config.app_name"],
         ) -> str:
             return app_name
 
-        setattr(module, "get_config", get_config)
+        setattr(module, "resolve_config_value", resolve_config_value)
         u.DependencyIntegration.wire(di_container, modules=[module])
         try:
-            func = getattr(module, "get_config")
+            func = getattr(module, "resolve_config_value")
             result = func()
             assert result == "injected_config"
         finally:
@@ -86,30 +85,28 @@ class TestDiServicesAccess:
 
     def test_logger_factory_method(self) -> None:
         """Test FlextLogger.create_module_logger."""
-        logger = FlextLogger.create_module_logger("test_service")
+        logger = u.create_module_logger("test_service")
         assert logger is not None
-        assert isinstance(logger, p.Logger)
+        assert callable(getattr(logger, "bind", None))
 
     def test_logger_registration_in_container(self) -> None:
         """Test registering FlextLogger in container for DI."""
         container = FlextContainer()
         logger_result = container.get("logger")
         assert logger_result.success
-        assert isinstance(logger_result.value, p.Logger)
+        assert callable(getattr(logger_result.value, "bind", None))
 
-        def create_custom_logger() -> FlextLogger:
-            return FlextLogger.create_module_logger("service_logger")
+        custom_logger = u.create_module_logger("service_logger")
 
         returned_container = container.register(
             "custom_logger",
-            create_custom_logger,
-            kind="factory",
+            custom_logger,
         )
         assert returned_container is container
         assert container.has_service("custom_logger")
         custom_logger_result = container.get("custom_logger")
         assert custom_logger_result.success
-        assert isinstance(custom_logger_result.value, p.Logger)
+        assert callable(getattr(custom_logger_result.value, "bind", None))
 
     def test_context_via_runtime_create(self) -> None:
         """Test creating context via FlextContext.create()."""

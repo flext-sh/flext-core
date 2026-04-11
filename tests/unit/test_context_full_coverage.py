@@ -58,11 +58,11 @@ def test_narrow_contextvar_exception_branch(
 def test_create_overloads_and_auto_correlation() -> None:
     ctx = FlextContext.create(user_id="u1", metadata=t.ConfigMap(root={"x": 1}))
     tm.that(ctx, is_=p.Context)
-    tm.that(ctx.get(c.KEY_USER_ID).value, eq="u1")
+    tm.that(ctx.get(c.ContextKey.USER_ID).value, eq="u1")
     ctx2 = FlextContext.create(initial_data=t.ConfigMap(root={}))
-    tm.ok(ctx2.get(c.KEY_OPERATION_ID))
+    tm.ok(ctx2.get(c.ContextKey.OPERATION_ID))
     ctx3 = FlextContext.create(operation_id="op-explicit")
-    tm.that(ctx3.get(c.KEY_OPERATION_ID).value, eq="op-explicit")
+    tm.that(ctx3.get(c.ContextKey.OPERATION_ID).value, eq="op-explicit")
 
 
 def test_set_set_all_get_validation_and_error_paths() -> None:
@@ -93,13 +93,13 @@ def test_inactive_and_none_value_paths() -> None:
     tm.that(ctx.items(), eq=[])
     tm.that(ctx._get_all_scopes(), eq={})
     ctx2 = FlextContext()
-    ctx2._set_in_contextvar(c.SCOPE_GLOBAL, t.ConfigMap(root={"k": None}))
+    ctx2._set_in_contextvar(c.ContextScope.GLOBAL, t.ConfigMap(root={"k": None}))
     tm.fail(ctx2.get("k"))
 
 
 def test_clear_keys_values_items_and_validate_branches() -> None:
     ctx = FlextContext()
-    ctx._statistics.operations = {c.OPERATION_CLEAR: 1}
+    ctx._statistics.operations = {c.ContextOperation.CLEAR.value: 1}
     ctx.clear()
     ctx._active = False
     tm.that(ctx.keys(), eq=[])
@@ -114,9 +114,9 @@ def test_clear_keys_values_items_and_validate_branches() -> None:
 
 def test_update_statistics_remove_hook_and_clone_false_result() -> None:
     ctx = FlextContext()
-    ctx._statistics.operations = {c.OPERATION_GET: 1}
-    ctx._update_statistics(c.OPERATION_GET)
-    tm.that(ctx._statistics.operations[c.OPERATION_GET], eq=2)
+    ctx._statistics.operations = {c.ContextOperation.GET.value: 1}
+    ctx._update_statistics(c.ContextOperation.GET.value)
+    tm.that(ctx._statistics.operations[c.ContextOperation.GET.value], eq=2)
     clone_source = FlextContext()
     _ = clone_source.set("a", "b")
     cloned = clone_source.clone()

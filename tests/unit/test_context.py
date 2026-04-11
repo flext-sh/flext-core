@@ -482,7 +482,7 @@ class TestFlextContext:
         value = result.map_or(default_value)
         tm.that(value, eq=default_value)
 
-    def test_context_set_get_metadata(self, test_context: FlextContext) -> None:
+    def test_context_apply_resolve_metadata(self, test_context: FlextContext) -> None:
         """Test setting and getting metadata."""
         context = test_context
         context.apply_metadata("meta_key", "meta_value")
@@ -496,7 +496,7 @@ class TestFlextContext:
         metadata = context._get_all_metadata()
         tm.that(metadata, is_=dict)
 
-    def test_service_register_and_get_service(self) -> None:
+    def test_service_register_and_fetch_service(self) -> None:
         """Test Service.register_service and get_service."""
         container = FlextContainer(_context=FlextContext())
         FlextContext.configure_container(container)

@@ -873,7 +873,7 @@ Combine multiple decorators for robust operations:
 ```python
 from flext_core import r, d, FlextLogger
 
-logger = FlextLogger(__name__)
+logger = u.fetch_logger(__name__)
 
 
 @d.retry(max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential")

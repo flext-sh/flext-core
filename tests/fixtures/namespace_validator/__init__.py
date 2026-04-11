@@ -22,6 +22,7 @@ _LAZY_IMPORTS = build_lazy_import_map(
         ".rule2_typevar_in_class": ("rule2_typevar_in_class",),
         ".rule2_typevar_wrong_module": ("rule2_typevar_wrong_module",),
         ".rule2_valid_types": ("rule2_valid_types",),
+        ".typings": ("LooseTypeAlias",),
     },
 )
 

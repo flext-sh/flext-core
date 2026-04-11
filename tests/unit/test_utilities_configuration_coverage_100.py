@@ -14,7 +14,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 class TestFlextUtilitiesConfiguration:
     def test_get_log_level_from_config_uses_default_constant(self) -> None:
         expected = getattr(logging, c.DEFAULT_LEVEL.upper(), logging.INFO)
-        assert u.get_log_level_from_config() == expected
+        assert u.resolve_log_level_from_config() == expected
 
     def test_resolve_env_file_prefers_existing_env_override(
         self,

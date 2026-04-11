@@ -17,7 +17,7 @@ class Ex07FlextExceptions(Examples):
         self.section("imports")
         self.check("import.e_is_FlextExceptions", e.__name__ == "e")
         self.check("import.r_ok", r[str].ok("ok").success)
-        self.check("import.constant", c.UNKNOWN_ERROR)
+        self.check("import.constant", c.ErrorCode.UNKNOWN_ERROR)
         try:
             msg = "boom"
             raise ValueError(msg)
@@ -223,7 +223,7 @@ class Ex07FlextExceptions(Examples):
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
         e.record_exception(e.ConfigurationError)
-        metric_map = e.get_metrics().root
+        metric_map = e.resolve_metrics().root
         self.check("metrics.total_exceptions", metric_map.get("total_exceptions", 0))
         self.check("metrics.has_exception_counts", "exception_counts" in metric_map)
         self.check(
@@ -234,7 +234,7 @@ class Ex07FlextExceptions(Examples):
         e.clear_metrics()
         self.check(
             "metrics.cleared_total",
-            e.get_metrics().root.get("total_exceptions", 0),
+            e.resolve_metrics().root.get("total_exceptions", 0),
         )
 
 

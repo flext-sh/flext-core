@@ -83,8 +83,8 @@ class TestUtilitiesConfigurationFullCoverage:
         env_file.write_text("B=2\n", encoding="utf-8")
         monkeypatch.chdir(tmp_path)
         assert u.resolve_env_file() == str(env_file.resolve())
-        assert isinstance(u.get_log_level_from_config(), int)
-        assert u.get_log_level_from_config() in {
+        assert isinstance(u.resolve_log_level_from_config(), int)
+        assert u.resolve_log_level_from_config() in {
             logging.DEBUG,
             logging.INFO,
             logging.WARNING,
