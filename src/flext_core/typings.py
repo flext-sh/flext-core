@@ -14,14 +14,12 @@ from typing import ParamSpec, TypeVar
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
-from flext_core import (
-    FlextModelsNamespace,
-    FlextTypesAnnotateds,
-    FlextTypesCore,
-    FlextTypesServices,
-    FlextTypesTypeAdapters,
-    FlextTypesValidation,
-)
+from flext_core._models.namespace import FlextModelsNamespace
+from flext_core._typings.annotateds import FlextTypesAnnotateds
+from flext_core._typings.core import FlextTypesCore
+from flext_core._typings.services import FlextTypesServices
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+from flext_core._typings.validation import FlextTypesValidation
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)

@@ -12,6 +12,12 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
+    from flext_cli.base import s
+    from flext_core.decorators import d
+    from flext_core.exceptions import e
+    from flext_core.handlers import h
+    from flext_core.mixins import x
+    from flext_core.result import r
     from tests._constants.domain import TestsFlextCoreConstantsDomain
     from tests._constants.errors import TestsFlextCoreConstantsErrors
     from tests._constants.fixtures import TestsFlextCoreConstantsFixtures
@@ -67,6 +73,12 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "TestsFlextCoreUtilities",
                 "u",
             ),
+            "flext_cli.base": ("s",),
+            "flext_core.decorators": ("d",),
+            "flext_core.exceptions": ("e",),
+            "flext_core.handlers": ("h",),
+            "flext_core.mixins": ("x",),
+            "flext_core.result": ("r",),
         },
     ),
     exclude_names=(
@@ -111,8 +123,14 @@ __all__ = [
     "TestsFlextCoreUtilities",
     "TestsFlextCoreUtilitiesMapper",
     "c",
+    "d",
+    "e",
+    "h",
     "m",
     "p",
+    "r",
+    "s",
     "t",
     "u",
+    "x",
 ]

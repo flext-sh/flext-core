@@ -13,86 +13,88 @@ from flext_core.lazy import (
 )
 
 if _t.TYPE_CHECKING:
-    from _constants.base import FlextConstantsBase
-    from _constants.cqrs import FlextConstantsCqrs
-    from _constants.enforcement import FlextConstantsEnforcement
-    from _constants.infrastructure import FlextConstantsInfrastructure
-    from _constants.mixins import FlextConstantsMixins
-    from _constants.platform import FlextConstantsPlatform
-    from _constants.validation import FlextConstantsValidation
-    from _models._context._data import FlextModelsContextData
-    from _models._context._export import FlextModelsContextExport
-    from _models._context._metadata import FlextModelsContextMetadata
-    from _models._context._proxy_var import FlextModelsContextProxyVar
-    from _models._context._scope import FlextModelsContextScope
-    from _models._context._tokens import FlextModelsContextTokens
-    from _models.base import FlextModelsBase
-    from _models.builder import FlextModelsBuilder
-    from _models.collections import FlextModelsCollections
-    from _models.container import FlextModelsContainer
-    from _models.containers import FlextModelsContainers
-    from _models.context import FlextModelsContext
-    from _models.cqrs import FlextModelsCqrs
-    from _models.decorators import FlextModelsDecorators
-    from _models.dispatcher import FlextModelsDispatcher
-    from _models.domain_event import FlextModelsDomainEvent
-    from _models.entity import FlextModelsEntity
-    from _models.errors import FlextModelsErrors
-    from _models.exception_params import FlextModelsExceptionParams
-    from _models.generic import FlextGenericModels
-    from _models.handler import FlextModelsHandler
-    from _models.namespace import FlextModelsNamespace
-    from _models.registry import FlextModelsRegistry
-    from _models.service import FlextModelsService
-    from _models.settings import FlextModelsSettings
-    from _protocols.base import FlextProtocolsBase
-    from _protocols.config import FlextProtocolsSettings
-    from _protocols.container import FlextProtocolsContainer
-    from _protocols.context import FlextProtocolsContext
-    from _protocols.handler import FlextProtocolsHandler
-    from _protocols.logging import FlextProtocolsLogging
-    from _protocols.registry import FlextProtocolsRegistry
-    from _protocols.result import FlextProtocolsResult
-    from _protocols.service import FlextProtocolsService
-    from _typings.annotateds import FlextTypesAnnotateds
-    from _typings.base import FlextTypingBase
-    from _typings.containers import FlextTypingContainers
-    from _typings.core import FlextTypesCore
-    from _typings.services import FlextTypesServices
-    from _typings.typeadapters import FlextTypesTypeAdapters
-    from _typings.validation import FlextTypesValidation
-    from _utilities.args import FlextUtilitiesArgs
-    from _utilities.beartype_conf import FlextUtilitiesBeartypeConf
-    from _utilities.beartype_engine import FlextUtilitiesBeartypeEngine
-    from _utilities.cache import FlextUtilitiesCache
-    from _utilities.checker import FlextUtilitiesChecker
-    from _utilities.collection import FlextUtilitiesCollection
-    from _utilities.configuration import FlextUtilitiesConfiguration
-    from _utilities.context import FlextUtilitiesContext
-    from _utilities.conversion import FlextUtilitiesConversion
-    from _utilities.discovery import FlextUtilitiesDiscovery
-    from _utilities.domain import FlextUtilitiesDomain
-    from _utilities.enforcement import FlextUtilitiesEnforcement
-    from _utilities.enum import FlextUtilitiesEnum
-    from _utilities.file_ops import FlextUtilitiesFileOps
-    from _utilities.generators import FlextUtilitiesGenerators
-    from _utilities.guards import FlextUtilitiesGuards
-    from _utilities.guards_ensure import FlextUtilitiesGuardsEnsure
-    from _utilities.guards_type import FlextUtilitiesGuardsType
-    from _utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-    from _utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-    from _utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
-    from _utilities.mapper import FlextUtilitiesMapper
-    from _utilities.model import FlextUtilitiesModel
-    from _utilities.parser import FlextUtilitiesParser
-    from _utilities.reliability import FlextUtilitiesReliability
-    from _utilities.result_helpers import FlextUtilitiesResultHelpers
-    from _utilities.text import FlextUtilitiesText
     from pydantic.main import BaseModel
 
-    from _constants.domain import FlextConstantsDomain
-    from _constants.errors import FlextConstantsErrors
-    from _constants.settings import FlextConstantsSettings
+    from flext_core._constants.base import FlextConstantsBase
+    from flext_core._constants.cqrs import FlextConstantsCqrs
+    from flext_core._constants.domain import FlextConstantsDomain
+    from flext_core._constants.enforcement import FlextConstantsEnforcement
+    from flext_core._constants.errors import FlextConstantsErrors
+    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+    from flext_core._constants.mixins import FlextConstantsMixins
+    from flext_core._constants.platform import FlextConstantsPlatform
+    from flext_core._constants.settings import FlextConstantsSettings
+    from flext_core._constants.validation import FlextConstantsValidation
+    from flext_core._models._context._data import FlextModelsContextData
+    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core._models._context._metadata import FlextModelsContextMetadata
+    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._scope import FlextModelsContextScope
+    from flext_core._models._context._tokens import FlextModelsContextTokens
+    from flext_core._models.base import FlextModelsBase
+    from flext_core._models.builder import FlextModelsBuilder
+    from flext_core._models.collections import FlextModelsCollections
+    from flext_core._models.container import FlextModelsContainer
+    from flext_core._models.containers import FlextModelsContainers
+    from flext_core._models.context import FlextModelsContext
+    from flext_core._models.cqrs import FlextModelsCqrs
+    from flext_core._models.decorators import FlextModelsDecorators
+    from flext_core._models.dispatcher import FlextModelsDispatcher
+    from flext_core._models.domain_event import FlextModelsDomainEvent
+    from flext_core._models.entity import FlextModelsEntity
+    from flext_core._models.errors import FlextModelsErrors
+    from flext_core._models.exception_params import FlextModelsExceptionParams
+    from flext_core._models.generic import FlextGenericModels
+    from flext_core._models.handler import FlextModelsHandler
+    from flext_core._models.namespace import FlextModelsNamespace
+    from flext_core._models.registry import FlextModelsRegistry
+    from flext_core._models.service import FlextModelsService
+    from flext_core._models.settings import FlextModelsSettings
+    from flext_core._protocols.base import FlextProtocolsBase
+    from flext_core._protocols.config import FlextProtocolsSettings
+    from flext_core._protocols.container import FlextProtocolsContainer
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core._protocols.registry import FlextProtocolsRegistry
+    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols.service import FlextProtocolsService
+    from flext_core._typings.annotateds import FlextTypesAnnotateds
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.containers import FlextTypingContainers
+    from flext_core._typings.core import FlextTypesCore
+    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+    from flext_core._typings.validation import FlextTypesValidation
+    from flext_core._utilities.args import FlextUtilitiesArgs
+    from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+    from flext_core._utilities.cache import FlextUtilitiesCache
+    from flext_core._utilities.checker import FlextUtilitiesChecker
+    from flext_core._utilities.collection import FlextUtilitiesCollection
+    from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+    from flext_core._utilities.context import FlextUtilitiesContext
+    from flext_core._utilities.conversion import FlextUtilitiesConversion
+    from flext_core._utilities.discovery import FlextUtilitiesDiscovery
+    from flext_core._utilities.domain import FlextUtilitiesDomain
+    from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+    from flext_core._utilities.enum import FlextUtilitiesEnum
+    from flext_core._utilities.file_ops import FlextUtilitiesFileOps
+    from flext_core._utilities.generators import FlextUtilitiesGenerators
+    from flext_core._utilities.guards import FlextUtilitiesGuards
+    from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
+    from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+    from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+    from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+    from flext_core._utilities.guards_type_protocol import (
+        FlextUtilitiesGuardsTypeProtocol,
+    )
+    from flext_core._utilities.mapper import FlextUtilitiesMapper
+    from flext_core._utilities.model import FlextUtilitiesModel
+    from flext_core._utilities.parser import FlextUtilitiesParser
+    from flext_core._utilities.reliability import FlextUtilitiesReliability
+    from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
+    from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
@@ -218,84 +220,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
                 "FlextUtilities",
                 "u",
             ),
-            "_constants.base": ("FlextConstantsBase",),
-            "_constants.cqrs": ("FlextConstantsCqrs",),
-            "_constants.domain": ("FlextConstantsDomain",),
-            "_constants.enforcement": ("FlextConstantsEnforcement",),
-            "_constants.errors": ("FlextConstantsErrors",),
-            "_constants.infrastructure": ("FlextConstantsInfrastructure",),
-            "_constants.mixins": ("FlextConstantsMixins",),
-            "_constants.platform": ("FlextConstantsPlatform",),
-            "_constants.settings": ("FlextConstantsSettings",),
-            "_constants.validation": ("FlextConstantsValidation",),
-            "_models._context._data": ("FlextModelsContextData",),
-            "_models._context._export": ("FlextModelsContextExport",),
-            "_models._context._metadata": ("FlextModelsContextMetadata",),
-            "_models._context._proxy_var": ("FlextModelsContextProxyVar",),
-            "_models._context._scope": ("FlextModelsContextScope",),
-            "_models._context._tokens": ("FlextModelsContextTokens",),
-            "_models.base": ("FlextModelsBase",),
-            "_models.builder": ("FlextModelsBuilder",),
-            "_models.collections": ("FlextModelsCollections",),
-            "_models.container": ("FlextModelsContainer",),
-            "_models.containers": ("FlextModelsContainers",),
-            "_models.context": ("FlextModelsContext",),
-            "_models.cqrs": ("FlextModelsCqrs",),
-            "_models.decorators": ("FlextModelsDecorators",),
-            "_models.dispatcher": ("FlextModelsDispatcher",),
-            "_models.domain_event": ("FlextModelsDomainEvent",),
-            "_models.entity": ("FlextModelsEntity",),
-            "_models.errors": ("FlextModelsErrors",),
-            "_models.exception_params": ("FlextModelsExceptionParams",),
-            "_models.generic": ("FlextGenericModels",),
-            "_models.handler": ("FlextModelsHandler",),
-            "_models.namespace": ("FlextModelsNamespace",),
-            "_models.registry": ("FlextModelsRegistry",),
-            "_models.service": ("FlextModelsService",),
-            "_models.settings": ("FlextModelsSettings",),
-            "_protocols.base": ("FlextProtocolsBase",),
-            "_protocols.config": ("FlextProtocolsSettings",),
-            "_protocols.container": ("FlextProtocolsContainer",),
-            "_protocols.context": ("FlextProtocolsContext",),
-            "_protocols.handler": ("FlextProtocolsHandler",),
-            "_protocols.logging": ("FlextProtocolsLogging",),
-            "_protocols.registry": ("FlextProtocolsRegistry",),
-            "_protocols.result": ("FlextProtocolsResult",),
-            "_protocols.service": ("FlextProtocolsService",),
-            "_typings.annotateds": ("FlextTypesAnnotateds",),
-            "_typings.base": ("FlextTypingBase",),
-            "_typings.containers": ("FlextTypingContainers",),
-            "_typings.core": ("FlextTypesCore",),
-            "_typings.services": ("FlextTypesServices",),
-            "_typings.typeadapters": ("FlextTypesTypeAdapters",),
-            "_typings.validation": ("FlextTypesValidation",),
-            "_utilities.args": ("FlextUtilitiesArgs",),
-            "_utilities.beartype_conf": ("FlextUtilitiesBeartypeConf",),
-            "_utilities.beartype_engine": ("FlextUtilitiesBeartypeEngine",),
-            "_utilities.cache": ("FlextUtilitiesCache",),
-            "_utilities.checker": ("FlextUtilitiesChecker",),
-            "_utilities.collection": ("FlextUtilitiesCollection",),
-            "_utilities.configuration": ("FlextUtilitiesConfiguration",),
-            "_utilities.context": ("FlextUtilitiesContext",),
-            "_utilities.conversion": ("FlextUtilitiesConversion",),
-            "_utilities.discovery": ("FlextUtilitiesDiscovery",),
-            "_utilities.domain": ("FlextUtilitiesDomain",),
-            "_utilities.enforcement": ("FlextUtilitiesEnforcement",),
-            "_utilities.enum": ("FlextUtilitiesEnum",),
-            "_utilities.file_ops": ("FlextUtilitiesFileOps",),
-            "_utilities.generators": ("FlextUtilitiesGenerators",),
-            "_utilities.guards": ("FlextUtilitiesGuards",),
-            "_utilities.guards_ensure": ("FlextUtilitiesGuardsEnsure",),
-            "_utilities.guards_type": ("FlextUtilitiesGuardsType",),
-            "_utilities.guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
-            "_utilities.guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
-            "_utilities.guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
-            "_utilities.mapper": ("FlextUtilitiesMapper",),
-            "_utilities.model": ("FlextUtilitiesModel",),
-            "_utilities.parser": ("FlextUtilitiesParser",),
-            "_utilities.reliability": ("FlextUtilitiesReliability",),
-            "_utilities.result_helpers": ("FlextUtilitiesResultHelpers",),
-            "_utilities.text": ("FlextUtilitiesText",),
             "pydantic.main": ("BaseModel",),
         },
     ),
